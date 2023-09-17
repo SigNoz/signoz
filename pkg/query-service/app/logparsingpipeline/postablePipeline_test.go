@@ -1,12 +1,9 @@
 package logparsingpipeline
 
 import (
-	"encoding/json"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
@@ -25,8 +22,6 @@ func TestIsValidPostablePipeline(t *testing.T) {
 			},
 		},
 	}
-	validPipelineFilter, err := json.Marshal(validPipelineFilterSet)
-	require.Nil(t, err)
 
 	var correctQueriesTest = []struct {
 		Name     string
@@ -39,8 +34,8 @@ func TestIsValidPostablePipeline(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  string(validPipelineFilter),
-				Config:  []model.PipelineOperator{},
+				Filter:  validPipelineFilterSet,
+				Config:  []PipelineOperator{},
 			},
 			IsValid: false,
 		},
@@ -51,8 +46,8 @@ func TestIsValidPostablePipeline(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  string(validPipelineFilter),
-				Config:  []model.PipelineOperator{},
+				Filter:  validPipelineFilterSet,
+				Config:  []PipelineOperator{},
 			},
 			IsValid: false,
 		},
@@ -63,8 +58,8 @@ func TestIsValidPostablePipeline(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  string(validPipelineFilter),
-				Config:  []model.PipelineOperator{},
+				Filter:  validPipelineFilterSet,
+				Config:  []PipelineOperator{},
 			},
 			IsValid: true,
 		},
@@ -75,7 +70,20 @@ func TestIsValidPostablePipeline(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  "test filter",
+				Filter: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "method",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeUnspecified,
+							},
+							Operator: "regex",
+							Value:    "[0-9A-Z*",
+						},
+					},
+				},
 			},
 			IsValid: false,
 		},
@@ -86,7 +94,7 @@ func TestIsValidPostablePipeline(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  string(validPipelineFilter),
+				Filter:  validPipelineFilterSet,
 			},
 			IsValid: true,
 		},
@@ -106,12 +114,12 @@ func TestIsValidPostablePipeline(t *testing.T) {
 
 var operatorTest = []struct {
 	Name     string
-	Operator model.PipelineOperator
+	Operator PipelineOperator
 	IsValid  bool
 }{
 	{
 		Name: "Operator - without id",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			Type:  "remove",
 			Field: "attributes.abc",
 		},
@@ -119,7 +127,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Operator - without type",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:    "test",
 			Field: "attributes.abc",
 		},
@@ -127,7 +135,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Copy - invalid to and from",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:   "copy",
 			Type: "copy",
 			From: "date",
@@ -137,7 +145,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Move - invalid to and from",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:   "move",
 			Type: "move",
 			From: "attributes",
@@ -147,7 +155,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Add - invalid to and from",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:    "add",
 			Type:  "add",
 			Field: "data",
@@ -156,7 +164,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Remove - invalid to and from",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:    "remove",
 			Type:  "remove",
 			Field: "data",
@@ -165,7 +173,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Add - valid",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:    "add",
 			Type:  "add",
 			Field: "body",
@@ -175,7 +183,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Move - valid",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:   "move",
 			Type: "move",
 			From: "attributes.x1",
@@ -185,7 +193,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Copy - valid",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:   "copy",
 			Type: "copy",
 			From: "resource.x1",
@@ -195,7 +203,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Unknown operator",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:   "copy",
 			Type: "operator",
 			From: "resource.x1",
@@ -205,7 +213,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Grok - valid",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:      "grok",
 			Type:    "grok_parser",
 			Pattern: "%{COMMONAPACHELOG}",
@@ -215,7 +223,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Grok - invalid",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:      "grok",
 			Type:    "grok_parser",
 			Pattern: "%{COMMONAPACHELOG}",
@@ -225,7 +233,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Regex - valid",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:      "regex",
 			Type:    "regex_parser",
 			Regex:   "(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$",
@@ -235,7 +243,7 @@ var operatorTest = []struct {
 	},
 	{
 		Name: "Regex - invalid",
-		Operator: model.PipelineOperator{
+		Operator: PipelineOperator{
 			ID:      "regex",
 			Type:    "regex_parser",
 			Regex:   "abcd",

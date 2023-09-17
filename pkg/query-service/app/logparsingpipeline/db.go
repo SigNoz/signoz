@@ -41,7 +41,7 @@ func (r *Repo) InitDB(engine string) error {
 // insertPipeline stores a given postable pipeline to database
 func (r *Repo) insertPipeline(
 	ctx context.Context, postable *PostablePipeline,
-) (*model.Pipeline, *model.ApiError) {
+) (*Pipeline, *model.ApiError) {
 	if err := postable.IsValid(); err != nil {
 		return nil, model.BadRequest(errors.Wrap(err,
 			"pipeline is not valid",
@@ -65,7 +65,7 @@ func (r *Repo) insertPipeline(
 		return nil, model.UnauthorizedError(err)
 	}
 
-	insertRow := &model.Pipeline{
+	insertRow := &Pipeline{
 		Id:          uuid.New().String(),
 		OrderId:     postable.OrderId,
 		Enabled:     postable.Enabled,
@@ -75,7 +75,7 @@ func (r *Repo) insertPipeline(
 		Filter:      postable.Filter,
 		Config:      postable.Config,
 		RawConfig:   string(rawConfig),
-		Creator: model.Creator{
+		Creator: Creator{
 			CreatedBy: claims["email"].(string),
 			CreatedAt: time.Now(),
 		},
@@ -107,9 +107,11 @@ func (r *Repo) insertPipeline(
 }
 
 // getPipelinesByVersion returns pipelines associated with a given version
-func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.Pipeline, []error) {
+func (r *Repo) getPipelinesByVersion(
+	ctx context.Context, version int,
+) ([]Pipeline, []error) {
 	var errors []error
-	pipelines := []model.Pipeline{}
+	pipelines := []Pipeline{}
 
 	versionQuery := `SELECT r.id, 
 		r.name, 
@@ -151,8 +153,8 @@ func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.
 // GetPipelines returns pipeline and errors (if any)
 func (r *Repo) GetPipeline(
 	ctx context.Context, id string,
-) (*model.Pipeline, *model.ApiError) {
-	pipelines := []model.Pipeline{}
+) (*Pipeline, *model.ApiError) {
+	pipelines := []Pipeline{}
 
 	pipelineQuery := `SELECT id, 
 		name, 

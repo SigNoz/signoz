@@ -6,7 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
 )
 
 // PostablePipelines are a list of user defined pielines
@@ -17,14 +18,14 @@ type PostablePipelines struct {
 // PostablePipeline captures user inputs in setting the pipeline
 
 type PostablePipeline struct {
-	Id          string                   `json:"id"`
-	OrderId     int                      `json:"orderId"`
-	Name        string                   `json:"name"`
-	Alias       string                   `json:"alias"`
-	Description string                   `json:"description"`
-	Enabled     bool                     `json:"enabled"`
-	Filter      string                   `json:"filter"`
-	Config      []model.PipelineOperator `json:"config"`
+	Id          string             `json:"id"`
+	OrderId     int                `json:"orderId"`
+	Name        string             `json:"name"`
+	Alias       string             `json:"alias"`
+	Description string             `json:"description"`
+	Enabled     bool               `json:"enabled"`
+	Filter      *v3.FilterSet      `json:"filter"`
+	Config      []PipelineOperator `json:"config"`
 }
 
 // IsValid checks if postable pipeline has all the required params
@@ -40,12 +41,8 @@ func (p *PostablePipeline) IsValid() error {
 		return fmt.Errorf("pipeline alias is required")
 	}
 
-	if p.Filter == "" {
-		return fmt.Errorf("pipeline filter is required")
-	}
-
 	// check the filter
-	_, err := PipelineFilterExpr(p.Filter)
+	_, err := queryBuilderToExpr.Parse(p.Filter)
 	if err != nil {
 		return fmt.Errorf(fmt.Sprintf("filter for pipeline %v is not correct: %v", p.Name, err.Error()))
 	}
@@ -93,7 +90,7 @@ func (p *PostablePipeline) IsValid() error {
 	return nil
 }
 
-func isValidOperator(op model.PipelineOperator) error {
+func isValidOperator(op PipelineOperator) error {
 	if op.ID == "" {
 		return errors.New("PipelineOperator.ID is required.")
 	}

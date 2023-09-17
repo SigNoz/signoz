@@ -30,6 +30,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -63,8 +64,6 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 			},
 		},
 	}
-	pipelineFilterSetJson, err := json.Marshal(pipelineFilterSet)
-	require.Nil(t, err)
 
 	postablePipelines := logparsingpipeline.PostablePipelines{
 		Pipelines: []logparsingpipeline.PostablePipeline{
@@ -73,8 +72,8 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  string(pipelineFilterSetJson),
-				Config: []model.PipelineOperator{
+				Filter:  pipelineFilterSet,
+				Config: []logparsingpipeline.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -90,8 +89,8 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 				Name:    "pipeline2",
 				Alias:   "pipeline2",
 				Enabled: true,
-				Filter:  string(pipelineFilterSetJson),
-				Config: []model.PipelineOperator{
+				Filter:  pipelineFilterSet,
+				Config: []logparsingpipeline.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "remove",
@@ -184,8 +183,6 @@ func TestLogPipelinesValidation(t *testing.T) {
 			},
 		},
 	}
-	validPipelineFilter, err := json.Marshal(validPipelineFilterSet)
-	require.Nil(t, err)
 
 	testCases := []struct {
 		Name                       string
@@ -199,8 +196,8 @@ func TestLogPipelinesValidation(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  string(validPipelineFilter),
-				Config: []model.PipelineOperator{
+				Filter:  validPipelineFilterSet,
+				Config: []logparsingpipeline.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -221,8 +218,8 @@ func TestLogPipelinesValidation(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  string(validPipelineFilter),
-				Config: []model.PipelineOperator{
+				Filter:  validPipelineFilterSet,
+				Config: []logparsingpipeline.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -243,8 +240,8 @@ func TestLogPipelinesValidation(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  "bad filter",
-				Config: []model.PipelineOperator{
+				Filter:  &v3.FilterSet{},
+				Config: []logparsingpipeline.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -265,8 +262,8 @@ func TestLogPipelinesValidation(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  string(validPipelineFilter),
-				Config: []model.PipelineOperator{
+				Filter:  validPipelineFilterSet,
+				Config: []logparsingpipeline.PipelineOperator{
 					{
 						OrderId: 1,
 						ID:      "add",
@@ -448,7 +445,7 @@ func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.Pipeline
 }
 
 func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
-	pipelines []model.Pipeline,
+	pipelines []logparsingpipeline.Pipeline,
 ) {
 	lastMsg := tb.opampClientConn.latestMsgFromServer()
 	collectorConfigFiles := lastMsg.RemoteConfig.Config.ConfigMap
@@ -505,14 +502,14 @@ func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
 		routerOproutes := pipelineProcOps[routerOpIdx].(map[string]interface{})["routes"].([]interface{})
 		pipelineFilterExpr := routerOproutes[0].(map[string]interface{})["expr"].(string)
 
-		// find model.Pipeline whose processor is being validated here
+		// find logparsingpipeline.Pipeline whose processor is being validated here
 		pipelineIdx := slices.IndexFunc(
-			pipelines, func(p model.Pipeline) bool {
+			pipelines, func(p logparsingpipeline.Pipeline) bool {
 				return logparsingpipeline.CollectorConfProcessorName(p) == procName
 			},
 		)
 		require.GreaterOrEqual(tb.t, pipelineIdx, 0)
-		expectedExpr, err := logparsingpipeline.PipelineFilterExpr(pipelines[pipelineIdx].Filter)
+		expectedExpr, err := queryBuilderToExpr.Parse(pipelines[pipelineIdx].Filter)
 		require.Nil(tb.t, err)
 		require.Equal(tb.t, expectedExpr, pipelineFilterExpr)
 	}
@@ -694,8 +691,8 @@ func (conn *mockOpAmpConnection) latestMsgFromServer() *protobufs.ServerToAgent 
 	return conn.serverToAgentMsgs[len(conn.serverToAgentMsgs)-1]
 }
 
-func (conn *mockOpAmpConnection) LatestPipelinesReceivedFromServer() ([]model.Pipeline, error) {
-	pipelines := []model.Pipeline{}
+func (conn *mockOpAmpConnection) LatestPipelinesReceivedFromServer() ([]logparsingpipeline.Pipeline, error) {
+	pipelines := []logparsingpipeline.Pipeline{}
 	lastMsg := conn.latestMsgFromServer()
 	if lastMsg == nil {
 		return pipelines, nil
