@@ -6,6 +6,7 @@ import {
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
 import { transformFromStringToHaving } from 'lib/query/transformQueryBuilderData';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -19,7 +20,7 @@ const valueWithAttributeAndOperator: IBuilderQuery = {
 		isColumn: false,
 		key: 'bytes',
 		type: 'tag',
-		dataType: 'float64',
+		dataType: DataTypes.Float64,
 	},
 };
 

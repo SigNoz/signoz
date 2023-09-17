@@ -40,6 +40,8 @@ function SideNav(): JSX.Element {
 		featureResponse,
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
+	const { hostname } = window.location;
+
 	const menuItems = useMemo(
 		() =>
 			defaultMenuItems.filter((item) => {
@@ -48,13 +50,16 @@ function SideNav(): JSX.Element {
 						(feature) => feature.name === FeatureKeys.ONBOARDING,
 					)?.active || false;
 
-				if (!isOnboardingEnabled) {
+				if (
+					!isOnboardingEnabled ||
+					!(hostname && hostname.endsWith('signoz.cloud'))
+				) {
 					return item.key !== ROUTES.GET_STARTED;
 				}
 
 				return true;
 			}),
-		[featureResponse],
+		[featureResponse.data, hostname],
 	);
 
 	const { pathname, search } = useLocation();
