@@ -22,12 +22,10 @@ function NewDashboardPage({ getDashboard }: NewDashboardProps): JSX.Element {
 	const { dashboardId } = useParams<Params>();
 
 	useEffect(() => {
-		if (dashboards.length !== 1) {
-			getDashboard({
-				uuid: dashboardId,
-			});
-		}
-	}, [getDashboard, dashboardId, dashboards.length]);
+		getDashboard({
+			uuid: dashboardId,
+		});
+	}, [getDashboard, dashboardId]);
 
 	if (
 		error &&
