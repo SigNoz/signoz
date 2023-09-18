@@ -17,6 +17,8 @@ export const useOperators = (
 	useMemo(() => {
 		const currentKey = keys?.find((el) => el.key === getRemovePrefixFromKey(key));
 		return currentKey?.dataType
-			? QUERY_BUILDER_OPERATORS_BY_TYPES[currentKey.dataType]
+			? QUERY_BUILDER_OPERATORS_BY_TYPES[
+					currentKey.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
+			  ]
 			: QUERY_BUILDER_OPERATORS_BY_TYPES.universal;
 	}, [keys, key]);

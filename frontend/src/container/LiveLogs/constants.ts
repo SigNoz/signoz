@@ -3,7 +3,10 @@ import {
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
 import { FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
@@ -45,6 +48,6 @@ export const liveLogsCompositeQuery = constructCompositeQuery({
 export const idObject: BaseAutocompleteData = {
 	key: 'id',
 	type: '',
-	dataType: 'string',
+	dataType: DataTypes.String,
 	isColumn: true,
 };

@@ -4,7 +4,7 @@ import {
 } from 'api/metrics/getResourceAttributes';
 import { OperatorConversions } from 'constants/resourceAttributes';
 import ROUTES from 'constants/routes';
-import { DataType, MetricsType } from 'container/MetricsApplication/constant';
+import { MetricsType } from 'container/MetricsApplication/constant';
 import {
 	IOption,
 	IResourceAttribute,
@@ -12,6 +12,7 @@ import {
 } from 'hooks/useResourceAttribute/types';
 import { decode } from 'js-base64';
 import history from 'lib/history';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { OperatorValues, Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
@@ -72,7 +73,7 @@ export const resourceAttributesToTagFilterItems = (
 			op: e.Operator,
 			value: e.StringValues,
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				type: MetricsType.Resource,
 				isColumn: false,
 				key: e.Key,
@@ -82,7 +83,12 @@ export const resourceAttributesToTagFilterItems = (
 
 	return queries.map((res) => ({
 		id: `${res.id}`,
-		key: { key: res.tagKey, isColumn: false, type: '', dataType: '' },
+		key: {
+			key: res.tagKey,
+			isColumn: false,
+			type: '',
+			dataType: DataTypes.EMPTY,
+		},
 		op: `${res.operator}`,
 		value: `${res.tagValue}`.split(','),
 	}));
