@@ -2,47 +2,57 @@ import { CompassOutlined } from '@ant-design/icons';
 import { Badge, Button } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { RIBBON_STYLES } from './config';
+import { buttonText, RIBBON_STYLES } from './config';
 
 function NewExplorerCTA(): JSX.Element | null {
 	const location = useLocation();
 
 	const isTraceOrLogsExplorerPage = useMemo(
-		() => location.pathname === ROUTES.LOGS || location.pathname === ROUTES.TRACE,
+		() =>
+			location.pathname === ROUTES.LOGS_EXPLORER ||
+			location.pathname === ROUTES.TRACE ||
+			location.pathname === ROUTES.LOGS,
 		[location.pathname],
 	);
 
-	const onClickHandler = (): void => {
-		if (location.pathname === ROUTES.LOGS) {
-			history.push(ROUTES.LOGS_EXPLORER);
+	const onClickHandler = useCallback((): void => {
+		if (location.pathname === ROUTES.LOGS_EXPLORER) {
+			history.push(ROUTES.LOGS);
 		} else if (location.pathname === ROUTES.TRACE) {
 			history.push(ROUTES.TRACES_EXPLORER);
+		} else if (location.pathname === ROUTES.LOGS) {
+			history.push(ROUTES.LOGS_EXPLORER);
 		}
-	};
+	}, [location.pathname]);
 
-	const buttonText = useMemo(
-		() =>
-			`Try new ${ROUTES.LOGS === location.pathname ? 'Logs' : 'Traces'} Explorer`,
-		[location.pathname],
-	);
-
-	if (!isTraceOrLogsExplorerPage) {
-		return null;
-	}
-
-	return (
-		<Badge.Ribbon style={RIBBON_STYLES} text="New">
+	const button = useMemo(
+		() => (
 			<Button
 				icon={<CompassOutlined />}
 				onClick={onClickHandler}
 				danger
 				type="primary"
 			>
-				{buttonText}
+				{buttonText[location.pathname]}
 			</Button>
+		),
+		[location.pathname, onClickHandler],
+	);
+
+	if (!isTraceOrLogsExplorerPage) {
+		return null;
+	}
+
+	if (location.pathname === ROUTES.LOGS_EXPLORER) {
+		return button;
+	}
+
+	return (
+		<Badge.Ribbon style={RIBBON_STYLES} text="New">
+			{button}
 		</Badge.Ribbon>
 	);
 }
