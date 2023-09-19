@@ -90,6 +90,8 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 		history.push(
 			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
 				[QueryParams.compositeQuery]: JSON.stringify(query),
+				[QueryParams.startTime]: minTime,
+				[QueryParams.endTime]: maxTime,
 			})}`,
 		);
 	};
