@@ -28,9 +28,11 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
+	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
@@ -51,8 +53,9 @@ import (
 type status string
 
 const (
-	statusSuccess status = "success"
-	statusError   status = "error"
+	statusSuccess       status = "success"
+	statusError         status = "error"
+	defaultFluxInterval        = 5 * time.Minute
 )
 
 // NewRouter creates and configures a Gorilla Router.
@@ -73,6 +76,7 @@ type APIHandler struct {
 	ruleManager       *rules.Manager
 	featureFlags      interfaces.FeatureLookup
 	ready             func(http.HandlerFunc) http.HandlerFunc
+	querier           interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
 	preferDelta       bool
 	preferSpanMetrics bool
@@ -114,6 +118,11 @@ type APIHandlerOpts struct {
 
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
+	// cache
+	Cache cache.Cache
+
+	// Querier Influx Interval
+	FluxInterval time.Duration
 }
 
 // NewAPIHandler returns an APIHandler
@@ -123,6 +132,16 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	querierOpts := querier.QuerierOptions{
+		Reader:        opts.Reader,
+		Cache:         opts.Cache,
+		KeyGenerator:  queryBuilder.NewKeyGenerator(),
+		FluxInterval:  opts.FluxInterval,
+		FeatureLookup: opts.FeatureFlags,
+	}
+
+	querier := querier.NewQuerier(querierOpts)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -137,6 +156,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
+		querier:                       querier,
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
@@ -2965,9 +2985,8 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	var result []*v3.Result
 	var err error
 	var errQuriesByName map[string]string
-	var queries map[string]string
-	switch queryRangeParams.CompositeQuery.QueryType {
-	case v3.QueryTypeBuilder:
+	var spanKeys map[string]v3.AttributeKey
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
 			// get the fields if any logs query is present
@@ -2981,41 +3000,15 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
-		var spanKeys map[string]v3.AttributeKey
 		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
 		if err != nil {
 			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-
-		queries, err = aH.queryBuilder.PrepareQueries(queryRangeParams, spanKeys)
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-			return
-		}
-
-		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList || queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTrace {
-			result, err, errQuriesByName = aH.execClickHouseListQueries(r.Context(), queries)
-		} else {
-			result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
-		}
-	case v3.QueryTypeClickHouseSQL:
-		queries := make(map[string]string)
-		for name, query := range queryRangeParams.CompositeQuery.ClickHouseQueries {
-			if query.Disabled {
-				continue
-			}
-			queries[name] = query.Query
-		}
-		result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
-	case v3.QueryTypePromQL:
-		result, err, errQuriesByName = aH.execPromQueries(r.Context(), queryRangeParams)
-	default:
-		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
-		return
 	}
+
+	result, err, errQuriesByName = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
@@ -3062,7 +3055,7 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 			limit := builderQueries[result.QueryName].Limit
 
 			orderByList := builderQueries[result.QueryName].OrderBy
-			if limit != 0 {
+			if limit >= 0 {
 				if len(orderByList) == 0 {
 					// If no orderBy is specified, sort by value in descending order
 					orderByList = []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "desc"}}
@@ -3070,6 +3063,18 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 				sort.SliceStable(result.Series, func(i, j int) bool {
 					for _, orderBy := range orderByList {
 						if orderBy.ColumnName == constants.SigNozOrderByValue {
+
+							// For table type queries (we rely on the fact that one value for row), sort
+							// based on final aggregation value
+							if len(result.Series[i].Points) == 1 && len(result.Series[j].Points) == 1 {
+								if orderBy.Order == "asc" {
+									return result.Series[i].Points[0].Value < result.Series[j].Points[0].Value
+								} else if orderBy.Order == "desc" {
+									return result.Series[i].Points[0].Value > result.Series[j].Points[0].Value
+								}
+							}
+
+							// For graph type queries, sort based on GroupingSetsPoint
 							if result.Series[i].GroupingSetsPoint == nil || result.Series[j].GroupingSetsPoint == nil {
 								// Handle nil GroupingSetsPoint, if needed
 								// Here, we assume non-nil values are always less than nil values
@@ -3102,7 +3107,7 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 					return i < j
 				})
 
-				if len(result.Series) > int(limit) {
+				if limit > 0 && len(result.Series) > int(limit) {
 					result.Series = result.Series[:limit]
 				}
 			}
