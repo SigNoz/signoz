@@ -110,6 +110,6 @@
 	"exceptions_based_alert": "Exceptions-based Alert",
 	"exceptions_based_alert_desc": "Send a notification when a condition occurs in the exceptions data.",
 	"field_unit": "Threshold unit",
-	"on_selected_query": "on Selected Query",
+	"on_selected_query": "on selected Query",
 	"selected_query_placeholder": "Select a query"
 }
