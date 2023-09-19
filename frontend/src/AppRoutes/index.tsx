@@ -10,7 +10,7 @@ import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, Router, Switch } from 'react-router-dom';
 import { Dispatch } from 'redux';
@@ -18,6 +18,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_FEATURE_FLAG_RESPONSE } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
+import { trackPageView } from 'utils/segmentAnalytics';
 
 import PrivateRoute from './Private';
 import defaultRoutes from './routes';
@@ -32,7 +33,7 @@ function App(): JSX.Element {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const { hostname } = window.location;
+	const { hostname, pathname } = window.location;
 
 	const featureResponse = useGetFeatureFlag((allFlags) => {
 		const isOnboardingEnabled =
@@ -72,6 +73,20 @@ function App(): JSX.Element {
 			});
 		}
 	});
+
+	useEffect(() => {
+		if (isLoggedInState && user && user.userId && user.email) {
+			window.analytics.identify(user?.userId, {
+				email: user?.email || '',
+				name: user?.name || '',
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isLoggedInState]);
+
+	useEffect(() => {
+		trackPageView(pathname);
+	}, [pathname]);
 
 	return (
 		<ConfigProvider theme={themeConfig}>
