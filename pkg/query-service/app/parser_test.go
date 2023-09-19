@@ -856,7 +856,6 @@ func TestParseQueryRangeParamsPromQLVars(t *testing.T) {
 				require.Error(t, apiErr)
 				require.Contains(t, apiErr.Error(), tc.errMsg)
 			} else {
-				fmt.Println(apiErr)
 				require.Nil(t, apiErr)
 				require.Equal(t, parsedQueryRangeParams.CompositeQuery.PromQueries["A"].Query, tc.expectedQuery)
 			}

@@ -1065,8 +1065,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 			}
 			promQuery.Query = query.String()
-			fmt.Println("queryRangeParams.Variables", queryRangeParams.Variables)
-			fmt.Println("promQuery.Query", promQuery.Query)
 		}
 	}
 
