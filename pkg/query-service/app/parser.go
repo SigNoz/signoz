@@ -1044,5 +1044,29 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 		}
 	}
 
+	// replace go template variables in prometheus query
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		for _, promQuery := range queryRangeParams.CompositeQuery.PromQueries {
+			if promQuery.Disabled {
+				continue
+			}
+			tmpl := template.New("prometheus-query")
+			tmpl, err := tmpl.Parse(promQuery.Query)
+			if err != nil {
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			}
+			var query bytes.Buffer
+
+			// replace go template variables
+			querytemplate.AssignReservedVarsV3(queryRangeParams)
+
+			err = tmpl.Execute(&query, queryRangeParams.Variables)
+			if err != nil {
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			}
+			promQuery.Query = query.String()
+		}
+	}
+
 	return queryRangeParams, nil
 }
