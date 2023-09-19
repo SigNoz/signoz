@@ -22,11 +22,12 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	opamp "go.signoz.io/signoz/pkg/query-service/app/opamp"
+	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
@@ -54,6 +55,8 @@ type ServerOptions struct {
 	MaxIdleConns      int
 	MaxOpenConns      int
 	DialTimeout       time.Duration
+	CacheConfigPath   string
+	FluxInterval      string
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -134,6 +137,16 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
+	}
+
+	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
 	if err != nil {
@@ -153,6 +166,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		RuleManager:                   rm,
 		FeatureFlags:                  fm,
 		LogsParsingPipelineController: logParsingPipelineController,
+		Cache:                         c,
+		FluxInterval:                  fluxInterval,
 	})
 	if err != nil {
 		return nil, err
