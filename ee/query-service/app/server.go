@@ -35,6 +35,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -62,6 +63,8 @@ type ServerOptions struct {
 	MaxIdleConns      int
 	MaxOpenConns      int
 	DialTimeout       time.Duration
+	CacheConfigPath   string
+	FluxInterval      string
 }
 
 // Server runs HTTP api service
@@ -189,6 +192,21 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
+	}
+
+	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
+
+	if err != nil {
+		return nil, err
+	}
+
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:                 reader,
 		SkipConfig:                    skipConfig,
@@ -202,6 +220,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FeatureFlags:                  lm,
 		LicenseManager:                lm,
 		LogsParsingPipelineController: logParsingPipelineController,
+		Cache:                         c,
+		FluxInterval:                  fluxInterval,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)

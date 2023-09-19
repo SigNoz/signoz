@@ -82,6 +82,7 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 					},
 					"B": {
 						QueryName:          "B",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "name2"},
 						AggregateOperator:  v3.AggregateOperatorRateMax,
 						Expression:         "B",
