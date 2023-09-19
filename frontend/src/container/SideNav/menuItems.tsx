@@ -31,7 +31,7 @@ const menuItems: SidebarMenu[] = [
 		icon: <MenuOutlined />,
 	},
 	{
-		key: ROUTES.LOGS,
+		key: ROUTES.LOGS_EXPLORER,
 		label: 'Logs',
 		icon: <AlignLeftOutlined />,
 	},
