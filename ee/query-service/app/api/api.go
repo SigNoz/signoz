@@ -10,6 +10,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/license"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
@@ -29,6 +30,9 @@ type APIHandlerOptions struct {
 	FeatureFlags                  baseint.FeatureLookup
 	LicenseManager                *license.Manager
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
+	Cache                         cache.Cache
+	// Querier Influx Interval
+	FluxInterval time.Duration
 }
 
 type APIHandler struct {
@@ -51,6 +55,8 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		RuleManager:                   opts.RulesManager,
 		FeatureFlags:                  opts.FeatureFlags,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
+		Cache:                         opts.Cache,
+		FluxInterval:                  opts.FluxInterval,
 	})
 
 	if err != nil {

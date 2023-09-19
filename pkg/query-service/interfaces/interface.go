@@ -100,7 +100,7 @@ type Reader interface {
 }
 
 type Querier interface {
-	QueryRange(context.Context, *v3.QueryRangeParamsV3, map[string]v3.AttributeKey) ([]*v3.Series, error, map[string]string)
+	QueryRange(context.Context, *v3.QueryRangeParamsV3, map[string]v3.AttributeKey) ([]*v3.Result, error, map[string]string)
 
 	// test helpers
 	QueriesExecuted() []string
