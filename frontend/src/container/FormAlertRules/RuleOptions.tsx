@@ -12,6 +12,7 @@ import {
 	getCategorySelectOptionByName,
 } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	AlertDef,
@@ -159,6 +160,30 @@ function RuleOptions({
 		selectedCategory?.name,
 	);
 
+	const queryOptions = useMemo(
+		() =>
+			[
+				...currentQuery.builder.queryData.map((query) => query.queryName),
+				...currentQuery.builder.queryFormulas.map((query) => query.queryName),
+			].map((query) => ({
+				label: query,
+				value: query,
+			})),
+		[currentQuery],
+	);
+
+	const onChangeSelectedQueryName = (value: string | unknown): void => {
+		if (typeof value !== 'string') return;
+
+		setAlertDef({
+			...alertDef,
+			condition: {
+				...alertDef.condition,
+				selectedQueryName: value,
+			},
+		});
+	};
+
 	return (
 		<>
 			<StepHeading>{t('alert_form_step2')}</StepHeading>
@@ -167,7 +192,7 @@ function RuleOptions({
 					? renderPromRuleOptions()
 					: renderThresholdRuleOpts()}
 
-				<Space align="start">
+				<Space direction="horizontal" align="center">
 					<Form.Item noStyle name={['condition', 'target']}>
 						<InputNumber
 							addonBefore={t('field_threshold')}
@@ -178,7 +203,7 @@ function RuleOptions({
 						/>
 					</Form.Item>
 
-					<Form.Item>
+					<Form.Item noStyle>
 						<Select
 							allowClear
 							showSearch
@@ -186,6 +211,19 @@ function RuleOptions({
 							placeholder={t('field_unit')}
 							value={alertDef.condition.targetUnit}
 							onChange={onChangeAlertUnit}
+						/>
+					</Form.Item>
+
+					<Typography.Text>{t('on_selected_query')}</Typography.Text>
+
+					<Form.Item noStyle>
+						<Select
+							allowClear
+							showSearch
+							options={queryOptions}
+							placeholder={t('selected_query_placeholder')}
+							value={alertDef.condition.selectedQueryName}
+							onChange={onChangeSelectedQueryName}
 						/>
 					</Form.Item>
 				</Space>

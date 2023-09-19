@@ -109,5 +109,6 @@
 	"traces_based_alert_desc": "Send a notification when a condition occurs in the traces data.",
 	"exceptions_based_alert": "Exceptions-based Alert",
 	"exceptions_based_alert_desc": "Send a notification when a condition occurs in the exceptions data.",
-	"field_unit": "Threshold unit"
+	"field_unit": "Threshold unit",
+	"on_selected_query": "on Selected Query"
 }
