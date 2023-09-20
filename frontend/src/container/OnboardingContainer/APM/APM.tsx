@@ -3,7 +3,8 @@
 import './APM.styles.scss';
 
 import cx from 'classnames';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 import GoLang from './GoLang/GoLang';
 import Java from './Java/Java';
@@ -35,6 +36,15 @@ export default function APM({
 	activeStep: number;
 }): JSX.Element {
 	const [selectedLanguage, setSelectedLanguage] = useState('java');
+
+	useEffect(() => {
+		// on language select
+		trackEvent('Onboarding: APM', {
+			selectedLanguage,
+			activeStep,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedLanguage]);
 
 	const renderSelectedLanguageSetupInstructions = (): JSX.Element => {
 		switch (selectedLanguage) {

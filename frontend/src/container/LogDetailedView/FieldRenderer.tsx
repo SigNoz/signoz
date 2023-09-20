@@ -1,6 +1,6 @@
 import { blue } from '@ant-design/colors';
-import { Tag } from 'antd';
 
+import { TagContainer, TagLabel, TagValue } from './FieldRenderer.styles';
 import { FieldRendererProps } from './LogDetailedView.types';
 import { getFieldAttributes } from './utils';
 
@@ -12,8 +12,14 @@ function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 			{dataType && newField && logType ? (
 				<>
 					<span style={{ color: blue[4] }}>{newField} </span>
-					<Tag>Type: {logType}</Tag>
-					<Tag>Data type: {dataType}</Tag>
+					<TagContainer>
+						<TagLabel>Type: </TagLabel>
+						<TagValue>{logType}</TagValue>
+					</TagContainer>
+					<TagContainer>
+						<TagLabel>Data type: </TagLabel>
+						<TagValue>{dataType}</TagValue>
+					</TagContainer>
 				</>
 			) : (
 				<span style={{ color: blue[4] }}>{field}</span>

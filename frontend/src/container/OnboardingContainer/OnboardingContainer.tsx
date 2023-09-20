@@ -9,6 +9,8 @@ import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { useEffect, useState } from 'react';
+import { useEffectOnce } from 'react-use';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 import APM from './APM/APM';
 import InfrastructureMonitoring from './InfrastructureMonitoring/InfrastructureMonitoring';
@@ -98,6 +100,10 @@ export default function Onboarding(): JSX.Element {
 		},
 	];
 
+	useEffectOnce(() => {
+		trackEvent('Onboarding Started');
+	});
+
 	useEffect(() => {
 		if (selectedModule?.id === ModulesMap.InfrastructureMonitoring) {
 			setsteps([...baseSteps]);
@@ -123,27 +129,55 @@ export default function Onboarding(): JSX.Element {
 				},
 			]);
 		}
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedModule, selectedLogsType]);
+
+	useEffect(() => {
+		// on select
+		trackEvent('Onboarding: Module Selected', {
+			selectedModule: selectedModule.id,
+		});
+	}, [selectedModule]);
 
 	const handleNext = (): void => {
 		// Need to add logic to validate service name and then allow next step transition in APM module
 		const isFormValid = true;
 
 		if (isFormValid && activeStep <= 3) {
-			setActiveStep(activeStep + 1);
+			const nextStep = activeStep + 1;
+
+			// on next
+			trackEvent('Onboarding: Next', {
+				selectedModule: selectedModule.id,
+				nextStepId: nextStep,
+			});
+
+			setActiveStep(nextStep);
 			setCurrent(current + 1);
 		}
 	};
 
 	const handlePrev = (): void => {
 		if (activeStep >= 1) {
+			const prevStep = activeStep - 1;
+
+			// on prev
+			trackEvent('Onboarding: Back', {
+				module: selectedModule.id,
+				prevStepId: prevStep,
+			});
+
 			setCurrent(current - 1);
-			setActiveStep(activeStep - 1);
+			setActiveStep(prevStep);
 		}
 	};
 
 	const handleOnboardingComplete = (): void => {
+		trackEvent('Onboarding Complete', {
+			module: selectedModule.id,
+		});
+
 		switch (selectedModule.id) {
 			case ModulesMap.APM:
 				history.push(ROUTES.APPLICATION);
@@ -160,8 +194,15 @@ export default function Onboarding(): JSX.Element {
 	};
 
 	const handleStepChange = (value: number): void => {
+		const stepId = value + 1;
+
+		trackEvent('Onboarding: Step Change', {
+			module: selectedModule.id,
+			step: stepId,
+		});
+
 		setCurrent(value);
-		setActiveStep(value + 1);
+		setActiveStep(stepId);
 	};
 
 	const handleModuleSelect = (module: ModuleProps): void => {
