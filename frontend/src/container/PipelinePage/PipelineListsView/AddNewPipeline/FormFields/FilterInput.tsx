@@ -44,6 +44,8 @@ function FilterInput({ fieldData }: FilterInputProps): JSX.Element {
 			rules={formValidationRules}
 			name={fieldData.name}
 		>
+			{/* Antd form will supply value and onChange to <TagFilterInput /> here.
+      // @ts-ignore */}
 			<TagFilterInput placeholder={t(fieldData.placeholder)} />
 		</Form.Item>
 	);
