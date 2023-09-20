@@ -130,7 +130,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Create .env file
-        run: echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > frontend/.env
+        run: |
+          echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > frontend/.env
+          echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> frontend/.env
       - name: Install dependencies
         working-directory: frontend
         run: yarn install
