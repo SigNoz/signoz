@@ -3,7 +3,8 @@ import './Javascript.styles.scss';
 import { MDXProvider } from '@mdx-js/react';
 import { Form, Input, Select } from 'antd';
 import Header from 'container/OnboardingContainer/common/Header/Header';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import ExpressDocs from './md-docs/express.md';
@@ -24,6 +25,14 @@ export default function Javascript({
 	const [selectedFrameWork, setSelectedFrameWork] = useState('nodejs');
 
 	const [form] = Form.useForm();
+
+	useEffect(() => {
+		// on language select
+		trackEvent('Onboarding: APM : Javascript', {
+			selectedFrameWork,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedFrameWork]);
 
 	const renderDocs = (): JSX.Element => {
 		switch (selectedFrameWork) {
