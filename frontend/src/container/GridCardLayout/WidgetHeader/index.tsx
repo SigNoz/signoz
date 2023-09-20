@@ -65,7 +65,7 @@ function WidgetHeader({
 	errorMessage,
 	threshold,
 	headerMenuList,
-}: IWidgetHeaderProps): JSX.Element {
+}: IWidgetHeaderProps): JSX.Element | null {
 	const [localHover, setLocalHover] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -175,6 +175,10 @@ function WidgetHeader({
 		[updatedMenuList, onMenuItemSelectHandler],
 	);
 
+	if (widget.id === PANEL_TYPES.EMPTY_WIDGET) {
+		return null;
+	}
+
 	return (
 		<WidgetHeaderContainer>
 			<Dropdown
@@ -201,6 +205,7 @@ function WidgetHeader({
 					</HeaderContentContainer>
 				</HeaderContainer>
 			</Dropdown>
+
 			<ThesholdContainer>{threshold}</ThesholdContainer>
 			{queryResponse.isFetching &&
 				!queryResponse.isError &&

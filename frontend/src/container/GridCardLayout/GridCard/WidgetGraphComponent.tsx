@@ -65,13 +65,11 @@ function WidgetGraphComponent({
 		[data, name],
 	);
 
-	const { setLayouts } = useDashboard();
+	const { setLayouts, selectedDashboard } = useDashboard();
 
 	const [graphsVisibilityStates, setGraphsVisilityStates] = useState<boolean[]>(
 		localstoredVisibilityStates,
 	);
-
-	const { selectedDashboard } = useDashboard();
 
 	const canModifyChart = useChartMutable({
 		panelType: widget.panelTypes,
