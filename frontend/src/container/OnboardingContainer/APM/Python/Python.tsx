@@ -3,7 +3,8 @@ import './Python.styles.scss';
 import { MDXProvider } from '@mdx-js/react';
 import { Form, Input, Select } from 'antd';
 import Header from 'container/OnboardingContainer/common/Header/Header';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import DjangoDocs from './md-docs/django.md';
@@ -28,6 +29,14 @@ export default function Python({
 	const [selectedFrameWork, setSelectedFrameWork] = useState('django');
 
 	const [form] = Form.useForm();
+
+	useEffect(() => {
+		// on language select
+		trackEvent('Onboarding: APM : Python', {
+			selectedFrameWork,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedFrameWork]);
 
 	const renderDocs = (): JSX.Element => {
 		switch (selectedFrameWork) {

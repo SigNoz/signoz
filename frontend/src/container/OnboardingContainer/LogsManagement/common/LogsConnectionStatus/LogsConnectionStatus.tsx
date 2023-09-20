@@ -16,6 +16,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 interface ConnectionStatusProps {
 	logType: string;
@@ -95,6 +96,10 @@ export default function LogsConnectionStatus({
 			setRetryCount(retryCount - 1);
 
 			if (retryCount < 0) {
+				trackEvent('❌ Onboarding: Logs Management: Connection Status', {
+					status: 'Failed',
+				});
+
 				setLoading(false);
 				setPollingInterval(false);
 			}
@@ -123,6 +128,11 @@ export default function LogsConnectionStatus({
 					setIsReceivingData(true);
 					setRetryCount(-1);
 					setPollingInterval(false);
+
+					trackEvent('✅ Onboarding: Logs Management: Connection Status', {
+						status: 'Successful',
+					});
+
 					break;
 				}
 			}
