@@ -13,7 +13,7 @@ function TagFilterInput({
 	onChange,
 	placeholder,
 }: TagFilterInputProps): JSX.Element {
-	const query = initialQueryBuilderFormValuesMap.logs;
+	const query = { ...initialQueryBuilderFormValuesMap.logs };
 	if (value) {
 		query.filters = value;
 	}
