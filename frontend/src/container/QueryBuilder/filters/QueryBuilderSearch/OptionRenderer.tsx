@@ -1,6 +1,9 @@
-import { Tag } from 'antd';
-
-import { SelectOptionContainer } from './style';
+import {
+	SelectOptionContainer,
+	TagContainer,
+	TagLabel,
+	TagValue,
+} from './style';
 import { getOptionType } from './utils';
 
 function OptionRenderer({
@@ -16,8 +19,14 @@ function OptionRenderer({
 				<SelectOptionContainer>
 					<div>{value}</div>
 					<div>
-						<Tag>Type: {optionType}</Tag>
-						<Tag>Data type: {dataType}</Tag>
+						<TagContainer>
+							<TagLabel>Type: </TagLabel>
+							<TagValue>{optionType}</TagValue>
+						</TagContainer>
+						<TagContainer>
+							<TagLabel>Data type: </TagLabel>
+							<TagValue>{dataType}</TagValue>
+						</TagContainer>
 					</div>
 				</SelectOptionContainer>
 			) : (
