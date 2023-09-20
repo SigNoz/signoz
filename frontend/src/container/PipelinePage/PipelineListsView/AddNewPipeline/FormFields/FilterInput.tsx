@@ -1,6 +1,7 @@
 import { Form } from 'antd';
 import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
+import isEqual from 'lodash-es/isEqual';
 import { useTranslation } from 'react-i18next';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -18,10 +19,17 @@ function TagFilterInput({
 		query.filters = value;
 	}
 
+	const onQueryChange = (newValue: TagFilter): void => {
+		// Avoid unnecessary onChange calls
+		if (!isEqual(newValue, query.filters)) {
+			onChange(newValue);
+		}
+	};
+
 	return (
 		<QueryBuilderSearch
 			query={query}
-			onChange={onChange}
+			onChange={onQueryChange}
 			placeholder={placeholder}
 		/>
 	);
