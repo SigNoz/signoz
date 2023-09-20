@@ -4,17 +4,16 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 var prepareProcessorTestData = []struct {
 	Name      string
-	Operators []model.PipelineOperator
-	Output    []model.PipelineOperator
+	Operators []PipelineOperator
+	Output    []PipelineOperator
 }{
 	{
 		Name: "Last operator disabled",
-		Operators: []model.PipelineOperator{
+		Operators: []PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
@@ -27,7 +26,7 @@ var prepareProcessorTestData = []struct {
 				Enabled: false,
 			},
 		},
-		Output: []model.PipelineOperator{
+		Output: []PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
@@ -37,7 +36,7 @@ var prepareProcessorTestData = []struct {
 	},
 	{
 		Name: "Operator in middle disabled",
-		Operators: []model.PipelineOperator{
+		Operators: []PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
@@ -56,7 +55,7 @@ var prepareProcessorTestData = []struct {
 				Enabled: true,
 			},
 		},
-		Output: []model.PipelineOperator{
+		Output: []PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
@@ -72,7 +71,7 @@ var prepareProcessorTestData = []struct {
 	},
 	{
 		Name: "Single operator disabled",
-		Operators: []model.PipelineOperator{
+		Operators: []PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
@@ -80,18 +79,18 @@ var prepareProcessorTestData = []struct {
 				Enabled: false,
 			},
 		},
-		Output: []model.PipelineOperator{},
+		Output: []PipelineOperator{},
 	},
 	{
 		Name: "Single operator enabled",
-		Operators: []model.PipelineOperator{
+		Operators: []PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
 				Enabled: true,
 			},
 		},
-		Output: []model.PipelineOperator{
+		Output: []PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
@@ -101,12 +100,12 @@ var prepareProcessorTestData = []struct {
 	},
 	{
 		Name:      "Empty operator",
-		Operators: []model.PipelineOperator{},
-		Output:    []model.PipelineOperator{},
+		Operators: []PipelineOperator{},
+		Output:    []PipelineOperator{},
 	},
 	{
 		Name: "new test",
-		Operators: []model.PipelineOperator{
+		Operators: []PipelineOperator{
 			{
 				ID:      "move_filename",
 				Output:  "move_function",
@@ -137,7 +136,7 @@ var prepareProcessorTestData = []struct {
 				Name:    "move_lwp",
 			},
 		},
-		Output: []model.PipelineOperator{
+		Output: []PipelineOperator{
 			{
 				ID:      "move_filename",
 				Output:  "move_line",
@@ -165,7 +164,7 @@ var prepareProcessorTestData = []struct {
 	},
 	{
 		Name: "first op disabled",
-		Operators: []model.PipelineOperator{
+		Operators: []PipelineOperator{
 			{
 				ID:      "move_filename",
 				Output:  "move_function",
@@ -178,7 +177,7 @@ var prepareProcessorTestData = []struct {
 				Name:    "move_function",
 			},
 		},
-		Output: []model.PipelineOperator{
+		Output: []PipelineOperator{
 			{
 				ID:      "move_function",
 				Enabled: true,

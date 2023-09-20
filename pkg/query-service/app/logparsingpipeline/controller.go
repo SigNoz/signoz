@@ -28,7 +28,7 @@ func NewLogParsingPipelinesController(db *sqlx.DB, engine string) (*LogParsingPi
 type PipelinesResponse struct {
 	*agentConf.ConfigVersion
 
-	Pipelines []model.Pipeline          `json:"pipelines"`
+	Pipelines []Pipeline                `json:"pipelines"`
 	History   []agentConf.ConfigVersion `json:"history"`
 }
 
@@ -43,7 +43,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 		return nil, model.UnauthorizedError(errors.Wrap(authErr, "failed to get userId from context"))
 	}
 
-	var pipelines []model.Pipeline
+	var pipelines []Pipeline
 
 	// scan through postable pipelines, to select the existing pipelines or insert missing ones
 	for _, r := range postable {
