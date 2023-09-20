@@ -5,10 +5,8 @@ import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import getChartData from 'lib/getChartData';
-import { useSelector } from 'react-redux';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import { NotFoundContainer } from './styles';
 
@@ -18,13 +16,10 @@ function WidgetGraph({
 	selectedTime,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
 
-	const [selectedDashboard] = dashboards;
-	const { data } = selectedDashboard;
-	const { widgets = [] } = data;
+	const { selectedDashboard } = useDashboard();
+
+	const { widgets = [] } = selectedDashboard?.data || {};
 	const { search } = useLocation();
 
 	const params = new URLSearchParams(search);

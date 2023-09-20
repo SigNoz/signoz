@@ -40,22 +40,28 @@ export function DashboardProvider({
 		exact: true,
 	});
 
+	const isDashboardWidgetPage = useRouteMatch({
+		path: ROUTES.DASHBOARD_WIDGET,
+		exact: true,
+	});
+
 	const [layouts, setLayouts] = useState<Layout[]>([]);
 
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const pathnameArray = pathname.split('/');
 	const dashboardId = pathnameArray[pathnameArray.length - 1];
+	const widgetDashboardId = pathnameArray[pathnameArray.length - 2];
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
 
 	const dashboardResponse = useQuery(
 		[REACT_QUERY_KEY.DASHBOARD_BY_ID, dashboardId],
 		{
-			enabled: !!isDashboardPage && isLoggedIn,
+			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
 			queryFn: () =>
 				get({
-					uuid: dashboardId,
+					uuid: isDashboardWidgetPage ? widgetDashboardId : dashboardId,
 				}),
 			onSuccess: (data) => {
 				setSelectedDashboard(data);

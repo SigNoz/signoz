@@ -3,15 +3,16 @@
 // @ts-nocheck
 
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
+import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { Pagination } from 'hooks/queryPagination';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+
 import { prepareQueryRangePayload } from './prepareQueryRangePayload';
 
 export async function GetMetricQueryRange(

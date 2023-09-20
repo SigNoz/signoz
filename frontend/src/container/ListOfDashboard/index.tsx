@@ -17,21 +17,11 @@ import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import {
-	Dispatch,
-	Key,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import { Key, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UseQueryResult } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { GET_ALL_DASHBOARD_SUCCESS } from 'types/actions/dashboard';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 
@@ -39,9 +29,7 @@ import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import Createdby from './TableComponents/CreatedBy';
 import DateComponent from './TableComponents/Date';
-import DeleteButton, {
-	DeleteButtonProps,
-} from './TableComponents/DeleteButton';
+import DeleteButton from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
 import Tags from './TableComponents/Tags';
 
@@ -52,7 +40,6 @@ function ListOfAllDashboard(): JSX.Element {
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
 
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [action, createNewDashboard, newDashboard] = useComponentPermission(
@@ -133,31 +120,12 @@ function ListOfAllDashboard(): JSX.Element {
 				title: 'Action',
 				dataIndex: '',
 				width: 40,
-				render: ({
-					createdBy,
-					description,
-					id,
-					key,
-					lastUpdatedTime,
-					name,
-					tags,
-				}: DeleteButtonProps) => (
-					<DeleteButton
-						description={description}
-						id={id}
-						key={key}
-						lastUpdatedTime={lastUpdatedTime}
-						name={name}
-						tags={tags}
-						createdBy={createdBy}
-						refetchDashboardList={refetchDashboardList}
-					/>
-				),
+				render: DeleteButton,
 			});
 		}
 
 		return tableColumns;
-	}, [action, refetchDashboardList]);
+	}, [action]);
 
 	const data: Data[] =
 		filteredDashboards?.map((e) => ({
@@ -185,10 +153,6 @@ function ListOfAllDashboard(): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				dispatch({
-					type: GET_ALL_DASHBOARD_SUCCESS,
-					payload: [],
-				});
 				history.push(
 					generatePath(ROUTES.DASHBOARD, {
 						dashboardId: response.payload.uuid,
@@ -209,7 +173,7 @@ function ListOfAllDashboard(): JSX.Element {
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState, t, dispatch]);
+	}, [newDashboardState, t]);
 
 	const getText = useCallback(() => {
 		if (!newDashboardState.error && !newDashboardState.loading) {
@@ -350,7 +314,6 @@ export interface Data {
 	createdBy: string;
 	lastUpdatedTime: string;
 	id: string;
-	refetchDashboardList: UseQueryResult['refetch'];
 }
 
 export default ListOfAllDashboard;
