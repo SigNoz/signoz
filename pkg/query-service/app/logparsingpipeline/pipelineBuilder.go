@@ -1,15 +1,20 @@
 package logparsingpipeline
 
 import (
+	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
 )
 
 const (
 	NOOP = "noop"
 )
 
-func PreparePipelineProcessor(pipelines []model.Pipeline) (map[string]interface{}, []string, error) {
+func CollectorConfProcessorName(p Pipeline) string {
+	return constants.LogsPPLPfx + p.Alias
+}
+
+func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []string, error) {
 	processors := map[string]interface{}{}
 	names := []string{}
 	for _, v := range pipelines {
@@ -21,14 +26,20 @@ func PreparePipelineProcessor(pipelines []model.Pipeline) (map[string]interface{
 		if len(operators) == 0 {
 			continue
 		}
-		router := []model.PipelineOperator{
+
+		filterExpr, err := queryBuilderToExpr.Parse(v.Filter)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "failed to parse pipeline filter")
+		}
+
+		router := []PipelineOperator{
 			{
 				ID:   "router_signoz",
 				Type: "router",
-				Routes: &[]model.Route{
+				Routes: &[]Route{
 					{
 						Output: v.Config[0].ID,
-						Expr:   v.Filter,
+						Expr:   filterExpr,
 					},
 				},
 				Default: NOOP,
@@ -38,24 +49,24 @@ func PreparePipelineProcessor(pipelines []model.Pipeline) (map[string]interface{
 		v.Config = append(router, operators...)
 
 		// noop operator is needed as the default operator so that logs are not dropped
-		noop := model.PipelineOperator{
+		noop := PipelineOperator{
 			ID:   NOOP,
 			Type: NOOP,
 		}
 		v.Config = append(v.Config, noop)
 
-		processor := model.Processor{
+		processor := Processor{
 			Operators: v.Config,
 		}
-		name := constants.LogsPPLPfx + v.Alias
+		name := CollectorConfProcessorName(v)
 		processors[name] = processor
 		names = append(names, name)
 	}
 	return processors, names, nil
 }
 
-func getOperators(ops []model.PipelineOperator) []model.PipelineOperator {
-	filteredOp := []model.PipelineOperator{}
+func getOperators(ops []PipelineOperator) []PipelineOperator {
+	filteredOp := []PipelineOperator{}
 	for i, operator := range ops {
 		if operator.Enabled {
 			if len(filteredOp) > 0 {
