@@ -23,12 +23,14 @@ import (
 var db *sqlx.DB
 
 // User for mapping job,instance from grafana
-var instanceEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.instance}}\\\"")
-var nodeEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.node}}\\\"")
-var jobEQRE = regexp.MustCompile("job(?s)=(?s)\\\"{{.job}}\\\"")
-var instanceRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.instance}}\\\"")
-var nodeRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.node}}\\\"")
-var jobRERE = regexp.MustCompile("job(?s)=~(?s)\\\"{{.job}}\\\"")
+var (
+	instanceEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.instance}}\\\"")
+	nodeEQRE     = regexp.MustCompile("instance(?s)=(?s)\\\"{{.node}}\\\"")
+	jobEQRE      = regexp.MustCompile("job(?s)=(?s)\\\"{{.job}}\\\"")
+	instanceRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.instance}}\\\"")
+	nodeRERE     = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.node}}\\\"")
+	jobRERE      = regexp.MustCompile("job(?s)=~(?s)\\\"{{.job}}\\\"")
+)
 
 // InitDB sets up setting up the connection pool global variable.
 func InitDB(dataSourceName string) (*sqlx.DB, error) {
@@ -140,6 +142,9 @@ func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (
 	dash.UpdatedAt = time.Now()
 	dash.UpdateSlug()
 	dash.Uuid = uuid.New().String()
+	if data["uuid"] != nil {
+		dash.Uuid = data["uuid"].(string)
+	}
 
 	map_data, err := json.Marshal(dash.Data)
 	if err != nil {
@@ -156,13 +161,11 @@ func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (
 
 	// db.Prepare("Insert into dashboards where")
 	result, err := db.Exec("INSERT INTO dashboards (uuid, created_at, updated_at, data) VALUES ($1, $2, $3, $4)", dash.Uuid, dash.CreatedAt, dash.UpdatedAt, map_data)
-
 	if err != nil {
 		zap.S().Errorf("Error in inserting dashboard data: ", dash, err)
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 	lastInsertId, err := result.LastInsertId()
-
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
@@ -177,7 +180,6 @@ func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (
 }
 
 func GetDashboards() ([]Dashboard, *model.ApiError) {
-
 	dashboards := []Dashboard{}
 	query := `SELECT * FROM dashboards`
 
@@ -190,7 +192,6 @@ func GetDashboards() ([]Dashboard, *model.ApiError) {
 }
 
 func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
-
 	dashboard, dErr := GetDashboard(uuid)
 	if dErr != nil {
 		zap.S().Errorf("Error in getting dashboard: ", uuid, dErr)
@@ -200,7 +201,6 @@ func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 	query := `DELETE FROM dashboards WHERE uuid=?`
 
 	result, err := db.Exec(query, uuid)
-
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
@@ -222,7 +222,6 @@ func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 }
 
 func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
-
 	dashboard := Dashboard{}
 	query := `SELECT * FROM dashboards WHERE uuid=?`
 
@@ -235,7 +234,6 @@ func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
 }
 
 func UpdateDashboard(uuid string, data map[string]interface{}, fm interfaces.FeatureLookup) (*Dashboard, *model.ApiError) {
-
 	map_data, err := json.Marshal(data)
 	if err != nil {
 		zap.S().Errorf("Error in marshalling data field in dashboard: ", data, err)
@@ -331,7 +329,6 @@ func (d *Dashboard) UpdateSlug() {
 }
 
 func IsPostDataSane(data *map[string]interface{}) error {
-
 	val, ok := (*data)["title"]
 	if !ok || val == nil {
 		return fmt.Errorf("title not found in post data")

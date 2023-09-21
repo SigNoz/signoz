@@ -46,6 +46,7 @@ export interface Dashboard {
 }
 
 export interface DashboardData {
+	uuid?: string;
 	description?: string;
 	tags?: string[];
 	name?: string;

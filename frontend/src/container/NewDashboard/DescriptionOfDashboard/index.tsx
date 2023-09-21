@@ -18,7 +18,10 @@ function DescriptionOfDashboard(): JSX.Element {
 	);
 
 	const [selectedDashboard] = dashboards;
-	const selectedData = selectedDashboard.data;
+	const selectedData = {
+		...selectedDashboard.data,
+		uuid: selectedDashboard.uuid,
+	};
 	const { title, tags, description } = selectedData;
 
 	const [isJSONModalVisible, isIsJSONModalVisible] = useState<boolean>(false);
