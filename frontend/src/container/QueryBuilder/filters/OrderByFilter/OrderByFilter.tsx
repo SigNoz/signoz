@@ -2,6 +2,7 @@ import { Select, Spin } from 'antd';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useMemo } from 'react';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
@@ -66,6 +67,7 @@ export function OrderByFilter({
 
 	return (
 		<Select
+			getPopupContainer={popupContainer}
 			mode="tags"
 			style={selectStyle}
 			onSearch={handleSearchKeys}
