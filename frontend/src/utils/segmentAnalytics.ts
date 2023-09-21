@@ -4,7 +4,7 @@ function trackPageView(pageName: string): void {
 
 function trackEvent(
 	eventName: string,
-	properties: Record<string, string>,
+	properties?: Record<string, unknown>,
 ): void {
 	window.analytics.track(eventName, properties);
 }

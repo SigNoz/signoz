@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -527,6 +529,22 @@ func (f *FilterSet) Validate() error {
 		}
 	}
 	return nil
+}
+
+// For serializing to and from db
+func (f *FilterSet) Scan(src interface{}) error {
+	if data, ok := src.([]byte); ok {
+		return json.Unmarshal(data, &f)
+	}
+	return nil
+}
+
+func (f *FilterSet) Value() (driver.Value, error) {
+	filterSetJson, err := json.Marshal(f)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not serialize FilterSet to JSON")
+	}
+	return filterSetJson, nil
 }
 
 type FilterOperator string

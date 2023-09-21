@@ -76,9 +76,9 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (isLoggedInState && user && user.userId && user.email) {
-			window.analytics.identify(user?.userId, {
-				email: user?.email || '',
-				name: user?.name || '',
+			window.analytics.identify(user?.email, {
+				email: user?.email,
+				name: user?.name,
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps

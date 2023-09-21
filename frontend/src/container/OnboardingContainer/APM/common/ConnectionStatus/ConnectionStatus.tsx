@@ -16,6 +16,7 @@ import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { PayloadProps as QueryServicePayloadProps } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 interface ConnectionStatusProps {
 	serviceName: string;
@@ -112,6 +113,10 @@ export default function ConnectionStatus({
 		if (data || isError) {
 			setRetryCount(retryCount - 1);
 			if (retryCount < 0) {
+				trackEvent('❌ Onboarding: APM: Connection Status', {
+					serviceName,
+					status: 'Failed',
+				});
 				setLoading(false);
 			}
 		}
@@ -122,6 +127,11 @@ export default function ConnectionStatus({
 					setLoading(false);
 					setIsReceivingData(true);
 
+					trackEvent('✅ Onboarding: APM: Connection Status', {
+						serviceName,
+						status: 'Successful',
+					});
+
 					break;
 				}
 			}
@@ -130,31 +140,35 @@ export default function ConnectionStatus({
 
 	// Use useEffect to update query parameters when the polling interval lapses
 	useEffect(() => {
-		const pollingTimer = setInterval(() => {
-			// Trigger a refetch with the updated parameters
-			const updatedMinTime = (Date.now() - 15 * 60 * 1000) * 1000000;
-			const updatedMaxTime = Date.now() * 1000000;
+		let pollingTimer: string | number | NodeJS.Timer | undefined;
 
-			const payload = {
-				maxTime: updatedMaxTime,
-				minTime: updatedMinTime,
-				selectedTime,
-			};
+		if (loading) {
+			pollingTimer = setInterval(() => {
+				// Trigger a refetch with the updated parameters
+				const updatedMinTime = (Date.now() - 15 * 60 * 1000) * 1000000;
+				const updatedMaxTime = Date.now() * 1000000;
 
-			dispatch({
-				type: UPDATE_TIME_INTERVAL,
-				payload,
-			});
+				const payload = {
+					maxTime: updatedMaxTime,
+					minTime: updatedMinTime,
+					selectedTime,
+				};
 
-			// refetch(updatedParams);
-		}, pollingInterval); // Same interval as pollingInterval
+				dispatch({
+					type: UPDATE_TIME_INTERVAL,
+					payload,
+				});
+			}, pollingInterval); // Same interval as pollingInterval
+		} else if (!loading && pollingTimer) {
+			clearInterval(pollingTimer);
+		}
 
 		// Clean up the interval when the component unmounts
 		return (): void => {
 			clearInterval(pollingTimer);
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [refetch, selectedTags, selectedTime]);
+	}, [refetch, selectedTags, selectedTime, loading]);
 
 	useEffect(() => {
 		verifyApplicationData(data);
