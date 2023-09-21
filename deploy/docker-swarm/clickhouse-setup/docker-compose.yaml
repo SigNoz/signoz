@@ -144,7 +144,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.29.2
+    image: signoz/query-service:0.29.3
     command:
       [
         "-config=/root/config/prometheus.yml",
@@ -184,7 +184,7 @@ services:
     <<: *clickhouse-depend
 
   frontend:
-    image: signoz/frontend:0.29.2
+    image: signoz/frontend:0.29.3
     deploy:
       restart_policy:
         condition: on-failure

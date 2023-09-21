@@ -1,7 +1,8 @@
 import { MDXProvider } from '@mdx-js/react';
 import { Select } from 'antd';
 import Header from 'container/OnboardingContainer/common/Header/Header';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 import FluentBit from './md-docs/fluentBit.md';
 import FluentD from './md-docs/fluentD.md';
@@ -15,6 +16,14 @@ enum FrameworksMap {
 
 export default function ExistingCollectors(): JSX.Element {
 	const [selectedFrameWork, setSelectedFrameWork] = useState('fluent_d');
+
+	useEffect(() => {
+		// on language select
+		trackEvent('Onboarding: Logs Management: Existing Collectors', {
+			selectedFrameWork,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedFrameWork]);
 
 	const renderDocs = (): JSX.Element => {
 		switch (selectedFrameWork) {

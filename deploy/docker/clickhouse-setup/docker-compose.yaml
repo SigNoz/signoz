@@ -162,7 +162,7 @@ services:
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
-    image: signoz/query-service:${DOCKER_TAG:-0.29.2}
+    image: signoz/query-service:${DOCKER_TAG:-0.29.3}
     container_name: signoz-query-service
     command:
       [
@@ -201,7 +201,7 @@ services:
     <<: *clickhouse-depend
 
   frontend:
-    image: signoz/frontend:${DOCKER_TAG:-0.29.2}
+    image: signoz/frontend:${DOCKER_TAG:-0.29.3}
     container_name: signoz-frontend
     restart: on-failure
     depends_on:

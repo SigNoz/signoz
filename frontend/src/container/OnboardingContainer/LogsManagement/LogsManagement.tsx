@@ -4,7 +4,8 @@
 import './LogsManagement.styles.scss';
 
 import cx from 'classnames';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 import ApplicationLogs from './ApplicationLogs/ApplicationLogs';
 import Docker from './Docker/Docker';
@@ -59,6 +60,15 @@ export default function LogsManagement({
 	handleLogTypeSelect: (id: string) => any;
 }): JSX.Element {
 	const [selectedLogsType, setSelectedLogsType] = useState('kubernetes');
+
+	useEffect(() => {
+		// on language select
+		trackEvent('Onboarding: Logs Management', {
+			selectedLogsType,
+			activeStep,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedLogsType]);
 
 	const renderSelectedLanguageSetupInstructions = ():
 		| JSX.Element
