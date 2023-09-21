@@ -23,6 +23,7 @@ import {
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
@@ -185,6 +186,7 @@ function QueryBuilderSearch({
 
 	return (
 		<Select
+			getPopupContainer={popupContainer}
 			virtual
 			showSearch
 			tagRender={onTagRender}

@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 // ** Types
 import { HavingFilterProps } from './HavingFilter.interfaces';
@@ -224,6 +225,7 @@ export function HavingFilter({
 
 	return (
 		<Select
+			getPopupContainer={popupContainer}
 			autoClearSearchValue={false}
 			mode="multiple"
 			onSearch={handleSearch}
