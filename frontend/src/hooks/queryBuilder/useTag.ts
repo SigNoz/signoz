@@ -7,9 +7,31 @@ import {
 import { unparse } from 'papaparse';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 import { WhereClauseConfig } from './useAutoComplete';
+
+/**
+ * Helper for formatting a TagFilter object into filter item strings
+ * @param {TagFilter} filters - query filter object to be converted
+ * @returns {string[]} An array of formatted conditions. Eg: `["service = web", "severity_text = INFO"]`)
+ */
+export function queryFilterTags(filter: TagFilter): string[] {
+	return (filter?.items || []).map((ele) => {
+		if (isInNInOperator(getOperatorFromValue(ele.op))) {
+			try {
+				const csvString = unparse([ele.value]);
+				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
+			} catch {
+				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+			}
+		}
+		return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+	});
+}
 
 type IUseTag = {
 	handleAddTag: (value: string) => void;
@@ -33,21 +55,9 @@ export const useTag = (
 	setSearchKey: (value: string) => void,
 	whereClauseConfig?: WhereClauseConfig,
 ): IUseTag => {
-	const initTagsData = useMemo(
-		() =>
-			(query?.filters?.items || []).map((ele) => {
-				if (isInNInOperator(getOperatorFromValue(ele.op))) {
-					try {
-						const csvString = unparse([ele.value]);
-						return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
-					} catch {
-						return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
-					}
-				}
-				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
-			}),
-		[query.filters],
-	);
+	const initTagsData = useMemo(() => queryFilterTags(query?.filters), [
+		query?.filters,
+	]);
 
 	const [tags, setTags] = useState<string[]>(initTagsData);
 

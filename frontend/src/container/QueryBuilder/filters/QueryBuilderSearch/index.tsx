@@ -41,6 +41,7 @@ function QueryBuilderSearch({
 	onChange,
 	whereClauseConfig,
 	className,
+	placeholder,
 }: QueryBuilderSearchProps): JSX.Element {
 	const {
 		updateTag,
@@ -190,7 +191,7 @@ function QueryBuilderSearch({
 			filterOption={false}
 			autoClearSearchValue={false}
 			mode="multiple"
-			placeholder={PLACEHOLDER}
+			placeholder={placeholder}
 			value={queryTags}
 			searchValue={searchValue}
 			className={className}
@@ -218,11 +219,13 @@ interface QueryBuilderSearchProps {
 	onChange: (value: TagFilter) => void;
 	whereClauseConfig?: WhereClauseConfig;
 	className?: string;
+	placeholder?: string;
 }
 
 QueryBuilderSearch.defaultProps = {
 	whereClauseConfig: undefined,
 	className: '',
+	placeholder: PLACEHOLDER,
 };
 
 export interface CustomTagProps {
