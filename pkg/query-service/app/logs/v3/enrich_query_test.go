@@ -289,3 +289,85 @@ func TestEnrichParams(t *testing.T) {
 		})
 	}
 }
+
+var testJSONFilterEnrichData = []struct {
+	Name   string
+	Filter v3.FilterItem
+	Result v3.FilterItem
+}{
+	{
+		Name: "array string",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.requestor_list[*]",
+				DataType: v3.AttributeKeyDataTypeUnspecified,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "has",
+			Value:    "index_service",
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.requestor_list[*]",
+				DataType: v3.AttributeKeyDataTypeArrayString,
+				Type:     v3.AttributeKeyTypeUnspecified,
+				IsJSON:   true,
+			},
+			Operator: "has",
+			Value:    "index_service",
+		},
+	},
+	{
+		Name: "int64",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.intx",
+				DataType: v3.AttributeKeyDataTypeUnspecified,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "=",
+			Value:    10,
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.intx",
+				DataType: v3.AttributeKeyDataTypeInt64,
+				Type:     v3.AttributeKeyTypeUnspecified,
+				IsJSON:   true,
+			},
+			Operator: "=",
+			Value:    10,
+		},
+	},
+	{
+		Name: "float64",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.float64",
+				DataType: v3.AttributeKeyDataTypeArrayFloat64,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "!=",
+			Value:    10.0,
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.float64",
+				DataType: v3.AttributeKeyDataTypeArrayFloat64,
+				Type:     v3.AttributeKeyTypeUnspecified,
+				IsJSON:   true,
+			},
+			Operator: "!=",
+			Value:    10.0,
+		},
+	},
+}
+
+func TestJsonEnrich(t *testing.T) {
+	for _, tt := range testJSONFilterEnrichData {
+		Convey(tt.Name, t, func() {
+			res := jsonFilterEnrich(tt.Filter)
+			So(res, ShouldResemble, tt.Result)
+		})
+	}
+}

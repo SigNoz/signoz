@@ -1,6 +1,9 @@
 package v3
 
 import (
+	"fmt"
+	"strings"
+
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
@@ -27,6 +30,7 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 		// check filter attribute
 		if query.Filters != nil && len(query.Filters.Items) != 0 {
 			for _, item := range query.Filters.Items {
+				item = jsonFilterEnrich(item)
 				if item.Key.IsJSON {
 					continue
 				}
@@ -148,4 +152,38 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 	field.Type = v3.AttributeKeyTypeTag
 	field.DataType = v3.AttributeKeyDataTypeString
 	return field
+}
+
+func jsonFilterEnrich(filter v3.FilterItem) v3.FilterItem {
+	if filter.Key.Type != v3.AttributeKeyTypeUnspecified && filter.Key.DataType != v3.AttributeKeyDataTypeUnspecified {
+		return filter
+	}
+
+	// check if it is a json request
+	if !strings.HasPrefix(filter.Key.Key, "body.") {
+		// this means it is not a json request
+		return filter
+	}
+
+	// check if the value is a int, float, string, bool
+	valueType := ""
+	switch filter.Value.(type) {
+	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
+		valueType = "int64"
+	case float32, float64:
+		valueType = "float64"
+	case string:
+		valueType = "string"
+	case bool:
+		valueType = "bool"
+	}
+
+	// check if it is array
+	if strings.HasSuffix(filter.Key.Key, "[*]") {
+		valueType = fmt.Sprintf("array(%s)", valueType)
+	}
+
+	filter.Key.DataType = v3.AttributeKeyDataType(valueType)
+	filter.Key.IsJSON = true
+	return filter
 }
