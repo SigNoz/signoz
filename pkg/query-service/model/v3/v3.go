@@ -138,6 +138,24 @@ func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
 	}
 }
 
+func (a AggregateOperator) IsRateOperator() bool {
+	switch a {
+	case AggregateOperatorRate,
+		AggregateOperatorSumRate,
+		AggregateOperatorAvgRate,
+		AggregateOperatorMinRate,
+		AggregateOperatorMaxRate,
+		AggregateOperatorRateSum,
+		AggregateOperatorRateAvg,
+		AggregateOperatorRateMin,
+		AggregateOperatorRateMax:
+		return true
+
+	default:
+		return false
+	}
+}
+
 type ReduceToOperator string
 
 const (
