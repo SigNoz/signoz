@@ -406,6 +406,16 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	}
 }
 
+func (r *ThresholdRule) shouldSkipFirstRecord() bool {
+	shouldSkip := false
+	for _, q := range r.ruleCondition.CompositeQuery.BuilderQueries {
+		if q.DataSource == v3.DataSourceMetrics && q.AggregateOperator.IsRateOperator() {
+			shouldSkip = true
+		}
+	}
+	return shouldSkip
+}
+
 // queryClickhouse runs actual query against clickhouse
 func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, query string) (Vector, error) {
 	rows, err := db.Query(ctx, query)
@@ -553,7 +563,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 				// we skip the first record to support rate cases correctly
 				// improvement(amol): explore approaches to limit this only for
 				// rate uses cases
-				if exists := skipFirstRecord[labelHash]; exists {
+				if exists := skipFirstRecord[labelHash]; exists || !r.shouldSkipFirstRecord() {
 					resultMap[labelHash] = sample
 				} else {
 					// looks like the first record for this label combo, skip it
