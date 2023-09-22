@@ -174,3 +174,10 @@ export const deleteViewHandler = ({
 		},
 	});
 };
+
+export const trimViewName = (viewName: string): string => {
+	if (viewName.length > 20) {
+		return `${viewName.substring(0, 20)}...`;
+	}
+	return viewName;
+};
