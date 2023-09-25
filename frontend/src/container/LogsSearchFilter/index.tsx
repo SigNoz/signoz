@@ -20,6 +20,7 @@ import {
 } from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import SearchFields from './SearchFields';
 import { Container, DropDownContainer } from './styles';
@@ -174,6 +175,7 @@ function SearchFilter({
 	return (
 		<Container>
 			<Popover
+				getPopupContainer={popupContainer}
 				placement="bottom"
 				content={
 					<DropDownContainer>

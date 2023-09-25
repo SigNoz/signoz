@@ -18,6 +18,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { SET_LOGS_ORDER } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import {
 	defaultSelectStyle,
@@ -100,6 +101,7 @@ function Logs(): JSX.Element {
 						<Col flex={1}>
 							<Space align="baseline" direction="horizontal">
 								<Select
+									getPopupContainer={popupContainer}
 									style={defaultSelectStyle}
 									value={selectedViewModeOption}
 									onChange={onChangeVeiwMode}
@@ -110,12 +112,17 @@ function Logs(): JSX.Element {
 								</Select>
 
 								{isFormatButtonVisible && (
-									<Popover placement="right" content={renderPopoverContent}>
+									<Popover
+										getPopupContainer={popupContainer}
+										placement="right"
+										content={renderPopoverContent}
+									>
 										<Button>Format</Button>
 									</Popover>
 								)}
 
 								<Select
+									getPopupContainer={popupContainer}
 									style={defaultSelectStyle}
 									defaultValue={order}
 									onChange={handleChangeOrder}

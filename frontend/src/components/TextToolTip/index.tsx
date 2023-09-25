@@ -7,6 +7,7 @@ import { Tooltip } from 'antd';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useMemo } from 'react';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { style } from './styles';
 
@@ -61,7 +62,7 @@ function TextToolTip({
 	);
 
 	return (
-		<Tooltip overlay={overlay}>
+		<Tooltip getTooltipContainer={popupContainer} overlay={overlay}>
 			{useFilledIcon ? (
 				<QuestionCircleFilled style={iconStyle} />
 			) : (
