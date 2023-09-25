@@ -5,6 +5,7 @@ import { Form, Input, Select } from 'antd';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useEffect, useState } from 'react';
 import { trackEvent } from 'utils/segmentAnalytics';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import JavaDocs from './md-docs/java.md';
@@ -66,6 +67,7 @@ export default function Java({
 							<div className="label"> Select Framework </div>
 
 							<Select
+								getPopupContainer={popupContainer}
 								defaultValue="spring_boot"
 								style={{ minWidth: 120 }}
 								placeholder="Select Framework"

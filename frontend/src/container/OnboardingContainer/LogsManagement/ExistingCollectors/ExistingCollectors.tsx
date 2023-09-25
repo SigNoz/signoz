@@ -3,6 +3,7 @@ import { Select } from 'antd';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useEffect, useState } from 'react';
 import { trackEvent } from 'utils/segmentAnalytics';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import FluentBit from './md-docs/fluentBit.md';
 import FluentD from './md-docs/fluentD.md';
@@ -51,6 +52,7 @@ export default function ExistingCollectors(): JSX.Element {
 					<div className="label"> Select Framework </div>
 
 					<Select
+						getPopupContainer={popupContainer}
 						defaultValue="fluent_d"
 						style={{ minWidth: 120 }}
 						placeholder="Select Framework"
