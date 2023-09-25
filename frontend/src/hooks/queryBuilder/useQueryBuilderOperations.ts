@@ -10,8 +10,12 @@ import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperato
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import {
+	IBuilderFormula,
+	IBuilderQuery,
+} from 'types/api/queryBuilder/queryBuilderData';
+import {
+	HandleChangeFormulaData,
 	HandleChangeQueryData,
 	UseQueryOperations,
 } from 'types/common/operations.types';
@@ -22,14 +26,17 @@ export const useQueryOperations: UseQueryOperations = ({
 	query,
 	index,
 	filterConfigs,
+	formula,
 }) => {
 	const {
 		handleSetQueryData,
+		handleSetFormulaData,
 		removeQueryBuilderEntityByIndex,
 		panelType,
 		initialDataSource,
 		currentQuery,
 	} = useQueryBuilder();
+
 	const [operators, setOperators] = useState<SelectOption<string, string>[]>([]);
 
 	const { dataSource, aggregateOperator } = query;
@@ -158,6 +165,20 @@ export const useQueryOperations: UseQueryOperations = ({
 		[query, index, handleSetQueryData],
 	);
 
+	const handleChangeFormulaData: HandleChangeFormulaData = useCallback(
+		(key, value) => {
+			const newFormula: IBuilderFormula = {
+				...(formula || ({} as IBuilderFormula)),
+				[key]: value,
+			};
+
+			console.log({ newFormula });
+
+			handleSetFormulaData(index, newFormula);
+		},
+		[formula, handleSetFormulaData, index],
+	);
+
 	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
 
 	const isTracePanelType = panelType === PANEL_TYPES.TRACE;
@@ -198,5 +219,6 @@ export const useQueryOperations: UseQueryOperations = ({
 		handleDeleteQuery,
 		handleChangeQueryData,
 		listOfAdditionalFormulaFilters,
+		handleChangeFormulaData,
 	};
 };

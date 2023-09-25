@@ -1,6 +1,12 @@
 import { Col, Input, Row } from 'antd';
 // ** Components
-import { ListItemWrapper, ListMarker } from 'container/QueryBuilder/components';
+import {
+	FilterLabel,
+	ListItemWrapper,
+	ListMarker,
+} from 'container/QueryBuilder/components';
+import HavingFilter from 'container/QueryBuilder/filters/Formula/Having/HavingFilter';
+import LimitFilter from 'container/QueryBuilder/filters/Formula/Limit/Limit';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -24,10 +30,14 @@ export function Formula({
 		handleSetFormulaData,
 	} = useQueryBuilder();
 
-	const { listOfAdditionalFormulaFilters } = useQueryOperations({
+	const {
+		listOfAdditionalFormulaFilters,
+		handleChangeFormulaData,
+	} = useQueryOperations({
 		index,
 		query,
 		filterConfigs,
+		formula,
 	});
 
 	const handleDelete = useCallback(() => {
@@ -56,7 +66,47 @@ export function Formula({
 		[index, formula, handleSetFormulaData],
 	);
 
-	const renderAdditionalFilters = useMemo(() => <div>asd</div>, []);
+	const handleChangeLimit = useCallback(
+		(value: IBuilderFormula['limit']) => {
+			handleChangeFormulaData('limit', value);
+		},
+		[handleChangeFormulaData],
+	);
+
+	const handleChangeHavingFilter = useCallback(
+		(value: IBuilderFormula['having']) => {
+			handleChangeFormulaData('having', value);
+		},
+		[handleChangeFormulaData],
+	);
+
+	const renderAdditionalFilters = useMemo(
+		() => (
+			<>
+				<Col span={11}>
+					<Row gutter={[11, 5]}>
+						<Col flex="5.93rem">
+							<FilterLabel label="Limit" />
+						</Col>
+						<Col flex="1 1 12.5rem">
+							<LimitFilter formula={formula} onChange={handleChangeLimit} />
+						</Col>
+					</Row>
+				</Col>
+				<Col span={11}>
+					<Row gutter={[11, 5]}>
+						<Col flex="5.93rem">
+							<FilterLabel label="HAVING" />
+						</Col>
+						<Col flex="1 1 12.5rem">
+							<HavingFilter formula={formula} onChange={handleChangeHavingFilter} />
+						</Col>
+					</Row>
+				</Col>
+			</>
+		),
+		[formula, handleChangeHavingFilter, handleChangeLimit],
+	);
 
 	return (
 		<ListItemWrapper onDelete={handleDelete}>

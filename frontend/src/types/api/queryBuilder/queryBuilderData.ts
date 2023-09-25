@@ -15,6 +15,10 @@ export interface IBuilderFormula {
 	queryName: string;
 	dataSource?: DataSource;
 	legend: string;
+	limit?: number | null;
+	having?: Having[];
+	stepInterval?: number;
+	orderBy?: OrderByPayload[];
 }
 
 export interface TagFilterItem {
