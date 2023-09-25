@@ -206,6 +206,7 @@ function ExplorerCard({
 								</Button>
 							)}
 							<Popover
+								getPopupContainer={popupContainer}
 								placement="bottomLeft"
 								trigger="click"
 								content={
