@@ -1,6 +1,32 @@
 import { Pipeline, PipelineData } from 'types/api/pipeline/def';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 export const configurationVersion = '1.0';
+
+export function mockPipelineFilter(
+	key: string,
+	op: string,
+	value: string,
+): TagFilter {
+	return {
+		op: 'AND',
+		items: [
+			{
+				id: `${key}-${value}`,
+				key: {
+					key,
+					dataType: DataTypes.String,
+					type: '',
+					isColumn: false,
+					isJSON: false,
+				},
+				op,
+				value,
+			},
+		],
+	};
+}
 
 export const pipelineMockData: Array<PipelineData> = [
 	{
@@ -10,7 +36,7 @@ export const pipelineMockData: Array<PipelineData> = [
 		alias: 'apachecommonparser',
 		description: 'This is a desc',
 		enabled: false,
-		filter: 'attributes.source == nginx',
+		filter: mockPipelineFilter('source', '=', 'nginx'),
 		config: [
 			{
 				orderId: 1,
@@ -43,7 +69,7 @@ export const pipelineMockData: Array<PipelineData> = [
 		alias: 'movingpipelinenew',
 		description: 'This is a desc of move',
 		enabled: false,
-		filter: 'attributes.method == POST',
+		filter: mockPipelineFilter('method', '=', 'POST'),
 		config: [
 			{
 				orderId: 1,

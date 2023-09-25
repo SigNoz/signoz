@@ -8,15 +8,16 @@ import {
 import DeploymentStage from '../Layouts/ChangeHistory/DeploymentStage';
 import DeploymentTime from '../Layouts/ChangeHistory/DeploymentTime';
 import DescriptionTextArea from './AddNewPipeline/FormFields/DescriptionTextArea';
+import FilterInput from './AddNewPipeline/FormFields/FilterInput';
 import NameInput from './AddNewPipeline/FormFields/NameInput';
 
 export const pipelineFields = [
 	{
 		id: 1,
 		fieldName: 'Filter',
-		placeholder: 'search_pipeline_placeholder',
+		placeholder: 'pipeline_filter_placeholder',
 		name: 'filter',
-		component: NameInput,
+		component: FilterInput,
 	},
 	{
 		id: 2,
