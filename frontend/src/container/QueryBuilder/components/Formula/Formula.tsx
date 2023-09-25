@@ -1,21 +1,34 @@
-import { Col, Input } from 'antd';
+import { Col, Input, Row } from 'antd';
 // ** Components
 import { ListItemWrapper, ListMarker } from 'container/QueryBuilder/components';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { ChangeEvent, useCallback } from 'react';
+import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { ChangeEvent, useCallback, useMemo } from 'react';
 import { IBuilderFormula } from 'types/api/queryBuilder/queryBuilderData';
 
+import { AdditionalFiltersToggler } from '../AdditionalFiltersToggler';
 // ** Types
 import { FormulaProps } from './Formula.interfaces';
 
 const { TextArea } = Input;
 
-export function Formula({ index, formula }: FormulaProps): JSX.Element {
+export function Formula({
+	index,
+	formula,
+	filterConfigs,
+	query,
+}: FormulaProps): JSX.Element {
 	const {
 		removeQueryBuilderEntityByIndex,
 		handleSetFormulaData,
 	} = useQueryBuilder();
+
+	const { listOfAdditionalFormulaFilters } = useQueryOperations({
+		index,
+		query,
+		filterConfigs,
+	});
 
 	const handleDelete = useCallback(() => {
 		removeQueryBuilderEntityByIndex('queryFormulas', index);
@@ -42,6 +55,8 @@ export function Formula({ index, formula }: FormulaProps): JSX.Element {
 		},
 		[index, formula, handleSetFormulaData],
 	);
+
+	const renderAdditionalFilters = useMemo(() => <div>asd</div>, []);
 
 	return (
 		<ListItemWrapper onDelete={handleDelete}>
@@ -70,6 +85,15 @@ export function Formula({ index, formula }: FormulaProps): JSX.Element {
 					value={formula.legend}
 					addonBefore="Legend Format"
 				/>
+			</Col>
+			<Col>
+				<AdditionalFiltersToggler
+					listOfAdditionalFilter={listOfAdditionalFormulaFilters}
+				>
+					<Row gutter={[0, 11]} justify="space-between">
+						{renderAdditionalFilters}
+					</Row>
+				</AdditionalFiltersToggler>
 			</Col>
 		</ListItemWrapper>
 	);

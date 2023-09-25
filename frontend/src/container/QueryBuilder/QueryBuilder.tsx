@@ -81,7 +81,12 @@ export const QueryBuilder = memo(function QueryBuilder({
 					))}
 					{currentQuery.builder.queryFormulas.map((formula, index) => (
 						<Col key={formula.queryName} span={24}>
-							<Formula formula={formula} index={index} />
+							<Formula
+								filterConfigs={filterConfigs}
+								query={currentQuery.builder.queryData[index]}
+								formula={formula}
+								index={index}
+							/>
 						</Col>
 					))}
 				</Row>

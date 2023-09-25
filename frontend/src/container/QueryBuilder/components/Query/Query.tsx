@@ -21,7 +21,7 @@ import AggregateEveryFilter from 'container/QueryBuilder/filters/AggregateEveryF
 import LimitFilter from 'container/QueryBuilder/filters/LimitFilter/LimitFilter';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryOperations';
+import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 // ** Hooks
 import { ChangeEvent, memo, ReactNode, useCallback } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';

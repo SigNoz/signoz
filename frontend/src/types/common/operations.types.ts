@@ -29,4 +29,5 @@ export type UseQueryOperations = (
 	handleChangeDataSource: (newSource: DataSource) => void;
 	handleDeleteQuery: () => void;
 	handleChangeQueryData: HandleChangeQueryData;
+	listOfAdditionalFormulaFilters: string[];
 };
