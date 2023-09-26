@@ -8,7 +8,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getRemoveOrderFromValue } from '../QueryBuilderSearch/utils';
-import { FILTERS } from './config';
+import { ORDERBY_FILTERS } from './config';
 import { SIGNOZ_VALUE } from './constants';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import {
@@ -56,8 +56,8 @@ export const useOrderByFilter = ({
 				};
 
 			return {
-				label: `${item.value} ${FILTERS.ASC}`,
-				value: `${item.value}${orderByValueDelimiter}${FILTERS.ASC}`,
+				label: `${item.value} ${ORDERBY_FILTERS.ASC}`,
+				value: `${item.value}${orderByValueDelimiter}${ORDERBY_FILTERS.ASC}`,
 			};
 		});
 
@@ -74,12 +74,12 @@ export const useOrderByFilter = ({
 
 		return [
 			{
-				label: `${searchText} ${FILTERS.ASC}`,
-				value: `${searchText}${orderByValueDelimiter}${FILTERS.ASC}`,
+				label: `${searchText} ${ORDERBY_FILTERS.ASC}`,
+				value: `${searchText}${orderByValueDelimiter}${ORDERBY_FILTERS.ASC}`,
 			},
 			{
-				label: `${searchText} ${FILTERS.DESC}`,
-				value: `${searchText}${orderByValueDelimiter}${FILTERS.DESC}`,
+				label: `${searchText} ${ORDERBY_FILTERS.DESC}`,
+				value: `${searchText}${orderByValueDelimiter}${ORDERBY_FILTERS.DESC}`,
 			},
 		];
 	}, [searchText]);
@@ -114,9 +114,16 @@ export const useOrderByFilter = ({
 	const getValidResult = useCallback(
 		(result: IOption[]): IOption[] =>
 			result.reduce<IOption[]>((acc, item) => {
-				if (item.value === FILTERS.ASC || item.value === FILTERS.DESC) return acc;
+				if (
+					item.value === ORDERBY_FILTERS.ASC ||
+					item.value === ORDERBY_FILTERS.DESC
+				)
+					return acc;
 
-				if (item.value.includes(FILTERS.ASC) || item.value.includes(FILTERS.DESC)) {
+				if (
+					item.value.includes(ORDERBY_FILTERS.ASC) ||
+					item.value.includes(ORDERBY_FILTERS.DESC)
+				) {
 					const splittedOrderBy = splitOrderByFromString(item.value);
 
 					if (splittedOrderBy) {
@@ -175,12 +182,12 @@ export const useOrderByFilter = ({
 	const aggregationOptions = useMemo(
 		() => [
 			{
-				label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) ${FILTERS.ASC}`,
-				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${FILTERS.ASC}`,
+				label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) ${ORDERBY_FILTERS.ASC}`,
+				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${ORDERBY_FILTERS.ASC}`,
 			},
 			{
-				label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) ${FILTERS.DESC}`,
-				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${FILTERS.DESC}`,
+				label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) ${ORDERBY_FILTERS.DESC}`,
+				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${ORDERBY_FILTERS.DESC}`,
 			},
 		],
 		[query],

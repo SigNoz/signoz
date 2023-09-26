@@ -7,6 +7,7 @@ import {
 } from 'container/QueryBuilder/components';
 import HavingFilter from 'container/QueryBuilder/filters/Formula/Having/HavingFilter';
 import LimitFilter from 'container/QueryBuilder/filters/Formula/Limit/Limit';
+import OrderByFilter from 'container/QueryBuilder/filters/Formula/OrderBy/OrderByFilter';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -16,8 +17,6 @@ import { IBuilderFormula } from 'types/api/queryBuilder/queryBuilderData';
 import { AdditionalFiltersToggler } from '../AdditionalFiltersToggler';
 // ** Types
 import { FormulaProps } from './Formula.interfaces';
-
-const { TextArea } = Input;
 
 export function Formula({
 	index,
@@ -80,6 +79,13 @@ export function Formula({
 		[handleChangeFormulaData],
 	);
 
+	const handleChangeOrderByFilter = useCallback(
+		(value: IBuilderFormula['orderBy']) => {
+			handleChangeFormulaData('orderBy', value);
+		},
+		[handleChangeFormulaData],
+	);
+
 	const renderAdditionalFilters = useMemo(
 		() => (
 			<>
@@ -103,9 +109,24 @@ export function Formula({
 						</Col>
 					</Row>
 				</Col>
+				<Col span={11}>
+					<Row gutter={[11, 5]}>
+						<Col flex="5.93rem">
+							<FilterLabel label="Order by" />
+						</Col>
+						<Col flex="1 1 12.5rem">
+							<OrderByFilter formula={formula} onChange={handleChangeOrderByFilter} />
+						</Col>
+					</Row>
+				</Col>
 			</>
 		),
-		[formula, handleChangeHavingFilter, handleChangeLimit],
+		[
+			formula,
+			handleChangeHavingFilter,
+			handleChangeLimit,
+			handleChangeOrderByFilter,
+		],
 	);
 
 	return (
@@ -119,7 +140,7 @@ export function Formula({
 				/>
 			</Col>
 			<Col span={24}>
-				<TextArea
+				<Input.TextArea
 					name="expression"
 					onChange={handleChange}
 					size="middle"
@@ -136,7 +157,7 @@ export function Formula({
 					addonBefore="Legend Format"
 				/>
 			</Col>
-			<Col>
+			<Col span={24}>
 				<AdditionalFiltersToggler
 					listOfAdditionalFilter={listOfAdditionalFormulaFilters}
 				>
