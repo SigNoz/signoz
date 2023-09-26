@@ -1,6 +1,10 @@
 package v3
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
@@ -27,9 +31,6 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 		// check filter attribute
 		if query.Filters != nil && len(query.Filters.Items) != 0 {
 			for _, item := range query.Filters.Items {
-				if item.Key.IsJSON {
-					continue
-				}
 				if !isEnriched(item.Key) {
 					return true
 				}
@@ -100,6 +101,7 @@ func enrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) 
 	// enrich filter attribute
 	if query.Filters != nil && len(query.Filters.Items) != 0 {
 		for i := 0; i < len(query.Filters.Items); i++ {
+			query.Filters.Items[i] = jsonFilterEnrich(query.Filters.Items[i])
 			if query.Filters.Items[i].Key.IsJSON {
 				continue
 			}
@@ -148,4 +150,60 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 	field.Type = v3.AttributeKeyTypeTag
 	field.DataType = v3.AttributeKeyDataTypeString
 	return field
+}
+
+func jsonFilterEnrich(filter v3.FilterItem) v3.FilterItem {
+	// check if it is a json request
+	if !strings.HasPrefix(filter.Key.Key, "body.") {
+		return filter
+	}
+
+	// check if the value is a int, float, string, bool
+	valueType := ""
+	switch filter.Value.(type) {
+	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
+		valueType = "int64"
+	case float32, float64:
+		valueType = "float64"
+	case string:
+		valueType, filter.Value = parseStrValue(filter.Value.(string), filter.Operator)
+	case bool:
+		valueType = "bool"
+	}
+
+	// check if it is array
+	if strings.HasSuffix(filter.Key.Key, "[*]") {
+		valueType = fmt.Sprintf("array(%s)", valueType)
+	}
+
+	filter.Key.DataType = v3.AttributeKeyDataType(valueType)
+	filter.Key.IsJSON = true
+	return filter
+}
+
+func parseStrValue(valueStr string, operator v3.FilterOperator) (string, interface{}) {
+
+	valueType := "string"
+
+	// for the following operators it will always be string
+	if operator == v3.FilterOperatorContains || operator == v3.FilterOperatorNotContains ||
+		operator == v3.FilterOperatorRegex || operator == v3.FilterOperatorNotRegex ||
+		operator == v3.FilterOperatorLike || operator == v3.FilterOperatorNotLike {
+		return valueType, valueStr
+	}
+
+	var err error
+	var parsedValue interface{}
+	if parsedValue, err = strconv.ParseBool(valueStr); err == nil {
+		valueType = "bool"
+	} else if parsedValue, err = strconv.ParseInt(valueStr, 10, 64); err == nil {
+		valueType = "int64"
+	} else if parsedValue, err = strconv.ParseFloat(valueStr, 64); err == nil {
+		valueType = "float64"
+	} else {
+		parsedValue = valueStr
+		valueType = "string"
+	}
+
+	return valueType, parsedValue
 }
