@@ -17,6 +17,7 @@ import { useLocation } from 'react-router-dom';
 import { SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 import {
 	ButtonContainer,
@@ -84,6 +85,13 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			form.setFieldValue('email', responseDetails.email);
 			form.setFieldValue('organizationName', responseDetails.organization);
 			setIsDetailsDisable(true);
+
+			trackEvent('Account Creation Page Visited', {
+				email: responseDetails.email,
+				name: responseDetails.name,
+				company_name: responseDetails.organization,
+				source: 'SigNoz Cloud',
+			});
 		}
 	}, [
 		getInviteDetailsResponse.data?.payload,
@@ -230,6 +238,10 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				setLoading(true);
 
 				if (!isPasswordValid(values.password)) {
+					trackEvent('Account Creation Page - Invalid Password', {
+						email: values.email,
+						name: values.firstName,
+					});
 					setIsPasswordPolicyError(true);
 					setLoading(false);
 					return;
@@ -238,6 +250,11 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				if (isPreferenceVisible) {
 					await commonHandler(values, onAdminAfterLogin);
 				} else {
+					trackEvent('Account Created Successfully', {
+						email: values.email,
+						name: values.firstName,
+					});
+
 					await commonHandler(
 						values,
 						async (): Promise<void> => {
