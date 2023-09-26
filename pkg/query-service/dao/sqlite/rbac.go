@@ -563,13 +563,11 @@ func (mds *ModelDaoSqlite) UpdateUserFlags(ctx context.Context, userId string, f
 		return nil, apiError
 	}
 
-	if userPayload.Flags != nil {
-		for k, v := range userPayload.Flags {
-			if _, ok := flags[k]; !ok {
-				// insert only missing keys as we want to retain the
-				// flags in the db that are not part of this request
-				flags[k] = v
-			}
+	for k, v := range userPayload.Flags {
+		if _, ok := flags[k]; !ok {
+			// insert only missing keys as we want to retain the
+			// flags in the db that are not part of this request
+			flags[k] = v
 		}
 	}
 

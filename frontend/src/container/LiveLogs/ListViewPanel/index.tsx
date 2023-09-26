@@ -11,6 +11,7 @@ import PopoverContent from 'pages/Logs/PopoverContent';
 import { useEventSource } from 'providers/EventSource';
 import { useCallback } from 'react';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { SpinnerWrapper, Wrapper } from './styles';
 
@@ -43,6 +44,7 @@ function ListViewPanel(): JSX.Element {
 	return (
 		<Wrapper>
 			<Select
+				getPopupContainer={popupContainer}
 				style={defaultSelectStyle}
 				value={config.format?.value}
 				onChange={config.format?.onChange}
@@ -53,7 +55,11 @@ function ListViewPanel(): JSX.Element {
 			</Select>
 
 			{isFormatButtonVisible && (
-				<Popover placement="right" content={renderPopoverContent}>
+				<Popover
+					getPopupContainer={popupContainer}
+					placement="right"
+					content={renderPopoverContent}
+				>
 					<Button>Format</Button>
 				</Popover>
 			)}

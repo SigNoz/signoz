@@ -21,6 +21,7 @@ const plugins = [
 		template: 'src/index.html.ejs',
 		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 		SEGMENT_ID: process.env.SEGMENT_ID,
+		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
 	}),
 	new webpack.ProvidePlugin({
 		process: 'process/browser',
@@ -31,6 +32,7 @@ const plugins = [
 			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
 			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 			SEGMENT_ID: process.env.SEGMENT_ID,
+			CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
 		}),
 	}),
 ];

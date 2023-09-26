@@ -53,10 +53,10 @@ export const ServiceMapOptions: Option[] = [
 
 export const getDefaultOption = (route: string): Time => {
 	if (route === ROUTES.SERVICE_MAP) {
-		return ServiceMapOptions[0].value;
+		return ServiceMapOptions[2].value;
 	}
 	if (route === ROUTES.APPLICATION) {
-		return Options[0].value;
+		return Options[2].value;
 	}
 	return Options[2].value;
 };
