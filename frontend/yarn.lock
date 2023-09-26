@@ -2916,6 +2916,11 @@
   resolved "https://registry.npmjs.org/@sideway/pinpoint/-/pinpoint-2.0.0.tgz"
   integrity sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==
 
+"@signozhq/ui-core@0.0.3":
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@signozhq/ui-core/-/ui-core-0.0.3.tgz#6b81f0b3b6525c3e152885264304080aabb6f276"
+  integrity sha512-4Mf+oEQqvsa6X1Z6bUHLVjV6VCOuoyg7CjPW1XNy0QmI6KUy59rW5XKotW9ZrFod+0+1EkfCjisGQ82aU56QoQ==
+
 "@sinclair/typebox@^0.25.16":
   version "0.25.24"
   resolved "https://registry.npmjs.org/@sinclair/typebox/-/typebox-0.25.24.tgz"

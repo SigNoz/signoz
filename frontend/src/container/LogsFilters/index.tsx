@@ -1,6 +1,6 @@
 import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
 import { Col, Input } from 'antd';
-import CategoryHeading from 'components/Logs/CategoryHeading';
+import CategoryHeading from 'components/Logs/CategoryHeading/CategoryHeading';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { ChangeEvent, useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
