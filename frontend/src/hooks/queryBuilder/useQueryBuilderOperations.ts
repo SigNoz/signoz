@@ -172,8 +172,6 @@ export const useQueryOperations: UseQueryOperations = ({
 				[key]: value,
 			};
 
-			console.log({ newFormula });
-
 			handleSetFormulaData(index, newFormula);
 		},
 		[formula, handleSetFormulaData, index],

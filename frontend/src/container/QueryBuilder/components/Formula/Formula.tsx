@@ -115,7 +115,11 @@ export function Formula({
 							<FilterLabel label="Order by" />
 						</Col>
 						<Col flex="1 1 12.5rem">
-							<OrderByFilter formula={formula} onChange={handleChangeOrderByFilter} />
+							<OrderByFilter
+								query={query}
+								formula={formula}
+								onChange={handleChangeOrderByFilter}
+							/>
 						</Col>
 					</Row>
 				</Col>
@@ -126,6 +130,7 @@ export function Formula({
 			handleChangeHavingFilter,
 			handleChangeLimit,
 			handleChangeOrderByFilter,
+			query,
 		],
 	);
 
