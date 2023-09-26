@@ -27,13 +27,14 @@ wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releas
 Step 2. Run your application
 
 ```bash
-OTEL_RESOURCE_ATTRIBUTES=service.name=<app_name> \
-OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=SIGNOZ_INGESTION_KEY" \
+OTEL_RESOURCE_ATTRIBUTES=service.name=<myapp> \
+OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>" \
 OTEL_EXPORTER_OTLP_ENDPOINT=https://ingest.{region}.signoz.cloud:443 \
-java -javaagent:$PWD/opentelemetry-javaagent.jar -jar <my-app>.jar
+java -javaagent:<path>/opentelemetry-javaagent.jar -jar <myapp>.jar
 ```
-- `<app_name>` is the name for your application
-- `SIGNOZ_INGESTION_KEY` is the API token provided by SigNoz. You can find your ingestion key from SigNoz cloud account details sent on your email.
+- `<myapp>` is the name for your application
+- `<path>` - update it to the path of your downloaded Java JAR agent
+- `<SIGNOZ_INGESTION_KEY>` is the API token provided by SigNoz. You can find your ingestion key from SigNoz cloud account details sent on your email.
 
 Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
 
@@ -59,17 +60,17 @@ wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releas
 Step 2. Run your application<br></br>
 
 ```bash
-java -javaagent:$PWD/opentelemetry-javaagent.jar -jar <myapp>.jar
+java -javaagent:<path>/opentelemetry-javaagent.jar -jar <myapp>.jar
 ```
 
-- `<myapp>` is the name of your application jar file
-- In case you download `opentelemetry-javaagent.jar` file in different directory than that of the project, replace `$PWD` with the path of the otel jar file.
+- `<myapp>` is the name of your application
+- `<path>` - update it to the path of your downloaded Java JAR agent
   
 ---
 
 ### Applications Deployed on Kubernetes
 
-For Java application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](/docs/tutorial/kubernetes-infra-metrics/).
+For Java application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/).
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry java instrumentation by following the below steps:
 
@@ -82,10 +83,10 @@ Once you have set up OTel Collector agent, you can proceed with OpenTelemetry ja
 2. Run your application<br></br>
    
    ```bash
-   java -javaagent:$PWD/opentelemetry-javaagent.jar -jar <myapp>.jar
+   java -javaagent:<path>/opentelemetry-javaagent.jar -jar <myapp>.jar
    ```
 
-   - `<myapp>` is the name of your application jar file
-   - In case you download `opentelemetry-javaagent.jar` file in different directory than that of the project, replace `$PWD` with the path of the otel jar file.
+   - `<myapp>` is the name of your application
+   - `<path>` - update it to the path of your downloaded Java JAR agent
 
 3. Make sure to dockerise your application along with OpenTelemetry instrumentation.

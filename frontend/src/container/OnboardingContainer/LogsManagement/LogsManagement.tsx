@@ -35,16 +35,16 @@ const supportedLogTypes = [
 		id: 'application_logs_log_file',
 		imgURL: `Logos/software-window.svg`,
 	},
-	{
-		name: 'NodeJS Winston Logs ',
-		id: 'nodejs',
-		imgURL: `Logos/node-js.svg`,
-	},
-	{
-		name: 'Application Logs using OTEL SDK',
-		id: 'application_logs_otel_sdk',
-		imgURL: `Logos/cmd-terminal.svg`,
-	},
+	// {
+	// 	name: 'NodeJS Winston Logs ',
+	// 	id: 'nodejs',
+	// 	imgURL: `Logos/node-js.svg`,
+	// },
+	// {
+	// 	name: 'Application Logs using OTEL SDK',
+	// 	id: 'application_logs_otel_sdk',
+	// 	imgURL: `Logos/cmd-terminal.svg`,
+	// },
 	{
 		name: 'Logs from existing collectors',
 		id: 'existing_collectors',

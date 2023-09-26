@@ -28,12 +28,11 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
 
 Step 2. Create `tracer.ts` file<br></br>
 
-You need to configure the endpoint for SigNoz cloud in this file.
+You need to configure the endpoint for SigNoz cloud in this file. You also need to configure your service name. In this example, we have used `sampleNestjsApplication`.
 
 ```js
 'use strict'
 const process = require('process');
-//OpenTelemetry
 const opentelemetry = require('@opentelemetry/sdk-node');
 const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
 const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
@@ -41,9 +40,7 @@ const {Resource} = require('@opentelemetry/resources');
 const {SemanticResourceAttributes} = require('@opentelemetry/semantic-conventions');
 
 const exporterOptions = {
-  // highlight-start
     url: 'https://ingest.{region}.signoz.cloud:443/v1/traces'
-  // highlight-end
   }
 
 const traceExporter = new OTLPTraceExporter(exporterOptions);
@@ -70,7 +67,7 @@ const sdk = new opentelemetry.NodeSDK({
   module.exports = sdk
 ```
 
-Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
+Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary accordingly.
 
  US -	ingest.us.signoz.cloud:443/v1/traces <br></br>
 
@@ -80,7 +77,7 @@ Depending on the choice of your region for SigNoz cloud, the ingest endpoint wil
 
 
 
-Step 3. Import the tracer module where your app starts
+Step 3. Import the tracer module where your app starts  `(Ex —> main.ts)`
     
 ```jsx
 const tracer = require('./tracer')
@@ -89,7 +86,7 @@ const tracer = require('./tracer')
 
 Step 4. Start the tracer<br></br>
 
-In the `async function boostrap` section of the application code, initialize the tracer as follows: 
+In the `async function boostrap` section of the application code `(Ex —> In main.ts)`, initialize the tracer as follows: 
 
 ```jsx
 const tracer = require('./tracer')
@@ -100,9 +97,7 @@ import { AppModule } from './app.module';
   // OpenTelemetry automatic instrumentation must go here.
 
 async function bootstrap() {
-    // highlight-start
     await tracer.start();
-    //highlight-end
     const app = await NestFactory.create(AppModule);
     await app.listen(3001);
   }
@@ -117,7 +112,7 @@ OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>" nest sta
 
 You can now run your Nestjs application. The data captured with OpenTelemetry from your application should start showing on the SigNoz dashboard.
 
-`SIGNOZ_INGESTION_KEY` is the API token provided by SigNoz. You can find your ingestion key from SigNoz cloud account details sent on your email.
+`<SIGNOZ_INGESTION_KEY>` is the API token provided by SigNoz. You can find your ingestion key from SigNoz cloud account details sent on your email.
 
 ---
 
@@ -138,6 +133,8 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
 
 Step 2. Create `tracer.ts` file<br></br>
 
+You need to configure your service name. In this example, we have used `sampleNestjsApplication`.
+
 ```js
 'use strict'
 const process = require('process');
@@ -149,9 +146,7 @@ const {Resource} = require('@opentelemetry/resources');
 const {SemanticResourceAttributes} = require('@opentelemetry/semantic-conventions');
 
 const exporterOptions = {
-  // highlight-start
     url: 'http://localhost:4318/v1/traces'
-    // highlight-end
   }
 
 const traceExporter = new OTLPTraceExporter(exporterOptions);
@@ -198,9 +193,7 @@ import { AppModule } from './app.module';
   // OpenTelemetry automatic instrumentation must go here.
 
 async function bootstrap() {
-    // highlight-start
     await tracer.start();
-    //highlight-end
     const app = await NestFactory.create(AppModule);
     await app.listen(3001);
   }
@@ -213,7 +206,7 @@ Step 5. Run the application
 
 ### Applications Deployed on Kubernetes
 
-For Javascript application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](/docs/tutorial/kubernetes-infra-metrics/).
+For Javascript application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/).
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry Javascript instrumentation by following the below steps:
 
@@ -228,6 +221,8 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
 
 Step 2. Create `tracer.ts` file<br></br>
 
+You need to configure your service name. In this example, we have used `sampleNestjsApplication`.
+
 ```js
 'use strict'
 const process = require('process');
@@ -239,9 +234,7 @@ const {Resource} = require('@opentelemetry/resources');
 const {SemanticResourceAttributes} = require('@opentelemetry/semantic-conventions');
 
 const exporterOptions = {
-  // highlight-start
     url: 'http://localhost:4318/v1/traces'
-    // highlight-end
   }
 
 const traceExporter = new OTLPTraceExporter(exporterOptions);
@@ -288,9 +281,7 @@ import { AppModule } from './app.module';
   // OpenTelemetry automatic instrumentation must go here.
 
 async function bootstrap() {
-    // highlight-start
     await tracer.start();
-    //highlight-end
     const app = await NestFactory.create(AppModule);
     await app.listen(3001);
   }
