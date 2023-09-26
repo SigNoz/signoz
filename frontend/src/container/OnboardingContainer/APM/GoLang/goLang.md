@@ -143,7 +143,7 @@ From VMs, there are two ways to send data to SigNoz Cloud.
 
     `OTEL_EXPORTER_OTLP_HEADERS`: `signoz-access-token=<SIGNOZ-INGESTION-TOKEN>`. Update `<SIGNOZ-INGESTION-TOKEN>` with the ingestion token provided by SigNoz
     
-    `OTEL_EXPORTER_OTLP_ENDPOINT`: ingest.{region}.signoz.cloud:443. Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
+    `OTEL_EXPORTER_OTLP_ENDPOINT`: ingest.{region}.signoz.cloud:443. Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary accordingly.
 
     
     US - ingest.us.signoz.cloud:443 <br></br>
@@ -295,7 +295,7 @@ You can find instructions to install OTel Collector binary [here](https://signoz
 
 ### Applications Deployed on Kubernetes
 
-For Golang application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](/docs/tutorial/kubernetes-infra-metrics/).
+For Golang application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/).
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry Golang instrumentation by following the below steps:
 

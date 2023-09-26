@@ -23,7 +23,7 @@ export default function Javascript({
 }: {
 	activeStep: number;
 }): JSX.Element {
-	const [selectedFrameWork, setSelectedFrameWork] = useState('nodejs');
+	const [selectedFrameWork, setSelectedFrameWork] = useState('express');
 
 	const [form] = Form.useForm();
 

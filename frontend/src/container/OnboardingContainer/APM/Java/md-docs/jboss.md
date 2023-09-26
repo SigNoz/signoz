@@ -35,16 +35,16 @@ Step 3. Update `JAVA_OPTS` environment variable
 Update `JAVA_OPTS` environment variable with configurations required to send data to SigNoz cloud in your configuration file.
 
 ```bash
-JAVA_OPTS="-javaagent:/path/opentelemetry-javaagent.jar
+JAVA_OPTS="-javaagent:/<path>/opentelemetry-javaagent.jar
 -Dotel.exporter.otlp.endpoint=https://ingest.{region}.signoz.cloud:443
--Dotel.exporter.otlp.headers="signoz-access-token=SIGNOZ_INGESTION_KEY"
+-Dotel.exporter.otlp.headers="signoz-access-token=<SIGNOZ_INGESTION_KEY>"
 -Dotel.resource.attributes="service.name=<app_name>""
 ```
 You need to replace the following things based on your environment:<br></br>
 
-- `path` - Update it to the path of your downloaded Java JAR agent.<br></br>
+- `<path>` - Update it to the path of your downloaded Java JAR agent.<br></br>
 - `<app_name>` is the name for your application
-- `SIGNOZ_INGESTION_KEY` is the API token provided by SigNoz. You can find your ingestion key from SigNoz cloud account details sent on your email.
+- `<SIGNOZ_INGESTION_KEY>` is the API token provided by SigNoz. You can find your ingestion key from SigNoz cloud account details sent on your email.
 
 Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
 
@@ -96,7 +96,7 @@ where,
 
 ### Applications Deployed on Kubernetes
 
-For Java application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](/docs/tutorial/kubernetes-infra-metrics/).
+For Java application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/).
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry java instrumentation by following the below steps:
 

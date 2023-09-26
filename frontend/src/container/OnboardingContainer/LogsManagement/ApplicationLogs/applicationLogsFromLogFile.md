@@ -1,7 +1,5 @@
 ## Collect Application Logs from Log file in SigNoz cloud
 
-If you don’t already have a SigNoz cloud account, you can sign up [here](https://signoz.io/teams/).
-
 - Add otel collector binary to your VM by following this [guide](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/).
 
 - Add the filelog reciever to `config.yaml`.
@@ -35,4 +33,5 @@ If you don’t already have a SigNoz cloud account, you can sign up [here](https
 - Now we can restart the otel collector so that new changes are applied.
 
 - The log will be exported, if you add more lines to the log file it will be exported as well
+
 - If there are no errors your logs will be visible on SigNoz UI.
