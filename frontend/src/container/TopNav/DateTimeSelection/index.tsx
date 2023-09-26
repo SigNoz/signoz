@@ -17,6 +17,7 @@ import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
@@ -271,6 +272,7 @@ function DateTimeSelection({
 			>
 				<FormContainer>
 					<DefaultSelect
+						getPopupContainer={popupContainer}
 						onSelect={(value: unknown): void => onSelectHandler(value as Time)}
 						value={getInputLabel(
 							dayjs(minTime / 1000000),
