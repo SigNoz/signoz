@@ -193,27 +193,17 @@ func parseStrValue(valueStr string, operator v3.FilterOperator) (string, interfa
 	}
 
 	var err error
-	var value interface{}
-
-	// try to convert it to bool/int/float
-	value, err = strconv.ParseBool(valueStr)
-	if err != nil {
-		// try parsing it as int
-		value, err = strconv.ParseInt(valueStr, 10, 64)
-		// try parsing it as float
-		if err != nil {
-			value, err = strconv.ParseFloat(valueStr, 64)
-			if err != nil {
-				value = valueStr
-			} else {
-				valueType = "float64"
-			}
-		} else {
-			valueType = "int64"
-		}
-	} else {
+	var parsedValue interface{}
+	if parsedValue, err = strconv.ParseBool(valueStr); err == nil {
 		valueType = "bool"
+	} else if parsedValue, err = strconv.ParseInt(valueStr, 10, 64); err == nil {
+		valueType = "int64"
+	} else if parsedValue, err = strconv.ParseFloat(valueStr, 64); err == nil {
+		valueType = "float64"
+	} else {
+		parsedValue = valueStr
+		valueType = "string"
 	}
 
-	return valueType, value
+	return valueType, parsedValue
 }
