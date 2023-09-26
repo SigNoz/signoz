@@ -394,7 +394,7 @@ func TestJsonEnrich(t *testing.T) {
 	}
 }
 
-var testParseStrData = []struct {
+var testParseStrValueData = []struct {
 	Name       string
 	Operator   v3.FilterOperator
 	Value      interface{}
@@ -431,10 +431,10 @@ var testParseStrData = []struct {
 	},
 }
 
-func TestParseStr(t *testing.T) {
-	for _, tt := range testParseStrData {
+func TestParseStrValue(t *testing.T) {
+	for _, tt := range testParseStrValueData {
 		Convey(tt.Name, t, func() {
-			vtype, value := parseStr(tt.Value.(string), tt.Operator)
+			vtype, value := parseStrValue(tt.Value.(string), tt.Operator)
 			So(vtype, ShouldEqual, tt.ResultType)
 			So(value, ShouldEqual, tt.Result)
 		})

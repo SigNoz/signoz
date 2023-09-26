@@ -166,7 +166,7 @@ func jsonFilterEnrich(filter v3.FilterItem) v3.FilterItem {
 	case float32, float64:
 		valueType = "float64"
 	case string:
-		valueType, filter.Value = parseStr(filter.Value.(string), filter.Operator)
+		valueType, filter.Value = parseStrValue(filter.Value.(string), filter.Operator)
 	case bool:
 		valueType = "bool"
 	}
@@ -181,7 +181,7 @@ func jsonFilterEnrich(filter v3.FilterItem) v3.FilterItem {
 	return filter
 }
 
-func parseStr(valueStr string, operator v3.FilterOperator) (string, interface{}) {
+func parseStrValue(valueStr string, operator v3.FilterOperator) (string, interface{}) {
 
 	valueType := "string"
 
