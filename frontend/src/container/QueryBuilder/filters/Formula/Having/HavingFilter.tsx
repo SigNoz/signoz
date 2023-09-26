@@ -8,7 +8,6 @@ import {
 } from 'lib/query/transformQueryBuilderData';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -53,8 +52,6 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 		(currentString: string) => {
 			const [aggregator = '', op = '', ...restValue] = currentString.split(' ');
 			let newOptions: SelectOption<string, string>[] = [];
-
-			console.log({ op });
 
 			const isAggregatorExist = columnName
 				.toLowerCase()
@@ -137,8 +134,6 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 		parseSearchText(searchText);
 	}, [searchText, parseSearchText]);
 
-	const isMetricsDataSource = formula.dataSource === DataSource.METRICS;
-
 	const resetChanges = useCallback((): void => {
 		setSearchText('');
 		setCurrentFormValue(initialHavingValues);
@@ -180,7 +175,6 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 
 	return (
 		<Select
-			disabled={isMetricsDataSource}
 			getPopupContainer={popupContainer}
 			autoClearSearchValue={false}
 			mode="multiple"

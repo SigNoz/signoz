@@ -50,7 +50,7 @@ export const useQueryOperations: UseQueryOperations = ({
 
 			const mapsOfFilters = isQuery ? mapOfQueryFilters : mapOfFormulaToFilters;
 
-			const result: string[] = mapsOfFilters[dataSource].reduce<string[]>(
+			const result: string[] = mapsOfFilters[dataSource]?.reduce<string[]>(
 				(acc, item) => {
 					if (
 						filterConfigs &&

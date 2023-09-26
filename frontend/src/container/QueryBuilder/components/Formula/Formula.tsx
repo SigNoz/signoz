@@ -23,6 +23,7 @@ export function Formula({
 	formula,
 	filterConfigs,
 	query,
+	isAdditionalFilterEnable,
 }: FormulaProps): JSX.Element {
 	const {
 		removeQueryBuilderEntityByIndex,
@@ -162,15 +163,17 @@ export function Formula({
 					addonBefore="Legend Format"
 				/>
 			</Col>
-			<Col span={24}>
-				<AdditionalFiltersToggler
-					listOfAdditionalFilter={listOfAdditionalFormulaFilters}
-				>
-					<Row gutter={[0, 11]} justify="space-between">
-						{renderAdditionalFilters}
-					</Row>
-				</AdditionalFiltersToggler>
-			</Col>
+			{isAdditionalFilterEnable && (
+				<Col span={24}>
+					<AdditionalFiltersToggler
+						listOfAdditionalFilter={listOfAdditionalFormulaFilters}
+					>
+						<Row gutter={[0, 11]} justify="space-between">
+							{renderAdditionalFilters}
+						</Row>
+					</AdditionalFiltersToggler>
+				</Col>
+			)}
 		</ListItemWrapper>
 	);
 }

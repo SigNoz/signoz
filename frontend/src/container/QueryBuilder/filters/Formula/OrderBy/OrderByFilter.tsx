@@ -1,7 +1,7 @@
 import { Select, Spin } from 'antd';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useMemo } from 'react';
-import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
+import { MetricAggregateOperator } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../../QueryBuilderSearch/config';
@@ -62,8 +62,6 @@ function OrderByFilter({
 		!query.aggregateAttribute.key ||
 		query.aggregateOperator === MetricAggregateOperator.NOOP;
 
-	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
-
 	return (
 		<Select
 			getPopupContainer={popupContainer}
@@ -71,7 +69,7 @@ function OrderByFilter({
 			style={selectStyle}
 			onSearch={handleSearchKeys}
 			showSearch
-			disabled={isMetricsDataSource && isDisabledSelect}
+			disabled={isDisabledSelect}
 			showArrow={false}
 			value={selectedValue}
 			labelInValue

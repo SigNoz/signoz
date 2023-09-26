@@ -9,4 +9,5 @@ export type FormulaProps = {
 	index: number;
 	query: IBuilderQuery;
 	filterConfigs: Partial<QueryBuilderProps['filterConfigs']>;
+	isAdditionalFilterEnable: boolean;
 };
