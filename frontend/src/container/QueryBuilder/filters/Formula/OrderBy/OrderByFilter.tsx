@@ -1,26 +1,31 @@
 import { Select, Spin } from 'antd';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useMemo } from 'react';
-import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
+import { MetricAggregateOperator } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { selectStyle } from '../QueryBuilderSearch/config';
-import { OrderByFilterProps } from './OrderByFilter.interfaces';
-import { useOrderByFilter } from './useOrderByFilter';
+import { selectStyle } from '../../QueryBuilderSearch/config';
+import { OrderByProps } from './types';
+import { useOrderByFormulaFilter } from './useOrderByFormulaFilter';
 
-export function OrderByFilter({
-	query,
+function OrderByFilter({
+	formula,
 	onChange,
-}: OrderByFilterProps): JSX.Element {
+	query,
+}: OrderByProps): JSX.Element {
 	const {
 		debouncedSearchText,
-		selectedValue,
-		aggregationOptions,
-		generateOptions,
 		createOptions,
+		aggregationOptions,
 		handleChange,
 		handleSearchKeys,
-	} = useOrderByFilter({ query, onChange });
+		selectedValue,
+		generateOptions,
+	} = useOrderByFormulaFilter({
+		query,
+		onChange,
+		formula,
+	});
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
@@ -57,8 +62,6 @@ export function OrderByFilter({
 		!query.aggregateAttribute.key ||
 		query.aggregateOperator === MetricAggregateOperator.NOOP;
 
-	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
-
 	return (
 		<Select
 			getPopupContainer={popupContainer}
@@ -66,7 +69,7 @@ export function OrderByFilter({
 			style={selectStyle}
 			onSearch={handleSearchKeys}
 			showSearch
-			disabled={isMetricsDataSource && isDisabledSelect}
+			disabled={isDisabledSelect}
 			showArrow={false}
 			value={selectedValue}
 			labelInValue
@@ -77,3 +80,5 @@ export function OrderByFilter({
 		/>
 	);
 }
+
+export default OrderByFilter;
