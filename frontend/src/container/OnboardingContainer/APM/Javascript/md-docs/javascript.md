@@ -1,6 +1,6 @@
 ## Requirements
 
-- Node.js version 14 or newer ([See here](https://github.com/open-telemetry/opentelemetry-js#supported-runtimes))<br></br>
+- Node.js version 14 or newer ([See here](https://github.com/open-telemetry/opentelemetry-js#supported-runtimes))
 
 ## Send traces to SigNoz Cloud
 
@@ -24,7 +24,7 @@ npm install --save @opentelemetry/auto-instrumentations-node@^0.37.0
 npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
 ```
 
-Step 2. Create tracing.js file<br></br>
+Step 2. Create tracing.js file
 
 You need to configure the endpoint for SigNoz cloud in this file. You also need to configure your service name. In this example, we have used `node_app`.
 
@@ -69,13 +69,13 @@ process.on('SIGTERM', () => {
 
 Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
 
- US -	ingest.us.signoz.cloud:443/v1/traces <br></br>
+ US -	ingest.us.signoz.cloud:443/v1/traces 
 
- IN -	ingest.in.signoz.cloud:443/v1/traces <br></br>
+ IN -	ingest.in.signoz.cloud:443/v1/traces 
 
- EU - ingest.eu.signoz.cloud:443/v1/traces <br></br>
+ EU - ingest.eu.signoz.cloud:443/v1/traces 
 
-Step 3. Run the application<br></br>
+Step 3. Run the application
 
 Make sure you set the `OTEL_EXPORTER_OTLP_HEADERS` env as follows
 
@@ -102,7 +102,7 @@ npm install --save @opentelemetry/auto-instrumentations-node@^0.37.0
 npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
 ```
 
-Step 2. Create tracing.js file<br></br>
+Step 2. Create tracing.js file
 
 You need to configure your service name. In this example, we have used `node_app`.
 
@@ -142,7 +142,7 @@ process.on('SIGTERM', () => {
 });
 ```
 
-Step 3. Run the application<br></br>
+Step 3. Run the application
 
 ```bash
 node -r ./tracing.js app.js
@@ -165,7 +165,7 @@ npm install --save @opentelemetry/auto-instrumentations-node@^0.37.0
 npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
 ```
 
-Step 2. Create tracing.js file<br></br>
+Step 2. Create tracing.js file
 
 You need to configure your service name. In this example, we have used `node_app`.
 
@@ -205,7 +205,7 @@ process.on('SIGTERM', () => {
 });
 ```
 
-Step 3. Run the application<br></br>
+Step 3. Run the application
 ```bash
 node -r ./tracing.js app.js
 ```

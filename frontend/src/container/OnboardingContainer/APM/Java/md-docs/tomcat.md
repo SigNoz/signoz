@@ -42,11 +42,11 @@ export OTEL_RESOURCE_ATTRIBUTES=service.name=<app_name>
 
 Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary accordingly.
 
- US -	ingest.us.signoz.cloud:443 <br></br>
+ US -	ingest.us.signoz.cloud:443 
 
- IN -	ingest.in.signoz.cloud:443 <br></br>
+ IN -	ingest.in.signoz.cloud:443 
 
- EU - ingest.eu.signoz.cloud:443 <br></br>
+ EU - ingest.eu.signoz.cloud:443 
 
 ---
 
@@ -56,12 +56,12 @@ OTel Collector binary helps to collect logs, hostmetrics, resource and infra att
 
 You can find instructions to install OTel Collector binary [here](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/) in your VM. Once you are done setting up your OTel Collector binary, you can follow the below steps for instrumenting your Java application.
 
-Step 1. Download OTel java binary agent<br></br>
+Step 1. Download OTel java binary agent
 ```bash
 wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
 ```
 
-Step 2. Enable the instrumentation agent and run your application<br></br>
+Step 2. Enable the instrumentation agent and run your application
 
 If you run your `.war` package by putting in `webapps` folder, just add `setenv.sh` in your Tomcat `bin` folder.
 
@@ -82,13 +82,13 @@ For Java application deployed on Kubernetes, you need to install OTel Collector 
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry java instrumentation by following the below steps:
 
-1. Download otel java binary<br></br>
+1. Download otel java binary
 
    ```bash
    wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
    ```
 
-2. Enable the instrumentation agent and run your application<br></br>
+2. Enable the instrumentation agent and run your application
 
    If you run your `.war` package by putting in `webapps` folder, just add `setenv.sh` in your Tomcat `bin` folder.
    
