@@ -5,7 +5,7 @@ import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 
 import CodeCopyBtn from './CodeCopyBtn/CodeCopyBtn';
 
-function Pre({ children }: { children: any }): JSX.Element {
+function Pre({ children }: { children: React.ReactNode }): JSX.Element {
 	return (
 		<pre className="code-snippet-container">
 			<CodeCopyBtn>{children}</CodeCopyBtn>
