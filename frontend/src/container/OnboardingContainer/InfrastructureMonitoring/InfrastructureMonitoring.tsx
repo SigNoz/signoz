@@ -1,6 +1,7 @@
 import './InfrastructureMonitoring.styles.scss';
 
-import { MDXProvider } from '@mdx-js/react';
+import { Code, Pre } from 'components/MarkdownRenderer/MarkdownRenderer';
+import ReactMarkdown from 'react-markdown';
 
 import InfraMonitoringDocs from './infraMonitoringDocs.md';
 
@@ -28,9 +29,14 @@ export default function InfrastructureMonitoring({
 						</div>
 					</div>
 
-					<MDXProvider>
-						<InfraMonitoringDocs />
-					</MDXProvider>
+					<ReactMarkdown
+						components={{
+							pre: Pre,
+							code: Code,
+						}}
+					>
+						{InfraMonitoringDocs}
+					</ReactMarkdown>
 				</div>
 			)}
 			{activeStep === 3 && <div> Infra Monitoring Step 3 </div>}

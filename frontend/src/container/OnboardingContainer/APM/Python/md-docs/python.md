@@ -43,11 +43,11 @@ opentelemetry-instrument <your_run_command>
 
 Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
 
- US -	ingest.us.signoz.cloud:443 <br></br>
+ US -	ingest.us.signoz.cloud:443 
 
- IN -	ingest.in.signoz.cloud:443 <br></br>
+ IN -	ingest.in.signoz.cloud:443 
 
- EU - ingest.eu.signoz.cloud:443 <br></br>
+ EU - ingest.eu.signoz.cloud:443 
 
 Note:
 Don’t run app in reloader/hot-reload mode as it breaks instrumentation.

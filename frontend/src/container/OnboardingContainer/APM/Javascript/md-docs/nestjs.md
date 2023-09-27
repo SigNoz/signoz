@@ -26,7 +26,7 @@ npm install --save @opentelemetry/auto-instrumentations-node@^0.37.0
 npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
 ```
 
-Step 2. Create `tracer.ts` file<br></br>
+Step 2. Create `tracer.ts` file
 
 You need to configure the endpoint for SigNoz cloud in this file. You also need to configure your service name. In this example, we have used `sampleNestjsApplication`.
 
@@ -69,11 +69,11 @@ const sdk = new opentelemetry.NodeSDK({
 
 Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary accordingly.
 
- US -	ingest.us.signoz.cloud:443/v1/traces <br></br>
+ US -	ingest.us.signoz.cloud:443/v1/traces 
 
- IN -	ingest.in.signoz.cloud:443/v1/traces <br></br>
+ IN -	ingest.in.signoz.cloud:443/v1/traces 
 
- EU - ingest.eu.signoz.cloud:443/v1/traces <br></br>
+ EU - ingest.eu.signoz.cloud:443/v1/traces 
 
 
 
@@ -84,7 +84,7 @@ const tracer = require('./tracer')
 ```
     
 
-Step 4. Start the tracer<br></br>
+Step 4. Start the tracer
 
 In the `async function boostrap` section of the application code `(Ex —> In main.ts)`, initialize the tracer as follows: 
 
@@ -131,7 +131,7 @@ npm install --save @opentelemetry/auto-instrumentations-node@^0.37.0
 npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
 ```
 
-Step 2. Create `tracer.ts` file<br></br>
+Step 2. Create `tracer.ts` file
 
 You need to configure your service name. In this example, we have used `sampleNestjsApplication`.
 
@@ -180,7 +180,7 @@ const tracer = require('./tracer')
 ```
     
 
-Step 4. Start the tracer<br></br>
+Step 4. Start the tracer
 
 In the `async function boostrap` section of the application code, initialize the tracer as follows: 
 
@@ -219,7 +219,7 @@ npm install --save @opentelemetry/auto-instrumentations-node@^0.37.0
 npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
 ```
 
-Step 2. Create `tracer.ts` file<br></br>
+Step 2. Create `tracer.ts` file
 
 You need to configure your service name. In this example, we have used `sampleNestjsApplication`.
 
@@ -268,7 +268,7 @@ const tracer = require('./tracer')
 ```
     
 
-Step 4. Start the tracer<br></br>
+Step 4. Start the tracer
 
 In the `async function boostrap` section of the application code, initialize the tracer as follows: 
 

@@ -71,11 +71,11 @@ service:
 
 Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
 
-US - ingest.us.signoz.cloud:443 <br></br>
+US - ingest.us.signoz.cloud:443 
 
-IN - ingest.in.signoz.cloud:443 <br></br>
+IN - ingest.in.signoz.cloud:443 
 
-EU - ingest.eu.signoz.cloud:443 <br></br>
+EU - ingest.eu.signoz.cloud:443 
 
 To enable a new OpenTelemetry receiver, follow the steps below:
 
