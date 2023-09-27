@@ -91,18 +91,8 @@ const config = {
 				exclude: /node_modules/,
 			},
 			{
-				test: /\.mdx?$/,
-				use: [
-					// `babel-loader` is optional:
-					{ loader: 'babel-loader', options: {} },
-					{
-						loader: '@mdx-js/loader',
-						/** @type {import('@mdx-js/loader').Options} */
-						options: {
-							/* jsxImportSource: …, otherOptions… */
-						},
-					},
-				],
+				test: /\.md$/,
+				use: 'raw-loader',
 			},
 			{
 				test: /\.css$/,

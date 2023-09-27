@@ -1,4 +1,4 @@
-export const FILTERS = {
+export const ORDERBY_FILTERS = {
 	ASC: 'asc',
 	DESC: 'desc',
 };

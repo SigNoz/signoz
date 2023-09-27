@@ -36,6 +36,7 @@ jobs:
         run: |
           echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > frontend/.env
           echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> frontend/.env
+          echo 'CLARITY_PROJECT_ID="${{ secrets.CLARITY_PROJECT_ID }}"' >> frontend/.env
       - name: Install dependencies
         run: cd frontend && yarn install
       - name: Run ESLint

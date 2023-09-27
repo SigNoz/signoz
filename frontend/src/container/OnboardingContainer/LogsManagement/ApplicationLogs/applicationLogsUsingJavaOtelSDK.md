@@ -13,7 +13,7 @@ The command for it will look like
 OTEL_LOGS_EXPORTER=otlp OTEL_EXPORTER_OTLP_ENDPOINT="http://<IP of SigNoz Backend>:4317" OTEL_RESOURCE_ATTRIBUTES=service.name=<app_name> java -javaagent:/path/opentelemetry-javaagent.jar -jar  <myapp>.jar
 ```
 
-<br></br>
+
 
 In the below example we will configure a java application to send logs to SigNoz.
 

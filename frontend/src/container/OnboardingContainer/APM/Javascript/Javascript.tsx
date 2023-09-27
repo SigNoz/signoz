@@ -1,9 +1,10 @@
 import './Javascript.styles.scss';
 
-import { MDXProvider } from '@mdx-js/react';
 import { Form, Input, Select } from 'antd';
+import { Code, Pre } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { trackEvent } from 'utils/segmentAnalytics';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -24,7 +25,9 @@ export default function Javascript({
 	activeStep: number;
 }): JSX.Element {
 	const [selectedFrameWork, setSelectedFrameWork] = useState('express');
-
+	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(
+		ExpressDocs,
+	);
 	const [form] = Form.useForm();
 
 	useEffect(() => {
@@ -35,14 +38,19 @@ export default function Javascript({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedFrameWork]);
 
-	const renderDocs = (): JSX.Element => {
+	const handleFrameworkChange = (selectedFrameWork: string): void => {
+		setSelectedFrameWork(selectedFrameWork);
+
 		switch (selectedFrameWork) {
 			case 'nodejs':
-				return <JavascriptDocs />;
+				setSelectedFrameWorkDocs(JavascriptDocs);
+				break;
 			case 'nestjs':
-				return <NestJsDocs />;
+				setSelectedFrameWorkDocs(NestJsDocs);
+				break;
 			default:
-				return <ExpressDocs />;
+				setSelectedFrameWorkDocs(ExpressDocs);
+				break;
 		}
 	};
 
@@ -67,7 +75,7 @@ export default function Javascript({
 								defaultValue="express"
 								style={{ minWidth: 120 }}
 								placeholder="Select Framework"
-								onChange={(value): void => setSelectedFrameWork(value)}
+								onChange={(value): void => handleFrameworkChange(value)}
 								options={[
 									{
 										value: 'nodejs',
@@ -108,7 +116,14 @@ export default function Javascript({
 					</div>
 
 					<div className="content-container">
-						<MDXProvider>{renderDocs()}</MDXProvider>
+						<ReactMarkdown
+							components={{
+								pre: Pre,
+								code: Code,
+							}}
+						>
+							{selectedFrameWorkDocs}
+						</ReactMarkdown>
 					</div>
 				</div>
 			)}
