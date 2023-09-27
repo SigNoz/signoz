@@ -143,7 +143,15 @@ const config = {
 					// Translates CSS into CommonJS
 					cssLoader,
 					// Compiles Sass to CSS
-					sassLoader,
+					{
+						loader: sassLoader,
+						options: {
+							sassOptions: {
+								indentWidth: 4,
+								includePaths: ['./src'],
+							},
+						},
+					},
 				],
 			},
 		],

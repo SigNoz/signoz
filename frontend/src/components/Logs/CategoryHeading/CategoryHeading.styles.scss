@@ -1,5 +1,5 @@
-@import '@signozhq/ui-core/packages/token/build/tokens/variables.scss';
+@use 'scss/main';
 
 .category-heading-text {
-    font-size: $size-font-normal;
+    font-size: main.$size-font-normal;
 }
