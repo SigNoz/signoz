@@ -10,8 +10,8 @@ Based on your application environment, you can choose the setup below to send tr
 
 From VMs, there are two ways to send data to SigNoz Cloud.
 
-- [Send traces directly to SigNoz Cloud](#send-traces-directly-to-signoz-cloud)
-- [Send traces via OTel Collector binary](#send-traces-via-otel-collector-binary) (recommended)
+- Send traces directly to SigNoz Cloud (quick start)
+- Send traces via OTel Collector binary (recommended)
 
 #### **Send traces directly to SigNoz Cloud**
 
@@ -73,7 +73,7 @@ Step 2. Add automatic instrumentation
 opentelemetry-bootstrap --action=install
 ```
 
-Step 3. To run your application and send data to collector in same VM:
+Step 3. To run your application and send data to collector in same VM
 
 ```bash
 OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
@@ -118,7 +118,7 @@ Step 2. Add automatic instrumentation
 opentelemetry-bootstrap --action=install
 ```
 
-Step 3. Run your application:
+Step 3. Run your application
 
 ```bash
 OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \

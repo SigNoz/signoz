@@ -12,8 +12,8 @@ Based on your application environment, you can choose the setup below to send tr
 
 From VMs, there are two ways to send data to SigNoz Cloud.
 
-- [Send traces directly to SigNoz Cloud](#send-traces-directly-to-signoz-cloud)
-- [Send traces via OTel Collector binary](#send-traces-via-otel-collector-binary) (recommended)
+- Send traces directly to SigNoz Cloud (quick start)
+- Send traces via OTel Collector binary (recommended)
 
 #### **Send traces directly to SigNoz Cloud**
 OpenTelemetry Java agent can send traces directly to SigNoz Cloud.
@@ -82,24 +82,24 @@ For Java application deployed on Kubernetes, you need to install OTel Collector 
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry java instrumentation by following the below steps:
 
-1. Download otel java binary
+Step 1. Download otel java binary
 
-   ```bash
-   wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
-   ```
+```bash
+wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
+```
 
-2. Enable the instrumentation agent and run your application
+Step 2. Enable the instrumentation agent and run your application
 
-   If you run your `.war` package by putting in `webapps` folder, just add `setenv.sh` in your Tomcat `bin` folder.
-   
-   This should set the environment variable and start sending telemetry data to SigNoz Cloud.
-   
-   ```bash
-   export CATALINA_OPTS="$CATALINA_OPTS -javaagent:/<path>/opentelemetry-javaagent.jar"
-   ```
+If you run your `.war` package by putting in `webapps` folder, just add `setenv.sh` in your Tomcat `bin` folder.
 
-   - `<path>` - Update it to the path of your downloaded Java JAR agent.
+This should set the environment variable and start sending telemetry data to SigNoz Cloud.
 
-3. Make sure to dockerise your application along with OpenTelemetry instrumentation.
+```bash
+export CATALINA_OPTS="$CATALINA_OPTS -javaagent:/<path>/opentelemetry-javaagent.jar"
+```
+
+- `<path>` - Update it to the path of your downloaded Java JAR agent.
+
+Step 3. Make sure to dockerise your application along with OpenTelemetry instrumentation.
 
 You can validate if your application is sending traces to SigNoz cloud by following the instructions [here](https://signoz.io/docs/instrumentation/tomcat/#validating-instrumentation-by-checking-for-traces).
