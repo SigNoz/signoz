@@ -1,5 +1,5 @@
 import { DeleteOutlined } from '@ant-design/icons';
-import { Col, Row, Typography } from 'antd';
+import { Col, Row, Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
@@ -8,7 +8,11 @@ import { MouseEvent, useCallback } from 'react';
 
 import { MenuItemContainer } from './styles';
 import { MenuItemLabelGeneratorProps } from './types';
-import { deleteViewHandler, getViewDetailsUsingViewKey } from './utils';
+import {
+	deleteViewHandler,
+	getViewDetailsUsingViewKey,
+	trimViewName,
+} from './utils';
 
 function MenuItemGenerator({
 	viewName,
@@ -71,12 +75,16 @@ function MenuItemGenerator({
 		});
 	};
 
+	const newViewName = trimViewName(viewName);
+
 	return (
 		<MenuItemContainer onClick={onLabelClickHandler}>
 			<Row justify="space-between">
 				<Col span={22}>
 					<Row>
-						<Typography.Text strong>{viewName}</Typography.Text>
+						<Tooltip title={viewName}>
+							<Typography.Text strong>{newViewName}</Typography.Text>
+						</Tooltip>
 					</Row>
 					<Row>
 						<Typography.Text type="secondary">Created by {createdBy}</Typography.Text>

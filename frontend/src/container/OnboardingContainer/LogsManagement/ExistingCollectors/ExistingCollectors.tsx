@@ -1,8 +1,10 @@
-import { MDXProvider } from '@mdx-js/react';
 import { Select } from 'antd';
+import { Code, Pre } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { trackEvent } from 'utils/segmentAnalytics';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import FluentBit from './md-docs/fluentBit.md';
 import FluentD from './md-docs/fluentD.md';
@@ -16,6 +18,7 @@ enum FrameworksMap {
 
 export default function ExistingCollectors(): JSX.Element {
 	const [selectedFrameWork, setSelectedFrameWork] = useState('fluent_d');
+	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(FluentD);
 
 	useEffect(() => {
 		// on language select
@@ -25,14 +28,19 @@ export default function ExistingCollectors(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedFrameWork]);
 
-	const renderDocs = (): JSX.Element => {
+	const handleFrameworkChange = (selectedFrameWork: string): void => {
+		setSelectedFrameWork(selectedFrameWork);
+
 		switch (selectedFrameWork) {
 			case 'fluent_d':
-				return <FluentD />;
+				setSelectedFrameWorkDocs(FluentD);
+				break;
 			case 'fluent_bit':
-				return <FluentBit />;
+				setSelectedFrameWorkDocs(FluentBit);
+				break;
 			default:
-				return <LogStashDocs />;
+				setSelectedFrameWorkDocs(LogStashDocs);
+				break;
 		}
 	};
 
@@ -51,10 +59,11 @@ export default function ExistingCollectors(): JSX.Element {
 					<div className="label"> Select Framework </div>
 
 					<Select
+						getPopupContainer={popupContainer}
 						defaultValue="fluent_d"
 						style={{ minWidth: 120 }}
 						placeholder="Select Framework"
-						onChange={(value): void => setSelectedFrameWork(value)}
+						onChange={(value): void => handleFrameworkChange(value)}
 						options={[
 							{
 								value: 'fluent_d',
@@ -74,7 +83,14 @@ export default function ExistingCollectors(): JSX.Element {
 			</div>
 
 			<div className="content-container">
-				<MDXProvider>{renderDocs()}</MDXProvider>
+				<ReactMarkdown
+					components={{
+						pre: Pre,
+						code: Code,
+					}}
+				>
+					{selectedFrameWorkDocs}
+				</ReactMarkdown>
 			</div>
 		</div>
 	);

@@ -1,3 +1,5 @@
+import { TagFilter } from '../queryBuilder/queryBuilderData';
+
 export interface ProcessorData {
 	type: string;
 	id?: string;
@@ -23,7 +25,7 @@ export interface PipelineData {
 	description?: string;
 	createdBy: string;
 	enabled: boolean;
-	filter: string;
+	filter: TagFilter;
 	id?: string;
 	name: string;
 	orderId: number;

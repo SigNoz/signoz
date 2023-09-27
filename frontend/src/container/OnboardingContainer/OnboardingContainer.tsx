@@ -43,21 +43,21 @@ const useCases = {
 		id: ModulesMap.APM,
 		title: 'Application Monitoring',
 		desc:
-			'Monitor performance of your applications & troubleshoot problems by installing within your infra.',
+			'Monitor application metrics like p99 latency, error rates, external API calls, and db calls.',
 		stepDesc: defaultStepDesc,
 	},
 	LogsManagement: {
 		id: ModulesMap.LogsManagement,
 		title: 'Logs Management',
 		desc:
-			'Easily search and filter logs with query builder and automatically detect logs from K8s cluster.',
+			'Easily filter and query logs, build dashboards and alerts based on attributes in logs',
 		stepDesc: 'Choose the logs that you want to receive on SigNoz',
 	},
 	InfrastructureMonitoring: {
 		id: ModulesMap.InfrastructureMonitoring,
 		title: 'Infrastructure Monitoring',
 		desc:
-			'Easily search and filter logs with query builder and automatically detect logs from K8s cluster.',
+			'Monitor Kubernetes infrastructure metrics, hostmetrics, or metrics of any third-party integration',
 		stepDesc: defaultStepDesc,
 	},
 };

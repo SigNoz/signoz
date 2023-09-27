@@ -4,6 +4,7 @@ import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import { PipelineIndexIcon } from '../AddNewProcessor/styles';
 import { ColumnDataStyle, ListDataStyle, ProcessorIndexIcon } from '../styles';
+import PipelineFilterPreview from './PipelineFilterPreview';
 
 const componentMap: ComponentMap = {
 	orderId: ({ record }) => <PipelineIndexIcon>{record}</PipelineIndexIcon>,
@@ -14,6 +15,7 @@ const componentMap: ComponentMap = {
 	),
 	id: ({ record }) => <ProcessorIndexIcon>{record}</ProcessorIndexIcon>,
 	name: ({ record }) => <ListDataStyle>{record}</ListDataStyle>,
+	filter: ({ record }) => <PipelineFilterPreview filter={record} />,
 };
 
 function TableComponents({
@@ -31,7 +33,9 @@ type ComponentMap = {
 	[key: string]: React.FC<{ record: Record }>;
 };
 
-export type Record = PipelineData['orderId'] & ProcessorData;
+export type Record = PipelineData['orderId'] &
+	PipelineData['filter'] &
+	ProcessorData;
 
 interface TableComponentsProps {
 	columnKey: string;
