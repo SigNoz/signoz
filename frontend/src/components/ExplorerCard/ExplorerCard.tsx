@@ -30,6 +30,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { ExploreHeaderToolTip, SaveButtonText } from './constants';
 import MenuItemGenerator from './MenuItemGenerator';
@@ -170,6 +171,7 @@ function ExplorerCard({
 							{viewsData?.data.data && viewsData?.data.data.length && (
 								<Space>
 									<Select
+										getPopupContainer={popupContainer}
 										loading={isLoading || isRefetching}
 										showSearch
 										placeholder="Select a view"
@@ -204,6 +206,7 @@ function ExplorerCard({
 								</Button>
 							)}
 							<Popover
+								getPopupContainer={popupContainer}
 								placement="bottomLeft"
 								trigger="click"
 								content={

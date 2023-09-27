@@ -9,9 +9,9 @@ export type OrderByFilterProps = {
 };
 
 export type OrderByFilterValue = {
-	disabled: boolean | undefined;
+	disabled?: boolean;
 	key: string;
 	label: string;
-	title: string | undefined;
+	title?: string;
 	value: string;
 };

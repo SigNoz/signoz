@@ -13,6 +13,7 @@ export interface ILog {
 	attributes_string: Record<string, never>;
 	attributesInt: Record<string, never>;
 	attributesFloat: Record<string, never>;
+	severity_text: string;
 }
 
 type OmitAttributesResources = Pick<

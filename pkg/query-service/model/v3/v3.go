@@ -138,6 +138,24 @@ func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
 	}
 }
 
+func (a AggregateOperator) IsRateOperator() bool {
+	switch a {
+	case AggregateOperatorRate,
+		AggregateOperatorSumRate,
+		AggregateOperatorAvgRate,
+		AggregateOperatorMinRate,
+		AggregateOperatorMaxRate,
+		AggregateOperatorRateSum,
+		AggregateOperatorRateAvg,
+		AggregateOperatorRateMin,
+		AggregateOperatorRateMax:
+		return true
+
+	default:
+		return false
+	}
+}
+
 type ReduceToOperator string
 
 const (
@@ -392,27 +410,21 @@ func (c *CompositeQuery) Validate() error {
 		return fmt.Errorf("composite query must contain at least one query")
 	}
 
-	if c.BuilderQueries != nil {
-		for name, query := range c.BuilderQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("builder query %s is invalid: %w", name, err)
-			}
+	for name, query := range c.BuilderQueries {
+		if err := query.Validate(); err != nil {
+			return fmt.Errorf("builder query %s is invalid: %w", name, err)
 		}
 	}
 
-	if c.ClickHouseQueries != nil {
-		for name, query := range c.ClickHouseQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
-			}
+	for name, query := range c.ClickHouseQueries {
+		if err := query.Validate(); err != nil {
+			return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
 		}
 	}
 
-	if c.PromQueries != nil {
-		for name, query := range c.PromQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("prom query %s is invalid: %w", name, err)
-			}
+	for name, query := range c.PromQueries {
+		if err := query.Validate(); err != nil {
+			return fmt.Errorf("prom query %s is invalid: %w", name, err)
 		}
 	}
 
@@ -497,11 +509,9 @@ func (b *BuilderQuery) Validate() error {
 		}
 	}
 
-	if b.SelectColumns != nil {
-		for _, selectColumn := range b.SelectColumns {
-			if err := selectColumn.Validate(); err != nil {
-				return fmt.Errorf("select column is invalid %w", err)
-			}
+	for _, selectColumn := range b.SelectColumns {
+		if err := selectColumn.Validate(); err != nil {
+			return fmt.Errorf("select column is invalid %w", err)
 		}
 	}
 

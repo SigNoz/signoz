@@ -1,7 +1,10 @@
 import { ConfigProvider } from 'antd';
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import { useThemeConfig } from 'hooks/useDarkMode';
@@ -75,14 +78,26 @@ function App(): JSX.Element {
 	});
 
 	useEffect(() => {
-		if (isLoggedInState && user && user.userId && user.email) {
+		const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
+
+		if (
+			isLoggedInState &&
+			user &&
+			user.userId &&
+			user.email &&
+			!isIdentifiedUser
+		) {
+			setLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER, 'true');
+
 			window.analytics.identify(user?.email, {
 				email: user?.email,
 				name: user?.name,
 			});
+
+			window.clarity('identify', user.email, user.name);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isLoggedInState]);
+	}, [isLoggedInState, user]);
 
 	useEffect(() => {
 		trackPageView(pathname);

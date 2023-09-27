@@ -1,11 +1,7 @@
 ## Collect Syslogs in SigNoz cloud
 
-If you don’t already have a SigNoz cloud account, you can sign up [here](https://signoz.io/teams/).
-
-<Tabs>
-<TabItem value="VM" label="VM" default>
-
 - Add otel collector binary to your VM by following this [guide](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/).
+
 - Add the syslog reciever to `config.yaml` to otel-collector.
 
   ```yaml {2-10}
@@ -22,7 +18,7 @@ If you don’t already have a SigNoz cloud account, you can sign up [here](https
   ```
 
   Here we are collecting the logs and moving message from attributes to body using operators that are available.
-  You can read more about operators [here](./logs.md#operators-for-parsing-and-manipulating-logs).
+  You can read more about operators [here](https://signoz.io/docs/userguide/logs/#operators-for-parsing-and-manipulating-logs).
 
   For more configurations that are available for syslog receiver please check [here](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/syslogreceiver).
 
@@ -70,14 +66,10 @@ If you don’t already have a SigNoz cloud account, you can sign up [here](https
           action.resumeRetryCount="10"
           queue.type="linkedList" queue.size="10000" template="UTCTraditionalForwardFormat")
   ```
-
-  So that you have retires and queue in place to de-couple the sending from the other logging action.
-
-  The value of `target` might vary depending on where SigNoz is deployed, since it is deployed on the same host I am using `0.0.0.0` for more help you can visit [here](../install/troubleshooting.md#signoz-otel-collector-address-grid).
+  So that you have retries and queue in place to de-couple the sending from other logging action. Also, we are assuming that you are running the otel binary on the same host. If not, the value of target might change depending on your environment.
 
 - Now restart your rsyslog service by running `sudo systemctl restart rsyslog.service`
-- You can check the status of service by running `sudo systemctl status rsyslog.service`
-- If there are no errors your logs will be visible on SigNoz UI.
 
-</TabItem>
-</Tabs>
+- You can check the status of service by running `sudo systemctl status rsyslog.service`
+
+- If there are no errors your logs will be visible on SigNoz UI.
