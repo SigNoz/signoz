@@ -1,3 +1,7 @@
+## Send metrics from any third-party integrations
+
+This document helps you to send metrics from any third-party integrations such as RabbitMQ, Nginx, MySQL, etc.
+
 There are two ways in which you can send metrics to SigNoz using OpenTelemetry:
 
 - From your application
