@@ -4,7 +4,7 @@ import { IOption } from 'hooks/useResourceAttribute/types';
 import isEqual from 'lodash-es/isEqual';
 import uniqWith from 'lodash-es/uniqWith';
 import { parse } from 'papaparse';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -29,10 +29,8 @@ export const useOrderByFormulaFilter = ({
 
 	const debouncedSearchText = useDebounce(searchText, DEBOUNCE_DELAY);
 
-	const handleSearchKeys = useCallback(
-		(searchText: string): void => setSearchText(searchText),
-		[],
-	);
+	const handleSearchKeys = (searchText: string): void =>
+		setSearchText(searchText);
 
 	const handleChange = (values: IOption[]): void => {
 		const validResult = getValidOrderByResult(values);
@@ -44,7 +42,7 @@ export const useOrderByFormulaFilter = ({
 			if (!match) {
 				return {
 					columnName: item.value,
-					order: 'asc',
+					order: ORDERBY_FILTERS.ASC,
 				};
 			}
 
@@ -53,9 +51,7 @@ export const useOrderByFormulaFilter = ({
 			const columnNameValue =
 				columnName === SIGNOZ_VALUE ? SIGNOZ_VALUE : columnName;
 
-			const orderValue = order ?? 'asc';
-
-			console.log({ columnNameValue, orderValue });
+			const orderValue = order ?? ORDERBY_FILTERS.ASC;
 
 			return {
 				columnName: columnNameValue,
@@ -83,10 +79,8 @@ export const useOrderByFormulaFilter = ({
 
 	const selectedValue = transformToOrderByStringValuesByFormula(formula);
 
-	const createOptions = useCallback(
-		(data: BaseAutocompleteData[]): IOption[] => mapLabelValuePairs(data).flat(),
-		[],
-	);
+	const createOptions = (data: BaseAutocompleteData[]): IOption[] =>
+		mapLabelValuePairs(data).flat();
 
 	const customValue: IOption[] = useMemo(() => {
 		if (!searchText) return [];
@@ -103,28 +97,25 @@ export const useOrderByFormulaFilter = ({
 		];
 	}, [searchText]);
 
-	const generateOptions = useCallback(
-		(options: IOption[]): IOption[] => {
-			const currentCustomValue = options.find(
-				(keyOption) =>
-					getRemoveOrderFromValue(keyOption.value) === debouncedSearchText,
-			)
-				? []
-				: customValue;
+	const generateOptions = (options: IOption[]): IOption[] => {
+		const currentCustomValue = options.find(
+			(keyOption) =>
+				getRemoveOrderFromValue(keyOption.value) === debouncedSearchText,
+		)
+			? []
+			: customValue;
 
-			const result = [...currentCustomValue, ...options];
+		const result = [...currentCustomValue, ...options];
 
-			const uniqResult = uniqWith(result, isEqual);
+		const uniqResult = uniqWith(result, isEqual);
 
-			return uniqResult.filter(
-				(option) =>
-					!getLabelFromValue(selectedValue).includes(
-						getRemoveOrderFromValue(option.value),
-					),
-			);
-		},
-		[customValue, debouncedSearchText, selectedValue],
-	);
+		return uniqResult.filter(
+			(option) =>
+				!getLabelFromValue(selectedValue).includes(
+					getRemoveOrderFromValue(option.value),
+				),
+		);
+	};
 
 	return {
 		searchText,

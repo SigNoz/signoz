@@ -85,14 +85,15 @@ export const QueryBuilder = memo(function QueryBuilder({
 							(query) => query.dataSource === DataSource.METRICS,
 						);
 
+						const query =
+							currentQuery.builder.queryData[index] ||
+							currentQuery.builder.queryData[0];
+
 						return (
 							<Col key={formula.queryName} span={24}>
 								<Formula
 									filterConfigs={filterConfigs}
-									query={
-										currentQuery.builder.queryData[index] ||
-										currentQuery.builder.queryData[0]
-									}
+									query={query}
 									isAdditionalFilterEnable={isAllMetricDataSource}
 									formula={formula}
 									index={index}

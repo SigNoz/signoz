@@ -109,22 +109,19 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 		[handleUpdateTag],
 	);
 
-	const handleSearch = useCallback(
-		(search: string): void => {
-			const trimmedSearch = search.replace(/\s\s+/g, ' ').trimStart();
+	const handleSearch = (search: string): void => {
+		const trimmedSearch = search.replace(/\s\s+/g, ' ').trimStart();
 
-			const currentSearch = isMulti
-				? trimmedSearch
-				: trimmedSearch.split(' ').slice(0, 3).join(' ');
+		const currentSearch = isMulti
+			? trimmedSearch
+			: trimmedSearch.split(' ').slice(0, 3).join(' ');
 
-			const isValidSearch = isValidHavingValue(currentSearch);
+		const isValidSearch = isValidHavingValue(currentSearch);
 
-			if (isValidSearch) {
-				setSearchText(currentSearch);
-			}
-		},
-		[isMulti],
-	);
+		if (isValidSearch) {
+			setSearchText(currentSearch);
+		}
+	};
 
 	useEffect(() => {
 		setLocalValues(transformHavingToStringValue(having || []));
@@ -134,11 +131,11 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 		parseSearchText(searchText);
 	}, [searchText, parseSearchText]);
 
-	const resetChanges = useCallback((): void => {
+	const resetChanges = (): void => {
 		setSearchText('');
 		setCurrentFormValue(initialHavingValues);
 		setOptions(aggregatorOptions);
-	}, [aggregatorOptions]);
+	};
 
 	const handleDeselect = (value: string): void => {
 		const result = localValues.filter((item) => item !== value);
@@ -157,21 +154,18 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 		setSearchText(isClearSearch ? '' : currentValue);
 	};
 
-	const handleChange = useCallback(
-		(values: string[]): void => {
-			const having: Having[] = values.map(transformFromStringToHaving);
+	const handleChange = (values: string[]): void => {
+		const having: Having[] = values.map(transformFromStringToHaving);
 
-			const isSelectable =
-				currentFormValue.value.length > 0 &&
-				currentFormValue.value.every((value) => !!value);
+		const isSelectable =
+			currentFormValue.value.length > 0 &&
+			currentFormValue.value.every((value) => !!value);
 
-			if (isSelectable) {
-				onChange(having);
-				resetChanges();
-			}
-		},
-		[currentFormValue, resetChanges, onChange],
-	);
+		if (isSelectable) {
+			onChange(having);
+			resetChanges();
+		}
+	};
 
 	return (
 		<Select
