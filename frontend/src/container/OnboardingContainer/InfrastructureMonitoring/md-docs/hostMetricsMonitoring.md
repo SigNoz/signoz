@@ -3,8 +3,8 @@ You can collect Hostmetrics from your VM and send it to SigNoz cloud using OpenT
 
 Steps to send hostmetrics to SigNoz Cloud:
 
-- Install OpenTelemetry Collector binary agent. Find instructions [here](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/#setup-otel-collector-as-agent).
+- Install OpenTelemetry Collector binary agent. Please find instructions [here](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/#setup-otel-collector-as-agent).
 
-- Import Hostmetrics Dashboard in SigNoz. Find instructions [here](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/#hostmetrics-dashboard).
+- Import Hostmetrics Dashboard in SigNoz. Please find instructions [here](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/#hostmetrics-dashboard).
 
 Learn how to create dashboards and panels [here](https://signoz.io/docs/userguide/manage-dashboards-and-panels/).

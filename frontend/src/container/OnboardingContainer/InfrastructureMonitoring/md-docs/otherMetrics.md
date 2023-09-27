@@ -9,8 +9,8 @@ There are two ways in which you can send metrics to SigNoz using OpenTelemetry:
 
 In this document, we will cover how to send metrics from OpenTelemetry Collector. The Collector is a swiss-army knife that can collect metrics from various sources and send them to SigNoz.
 
-- [Enable a Specific Metric Receiver](#enable-a-specific-metric-receiver)
-- [Enable a Prometheus Receiver](#enable-a-prometheus-receiver)
+- Enable a Specific Metric Receiver
+- Enable a Prometheus Receiver
 
 ## Enable a Specific Metric Receiver
 
