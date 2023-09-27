@@ -14,7 +14,6 @@ function Pre({ children }: { children: any }): JSX.Element {
 	);
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 function Code({
 	node,
 	inline,

@@ -7,18 +7,21 @@ import { useState } from 'react';
 export default function CodeCopyBtn({
 	children,
 }: {
-	children: any;
+	children: React.ReactNode;
 }): JSX.Element {
 	const [isSnippetCopied, setIsSnippetCopied] = useState(false);
 
 	const handleClick = (): void => {
-		navigator.clipboard.writeText(children[0].props.children[0]);
-		console.log(children[0].props.children[0]);
-		setIsSnippetCopied(true);
-		setTimeout(() => {
-			setIsSnippetCopied(false);
-		}, 1000);
+		if (children && Array.isArray(children)) {
+			setIsSnippetCopied(true);
+			navigator.clipboard.writeText(children[0].props.children[0]).finally(() => {
+				setTimeout(() => {
+					setIsSnippetCopied(false);
+				}, 1000);
+			});
+		}
 	};
+
 	return (
 		<div className={cx('code-copy-btn', isSnippetCopied ? 'copied' : '')}>
 			<button type="button" onClick={handleClick}>
