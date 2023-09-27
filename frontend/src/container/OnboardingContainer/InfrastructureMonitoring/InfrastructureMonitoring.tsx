@@ -133,9 +133,9 @@ export default function InfrastructureMonitoring({
 								<div> {logType.name} </div>
 							</div>
 						))}
-
-						{getHeaderBasedOnType()}
 					</div>
+
+					{getHeaderBasedOnType()}
 
 					<div className="content-container">
 						<ReactMarkdown
