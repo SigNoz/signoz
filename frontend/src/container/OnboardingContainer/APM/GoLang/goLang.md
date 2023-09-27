@@ -4,14 +4,14 @@
 
 From VMs, there are two ways to send data to SigNoz Cloud.
 
-- [Send traces directly to SigNoz Cloud](#send-traces-directly-to-signoz-cloud)
-- [Send traces via OTel Collector binary](#send-traces-via-otel-collector-binary) (recommended)
+- Send traces directly to SigNoz Cloud (quick start)
+- Send traces via OTel Collector binary (recommended)
 
 #### **Send traces directly to SigNoz Cloud**
 
 1. **Install Dependencies**
    
-   Dependencies related to OpenTelemetry exporter and SDK have to be installed first. Note that we are assuming you are using `gin` request router. If you are using other request routers, check out the [corresponding package](#request-routers).
+   Dependencies related to OpenTelemetry exporter and SDK have to be installed first. Note that we are assuming you are using `gin` request router. If you are using other request routers, check out the [corresponding package](https://signoz.io/docs/instrumentation/golang/#request-routers).
    
    Run the below commands after navigating to the application source folder:
     
@@ -163,7 +163,7 @@ You can find instructions to install OTel Collector binary [here](https://signoz
 
 1. **Install Dependencies**
    
-   Dependencies related to OpenTelemetry exporter and SDK have to be installed first. Note that we are assuming you are using `gin` request router. If you are using other request routers, check out the [corresponding package](#request-routers).
+   Dependencies related to OpenTelemetry exporter and SDK have to be installed first. Note that we are assuming you are using `gin` request router. If you are using other request routers, check out the [corresponding package](https://signoz.io/docs/instrumentation/golang/#request-routers).
    
    Run the below commands after navigating to the application source folder:
     
@@ -301,7 +301,7 @@ Once you have set up OTel Collector agent, you can proceed with OpenTelemetry Go
 
 1. **Install Dependencies**
    
-   Dependencies related to OpenTelemetry exporter and SDK have to be installed first. Note that we are assuming you are using `gin` request router. If you are using other request routers, check out the [corresponding package](#request-routers).
+   Dependencies related to OpenTelemetry exporter and SDK have to be installed first. Note that we are assuming you are using `gin` request router. If you are using other request routers, check out the [corresponding package](https://signoz.io/docs/instrumentation/golang/#request-routers).
    
    Run the below commands after navigating to the application source folder:
     

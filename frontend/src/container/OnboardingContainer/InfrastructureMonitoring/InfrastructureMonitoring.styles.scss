@@ -1,6 +1,18 @@
 .infrastructure-monitoring-module-container {
 	padding: 48px 0;
 
+	.module-header {
+		h1 {
+			font-size: 24px;
+			font-weight: 500;
+		}
+
+		h4 {
+			font-size: 14px;
+			font-weight: 300;
+		}
+	}
+
 	.content-container {
 		.heading {
 			.title {
@@ -21,15 +33,13 @@
 				flex-direction: column;
 			}
 		}
+	}
 
-		h1 {
-			font-size: 24px;
-			font-weight: 500;
-		}
-
-		h4 {
-			font-size: 14px;
-			font-weight: 300;
-		}
+	.header {
+		display: flex;
+		gap: 16px;
+		justify-content: flex-start;
+		align-items: center;
+		margin: 16px 0;
 	}
 }

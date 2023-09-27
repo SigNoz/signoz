@@ -12,8 +12,8 @@ Based on your application environment, you can choose the setup below to send tr
 
 From VMs, there are two ways to send data to SigNoz Cloud.
 
-- [Send traces directly to SigNoz Cloud](#send-traces-directly-to-signoz-cloud)
-- [Send traces via OTel Collector binary](#send-traces-via-otel-collector-binary) (recommended)
+- Send traces directly to SigNoz Cloud (quick start)
+- Send traces via OTel Collector binary (recommended)
 
 #### **Send traces directly to SigNoz Cloud**
 
@@ -31,11 +31,12 @@ Step 2. Run your application
 OTEL_RESOURCE_ATTRIBUTES=service.name=<app_name> \
 OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>" \
 OTEL_EXPORTER_OTLP_ENDPOINT=https://ingest.{region}.signoz.cloud:443 \
-java -javaagent:$PWD/opentelemetry-javaagent.jar -jar <my-app>.jar
+java -javaagent:<path>/opentelemetry-javaagent.jar -jar <my-app>.jar
 ```
 
 - `<app_name>` is the name for your application
 - `<SIGNOZ_INGESTION_KEY>` is the API token provided by SigNoz. You can find your ingestion key from SigNoz cloud account details sent on your email.
+- `path` - Update it to the path of your downloaded Java JAR agent.
 
 Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
 
@@ -63,11 +64,11 @@ wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releas
 Step 2. Run your application
 
 ```bash
-java -javaagent:$PWD/opentelemetry-javaagent.jar -jar <myapp>.jar
+java -javaagent:<path>/opentelemetry-javaagent.jar -jar <myapp>.jar
 ```
 
 - `<myapp>` is the name of your application jar file
-- In case you download `opentelemetry-javaagent.jar` file in different directory than that of the project, replace `$PWD` with the path of the otel jar file.
+- `path` - Update it to the path of your downloaded Java JAR agent.
 
 ---
 
@@ -77,20 +78,20 @@ For Java application deployed on Kubernetes, you need to install OTel Collector 
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry java instrumentation by following the below steps:
 
-1. Download otel java binary
+Step 1. Download otel java binary
 
-   ```bash
-   wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
-   ```
+```bash
+wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
+```
 
-2. Run your application
+Step 2. Run your application
    
-   ```bash
-   java -javaagent:$PWD/opentelemetry-javaagent.jar -jar <myapp>.jar
-   ```
+```bash
+java -javaagent:<path>/opentelemetry-javaagent.jar -jar <myapp>.jar
+```
 
-   - `<myapp>` is the name of your application jar file
-   - In case you download `opentelemetry-javaagent.jar` file in different directory than that of the project, replace `$PWD` with the path of the otel jar file.
+- `<myapp>` is the name of your application jar file
+- `path` - Update it to the path of your downloaded Java JAR agent.
 
-3. Make sure to dockerise your application along with OpenTelemetry instrumentation.
+Step 3. Make sure to dockerise your application along with OpenTelemetry instrumentation.
   

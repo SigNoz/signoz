@@ -12,8 +12,8 @@ Based on your application environment, you can choose the setup below to send tr
 
 From VMs, there are two ways to send data to SigNoz Cloud.
 
-- [Send traces directly to SigNoz Cloud](#send-traces-directly-to-signoz-cloud)
-- [Send traces via OTel Collector binary](#send-traces-via-otel-collector-binary) (recommended)
+- Send traces directly to SigNoz Cloud (quick start)
+- Send traces via OTel Collector binary (recommended)
 
 #### **Send traces directly to SigNoz Cloud**
 OpenTelemetry Java agent can send traces directly to SigNoz Cloud.
@@ -74,19 +74,19 @@ For Java application deployed on Kubernetes, you need to install OTel Collector 
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry java instrumentation by following the below steps:
 
-1. Download otel java binary
+Step 1. Download otel java binary
 
-   ```bash
-   wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
-   ```
+```bash
+wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
+```
 
-2. Run your application
+Step 2. Run your application
    
-   ```bash
-   java -javaagent:<path>/opentelemetry-javaagent.jar -jar <myapp>.jar
-   ```
+```bash
+java -javaagent:<path>/opentelemetry-javaagent.jar -jar <myapp>.jar
+```
 
-   - `<myapp>` is the name of your application
-   - `<path>` - update it to the path of your downloaded Java JAR agent
+- `<myapp>` is the name of your application
+- `<path>` - update it to the path of your downloaded Java JAR agent
 
-3. Make sure to dockerise your application along with OpenTelemetry instrumentation.
+Step 3. Make sure to dockerise your application along with OpenTelemetry instrumentation.
