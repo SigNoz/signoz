@@ -78,19 +78,10 @@ const config = {
 				use: ['babel-loader'],
 				exclude: /node_modules/,
 			},
+			// Add a rule for Markdown files using raw-loader
 			{
-				test: /\.mdx?$/,
-				use: [
-					// `babel-loader` is optional:
-					{ loader: 'babel-loader', options: {} },
-					{
-						loader: '@mdx-js/loader',
-						/** @type {import('@mdx-js/loader').Options} */
-						options: {
-							/* jsxImportSource: …, otherOptions… */
-						},
-					},
-				],
+				test: /\.md$/,
+				use: 'raw-loader',
 			},
 			{
 				test: /\.css$/,

@@ -2,7 +2,7 @@ import {
 	initialQueriesMap,
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
-import { FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import {
 	BaseAutocompleteData,
 	DataTypes,
@@ -14,7 +14,7 @@ export const defaultLiveQueryDataConfig: Partial<IBuilderQuery> = {
 	aggregateOperator: LogsAggregatorOperator.NOOP,
 	disabled: true,
 	pageSize: 10,
-	orderBy: [{ columnName: 'timestamp', order: FILTERS.DESC }],
+	orderBy: [{ columnName: 'timestamp', order: ORDERBY_FILTERS.DESC }],
 };
 
 type GetDefaultCompositeQueryParams = {

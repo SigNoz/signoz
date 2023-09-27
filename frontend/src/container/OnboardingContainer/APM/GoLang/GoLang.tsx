@@ -1,8 +1,9 @@
 import './GoLang.styles.scss';
 
-import { MDXProvider } from '@mdx-js/react';
 import { Form, Input } from 'antd';
+import { Code, Pre } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
+import ReactMarkdown from 'react-markdown';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import GoLangDocs from './goLang.md';
@@ -44,9 +45,14 @@ export default function GoLang({
 					</div>
 
 					<div className="content-container">
-						<MDXProvider>
-							<GoLangDocs />
-						</MDXProvider>
+						<ReactMarkdown
+							components={{
+								pre: Pre,
+								code: Code,
+							}}
+						>
+							{GoLangDocs}
+						</ReactMarkdown>
 					</div>
 				</div>
 			)}
