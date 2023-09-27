@@ -63,19 +63,16 @@ export const useOrderByFormulaFilter = ({
 		onChange(orderByValues);
 	};
 
-	const aggregationOptions = useMemo(
-		() => [
-			{
-				label: `${formula.expression} ${ORDERBY_FILTERS.ASC}`,
-				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${ORDERBY_FILTERS.ASC}`,
-			},
-			{
-				label: `${formula.expression} ${ORDERBY_FILTERS.DESC}`,
-				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${ORDERBY_FILTERS.DESC}`,
-			},
-		],
-		[formula],
-	);
+	const aggregationOptions = [
+		{
+			label: `${formula.expression} ${ORDERBY_FILTERS.ASC}`,
+			value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${ORDERBY_FILTERS.ASC}`,
+		},
+		{
+			label: `${formula.expression} ${ORDERBY_FILTERS.DESC}`,
+			value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${ORDERBY_FILTERS.DESC}`,
+		},
+	];
 
 	const selectedValue = transformToOrderByStringValuesByFormula(formula);
 

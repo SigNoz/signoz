@@ -89,25 +89,28 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 		[generateOptions],
 	);
 
-	const tagRender = useCallback(
-		({ label, value, closable, disabled, onClose }: HavingTagRenderProps) => {
-			const handleClose = (): void => {
-				onClose();
-				setSearchText('');
-			};
-			return (
-				<HavingFilterTag
-					label={label}
-					value={value}
-					closable={closable}
-					disabled={disabled}
-					onClose={handleClose}
-					onUpdate={handleUpdateTag}
-				/>
-			);
-		},
-		[handleUpdateTag],
-	);
+	const tagRender = ({
+		label,
+		value,
+		closable,
+		disabled,
+		onClose,
+	}: HavingTagRenderProps): JSX.Element => {
+		const handleClose = (): void => {
+			onClose();
+			setSearchText('');
+		};
+		return (
+			<HavingFilterTag
+				label={label}
+				value={value}
+				closable={closable}
+				disabled={disabled}
+				onClose={handleClose}
+				onUpdate={handleUpdateTag}
+			/>
+		);
+	};
 
 	const handleSearch = (search: string): void => {
 		const trimmedSearch = search.replace(/\s\s+/g, ' ').trimStart();
