@@ -1,8 +1,9 @@
-import { MDXProvider } from '@mdx-js/react';
+import { Code, Pre } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
+import ReactMarkdown from 'react-markdown';
 
 import ConnectionStatus from '../common/LogsConnectionStatus/LogsConnectionStatus';
-import Post from './syslogs.md';
+import SysLogsDocs from './syslogs.md';
 
 export default function SysLogs({
 	activeStep,
@@ -22,9 +23,14 @@ export default function SysLogs({
 					/>
 
 					<div className="content-container">
-						<MDXProvider>
-							<Post />
-						</MDXProvider>
+						<ReactMarkdown
+							components={{
+								pre: Pre,
+								code: Code,
+							}}
+						>
+							{SysLogsDocs}
+						</ReactMarkdown>
 					</div>
 				</div>
 			)}

@@ -15,7 +15,7 @@ From VMs, there are two ways to send data to SigNoz Cloud.
 
 #### **Send traces directly to SigNoz Cloud**
 
-Step 1. Create a virtual environment<br></br>
+Step 1. Create a virtual environment
     
 ```bash
 python3 -m venv .venv
@@ -53,11 +53,11 @@ opentelemetry-instrument <your_run_command>
 
 Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
 
- US -	ingest.us.signoz.cloud:443 <br></br>
+ US -	ingest.us.signoz.cloud:443 
 
- IN -	ingest.in.signoz.cloud:443 <br></br>
+ IN -	ingest.in.signoz.cloud:443 
 
- EU - ingest.eu.signoz.cloud:443 <br></br>
+ EU - ingest.eu.signoz.cloud:443 
 
 Note:
 Don’t run app in reloader/hot-reload mode as it breaks instrumentation. For example, you can disable the auto reload with `--noreload`.
@@ -70,7 +70,7 @@ OTel Collector binary helps to collect logs, hostmetrics, resource and infra att
 
 You can find instructions to install OTel Collector binary [here](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/) in your VM. Once you are done setting up your OTel Collector binary, you can follow the below steps for instrumenting your Python application.
 
-Step 1. Create a virtual environment<br></br>
+Step 1. Create a virtual environment
     
 ```bash
 python3 -m venv .venv
@@ -121,7 +121,7 @@ For Python application deployed on Kubernetes, you need to install OTel Collecto
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry Python instrumentation by following the below steps:
 
-Step 1. Create a virtual environment<br></br>
+Step 1. Create a virtual environment
     
 ```bash
 python3 -m venv .venv
