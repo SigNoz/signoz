@@ -13,8 +13,11 @@ export interface IBuilderFormula {
 	expression: string;
 	disabled: boolean;
 	queryName: string;
-	dataSource?: DataSource;
 	legend: string;
+	limit?: number | null;
+	having?: Having[];
+	stepInterval?: number;
+	orderBy?: OrderByPayload[];
 }
 
 export interface TagFilterItem {
