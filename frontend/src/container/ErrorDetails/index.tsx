@@ -163,7 +163,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			</DashedContainer>
 
 			<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
-			<div className="errorContainer">
+			<div className="error-container">
 				<Editor value={stackTraceValue} readOnly />
 			</div>
 
