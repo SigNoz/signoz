@@ -1,17 +1,30 @@
 import { QueryProps } from 'container/QueryBuilder/components/Query/Query.interfaces';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderFormula,
+	IBuilderQuery,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { SelectOption } from './select';
 
 type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> &
-	Pick<QueryBuilderProps, 'filterConfigs'>;
+	Pick<QueryBuilderProps, 'filterConfigs'> & {
+		formula?: IBuilderFormula;
+	};
 
 export type HandleChangeQueryData = <
 	Key extends keyof IBuilderQuery,
 	Value extends IBuilderQuery[Key]
+>(
+	key: Key,
+	value: Value,
+) => void;
+
+export type HandleChangeFormulaData = <
+	Key extends keyof IBuilderFormula,
+	Value extends IBuilderFormula[Key]
 >(
 	key: Key,
 	value: Value,
@@ -29,4 +42,6 @@ export type UseQueryOperations = (
 	handleChangeDataSource: (newSource: DataSource) => void;
 	handleDeleteQuery: () => void;
 	handleChangeQueryData: HandleChangeQueryData;
+	handleChangeFormulaData: HandleChangeFormulaData;
+	listOfAdditionalFormulaFilters: string[];
 };

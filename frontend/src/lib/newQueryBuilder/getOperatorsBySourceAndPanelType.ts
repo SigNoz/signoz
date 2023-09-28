@@ -19,12 +19,12 @@ export const getOperatorsBySourceAndPanelType = ({
 	let operatorsByDataSource = mapOfOperators[dataSource];
 
 	if (panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE) {
-		operatorsByDataSource = operatorsByDataSource.filter(
+		operatorsByDataSource = operatorsByDataSource?.filter(
 			(operator) => operator.value === StringOperators.NOOP,
 		);
 	}
 	if (panelType === PANEL_TYPES.TABLE && dataSource === DataSource.METRICS) {
-		operatorsByDataSource = operatorsByDataSource.filter(
+		operatorsByDataSource = operatorsByDataSource?.filter(
 			(operator) =>
 				operator.value !== MetricAggregateOperator.NOOP &&
 				operator.value !== MetricAggregateOperator.RATE,
@@ -35,7 +35,7 @@ export const getOperatorsBySourceAndPanelType = ({
 		panelType !== PANEL_TYPES.LIST &&
 		panelType !== PANEL_TYPES.TRACE
 	) {
-		operatorsByDataSource = operatorsByDataSource.filter(
+		operatorsByDataSource = operatorsByDataSource?.filter(
 			(operator) => operator.value !== StringOperators.NOOP,
 		);
 	}

@@ -521,6 +521,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		if math.IsNaN(sample.Point.V) {
 			continue
 		}
+		sample.Point.Vs = append(sample.Point.Vs, sample.Point.V)
 
 		// capture lables in result
 		sample.Metric = lbls.Labels()
@@ -540,6 +541,9 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 				} else if r.compareOp() == ValueIsBelow {
 					sample.Point.V = math.Max(existing.Point.V, sample.Point.V)
 					resultMap[labelHash] = sample
+				} else {
+					sample.Point.Vs = append(existing.Point.Vs, sample.Point.V)
+					resultMap[labelHash] = sample
 				}
 			case AtleastOnce:
 				if r.compareOp() == ValueIsAbove {
@@ -547,6 +551,9 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					resultMap[labelHash] = sample
 				} else if r.compareOp() == ValueIsBelow {
 					sample.Point.V = math.Min(existing.Point.V, sample.Point.V)
+					resultMap[labelHash] = sample
+				} else {
+					sample.Point.Vs = append(existing.Point.Vs, sample.Point.V)
 					resultMap[labelHash] = sample
 				}
 			case OnAverage:
@@ -578,36 +585,37 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 		}
 
-		if s, ok := resultMap[labelHash]; ok {
-			s.Point.Vs = append(s.Point.Vs, s.Point.V)
-		}
 	}
 
-	for _, s := range resultMap {
+	for hash, s := range resultMap {
 		if r.matchType() == AllTheTimes && r.compareOp() == ValueIsEq {
 			for _, v := range s.Point.Vs {
 				if v != r.targetVal() { // if any of the values is not equal to target, alert shouldn't be sent
 					s.Point.V = v
 				}
 			}
+			resultMap[hash] = s
 		} else if r.matchType() == AllTheTimes && r.compareOp() == ValueIsNotEq {
 			for _, v := range s.Point.Vs {
 				if v == r.targetVal() { // if any of the values is equal to target, alert shouldn't be sent
 					s.Point.V = v
 				}
 			}
+			resultMap[hash] = s
 		} else if r.matchType() == AtleastOnce && r.compareOp() == ValueIsEq {
 			for _, v := range s.Point.Vs {
 				if v == r.targetVal() { // if any of the values is equal to target, alert should be sent
 					s.Point.V = v
 				}
 			}
+			resultMap[hash] = s
 		} else if r.matchType() == AtleastOnce && r.compareOp() == ValueIsNotEq {
 			for _, v := range s.Point.Vs {
 				if v != r.targetVal() { // if any of the values is not equal to target, alert should be sent
 					s.Point.V = v
 				}
 			}
+			resultMap[hash] = s
 		}
 	}
 
