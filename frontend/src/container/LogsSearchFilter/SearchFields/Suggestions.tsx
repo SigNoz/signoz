@@ -1,5 +1,5 @@
 import { Button } from 'antd';
-import CategoryHeading from 'components/Logs/CategoryHeading/CategoryHeading';
+import CategoryHeading from 'components/Logs/CategoryHeading';
 import map from 'lodash-es/map';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';

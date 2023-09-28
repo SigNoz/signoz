@@ -1,6 +1,6 @@
 import { CloseOutlined, CloseSquareOutlined } from '@ant-design/icons';
 import { Button, Input, Select } from 'antd';
-import CategoryHeading from 'components/Logs/CategoryHeading/CategoryHeading';
+import CategoryHeading from 'components/Logs/CategoryHeading';
 import {
 	ConditionalOperators,
 	QueryOperatorsMultiVal,
