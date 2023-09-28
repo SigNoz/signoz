@@ -7,10 +7,10 @@ import (
 
 type SignozLog model.GetLogsResponse
 
-type CollectorConfProviderFn func(baseConfYaml []byte) ([]byte, error)
+type CollectorConfGeneratorFn func(baseConfYaml []byte) ([]byte, error)
 
-func SimulateLogsProcessing(configProvider CollectorConfProviderFn, logs plog.Logs) (
-	plog.Logs, error,
+func SimulateLogsProcessing(configProvider CollectorConfGeneratorFn, logs []plog.Logs) (
+	[]plog.Logs, *model.ApiError,
 ) {
 	return logs, nil
 }
