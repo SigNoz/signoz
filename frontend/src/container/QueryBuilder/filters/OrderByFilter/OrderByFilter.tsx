@@ -53,17 +53,11 @@ export function OrderByFilter({
 		query.groupBy,
 	]);
 
-	const isDisabledSelect = useMemo(
-		() =>
-			!query.aggregateAttribute.key ||
-			query.aggregateOperator === MetricAggregateOperator.NOOP,
-		[query.aggregateAttribute.key, query.aggregateOperator],
-	);
+	const isDisabledSelect =
+		!query.aggregateAttribute.key ||
+		query.aggregateOperator === MetricAggregateOperator.NOOP;
 
-	const isMetricsDataSource = useMemo(
-		() => query.dataSource === DataSource.METRICS,
-		[query.dataSource],
-	);
+	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
 
 	return (
 		<Select

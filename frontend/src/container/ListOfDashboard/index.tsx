@@ -24,6 +24,7 @@ import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
@@ -244,6 +245,7 @@ function ListOfAllDashboard(): JSX.Element {
 					/>
 					{newDashboard && (
 						<Dropdown
+							getPopupContainer={popupContainer}
 							disabled={isDashboardListLoading}
 							trigger={['click']}
 							menu={menu}

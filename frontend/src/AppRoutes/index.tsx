@@ -94,6 +94,8 @@ function App(): JSX.Element {
 				email: user?.email,
 				name: user?.name,
 			});
+
+			window.clarity('identify', user.email, user.name);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isLoggedInState, user]);

@@ -21,6 +21,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import {
 	errorTooltipPosition,
@@ -182,6 +183,7 @@ function WidgetHeader({
 	return (
 		<WidgetHeaderContainer>
 			<Dropdown
+				getPopupContainer={popupContainer}
 				destroyPopupOnHide
 				open={isOpen}
 				onOpenChange={setIsOpen}
