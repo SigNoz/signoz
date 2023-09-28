@@ -15,35 +15,13 @@ func createDefaultConfig() component.Config {
 	}
 }
 
-func createTracesExporter(
-	_ context.Context, _ exporter.CreateSettings, config component.Config,
-) (exporter.Traces, error) {
-	if err := component.ValidateConfig(config); err != nil {
-		return nil, errors.Wrap(err, "invalid inmemory exporter config")
-	}
-	return &InMemoryExporter{
-		id: config.(*Config).Id,
-	}, nil
-}
-
-func createMetricsExporter(
-	_ context.Context, _ exporter.CreateSettings, config component.Config,
-) (exporter.Metrics, error) {
-	if err := component.ValidateConfig(config); err != nil {
-		return nil, errors.Wrap(err, "invalid inmemory exporter config")
-	}
-	return &InMemoryExporter{
-		id: config.(*Config).Id,
-	}, nil
-}
-
 func createLogsExporter(
 	_ context.Context, _ exporter.CreateSettings, config component.Config,
 ) (exporter.Logs, error) {
 	if err := component.ValidateConfig(config); err != nil {
 		return nil, errors.Wrap(err, "invalid inmemory exporter config")
 	}
-	return &InMemoryExporter{
+	return &InMemoryLogsExporter{
 		id: config.(*Config).Id,
 	}, nil
 }
@@ -53,7 +31,5 @@ func NewFactory() exporter.Factory {
 	return exporter.NewFactory(
 		"memory",
 		createDefaultConfig,
-		exporter.WithTraces(createTracesExporter, component.StabilityLevelStable),
-		exporter.WithMetrics(createMetricsExporter, component.StabilityLevelStable),
 		exporter.WithLogs(createLogsExporter, component.StabilityLevelBeta))
 }
