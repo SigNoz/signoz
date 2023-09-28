@@ -33,7 +33,7 @@
 		"@mdx-js/loader": "2.3.0",
 		"@mdx-js/react": "2.3.0",
 		"@monaco-editor/react": "^4.3.1",
-		"@signozhq/ui-core": "0.0.4",
+		"@signozhq/ui-core": "0.0.5",
 		"@uiw/react-md-editor": "3.23.5",
 		"@xstate/react": "^3.0.0",
 		"ansi-to-html": "0.7.2",
