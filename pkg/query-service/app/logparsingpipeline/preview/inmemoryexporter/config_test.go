@@ -22,8 +22,10 @@ func TestValidate(t *testing.T) {
 			errorExpected: false,
 		},
 		{
-			name:          "without id",
-			rawConf:       confmap.NewFromStringMap(map[string]interface{}{}),
+			name: "empty id",
+			rawConf: confmap.NewFromStringMap(map[string]interface{}{
+				"id": "",
+			}),
 			errorExpected: true,
 		},
 	}
