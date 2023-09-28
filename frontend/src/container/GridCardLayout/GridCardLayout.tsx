@@ -30,11 +30,9 @@ function GraphLayout({
 	const { selectedDashboard, layouts, setLayouts } = useDashboard();
 	const { t } = useTranslation(['dashboard']);
 
-	const { featureResponse } = useSelector<AppState, AppReducer>(
+	const { featureResponse, role } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
-
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const isDarkMode = useIsDarkMode();
 
