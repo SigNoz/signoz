@@ -44,6 +44,10 @@ export const GettingStarted = Loadable(
 	() => import(/* webpackChunkName: "GettingStarted" */ 'pages/GettingStarted'),
 );
 
+export const Onboarding = Loadable(
+	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPage'),
+);
+
 export const DashboardPage = Loadable(
 	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/Dashboard'),
 );
@@ -108,6 +112,10 @@ export const Logs = Loadable(
 
 export const LogsExplorer = Loadable(
 	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsExplorer'),
+);
+
+export const LiveLogs = Loadable(
+	() => import(/* webpackChunkName: "Live Logs" */ 'pages/LiveLogs'),
 );
 
 export const Login = Loadable(

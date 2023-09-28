@@ -1,30 +1,12 @@
 import { InputNumber } from 'antd';
-import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
+import { handleKeyDownLimitFilter } from '../utils';
 
 function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
-	const handleKeyDown = (event: {
-		keyCode: number;
-		which: number;
-		preventDefault: () => void;
-	}): void => {
-		const keyCode = event.keyCode || event.which;
-		const isBackspace = keyCode === 8;
-		const isNumeric =
-			(keyCode >= 48 && keyCode <= 57) || (keyCode >= 96 && keyCode <= 105);
-
-		if (!isNumeric && !isBackspace) {
-			event.preventDefault();
-		}
-	};
-
-	const isMetricsDataSource = useMemo(
-		() => query.dataSource === DataSource.METRICS,
-		[query.dataSource],
-	);
+	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
 
 	const isDisabled = isMetricsDataSource && !query.aggregateAttribute.key;
 
@@ -36,7 +18,7 @@ function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
 			style={selectStyle}
 			disabled={isDisabled}
 			onChange={onChange}
-			onKeyDown={handleKeyDown}
+			onKeyDown={handleKeyDownLimitFilter}
 		/>
 	);
 }

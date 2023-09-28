@@ -136,6 +136,7 @@ type QueryRangeParamsV2 struct {
 	Step                 int64                  `json:"step"`
 	CompositeMetricQuery *CompositeMetricQuery  `json:"compositeMetricQuery"`
 	Variables            map[string]interface{} `json:"variables,omitempty"`
+	NoCache              bool                   `json:"noCache"`
 }
 
 type DashboardVars struct {

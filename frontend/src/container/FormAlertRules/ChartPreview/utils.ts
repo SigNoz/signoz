@@ -20,6 +20,10 @@ export function covertIntoDataFormats({
 	sourceUnit,
 	targetUnit,
 }: IUnit): number {
+	if (sourceUnit === undefined || targetUnit === undefined) {
+		return value;
+	}
+
 	if (Object.values(BooleanFormats).includes(sourceUnit as BooleanFormats)) {
 		return 1;
 	}

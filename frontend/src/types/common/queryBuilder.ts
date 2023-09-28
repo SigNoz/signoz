@@ -6,7 +6,9 @@ import {
 	IClickHouseQuery,
 	IPromQLQuery,
 	Query,
+	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { ViewProps } from 'types/api/saveViews/types';
 
 import { EQueryType } from './dashboard';
 
@@ -187,7 +189,7 @@ export type QueryBuilderContextType = {
 		searchParams?: Record<string, unknown>,
 	) => void;
 	handleRunQuery: () => void;
-	resetStagedQuery: () => void;
+	resetQuery: (newCurrentQuery?: QueryState) => void;
 	handleOnUnitsChange: (units: Format['id']) => void;
 	updateAllQueriesOperators: (
 		queryData: Query,
@@ -203,6 +205,10 @@ export type QueryBuilderContextType = {
 		) => QueryBuilderData[T][number],
 	) => Query;
 	initQueryBuilderData: (query: Query) => void;
+	isStagedQueryUpdated: (
+		viewData: ViewProps[] | undefined,
+		viewKey: string,
+	) => boolean;
 };
 
 export type QueryAdditionalFilter = {

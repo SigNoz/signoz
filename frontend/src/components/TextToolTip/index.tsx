@@ -7,6 +7,7 @@ import { Tooltip } from 'antd';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useMemo } from 'react';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { style } from './styles';
 
@@ -18,12 +19,24 @@ function TextToolTip({
 }: TextToolTipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
+	const onClickHandler = (
+		event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+	): void => {
+		event.stopPropagation();
+	};
+
 	const overlay = useMemo(
 		() => (
 			<div>
 				{`${text} `}
 				{url && (
-					<a href={url} rel="noopener noreferrer" target="_blank">
+					<a
+						// Stopping event propagation on click so that parent click listener are not triggered
+						onClick={onClickHandler}
+						href={url}
+						rel="noopener noreferrer"
+						target="_blank"
+					>
 						{urlText || 'here'}
 					</a>
 				)}
@@ -49,7 +62,7 @@ function TextToolTip({
 	);
 
 	return (
-		<Tooltip overlay={overlay}>
+		<Tooltip getTooltipContainer={popupContainer} overlay={overlay}>
 			{useFilledIcon ? (
 				<QuestionCircleFilled style={iconStyle} />
 			) : (

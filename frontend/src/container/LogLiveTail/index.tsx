@@ -30,6 +30,7 @@ import { TLogsLiveTailState } from 'types/api/logs/liveTail';
 import { ILog } from 'types/api/logs/log';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { TIME_PICKER_OPTIONS } from './config';
 import { StopContainer, TimePickerCard, TimePickerSelect } from './styles';
@@ -165,6 +166,7 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 	const OptionsPopOverContent = useMemo(
 		() => (
 			<TimePickerSelect
+				getPopupContainer={popupContainer}
 				disabled={liveTail === 'PLAYING'}
 				value={liveTailStartRange}
 				onChange={(value): void => {
@@ -236,6 +238,7 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 				)}
 
 				<Popover
+					getPopupContainer={popupContainer}
 					placement="bottomRight"
 					title="Select Live Tail Timing"
 					trigger="click"

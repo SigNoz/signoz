@@ -1,7 +1,6 @@
 import { Select } from 'antd';
 // ** Constants
 import { HAVING_OPERATORS, initialHavingValues } from 'constants/queryBuilder';
-import { HAVING_FILTER_REGEXP } from 'constants/regExp';
 import { HavingFilterTag } from 'container/QueryBuilder/components';
 import { HavingTagRenderProps } from 'container/QueryBuilder/components/HavingFilterTag/HavingFilterTag.interfaces';
 // ** Hooks
@@ -16,11 +15,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
+import { popupContainer } from 'utils/selectPopupContainer';
 
+import { getHavingObject, isValidHavingValue } from '../utils';
 // ** Types
 import { HavingFilterProps } from './HavingFilter.interfaces';
-
-const { Option } = Select;
 
 export function HavingFilter({
 	query,
@@ -59,13 +58,6 @@ export function HavingFilter({
 		[columnName],
 	);
 
-	const getHavingObject = useCallback((currentSearch: string): HavingForm => {
-		const textArr = currentSearch.split(' ');
-		const [columnName = '', op = '', ...value] = textArr;
-
-		return { columnName, op, value };
-	}, []);
-
 	const generateOptions = useCallback(
 		(search: string): void => {
 			const [aggregator = '', op = '', ...restValue] = search.split(' ');
@@ -97,19 +89,6 @@ export function HavingFilter({
 		[columnName, aggregatorOptions],
 	);
 
-	const isValidHavingValue = useCallback(
-		(search: string): boolean => {
-			const values = getHavingObject(search).value.join(' ');
-
-			if (values) {
-				return HAVING_FILTER_REGEXP.test(values);
-			}
-
-			return true;
-		},
-		[getHavingObject],
-	);
-
 	const handleSearch = useCallback(
 		(search: string): void => {
 			const trimmedSearch = search.replace(/\s\s+/g, ' ').trimStart();
@@ -124,7 +103,7 @@ export function HavingFilter({
 				setSearchText(currentSearch);
 			}
 		},
-		[isMulti, isValidHavingValue],
+		[isMulti],
 	);
 
 	const resetChanges = useCallback((): void => {
@@ -199,7 +178,7 @@ export function HavingFilter({
 
 			generateOptions(text);
 		},
-		[generateOptions, getHavingObject],
+		[generateOptions],
 	);
 
 	const handleDeselect = (value: string): void => {
@@ -217,13 +196,11 @@ export function HavingFilter({
 		setLocalValues(transformHavingToStringValue(having));
 	}, [having]);
 
-	const isMetricsDataSource = useMemo(
-		() => query.dataSource === DataSource.METRICS,
-		[query.dataSource],
-	);
+	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
 
 	return (
 		<Select
+			getPopupContainer={popupContainer}
 			autoClearSearchValue={false}
 			mode="multiple"
 			onSearch={handleSearch}
@@ -240,9 +217,9 @@ export function HavingFilter({
 			onSelect={handleSelect}
 		>
 			{options.map((opt) => (
-				<Option key={opt.value} value={opt.value} title="havingOption">
+				<Select.Option key={opt.value} value={opt.value} title="havingOption">
 					{opt.label}
-				</Option>
+				</Select.Option>
 			))}
 		</Select>
 	);

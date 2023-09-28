@@ -41,13 +41,6 @@ export enum KeyOperationTableHeader {
 	OPERATION_PR_SECOND = 'Op/s',
 }
 
-export enum DataType {
-	STRING = 'string',
-	FLOAT64 = 'float64',
-	INT64 = 'int64',
-	BOOL = 'bool',
-}
-
 export enum MetricsType {
 	Tag = 'tag',
 	Resource = 'resource',

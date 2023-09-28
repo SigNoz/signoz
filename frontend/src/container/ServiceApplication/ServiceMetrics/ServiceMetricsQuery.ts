@@ -1,13 +1,15 @@
 import { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 import { OPERATORS } from 'constants/queryBuilder';
 import {
-	DataType,
 	KeyOperationTableHeader,
 	MetricsType,
 	WidgetKeys,
 } from 'container/MetricsApplication/constant';
 import { getQueryBuilderQuerieswithFormula } from 'container/MetricsApplication/MetricsPageQueries/MetricsPageQueriesFactory';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DataSource,
@@ -19,21 +21,21 @@ export const serviceMetricsQuery = (
 	topLevelOperation: [keyof ServiceDataProps, string[]],
 ): QueryBuilderData => {
 	const p99AutoCompleteData: BaseAutocompleteData = {
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		key: WidgetKeys.Signoz_latency_bucket,
 		type: '',
 	};
 
 	const errorRateAutoCompleteData: BaseAutocompleteData = {
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		key: WidgetKeys.SignozCallsTotal,
 		type: '',
 	};
 
 	const operationPrSecondAutoCompleteData: BaseAutocompleteData = {
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		key: WidgetKeys.SignozCallsTotal,
 		type: '',
@@ -50,7 +52,7 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				key: WidgetKeys.Service_name,
 				type: MetricsType.Resource,
@@ -61,7 +63,7 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
@@ -75,7 +77,7 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				key: WidgetKeys.Service_name,
 				type: MetricsType.Resource,
@@ -86,7 +88,7 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: DataType.INT64,
+				dataType: DataTypes.Int64,
 				isColumn: false,
 				key: WidgetKeys.StatusCode,
 				type: MetricsType.Tag,
@@ -97,7 +99,7 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
@@ -111,7 +113,7 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				key: WidgetKeys.Service_name,
 				type: MetricsType.Resource,
@@ -122,7 +124,7 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
@@ -136,7 +138,7 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				key: WidgetKeys.Service_name,
 				type: MetricsType.Resource,
@@ -147,7 +149,7 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
@@ -185,7 +187,7 @@ export const serviceMetricsQuery = (
 
 	const groupBy: BaseAutocompleteData[] = [
 		{
-			dataType: DataType.STRING,
+			dataType: DataTypes.String,
 			isColumn: false,
 			key: WidgetKeys.Service_name,
 			type: MetricsType.Tag,

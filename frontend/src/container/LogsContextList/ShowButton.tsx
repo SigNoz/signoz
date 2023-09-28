@@ -1,5 +1,5 @@
 import { Button, Typography } from 'antd';
-import { FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 
 import { ShowButtonWrapper } from './styles';
 
@@ -19,7 +19,7 @@ function ShowButton({
 	return (
 		<ShowButtonWrapper>
 			<Typography>
-				Showing 10 lines {order === FILTERS.ASC ? 'after' : 'before'} match
+				Showing 10 lines {order === ORDERBY_FILTERS.ASC ? 'after' : 'before'} match
 			</Typography>
 			<Button
 				size="small"

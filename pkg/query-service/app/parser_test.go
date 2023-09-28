@@ -757,3 +757,108 @@ func TestParseQueryRangeParamsDashboardVarsSubstitution(t *testing.T) {
 		})
 	}
 }
+
+func TestParseQueryRangeParamsPromQLVars(t *testing.T) {
+	reqCases := []struct {
+		desc           string
+		compositeQuery v3.CompositeQuery
+		variables      map[string]interface{}
+		expectErr      bool
+		errMsg         string
+		expectedQuery  string
+	}{
+		{
+			desc: "valid prom query with dashboard variables",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {
+						Query:    "http_calls_total{service_name=\"{{.service_name}}\", operation_name=~\"{{.operation_name}}\"}",
+						Disabled: false,
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"operation_name": []interface{}{
+					"GET /route",
+					"POST /route",
+				},
+			},
+			expectErr:     false,
+			expectedQuery: "http_calls_total{service_name=\"route\", operation_name=~\"GET /route|POST /route\"}",
+		},
+		{
+			desc: "valid prom query with dashboard variables",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {
+						Query:    "http_calls_total{service_name=\"{{.service_name}}\", status_code=~\"{{.status_code}}\"}",
+						Disabled: false,
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"status_code": []interface{}{
+					200,
+					505,
+				},
+			},
+			expectErr:     false,
+			expectedQuery: "http_calls_total{service_name=\"route\", status_code=~\"200|505\"}",
+		},
+		{
+			desc: "valid prom query with dashboard variables",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {
+						Query:    "http_calls_total{service_name=\"{{.service_name}}\", quantity=~\"{{.quantity}}\"}",
+						Disabled: false,
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"quantity": []interface{}{
+					4.5,
+					4.6,
+				},
+			},
+			expectErr:     false,
+			expectedQuery: "http_calls_total{service_name=\"route\", quantity=~\"4.5|4.6\"}",
+		},
+	}
+
+	for _, tc := range reqCases {
+		t.Run(tc.desc, func(t *testing.T) {
+
+			queryRangeParams := &v3.QueryRangeParamsV3{
+				Start:          time.Now().Add(-time.Hour).UnixMilli(),
+				End:            time.Now().UnixMilli(),
+				Step:           time.Minute.Microseconds(),
+				CompositeQuery: &tc.compositeQuery,
+				Variables:      tc.variables,
+			}
+
+			body := &bytes.Buffer{}
+			err := json.NewEncoder(body).Encode(queryRangeParams)
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodPost, "/api/v3/query_range", body)
+
+			parsedQueryRangeParams, apiErr := ParseQueryRangeParams(req)
+			if tc.expectErr {
+				require.Error(t, apiErr)
+				require.Contains(t, apiErr.Error(), tc.errMsg)
+			} else {
+				require.Nil(t, apiErr)
+				require.Equal(t, parsedQueryRangeParams.CompositeQuery.PromQueries["A"].Query, tc.expectedQuery)
+			}
+		})
+	}
+}

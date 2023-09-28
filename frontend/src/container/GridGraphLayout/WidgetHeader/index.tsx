@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons';
 import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
@@ -20,6 +20,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import {
 	errorTooltipPosition,
@@ -73,7 +74,7 @@ function WidgetHeader({
 		history.push(
 			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${
 				widget.panelTypes
-			}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
+			}&${QueryParams.compositeQuery}=${encodeURIComponent(
 				JSON.stringify(widget.query),
 			)}`,
 		);
@@ -81,9 +82,9 @@ function WidgetHeader({
 
 	const onCreateAlertsHandler = useCallback(() => {
 		history.push(
-			`${ROUTES.ALERTS_NEW}?${
-				queryParamNamesMap.compositeQuery
-			}=${encodeURIComponent(JSON.stringify(widget.query))}`,
+			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+				JSON.stringify(widget.query),
+			)}`,
 		);
 	}, [widget]);
 
@@ -177,6 +178,7 @@ function WidgetHeader({
 	return (
 		<WidgetHeaderContainer>
 			<Dropdown
+				getPopupContainer={popupContainer}
 				destroyPopupOnHide
 				open={isOpen}
 				onOpenChange={setIsOpen}

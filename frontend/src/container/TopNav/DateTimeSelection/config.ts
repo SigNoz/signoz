@@ -53,10 +53,10 @@ export const ServiceMapOptions: Option[] = [
 
 export const getDefaultOption = (route: string): Time => {
 	if (route === ROUTES.SERVICE_MAP) {
-		return ServiceMapOptions[0].value;
+		return ServiceMapOptions[2].value;
 	}
 	if (route === ROUTES.APPLICATION) {
-		return Options[0].value;
+		return Options[2].value;
 	}
 	return Options[2].value;
 };
@@ -74,7 +74,7 @@ export const routesToSkip = [
 	ROUTES.TRACE_DETAIL,
 	ROUTES.ALL_CHANNELS,
 	ROUTES.USAGE_EXPLORER,
-	ROUTES.INSTRUMENTATION,
+	ROUTES.GET_STARTED,
 	ROUTES.VERSION,
 	ROUTES.ALL_DASHBOARD,
 	ROUTES.ORG_SETTINGS,
@@ -84,3 +84,5 @@ export const routesToSkip = [
 	ROUTES.LIST_ALL_ALERT,
 	ROUTES.PIPELINES,
 ];
+
+export const routesToDisable = [ROUTES.LOGS_EXPLORER, ROUTES.LIVE_LOGS];

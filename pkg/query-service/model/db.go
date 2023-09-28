@@ -53,7 +53,6 @@ func (uf UserFlag) Value() (driver.Value, error) {
 }
 
 func (uf *UserFlag) Scan(value interface{}) error {
-	fmt.Println(" value:", value)
 	if value == "" {
 		return nil
 	}

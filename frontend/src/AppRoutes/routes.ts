@@ -1,5 +1,4 @@
 import ROUTES from 'constants/routes';
-import DashboardWidget from 'pages/DashboardWidget';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -8,18 +7,20 @@ import {
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
+	DashboardWidget,
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
-	GettingStarted,
 	LicensePage,
 	ListAllALertsPage,
+	LiveLogs,
 	Login,
 	Logs,
 	LogsExplorer,
 	LogsIndexToFields,
 	MySettings,
 	NewDashboardPage,
+	Onboarding,
 	OrganizationSettings,
 	PasswordReset,
 	PipelinePage,
@@ -44,6 +45,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		isPrivate: false,
 		key: 'SIGN_UP',
+	},
+	{
+		path: ROUTES.GET_STARTED,
+		exact: true,
+		component: Onboarding,
+		isPrivate: true,
+		key: 'GET_STARTED',
 	},
 	{
 		component: LogsIndexToFields,
@@ -93,13 +101,6 @@ const routes: AppRoutes[] = [
 		component: UsageExplorerPage,
 		isPrivate: true,
 		key: 'USAGE_EXPLORER',
-	},
-	{
-		path: ROUTES.INSTRUMENTATION,
-		exact: true,
-		component: GettingStarted,
-		isPrivate: true,
-		key: 'INSTRUMENTATION',
 	},
 	{
 		path: ROUTES.ALL_DASHBOARD,
@@ -232,6 +233,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: LogsExplorer,
 		key: 'LOGS_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LIVE_LOGS,
+		exact: true,
+		component: LiveLogs,
+		key: 'LIVE_LOGS',
 		isPrivate: true,
 	},
 	{
