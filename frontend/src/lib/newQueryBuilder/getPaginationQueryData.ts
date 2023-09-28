@@ -1,4 +1,5 @@
-import { FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import { OPERATORS } from 'constants/queryBuilder';
+import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
@@ -51,7 +52,10 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 								dataType: DataTypes.String,
 								isColumn: true,
 							},
-							op: orderByTimestamp.order === FILTERS.ASC ? '>' : '<',
+							op:
+								orderByTimestamp.order === ORDERBY_FILTERS.ASC
+									? OPERATORS['>']
+									: OPERATORS['<'],
 							value: listItemId,
 						},
 						...updatedFilters.items,

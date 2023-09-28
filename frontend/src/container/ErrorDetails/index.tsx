@@ -1,3 +1,5 @@
+import './styles.scss';
+
 import { Button, Divider, Space, Typography } from 'antd';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
@@ -161,7 +163,9 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			</DashedContainer>
 
 			<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
-			<Editor onChange={(): void => {}} value={stackTraceValue} readOnly />
+			<div className="error-container">
+				<Editor value={stackTraceValue} readOnly />
+			</div>
 
 			<EditorContainer>
 				<Space direction="vertical">

@@ -1,10 +1,12 @@
 import './Java.styles.scss';
 
-import { MDXProvider } from '@mdx-js/react';
 import { Form, Input, Select } from 'antd';
+import { Code, Pre } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { trackEvent } from 'utils/segmentAnalytics';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import JavaDocs from './md-docs/java.md';
@@ -25,7 +27,9 @@ export default function Java({
 	activeStep: number;
 }): JSX.Element {
 	const [selectedFrameWork, setSelectedFrameWork] = useState('spring_boot');
-
+	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(
+		SprintBootDocs,
+	);
 	const [form] = Form.useForm();
 
 	useEffect(() => {
@@ -36,16 +40,22 @@ export default function Java({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedFrameWork]);
 
-	const renderDocs = (): JSX.Element => {
+	const handleFrameworkChange = (selectedFrameWork: string): void => {
+		setSelectedFrameWork(selectedFrameWork);
+
 		switch (selectedFrameWork) {
 			case 'tomcat':
-				return <TomcatDocs />;
+				setSelectedFrameWorkDocs(TomcatDocs);
+				break;
 			case 'spring_boot':
-				return <SprintBootDocs />;
+				setSelectedFrameWorkDocs(SprintBootDocs);
+				break;
 			case 'jboss':
-				return <JbossDocs />;
+				setSelectedFrameWorkDocs(JbossDocs);
+				break;
 			default:
-				return <JavaDocs />;
+				setSelectedFrameWorkDocs(JavaDocs);
+				break;
 		}
 	};
 
@@ -66,10 +76,11 @@ export default function Java({
 							<div className="label"> Select Framework </div>
 
 							<Select
+								getPopupContainer={popupContainer}
 								defaultValue="spring_boot"
 								style={{ minWidth: 120 }}
 								placeholder="Select Framework"
-								onChange={(value): void => setSelectedFrameWork(value)}
+								onChange={(value): void => handleFrameworkChange(value)}
 								options={[
 									{
 										value: 'spring_boot',
@@ -108,7 +119,14 @@ export default function Java({
 					</div>
 
 					<div className="content-container">
-						<MDXProvider>{renderDocs()}</MDXProvider>
+						<ReactMarkdown
+							components={{
+								pre: Pre,
+								code: Code,
+							}}
+						>
+							{selectedFrameWorkDocs}
+						</ReactMarkdown>
 					</div>
 				</div>
 			)}

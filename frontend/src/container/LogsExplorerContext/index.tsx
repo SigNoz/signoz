@@ -3,7 +3,7 @@ import { Typography } from 'antd';
 import Modal from 'antd/es/modal/Modal';
 import RawLogView from 'components/Logs/RawLogView';
 import LogsContextList from 'container/LogsContextList';
-import { FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { memo, useCallback, useState } from 'react';
@@ -87,7 +87,7 @@ function LogsExplorerContext({
 				/>
 			)}
 			<LogsContextList
-				order={FILTERS.ASC}
+				order={ORDERBY_FILTERS.ASC}
 				filters={filters}
 				isEdit={isEdit}
 				log={log}
@@ -103,7 +103,7 @@ function LogsExplorerContext({
 				/>
 			</LogContainer>
 			<LogsContextList
-				order={FILTERS.DESC}
+				order={ORDERBY_FILTERS.DESC}
 				filters={filters}
 				isEdit={isEdit}
 				log={log}

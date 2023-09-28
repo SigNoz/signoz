@@ -1,10 +1,12 @@
 import './Python.styles.scss';
 
-import { MDXProvider } from '@mdx-js/react';
 import { Form, Input, Select } from 'antd';
+import { Code, Pre } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { trackEvent } from 'utils/segmentAnalytics';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import DjangoDocs from './md-docs/django.md';
@@ -27,7 +29,7 @@ export default function Python({
 	activeStep: number;
 }): JSX.Element {
 	const [selectedFrameWork, setSelectedFrameWork] = useState('django');
-
+	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(DjangoDocs);
 	const [form] = Form.useForm();
 
 	useEffect(() => {
@@ -38,18 +40,25 @@ export default function Python({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedFrameWork]);
 
-	const renderDocs = (): JSX.Element => {
+	const handleFrameworkChange = (selectedFrameWork: string): void => {
+		setSelectedFrameWork(selectedFrameWork);
+
 		switch (selectedFrameWork) {
 			case 'django':
-				return <DjangoDocs />;
+				setSelectedFrameWorkDocs(DjangoDocs);
+				break;
 			case 'fastAPI':
-				return <FastAPIDocs />;
+				setSelectedFrameWorkDocs(FastAPIDocs);
+				break;
 			case 'flask':
-				return <FlaskDocs />;
+				setSelectedFrameWorkDocs(FlaskDocs);
+				break;
 			case 'falcon':
-				return <FalconDocs />;
+				setSelectedFrameWorkDocs(FalconDocs);
+				break;
 			default:
-				return <PythonDocs />;
+				setSelectedFrameWorkDocs(PythonDocs);
+				break;
 		}
 	};
 
@@ -70,10 +79,11 @@ export default function Python({
 							<div className="label"> Select Framework </div>
 
 							<Select
+								getPopupContainer={popupContainer}
 								defaultValue="Django"
 								style={{ minWidth: 120 }}
 								placeholder="Select Framework"
-								onChange={(value): void => setSelectedFrameWork(value)}
+								onChange={(value): void => handleFrameworkChange(value)}
 								options={[
 									{
 										value: 'django',
@@ -116,7 +126,14 @@ export default function Python({
 					</div>
 
 					<div className="content-container">
-						<MDXProvider>{renderDocs()}</MDXProvider>
+						<ReactMarkdown
+							components={{
+								pre: Pre,
+								code: Code,
+							}}
+						>
+							{selectedFrameWorkDocs}
+						</ReactMarkdown>
 					</div>
 				</div>
 			)}
