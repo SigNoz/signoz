@@ -34,17 +34,24 @@ type InMemoryExporter struct {
 // Useful for getting a hold of the exporter in scenarios where one doesn't
 // create the instances. Eg: bringing up a collector service from collector config
 var allExporterInstances map[string]*InMemoryExporter
+var allExportersLock sync.Mutex
 
 func init() {
 	allExporterInstances = make(map[string]*InMemoryExporter)
 }
 
 func (e *InMemoryExporter) Start(ctx context.Context, host component.Host) error {
+	allExportersLock.Lock()
+	defer allExportersLock.Unlock()
+
 	allExporterInstances[e.id] = e
 	return nil
 }
 
 func (e *InMemoryExporter) Shutdown(ctx context.Context) error {
+	allExportersLock.Lock()
+	defer allExportersLock.Unlock()
+
 	delete(allExporterInstances, e.id)
 	return nil
 }
