@@ -126,7 +126,11 @@ func GenerateCollectorConfigWithPipelines(
 // if yes then update the processor.
 // if something doesn't exists then remove it.
 func buildLogParsingProcessors(agentConf, parsingProcessors map[string]interface{}) error {
+	if agentConf["processors"] == nil {
+		agentConf["processors"] = map[string]interface{}{}
+	}
 	agentProcessors := agentConf["processors"].(map[string]interface{})
+
 	exists := map[string]struct{}{}
 	for key, params := range parsingProcessors {
 		agentProcessors[key] = params
