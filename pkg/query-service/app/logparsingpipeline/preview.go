@@ -1,6 +1,7 @@
 package logparsingpipeline
 
 import (
+	"context"
 	"time"
 
 	"github.com/pkg/errors"
@@ -15,6 +16,7 @@ import (
 type SignozLog model.GetLogsResponse
 
 func SimulatePipelinesProcessing(
+	ctx context.Context,
 	pipelines []Pipeline,
 	logs []SignozLog,
 ) ([]SignozLog, *model.ApiError) {
@@ -31,7 +33,7 @@ func SimulatePipelinesProcessing(
 
 	collectorConfGenerator := func(
 		baseConfYaml []byte,
-	) ([]byte, error) {
+	) ([]byte, *model.ApiError) {
 		return opamp.GenerateCollectorConfigWithPipelines(
 			baseConfYaml, processors, procNames,
 		)
@@ -40,7 +42,7 @@ func SimulatePipelinesProcessing(
 	plogs := toPlogs(logs)
 
 	resultPlogs, apiErr := collectorsimulator.SimulateLogsProcessing(
-		collectorConfGenerator, plogs,
+		ctx, collectorConfGenerator, plogs,
 	)
 	if apiErr != nil {
 		return nil, apiErr
