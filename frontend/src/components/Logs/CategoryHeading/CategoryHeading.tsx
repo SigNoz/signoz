@@ -1,14 +1,12 @@
 import './CategoryHeading.styles.scss';
 
 import { Typography } from 'antd';
-import { ReactNode } from 'react';
 
-interface ICategoryHeadingProps {
-	children: ReactNode;
-}
+import { ICategoryHeadingProps } from './CategoryHeading.types';
+
 function CategoryHeading({ children }: ICategoryHeadingProps): JSX.Element {
 	return (
-		<Typography.Text type="secondary" className="category-heading-text">
+		<Typography.Text type="secondary" className="container--text-size">
 			{children}
 		</Typography.Text>
 	);
