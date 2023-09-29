@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
 
-export type ICategoryHeadingProps = {
+export type CategoryHeadingProps = {
 	children: ReactNode;
 };
