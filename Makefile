@@ -37,10 +37,22 @@ LD_FLAGS=-X ${buildHash}=${BUILD_HASH} -X ${buildTime}=${BUILD_TIME} -X ${buildV
 DEV_LD_FLAGS=-X ${licenseSignozIo}=${DEV_LICENSE_SIGNOZ_IO}
 
 all: build-push-frontend build-push-query-service
+
+# Steps to build static files of frontend
+build-frontend-static:
+	@echo "------------------"
+	@echo "--> Building frontend static files"
+	@echo "------------------"
+	@cd $(FRONTEND_DIRECTORY) && \
+	rm -rf build && \
+	CI=1 yarn install && \
+	yarn build && \
+	ls -l build
+
 # Steps to build and push docker image of frontend
 .PHONY: build-frontend-amd64  build-push-frontend
 # Step to build docker image of frontend in amd64 (used in build pipeline)
-build-frontend-amd64:
+build-frontend-amd64: build-frontend-static
 	@echo "------------------"
 	@echo "--> Building frontend docker image for amd64"
 	@echo "------------------"
@@ -49,7 +61,7 @@ build-frontend-amd64:
 	--build-arg TARGETPLATFORM="linux/amd64" .
 
 # Step to build and push docker image of frontend(used in push pipeline)
-build-push-frontend:
+build-push-frontend: build-frontend-static
 	@echo "------------------"
 	@echo "--> Building and pushing frontend docker image"
 	@echo "------------------"
