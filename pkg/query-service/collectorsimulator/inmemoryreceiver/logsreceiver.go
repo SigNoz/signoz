@@ -22,7 +22,7 @@ func (r *InMemoryLogsReceiver) ConsumeLogs(ctx context.Context, ld plog.Logs) er
 	return r.nextConsumer.ConsumeLogs(ctx, ld)
 }
 
-func (e *InMemoryLogsReceiver) Capabilities() consumer.Capabilities {
+func (r *InMemoryLogsReceiver) Capabilities() consumer.Capabilities {
 	return consumer.Capabilities{MutatesData: false}
 }
 
@@ -36,23 +36,23 @@ func init() {
 	allReceiverInstances = make(map[string]*InMemoryLogsReceiver)
 }
 
-func (e *InMemoryLogsReceiver) Start(ctx context.Context, host component.Host) error {
+func (r *InMemoryLogsReceiver) Start(ctx context.Context, host component.Host) error {
 	allReceiversLock.Lock()
 	defer allReceiversLock.Unlock()
 
-	if allReceiverInstances[e.id] != nil {
-		return fmt.Errorf("receiver with id %s is already running", e.id)
+	if allReceiverInstances[r.id] != nil {
+		return fmt.Errorf("receiver with id %s is already running", r.id)
 	}
 
-	allReceiverInstances[e.id] = e
+	allReceiverInstances[r.id] = r
 	return nil
 }
 
-func (e *InMemoryLogsReceiver) Shutdown(ctx context.Context) error {
+func (r *InMemoryLogsReceiver) Shutdown(ctx context.Context) error {
 	allReceiversLock.Lock()
 	defer allReceiversLock.Unlock()
 
-	delete(allReceiverInstances, e.id)
+	delete(allReceiverInstances, r.id)
 	return nil
 }
 

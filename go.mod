@@ -136,6 +136,7 @@ require (
 	go.opentelemetry.io/collector v0.79.0 // indirect
 	go.opentelemetry.io/collector/component v0.79.0 // indirect
 	go.opentelemetry.io/collector/consumer v0.79.0 // indirect
+	go.opentelemetry.io/collector/exporter v0.79.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.0.0-rcv0012 // indirect
 	go.opentelemetry.io/collector/pdata v1.0.0-rcv0014 // indirect
 	go.opentelemetry.io/collector/receiver v0.79.0 // indirect
