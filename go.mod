@@ -37,7 +37,7 @@ require (
 	github.com/posthog/posthog-go v0.0.0-20220817142604-0b0bbf0f9c0f
 	github.com/prometheus/common v0.44.0
 	github.com/prometheus/prometheus v2.5.0+incompatible
-	github.com/rs/cors v1.9.0
+	github.com/rs/cors v1.10.1
 	github.com/russellhaering/gosaml2 v0.9.0
 	github.com/russellhaering/goxmldsig v1.2.0
 	github.com/samber/lo v1.38.1
