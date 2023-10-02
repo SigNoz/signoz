@@ -36,6 +36,12 @@ func init() {
 	allReceiverInstances = make(map[string]*InMemoryLogsReceiver)
 }
 
+func CleanupInstance(receiverId string) {
+	allReceiversLock.Lock()
+	defer allReceiversLock.Unlock()
+	delete(allReceiverInstances, receiverId)
+}
+
 func (r *InMemoryLogsReceiver) Start(ctx context.Context, host component.Host) error {
 	allReceiversLock.Lock()
 	defer allReceiversLock.Unlock()
@@ -49,10 +55,7 @@ func (r *InMemoryLogsReceiver) Start(ctx context.Context, host component.Host) e
 }
 
 func (r *InMemoryLogsReceiver) Shutdown(ctx context.Context) error {
-	allReceiversLock.Lock()
-	defer allReceiversLock.Unlock()
-
-	delete(allReceiverInstances, r.id)
+	CleanupInstance(r.id)
 	return nil
 }
 

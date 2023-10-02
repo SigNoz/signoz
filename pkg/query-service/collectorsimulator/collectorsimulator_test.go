@@ -25,19 +25,19 @@ func TestSimulateLogsProcessing(t *testing.T) {
 	}
 
 	testLogstransformConf1, err := yaml.Parser().Unmarshal([]byte(`
-        operators:
-            - type: router
-              id: router_signoz
-              routes:
-                - output: add
-                  expr: attributes.method == "GET"
-              default: noop
-            - type: add
-              id: add
-              field: attributes.test
-              value: test-value-get
-            - type: noop
-              id: noop
+  operators:
+      - type: router
+        id: router_signoz
+        routes:
+          - output: add
+            expr: attributes.method == "GET"
+        default: noop
+      - type: add
+        id: add
+        field: attributes.test
+        value: test-value-get
+      - type: noop
+        id: noop
   `))
 	require.Nil(err, "could not unmarshal test logstransform op config")
 	testProcessor1 := ProcessorConfig{
@@ -46,19 +46,19 @@ func TestSimulateLogsProcessing(t *testing.T) {
 	}
 
 	testLogstransformConf2, err := yaml.Parser().Unmarshal([]byte(`
-        operators:
-            - type: router
-              id: router_signoz
-              routes:
-                - output: add
-                  expr: attributes.method == "POST"
-              default: noop
-            - type: add
-              id: add
-              field: attributes.test
-              value: test-value-post
-            - type: noop
-              id: noop
+  operators:
+      - type: router
+        id: router_signoz
+        routes:
+          - output: add
+            expr: attributes.method == "POST"
+        default: noop
+      - type: add
+        id: add
+        field: attributes.test
+        value: test-value-post
+      - type: noop
+        id: noop
   `))
 	require.Nil(err, "could not unmarshal test logstransform op config")
 	testProcessor2 := ProcessorConfig{
@@ -71,7 +71,7 @@ func TestSimulateLogsProcessing(t *testing.T) {
 	)
 	require.Nil(err, "could not create processors factory map")
 
-	outputLogs, apiErr := SimulateLogsProcessing(
+	outputLogs, collectorErrs, apiErr := SimulateLogsProcessing(
 		context.Background(),
 		processorFactories,
 		[]ProcessorConfig{testProcessor1, testProcessor2},
@@ -79,6 +79,7 @@ func TestSimulateLogsProcessing(t *testing.T) {
 		300*time.Millisecond,
 	)
 	require.Nil(apiErr, apiErr.ToError().Error())
+	require.Equal(len(collectorErrs), 0)
 
 	for _, l := range outputLogs {
 		rl := l.ResourceLogs().At(0)

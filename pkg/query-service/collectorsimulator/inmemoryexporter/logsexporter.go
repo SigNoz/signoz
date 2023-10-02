@@ -59,6 +59,12 @@ func init() {
 	allExporterInstances = make(map[string]*InMemoryLogsExporter)
 }
 
+func CleanupInstance(exporterId string) {
+	allExportersLock.Lock()
+	defer allExportersLock.Unlock()
+	delete(allExporterInstances, exporterId)
+}
+
 func (e *InMemoryLogsExporter) Start(ctx context.Context, host component.Host) error {
 	allExportersLock.Lock()
 	defer allExportersLock.Unlock()
@@ -72,10 +78,7 @@ func (e *InMemoryLogsExporter) Start(ctx context.Context, host component.Host) e
 }
 
 func (e *InMemoryLogsExporter) Shutdown(ctx context.Context) error {
-	allExportersLock.Lock()
-	defer allExportersLock.Unlock()
-
-	delete(allExporterInstances, e.id)
+	CleanupInstance(e.id)
 	return nil
 }
 
