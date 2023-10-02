@@ -12,7 +12,7 @@ import (
 	"go.opentelemetry.io/collector/processor"
 )
 
-func TestSimulateLogsProcessing(t *testing.T) {
+func TestLogsProcessingSimulation(t *testing.T) {
 	require := require.New(t)
 
 	inputLogs := []plog.Logs{
