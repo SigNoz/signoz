@@ -87,10 +87,7 @@ function QueryBuilderSearch({
 			handleSearch(value);
 		};
 
-		const isDisabled =
-			!!searchValue ||
-			OPERATORS.HAS === tagOperator ||
-			OPERATORS.NHAS === tagOperator;
+		const isDisabled = !!searchValue;
 
 		return (
 			<Tag closable={!searchValue && closable} onClose={onCloseHandler}>

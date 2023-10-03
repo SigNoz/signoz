@@ -176,8 +176,8 @@ describe('Get Data Types utils', () => {
 	});
 
 	// Edge cases
-	it('should return Int64 for empty array input', () => {
-		expect(getDataTypes([])).toBe(DataTypes.Int64);
+	it('should return Empty for empty array input', () => {
+		expect(getDataTypes([])).toBe(DataTypes.EMPTY);
 	});
 
 	it('should handle mixed array (return based on first element)', () => {

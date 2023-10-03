@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -64,7 +65,7 @@ func (q *querier) runBuilderQuery(
 				ch <- channelResult{Err: err, Name: queryName, Query: placeholderQuery, Series: nil}
 				return
 			}
-			query = fmt.Sprintf(placeholderQuery, limitQuery)
+			query = strings.Replace(placeholderQuery, "#LIMIT_PLACEHOLDER", limitQuery, 1)
 		} else {
 			query, err = logsV3.PrepareLogsQuery(
 				params.Start,
