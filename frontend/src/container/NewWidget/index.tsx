@@ -178,7 +178,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		const params = new URLSearchParams(search);
 		params.set('graphType', type);
 		setGraphType(type);
-		history.push({ search: params.toString() });
 	};
 
 	const onSaveDashboard = useCallback((): void => {

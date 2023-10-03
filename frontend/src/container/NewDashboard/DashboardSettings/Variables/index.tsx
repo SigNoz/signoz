@@ -6,6 +6,7 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { TVariableViewMode } from './types';
@@ -14,6 +15,8 @@ import VariableItem from './VariableItem/VariableItem';
 function VariablesSetting(): JSX.Element {
 	const variableToDelete = useRef<string | null>(null);
 	const [deleteVariableModal, setDeleteVariableModal] = useState(false);
+
+	const { t } = useTranslation(['dashboard']);
 
 	const { selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -72,13 +75,13 @@ function VariablesSetting(): JSX.Element {
 					if (updatedDashboard.payload) {
 						setSelectedDashboard(updatedDashboard.payload);
 						notifications.success({
-							message: 'Variable updated successfully',
+							message: t('variable_updated_successfully'),
 						});
 					}
 				},
 				onError: () => {
 					notifications.error({
-						message: 'Error while updating variable',
+						message: t('error_while_updating_variable'),
 					});
 				},
 			},

@@ -12,7 +12,7 @@ import {
 import { Layout } from 'react-grid-layout';
 import { useQuery, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
-import { useLocation, useRouteMatch } from 'react-router-dom';
+import { useRouteMatch } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
@@ -30,17 +30,20 @@ const DashboardContext = createContext<IDashboardContext>({
 	setSelectedDashboard: () => {},
 });
 
+interface Props {
+	dashboardId: string;
+}
+
 export function DashboardProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
-	const { pathname } = useLocation();
-	const isDashboardPage = useRouteMatch({
+	const isDashboardPage = useRouteMatch<Props>({
 		path: ROUTES.DASHBOARD,
 		exact: true,
 	});
 
-	const isDashboardWidgetPage = useRouteMatch({
+	const isDashboardWidgetPage = useRouteMatch<Props>({
 		path: ROUTES.DASHBOARD_WIDGET,
 		exact: true,
 	});
@@ -49,9 +52,10 @@ export function DashboardProvider({
 
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const pathnameArray = pathname.split('/');
-	const dashboardId = pathnameArray[pathnameArray.length - 1];
-	const widgetDashboardId = pathnameArray[pathnameArray.length - 2];
+	const dashboardId =
+		(isDashboardPage
+			? isDashboardPage.params.dashboardId
+			: isDashboardWidgetPage?.params.dashboardId) || '';
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
 
@@ -61,7 +65,7 @@ export function DashboardProvider({
 			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
 			queryFn: () =>
 				get({
-					uuid: isDashboardWidgetPage ? widgetDashboardId : dashboardId,
+					uuid: dashboardId,
 				}),
 			onSuccess: (data) => {
 				setSelectedDashboard(data);
@@ -96,7 +100,6 @@ export function DashboardProvider({
 			selectedDashboard,
 			dashboardId,
 			layouts,
-			setSelectedDashboard,
 		],
 	);
 
