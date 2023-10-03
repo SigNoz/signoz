@@ -37,8 +37,6 @@ export const useOptions = (
 		[],
 	);
 
-	console.log({ options });
-
 	const getOptionsFromKeys = useCallback(
 		(items: BaseAutocompleteData[]): Option[] =>
 			items?.map((item) => ({
