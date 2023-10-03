@@ -2923,10 +2923,10 @@
   resolved "https://registry.npmjs.org/@sideway/pinpoint/-/pinpoint-2.0.0.tgz"
   integrity sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==
 
-"@signozhq/ui-core@0.0.5":
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/@signozhq/ui-core/-/ui-core-0.0.5.tgz#9368ca2cbb9354322587195d9cc636c236d0e28d"
-  integrity sha512-o17eKC2o+PPNF+41Qx/Gmu+h5cTCdqTTIrOi8At/jKrXTA8Uezy6JkGhqoI0oA384N+HbcCOaSzY9VjNesvzkQ==
+"@signozhq/ui-core@0.0.6":
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/@signozhq/ui-core/-/ui-core-0.0.6.tgz#be80b46244757324fd7faad1c58ed47ab43a2d4e"
+  integrity sha512-eCWZI/O0n5mQHgD1k6PoBURhdyO1vzjd1xmgbQJmjzJljAN6miEcYSCj1MOrm9//qvOym5I6XF0By6w6T3BQ9w==
 
 "@sinclair/typebox@^0.25.16":
   version "0.25.24"
