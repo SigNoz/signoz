@@ -5,7 +5,6 @@ import "fmt"
 type Config struct {
 	// Unique id for the receiver.
 	// Useful for getting a hold of the receiver in code that doesn't control its instantiation.
-	// Example: when instantiation happens in yaml configured collector service
 	Id string `mapstructure:"id"`
 }
 

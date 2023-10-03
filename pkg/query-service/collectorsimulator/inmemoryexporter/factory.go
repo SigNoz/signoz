@@ -21,12 +21,11 @@ func createLogsExporter(
 	if err := component.ValidateConfig(config); err != nil {
 		return nil, errors.Wrap(err, "invalid inmemory exporter config")
 	}
-	return &InMemoryLogsExporter{
+	return &InMemoryExporter{
 		id: config.(*Config).Id,
 	}, nil
 }
 
-// NewFactory creates a new OTLP receiver factory.
 func NewFactory() exporter.Factory {
 	return exporter.NewFactory(
 		"memory",

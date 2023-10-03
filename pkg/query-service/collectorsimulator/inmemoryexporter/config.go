@@ -4,8 +4,7 @@ import "fmt"
 
 type Config struct {
 	// Unique id for the exporter.
-	// Useful for getting a hold of the exporter in code that doesn't control
-	// its instantiation. Example: when instantiation happens in collector service
+	// Useful for getting a hold of the exporter in code that doesn't control its instantiation.
 	Id string `mapstructure:"id"`
 }
 

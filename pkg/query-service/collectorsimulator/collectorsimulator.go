@@ -27,6 +27,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
+// Puts together a collector service with inmemory receiver and exporter
+// for simulating processing of signal data through an otel collector
 type CollectorSimulator struct {
 	// collector service to be used for the simulation
 	collectorSvc *service.Service
@@ -35,8 +37,7 @@ type CollectorSimulator struct {
 	collectorErrorLogsBuffer *bytes.Buffer
 
 	// error channel where collector components will report fatal errors
-	// Gets passed in as AsyncErrorChannel in service.Settings when creating
-	// a collector service.
+	// Gets passed in as AsyncErrorChannel in service.Settings when creating a collector service.
 	collectorErrorChannel chan error
 
 	// Unique ids of inmemory receiver and exporter instances that
@@ -51,7 +52,7 @@ func NewCollectorSimulator(
 	processorFactories map[component.Type]processor.Factory,
 	processorConfigs []ProcessorConfig,
 ) (*CollectorSimulator, *model.ApiError) {
-	// Put together factories for collector components to be used in the simulation
+	// Put together collector component factories for use in the simulation
 	receiverFactories, err := receiver.MakeFactoryMap(inmemoryreceiver.NewFactory())
 	if err != nil {
 		return nil, model.InternalError(errors.Wrap(err, "could not create receiver factories."))
@@ -77,7 +78,7 @@ func NewCollectorSimulator(
 		return nil, model.BadRequest(errors.Wrap(err, "could not generate collector config"))
 	}
 
-	// Parse and validate collector conf
+	// Parse and validate collector config
 	yamlP := yamlprovider.New()
 	confProvider, err := otelcol.NewConfigProvider(otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
@@ -88,11 +89,11 @@ func NewCollectorSimulator(
 	if err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, "could not create config provider."))
 	}
-
 	collectorCfg, err := confProvider.Get(ctx, factories)
 	if err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, "failed to parse collector config"))
 	}
+
 	if err = collectorCfg.Validate(); err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, "invalid collector config"))
 	}
@@ -100,7 +101,6 @@ func NewCollectorSimulator(
 	// Build and start collector service.
 	collectorErrChan := make(chan error)
 	var collectorErrBuf bytes.Buffer
-
 	svcSettings := service.Settings{
 		Receivers:         receiver.NewBuilder(collectorCfg.Receivers, factories.Receivers),
 		Processors:        processor.NewBuilder(collectorCfg.Processors, factories.Processors),
@@ -112,6 +112,7 @@ func NewCollectorSimulator(
 			zap.ErrorOutput(zapcore.AddSync(&collectorErrBuf)),
 		},
 	}
+
 	collectorSvc, err := service.New(ctx, svcSettings, collectorCfg.Service)
 	if err != nil {
 		return nil, model.InternalError(errors.Wrap(err, "could not instantiate collector service"))
@@ -129,6 +130,11 @@ func NewCollectorSimulator(
 func (l *CollectorSimulator) Start(ctx context.Context) (
 	func(), *model.ApiError,
 ) {
+	// Calling collectorSvc.Start below will in turn call Start on
+	// inmemory receiver and exporter instances created by collectorSvc
+	//
+	// inmemory components are indexed in a global map after Start is called
+	// on them and will have to be cleaned up to ensure there is no memory leak
 	cleanupFn := func() {
 		inmemoryreceiver.CleanupInstance(l.inMemoryReceiverId)
 		inmemoryexporter.CleanupInstance(l.inMemoryExporterId)
@@ -142,32 +148,36 @@ func (l *CollectorSimulator) Start(ctx context.Context) (
 	return cleanupFn, nil
 }
 
-func (l *CollectorSimulator) GetReceiver() *inmemoryreceiver.InMemoryLogsReceiver {
+func (l *CollectorSimulator) GetReceiver() *inmemoryreceiver.InMemoryReceiver {
 	return inmemoryreceiver.GetReceiverInstance(l.inMemoryReceiverId)
 }
 
-func (l *CollectorSimulator) GetExporter() *inmemoryexporter.InMemoryLogsExporter {
+func (l *CollectorSimulator) GetExporter() *inmemoryexporter.InMemoryExporter {
 	return inmemoryexporter.GetExporterInstance(l.inMemoryExporterId)
 }
 
 func (l *CollectorSimulator) Shutdown(ctx context.Context) (
 	simulationErrs []string, apiErr *model.ApiError,
 ) {
+	shutdownErr := l.collectorSvc.Shutdown(ctx)
+
+	// Collect all errors logged or reported by collectorSvc
 	simulationErrs = []string{}
-
-	if err := l.collectorSvc.Shutdown(ctx); err != nil {
-		return simulationErrs, model.InternalError(errors.Wrap(err, "could not shutdown the collector service"))
-	}
 	close(l.collectorErrorChannel)
-
-	for err := range l.collectorErrorChannel {
-		simulationErrs = append(simulationErrs, err.Error())
+	for reportedErr := range l.collectorErrorChannel {
+		simulationErrs = append(simulationErrs, reportedErr.Error())
 	}
+
 	if l.collectorErrorLogsBuffer.Len() > 0 {
-		errBufLines := strings.Split(strings.TrimSpace(
-			l.collectorErrorLogsBuffer.String(),
-		), "\n")
+		errBufText := strings.TrimSpace(l.collectorErrorLogsBuffer.String())
+		errBufLines := strings.Split(errBufText, "\n")
 		simulationErrs = append(simulationErrs, errBufLines...)
+	}
+
+	if shutdownErr != nil {
+		return simulationErrs, model.InternalError(errors.Wrap(
+			shutdownErr, "could not shutdown the collector service",
+		))
 	}
 	return simulationErrs, nil
 }
@@ -179,19 +189,19 @@ func generateSimulationConfig(
 	exporterId string,
 ) ([]byte, error) {
 	baseConf := fmt.Sprintf(`
-  receivers:
-    memory:
-      id: %s
-  exporters:
-    memory:
-      id: %s
-  service:
-    telemetry:
-      metrics:
-        level: none
-      logs:
-        level: error
-  `, receiverId, exporterId)
+    receivers:
+      memory:
+        id: %s
+    exporters:
+      memory:
+        id: %s
+    service:
+      telemetry:
+        metrics:
+          level: none
+        logs:
+          level: error
+    `, receiverId, exporterId)
 
 	simulationConf, err := yaml.Parser().Unmarshal([]byte(baseConf))
 	if err != nil {

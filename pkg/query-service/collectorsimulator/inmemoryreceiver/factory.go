@@ -25,7 +25,7 @@ func createLogsReceiver(
 	if err := component.ValidateConfig(config); err != nil {
 		return nil, errors.Wrap(err, "invalid inmemory receiver config")
 	}
-	return &InMemoryLogsReceiver{
+	return &InMemoryReceiver{
 		id:           config.(*Config).Id,
 		nextConsumer: consumer,
 	}, nil

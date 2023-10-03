@@ -10,8 +10,8 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 
-/* An in-memory exporter for use in testing and previewing log pipelines.*/
-type InMemoryLogsExporter struct {
+// An in-memory exporter for use in testing and previewing log pipelines.
+type InMemoryExporter struct {
 	// Unique identifier for the exporter.
 	id string
 	// mu protects the data below
@@ -21,7 +21,7 @@ type InMemoryLogsExporter struct {
 }
 
 // ConsumeLogs implements component.LogsExporter.
-func (e *InMemoryLogsExporter) ConsumeLogs(ctx context.Context, ld plog.Logs) error {
+func (e *InMemoryExporter) ConsumeLogs(ctx context.Context, ld plog.Logs) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -29,43 +29,46 @@ func (e *InMemoryLogsExporter) ConsumeLogs(ctx context.Context, ld plog.Logs) er
 	return nil
 }
 
-// GetLogs returns a slice of pdata.Logs that were received by this exporter.
-func (e *InMemoryLogsExporter) GetLogs() []plog.Logs {
+func (e *InMemoryExporter) GetLogs() []plog.Logs {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
 	return e.logs
 }
 
-// ResetLogs removes all logs that were received by this exporter.
-func (e *InMemoryLogsExporter) ResetLogs() {
+func (e *InMemoryExporter) ResetLogs() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
 	e.logs = nil
 }
 
-func (e *InMemoryLogsExporter) Capabilities() consumer.Capabilities {
+func (e *InMemoryExporter) Capabilities() consumer.Capabilities {
 	return consumer.Capabilities{MutatesData: false}
 }
 
 // Keep track of all exporter instances in the process.
 // Useful for getting a hold of the exporter in scenarios where one doesn't
 // create the instances. Eg: bringing up a collector service from collector config
-var allExporterInstances map[string]*InMemoryLogsExporter
+var allExporterInstances map[string]*InMemoryExporter
 var allExportersLock sync.Mutex
 
 func init() {
-	allExporterInstances = make(map[string]*InMemoryLogsExporter)
+	allExporterInstances = make(map[string]*InMemoryExporter)
+}
+
+func GetExporterInstance(id string) *InMemoryExporter {
+	return allExporterInstances[id]
 }
 
 func CleanupInstance(exporterId string) {
 	allExportersLock.Lock()
 	defer allExportersLock.Unlock()
+
 	delete(allExporterInstances, exporterId)
 }
 
-func (e *InMemoryLogsExporter) Start(ctx context.Context, host component.Host) error {
+func (e *InMemoryExporter) Start(ctx context.Context, host component.Host) error {
 	allExportersLock.Lock()
 	defer allExportersLock.Unlock()
 
@@ -77,11 +80,7 @@ func (e *InMemoryLogsExporter) Start(ctx context.Context, host component.Host) e
 	return nil
 }
 
-func (e *InMemoryLogsExporter) Shutdown(ctx context.Context) error {
+func (e *InMemoryExporter) Shutdown(ctx context.Context) error {
 	CleanupInstance(e.id)
 	return nil
-}
-
-func GetExporterInstance(id string) *InMemoryLogsExporter {
-	return allExporterInstances[id]
 }
