@@ -1,9 +1,11 @@
+@use '/src/scss/main.scss';
+
 .apm-module-container {
-	padding: 48px 0;
+	padding: main.$size-12 main.$size-0;
 
 	.header {
 		h1 {
-			font-size: 24px;
+			font-size: main.$font-size-xxl;
 			font-weight: 500;
 		}
 
