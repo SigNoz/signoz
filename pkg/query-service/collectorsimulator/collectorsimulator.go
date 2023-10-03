@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -17,7 +16,6 @@ import (
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/extension"
 	"go.opentelemetry.io/collector/otelcol"
-	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/service"
@@ -29,7 +27,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
-type LogsProcessingSimulator struct {
+type CollectorSimulator struct {
 	// collector service to be used for the simulation
 	collectorSvc *service.Service
 
@@ -47,11 +45,12 @@ type LogsProcessingSimulator struct {
 	inMemoryExporterId string
 }
 
-func NewLogsProcessingSimulator(
+func NewCollectorSimulator(
 	ctx context.Context,
+	signalType component.DataType,
 	processorFactories map[component.Type]processor.Factory,
 	processorConfigs []ProcessorConfig,
-) (*LogsProcessingSimulator, *model.ApiError) {
+) (*CollectorSimulator, *model.ApiError) {
 	// Put together factories for collector components to be used in the simulation
 	receiverFactories, err := receiver.MakeFactoryMap(inmemoryreceiver.NewFactory())
 	if err != nil {
@@ -72,7 +71,7 @@ func NewLogsProcessingSimulator(
 	inMemoryExporterId := uuid.NewString()
 
 	collectorConfYaml, err := generateSimulationConfig(
-		inMemoryReceiverId, processorConfigs, inMemoryExporterId,
+		signalType, inMemoryReceiverId, processorConfigs, inMemoryExporterId,
 	)
 	if err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, "could not generate collector config"))
@@ -118,7 +117,7 @@ func NewLogsProcessingSimulator(
 		return nil, model.InternalError(errors.Wrap(err, "could not instantiate collector service"))
 	}
 
-	return &LogsProcessingSimulator{
+	return &CollectorSimulator{
 		inMemoryReceiverId:       inMemoryReceiverId,
 		inMemoryExporterId:       inMemoryExporterId,
 		collectorSvc:             collectorSvc,
@@ -127,7 +126,7 @@ func NewLogsProcessingSimulator(
 	}, nil
 }
 
-func (l *LogsProcessingSimulator) Start(ctx context.Context) (
+func (l *CollectorSimulator) Start(ctx context.Context) (
 	func(), *model.ApiError,
 ) {
 	cleanupFn := func() {
@@ -143,22 +142,15 @@ func (l *LogsProcessingSimulator) Start(ctx context.Context) (
 	return cleanupFn, nil
 }
 
-func (l *LogsProcessingSimulator) ConsumeLogs(
-	ctx context.Context, plog plog.Logs,
-) *model.ApiError {
-	receiver := inmemoryreceiver.GetReceiverInstance(l.inMemoryReceiverId)
-	if receiver == nil {
-		return model.InternalError(fmt.Errorf("could not find in memory receiver"))
-	}
-	if err := receiver.ConsumeLogs(ctx, plog); err != nil {
-		return model.InternalError(errors.Wrap(err,
-			"inmemory receiver could not consume logs for simulation",
-		))
-	}
-	return nil
+func (l *CollectorSimulator) GetReceiver() *inmemoryreceiver.InMemoryLogsReceiver {
+	return inmemoryreceiver.GetReceiverInstance(l.inMemoryReceiverId)
 }
 
-func (l *LogsProcessingSimulator) Shutdown(ctx context.Context) (
+func (l *CollectorSimulator) GetExporter() *inmemoryexporter.InMemoryLogsExporter {
+	return inmemoryexporter.GetExporterInstance(l.inMemoryExporterId)
+}
+
+func (l *CollectorSimulator) Shutdown(ctx context.Context) (
 	simulationErrs []string, apiErr *model.ApiError,
 ) {
 	simulationErrs = []string{}
@@ -180,38 +172,8 @@ func (l *LogsProcessingSimulator) Shutdown(ctx context.Context) (
 	return simulationErrs, nil
 }
 
-func (l *LogsProcessingSimulator) GetProcessedLogs(
-	minLogCount int, timeout time.Duration,
-) (
-	[]plog.Logs, *model.ApiError,
-) {
-	exporter := inmemoryexporter.GetExporterInstance(l.inMemoryExporterId)
-	if exporter == nil {
-		return nil, model.InternalError(fmt.Errorf("could not find in memory exporter"))
-	}
-
-	// Must do a time based wait to ensure all logs come through.
-	// For example, logstransformprocessor does internal batching and it
-	// takes (processorCount * batchTime) for logs to get through.
-	startTsMillis := time.Now().UnixMilli()
-	for {
-		elapsedMillis := time.Now().UnixMilli() - startTsMillis
-		if elapsedMillis > timeout.Milliseconds() {
-			break
-		}
-
-		exportedLogs := exporter.GetLogs()
-		if len(exportedLogs) >= minLogCount {
-			return exportedLogs, nil
-		}
-
-		time.Sleep(50 * time.Millisecond)
-	}
-
-	return exporter.GetLogs(), nil
-}
-
 func generateSimulationConfig(
+	signalType component.DataType,
 	receiverId string,
 	processorConfigs []ProcessorConfig,
 	exporterId string,
@@ -224,12 +186,6 @@ func generateSimulationConfig(
     memory:
       id: %s
   service:
-    pipelines:
-      logs:
-        receivers:
-          - memory
-        exporters:
-          - memory
     telemetry:
       metrics:
         level: none
@@ -251,9 +207,13 @@ func generateSimulationConfig(
 	simulationConf["processors"] = processors
 
 	svc := simulationConf["service"].(map[string]interface{})
-	svcPipelines := svc["pipelines"].(map[string]interface{})
-	svcPipelinesLogs := svcPipelines["logs"].(map[string]interface{})
-	svcPipelinesLogs["processors"] = procNamesInOrder
+	svc["pipelines"] = map[string]interface{}{
+		string(signalType): map[string]interface{}{
+			"receivers":  []string{"memory"},
+			"processors": procNamesInOrder,
+			"exporters":  []string{"memory"},
+		},
+	}
 
 	simulationConfYaml, err := yaml.Parser().Marshal(simulationConf)
 	if err != nil {

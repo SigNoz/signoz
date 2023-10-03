@@ -2,8 +2,10 @@ package collectorsimulator
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/pdata/plog"
 	"go.opentelemetry.io/collector/processor"
@@ -25,8 +27,8 @@ func SimulateLogsProcessing(
 	outputLogs []plog.Logs, collectorErrs []string, apiErr *model.ApiError,
 ) {
 	// Construct and start a simulator (wraps a collector service)
-	simulator, apiErr := NewLogsProcessingSimulator(
-		ctx, processorFactories, processorConfigs,
+	simulator, apiErr := NewCollectorSimulator(
+		ctx, component.DataTypeLogs, processorFactories, processorConfigs,
 	)
 	if apiErr != nil {
 		return nil, nil, model.WrapApiError(apiErr, "could not create logs processing simulator")
@@ -42,12 +44,15 @@ func SimulateLogsProcessing(
 
 	// Do the simulation
 	for _, plog := range logs {
-		if apiErr = simulator.ConsumeLogs(ctx, plog); apiErr != nil {
+		apiErr = SendLogsToSimulator(ctx, simulator, plog)
+		if apiErr != nil {
 			return nil, nil, model.WrapApiError(apiErr, "could not consume logs for simulation")
 		}
 	}
 
-	result, apiErr := simulator.GetProcessedLogs(len(logs), timeout)
+	result, apiErr := GetProcessedLogsFromSimulator(
+		simulator, len(logs), timeout,
+	)
 	if apiErr != nil {
 		return nil, nil, model.InternalError(model.WrapApiError(apiErr,
 			"could not get processed logs from simulator",
@@ -63,4 +68,54 @@ func SimulateLogsProcessing(
 	}
 
 	return result, simulationErrs, nil
+}
+
+func SendLogsToSimulator(
+	ctx context.Context,
+	simulator *CollectorSimulator,
+	plog plog.Logs,
+) *model.ApiError {
+	receiver := simulator.GetReceiver()
+	if receiver == nil {
+		return model.InternalError(fmt.Errorf("could not find in memory receiver for simulator"))
+	}
+	if err := receiver.ConsumeLogs(ctx, plog); err != nil {
+		return model.InternalError(errors.Wrap(err,
+			"inmemory receiver could not consume logs for simulation",
+		))
+	}
+	return nil
+}
+
+func GetProcessedLogsFromSimulator(
+	simulator *CollectorSimulator,
+	minLogCount int,
+	timeout time.Duration,
+) (
+	[]plog.Logs, *model.ApiError,
+) {
+	exporter := simulator.GetExporter()
+	if exporter == nil {
+		return nil, model.InternalError(fmt.Errorf("could not find in memory exporter for simulator"))
+	}
+
+	// Must do a time based wait to ensure all logs come through.
+	// For example, logstransformprocessor does internal batching and it
+	// takes (processorCount * batchTime) for logs to get through.
+	startTsMillis := time.Now().UnixMilli()
+	for {
+		elapsedMillis := time.Now().UnixMilli() - startTsMillis
+		if elapsedMillis > timeout.Milliseconds() {
+			break
+		}
+
+		exportedLogs := exporter.GetLogs()
+		if len(exportedLogs) >= minLogCount {
+			return exportedLogs, nil
+		}
+
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	return exporter.GetLogs(), nil
 }
