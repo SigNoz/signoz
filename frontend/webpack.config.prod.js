@@ -114,7 +114,15 @@ const config = {
 					// Translates CSS into CommonJS
 					cssLoader,
 					// Compiles Sass to CSS
-					sassLoader,
+					{
+						loader: sassLoader,
+						options: {
+							additionalData: `@use "${resolve(
+								__dirname,
+								'src/scss/main.scss',
+							)}" as *;`,
+						},
+					},
 				],
 			},
 			{
