@@ -17,6 +17,8 @@ type ProcessorConfig struct {
 	Config map[string]interface{}
 }
 
+// Simulate processing of logs through the otel collector.
+// Useful for testing, validation and generating previews.
 func SimulateLogsProcessing(
 	ctx context.Context,
 	processorFactories map[component.Type]processor.Factory,
@@ -35,8 +37,7 @@ func SimulateLogsProcessing(
 	}
 
 	simulatorCleanup, apiErr := simulator.Start(ctx)
-	// We can not rely on collector service to shutdown successfully and take care of
-	// cleaning up inmemory component references and ensure there are no memory leaks
+	// We can not rely on collector service to shutdown successfully and cleanup refs to inmemory components.
 	defer simulatorCleanup()
 	if apiErr != nil {
 		return nil, nil, apiErr

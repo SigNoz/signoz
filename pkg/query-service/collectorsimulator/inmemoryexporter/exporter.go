@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 
-// An in-memory exporter for use in testing and previewing log pipelines.
+// An in-memory exporter for testing and generating previews.
 type InMemoryExporter struct {
 	// Unique identifier for the exporter.
 	id string

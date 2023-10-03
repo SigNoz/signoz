@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 
-// In memory receivers for testing and simulation
+// In memory receiver for testing and simulation
 type InMemoryReceiver struct {
 	// Unique identifier for the receiver.
 	id string
