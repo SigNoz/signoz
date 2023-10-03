@@ -4,7 +4,7 @@ import { parse } from 'papaparse';
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
 // eslint-disable-next-line no-useless-escape
-export const tagRegexp = /^\s*(.*?)\s*(IN|NOT_IN|LIKE|NOT_LIKE|REGEX|NOT_REGEX|=|!=|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS|>=|>|<=|<|HAS|NHAS)\s*(.*)$/g;
+export const tagRegexp = /^\s*(.*?)\s*(IN|in|NOT_IN|not_in|LIKE|like|NOT_LIKE|not_like|REGEX|regex|NOT_REGEX|not_regex|=|!=|EXISTS|exists|NOT_EXISTS|not_exists|CONTAINS|contains|NOT_CONTAINS|not_contains|>=|>|<=|<|HAS|has|NHAS|nhas)\s*(.*)$/g;
 
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
@@ -22,6 +22,7 @@ export function getTagToken(tag: string): ITagToken {
 
 	if (match) {
 		const [, matchTagKey, matchTagOperator, matchTagValue] = match;
+
 		return {
 			tagKey: matchTagKey,
 			tagOperator: matchTagOperator,

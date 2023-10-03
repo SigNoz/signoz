@@ -161,9 +161,11 @@ export const useOptions = (
 				if (isMulti) {
 					return {
 						...option,
-						selected: tagValue
-							.filter((i) => i.trim().replace(/^\s+/, '') === option.value)
-							.includes(option.value),
+						selected: Array.isArray(tagValue)
+							? tagValue
+									?.filter((i) => i.trim().replace(/^\s+/, '') === option.value)
+									?.includes(option.value)
+							: String(tagValue).includes(option.value),
 					};
 				}
 				return option;
