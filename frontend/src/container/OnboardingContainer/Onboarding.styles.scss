@@ -1,3 +1,5 @@
+@use '/src/scss/main.scss';
+
 .container {
 	width: 100%;
 	max-width: 1440px;
@@ -20,7 +22,7 @@
 .onboardingContainer {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: main.$size-4;
 	text-align: center;
 	justify-content: center;
 	align-items: center;
@@ -31,44 +33,44 @@
 
 .onboardingHeader {
 	text-align: center;
-	margin-top: 48px;
-	margin-bottom: 24px;
+	margin-top: main.$size-9;
+	margin-bottom: main.$size-6;
 }
 
 .onboardingHeader h1 {
-	font-size: 24px;
-	font-weight: 500;
+	font-size: main.$font-size-xxl;
+	font-weight: main.$weight-medium;
 }
 
 .modulesContainer {
 	display: block;
-	padding: 24px;
+	padding: main.$size-6;
 }
 
 .moduleContainerRowStyles {
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
-	gap: 36px;
-	margin: 36px;
+	gap: main.$size-9;
+	margin: main.$size-9;
 }
 
 .moduleStyles {
-	padding: 0;
+	padding: main.$size-0;
 	box-sizing: border-box;
 	cursor: pointer;
 	width: 400px;
 
 	.ant-card-body {
-		padding: 0px;
+		padding: main.$size-0;
 	}
 }
 
 .moduleTitleStyle {
-	font-size: 16px;
-	font-weight: 500;
-	padding: 16px;
-	margin: 0px !important;
+	font-size: main.$font-size-lg;
+	font-weight: main.$weight-medium;
+	padding: main.$size-1;
+	margin: main.$size-0 !important;
 
 	white-space: nowrap;
 	overflow: hidden;
@@ -84,8 +86,8 @@
 }
 
 .moduleDesc {
-	padding: 24px;
-	margin: 0px !important;
+	padding: main.$size-6;
+	margin: main.$size-0 !important;
 	min-height: 100px;
 }
 
@@ -96,24 +98,24 @@
 .continue-to-next-step {
 	display: flex;
 	justify-content: center;
-	margin: 48px 0;
+	margin: main.$size-12 0;
 }
 
 .stepsContainer {
 	position: relative;
 	height: 100%;
-	padding: 48px;
+	padding: main.$size-12;
 }
 
 .actionButtonsContainer {
 	display: flex;
 	justify-content: space-between;
-	padding-bottom: 48px;
+	padding-bottom: main.$size-12;
 	box-sizing: border-box;
-	bottom: 0;
+	bottom: main.$size-0;
 }
 
 .ant-steps-item-description {
-	font-size: 12px !important;
+	font-size: main.$size-3 !important;
 	max-width: 100% !important;
 }
