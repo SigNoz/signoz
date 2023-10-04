@@ -35,6 +35,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, err
 	}
 
+	// `effective_config` column contains the latest known config for an agent
 	tableSchema := `CREATE TABLE IF NOT EXISTS agents (
 		agent_id TEXT PRIMARY KEY UNIQUE,
 		started_at datetime NOT NULL,
