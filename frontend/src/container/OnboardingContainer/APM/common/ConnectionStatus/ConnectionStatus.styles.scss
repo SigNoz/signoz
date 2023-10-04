@@ -1,19 +1,17 @@
-@use '/src/scss/main.scss';
-
 .connection-status-container {
 	height: calc(100vh - 420px);
 
 	.full-docs-link {
-		margin-bottom: main.$size-9;
+		margin-bottom: $size-9;
 
 		.header {
 			display: flex;
 			align-items: center;
-			gap: main.$size-4;
-			margin: main.$size-4 main.$size-0;
+			gap: $size-4;
+			margin: $size-4 $size-0;
 
 			img {
-				height: main.$size-10;
+				height: $size-10;
 			}
 
 			h1 {
@@ -21,8 +19,8 @@
 				display: flex;
 				align-items: center;
 				color: #e5e7eb;
-				gap: main.$size-4;
-				margin: main.$size-0;
+				gap: $size-4;
+				margin: $size-0;
 			}
 		}
 	}
@@ -30,7 +28,7 @@
 	.status-container {
 		display: flex;
 		justify-content: space-between;
-		gap: main.$size-6;
+		gap: $size-6;
 
 		.title {
 			text-transform: capitalize;
@@ -42,7 +40,7 @@
 	.status-info,
 	.details-info {
 		display: flex;
-		gap: main.$size-2;
+		gap: $size-2;
 		flex-direction: column;
 	}
 
@@ -70,11 +68,11 @@
 
 	.status {
 		display: flex;
-		gap: main.$size-2;
+		gap: $size-2;
 
 		svg {
-			width: main.$size-4;
-			height: main.$size-4;
+			width: $size-4;
+			height: $size-4;
 		}
 	}
 }

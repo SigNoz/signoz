@@ -1,16 +1,16 @@
 .logs-management-module-container {
 	min-height: calc(100vh - 300px);
-	padding: 48px 0;
+	padding: $size-12 $size-0;
 
 	.header {
 		h1 {
-			font-size: 24px;
-			font-weight: 500;
+			font-size: $size-6;
+			font-weight: $font-weight-medium;
 		}
 
 		h4 {
 			font-size: 14px;
-			font-weight: 300;
+			font-weight: $font-weight-light;
 		}
 	}
 }
@@ -18,7 +18,7 @@
 .supported-logs-type-container {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 24px;
+	gap: $size-6;
 }
 
 .supported-logs-type {
@@ -26,9 +26,9 @@
 	justify-content: center;
 	align-items: flex-start;
 	flex-direction: column;
-	gap: 16px;
+	gap: $size-4;
 	width: 300px;
-	padding: 16px;
+	padding: $size-4;
 	box-sizing: border-box;
 	height: 120px;
 	background: #1d1d1d;
@@ -44,25 +44,25 @@
 }
 
 .supported-logs-type-img {
-	height: 36px;
+	height: $size-9;
 }
 
 .selected-logs-type-setup-instructions {
-	padding: 24px 0;
+	padding: $size-6 $size-0;
 }
 
 div[class*='-setup-instructions-container'] {
 	.header {
 		display: flex;
 		align-items: flex-start;
-		gap: 12px;
+		gap: $size-3;
 
-		margin: 16px 0;
+		margin: $size-4 $size-0;
 
 		img {
-			height: 32px;
-			min-height: 32px;
-			min-width: 32px;
+			height: $size-8;
+			min-height: $size-8;
+			min-width: $size-8;
 		}
 
 		h1 {
@@ -70,21 +70,21 @@ div[class*='-setup-instructions-container'] {
 			display: flex;
 			align-items: center;
 			color: #e5e7eb;
-			gap: 16px;
-			margin: 0;
+			gap: $size-4;
+			margin: $size-0;
 		}
 	}
 }
 
 .label {
 	font-size: 14px;
-	margin-bottom: 8px;
-	font-weight: 300;
+	margin-bottom: $size-2;
+	font-weight: $font-weight-light;
 }
 
 pre {
 	background-color: #292d3e;
-	padding: 8px;
+	padding: $size-2;
 	overflow: auto;
 	border-radius: 3px;
 
@@ -95,19 +95,19 @@ pre {
 }
 
 .content-container {
-	padding: 24px;
-	margin: 16px 0;
+	padding: $size-6;
+	margin: $size-4 $size-0;
 	background: rgba(29, 29, 29, 1);
-	line-height: 20px;
+	line-height: $size-5;
 }
 
 .detailed-docs-link {
 	display: flex;
-	margin: 8px 0;
-	font-size: 12px;
+	margin: $size-2 $size-0;
+	font-size: $font-size-sm;
 
 	a {
-		padding-left: 4px;
+		padding-left: $size-1;
 	}
 }
 
@@ -117,7 +117,7 @@ pre {
 	align-items: center;
 
 	img {
-		height: 28px;
+		height: $size-7;
 	}
 }
 

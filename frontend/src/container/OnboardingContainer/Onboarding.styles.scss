@@ -1,5 +1,3 @@
-@use '/src/scss/main.scss';
-
 .container {
 	width: 100%;
 	max-width: 1440px;
@@ -22,7 +20,7 @@
 .onboardingContainer {
 	display: flex;
 	flex-direction: column;
-	gap: main.$size-4;
+	gap: $size-4;
 	text-align: center;
 	justify-content: center;
 	align-items: center;
@@ -33,44 +31,44 @@
 
 .onboardingHeader {
 	text-align: center;
-	margin-top: main.$size-9;
-	margin-bottom: main.$size-6;
+	margin-top: $size-9;
+	margin-bottom: $size-6;
 }
 
 .onboardingHeader h1 {
-	font-size: main.$font-size-xxl;
-	font-weight: main.$weight-medium;
+	font-size: $font-size-xxl;
+	font-weight: $font-weight-medium;
 }
 
 .modulesContainer {
 	display: block;
-	padding: main.$size-6;
+	padding: $size-6;
 }
 
 .moduleContainerRowStyles {
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
-	gap: main.$size-9;
-	margin: main.$size-9;
+	gap: $size-9;
+	margin: $size-9;
 }
 
 .moduleStyles {
-	padding: main.$size-0;
+	padding: $size-0;
 	box-sizing: border-box;
 	cursor: pointer;
 	width: 400px;
 
 	.ant-card-body {
-		padding: main.$size-0;
+		padding: $size-0;
 	}
 }
 
 .moduleTitleStyle {
-	font-size: main.$font-size-lg;
-	font-weight: main.$weight-medium;
-	padding: main.$size-1;
-	margin: main.$size-0 !important;
+	font-size: $font-size-lg;
+	font-weight: $font-weight-medium;
+	padding: $size-1;
+	margin: $size-0 !important;
 
 	white-space: nowrap;
 	overflow: hidden;
@@ -86,8 +84,8 @@
 }
 
 .moduleDesc {
-	padding: main.$size-6;
-	margin: main.$size-0 !important;
+	padding: $size-6;
+	margin: $size-0 !important;
 	min-height: 100px;
 }
 
@@ -98,24 +96,24 @@
 .continue-to-next-step {
 	display: flex;
 	justify-content: center;
-	margin: main.$size-12 0;
+	margin: $size-12 0;
 }
 
 .stepsContainer {
 	position: relative;
 	height: 100%;
-	padding: main.$size-12;
+	padding: $size-12;
 }
 
 .actionButtonsContainer {
 	display: flex;
 	justify-content: space-between;
-	padding-bottom: main.$size-12;
+	padding-bottom: $size-12;
 	box-sizing: border-box;
-	bottom: main.$size-0;
+	bottom: $size-0;
 }
 
 .ant-steps-item-description {
-	font-size: main.$size-3 !important;
+	font-size: $size-3 !important;
 	max-width: 100% !important;
 }

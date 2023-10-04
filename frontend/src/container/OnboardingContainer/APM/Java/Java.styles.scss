@@ -1,12 +1,10 @@
-@use '/src/scss/main.scss';
-
 .form-container {
 	display: flex;
 	align-items: flex-start;
 	width: 100%;
-	gap: main.$size-4;
+	gap: $size-4;
 
 	& .ant-form-item {
-		margin-bottom: main.$size-0;
+		margin-bottom: $size-0;
 	}
 }

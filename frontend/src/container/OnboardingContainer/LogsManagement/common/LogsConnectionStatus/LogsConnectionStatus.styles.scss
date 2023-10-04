@@ -1,15 +1,15 @@
 .connection-status-container {
 	.full-docs-link {
-		margin-bottom: 36px;
+		margin-bottom: $size-9;
 
 		.header {
 			display: flex;
 			align-items: center;
-			gap: 16px;
-			margin: 16px 0;
+			gap: $size-4;
+			margin: $size-4 $size-0;
 
 			img {
-				height: 40px;
+				height: $size-10;
 			}
 
 			h1 {
@@ -17,8 +17,8 @@
 				display: flex;
 				align-items: center;
 				color: #e5e7eb;
-				gap: 16px;
-				margin: 0px;
+				gap: $size-4;
+				margin: $size-0;
 			}
 		}
 	}
@@ -26,7 +26,7 @@
 	.status-container {
 		display: flex;
 		justify-content: space-between;
-		gap: 24px;
+		gap: $size-6;
 
 		.title {
 			text-transform: capitalize;
@@ -38,7 +38,7 @@
 	.status-info,
 	.details-info {
 		display: flex;
-		gap: 8px;
+		gap: $size-2;
 		flex-direction: column;
 	}
 
@@ -66,11 +66,11 @@
 
 	.status {
 		display: flex;
-		gap: 8px;
+		gap: $size-2;
 
 		svg {
-			width: 16px;
-			height: 16px;
+			width: $size-4;
+			height: $size-4;
 		}
 	}
 }

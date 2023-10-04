@@ -1,15 +1,15 @@
 .infrastructure-monitoring-module-container {
-	padding: 48px 0;
+	padding: $size-12 $size-0;
 
 	.module-header {
 		h1 {
-			font-size: 24px;
-			font-weight: 500;
+			font-size: $size-6;
+			font-weight: $font-weight-medium;
 		}
 
 		h4 {
 			font-size: 14px;
-			font-weight: 300;
+			font-weight: $font-weight-light;
 		}
 	}
 
@@ -25,8 +25,8 @@
 		.subheading {
 			display: flex;
 			flex-direction: column;
-			gap: 12px;
-			margin-bottom: 16px;
+			gap: $size-3;
+			margin-bottom: $size-4;
 
 			.recevier-types {
 				display: flex;
@@ -37,9 +37,9 @@
 
 	.header {
 		display: flex;
-		gap: 16px;
+		gap: $size-4;
 		justify-content: flex-start;
 		align-items: center;
-		margin: 16px 0;
+		margin: $size-4 $size-0;
 	}
 }
