@@ -63,9 +63,9 @@ export default function Java({
 	};
 
 	const variables = {
-		myapp: serviceName || '<myapp>',
-		ingestionKey: SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
-		region: REGION || 'region',
+		MYAPP: serviceName || '<myapp>',
+		SIGNOZ_INGESTION_KEY: SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
+		REGION: REGION || 'region',
 	};
 
 	return (

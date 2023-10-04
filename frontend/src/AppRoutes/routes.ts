@@ -1,5 +1,4 @@
 import ROUTES from 'constants/routes';
-import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -12,6 +11,7 @@ import {
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
+	IngestionSettings,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
