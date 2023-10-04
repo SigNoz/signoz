@@ -33,7 +33,7 @@ export const useAutoComplete = (
 		searchKey,
 	);
 
-	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
+	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue);
 
 	const handleSearch = (value: string): void => {
 		const prefixFreeValue = getRemovePrefixFromKey(getTagToken(value).tagKey);

@@ -4,7 +4,7 @@ import {
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { WhereClauseConfig } from './useAutoComplete';
@@ -146,26 +146,30 @@ export const useOptions = (
 		getOptionsWithValidOperator,
 	]);
 
-	return options
-		.filter(
-			(option, index, self) =>
-				index ===
-					self.findIndex(
-						(o) => o.label === option.label && o.value === option.value, // to remove duplicate & empty options from list
-					) && option.value !== '',
-		)
-		.map((option) => {
-			const { tagValue } = getTagToken(searchValue);
-			if (isMulti) {
-				return {
-					...option,
-					selected: Array.isArray(tagValue)
-						? tagValue
-								?.filter((i) => i.trim().replace(/^\s+/, '') === option.value)
-								?.includes(option.value)
-						: String(tagValue).includes(option.value),
-				};
-			}
-			return option;
-		});
+	return useMemo(
+		() =>
+			options
+				.filter(
+					(option, index, self) =>
+						index ===
+							self.findIndex(
+								(o) => o.label === option.label && o.value === option.value, // to remove duplicate & empty options from list
+							) && option.value !== '',
+				)
+				.map((option) => {
+					const { tagValue } = getTagToken(searchValue);
+					if (isMulti) {
+						return {
+							...option,
+							selected: Array.isArray(tagValue)
+								? tagValue
+										?.filter((i) => i.trim().replace(/^\s+/, '') === option.value)
+										?.includes(option.value)
+								: String(tagValue).includes(option.value),
+						};
+					}
+					return option;
+				}),
+		[isMulti, options, searchValue],
+	);
 };
