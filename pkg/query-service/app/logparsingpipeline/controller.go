@@ -2,7 +2,6 @@ package logparsingpipeline
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -43,6 +42,12 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 		return nil, model.UnauthorizedError(errors.Wrap(authErr, "failed to get userId from context"))
 	}
 
+	if !agentConf.Ready() {
+		return nil, model.UnavailableError(fmt.Errorf(
+			"agent updater unavailable at the moment. Please try in sometime",
+		))
+	}
+
 	var pipelines []Pipeline
 
 	// scan through postable pipelines, to select the existing pipelines or insert missing ones
@@ -72,21 +77,6 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 
 	}
 
-	// prepare filter config (processor) from the pipelines
-	filterConfig, names, translationErr := PreparePipelineProcessor(pipelines)
-	if translationErr != nil {
-		zap.S().Errorf("failed to generate processor config from pipelines for deployment %w", translationErr)
-		return nil, model.BadRequest(errors.Wrap(
-			translationErr, "failed to generate processor config from pipelines for deployment",
-		))
-	}
-
-	if !agentConf.Ready() {
-		return nil, model.UnavailableError(fmt.Errorf(
-			"agent updater unavailable at the moment. Please try in sometime",
-		))
-	}
-
 	// prepare config elements
 	elements := make([]string, len(pipelines))
 	for i, p := range pipelines {
@@ -94,19 +84,13 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	}
 
 	// prepare config by calling gen func
-	cfg, err := agentConf.StartNewVersion(ctx, userId, agentConf.ElementTypeLogPipelines, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, userId, LogPipelinesFeatureType, elements)
 	if err != nil || cfg == nil {
 		return nil, err
 	}
 
-	zap.S().Info("applying drop pipeline config", cfg)
-	// raw pipeline is needed since filterConfig doesn't contain inactive pipelines and operators
-	rawPipelineData, _ := json.Marshal(pipelines)
-
-	// queue up the config to push to opamp
-	err = agentConf.UpsertLogParsingProcessor(ctx, cfg.Version, rawPipelineData, filterConfig, names)
-	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeLogPipelines, 10)
-	insertedCfg, _ := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeLogPipelines, cfg.Version)
+	history, _ := agentConf.GetConfigHistory(ctx, LogPipelinesFeatureType, 10)
+	insertedCfg, _ := agentConf.GetConfigVersion(ctx, LogPipelinesFeatureType, cfg.Version)
 
 	response := &PipelinesResponse{
 		ConfigVersion: insertedCfg,
@@ -129,7 +113,7 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 		zap.S().Errorf("failed to get pipelines for version %d, %w", version, errors)
 		return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version"))
 	}
-	configVersion, err := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeLogPipelines, version)
+	configVersion, err := agentConf.GetConfigVersion(ctx, LogPipelinesFeatureType, version)
 	if err != nil {
 		zap.S().Errorf("failed to get config for version %d, %s", version, err.Error())
 		return nil, model.WrapApiError(err, "failed to get config for given version")

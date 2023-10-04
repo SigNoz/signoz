@@ -33,7 +33,7 @@ func (r *Repo) initDB(engine string) error {
 }
 
 func (r *Repo) GetConfigHistory(
-	ctx context.Context, typ ElementTypeDef, limit int,
+	ctx context.Context, typ PreprocessingFeatureType, limit int,
 ) ([]ConfigVersion, *model.ApiError) {
 	var c []ConfigVersion
 	err := r.db.SelectContext(ctx, &c, fmt.Sprintf(`SELECT 
@@ -65,7 +65,7 @@ func (r *Repo) GetConfigHistory(
 }
 
 func (r *Repo) GetConfigVersion(
-	ctx context.Context, typ ElementTypeDef, v int,
+	ctx context.Context, typ PreprocessingFeatureType, v int,
 ) (*ConfigVersion, *model.ApiError) {
 	var c ConfigVersion
 	err := r.db.GetContext(ctx, &c, `SELECT 
@@ -98,7 +98,7 @@ func (r *Repo) GetConfigVersion(
 }
 
 func (r *Repo) GetLatestVersion(
-	ctx context.Context, typ ElementTypeDef,
+	ctx context.Context, typ PreprocessingFeatureType,
 ) (*ConfigVersion, *model.ApiError) {
 	var c ConfigVersion
 	err := r.db.GetContext(ctx, &c, `SELECT 
@@ -139,12 +139,6 @@ func (r *Repo) insertConfig(
 		return model.BadRequest(fmt.Errorf(
 			"element type is required for creating agent config version",
 		))
-	}
-
-	// allowing empty elements for logs - use case is deleting all pipelines
-	if len(elements) == 0 && c.ElementType != ElementTypeLogPipelines {
-		zap.S().Error("insert config called with no elements ", c.ElementType)
-		return model.BadRequest(fmt.Errorf("config must have atleast one element"))
 	}
 
 	if c.Version != 0 {
@@ -233,7 +227,7 @@ func (r *Repo) insertConfig(
 }
 
 func (r *Repo) updateDeployStatus(ctx context.Context,
-	elementType ElementTypeDef,
+	elementType PreprocessingFeatureType,
 	version int,
 	status string,
 	result string,

@@ -6,15 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type ElementTypeDef string
-
-const (
-	ElementTypeSamplingRules ElementTypeDef = "sampling_rules"
-	ElementTypeDropRules     ElementTypeDef = "drop_rules"
-	ElementTypeLogPipelines  ElementTypeDef = "log_pipelines"
-	ElementTypeLbExporter    ElementTypeDef = "lb_exporter"
-)
-
 type DeployStatus string
 
 const (
@@ -26,12 +17,12 @@ const (
 )
 
 type ConfigVersion struct {
-	ID          string         `json:"id" db:"id"`
-	Version     int            `json:"version" db:"version"`
-	ElementType ElementTypeDef `json:"elementType" db:"element_type"`
-	Active      bool           `json:"active" db:"active"`
-	IsValid     bool           `json:"is_valid" db:"is_valid"`
-	Disabled    bool           `json:"disabled" db:"disabled"`
+	ID          string                   `json:"id" db:"id"`
+	Version     int                      `json:"version" db:"version"`
+	ElementType PreprocessingFeatureType `json:"elementType" db:"element_type"`
+	Active      bool                     `json:"active" db:"active"`
+	IsValid     bool                     `json:"is_valid" db:"is_valid"`
+	Disabled    bool                     `json:"disabled" db:"disabled"`
 
 	DeployStatus DeployStatus `json:"deployStatus" db:"deploy_status"`
 	DeployResult string       `json:"deployResult" db:"deploy_result"`
@@ -44,7 +35,7 @@ type ConfigVersion struct {
 	CreatedAt     time.Time `json:"createdAt" db:"created_at"`
 }
 
-func NewConfigversion(typeDef ElementTypeDef) *ConfigVersion {
+func NewConfigversion(typeDef PreprocessingFeatureType) *ConfigVersion {
 	return &ConfigVersion{
 		ID:           uuid.NewString(),
 		ElementType:  typeDef,
@@ -64,6 +55,6 @@ func updateVersion(v int) int {
 type ConfigElements struct {
 	VersionID   string
 	Version     int
-	ElementType ElementTypeDef
+	ElementType PreprocessingFeatureType
 	ElementId   string
 }

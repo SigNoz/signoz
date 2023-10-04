@@ -520,9 +520,7 @@ func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
-	opampServer, err := mockOpampServer(
-		testDBFilePath, controller,
-	)
+	opampServer, err := mockOpampServer(testDBFilePath)
 	if err != nil {
 		t.Fatalf("could not create opamp server and mock client connection: %v", err)
 	}
@@ -775,10 +773,7 @@ func assertPipelinesResponseMatchesPostedPipelines(
 	}
 }
 
-func mockOpampServer(
-	testDBFilePath string,
-	collectorConfProvider opamp.CollectorConfigProvider,
-) (
+func mockOpampServer(testDBFilePath string) (
 	*opamp.Server, error,
 ) {
 	// Mock an available opamp agent
@@ -791,7 +786,7 @@ func mockOpampServer(
 		return nil, err
 	}
 
-	opampServer := opamp.InitializeServer(nil, collectorConfProvider)
+	opampServer := opamp.InitializeServer("", nil)
 	return opampServer, nil
 }
 

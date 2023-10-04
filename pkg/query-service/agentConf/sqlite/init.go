@@ -8,6 +8,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// TODO(Raj): Maybe rename this package and its schema to signalPreprocessing or preprocessingSettings
+
 func InitDB(db *sqlx.DB) error {
 	var err error
 	if db == nil {
