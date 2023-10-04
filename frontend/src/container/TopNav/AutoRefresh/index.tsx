@@ -26,6 +26,7 @@ import {
 	UPDATE_TIME_INTERVAL,
 } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { getMinMax, options } from './config';
 import { ButtonContainer, Container } from './styles';
@@ -142,6 +143,7 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 
 	return (
 		<Popover
+			getPopupContainer={popupContainer}
 			placement="bottomLeft"
 			trigger={['click']}
 			content={

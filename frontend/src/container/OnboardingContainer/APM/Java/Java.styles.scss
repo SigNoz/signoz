@@ -1,0 +1,10 @@
+.form-container {
+	display: flex;
+	align-items: flex-start;
+	width: 100%;
+	gap: 16px;
+
+	& .ant-form-item {
+		margin-bottom: 0px;
+	}
+}

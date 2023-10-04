@@ -21,6 +21,7 @@ type Receiver struct {
 	PushoverConfigs  interface{} `yaml:"pushover_configs,omitempty" json:"pushover_configs,omitempty"`
 	VictorOpsConfigs interface{} `yaml:"victorops_configs,omitempty" json:"victorops_configs,omitempty"`
 	SNSConfigs       interface{} `yaml:"sns_configs,omitempty" json:"sns_configs,omitempty"`
+	MSTeamsConfigs   interface{} `yaml:"msteams_configs,omitempty" json:"msteams_configs,omitempty"`
 }
 
 type ReceiverResponse struct {

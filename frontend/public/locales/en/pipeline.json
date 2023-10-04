@@ -25,6 +25,7 @@
 	"delete_processor_description": "Logs are processed sequentially in processors. Deleting a processor may change content of data processed by other processors",
 	"search_pipeline_placeholder": "Filter Pipelines",
 	"pipeline_name_placeholder": "Name",
+	"pipeline_filter_placeholder": "Filter for selecting logs to be processed by this pipeline. Example: service_name = billing",
 	"pipeline_tags_placeholder": "Tags",
 	"pipeline_description_placeholder": "Enter description for your pipeline",
 	"processor_name_placeholder": "Name",

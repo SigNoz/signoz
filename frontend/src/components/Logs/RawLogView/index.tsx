@@ -21,8 +21,6 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-// interfaces
-import { ILog } from 'types/api/logs/log';
 
 // styles
 import {
@@ -31,19 +29,17 @@ import {
 	RawLogContent,
 	RawLogViewContainer,
 } from './styles';
+import { RawLogViewProps } from './types';
 
 const convert = new Convert();
 
-interface RawLogViewProps {
-	isActiveLog?: boolean;
-	isReadOnly?: boolean;
-	data: ILog;
-	linesPerRow: number;
-}
-
-function RawLogView(props: RawLogViewProps): JSX.Element {
-	const { isActiveLog = false, isReadOnly = false, data, linesPerRow } = props;
-
+function RawLogView({
+	isActiveLog,
+	isReadOnly,
+	data,
+	linesPerRow,
+	isTextOverflowEllipsisDisabled,
+}: RawLogViewProps): JSX.Element {
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
 	);
@@ -64,12 +60,14 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const isReadOnlyLog = !isLogsExplorerPage || isReadOnly;
 
+	const severityText = data.severity_text ? `${data.severity_text} |` : '';
+
 	const text = useMemo(
 		() =>
 			typeof data.timestamp === 'string'
-				? `${dayjs(data.timestamp).format()} | ${data.body}`
-				: `${dayjs(data.timestamp / 1e6).format()} | ${data.body}`,
-		[data.timestamp, data.body],
+				? `${dayjs(data.timestamp).format()} | ${severityText} ${data.body}`
+				: `${dayjs(data.timestamp / 1e6).format()} | ${severityText} ${data.body}`,
+		[data.timestamp, data.body, severityText],
 	);
 
 	const handleClickExpand = useCallback(() => {
@@ -118,11 +116,6 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		[text],
 	);
 
-	const mouseActions = useMemo(
-		() => ({ onMouseEnter: handleMouseEnter, onMouseLeave: handleMouseLeave }),
-		[handleMouseEnter, handleMouseLeave],
-	);
-
 	return (
 		<RawLogViewContainer
 			onClick={handleClickExpand}
@@ -131,8 +124,8 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			$isDarkMode={isDarkMode}
 			$isReadOnly={isReadOnly}
 			$isActiveLog={isHighlighted}
-			// eslint-disable-next-line react/jsx-props-no-spreading
-			{...mouseActions}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
 		>
 			{!isReadOnly && (
 				<ExpandIconWrapper flex="30px">
@@ -143,6 +136,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			<RawLogContent
 				$isReadOnly={isReadOnly}
 				$isActiveLog={isActiveLog}
+				$isTextOverflowEllipsisDisabled={isTextOverflowEllipsisDisabled}
 				linesPerRow={linesPerRow}
 				dangerouslySetInnerHTML={html}
 			/>
@@ -181,6 +175,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 RawLogView.defaultProps = {
 	isActiveLog: false,
 	isReadOnly: false,
+	isTextOverflowEllipsisDisabled: false,
 };
 
 export default RawLogView;

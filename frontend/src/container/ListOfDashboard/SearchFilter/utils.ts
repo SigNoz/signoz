@@ -136,6 +136,8 @@ export function OptionsValueResolution(
 			options: uniqWith(
 				map(
 					flattenDeep(
+						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+						// @ts-ignore
 						map(searchData, (searchItem) => searchItem.data.tags).filter(Boolean),
 					),
 					(tag) => ({ name: tag }),

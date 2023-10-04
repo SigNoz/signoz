@@ -1,4 +1,17 @@
-import { Form, InputNumber, InputNumberProps, Select, Typography } from 'antd';
+import {
+	Form,
+	InputNumber,
+	InputNumberProps,
+	Select,
+	SelectProps,
+	Space,
+	Typography,
+} from 'antd';
+import {
+	getCategoryByOptionId,
+	getCategorySelectOptionByName,
+} from 'container/NewWidget/RightContainer/alertFomatCategories';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useTranslation } from 'react-i18next';
 import {
 	AlertDef,
@@ -10,9 +23,6 @@ import { EQueryType } from 'types/common/dashboard';
 
 import { FormContainer, InlineSelect, StepHeading } from './styles';
 
-const { Option } = Select;
-const FormItem = Form.Item;
-
 function RuleOptions({
 	alertDef,
 	setAlertDef,
@@ -20,6 +30,7 @@ function RuleOptions({
 }: RuleOptionsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
+	const { currentQuery } = useQueryBuilder();
 
 	const handleMatchOptChange = (value: string | unknown): void => {
 		const m = (value as string) || alertDef.condition?.matchType;
@@ -49,10 +60,10 @@ function RuleOptions({
 				});
 			}}
 		>
-			<Option value="1">{t('option_above')}</Option>
-			<Option value="2">{t('option_below')}</Option>
-			<Option value="3">{t('option_equal')}</Option>
-			<Option value="4">{t('option_notequal')}</Option>
+			<Select.Option value="1">{t('option_above')}</Select.Option>
+			<Select.Option value="2">{t('option_below')}</Select.Option>
+			<Select.Option value="3">{t('option_equal')}</Select.Option>
+			<Select.Option value="4">{t('option_notequal')}</Select.Option>
 		</InlineSelect>
 	);
 
@@ -63,10 +74,10 @@ function RuleOptions({
 			value={alertDef.condition?.matchType}
 			onChange={(value: string | unknown): void => handleMatchOptChange(value)}
 		>
-			<Option value="1">{t('option_atleastonce')}</Option>
-			<Option value="2">{t('option_allthetimes')}</Option>
-			<Option value="3">{t('option_onaverage')}</Option>
-			<Option value="4">{t('option_intotal')}</Option>
+			<Select.Option value="1">{t('option_atleastonce')}</Select.Option>
+			<Select.Option value="2">{t('option_allthetimes')}</Select.Option>
+			<Select.Option value="3">{t('option_onaverage')}</Select.Option>
+			<Select.Option value="4">{t('option_intotal')}</Select.Option>
 		</InlineSelect>
 	);
 
@@ -77,7 +88,7 @@ function RuleOptions({
 			value={alertDef.condition?.matchType}
 			onChange={(value: string | unknown): void => handleMatchOptChange(value)}
 		>
-			<Option value="1">{t('option_atleastonce')}</Option>
+			<Select.Option value="1">{t('option_atleastonce')}</Select.Option>
 		</InlineSelect>
 	);
 
@@ -94,31 +105,30 @@ function RuleOptions({
 				});
 			}}
 		>
-			{' '}
-			<Option value="5m0s">{t('option_5min')}</Option>
-			<Option value="10m0s">{t('option_10min')}</Option>
-			<Option value="15m0s">{t('option_15min')}</Option>
-			<Option value="1h0m0s">{t('option_60min')}</Option>
-			<Option value="4h0m0s">{t('option_4hours')}</Option>
-			<Option value="24h0m0s">{t('option_24hours')}</Option>
+			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
+			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
+			<Select.Option value="15m0s">{t('option_15min')}</Select.Option>
+			<Select.Option value="1h0m0s">{t('option_60min')}</Select.Option>
+			<Select.Option value="4h0m0s">{t('option_4hours')}</Select.Option>
+			<Select.Option value="24h0m0s">{t('option_24hours')}</Select.Option>
 		</InlineSelect>
 	);
 
 	const renderThresholdRuleOpts = (): JSX.Element => (
-		<FormItem>
+		<Form.Item>
 			<Typography.Text>
 				{t('text_condition1')} {renderCompareOps()} {t('text_condition2')}{' '}
 				{renderThresholdMatchOpts()} {t('text_condition3')} {renderEvalWindows()}
 			</Typography.Text>
-		</FormItem>
+		</Form.Item>
 	);
 	const renderPromRuleOptions = (): JSX.Element => (
-		<FormItem>
+		<Form.Item>
 			<Typography.Text>
 				{t('text_condition1')} {renderCompareOps()} {t('text_condition2')}{' '}
 				{renderPromMatchOpts()}
 			</Typography.Text>
-		</FormItem>
+		</Form.Item>
 	);
 
 	const onChange: InputNumberProps['onChange'] = (value): void => {
@@ -133,6 +143,22 @@ function RuleOptions({
 		});
 	};
 
+	const onChangeAlertUnit: SelectProps['onChange'] = (value) => {
+		setAlertDef({
+			...alertDef,
+			condition: {
+				...alertDef.condition,
+				targetUnit: value as string,
+			},
+		});
+	};
+
+	const selectedCategory = getCategoryByOptionId(currentQuery?.unit || '');
+
+	const categorySelectOptions = getCategorySelectOptionByName(
+		selectedCategory?.name,
+	);
+
 	return (
 		<>
 			<StepHeading>{t('alert_form_step2')}</StepHeading>
@@ -140,14 +166,29 @@ function RuleOptions({
 				{queryCategory === EQueryType.PROM
 					? renderPromRuleOptions()
 					: renderThresholdRuleOpts()}
-				<Form.Item name={['condition', 'target']}>
-					<InputNumber
-						addonBefore={t('field_threshold')}
-						value={alertDef?.condition?.target}
-						onChange={onChange}
-						type="number"
-					/>
-				</Form.Item>
+
+				<Space align="start">
+					<Form.Item noStyle name={['condition', 'target']}>
+						<InputNumber
+							addonBefore={t('field_threshold')}
+							value={alertDef?.condition?.target}
+							onChange={onChange}
+							type="number"
+							onWheel={(e): void => e.currentTarget.blur()}
+						/>
+					</Form.Item>
+
+					<Form.Item>
+						<Select
+							allowClear
+							showSearch
+							options={categorySelectOptions}
+							placeholder={t('field_unit')}
+							value={alertDef.condition.targetUnit}
+							onChange={onChangeAlertUnit}
+						/>
+					</Form.Item>
+				</Space>
 			</FormContainer>
 		</>
 	);

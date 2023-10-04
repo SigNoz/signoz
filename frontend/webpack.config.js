@@ -12,13 +12,28 @@ dotenv.config();
 
 console.log(resolve(__dirname, './src/'));
 
+const cssLoader = 'css-loader';
+const sassLoader = 'sass-loader';
+const styleLoader = 'style-loader';
+
 const plugins = [
-	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new HtmlWebpackPlugin({
+		template: 'src/index.html.ejs',
+		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+		SEGMENT_ID: process.env.SEGMENT_ID,
+		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+	}),
 	new webpack.ProvidePlugin({
 		process: 'process/browser',
 	}),
 	new webpack.DefinePlugin({
-		'process.env': JSON.stringify(process.env),
+		'process.env': JSON.stringify({
+			NODE_ENV: process.env.NODE_ENV,
+			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
+			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+			SEGMENT_ID: process.env.SEGMENT_ID,
+			CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+		}),
 	}),
 ];
 
@@ -63,12 +78,17 @@ const config = {
 				use: ['babel-loader'],
 				exclude: /node_modules/,
 			},
+			// Add a rule for Markdown files using raw-loader
+			{
+				test: /\.md$/,
+				use: 'raw-loader',
+			},
 			{
 				test: /\.css$/,
 				use: [
-					'style-loader',
+					styleLoader,
 					{
-						loader: 'css-loader',
+						loader: cssLoader,
 						options: {
 							modules: true,
 						},
@@ -90,10 +110,10 @@ const config = {
 				test: /\.less$/i,
 				use: [
 					{
-						loader: 'style-loader',
+						loader: styleLoader,
 					},
 					{
-						loader: 'css-loader',
+						loader: cssLoader,
 						options: {
 							modules: true,
 						},
@@ -108,11 +128,25 @@ const config = {
 					},
 				],
 			},
+			{
+				test: /\.s[ac]ss$/i,
+				use: [
+					// Creates `style` nodes from JS strings
+					styleLoader,
+					// Translates CSS into CommonJS
+					cssLoader,
+					// Compiles Sass to CSS
+					sassLoader,
+				],
+			},
 		],
 	},
 	plugins,
 	performance: {
 		hints: false,
+	},
+	optimization: {
+		minimize: false,
 	},
 };
 

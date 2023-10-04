@@ -57,8 +57,133 @@
 			rel="stylesheet"
 		/>
 	</head>
-	<body style="margin: 0; padding: 0; box-sizing: border-box">
+	<body>
 		<noscript>You need to enable JavaScript to run this app.</noscript>
 		<div id="root"></div>
+
+		<script>
+			//Set your APP_ID
+			const APP_ID = '<%= htmlWebpackPlugin.options.INTERCOM_APP_ID %>';
+
+			(function () {
+				var w = window;
+				var ic = w.Intercom;
+				if (typeof ic === 'function') {
+					ic('reattach_activator');
+					ic('update', w.intercomSettings);
+				} else {
+					var d = document;
+					var i = function () {
+						i.c(arguments);
+					};
+					i.q = [];
+					i.c = function (args) {
+						i.q.push(args);
+					};
+					w.Intercom = i;
+					var l = function () {
+						var s = d.createElement('script');
+						s.type = 'text/javascript';
+						s.async = true;
+						s.src = 'https://widget.intercom.io/widget/' + APP_ID;
+						var x = d.getElementsByTagName('script')[0];
+						x.parentNode.insertBefore(s, x);
+					};
+					if (document.readyState === 'complete') {
+						l();
+					} else if (w.attachEvent) {
+						w.attachEvent('onload', l);
+					} else {
+						w.addEventListener('load', l, false);
+					}
+				}
+			})();
+		</script>
+
+		<script type="text/javascript">
+			//Set your SEGMENT_ID
+			const CLARITY_PROJECT_ID =
+				'<%= htmlWebpackPlugin.options.CLARITY_PROJECT_ID %>';
+
+			(function (c, l, a, r, i, t, y) {
+				c[a] =
+					c[a] ||
+					function () {
+						(c[a].q = c[a].q || []).push(arguments);
+					};
+				t = l.createElement(r);
+				t.async = 1;
+				t.src = 'https://www.clarity.ms/tag/' + i;
+				y = l.getElementsByTagName(r)[0];
+				y.parentNode.insertBefore(t, y);
+			})(window, document, 'clarity', 'script', CLARITY_PROJECT_ID);
+		</script>
+
+		<script>
+			//Set your SEGMENT_ID
+			const SEGMENT_ID = '<%= htmlWebpackPlugin.options.SEGMENT_ID %>';
+
+			!(function () {
+				var analytics = (window.analytics = window.analytics || []);
+				if (!analytics.initialize)
+					if (analytics.invoked)
+						window.console &&
+							console.error &&
+							console.error('Segment snippet included twice.');
+					else {
+						analytics.invoked = !0;
+						analytics.methods = [
+							'trackSubmit',
+							'trackClick',
+							'trackLink',
+							'trackForm',
+							'pageview',
+							'identify',
+							'reset',
+							'group',
+							'track',
+							'ready',
+							'alias',
+							'debug',
+							'page',
+							'once',
+							'off',
+							'on',
+							'addSourceMiddleware',
+							'addIntegrationMiddleware',
+							'setAnonymousId',
+							'addDestinationMiddleware',
+						];
+						analytics.factory = function (e) {
+							return function () {
+								if (window.analytics.initialized)
+									return window.analytics[e].apply(window.analytics, arguments);
+								var i = Array.prototype.slice.call(arguments);
+								i.unshift(e);
+								analytics.push(i);
+								return analytics;
+							};
+						};
+						for (var i = 0; i < analytics.methods.length; i++) {
+							var key = analytics.methods[i];
+							analytics[key] = analytics.factory(key);
+						}
+						analytics.load = function (key, i) {
+							var t = document.createElement('script');
+							t.type = 'text/javascript';
+							t.async = !0;
+							t.src =
+								'https://cdn.segment.com/analytics.js/v1/' + key + '/analytics.min.js';
+							var n = document.getElementsByTagName('script')[0];
+							n.parentNode.insertBefore(t, n);
+							analytics._loadOptions = i;
+						};
+						analytics._writeKey = SEGMENT_ID;
+						analytics.SNIPPET_VERSION = '4.16.1';
+						analytics.load(SEGMENT_ID);
+						analytics.page();
+					}
+			})();
+		</script>
 	</body>
 </html>

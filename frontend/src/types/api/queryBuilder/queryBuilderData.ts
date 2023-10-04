@@ -1,3 +1,4 @@
+import { Format } from 'container/NewWidget/RightContainer/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
@@ -12,15 +13,18 @@ export interface IBuilderFormula {
 	expression: string;
 	disabled: boolean;
 	queryName: string;
-	dataSource?: DataSource;
 	legend: string;
+	limit?: number | null;
+	having?: Having[];
+	stepInterval?: number;
+	orderBy?: OrderByPayload[];
 }
 
 export interface TagFilterItem {
 	id: string;
 	key?: BaseAutocompleteData;
 	op: string;
-	value: string[] | string;
+	value: string[] | string | number | boolean;
 }
 
 export interface TagFilter {
@@ -82,6 +86,7 @@ export interface Query {
 	builder: QueryBuilderData;
 	clickhouse_sql: IClickHouseQuery[];
 	id: string;
+	unit?: Format['id'];
 }
 
 export type QueryState = Omit<Query, 'queryType'>;

@@ -38,6 +38,7 @@ export const UpdateDashboard = async (
 					query: widgetData?.query || initialQueriesMap.metrics,
 					timePreferance: widgetData?.timePreferance || 'GLOBAL_TIME',
 					title: widgetData ? copyTitle : '',
+					yAxisUnit: widgetData?.yAxisUnit,
 				},
 			],
 			layout,

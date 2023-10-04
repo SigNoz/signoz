@@ -5,6 +5,7 @@ import { MAX_FORMULAS, MAX_QUERIES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 // ** Constants
 import { memo, useEffect, useMemo } from 'react';
+import { DataSource } from 'types/common/queryBuilder';
 
 // ** Components
 import { Formula, Query } from './components';
@@ -79,11 +80,27 @@ export const QueryBuilder = memo(function QueryBuilder({
 							/>
 						</Col>
 					))}
-					{currentQuery.builder.queryFormulas.map((formula, index) => (
-						<Col key={formula.queryName} span={24}>
-							<Formula formula={formula} index={index} />
-						</Col>
-					))}
+					{currentQuery.builder.queryFormulas.map((formula, index) => {
+						const isAllMetricDataSource = currentQuery.builder.queryData.every(
+							(query) => query.dataSource === DataSource.METRICS,
+						);
+
+						const query =
+							currentQuery.builder.queryData[index] ||
+							currentQuery.builder.queryData[0];
+
+						return (
+							<Col key={formula.queryName} span={24}>
+								<Formula
+									filterConfigs={filterConfigs}
+									query={query}
+									isAdditionalFilterEnable={isAllMetricDataSource}
+									formula={formula}
+									index={index}
+								/>
+							</Col>
+						);
+					})}
 				</Row>
 			</Col>
 

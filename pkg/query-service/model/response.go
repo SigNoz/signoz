@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/util/stats"
 	"k8s.io/apimachinery/pkg/labels"
@@ -86,6 +88,34 @@ func InternalError(err error) *ApiError {
 	return &ApiError{
 		Typ: ErrorInternal,
 		Err: err,
+	}
+}
+
+func NotFoundError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorNotFound,
+		Err: err,
+	}
+}
+
+func UnauthorizedError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorUnauthorized,
+		Err: err,
+	}
+}
+
+func UnavailableError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorUnavailable,
+		Err: err,
+	}
+}
+
+func WrapApiError(err *ApiError, msg string) *ApiError {
+	return &ApiError{
+		Typ: err.Type(),
+		Err: errors.Wrap(err.ToError(), msg),
 	}
 }
 
@@ -465,6 +495,12 @@ type Series struct {
 	Points    []MetricPoint     `json:"values"`
 }
 
+func (s *Series) SortPoints() {
+	sort.Slice(s.Points, func(i, j int) bool {
+		return s.Points[i].Timestamp < s.Points[j].Timestamp
+	})
+}
+
 type MetricPoint struct {
 	Timestamp int64
 	Value     float64
@@ -474,6 +510,17 @@ type MetricPoint struct {
 func (p *MetricPoint) MarshalJSON() ([]byte, error) {
 	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
 	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (p *MetricPoint) UnmarshalJSON(b []byte) error {
+	var a [2]interface{}
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+	p.Timestamp = int64(a[0].(float64) * 1000)
+	p.Value, _ = strconv.ParseFloat(a[1].(string), 64)
+	return nil
 }
 
 type ShowCreateTableStatement struct {

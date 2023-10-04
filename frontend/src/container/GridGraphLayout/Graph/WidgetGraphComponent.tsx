@@ -4,6 +4,7 @@ import { Events } from 'constants/events';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useNotifications } from 'hooks/useNotifications';
+import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { isEmpty, isEqual } from 'lodash-es';
 import {
@@ -18,6 +19,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { connect, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { DeleteWidget } from 'store/actions/dashboard/deleteWidget';
@@ -53,6 +55,7 @@ function WidgetGraphComponent({
 	setLayout,
 	onDragSelect,
 	onClickHandler,
+	threshold,
 	headerMenuList,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -60,6 +63,7 @@ function WidgetGraphComponent({
 	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
 	const { t } = useTranslation(['common']);
+	const { pathname } = useLocation();
 
 	const { graphVisibilityStates: localstoredVisibilityStates } = useMemo(
 		() =>
@@ -189,11 +193,11 @@ function WidgetGraphComponent({
 					message: 'Panel cloned successfully, redirecting to new copy.',
 				});
 
-				setTimeout(() => {
-					history.push(
-						`${history.location.pathname}/new?graphType=${widget?.panelTypes}&widgetId=${uuid}`,
-					);
-				}, 1500);
+				const queryParams = {
+					graphType: widget?.panelTypes,
+					widgetId: uuid,
+				};
+				history.push(`${pathname}/new?${createQueryParams(queryParams)}`);
 			});
 		}
 	};
@@ -279,6 +283,7 @@ function WidgetGraphComponent({
 								onClone={onCloneHandler}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
+								threshold={threshold}
 								headerMenuList={headerMenuList}
 							/>
 						</div>

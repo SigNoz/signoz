@@ -1,7 +1,12 @@
 import getService from 'api/metrics/getService';
 import { AxiosError } from 'axios';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
-import { useQuery, UseQueryResult } from 'react-query';
+import {
+	QueryKey,
+	useQuery,
+	UseQueryOptions,
+	UseQueryResult,
+} from 'react-query';
 import { PayloadProps } from 'types/api/metrics/getService';
 import { Tags } from 'types/reducer/trace';
 
@@ -10,20 +15,18 @@ export const useQueryService = ({
 	maxTime,
 	selectedTime,
 	selectedTags,
-}: UseQueryServiceProps): UseQueryResult<PayloadProps, AxiosError> => {
-	const queryKey = [minTime, maxTime, selectedTime, selectedTags];
-	return useQuery<PayloadProps, AxiosError>(queryKey, () =>
-		getService({
-			end: maxTime,
-			start: minTime,
-			selectedTags,
-		}),
-	);
-};
+	options,
+}: UseQueryServiceProps): UseQueryResult<PayloadProps, AxiosError> =>
+	useQuery<PayloadProps, AxiosError>({
+		queryFn: () => getService({ end: maxTime, selectedTags, start: minTime }),
+		queryKey: [minTime, maxTime, selectedTime, selectedTags],
+		...options,
+	});
 
 interface UseQueryServiceProps {
 	minTime: number;
 	maxTime: number;
 	selectedTime: Time;
 	selectedTags: Tags[];
+	options?: UseQueryOptions<PayloadProps, AxiosError, PayloadProps, QueryKey>;
 }

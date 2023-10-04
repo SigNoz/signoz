@@ -7,7 +7,7 @@ const config: Config.InitialOptions = {
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
-		'\\.(css|less)$': '<rootDir>/__mocks__/cssMock.ts',
+		'\\.(css|less|scss)$': '<rootDir>/__mocks__/cssMock.ts',
 	},
 	globals: {
 		extensionsToTreatAsEsm: ['.ts'],

@@ -8,11 +8,11 @@ import {
 } from '@ant-design/icons';
 import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import { useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -20,6 +20,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import {
 	errorTooltipPosition,
@@ -32,12 +33,14 @@ import {
 	ArrowContainer,
 	HeaderContainer,
 	HeaderContentContainer,
+	ThesholdContainer,
+	WidgetHeaderContainer,
 } from './styles';
 import { MenuItem } from './types';
 import { generateMenuList, isTWidgetOptions } from './utils';
 
 interface IWidgetHeaderProps {
-	title: string;
+	title: ReactNode;
 	widget: Widgets;
 	onView: VoidFunction;
 	onDelete?: VoidFunction;
@@ -47,6 +50,7 @@ interface IWidgetHeaderProps {
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>;
 	errorMessage: string | undefined;
+	threshold?: ReactNode;
 	headerMenuList?: MenuItemKeys[];
 }
 
@@ -59,6 +63,7 @@ function WidgetHeader({
 	parentHover,
 	queryResponse,
 	errorMessage,
+	threshold,
 	headerMenuList,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
@@ -69,7 +74,7 @@ function WidgetHeader({
 		history.push(
 			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${
 				widget.panelTypes
-			}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
+			}&${QueryParams.compositeQuery}=${encodeURIComponent(
 				JSON.stringify(widget.query),
 			)}`,
 		);
@@ -77,9 +82,9 @@ function WidgetHeader({
 
 	const onCreateAlertsHandler = useCallback(() => {
 		history.push(
-			`${ROUTES.ALERTS_NEW}?${
-				queryParamNamesMap.compositeQuery
-			}=${encodeURIComponent(JSON.stringify(widget.query))}`,
+			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+				JSON.stringify(widget.query),
+			)}`,
 		);
 	}, [widget]);
 
@@ -171,8 +176,9 @@ function WidgetHeader({
 	);
 
 	return (
-		<div>
+		<WidgetHeaderContainer>
 			<Dropdown
+				getPopupContainer={popupContainer}
 				destroyPopupOnHide
 				open={isOpen}
 				onOpenChange={setIsOpen}
@@ -196,6 +202,7 @@ function WidgetHeader({
 					</HeaderContentContainer>
 				</HeaderContainer>
 			</Dropdown>
+			<ThesholdContainer>{threshold}</ThesholdContainer>
 			{queryResponse.isFetching && !queryResponse.isError && (
 				<Spinner height="5vh" style={spinnerStyles} />
 			)}
@@ -204,13 +211,14 @@ function WidgetHeader({
 					<ExclamationCircleOutlined style={tooltipStyles} />
 				</Tooltip>
 			)}
-		</div>
+		</WidgetHeaderContainer>
 	);
 }
 
 WidgetHeader.defaultProps = {
 	onDelete: undefined,
 	onClone: undefined,
+	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
 };
 
