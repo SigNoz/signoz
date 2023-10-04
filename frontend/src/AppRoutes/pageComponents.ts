@@ -106,6 +106,10 @@ export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
 );
 
+export const IngestionSettings = Loadable(
+	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
+);
+
 export const Logs = Loadable(
 	() => import(/* webpackChunkName: "Logs" */ 'pages/Logs'),
 );

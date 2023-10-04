@@ -1,4 +1,5 @@
 import ROUTES from 'constants/routes';
+import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -213,6 +214,13 @@ const routes: AppRoutes[] = [
 		component: OrganizationSettings,
 		isPrivate: true,
 		key: 'ORG_SETTINGS',
+	},
+	{
+		path: ROUTES.INGESTION_SETTINGS,
+		exact: true,
+		component: IngestionSettings,
+		isPrivate: true,
+		key: 'INGESTION_SETTINGS',
 	},
 	{
 		path: ROUTES.MY_SETTINGS,
