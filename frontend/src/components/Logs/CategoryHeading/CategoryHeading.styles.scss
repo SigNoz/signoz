@@ -1,5 +1,3 @@
-@use '/src/scss/main.scss';
-
 .container--text-size {
-    font-size: main.$font-md;
+    font-size: $font-size-md;
 }
