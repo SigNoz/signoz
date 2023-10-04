@@ -776,7 +776,7 @@ func assertPipelinesResponseMatchesPostedPipelines(
 func mockOpampServer(testDBFilePath string) (
 	*opamp.Server, error,
 ) {
-	// Mock an available opamp agent
+	// Mock an available opamp agent.
 	testDB, err := opampModel.InitDB(testDBFilePath)
 	if err != nil {
 		return nil, err
@@ -785,8 +785,11 @@ func mockOpampServer(testDBFilePath string) (
 	if err != nil {
 		return nil, err
 	}
-
-	opampServer := opamp.InitializeServer("", nil)
+	agentConfigProvider, apiErr := agentConf.NewCollectorConfigProvider()
+	if apiErr != nil {
+		return nil, apiErr.ToError()
+	}
+	opampServer := opamp.InitializeServer(nil, agentConfigProvider)
 	return opampServer, nil
 }
 

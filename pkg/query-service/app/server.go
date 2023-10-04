@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
@@ -75,6 +76,9 @@ type Server struct {
 	// private http
 	privateConn net.Listener
 	privateHTTP *http.Server
+
+	// opamp
+	opampServer *opamp.Server
 
 	unavailableChannel chan healthcheck.Status
 }
@@ -204,6 +208,19 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if err := agentConf.Initiate(localDB, "sqlite"); err != nil {
 		return nil, err
 	}
+
+	// opamp
+	agentConfigProvider, apiErr := agentConf.NewCollectorConfigProvider()
+	if apiErr != nil {
+		return nil, errors.Wrap(
+			apiErr.ToError(),
+			"could not create collector config provider for opamp server",
+		)
+	}
+	s.opampServer = opamp.InitializeServer(
+		&opAmpModel.AllAgents, agentConfigProvider,
+	)
+
 	return s, nil
 }
 
@@ -503,7 +520,7 @@ func (s *Server) Start() error {
 
 	go func() {
 		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
-		err := opamp.InitializeAndStartServer(constants.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		err := s.opampServer.Start(constants.OpAmpWsEndpoint)
 		if err != nil {
 			zap.S().Info("opamp ws server failed to start", err)
 			s.unavailableChannel <- healthcheck.Unavailable

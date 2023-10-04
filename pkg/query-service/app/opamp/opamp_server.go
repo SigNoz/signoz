@@ -14,32 +14,43 @@ import (
 var opAmpServer *Server
 
 type Server struct {
-	server       server.OpAMPServer
-	agents       *model.Agents
-	logger       *zap.Logger
-	capabilities int32
+	server                  server.OpAMPServer
+	agents                  *model.Agents
+	logger                  *zap.Logger
+	capabilities            int32
+	collectorConfigProvider *CollectorConfigProvider
 }
 
 const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffectiveConfig |
 	protobufs.ServerCapabilities_ServerCapabilities_OffersRemoteConfig |
 	protobufs.ServerCapabilities_ServerCapabilities_AcceptsStatus
 
-func InitializeServer(listener string, agents *model.Agents) *Server {
+func InitializeServer(
+	agents *model.Agents,
+	collectorConfigProvider *CollectorConfigProvider,
+) *Server {
 	if agents == nil {
 		agents = &model.AllAgents
 	}
 
 	opAmpServer = &Server{
-		agents: agents,
+		agents:                  agents,
+		collectorConfigProvider: collectorConfigProvider,
+		server:                  server.New(zap.S()),
 	}
-	opAmpServer.server = server.New(zap.S())
+
+	collectorConfigProvider.SubscribeToConfigUpdates(func() {
+		RecommendLatestConfigToAllAgents(collectorConfigProvider)
+	})
+
 	return opAmpServer
 }
 
-func InitializeAndStartServer(listener string, agents *model.Agents) error {
-	InitializeServer(listener, agents)
-	return opAmpServer.Start(listener)
-}
+// TODO(Raj): remove all usages of InitializeAndStartServer
+//func InitializeAndStartServer(listener string, agents *model.Agents) error {
+//	InitializeServer(listener, agents)
+//	return opAmpServer.Start(listener)
+//}
 
 func StopServer() {
 	if opAmpServer != nil {
