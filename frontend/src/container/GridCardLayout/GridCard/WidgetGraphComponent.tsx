@@ -8,11 +8,9 @@ import { useChartMutable } from 'hooks/useChartMutable';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import isEqual from 'lodash-es/isEqual';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
-	memo,
 	SetStateAction,
 	useCallback,
 	useEffect,
@@ -308,8 +306,4 @@ WidgetGraphComponent.defaultProps = {
 	onClickHandler: undefined,
 };
 
-export default memo(
-	WidgetGraphComponent,
-	(prevProps, nextProps) =>
-		isEqual(prevProps.data, nextProps.data) && prevProps.name === nextProps.name,
-);
+export default WidgetGraphComponent;

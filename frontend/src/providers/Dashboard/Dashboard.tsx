@@ -60,7 +60,7 @@ export function DashboardProvider({
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
 
 	const dashboardResponse = useQuery(
-		[REACT_QUERY_KEY.DASHBOARD_BY_ID, dashboardId],
+		[REACT_QUERY_KEY.DASHBOARD_BY_ID, isDashboardPage?.params],
 		{
 			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
 			queryFn: () =>

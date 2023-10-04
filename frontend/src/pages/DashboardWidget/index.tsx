@@ -4,6 +4,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import NewWidget from 'container/NewWidget';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useState } from 'react';
@@ -17,7 +18,7 @@ function DashboardWidget(): JSX.Element | null {
 
 	const { selectedDashboard, dashboardResponse } = useDashboard();
 
-	const params = new URLSearchParams(search);
+	const params = useUrlQuery();
 
 	const widgetId = params.get('widgetId');
 	const { data } = selectedDashboard || {};

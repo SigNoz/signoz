@@ -8,6 +8,7 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -50,7 +51,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const { search } = useLocation();
 
-	const query = useMemo(() => new URLSearchParams(search), [search]);
+	const query = useUrlQuery();
 
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
