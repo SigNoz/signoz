@@ -63,7 +63,7 @@ function WidgetGraphComponent({
 		[data, name],
 	);
 
-	const { setLayouts, selectedDashboard } = useDashboard();
+	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
 	const [graphsVisibilityStates, setGraphsVisilityStates] = useState<boolean[]>(
 		localstoredVisibilityStates,
@@ -146,6 +146,9 @@ function WidgetGraphComponent({
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
 				if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
+				if (setSelectedDashboard && updatedDashboard.payload) {
+					setSelectedDashboard(updatedDashboard.payload);
+				}
 				featureResponse.refetch();
 			},
 			onError: () => {
