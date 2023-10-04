@@ -1,10 +1,10 @@
 import './Java.styles.scss';
 
 import { Form, Input, Select } from 'antd';
-import { Code, Pre } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
+// import ReactMarkdown from 'react-markdown';
 import { trackEvent } from 'utils/segmentAnalytics';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -31,6 +31,9 @@ export default function Java({
 		SprintBootDocs,
 	);
 	const [form] = Form.useForm();
+	const serviceName = Form.useWatch('Service Name', form);
+	const SIGNOZ_INGESTION_KEY = null;
+	const REGION = null;
 
 	useEffect(() => {
 		// on language select
@@ -57,6 +60,12 @@ export default function Java({
 				setSelectedFrameWorkDocs(JavaDocs);
 				break;
 		}
+	};
+
+	const variables = {
+		myapp: serviceName || '<myapp>',
+		ingestionKey: SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
+		region: REGION || 'region',
 	};
 
 	return (
@@ -119,14 +128,10 @@ export default function Java({
 					</div>
 
 					<div className="content-container">
-						<ReactMarkdown
-							components={{
-								pre: Pre,
-								code: Code,
-							}}
-						>
-							{selectedFrameWorkDocs}
-						</ReactMarkdown>
+						<MarkdownRenderer
+							markdownContent={selectedFrameWorkDocs}
+							variables={variables}
+						/>
 					</div>
 				</div>
 			)}

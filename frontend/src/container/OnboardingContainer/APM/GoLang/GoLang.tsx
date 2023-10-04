@@ -1,9 +1,8 @@
 import './GoLang.styles.scss';
 
 import { Form, Input } from 'antd';
-import { Code, Pre } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
-import ReactMarkdown from 'react-markdown';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import GoLangDocs from './goLang.md';
@@ -14,6 +13,15 @@ export default function GoLang({
 	activeStep: number;
 }): JSX.Element {
 	const [form] = Form.useForm();
+	const serviceName = Form.useWatch('Service Name', form);
+	const SIGNOZ_INGESTION_KEY = null;
+	const REGION = null;
+
+	const variables = {
+		myapp: serviceName || '<myapp>',
+		ingestionKey: SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
+		region: REGION || 'region',
+	};
 
 	return (
 		<>
@@ -45,14 +53,7 @@ export default function GoLang({
 					</div>
 
 					<div className="content-container">
-						<ReactMarkdown
-							components={{
-								pre: Pre,
-								code: Code,
-							}}
-						>
-							{GoLangDocs}
-						</ReactMarkdown>
+						<MarkdownRenderer markdownContent={GoLangDocs} variables={variables} />
 					</div>
 				</div>
 			)}
