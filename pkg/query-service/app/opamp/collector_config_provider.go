@@ -3,19 +3,7 @@ package opamp
 import (
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-	coreModel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
-)
-
-// Generate recommended collector config by combining `baseConfYaml`
-// with config derived from latest user facing settings.
-type RecommendedConfigGeneratorFn func(
-	baseConfYaml []byte,
-) (
-	recommendedConfYaml []byte,
-	// opaque id for recommended config. Used for reporting deployment status
-	configId string,
-	apiErr *coreModel.ApiError,
 )
 
 type SubscribeFn func(callback func()) (unsubscribe func())
@@ -38,7 +26,7 @@ type CollectorConfigProvider struct {
 	// The OpAMP server will call this method to generate recommended
 	// config when an opamp client connects to it or when it needs to deploy
 	// latest config after being notified of updates to the config.
-	GenerateConfigRecommendation RecommendedConfigGeneratorFn
+	GenerateConfigRecommendation model.RecommendedConfigGeneratorFn
 
 	// Subscribe to changes to config provided by this provider.
 	//

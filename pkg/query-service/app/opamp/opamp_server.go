@@ -107,7 +107,7 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 		Capabilities: uint64(capabilities),
 	}
 
-	agent.UpdateStatus(msg, response)
+	agent.UpdateStatus(msg, response, srv.collectorConfigProvider.GenerateConfigRecommendation)
 
 	return response
 }

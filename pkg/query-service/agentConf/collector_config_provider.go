@@ -37,6 +37,11 @@ func RecommendCollectorConfig(
 		if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
 			return nil, "", model.WrapApiError(apiErr, "failed to get latest agent config version")
 		}
+
+		if latestConfig == nil {
+			continue
+		}
+
 		updatedConf, rawSettings, apiErr := configGenerator(m.Repo.db, recommendation, latestConfig)
 		if apiErr != nil {
 			return nil, "", model.WrapApiError(apiErr, fmt.Sprintf(
