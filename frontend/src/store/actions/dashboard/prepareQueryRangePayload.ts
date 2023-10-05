@@ -22,7 +22,7 @@ export const prepareQueryRangePayload = ({
 	params = {},
 }: GetQueryResultsProps): PrepareQueryRangePayload => {
 	let legendMap: Record<string, string> = {};
-	const { allowSelectedIntervalForStepGen, ...newParams } = params;
+	const { allowSelectedIntervalForStepGen, ...restParams } = params;
 
 	const compositeQuery: QueryRangePayload['compositeQuery'] = {
 		queryType: query.queryType,
@@ -101,7 +101,7 @@ export const prepareQueryRangePayload = ({
 		}),
 		variables,
 		compositeQuery,
-		...newParams,
+		...restParams,
 	};
 
 	return { legendMap, queryPayload };
