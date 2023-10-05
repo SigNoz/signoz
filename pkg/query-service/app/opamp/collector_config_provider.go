@@ -18,7 +18,7 @@ type RecommendedConfigGeneratorFn func(
 	apiErr *coreModel.ApiError,
 )
 
-type CallbackReceiverFn func(callback func())
+type SubscribeFn func(callback func()) (unsubscribe func())
 
 type DeploymentStatus struct {
 	AgentId string
@@ -44,7 +44,7 @@ type CollectorConfigProvider struct {
 	//
 	// OpAMP server will subscribe to config updates with RecommendLatestConfigToAllAgents,
 	// rolling out the latest config recommendation to all connected agents.
-	SubscribeToConfigUpdates CallbackReceiverFn
+	SubscribeToConfigUpdates SubscribeFn
 
 	// Called by OpAMP server to report changes in deployment status of
 	// config recommended to OpAMP server.

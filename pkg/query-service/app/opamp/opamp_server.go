@@ -19,6 +19,7 @@ type Server struct {
 	logger                  *zap.Logger
 	capabilities            int32
 	collectorConfigProvider *CollectorConfigProvider
+	collectorConfigCleanup  func()
 }
 
 const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffectiveConfig |
@@ -33,15 +34,18 @@ func InitializeServer(
 		agents = &model.AllAgents
 	}
 
-	opAmpServer = &Server{
-		agents:                  agents,
-		collectorConfigProvider: collectorConfigProvider,
-		server:                  server.New(zap.S()),
-	}
-
-	collectorConfigProvider.SubscribeToConfigUpdates(func() {
+	// TODO(Raj): The subscription should be opened in Start()
+	// checkout https://github.com/open-telemetry/opamp-go/blob/main/server/serverimpl_test.go#L32
+	unsubscribe := collectorConfigProvider.SubscribeToConfigUpdates(func() {
 		RecommendLatestConfigToAllAgents(collectorConfigProvider)
 	})
+
+	opAmpServer = &Server{
+		server:                  server.New(zap.S()),
+		agents:                  agents,
+		collectorConfigProvider: collectorConfigProvider,
+		collectorConfigCleanup:  unsubscribe,
+	}
 
 	return opAmpServer
 }
@@ -73,6 +77,9 @@ func (srv *Server) Start(listener string) error {
 }
 
 func (srv *Server) Stop() {
+	if srv.collectorConfigCleanup != nil {
+		srv.collectorConfigCleanup()
+	}
 	srv.server.Stop(context.Background())
 }
 
