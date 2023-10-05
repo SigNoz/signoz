@@ -49,8 +49,8 @@ func (r *Repo) GetConfigHistory(
 		disabled, 
 		deploy_status, 
 		deploy_result,
-		last_hash,
-		last_config 
+		COALESCE(last_hash, "") last_hash,
+		COALESCE(last_config, "") last_config
 		FROM agent_config_versions AS v
 		WHERE element_type = $1
 		ORDER BY created_at desc, version desc
@@ -81,8 +81,8 @@ func (r *Repo) GetConfigVersion(
 		disabled, 
 		deploy_status, 
 		deploy_result,
-		last_hash,
-		last_config
+		COALESCE(last_hash, "") last_hash,
+		COALESCE(last_config, "") last_config
 		FROM agent_config_versions v 
 		WHERE element_type = $1 
 		AND version = $2`, typ, v)
