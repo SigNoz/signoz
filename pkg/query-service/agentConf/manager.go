@@ -78,8 +78,8 @@ func StartNewVersion(
 		return nil, err
 	}
 
-	// Notify opamp server of the change.
-	panic("TODO(Raj): Not implemented yet")
+	// TODO(Raj): Maybe this should be its own goroutine.
+	NotifyCollectorConfSubscribers()
 
 	return cfg, nil
 }

@@ -1,12 +1,19 @@
 package agentConf
 
-import "go.signoz.io/signoz/pkg/query-service/model"
+import (
+	"fmt"
+
+	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/query-service/model"
+)
 
 // Interface for specific signal pre-processing feature implementations
 
 // Strategy for recommending a collector config for
 // a particular version of pre-processing settings.
 type CollectorConfigGenerator func(
+	db *sqlx.DB,
+
 	// Base collector config to build upon
 	baseConfYaml []byte,
 
@@ -27,6 +34,11 @@ func (r *Registry) Register(
 	featureType PreprocessingFeatureType,
 	configGenerator CollectorConfigGenerator,
 ) {
+	if r.configGenerators[featureType] != nil {
+		panic(fmt.Sprintf(
+			"Pre processing feature can't be registered more than once: %s", featureType,
+		))
+	}
 	r.configGenerators[featureType] = configGenerator
 }
 
