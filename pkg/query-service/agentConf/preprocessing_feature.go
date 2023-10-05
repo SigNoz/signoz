@@ -20,7 +20,7 @@ type CollectorConfigGenerator func(
 	// The recommendation should be made based on this
 	// version of the feature's settings.
 	featureSettings *ConfigVersion,
-) (recommendedConfYaml []byte, apiErr *model.ApiError)
+) (recommendedConfYaml []byte, settingsUsed string, apiErr *model.ApiError)
 
 // TODO(Raj): Maybe reorganize registry to be like
 // https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/operator/registry.go

@@ -37,23 +37,40 @@ func RecommendCollectorConfig(
 		if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
 			return nil, "", model.WrapApiError(apiErr, "failed to get latest agent config version")
 		}
-		updated, apiErr := configGenerator(m.Repo.db, recommendation, latestConfig)
+		updatedConf, rawSettings, apiErr := configGenerator(m.Repo.db, recommendation, latestConfig)
 		if apiErr != nil {
 			return nil, "", model.WrapApiError(apiErr, fmt.Sprintf(
 				"failed to generate recommendation for %s", featureType,
 			))
 		}
-		recommendation = updated
-		settingVersions = append(settingVersions, fmt.Sprintf(
-			"%s:%d", featureType, latestConfig.Version,
-		))
+		recommendation = updatedConf
+		configId := fmt.Sprintf("%s:%d", featureType, latestConfig.Version)
+		settingVersions = append(settingVersions, configId)
+
+		m.updateDeployStatus(
+			context.Background(), featureType, latestConfig.Version,
+			string(DeployInitiated), "Deployment has started",
+			configId, rawSettings,
+		)
+
 	}
 
 	return recommendation, strings.Join(settingVersions, ","), nil
 }
 
-func HandleConfigDeploymentStatus(status opamp.DeploymentStatus) {
-	panic("TODO(Raj): Implement this")
+func HandleConfigDeploymentStatus(agentId string, configId string, status opamp.DeploymentStatus) {
+	featureConfigIds := strings.Split(configId, ",")
+	for _, featureConfId := range featureConfigIds {
+		newStatus := string(Deployed)
+		message := "Deployment was successful"
+		if !status.IsOk {
+			newStatus = string(DeployFailed)
+			message = fmt.Sprintf("%s: %s", agentId, status.Description)
+		}
+		m.updateDeployStatusByHash(
+			context.Background(), featureConfId, newStatus, message,
+		)
+	}
 }
 
 var collectorConfigSubscribers = map[string]func(){}

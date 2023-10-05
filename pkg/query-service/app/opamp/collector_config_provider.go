@@ -32,7 +32,7 @@ type DeploymentStatus struct {
 	Description string
 }
 
-type DeploymentStatusReceiverFn func(status DeploymentStatus)
+type DeploymentStatusReceiverFn func(agentId string, configId string, status DeploymentStatus)
 
 type CollectorConfigProvider struct {
 	// The OpAMP server will call this method to generate recommended
@@ -96,7 +96,7 @@ func RecommendLatestConfigToAllAgents(configProvider *CollectorConfigProvider) {
 			if err != nil {
 				status.Description = err.Error()
 			}
-			configProvider.ReportDeploymentStatus(status)
+			configProvider.ReportDeploymentStatus(agentId, configId, status)
 		})
 	}
 }

@@ -2,6 +2,7 @@ package logparsingpipeline
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -21,34 +22,34 @@ func CollectorConfigGenerator(
 	db *sqlx.DB,
 	baseConfYaml []byte,
 	configVersion *agentConf.ConfigVersion,
-) (recommendedConfYaml []byte, apiErr *model.ApiError) {
+) (recommendedConfYaml []byte, settingsUsed string, apiErr *model.ApiError) {
 	pipelinesRepo := NewRepo(db)
 
 	pipelines, errs := pipelinesRepo.getPipelinesByVersion(
 		context.Background(), configVersion.Version,
 	)
 	if len(errs) > 0 {
-		return nil, model.InternalError(multierr.Combine(errs...))
+		return nil, "", model.InternalError(multierr.Combine(errs...))
 	}
 
 	processors, procNames, err := PreparePipelineProcessor(pipelines)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "could not prepare otel collector processors for log pipelines"))
+		return nil, "", model.BadRequest(errors.Wrap(err, "could not prepare otel collector processors for log pipelines"))
 	}
 
 	c, err := yaml.Parser().Unmarshal([]byte(baseConfYaml))
 	if err != nil {
-		return nil, model.BadRequest(err)
+		return nil, "", model.BadRequest(err)
 	}
 
 	buildLogParsingProcessors(c, processors)
 
 	p, err := getOtelPipelinFromConfig(c)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "could not find svc pipeline for logs"))
+		return nil, "", model.BadRequest(errors.Wrap(err, "could not find svc pipeline for logs"))
 	}
 	if p.Pipelines.Logs == nil {
-		return nil, model.InternalError(fmt.Errorf("logs pipeline doesn't exist"))
+		return nil, "", model.InternalError(fmt.Errorf("logs pipeline doesn't exist"))
 	}
 
 	// build the new processor list
@@ -60,10 +61,15 @@ func CollectorConfigGenerator(
 
 	updatedConf, err := yaml.Parser().Marshal(c)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "could not marshal yaml for updated conf"))
+		return nil, "", model.BadRequest(errors.Wrap(err, "could not marshal yaml for updated conf"))
 	}
 
-	return updatedConf, nil
+	rawPipelineData, err := json.Marshal(pipelines)
+	if err != nil {
+		return nil, "", model.BadRequest(errors.Wrap(err, "could not serialize pipelines to JSON"))
+	}
+
+	return updatedConf, string(rawPipelineData), nil
 }
 
 func init() {
