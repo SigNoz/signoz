@@ -139,7 +139,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 		return "", fmt.Errorf("unsupported operator: %s", op)
 	}
 
-	// add exists check for non array items as default values of int/float/bool with corrupt the results
+	// add exists check for non array items as default values of int/float/bool will corrupt the results
 	if !isArray && !(item.Operator == v3.FilterOperatorExists || item.Operator == v3.FilterOperatorNotExists) {
 		existsFilter := fmt.Sprintf("JSON_EXISTS(body, '$.%s')", strings.Join(strings.Split(item.Key.Key, ".")[1:], "."))
 		filter = fmt.Sprintf("%s AND %s", existsFilter, filter)
