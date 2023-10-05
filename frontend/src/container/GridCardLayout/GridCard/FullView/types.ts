@@ -52,6 +52,7 @@ export interface FullViewProps {
 	graphsVisibilityStates?: boolean[];
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
 	setGraphsVisibilityStates: (graphsVisibilityStates: boolean[]) => void;
+	parentChartRef: GraphManagerProps['lineChartRef'];
 }
 
 export interface GraphManagerProps {
@@ -62,6 +63,7 @@ export interface GraphManagerProps {
 	setGraphsVisibilityStates: FullViewProps['setGraphsVisibilityStates'];
 	graphsVisibilityStates: FullViewProps['graphsVisibilityStates'];
 	lineChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
+	parentChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
 }
 
 export interface CheckBoxProps {

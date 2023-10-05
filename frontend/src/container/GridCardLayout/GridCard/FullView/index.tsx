@@ -34,6 +34,7 @@ function FullView({
 	graphsVisibilityStates,
 	onToggleModelHandler,
 	setGraphsVisibilityStates,
+	parentChartRef,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -92,9 +93,10 @@ function FullView({
 		if (!response.isFetching && lineChartRef.current) {
 			graphsVisibilityStates?.forEach((e, i) => {
 				lineChartRef?.current?.toggleGraph(i, e);
+				parentChartRef?.current?.toggleGraph(i, e);
 			});
 		}
-	}, [graphsVisibilityStates, response.isFetching]);
+	}, [graphsVisibilityStates, parentChartRef, response.isFetching]);
 
 	if (response.isFetching) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
@@ -145,6 +147,7 @@ function FullView({
 					setGraphsVisibilityStates={setGraphsVisibilityStates}
 					graphsVisibilityStates={graphsVisibilityStates}
 					lineChartRef={lineChartRef}
+					parentChartRef={parentChartRef}
 				/>
 			)}
 		</>

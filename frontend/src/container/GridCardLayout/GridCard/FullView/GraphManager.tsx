@@ -25,6 +25,7 @@ function GraphManager({
 	setGraphsVisibilityStates,
 	graphsVisibilityStates = [],
 	lineChartRef,
+	parentChartRef,
 }: GraphManagerProps): JSX.Element {
 	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(
 		getDefaultTableDataSet(data),
@@ -54,10 +55,16 @@ function GraphManager({
 
 			newGraphVisibilityStates.forEach((state, index) => {
 				lineChartRef?.current?.toggleGraph(index, state);
+				parentChartRef?.current?.toggleGraph(index, state);
 			});
 			setGraphsVisibilityStates(newGraphVisibilityStates);
 		},
-		[data.datasets.length, setGraphsVisibilityStates, lineChartRef],
+		[
+			data.datasets.length,
+			setGraphsVisibilityStates,
+			lineChartRef,
+			parentChartRef,
+		],
 	);
 
 	const columns = getGraphManagerTableColumns({

@@ -18,5 +18,7 @@
 	"add_panel": "Add Panel",
 	"save_layout": "Save Layout",
 	"variable_updated_successfully": "Variable updated successfully",
-	"error_while_updating_variable": "Error while updating variable"
+	"error_while_updating_variable": "Error while updating variable",
+	"dashboard_has_been_updated": "Dashboard has been updated",
+	"do_you_want_to_refresh_the_dashboard": "Do you want to refresh the dashboard?"
 }

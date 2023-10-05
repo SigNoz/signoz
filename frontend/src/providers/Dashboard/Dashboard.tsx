@@ -1,15 +1,21 @@
+import { Modal } from 'antd';
 import get from 'api/dashboard/get';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
+import dayjs, { Dayjs } from 'dayjs';
+import useTabVisibility from 'hooks/useTabFocus';
 import {
 	createContext,
 	PropsWithChildren,
 	useContext,
+	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import { Layout } from 'react-grid-layout';
+import { useTranslation } from 'react-i18next';
 import { useQuery, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useRouteMatch } from 'react-router-dom';
@@ -28,6 +34,7 @@ const DashboardContext = createContext<IDashboardContext>({
 	layouts: [],
 	setLayouts: () => {},
 	setSelectedDashboard: () => {},
+	updatedTimeRef: {} as React.MutableRefObject<Dayjs | null>,
 });
 
 interface Props {
@@ -42,6 +49,8 @@ export function DashboardProvider({
 		path: ROUTES.DASHBOARD,
 		exact: true,
 	});
+
+	const [onModal, Content] = Modal.useModal();
 
 	const isDashboardWidgetPage = useRouteMatch<Props>({
 		path: ROUTES.DASHBOARD_WIDGET,
@@ -59,6 +68,12 @@ export function DashboardProvider({
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
 
+	const updatedTimeRef = useRef<Dayjs | null>(null); // Using ref to store the updated time
+
+	const isVisible = useTabVisibility();
+
+	const { t } = useTranslation(['dashboard']);
+
 	const dashboardResponse = useQuery(
 		[REACT_QUERY_KEY.DASHBOARD_BY_ID, isDashboardPage?.params],
 		{
@@ -67,17 +82,67 @@ export function DashboardProvider({
 				get({
 					uuid: dashboardId,
 				}),
+			refetchOnWindowFocus: false,
 			onSuccess: (data) => {
-				setSelectedDashboard(data);
+				const updatedDate = dayjs(data.updated_at);
 
-				setLayouts(
-					data.data.layout?.filter(
-						(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
-					) || [],
-				);
+				// on first render
+				if (updatedTimeRef.current === null) {
+					setSelectedDashboard(data);
+
+					updatedTimeRef.current = updatedDate;
+
+					setLayouts(
+						data.data.layout?.filter(
+							(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
+						) || [],
+					);
+				}
+
+				if (
+					updatedTimeRef.current !== null &&
+					updatedDate.isAfter(updatedTimeRef.current) &&
+					isVisible
+				) {
+					// show modal when state is out of sync
+					onModal.confirm({
+						centered: true,
+						title: t('dashboard_has_been_updated'),
+						content: t('do_you_want_to_refresh_the_dashboard'),
+						onOk() {
+							setSelectedDashboard(data);
+
+							updatedTimeRef.current = dayjs(data.updated_at);
+
+							setLayouts(
+								data.data.layout?.filter(
+									(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
+								) || [],
+							);
+						},
+					});
+				} else {
+					// normal flow
+					updatedTimeRef.current = dayjs(data.updated_at);
+
+					setSelectedDashboard(data);
+
+					setLayouts(
+						data.data.layout?.filter(
+							(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
+						) || [],
+					);
+				}
 			},
 		},
 	);
+
+	useEffect(() => {
+		if (isVisible && updatedTimeRef.current) {
+			dashboardResponse.refetch();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isVisible]);
 
 	const handleToggleDashboardSlider = (value: boolean): void => {
 		setIsDashboardSlider(value);
@@ -93,6 +158,7 @@ export function DashboardProvider({
 			layouts,
 			setLayouts,
 			setSelectedDashboard,
+			updatedTimeRef,
 		}),
 		[
 			isDashboardSliderOpen,
@@ -105,6 +171,7 @@ export function DashboardProvider({
 
 	return (
 		<DashboardContext.Provider value={value}>
+			{Content}
 			{children}
 		</DashboardContext.Provider>
 	);

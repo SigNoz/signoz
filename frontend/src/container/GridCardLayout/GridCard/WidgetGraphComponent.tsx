@@ -11,6 +11,7 @@ import {
 	Dispatch,
 	SetStateAction,
 	useCallback,
+	useEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -57,6 +58,14 @@ function WidgetGraphComponent({
 			}),
 		[data, name],
 	);
+
+	useEffect(() => {
+		if (!lineChartRef.current) return;
+
+		localStoredVisibilityStates.forEach((state, index) => {
+			lineChartRef.current?.toggleGraph(index, state);
+		});
+	}, [localStoredVisibilityStates]);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -220,6 +229,7 @@ function WidgetGraphComponent({
 						graphsVisibilityStates={graphsVisibilityStates}
 						onToggleModelHandler={onToggleModelHandler}
 						setGraphsVisibilityStates={setGraphsVisibilityStates}
+						parentChartRef={lineChartRef}
 					/>
 				</FullViewContainer>
 			</Modal>

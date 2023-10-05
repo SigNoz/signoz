@@ -9,7 +9,7 @@ import { ErrorType } from 'types/common';
 function NewDashboardPage(): JSX.Element {
 	const { dashboardResponse } = useDashboard();
 
-	const { isFetching, isError } = dashboardResponse;
+	const { isFetching, isError, isLoading } = dashboardResponse;
 
 	const errorMessage = isError
 		? (dashboardResponse?.error as AxiosError)?.response?.data.errorType
@@ -23,7 +23,7 @@ function NewDashboardPage(): JSX.Element {
 		return <Typography>{errorMessage}</Typography>;
 	}
 
-	if (isFetching) {
+	if (isLoading) {
 		return <Spinner tip="Loading.." />;
 	}
 
