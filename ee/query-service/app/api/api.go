@@ -1,11 +1,13 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/dao"
+	saasserver "go.signoz.io/signoz/ee/query-service/integrations/saas-server"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
@@ -112,6 +114,10 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 		am.OpenAccess(ah.precheckLogin)).
 		Methods(http.MethodGet)
 
+	router.HandleFunc("/api/v1/getIngestionCred",
+		am.ViewAccess(ah.getIngestionCred)).
+		Methods(http.MethodGet)
+
 	// paid plans specific routes
 	router.HandleFunc("/api/v1/complete/saml",
 		am.OpenAccess(ah.receiveSAML)).
@@ -163,4 +169,20 @@ func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ah.WriteJSON(w, r, versionResponse)
+}
+
+func (aH *APIHandler) getIngestionCred(w http.ResponseWriter, r *http.Request) {
+	tenantId := r.URL.Query().Get("tenantId")
+	if tenantId == "" {
+		aH.HandleError(w, basemodel.BadRequest(fmt.Errorf("tenantId is required")), http.StatusBadRequest)
+		return
+	}
+	// make a getIngestionCred call to the saas-backend service
+	// and return the response
+	res, err := saasserver.GetIngestionCred(tenantId)
+	if err != nil {
+		RespondError(w, err, http.StatusInternalServerError)
+		return
+	}
+	aH.WriteJSON(w, r, res)
 }

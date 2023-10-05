@@ -9,6 +9,8 @@ const (
 )
 
 var LicenseSignozIo = "https://license.signoz.io/api/v1"
+var SaasServer = "https://signup.signoz.cloud/api"
+var SaasServerApiKey = GetOrDefaultEnv("SAAS_SERVER_API_KEY", "")
 
 var SpanLimitStr = GetOrDefaultEnv("SPAN_LIMIT", "5000")
 
