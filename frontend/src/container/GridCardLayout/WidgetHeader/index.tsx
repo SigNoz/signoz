@@ -30,7 +30,6 @@ import {
 	spinnerStyles,
 	tooltipStyles,
 	WARNING_MESSAGE,
-	warningTooltipStyles,
 } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
 import {
@@ -214,11 +213,9 @@ function WidgetHeader({
 			</Dropdown>
 
 			<ThesholdContainer>{threshold}</ThesholdContainer>
-			{queryResponse.isFetching &&
-				!queryResponse.isError &&
-				widget.id !== PANEL_TYPES.EMPTY_WIDGET && (
-					<Spinner height="5vh" style={spinnerStyles} />
-				)}
+			{queryResponse.isFetching && !queryResponse.isError && (
+				<Spinner height="5vh" style={spinnerStyles} />
+			)}
 			{queryResponse.isError && (
 				<Tooltip title={errorMessage} placement={errorTooltipPosition}>
 					<ExclamationCircleOutlined style={tooltipStyles} />
@@ -227,7 +224,7 @@ function WidgetHeader({
 
 			{isWarning && (
 				<Tooltip title={WARNING_MESSAGE} placement={errorTooltipPosition}>
-					<WarningOutlined style={warningTooltipStyles} />
+					<WarningOutlined style={tooltipStyles} />
 				</Tooltip>
 			)}
 		</WidgetHeaderContainer>

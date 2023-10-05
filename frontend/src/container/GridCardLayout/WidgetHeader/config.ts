@@ -16,11 +16,6 @@ export const tooltipStyles = {
 	color: themeColors.errorColor,
 };
 
-export const warningTooltipStyles = {
-	...tooltipStyles,
-	right: '2rem',
-};
-
 export const errorTooltipPosition = 'top';
 
 export const overlayStyles: CSSProperties = {
