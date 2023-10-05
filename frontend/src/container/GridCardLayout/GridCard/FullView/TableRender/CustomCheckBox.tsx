@@ -7,7 +7,7 @@ import { CheckBoxProps } from '../types';
 function CustomCheckBox({
 	data,
 	index,
-	graphVisibilityState,
+	graphVisibilityState = [],
 	checkBoxOnChangeHandler,
 }: CheckBoxProps): JSX.Element {
 	const { datasets } = data;
@@ -17,6 +17,8 @@ function CustomCheckBox({
 	};
 
 	const color = datasets[index]?.borderColor?.toString() || grey[0];
+
+	const isChecked = graphVisibilityState[index] || false;
 
 	return (
 		<ConfigProvider
@@ -28,7 +30,7 @@ function CustomCheckBox({
 				},
 			}}
 		>
-			<Checkbox onChange={onChangeHandler} checked={graphVisibilityState[index]} />
+			<Checkbox onChange={onChangeHandler} checked={isChecked} />
 		</ConfigProvider>
 	);
 }

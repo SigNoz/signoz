@@ -1,13 +1,9 @@
 import { Button, Input } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ResizeTable } from 'components/ResizeTable';
-import { Events } from 'constants/events';
 import { useNotifications } from 'hooks/useNotifications';
-import isEqual from 'lodash-es/isEqual';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { eventEmitter } from 'utils/getEventEmitter';
+import { memo, useCallback, useState } from 'react';
 
-import { getGraphVisibilityStateOnDataChange } from '../utils';
 import {
 	FilterTableAndSaveContainer,
 	FilterTableContainer,
@@ -26,83 +22,27 @@ function GraphManager({
 	name,
 	yAxisUnit,
 	onToggleModelHandler,
+	setGraphsVisibilityStates,
+	graphsVisibilityStates = [],
+	lineChartRef,
 }: GraphManagerProps): JSX.Element {
-	const {
-		graphVisibilityStates: localstoredVisibilityStates,
-		legendEntry,
-	} = useMemo(
-		() =>
-			getGraphVisibilityStateOnDataChange({
-				data,
-				isExpandedName: false,
-				name,
-			}),
-		[data, name],
-	);
-
-	const [graphVisibilityState, setGraphVisibilityState] = useState<boolean[]>(
-		localstoredVisibilityStates,
-	);
-
 	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(
 		getDefaultTableDataSet(data),
 	);
 
 	const { notifications } = useNotifications();
 
-	// useEffect for updating graph visibility state on data change
-	useEffect(() => {
-		const newGraphVisibilityStates = Array<boolean>(data.datasets.length).fill(
-			true,
-		);
-		data.datasets.forEach((dataset, i) => {
-			const index = legendEntry.findIndex(
-				(entry) => entry.label === dataset.label,
-			);
-			if (index !== -1) {
-				newGraphVisibilityStates[i] = legendEntry[index].show;
-			}
-		});
-		eventEmitter.emit(Events.UPDATE_GRAPH_VISIBILITY_STATE, {
-			name,
-			graphVisibilityStates: newGraphVisibilityStates,
-		});
-		setGraphVisibilityState(newGraphVisibilityStates);
-	}, [data, name, legendEntry]);
-
-	// useEffect for listening to events event graph legend is clicked
-	useEffect(() => {
-		const eventListener = eventEmitter.on(
-			Events.UPDATE_GRAPH_MANAGER_TABLE,
-			(data) => {
-				if (data.name === name) {
-					const newGraphVisibilityStates = graphVisibilityState;
-					newGraphVisibilityStates[data.index] = !newGraphVisibilityStates[
-						data.index
-					];
-					eventEmitter.emit(Events.UPDATE_GRAPH_VISIBILITY_STATE, {
-						name,
-						graphVisibilityStates: newGraphVisibilityStates,
-					});
-					setGraphVisibilityState([...newGraphVisibilityStates]);
-				}
-			},
-		);
-		return (): void => {
-			eventListener.off(Events.UPDATE_GRAPH_MANAGER_TABLE);
-		};
-	}, [graphVisibilityState, name]);
-
 	const checkBoxOnChangeHandler = useCallback(
 		(e: CheckboxChangeEvent, index: number): void => {
-			graphVisibilityState[index] = e.target.checked;
-			setGraphVisibilityState([...graphVisibilityState]);
-			eventEmitter.emit(Events.UPDATE_GRAPH_VISIBILITY_STATE, {
-				name,
-				graphVisibilityStates: [...graphVisibilityState],
-			});
+			const newStates = [...graphsVisibilityStates];
+
+			newStates[index] = e.target.checked;
+
+			lineChartRef?.current?.toggleGraph(index, e.target.checked);
+
+			setGraphsVisibilityStates([...newStates]);
 		},
-		[graphVisibilityState, name],
+		[graphsVisibilityStates, setGraphsVisibilityStates, lineChartRef],
 	);
 
 	const labelClickedHandler = useCallback(
@@ -111,32 +51,22 @@ function GraphManager({
 				false,
 			);
 			newGraphVisibilityStates[labelIndex] = true;
-			setGraphVisibilityState([...newGraphVisibilityStates]);
-			eventEmitter.emit(Events.UPDATE_GRAPH_VISIBILITY_STATE, {
-				name,
-				graphVisibilityStates: newGraphVisibilityStates,
+
+			newGraphVisibilityStates.forEach((state, index) => {
+				lineChartRef?.current?.toggleGraph(index, state);
 			});
+			setGraphsVisibilityStates(newGraphVisibilityStates);
 		},
-		[data.datasets.length, name],
+		[data.datasets.length, setGraphsVisibilityStates, lineChartRef],
 	);
 
-	const columns = useMemo(
-		() =>
-			getGraphManagerTableColumns({
-				data,
-				checkBoxOnChangeHandler,
-				graphVisibilityState,
-				labelClickedHandler,
-				yAxisUnit,
-			}),
-		[
-			checkBoxOnChangeHandler,
-			data,
-			graphVisibilityState,
-			labelClickedHandler,
-			yAxisUnit,
-		],
-	);
+	const columns = getGraphManagerTableColumns({
+		data,
+		checkBoxOnChangeHandler,
+		graphVisibilityState: graphsVisibilityStates || [],
+		labelClickedHandler,
+		yAxisUnit,
+	});
 
 	const filterHandler = useCallback(
 		(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -155,7 +85,7 @@ function GraphManager({
 	const saveHandler = useCallback((): void => {
 		saveLegendEntriesToLocalStorage({
 			data,
-			graphVisibilityState,
+			graphVisibilityState: graphsVisibilityStates || [],
 			name,
 		});
 		notifications.success({
@@ -164,7 +94,7 @@ function GraphManager({
 		if (onToggleModelHandler) {
 			onToggleModelHandler();
 		}
-	}, [data, graphVisibilityState, name, notifications, onToggleModelHandler]);
+	}, [data, graphsVisibilityStates, name, notifications, onToggleModelHandler]);
 
 	const dataSource = tableDataSet.filter((item) => item.show);
 
@@ -200,8 +130,4 @@ GraphManager.defaultProps = {
 	graphVisibilityStateHandler: undefined,
 };
 
-export default memo(
-	GraphManager,
-	(prevProps, nextProps) =>
-		isEqual(prevProps.data, nextProps.data) && prevProps.name === nextProps.name,
-);
+export default memo(GraphManager);

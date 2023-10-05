@@ -1,7 +1,8 @@
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ChartData, ChartDataset } from 'chart.js';
-import { GraphOnClickHandler } from 'components/Graph/types';
+import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { MutableRefObject } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 export interface DataSetProps {
@@ -40,20 +41,6 @@ export interface LabelProps {
 	label: string;
 }
 
-export interface GraphManagerProps {
-	data: ChartData;
-	name: string;
-	yAxisUnit?: string;
-	onToggleModelHandler?: () => void;
-}
-
-export interface CheckBoxProps {
-	data: ChartData;
-	index: number;
-	graphVisibilityState: boolean[];
-	checkBoxOnChangeHandler: (e: CheckboxChangeEvent, index: number) => void;
-}
-
 export interface FullViewProps {
 	widget: Widgets;
 	fullViewOptions?: boolean;
@@ -64,6 +51,24 @@ export interface FullViewProps {
 	isDependedDataLoaded?: boolean;
 	graphsVisibilityStates?: boolean[];
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
+	setGraphsVisibilityStates: (graphsVisibilityStates: boolean[]) => void;
+}
+
+export interface GraphManagerProps {
+	data: ChartData;
+	name: string;
+	yAxisUnit?: string;
+	onToggleModelHandler?: () => void;
+	setGraphsVisibilityStates: FullViewProps['setGraphsVisibilityStates'];
+	graphsVisibilityStates: FullViewProps['graphsVisibilityStates'];
+	lineChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
+}
+
+export interface CheckBoxProps {
+	data: ChartData;
+	index: number;
+	graphVisibilityState: boolean[];
+	checkBoxOnChangeHandler: (e: CheckboxChangeEvent, index: number) => void;
 }
 
 export interface SaveLegendEntriesToLocalStoreProps {

@@ -18,12 +18,10 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { toggleGraphsVisibilityInChart } from '../utils';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
-import { getIsGraphLegendToggleAvailable } from './utils';
 
 function FullView({
 	widget,
@@ -35,6 +33,7 @@ function FullView({
 	isDependedDataLoaded = false,
 	graphsVisibilityStates,
 	onToggleModelHandler,
+	setGraphsVisibilityStates,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -49,32 +48,12 @@ function FullView({
 		[widget],
 	);
 
-	const canModifyChart = useChartMutable({
-		panelType: widget.panelTypes,
-		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
-	});
-
 	const lineChartRef = useRef<ToggleGraphProps>();
-
-	useEffect(() => {
-		if (graphsVisibilityStates && canModifyChart && lineChartRef.current) {
-			toggleGraphsVisibilityInChart({
-				graphsVisibilityStates,
-				lineChartRef,
-			});
-		}
-	}, [graphsVisibilityStates, canModifyChart]);
 
 	const [selectedTime, setSelectedTime] = useState<timePreferance>({
 		name: getSelectedTime()?.name || '',
 		enum: widget?.timePreferance || 'GLOBAL_TIME',
 	});
-
-	const queryKey = useMemo(
-		() =>
-			`FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
-		[selectedTime, globalSelectedTime, widget],
-	);
 
 	const updatedQuery = useStepInterval(widget?.query);
 
@@ -87,10 +66,15 @@ function FullView({
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		},
 		{
-			queryKey,
+			queryKey: `FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
 			enabled: !isDependedDataLoaded,
 		},
 	);
+
+	const canModifyChart = useChartMutable({
+		panelType: widget.panelTypes,
+		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
+	});
 
 	const chartDataSet = useMemo(
 		() =>
@@ -104,9 +88,13 @@ function FullView({
 		[response],
 	);
 
-	const isGraphLegendToggleAvailable = getIsGraphLegendToggleAvailable(
-		widget.panelTypes,
-	);
+	useEffect(() => {
+		if (!response.isFetching && lineChartRef.current) {
+			graphsVisibilityStates?.forEach((e, i) => {
+				lineChartRef?.current?.toggleGraph(i, e);
+			});
+		}
+	}, [graphsVisibilityStates, response.isFetching]);
 
 	if (response.isFetching) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
@@ -131,7 +119,7 @@ function FullView({
 				</TimeContainer>
 			)}
 
-			<GraphContainer isGraphLegendToggleAvailable={isGraphLegendToggleAvailable}>
+			<GraphContainer isGraphLegendToggleAvailable={canModifyChart}>
 				<GridPanelSwitch
 					panelType={widget.panelTypes}
 					data={chartDataSet.data}
@@ -154,6 +142,9 @@ function FullView({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
+					setGraphsVisibilityStates={setGraphsVisibilityStates}
+					graphsVisibilityStates={graphsVisibilityStates}
+					lineChartRef={lineChartRef}
 				/>
 			)}
 		</>

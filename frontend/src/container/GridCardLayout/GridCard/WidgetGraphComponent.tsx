@@ -1,10 +1,8 @@
 import { Typography } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { Events } from 'constants/events';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useChartMutable } from 'hooks/useChartMutable';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
@@ -13,7 +11,6 @@ import {
 	Dispatch,
 	SetStateAction,
 	useCallback,
-	useEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -23,18 +20,13 @@ import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
-import { eventEmitter } from 'utils/getEventEmitter';
 import { v4 } from 'uuid';
 
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
-import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './FullView/contants';
 import { FullViewContainer, Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
-import {
-	getGraphVisibilityStateOnDataChange,
-	toggleGraphsVisibilityInChart,
-} from './utils';
+import { getGraphVisibilityStateOnDataChange } from './utils';
 
 function WidgetGraphComponent({
 	data,
@@ -54,7 +46,9 @@ function WidgetGraphComponent({
 	const { notifications } = useNotifications();
 	const { pathname } = useLocation();
 
-	const { graphVisibilityStates: localstoredVisibilityStates } = useMemo(
+	const lineChartRef = useRef<ToggleGraphProps>();
+
+	const { graphVisibilityStates: localStoredVisibilityStates } = useMemo(
 		() =>
 			getGraphVisibilityStateOnDataChange({
 				data,
@@ -66,51 +60,9 @@ function WidgetGraphComponent({
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
-	const [graphsVisibilityStates, setGraphsVisilityStates] = useState<boolean[]>(
-		localstoredVisibilityStates,
-	);
-
-	const canModifyChart = useChartMutable({
-		panelType: widget.panelTypes,
-		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
-	});
-
-	const lineChartRef = useRef<ToggleGraphProps>();
-
-	// Updating the visibility state of the graph on data change according to global time range
-	useEffect(() => {
-		if (canModifyChart) {
-			const newGraphVisibilityState = getGraphVisibilityStateOnDataChange({
-				data,
-				isExpandedName: true,
-				name,
-			});
-			setGraphsVisilityStates(newGraphVisibilityState.graphVisibilityStates);
-		}
-	}, [canModifyChart, data, name]);
-
-	useEffect(() => {
-		const eventListener = eventEmitter.on(
-			Events.UPDATE_GRAPH_VISIBILITY_STATE,
-			(data) => {
-				if (data.name === `${name}expanded` && canModifyChart) {
-					setGraphsVisilityStates([...data.graphVisibilityStates]);
-				}
-			},
-		);
-		return (): void => {
-			eventListener.off(Events.UPDATE_GRAPH_VISIBILITY_STATE);
-		};
-	}, [canModifyChart, name]);
-
-	useEffect(() => {
-		if (canModifyChart && lineChartRef.current) {
-			toggleGraphsVisibilityInChart({
-				graphsVisibilityStates,
-				lineChartRef,
-			});
-		}
-	}, [graphsVisibilityStates, canModifyChart]);
+	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
+		boolean[]
+	>(localStoredVisibilityStates);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -267,6 +219,7 @@ function WidgetGraphComponent({
 						yAxisUnit={widget.yAxisUnit}
 						graphsVisibilityStates={graphsVisibilityStates}
 						onToggleModelHandler={onToggleModelHandler}
+						setGraphsVisibilityStates={setGraphsVisibilityStates}
 					/>
 				</FullViewContainer>
 			</Modal>
