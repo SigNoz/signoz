@@ -67,7 +67,7 @@ function WidgetGraph({
 			title={title}
 			isStacked={isStacked}
 			opacity={opacity}
-			data={chartDataSet}
+			data={chartDataSet.data}
 			panelType={selectedGraph}
 			name={widgetId || 'legend_widget'}
 			yAxisUnit={yAxisUnit}

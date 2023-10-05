@@ -5,6 +5,7 @@ import {
 	EditFilled,
 	ExclamationCircleOutlined,
 	FullscreenOutlined,
+	WarningOutlined,
 } from '@ant-design/icons';
 import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
@@ -28,6 +29,8 @@ import {
 	overlayStyles,
 	spinnerStyles,
 	tooltipStyles,
+	WARNING_MESSAGE,
+	warningTooltipStyles,
 } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
 import {
@@ -53,6 +56,7 @@ interface IWidgetHeaderProps {
 	errorMessage: string | undefined;
 	threshold?: ReactNode;
 	headerMenuList?: MenuItemKeys[];
+	isWarning: boolean;
 }
 
 function WidgetHeader({
@@ -66,6 +70,7 @@ function WidgetHeader({
 	errorMessage,
 	threshold,
 	headerMenuList,
+	isWarning,
 }: IWidgetHeaderProps): JSX.Element | null {
 	const [localHover, setLocalHover] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -217,6 +222,12 @@ function WidgetHeader({
 			{queryResponse.isError && (
 				<Tooltip title={errorMessage} placement={errorTooltipPosition}>
 					<ExclamationCircleOutlined style={tooltipStyles} />
+				</Tooltip>
+			)}
+
+			{isWarning && (
+				<Tooltip title={WARNING_MESSAGE} placement={errorTooltipPosition}>
+					<WarningOutlined style={warningTooltipStyles} />
 				</Tooltip>
 			)}
 		</WidgetHeaderContainer>

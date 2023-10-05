@@ -106,7 +106,8 @@ function GridCardGraph({
 				widget={widget}
 				queryResponse={queryResponse}
 				errorMessage={errorMessage}
-				data={chartData}
+				data={chartData.data}
+				isWarning={chartData.isWarning}
 				name={name}
 				onDragSelect={onDragSelect}
 				threshold={threshold}

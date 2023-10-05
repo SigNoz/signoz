@@ -46,6 +46,7 @@ function WidgetGraphComponent({
 	onClickHandler,
 	threshold,
 	headerMenuList,
+	isWarning,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [modal, setModal] = useState<boolean>(false);
@@ -282,6 +283,7 @@ function WidgetGraphComponent({
 					errorMessage={errorMessage}
 					threshold={threshold}
 					headerMenuList={headerMenuList}
+					isWarning={isWarning}
 				/>
 			</div>
 			<GridPanelSwitch

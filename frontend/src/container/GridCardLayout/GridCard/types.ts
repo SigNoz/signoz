@@ -26,6 +26,7 @@ export interface WidgetGraphComponentProps {
 	onClickHandler?: GraphOnClickHandler;
 	threshold?: ReactNode;
 	headerMenuList: MenuItemKeys[];
+	isWarning: boolean;
 }
 
 export interface GridCardGraphProps {

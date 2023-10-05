@@ -134,7 +134,7 @@ function FullView({
 			<GraphContainer isGraphLegendToggleAvailable={isGraphLegendToggleAvailable}>
 				<GridPanelSwitch
 					panelType={widget.panelTypes}
-					data={chartDataSet}
+					data={chartDataSet.data}
 					isStacked={widget.isStacked}
 					opacity={widget.opacity}
 					title={widget.title}
@@ -150,7 +150,7 @@ function FullView({
 
 			{canModifyChart && (
 				<GraphManager
-					data={chartDataSet}
+					data={chartDataSet.data}
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}

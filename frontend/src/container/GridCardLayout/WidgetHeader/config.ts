@@ -16,6 +16,11 @@ export const tooltipStyles = {
 	color: themeColors.errorColor,
 };
 
+export const warningTooltipStyles = {
+	...tooltipStyles,
+	right: '2rem',
+};
+
 export const errorTooltipPosition = 'top';
 
 export const overlayStyles: CSSProperties = {
@@ -25,3 +30,6 @@ export const overlayStyles: CSSProperties = {
 	justifyContent: 'center',
 	position: 'absolute',
 };
+
+export const WARNING_MESSAGE =
+	'Too many timeseries in the result. UI has restricted to showing the top 40. Please check the query if this is needed and contact support@signoz.io if you need to show >40 timeseries in the panel';

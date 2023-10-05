@@ -5,10 +5,15 @@ import { QueryData } from 'types/api/widgets/getQuery';
 import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
 
+const limit = 40;
+
 const getChartData = ({
 	queryData,
 	createDataset,
-}: GetChartDataProps): ChartData => {
+}: GetChartDataProps): {
+	data: ChartData;
+	isWarning: boolean;
+} => {
 	const uniqueTimeLabels = new Set<number>();
 	queryData.forEach((data) => {
 		data.queryData.forEach((query) => {
@@ -62,27 +67,34 @@ const getChartData = ({
 		.map((e) => e.map((e) => e.second))
 		.reduce((a, b) => [...a, ...b], []);
 
-	return {
-		datasets: alldata.map((e, index) => {
-			const datasetBaseConfig = {
-				index,
-				label: allLabels[index],
-				borderColor: colors[index % colors.length] || 'red',
-				data: e,
-				borderWidth: 1.5,
-				spanGaps: true,
-				animations: false,
-				showLine: true,
-				pointRadius: 0,
-			};
+	const updatedData = {
+		datasets: alldata
+			.map((e, index) => {
+				const datasetBaseConfig = {
+					index,
+					label: allLabels[index],
+					borderColor: colors[index % colors.length] || 'red',
+					data: e,
+					borderWidth: 1.5,
+					spanGaps: true,
+					animations: false,
+					showLine: true,
+					pointRadius: 0,
+				};
 
-			return createDataset
-				? createDataset(e, index, allLabels)
-				: datasetBaseConfig;
-		}),
+				return createDataset
+					? createDataset(e, index, allLabels)
+					: datasetBaseConfig;
+			})
+			.slice(0, limit),
 		labels: response
 			.map((e) => e.map((e) => e.first))
 			.reduce((a, b) => [...a, ...b], [])[0],
+	};
+
+	return {
+		data: updatedData,
+		isWarning: alldata.length >= limit,
 	};
 };
 
