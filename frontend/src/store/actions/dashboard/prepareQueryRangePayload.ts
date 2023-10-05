@@ -22,6 +22,7 @@ export const prepareQueryRangePayload = ({
 	params = {},
 }: GetQueryResultsProps): PrepareQueryRangePayload => {
 	let legendMap: Record<string, string> = {};
+	const { allowSelectedIntervalForStepGen, ...newParams } = params;
 
 	const compositeQuery: QueryRangePayload['compositeQuery'] = {
 		queryType: query.queryType,
@@ -90,17 +91,17 @@ export const prepareQueryRangePayload = ({
 		start: parseInt(start, 10) * 1e3,
 		end: parseInt(end, 10) * 1e3,
 		step: getStep({
-			start: params.allowSelectedIntervalForStepGen
+			start: allowSelectedIntervalForStepGen
 				? start
 				: store.getState().globalTime.minTime,
-			end: params.allowSelectedIntervalForStepGen
+			end: allowSelectedIntervalForStepGen
 				? end
 				: store.getState().globalTime.maxTime,
 			inputFormat: 'ns',
 		}),
 		variables,
 		compositeQuery,
-		...params,
+		...newParams,
 	};
 
 	return { legendMap, queryPayload };
