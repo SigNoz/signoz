@@ -1,3 +1,5 @@
+import './GraphManager.styles.scss';
+
 import { Button, Input } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ResizeTable } from 'components/ResizeTable';
@@ -8,12 +10,6 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { eventEmitter } from 'utils/getEventEmitter';
 
 import { getGraphVisibilityStateOnDataChange } from '../utils';
-import {
-	FilterTableAndSaveContainer,
-	FilterTableContainer,
-	SaveCancelButtonContainer,
-	SaveContainer,
-} from './styles';
 import { getGraphManagerTableColumns } from './TableRender/GraphManagerColumns';
 import { ExtendedChartDataset, GraphManagerProps } from './types';
 import {
@@ -169,30 +165,30 @@ function GraphManager({
 	const dataSource = tableDataSet.filter((item) => item.show);
 
 	return (
-		<FilterTableAndSaveContainer>
-			<FilterTableContainer>
+		<div className="filter-save-container">
+			<div className="filter-table-container">
 				<Input onChange={filterHandler} placeholder="Filter Series" />
 				<ResizeTable
 					columns={columns}
 					dataSource={dataSource}
 					rowKey="index"
 					pagination={false}
-					scroll={{ y: 240 }}
+					scroll={{ y: 200 }}
 				/>
-			</FilterTableContainer>
-			<SaveContainer>
-				<SaveCancelButtonContainer>
+			</div>
+			<div className="save-cancel-container">
+				<span className="save-cancel-button">
 					<Button type="default" onClick={onToggleModelHandler}>
 						Cancel
 					</Button>
-				</SaveCancelButtonContainer>
-				<SaveCancelButtonContainer>
+				</span>
+				<span className="save-cancel-button">
 					<Button onClick={saveHandler} type="primary">
 						Save
 					</Button>
-				</SaveCancelButtonContainer>
-			</SaveContainer>
-		</FilterTableAndSaveContainer>
+				</span>
+			</div>
+		</div>
 	);
 }
 
