@@ -34,6 +34,7 @@ Step 3. Run your application
 OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
 OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.{region}.signoz.cloud:443" \
 OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>" \
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
 opentelemetry-instrument <your_run_command>
 ```
 
@@ -78,7 +79,8 @@ Step 3. To run your application and send data to collector in same VM
 ```bash
 OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" \
-OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your run command>
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
+opentelemetry-instrument <your run command>
 ```
 
 where,
@@ -123,7 +125,8 @@ Step 3. Run your application
 ```bash
 OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" \
-OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your run command>
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
+opentelemetry-instrument <your run command>
 ```
 
 where,

@@ -134,7 +134,10 @@ From VMs, there are two ways to send data to SigNoz Cloud.
    The run command must have some environment variables to send data to SigNoz cloud. The run command:
     
     ```bash
-    SERVICE_NAME=goApp INSECURE_MODE=false OTEL_EXPORTER_OTLP_HEADERS=signoz-access-token=<SIGNOZ-INGESTION-TOKEN> OTEL_EXPORTER_OTLP_ENDPOINT=ingest.{region}.signoz.cloud:443 go run main.go
+    SERVICE_NAME=goApp INSECURE_MODE=false \
+    OTEL_EXPORTER_OTLP_HEADERS=signoz-access-token=<SIGNOZ-INGESTION-TOKEN> \
+    OTEL_EXPORTER_OTLP_ENDPOINT=ingest.{region}.signoz.cloud:443 \
+    go run main.go
     ```
 
     We can replace the placeholders based on our environment. 
@@ -285,7 +288,9 @@ You can find instructions to install OTel Collector binary [here](https://signoz
    The run command must have some environment variables to send data to SigNoz. The run command:
     
     ```bash
-    SERVICE_NAME=goGinApp INSECURE_MODE=true OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317 go run main.go
+    SERVICE_NAME=goGinApp INSECURE_MODE=true \
+    OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317 \
+    go run main.go
     ```
     
     If you want to update your `service_name`, you can modify the `SERVICE_NAME` variable.
@@ -423,7 +428,9 @@ Once you have set up OTel Collector agent, you can proceed with OpenTelemetry Go
    The run command must have some environment variables to send data to SigNoz. The run command:
     
     ```bash
-    SERVICE_NAME=goGinApp INSECURE_MODE=true OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317 go run main.go
+    SERVICE_NAME=goGinApp INSECURE_MODE=true \
+    OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317 \
+    go run main.go
     ```
     
     If you want to update your `service_name`, you can modify the `SERVICE_NAME` variable.

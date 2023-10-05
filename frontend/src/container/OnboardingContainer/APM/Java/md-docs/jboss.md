@@ -35,9 +35,9 @@ Step 3. Update `JAVA_OPTS` environment variable
 Update `JAVA_OPTS` environment variable with configurations required to send data to SigNoz cloud in your configuration file.
 
 ```bash
-JAVA_OPTS="-javaagent:/<path>/opentelemetry-javaagent.jar
--Dotel.exporter.otlp.endpoint=https://ingest.{region}.signoz.cloud:443
--Dotel.exporter.otlp.headers="signoz-access-token=<SIGNOZ_INGESTION_KEY>"
+JAVA_OPTS="-javaagent:/<path>/opentelemetry-javaagent.jar \
+-Dotel.exporter.otlp.endpoint=https://ingest.{region}.signoz.cloud:443 \
+-Dotel.exporter.otlp.headers="signoz-access-token=<SIGNOZ_INGESTION_KEY>" \
 -Dotel.resource.attributes="service.name=<app_name>""
 ```
 You need to replace the following things based on your environment:
