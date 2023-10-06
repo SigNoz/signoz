@@ -90,6 +90,8 @@ function GridCardGraph({
 						queryData: queryResponse?.data?.payload?.data?.result || [],
 					},
 				],
+				createDataset: undefined,
+				isWarningLimit: true,
 			}),
 		[queryResponse],
 	);

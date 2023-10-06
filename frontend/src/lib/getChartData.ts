@@ -10,6 +10,7 @@ const limit = 40;
 const getChartData = ({
 	queryData,
 	createDataset,
+	isWarningLimit = false,
 }: GetChartDataProps): {
 	data: ChartData;
 	isWarning: boolean;
@@ -67,26 +68,24 @@ const getChartData = ({
 		.map((e) => e.map((e) => e.second))
 		.reduce((a, b) => [...a, ...b], []);
 
-	const updatedData = {
-		datasets: alldata
-			.map((e, index) => {
-				const datasetBaseConfig = {
-					index,
-					label: allLabels[index],
-					borderColor: colors[index % colors.length] || 'red',
-					data: e,
-					borderWidth: 1.5,
-					spanGaps: true,
-					animations: false,
-					showLine: true,
-					pointRadius: 0,
-				};
+	const updatedDataSet = alldata.map((e, index) => {
+		const datasetBaseConfig = {
+			index,
+			label: allLabels[index],
+			borderColor: colors[index % colors.length] || 'red',
+			data: e,
+			borderWidth: 1.5,
+			spanGaps: true,
+			animations: false,
+			showLine: true,
+			pointRadius: 0,
+		};
 
-				return createDataset
-					? createDataset(e, index, allLabels)
-					: datasetBaseConfig;
-			})
-			.slice(0, limit),
+		return createDataset ? createDataset(e, index, allLabels) : datasetBaseConfig;
+	});
+
+	const updatedData = {
+		datasets: isWarningLimit ? updatedDataSet.slice(0, limit) : updatedDataSet,
 		labels: response
 			.map((e) => e.map((e) => e.first))
 			.reduce((a, b) => [...a, ...b], [])[0],
@@ -94,7 +93,7 @@ const getChartData = ({
 
 	return {
 		data: updatedData,
-		isWarning: alldata.length >= limit,
+		isWarning: isWarningLimit && updatedDataSet.length > limit,
 	};
 };
 
@@ -109,6 +108,7 @@ export interface GetChartDataProps {
 		index: number,
 		allLabels: string[],
 	) => ChartDataset;
+	isWarningLimit?: boolean;
 }
 
 export default getChartData;
