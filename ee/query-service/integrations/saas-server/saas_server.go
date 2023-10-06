@@ -19,6 +19,7 @@ func GetIngestionCred(tenantId string) (IngestionCred, *model.ApiError) {
 	req, err := http.NewRequest(method, url, http.NoBody)
 
 	if err != nil {
+		return IngestionCred{}, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
 	req.Header.Add("X-signozAdminAuthKey", constants.SaasServerApiKey)
 
@@ -36,7 +37,6 @@ func GetIngestionCred(tenantId string) (IngestionCred, *model.ApiError) {
 	if httpResponse.StatusCode == http.StatusNotFound {
 		return IngestionCred{}, &model.ApiError{Err: fmt.Errorf("TenantId not found"), Typ: model.ErrorNotFound}
 	} else if httpResponse.StatusCode != http.StatusOK {
-		fmt.Println(httpBody)
 		return IngestionCred{}, &model.ApiError{Err: fmt.Errorf("Internal Error"), Typ: model.ErrorInternal}
 	}
 	// read api request result
