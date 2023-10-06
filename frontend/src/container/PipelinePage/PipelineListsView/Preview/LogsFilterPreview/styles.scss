@@ -15,9 +15,55 @@
 }
 
 .logs-filter-preview-content {
-  height: 20vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  // padding: 4px 8px;
-  // border: 1px solid rgba(253, 253, 253, 0.12);
+  position: relative;
+  width: 100%;
+
+  height: 12rem;
+  overflow: hidden;
+
+  border: 1px solid rgba(253, 253, 253, 0.12);
+}
+
+
+// Preview list styles
+.logs-preview-list-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+
+  box-sizing: border-box;
+  padding: 0.25rem 0.5rem;
+}
+
+.logs-preview-list-item {
+  width: 100%;
+  position: relative;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  flex-grow: 1;
+}
+
+.logs-preview-list-item:not(:first-child) {
+  border-top: 1px solid rgba(253, 253, 253, 0.12);
+}
+
+.logs-preview-list-item-timestamp {
+  margin-right: 0.75rem;
+  white-space: nowrap;
+}
+
+.logs-preview-list-item-body {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logs-preview-list-item-actions{
+  margin-left: 0.75rem;
 }

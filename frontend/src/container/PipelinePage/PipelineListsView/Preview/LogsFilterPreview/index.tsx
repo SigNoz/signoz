@@ -1,17 +1,16 @@
 import './styles.scss';
 
-import { Typography } from 'antd';
+import { ExpandAltOutlined } from '@ant-design/icons';
 import {
 	initialFilters,
 	initialQueriesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import dayjs from 'dayjs';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { FlatLogData } from 'lib/logs/flatLogData';
 import _ from 'lodash-es';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { TableVirtuoso } from 'react-virtuoso';
 import { AppState } from 'store/reducers';
 import { ILog } from 'types/api/logs/log';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -19,24 +18,21 @@ import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 function PreviewLogsTable({ logs }: PreviewLogsTableProps): JSX.Element {
-	const flattenedLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
-		logs,
-	]);
-	const itemContent = (
-		index: number,
-		log: Record<string, unknown>,
-	): JSX.Element => (
-		<>
-			<td style={{ width: 150 }}>{String(log.timestamp)}</td>
-			<td>
-				<Typography.Paragraph ellipsis={{ rows: 1 }}>
-					{String(log.body)}
-				</Typography.Paragraph>
-			</td>
-		</>
+	return (
+		<div className="logs-preview-list-container">
+			{logs.map((log) => (
+				<div key={log.id} className="logs-preview-list-item">
+					<div className="logs-preview-list-item-timestamp">
+						{dayjs(String(log.timestamp)).format('MMM DD HH:mm:ss.SSS')}
+					</div>
+					<div className="logs-preview-list-item-body">{log.body}</div>
+					<div className="logs-preview-list-item-actions">
+						<ExpandAltOutlined />
+					</div>
+				</div>
+			))}
+		</div>
 	);
-
-	return <TableVirtuoso data={flattenedLogData} itemContent={itemContent} />;
 }
 
 interface PreviewLogsTableProps {
@@ -50,7 +46,7 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 			...q.builder.queryData[0],
 			filters: filter || initialFilters,
 			aggregateOperator: LogsAggregatorOperator.NOOP,
-			limit: 10,
+			limit: 8,
 		};
 		return q;
 	}, [filter]);
