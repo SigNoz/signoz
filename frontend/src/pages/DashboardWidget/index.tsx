@@ -37,7 +37,7 @@ function DashboardWidget(): JSX.Element | null {
 		}
 	}, [dashboardId, search]);
 
-	if (selectedGraph === undefined || dashboardResponse.isFetching) {
+	if (selectedGraph === undefined || dashboardResponse.isLoading) {
 		return <Spinner tip="Loading.." />;
 	}
 

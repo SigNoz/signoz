@@ -84,11 +84,13 @@ const getChartData = ({
 		return createDataset ? createDataset(e, index, allLabels) : datasetBaseConfig;
 	});
 
+	const updatedLabels = response
+		.map((e) => e.map((e) => e.first))
+		.reduce((a, b) => [...a, ...b], [])[0];
+
 	const updatedData = {
 		datasets: isWarningLimit ? updatedDataSet.slice(0, limit) : updatedDataSet,
-		labels: response
-			.map((e) => e.map((e) => e.first))
-			.reduce((a, b) => [...a, ...b], [])[0],
+		labels: isWarningLimit ? updatedLabels.slice(0, limit) : updatedLabels,
 	};
 
 	return {

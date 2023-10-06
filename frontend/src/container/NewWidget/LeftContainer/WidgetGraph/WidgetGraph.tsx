@@ -1,5 +1,11 @@
-import { Card, Typography } from 'antd';
+import { WarningOutlined } from '@ant-design/icons';
+import { Card, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
+import {
+	errorTooltipPosition,
+	tooltipStyles,
+	WARNING_MESSAGE,
+} from 'container/GridCardLayout/WidgetHeader/config';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
@@ -60,22 +66,32 @@ function WidgetGraph({
 		queryData: [
 			{ queryData: getWidgetQueryRange.data?.payload.data.result ?? [] },
 		],
+		createDataset: undefined,
+		isWarningLimit: true,
 	});
 
 	return (
-		<GridPanelSwitch
-			title={title}
-			isStacked={isStacked}
-			opacity={opacity}
-			data={chartDataSet.data}
-			panelType={selectedGraph}
-			name={widgetId || 'legend_widget'}
-			yAxisUnit={yAxisUnit}
-			panelData={
-				getWidgetQueryRange.data?.payload.data.newResult.data.result || []
-			}
-			query={stagedQuery || query}
-		/>
+		<>
+			{chartDataSet.isWarning && (
+				<Tooltip title={WARNING_MESSAGE} placement={errorTooltipPosition}>
+					<WarningOutlined style={tooltipStyles} />
+				</Tooltip>
+			)}
+
+			<GridPanelSwitch
+				title={title}
+				isStacked={isStacked}
+				opacity={opacity}
+				data={chartDataSet.data}
+				panelType={selectedGraph}
+				name={widgetId || 'legend_widget'}
+				yAxisUnit={yAxisUnit}
+				panelData={
+					getWidgetQueryRange.data?.payload.data.newResult.data.result || []
+				}
+				query={stagedQuery || query}
+			/>
+		</>
 	);
 }
 
