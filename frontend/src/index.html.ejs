@@ -173,14 +173,20 @@
 							t.type = 'text/javascript';
 							t.async = !0;
 							t.src =
-								'https://cdn.segment.com/analytics.js/v1/' + key + '/analytics.min.js';
+								'https://analytics-cdn.signoz.io/analytics.js/v1/' +
+								key +
+								'/analytics.min.js';
 							var n = document.getElementsByTagName('script')[0];
 							n.parentNode.insertBefore(t, n);
 							analytics._loadOptions = i;
 						};
 						analytics._writeKey = SEGMENT_ID;
 						analytics.SNIPPET_VERSION = '4.16.1';
-						analytics.load(SEGMENT_ID);
+						analytics.load(SEGMENT_ID, {
+							integrations: {
+								'Segment.io': { apiHost: 'analytics-api.signoz.io/v1' },
+							},
+						});
 						analytics.page();
 					}
 			})();
