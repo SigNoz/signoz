@@ -102,7 +102,7 @@ var testEnrichmentRequiredData = []struct {
 				},
 			},
 		},
-		EnrichmentRequired: true,
+		EnrichmentRequired: false,
 	},
 	{
 		Name: "groupBy enrichment not required",
@@ -294,6 +294,7 @@ var testJSONFilterEnrichData = []struct {
 	Name   string
 	Filter v3.FilterItem
 	Result v3.FilterItem
+	Fields map[string]v3.AttributeKey
 }{
 	{
 		Name: "array string",
@@ -383,12 +384,72 @@ var testJSONFilterEnrichData = []struct {
 			Value:    10.0,
 		},
 	},
+	{
+		Name: "json filter with interesting field",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.float64x",
+				DataType: v3.AttributeKeyDataTypeUnspecified,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "!=",
+			Value:    "10.0",
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "float64x",
+				DataType: v3.AttributeKeyDataTypeFloat64,
+				Type:     v3.AttributeKeyTypeTag,
+				IsJSON:   false,
+			},
+			Operator: "!=",
+			Value:    10.0,
+		},
+		Fields: map[string]v3.AttributeKey{
+			"attribute_float64_float64x": {
+				Key:      "float64x",
+				DataType: v3.AttributeKeyDataTypeFloat64,
+				Type:     v3.AttributeKeyTypeTag,
+			},
+		},
+	},
+	{
+		Name: "json filter with selected field",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.nest1.host",
+				DataType: v3.AttributeKeyDataTypeUnspecified,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "contains",
+			Value:    "ec2",
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "nest1.host",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeTag,
+				IsJSON:   false,
+				IsColumn: true,
+			},
+			Operator: "contains",
+			Value:    "ec2",
+		},
+		Fields: map[string]v3.AttributeKey{
+			"attribute_string_nest1.host": {
+				Key:      "nest1.host",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+			},
+		},
+	},
 }
 
 func TestJsonEnrich(t *testing.T) {
 	for _, tt := range testJSONFilterEnrichData {
 		Convey(tt.Name, t, func() {
-			res := jsonFilterEnrich(tt.Filter)
+			res := jsonFilterEnrich(tt.Filter, tt.Fields)
 			So(res, ShouldResemble, tt.Result)
 		})
 	}

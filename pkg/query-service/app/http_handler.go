@@ -2936,7 +2936,8 @@ func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.Q
 				if pass {
 					continue
 				}
-				data[selectedField.Name] = v3.AttributeKey{
+				fieldPrefix := selectedField.Type[:len(selectedField.Type)-1] + "_" + strings.ToLower(selectedField.DataType) + "_"
+				data[fieldPrefix+selectedField.Name] = v3.AttributeKey{
 					Key:      selectedField.Name,
 					Type:     fieldType,
 					DataType: v3.AttributeKeyDataType(strings.ToLower(selectedField.DataType)),
@@ -2948,7 +2949,8 @@ func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.Q
 				if pass {
 					continue
 				}
-				data[interestingField.Name] = v3.AttributeKey{
+				fieldPrefix := interestingField.Type[:len(interestingField.Type)-1] + "_" + strings.ToLower(interestingField.DataType) + "_"
+				data[fieldPrefix+interestingField.Name] = v3.AttributeKey{
 					Key:      interestingField.Name,
 					Type:     fieldType,
 					DataType: v3.AttributeKeyDataType(strings.ToLower(interestingField.DataType)),

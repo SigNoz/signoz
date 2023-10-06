@@ -31,6 +31,11 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 		// check filter attribute
 		if query.Filters != nil && len(query.Filters.Items) != 0 {
 			for _, item := range query.Filters.Items {
+				// for json we will have to enrich regardless as we want to use the attribute/materialized column
+				if item.Key.IsJSON {
+					return false
+				}
+
 				if !isEnriched(item.Key) {
 					return true
 				}
@@ -101,7 +106,7 @@ func enrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) 
 	// enrich filter attribute
 	if query.Filters != nil && len(query.Filters.Items) != 0 {
 		for i := 0; i < len(query.Filters.Items); i++ {
-			query.Filters.Items[i] = jsonFilterEnrich(query.Filters.Items[i])
+			query.Filters.Items[i] = jsonFilterEnrich(query.Filters.Items[i], fields)
 			if query.Filters.Items[i].Key.IsJSON {
 				continue
 			}
@@ -152,7 +157,7 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 	return field
 }
 
-func jsonFilterEnrich(filter v3.FilterItem) v3.FilterItem {
+func jsonFilterEnrich(filter v3.FilterItem, fields map[string]v3.AttributeKey) v3.FilterItem {
 	// check if it is a json request
 	if !strings.HasPrefix(filter.Key.Key, "body.") {
 		return filter
@@ -174,6 +179,15 @@ func jsonFilterEnrich(filter v3.FilterItem) v3.FilterItem {
 	// check if it is array
 	if strings.HasSuffix(filter.Key.Key, "[*]") {
 		valueType = fmt.Sprintf("array(%s)", valueType)
+	} else {
+		// things will completely change if it is an attribute with the corresponding meta is already present
+		name := strings.Replace(filter.Key.Key, "body.", "", 1)
+		// as of now we are assuming all extracted keys will be an attribute
+		existingName := "attribute_" + valueType + "_" + name
+		if existingField, ok := fields[existingName]; ok {
+			filter.Key = existingField
+			return filter
+		}
 	}
 
 	filter.Key.DataType = v3.AttributeKeyDataType(valueType)

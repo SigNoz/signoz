@@ -3478,7 +3478,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		valueColName := fmt.Sprintf("%s_%s_value", field.Type, strings.ToLower(field.DataType))
 
 		// create materialized column
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s[indexOf(%s, '%s')] CODEC(ZSTD(1))",
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS `%s` %s MATERIALIZED %s[indexOf(%s, '%s')] CODEC(ZSTD(1))",
 			r.logsDB, r.logsLocalTable,
 			cluster,
 			colname, field.DataType,
@@ -3491,7 +3491,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED -1",
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS `%s` %s MATERIALIZED -1",
 			r.logsDB, r.logsTable,
 			cluster,
 			colname, field.DataType,
@@ -3502,7 +3502,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		}
 
 		// create exists column
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS `%s_exists` bool MATERIALIZED if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
 			r.logsDB, r.logsLocalTable,
 			cluster,
 			colname,
@@ -3514,7 +3514,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED false",
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS `%s_exists` bool MATERIALIZED false",
 			r.logsDB, r.logsTable,
 			cluster,
 			colname,
@@ -3531,7 +3531,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		if field.IndexGranularity == 0 {
 			field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
 		}
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d",
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS `%s_idx` (%s) TYPE %s  GRANULARITY %d",
 			r.logsDB, r.logsLocalTable,
 			cluster,
 			colname,
@@ -3546,7 +3546,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 
 	} else {
 		// Delete the index first
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsLocalTable, cluster, colname)
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS `%s_idx`", r.logsDB, r.logsLocalTable, cluster, colname)
 		err := r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
@@ -3554,7 +3554,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 
 		for _, table := range []string{r.logsLocalTable, r.logsTable} {
 			// drop materialized column from logs table
-			query := "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s "
+			query := "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS `%s` "
 			err := r.db.Exec(ctx, fmt.Sprintf(query,
 				r.logsDB, table,
 				cluster,
@@ -3566,7 +3566,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			}
 
 			// drop exists column on logs table
-			query = "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s_exists "
+			query = "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS `%s_exists` "
 			err = r.db.Exec(ctx, fmt.Sprintf(query,
 				r.logsDB, table,
 				cluster,
