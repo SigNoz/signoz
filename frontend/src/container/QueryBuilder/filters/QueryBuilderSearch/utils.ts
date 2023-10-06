@@ -3,11 +3,19 @@ import { parse } from 'papaparse';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
+const operators = /=|!=|>=|>|<=|<$/;
+
 // eslint-disable-next-line no-useless-escape
-export const tagRegexp = /^\s*(.+?)\s+(IN|in|NOT_IN|not_in|LIKE|like|NOT_LIKE|not_like|REGEX|regex|NOT_REGEX|not_regex|=|!=|EXISTS|exists|NOT_EXISTS|not_exists|CONTAINS|contains|NOT_CONTAINS|not_contains|>=|>|<=|<|HAS|has|NHAS|nhas)\s*(.*)$/g;
+export const tagRegexpV1 = /^\s*(.*?)\s*(IN|NOT_IN|LIKE|NOT_LIKE|REGEX|NOT_REGEX|=|!=|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS|>=|>|<=|<|HAS|NHAS)\s*(.*)$/g;
+
+export const tagRegexpV2 = /^\s*(.+?)\s+(IN|in|NOT_IN|not_in|LIKE|like|NOT_LIKE|not_like|REGEX|regex|NOT_REGEX|not_regex|EXISTS|exists|NOT_EXISTS|not_exists|CONTAINS|contains|NOT_CONTAINS|not_contains|HAS|has|NHAS|nhas|=|!=|>=|>|<=|<)\s*(.*)$/g;
 
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
+}
+
+function endsWithOperator(inputString: string): boolean {
+	return operators.test(inputString);
 }
 
 interface ITagToken {
@@ -16,8 +24,16 @@ interface ITagToken {
 	tagValue: string[];
 }
 
+export function getMatchRegex(str: string): RegExp {
+	if (endsWithOperator(str)) {
+		return tagRegexpV1;
+	}
+
+	return tagRegexpV2;
+}
+
 export function getTagToken(tag: string): ITagToken {
-	const matches = tag?.matchAll(tagRegexp);
+	const matches = tag?.matchAll(getMatchRegex(tag));
 	const [match] = matches ? Array.from(matches) : [];
 
 	if (match) {
