@@ -145,7 +145,7 @@ dev-setup:
 	@echo "------------------"
 
 run-local:
-	GOARCH) docker-compose -f \
+	@docker-compose -f \
 	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-local.yaml \
 	up --build -d
 
