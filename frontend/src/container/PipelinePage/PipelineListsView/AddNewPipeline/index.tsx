@@ -114,7 +114,6 @@ function AddNewPipeline({
 		>
 			<Divider plain />
 			<LogsFilterPreview filter={filterFieldValue} />
-			<Divider plain />
 			<Form
 				name="add-new-pipeline"
 				layout="vertical"
