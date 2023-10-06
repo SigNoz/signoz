@@ -26,6 +26,8 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 		return q;
 	}, [filter]);
 
+	console.log('preview filter prop', filter);
+
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -40,21 +42,25 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 	});
 
 	console.log(queryResponse);
-	let content = null;
+	let content = <div>No logs found</div>;
 	if (queryResponse?.isError) {
 		content = <div>could not fetch logs for filter</div>;
 	} else if (queryResponse?.isFetching) {
 		content = <div>Loading...</div>;
+	} else if ((filter?.items?.length || 0) < 1) {
+		content = <div />;
 	} else {
 		const logsList =
 			queryResponse?.data?.payload?.data?.newResult?.data?.result[0]?.list || [];
-		content = (
-			<>
-				{logsList.map((l) => (
-					<div key={l.data.id}>{l.data.body}</div>
-				))}
-			</>
-		);
+		if (logsList.length > 0) {
+			content = (
+				<>
+					{logsList.map((l) => (
+						<div key={l.data.id}>{l.data.body}</div>
+					))}
+				</>
+			);
+		}
 	}
 
 	return (
