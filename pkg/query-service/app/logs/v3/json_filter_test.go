@@ -12,6 +12,7 @@ var testGetJSONFilterKeyData = []struct {
 	Key           v3.AttributeKey
 	IsArray       bool
 	ClickhouseKey string
+	Operator      v3.FilterOperator
 	Error         bool
 }{
 	{
@@ -129,7 +130,7 @@ var testGetJSONFilterKeyData = []struct {
 func TestGetJSONFilterKey(t *testing.T) {
 	for _, tt := range testGetJSONFilterKeyData {
 		Convey("testgetKey", t, func() {
-			columnName, err := getJSONFilterKey(tt.Key, tt.IsArray)
+			columnName, err := getJSONFilterKey(tt.Key, tt.Operator, tt.IsArray)
 			if tt.Error {
 				So(err, ShouldNotBeNil)
 			} else {
@@ -209,7 +210,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "=",
 			Value:    "hello",
 		},
-		Filter: "JSON_VALUE(body, '$.message') = 'hello'",
+		Filter: "JSON_EXISTS(body, '$.message') AND JSON_VALUE(body, '$.message') = 'hello'",
 	},
 	{
 		Name: "eq operator number",
@@ -222,7 +223,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "=",
 			Value:    1,
 		},
-		Filter: "JSONExtract(JSON_VALUE(body, '$.status'), '" + INT64 + "') = 1",
+		Filter: "JSON_EXISTS(body, '$.status') AND JSONExtract(JSON_VALUE(body, '$.status'), '" + INT64 + "') = 1",
 	},
 	{
 		Name: "neq operator number",
@@ -235,7 +236,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "=",
 			Value:    1.1,
 		},
-		Filter: "JSONExtract(JSON_VALUE(body, '$.status'), '" + FLOAT64 + "') = 1.100000",
+		Filter: "JSON_EXISTS(body, '$.status') AND JSONExtract(JSON_VALUE(body, '$.status'), '" + FLOAT64 + "') = 1.100000",
 	},
 	{
 		Name: "eq operator bool",
@@ -248,7 +249,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "=",
 			Value:    true,
 		},
-		Filter: "JSONExtract(JSON_VALUE(body, '$.boolkey'), '" + BOOL + "') = true",
+		Filter: "JSON_EXISTS(body, '$.boolkey') AND JSONExtract(JSON_VALUE(body, '$.boolkey'), '" + BOOL + "') = true",
 	},
 	{
 		Name: "greater than operator",
@@ -261,7 +262,7 @@ var testGetJSONFilterData = []struct {
 			Operator: ">",
 			Value:    1,
 		},
-		Filter: "JSONExtract(JSON_VALUE(body, '$.status'), '" + INT64 + "') > 1",
+		Filter: "JSON_EXISTS(body, '$.status') AND JSONExtract(JSON_VALUE(body, '$.status'), '" + INT64 + "') > 1",
 	},
 	{
 		Name: "regex operator",
@@ -274,7 +275,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "regex",
 			Value:    "a*",
 		},
-		Filter: "match(JSON_VALUE(body, '$.message'), 'a*')",
+		Filter: "JSON_EXISTS(body, '$.message') AND match(JSON_VALUE(body, '$.message'), 'a*')",
 	},
 	{
 		Name: "contains operator",
@@ -287,7 +288,20 @@ var testGetJSONFilterData = []struct {
 			Operator: "contains",
 			Value:    "a",
 		},
-		Filter: "JSON_VALUE(body, '$.message') ILIKE '%a%'",
+		Filter: "JSON_EXISTS(body, '$.message') AND JSON_VALUE(body, '$.message') ILIKE '%a%'",
+	},
+	{
+		Name: "exists",
+		FilterItem: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.message",
+				DataType: "string",
+				IsJSON:   true,
+			},
+			Operator: "exists",
+			Value:    "",
+		},
+		Filter: "JSON_EXISTS(body, '$.message')",
 	},
 }
 

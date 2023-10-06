@@ -31,26 +31,6 @@ export const GraphContainer = styled.div<GraphContainerProps>`
 		isGraphLegendToggleAvailable ? '50%' : '100%'};
 `;
 
-export const FilterTableAndSaveContainer = styled.div`
-	margin-top: 1.875rem;
-	display: flex;
-	align-items: flex-end;
-`;
-
-export const FilterTableContainer = styled.div`
-	flex-basis: 80%;
-`;
-
-export const SaveContainer = styled.div`
-	flex-basis: 20%;
-	display: flex;
-	justify-content: flex-end;
-`;
-
-export const SaveCancelButtonContainer = styled.span`
-	margin: 0 0.313rem;
-`;
-
 export const LabelContainer = styled.button`
 	max-width: 18.75rem;
 	cursor: pointer;
