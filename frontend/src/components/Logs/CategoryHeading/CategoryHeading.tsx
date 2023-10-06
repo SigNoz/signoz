@@ -6,7 +6,7 @@ import { CategoryHeadingProps } from './CategoryHeading.types';
 
 function CategoryHeading({ children }: CategoryHeadingProps): JSX.Element {
 	return (
-		<Typography.Text type="secondary" className="container--text-size">
+		<Typography.Text type="secondary" className="categoryheading--text-size">
 			{children}
 		</Typography.Text>
 	);
