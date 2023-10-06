@@ -1,18 +1,47 @@
 import './styles.scss';
 
+import { Typography } from 'antd';
 import {
 	initialFilters,
 	initialQueriesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { FlatLogData } from 'lib/logs/flatLogData';
 import _ from 'lodash-es';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import { TableVirtuoso } from 'react-virtuoso';
 import { AppState } from 'store/reducers';
+import { ILog } from 'types/api/logs/log';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+
+function PreviewLogsTable({ logs }: PreviewLogsTableProps): JSX.Element {
+	const flattenedLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
+		logs,
+	]);
+	const itemContent = (
+		index: number,
+		log: Record<string, unknown>,
+	): JSX.Element => (
+		<>
+			<td style={{ width: 150 }}>{String(log.timestamp)}</td>
+			<td>
+				<Typography.Paragraph ellipsis={{ rows: 1 }}>
+					{String(log.body)}
+				</Typography.Paragraph>
+			</td>
+		</>
+	);
+
+	return <TableVirtuoso data={flattenedLogData} itemContent={itemContent} />;
+}
+
+interface PreviewLogsTableProps {
+	logs: ILog[];
+}
 
 function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 	const query = useMemo(() => {
@@ -42,7 +71,7 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 	});
 
 	console.log(queryResponse);
-	let content = <div>No logs found</div>;
+	let content = null;
 	if (queryResponse?.isError) {
 		content = <div>could not fetch logs for filter</div>;
 	} else if (queryResponse?.isFetching) {
@@ -53,13 +82,14 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 		const logsList =
 			queryResponse?.data?.payload?.data?.newResult?.data?.result[0]?.list || [];
 		if (logsList.length > 0) {
-			content = (
-				<>
-					{logsList.map((l) => (
-						<div key={l.data.id}>{l.data.body}</div>
-					))}
-				</>
-			);
+			// content = <LiveLogsList logs={logsList} />;
+			const logs: ILog[] = logsList.map((item) => ({
+				...item.data,
+				timestamp: item.timestamp,
+			}));
+			content = <PreviewLogsTable logs={logs} />;
+		} else {
+			content = <div>No logs found</div>;
 		}
 	}
 

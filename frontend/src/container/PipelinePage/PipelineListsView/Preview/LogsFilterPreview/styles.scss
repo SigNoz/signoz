@@ -17,6 +17,7 @@
 .logs-filter-preview-content {
   height: 20vh;
   overflow-y: auto;
-  padding: 4px 8px;
-  border: 1px solid rgba(253, 253, 253, 0.12);
+  overflow-x: hidden;
+  // padding: 4px 8px;
+  // border: 1px solid rgba(253, 253, 253, 0.12);
 }
