@@ -165,7 +165,7 @@ function GraphManager({
 	const dataSource = tableDataSet.filter((item) => item.show);
 
 	return (
-		<div className="filter-save-container">
+		<div className="graph-manager-container">
 			<div className="filter-table-container">
 				<Input onChange={filterHandler} placeholder="Filter Series" />
 				<ResizeTable
