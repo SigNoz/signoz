@@ -33,7 +33,7 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 			for _, item := range query.Filters.Items {
 				// for json we will have to enrich regardless as we want to use the attribute/materialized column
 				if item.Key.IsJSON {
-					return false
+					return true
 				}
 
 				if !isEnriched(item.Key) {

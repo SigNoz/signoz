@@ -102,7 +102,7 @@ var testEnrichmentRequiredData = []struct {
 				},
 			},
 		},
-		EnrichmentRequired: false,
+		EnrichmentRequired: true,
 	},
 	{
 		Name: "groupBy enrichment not required",
