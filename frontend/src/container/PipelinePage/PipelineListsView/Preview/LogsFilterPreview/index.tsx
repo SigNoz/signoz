@@ -35,8 +35,12 @@ function PreviewLogsTable({ logs }: PreviewLogsTableProps): JSX.Element {
 						{dayjs(String(log.timestamp)).format('MMM DD HH:mm:ss.SSS')}
 					</div>
 					<div className="logs-preview-list-item-body">{log.body}</div>
-					<div className="logs-preview-list-item-expand">
-						<ExpandAltOutlined onClick={(): void => onSetActiveLog(log)} />
+					{/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+					<div
+						className="logs-preview-list-item-expand"
+						onClick={(): void => onSetActiveLog(log)}
+					>
+						<ExpandAltOutlined />
 					</div>
 				</div>
 			))}
@@ -61,7 +65,7 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 			...q.builder.queryData[0],
 			filters: filter || initialFilters,
 			aggregateOperator: LogsAggregatorOperator.NOOP,
-			limit: 8,
+			limit: 5,
 		};
 		return q;
 	}, [filter]);

@@ -1,5 +1,4 @@
 import { Button, Divider, Form, Modal } from 'antd';
-import { useWatch } from 'antd/es/form/Form';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -8,7 +7,6 @@ import { ActionMode, ActionType, PipelineData } from 'types/api/pipeline/def';
 import AppReducer from 'types/reducer/app';
 import { v4 } from 'uuid';
 
-import LogsFilterPreview from '../Preview/LogsFilterPreview';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
 import { renderPipelineForm } from './utils';
@@ -99,10 +97,6 @@ function AddNewPipeline({
 
 	const isOpen = useMemo(() => isEdit || isAdd, [isAdd, isEdit]);
 
-	const filterFieldValue = useWatch('filter', form);
-
-	console.log('current pipeline filter', filterFieldValue);
-
 	return (
 		<Modal
 			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
@@ -113,7 +107,6 @@ function AddNewPipeline({
 			onCancel={onCancelModalHandler}
 		>
 			<Divider plain />
-			<LogsFilterPreview filter={filterFieldValue} />
 			<Form
 				name="add-new-pipeline"
 				layout="vertical"
