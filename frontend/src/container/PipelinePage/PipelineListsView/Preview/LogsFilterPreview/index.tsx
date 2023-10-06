@@ -1,23 +1,26 @@
 import './styles.scss';
 
 import { ExpandAltOutlined } from '@ant-design/icons';
+import { Select } from 'antd';
 import LogDetail from 'components/LogDetail';
 import {
 	initialFilters,
 	initialQueriesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import {
+	RelativeDurationOptions,
+	Time,
+} from 'container/TopNav/DateTimeSelection/config';
 import dayjs from 'dayjs';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import _ from 'lodash-es';
-import { useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
+import { useMemo, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 function PreviewLogsTable({ logs }: PreviewLogsTableProps): JSX.Element {
 	const {
@@ -58,7 +61,38 @@ interface PreviewLogsTableProps {
 	logs: ILog[];
 }
 
+function PreviewTimeIntervalSelector({
+	value,
+	onChange,
+}: PreviewTimeIntervalSelectorProps): JSX.Element {
+	return (
+		<div>
+			<Select
+				getPopupContainer={popupContainer}
+				onSelect={(value: unknown): void => onChange(value as Time)}
+				value={value}
+			>
+				{RelativeDurationOptions.map(({ value, label }) => (
+					<Select.Option key={value + label} value={value}>
+						{label}
+					</Select.Option>
+				))}
+			</Select>
+		</div>
+	);
+}
+
+interface PreviewTimeIntervalSelectorProps {
+	value: Time;
+	onChange: (interval: Time) => void;
+}
+
 function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
+	const last6HoursInterval = RelativeDurationOptions[4].value;
+	const [previewTimeInterval, setPreviewTimeInterval] = useState(
+		last6HoursInterval,
+	);
+
 	const query = useMemo(() => {
 		const q = _.cloneDeep(initialQueriesMap.logs);
 		q.builder.queryData[0] = {
@@ -70,17 +104,11 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 		return q;
 	}, [filter]);
 
-	const { selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	>((state: { globalTime: any }) => state.globalTime);
-
 	const queryResponse = useGetQueryRange({
 		graphType: PANEL_TYPES.LIST,
 		query,
 		selectedTime: 'GLOBAL_TIME',
-		globalSelectedInterval,
+		globalSelectedInterval: previewTimeInterval,
 	});
 
 	let content = null;
@@ -107,7 +135,13 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 
 	return (
 		<div className="logs-filter-preview-container">
-			<div className="logs-filter-preview-header">Preview</div>
+			<div className="logs-filter-preview-header">
+				<div>Filtered Logs Preview</div>
+				<PreviewTimeIntervalSelector
+					value={previewTimeInterval}
+					onChange={setPreviewTimeInterval}
+				/>
+			</div>
 			<div className="logs-filter-preview-content">{content}</div>
 		</div>
 	);
