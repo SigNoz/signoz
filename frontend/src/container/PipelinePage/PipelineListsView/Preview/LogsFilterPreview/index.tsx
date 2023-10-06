@@ -1,12 +1,14 @@
 import './styles.scss';
 
 import { ExpandAltOutlined } from '@ant-design/icons';
+import LogDetail from 'components/LogDetail';
 import {
 	initialFilters,
 	initialQueriesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import dayjs from 'dayjs';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import _ from 'lodash-es';
 import { useMemo } from 'react';
@@ -18,6 +20,13 @@ import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 function PreviewLogsTable({ logs }: PreviewLogsTableProps): JSX.Element {
+	const {
+		activeLog,
+		onSetActiveLog,
+		onClearActiveLog,
+		onAddToQuery,
+	} = useActiveLog();
+
 	return (
 		<div className="logs-preview-list-container">
 			{logs.map((log) => (
@@ -26,11 +35,17 @@ function PreviewLogsTable({ logs }: PreviewLogsTableProps): JSX.Element {
 						{dayjs(String(log.timestamp)).format('MMM DD HH:mm:ss.SSS')}
 					</div>
 					<div className="logs-preview-list-item-body">{log.body}</div>
-					<div className="logs-preview-list-item-actions">
-						<ExpandAltOutlined />
+					<div className="logs-preview-list-item-expand">
+						<ExpandAltOutlined onClick={(): void => onSetActiveLog(log)} />
 					</div>
 				</div>
 			))}
+			<LogDetail
+				log={activeLog}
+				onClose={onClearActiveLog}
+				onAddToQuery={onAddToQuery}
+				onClickActionItem={onAddToQuery}
+			/>
 		</div>
 	);
 }
@@ -51,8 +66,6 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 		return q;
 	}, [filter]);
 
-	console.log('preview filter prop', filter);
-
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -66,8 +79,8 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 		globalSelectedInterval,
 	});
 
-	console.log(queryResponse);
 	let content = null;
+	// TODO(Raj): Style error and loading states appropriately
 	if (queryResponse?.isError) {
 		content = <div>could not fetch logs for filter</div>;
 	} else if (queryResponse?.isFetching) {
@@ -78,7 +91,6 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 		const logsList =
 			queryResponse?.data?.payload?.data?.newResult?.data?.result[0]?.list || [];
 		if (logsList.length > 0) {
-			// content = <LiveLogsList logs={logsList} />;
 			const logs: ILog[] = logsList.map((item) => ({
 				...item.data,
 				timestamp: item.timestamp,

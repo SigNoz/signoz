@@ -64,6 +64,10 @@
   white-space: nowrap;
 }
 
-.logs-preview-list-item-actions{
+.logs-preview-list-item-expand{
   margin-left: 0.75rem;
+  color: #1677ff;
+	padding: 0.25rem 0.375rem;
+	cursor: pointer;
+	font-size: 12px;
 }
