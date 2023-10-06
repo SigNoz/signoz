@@ -3,11 +3,19 @@ import { parse } from 'papaparse';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
+const operators = /=|!=|>=|>|<=|<$/;
+
 // eslint-disable-next-line no-useless-escape
-export const tagRegexp = /^\s*(.*?)\s*(IN|NOT_IN|LIKE|NOT_LIKE|REGEX|NOT_REGEX|=|!=|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS|>=|>|<=|<|HAS|NHAS)\s*(.*)$/g;
+export const tagRegexpV1 = /^\s*(.*?)\s*(IN|in|NOT_IN|nin|LIKE|like|NOT_LIKE|nlike|REGEX|regex|NOT_REGEX|nregex|=|!=|EXISTS|exists|NOT_EXISTS|nexists|CONTAINS|contains|NOT_CONTAINS|ncontains|>=|>|<=|<|HAS|has|NHAS|nhas)\s*(.*)$/g;
+
+export const tagRegexpV2 = /^\s*(.+?)\s+(IN|in|NOT_IN|nin|LIKE|like|NOT_LIKE|nlike|REGEX|regex|NOT_REGEX|nregex|EXISTS|exists|NOT_EXISTS|nexists|CONTAINS|contains|NOT_CONTAINS|ncontains|HAS|has|NHAS|nhas|=|!=|>=|>|<=|<)\s*(.*)$/g;
 
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
+}
+
+function endsWithOperator(inputString: string): boolean {
+	return operators.test(inputString);
 }
 
 interface ITagToken {
@@ -16,12 +24,21 @@ interface ITagToken {
 	tagValue: string[];
 }
 
+export function getMatchRegex(str: string): RegExp {
+	if (endsWithOperator(str)) {
+		return tagRegexpV1;
+	}
+
+	return tagRegexpV2;
+}
+
 export function getTagToken(tag: string): ITagToken {
-	const matches = tag?.matchAll(tagRegexp);
+	const matches = tag?.matchAll(getMatchRegex(tag));
 	const [match] = matches ? Array.from(matches) : [];
 
 	if (match) {
 		const [, matchTagKey, matchTagOperator, matchTagValue] = match;
+
 		return {
 			tagKey: matchTagKey,
 			tagOperator: matchTagOperator,
@@ -51,65 +68,11 @@ export function getRemovePrefixFromKey(tag: string): string {
 }
 
 export function getOperatorValue(op: string): string {
-	switch (op) {
-		case 'IN':
-			return 'in';
-		case 'NOT_IN':
-			return 'nin';
-		case OPERATORS.REGEX:
-			return 'regex';
-		case OPERATORS.HAS:
-			return 'has';
-		case OPERATORS.NHAS:
-			return 'nhas';
-		case OPERATORS.NREGEX:
-			return 'nregex';
-		case 'LIKE':
-			return 'like';
-		case 'NOT_LIKE':
-			return 'nlike';
-		case 'EXISTS':
-			return 'exists';
-		case 'NOT_EXISTS':
-			return 'nexists';
-		case 'CONTAINS':
-			return 'contains';
-		case 'NOT_CONTAINS':
-			return 'ncontains';
-		default:
-			return op;
-	}
+	return op.toLocaleLowerCase();
 }
 
 export function getOperatorFromValue(op: string): string {
-	switch (op) {
-		case 'in':
-			return 'IN';
-		case 'nin':
-			return 'NOT_IN';
-		case 'like':
-			return 'LIKE';
-		case 'regex':
-			return OPERATORS.REGEX;
-		case 'nregex':
-			return OPERATORS.NREGEX;
-		case 'nlike':
-			return 'NOT_LIKE';
-		case 'exists':
-			return 'EXISTS';
-		case 'nexists':
-			return 'NOT_EXISTS';
-		case 'contains':
-			return 'CONTAINS';
-		case 'ncontains':
-			return 'NOT_CONTAINS';
-		case 'has':
-			return OPERATORS.HAS;
-		case 'nhas':
-			return OPERATORS.NHAS;
-		default:
-			return op;
-	}
+	return op.toLocaleLowerCase();
 }
 
 export function replaceStringWithMaxLength(
