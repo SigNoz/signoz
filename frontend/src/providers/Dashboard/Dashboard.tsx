@@ -3,6 +3,7 @@ import get from 'api/dashboard/get';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
+import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
 import useTabVisibility from 'hooks/useTabFocus';
 import {
@@ -17,11 +18,15 @@ import {
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useQuery, UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useRouteMatch } from 'react-router-dom';
+import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
+import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { IDashboardContext } from './types';
 
@@ -50,6 +55,12 @@ export function DashboardProvider({
 		exact: true,
 	});
 
+	const dispatch = useDispatch<Dispatch<AppActions>>();
+
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const [onModal, Content] = Modal.useModal();
 
 	const isDashboardWidgetPage = useRouteMatch<Props>({
@@ -69,6 +80,7 @@ export function DashboardProvider({
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
 
 	const updatedTimeRef = useRef<Dayjs | null>(null); // Using ref to store the updated time
+	const modalRef = useRef<any>(null);
 
 	const isVisible = useTabVisibility();
 
@@ -105,12 +117,27 @@ export function DashboardProvider({
 					isVisible
 				) {
 					// show modal when state is out of sync
-					onModal.confirm({
+					const modal = onModal.confirm({
 						centered: true,
 						title: t('dashboard_has_been_updated'),
 						content: t('do_you_want_to_refresh_the_dashboard'),
 						onOk() {
 							setSelectedDashboard(data);
+
+							const { maxTime, minTime } = getMinMax(
+								globalTime.selectedTime,
+								globalTime.minTime,
+								globalTime.maxTime,
+							);
+
+							dispatch({
+								type: UPDATE_TIME_INTERVAL,
+								payload: {
+									maxTime,
+									minTime,
+									selectedTime: globalTime.selectedTime,
+								},
+							});
 
 							updatedTimeRef.current = dayjs(data.updated_at);
 
@@ -121,6 +148,8 @@ export function DashboardProvider({
 							);
 						},
 					});
+
+					modalRef.current = modal;
 				} else {
 					// normal flow
 					updatedTimeRef.current = dayjs(data.updated_at);
@@ -142,6 +171,12 @@ export function DashboardProvider({
 			dashboardResponse.refetch();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isVisible]);
+
+	useEffect(() => {
+		if (!isVisible && modalRef.current) {
+			modalRef.current.destroy();
+		}
 	}, [isVisible]);
 
 	const handleToggleDashboardSlider = (value: boolean): void => {

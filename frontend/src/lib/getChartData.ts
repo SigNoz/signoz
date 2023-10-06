@@ -89,13 +89,13 @@ const getChartData = ({
 		.reduce((a, b) => [...a, ...b], [])[0];
 
 	const updatedData = {
-		datasets: isWarningLimit ? updatedDataSet.slice(0, limit) : updatedDataSet,
-		labels: isWarningLimit ? updatedLabels.slice(0, limit) : updatedLabels,
+		datasets: isWarningLimit ? updatedDataSet?.slice(0, limit) : updatedDataSet,
+		labels: isWarningLimit ? updatedLabels?.slice(0, limit) : updatedLabels,
 	};
 
 	return {
 		data: updatedData,
-		isWarning: isWarningLimit && updatedDataSet.length > limit,
+		isWarning: isWarningLimit && (updatedDataSet?.length || 0) > limit,
 	};
 };
 
