@@ -5,7 +5,7 @@ import { QueryData } from 'types/api/widgets/getQuery';
 import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
 
-const limit = 40;
+const limit = 20;
 
 const getChartData = ({
 	queryData,

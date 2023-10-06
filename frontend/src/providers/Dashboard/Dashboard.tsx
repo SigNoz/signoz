@@ -85,6 +85,7 @@ export function DashboardProvider({
 	const isVisible = useTabVisibility();
 
 	const { t } = useTranslation(['dashboard']);
+	const dashboardRef = useRef<Dashboard>();
 
 	const dashboardResponse = useQuery(
 		[REACT_QUERY_KEY.DASHBOARD_BY_ID, isDashboardPage?.params],
@@ -104,6 +105,8 @@ export function DashboardProvider({
 
 					updatedTimeRef.current = updatedDate;
 
+					dashboardRef.current = data;
+
 					setLayouts(
 						data.data.layout?.filter(
 							(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
@@ -114,7 +117,8 @@ export function DashboardProvider({
 				if (
 					updatedTimeRef.current !== null &&
 					updatedDate.isAfter(updatedTimeRef.current) &&
-					isVisible
+					isVisible &&
+					dashboardRef.current?.id === data.id
 				) {
 					// show modal when state is out of sync
 					const modal = onModal.confirm({
@@ -139,6 +143,8 @@ export function DashboardProvider({
 								},
 							});
 
+							dashboardRef.current = data;
+
 							updatedTimeRef.current = dayjs(data.updated_at);
 
 							setLayouts(
@@ -153,6 +159,8 @@ export function DashboardProvider({
 				} else {
 					// normal flow
 					updatedTimeRef.current = dayjs(data.updated_at);
+
+					dashboardRef.current = data;
 
 					setSelectedDashboard(data);
 

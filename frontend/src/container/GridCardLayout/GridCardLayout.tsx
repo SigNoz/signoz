@@ -105,6 +105,7 @@ function GraphLayout({
 				allowOverlap={false}
 				onLayoutChange={setLayouts}
 				draggableHandle=".drag-handle"
+				layout={layouts}
 			>
 				{layouts.map((layout) => {
 					const { i: id } = layout;
