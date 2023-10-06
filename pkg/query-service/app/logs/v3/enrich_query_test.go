@@ -444,6 +444,30 @@ var testJSONFilterEnrichData = []struct {
 			},
 		},
 	},
+	{
+		Name: "json filter array",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.nest1.host[*]",
+				DataType: v3.AttributeKeyDataTypeUnspecified,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "has",
+			Value:    "ec2",
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.nest1.host[*]",
+				DataType: v3.AttributeKeyDataTypeArrayString,
+				Type:     v3.AttributeKeyTypeUnspecified,
+				IsJSON:   true,
+				IsColumn: false,
+			},
+			Operator: "has",
+			Value:    "ec2",
+		},
+		Fields: map[string]v3.AttributeKey{},
+	},
 }
 
 func TestJsonEnrich(t *testing.T) {
