@@ -6,9 +6,9 @@ import { orderByValueDelimiter } from '../OrderByFilter/utils';
 const operators = /=|!=|>=|>|<=|<$/;
 
 // eslint-disable-next-line no-useless-escape
-export const tagRegexpV1 = /^\s*(.*?)\s*(IN|NOT_IN|LIKE|NOT_LIKE|REGEX|NOT_REGEX|=|!=|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS|>=|>|<=|<|HAS|NHAS)\s*(.*)$/g;
+export const tagRegexpV1 = /^\s*(.*?)\s*(IN|in|NOT_IN|nin|LIKE|like|NOT_LIKE|nlike|REGEX|regex|NOT_REGEX|nregex|=|!=|EXISTS|exists|NOT_EXISTS|nexists|CONTAINS|contains|NOT_CONTAINS|ncontains|>=|>|<=|<|HAS|has|NHAS|nhas)\s*(.*)$/g;
 
-export const tagRegexpV2 = /^\s*(.+?)\s+(IN|in|NOT_IN|not_in|LIKE|like|NOT_LIKE|not_like|REGEX|regex|NOT_REGEX|not_regex|EXISTS|exists|NOT_EXISTS|not_exists|CONTAINS|contains|NOT_CONTAINS|not_contains|HAS|has|NHAS|nhas|=|!=|>=|>|<=|<)\s*(.*)$/g;
+export const tagRegexpV2 = /^\s*(.+?)\s+(IN|in|NOT_IN|nin|LIKE|like|NOT_LIKE|nlike|REGEX|regex|NOT_REGEX|nregex|EXISTS|exists|NOT_EXISTS|nexists|CONTAINS|contains|NOT_CONTAINS|ncontains|HAS|has|NHAS|nhas|=|!=|>=|>|<=|<)\s*(.*)$/g;
 
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;

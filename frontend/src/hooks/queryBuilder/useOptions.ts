@@ -81,8 +81,8 @@ export const useOptions = (
 	const getKeyOperatorOptions = useCallback(
 		(key: string) => {
 			const operatorsOptions = operators?.map((operator) => ({
-				value: `${key} ${operator} `,
-				label: `${key} ${operator} `,
+				value: `${key} ${operator.toLowerCase()} `,
+				label: `${key} ${operator.toLowerCase()} `,
 			}));
 			if (whereClauseConfig) {
 				return [
