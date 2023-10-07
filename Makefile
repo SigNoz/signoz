@@ -119,22 +119,18 @@ build-push-query-service: build-query-service-static-all
 	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 # Step to build EE docker image of query service in amd64 (used in build pipeline)
-build-ee-query-service-amd64: build-query-service-static-amd64
+build-ee-query-service-amd64:
 	@echo "------------------"
 	@echo "--> Building query-service docker image for amd64"
 	@echo "------------------"
-	@docker build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
-	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
-	--build-arg TARGETPLATFORM="linux/amd64" .
+	make QUERY_SERVICE_DIRECTORY=${EE_QUERY_SERVICE_DIRECTORY} build-query-service-amd64
 
 # Step to build and push EE docker image of query in amd64 and arm64 (used in push pipeline)
-build-push-ee-query-service: build-query-service-static-all
+build-push-ee-query-service: build-ee-query-service-static-all
 	@echo "------------------"
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
-	@docker buildx build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
-	--progress plain --push --platform linux/arm64,linux/amd64 \
-	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
+	make QUERY_SERVICE_DIRECTORY=${EE_QUERY_SERVICE_DIRECTORY} build-push-query-service
 
 dev-setup:
 	mkdir -p /var/lib/signoz
