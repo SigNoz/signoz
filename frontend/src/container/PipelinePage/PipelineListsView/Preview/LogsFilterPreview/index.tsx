@@ -13,6 +13,8 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 		last1HourInterval,
 	);
 
+	const isEmptyFilter = (filter?.items?.length || 0) < 1;
+
 	return (
 		<div>
 			<div className="logs-filter-preview-header">
@@ -24,7 +26,11 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 				/>
 			</div>
 			<div className="logs-filter-preview-content">
-				<SampleLogs filter={filter} timeInterval={previewTimeInterval} />
+				{isEmptyFilter ? (
+					<div>Please select a filter</div>
+				) : (
+					<SampleLogs filter={filter} timeInterval={previewTimeInterval} />
+				)}
 			</div>
 		</div>
 	);

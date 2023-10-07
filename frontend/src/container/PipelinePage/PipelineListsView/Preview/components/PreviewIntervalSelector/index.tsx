@@ -16,10 +16,10 @@ import { useMemo } from 'react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
-function useLogsCountStr({
+function MatchedLogsCount({
 	filter,
 	timeInterval,
-}: MatchedLogsCountProps): string | undefined {
+}: MatchedLogsCountProps): JSX.Element {
 	const query = useMemo(() => {
 		const q = _.cloneDeep(initialQueriesMap.logs);
 		q.builder.queryData[0] = {
@@ -37,11 +37,17 @@ function useLogsCountStr({
 		globalSelectedInterval: timeInterval,
 	});
 
-	if ((filter?.items?.length || 0) > 0 && result.isFetched) {
-		return result?.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
-			?.values?.[0]?.value;
+	if (result.isFetched) {
+		const count =
+			result?.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
+				?.values?.[0]?.value;
+		return (
+			<div className="logs-filter-preview-matched-logs-count">
+				{count} matches in
+			</div>
+		);
 	}
-	return undefined;
+	return <div />;
 }
 
 interface MatchedLogsCountProps {
@@ -54,17 +60,12 @@ function PreviewIntervalSelector({
 	value,
 	onChange,
 }: PreviewIntervalSelectorProps): JSX.Element {
-	const matchedLogsCount = useLogsCountStr({
-		filter: previewFilter,
-		timeInterval: value,
-	});
+	const isEmptyFilter = (previewFilter?.items?.length || 0) < 1;
 
 	return (
 		<div className="logs-filter-preview-time-interval-summary">
-			{matchedLogsCount && (
-				<div className="logs-filter-preview-matched-logs-count">
-					{matchedLogsCount} matches in{' '}
-				</div>
+			{!isEmptyFilter && (
+				<MatchedLogsCount filter={previewFilter} timeInterval={value} />
 			)}
 			<div>
 				<Select
