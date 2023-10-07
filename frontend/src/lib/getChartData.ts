@@ -90,7 +90,7 @@ const getChartData = ({
 
 	const updatedData = {
 		datasets: isWarningLimit ? updatedDataSet?.slice(0, limit) : updatedDataSet,
-		labels: isWarningLimit ? updatedLabels?.slice(0, limit) : updatedLabels,
+		labels: updatedLabels,
 	};
 
 	return {
