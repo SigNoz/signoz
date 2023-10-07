@@ -14,10 +14,10 @@ RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 WORKDIR /root
 
 # copy the query-service binary
-COPY ee/pkg/query-service/bin/query-service-${TARGETOS}-${TARGETARCH} /root/query-service
+COPY ee/query-service/bin/query-service-${TARGETOS}-${TARGETARCH} /root/query-service
 
 # copy prometheus YAML config
-COPY ee/pkg/query-service/config/prometheus.yml /root/config/prometheus.yml
+COPY pkg/query-service/config/prometheus.yml /root/config/prometheus.yml
 
 # Make query-service executable for non-root users
 RUN chmod 755 /root /root/query-service

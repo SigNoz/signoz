@@ -42,6 +42,11 @@ jobs:
           else
             echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}-oss" >> $GITHUB_ENV
           fi
+      - name: Install cross-compilation tools
+        run: |
+          set -ex
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
       - name: Build and push docker image
         run: make build-push-query-service
 
@@ -77,6 +82,11 @@ jobs:
           else
             echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
           fi
+      - name: Install cross-compilation tools
+        run: |
+          set -ex
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
       - name: Build and push docker image
         run: make build-push-ee-query-service
 
