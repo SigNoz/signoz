@@ -14,7 +14,10 @@ import {
 } from 'container/TopNav/DateTimeSelection/config';
 import dayjs from 'dayjs';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
-import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import {
+	useGetQueryRange,
+	UseQueryRangeResult,
+} from 'hooks/queryBuilder/useGetQueryRange';
 import _ from 'lodash-es';
 import { useMemo, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
@@ -87,41 +90,72 @@ interface PreviewTimeIntervalSelectorProps {
 	onChange: (interval: Time) => void;
 }
 
-function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
-	const last6HoursInterval = RelativeDurationOptions[4].value;
-	const [previewTimeInterval, setPreviewTimeInterval] = useState(
-		last6HoursInterval,
-	);
-
+function useGetLogSamples(
+	filter: TagFilter,
+	timeInterval: Time,
+): UseQueryRangeResult {
 	const query = useMemo(() => {
 		const q = _.cloneDeep(initialQueriesMap.logs);
 		q.builder.queryData[0] = {
 			...q.builder.queryData[0],
 			filters: filter || initialFilters,
 			aggregateOperator: LogsAggregatorOperator.NOOP,
+			orderBy: [{ columnName: 'timestamp', order: 'desc' }],
 			limit: 5,
 		};
 		return q;
 	}, [filter]);
 
-	const queryResponse = useGetQueryRange({
+	return useGetQueryRange({
 		graphType: PANEL_TYPES.LIST,
 		query,
 		selectedTime: 'GLOBAL_TIME',
-		globalSelectedInterval: previewTimeInterval,
+		globalSelectedInterval: timeInterval,
 	});
+}
+
+function useGetLogCount(
+	filter: TagFilter,
+	timeInterval: Time,
+): UseQueryRangeResult {
+	const query = useMemo(() => {
+		const q = _.cloneDeep(initialQueriesMap.logs);
+		q.builder.queryData[0] = {
+			...q.builder.queryData[0],
+			filters: filter || initialFilters,
+			aggregateOperator: LogsAggregatorOperator.COUNT,
+		};
+		return q;
+	}, [filter]);
+
+	return useGetQueryRange({
+		graphType: PANEL_TYPES.TABLE,
+		query,
+		selectedTime: 'GLOBAL_TIME',
+		globalSelectedInterval: timeInterval,
+	});
+}
+
+function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
+	const last1HourInterval = RelativeDurationOptions[3].value;
+	const [previewTimeInterval, setPreviewTimeInterval] = useState(
+		last1HourInterval,
+	);
+
+	const samplesQueryResponse = useGetLogSamples(filter, previewTimeInterval);
 
 	let content = null;
 	// TODO(Raj): Style error and loading states appropriately
-	if (queryResponse?.isError) {
+	if (samplesQueryResponse?.isError) {
 		content = <div>could not fetch logs for filter</div>;
-	} else if (queryResponse?.isFetching) {
+	} else if (samplesQueryResponse?.isFetching) {
 		content = <div>Loading...</div>;
 	} else if ((filter?.items?.length || 0) < 1) {
 		content = <div />;
 	} else {
 		const logsList =
-			queryResponse?.data?.payload?.data?.newResult?.data?.result[0]?.list || [];
+			samplesQueryResponse?.data?.payload?.data?.newResult?.data?.result[0]
+				?.list || [];
 		if (logsList.length > 0) {
 			const logs: ILog[] = logsList.map((item) => ({
 				...item.data,
@@ -133,14 +167,29 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 		}
 	}
 
+	const countQueryResponse = useGetLogCount(filter, previewTimeInterval);
+	let matchedLogsCount;
+	if ((filter?.items?.length || 0) > 0 && countQueryResponse.isFetched) {
+		matchedLogsCount =
+			countQueryResponse?.data?.payload?.data?.newResult?.data?.result?.[0]
+				?.series?.[0]?.values?.[0]?.value;
+	}
+
 	return (
 		<div className="logs-filter-preview-container">
 			<div className="logs-filter-preview-header">
 				<div>Filtered Logs Preview</div>
-				<PreviewTimeIntervalSelector
-					value={previewTimeInterval}
-					onChange={setPreviewTimeInterval}
-				/>
+				<div style={{ display: 'flex', alignItems: 'center' }}>
+					{matchedLogsCount !== undefined && (
+						<div style={{ marginRight: '0.5rem' }}>
+							{matchedLogsCount} matches in{' '}
+						</div>
+					)}
+					<PreviewTimeIntervalSelector
+						value={previewTimeInterval}
+						onChange={setPreviewTimeInterval}
+					/>
+				</div>
 			</div>
 			<div className="logs-filter-preview-content">{content}</div>
 		</div>

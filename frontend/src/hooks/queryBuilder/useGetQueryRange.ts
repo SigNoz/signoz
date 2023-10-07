@@ -8,10 +8,15 @@ import {
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
+export type UseQueryRangeResult = UseQueryResult<
+	SuccessResponse<MetricRangePayloadProps>,
+	Error
+>;
+
 type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
-) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
+) => UseQueryRangeResult;
 
 export const useGetQueryRange: UseGetQueryRange = (requestData, options) => {
 	const queryKey = useMemo(() => {
