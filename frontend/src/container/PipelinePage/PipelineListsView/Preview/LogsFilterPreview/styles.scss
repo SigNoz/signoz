@@ -3,11 +3,6 @@
   justify-content: space-between;
   align-items: center;
   padding-bottom: 8px;
-
-  // TODO(Raj): Are the font styles needed?
-  font-size: 0.75rem;
-  font-weight: 400;
-  line-height: 1.25rem;
 }
 
 .logs-filter-preview-content {
@@ -18,13 +13,4 @@
   overflow: hidden;
 
   border: 1px solid rgba(253, 253, 253, 0.12);
-}
-
-.logs-filter-preview-matched-logs-count {
-  margin-right: 0.5rem;
-}
-
-.logs-filter-preview-time-interval-summary {
-  display: flex;
-  align-items: center;
 }
