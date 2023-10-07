@@ -1,8 +1,6 @@
 import './styles.scss';
 
-import { ExpandAltOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
-import LogDetail from 'components/LogDetail';
 import {
 	initialFilters,
 	initialQueriesMap,
@@ -12,8 +10,6 @@ import {
 	RelativeDurationOptions,
 	Time,
 } from 'container/TopNav/DateTimeSelection/config';
-import dayjs from 'dayjs';
-import { useActiveLog } from 'hooks/logs/useActiveLog';
 import {
 	useGetQueryRange,
 	UseQueryRangeResult,
@@ -25,49 +21,12 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-function PreviewLogsTable({ logs }: PreviewLogsTableProps): JSX.Element {
-	const {
-		activeLog,
-		onSetActiveLog,
-		onClearActiveLog,
-		onAddToQuery,
-	} = useActiveLog();
+import LogsList from '../LogsList';
 
-	return (
-		<div className="logs-preview-list-container">
-			{logs.map((log) => (
-				<div key={log.id} className="logs-preview-list-item">
-					<div className="logs-preview-list-item-timestamp">
-						{dayjs(String(log.timestamp)).format('MMM DD HH:mm:ss.SSS')}
-					</div>
-					<div className="logs-preview-list-item-body">{log.body}</div>
-					{/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-					<div
-						className="logs-preview-list-item-expand"
-						onClick={(): void => onSetActiveLog(log)}
-					>
-						<ExpandAltOutlined />
-					</div>
-				</div>
-			))}
-			<LogDetail
-				log={activeLog}
-				onClose={onClearActiveLog}
-				onAddToQuery={onAddToQuery}
-				onClickActionItem={onAddToQuery}
-			/>
-		</div>
-	);
-}
-
-interface PreviewLogsTableProps {
-	logs: ILog[];
-}
-
-function PreviewTimeIntervalSelector({
+function TimeIntervalSelector({
 	value,
 	onChange,
-}: PreviewTimeIntervalSelectorProps): JSX.Element {
+}: TimeIntervalSelectorProps): JSX.Element {
 	return (
 		<div>
 			<Select
@@ -85,7 +44,7 @@ function PreviewTimeIntervalSelector({
 	);
 }
 
-interface PreviewTimeIntervalSelectorProps {
+interface TimeIntervalSelectorProps {
 	value: Time;
 	onChange: (interval: Time) => void;
 }
@@ -114,10 +73,10 @@ function useGetLogSamples(
 	});
 }
 
-function useGetLogCount(
-	filter: TagFilter,
-	timeInterval: Time,
-): UseQueryRangeResult {
+function MatchedLogsCount({
+	filter,
+	timeInterval,
+}: MatchedLogsCountProps): JSX.Element {
 	const query = useMemo(() => {
 		const q = _.cloneDeep(initialQueriesMap.logs);
 		q.builder.queryData[0] = {
@@ -128,12 +87,30 @@ function useGetLogCount(
 		return q;
 	}, [filter]);
 
-	return useGetQueryRange({
+	const result = useGetQueryRange({
 		graphType: PANEL_TYPES.TABLE,
 		query,
 		selectedTime: 'GLOBAL_TIME',
 		globalSelectedInterval: timeInterval,
 	});
+
+	let matchedLogsCount = null;
+	if ((filter?.items?.length || 0) > 0 && result.isFetched) {
+		matchedLogsCount =
+			result?.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
+				?.values?.[0]?.value;
+	}
+
+	return (
+		<div className="logs-filter-preview-matched-logs-count">
+			{matchedLogsCount} matches in{' '}
+		</div>
+	);
+}
+
+interface MatchedLogsCountProps {
+	filter: TagFilter;
+	timeInterval: Time;
 }
 
 function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
@@ -161,31 +138,19 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 				...item.data,
 				timestamp: item.timestamp,
 			}));
-			content = <PreviewLogsTable logs={logs} />;
+			content = <LogsList logs={logs} />;
 		} else {
 			content = <div>No logs found</div>;
 		}
-	}
-
-	const countQueryResponse = useGetLogCount(filter, previewTimeInterval);
-	let matchedLogsCount;
-	if ((filter?.items?.length || 0) > 0 && countQueryResponse.isFetched) {
-		matchedLogsCount =
-			countQueryResponse?.data?.payload?.data?.newResult?.data?.result?.[0]
-				?.series?.[0]?.values?.[0]?.value;
 	}
 
 	return (
 		<div className="logs-filter-preview-container">
 			<div className="logs-filter-preview-header">
 				<div>Filtered Logs Preview</div>
-				<div style={{ display: 'flex', alignItems: 'center' }}>
-					{matchedLogsCount !== undefined && (
-						<div style={{ marginRight: '0.5rem' }}>
-							{matchedLogsCount} matches in{' '}
-						</div>
-					)}
-					<PreviewTimeIntervalSelector
+				<div className="logs-filter-preview-time-interval-summary">
+					<MatchedLogsCount filter={filter} timeInterval={previewTimeInterval} />
+					<TimeIntervalSelector
 						value={previewTimeInterval}
 						onChange={setPreviewTimeInterval}
 					/>
