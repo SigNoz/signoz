@@ -7,7 +7,7 @@ import {
 } from 'constants/queryBuilder';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { cloneDeep } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
 import { useMemo } from 'react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
