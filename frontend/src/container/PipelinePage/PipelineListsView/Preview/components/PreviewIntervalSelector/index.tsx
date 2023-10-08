@@ -19,7 +19,7 @@ import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 function MatchedLogsCount({
 	filter,
 	timeInterval,
-}: MatchedLogsCountProps): JSX.Element {
+}: MatchedLogsCountProps): JSX.Element | null {
 	const query = useMemo(() => {
 		const q = cloneDeep(initialQueriesMap.logs);
 		q.builder.queryData[0] = {
@@ -37,17 +37,18 @@ function MatchedLogsCount({
 		globalSelectedInterval: timeInterval,
 	});
 
-	if (result.isFetched) {
-		const count =
-			result?.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
-				?.values?.[0]?.value;
-		return (
-			<div className="logs-filter-preview-matched-logs-count">
-				{count} matches in
-			</div>
-		);
+	if (!result.isFetched) {
+		return null;
 	}
-	return <div />;
+
+	const count =
+		result?.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
+			?.values?.[0]?.value;
+	return (
+		<div className="logs-filter-preview-matched-logs-count">
+			{count} matches in
+		</div>
+	);
 }
 
 interface MatchedLogsCountProps {
@@ -60,6 +61,8 @@ function PreviewIntervalSelector({
 	value,
 	onChange,
 }: PreviewIntervalSelectorProps): JSX.Element {
+	const onSelectInterval = (value: unknown): void => onChange(value as Time);
+
 	const isEmptyFilter = (previewFilter?.items?.length || 0) < 1;
 
 	return (
@@ -68,10 +71,7 @@ function PreviewIntervalSelector({
 				<MatchedLogsCount filter={previewFilter} timeInterval={value} />
 			)}
 			<div>
-				<Select
-					onSelect={(value: unknown): void => onChange(value as Time)}
-					value={value}
-				>
+				<Select value={value} onSelect={onSelectInterval}>
 					{RelativeDurationOptions.map(({ value, label }) => (
 						<Select.Option key={value + label} value={value}>
 							{label}
