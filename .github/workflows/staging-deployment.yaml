@@ -11,7 +11,7 @@ jobs:
     environment: staging
     steps:
       - name: Executing remote ssh commands using ssh key
-        uses: appleboy/ssh-action@v0.1.8
+        uses: appleboy/ssh-action@v1.0.0
         env:
           GITHUB_BRANCH: develop
           GITHUB_SHA: ${{ github.sha }}
