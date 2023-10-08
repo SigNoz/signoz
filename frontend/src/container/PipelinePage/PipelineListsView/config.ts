@@ -14,24 +14,24 @@ import NameInput from './AddNewPipeline/FormFields/NameInput';
 export const pipelineFields = [
 	{
 		id: 1,
-		fieldName: 'Filter',
-		placeholder: 'pipeline_filter_placeholder',
-		name: 'filter',
-		component: FilterInput,
-	},
-	{
-		id: 2,
 		fieldName: 'Name',
 		placeholder: 'pipeline_name_placeholder',
 		name: 'name',
 		component: NameInput,
 	},
 	{
-		id: 4,
+		id: 2,
 		fieldName: 'Description',
 		placeholder: 'pipeline_description_placeholder',
 		name: 'description',
 		component: DescriptionTextArea,
+	},
+	{
+		id: 3,
+		fieldName: 'Filter',
+		placeholder: 'pipeline_filter_placeholder',
+		name: 'filter',
+		component: FilterInput,
 	},
 ];
 
