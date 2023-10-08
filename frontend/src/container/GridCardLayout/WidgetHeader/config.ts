@@ -27,4 +27,4 @@ export const overlayStyles: CSSProperties = {
 };
 
 export const WARNING_MESSAGE =
-	'Too many timeseries in the result. UI has restricted to showing the top 20. Please check the query if this is needed and contact support@signoz.io if you need to show >40 timeseries in the panel';
+	'Too many timeseries in the result. UI has restricted to showing the top 20. Please check the query if this is needed and contact support@signoz.io if you need to show >20 timeseries in the panel';
