@@ -1,32 +1,24 @@
-import {
-	getRemovePrefixFromKey,
-	getTagToken,
-} from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { useMemo } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { getTagToken } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { useMemo, useRef } from 'react';
 
 type ICurrentKeyAndOperator = [string, string, string[]];
 
 export const useSetCurrentKeyAndOperator = (
 	value: string,
-	keys: BaseAutocompleteData[],
 ): ICurrentKeyAndOperator => {
-	const [key, operator, result] = useMemo(() => {
-		let key = '';
-		let operator = '';
+	const keyRef = useRef<string>('');
+	const operatorRef = useRef<string>('');
+
+	const result = useMemo(() => {
 		let result: string[] = [];
 		const { tagKey, tagOperator, tagValue } = getTagToken(value);
-		const isSuggestKey = keys?.some(
-			(el) => el?.key === getRemovePrefixFromKey(tagKey),
-		);
-		if (isSuggestKey || keys.length === 0) {
-			key = tagKey || '';
-			operator = tagOperator || '';
-			result = tagValue || [];
-		}
 
-		return [key, operator, result];
-	}, [value, keys]);
+		keyRef.current = tagKey || '';
+		operatorRef.current = tagOperator || '';
+		result = tagValue || [];
 
-	return [key, operator, result];
+		return result;
+	}, [value]);
+
+	return [keyRef.current, operatorRef.current, result];
 };
