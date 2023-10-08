@@ -7,7 +7,7 @@ import {
 } from 'constants/queryBuilder';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import _ from 'lodash-es';
+import { cloneDeep } from 'lodash-es';
 import { useMemo } from 'react';
 import { ILog } from 'types/api/logs/log';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -17,7 +17,7 @@ import LogsList from '../LogsList';
 
 function SampleLogs({ filter, timeInterval }: SampleLogsProps): JSX.Element {
 	const sampleLogsQuery = useMemo(() => {
-		const q = _.cloneDeep(initialQueriesMap.logs);
+		const q = cloneDeep(initialQueriesMap.logs);
 		q.builder.queryData[0] = {
 			...q.builder.queryData[0],
 			filters: filter || initialFilters,
