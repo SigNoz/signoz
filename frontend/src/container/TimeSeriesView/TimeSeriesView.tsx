@@ -32,7 +32,7 @@ function TimeSeriesView({
 			{!isLoading && !isError && (
 				<Graph
 					animate={false}
-					data={chartData}
+					data={chartData.data}
 					yAxisUnit={yAxisUnit}
 					name="tracesExplorerGraph"
 					type="line"

@@ -1,33 +1,23 @@
 import { SaveOutlined } from '@ant-design/icons';
 import { Col, Divider, Input, Space, Typography } from 'antd';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import AddTags from 'container/NewDashboard/DashboardSettings/General/AddTags';
-import { useCallback, useState } from 'react';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { useNotifications } from 'hooks/useNotifications';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { connect, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import {
-	UpdateDashboardTitleDescriptionTags,
-	UpdateDashboardTitleDescriptionTagsProps,
-} from 'store/actions';
-import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import { Button } from './styles';
 
-function GeneralDashboardSettings({
-	updateDashboardTitleDescriptionTags,
-}: DescriptionOfDashboardProps): JSX.Element {
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+function GeneralDashboardSettings(): JSX.Element {
+	const { selectedDashboard, setSelectedDashboard } = useDashboard();
 
-	const [selectedDashboard] = dashboards;
-	const selectedData = selectedDashboard.data;
-	const { title } = selectedData;
-	const { tags } = selectedData;
-	const { description } = selectedData;
+	const updateDashboardMutation = useUpdateDashboard();
+
+	const selectedData = selectedDashboard?.data;
+
+	const { title = '', tags = [], description = '' } = selectedData || {};
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 	const [updatedTags, setUpdatedTags] = useState<string[]>(tags || []);
@@ -37,27 +27,35 @@ function GeneralDashboardSettings({
 
 	const { t } = useTranslation('common');
 
-	const onSaveHandler = useCallback(() => {
-		const dashboard = selectedDashboard;
-		// @TODO need to update this function to take title,description,tags only
-		updateDashboardTitleDescriptionTags({
-			dashboard: {
-				...dashboard,
+	const { notifications } = useNotifications();
+
+	const onSaveHandler = (): void => {
+		if (!selectedDashboard) return;
+
+		updateDashboardMutation.mutateAsync(
+			{
+				...selectedDashboard,
 				data: {
-					...dashboard.data,
+					...selectedDashboard.data,
 					description: updatedDescription,
 					tags: updatedTags,
 					title: updatedTitle,
 				},
 			},
-		});
-	}, [
-		updatedTitle,
-		updatedTags,
-		updatedDescription,
-		selectedDashboard,
-		updateDashboardTitleDescriptionTags,
-	]);
+			{
+				onSuccess: (updatedDashboard) => {
+					if (updatedDashboard.payload) {
+						setSelectedDashboard(updatedDashboard.payload);
+					}
+				},
+				onError: () => {
+					notifications.error({
+						message: SOMETHING_WENT_WRONG,
+					});
+				},
+			},
+		);
+	};
 
 	return (
 		<Col>
@@ -83,7 +81,13 @@ function GeneralDashboardSettings({
 				</div>
 				<div>
 					<Divider />
-					<Button icon={<SaveOutlined />} onClick={onSaveHandler} type="primary">
+					<Button
+						disabled={updateDashboardMutation.isLoading}
+						loading={updateDashboardMutation.isLoading}
+						icon={<SaveOutlined />}
+						onClick={onSaveHandler}
+						type="primary"
+					>
 						{t('save')}
 					</Button>
 				</div>
@@ -92,21 +96,4 @@ function GeneralDashboardSettings({
 	);
 }
 
-interface DispatchProps {
-	updateDashboardTitleDescriptionTags: (
-		props: UpdateDashboardTitleDescriptionTagsProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	updateDashboardTitleDescriptionTags: bindActionCreators(
-		UpdateDashboardTitleDescriptionTags,
-		dispatch,
-	),
-});
-
-type DescriptionOfDashboardProps = DispatchProps;
-
-export default connect(null, mapDispatchToProps)(GeneralDashboardSettings);
+export default GeneralDashboardSettings;

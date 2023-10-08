@@ -12,6 +12,7 @@ import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
+import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -110,22 +111,24 @@ function App(): JSX.Element {
 					<PrivateRoute>
 						<ResourceProvider>
 							<QueryBuilderProvider>
-								<AppLayout>
-									<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-										<Switch>
-											{routes.map(({ path, component, exact }) => (
-												<Route
-													key={`${path}`}
-													exact={exact}
-													path={path}
-													component={component}
-												/>
-											))}
+								<DashboardProvider>
+									<AppLayout>
+										<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+											<Switch>
+												{routes.map(({ path, component, exact }) => (
+													<Route
+														key={`${path}`}
+														exact={exact}
+														path={path}
+														component={component}
+													/>
+												))}
 
-											<Route path="*" component={NotFound} />
-										</Switch>
-									</Suspense>
-								</AppLayout>
+												<Route path="*" component={NotFound} />
+											</Switch>
+										</Suspense>
+									</AppLayout>
+								</DashboardProvider>
 							</QueryBuilderProvider>
 						</ResourceProvider>
 					</PrivateRoute>

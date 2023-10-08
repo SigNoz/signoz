@@ -1,19 +1,15 @@
-import GridGraphLayout from 'container/GridGraphLayout';
+import GridGraphLayout from 'container/GridCardLayout';
 import ComponentsSlider from 'container/NewDashboard/ComponentsSlider';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import DashboardReducer from 'types/reducer/dashboards';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 
 import { GridComponentSliderContainer } from './styles';
 
 function GridGraphs(): JSX.Element {
-	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { isDashboardSliderOpen } = useDashboard();
 
 	return (
 		<GridComponentSliderContainer>
-			{isAddWidget && <ComponentsSlider />}
+			{isDashboardSliderOpen && <ComponentsSlider />}
 
 			<GridGraphLayout />
 		</GridComponentSliderContainer>

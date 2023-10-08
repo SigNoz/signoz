@@ -1,39 +1,28 @@
 import { blue, red } from '@ant-design/colors';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Modal, Row, Space, Tag } from 'antd';
-import { NotificationInstance } from 'antd/es/notification/interface';
 import { ResizeTable } from 'components/ResizeTable';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useRef, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { UpdateDashboardVariables } from 'store/actions/dashboard/updatedDashboardVariables';
-import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
-import DashboardReducer from 'types/reducer/dashboards';
+import { useTranslation } from 'react-i18next';
+import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { TVariableViewMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
 
-function VariablesSetting({
-	updateDashboardVariables,
-}: DispatchProps): JSX.Element {
+function VariablesSetting(): JSX.Element {
 	const variableToDelete = useRef<string | null>(null);
 	const [deleteVariableModal, setDeleteVariableModal] = useState(false);
 
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { t } = useTranslation(['dashboard']);
+
+	const { selectedDashboard, setSelectedDashboard } = useDashboard();
 
 	const { notifications } = useNotifications();
 
-	const [selectedDashboard] = dashboards;
-
-	const {
-		data: { variables = {} },
-	} = selectedDashboard;
+	const { variables = {} } = selectedDashboard?.data || {};
 
 	const variablesTableData = Object.keys(variables).map((variableName) => ({
 		key: variableName,
@@ -64,6 +53,41 @@ function VariablesSetting({
 		setVariableViewMode(viewType);
 	};
 
+	const updateMutation = useUpdateDashboard();
+
+	const updateVariables = (
+		updatedVariablesData: Dashboard['data']['variables'],
+	): void => {
+		if (!selectedDashboard) {
+			return;
+		}
+
+		updateMutation.mutateAsync(
+			{
+				...selectedDashboard,
+				data: {
+					...selectedDashboard.data,
+					variables: updatedVariablesData,
+				},
+			},
+			{
+				onSuccess: (updatedDashboard) => {
+					if (updatedDashboard.payload) {
+						setSelectedDashboard(updatedDashboard.payload);
+						notifications.success({
+							message: t('variable_updated_successfully'),
+						});
+					}
+				},
+				onError: () => {
+					notifications.error({
+						message: t('error_while_updating_variable'),
+					});
+				},
+			},
+		);
+	};
+
 	const onVariableSaveHandler = (
 		name: string,
 		variableData: IDashboardVariable,
@@ -79,7 +103,7 @@ function VariablesSetting({
 		if (oldName) {
 			delete newVariables[oldName];
 		}
-		updateDashboardVariables(newVariables, notifications);
+		updateVariables(newVariables);
 		onDoneVariableViewMode();
 	};
 
@@ -91,7 +115,7 @@ function VariablesSetting({
 	const handleDeleteConfirm = (): void => {
 		const newVariables = { ...variables };
 		if (variableToDelete?.current) delete newVariables[variableToDelete?.current];
-		updateDashboardVariables(newVariables, notifications);
+		updateVariables(newVariables);
 		variableToDelete.current = null;
 		setDeleteVariableModal(false);
 	};
@@ -182,20 +206,4 @@ function VariablesSetting({
 	);
 }
 
-interface DispatchProps {
-	updateDashboardVariables: (
-		props: Record<string, IDashboardVariable>,
-		notify: NotificationInstance,
-	) => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	updateDashboardVariables: bindActionCreators(
-		UpdateDashboardVariables,
-		dispatch,
-	),
-});
-
-export default connect(null, mapDispatchToProps)(VariablesSetting);
+export default VariablesSetting;
