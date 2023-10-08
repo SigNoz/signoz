@@ -14,6 +14,8 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 		onAddToQuery,
 	} = useActiveLog();
 
+	const makeLogDetailsHandler = (log: ILog) => (): void => onSetActiveLog(log);
+
 	return (
 		<div className="logs-preview-list-container">
 			{logs.map((log) => (
@@ -22,10 +24,12 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 						{dayjs(String(log.timestamp)).format('MMM DD HH:mm:ss.SSS')}
 					</div>
 					<div className="logs-preview-list-item-body">{log.body}</div>
-					{/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
 					<div
 						className="logs-preview-list-item-expand"
-						onClick={(): void => onSetActiveLog(log)}
+						onClick={makeLogDetailsHandler(log)}
+						role="button"
+						tabIndex={0}
+						onKeyUp={makeLogDetailsHandler(log)}
 					>
 						<ExpandAltOutlined />
 					</div>
