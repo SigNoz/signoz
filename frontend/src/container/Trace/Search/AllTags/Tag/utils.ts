@@ -1,5 +1,6 @@
 import { AutoCompleteProps } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
+import { OPERATORS } from 'constants/queryBuilder';
 import { Dispatch, SetStateAction } from 'react';
 import { PayloadProps as TagKeyPayload } from 'types/api/trace/getTagFilters';
 import { PayloadProps as TagValuePayload } from 'types/api/trace/getTagValue';
@@ -110,7 +111,10 @@ export function disableTagValue(
 	setLocalSelectedTags: Dispatch<SetStateAction<Tags[]>>,
 	index: number,
 ): boolean {
-	if (selectedOperator === 'Exists' || selectedOperator === 'NotExists') {
+	if (
+		selectedOperator === OPERATORS.exists ||
+		selectedOperator === OPERATORS.not_exists
+	) {
 		setLocalValue([]);
 		setLocalSelectedTags((tags) => [
 			...tags.slice(0, index),

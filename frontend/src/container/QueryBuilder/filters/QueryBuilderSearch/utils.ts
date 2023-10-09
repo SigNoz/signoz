@@ -57,9 +57,10 @@ export function getTagToken(tag: string): ITagToken {
 
 export function isExistsNotExistsOperator(value: string): boolean {
 	const { tagOperator } = getTagToken(value);
+
 	return (
-		tagOperator?.trim() === OPERATORS.NOT_EXISTS ||
-		tagOperator?.trim() === OPERATORS.EXISTS
+		tagOperator?.trim() === OPERATORS.NOT_EXISTS.toLocaleLowerCase() ||
+		tagOperator?.trim() === OPERATORS.EXISTS.toLocaleLowerCase()
 	);
 }
 
