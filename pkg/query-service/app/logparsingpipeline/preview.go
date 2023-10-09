@@ -21,22 +21,24 @@ func SimulatePipelinesProcessing(
 	ctx context.Context,
 	pipelines []Pipeline,
 	logs []model.SignozLog,
-) ([]model.SignozLog, *model.ApiError) {
+) (
+	[]model.SignozLog, *model.ApiError,
+) {
+
 	if len(pipelines) < 1 {
 		return logs, nil
 	}
 
 	// Collector simulation does not guarantee that logs will come
-	// out in the same order as that in the input.
+	// out in the same order as in the input.
 	//
-	// Add a temp attribute for maintaining same order of logs
-	// in simulation output as that in input
-	previewOrderAttribKey := "__signoz_preview_log_idx__"
+	// Add a temp attribute for sorting logs in simulation output
+	inputOrderAttribute := "__signoz_input_idx__"
 	for i := 0; i < len(logs); i++ {
 		if logs[i].Attributes_int64 == nil {
 			logs[i].Attributes_int64 = map[string]int64{}
 		}
-		logs[i].Attributes_int64[previewOrderAttribKey] = int64(i)
+		logs[i].Attributes_int64[inputOrderAttribute] = int64(i)
 	}
 	simulatorInputPLogs := SignozLogsToPLogs(logs)
 
@@ -62,6 +64,7 @@ func SimulatePipelinesProcessing(
 	// interval of 100ms. So e2e processing time for logs grows linearly with
 	// the number of logtransformprocessors involved.
 	// See defaultFlushInterval at https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/adapter/emitter.go
+	// TODO(Raj): Remove this after flushInterval is exposed in logtransformprocessor config
 	timeout := time.Millisecond * time.Duration(len(processorConfigs)*100+100)
 
 	outputPLogs, collectorErrs, apiErr := collectorsimulator.SimulateLogsProcessing(
@@ -74,23 +77,20 @@ func SimulatePipelinesProcessing(
 	collectorErrsText := strings.Join(collectorErrs, "\n")
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
-			"could not simulate log pipelines processing.\nCollector errors: %s", collectorErrsText,
+			"could not simulate log pipelines processing.\nCollector errors: %s\n", collectorErrsText,
 		))
 	}
 
-	outputSignozLogs, err := PLogsToSignozLogs(outputPLogs), nil
-	if err != nil {
-		return nil, model.InternalError(errors.Wrap(
-			err, "could not convert simulator output plogs to signoz logs",
-		))
-	}
+	outputSignozLogs := PLogsToSignozLogs(outputPLogs)
 
-	// Sort output logs by their order in the input
+	// Sort output logs by their order in the input and remove the temp ordering attribute
 	sort.Slice(outputSignozLogs, func(i, j int) bool {
-		return outputSignozLogs[i].Attributes_int64[previewOrderAttribKey] < outputSignozLogs[j].Attributes_int64[previewOrderAttribKey]
+		iIdx := outputSignozLogs[i].Attributes_int64[inputOrderAttribute]
+		jIdx := outputSignozLogs[j].Attributes_int64[inputOrderAttribute]
+		return iIdx < jIdx
 	})
 	for _, sigLog := range outputSignozLogs {
-		delete(sigLog.Attributes_int64, previewOrderAttribKey)
+		delete(sigLog.Attributes_int64, inputOrderAttribute)
 	}
 
 	return outputSignozLogs, nil
@@ -106,7 +106,7 @@ func collectorProcessorsForPipelines(pipelines []Pipeline) (
 
 	processorConfigs := []collectorsimulator.ProcessorConfig{}
 	for _, procName := range procNames {
-		// convert Processor structs to map[string]interface{}
+		// convert `Processor` structs to map[string]interface{}
 		procYaml, err := yaml.Marshal(processors[procName])
 		if err != nil {
 			return nil, errors.Wrap(err, "could not marshal Processor struct")
@@ -125,6 +125,11 @@ func collectorProcessorsForPipelines(pipelines []Pipeline) (
 
 	return processorConfigs, nil
 }
+
+// plog doesn't contain an ID field.
+// SignozLog.ID is stored as a log attribute in plogs for processing
+// and gets hydrated back later.
+const SignozLogIdAttr = "__signoz_log_id__"
 
 func SignozLogsToPLogs(logs []model.SignozLog) []plog.Logs {
 	result := []plog.Logs{}
@@ -145,13 +150,15 @@ func SignozLogsToPLogs(logs []model.SignozLog) []plog.Logs {
 			time.Unix(0, int64(log.Timestamp)),
 		))
 
+		var traceIdBuf [16]byte
+		copy(traceIdBuf[:], []byte(log.TraceID))
+		slRecord.SetTraceID(traceIdBuf)
+
 		var spanIdBuf [8]byte
 		copy(spanIdBuf[:], []byte(log.SpanID))
 		slRecord.SetSpanID(spanIdBuf)
 
-		var traceIdBuf [16]byte
-		copy(traceIdBuf[:], []byte(log.TraceID))
-		slRecord.SetTraceID(traceIdBuf)
+		slRecord.SetFlags(plog.LogRecordFlags(log.TraceFlags))
 
 		slRecord.SetSeverityText(log.SeverityText)
 		slRecord.SetSeverityNumber(plog.SeverityNumber(log.SeverityNumber))
@@ -159,15 +166,16 @@ func SignozLogsToPLogs(logs []model.SignozLog) []plog.Logs {
 		slRecord.Body().SetStr(log.Body)
 
 		slAttribs := slRecord.Attributes()
-		for k, v := range log.Attributes_string {
-			slAttribs.PutStr(k, v)
-		}
 		for k, v := range log.Attributes_int64 {
 			slAttribs.PutInt(k, v)
 		}
 		for k, v := range log.Attributes_float64 {
 			slAttribs.PutDouble(k, v)
 		}
+		for k, v := range log.Attributes_string {
+			slAttribs.PutStr(k, v)
+		}
+		slAttribs.PutStr(SignozLogIdAttr, log.ID)
 
 		result = append(result, pl)
 	}
@@ -192,10 +200,20 @@ func PLogsToSignozLogs(plogs []plog.Logs) []model.SignozLog {
 				for k := 0; k < lrSlice.Len(); k++ {
 					lr := lrSlice.At(k)
 
+					// Recover ID for the log and remove temp attrib used for storing it
+					signozLogId := ""
+					logIdVal, exists := lr.Attributes().Get(SignozLogIdAttr)
+					if exists {
+						signozLogId = logIdVal.Str()
+					}
+					lr.Attributes().Remove(SignozLogIdAttr)
+
 					signozLog := model.SignozLog{
 						Timestamp:          uint64(lr.Timestamp()),
+						ID:                 signozLogId,
 						TraceID:            lr.TraceID().String(),
 						SpanID:             lr.SpanID().String(),
+						TraceFlags:         uint32(lr.Flags()),
 						SeverityText:       lr.SeverityText(),
 						SeverityNumber:     uint8(lr.SeverityNumber()),
 						Body:               lr.Body().AsString(),
