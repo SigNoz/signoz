@@ -538,7 +538,8 @@ type GetFieldsResponse struct {
 	Interesting []LogField `json:"interesting"`
 }
 
-type GetLogsResponse struct {
+// Represents a log record in query service requests and responses.
+type SignozLog struct {
 	Timestamp          uint64             `json:"timestamp" ch:"timestamp"`
 	ID                 string             `json:"id" ch:"id"`
 	TraceID            string             `json:"trace_id" ch:"trace_id"`
@@ -555,7 +556,7 @@ type GetLogsResponse struct {
 
 type LogsTailClient struct {
 	Name   string
-	Logs   chan *GetLogsResponse
+	Logs   chan *SignozLog
 	Done   chan *bool
 	Error  chan error
 	Filter LogsFilterParams
