@@ -44,7 +44,7 @@ import {
 	StyledLeftContainer,
 } from './styles';
 import UserGuide from './UserGuide';
-import { toChartInterval } from './utils';
+import { getUpdatedStepInterval, toChartInterval } from './utils';
 
 function FormAlertRules({
 	alertType,
@@ -354,6 +354,16 @@ function FormAlertRules({
 		<BasicInfo alertDef={alertDef} setAlertDef={setAlertDef} />
 	);
 
+	const updatedStagedQuery = useMemo((): Query | null => {
+		const newQuery: Query | null = stagedQuery;
+		if (newQuery) {
+			newQuery.builder.queryData[0].stepInterval = getUpdatedStepInterval(
+				alertDef.evalWindow,
+			);
+		}
+		return newQuery;
+	}, [alertDef.evalWindow, stagedQuery]);
+
 	const renderQBChartPreview = (): JSX.Element => (
 		<ChartPreview
 			headline={
@@ -363,9 +373,10 @@ function FormAlertRules({
 				/>
 			}
 			name=""
-			query={stagedQuery}
+			query={updatedStagedQuery}
 			selectedInterval={toChartInterval(alertDef.evalWindow)}
 			alertDef={alertDef}
+			allowSelectedIntervalForStepGen
 		/>
 	);
 
