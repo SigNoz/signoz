@@ -1,6 +1,7 @@
 package logparsingpipeline
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -101,6 +102,7 @@ func TestPipelinePreview(t *testing.T) {
 	)
 
 	result, err := SimulatePipelinesProcessing(
+		context.Background(),
 		testPipelines,
 		[]model.SignozLog{
 			matchingLog,
