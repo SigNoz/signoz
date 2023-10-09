@@ -8,6 +8,7 @@ BUILD_HASH      ?= $(shell git rev-parse --short HEAD)
 BUILD_TIME      ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILD_BRANCH    ?= $(shell git rev-parse --abbrev-ref HEAD)
 DEV_LICENSE_SIGNOZ_IO ?= https://staging-license.signoz.io/api/v1
+DEV_BUILD ?= "" # set to any non-empty value to enable dev build
 
 # Internal variables or constants.
 FRONTEND_DIRECTORY ?= frontend
@@ -15,15 +16,15 @@ QUERY_SERVICE_DIRECTORY ?= pkg/query-service
 EE_QUERY_SERVICE_DIRECTORY ?= ee/query-service
 STANDALONE_DIRECTORY ?= deploy/docker/clickhouse-setup
 SWARM_DIRECTORY ?= deploy/docker-swarm/clickhouse-setup
-LOCAL_GOOS ?= $(shell go env GOOS)
-LOCAL_GOARCH ?= $(shell go env GOARCH)
+
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
+GOPATH ?= $(shell go env GOPATH)
 
 REPONAME ?= signoz
 DOCKER_TAG ?= $(subst v,,$(BUILD_VERSION))
-
 FRONTEND_DOCKER_IMAGE ?= frontend
 QUERY_SERVICE_DOCKER_IMAGE ?= query-service
-DEV_BUILD ?= ""
 
 # Build-time Go variables
 PACKAGE?=go.signoz.io/signoz
@@ -69,24 +70,52 @@ build-push-frontend: build-frontend-static
 	docker buildx build --file Dockerfile --progress plain --push --platform linux/arm64,linux/amd64 \
 	--tag $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) .
 
+# Steps to build static binary of query service
+.PHONY: build-query-service-static
+build-query-service-static:
+	@echo "------------------"
+	@echo "--> Building query-service static binary"
+	@echo "------------------"
+	@if [ $(DEV_BUILD) != "" ]; then \
+		cd $(QUERY_SERVICE_DIRECTORY) && \
+		CGO_ENABLED=1 go build -tags timetzdata -a -o ./bin/query-service-${GOOS}-${GOARCH} \
+    	-ldflags "-linkmode external -extldflags '-static' -s -w ${LD_FLAGS} ${DEV_LD_FLAGS}"; \
+	else \
+		cd $(QUERY_SERVICE_DIRECTORY) && \
+		CGO_ENABLED=1 go build -tags timetzdata -a -o ./bin/query-service-${GOOS}-${GOARCH} \
+		-ldflags "-linkmode external -extldflags '-static' -s -w ${LD_FLAGS}"; \
+	fi
+
+.PHONY: build-query-service-static-amd64
+build-query-service-static-amd64:
+	make GOARCH=amd64 build-query-service-static
+
+.PHONY: build-query-service-static-arm64
+build-query-service-static-arm64:
+	make CC=aarch64-linux-gnu-gcc GOARCH=arm64 build-query-service-static
+
+# Steps to build static binary of query service for all platforms
+.PHONY: build-query-service-static-all
+build-query-service-static-all: build-query-service-static-amd64 build-query-service-static-arm64
+
 # Steps to build and push docker image of query service
-.PHONY: build-query-service-amd64  build-push-query-service
+.PHONY: build-query-service-amd64 build-push-query-service
 # Step to build docker image of query service in amd64 (used in build pipeline)
-build-query-service-amd64:
+build-query-service-amd64: build-query-service-static-amd64
 	@echo "------------------"
 	@echo "--> Building query-service docker image for amd64"
 	@echo "------------------"
 	@docker build --file $(QUERY_SERVICE_DIRECTORY)/Dockerfile \
-	-t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
-	--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS="$(LD_FLAGS)" .
+	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
+	--build-arg TARGETPLATFORM="linux/amd64" .
 
 # Step to build and push docker image of query in amd64 and arm64 (used in push pipeline)
-build-push-query-service:
+build-push-query-service: build-query-service-static-all
 	@echo "------------------"
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
 	@docker buildx build --file $(QUERY_SERVICE_DIRECTORY)/Dockerfile --progress plain \
-	--push --platform linux/arm64,linux/amd64 --build-arg LD_FLAGS="$(LD_FLAGS)" \
+	--push --platform linux/arm64,linux/amd64 \
 	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 # Step to build EE docker image of query service in amd64 (used in build pipeline)
@@ -94,24 +123,14 @@ build-ee-query-service-amd64:
 	@echo "------------------"
 	@echo "--> Building query-service docker image for amd64"
 	@echo "------------------"
-	@if [ $(DEV_BUILD) != "" ]; then \
-		docker build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
-		-t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
-		--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS="${LD_FLAGS} ${DEV_LD_FLAGS}" .; \
-	else \
-		docker build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
-		-t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
-		--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS="$(LD_FLAGS)" .; \
-	fi
+	make QUERY_SERVICE_DIRECTORY=${EE_QUERY_SERVICE_DIRECTORY} build-query-service-amd64
 
 # Step to build and push EE docker image of query in amd64 and arm64 (used in push pipeline)
 build-push-ee-query-service:
 	@echo "------------------"
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
-	@docker buildx build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
-	--progress plain --push --platform linux/arm64,linux/amd64 \
-	--build-arg LD_FLAGS="$(LD_FLAGS)" --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
+	make QUERY_SERVICE_DIRECTORY=${EE_QUERY_SERVICE_DIRECTORY} build-push-query-service
 
 dev-setup:
 	mkdir -p /var/lib/signoz
@@ -122,7 +141,7 @@ dev-setup:
 	@echo "------------------"
 
 run-local:
-	@LOCAL_GOOS=$(LOCAL_GOOS) LOCAL_GOARCH=$(LOCAL_GOARCH) docker-compose -f \
+	@docker-compose -f \
 	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-local.yaml \
 	up --build -d
 
@@ -165,3 +184,4 @@ test:
 	go test ./pkg/query-service/formatter/...
 	go test ./pkg/query-service/tests/integration/...
 	go test ./pkg/query-service/rules/...
+	go test ./pkg/query-service/collectorsimulator/...

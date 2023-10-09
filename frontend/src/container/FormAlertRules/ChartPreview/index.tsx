@@ -132,7 +132,7 @@ function ChartPreview({
 				<GridPanelSwitch
 					panelType={graphType}
 					title={name}
-					data={chartDataSet}
+					data={chartDataSet.data}
 					isStacked
 					name={name || 'Chart Preview'}
 					staticLine={staticLine}

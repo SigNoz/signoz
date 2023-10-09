@@ -1,29 +1,29 @@
 import { LockFilled } from '@ant-design/icons';
 import { Button, Modal, Tooltip, Typography } from 'antd';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
-import { useCallback, useMemo, useState } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { generatePath, useLocation, useParams } from 'react-router-dom';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
-	SaveDashboard,
-	SaveDashboardProps,
-} from 'store/actions/dashboard/saveDashboard';
+	getNextWidgets,
+	getPreviousWidgets,
+	getSelectedWidgetIndex,
+} from 'providers/Dashboard/util';
+import { useCallback, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { FLUSH_DASHBOARD } from 'types/actions/dashboard';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import LeftContainer from './LeftContainer';
 import QueryTypeTag from './LeftContainer/QueryTypeTag';
@@ -38,11 +38,8 @@ import {
 } from './styles';
 import { NewWidgetProps } from './types';
 
-function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
-	const dispatch = useDispatch();
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
+	const { selectedDashboard } = useDashboard();
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -50,13 +47,11 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 		(state) => state.app,
 	);
 
-	const [selectedDashboard] = dashboards;
-
-	const { widgets } = selectedDashboard.data;
+	const { widgets = [] } = selectedDashboard?.data || {};
 
 	const { search } = useLocation();
 
-	const query = useMemo(() => new URLSearchParams(search), [search]);
+	const query = useUrlQuery();
 
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
@@ -87,6 +82,7 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 	const [saveModal, setSaveModal] = useState(false);
 
 	const [graphType, setGraphType] = useState(selectedGraph);
+
 	const getSelectedTime = useCallback(
 		() =>
 			TimeItems.find(
@@ -102,58 +98,86 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 
 	const { notifications } = useNotifications();
 
+	const updateDashboardMutation = useUpdateDashboard();
+
 	const onClickSaveHandler = useCallback(() => {
-		// update the global state
-		featureResponse
-			.refetch()
-			.then(() => {
-				saveSettingOfPanel({
-					uuid: selectedDashboard.uuid,
-					description,
-					isStacked: stacked,
-					nullZeroValues: selectedNullZeroValue,
-					opacity,
-					timePreferance: selectedTime.enum,
-					title,
-					yAxisUnit,
-					widgetId: query.get('widgetId') || '',
-					dashboardId,
-					graphType,
-				});
-			})
-			.catch(() => {
-				notifications.error({
-					message: 'Something went wrong',
-				});
-			});
+		if (!selectedDashboard) {
+			return;
+		}
+
+		const widgetId = query.get('widgetId');
+
+		const selectedWidgetIndex = getSelectedWidgetIndex(
+			selectedDashboard,
+			widgetId,
+		);
+
+		const preWidgets = getPreviousWidgets(selectedDashboard, selectedWidgetIndex);
+
+		const afterWidgets = getNextWidgets(selectedDashboard, selectedWidgetIndex);
+
+		const selectedWidget = (selectedDashboard.data.widgets || [])[
+			selectedWidgetIndex || 0
+		];
+
+		updateDashboardMutation.mutateAsync(
+			{
+				uuid: selectedDashboard.uuid,
+				data: {
+					...selectedDashboard.data,
+					widgets: [
+						...preWidgets,
+						{
+							...selectedWidget,
+							description,
+							timePreferance: selectedTime.enum,
+							isStacked: stacked,
+							opacity,
+							nullZeroValues: selectedNullZeroValue,
+							title,
+							yAxisUnit,
+							panelTypes: graphType,
+						},
+						...afterWidgets,
+					],
+				},
+			},
+			{
+				onSuccess: () => {
+					featureResponse.refetch();
+					history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+				},
+				onError: () => {
+					notifications.error({
+						message: SOMETHING_WENT_WRONG,
+					});
+				},
+			},
+		);
 	}, [
-		featureResponse,
-		saveSettingOfPanel,
-		selectedDashboard.uuid,
+		selectedDashboard,
+		updateDashboardMutation,
 		description,
-		stacked,
-		selectedNullZeroValue,
-		opacity,
 		selectedTime.enum,
+		stacked,
+		opacity,
+		selectedNullZeroValue,
 		title,
 		yAxisUnit,
-		query,
-		dashboardId,
 		graphType,
+		query,
+		featureResponse,
+		dashboardId,
 		notifications,
 	]);
 
 	const onClickDiscardHandler = useCallback(() => {
-		dispatch({
-			type: FLUSH_DASHBOARD,
-		});
 		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-	}, [dashboardId, dispatch]);
+	}, [dashboardId]);
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
 		const params = new URLSearchParams(search);
 		params.set('graphType', type);
-		history.push({ search: params.toString() });
 		setGraphType(type);
 	};
 
@@ -165,19 +189,12 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 		FeatureKeys.QUERY_BUILDER_PANELS,
 	);
 
-	const isNewTraceLogsAvailable = useMemo(
-		() =>
-			isQueryBuilderActive &&
-			currentQuery.queryType === EQueryType.QUERY_BUILDER &&
-			currentQuery.builder.queryData.find(
-				(query) => query.dataSource !== DataSource.METRICS,
-			) !== undefined,
-		[
-			currentQuery.builder.queryData,
-			currentQuery.queryType,
-			isQueryBuilderActive,
-		],
-	);
+	const isNewTraceLogsAvailable =
+		isQueryBuilderActive &&
+		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
+		currentQuery.builder.queryData.find(
+			(query) => query.dataSource !== DataSource.METRICS,
+		) !== undefined;
 
 	const isSaveDisabled = useMemo(() => {
 		// new created dashboard
@@ -239,23 +256,21 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 				<RightContainerWrapper flex={1}>
 					<RightContainer
 						setGraphHandler={setGraphHandler}
-						{...{
-							title,
-							setTitle,
-							description,
-							setDescription,
-							stacked,
-							setStacked,
-							opacity,
-							yAxisUnit,
-							setOpacity,
-							selectedNullZeroValue,
-							setSelectedNullZeroValue,
-							selectedGraph: graphType,
-							setSelectedTime,
-							selectedTime,
-							setYAxisUnit,
-						}}
+						title={title}
+						setTitle={setTitle}
+						description={description}
+						setDescription={setDescription}
+						stacked={stacked}
+						setStacked={setStacked}
+						opacity={opacity}
+						yAxisUnit={yAxisUnit}
+						setOpacity={setOpacity}
+						selectedNullZeroValue={selectedNullZeroValue}
+						setSelectedNullZeroValue={setSelectedNullZeroValue}
+						selectedGraph={graphType}
+						setSelectedTime={setSelectedTime}
+						selectedTime={selectedTime}
+						setYAxisUnit={setYAxisUnit}
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>
@@ -280,18 +295,4 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 	);
 }
 
-interface DispatchProps {
-	saveSettingOfPanel: (
-		props: SaveDashboardProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	saveSettingOfPanel: bindActionCreators(SaveDashboard, dispatch),
-});
-
-type Props = DispatchProps & NewWidgetProps;
-
-export default connect(null, mapDispatchToProps)(NewWidget);
+export default NewWidget;
