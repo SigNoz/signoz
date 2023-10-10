@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { trackEvent } from 'utils/segmentAnalytics';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import { LangProps } from '../APM';
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import ExpressDocs from './md-docs/express.md';
 import JavascriptDocs from './md-docs/javascript.md';
@@ -19,23 +20,21 @@ const frameworksMap = {
 };
 
 export default function Javascript({
+	ingestionInfo,
 	activeStep,
-}: {
-	activeStep: number;
-}): JSX.Element {
+}: LangProps): JSX.Element {
 	const [selectedFrameWork, setSelectedFrameWork] = useState('express');
 	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(
 		ExpressDocs,
 	);
 	const [form] = Form.useForm();
 	const serviceName = Form.useWatch('Service Name', form);
-	const SIGNOZ_INGESTION_KEY = null;
-	const REGION = null;
 
 	const variables = {
-		myapp: serviceName || '<myapp>',
-		ingestionKey: SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
-		region: REGION || 'region',
+		MYAPP: serviceName || '<myapp>',
+		SIGNOZ_INGESTION_KEY:
+			ingestionInfo.SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
+		REGION: ingestionInfo.REGION || 'region',
 	};
 
 	useEffect(() => {

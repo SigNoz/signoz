@@ -4,23 +4,22 @@ import { Form, Input } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 
+import { LangProps } from '../APM';
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import GoLangDocs from './goLang.md';
 
 export default function GoLang({
+	ingestionInfo,
 	activeStep,
-}: {
-	activeStep: number;
-}): JSX.Element {
+}: LangProps): JSX.Element {
 	const [form] = Form.useForm();
 	const serviceName = Form.useWatch('Service Name', form);
-	const SIGNOZ_INGESTION_KEY = null;
-	const REGION = null;
 
 	const variables = {
-		myapp: serviceName || '<myapp>',
-		ingestionKey: SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
-		region: REGION || 'region',
+		MYAPP: serviceName || '<myapp>',
+		SIGNOZ_INGESTION_KEY:
+			ingestionInfo.SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
+		REGION: ingestionInfo.REGION || 'region',
 	};
 
 	return (

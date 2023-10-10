@@ -2,14 +2,24 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './APM.styles.scss';
 
+import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
 import { useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
 import { trackEvent } from 'utils/segmentAnalytics';
 
 import GoLang from './GoLang/GoLang';
 import Java from './Java/Java';
 import Javascript from './Javascript/Javascript';
 import Python from './Python/Python';
+
+export interface LangProps {
+	ingestionInfo: {
+		SIGNOZ_INGESTION_KEY: string;
+		REGION: string;
+	};
+	activeStep: number;
+}
 
 const supportedLanguages = [
 	{
@@ -37,6 +47,23 @@ export default function APM({
 }): JSX.Element {
 	const [selectedLanguage, setSelectedLanguage] = useState('java');
 
+	const [ingestionInfo, setIngestionInfo] = useState({});
+
+	const { status, data: ingestionData } = useQuery({
+		queryFn: () => getIngestionData(),
+	});
+
+	useEffect(() => {
+		if (status === 'success' && ingestionData) {
+			const payload = ingestionData?.payload[0];
+
+			setIngestionInfo({
+				SIGNOZ_INGESTION_KEY: payload?.ingestionKey,
+				REGION: payload?.dataRegion,
+			});
+		}
+	}, [status, ingestionData]);
+
 	useEffect(() => {
 		// on language select
 		trackEvent('Onboarding: APM', {
@@ -49,13 +76,13 @@ export default function APM({
 	const renderSelectedLanguageSetupInstructions = (): JSX.Element => {
 		switch (selectedLanguage) {
 			case 'java':
-				return <Java activeStep={activeStep} />;
+				return <Java ingestionInfo={ingestionInfo} activeStep={activeStep} />;
 			case 'python':
-				return <Python activeStep={activeStep} />;
+				return <Python ingestionInfo={ingestionInfo} activeStep={activeStep} />;
 			case 'javascript':
-				return <Javascript activeStep={activeStep} />;
+				return <Javascript ingestionInfo={ingestionInfo} activeStep={activeStep} />;
 			case 'go':
-				return <GoLang activeStep={activeStep} />;
+				return <GoLang ingestionInfo={ingestionInfo} activeStep={activeStep} />;
 			default:
 				return <> </>;
 		}

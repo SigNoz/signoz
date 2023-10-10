@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { trackEvent } from 'utils/segmentAnalytics';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import { LangProps } from '../APM';
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import DjangoDocs from './md-docs/django.md';
 import FalconDocs from './md-docs/falcon.md';
@@ -23,16 +24,20 @@ const frameworksMap = {
 };
 
 export default function Python({
+	ingestionInfo,
 	activeStep,
-}: {
-	activeStep: number;
-}): JSX.Element {
+}: LangProps): JSX.Element {
 	const [selectedFrameWork, setSelectedFrameWork] = useState('django');
 	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(DjangoDocs);
 	const [form] = Form.useForm();
 	const serviceName = Form.useWatch('Service Name', form);
-	const SIGNOZ_INGESTION_KEY = null;
-	const REGION = null;
+
+	const variables = {
+		MYAPP: serviceName || '<myapp>',
+		SIGNOZ_INGESTION_KEY:
+			ingestionInfo.SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
+		REGION: ingestionInfo.REGION || 'region',
+	};
 
 	useEffect(() => {
 		// on language select
@@ -62,12 +67,6 @@ export default function Python({
 				setSelectedFrameWorkDocs(PythonDocs);
 				break;
 		}
-	};
-
-	const variables = {
-		myapp: serviceName || '<myapp>',
-		ingestionKey: SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
-		region: REGION || 'region',
 	};
 
 	return (
