@@ -9,14 +9,14 @@ function LogsProcessingSimulator({
 	inputLogs,
 	pipeline,
 }: LogsProcessingSimulatorProps): JSX.Element {
-	const [showResult, setShowResult] = useState<boolean>(false);
-	const simulate = (): void => setShowResult(true);
+	const [simulationInput, setSimulationInput] = useState<ILog[] | null>(null);
 
 	if ((inputLogs?.length || 0) < 1) {
-		return <div>No sample logs</div>;
+		return <div>Waiting for sample logs</div>;
 	}
 
-	if (!showResult) {
+	const simulate = (): void => setSimulationInput(inputLogs);
+	if (simulationInput !== inputLogs) {
 		return (
 			<div>
 				<Button type="primary" onClick={simulate}>
@@ -26,7 +26,9 @@ function LogsProcessingSimulator({
 		);
 	}
 
-	return <PipelineSimulationResult pipeline={pipeline} inputLogs={inputLogs} />;
+	return (
+		<PipelineSimulationResult pipeline={pipeline} inputLogs={simulationInput} />
+	);
 }
 
 export interface LogsProcessingSimulatorProps {
