@@ -11,16 +11,12 @@ import { ILog } from 'types/api/logs/log';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
+import { LogsResponse } from '../types';
+
 export interface SampleLogsRequest {
 	filter: TagFilter;
 	timeInterval: Time;
 	count: number;
-}
-
-export interface SampleLogsResponse {
-	isLoading: boolean;
-	isError: boolean;
-	logs: ILog[];
 }
 
 const DEFAULT_SAMPLE_LOGS_COUNT = 5;
@@ -29,7 +25,7 @@ const useSampleLogs = ({
 	filter,
 	timeInterval,
 	count,
-}: SampleLogsRequest): SampleLogsResponse => {
+}: SampleLogsRequest): LogsResponse => {
 	const sampleLogsQuery = useMemo(() => {
 		const q = cloneDeep(initialQueriesMap.logs);
 		q.builder.queryData[0] = {

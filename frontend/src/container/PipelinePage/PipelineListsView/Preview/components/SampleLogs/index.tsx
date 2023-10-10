@@ -1,7 +1,5 @@
-import './styles.scss';
-
 import useSampleLogs, { SampleLogsRequest } from '../../hooks/useSampleLogs';
-import SampleLogsResponseDisplay from './SampleLogsResponseDisplay';
+import LogsResponseDisplay from '../LogsResponseDisplay';
 
 function SampleLogs(props: SampleLogsRequest): JSX.Element {
 	const sampleLogsResponse = useSampleLogs(props);
@@ -12,7 +10,7 @@ function SampleLogs(props: SampleLogsRequest): JSX.Element {
 		);
 	}
 
-	return <SampleLogsResponseDisplay response={sampleLogsResponse} />;
+	return <LogsResponseDisplay response={sampleLogsResponse} />;
 }
 
 export default SampleLogs;

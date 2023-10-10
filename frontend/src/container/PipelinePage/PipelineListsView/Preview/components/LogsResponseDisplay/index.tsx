@@ -1,9 +1,9 @@
-import { SampleLogsResponse } from '../../hooks/useSampleLogs';
+import { LogsResponse } from '../../types';
 import LogsList from '../LogsList';
 
-function SampleLogsResponseDisplay({
+function LogsResponseDisplay({
 	response,
-}: SampleLogsResponseDisplayProps): JSX.Element {
+}: LogsResponseDisplayProps): JSX.Element {
 	const { isLoading, isError, logs } = response;
 
 	if (isError) {
@@ -23,8 +23,8 @@ function SampleLogsResponseDisplay({
 	return <LogsList logs={logs} />;
 }
 
-export interface SampleLogsResponseDisplayProps {
-	response: SampleLogsResponse;
+export interface LogsResponseDisplayProps {
+	response: LogsResponse;
 }
 
-export default SampleLogsResponseDisplay;
+export default LogsResponseDisplay;
