@@ -32,17 +32,7 @@ OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}" \
 OTEL_EXPORTER_OTLP_ENDPOINT=https://ingest.{{REGION}}.signoz.cloud:443 \
 java -javaagent:<path>/opentelemetry-javaagent.jar -jar {{MYAPP}}.jar
 ```
-- `<myapp>` is the name for your application
 - `<path>` - update it to the path of your downloaded Java JAR agent
-- `<SIGNOZ_INGESTION_KEY>` is the API token provided by SigNoz. You can find your ingestion key from SigNoz cloud account details sent on your email.
-
-Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
-
- US -	ingest.us.signoz.cloud:443 
-
- IN -	ingest.in.signoz.cloud:443 
-
- EU - ingest.eu.signoz.cloud:443 
 
 ---
 
@@ -63,7 +53,6 @@ Step 2. Run your application
 java -javaagent:<path>/opentelemetry-javaagent.jar -jar {{MYAPP}}.jar
 ```
 
-- `<myapp>` is the name of your application
 - `<path>` - update it to the path of your downloaded Java JAR agent
   
 ---
@@ -86,7 +75,6 @@ Step 2. Run your application
 java -javaagent:<path>/opentelemetry-javaagent.jar -jar {{MYAPP}}.jar
 ```
 
-- `<myapp>` is the name of your application
 - `<path>` - update it to the path of your downloaded Java JAR agent
 
 Step 3. Make sure to dockerise your application along with OpenTelemetry instrumentation.

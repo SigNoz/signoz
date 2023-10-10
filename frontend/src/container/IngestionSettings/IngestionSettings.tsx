@@ -4,19 +4,20 @@ import { Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import getIngestionData from 'api/settings/getIngestionData';
 import { useQuery } from 'react-query';
-
-interface DataType {
-	key: string;
-	name: string;
-	value: string;
-}
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { IngestionDataType } from 'types/api/settings/ingestion';
+import AppReducer from 'types/reducer/app';
 
 export default function IngestionSettings(): JSX.Element {
+	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+
 	const { data: ingestionData } = useQuery({
-		queryFn: () => getIngestionData(),
+		queryFn: getIngestionData,
+		queryKey: ['getIngestionData', user?.userId],
 	});
 
-	const columns: ColumnsType<DataType> = [
+	const columns: ColumnsType<IngestionDataType> = [
 		{
 			title: 'Name',
 			dataIndex: 'name',
@@ -32,23 +33,28 @@ export default function IngestionSettings(): JSX.Element {
 			),
 		},
 	];
-	const payload = ingestionData?.payload[0];
 
-	const data: DataType[] = [
+	const injectionDataPayload =
+		ingestionData &&
+		ingestionData.payload &&
+		Array.isArray(ingestionData.payload) &&
+		ingestionData?.payload[0];
+
+	const data: IngestionDataType[] = [
 		{
 			key: '1',
 			name: 'Ingestion URL',
-			value: payload?.ingestionURL,
+			value: injectionDataPayload?.ingestionURL,
 		},
 		{
 			key: '2',
 			name: 'Ingestion Key',
-			value: payload?.ingestionKey,
+			value: injectionDataPayload?.ingestionKey,
 		},
 		{
 			key: '3',
 			name: 'Ingestion Region',
-			value: payload?.dataRegion,
+			value: injectionDataPayload?.dataRegion,
 		},
 	];
 

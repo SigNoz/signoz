@@ -2,19 +2,7 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-
-interface IngestionInfo {
-	keyId: string;
-	name: string;
-	createdAt: string;
-	ingestionKey: string;
-	ingestionURL: string;
-	dataRegion: string;
-}
-
-interface IngestionResponseProps {
-	payload: IngestionInfo[];
-}
+import { IngestionResponseProps } from 'types/api/settings/ingestion';
 
 const getIngestionData = async (): Promise<
 	SuccessResponse<IngestionResponseProps> | ErrorResponse

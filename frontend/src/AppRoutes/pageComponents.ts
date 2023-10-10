@@ -103,7 +103,7 @@ export const OrganizationSettings = Loadable(
 );
 
 export const IngestionSettings = Loadable(
-	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
+	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
 );
 
 export const MySettings = Loadable(

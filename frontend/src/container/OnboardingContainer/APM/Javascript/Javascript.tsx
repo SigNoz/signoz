@@ -31,7 +31,7 @@ export default function Javascript({
 	const serviceName = Form.useWatch('Service Name', form);
 
 	const variables = {
-		MYAPP: serviceName || '<myapp>',
+		MYAPP: serviceName || '<service-name>',
 		SIGNOZ_INGESTION_KEY:
 			ingestionInfo.SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
 		REGION: ingestionInfo.REGION || 'region',

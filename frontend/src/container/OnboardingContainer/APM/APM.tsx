@@ -13,11 +13,12 @@ import Java from './Java/Java';
 import Javascript from './Javascript/Javascript';
 import Python from './Python/Python';
 
+interface IngestionInfoProps {
+	SIGNOZ_INGESTION_KEY?: string;
+	REGION?: string;
+}
 export interface LangProps {
-	ingestionInfo: {
-		SIGNOZ_INGESTION_KEY: string;
-		REGION: string;
-	};
+	ingestionInfo: IngestionInfoProps;
 	activeStep: number;
 }
 
@@ -47,22 +48,29 @@ export default function APM({
 }): JSX.Element {
 	const [selectedLanguage, setSelectedLanguage] = useState('java');
 
-	const [ingestionInfo, setIngestionInfo] = useState({});
+	const [ingestionInfo, setIngestionInfo] = useState<IngestionInfoProps>({});
 
 	const { status, data: ingestionData } = useQuery({
 		queryFn: () => getIngestionData(),
 	});
 
 	useEffect(() => {
-		if (status === 'success' && ingestionData) {
-			const payload = ingestionData?.payload[0];
+		if (
+			status === 'success' &&
+			ingestionData.payload &&
+			Array.isArray(ingestionData.payload)
+		) {
+			const payload = ingestionData.payload[0] || {
+				ingestionKey: '',
+				dataRegion: '',
+			};
 
 			setIngestionInfo({
 				SIGNOZ_INGESTION_KEY: payload?.ingestionKey,
 				REGION: payload?.dataRegion,
 			});
 		}
-	}, [status, ingestionData]);
+	}, [status, ingestionData?.payload]);
 
 	useEffect(() => {
 		// on language select
