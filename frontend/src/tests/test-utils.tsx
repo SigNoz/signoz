@@ -2,6 +2,7 @@ import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
+import { BrowserRouter } from 'react-router-dom';
 import store from 'store';
 
 const queryClient = new QueryClient({
@@ -23,7 +24,9 @@ function AllTheProviders({
 }): ReactElement {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<Provider store={store}>{children}</Provider>
+			<Provider store={store}>
+				<BrowserRouter>{children}</BrowserRouter>
+			</Provider>
 		</QueryClientProvider>
 	);
 }
