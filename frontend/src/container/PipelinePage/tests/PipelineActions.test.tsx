@@ -1,10 +1,12 @@
 import { render } from '@testing-library/react';
-import PipelineActions from 'container/PipelinePage/PipelineListsView/TableComponents/PipelineActions';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
+
+import { pipelineMockData } from '../mocks/pipeline';
+import PipelineActions from '../PipelineListsView/TableComponents/PipelineActions';
 
 describe('PipelinePage container test', () => {
 	it('should render PipelineActions section', () => {
@@ -12,7 +14,11 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<PipelineActions editAction={jest.fn()} deleteAction={jest.fn()} />
+						<PipelineActions
+							pipeline={pipelineMockData[0]}
+							editAction={jest.fn()}
+							deleteAction={jest.fn()}
+						/>
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,
