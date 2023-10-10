@@ -34,6 +34,7 @@ function SideNav(): JSX.Element {
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
 	const {
+		role,
 		currentVersion,
 		latestVersion,
 		isCurrentVersionError,
@@ -50,6 +51,10 @@ function SideNav(): JSX.Element {
 						(feature) => feature.name === FeatureKeys.ONBOARDING,
 					)?.active || false;
 
+				if (role !== 'ADMIN') {
+					return item.key !== ROUTES.BILLING;
+				}
+
 				if (
 					!isOnboardingEnabled ||
 					!(hostname && hostname.endsWith('signoz.cloud'))
@@ -59,7 +64,7 @@ function SideNav(): JSX.Element {
 
 				return true;
 			}),
-		[featureResponse.data, hostname],
+		[featureResponse.data, hostname, role],
 	);
 
 	const { pathname, search } = useLocation();
