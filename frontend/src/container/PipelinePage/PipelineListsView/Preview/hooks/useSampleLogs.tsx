@@ -23,6 +23,8 @@ export interface SampleLogsResponse {
 	logs: ILog[];
 }
 
+const DEFAULT_SAMPLE_LOGS_COUNT = 5;
+
 const useSampleLogs = ({
 	filter,
 	timeInterval,
@@ -35,7 +37,7 @@ const useSampleLogs = ({
 			filters: filter || initialFilters,
 			aggregateOperator: LogsAggregatorOperator.NOOP,
 			orderBy: [{ columnName: 'timestamp', order: 'desc' }],
-			limit: count,
+			limit: count || DEFAULT_SAMPLE_LOGS_COUNT,
 		};
 		return q;
 	}, [count, filter]);

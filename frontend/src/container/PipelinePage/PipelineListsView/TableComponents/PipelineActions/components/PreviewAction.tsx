@@ -1,5 +1,6 @@
 import { EyeFilled } from '@ant-design/icons';
 import { Divider, Modal } from 'antd';
+import PipelineProcessingPreview from 'container/PipelinePage/PipelineListsView/Preview/PipelineProcessingPreview';
 import { useState } from 'react';
 import { PipelineData } from 'types/api/pipeline/def';
 
@@ -31,7 +32,9 @@ function PreviewAction({ pipeline }: PreviewActionProps): JSX.Element | null {
 				title={`Logs processing preview for ${pipeline.name}`}
 			>
 				<Divider />
-				{/* isModalOpen && <PipelinePreview pipeline={pipeline} key={previewKey} /> */}
+				{isModalOpen && (
+					<PipelineProcessingPreview pipeline={pipeline} key={previewKey} />
+				)}
 			</Modal>
 		</>
 	);
