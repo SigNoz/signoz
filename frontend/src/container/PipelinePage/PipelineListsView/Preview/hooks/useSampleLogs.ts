@@ -19,8 +19,8 @@ export interface SampleLogsRequest {
 
 export interface SampleLogsResponse {
 	isLoading: boolean;
-	isError: boolean;
 	logs: ILog[];
+	isError: boolean;
 }
 
 const DEFAULT_SAMPLE_LOGS_COUNT = 5;
@@ -30,7 +30,7 @@ const useSampleLogs = ({
 	timeInterval,
 	count,
 }: SampleLogsRequest): SampleLogsResponse => {
-	const sampleLogsQuery = useMemo(() => {
+	const query = useMemo(() => {
 		const q = cloneDeep(initialQueriesMap.logs);
 		q.builder.queryData[0] = {
 			...q.builder.queryData[0],
@@ -42,27 +42,28 @@ const useSampleLogs = ({
 		return q;
 	}, [count, filter]);
 
-	const sampleLogsResponse = useGetQueryRange({
+	const response = useGetQueryRange({
 		graphType: PANEL_TYPES.LIST,
-		query: sampleLogsQuery,
+		query,
 		selectedTime: 'GLOBAL_TIME',
 		globalSelectedInterval: timeInterval,
 	});
 
-	const { isError, isFetching: isLoading } = sampleLogsResponse;
+	const { isFetching: isLoading, data } = response;
+
+	const errorMsg = data?.error || '';
+	const isError = response.isError || Boolean(errorMsg);
 
 	let logs: ILog[] = [];
 	if (!(isLoading || isError)) {
-		const logsList =
-			sampleLogsResponse?.data?.payload?.data?.newResult?.data?.result[0]?.list ||
-			[];
+		const logsList = data?.payload?.data?.newResult?.data?.result[0]?.list || [];
 		logs = logsList.map((item) => ({
 			...item.data,
 			timestamp: item.timestamp,
 		}));
 	}
 
-	return { isLoading, isError, logs };
+	return { isLoading, logs, isError };
 };
 
 export default useSampleLogs;
