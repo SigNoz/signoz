@@ -1,10 +1,10 @@
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useMemo } from 'react';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
-} from 'store/actions/dashboard/getQueryResults';
+} from 'lib/dashboard/getQueryResults';
+import { useMemo } from 'react';
+import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 

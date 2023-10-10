@@ -2,7 +2,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import { GetQueryResultsProps } from 'store/actions/dashboard/getQueryResults';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { ServicesList } from 'types/api/metrics/getService';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
