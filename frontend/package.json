@@ -185,6 +185,7 @@
 		"jest-playwright-preset": "^1.7.2",
 		"jest-styled-components": "^7.0.8",
 		"lint-staged": "^12.5.0",
+		"msw": "1.3.2",
 		"portfinder-sync": "^0.0.2",
 		"prettier": "2.2.1",
 		"raw-loader": "4.0.2",
