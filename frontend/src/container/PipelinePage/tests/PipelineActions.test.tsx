@@ -12,11 +12,7 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<PipelineActions
-							isPipelineAction
-							editAction={jest.fn()}
-							deleteAction={jest.fn()}
-						/>
+						<PipelineActions editAction={jest.fn()} deleteAction={jest.fn()} />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,
