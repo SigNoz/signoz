@@ -9,28 +9,25 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useMemo } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
-	UpdateQuery,
-	UpdateQueryProps,
-} from 'store/actions/dashboard/updateQuery';
+	getNextWidgets,
+	getPreviousWidgets,
+	getSelectedWidgetIndex,
+} from 'providers/Dashboard/util';
+import { useCallback, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import AppReducer from 'types/reducer/app';
-import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 
 function QuerySection({
-	updateQuery,
 	selectedGraph,
 	selectedTime,
 }: QueryProps): JSX.Element {
@@ -45,17 +42,14 @@ function QuerySection({
 		(state) => state.app,
 	);
 
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { selectedDashboard, setSelectedDashboard } = useDashboard();
 
 	const getWidgetQueryRange = useGetWidgetQueryRange({
 		graphType: selectedGraph,
 		selectedTime: selectedTime.enum,
 	});
 
-	const [selectedDashboards] = dashboards;
-	const { widgets } = selectedDashboards.data;
+	const { widgets } = selectedDashboard?.data || {};
 
 	const getWidget = useCallback(() => {
 		const widgetId = urlQuery.get('widgetId');
@@ -69,24 +63,49 @@ function QuerySection({
 	useShareBuilderUrl(query);
 
 	const handleStageQuery = useCallback(
-		(updatedQuery: Query): void => {
-			updateQuery({
-				widgetId: urlQuery.get('widgetId') || '',
-				yAxisUnit: selectedWidget.yAxisUnit,
+		(query: Query): void => {
+			if (selectedDashboard === undefined) {
+				return;
+			}
+
+			const updatedQuery = updateStepInterval(query, maxTime, minTime);
+
+			const selectedWidgetIndex = getSelectedWidgetIndex(
+				selectedDashboard,
+				selectedWidget.id,
+			);
+
+			const previousWidgets = getPreviousWidgets(
+				selectedDashboard,
+				selectedWidgetIndex,
+			);
+
+			const nextWidgets = getNextWidgets(selectedDashboard, selectedWidgetIndex);
+
+			setSelectedDashboard({
+				...selectedDashboard,
+				data: {
+					...selectedDashboard?.data,
+					widgets: [
+						...previousWidgets,
+						{
+							...selectedWidget,
+							query: updatedQuery,
+						},
+						...nextWidgets,
+					],
+				},
 			});
 
-			redirectWithQueryBuilderData(
-				updateStepInterval(updatedQuery, maxTime, minTime),
-			);
+			redirectWithQueryBuilderData(updatedQuery);
 		},
-
 		[
-			updateQuery,
-			urlQuery,
-			selectedWidget.yAxisUnit,
-			redirectWithQueryBuilderData,
+			selectedDashboard,
 			maxTime,
 			minTime,
+			selectedWidget,
+			setSelectedDashboard,
+			redirectWithQueryBuilderData,
 		],
 	);
 
@@ -157,21 +176,9 @@ function QuerySection({
 	);
 }
 
-interface DispatchProps {
-	updateQuery: (
-		props: UpdateQueryProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	updateQuery: bindActionCreators(UpdateQuery, dispatch),
-});
-
-interface QueryProps extends DispatchProps {
+interface QueryProps {
 	selectedGraph: PANEL_TYPES;
 	selectedTime: WidgetGraphProps['selectedTime'];
 }
 
-export default connect(null, mapDispatchToProps)(QuerySection);
+export default QuerySection;

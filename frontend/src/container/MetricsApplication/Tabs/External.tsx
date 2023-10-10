@@ -1,6 +1,6 @@
 import { Col } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/GridGraphLayout/Graph/';
+import Graph from 'container/GridCardLayout/GridCard';
 import {
 	externalCallDuration,
 	externalCallDurationByAddress,
@@ -56,6 +56,7 @@ function External(): JSX.Element {
 				},
 				title: GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: '%',
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -80,6 +81,7 @@ function External(): JSX.Element {
 				},
 				title: GraphTitle.EXTERNAL_CALL_DURATION,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ms',
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -100,6 +102,7 @@ function External(): JSX.Element {
 				},
 				title: GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'reqps',
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -120,6 +123,7 @@ function External(): JSX.Element {
 				},
 				title: GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ms',
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -146,7 +150,6 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_error_percentage"
 								widget={externalCallErrorWidget}
-								yAxisUnit="%"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
@@ -181,7 +184,6 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_duration"
 								widget={externalCallDurationWidget}
-								yAxisUnit="ms"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
@@ -217,7 +219,6 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_rps_by_address"
 								widget={externalCallRPSWidget}
-								yAxisUnit="reqps"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
@@ -252,7 +253,6 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_duration_by_address"
 								widget={externalCallDurationAddressWidget}
-								yAxisUnit="ms"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,

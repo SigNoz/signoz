@@ -126,7 +126,7 @@ build-ee-query-service-amd64:
 	make QUERY_SERVICE_DIRECTORY=${EE_QUERY_SERVICE_DIRECTORY} build-query-service-amd64
 
 # Step to build and push EE docker image of query in amd64 and arm64 (used in push pipeline)
-build-push-ee-query-service: build-ee-query-service-static-all
+build-push-ee-query-service:
 	@echo "------------------"
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
