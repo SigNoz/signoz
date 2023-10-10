@@ -10,15 +10,16 @@ export interface PipelinePreviewRequest {
 
 export interface PipelinePreviewResponse {
 	isLoading: boolean;
-	isError: boolean;
 	outputLogs: ILog[];
+	isError: boolean;
+	errorMsg: string;
 }
 
 const usePipelinePreview = ({
 	pipeline,
 	inputLogs,
 }: PipelinePreviewRequest): PipelinePreviewResponse => {
-	const { isFetching, isError, data } = useQuery({
+	const response = useQuery({
 		queryFn: async () =>
 			simulatePipelineProcessing({
 				logs: inputLogs,
@@ -27,10 +28,16 @@ const usePipelinePreview = ({
 		queryKey: ['logs-pipeline-preview', pipeline, inputLogs],
 	});
 
+	const { isFetching, data } = response;
+
+	const errorMsg = data?.error || '';
+	const isError = response.isError || Boolean(errorMsg);
+
 	return {
 		isLoading: isFetching,
-		isError,
 		outputLogs: data?.payload?.logs || [],
+		isError,
+		errorMsg,
 	};
 };
 

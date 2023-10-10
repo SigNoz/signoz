@@ -1,20 +1,27 @@
+import './styles.scss';
+
 import { ILog } from 'types/api/logs/log';
 import { PipelineData } from 'types/api/pipeline/def';
 
-import LogsList from '../../components/LogsList';
-import usePipelinePreview from '../../hooks/usePipelinePreview';
+import LogsList from '../../../components/LogsList';
+import usePipelinePreview from '../../../hooks/usePipelinePreview';
 
 function PipelineSimulationResult({
 	inputLogs,
 	pipeline,
 }: PipelineSimulationResultProps): JSX.Element {
-	const { isLoading, isError, outputLogs } = usePipelinePreview({
+	const { isLoading, outputLogs, isError, errorMsg } = usePipelinePreview({
 		pipeline,
 		inputLogs,
 	});
 
 	if (isError) {
-		return <div>There was an error.</div>;
+		return (
+			<div className="pipeline-simulation-error">
+				<div>There was an error</div>
+				<div>{errorMsg}</div>
+			</div>
+		);
 	}
 
 	if (isLoading) {
