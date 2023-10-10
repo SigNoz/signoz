@@ -13,8 +13,6 @@ function PreviewAction({ pipeline }: PreviewActionProps): JSX.Element | null {
 	const openModal = (): void => setPreviewKey(String(Math.random()));
 	const closeModal = (): void => setPreviewKey(null);
 
-	console.log(pipeline);
-
 	// Can only preview pipelines with some processors in them
 	if ((pipeline?.config?.length || 0) < 1) {
 		return null;
