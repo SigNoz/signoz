@@ -5,6 +5,7 @@ import {
 	BugOutlined,
 	DashboardFilled,
 	DeploymentUnitOutlined,
+	FileDoneOutlined,
 	LineChartOutlined,
 	MenuOutlined,
 	RocketOutlined,
@@ -59,6 +60,11 @@ const menuItems: SidebarMenu[] = [
 		key: ROUTES.USAGE_EXPLORER,
 		label: 'Usage Explorer',
 		icon: <LineChartOutlined />,
+	},
+	{
+		key: ROUTES.BILLING,
+		label: 'Billing',
+		icon: <FileDoneOutlined />,
 	},
 	{
 		key: ROUTES.SETTINGS,

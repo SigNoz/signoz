@@ -30,7 +30,7 @@ import defaultRoutes from './routes';
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
 	const [routes, setRoutes] = useState(defaultRoutes);
-	const { isLoggedIn: isLoggedInState, user } = useSelector<
+	const { role, isLoggedIn: isLoggedInState, user } = useSelector<
 		AppState,
 		AppReducer
 	>((state) => state.app);
@@ -96,6 +96,11 @@ function App(): JSX.Element {
 			});
 
 			window.clarity('identify', user.email, user.name);
+		}
+
+		if (isLoggedInState && role && role !== 'ADMIN') {
+			const newRoutes = routes.filter((route) => route?.path !== ROUTES.BILLING);
+			setRoutes(newRoutes);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isLoggedInState, user]);
