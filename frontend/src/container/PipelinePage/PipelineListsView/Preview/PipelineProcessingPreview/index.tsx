@@ -4,8 +4,8 @@ import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelection/conf
 import { useState } from 'react';
 import { PipelineData } from 'types/api/pipeline/def';
 
-import LogsResponseDisplay from '../components/LogsResponseDisplay';
 import PreviewIntervalSelector from '../components/PreviewIntervalSelector';
+import SampleLogsResponseDisplay from '../components/SampleLogs/SampleLogsResponseDisplay';
 import useSampleLogs from '../hooks/useSampleLogs';
 import LogsProcessingSimulator from './components/LogsProcessingSimulator';
 
@@ -36,7 +36,7 @@ function PipelineProcessingPreview({
 				/>
 			</div>
 			<div className="pipeline-preview-logs-container">
-				<LogsResponseDisplay response={sampleLogsResponse} />
+				<SampleLogsResponseDisplay response={sampleLogsResponse} />
 			</div>
 			<div className="pipeline-preview-section-header">
 				<div>Processed Output</div>

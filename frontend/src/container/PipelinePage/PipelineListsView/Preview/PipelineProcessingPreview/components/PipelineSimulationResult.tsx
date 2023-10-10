@@ -1,16 +1,31 @@
 import { ILog } from 'types/api/logs/log';
 import { PipelineData } from 'types/api/pipeline/def';
 
-import LogsResponseDisplay from '../../components/LogsResponseDisplay';
+import LogsList from '../../components/LogsList';
 import usePipelinePreview from '../../hooks/usePipelinePreview';
 
 function PipelineSimulationResult({
 	inputLogs,
 	pipeline,
 }: PipelineSimulationResultProps): JSX.Element {
-	const simulationResult = usePipelinePreview({ pipeline, logs: inputLogs });
+	const { isLoading, isError, outputLogs } = usePipelinePreview({
+		pipeline,
+		inputLogs,
+	});
 
-	return <LogsResponseDisplay response={simulationResult} />;
+	if (isError) {
+		return <div>There was an error.</div>;
+	}
+
+	if (isLoading) {
+		return <div>Loading...</div>;
+	}
+
+	if (outputLogs.length < 1) {
+		return <div>No logs found</div>;
+	}
+
+	return <LogsList logs={outputLogs} />;
 }
 
 export interface PipelineSimulationResultProps {

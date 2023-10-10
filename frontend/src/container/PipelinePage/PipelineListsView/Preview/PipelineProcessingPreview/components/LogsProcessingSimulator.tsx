@@ -12,6 +12,10 @@ function LogsProcessingSimulator({
 	const [showResult, setShowResult] = useState<boolean>(false);
 	const simulate = (): void => setShowResult(true);
 
+	if ((inputLogs?.length || 0) < 1) {
+		return <div>No sample logs</div>;
+	}
+
 	if (!showResult) {
 		return (
 			<div>

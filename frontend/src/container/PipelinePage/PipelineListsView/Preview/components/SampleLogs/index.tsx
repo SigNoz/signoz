@@ -1,5 +1,5 @@
 import useSampleLogs, { SampleLogsRequest } from '../../hooks/useSampleLogs';
-import LogsResponseDisplay from '../LogsResponseDisplay';
+import LogsResponseDisplay from './SampleLogsResponseDisplay';
 
 function SampleLogs(props: SampleLogsRequest): JSX.Element {
 	const sampleLogsResponse = useSampleLogs(props);

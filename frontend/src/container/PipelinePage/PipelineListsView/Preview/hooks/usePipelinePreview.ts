@@ -3,30 +3,34 @@ import { useQuery } from 'react-query';
 import { ILog } from 'types/api/logs/log';
 import { PipelineData } from 'types/api/pipeline/def';
 
-import { LogsResponse } from '../types';
-
 export interface PipelinePreviewRequest {
 	pipeline: PipelineData;
-	logs: ILog[];
+	inputLogs: ILog[];
+}
+
+export interface PipelinePreviewResponse {
+	isLoading: boolean;
+	isError: boolean;
+	outputLogs: ILog[];
 }
 
 const usePipelinePreview = ({
 	pipeline,
-	logs,
-}: PipelinePreviewRequest): LogsResponse => {
+	inputLogs,
+}: PipelinePreviewRequest): PipelinePreviewResponse => {
 	const { isFetching, isError, data } = useQuery({
 		queryFn: async () =>
 			simulatePipelineProcessing({
-				logs,
+				logs: inputLogs,
 				pipelines: [pipeline],
 			}),
-		queryKey: ['logs-pipeline-preview', pipeline, logs],
+		queryKey: ['logs-pipeline-preview', pipeline, inputLogs],
 	});
 
 	return {
 		isLoading: isFetching,
 		isError,
-		logs: data?.payload?.logs || [],
+		outputLogs: data?.payload?.logs || [],
 	};
 };
 
