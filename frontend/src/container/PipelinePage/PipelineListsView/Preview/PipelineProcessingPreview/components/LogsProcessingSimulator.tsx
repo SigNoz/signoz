@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 import { PipelineData } from 'types/api/pipeline/def';
 
+import PipelineSimulationResult from './PipelineSimulationResult';
+
 function LogsProcessingSimulator({
 	inputLogs,
 	pipeline,
@@ -20,7 +22,7 @@ function LogsProcessingSimulator({
 		);
 	}
 
-	return <div>{JSON.stringify({ inputLogs, pipeline })}</div>;
+	return <PipelineSimulationResult pipeline={pipeline} inputLogs={inputLogs} />;
 }
 
 export interface LogsProcessingSimulatorProps {
