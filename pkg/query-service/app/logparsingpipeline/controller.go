@@ -140,3 +140,23 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 		Pipelines:     pipelines,
 	}, nil
 }
+
+type PipelinesPreviewRequest struct {
+	Pipelines []Pipeline        `json:"pipelines"`
+	Logs      []model.SignozLog `json:"logs"`
+}
+
+func (ic *LogParsingPipelineController) PreviewLogsPipelines(
+	ctx context.Context,
+	request *PipelinesPreviewRequest,
+) ([]model.SignozLog, *model.ApiError) {
+	result, err := SimulatePipelinesProcessing(
+		ctx, request.Pipelines, request.Logs,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
