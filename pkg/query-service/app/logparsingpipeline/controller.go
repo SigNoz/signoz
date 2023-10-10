@@ -146,10 +146,14 @@ type PipelinesPreviewRequest struct {
 	Logs      []model.SignozLog `json:"logs"`
 }
 
+type PipelinesPreviewResponse struct {
+	OutputLogs []model.SignozLog `json:"logs"`
+}
+
 func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 	ctx context.Context,
 	request *PipelinesPreviewRequest,
-) ([]model.SignozLog, *model.ApiError) {
+) (*PipelinesPreviewResponse, *model.ApiError) {
 	result, err := SimulatePipelinesProcessing(
 		ctx, request.Pipelines, request.Logs,
 	)
@@ -158,5 +162,7 @@ func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 		return nil, err
 	}
 
-	return result, nil
+	return &PipelinesPreviewResponse{
+		OutputLogs: result,
+	}, nil
 }
