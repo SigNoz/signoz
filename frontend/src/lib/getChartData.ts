@@ -5,8 +5,6 @@ import { QueryData } from 'types/api/widgets/getQuery';
 import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
 
-const limit = 20;
-
 const getChartData = ({
 	queryData,
 	createDataset,
@@ -14,7 +12,12 @@ const getChartData = ({
 }: GetChartDataProps): {
 	data: ChartData;
 	isWarning: boolean;
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 } => {
+	const limit = process.env.FRONTEND_CHART_LIMIT
+		? +process.env.FRONTEND_CHART_LIMIT
+		: 20;
+
 	const uniqueTimeLabels = new Set<number>();
 	queryData.forEach((data) => {
 		data.queryData.forEach((query) => {
@@ -23,6 +26,7 @@ const getChartData = ({
 			});
 		});
 	});
+
 	const labels = Array.from(uniqueTimeLabels).sort((a, b) => a - b);
 
 	const response = queryData.map(
@@ -55,25 +59,44 @@ const getChartData = ({
 
 				return {
 					label: labelNames !== 'undefined' ? labelNames : '',
-					first: filledDataValues.map((e) => e.first),
-					second: filledDataValues.map((e) => e.second),
+					first: filledDataValues.map((e) => e.first || 0),
+					second: filledDataValues.map((e) => e.second || 0),
 				};
 			}),
 	);
+
 	const allLabels = response
 		.map((e) => e.map((e) => e.label))
 		.reduce((a, b) => [...a, ...b], []);
 
-	const alldata = response
-		.map((e) => e.map((e) => e.second))
-		.reduce((a, b) => [...a, ...b], []);
+	const modifiedData = response
+		.flat()
+		.sort((a, b) => {
+			const len = Math.min(a.second.length, b.second.length); // min length of both array
 
-	const updatedDataSet = alldata.map((e, index) => {
+			for (let i = 0; i < len; i += 1) {
+				const avearageOfArray = (arr: number[]): number =>
+					arr.reduce((a, b) => a + b, 0) / arr.length;
+
+				const diff = avearageOfArray(a.second) - avearageOfArray(b.second); // calculating the difference
+
+				if (diff !== 0) return diff;
+			}
+
+			return a.second.length - b.second.length;
+		})
+		.reverse();
+
+	const updatedSortedData = isWarningLimit
+		? modifiedData.slice(0, limit)
+		: modifiedData;
+
+	const updatedDataSet = updatedSortedData.map((e, index) => {
 		const datasetBaseConfig = {
 			index,
 			label: allLabels[index],
 			borderColor: colors[index % colors.length] || 'red',
-			data: e,
+			data: e.second,
 			borderWidth: 1.5,
 			spanGaps: true,
 			animations: false,
@@ -81,15 +104,15 @@ const getChartData = ({
 			pointRadius: 0,
 		};
 
-		return createDataset ? createDataset(e, index, allLabels) : datasetBaseConfig;
+		return createDataset
+			? createDataset(e.second, index, allLabels)
+			: datasetBaseConfig;
 	});
 
-	const updatedLabels = response
-		.map((e) => e.map((e) => e.first))
-		.reduce((a, b) => [...a, ...b], [])[0];
+	const updatedLabels = modifiedData.map((e) => e.first).flat();
 
 	const updatedData = {
-		datasets: isWarningLimit ? updatedDataSet?.slice(0, limit) : updatedDataSet,
+		datasets: updatedDataSet,
 		labels: updatedLabels,
 	};
 
