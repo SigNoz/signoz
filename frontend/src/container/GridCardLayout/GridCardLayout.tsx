@@ -27,7 +27,12 @@ function GraphLayout({
 	onAddPanelHandler,
 	widgets,
 }: GraphLayoutProps): JSX.Element {
-	const { selectedDashboard, layouts, setLayouts } = useDashboard();
+	const {
+		selectedDashboard,
+		layouts,
+		setLayouts,
+		setSelectedDashboard,
+	} = useDashboard();
 	const { t } = useTranslation(['dashboard']);
 
 	const { featureResponse, role } = useSelector<AppState, AppReducer>(
@@ -58,12 +63,17 @@ function GraphLayout({
 		};
 
 		updateDashboardMutation.mutate(updatedDashboard, {
-			onSuccess: () => {
-				featureResponse.refetch();
-
+			onSuccess: (updatedDashboard) => {
+				if (updatedDashboard.payload) {
+					if (updatedDashboard.payload.data.layout)
+						setLayouts(updatedDashboard.payload.data.layout);
+					setSelectedDashboard(updatedDashboard.payload);
+				}
 				notifications.success({
 					message: t('dashboard:layout_saved_successfully'),
 				});
+
+				featureResponse.refetch();
 			},
 			onError: () => {
 				notifications.error({
