@@ -14,28 +14,11 @@ export interface PipelineSimulationResponse {
 	logs: ILog[];
 }
 
-function numericTimestamp(timestamp: string | number): number {
-	if (typeof timestamp === 'string') {
-		return new Date(timestamp).getTime();
-	}
-	return timestamp;
-}
-
 const simulatePipelineProcessing = async (
 	requestBody: PipelineSimulationRequest,
 ): Promise<SuccessResponse<PipelineSimulationResponse> | ErrorResponse> => {
 	try {
-		// Ensure ILog timestamps are numbers.
-		// ILog allows both number and string while the API needs a number
-		const payload = {
-			...requestBody,
-			logs: requestBody.logs.map((l) => ({
-				...l,
-				timestamp: numericTimestamp(l.timestamp),
-			})),
-		};
-
-		const response = await axios.post('/logs/pipelines/preview', payload);
+		const response = await axios.post('/logs/pipelines/preview', requestBody);
 
 		return {
 			statusCode: 200,

@@ -19,10 +19,17 @@ const usePipelinePreview = ({
 	pipeline,
 	inputLogs,
 }: PipelinePreviewRequest): PipelinePreviewResponse => {
+	// Ensure log timestamps are numbers for pipeline preview API request
+	// ILog allows both number and string while the API needs a number
+	const simulationReqLogs = inputLogs.map((l) => ({
+		...l,
+		timestamp: new Date(l.timestamp).getTime(),
+	}));
+
 	const response = useQuery({
 		queryFn: async () =>
 			simulatePipelineProcessing({
-				logs: inputLogs,
+				logs: simulationReqLogs,
 				pipelines: [pipeline],
 			}),
 		queryKey: ['logs-pipeline-preview', pipeline, inputLogs],
