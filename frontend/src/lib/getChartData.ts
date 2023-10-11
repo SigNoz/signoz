@@ -64,33 +64,39 @@ const getChartData = ({
 				};
 			}),
 	);
+
 	const allLabels = response
 		.map((e) => e.map((e) => e.label))
 		.reduce((a, b) => [...a, ...b], []);
 
-	const alldata = response
+	const modifiedData = response
 		.flat()
-		.map((e) => e.second)
 		.sort((a, b) => {
-			const len = Math.min(a.length, b.length); // min length of both array
+			const len = Math.min(a.second.length, b.second.length); // min length of both array
 
 			for (let i = 0; i < len; i += 1) {
-				const diff = (a[i] || 0) - (b[i] || 0); // calculating the difference
+				const avearageOfArray = (arr: number[]): number =>
+					arr.reduce((a, b) => a + b, 0) / arr.length;
+
+				const diff = avearageOfArray(a.second) - avearageOfArray(b.second); // calculating the difference
+
 				if (diff !== 0) return diff;
 			}
 
-			return a.length - b.length;
+			return a.second.length - b.second.length;
 		})
 		.reverse();
 
-	const updatedSortedData = isWarningLimit ? alldata.slice(0, limit) : alldata;
+	const updatedSortedData = isWarningLimit
+		? modifiedData.slice(0, limit)
+		: modifiedData;
 
 	const updatedDataSet = updatedSortedData.map((e, index) => {
 		const datasetBaseConfig = {
 			index,
 			label: allLabels[index],
 			borderColor: colors[index % colors.length] || 'red',
-			data: e,
+			data: e.second,
 			borderWidth: 1.5,
 			spanGaps: true,
 			animations: false,
@@ -98,12 +104,12 @@ const getChartData = ({
 			pointRadius: 0,
 		};
 
-		return createDataset ? createDataset(e, index, allLabels) : datasetBaseConfig;
+		return createDataset
+			? createDataset(e.second, index, allLabels)
+			: datasetBaseConfig;
 	});
 
-	const updatedLabels = response
-		.map((e) => e.map((e) => e.first))
-		.reduce((a, b) => [...a, ...b], [])[0];
+	const updatedLabels = modifiedData.map((e) => e.first).flat();
 
 	const updatedData = {
 		datasets: updatedDataSet,
