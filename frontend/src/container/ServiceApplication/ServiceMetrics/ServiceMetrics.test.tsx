@@ -41,6 +41,7 @@ describe('ServicesUsingMetrics', () => {
 						ctx.status(200),
 						ctx.json({
 							SampleApp: ['GET'],
+							TestApp: ['GET'],
 						}),
 					),
 			),
@@ -48,7 +49,9 @@ describe('ServicesUsingMetrics', () => {
 		render(<ServicesUsingMetrics />);
 		const loading = screen.getByText(/Loading.../i);
 		expect(loading).toBeInTheDocument();
-		const noDataText = await screen.findByText(/SampleApp/i);
-		expect(noDataText).toBeInTheDocument();
+		const sampleAppText = await screen.findByText(/SampleApp/i);
+		expect(sampleAppText).toBeInTheDocument();
+		const testAppText = await screen.findByText(/TestApp/i);
+		expect(testAppText).toBeInTheDocument();
 	});
 });
