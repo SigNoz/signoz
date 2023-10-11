@@ -5,8 +5,6 @@ import { QueryData } from 'types/api/widgets/getQuery';
 import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
 
-const limit = 20;
-
 const getChartData = ({
 	queryData,
 	createDataset,
@@ -14,7 +12,12 @@ const getChartData = ({
 }: GetChartDataProps): {
 	data: ChartData;
 	isWarning: boolean;
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 } => {
+	const limit = process.env.FRONTEND_CHART_LIMIT
+		? +process.env.FRONTEND_CHART_LIMIT
+		: 20;
+
 	const uniqueTimeLabels = new Set<number>();
 	queryData.forEach((data) => {
 		data.queryData.forEach((query) => {
@@ -23,6 +26,7 @@ const getChartData = ({
 			});
 		});
 	});
+
 	const labels = Array.from(uniqueTimeLabels).sort((a, b) => a - b);
 
 	const response = queryData.map(
@@ -55,8 +59,8 @@ const getChartData = ({
 
 				return {
 					label: labelNames !== 'undefined' ? labelNames : '',
-					first: filledDataValues.map((e) => e.first),
-					second: filledDataValues.map((e) => e.second),
+					first: filledDataValues.map((e) => e.first || 0),
+					second: filledDataValues.map((e) => e.second || 0),
 				};
 			}),
 	);
@@ -66,7 +70,17 @@ const getChartData = ({
 
 	const alldata = response
 		.map((e) => e.map((e) => e.second))
-		.reduce((a, b) => [...a, ...b], []);
+		.reduce((a, b) => [...a, ...b], [])
+		.sort((a, b) => {
+			const len = a.length;
+			for (let i = 0; i < len; i += 1) {
+				if ((a[i] || 0) > (b[i] || 0)) return 1;
+				if ((a[i] || 0) < (b[i] || 0)) return -1;
+			}
+			return 0;
+		})
+		.reverse()
+		.slice(0, limit);
 
 	const updatedDataSet = alldata.map((e, index) => {
 		const datasetBaseConfig = {
@@ -89,7 +103,7 @@ const getChartData = ({
 		.reduce((a, b) => [...a, ...b], [])[0];
 
 	const updatedData = {
-		datasets: isWarningLimit ? updatedDataSet?.slice(0, limit) : updatedDataSet,
+		datasets: updatedDataSet,
 		labels: updatedLabels,
 	};
 

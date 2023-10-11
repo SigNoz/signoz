@@ -22,6 +22,7 @@ const plugins = [
 		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 		SEGMENT_ID: process.env.SEGMENT_ID,
 		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+		FRONTEND_CHART_LIMIT: process.env.FRONTEND_CHART_LIMIT,
 	}),
 	new webpack.ProvidePlugin({
 		process: 'process/browser',
@@ -33,6 +34,7 @@ const plugins = [
 			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 			SEGMENT_ID: process.env.SEGMENT_ID,
 			CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+			FRONTEND_CHART_LIMIT: process.env.FRONTEND_CHART_LIMIT,
 		}),
 	}),
 ];

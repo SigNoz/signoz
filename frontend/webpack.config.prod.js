@@ -26,6 +26,7 @@ const plugins = [
 		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 		SEGMENT_ID: process.env.SEGMENT_ID,
 		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+		FRONTEND_CHART_LIMIT: process.env.FRONTEND_CHART_LIMIT,
 	}),
 	new CompressionPlugin({
 		exclude: /.map$/,
@@ -42,6 +43,7 @@ const plugins = [
 			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 			SEGMENT_ID: process.env.SEGMENT_ID,
 			CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+			FRONTEND_CHART_LIMIT: process.env.FRONTEND_CHART_LIMIT,
 		}),
 	}),
 	new MiniCssExtractPlugin(),
