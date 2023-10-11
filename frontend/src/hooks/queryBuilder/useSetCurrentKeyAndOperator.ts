@@ -14,7 +14,7 @@ export const useSetCurrentKeyAndOperator = (
 		const { tagKey, tagOperator, tagValue } = getTagToken(value);
 
 		keyRef.current = tagKey || '';
-		operatorRef.current = tagOperator || '';
+		operatorRef.current = tagOperator.toLowerCase() || '';
 		result = tagValue || [];
 
 		return result;
