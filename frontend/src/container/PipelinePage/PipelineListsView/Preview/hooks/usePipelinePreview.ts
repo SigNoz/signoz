@@ -1,4 +1,7 @@
-import simulatePipelineProcessing from 'api/pipeline/preview';
+import simulatePipelineProcessing, {
+	PipelineSimulationResponse,
+} from 'api/pipeline/preview';
+import { AxiosError } from 'axios';
 import { useQuery } from 'react-query';
 import { ILog } from 'types/api/logs/log';
 import { PipelineData } from 'types/api/pipeline/def';
@@ -21,30 +24,28 @@ const usePipelinePreview = ({
 }: PipelinePreviewRequest): PipelinePreviewResponse => {
 	// Ensure log timestamps are numbers for pipeline preview API request
 	// ILog allows both number and string while the API needs a number
-	const simulationReqLogs = inputLogs.map((l) => ({
+	const simulationInput = inputLogs.map((l) => ({
 		...l,
 		timestamp: new Date(l.timestamp).getTime(),
 	}));
 
-	const response = useQuery({
+	const response = useQuery<PipelineSimulationResponse, AxiosError>({
 		queryFn: async () =>
 			simulatePipelineProcessing({
-				logs: simulationReqLogs,
+				logs: simulationInput,
 				pipelines: [pipeline],
 			}),
 		queryKey: ['logs-pipeline-preview', pipeline, inputLogs],
+		retry: false,
 	});
 
-	const { isFetching, data } = response;
-
-	const errorMsg = data?.error || '';
-	const isError = response.isError || Boolean(errorMsg);
+	const { isFetching, isError, data, error } = response;
 
 	return {
 		isLoading: isFetching,
-		outputLogs: data?.payload?.logs || [],
+		outputLogs: data?.logs || [],
 		isError,
-		errorMsg,
+		errorMsg: error?.response?.data?.error || '',
 	};
 };
 
