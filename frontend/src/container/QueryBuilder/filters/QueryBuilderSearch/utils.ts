@@ -8,7 +8,7 @@ const operators = /=|!=|>=|>|<=|<$/;
 // eslint-disable-next-line no-useless-escape
 export const tagRegexpV1 = /^\s*(.*?)\s*(=|!=|>=|>|<=)\s*(.*)$/g;
 
-export const tagRegexpV2 = /^\s*(.+?)\s+(IN|in|nin|LIKE|like|NLIKE|nlike|REGEX|regex|NREGEX|nregex|EXISTS|exists|NEXISTS|nexists|CONTAINS|contains|NCONTAINS|ncontains|HAS|has|NHAS|nhas|=|!=|>=|>|<=|<)\s*(.*)$/g;
+export const tagRegexpV2 = /^\s*(.+?)\s+(IN|in|nin|NIN|LIKE|like|NLIKE|nlike|REGEX|regex|NREGEX|nregex|EXISTS|exists|NEXISTS|nexists|CONTAINS|contains|NCONTAINS|ncontains|HAS|has|NHAS|nhas|=|!=|>=|>|<=|<)\s*(.*)$/g;
 
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
