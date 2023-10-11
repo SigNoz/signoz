@@ -147,8 +147,9 @@ func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
-	if countTraceAndLogsPanel(data) > 0 {
-		fErr := checkFeatureUsage(fm, countTraceAndLogsPanel(data))
+	newCount, _ := countTraceAndLogsPanel(data)
+	if newCount > 0 {
+		fErr := checkFeatureUsage(fm, newCount)
 		if fErr != nil {
 			return nil, fErr
 		}
@@ -168,7 +169,7 @@ func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (
 	}
 	dash.Id = int(lastInsertId)
 
-	traceAndLogsPanelUsage := countTraceAndLogsPanel(data)
+	traceAndLogsPanelUsage, _ := countTraceAndLogsPanel(data)
 	if traceAndLogsPanelUsage > 0 {
 		updateFeatureUsage(fm, traceAndLogsPanelUsage)
 	}
@@ -213,7 +214,7 @@ func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 		return &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
 	}
 
-	traceAndLogsPanelUsage := countTraceAndLogsPanel(dashboard.Data)
+	traceAndLogsPanelUsage, _ := countTraceAndLogsPanel(dashboard.Data)
 	if traceAndLogsPanelUsage > 0 {
 		updateFeatureUsage(fm, -traceAndLogsPanelUsage)
 	}
@@ -248,13 +249,19 @@ func UpdateDashboard(uuid string, data map[string]interface{}, fm interfaces.Fea
 	}
 
 	// check if the count of trace and logs QB panel has changed, if yes, then check feature flag count
-	existingCount := countTraceAndLogsPanel(dashboard.Data)
-	newCount := countTraceAndLogsPanel(data)
+	existingCount, existingTotal := countTraceAndLogsPanel(dashboard.Data)
+	newCount, newTotal := countTraceAndLogsPanel(data)
 	if newCount > existingCount {
 		err := checkFeatureUsage(fm, newCount-existingCount)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if existingTotal > newTotal && existingTotal-newTotal > 1 {
+		// if the total count of panels has reduced by more than 1,
+		// return error
+		return nil, model.BadRequest(fmt.Errorf("deleting more than one panel is not supported"))
 	}
 
 	dashboard.UpdatedAt = time.Now()
@@ -588,8 +595,9 @@ func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.Dashboard
 	return toReturn
 }
 
-func countTraceAndLogsPanel(data map[string]interface{}) int64 {
+func countTraceAndLogsPanel(data map[string]interface{}) (int64, int64) {
 	count := int64(0)
+	totalPanels := int64(0)
 	if data != nil && data["widgets"] != nil {
 		widgets, ok := data["widgets"].(interface{})
 		if ok {
@@ -598,6 +606,7 @@ func countTraceAndLogsPanel(data map[string]interface{}) int64 {
 				for _, widget := range data {
 					sData, ok := widget.(map[string]interface{})
 					if ok && sData["query"] != nil {
+						totalPanels++
 						query, ok := sData["query"].(interface{}).(map[string]interface{})
 						if ok && query["queryType"] == "builder" && query["builder"] != nil {
 							builderData, ok := query["builder"].(interface{}).(map[string]interface{})
@@ -620,5 +629,5 @@ func countTraceAndLogsPanel(data map[string]interface{}) int64 {
 			}
 		}
 	}
-	return count
+	return count, totalPanels
 }
