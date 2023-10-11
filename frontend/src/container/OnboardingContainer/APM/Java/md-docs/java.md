@@ -28,24 +28,12 @@ wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releas
 Step 2. Run your application
 
 ```bash
-OTEL_RESOURCE_ATTRIBUTES=service.name=<app_name> \
-OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>" \
-OTEL_EXPORTER_OTLP_ENDPOINT=https://ingest.{region}.signoz.cloud:443 \
-java -javaagent:<path>/opentelemetry-javaagent.jar -jar <my-app>.jar
+OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \
+OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}" \
+OTEL_EXPORTER_OTLP_ENDPOINT=https://ingest.{{REGION}}.signoz.cloud:443 \
+java -javaagent:<path>/opentelemetry-javaagent.jar -jar {{MYAPP}}.jar
 ```
-
-- `<app_name>` is the name for your application
-- `<SIGNOZ_INGESTION_KEY>` is the API token provided by SigNoz. You can find your ingestion key from SigNoz cloud account details sent on your email.
-- `path` - Update it to the path of your downloaded Java JAR agent.
-
-Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
-
- US -	ingest.us.signoz.cloud:443 
-
- IN -	ingest.in.signoz.cloud:443 
-
- EU - ingest.eu.signoz.cloud:443 
-
+- `<path>` - Update it to the path of your downloaded Java JAR agent.
 
 ---
 
@@ -64,11 +52,10 @@ wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releas
 Step 2. Run your application
 
 ```bash
-java -javaagent:<path>/opentelemetry-javaagent.jar -jar <myapp>.jar
+java -javaagent:<path>/opentelemetry-javaagent.jar -jar {{MYAPP}}.jar
 ```
 
-- `<myapp>` is the name of your application jar file
-- `path` - Update it to the path of your downloaded Java JAR agent.
+- `<path>` - Update it to the path of your downloaded Java JAR agent.
 
 ---
 
@@ -87,11 +74,10 @@ wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releas
 Step 2. Run your application
    
 ```bash
-java -javaagent:<path>/opentelemetry-javaagent.jar -jar <myapp>.jar
+java -javaagent:<path>/opentelemetry-javaagent.jar -jar {{MYAPP}}.jar
 ```
 
-- `<myapp>` is the name of your application jar file
-- `path` - Update it to the path of your downloaded Java JAR agent.
+- `<path>` - Update it to the path of your downloaded Java JAR agent.
 
 Step 3. Make sure to dockerise your application along with OpenTelemetry instrumentation.
   

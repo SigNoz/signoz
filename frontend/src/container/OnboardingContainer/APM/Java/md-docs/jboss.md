@@ -36,24 +36,13 @@ Update `JAVA_OPTS` environment variable with configurations required to send dat
 
 ```bash
 JAVA_OPTS="-javaagent:/<path>/opentelemetry-javaagent.jar
--Dotel.exporter.otlp.endpoint=https://ingest.{region}.signoz.cloud:443
--Dotel.exporter.otlp.headers="signoz-access-token=<SIGNOZ_INGESTION_KEY>"
--Dotel.resource.attributes="service.name=<app_name>""
+-Dotel.exporter.otlp.endpoint=https://ingest.{{REGION}}.signoz.cloud:443
+-Dotel.exporter.otlp.headers="signoz-access-token={{SIGNOZ_INGESTION_KEY}}"
+-Dotel.resource.attributes="service.name={{MYAPP}}""
 ```
 You need to replace the following things based on your environment:
 
 - `<path>` - Update it to the path of your downloaded Java JAR agent.
-- `<app_name>` is the name for your application
-- `<SIGNOZ_INGESTION_KEY>` is the API token provided by SigNoz. You can find your ingestion key from SigNoz cloud account details sent on your email.
-
-Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
-
-
- US -	ingest.us.signoz.cloud:443 
-
- IN -	ingest.in.signoz.cloud:443 
-
- EU - ingest.eu.signoz.cloud:443 
 
    
 Step 4. [Optional] Write the output/logs of standalone.sh script to a file nohup.out as a background thread
@@ -86,11 +75,11 @@ Step 3. Update `JAVA_OPTS` environment variable
 Update `JAVA_OPTS` environment variable with configurations required to send data to SigNoz cloud in your configuration file.
 
 ```bash
-JAVA_OPTS="-javaagent:/path/opentelemetry-javaagent.jar"
+JAVA_OPTS="-javaagent:/<path>/opentelemetry-javaagent.jar"
 ```
 
 where,
-- `path` - Update it to the path of your downloaded Java JAR agent.
+- `<path>` - Update it to the path of your downloaded Java JAR agent.
 
 ---
 
@@ -117,11 +106,11 @@ Step 3. Update `JAVA_OPTS` environment variable
 Update `JAVA_OPTS` environment variable with configurations required to send data to SigNoz cloud in your configuration file.
 
 ```bash
-JAVA_OPTS="-javaagent:/path/opentelemetry-javaagent.jar"
+JAVA_OPTS="-javaagent:/<path>/opentelemetry-javaagent.jar"
 ```
 
 where,
-- `path` - Update it to the path of your downloaded Java JAR agent.
+- `<path>` - Update it to the path of your downloaded Java JAR agent.
 
 
 Step 4. Make sure to dockerise your application along with OpenTelemetry instrumentation.

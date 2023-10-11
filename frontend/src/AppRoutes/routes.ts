@@ -11,6 +11,7 @@ import {
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
+	IngestionSettings,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
@@ -213,6 +214,13 @@ const routes: AppRoutes[] = [
 		component: OrganizationSettings,
 		isPrivate: true,
 		key: 'ORG_SETTINGS',
+	},
+	{
+		path: ROUTES.INGESTION_SETTINGS,
+		exact: true,
+		component: IngestionSettings,
+		isPrivate: true,
+		key: 'INGESTION_SETTINGS',
 	},
 	{
 		path: ROUTES.MY_SETTINGS,

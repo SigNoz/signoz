@@ -24,6 +24,7 @@ const ROUTES = {
 	VERSION: '/status',
 	MY_SETTINGS: '/my-settings',
 	ORG_SETTINGS: '/settings/org-settings',
+	INGESTION_SETTINGS: '/settings/ingestion-settings',
 	SOMETHING_WENT_WRONG: '/something-went-wrong',
 	UN_AUTHORIZED: '/un-authorized',
 	NOT_FOUND: '/not-found',
