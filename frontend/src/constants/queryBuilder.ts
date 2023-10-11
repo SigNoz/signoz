@@ -277,35 +277,24 @@ export const QUERY_BUILDER_SEARCH_VALUES = {
 };
 
 export const OPERATORS = {
-	IN: 'IN',
-	in: 'in',
+	IN: 'in',
 	NIN: 'nin',
-	not_in: 'nin',
 	LIKE: 'like',
-	like: 'like',
 	NLIKE: 'nlike',
 	REGEX: 'regex',
-	regex: 'regex',
 	NREGEX: 'nregex',
-	nregex: 'nregex',
 	'=': '=',
 	'!=': '!=',
 	EXISTS: 'exists',
-	exists: 'exists',
 	NOT_EXISTS: 'nexists',
-	not_exists: 'nexists',
 	CONTAINS: 'contains',
-	contains: 'contains',
 	NOT_CONTAINS: 'ncontains',
-	not_contains: 'ncontains',
 	'>=': '>=',
 	'>': '>',
 	'<=': '<=',
 	'<': '<',
-	HAS: 'HAS',
-	has: 'has',
-	NHAS: 'NHAS',
-	nhas: 'nhas',
+	HAS: 'has',
+	NHAS: 'nhas',
 };
 
 export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
