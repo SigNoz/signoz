@@ -74,7 +74,6 @@ export const useTag = (
 	const handleAddTag = useCallback(
 		(value: string): void => {
 			const { tagKey } = getTagToken(value);
-
 			const [key, id] = tagKey.split('-');
 
 			if (id === 'custom') {
