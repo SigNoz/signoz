@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
@@ -7,7 +8,7 @@ import {
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import useDebounceValue from 'hooks/useDebounce';
 import { isEqual, uniqWith } from 'lodash-es';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 import {
 	BaseAutocompleteData,
@@ -38,7 +39,6 @@ export const useFetchKeysAndValues = (
 	query: IBuilderQuery,
 	searchKey: string,
 ): IuseFetchKeysAndValues => {
-	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [sourceKeys, setSourceKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
 
@@ -59,21 +59,14 @@ export const useFetchKeysAndValues = (
 
 	const searchParams = useDebounceValue(memoizedSearchParams, DEBOUNCE_DELAY);
 
-	const isQueryEnabled = useMemo(
-		() =>
-			query.dataSource === DataSource.METRICS
-				? !!query.aggregateOperator &&
-				  !!query.dataSource &&
-				  !!query.aggregateAttribute.dataType
-				: true,
-		[
-			query.aggregateAttribute.dataType,
-			query.aggregateOperator,
-			query.dataSource,
-		],
-	);
+	const isQueryEnabled =
+		query.dataSource === DataSource.METRICS
+			? !!query.aggregateOperator &&
+			  !!query.dataSource &&
+			  !!query.aggregateAttribute.dataType
+			: true;
 
-	const { data, isFetching, status } = useGetAggregateKeys(
+	const { isFetching } = useGetAggregateKeys(
 		{
 			searchText: searchKey,
 			dataSource: query.dataSource,
@@ -81,7 +74,17 @@ export const useFetchKeysAndValues = (
 			aggregateAttribute: query.aggregateAttribute.key,
 			tagType: query.aggregateAttribute.type ?? null,
 		},
-		{ queryKey: [searchParams], enabled: isQueryEnabled },
+		{
+			queryKey: [searchParams],
+			enabled: isQueryEnabled,
+			onSuccess: (data) => {
+				if (data && data.payload) {
+					setSourceKeys((prevState) =>
+						uniqWith([...(data.payload.attributeKeys ?? []), ...prevState], isEqual),
+					);
+				}
+			},
+		},
 	);
 
 	/**
@@ -135,27 +138,15 @@ export const useFetchKeysAndValues = (
 	const clearFetcher = useRef(handleFetchOption).current;
 
 	// debounces the fetch function to avoid excessive API calls
-	useDebounce(() => clearFetcher(searchValue, query, keys), 750, [
+	useDebounce(() => clearFetcher(searchValue, query, sourceKeys), 750, [
 		clearFetcher,
 		searchValue,
 		query,
-		keys,
+		searchKey,
 	]);
 
-	// update the fetched keys when the fetch status changes
-	useEffect(() => {
-		if (status === 'success' && data?.payload?.attributeKeys) {
-			setKeys(data.payload.attributeKeys);
-			setSourceKeys((prevState) =>
-				uniqWith([...(data.payload.attributeKeys ?? []), ...prevState], isEqual),
-			);
-		} else {
-			setKeys([]);
-		}
-	}, [data?.payload?.attributeKeys, status]);
-
 	return {
-		keys,
+		keys: sourceKeys,
 		results,
 		isFetching,
 		sourceKeys,
