@@ -134,25 +134,11 @@ From VMs, there are two ways to send data to SigNoz Cloud.
    The run command must have some environment variables to send data to SigNoz cloud. The run command:
     
     ```bash
-    SERVICE_NAME=goApp INSECURE_MODE=false OTEL_EXPORTER_OTLP_HEADERS=signoz-access-token=<SIGNOZ-INGESTION-TOKEN> OTEL_EXPORTER_OTLP_ENDPOINT=ingest.{region}.signoz.cloud:443 go run main.go
-    ```
-
-    We can replace the placeholders based on our environment. 
+    SERVICE_NAME={{MYAPP}} INSECURE_MODE=false OTEL_EXPORTER_OTLP_HEADERS=signoz-access-token={{SIGNOZ_INGESTION_KEY}} OTEL_EXPORTER_OTLP_ENDPOINT=ingest.{{REGION}}.signoz.cloud:443 go run main.go
+    ```  
     
-    `SERVICE_NAME`: goGinApp (you can name it whatever you want)
-
-    `OTEL_EXPORTER_OTLP_HEADERS`: `signoz-access-token=<SIGNOZ-INGESTION-TOKEN>`. Update `<SIGNOZ-INGESTION-TOKEN>` with the ingestion token provided by SigNoz
-    
-    `OTEL_EXPORTER_OTLP_ENDPOINT`: ingest.{region}.signoz.cloud:443. Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary accordingly.
-
-    
-    US - ingest.us.signoz.cloud:443 
-
-    IN - ingest.in.signoz.cloud:443 
-
-    EU - ingest.eu.signoz.cloud:443 
-
-
+    If you want to update your `service_name`, you can modify the `SERVICE_NAME` variable.
+  
 ---
 
 #### **Send traces via OTel Collector binary**
@@ -285,11 +271,10 @@ You can find instructions to install OTel Collector binary [here](https://signoz
    The run command must have some environment variables to send data to SigNoz. The run command:
     
     ```bash
-    SERVICE_NAME=goGinApp INSECURE_MODE=true OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317 go run main.go
+    SERVICE_NAME={{MYAPP}} INSECURE_MODE=true OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317 go run main.go
     ```
     
     If you want to update your `service_name`, you can modify the `SERVICE_NAME` variable.
-    `SERVICE_NAME`: goGinApp (you can name it whatever you want)
 
 ---
 
@@ -423,8 +408,7 @@ Once you have set up OTel Collector agent, you can proceed with OpenTelemetry Go
    The run command must have some environment variables to send data to SigNoz. The run command:
     
     ```bash
-    SERVICE_NAME=goGinApp INSECURE_MODE=true OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317 go run main.go
+    SERVICE_NAME={{MYAPP}} INSECURE_MODE=true OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317 go run main.go
     ```
     
     If you want to update your `service_name`, you can modify the `SERVICE_NAME` variable.
-    `SERVICE_NAME`: goGinApp (you can name it whatever you want)

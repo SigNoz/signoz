@@ -31,22 +31,12 @@ If you run your `.war` package by putting in `webapps` folder, just add `setenv.
 
 ```bash
 export CATALINA_OPTS="$CATALINA_OPTS -javaagent:/<path>/opentelemetry-javaagent.jar"
-export OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>"
-export OTEL_EXPORTER_OTLP_ENDPOINT=https://ingest.{region}.signoz.cloud:443
-export OTEL_RESOURCE_ATTRIBUTES=service.name=<app_name>
+export OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}"
+export OTEL_EXPORTER_OTLP_ENDPOINT=https://ingest.{{REGION}}.signoz.cloud:443
+export OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}}
 ```
 
-- `<app_name>` is the name for your application
 - `<path>` - update it to the path of your downloaded Java JAR agent.
-- `<SIGNOZ_INGESTION_KEY>` is the API token provided by SigNoz. You can find your ingestion key from SigNoz cloud account details sent on your email.
-
-Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary accordingly.
-
- US -	ingest.us.signoz.cloud:443 
-
- IN -	ingest.in.signoz.cloud:443 
-
- EU - ingest.eu.signoz.cloud:443 
 
 ---
 
