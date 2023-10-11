@@ -102,6 +102,10 @@ export const OrganizationSettings = Loadable(
 	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
 );
 
+export const IngestionSettings = Loadable(
+	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
+);
+
 export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
 );
