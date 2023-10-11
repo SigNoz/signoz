@@ -69,20 +69,23 @@ const getChartData = ({
 		.reduce((a, b) => [...a, ...b], []);
 
 	const alldata = response
-		.map((e) => e.map((e) => e.second))
-		.reduce((a, b) => [...a, ...b], [])
+		.flat()
+		.map((e) => e.second)
 		.sort((a, b) => {
-			const len = a.length;
-			for (let i = 0; i < len; i += 1) {
-				if ((a[i] || 0) > (b[i] || 0)) return 1;
-				if ((a[i] || 0) < (b[i] || 0)) return -1;
-			}
-			return 0;
-		})
-		.reverse()
-		.slice(0, limit);
+			const len = Math.min(a.length, b.length); // min length of both array
 
-	const updatedDataSet = alldata.map((e, index) => {
+			for (let i = 0; i < len; i += 1) {
+				const diff = (a[i] || 0) - (b[i] || 0); // calculating the difference
+				if (diff !== 0) return diff;
+			}
+
+			return a.length - b.length;
+		})
+		.reverse();
+
+	const updatedSortedData = isWarningLimit ? alldata.slice(0, limit) : alldata;
+
+	const updatedDataSet = updatedSortedData.map((e, index) => {
 		const datasetBaseConfig = {
 			index,
 			label: allLabels[index],
