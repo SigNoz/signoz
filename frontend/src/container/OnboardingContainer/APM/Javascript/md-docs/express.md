@@ -28,7 +28,7 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
 
 Step 2. Create tracing.js file
 
-You need to configure the endpoint for SigNoz cloud in this file. You also need to configure your service name. In this example, we have used `node_app`.
+This file will have your SigNoz cloud endpoint and service name configued as values of `url` and `SERVICE_NAME` respectively.
 
 ```js
 // tracing.js
@@ -44,7 +44,7 @@ const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventi
 // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables
 
 const exporterOptions = {
-  url: 'https://ingest.{region}.signoz.cloud:443/v1/traces'
+  url: 'https://ingest.{{REGION}}.signoz.cloud:443/v1/traces'
 }
 
 const traceExporter = new OTLPTraceExporter(exporterOptions);
@@ -52,7 +52,7 @@ const sdk = new opentelemetry.NodeSDK({
   traceExporter,
   instrumentations: [getNodeAutoInstrumentations()],
   resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: 'node_app'
+    [SemanticResourceAttributes.SERVICE_NAME]: '{{MYAPP}}'
   })
 });
 
@@ -69,23 +69,12 @@ process.on('SIGTERM', () => {
 });
 ```
 
-Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
-
- US -	ingest.us.signoz.cloud:443/v1/traces 
-
- IN -	ingest.in.signoz.cloud:443/v1/traces 
-
- EU - ingest.eu.signoz.cloud:443/v1/traces 
-
 Step 3. Run the application
 
 Make sure you set the `OTEL_EXPORTER_OTLP_HEADERS` env as follows
 ```bash
-OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>" node -r ./tracing.js app.js
+OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}" node -r ./tracing.js app.js
 ```
-
-`<SIGNOZ_INGESTION_KEY>` is the API token provided by SigNoz. You can find your ingestion key from SigNoz cloud account details sent on your email.
-
 ---
 
 #### **Send traces via OTel Collector binary**
@@ -106,7 +95,7 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
 
 Step 2. Create tracing.js file
 
-You need to configure your service name. In this example, we have used `node_app`.
+This file will have your service name configued as value for `SERVICE_NAME`.
 
 ```js
 // tracing.js
@@ -127,7 +116,7 @@ const sdk = new opentelemetry.NodeSDK({
   traceExporter,
   instrumentations: [getNodeAutoInstrumentations()],
   resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: 'node_app'
+    [SemanticResourceAttributes.SERVICE_NAME]: '{{MYAPP}}'
   })
 });
 
@@ -167,7 +156,7 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
 
 Step 2. Create tracing.js file
 
-You also need to configure your service name. In this example, we have used `node_app`.
+This file will have your service name configued as value for `SERVICE_NAME`.
 
 ```js
 // tracing.js
@@ -188,7 +177,7 @@ const sdk = new opentelemetry.NodeSDK({
   traceExporter,
   instrumentations: [getNodeAutoInstrumentations()],
   resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: 'node_app'
+    [SemanticResourceAttributes.SERVICE_NAME]: '{{MYAPP}}'
   })
 });
 
