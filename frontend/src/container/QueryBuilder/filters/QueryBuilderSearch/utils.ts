@@ -8,7 +8,7 @@ const operators = /=|!=|>=|>|<=|<$/;
 // eslint-disable-next-line no-useless-escape
 export const tagRegexpV1 = /^\s*(.*?)\s*(=|!=|>=|>|<=)\s*(.*)$/g;
 
-export const tagRegexpV2 = /^\s*(.+?)\s+(IN|in|nin|NIN|LIKE|like|NLIKE|nlike|REGEX|regex|NREGEX|nregex|EXISTS|exists|NEXISTS|nexists|CONTAINS|contains|NCONTAINS|ncontains|HAS|has|NHAS|nhas|=|!=|>=|>|<=|<)\s*(.*)$/g;
+export const tagRegexpV2 = /^\s*(.+?)\s+(IN|in|NIN|nin|LIKE|like|NLIKE|nlike|REGEX|regex|NREGEX|nregex|EXISTS|exists|NEXISTS|nexists|CONTAINS|contains|NCONTAINS|ncontains|HAS|has|NHAS|nhas|=|!=|>=|>|<=|<)\s*(.*)$/g;
 
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
@@ -16,12 +16,6 @@ export function isInNInOperator(value: string): boolean {
 
 function endsWithOperator(inputString: string): boolean {
 	return operators.test(inputString);
-}
-
-interface ITagToken {
-	tagKey: string;
-	tagOperator: string;
-	tagValue: string[];
 }
 
 export function getMatchRegex(str: string): RegExp {
@@ -32,13 +26,18 @@ export function getMatchRegex(str: string): RegExp {
 	return tagRegexpV2;
 }
 
+interface ITagToken {
+	tagKey: string;
+	tagOperator: string;
+	tagValue: string[];
+}
+
 export function getTagToken(tag: string): ITagToken {
 	const matches = tag?.matchAll(getMatchRegex(tag));
 	const [match] = matches ? Array.from(matches) : [];
 
 	if (match) {
 		const [, matchTagKey, matchTagOperator, matchTagValue] = match;
-
 		return {
 			tagKey: matchTagKey,
 			tagOperator: matchTagOperator,
@@ -69,11 +68,11 @@ export function getRemovePrefixFromKey(tag: string): string {
 }
 
 export function getOperatorValue(op: string): string {
-	return op.toLocaleLowerCase();
+	return op.toLowerCase();
 }
 
 export function getOperatorFromValue(op: string): string {
-	return op.toLocaleLowerCase();
+	return op.toLowerCase();
 }
 
 export function replaceStringWithMaxLength(
