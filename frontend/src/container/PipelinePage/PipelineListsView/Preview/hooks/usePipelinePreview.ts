@@ -2,6 +2,7 @@ import simulatePipelineProcessing, {
 	PipelineSimulationResponse,
 } from 'api/pipeline/preview';
 import { AxiosError } from 'axios';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery } from 'react-query';
 import { ILog } from 'types/api/logs/log';
 import { PipelineData } from 'types/api/pipeline/def';
@@ -35,7 +36,7 @@ const usePipelinePreview = ({
 				logs: simulationInput,
 				pipelines: [pipeline],
 			}),
-		queryKey: ['logs-pipeline-preview', pipeline, inputLogs],
+		queryKey: [REACT_QUERY_KEY.LOGS_PIPELINE_PREVIEW, pipeline, inputLogs],
 		retry: false,
 	});
 
