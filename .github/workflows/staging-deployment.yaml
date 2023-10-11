@@ -26,6 +26,7 @@ jobs:
             echo "GITHUB_SHA: ${GITHUB_SHA}"
             export DOCKER_TAG="${GITHUB_SHA:0:7}" # needed for child process to access it
             export OTELCOL_TAG="main"
+            export PATH="/usr/local/go/bin/:$PATH" # needed for Golang to work
             docker system prune --force
             docker pull signoz/signoz-otel-collector:main
             cd ~/signoz

@@ -4,7 +4,7 @@ import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import { PipelineIndexIcon } from '../AddNewProcessor/styles';
 import { ColumnDataStyle, ListDataStyle, ProcessorIndexIcon } from '../styles';
-import PipelineFilterPreview from './PipelineFilterPreview';
+import PipelineFilterSummary from './PipelineFilterSummary';
 
 const componentMap: ComponentMap = {
 	orderId: ({ record }) => <PipelineIndexIcon>{record}</PipelineIndexIcon>,
@@ -15,7 +15,7 @@ const componentMap: ComponentMap = {
 	),
 	id: ({ record }) => <ProcessorIndexIcon>{record}</ProcessorIndexIcon>,
 	name: ({ record }) => <ListDataStyle>{record}</ListDataStyle>,
-	filter: ({ record }) => <PipelineFilterPreview filter={record} />,
+	filter: ({ record }) => <PipelineFilterSummary filter={record} />,
 };
 
 function TableComponents({

@@ -233,6 +233,8 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	const handleSubmit = (): void => {
 		(async (): Promise<void> => {
+			const { hostname } = window.location;
+
 			try {
 				const values = form.getFieldsValue();
 				setLoading(true);
@@ -258,7 +260,11 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					await commonHandler(
 						values,
 						async (): Promise<void> => {
-							if (isOnboardingEnabled) {
+							if (
+								isOnboardingEnabled &&
+								hostname &&
+								hostname.endsWith('signoz.cloud')
+							) {
 								history.push(ROUTES.GET_STARTED);
 							} else {
 								history.push(ROUTES.APPLICATION);

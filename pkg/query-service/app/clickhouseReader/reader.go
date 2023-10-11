@@ -3583,8 +3583,8 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 	return nil
 }
 
-func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.GetLogsResponse, *model.ApiError) {
-	response := []model.GetLogsResponse{}
+func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.SignozLog, *model.ApiError) {
+	response := []model.SignozLog{}
 	fields, apiErr := r.GetLogFields(ctx)
 	if apiErr != nil {
 		return nil, apiErr
@@ -3680,7 +3680,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 			}
 			tmpQuery = fmt.Sprintf("%s order by timestamp desc, id desc limit 100", tmpQuery)
 			zap.S().Debug(tmpQuery)
-			response := []model.GetLogsResponse{}
+			response := []model.SignozLog{}
 			err := r.db.Select(ctx, &response, tmpQuery)
 			if err != nil {
 				zap.S().Error(err)
@@ -4704,7 +4704,7 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 			tmpQuery = query + tmpQuery + " order by timestamp desc, id desc limit 100"
 
 			// using the old structure since we can directly read it to the struct as use it.
-			response := []model.GetLogsResponse{}
+			response := []model.SignozLog{}
 			err := r.db.Select(ctx, &response, tmpQuery)
 			if err != nil {
 				zap.S().Error(err)

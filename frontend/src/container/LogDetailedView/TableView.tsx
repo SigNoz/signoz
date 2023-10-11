@@ -164,6 +164,8 @@ function TableView({
 			width: 70,
 			ellipsis: false,
 			render: (field, record): JSX.Element => {
+				const textToCopy = field.slice(1, -1);
+
 				if (record.field === 'body') {
 					const parsedBody = recursiveParseJSON(field);
 					if (!isEmpty(parsedBody)) {
@@ -174,7 +176,7 @@ function TableView({
 				}
 
 				return (
-					<CopyClipboardHOC textToCopy={field}>
+					<CopyClipboardHOC textToCopy={textToCopy}>
 						<span style={{ color: orange[6] }}>{field}</span>
 					</CopyClipboardHOC>
 				);

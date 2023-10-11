@@ -1,4 +1,6 @@
 import { Time } from 'container/TopNav/DateTimeSelection/config';
+import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import getStep from 'lib/getStep';
 
 // toChartInterval converts eval window to chart selection time interval
 export const toChartInterval = (evalWindow: string | undefined): Time => {
@@ -20,4 +22,16 @@ export const toChartInterval = (evalWindow: string | undefined): Time => {
 		default:
 			return '5min';
 	}
+};
+
+export const getUpdatedStepInterval = (evalWindow?: string): number => {
+	const { start, end } = getStartEndRangeTime({
+		type: 'GLOBAL_TIME',
+		interval: toChartInterval(evalWindow),
+	});
+	return getStep({
+		start,
+		end,
+		inputFormat: 'ns',
+	});
 };

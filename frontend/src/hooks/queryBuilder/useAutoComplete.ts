@@ -1,8 +1,8 @@
 import {
+	getMatchRegex,
 	getRemovePrefixFromKey,
 	getTagToken,
 	replaceStringWithMaxLength,
-	tagRegexp,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
 import { parse } from 'papaparse';
@@ -33,7 +33,7 @@ export const useAutoComplete = (
 		searchKey,
 	);
 
-	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
+	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue);
 
 	const handleSearch = (value: string): void => {
 		const prefixFreeValue = getRemovePrefixFromKey(getTagToken(value).tagKey);
@@ -58,7 +58,7 @@ export const useAutoComplete = (
 		(value: string): void => {
 			if (isMulti) {
 				setSearchValue((prev: string) => {
-					const matches = prev?.matchAll(tagRegexp);
+					const matches = prev?.matchAll(getMatchRegex(prev));
 					const [match] = matches ? Array.from(matches) : [];
 					const [, , , matchTagValue] = match;
 					const data = parse(matchTagValue).data.flat();

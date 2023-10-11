@@ -81,8 +81,8 @@ export const useOptions = (
 	const getKeyOperatorOptions = useCallback(
 		(key: string) => {
 			const operatorsOptions = operators?.map((operator) => ({
-				value: `${key} ${operator} `,
-				label: `${key} ${operator} `,
+				value: `${key} ${operator.toLowerCase()} `,
+				label: `${key} ${operator.toLowerCase()} `,
 			}));
 			if (whereClauseConfig) {
 				return [
@@ -148,26 +148,28 @@ export const useOptions = (
 
 	return useMemo(
 		() =>
-			(
-				options.filter(
+			options
+				.filter(
 					(option, index, self) =>
 						index ===
 							self.findIndex(
 								(o) => o.label === option.label && o.value === option.value, // to remove duplicate & empty options from list
 							) && option.value !== '',
-				) || []
-			).map((option) => {
-				const { tagValue } = getTagToken(searchValue);
-				if (isMulti) {
-					return {
-						...option,
-						selected: tagValue
-							.filter((i) => i.trim().replace(/^\s+/, '') === option.value)
-							.includes(option.value),
-					};
-				}
-				return option;
-			}),
+				)
+				.map((option) => {
+					const { tagValue } = getTagToken(searchValue);
+					if (isMulti) {
+						return {
+							...option,
+							selected: Array.isArray(tagValue)
+								? tagValue
+										?.filter((i) => i.trim().replace(/^\s+/, '') === option.value)
+										?.includes(option.value)
+								: String(tagValue).includes(option.value),
+						};
+					}
+					return option;
+				}),
 		[isMulti, options, searchValue],
 	);
 };

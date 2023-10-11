@@ -50,24 +50,13 @@ Please make sure that you have installed all the dependencies of your applicatio
 Step 4. Run your application
 
 ```bash
-OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
-OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.{region}.signoz.cloud:443" \
-OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=<SIGNOZ_INGESTION_KEY>" \
+OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \
+OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.{{REGION}}.signoz.cloud:443" \
+OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}" \
 OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
 opentelemetry-instrument <your_run_command>
 ```
-
-- `<service_name>` is the name of the service you want
 - <your_run_command> can be `python3 app.py` or `python manage.py runserver --noreload`
-- Replace `<SIGNOZ_INGESTION_KEY>` with the api token provided by SigNoz. You can find it in the email sent by SigNoz with your cloud account details.
-
-Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
-
- US -	ingest.us.signoz.cloud:443 
-
- IN -	ingest.in.signoz.cloud:443 
-
- EU - ingest.eu.signoz.cloud:443 
 
 Note:
 Don’t run app in reloader/hot-reload mode as it breaks instrumentation. For example, you can disable the auto reload with `--noreload`.
@@ -103,12 +92,10 @@ opentelemetry-bootstrap --action=install
 Step 4. To run your application and send data to collector in same VM
 
 ```bash
-OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
+OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" \
-OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your run command>
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your_run_command>
 ```
-
-- <service_name> is the name of service you want
 
 - <your_run_command>* can be `python3 app.py` or `python manage.py runserver --noreload`
 
@@ -149,12 +136,10 @@ opentelemetry-bootstrap --action=install
 Step 4. Run your application:
 
 ```bash
-OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
+OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" \
-OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your run command>
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your_run_command>
 ```
-
-<service_name> is the name of service you want
 
 <your_run_command> can be `python3 app.py` or `python manage.py runserver --noreload`
 
