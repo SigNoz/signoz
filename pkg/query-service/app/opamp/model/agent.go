@@ -3,10 +3,10 @@ package model
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/open-telemetry/opamp-go/protobufs"
@@ -70,12 +70,6 @@ func (agent *Agent) Upsert() error {
 	}
 
 	return nil
-}
-
-func (agent *Agent) UpdateStatus(statusMsg *protobufs.AgentToServer, response *protobufs.ServerToAgent) {
-	agent.mux.Lock()
-	defer agent.mux.Unlock()
-	agent.processStatusUpdate(statusMsg, response)
 }
 
 // extracts lb exporter support flag from agent description. the flag
@@ -208,9 +202,29 @@ func (agent *Agent) hasCapability(capability protobufs.AgentCapabilities) bool {
 	return agent.Status.Capabilities&uint64(capability) != 0
 }
 
+type RecommendedConfigGenerator interface {
+	RecommendAgentConfig(baseConfYaml []byte) (
+		recommendedConfYaml []byte,
+		// Opaque id for recommended config, used for reporting deployment status updates
+		configId string,
+		err error,
+	)
+}
+
+func (agent *Agent) UpdateStatus(
+	statusMsg *protobufs.AgentToServer,
+	response *protobufs.ServerToAgent,
+	configRecommender RecommendedConfigGenerator,
+) {
+	agent.mux.Lock()
+	defer agent.mux.Unlock()
+	agent.processStatusUpdate(statusMsg, response, configRecommender)
+}
+
 func (agent *Agent) processStatusUpdate(
 	newStatus *protobufs.AgentToServer,
 	response *protobufs.ServerToAgent,
+	configRecommender RecommendedConfigGenerator,
 ) {
 	// We don't have any status for this Agent, or we lost the previous status update from the Agent, so our
 	// current status is not up-to-date.
@@ -242,7 +256,7 @@ func (agent *Agent) processStatusUpdate(
 		// Agent description is changed.
 
 		// We need to recalculate the config.
-		configChanged = agent.updateRemoteConfig()
+		configChanged = agent.updateRemoteConfig(configRecommender)
 	}
 
 	// If remote config is changed and different from what the Agent has then
@@ -259,23 +273,27 @@ func (agent *Agent) processStatusUpdate(
 	agent.updateEffectiveConfig(newStatus, response)
 }
 
-func (agent *Agent) updateRemoteConfig() bool {
-	hash := sha256.New()
-
+func (agent *Agent) updateRemoteConfig(
+	configRecommender RecommendedConfigGenerator,
+) bool {
 	cfg := protobufs.AgentRemoteConfig{
 		Config: &protobufs.AgentConfigMap{
 			ConfigMap: map[string]*protobufs.AgentConfigFile{},
 		},
 	}
 
-	// Calculate the hash.
-	for k, v := range cfg.Config.ConfigMap {
-		hash.Write([]byte(k))
-		hash.Write(v.Body)
-		hash.Write([]byte(v.ContentType))
+	newConfig, confId, err := configRecommender.RecommendAgentConfig([]byte(agent.EffectiveConfig))
+	if err != nil {
+		zap.S().Errorf("could not generate config recommendation for agent %d: %w", agent.ID, err)
+		return false
 	}
 
-	cfg.ConfigHash = hash.Sum(nil)
+	configName := "otel-collector-config.yaml"
+	cfg.Config.ConfigMap[configName] = &protobufs.AgentConfigFile{
+		Body:        newConfig,
+		ContentType: "application/x-yaml",
+	}
+	cfg.ConfigHash = []byte(confId)
 
 	configChanged := !isEqualRemoteConfig(agent.remoteConfig, &cfg)
 
