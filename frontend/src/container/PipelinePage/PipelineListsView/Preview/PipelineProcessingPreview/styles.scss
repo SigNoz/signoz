@@ -1,11 +1,12 @@
-.logs-filter-preview-header {
+.pipeline-preview-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 8px;
+  padding-bottom: 0.4rem;
+  margin: 1.2rem 0 0.4rem 0;
 }
 
-.logs-filter-preview-content {
+.pipeline-preview-logs-container {
   position: relative;
   display: flex;
   justify-content: center;

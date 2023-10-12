@@ -172,7 +172,7 @@ function PipelineListsView({
 					align: 'center',
 					render: (_value, record): JSX.Element => (
 						<PipelineActions
-							isPipelineAction
+							pipeline={record}
 							editAction={pipelineEditAction(record)}
 							deleteAction={pipelineDeleteAction(record)}
 						/>
