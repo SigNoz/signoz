@@ -152,6 +152,7 @@ jobs:
           echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > frontend/.env
           echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> frontend/.env
           echo 'CLARITY_PROJECT_ID="${{ secrets.CLARITY_PROJECT_ID }}"' >> frontend/.env
+          echo 'FRONTEND_CHART_LIMIT="${{ secrets.FRONTEND_CHART_LIMIT }}"' >> frontend/.env
       - name: Install dependencies
         working-directory: frontend
         run: yarn install
