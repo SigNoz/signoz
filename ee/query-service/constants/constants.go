@@ -9,6 +9,7 @@ const (
 )
 
 var LicenseSignozIo = "https://license.signoz.io/api/v1"
+var LicenseAPIKey = GetOrDefaultEnv("SIGNOZ_LICENSE_API_KEY", "")
 
 var SpanLimitStr = GetOrDefaultEnv("SPAN_LIMIT", "5000")
 
