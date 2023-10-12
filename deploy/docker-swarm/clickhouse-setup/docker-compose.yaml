@@ -33,11 +33,13 @@ x-clickhouse-defaults: &clickhouse-defaults
       soft: 262144
       hard: 262144
 
-x-clickhouse-depend: &clickhouse-depend
+x-db-depend: &db-depend
   depends_on:
     - clickhouse
+    - otel-collector-migrator
     # - clickhouse-2
     # - clickhouse-3
+
 
 services:
   zookeeper-1:
@@ -181,7 +183,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-    <<: *clickhouse-depend
+    <<: *db-depend
 
   frontend:
     image: signoz/frontend:0.30.0
@@ -227,7 +229,21 @@ services:
       mode: global
       restart_policy:
         condition: on-failure
-    <<: *clickhouse-depend
+    <<: *db-depend
+
+    otel-collector-migrator:
+      image: signoz/signoz-otel-collector-migrator:0.79.7
+      deploy:
+        restart_policy:
+          condition: on-failure
+          delay: 5s
+      command:
+        - "--dsn=tcp://clickhouse:9000"
+      depends_on:
+        - clickhouse
+        # - clickhouse-2
+        # - clickhouse-3
+        
 
   otel-collector-metrics:
     image: signoz/signoz-otel-collector:0.79.7
@@ -246,7 +262,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-    <<: *clickhouse-depend
+    <<: *db-depend
 
   logspout:
     image: "gliderlabs/logspout:v3.2.14"
