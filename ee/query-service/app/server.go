@@ -217,6 +217,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		DialTimeout:                   serverOptions.DialTimeout,
 		AppDao:                        modelDao,
 		RulesManager:                  rm,
+		UsageManager:                  usageManager,
 		FeatureFlags:                  lm,
 		LicenseManager:                lm,
 		LogsParsingPipelineController: logParsingPipelineController,
