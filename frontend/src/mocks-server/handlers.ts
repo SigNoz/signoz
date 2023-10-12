@@ -37,22 +37,20 @@ export const handlers = [
 		),
 	),
 
-	rest.post(
-		'http://localhost/api/v1/api/v1/service/top_operations',
-		(req, res, ctx) =>
-			res(
-				ctx.status(200),
-				ctx.json([
-					{
-						p50: 310908500,
-						p95: 573294000,
-						p99: 749915500,
-						numCalls: 1626,
-						errorCount: 0,
-						name: 'HTTP GET /customer',
-					},
-				]),
-			),
+	rest.post('http://localhost/api/v1/service/top_operations', (req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json([
+				{
+					p50: 310908500,
+					p95: 573294000,
+					p99: 749915500,
+					numCalls: 1626,
+					errorCount: 0,
+					name: 'HTTP GET /customer',
+				},
+			]),
+		),
 	),
 
 	rest.get('http://localhost/api/v1/metric_meta', (req, res, ctx) =>

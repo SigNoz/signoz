@@ -1,6 +1,6 @@
 import { render, screen } from 'tests/test-utils';
 
-import ServiceOverview from '../Overview/ServiceOverview';
+import ServiceOverview from './ServiceOverview';
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -16,8 +16,8 @@ jest.mock('hooks/useFeatureFlag', () => ({
 	}),
 }));
 
-describe('ServiceOverview', () => {
-	test('Should render the component', () => {
+describe('ServiceOverview Testing', () => {
+	test('ServiceOverview component Should render the component', () => {
 		render(
 			<ServiceOverview
 				onDragSelect={jest.fn()}
