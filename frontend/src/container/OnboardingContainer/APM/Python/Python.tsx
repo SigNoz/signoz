@@ -1,13 +1,13 @@
 import './Python.styles.scss';
 
 import { Form, Input, Select } from 'antd';
-import { Code, Pre } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
 import { trackEvent } from 'utils/segmentAnalytics';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import { LangProps } from '../APM';
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import DjangoDocs from './md-docs/django.md';
 import FalconDocs from './md-docs/falcon.md';
@@ -24,13 +24,20 @@ const frameworksMap = {
 };
 
 export default function Python({
+	ingestionInfo,
 	activeStep,
-}: {
-	activeStep: number;
-}): JSX.Element {
+}: LangProps): JSX.Element {
 	const [selectedFrameWork, setSelectedFrameWork] = useState('django');
 	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(DjangoDocs);
 	const [form] = Form.useForm();
+	const serviceName = Form.useWatch('Service Name', form);
+
+	const variables = {
+		MYAPP: serviceName || '<service-name>',
+		SIGNOZ_INGESTION_KEY:
+			ingestionInfo.SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
+		REGION: ingestionInfo.REGION || 'region',
+	};
 
 	useEffect(() => {
 		// on language select
@@ -126,14 +133,10 @@ export default function Python({
 					</div>
 
 					<div className="content-container">
-						<ReactMarkdown
-							components={{
-								pre: Pre,
-								code: Code,
-							}}
-						>
-							{selectedFrameWorkDocs}
-						</ReactMarkdown>
+						<MarkdownRenderer
+							markdownContent={selectedFrameWorkDocs}
+							variables={variables}
+						/>
 					</div>
 				</div>
 			)}

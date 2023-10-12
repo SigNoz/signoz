@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install dependencies
         run: cd frontend && yarn install
       - name: Run ESLint
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Create .env file
         run: |
           echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > frontend/.env
@@ -54,12 +54,12 @@ jobs:
   build-query-service:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup golang
         uses: actions/setup-go@v4
         with:
           go-version: "1.21"
-      - name: Checkout code
-        uses: actions/checkout@v3
       - name: Run tests
         shell: bash
         run: |
@@ -72,12 +72,12 @@ jobs:
   build-ee-query-service:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Setup golang
         uses: actions/setup-go@v4
         with:
           go-version: "1.21"
-      - name: Checkout code
-        uses: actions/checkout@v3
       - name: Build EE query-service image
         shell: bash
         run: |

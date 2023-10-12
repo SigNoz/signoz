@@ -35,6 +35,8 @@ type Queries interface {
 
 	GetApdexSettings(ctx context.Context, services []string) ([]model.ApdexSettings, *model.ApiError)
 
+	GetIngestionKeys(ctx context.Context) ([]model.IngestionKey, *model.ApiError)
+
 	PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, model.BaseApiError)
 }
 
@@ -62,4 +64,6 @@ type Mutations interface {
 	UpdateUserGroup(ctx context.Context, userId, groupId string) *model.ApiError
 
 	SetApdexSettings(ctx context.Context, set *model.ApdexSettings) *model.ApiError
+
+	InsertIngestionKey(ctx context.Context, ingestionKey *model.IngestionKey) *model.ApiError
 }

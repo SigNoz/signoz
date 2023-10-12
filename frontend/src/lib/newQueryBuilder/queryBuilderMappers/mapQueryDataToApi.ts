@@ -1,4 +1,4 @@
-import { GetQueryResultsProps } from 'store/actions/dashboard/getQueryResults';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import {
 	MapData,
 	MapQueryDataToApiResult,
