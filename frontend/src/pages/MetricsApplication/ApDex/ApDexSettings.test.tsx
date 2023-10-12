@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import { axiosResponseThresholdData } from './__mock__/axiosResponseMockThresholdData';
 import ApDexSettings from './ApDexSettings';

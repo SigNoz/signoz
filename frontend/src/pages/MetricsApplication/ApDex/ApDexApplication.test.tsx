@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import user from '@testing-library/user-event';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import { APPLICATION_SETTINGS } from '../constants';
-import { thresholdMockData } from './__mock__/thresholdMockData';
 import ApDexApplication from './ApDexApplication';
 
 jest.mock('react-router-dom', () => ({
@@ -9,16 +9,6 @@ jest.mock('react-router-dom', () => ({
 	useParams: (): {
 		servicename: string;
 	} => ({ servicename: 'mockServiceName' }),
-}));
-
-jest.mock('hooks/apDex/useGetApDexSettings', () => ({
-	__esModule: true,
-	useGetApDexSettings: jest.fn().mockReturnValue({
-		data: thresholdMockData,
-		isLoading: false,
-		error: null,
-		refetch: jest.fn(),
-	}),
 }));
 
 jest.mock('hooks/apDex/useSetApDexSettings', () => ({
@@ -61,5 +51,19 @@ describe('ApDexApplication', () => {
 		await waitFor(() => {
 			expect(screen.queryByText(APPLICATION_SETTINGS)).not.toBeInTheDocument();
 		});
+	});
+
+	it('Should render the correct apdex score from api call', async () => {
+		render(<ApDexApplication />);
+
+		const settingButton = screen.getByText('Settings');
+		expect(settingButton).toBeInTheDocument();
+
+		await user.click(settingButton);
+
+		const inputField = await screen.findByRole('spinbutton');
+		const ariaValueNow = inputField.getAttribute('aria-valuenow');
+
+		expect(ariaValueNow).toBe('0.7');
 	});
 });
