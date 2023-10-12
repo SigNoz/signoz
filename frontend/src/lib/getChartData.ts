@@ -5,6 +5,8 @@ import { QueryData } from 'types/api/widgets/getQuery';
 import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
 
+export const limit = 30;
+
 const getChartData = ({
 	queryData,
 	createDataset,
@@ -14,10 +16,6 @@ const getChartData = ({
 	isWarning: boolean;
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 } => {
-	const limit = process.env.FRONTEND_CHART_LIMIT
-		? +process.env.FRONTEND_CHART_LIMIT
-		: 20;
-
 	const uniqueTimeLabels = new Set<number>();
 	queryData.forEach((data) => {
 		data.queryData.forEach((query) => {
@@ -118,7 +116,7 @@ const getChartData = ({
 
 	return {
 		data: updatedData,
-		isWarning: isWarningLimit && (updatedDataSet?.length || 0) > limit,
+		isWarning: isWarningLimit && (allLabels?.length || 0) > limit,
 	};
 };
 
