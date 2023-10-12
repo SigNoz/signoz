@@ -2,14 +2,16 @@ package opamp
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"os"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
+	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/rawbytes"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/stretchr/testify/require"
@@ -47,13 +49,36 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		},
 	)
 
-	require.Empty(RemoteConfigBody(agent1Conn.latestMsgFromServer()),
+	lastAgent1Msg := agent1Conn.latestMsgFromServer()
+	require.Nil(
+		lastAgent1Msg,
 		"Server should not recommend any config to the agent if the provider recommends agent's current config",
 	)
 
 	// The server should recommend provided config when the agent first connects.
+	tb.testConfigProvider.ZPagesEndpoint = "localhost:55555"
+	agent2Conn := &MockOpAmpConnection{}
+	tb.opampServer.OnMessage(
+		agent2Conn,
+		&protobufs.AgentToServer{
+			InstanceUid: "testAgent2",
+			EffectiveConfig: &protobufs.EffectiveConfig{
+				ConfigMap: &TestCollectorConfig,
+			},
+		},
+	)
+
+	configRecommendedToAgent2 := RemoteConfigBody(agent2Conn.latestMsgFromServer())
+	require.NotEmpty(
+		configRecommendedToAgent2,
+		"Server should not recommend any config to the agent if the provider recommends agent's current config",
+	)
+	tb.testConfigProvider.ValidateConfigHasRecommendedZPagesEndpoint(
+		t, []byte(configRecommendedToAgent2),
+	)
 
 	// The server should report deployment status to config provider
+	// on receiving updates from the agent.
 
 	// The server should rollout latest config to all agents when notified of
 	// a change by config provider
@@ -127,8 +152,6 @@ func (ta *TestAgentConfProvider) RecommendAgentConfig(baseConfYaml []byte) (
 		return nil, "", err
 	}
 
-	spew.Dump(conf)
-
 	conf["extensions"] = map[string]interface{}{
 		"zpages": map[string]interface{}{
 			"endpoint": ta.ZPagesEndpoint,
@@ -141,6 +164,26 @@ func (ta *TestAgentConfProvider) RecommendAgentConfig(baseConfYaml []byte) (
 	}
 	confId := ta.ZPagesEndpoint
 	return recommendedYaml, confId, nil
+}
+
+// Test helper for validating config recommendations
+func (tp *TestAgentConfProvider) ValidateConfigHasRecommendedZPagesEndpoint(
+	t *testing.T,
+	collectorConf []byte,
+) {
+	k := koanf.New(".")
+	err := k.Load(rawbytes.Provider(collectorConf), yaml.Parser())
+	require.Nil(t, err, "could not unmarshal collector config")
+
+	endpointInConf := k.String("extensions.zpages.endpoint")
+	expectedEndpoint := tp.ZPagesEndpoint
+	require.Equal(
+		t, expectedEndpoint, endpointInConf,
+		fmt.Sprintf(
+			"zpages endpoint not '%s' as expected in %s",
+			expectedEndpoint, endpointInConf,
+		),
+	)
 }
 
 func (ta *TestAgentConfProvider) ReportConfigDeploymentStatus(
@@ -198,6 +241,10 @@ func (conn *MockOpAmpConnection) RemoteAddr() net.Addr {
 
 // Returns recommended remote collector config yaml or ""
 func RemoteConfigBody(msg *protobufs.ServerToAgent) string {
+	if msg == nil {
+		return ""
+	}
+
 	collectorConfFiles := msg.RemoteConfig.Config.ConfigMap
 	if len(collectorConfFiles) < 1 {
 		return ""
