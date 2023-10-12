@@ -21,7 +21,12 @@ import { ILog } from 'types/api/logs/log';
 
 import ActionItem, { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
-import { flattenObject, jsonToDataNodes, recursiveParseJSON } from './utils';
+import {
+	flattenObject,
+	jsonToDataNodes,
+	recursiveParseJSON,
+	removeEscapeCharacters,
+} from './utils';
 
 // Fields which should be restricted from adding it to query
 const RESTRICTED_FIELDS = ['timestamp'];
@@ -58,7 +63,7 @@ function TableView({
 			.map((key) => ({
 				key,
 				field: key,
-				value: JSON.stringify(flattenLogData[key]),
+				value: removeEscapeCharacters(JSON.stringify(flattenLogData[key])),
 			}));
 
 	const onTraceHandler = (record: DataType) => (): void => {
