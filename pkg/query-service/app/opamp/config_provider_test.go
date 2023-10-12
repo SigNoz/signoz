@@ -14,6 +14,7 @@ import (
 	"github.com/knadh/koanf/providers/rawbytes"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/open-telemetry/opamp-go/protobufs"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	"golang.org/x/exp/maps"
@@ -57,18 +58,20 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 
 	// The server should recommend provided config when the agent first connects.
 	tb.testConfigProvider.ZPagesEndpoint = "localhost:55555"
+	agent2Id := "testAgent2"
 	agent2Conn := &MockOpAmpConnection{}
 	tb.opampServer.OnMessage(
 		agent2Conn,
 		&protobufs.AgentToServer{
-			InstanceUid: "testAgent2",
+			InstanceUid: agent2Id,
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: &TestCollectorConfig,
 			},
 		},
 	)
 
-	configRecommendedToAgent2 := RemoteConfigBody(agent2Conn.latestMsgFromServer())
+	lastAgent2Msg := agent2Conn.latestMsgFromServer()
+	configRecommendedToAgent2 := RemoteConfigBody(lastAgent2Msg)
 	require.NotEmpty(
 		configRecommendedToAgent2,
 		"Server should not recommend any config to the agent if the provider recommends agent's current config",
@@ -79,6 +82,35 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 
 	// The server should report deployment status to config provider
 	// on receiving updates from the agent.
+	require.Equal(
+		0, len(tb.testConfigProvider.ReportedDeploymentStatuses),
+		"no deployment statuses should have been reported at the start",
+	)
+	tb.opampServer.OnMessage(agent2Conn, &protobufs.AgentToServer{
+		InstanceUid: agent2Id,
+		EffectiveConfig: &protobufs.EffectiveConfig{
+			ConfigMap: lastAgent2Msg.RemoteConfig.Config,
+		},
+		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
+			Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
+			LastRemoteConfigHash: lastAgent2Msg.RemoteConfig.ConfigHash,
+		},
+	})
+
+	expectedConfId := tb.testConfigProvider.ZPagesEndpoint
+	confIdReports, exists := tb.testConfigProvider.ReportedDeploymentStatuses[expectedConfId]
+
+	assertionMsg := fmt.Sprintf(
+		"config deployment status should have been reported for conf: %s agent: %s",
+		expectedConfId, agent2Id,
+	)
+	require.True(exists, assertionMsg)
+	require.Equal(len(confIdReports), 1, assertionMsg)
+	wasConfigDeployedToAgent2 := confIdReports[agent2Id]
+	require.NotNil(wasConfigDeployedToAgent2, assertionMsg)
+	require.True(wasConfigDeployedToAgent2, assertionMsg)
+
+	// TODO(Raj): Also test for deployment failure.
 
 	// The server should rollout latest config to all agents when notified of
 	// a change by config provider
@@ -109,7 +141,8 @@ func NewTestBed(t *testing.T) *TestBed {
 	}
 
 	testConfigProvider := &TestAgentConfProvider{
-		Subscriptions: map[string]func(){},
+		Subscriptions:              map[string]func(){},
+		ReportedDeploymentStatuses: map[string]map[string]bool{},
 	}
 	opampServer := InitializeServer(nil, testConfigProvider)
 
@@ -136,8 +169,8 @@ type TestAgentConfProvider struct {
 
 	Subscriptions map[string]func()
 
-	// { configId: { agentId: status } }
-	reportedDeploymentStatuses map[string]map[string]ConfigDeploymentStatus
+	// { configId: { agentId: isOk } }
+	ReportedDeploymentStatuses map[string]map[string]bool
 }
 
 func (ta *TestAgentConfProvider) RecommendAgentConfig(baseConfYaml []byte) (
@@ -147,21 +180,18 @@ func (ta *TestAgentConfProvider) RecommendAgentConfig(baseConfYaml []byte) (
 		return baseConfYaml, "", nil
 	}
 
-	conf, err := yaml.Parser().Unmarshal(baseConfYaml)
+	k := koanf.New(".")
+	err := k.Load(rawbytes.Provider(baseConfYaml), yaml.Parser())
 	if err != nil {
-		return nil, "", err
+		return nil, "", errors.Wrap(err, "could not unmarshal baseConf")
 	}
 
-	conf["extensions"] = map[string]interface{}{
-		"zpages": map[string]interface{}{
-			"endpoint": ta.ZPagesEndpoint,
-		},
+	k.Set("extensions.zpages.endpoint", ta.ZPagesEndpoint)
+	recommendedYaml, err := k.Marshal(yaml.Parser())
+	if err != nil {
+		return nil, "", errors.Wrap(err, "could not marshal recommended conf")
 	}
 
-	recommendedYaml, err := yaml.Parser().Marshal(conf)
-	if err != nil {
-		return nil, "", err
-	}
 	confId := ta.ZPagesEndpoint
 	return recommendedYaml, confId, nil
 }
@@ -189,9 +219,15 @@ func (tp *TestAgentConfProvider) ValidateConfigHasRecommendedZPagesEndpoint(
 func (ta *TestAgentConfProvider) ReportConfigDeploymentStatus(
 	agentId string,
 	configId string,
-	status ConfigDeploymentStatus,
+	err error,
 ) {
-	ta.reportedDeploymentStatuses[configId][agentId] = status
+	confIdReports := ta.ReportedDeploymentStatuses[configId]
+	if confIdReports == nil {
+		confIdReports = map[string]bool{}
+		ta.ReportedDeploymentStatuses[configId] = confIdReports
+	}
+
+	confIdReports[agentId] = (err == nil)
 }
 
 func (ta *TestAgentConfProvider) SubscribeToConfigUpdates(callback func()) func() {

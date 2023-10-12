@@ -575,7 +575,7 @@ func mockOpampAgent(testDBFilePath string) (*opamp.Server, *mockOpAmpConnection,
 		return nil, nil, err
 	}
 
-	opampServer := opamp.InitializeServer(constants.OpAmpWsEndpoint, nil)
+	opampServer := opamp.InitializeServer(nil)
 	opampClientConnection := &mockOpAmpConnection{}
 	opampServer.OnMessage(
 		opampClientConnection,
