@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -299,7 +298,7 @@ type LogPipelinesTestBed struct {
 	testUser        *model.User
 	apiHandler      *app.APIHandler
 	opampServer     *opamp.Server
-	opampClientConn *mockOpAmpConnection
+	opampClientConn *opamp.MockOpAmpConnection
 }
 
 func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
@@ -447,7 +446,7 @@ func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.Pipeline
 func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
 	pipelines []logparsingpipeline.Pipeline,
 ) {
-	lastMsg := tb.opampClientConn.latestMsgFromServer()
+	lastMsg := tb.opampClientConn.LatestMsgFromServer()
 	collectorConfigFiles := lastMsg.RemoteConfig.Config.ConfigMap
 	assert.Equal(
 		tb.t, len(collectorConfigFiles), 1,
@@ -516,7 +515,7 @@ func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
 }
 
 func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig() {
-	lastMsg := tb.opampClientConn.latestMsgFromServer()
+	lastMsg := tb.opampClientConn.LatestMsgFromServer()
 	tb.opampServer.OnMessage(tb.opampClientConn, &protobufs.AgentToServer{
 		InstanceUid: "test",
 		EffectiveConfig: &protobufs.EffectiveConfig{
@@ -564,7 +563,7 @@ func assertPipelinesResponseMatchesPostedPipelines(
 	}
 }
 
-func mockOpampAgent(testDBFilePath string) (*opamp.Server, *mockOpAmpConnection, error) {
+func mockOpampAgent(testDBFilePath string) (*opamp.Server, *opamp.MockOpAmpConnection, error) {
 	// Mock an available opamp agent
 	testDB, err := opampModel.InitDB(testDBFilePath)
 	if err != nil {
@@ -575,8 +574,8 @@ func mockOpampAgent(testDBFilePath string) (*opamp.Server, *mockOpAmpConnection,
 		return nil, nil, err
 	}
 
-	opampServer := opamp.InitializeServer(nil)
-	opampClientConnection := &mockOpAmpConnection{}
+	opampServer := opamp.InitializeServer(nil, opamp.NewMockAgentConfigProvider())
+	opampClientConnection := &opamp.MockOpAmpConnection{}
 	opampServer.OnMessage(
 		opampClientConnection,
 		&protobufs.AgentToServer{
@@ -673,37 +672,4 @@ func NewAuthenticatedTestRequest(
 
 	req.Header.Add("Authorization", "Bearer "+userJwt.AccessJwt)
 	return req, nil
-}
-
-type mockOpAmpConnection struct {
-	serverToAgentMsgs []*protobufs.ServerToAgent
-}
-
-func (conn *mockOpAmpConnection) Send(ctx context.Context, msg *protobufs.ServerToAgent) error {
-	conn.serverToAgentMsgs = append(conn.serverToAgentMsgs, msg)
-	return nil
-}
-
-func (conn *mockOpAmpConnection) latestMsgFromServer() *protobufs.ServerToAgent {
-	if len(conn.serverToAgentMsgs) < 1 {
-		return nil
-	}
-	return conn.serverToAgentMsgs[len(conn.serverToAgentMsgs)-1]
-}
-
-func (conn *mockOpAmpConnection) LatestPipelinesReceivedFromServer() ([]logparsingpipeline.Pipeline, error) {
-	pipelines := []logparsingpipeline.Pipeline{}
-	lastMsg := conn.latestMsgFromServer()
-	if lastMsg == nil {
-		return pipelines, nil
-	}
-
-	return pipelines, nil
-}
-
-func (conn *mockOpAmpConnection) Disconnect() error {
-	return nil
-}
-func (conn *mockOpAmpConnection) RemoteAddr() net.Addr {
-	return nil
 }
