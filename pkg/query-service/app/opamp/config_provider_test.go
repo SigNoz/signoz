@@ -21,7 +21,7 @@ import (
 func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	require := require.New(t)
 
-	tb := NewTestBed(t)
+	tb := newTestbed(t)
 
 	require.Equal(
 		0, len(tb.testConfigProvider.ConfigUpdateSubscribers),
@@ -33,6 +33,8 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		"Opamp server should have subscribed to updates from config provider after being started",
 	)
 
+	// Server should always respond with a RemoteConfig when an agent connects.
+	// Even if there are no recommended changes to the agent's initial config
 	require.False(tb.testConfigProvider.HasRecommendations())
 	agent1Conn := &MockOpAmpConnection{}
 	agent1Id := "testAgent1"
@@ -41,18 +43,18 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		&protobufs.AgentToServer{
 			InstanceUid: agent1Id,
 			EffectiveConfig: &protobufs.EffectiveConfig{
-				ConfigMap: &TestCollectorConfig,
+				ConfigMap: initialAgentConf(),
 			},
 		},
 	)
 	lastAgent1Msg := agent1Conn.LatestMsgFromServer()
 	require.NotNil(
 		lastAgent1Msg,
-		"Server should always recommend a config to the agent on first connection",
+		"Server should always send a remote config to the agent when it connects",
 	)
 	require.Equal(
 		RemoteConfigBody(lastAgent1Msg),
-		string(TestCollectorConfig.ConfigMap[model.CollectorConfigFilename].Body),
+		string(initialAgentConf().ConfigMap[model.CollectorConfigFilename].Body),
 	)
 
 	tb.testConfigProvider.ZPagesEndpoint = "localhost:55555"
@@ -64,7 +66,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		&protobufs.AgentToServer{
 			InstanceUid: agent2Id,
 			EffectiveConfig: &protobufs.EffectiveConfig{
-				ConfigMap: &TestCollectorConfig,
+				ConfigMap: initialAgentConf(),
 			},
 		},
 	)
@@ -74,7 +76,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		"server should recommend a config to agent when it connects",
 	)
 
-	recommendedEndpoint, err := GetCollectorConfStringValue(
+	recommendedEndpoint, err := GetStringValueFromYaml(
 		[]byte(RemoteConfigBody(lastAgent2Msg)), "extensions.zpages.endpoint",
 	)
 	require.Nil(err)
@@ -83,11 +85,13 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		"server should send recommended config to agent when it connects",
 	)
 
-	// Server should report deployment success to config provider on receiving update from agent.
+	agent2Conn.ClearMsgsFromServer()
 	tb.opampServer.OnMessage(agent2Conn, &protobufs.AgentToServer{
 		InstanceUid: agent2Id,
 		EffectiveConfig: &protobufs.EffectiveConfig{
-			ConfigMap: lastAgent2Msg.RemoteConfig.Config,
+			ConfigMap: NewAgentConfigMap(
+				[]byte(RemoteConfigBody(lastAgent2Msg)),
+			),
 		},
 		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
 			Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
@@ -95,59 +99,44 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		},
 	})
 	expectedConfId := tb.testConfigProvider.ZPagesEndpoint
-	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(
-		agent2Id, expectedConfId,
-	))
+	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(expectedConfId, agent2Id),
+		"Server should report deployment success to config provider on receiving update from agent.",
+	)
 	require.True(tb.testConfigProvider.ReportedDeploymentStatuses[expectedConfId][agent2Id])
-
-	// Server should not recommend a RemoteConfig if agent is already running it.
-	agent2Conn.ClearMsgsFromServer()
-	tb.opampServer.OnMessage(agent2Conn, &protobufs.AgentToServer{
-		InstanceUid: agent2Id,
-		EffectiveConfig: &protobufs.EffectiveConfig{
-			ConfigMap: lastAgent2Msg.RemoteConfig.Config,
-		},
-		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
-			LastRemoteConfigHash: lastAgent2Msg.RemoteConfig.ConfigHash,
-		},
-	})
 	require.Nil(
 		agent2Conn.LatestMsgFromServer(),
 		"Server should not recommend a RemoteConfig if agent is already running it.",
 	)
 
 	// Server should rollout latest config to all agents when notified of a change by config provider
+	agent1Conn.ClearMsgsFromServer()
+	agent2Conn.ClearMsgsFromServer()
 	tb.testConfigProvider.ZPagesEndpoint = "localhost:66666"
 	tb.testConfigProvider.NotifySubscribersOfChange()
 	for _, agentConn := range []*MockOpAmpConnection{agent1Conn, agent2Conn} {
 		lastMsg := agentConn.LatestMsgFromServer()
 
-		recommendedEndpoint, err := GetCollectorConfStringValue(
+		recommendedEndpoint, err := GetStringValueFromYaml(
 			[]byte(RemoteConfigBody(lastMsg)), "extensions.zpages.endpoint",
 		)
 		require.Nil(err)
 		require.Equal(tb.testConfigProvider.ZPagesEndpoint, recommendedEndpoint)
 	}
 
-	// Server should report deployment failure to config provider on receiving update from agent
 	lastAgent2Msg = agent2Conn.LatestMsgFromServer()
 	tb.opampServer.OnMessage(agent2Conn, &protobufs.AgentToServer{
 		InstanceUid: agent2Id,
-		EffectiveConfig: &protobufs.EffectiveConfig{
-			ConfigMap: lastAgent2Msg.RemoteConfig.Config,
-		},
 		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
 			Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED,
 			LastRemoteConfigHash: lastAgent2Msg.RemoteConfig.ConfigHash,
 		},
 	})
 	expectedConfId = tb.testConfigProvider.ZPagesEndpoint
-	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(
-		agent2Id, expectedConfId,
-	))
+	require.True(tb.testConfigProvider.HasReportedDeploymentStatus(expectedConfId, agent2Id),
+		"Server should report deployment failure to config provider on receiving update from agent.",
+	)
 	require.False(tb.testConfigProvider.ReportedDeploymentStatuses[expectedConfId][agent2Id])
 
-	// Server should unsubscribe from config provider updates after shutdown
 	require.Equal(1, len(tb.testConfigProvider.ConfigUpdateSubscribers))
 	tb.opampServer.Stop()
 	require.Equal(
@@ -156,13 +145,13 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	)
 }
 
-type TestBed struct {
+type testbed struct {
 	testConfigProvider *MockAgentConfigProvider
 	opampServer        *Server
 	t                  *testing.T
 }
 
-func NewTestBed(t *testing.T) *TestBed {
+func newTestbed(t *testing.T) *testbed {
 	// Init opamp model.
 	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
 	if err != nil {
@@ -180,29 +169,29 @@ func NewTestBed(t *testing.T) *TestBed {
 	testConfigProvider := NewMockAgentConfigProvider()
 	opampServer := InitializeServer(nil, testConfigProvider)
 
-	return &TestBed{
+	return &testbed{
 		testConfigProvider: testConfigProvider,
 		opampServer:        opampServer,
 		t:                  t,
 	}
 }
 
-func (tb *TestBed) StartServer() {
+func (tb *testbed) StartServer() {
 	testListenPath := GetAvailableLocalAddress()
 	err := tb.opampServer.Start(testListenPath)
 	require.Nil(tb.t, err, "should be able to start opamp server")
 }
 
 // Test helper
-func GetCollectorConfStringValue(
-	collectorConf []byte, path string,
+func GetStringValueFromYaml(
+	serializedYaml []byte, path string,
 ) (string, error) {
-	if len(collectorConf) < 1 {
-		return "", fmt.Errorf("collector conf is empty")
+	if len(serializedYaml) < 1 {
+		return "", fmt.Errorf("yaml data is empty")
 	}
 
 	k := koanf.New(".")
-	err := k.Load(rawbytes.Provider(collectorConf), yaml.Parser())
+	err := k.Load(rawbytes.Provider(serializedYaml), yaml.Parser())
 	if err != nil {
 		return "", errors.Wrap(err, "could not unmarshal collector config")
 	}
@@ -210,19 +199,7 @@ func GetCollectorConfStringValue(
 	return k.String("extensions.zpages.endpoint"), nil
 }
 
-// Brought in from https://github.com/open-telemetry/opamp-go/blob/main/internal/testhelpers/nethelpers.go
-func GetAvailableLocalAddress() string {
-	ln, err := net.Listen("tcp", "127.0.0.1:")
-	if err != nil {
-		log.Fatalf("failed to get a free local port: %v", err)
-	}
-	// There is a possible race if something else takes this same port before
-	// the test uses it, however, that is unlikely in practice.
-	defer ln.Close()
-	return ln.Addr().String()
-}
-
-// Returns body a ServerToAgent.RemoteConfig or ""
+// Returns body of a ServerToAgent.RemoteConfig or ""
 func RemoteConfigBody(msg *protobufs.ServerToAgent) string {
 	if msg == nil {
 		return ""
@@ -235,10 +212,21 @@ func RemoteConfigBody(msg *protobufs.ServerToAgent) string {
 	return string(maps.Values(collectorConfFiles)[0].Body)
 }
 
-var TestCollectorConfig protobufs.AgentConfigMap = protobufs.AgentConfigMap{
-	ConfigMap: map[string]*protobufs.AgentConfigFile{
-		model.CollectorConfigFilename: {
-			Body: []byte(`
+func NewAgentConfigMap(body []byte) *protobufs.AgentConfigMap {
+	return &protobufs.AgentConfigMap{
+		ConfigMap: map[string]*protobufs.AgentConfigFile{
+			model.CollectorConfigFilename: {
+				Body:        body,
+				ContentType: "text/yaml",
+			},
+		},
+	}
+
+}
+
+func initialAgentConf() *protobufs.AgentConfigMap {
+	return NewAgentConfigMap(
+		[]byte(`
       receivers:
         otlp:
       processors:
@@ -251,8 +239,18 @@ var TestCollectorConfig protobufs.AgentConfigMap = protobufs.AgentConfigMap{
             receivers: [otlp]
             processors: [batch]
             exporters: [otlp]
-    `),
-			ContentType: "text/yaml",
-		},
-	},
+  `),
+	)
+}
+
+// Brought in from https://github.com/open-telemetry/opamp-go/blob/main/internal/testhelpers/nethelpers.go
+func GetAvailableLocalAddress() string {
+	ln, err := net.Listen("tcp", "127.0.0.1:")
+	if err != nil {
+		log.Fatalf("failed to get a free local port: %v", err)
+	}
+	// There is a possible race if something else takes this same port before
+	// the test uses it, however, that is unlikely in practice.
+	defer ln.Close()
+	return ln.Addr().String()
 }

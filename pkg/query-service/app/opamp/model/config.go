@@ -1,11 +1,12 @@
 package model
 
+// Interface for source of otel collector config recommendations.
 type AgentConfigProvider interface {
-	// Generate recommended config for an agent based on its current `baseConfYaml`
-	// and the latest settings for agent config based features.
-	RecommendAgentConfig(baseConfYaml []byte) (
+	// Generate recommended config for an agent based on its `currentConfYaml`
+	// and current state of user facing settings for agent based features.
+	RecommendAgentConfig(currentConfYaml []byte) (
 		recommendedConfYaml []byte,
-		// Opaque id for recommended config, used for reporting deployment status updates
+		// Opaque id of the recommended config, used for reporting deployment status updates
 		configId string,
 		err error,
 	)

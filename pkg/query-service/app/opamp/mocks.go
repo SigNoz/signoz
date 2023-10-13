@@ -106,7 +106,7 @@ func (ta *MockAgentConfigProvider) ReportConfigDeploymentStatus(
 
 // Test helper.
 func (ta *MockAgentConfigProvider) HasReportedDeploymentStatus(
-	agentId string, configId string,
+	configId string, agentId string,
 ) bool {
 	confIdReports := ta.ReportedDeploymentStatuses[configId]
 	if confIdReports == nil {

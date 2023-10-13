@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"fmt"
 	"sync"
 	"time"
 
@@ -185,7 +184,6 @@ func (agent *Agent) updateStatusField(newStatus *protobufs.AgentToServer) (agent
 }
 
 func (agent *Agent) updateEffectiveConfig(newStatus *protobufs.AgentToServer, response *protobufs.ServerToAgent) {
-
 	// Update effective config if provided.
 	if newStatus.EffectiveConfig != nil {
 		if newStatus.EffectiveConfig.ConfigMap != nil {
@@ -245,6 +243,8 @@ func (agent *Agent) processStatusUpdate(
 		response.Flags |= uint64(protobufs.ServerToAgentFlags_ServerToAgentFlags_ReportFullState)
 	}
 
+	// This needs to be done before agent.updateRemoteConfig() to ensure it sees
+	// the latest value for agent.EffectiveConfig when generating a config recommendation
 	agent.updateEffectiveConfig(newStatus, response)
 
 	configChanged := false
@@ -257,17 +257,13 @@ func (agent *Agent) processStatusUpdate(
 
 	// If remote config is changed and different from what the Agent has then
 	// send the new remote config to the Agent.
-	if configChanged || (agent.Status.RemoteConfigStatus != nil &&
-		bytes.Compare(agent.Status.RemoteConfigStatus.LastRemoteConfigHash, agent.remoteConfig.ConfigHash) != 0) {
+	if configChanged ||
+		(agent.Status.RemoteConfigStatus != nil &&
+			bytes.Compare(agent.Status.RemoteConfigStatus.LastRemoteConfigHash, agent.remoteConfig.ConfigHash) != 0) {
 		// The new status resulted in a change in the config of the Agent or the Agent
 		// does not have this config (hash is different). Send the new config the Agent.
 		response.RemoteConfig = agent.remoteConfig
 		agent.SendToAgent(response)
-
-		if response.RemoteConfig != nil {
-			fmt.Println("Recommending remote config")
-			fmt.Println(string(response.RemoteConfig.Config.ConfigMap[CollectorConfigFilename].Body))
-		}
 
 		ListenToConfigUpdate(
 			agent.ID,
@@ -277,9 +273,7 @@ func (agent *Agent) processStatusUpdate(
 	}
 }
 
-func (agent *Agent) updateRemoteConfig(
-	configProvider AgentConfigProvider,
-) bool {
+func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
 	recommendedConfig, confId, err := configProvider.RecommendAgentConfig([]byte(agent.EffectiveConfig))
 	if err != nil {
 		zap.S().Errorf("could not generate config recommendation for agent %d: %w", agent.ID, err)
