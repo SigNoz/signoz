@@ -26,12 +26,12 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	tb := NewTestBed(t)
 
 	require.Equal(
-		0, len(tb.testConfigProvider.Subscriptions),
+		0, len(tb.testConfigProvider.ConfigUpdateSubscribers),
 		"there should be no agent config subscribers at the start",
 	)
 	tb.StartServer()
 	require.Equal(
-		1, len(tb.testConfigProvider.Subscriptions),
+		1, len(tb.testConfigProvider.ConfigUpdateSubscribers),
 		"Opamp server should have subscribed to updates from config provider after being started",
 	)
 
@@ -71,7 +71,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		"server should recommend a config to agent on first connection if it has recommendations",
 	)
 	configRecommendedToAgent2 := RemoteConfigBody(lastAgent2Msg)
-	tb.testConfigProvider.ValidateConfigHasRecommendedZPagesEndpoint(
+	tb.testConfigProvider.ValidateCollectorConfHasRecommendedZPagesEndpoint(
 		t, []byte(configRecommendedToAgent2),
 	)
 
@@ -97,7 +97,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		lastMsg := agentConn.latestMsgFromServer()
 		recommendedConfig := RemoteConfigBody(lastMsg)
 
-		tb.testConfigProvider.ValidateConfigHasRecommendedZPagesEndpoint(
+		tb.testConfigProvider.ValidateCollectorConfHasRecommendedZPagesEndpoint(
 			t, []byte(recommendedConfig),
 		)
 	}
@@ -119,10 +119,10 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	)
 
 	// Server should unsubscribe from config provider updates after shutdown
-	require.Equal(1, len(tb.testConfigProvider.Subscriptions))
+	require.Equal(1, len(tb.testConfigProvider.ConfigUpdateSubscribers))
 	tb.opampServer.Stop()
 	require.Equal(
-		0, len(tb.testConfigProvider.Subscriptions),
+		0, len(tb.testConfigProvider.ConfigUpdateSubscribers),
 		"Opamp server should have unsubscribed to config provider updates after shutdown",
 	)
 }
@@ -149,7 +149,7 @@ func NewTestBed(t *testing.T) *TestBed {
 	}
 
 	testConfigProvider := &TestAgentConfProvider{
-		Subscriptions:              map[string]func(){},
+		ConfigUpdateSubscribers:    map[string]func(){},
 		ReportedDeploymentStatuses: map[string]map[string]bool{},
 	}
 	opampServer := InitializeServer(nil, testConfigProvider)
@@ -168,19 +168,22 @@ func (tb *TestBed) StartServer() {
 }
 
 type TestAgentConfProvider struct {
-	// This config provider recommends collector config
-	// by adding the following zpages to supplied base config
-	//
-	// The test provider recommends the base conf without changes
-	// if ZPagesEndpoint is empty
+	// An updated config is recommended by TestAgentConfProvider
+	// if `ZPagesEndpoint` is not empty
 	ZPagesEndpoint string
 
-	Subscriptions map[string]func()
+	ConfigUpdateSubscribers map[string]func()
 
 	// { configId: { agentId: isOk } }
 	ReportedDeploymentStatuses map[string]map[string]bool
 }
 
+// Test helper.
+func (ta *TestAgentConfProvider) HasRecommendations() bool {
+	return len(ta.ZPagesEndpoint) > 0
+}
+
+// AgentConfigProvider interface
 func (ta *TestAgentConfProvider) RecommendAgentConfig(baseConfYaml []byte) (
 	[]byte, string, error,
 ) {
@@ -204,18 +207,13 @@ func (ta *TestAgentConfProvider) RecommendAgentConfig(baseConfYaml []byte) (
 	return recommendedYaml, confId, nil
 }
 
-// test helper.
-func (ta *TestAgentConfProvider) HasRecommendations() bool {
-	return len(ta.ZPagesEndpoint) < 1
-}
-
-// Test helper for validating config recommendations
-func (tp *TestAgentConfProvider) ValidateConfigHasRecommendedZPagesEndpoint(
+// Test helper
+func (tp *TestAgentConfProvider) ValidateCollectorConfHasRecommendedZPagesEndpoint(
 	t *testing.T,
 	collectorConf []byte,
 ) {
 	require.NotEmpty(
-		t, collectorConf, "config expected to contain zpages endpoint but is empty",
+		t, collectorConf, "config expected to contain zpages endpoint is empty",
 	)
 
 	k := koanf.New(".")
@@ -227,12 +225,13 @@ func (tp *TestAgentConfProvider) ValidateConfigHasRecommendedZPagesEndpoint(
 	require.Equal(
 		t, expectedEndpoint, endpointInConf,
 		fmt.Sprintf(
-			"zpages endpoint not '%s' as expected in %s",
-			expectedEndpoint, endpointInConf,
+			"zpages endpoint is not '%s' as expected, in %s",
+			expectedEndpoint, collectorConf,
 		),
 	)
 }
 
+// AgentConfigProvider interface
 func (ta *TestAgentConfProvider) ReportConfigDeploymentStatus(
 	agentId string,
 	configId string,
@@ -247,12 +246,12 @@ func (ta *TestAgentConfProvider) ReportConfigDeploymentStatus(
 	confIdReports[agentId] = (err == nil)
 }
 
-// test helper.
+// Test helper.
 func (ta *TestAgentConfProvider) ValidateConfigDeploymentStatus(
 	t *testing.T, agentId string, configId string, expectOk bool,
 ) {
 	assertionMsg := fmt.Sprintf(
-		"config deployment status should be isOk: %v for conf: %s agent: %s",
+		"config deployment status should be isOk: %v for conf: %s and agent: %s",
 		expectOk, configId, agentId,
 	)
 	confIdReports := ta.ReportedDeploymentStatuses[configId]
@@ -264,18 +263,19 @@ func (ta *TestAgentConfProvider) ValidateConfigDeploymentStatus(
 	require.Equal(t, agentDeploymentIsOk, expectOk, assertionMsg)
 }
 
+// AgentConfigProvider interface
 func (ta *TestAgentConfProvider) SubscribeToConfigUpdates(callback func()) func() {
 	subscriberId := uuid.NewString()
-	ta.Subscriptions[subscriberId] = callback
+	ta.ConfigUpdateSubscribers[subscriberId] = callback
 
 	return func() {
-		delete(ta.Subscriptions, subscriberId)
+		delete(ta.ConfigUpdateSubscribers, subscriberId)
 	}
 }
 
 // test helper.
 func (ta *TestAgentConfProvider) NotifySubscribersOfChange() {
-	for _, callback := range ta.Subscriptions {
+	for _, callback := range ta.ConfigUpdateSubscribers {
 		callback()
 	}
 }
@@ -292,31 +292,7 @@ func GetAvailableLocalAddress() string {
 	return ln.Addr().String()
 }
 
-type MockOpAmpConnection struct {
-	ServerToAgentMsgs []*protobufs.ServerToAgent
-}
-
-func (conn *MockOpAmpConnection) Send(ctx context.Context, msg *protobufs.ServerToAgent) error {
-	conn.ServerToAgentMsgs = append(conn.ServerToAgentMsgs, msg)
-	return nil
-}
-
-// TODO(Raj): Maybe switch to clear all received messages.
-func (conn *MockOpAmpConnection) latestMsgFromServer() *protobufs.ServerToAgent {
-	if len(conn.ServerToAgentMsgs) < 1 {
-		return nil
-	}
-	return conn.ServerToAgentMsgs[len(conn.ServerToAgentMsgs)-1]
-}
-
-func (conn *MockOpAmpConnection) Disconnect() error {
-	return nil
-}
-func (conn *MockOpAmpConnection) RemoteAddr() net.Addr {
-	return nil
-}
-
-// Returns recommended remote collector config yaml or ""
+// Returns body a ServerToAgent.RemoteConfig or ""
 func RemoteConfigBody(msg *protobufs.ServerToAgent) string {
 	if msg == nil {
 		return ""
@@ -335,19 +311,10 @@ var TestCollectorConfig protobufs.AgentConfigMap = protobufs.AgentConfigMap{
 			Body: []byte(`
       receivers:
         otlp:
-          protocols:
-            grpc:
-              endpoint: 0.0.0.0:4317
-            http:
-              endpoint: 0.0.0.0:4318
       processors:
         batch:
-          send_batch_size: 10000
-          send_batch_max_size: 11000
-          timeout: 10s
       exporters:
         otlp:
-          endpoint: otelcol2:4317
       service:
         pipelines:
           logs:
@@ -358,4 +325,27 @@ var TestCollectorConfig protobufs.AgentConfigMap = protobufs.AgentConfigMap{
 			ContentType: "text/yaml",
 		},
 	},
+}
+
+type MockOpAmpConnection struct {
+	ServerToAgentMsgs []*protobufs.ServerToAgent
+}
+
+func (conn *MockOpAmpConnection) Send(ctx context.Context, msg *protobufs.ServerToAgent) error {
+	conn.ServerToAgentMsgs = append(conn.ServerToAgentMsgs, msg)
+	return nil
+}
+
+func (conn *MockOpAmpConnection) latestMsgFromServer() *protobufs.ServerToAgent {
+	if len(conn.ServerToAgentMsgs) < 1 {
+		return nil
+	}
+	return conn.ServerToAgentMsgs[len(conn.ServerToAgentMsgs)-1]
+}
+
+func (conn *MockOpAmpConnection) Disconnect() error {
+	return nil
+}
+func (conn *MockOpAmpConnection) RemoteAddr() net.Addr {
+	return nil
 }
