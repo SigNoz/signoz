@@ -131,6 +131,7 @@ function Application(): JSX.Element {
 				},
 				title: GraphTitle.RATE_PER_OPS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ops',
 			}),
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
@@ -151,6 +152,7 @@ function Application(): JSX.Element {
 				},
 				title: GraphTitle.ERROR_PERCENTAGE,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: '%',
 			}),
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
@@ -222,7 +224,6 @@ function Application(): JSX.Element {
 						topLevelOperationsIsError={topLevelOperationsIsError}
 						name="operations_per_sec"
 						widget={operationPerSecWidget}
-						yAxisUnit="ops"
 						opName="Rate"
 					/>
 				</Col>
@@ -267,7 +268,6 @@ function Application(): JSX.Element {
 							topLevelOperationsIsError={topLevelOperationsIsError}
 							name="error_percentage_%"
 							widget={errorPercentageWidget}
-							yAxisUnit="%"
 							opName="Error"
 						/>
 					</ColErrorContainer>

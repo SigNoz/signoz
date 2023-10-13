@@ -1,12 +1,10 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Card } from 'container/GridGraphLayout/styles';
+import { Card } from 'container/GridCardLayout/styles';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo } from 'react';
-import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import { WidgetGraphProps } from '../../types';
 import PlotTag from './PlotTag';
@@ -19,16 +17,11 @@ function WidgetGraph({
 	selectedTime,
 }: WidgetGraphProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { selectedDashboard } = useDashboard();
 
-	const [selectedDashboard] = dashboards;
 	const { search } = useLocation();
 
-	const { data } = selectedDashboard;
-
-	const { widgets = [] } = data;
+	const { widgets = [] } = selectedDashboard?.data || {};
 
 	const params = new URLSearchParams(search);
 	const widgetId = params.get('widgetId');

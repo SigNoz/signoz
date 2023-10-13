@@ -10,7 +10,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { getErrorRate, navigateToTrace } from './utils';
 
-function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
+function TopOperationsTable({ data }: TopOperationsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -19,8 +19,6 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
-
-	const { data } = props;
 
 	const params = useParams<{ servicename: string }>();
 

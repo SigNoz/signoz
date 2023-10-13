@@ -1,0 +1,21 @@
+.graph-manager-container {
+    margin-top: 1.25rem;
+    display: flex;
+    align-items: flex-end;
+    overflow-x: scroll;
+
+    .filter-table-container {
+        flex-basis: 80%;
+    }
+
+    .save-cancel-container {
+        flex-basis: 20%;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .save-cancel-button {
+        margin: 0 0.313rem;
+    }
+
+}

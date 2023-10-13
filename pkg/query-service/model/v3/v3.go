@@ -625,7 +625,7 @@ type Result struct {
 
 type LogsLiveTailClient struct {
 	Name  string
-	Logs  chan *model.GetLogsResponse
+	Logs  chan *model.SignozLog
 	Done  chan *bool
 	Error chan error
 }

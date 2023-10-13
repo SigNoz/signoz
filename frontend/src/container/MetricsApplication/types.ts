@@ -8,6 +8,7 @@ export interface GetWidgetQueryBuilderProps {
 	query: Widgets['query'];
 	title?: ReactNode;
 	panelTypes: Widgets['panelTypes'];
+	yAxisUnit?: Widgets['yAxisUnit'];
 }
 
 export interface NavigateToTraceProps {
