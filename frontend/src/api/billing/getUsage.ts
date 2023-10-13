@@ -10,6 +10,7 @@ export interface UsageResponsePayloadProps {
 		total: number;
 		baseFee: number;
 		breakdown: [];
+		billTotal: number;
 	};
 	discount: number;
 }
