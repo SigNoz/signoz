@@ -3,9 +3,13 @@ package agentConf
 import (
 	"context"
 	"fmt"
+	"strings"
+	"sync"
 	"sync/atomic"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	filterprocessor "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
 	tsp "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
@@ -20,10 +24,16 @@ func init() {
 	m = &Manager{}
 }
 
+type AgentFeatureType string
+
 type Manager struct {
 	Repo
 	// lock to make sure only one update is sent to remote agents at a time
 	lock uint32
+
+	agentFeatures         map[AgentFeatureType]AgentFeature
+	configSubscribers     map[string]func()
+	configSubscribersLock sync.Mutex
 }
 
 // Ready indicates if Manager can accept new config update requests
@@ -34,9 +44,94 @@ func (mgr *Manager) Ready() bool {
 	return opamp.Ready()
 }
 
-func Initiate(db *sqlx.DB, engine string) error {
+func Initiate(
+	db *sqlx.DB,
+	dbEngine string,
+	agentFeatures map[AgentFeatureType]AgentFeature,
+) (*Manager, error) {
 	m.Repo = Repo{db}
-	return m.initDB(engine)
+	m.agentFeatures = agentFeatures
+	m.configSubscribers = map[string]func(){}
+	err := m.initDB(dbEngine)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not init agentConf db")
+	}
+	return m, nil
+}
+
+func (m *Manager) SubscribeToConfigUpdates(callback func()) (unsubscribe func()) {
+	m.configSubscribersLock.Lock()
+	defer m.configSubscribersLock.Unlock()
+
+	subscriberId := uuid.NewString()
+	m.configSubscribers[subscriberId] = callback
+
+	return func() {
+		delete(m.configSubscribers, subscriberId)
+	}
+}
+
+func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
+	recommendedConfYaml []byte,
+	// Opaque id of the recommended config, used for reporting deployment status updates
+	configId string,
+	err error,
+) {
+	recommendation := currentConfYaml
+	settingVersions := []string{}
+
+	// Find latest/active config versions from the DB
+	for featureType, feature := range m.agentFeatures {
+		featureType := ElementTypeDef(featureType)
+		latestConfig, apiErr := GetLatestVersion(context.Background(), featureType)
+		if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
+			return nil, "", errors.Wrap(apiErr.ToError(), "failed to get latest agent config version")
+		}
+
+		if latestConfig == nil {
+			continue
+		}
+
+		updatedConf, serializedSettingsUsed, apiErr := feature.RecommendAgentConfig(
+			recommendation, latestConfig,
+		)
+		if apiErr != nil {
+			return nil, "", model.WrapApiError(apiErr, fmt.Sprintf(
+				"failed to generate recommendation for %s", featureType,
+			))
+		}
+		recommendation = updatedConf
+		configId := fmt.Sprintf("%s:%d", featureType, latestConfig.Version)
+		settingVersions = append(settingVersions, configId)
+
+		m.updateDeployStatus(
+			context.Background(), featureType, latestConfig.Version,
+			string(DeployInitiated), "Deployment has started",
+			configId, serializedSettingsUsed,
+		)
+
+	}
+
+	return recommendation, strings.Join(settingVersions, ","), nil
+}
+
+func (m *Manager) ReportConfigDeploymentStatus(
+	agentId string,
+	configId string,
+	err error,
+) {
+	featureConfigIds := strings.Split(configId, ",")
+	for _, featureConfId := range featureConfigIds {
+		newStatus := string(Deployed)
+		message := "Deployment was successful"
+		if err != nil {
+			newStatus = string(DeployFailed)
+			message = fmt.Sprintf("%s: %s", agentId, err.Error())
+		}
+		m.updateDeployStatusByHash(
+			context.Background(), featureConfId, newStatus, message,
+		)
+	}
 }
 
 // Ready indicates if Manager can accept new config update requests
