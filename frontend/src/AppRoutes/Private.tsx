@@ -42,6 +42,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const { data: licensesData } = useLicense();
 
 	const {
+		user,
 		isUserFetching,
 		isUserFetchingError,
 		isLoggedIn: isLoggedInState,
@@ -112,7 +113,11 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const handlePrivateRoutes = async (
 		key: keyof typeof ROUTES,
 	): Promise<void> => {
-		if (localStorageUserAuthToken && localStorageUserAuthToken.refreshJwt) {
+		if (
+			localStorageUserAuthToken &&
+			localStorageUserAuthToken.refreshJwt &&
+			user?.userId === ''
+		) {
 			handleUserLoginIfTokenPresent(key);
 		} else {
 			// user does have localstorage values

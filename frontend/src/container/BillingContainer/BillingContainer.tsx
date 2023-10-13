@@ -312,14 +312,17 @@ export default function BillingContainer(): JSX.Element {
 						{headerText}
 					</Typography.Title>
 
-					<Typography.Title
-						level={5}
-						ellipsis
-						style={{ fontWeight: '300', color: '#49aa19' }}
-					>
-						We have received your card details, your billing will only start after the
-						end of your free trial period.
-					</Typography.Title>
+					{licensesData?.payload?.onTrial &&
+						licensesData?.payload?.trialConvertedToSubscription && (
+							<Typography.Title
+								level={5}
+								ellipsis
+								style={{ fontWeight: '300', color: '#49aa19' }}
+							>
+								We have received your card details, your billing will only start after
+								the end of your free trial period.
+							</Typography.Title>
+						)}
 				</Col>
 
 				<Col span={4} style={{ display: 'flex', justifyContent: 'flex-end' }}>
