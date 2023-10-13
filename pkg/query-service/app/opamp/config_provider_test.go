@@ -45,9 +45,14 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 			},
 		},
 	)
-	require.Nil(
-		agent1Conn.LatestMsgFromServer(),
-		"Server should not recommend any config to the agent if the provider recommends agent's current config",
+	lastAgent1Msg := agent1Conn.LatestMsgFromServer()
+	require.NotNil(
+		lastAgent1Msg,
+		"Server should always recommend a config to the agent on first connection",
+	)
+	require.Equal(
+		RemoteConfigBody(lastAgent1Msg),
+		string(TestCollectorConfig.ConfigMap[model.CollectorConfigFilename].Body),
 	)
 
 	tb.testConfigProvider.ZPagesEndpoint = "localhost:55555"
@@ -66,7 +71,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	lastAgent2Msg := agent2Conn.LatestMsgFromServer()
 	require.NotNil(
 		lastAgent2Msg,
-		"server should recommend a config to agent on first connection if it has recommendations",
+		"server should recommend a config to agent when it connects",
 	)
 
 	recommendedEndpoint, err := GetCollectorConfStringValue(
@@ -75,7 +80,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	require.Nil(err)
 	require.Equal(
 		tb.testConfigProvider.ZPagesEndpoint, recommendedEndpoint,
-		"server should recommend a config to agent on first connection if it has recommendations",
+		"server should send recommended config to agent when it connects",
 	)
 
 	// Server should report deployment success to config provider on receiving update from agent.
@@ -94,6 +99,22 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		agent2Id, expectedConfId,
 	))
 	require.True(tb.testConfigProvider.ReportedDeploymentStatuses[expectedConfId][agent2Id])
+
+	// Server should not recommend a RemoteConfig if agent is already running it.
+	agent2Conn.ClearMsgsFromServer()
+	tb.opampServer.OnMessage(agent2Conn, &protobufs.AgentToServer{
+		InstanceUid: agent2Id,
+		EffectiveConfig: &protobufs.EffectiveConfig{
+			ConfigMap: lastAgent2Msg.RemoteConfig.Config,
+		},
+		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
+			LastRemoteConfigHash: lastAgent2Msg.RemoteConfig.ConfigHash,
+		},
+	})
+	require.Nil(
+		agent2Conn.LatestMsgFromServer(),
+		"Server should not recommend a RemoteConfig if agent is already running it.",
+	)
 
 	// Server should rollout latest config to all agents when notified of a change by config provider
 	tb.testConfigProvider.ZPagesEndpoint = "localhost:66666"

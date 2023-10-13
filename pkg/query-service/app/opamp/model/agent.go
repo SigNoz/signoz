@@ -3,6 +3,8 @@ package model
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"sync"
 	"time"
 
@@ -255,12 +257,17 @@ func (agent *Agent) processStatusUpdate(
 
 	// If remote config is changed and different from what the Agent has then
 	// send the new remote config to the Agent.
-	if configChanged || (agent.Status.RemoteConfigStatus != nil && agent.remoteConfig != nil &&
+	if configChanged || (agent.Status.RemoteConfigStatus != nil &&
 		bytes.Compare(agent.Status.RemoteConfigStatus.LastRemoteConfigHash, agent.remoteConfig.ConfigHash) != 0) {
 		// The new status resulted in a change in the config of the Agent or the Agent
 		// does not have this config (hash is different). Send the new config the Agent.
 		response.RemoteConfig = agent.remoteConfig
 		agent.SendToAgent(response)
+
+		if response.RemoteConfig != nil {
+			fmt.Println("Recommending remote config")
+			fmt.Println(string(response.RemoteConfig.Config.ConfigMap[CollectorConfigFilename].Body))
+		}
 
 		ListenToConfigUpdate(
 			agent.ID,
@@ -273,14 +280,9 @@ func (agent *Agent) processStatusUpdate(
 func (agent *Agent) updateRemoteConfig(
 	configProvider AgentConfigProvider,
 ) bool {
-	newConfig, confId, err := configProvider.RecommendAgentConfig([]byte(agent.EffectiveConfig))
+	recommendedConfig, confId, err := configProvider.RecommendAgentConfig([]byte(agent.EffectiveConfig))
 	if err != nil {
 		zap.S().Errorf("could not generate config recommendation for agent %d: %w", agent.ID, err)
-		return false
-	}
-
-	if string(newConfig) == agent.EffectiveConfig {
-		zap.S().Infof("no config recommendation for agent %s", agent.ID)
 		return false
 	}
 
@@ -291,10 +293,24 @@ func (agent *Agent) updateRemoteConfig(
 	}
 
 	cfg.Config.ConfigMap[CollectorConfigFilename] = &protobufs.AgentConfigFile{
-		Body:        newConfig,
+		Body:        recommendedConfig,
 		ContentType: "application/x-yaml",
 	}
-	cfg.ConfigHash = []byte(confId)
+
+	if len(confId) < 1 {
+		// Should never happen. Handle gracefully if it does by some chance.
+		zap.S().Errorf("config provider recommended a config with empty confId. Using content hash for configId")
+
+		hash := sha256.New()
+		for k, v := range cfg.Config.ConfigMap {
+			hash.Write([]byte(k))
+			hash.Write(v.Body)
+			hash.Write([]byte(v.ContentType))
+		}
+		cfg.ConfigHash = hash.Sum(nil)
+	} else {
+		cfg.ConfigHash = []byte(confId)
+	}
 
 	configChanged := !isEqualRemoteConfig(agent.remoteConfig, &cfg)
 

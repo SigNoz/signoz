@@ -28,6 +28,12 @@ func (conn *MockOpAmpConnection) LatestMsgFromServer() *protobufs.ServerToAgent 
 	return conn.ServerToAgentMsgs[len(conn.ServerToAgentMsgs)-1]
 }
 
+func (conn *MockOpAmpConnection) ClearMsgsFromServer() []*protobufs.ServerToAgent {
+	msgs := conn.ServerToAgentMsgs
+	conn.ServerToAgentMsgs = []*protobufs.ServerToAgent{}
+	return msgs
+}
+
 func (conn *MockOpAmpConnection) Disconnect() error {
 	return nil
 }
@@ -64,7 +70,7 @@ func (ta *MockAgentConfigProvider) RecommendAgentConfig(baseConfYaml []byte) (
 	[]byte, string, error,
 ) {
 	if len(ta.ZPagesEndpoint) < 1 {
-		return baseConfYaml, "", nil
+		return baseConfYaml, "agent-base-config", nil
 	}
 
 	k := koanf.New(".")
