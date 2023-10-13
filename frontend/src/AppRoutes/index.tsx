@@ -84,7 +84,7 @@ function App(): JSX.Element {
 		data?.payload?.licenses?.some(
 			(license) =>
 				license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
-		) || true;
+		) || data?.payload?.licenses?.length === 0;
 
 	useEffect(() => {
 		const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
