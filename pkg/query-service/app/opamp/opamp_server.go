@@ -56,7 +56,7 @@ func (srv *Server) Start(listener string) error {
 	}
 
 	unsubscribe := srv.agentConfigProvider.SubscribeToConfigUpdates(func() {
-		err := srv.agents.RecommendLatestConfig(srv.agentConfigProvider)
+		err := srv.agents.RecommendLatestConfigToAll(srv.agentConfigProvider)
 		if err != nil {
 			zap.S().Errorf(
 				"could not roll out latest config recommendation to connected agents: %w", err,

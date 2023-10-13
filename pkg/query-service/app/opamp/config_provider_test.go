@@ -35,8 +35,7 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		"Opamp server should have subscribed to updates from config provider after being started",
 	)
 
-	// Server should not recommend any config to the agent if the
-	// config provider recommends agent's current effective config
+	require.False(tb.testConfigProvider.HasRecommendations())
 	agent1Conn := &MockOpAmpConnection{}
 	agent1Id := "testAgent1"
 	tb.opampServer.OnMessage(
@@ -48,14 +47,13 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 			},
 		},
 	)
-	lastAgent1Msg := agent1Conn.latestMsgFromServer()
 	require.Nil(
-		lastAgent1Msg,
+		agent1Conn.latestMsgFromServer(),
 		"Server should not recommend any config to the agent if the provider recommends agent's current config",
 	)
 
-	// The server should recommend provided config when the agent first connects.
 	tb.testConfigProvider.ZPagesEndpoint = "localhost:55555"
+	require.True(tb.testConfigProvider.HasRecommendations())
 	agent2Id := "testAgent2"
 	agent2Conn := &MockOpAmpConnection{}
 	tb.opampServer.OnMessage(
@@ -67,15 +65,17 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 			},
 		},
 	)
-
 	lastAgent2Msg := agent2Conn.latestMsgFromServer()
+	require.NotNil(
+		lastAgent2Msg,
+		"server should recommend a config to agent on first connection if it has recommendations",
+	)
 	configRecommendedToAgent2 := RemoteConfigBody(lastAgent2Msg)
 	tb.testConfigProvider.ValidateConfigHasRecommendedZPagesEndpoint(
 		t, []byte(configRecommendedToAgent2),
 	)
 
-	// The server should report deployment status to config provider
-	// on receiving updates from agents.
+	// Server should report deployment success to config provider on receiving update from agent.
 	tb.opampServer.OnMessage(agent2Conn, &protobufs.AgentToServer{
 		InstanceUid: agent2Id,
 		EffectiveConfig: &protobufs.EffectiveConfig{
@@ -86,26 +86,45 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 			LastRemoteConfigHash: lastAgent2Msg.RemoteConfig.ConfigHash,
 		},
 	})
-	expectedConfId := tb.testConfigProvider.ZPagesEndpoint
 	tb.testConfigProvider.ValidateConfigDeploymentStatus(
-		t, agent2Id, expectedConfId, true,
+		t, agent2Id, tb.testConfigProvider.ZPagesEndpoint, true,
 	)
 
-	// The server should rollout latest config to all agents when notified of
-	// a change by config provider
+	// Server should rollout latest config to all agents when notified of a change by config provider
 	tb.testConfigProvider.ZPagesEndpoint = "localhost:66666"
 	tb.testConfigProvider.NotifySubscribersOfChange()
 	for _, agentConn := range []*MockOpAmpConnection{agent1Conn, agent2Conn} {
 		lastMsg := agentConn.latestMsgFromServer()
 		recommendedConfig := RemoteConfigBody(lastMsg)
+
 		tb.testConfigProvider.ValidateConfigHasRecommendedZPagesEndpoint(
 			t, []byte(recommendedConfig),
 		)
 	}
 
-	// TODO(Raj): Also test for deployment failure.
+	// Server should report deployment failure to config provider on receiving update from agent
+	lastAgent2Msg = agent2Conn.latestMsgFromServer()
+	tb.opampServer.OnMessage(agent2Conn, &protobufs.AgentToServer{
+		InstanceUid: agent2Id,
+		EffectiveConfig: &protobufs.EffectiveConfig{
+			ConfigMap: lastAgent2Msg.RemoteConfig.Config,
+		},
+		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
+			Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED,
+			LastRemoteConfigHash: lastAgent2Msg.RemoteConfig.ConfigHash,
+		},
+	})
+	tb.testConfigProvider.ValidateConfigDeploymentStatus(
+		t, agent2Id, tb.testConfigProvider.ZPagesEndpoint, false,
+	)
 
-	// The server should unsubscribe after shutdown
+	// Server should unsubscribe from config provider updates after shutdown
+	require.Equal(1, len(tb.testConfigProvider.Subscriptions))
+	tb.opampServer.Stop()
+	require.Equal(
+		0, len(tb.testConfigProvider.Subscriptions),
+		"Opamp server should have unsubscribed to config provider updates after shutdown",
+	)
 }
 
 type TestBed struct {
@@ -185,6 +204,11 @@ func (ta *TestAgentConfProvider) RecommendAgentConfig(baseConfYaml []byte) (
 	return recommendedYaml, confId, nil
 }
 
+// test helper.
+func (ta *TestAgentConfProvider) HasRecommendations() bool {
+	return len(ta.ZPagesEndpoint) < 1
+}
+
 // Test helper for validating config recommendations
 func (tp *TestAgentConfProvider) ValidateConfigHasRecommendedZPagesEndpoint(
 	t *testing.T,
@@ -223,6 +247,7 @@ func (ta *TestAgentConfProvider) ReportConfigDeploymentStatus(
 	confIdReports[agentId] = (err == nil)
 }
 
+// test helper.
 func (ta *TestAgentConfProvider) ValidateConfigDeploymentStatus(
 	t *testing.T, agentId string, configId string, expectOk bool,
 ) {
@@ -248,6 +273,7 @@ func (ta *TestAgentConfProvider) SubscribeToConfigUpdates(callback func()) func(
 	}
 }
 
+// test helper.
 func (ta *TestAgentConfProvider) NotifySubscribersOfChange() {
 	for _, callback := range ta.Subscriptions {
 		callback()
@@ -305,7 +331,7 @@ func RemoteConfigBody(msg *protobufs.ServerToAgent) string {
 
 var TestCollectorConfig protobufs.AgentConfigMap = protobufs.AgentConfigMap{
 	ConfigMap: map[string]*protobufs.AgentConfigFile{
-		"otel-collector.yaml": {
+		model.CollectorConfigFilename: {
 			Body: []byte(`
       receivers:
         otlp:

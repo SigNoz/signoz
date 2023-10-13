@@ -121,7 +121,7 @@ func (agents *Agents) GetAllAgents() []*Agent {
 
 // Recommend latest config to connected agents whose effective
 // config is not the same as the latest recommendation
-func (agents *Agents) RecommendLatestConfig(
+func (agents *Agents) RecommendLatestConfigToAll(
 	provider AgentConfigProvider,
 ) error {
 	for _, agent := range agents.GetAllAgents() {
