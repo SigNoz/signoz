@@ -29,7 +29,7 @@ function LogsFilterPreview({ filter }: LogsFilterPreviewProps): JSX.Element {
 				{isEmptyFilter ? (
 					<div>Please select a filter</div>
 				) : (
-					<SampleLogs filter={filter} timeInterval={previewTimeInterval} />
+					<SampleLogs filter={filter} timeInterval={previewTimeInterval} count={5} />
 				)}
 			</div>
 		</div>

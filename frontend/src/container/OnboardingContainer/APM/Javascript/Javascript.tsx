@@ -1,13 +1,13 @@
 import './Javascript.styles.scss';
 
 import { Form, Input, Select } from 'antd';
-import { Code, Pre } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
 import { trackEvent } from 'utils/segmentAnalytics';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import { LangProps } from '../APM';
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import ExpressDocs from './md-docs/express.md';
 import JavascriptDocs from './md-docs/javascript.md';
@@ -20,15 +20,22 @@ const frameworksMap = {
 };
 
 export default function Javascript({
+	ingestionInfo,
 	activeStep,
-}: {
-	activeStep: number;
-}): JSX.Element {
+}: LangProps): JSX.Element {
 	const [selectedFrameWork, setSelectedFrameWork] = useState('express');
 	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(
 		ExpressDocs,
 	);
 	const [form] = Form.useForm();
+	const serviceName = Form.useWatch('Service Name', form);
+
+	const variables = {
+		MYAPP: serviceName || '<service-name>',
+		SIGNOZ_INGESTION_KEY:
+			ingestionInfo.SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
+		REGION: ingestionInfo.REGION || 'region',
+	};
 
 	useEffect(() => {
 		// on language select
@@ -116,14 +123,10 @@ export default function Javascript({
 					</div>
 
 					<div className="content-container">
-						<ReactMarkdown
-							components={{
-								pre: Pre,
-								code: Code,
-							}}
-						>
-							{selectedFrameWorkDocs}
-						</ReactMarkdown>
+						<MarkdownRenderer
+							markdownContent={selectedFrameWorkDocs}
+							variables={variables}
+						/>
 					</div>
 				</div>
 			)}
