@@ -29,27 +29,25 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 		0, len(tb.testConfigProvider.Subscriptions),
 		"there should be no agent config subscribers at the start",
 	)
-
 	tb.StartServer()
-
 	require.Equal(
 		1, len(tb.testConfigProvider.Subscriptions),
 		"Opamp server should have subscribed to updates from config provider after being started",
 	)
 
-	// Server should not recommend any config to the agent if
-	// the provider recommends agent's current config
+	// Server should not recommend any config to the agent if the
+	// config provider recommends agent's current effective config
 	agent1Conn := &MockOpAmpConnection{}
+	agent1Id := "testAgent1"
 	tb.opampServer.OnMessage(
 		agent1Conn,
 		&protobufs.AgentToServer{
-			InstanceUid: "testAgent1",
+			InstanceUid: agent1Id,
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: &TestCollectorConfig,
 			},
 		},
 	)
-
 	lastAgent1Msg := agent1Conn.latestMsgFromServer()
 	require.Nil(
 		lastAgent1Msg,
@@ -72,20 +70,12 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 
 	lastAgent2Msg := agent2Conn.latestMsgFromServer()
 	configRecommendedToAgent2 := RemoteConfigBody(lastAgent2Msg)
-	require.NotEmpty(
-		configRecommendedToAgent2,
-		"Server should not recommend any config to the agent if the provider recommends agent's current config",
-	)
 	tb.testConfigProvider.ValidateConfigHasRecommendedZPagesEndpoint(
 		t, []byte(configRecommendedToAgent2),
 	)
 
 	// The server should report deployment status to config provider
-	// on receiving updates from the agent.
-	require.Equal(
-		0, len(tb.testConfigProvider.ReportedDeploymentStatuses),
-		"no deployment statuses should have been reported at the start",
-	)
+	// on receiving updates from agents.
 	tb.opampServer.OnMessage(agent2Conn, &protobufs.AgentToServer{
 		InstanceUid: agent2Id,
 		EffectiveConfig: &protobufs.EffectiveConfig{
@@ -96,27 +86,26 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 			LastRemoteConfigHash: lastAgent2Msg.RemoteConfig.ConfigHash,
 		},
 	})
-
 	expectedConfId := tb.testConfigProvider.ZPagesEndpoint
-	confIdReports, exists := tb.testConfigProvider.ReportedDeploymentStatuses[expectedConfId]
-
-	assertionMsg := fmt.Sprintf(
-		"config deployment status should have been reported for conf: %s agent: %s",
-		expectedConfId, agent2Id,
+	tb.testConfigProvider.ValidateConfigDeploymentStatus(
+		t, agent2Id, expectedConfId, true,
 	)
-	require.True(exists, assertionMsg)
-	require.Equal(len(confIdReports), 1, assertionMsg)
-	wasConfigDeployedToAgent2 := confIdReports[agent2Id]
-	require.NotNil(wasConfigDeployedToAgent2, assertionMsg)
-	require.True(wasConfigDeployedToAgent2, assertionMsg)
-
-	// TODO(Raj): Also test for deployment failure.
 
 	// The server should rollout latest config to all agents when notified of
 	// a change by config provider
+	tb.testConfigProvider.ZPagesEndpoint = "localhost:66666"
+	tb.testConfigProvider.NotifySubscribersOfChange()
+	for _, agentConn := range []*MockOpAmpConnection{agent1Conn, agent2Conn} {
+		lastMsg := agentConn.latestMsgFromServer()
+		recommendedConfig := RemoteConfigBody(lastMsg)
+		tb.testConfigProvider.ValidateConfigHasRecommendedZPagesEndpoint(
+			t, []byte(recommendedConfig),
+		)
+	}
+
+	// TODO(Raj): Also test for deployment failure.
 
 	// The server should unsubscribe after shutdown
-
 }
 
 type TestBed struct {
@@ -201,6 +190,10 @@ func (tp *TestAgentConfProvider) ValidateConfigHasRecommendedZPagesEndpoint(
 	t *testing.T,
 	collectorConf []byte,
 ) {
+	require.NotEmpty(
+		t, collectorConf, "config expected to contain zpages endpoint but is empty",
+	)
+
 	k := koanf.New(".")
 	err := k.Load(rawbytes.Provider(collectorConf), yaml.Parser())
 	require.Nil(t, err, "could not unmarshal collector config")
@@ -230,12 +223,34 @@ func (ta *TestAgentConfProvider) ReportConfigDeploymentStatus(
 	confIdReports[agentId] = (err == nil)
 }
 
+func (ta *TestAgentConfProvider) ValidateConfigDeploymentStatus(
+	t *testing.T, agentId string, configId string, expectOk bool,
+) {
+	assertionMsg := fmt.Sprintf(
+		"config deployment status should be isOk: %v for conf: %s agent: %s",
+		expectOk, configId, agentId,
+	)
+	confIdReports := ta.ReportedDeploymentStatuses[configId]
+	require.NotNil(t, confIdReports, assertionMsg)
+
+	agentDeploymentIsOk := confIdReports[agentId]
+	require.NotNil(t, agentDeploymentIsOk, assertionMsg)
+
+	require.Equal(t, agentDeploymentIsOk, expectOk, assertionMsg)
+}
+
 func (ta *TestAgentConfProvider) SubscribeToConfigUpdates(callback func()) func() {
 	subscriberId := uuid.NewString()
 	ta.Subscriptions[subscriberId] = callback
 
 	return func() {
 		delete(ta.Subscriptions, subscriberId)
+	}
+}
+
+func (ta *TestAgentConfProvider) NotifySubscribersOfChange() {
+	for _, callback := range ta.Subscriptions {
+		callback()
 	}
 }
 

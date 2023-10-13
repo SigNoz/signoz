@@ -56,8 +56,12 @@ func (srv *Server) Start(listener string) error {
 	}
 
 	unsubscribe := srv.agentConfigProvider.SubscribeToConfigUpdates(func() {
-		panic("TODO(Raj): Implement this")
-		// RecommendLatestConfigToAllAgents(collectorConfigProvider)
+		err := srv.agents.RecommendLatestConfig(srv.agentConfigProvider)
+		if err != nil {
+			zap.S().Errorf(
+				"could not roll out latest config recommendation to connected agents: %w", err,
+			)
+		}
 	})
 	srv.cleanups = append(srv.cleanups, unsubscribe)
 
@@ -65,10 +69,11 @@ func (srv *Server) Start(listener string) error {
 }
 
 func (srv *Server) Stop() {
-	srv.server.Stop(context.Background())
 	for _, cleanup := range srv.cleanups {
-		cleanup()
+		defer cleanup()
 	}
+
+	srv.server.Stop(context.Background())
 }
 
 func (srv *Server) onDisconnect(conn types.Connection) {
