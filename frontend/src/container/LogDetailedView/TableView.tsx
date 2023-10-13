@@ -63,7 +63,7 @@ function TableView({
 			.map((key) => ({
 				key,
 				field: key,
-				value: removeEscapeCharacters(JSON.stringify(flattenLogData[key])),
+				value: JSON.stringify(flattenLogData[key]),
 			}));
 
 	const onTraceHandler = (record: DataType) => (): void => {
@@ -182,7 +182,7 @@ function TableView({
 
 				return (
 					<CopyClipboardHOC textToCopy={textToCopy}>
-						<span style={{ color: orange[6] }}>{field}</span>
+						<span style={{ color: orange[6] }}>{removeEscapeCharacters(field)}</span>
 					</CopyClipboardHOC>
 				);
 			},
