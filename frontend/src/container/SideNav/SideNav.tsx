@@ -44,10 +44,11 @@ function SideNav(): JSX.Element {
 
 	const { data } = useLicense();
 
-	const isOnBasicPlan = data?.payload?.licenses?.some(
-		(license) =>
-			license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
-	);
+	const isOnBasicPlan =
+		data?.payload?.licenses?.some(
+			(license) =>
+				license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
+		) || true;
 
 	const { hostname } = window.location;
 
@@ -59,7 +60,7 @@ function SideNav(): JSX.Element {
 						(feature) => feature.name === FeatureKeys.ONBOARDING,
 					)?.active || false;
 
-				if (role !== 'ADMIN' || !isOnBasicPlan) {
+				if (role !== 'ADMIN' || isOnBasicPlan) {
 					return item.key !== ROUTES.BILLING;
 				}
 
