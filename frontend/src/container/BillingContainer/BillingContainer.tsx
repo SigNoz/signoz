@@ -167,7 +167,7 @@ export default function BillingContainer(): JSX.Element {
 	const processUsageData = useCallback(
 		(data: any): void => {
 			const {
-				details: { breakdown = [], total },
+				details: { breakdown = [], total, billTotal },
 				billingPeriodStart,
 				billingPeriodEnd,
 			} = data?.payload || {};
@@ -203,7 +203,7 @@ export default function BillingContainer(): JSX.Element {
 					)} to ${getFormattedDate(billingPeriodEnd)}`,
 				);
 				setDaysRemaining(getRemainingDays(billingPeriodEnd) - 1);
-				setBillAmount(total);
+				setBillAmount(billTotal);
 			}
 		},
 		[licensesData?.payload?.onTrial],
