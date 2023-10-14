@@ -17,6 +17,13 @@ afterEach(() => {
 	queryClient.clear();
 });
 
+jest.mock('hooks/useResourceAttribute', () => ({
+	__esModule: true,
+	default: jest.fn().mockReturnValue({
+		queries: [],
+	}),
+}));
+
 function AllTheProviders({
 	children,
 }: {

@@ -4,13 +4,6 @@ import { act, render, screen } from 'tests/test-utils';
 
 import ServicesUsingMetrics from './index';
 
-jest.mock('hooks/useResourceAttribute', () => ({
-	__esModule: true,
-	default: jest.fn().mockReturnValue({
-		queries: [],
-	}),
-}));
-
 describe('ServicesUsingMetrics', () => {
 	test('should render the ServicesUsingMetrics component', async () => {
 		await act(() => {

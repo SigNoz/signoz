@@ -2,13 +2,6 @@ import { act, fireEvent, render, screen } from 'tests/test-utils';
 
 import ServiceTraces from '.';
 
-jest.mock('hooks/useResourceAttribute', () => ({
-	__esModule: true,
-	default: jest.fn().mockReturnValue({
-		queries: [],
-	}),
-}));
-
 describe('ServicesTraces', () => {
 	test('Should render the component', async () => {
 		await act(() => {
