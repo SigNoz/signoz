@@ -171,13 +171,18 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	// initiate agent config handler
-	if err := agentConf.Initiate(localDB, AppDbEngine); err != nil {
+	// ingestion pipelines manager
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	if err != nil {
 		return nil, err
 	}
 
-	// ingestion pipelines manager
-	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	// initiate agent config handler
+	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
+		DB:            localDB,
+		DBEngine:      AppDbEngine,
+		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -256,10 +261,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
-	// TODO(Raj): Replace this with actual provider in a follow up PR
-	agentConfigProvider := opamp.NewMockAgentConfigProvider()
 	s.opampServer = opamp.InitializeServer(
-		&opAmpModel.AllAgents, agentConfigProvider,
+		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
 	return s, nil

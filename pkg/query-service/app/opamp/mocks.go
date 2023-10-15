@@ -2,6 +2,7 @@ package opamp
 
 import (
 	"context"
+	"log"
 	"net"
 
 	"github.com/google/uuid"
@@ -131,4 +132,16 @@ func (ta *MockAgentConfigProvider) NotifySubscribersOfChange() {
 	for _, callback := range ta.ConfigUpdateSubscribers {
 		callback()
 	}
+}
+
+// Brought in from https://github.com/open-telemetry/opamp-go/blob/main/internal/testhelpers/nethelpers.go
+func GetAvailableLocalAddress() string {
+	ln, err := net.Listen("tcp", "127.0.0.1:")
+	if err != nil {
+		log.Fatalf("failed to get a free local port: %v", err)
+	}
+	// There is a possible race if something else takes this same port before
+	// the test uses it, however, that is unlikely in practice.
+	defer ln.Close()
+	return ln.Addr().String()
 }

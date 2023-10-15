@@ -203,14 +203,19 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := agentConf.Initiate(localDB, "sqlite"); err != nil {
+	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
+		DB:       localDB,
+		DBEngine: "sqlite",
+		AgentFeatures: []agentConf.AgentFeature{
+			logParsingPipelineController,
+		},
+	})
+	if err != nil {
 		return nil, err
 	}
 
-	// TODO(Raj): Replace this with actual provider in a follow up PR
-	agentConfigProvider := opamp.NewMockAgentConfigProvider()
 	s.opampServer = opamp.InitializeServer(
-		&opAmpModel.AllAgents, agentConfigProvider,
+		&opAmpModel.AllAgents, agentConfMgr,
 	)
 
 	return s, nil

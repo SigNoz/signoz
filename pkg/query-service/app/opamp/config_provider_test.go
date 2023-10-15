@@ -2,8 +2,6 @@ package opamp
 
 import (
 	"fmt"
-	"log"
-	"net"
 	"os"
 	"testing"
 
@@ -137,6 +135,21 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	)
 	require.False(tb.testConfigProvider.ReportedDeploymentStatuses[expectedConfId][agent2Id])
 
+	lastAgent1Msg = agent1Conn.LatestMsgFromServer()
+	agent1Conn.ClearMsgsFromServer()
+	response := tb.opampServer.OnMessage(agent1Conn, &protobufs.AgentToServer{
+		InstanceUid: agent1Id,
+		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
+			Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
+			LastRemoteConfigHash: lastAgent1Msg.RemoteConfig.ConfigHash,
+		},
+	})
+	require.Nil(response.RemoteConfig)
+	require.Nil(
+		agent1Conn.LatestMsgFromServer(),
+		"server should not recommend a config if agent is reporting back with status on a broadcasted config",
+	)
+
 	require.Equal(1, len(tb.testConfigProvider.ConfigUpdateSubscribers))
 	tb.opampServer.Stop()
 	require.Equal(
@@ -241,16 +254,4 @@ func initialAgentConf() *protobufs.AgentConfigMap {
             exporters: [otlp]
   `),
 	)
-}
-
-// Brought in from https://github.com/open-telemetry/opamp-go/blob/main/internal/testhelpers/nethelpers.go
-func GetAvailableLocalAddress() string {
-	ln, err := net.Listen("tcp", "127.0.0.1:")
-	if err != nil {
-		log.Fatalf("failed to get a free local port: %v", err)
-	}
-	// There is a possible race if something else takes this same port before
-	// the test uses it, however, that is unlikely in practice.
-	defer ln.Close()
-	return ln.Addr().String()
 }
