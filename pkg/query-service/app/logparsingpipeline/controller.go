@@ -8,7 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/multierr"
@@ -74,15 +73,6 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 
 	}
 
-	// prepare filter config (processor) from the pipelines
-	// filterConfig, names, translationErr := PreparePipelineProcessor(pipelines)
-	// if translationErr != nil {
-	// 	zap.S().Errorf("failed to generate processor config from pipelines for deployment %w", translationErr)
-	// 	return nil, model.BadRequest(errors.Wrap(
-	// 		translationErr, "failed to generate processor config from pipelines for deployment",
-	// 	))
-	// }
-
 	if !agentConf.Ready() {
 		return nil, model.UnavailableError(fmt.Errorf(
 			"agent updater unavailable at the moment. Please try in sometime",
@@ -100,13 +90,6 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	if err != nil || cfg == nil {
 		return nil, err
 	}
-
-	// zap.S().Info("applying drop pipeline config", cfg)
-	// raw pipeline is needed since filterConfig doesn't contain inactive pipelines and operators
-	// rawPipelineData, _ := json.Marshal(pipelines)
-
-	// queue up the config to push to opamp
-	// err = agentConf.UpsertLogParsingProcessor(ctx, cfg.Version, rawPipelineData, filterConfig, names)
 
 	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeLogPipelines, 10)
 	insertedCfg, _ := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeLogPipelines, cfg.Version)
@@ -197,7 +180,7 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", model.BadRequest(errors.Wrap(err, "could not prepare otel collector processors for log pipelines"))
 	}
 
-	updatedConf, apiErr := opamp.GenerateCollectorConfigWithPipelines(
+	updatedConf, apiErr := GenerateCollectorConfigWithPipelines(
 		currentConfYaml, processors, procNames,
 	)
 	if apiErr != nil {

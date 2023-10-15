@@ -1,90 +1,18 @@
-package opamp
+package logparsingpipeline
 
 import (
-	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
 
 	"github.com/knadh/koanf/parsers/yaml"
-	"github.com/open-telemetry/opamp-go/protobufs"
-	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	coreModel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
 var lockLogsPipelineSpec sync.RWMutex
-
-func UpsertLogsParsingProcessor(
-	ctx context.Context,
-	parsingProcessors map[string]interface{},
-	parsingProcessorsNames []string,
-	callback func(string, string, error),
-) (string, *coreModel.ApiError) {
-	confHash := ""
-	if opAmpServer == nil {
-		return confHash, coreModel.UnavailableError(fmt.Errorf(
-			"opamp server is down, unable to push config to agent at this moment",
-		))
-	}
-
-	agents := opAmpServer.agents.GetAllAgents()
-	if len(agents) == 0 {
-		return confHash, coreModel.UnavailableError(fmt.Errorf(
-			"no agents available at the moment",
-		))
-	}
-
-	for _, agent := range agents {
-		config := agent.EffectiveConfig
-
-		updatedConf, apiErr := GenerateCollectorConfigWithPipelines(
-			[]byte(config),
-			parsingProcessors,
-			parsingProcessorsNames,
-		)
-		if apiErr != nil {
-			return confHash, apiErr
-		}
-
-		agent.EffectiveConfig = string(updatedConf)
-		err := agent.Upsert()
-		if err != nil {
-			return confHash, coreModel.InternalError(err)
-		}
-
-		// zap.S().Infof("sending new config", string(updatedConf))
-		hash := sha256.New()
-		_, err = hash.Write(updatedConf)
-		if err != nil {
-			return confHash, coreModel.InternalError(err)
-		}
-
-		agent.SendToAgent(&protobufs.ServerToAgent{
-			RemoteConfig: &protobufs.AgentRemoteConfig{
-				Config: &protobufs.AgentConfigMap{
-					ConfigMap: map[string]*protobufs.AgentConfigFile{
-						"collector.yaml": {
-							Body:        updatedConf,
-							ContentType: "application/x-yaml",
-						},
-					},
-				},
-				ConfigHash: hash.Sum(nil),
-			},
-		})
-
-		if confHash == "" {
-			confHash = string(hash.Sum(nil))
-			model.ListenToConfigUpdate(agent.ID, confHash, callback)
-		}
-	}
-
-	return confHash, nil
-}
 
 // check if the processors already exis
 // if yes then update the processor.

@@ -47,8 +47,6 @@ type ManagerOptions struct {
 }
 
 func Initiate(options *ManagerOptions) (*Manager, error) {
-	m.Repo = Repo{options.DB}
-
 	// featureType must be unqiue across registered AgentFeatures.
 	agentFeatureByType := map[AgentFeatureType]AgentFeature{}
 	for _, feature := range options.AgentFeatures {
@@ -61,8 +59,11 @@ func Initiate(options *ManagerOptions) (*Manager, error) {
 		agentFeatureByType[featureType] = feature
 	}
 
-	m.agentFeatures = options.AgentFeatures
-	m.configSubscribers = map[string]func(){}
+	m = &Manager{
+		Repo:              Repo{options.DB},
+		agentFeatures:     options.AgentFeatures,
+		configSubscribers: map[string]func(){},
+	}
 
 	err := m.initDB(options.DBEngine)
 	if err != nil {
@@ -102,7 +103,6 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 	recommendation := currentConfYaml
 	settingVersions := []string{}
 
-	// Find latest/active config versions from the DB
 	for _, feature := range m.agentFeatures {
 		featureType := ElementTypeDef(feature.AgentFeatureType())
 		latestConfig, apiErr := GetLatestVersion(context.Background(), featureType)
@@ -119,7 +119,7 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 		)
 		if apiErr != nil {
 			return nil, "", errors.Wrap(apiErr.ToError(), fmt.Sprintf(
-				"failed to generate recommendation for %s", featureType,
+				"failed to generate agent config recommendation for %s", featureType,
 			))
 		}
 		recommendation = updatedConf
@@ -127,9 +127,13 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 		settingVersions = append(settingVersions, configId)
 
 		m.updateDeployStatus(
-			context.Background(), featureType, latestConfig.Version,
-			string(DeployInitiated), "Deployment has started",
-			configId, serializedSettingsUsed,
+			context.Background(),
+			featureType,
+			latestConfig.Version,
+			string(DeployInitiated),
+			"Deployment has started",
+			configId,
+			serializedSettingsUsed,
 		)
 
 	}
