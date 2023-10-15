@@ -135,6 +135,21 @@ func TestOpAMPServerToAgentCommunicationWithConfigProvider(t *testing.T) {
 	)
 	require.False(tb.testConfigProvider.ReportedDeploymentStatuses[expectedConfId][agent2Id])
 
+	lastAgent1Msg = agent1Conn.LatestMsgFromServer()
+	agent1Conn.ClearMsgsFromServer()
+	response := tb.opampServer.OnMessage(agent1Conn, &protobufs.AgentToServer{
+		InstanceUid: agent1Id,
+		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
+			Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
+			LastRemoteConfigHash: lastAgent1Msg.RemoteConfig.ConfigHash,
+		},
+	})
+	require.Nil(response.RemoteConfig)
+	require.Nil(
+		agent1Conn.LatestMsgFromServer(),
+		"server should not recommend a config if agent is reporting back with status on a broadcasted config",
+	)
+
 	require.Equal(1, len(tb.testConfigProvider.ConfigUpdateSubscribers))
 	tb.opampServer.Stop()
 	require.Equal(
