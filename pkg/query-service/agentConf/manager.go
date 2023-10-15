@@ -71,6 +71,14 @@ func (m *Manager) SubscribeToConfigUpdates(callback func()) (unsubscribe func())
 	}
 }
 
+func (m *Manager) notifyConfigUpdateSubscribers() {
+	m.configSubscribersLock.Lock()
+	defer m.configSubscribersLock.Unlock()
+	for _, handler := range m.configSubscribers {
+		handler()
+	}
+}
+
 func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 	recommendedConfYaml []byte,
 	// Opaque id of the recommended config, used for reporting deployment status updates
@@ -96,7 +104,7 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 			recommendation, latestConfig,
 		)
 		if apiErr != nil {
-			return nil, "", model.WrapApiError(apiErr, fmt.Sprintf(
+			return nil, "", errors.Wrap(apiErr.ToError(), fmt.Sprintf(
 				"failed to generate recommendation for %s", featureType,
 			))
 		}
@@ -112,7 +120,8 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 
 	}
 
-	return recommendation, strings.Join(settingVersions, ","), nil
+	configId = strings.Join(settingVersions, ",")
+	return recommendation, configId, nil
 }
 
 func (m *Manager) ReportConfigDeploymentStatus(
@@ -175,6 +184,8 @@ func StartNewVersion(
 	if err != nil {
 		return nil, err
 	}
+
+	m.notifyConfigUpdateSubscribers()
 
 	return cfg, nil
 }

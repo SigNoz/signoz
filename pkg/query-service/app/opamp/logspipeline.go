@@ -40,43 +40,25 @@ func UpsertLogsParsingProcessor(
 
 	for _, agent := range agents {
 		config := agent.EffectiveConfig
-		c, err := yaml.Parser().Unmarshal([]byte(config))
-		if err != nil {
-			return confHash, coreModel.BadRequest(err)
+
+		updatedConf, apiErr := GenerateCollectorConfigWithPipelines(
+			[]byte(config),
+			parsingProcessors,
+			parsingProcessorsNames,
+		)
+		if apiErr != nil {
+			return confHash, apiErr
 		}
 
-		buildLogParsingProcessors(c, parsingProcessors)
-
-		p, err := getOtelPipelinFromConfig(c)
+		agent.EffectiveConfig = string(updatedConf)
+		err := agent.Upsert()
 		if err != nil {
-			return confHash, coreModel.BadRequest(err)
-		}
-		if p.Pipelines.Logs == nil {
-			return confHash, coreModel.InternalError(fmt.Errorf(
-				"logs pipeline doesn't exist",
-			))
-		}
-
-		// build the new processor list
-		updatedProcessorList, _ := buildLogsProcessors(p.Pipelines.Logs.Processors, parsingProcessorsNames)
-		p.Pipelines.Logs.Processors = updatedProcessorList
-
-		// add the new processor to the data ( no checks required as the keys will exists)
-		c["service"].(map[string]interface{})["pipelines"].(map[string]interface{})["logs"] = p.Pipelines.Logs
-
-		updatedConf, err := yaml.Parser().Marshal(c)
-		if err != nil {
-			return confHash, coreModel.BadRequest(err)
+			return confHash, coreModel.InternalError(err)
 		}
 
 		// zap.S().Infof("sending new config", string(updatedConf))
 		hash := sha256.New()
 		_, err = hash.Write(updatedConf)
-		if err != nil {
-			return confHash, coreModel.InternalError(err)
-		}
-		agent.EffectiveConfig = string(updatedConf)
-		err = agent.Upsert()
 		if err != nil {
 			return confHash, coreModel.InternalError(err)
 		}
@@ -104,7 +86,7 @@ func UpsertLogsParsingProcessor(
 	return confHash, nil
 }
 
-// check if the processors already exist
+// check if the processors already exis
 // if yes then update the processor.
 // if something doesn't exists then remove it.
 func buildLogParsingProcessors(agentConf, parsingProcessors map[string]interface{}) error {
@@ -232,4 +214,41 @@ func checkDuplicateString(pipeline []string) bool {
 		exists[name] = true
 	}
 	return false
+}
+
+func GenerateCollectorConfigWithPipelines(
+	config []byte,
+	parsingProcessors map[string]interface{},
+	parsingProcessorsNames []string,
+) ([]byte, *coreModel.ApiError) {
+	c, err := yaml.Parser().Unmarshal([]byte(config))
+	if err != nil {
+		return nil, coreModel.BadRequest(err)
+	}
+
+	buildLogParsingProcessors(c, parsingProcessors)
+
+	p, err := getOtelPipelinFromConfig(c)
+	if err != nil {
+		return nil, coreModel.BadRequest(err)
+	}
+	if p.Pipelines.Logs == nil {
+		return nil, coreModel.InternalError(fmt.Errorf(
+			"logs pipeline doesn't exist",
+		))
+	}
+
+	// build the new processor list
+	updatedProcessorList, _ := buildLogsProcessors(p.Pipelines.Logs.Processors, parsingProcessorsNames)
+	p.Pipelines.Logs.Processors = updatedProcessorList
+
+	// add the new processor to the data ( no checks required as the keys will exists)
+	c["service"].(map[string]interface{})["pipelines"].(map[string]interface{})["logs"] = p.Pipelines.Logs
+
+	updatedConf, err := yaml.Parser().Marshal(c)
+	if err != nil {
+		return nil, coreModel.BadRequest(err)
+	}
+
+	return updatedConf, nil
 }

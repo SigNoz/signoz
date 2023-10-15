@@ -275,6 +275,7 @@ func (agent *Agent) processStatusUpdate(
 
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
 	recommendedConfig, confId, err := configProvider.RecommendAgentConfig([]byte(agent.EffectiveConfig))
+
 	if err != nil {
 		zap.S().Errorf("could not generate config recommendation for agent %d: %w", agent.ID, err)
 		return false
@@ -294,7 +295,6 @@ func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool 
 	if len(confId) < 1 {
 		// Should never happen. Handle gracefully if it does by some chance.
 		zap.S().Errorf("config provider recommended a config with empty confId. Using content hash for configId")
-
 		hash := sha256.New()
 		for k, v := range cfg.Config.ConfigMap {
 			hash.Write([]byte(k))

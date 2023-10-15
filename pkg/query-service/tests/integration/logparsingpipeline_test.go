@@ -135,7 +135,8 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, postablePipelines, getPipelinesResp,
 	)
 	assert.Equal(
-		getPipelinesResp.History[0].DeployStatus, agentConf.Deployed,
+		agentConf.Deployed,
+		getPipelinesResp.History[0].DeployStatus,
 		"pipeline deployment should be complete after acknowledgment from opamp client",
 	)
 
@@ -165,7 +166,8 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, postablePipelines, getPipelinesResp,
 	)
 	assert.Equal(
-		getPipelinesResp.History[0].DeployStatus, agentConf.Deployed,
+		agentConf.Deployed,
+		getPipelinesResp.History[0].DeployStatus,
 		"deployment for latest pipeline config should be complete after acknowledgment from opamp client",
 	)
 }
@@ -335,7 +337,9 @@ func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
-	opampServer, clientConn, err := mockOpampAgent(testDBFilePath)
+	opampServer, clientConn, err := mockOpampAgent(
+		t, testDBFilePath, controller,
+	)
 	if err != nil {
 		t.Fatalf("could not create opamp server and mock client connection: %v", err)
 	}
@@ -596,18 +600,32 @@ func assertPipelinesResponseMatchesPostedPipelines(
 	}
 }
 
-func mockOpampAgent(testDBFilePath string) (*opamp.Server, *opamp.MockOpAmpConnection, error) {
+func mockOpampAgent(
+	t *testing.T,
+	testDBFilePath string,
+	pipelinesController *logparsingpipeline.LogParsingPipelineController,
+) (*opamp.Server, *opamp.MockOpAmpConnection, error) {
 	// Mock an available opamp agent
 	testDB, err := opampModel.InitDB(testDBFilePath)
 	if err != nil {
 		return nil, nil, err
 	}
-	err = agentConf.Initiate(testDB, "sqlite")
+	agentConfMgr, err := agentConf.Initiate(
+		testDB, "sqlite",
+		map[agentConf.AgentFeatureType]agentConf.AgentFeature{
+			logparsingpipeline.LogPipelinesFeatureType: pipelinesController,
+		},
+	)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	opampServer := opamp.InitializeServer(nil, opamp.NewMockAgentConfigProvider())
+	opampServer := opamp.InitializeServer(nil, agentConfMgr)
+	opampServer.Start(opamp.GetAvailableLocalAddress())
+	t.Cleanup(func() {
+		opampServer.Stop()
+	})
+
 	opampClientConnection := &opamp.MockOpAmpConnection{}
 	opampServer.OnMessage(
 		opampClientConnection,
