@@ -337,12 +337,7 @@ func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
-	opampServer, clientConn, err := mockOpampAgent(
-		t, testDBFilePath, controller,
-	)
-	if err != nil {
-		t.Fatalf("could not create opamp server and mock client connection: %v", err)
-	}
+	opampServer, clientConn := mockOpampAgent(t, testDBFilePath, controller)
 
 	user, apiErr := createTestUser()
 	if apiErr != nil {
@@ -604,23 +599,22 @@ func mockOpampAgent(
 	t *testing.T,
 	testDBFilePath string,
 	pipelinesController *logparsingpipeline.LogParsingPipelineController,
-) (*opamp.Server, *opamp.MockOpAmpConnection, error) {
+) (*opamp.Server, *opamp.MockOpAmpConnection) {
 	// Mock an available opamp agent
 	testDB, err := opampModel.InitDB(testDBFilePath)
-	if err != nil {
-		return nil, nil, err
-	}
+	require.Nil(t, err, "failed to init opamp model")
+
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
 		DB:            testDB,
 		DBEngine:      "sqlite",
 		AgentFeatures: []agentConf.AgentFeature{pipelinesController},
 	})
-	if err != nil {
-		return nil, nil, err
-	}
+	require.Nil(t, err, "failed to init agentConf")
 
 	opampServer := opamp.InitializeServer(nil, agentConfMgr)
-	opampServer.Start(opamp.GetAvailableLocalAddress())
+	err = opampServer.Start(opamp.GetAvailableLocalAddress())
+	require.Nil(t, err, "failed to start opamp server")
+
 	t.Cleanup(func() {
 		opampServer.Stop()
 	})
@@ -635,7 +629,7 @@ func mockOpampAgent(
 			},
 		},
 	)
-	return opampServer, opampClientConnection, nil
+	return opampServer, opampClientConnection
 }
 
 func newInitialAgentConfigMap() *protobufs.AgentConfigMap {
