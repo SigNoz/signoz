@@ -203,16 +203,17 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	agentConfMgr, err := agentConf.Initiate(
-		localDB, "sqlite",
-		map[agentConf.AgentFeatureType]agentConf.AgentFeature{
-			logparsingpipeline.LogPipelinesFeatureType: logParsingPipelineController,
-		})
+	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
+		DB:       localDB,
+		DBEngine: "sqlite",
+		AgentFeatures: []agentConf.AgentFeature{
+			logParsingPipelineController,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO(Raj): Replace this with actual provider in a follow up PR
 	s.opampServer = opamp.InitializeServer(
 		&opAmpModel.AllAgents, agentConfMgr,
 	)

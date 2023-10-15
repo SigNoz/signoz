@@ -610,12 +610,11 @@ func mockOpampAgent(
 	if err != nil {
 		return nil, nil, err
 	}
-	agentConfMgr, err := agentConf.Initiate(
-		testDB, "sqlite",
-		map[agentConf.AgentFeatureType]agentConf.AgentFeature{
-			logparsingpipeline.LogPipelinesFeatureType: pipelinesController,
-		},
-	)
+	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
+		DB:            testDB,
+		DBEngine:      "sqlite",
+		AgentFeatures: []agentConf.AgentFeature{pipelinesController},
+	})
 	if err != nil {
 		return nil, nil, err
 	}

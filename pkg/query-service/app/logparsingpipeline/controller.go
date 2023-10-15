@@ -171,6 +171,11 @@ func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 }
 
 // Implements agentConf.AgentFeature interface.
+func (pc *LogParsingPipelineController) AgentFeatureType() agentConf.AgentFeatureType {
+	return LogPipelinesFeatureType
+}
+
+// Implements agentConf.AgentFeature interface.
 func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	currentConfYaml []byte,
 	configVersion *agentConf.ConfigVersion,

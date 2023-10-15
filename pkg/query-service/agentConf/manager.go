@@ -31,34 +31,47 @@ type Manager struct {
 	// lock to make sure only one update is sent to remote agents at a time
 	lock uint32
 
-	agentFeatures         map[AgentFeatureType]AgentFeature
+	// For AgentConfigProvider implementation
+	agentFeatures         []AgentFeature
 	configSubscribers     map[string]func()
 	configSubscribersLock sync.Mutex
 }
 
-// Ready indicates if Manager can accept new config update requests
-func (mgr *Manager) Ready() bool {
-	if atomic.LoadUint32(&mgr.lock) != 0 {
-		return false
-	}
-	return opamp.Ready()
+type ManagerOptions struct {
+	DB       *sqlx.DB
+	DBEngine string
+
+	// When acting as opamp.AgentConfigProvider, agent conf recommendations are
+	// applied to the base conf in the order the features have been specified here.
+	AgentFeatures []AgentFeature
 }
 
-func Initiate(
-	db *sqlx.DB,
-	dbEngine string,
-	agentFeatures map[AgentFeatureType]AgentFeature,
-) (*Manager, error) {
-	m.Repo = Repo{db}
-	m.agentFeatures = agentFeatures
+func Initiate(options *ManagerOptions) (*Manager, error) {
+	m.Repo = Repo{options.DB}
+
+	// featureType must be unqiue across registered AgentFeatures.
+	agentFeatureByType := map[AgentFeatureType]AgentFeature{}
+	for _, feature := range options.AgentFeatures {
+		featureType := feature.AgentFeatureType()
+		if agentFeatureByType[featureType] != nil {
+			panic(fmt.Sprintf(
+				"found multiple agent features with type: %s", featureType,
+			))
+		}
+		agentFeatureByType[featureType] = feature
+	}
+
+	m.agentFeatures = options.AgentFeatures
 	m.configSubscribers = map[string]func(){}
-	err := m.initDB(dbEngine)
+
+	err := m.initDB(options.DBEngine)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not init agentConf db")
 	}
 	return m, nil
 }
 
+// Implements opamp.AgentConfigProvider
 func (m *Manager) SubscribeToConfigUpdates(callback func()) (unsubscribe func()) {
 	m.configSubscribersLock.Lock()
 	defer m.configSubscribersLock.Unlock()
@@ -79,6 +92,7 @@ func (m *Manager) notifyConfigUpdateSubscribers() {
 	}
 }
 
+// Implements opamp.AgentConfigProvider
 func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 	recommendedConfYaml []byte,
 	// Opaque id of the recommended config, used for reporting deployment status updates
@@ -89,8 +103,8 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 	settingVersions := []string{}
 
 	// Find latest/active config versions from the DB
-	for featureType, feature := range m.agentFeatures {
-		featureType := ElementTypeDef(featureType)
+	for _, feature := range m.agentFeatures {
+		featureType := ElementTypeDef(feature.AgentFeatureType())
 		latestConfig, apiErr := GetLatestVersion(context.Background(), featureType)
 		if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
 			return nil, "", errors.Wrap(apiErr.ToError(), "failed to get latest agent config version")
@@ -124,6 +138,7 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 	return recommendation, configId, nil
 }
 
+// Implements opamp.AgentConfigProvider
 func (m *Manager) ReportConfigDeploymentStatus(
 	agentId string,
 	configId string,
@@ -142,6 +157,16 @@ func (m *Manager) ReportConfigDeploymentStatus(
 		)
 	}
 }
+
+// Ready indicates if Manager can accept new config update requests
+func (mgr *Manager) Ready() bool {
+	if atomic.LoadUint32(&mgr.lock) != 0 {
+		return false
+	}
+	return opamp.Ready()
+}
+
+// Static methods for working with default manager instance in this module.
 
 // Ready indicates if Manager can accept new config update requests
 func Ready() bool {
@@ -323,29 +348,5 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 	}
 
 	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
-	return nil
-}
-
-// UpsertLogParsingProcessors updates the agent with log parsing processors
-func UpsertLogParsingProcessor(
-	ctx context.Context,
-	version int,
-	rawPipelineData []byte,
-	config map[string]interface{},
-	names []string,
-) *model.ApiError {
-	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
-		return model.UnavailableError(fmt.Errorf("agent updater is busy"))
-	}
-	defer atomic.StoreUint32(&m.lock, 0)
-
-	// send the changes to opamp.
-	configHash, err := opamp.UpsertLogsParsingProcessor(context.Background(), config, names, m.OnConfigUpdate)
-	if err != nil {
-		zap.S().Errorf("failed to call agent config update for log parsing processor:", err)
-		return err
-	}
-
-	m.updateDeployStatus(ctx, ElementTypeLogPipelines, version, string(DeployInitiated), "Deployment has started", configHash, string(rawPipelineData))
 	return nil
 }
