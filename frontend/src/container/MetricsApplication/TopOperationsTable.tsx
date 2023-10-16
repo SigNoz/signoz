@@ -10,7 +10,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { getErrorRate, navigateToTrace } from './utils';
 
-function TopOperationsTable({ data }: TopOperationsTableProps): JSX.Element {
+function TopOperationsTable({
+	data,
+	isLoading,
+}: TopOperationsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -100,6 +103,7 @@ function TopOperationsTable({ data }: TopOperationsTableProps): JSX.Element {
 			tableLayout="fixed"
 			dataSource={data}
 			rowKey="name"
+			loading={isLoading}
 		/>
 	);
 }
@@ -115,6 +119,7 @@ export interface TopOperationList {
 
 interface TopOperationsTableProps {
 	data: TopOperationList[];
+	isLoading: boolean;
 }
 
 export default TopOperationsTable;

@@ -1,4 +1,3 @@
-import { Skeleton } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -98,10 +97,6 @@ function GridCardGraph({
 	);
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
-
-	if (queryResponse.isLoading) {
-		return <Skeleton />;
-	}
 
 	return (
 		<span ref={graphRef}>
