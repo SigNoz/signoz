@@ -162,7 +162,7 @@ services:
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
-    image: signoz/query-service:${DOCKER_TAG:-0.30.0}
+    image: signoz/query-service:${DOCKER_TAG:-0.31.1}
     container_name: signoz-query-service
     command:
       [
@@ -201,7 +201,7 @@ services:
     <<: *clickhouse-depend
 
   frontend:
-    image: signoz/frontend:${DOCKER_TAG:-0.30.0}
+    image: signoz/frontend:${DOCKER_TAG:-0.31.1}
     container_name: signoz-frontend
     restart: on-failure
     depends_on:
@@ -213,16 +213,18 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.7}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.8}
     container_name: signoz-otel-collector
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
+        "--manager-config=/etc/manager-config.yaml",
         "--feature-gates=-pkg.translator.prometheus.NormalizeName"
       ]
     user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ./otel-collector-opamp-config.yaml:/etc/manager-config.yaml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
@@ -244,7 +246,7 @@ services:
     <<: *clickhouse-depend
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.7}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.8}
     container_name: signoz-otel-collector-metrics
     command:
       [
