@@ -1051,7 +1051,7 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
 
-	err := aH.ruleManager.DeleteRule(id)
+	err := aH.ruleManager.DeleteRule(r.Context(), id)
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1074,7 +1074,7 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gettableRule, err := aH.ruleManager.PatchRule(string(body), id)
+	gettableRule, err := aH.ruleManager.PatchRule(r.Context(), string(body), id)
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1095,7 +1095,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = aH.ruleManager.EditRule(string(body), id)
+	err = aH.ruleManager.EditRule(r.Context(), string(body), id)
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1248,7 +1248,7 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = aH.ruleManager.CreateRule(string(body))
+	err = aH.ruleManager.CreateRule(r.Context(), string(body))
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return

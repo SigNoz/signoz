@@ -95,6 +95,25 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("error in creating ttl_status table: %s", err.Error())
 	}
 
+	// sqlite does not support "IF NOT EXISTS"
+	createdAt := `ALTER TABLE rules ADD COLUMN created_at datetime;`
+	_, err = db.Exec(createdAt)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
+		return nil, fmt.Errorf("error in adding column created_at to rules table: %s", err.Error())
+	}
+
+	createdBy := `ALTER TABLE rules ADD COLUMN created_by TEXT;`
+	_, err = db.Exec(createdBy)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
+		return nil, fmt.Errorf("error in adding column created_by to rules table: %s", err.Error())
+	}
+
+	updatedBy := `ALTER TABLE rules ADD COLUMN updated_by TEXT;`
+	_, err = db.Exec(updatedBy)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
+		return nil, fmt.Errorf("error in adding column updated_by to rules table: %s", err.Error())
+	}
+
 	return db, nil
 }
 
