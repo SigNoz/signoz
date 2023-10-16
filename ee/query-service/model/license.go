@@ -91,11 +91,13 @@ func (l *License) ParseFeatures() {
 }
 
 type Licenses struct {
-	TrialStart     int64     `json:"trialStart"`
-	TrialEnd       int64     `json:"trialEnd"`
-	OnTrial        bool      `json:"onTrial"`
-	WorkSpaceBlock bool      `json:"workSpaceBlock"`
-	Licenses       []License `json:"licenses"`
+	TrialStart                   int64     `json:"trialStart"`
+	TrialEnd                     int64     `json:"trialEnd"`
+	OnTrial                      bool      `json:"onTrial"`
+	WorkSpaceBlock               bool      `json:"workSpaceBlock"`
+	TrialConvertedToSubscription bool      `json:"trialConvertedToSubscription"`
+	GracePeriodEnd               int64     `json:"gracePeriodEnd"`
+	Licenses                     []License `json:"licenses"`
 }
 
 type SubscriptionServerResp struct {

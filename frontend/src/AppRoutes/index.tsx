@@ -9,6 +9,7 @@ import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
+import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
@@ -29,8 +30,9 @@ import defaultRoutes from './routes';
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
+	const { data } = useLicense();
 	const [routes, setRoutes] = useState(defaultRoutes);
-	const { isLoggedIn: isLoggedInState, user } = useSelector<
+	const { role, isLoggedIn: isLoggedInState, user } = useSelector<
 		AppState,
 		AppReducer
 	>((state) => state.app);
@@ -78,6 +80,12 @@ function App(): JSX.Element {
 		}
 	});
 
+	const isOnBasicPlan =
+		data?.payload?.licenses?.some(
+			(license) =>
+				license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
+		) || data?.payload?.licenses === null;
+
 	useEffect(() => {
 		const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
 
@@ -97,8 +105,13 @@ function App(): JSX.Element {
 
 			window.clarity('identify', user.email, user.name);
 		}
+
+		if (isOnBasicPlan || (isLoggedInState && role && role !== 'ADMIN')) {
+			const newRoutes = routes.filter((route) => route?.path !== ROUTES.BILLING);
+			setRoutes(newRoutes);
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isLoggedInState, user]);
+	}, [isLoggedInState, isOnBasicPlan, user]);
 
 	useEffect(() => {
 		trackPageView(pathname);
