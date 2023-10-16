@@ -1,5 +1,5 @@
 import { Chart, ChartTypeRegistry, Plugin } from 'chart.js';
-import * as ChartHelpers from 'chart.js/helpers';
+import { getRelativePosition } from 'chart.js/helpers';
 
 // utils
 import { ChartEventHandler, mergeDefaultOptions } from './utils';
@@ -45,7 +45,7 @@ function createMousedownHandler(
 	return (ev): void => {
 		const { left, right } = chart.chartArea;
 
-		let { x: startDragPositionX } = ChartHelpers.getRelativePosition(ev, chart);
+		let { x: startDragPositionX } = getRelativePosition(ev, chart);
 
 		if (left > startDragPositionX) {
 			startDragPositionX = left;
@@ -74,7 +74,7 @@ function createMousemoveHandler(
 
 		const { left, right } = chart.chartArea;
 
-		let { x: dragPositionX } = ChartHelpers.getRelativePosition(ev, chart);
+		let { x: dragPositionX } = getRelativePosition(ev, chart);
 
 		if (left > dragPositionX) {
 			dragPositionX = left;
@@ -99,7 +99,7 @@ function createMouseupHandler(
 	return (ev): void => {
 		const { left, right } = chart.chartArea;
 
-		let { x: endRelativePostionX } = ChartHelpers.getRelativePosition(ev, chart);
+		let { x: endRelativePostionX } = getRelativePosition(ev, chart);
 
 		if (left > endRelativePostionX) {
 			endRelativePostionX = left;

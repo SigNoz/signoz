@@ -31,9 +31,11 @@ import (
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -58,6 +60,11 @@ type ServerOptions struct {
 	RuleRepoURL       string
 	PreferDelta       bool
 	PreferSpanMetrics bool
+	MaxIdleConns      int
+	MaxOpenConns      int
+	DialTimeout       time.Duration
+	CacheConfigPath   string
+	FluxInterval      string
 }
 
 // Server runs HTTP api service
@@ -77,6 +84,11 @@ type Server struct {
 
 	// feature flags
 	featureLookup baseint.FeatureLookup
+
+	// Usage manager
+	usageManager *usage.Manager
+
+	opampServer *opamp.Server
 
 	unavailableChannel chan healthcheck.Status
 }
@@ -118,7 +130,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		qb := db.NewDataConnector(localDB, serverOptions.PromConfigPath, lm)
+		qb := db.NewDataConnector(
+			localDB,
+			serverOptions.PromConfigPath,
+			lm,
+			serverOptions.MaxIdleConns,
+			serverOptions.MaxOpenConns,
+			serverOptions.DialTimeout,
+		)
 		go qb.Start(readerReady)
 		reader = qb
 	} else {
@@ -152,8 +171,19 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	// ingestion pipelines manager
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	if err != nil {
+		return nil, err
+	}
+
 	// initiate agent config handler
-	if err := agentConf.Initiate(localDB, AppDbEngine); err != nil {
+	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
+		DB:            localDB,
+		DBEngine:      AppDbEngine,
+		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
+	})
+	if err != nil {
 		return nil, err
 	}
 
@@ -169,15 +199,37 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
+	}
+
+	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
+
+	if err != nil {
+		return nil, err
+	}
+
 	apiOpts := api.APIHandlerOptions{
-		DataConnector:     reader,
-		SkipConfig:        skipConfig,
-		PreferDelta:       serverOptions.PreferDelta,
-		PreferSpanMetrics: serverOptions.PreferSpanMetrics,
-		AppDao:            modelDao,
-		RulesManager:      rm,
-		FeatureFlags:      lm,
-		LicenseManager:    lm,
+		DataConnector:                 reader,
+		SkipConfig:                    skipConfig,
+		PreferDelta:                   serverOptions.PreferDelta,
+		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
+		MaxIdleConns:                  serverOptions.MaxIdleConns,
+		MaxOpenConns:                  serverOptions.MaxOpenConns,
+		DialTimeout:                   serverOptions.DialTimeout,
+		AppDao:                        modelDao,
+		RulesManager:                  rm,
+		UsageManager:                  usageManager,
+		FeatureFlags:                  lm,
+		LicenseManager:                lm,
+		LogsParsingPipelineController: logParsingPipelineController,
+		Cache:                         c,
+		FluxInterval:                  fluxInterval,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -191,6 +243,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		ruleManager:        rm,
 		serverOptions:      serverOptions,
 		unavailableChannel: make(chan healthcheck.Status),
+		usageManager:       usageManager,
 	}
 
 	httpServer, err := s.createPublicServer(apiHandler)
@@ -207,6 +260,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	s.privateHTTP = privateServer
+
+	s.opampServer = opamp.InitializeServer(
+		&opAmpModel.AllAgents, agentConfMgr,
+	)
 
 	return s, nil
 }
@@ -523,7 +580,7 @@ func (s *Server) Start() error {
 
 	go func() {
 		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", baseconst.OpAmpWsEndpoint))
-		err := opamp.InitalizeServer(baseconst.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		err := s.opampServer.Start(baseconst.OpAmpWsEndpoint)
 		if err != nil {
 			zap.S().Info("opamp ws server failed to start", err)
 			s.unavailableChannel <- healthcheck.Unavailable
@@ -546,11 +603,14 @@ func (s *Server) Stop() error {
 		}
 	}
 
-	opamp.StopServer()
+	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
 		s.ruleManager.Stop()
 	}
+
+	// stop usage manager
+	s.usageManager.Stop()
 
 	return nil
 }

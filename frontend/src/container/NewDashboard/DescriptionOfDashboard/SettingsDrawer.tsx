@@ -6,7 +6,7 @@ import DashboardSettingsContent from '../DashboardSettings';
 import { DrawerContainer } from './styles';
 
 function SettingsDrawer(): JSX.Element {
-	const [visible, setVisible] = useState(false); // TODO Make it False
+	const [visible, setVisible] = useState<boolean>(false);
 
 	const showDrawer = (): void => {
 		setVisible(true);
@@ -25,7 +25,7 @@ function SettingsDrawer(): JSX.Element {
 				placement="right"
 				width="70%"
 				onClose={onClose}
-				visible={visible}
+				open={visible}
 			>
 				<DashboardSettingsContent />
 			</DrawerContainer>

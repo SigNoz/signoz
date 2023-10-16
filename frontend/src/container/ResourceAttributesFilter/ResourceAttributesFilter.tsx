@@ -5,6 +5,7 @@ import useResourceAttribute, {
 } from 'hooks/useResourceAttribute';
 import { convertMetricKeyToTrace } from 'hooks/useResourceAttribute/utils';
 import { ReactNode, useMemo } from 'react';
+import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import QueryChip from './components/QueryChip';
@@ -44,6 +45,7 @@ function ResourceAttributesFilter({
 				))}
 			</div>
 			<Select
+				getPopupContainer={popupContainer}
 				placeholder={!isEmpty && 'Search and Filter based on resource attributes.'}
 				onChange={handleChange}
 				bordered={false}

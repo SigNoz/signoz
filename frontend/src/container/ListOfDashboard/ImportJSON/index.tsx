@@ -9,11 +9,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
-import { Dispatch } from 'redux';
-import AppActions from 'types/actions';
-import { FLUSH_DASHBOARD } from 'types/actions/dashboard';
 import { DashboardData } from 'types/api/dashboard/getAll';
 
 import { EditorContainer, FooterContainer } from './styles';
@@ -30,8 +26,6 @@ function ImportJSON({
 		false,
 	);
 	const [isFeatureAlert, setIsFeatureAlert] = useState<boolean>(false);
-
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
 
@@ -77,16 +71,11 @@ function ImportJSON({
 			});
 
 			if (response.statusCode === 200) {
-				dispatch({
-					type: FLUSH_DASHBOARD,
-				});
-				setTimeout(() => {
-					history.push(
-						generatePath(ROUTES.DASHBOARD, {
-							dashboardId: response.payload.uuid,
-						}),
-					);
-				}, 10);
+				history.push(
+					generatePath(ROUTES.DASHBOARD, {
+						dashboardId: response.payload.uuid,
+					}),
+				);
 			} else if (response.error === 'feature usage exceeded') {
 				setIsFeatureAlert(true);
 				notifications.error({

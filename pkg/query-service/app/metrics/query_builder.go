@@ -150,7 +150,7 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 		}
 	}
 
-	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_TABLENAME, queryString)
+	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_LOCAL_TABLENAME, queryString)
 
 	return filterSubQuery, nil
 }
@@ -174,7 +174,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as value" +
 			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-			" GLOBAL INNER JOIN" +
+			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
 			" WHERE " + samplesTableTimeFilter +
@@ -261,7 +261,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 				" any(value) as value" +
 				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-				" GLOBAL INNER JOIN" +
+				" INNER JOIN" +
 				" (%s) as filtered_time_series" +
 				" USING fingerprint" +
 				" WHERE " + samplesTableTimeFilter +
@@ -435,7 +435,7 @@ func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]strin
 			formulaSubQuery = strings.TrimSuffix(formulaSubQuery, " AND ")
 		}
 		if idx < len(vars)-1 {
-			formulaSubQuery += " GLOBAL INNER JOIN"
+			formulaSubQuery += " INNER JOIN"
 		}
 		prevVar = var_
 	}
@@ -497,7 +497,7 @@ func PromFormattedValue(v interface{}) string {
 	case float32, float64:
 		return fmt.Sprintf("%f", x)
 	case string:
-		return fmt.Sprintf("%s", x)
+		return x
 	case bool:
 		return fmt.Sprintf("%v", x)
 	case []interface{}:
@@ -506,7 +506,12 @@ func PromFormattedValue(v interface{}) string {
 		}
 		switch x[0].(type) {
 		case string, int, float32, float64, bool:
-			return strings.Trim(strings.Join(strings.Fields(fmt.Sprint(x)), "|"), "[]")
+			// list of values joined by | for promql - a value can contain whitespace
+			var str []string
+			for _, sVal := range x {
+				str = append(str, fmt.Sprintf("%v", sVal))
+			}
+			return strings.Join(str, "|")
 		default:
 			zap.L().Error("invalid type for prom formatted value", zap.Any("type", reflect.TypeOf(x[0])))
 			return ""

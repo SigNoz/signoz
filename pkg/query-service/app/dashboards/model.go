@@ -49,7 +49,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating dashboard table: %s", err.Error())
+		return nil, fmt.Errorf("error in creating dashboard table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS rules (
@@ -61,7 +61,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating rules table: %s", err.Error())
+		return nil, fmt.Errorf("error in creating rules table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS notification_channels (
@@ -76,7 +76,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating notification_channles table: %s", err.Error())
+		return nil, fmt.Errorf("error in creating notification_channles table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS ttl_status (
@@ -92,7 +92,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating ttl_status table: %s", err.Error())
+		return nil, fmt.Errorf("error in creating ttl_status table: %s", err.Error())
 	}
 
 	return db, nil
@@ -152,8 +152,9 @@ func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
-	if countTraceAndLogsPanel(data) > 0 {
-		fErr := checkFeatureUsage(fm, countTraceAndLogsPanel(data))
+	newCount, _ := countTraceAndLogsPanel(data)
+	if newCount > 0 {
+		fErr := checkFeatureUsage(fm, newCount)
 		if fErr != nil {
 			return nil, fErr
 		}
@@ -173,7 +174,7 @@ func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (
 	}
 	dash.Id = int(lastInsertId)
 
-	traceAndLogsPanelUsage := countTraceAndLogsPanel(data)
+	traceAndLogsPanelUsage, _ := countTraceAndLogsPanel(data)
 	if traceAndLogsPanelUsage > 0 {
 		updateFeatureUsage(fm, traceAndLogsPanelUsage)
 	}
@@ -184,7 +185,7 @@ func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (
 func GetDashboards() ([]Dashboard, *model.ApiError) {
 
 	dashboards := []Dashboard{}
-	query := fmt.Sprintf("SELECT * FROM dashboards;")
+	query := `SELECT * FROM dashboards`
 
 	err := db.Select(&dashboards, query)
 	if err != nil {
@@ -202,9 +203,9 @@ func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 		return dErr
 	}
 
-	query := fmt.Sprintf("DELETE FROM dashboards WHERE uuid='%s';", uuid)
+	query := `DELETE FROM dashboards WHERE uuid=?`
 
-	result, err := db.Exec(query)
+	result, err := db.Exec(query, uuid)
 
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorExec, Err: err}
@@ -218,7 +219,7 @@ func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 		return &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
 	}
 
-	traceAndLogsPanelUsage := countTraceAndLogsPanel(dashboard.Data)
+	traceAndLogsPanelUsage, _ := countTraceAndLogsPanel(dashboard.Data)
 	if traceAndLogsPanelUsage > 0 {
 		updateFeatureUsage(fm, -traceAndLogsPanelUsage)
 	}
@@ -229,9 +230,9 @@ func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
 
 	dashboard := Dashboard{}
-	query := fmt.Sprintf("SELECT * FROM dashboards WHERE uuid='%s';", uuid)
+	query := `SELECT * FROM dashboards WHERE uuid=?`
 
-	err := db.Get(&dashboard, query)
+	err := db.Get(&dashboard, query, uuid)
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
 	}
@@ -253,13 +254,19 @@ func UpdateDashboard(uuid string, data map[string]interface{}, fm interfaces.Fea
 	}
 
 	// check if the count of trace and logs QB panel has changed, if yes, then check feature flag count
-	existingCount := countTraceAndLogsPanel(dashboard.Data)
-	newCount := countTraceAndLogsPanel(data)
+	existingCount, existingTotal := countTraceAndLogsPanel(dashboard.Data)
+	newCount, newTotal := countTraceAndLogsPanel(data)
 	if newCount > existingCount {
 		err := checkFeatureUsage(fm, newCount-existingCount)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if existingTotal > newTotal && existingTotal-newTotal > 1 {
+		// if the total count of panels has reduced by more than 1,
+		// return error
+		return nil, model.BadRequest(fmt.Errorf("deleting more than one panel is not supported"))
 	}
 
 	dashboard.UpdatedAt = time.Now()
@@ -593,8 +600,9 @@ func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.Dashboard
 	return toReturn
 }
 
-func countTraceAndLogsPanel(data map[string]interface{}) int64 {
+func countTraceAndLogsPanel(data map[string]interface{}) (int64, int64) {
 	count := int64(0)
+	totalPanels := int64(0)
 	if data != nil && data["widgets"] != nil {
 		widgets, ok := data["widgets"].(interface{})
 		if ok {
@@ -603,6 +611,7 @@ func countTraceAndLogsPanel(data map[string]interface{}) int64 {
 				for _, widget := range data {
 					sData, ok := widget.(map[string]interface{})
 					if ok && sData["query"] != nil {
+						totalPanels++
 						query, ok := sData["query"].(interface{}).(map[string]interface{})
 						if ok && query["queryType"] == "builder" && query["builder"] != nil {
 							builderData, ok := query["builder"].(interface{}).(map[string]interface{})
@@ -625,5 +634,5 @@ func countTraceAndLogsPanel(data map[string]interface{}) int64 {
 			}
 		}
 	}
-	return count
+	return count, totalPanels
 }

@@ -163,6 +163,7 @@ function Login({
 					response.payload.accessJwt,
 					response.payload.refreshJwt,
 				);
+
 				history.push(ROUTES.APPLICATION);
 			} else {
 				notifications.error({

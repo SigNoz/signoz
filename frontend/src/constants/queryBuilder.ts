@@ -1,10 +1,10 @@
 // ** Helpers
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import {
 	AutocompleteType,
 	BaseAutocompleteData,
+	DataTypes,
 	LocalDataType,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -24,7 +24,6 @@ import {
 	LogsAggregatorOperator,
 	MetricAggregateOperator,
 	NumberOperators,
-	PanelTypeKeys,
 	QueryAdditionalFilter,
 	QueryBuilderData,
 	ReduceOperators,
@@ -48,12 +47,13 @@ export const selectValueDivider = '__';
 
 export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 	BaseAutocompleteData,
-	'id'
+	'id' | 'isJSON'
 >)[] = ['key', 'dataType', 'type', 'isColumn'];
 
 export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
 	resource: 'resource',
 	tag: 'tag',
+	'': '',
 };
 
 export const formulasNames: string[] = Array.from(
@@ -74,7 +74,7 @@ export const mapOfOperators = {
 	traces: tracesAggregateOperatorOptions,
 };
 
-export const mapOfFilters: Record<DataSource, QueryAdditionalFilter[]> = {
+export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
 	metrics: [
 		// eslint-disable-next-line sonarjs/no-duplicate-string
 		{ text: 'Aggregation interval', field: 'stepInterval' },
@@ -92,6 +92,24 @@ export const mapOfFilters: Record<DataSource, QueryAdditionalFilter[]> = {
 		{ text: 'Having', field: 'having' },
 		{ text: 'Aggregation interval', field: 'stepInterval' },
 	],
+};
+
+const commonFormulaFilters: QueryAdditionalFilter[] = [
+	{
+		text: 'Having',
+		field: 'having',
+	},
+	{ text: 'Order by', field: 'orderBy' },
+	{ text: 'Limit', field: 'limit' },
+];
+
+export const mapOfFormulaToFilters: Record<
+	DataSource,
+	QueryAdditionalFilter[]
+> = {
+	metrics: commonFormulaFilters,
+	logs: commonFormulaFilters,
+	traces: commonFormulaFilters,
 };
 
 export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
@@ -113,10 +131,11 @@ export const initialAutocompleteData: BaseAutocompleteData = {
 		{ dataType: null, key: '', isColumn: null, type: null },
 		baseAutoCompleteIdKeysOrder,
 	),
-	dataType: null,
+	dataType: DataTypes.EMPTY,
 	key: '',
-	isColumn: null,
-	type: null,
+	isColumn: false,
+	type: '',
+	isJSON: false,
 };
 
 export const initialFilters: TagFilter = {
@@ -124,10 +143,10 @@ export const initialFilters: TagFilter = {
 	op: 'AND',
 };
 
-const initialQueryBuilderFormValues: IBuilderQuery = {
+export const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
-	aggregateOperator: MetricAggregateOperator.NOOP,
+	aggregateOperator: MetricAggregateOperator.COUNT,
 	aggregateAttribute: initialAutocompleteData,
 	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({
@@ -238,14 +257,15 @@ export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	bool: Object.values(BoolOperators),
 };
 
-export const PANEL_TYPES: Record<PanelTypeKeys, GRAPH_TYPES> = {
-	TIME_SERIES: 'graph',
-	VALUE: 'value',
-	TABLE: 'table',
-	LIST: 'list',
-	TRACE: 'trace',
-	EMPTY_WIDGET: 'EMPTY_WIDGET',
-};
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum PANEL_TYPES {
+	TIME_SERIES = 'graph',
+	VALUE = 'value',
+	TABLE = 'table',
+	LIST = 'list',
+	TRACE = 'trace',
+	EMPTY_WIDGET = 'EMPTY_WIDGET',
+}
 
 export type IQueryBuilderState = 'search';
 
@@ -261,6 +281,8 @@ export const OPERATORS = {
 	NIN: 'NOT_IN',
 	LIKE: 'LIKE',
 	NLIKE: 'NOT_LIKE',
+	REGEX: 'REGEX',
+	NREGEX: 'NOT_REGEX',
 	'=': '=',
 	'!=': '!=',
 	EXISTS: 'EXISTS',
@@ -271,6 +293,8 @@ export const OPERATORS = {
 	'>': '>',
 	'<=': '<=',
 	'<': '<',
+	HAS: 'HAS',
+	NHAS: 'NHAS',
 };
 
 export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
@@ -285,6 +309,8 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS.NOT_CONTAINS,
 		OPERATORS.EXISTS,
 		OPERATORS.NOT_EXISTS,
+		OPERATORS.REGEX,
+		OPERATORS.NREGEX,
 	],
 	int64: [
 		OPERATORS['='],

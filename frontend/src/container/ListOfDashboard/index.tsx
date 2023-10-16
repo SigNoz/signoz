@@ -14,25 +14,17 @@ import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
+import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import {
-	Dispatch,
-	Key,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import { Key, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { GET_ALL_DASHBOARD_SUCCESS } from 'types/actions/dashboard';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
-import DashboardReducer from 'types/reducer/dashboards';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
@@ -43,10 +35,12 @@ import Name from './TableComponents/Name';
 import Tags from './TableComponents/Tags';
 
 function ListOfAllDashboard(): JSX.Element {
-	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
-	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const {
+		data: dashboardListResponse = [],
+		isLoading: isDashboardListLoading,
+		refetch: refetchDashboardList,
+	} = useGetAllDashboard();
+
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [action, createNewDashboard, newDashboard] = useComponentPermission(
@@ -66,8 +60,10 @@ function ListOfAllDashboard(): JSX.Element {
 	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>();
 
 	useEffect(() => {
-		setFilteredDashboards(dashboards);
-	}, [dashboards]);
+		if (dashboardListResponse.length) {
+			setFilteredDashboards(dashboardListResponse);
+		}
+	}, [dashboardListResponse]);
 
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
@@ -132,15 +128,17 @@ function ListOfAllDashboard(): JSX.Element {
 		return tableColumns;
 	}, [action]);
 
-	const data: Data[] = (filteredDashboards || dashboards).map((e) => ({
-		createdBy: e.created_at,
-		description: e.data.description || '',
-		id: e.uuid,
-		lastUpdatedTime: e.updated_at,
-		name: e.data.title,
-		tags: e.data.tags || [],
-		key: e.uuid,
-	}));
+	const data: Data[] =
+		filteredDashboards?.map((e) => ({
+			createdBy: e.created_at,
+			description: e.data.description || '',
+			id: e.uuid,
+			lastUpdatedTime: e.updated_at,
+			name: e.data.title,
+			tags: e.data.tags || [],
+			key: e.uuid,
+			refetchDashboardList,
+		})) || [];
 
 	const onNewDashboardHandler = useCallback(async () => {
 		try {
@@ -156,10 +154,6 @@ function ListOfAllDashboard(): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				dispatch({
-					type: GET_ALL_DASHBOARD_SUCCESS,
-					payload: [],
-				});
 				history.push(
 					generatePath(ROUTES.DASHBOARD, {
 						dashboardId: response.payload.uuid,
@@ -180,7 +174,7 @@ function ListOfAllDashboard(): JSX.Element {
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState, t, dispatch]);
+	}, [newDashboardState, t]);
 
 	const getText = useCallback(() => {
 		if (!newDashboardState.error && !newDashboardState.loading) {
@@ -209,7 +203,7 @@ function ListOfAllDashboard(): JSX.Element {
 			menuItems.push({
 				key: t('create_dashboard').toString(),
 				label: t('create_dashboard'),
-				disabled: loading,
+				disabled: isDashboardListLoading,
 				onClick: onNewDashboardHandler,
 			});
 		}
@@ -224,10 +218,11 @@ function ListOfAllDashboard(): JSX.Element {
 			key: t('import_grafana_json').toString(),
 			label: t('import_grafana_json'),
 			onClick: (): void => onModalHandler(true),
+			disabled: true,
 		});
 
 		return menuItems;
-	}, [createNewDashboard, loading, onNewDashboardHandler, t]);
+	}, [createNewDashboard, isDashboardListLoading, onNewDashboardHandler, t]);
 
 	const menu: MenuProps = useMemo(
 		() => ({
@@ -249,7 +244,12 @@ function ListOfAllDashboard(): JSX.Element {
 						}}
 					/>
 					{newDashboard && (
-						<Dropdown disabled={loading} trigger={['click']} menu={menu}>
+						<Dropdown
+							getPopupContainer={popupContainer}
+							disabled={isDashboardListLoading}
+							trigger={['click']}
+							menu={menu}
+						>
 							<NewDashboardButton
 								icon={<PlusOutlined />}
 								type="primary"
@@ -265,7 +265,7 @@ function ListOfAllDashboard(): JSX.Element {
 		),
 		[
 			newDashboard,
-			loading,
+			isDashboardListLoading,
 			menu,
 			newDashboardState.loading,
 			newDashboardState.error,
@@ -277,9 +277,9 @@ function ListOfAllDashboard(): JSX.Element {
 		<Card>
 			{GetHeader}
 
-			{!loading && (
+			{!isDashboardListLoading && (
 				<SearchFilter
-					searchData={dashboards}
+					searchData={dashboardListResponse}
 					filterDashboards={setFilteredDashboards}
 				/>
 			)}
@@ -299,7 +299,7 @@ function ListOfAllDashboard(): JSX.Element {
 					showHeader
 					bordered
 					sticky
-					loading={loading}
+					loading={isDashboardListLoading}
 					dataSource={data}
 					showSorterTooltip
 				/>

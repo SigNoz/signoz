@@ -107,13 +107,13 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, model.InternalError(basemodel.ErrSignupFailed{}), nil)
 	}
 
-	precheckResp := &model.PrecheckResponse{
+	precheckResp := &basemodel.PrecheckResponse{
 		SSO:    false,
 		IsUser: false,
 	}
 
 	if domain != nil && domain.SsoEnabled {
-		// so is enabled, create user and respond precheck data
+		// sso is enabled, create user and respond precheck data
 		user, apierr := baseauth.RegisterInvitedUser(ctx, req, true)
 		if apierr != nil {
 			RespondError(w, apierr, nil)

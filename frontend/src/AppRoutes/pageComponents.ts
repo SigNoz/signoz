@@ -1,7 +1,7 @@
 import Loadable from 'components/Loadable';
 
 export const ServicesTablePage = Loadable(
-	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Metrics'),
+	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Services'),
 );
 
 export const ServiceMetricsPage = Loadable(
@@ -42,6 +42,10 @@ export const SettingsPage = Loadable(
 
 export const GettingStarted = Loadable(
 	() => import(/* webpackChunkName: "GettingStarted" */ 'pages/GettingStarted'),
+);
+
+export const Onboarding = Loadable(
+	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPage'),
 );
 
 export const DashboardPage = Loadable(
@@ -98,6 +102,10 @@ export const OrganizationSettings = Loadable(
 	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
 );
 
+export const IngestionSettings = Loadable(
+	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
+);
+
 export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
 );
@@ -108,6 +116,10 @@ export const Logs = Loadable(
 
 export const LogsExplorer = Loadable(
 	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsExplorer'),
+);
+
+export const LiveLogs = Loadable(
+	() => import(/* webpackChunkName: "Live Logs" */ 'pages/LiveLogs'),
 );
 
 export const Login = Loadable(
@@ -131,4 +143,13 @@ export const SomethingWentWrong = Loadable(
 
 export const LicensePage = Loadable(
 	() => import(/* webpackChunkName: "All Channels" */ 'pages/License'),
+);
+
+export const LogsIndexToFields = Loadable(
+	() =>
+		import(/* webpackChunkName: "LogsIndexToFields Page" */ 'pages/LogsSettings'),
+);
+
+export const PipelinePage = Loadable(
+	() => import(/* webpackChunkName: "Pipelines" */ 'pages/Pipelines'),
 );

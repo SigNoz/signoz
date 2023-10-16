@@ -2,10 +2,13 @@ import getTopLevelOperations, {
 	ServiceDataProps,
 } from 'api/metrics/getTopLevelOperations';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
+import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
@@ -29,10 +32,18 @@ import {
 	errorPercentage,
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
-import { Col, Row } from '../styles';
+import {
+	Card,
+	Col,
+	ColApDexContainer,
+	ColErrorContainer,
+	Row,
+} from '../styles';
+import ApDex from './Overview/ApDex';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
+import TopOperationMetrics from './Overview/TopOperationMetrics';
 import { Button } from './styles';
 import { IServiceName } from './types';
 import {
@@ -53,6 +64,8 @@ function Application(): JSX.Element {
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
 		[queries],
 	);
+	const isSpanMetricEnabled = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
+		?.active;
 
 	const handleSetTimeStamp = useCallback((selectTime: number) => {
 		setSelectedTimeStamp(selectTime);
@@ -104,8 +117,8 @@ function Application(): JSX.Element {
 
 	const operationPerSecWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: operationPerSec({
@@ -116,15 +129,17 @@ function Application(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.RATE_PER_OPS,
-			),
+				title: GraphTitle.RATE_PER_OPS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ops',
+			}),
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const errorPercentageWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: errorPercentage({
@@ -135,8 +150,10 @@ function Application(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.ERROR_PERCENTAGE,
-			),
+				title: GraphTitle.ERROR_PERCENTAGE,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: '%',
+			}),
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
@@ -152,7 +169,7 @@ function Application(): JSX.Element {
 		[dispatch],
 	);
 
-	const onErrorTrackHandler = (timestamp: number): void => {
+	const onErrorTrackHandler = (timestamp: number): (() => void) => (): void => {
 		const currentTime = timestamp;
 		const tPlusOne = timestamp + 60 * 1000;
 
@@ -181,8 +198,8 @@ function Application(): JSX.Element {
 						handleGraphClick={handleGraphClick}
 						selectedTimeStamp={selectedTimeStamp}
 						selectedTraceTags={selectedTraceTags}
-						tagFilterItems={tagFilterItems}
 						topLevelOperationsRoute={topLevelOperationsRoute}
+						topLevelOperationsLoading={topLevelOperationsLoading}
 					/>
 				</Col>
 
@@ -207,39 +224,59 @@ function Application(): JSX.Element {
 						topLevelOperationsIsError={topLevelOperationsIsError}
 						name="operations_per_sec"
 						widget={operationPerSecWidget}
-						yAxisUnit="ops"
 						opName="Rate"
 					/>
 				</Col>
 			</Row>
 			<Row gutter={24}>
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
-						id="Error_button"
-						onClick={(): void => {
-							onErrorTrackHandler(selectedTimeStamp);
-						}}
-					>
-						View Traces
-					</Button>
+					<ColApDexContainer>
+						<Button
+							type="default"
+							size="small"
+							id="ApDex_button"
+							onClick={onViewTracePopupClick({
+								servicename,
+								selectedTraceTags,
+								timestamp: selectedTimeStamp,
+							})}
+						>
+							View Traces
+						</Button>
+						<ApDex
+							handleGraphClick={handleGraphClick}
+							onDragSelect={onDragSelect}
+							topLevelOperationsRoute={topLevelOperationsRoute}
+							tagFilterItems={tagFilterItems}
+						/>
+					</ColApDexContainer>
+					<ColErrorContainer>
+						<Button
+							type="default"
+							size="small"
+							id="Error_button"
+							onClick={onErrorTrackHandler(selectedTimeStamp)}
+						>
+							View Traces
+						</Button>
 
-					<TopLevelOperation
-						handleGraphClick={handleGraphClick}
-						onDragSelect={onDragSelect}
-						topLevelOperationsError={topLevelOperationsError}
-						topLevelOperationsLoading={topLevelOperationsLoading}
-						topLevelOperationsIsError={topLevelOperationsIsError}
-						name="error_percentage_%"
-						widget={errorPercentageWidget}
-						yAxisUnit="%"
-						opName="Error"
-					/>
+						<TopLevelOperation
+							handleGraphClick={handleGraphClick}
+							onDragSelect={onDragSelect}
+							topLevelOperationsError={topLevelOperationsError}
+							topLevelOperationsLoading={topLevelOperationsLoading}
+							topLevelOperationsIsError={topLevelOperationsIsError}
+							name="error_percentage_%"
+							widget={errorPercentageWidget}
+							opName="Error"
+						/>
+					</ColErrorContainer>
 				</Col>
 
 				<Col span={12}>
-					<TopOperation />
+					<Card>
+						{isSpanMetricEnabled ? <TopOperationMetrics /> : <TopOperation />}
+					</Card>
 				</Col>
 			</Row>
 		</>

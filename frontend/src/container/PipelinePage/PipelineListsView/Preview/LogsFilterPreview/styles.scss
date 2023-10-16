@@ -1,0 +1,18 @@
+.logs-filter-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+.logs-filter-preview-content {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  height: 12em;
+  overflow: hidden;
+  border: 1px solid rgba(253, 253, 253, 0.12);
+}

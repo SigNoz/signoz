@@ -21,11 +21,13 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	opamp "go.signoz.io/signoz/pkg/query-service/app/opamp"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
+	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
@@ -50,6 +52,11 @@ type ServerOptions struct {
 	RuleRepoURL       string
 	PreferDelta       bool
 	PreferSpanMetrics bool
+	MaxIdleConns      int
+	MaxOpenConns      int
+	DialTimeout       time.Duration
+	CacheConfigPath   string
+	FluxInterval      string
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -68,6 +75,8 @@ type Server struct {
 	// private http
 	privateConn net.Listener
 	privateHTTP *http.Server
+
+	opampServer *opamp.Server
 
 	unavailableChannel chan healthcheck.Status
 }
@@ -102,13 +111,20 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		clickhouseReader := clickhouseReader.NewReader(localDB, serverOptions.PromConfigPath, fm)
+		clickhouseReader := clickhouseReader.NewReader(
+			localDB,
+			serverOptions.PromConfigPath,
+			fm,
+			serverOptions.MaxIdleConns,
+			serverOptions.MaxOpenConns,
+			serverOptions.DialTimeout,
+		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
-	var skipConfig *model.SkipConfig
+	skipConfig := &model.SkipConfig{}
 	if serverOptions.SkipTopLvlOpsPath != "" {
 		// read skip config
 		skipConfig, err = model.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
@@ -123,15 +139,37 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
+	}
+
+	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
+	// ingestion pipelines manager
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	if err != nil {
+		return nil, err
+	}
+
 	telemetry.GetInstance().SetReader(reader)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
-		Reader:            reader,
-		SkipConfig:        skipConfig,
-		PerferDelta:       serverOptions.PreferDelta,
-		PreferSpanMetrics: serverOptions.PreferSpanMetrics,
-		AppDao:            dao.DB(),
-		RuleManager:       rm,
-		FeatureFlags:      fm,
+		Reader:                        reader,
+		SkipConfig:                    skipConfig,
+		PerferDelta:                   serverOptions.PreferDelta,
+		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
+		MaxIdleConns:                  serverOptions.MaxIdleConns,
+		MaxOpenConns:                  serverOptions.MaxOpenConns,
+		DialTimeout:                   serverOptions.DialTimeout,
+		AppDao:                        dao.DB(),
+		RuleManager:                   rm,
+		FeatureFlags:                  fm,
+		LogsParsingPipelineController: logParsingPipelineController,
+		Cache:                         c,
+		FluxInterval:                  fluxInterval,
 	})
 	if err != nil {
 		return nil, err
@@ -165,9 +203,21 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := agentConf.Initiate(localDB, "sqlite"); err != nil {
+	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
+		DB:       localDB,
+		DBEngine: "sqlite",
+		AgentFeatures: []agentConf.AgentFeature{
+			logParsingPipelineController,
+		},
+	})
+	if err != nil {
 		return nil, err
 	}
+
+	s.opampServer = opamp.InitializeServer(
+		&opAmpModel.AllAgents, agentConfMgr,
+	)
+
 	return s, nil
 }
 
@@ -467,7 +517,7 @@ func (s *Server) Start() error {
 
 	go func() {
 		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
-		err := opamp.InitalizeServer(constants.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		err := s.opampServer.Start(constants.OpAmpWsEndpoint)
 		if err != nil {
 			zap.S().Info("opamp ws server failed to start", err)
 			s.unavailableChannel <- healthcheck.Unavailable
@@ -490,7 +540,7 @@ func (s *Server) Stop() error {
 		}
 	}
 
-	opamp.StopServer()
+	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
 		s.ruleManager.Stop()

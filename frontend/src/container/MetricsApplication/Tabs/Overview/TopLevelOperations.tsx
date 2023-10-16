@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import axios from 'axios';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import Graph from 'container/GridGraphLayout/Graph/';
+import Graph from 'container/GridCardLayout/GridCard';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { Widgets } from 'types/api/dashboard/getAll';
 
@@ -17,7 +17,6 @@ function TopLevelOperation({
 	onDragSelect,
 	handleGraphClick,
 	widget,
-	yAxisUnit,
 }: TopLevelOperationProps): JSX.Element {
 	return (
 		<Card>
@@ -37,11 +36,7 @@ function TopLevelOperation({
 							name={name}
 							widget={widget}
 							onClickHandler={handleGraphClick(opName)}
-							yAxisUnit={yAxisUnit}
 							onDragSelect={onDragSelect}
-							allowClone={false}
-							allowDelete={false}
-							allowEdit={false}
 						/>
 					)}
 				</GraphContainer>
@@ -59,7 +54,6 @@ interface TopLevelOperationProps {
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
 	widget: Widgets;
-	yAxisUnit: string;
 }
 
 export default TopLevelOperation;

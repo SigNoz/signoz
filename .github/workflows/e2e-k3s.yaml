@@ -13,7 +13,7 @@ jobs:
       DOCKER_TAG: pull-${{ github.event.number }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build query-service image
         env:

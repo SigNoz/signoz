@@ -1,11 +1,14 @@
 import { mapOfOperators, PANEL_TYPES } from 'constants/queryBuilder';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	StringOperators,
+} from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
 type GetQueryOperatorsParams = {
 	dataSource: DataSource;
-	panelType: GRAPH_TYPES;
+	panelType: PANEL_TYPES;
 };
 
 // Modify this function if need special conditions for filtering of the operators
@@ -16,8 +19,15 @@ export const getOperatorsBySourceAndPanelType = ({
 	let operatorsByDataSource = mapOfOperators[dataSource];
 
 	if (panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE) {
-		operatorsByDataSource = operatorsByDataSource.filter(
+		operatorsByDataSource = operatorsByDataSource?.filter(
 			(operator) => operator.value === StringOperators.NOOP,
+		);
+	}
+	if (panelType === PANEL_TYPES.TABLE && dataSource === DataSource.METRICS) {
+		operatorsByDataSource = operatorsByDataSource?.filter(
+			(operator) =>
+				operator.value !== MetricAggregateOperator.NOOP &&
+				operator.value !== MetricAggregateOperator.RATE,
 		);
 	}
 	if (
@@ -25,7 +35,7 @@ export const getOperatorsBySourceAndPanelType = ({
 		panelType !== PANEL_TYPES.LIST &&
 		panelType !== PANEL_TYPES.TRACE
 	) {
-		operatorsByDataSource = operatorsByDataSource.filter(
+		operatorsByDataSource = operatorsByDataSource?.filter(
 			(operator) => operator.value !== StringOperators.NOOP,
 		);
 	}

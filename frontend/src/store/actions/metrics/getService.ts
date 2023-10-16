@@ -1,5 +1,6 @@
 import getService from 'api/metrics/getService';
 import { AxiosError } from 'axios';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import GetMinMax from 'lib/getMinMax';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -38,16 +39,16 @@ export const GetService = (
 			selectedTags: props.selectedTags,
 		});
 
-		if (response.statusCode === 200) {
+		if (response.length > 0) {
 			dispatch({
 				type: 'GET_SERVICE_LIST_SUCCESS',
-				payload: response.payload,
+				payload: response,
 			});
 		} else {
 			dispatch({
 				type: 'GET_SERVICE_LIST_ERROR',
 				payload: {
-					errorMessage: response.error || 'Something went wrong',
+					errorMessage: SOMETHING_WENT_WRONG,
 				},
 			});
 		}
@@ -55,7 +56,7 @@ export const GetService = (
 		dispatch({
 			type: 'GET_SERVICE_LIST_ERROR',
 			payload: {
-				errorMessage: (error as AxiosError).toString() || 'Something went wrong',
+				errorMessage: (error as AxiosError).toString() || SOMETHING_WENT_WRONG,
 			},
 		});
 	}

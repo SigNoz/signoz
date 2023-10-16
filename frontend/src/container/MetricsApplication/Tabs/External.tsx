@@ -1,5 +1,6 @@
 import { Col } from 'antd';
-import Graph from 'container/GridGraphLayout/Graph/';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import Graph from 'container/GridCardLayout/GridCard';
 import {
 	externalCallDuration,
 	externalCallDurationByAddress,
@@ -41,8 +42,8 @@ function External(): JSX.Element {
 
 	const externalCallErrorWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: externalCallErrorPercent({
@@ -53,8 +54,10 @@ function External(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
-			),
+				title: GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: '%',
+			}),
 		[servicename, tagFilterItems],
 	);
 
@@ -65,8 +68,8 @@ function External(): JSX.Element {
 
 	const externalCallDurationWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: externalCallDuration({
@@ -76,15 +79,17 @@ function External(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.EXTERNAL_CALL_DURATION,
-			),
+				title: GraphTitle.EXTERNAL_CALL_DURATION,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ms',
+			}),
 		[servicename, tagFilterItems],
 	);
 
 	const externalCallRPSWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: externalCallRpsByAddress({
@@ -95,15 +100,17 @@ function External(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
-			),
+				title: GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'reqps',
+			}),
 		[servicename, tagFilterItems],
 	);
 
 	const externalCallDurationAddressWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: externalCallDurationByAddress({
@@ -114,8 +121,10 @@ function External(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
-			),
+				title: GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ms',
+			}),
 		[servicename, tagFilterItems],
 	);
 
@@ -141,7 +150,6 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_error_percentage"
 								widget={externalCallErrorWidget}
-								yAxisUnit="%"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
@@ -151,9 +159,6 @@ function External(): JSX.Element {
 										'external_call_error_percentage',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -179,7 +184,6 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_duration"
 								widget={externalCallDurationWidget}
-								yAxisUnit="ms"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
@@ -189,9 +193,6 @@ function External(): JSX.Element {
 										'external_call_duration',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -218,7 +219,6 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_rps_by_address"
 								widget={externalCallRPSWidget}
-								yAxisUnit="reqps"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
@@ -228,9 +228,6 @@ function External(): JSX.Element {
 										'external_call_rps_by_address',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -256,7 +253,6 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_duration_by_address"
 								widget={externalCallDurationAddressWidget}
-								yAxisUnit="ms"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
@@ -266,9 +262,6 @@ function External(): JSX.Element {
 										'external_call_duration_by_address',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>

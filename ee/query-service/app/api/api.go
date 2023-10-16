@@ -2,12 +2,16 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/dao"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
+	"go.signoz.io/signoz/ee/query-service/usage"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
@@ -15,14 +19,22 @@ import (
 )
 
 type APIHandlerOptions struct {
-	DataConnector     interfaces.DataConnector
-	SkipConfig        *basemodel.SkipConfig
-	PreferDelta       bool
-	PreferSpanMetrics bool
-	AppDao            dao.ModelDao
-	RulesManager      *rules.Manager
-	FeatureFlags      baseint.FeatureLookup
-	LicenseManager    *license.Manager
+	DataConnector                 interfaces.DataConnector
+	SkipConfig                    *basemodel.SkipConfig
+	PreferDelta                   bool
+	PreferSpanMetrics             bool
+	MaxIdleConns                  int
+	MaxOpenConns                  int
+	DialTimeout                   time.Duration
+	AppDao                        dao.ModelDao
+	RulesManager                  *rules.Manager
+	UsageManager                  *usage.Manager
+	FeatureFlags                  baseint.FeatureLookup
+	LicenseManager                *license.Manager
+	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
+	Cache                         cache.Cache
+	// Querier Influx Interval
+	FluxInterval time.Duration
 }
 
 type APIHandler struct {
@@ -34,13 +46,20 @@ type APIHandler struct {
 func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
-		Reader:            opts.DataConnector,
-		SkipConfig:        opts.SkipConfig,
-		PerferDelta:       opts.PreferDelta,
-		PreferSpanMetrics: opts.PreferSpanMetrics,
-		AppDao:            opts.AppDao,
-		RuleManager:       opts.RulesManager,
-		FeatureFlags:      opts.FeatureFlags})
+		Reader:                        opts.DataConnector,
+		SkipConfig:                    opts.SkipConfig,
+		PerferDelta:                   opts.PreferDelta,
+		PreferSpanMetrics:             opts.PreferSpanMetrics,
+		MaxIdleConns:                  opts.MaxIdleConns,
+		MaxOpenConns:                  opts.MaxOpenConns,
+		DialTimeout:                   opts.DialTimeout,
+		AppDao:                        opts.AppDao,
+		RuleManager:                   opts.RulesManager,
+		FeatureFlags:                  opts.FeatureFlags,
+		LogsParsingPipelineController: opts.LogsParsingPipelineController,
+		Cache:                         opts.Cache,
+		FluxInterval:                  opts.FluxInterval,
+	})
 
 	if err != nil {
 		return nil, err
@@ -63,6 +82,10 @@ func (ah *APIHandler) RM() *rules.Manager {
 
 func (ah *APIHandler) LM() *license.Manager {
 	return ah.opts.LicenseManager
+}
+
+func (ah *APIHandler) UM() *usage.Manager {
+	return ah.opts.UsageManager
 }
 
 func (ah *APIHandler) AppDao() dao.ModelDao {
@@ -132,6 +155,13 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v1/pat", am.OpenAccess(ah.createPAT)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/pat", am.OpenAccess(ah.getPATs)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/pat/{id}", am.OpenAccess(ah.deletePAT)).Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/checkout", am.AdminAccess(ah.checkout)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/billing", am.AdminAccess(ah.getBilling)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v2/licenses",
+		am.ViewAccess(ah.listLicensesV2)).
+		Methods(http.MethodGet)
 
 	ah.APIHandler.RegisterRoutes(router, am)
 

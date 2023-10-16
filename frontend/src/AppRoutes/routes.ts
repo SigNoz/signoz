@@ -1,5 +1,4 @@
 import ROUTES from 'constants/routes';
-import DashboardWidget from 'pages/DashboardWidget';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -8,19 +7,24 @@ import {
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
+	DashboardWidget,
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
-	GettingStarted,
+	IngestionSettings,
 	LicensePage,
 	ListAllALertsPage,
+	LiveLogs,
 	Login,
 	Logs,
 	LogsExplorer,
+	LogsIndexToFields,
 	MySettings,
 	NewDashboardPage,
+	Onboarding,
 	OrganizationSettings,
 	PasswordReset,
+	PipelinePage,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -42,6 +46,20 @@ const routes: AppRoutes[] = [
 		exact: true,
 		isPrivate: false,
 		key: 'SIGN_UP',
+	},
+	{
+		path: ROUTES.GET_STARTED,
+		exact: true,
+		component: Onboarding,
+		isPrivate: true,
+		key: 'GET_STARTED',
+	},
+	{
+		component: LogsIndexToFields,
+		path: ROUTES.LOGS_INDEX_FIELDS,
+		exact: true,
+		isPrivate: true,
+		key: 'LOGS_INDEX_FIELDS',
 	},
 	{
 		component: ServicesTablePage,
@@ -84,13 +102,6 @@ const routes: AppRoutes[] = [
 		component: UsageExplorerPage,
 		isPrivate: true,
 		key: 'USAGE_EXPLORER',
-	},
-	{
-		path: ROUTES.INSTRUMENTATION,
-		exact: true,
-		component: GettingStarted,
-		isPrivate: true,
-		key: 'INSTRUMENTATION',
 	},
 	{
 		path: ROUTES.ALL_DASHBOARD,
@@ -205,6 +216,13 @@ const routes: AppRoutes[] = [
 		key: 'ORG_SETTINGS',
 	},
 	{
+		path: ROUTES.INGESTION_SETTINGS,
+		exact: true,
+		component: IngestionSettings,
+		isPrivate: true,
+		key: 'INGESTION_SETTINGS',
+	},
+	{
 		path: ROUTES.MY_SETTINGS,
 		exact: true,
 		component: MySettings,
@@ -223,6 +241,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: LogsExplorer,
 		key: 'LOGS_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LIVE_LOGS,
+		exact: true,
+		component: LiveLogs,
+		key: 'LIVE_LOGS',
 		isPrivate: true,
 	},
 	{
@@ -252,6 +277,13 @@ const routes: AppRoutes[] = [
 		component: SomethingWentWrong,
 		key: 'SOMETHING_WENT_WRONG',
 		isPrivate: false,
+	},
+	{
+		path: ROUTES.PIPELINES,
+		exact: true,
+		component: PipelinePage,
+		key: 'PIPELINES',
+		isPrivate: true,
 	},
 ];
 

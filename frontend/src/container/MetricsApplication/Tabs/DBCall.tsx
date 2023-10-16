@@ -1,5 +1,6 @@
 import { Col } from 'antd';
-import Graph from 'container/GridGraphLayout/Graph/';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import Graph from 'container/GridCardLayout/GridCard';
 import {
 	databaseCallsAvgDuration,
 	databaseCallsRPS,
@@ -50,8 +51,8 @@ function DBCall(): JSX.Element {
 
 	const databaseCallsRPSWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: databaseCallsRPS({
@@ -62,14 +63,16 @@ function DBCall(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.DATABASE_CALLS_RPS,
-			),
+				title: GraphTitle.DATABASE_CALLS_RPS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'reqps',
+			}),
 		[servicename, tagFilterItems],
 	);
 	const databaseCallsAverageDurationWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: databaseCallsAvgDuration({
@@ -79,8 +82,10 @@ function DBCall(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.DATABASE_CALLS_AVG_DURATION,
-			),
+				title: GraphTitle.DATABASE_CALLS_AVG_DURATION,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ms',
+			}),
 		[servicename, tagFilterItems],
 	);
 
@@ -104,7 +109,6 @@ function DBCall(): JSX.Element {
 						<Graph
 							name="database_call_rps"
 							widget={databaseCallsRPSWidget}
-							yAxisUnit="reqps"
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
 									ChartEvent,
@@ -114,9 +118,6 @@ function DBCall(): JSX.Element {
 									'database_call_rps',
 								);
 							}}
-							allowClone={false}
-							allowDelete={false}
-							allowEdit={false}
 						/>
 					</GraphContainer>
 				</Card>
@@ -135,12 +136,12 @@ function DBCall(): JSX.Element {
 				>
 					View Traces
 				</Button>
+
 				<Card>
 					<GraphContainer>
 						<Graph
 							name="database_call_avg_duration"
 							widget={databaseCallsAverageDurationWidget}
-							yAxisUnit="ms"
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
 									ChartEvent,
@@ -150,9 +151,6 @@ function DBCall(): JSX.Element {
 									'database_call_avg_duration',
 								);
 							}}
-							allowClone={false}
-							allowDelete={false}
-							allowEdit={false}
 						/>
 					</GraphContainer>
 				</Card>

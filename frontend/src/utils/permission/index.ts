@@ -17,7 +17,8 @@ export type ComponentTypes =
 	| 'new_dashboard'
 	| 'new_alert_action'
 	| 'edit_widget'
-	| 'add_panel';
+	| 'add_panel'
+	| 'page_pipelines';
 
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
@@ -36,6 +37,7 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	new_alert_action: ['ADMIN'],
 	edit_widget: ['ADMIN', 'EDITOR'],
 	add_panel: ['ADMIN', 'EDITOR'],
+	page_pipelines: ['ADMIN', 'EDITOR'],
 };
 
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
@@ -44,6 +46,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	MY_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SERVICE_MAP: ['ADMIN', 'EDITOR', 'VIEWER'],
 	ALL_CHANNELS: ['ADMIN', 'EDITOR', 'VIEWER'],
+	INGESTION_SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	ALL_DASHBOARD: ['ADMIN', 'EDITOR', 'VIEWER'],
 	ALL_ERROR: ['ADMIN', 'EDITOR', 'VIEWER'],
 	APPLICATION: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -54,7 +57,6 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	EDIT_ALERTS: ['ADMIN'],
 	ERROR_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
 	HOME_PAGE: ['ADMIN', 'EDITOR', 'VIEWER'],
-	INSTRUMENTATION: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LIST_ALL_ALERT: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGIN: ['ADMIN', 'EDITOR', 'VIEWER'],
 	NOT_FOUND: ['ADMIN', 'VIEWER', 'EDITOR'],
@@ -71,5 +73,11 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	VERSION: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
+	LIVE_LOGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LIST_LICENSES: ['ADMIN'],
+	LOGS_INDEX_FIELDS: ['ADMIN', 'EDITOR', 'VIEWER'],
+	LOGS_PIPELINE: ['ADMIN', 'EDITOR', 'VIEWER'],
+	TRACE_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
+	PIPELINES: ['ADMIN', 'EDITOR', 'VIEWER'],
+	GET_STARTED: ['ADMIN', 'EDITOR', 'VIEWER'],
 };

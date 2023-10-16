@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -19,6 +20,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
+	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
@@ -26,13 +28,16 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
+	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	signozio "go.signoz.io/signoz/pkg/query-service/integrations/signozio"
@@ -48,8 +53,9 @@ import (
 type status string
 
 const (
-	statusSuccess status = "success"
-	statusError   status = "error"
+	statusSuccess       status = "success"
+	statusError         status = "error"
+	defaultFluxInterval        = 5 * time.Minute
 )
 
 // NewRouter creates and configures a Gorilla Router.
@@ -70,9 +76,16 @@ type APIHandler struct {
 	ruleManager       *rules.Manager
 	featureFlags      interfaces.FeatureLookup
 	ready             func(http.HandlerFunc) http.HandlerFunc
+	querier           interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
 	preferDelta       bool
 	preferSpanMetrics bool
+
+	maxIdleConns int
+	maxOpenConns int
+	dialTimeout  time.Duration
+
+	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
 	// at the moment, we mark the app ready when the first user
@@ -89,6 +102,11 @@ type APIHandlerOpts struct {
 
 	PerferDelta       bool
 	PreferSpanMetrics bool
+
+	MaxIdleConns int
+	MaxOpenConns int
+	DialTimeout  time.Duration
+
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
 
@@ -97,6 +115,14 @@ type APIHandlerOpts struct {
 
 	// feature flags querier
 	FeatureFlags interfaces.FeatureLookup
+
+	// Log parsing pipelines
+	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
+	// cache
+	Cache cache.Cache
+
+	// Querier Influx Interval
+	FluxInterval time.Duration
 }
 
 // NewAPIHandler returns an APIHandler
@@ -107,15 +133,30 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		return nil, err
 	}
 
+	querierOpts := querier.QuerierOptions{
+		Reader:        opts.Reader,
+		Cache:         opts.Cache,
+		KeyGenerator:  queryBuilder.NewKeyGenerator(),
+		FluxInterval:  opts.FluxInterval,
+		FeatureLookup: opts.FeatureFlags,
+	}
+
+	querier := querier.NewQuerier(querierOpts)
+
 	aH := &APIHandler{
-		reader:            opts.Reader,
-		appDao:            opts.AppDao,
-		skipConfig:        opts.SkipConfig,
-		preferDelta:       opts.PerferDelta,
-		preferSpanMetrics: opts.PreferSpanMetrics,
-		alertManager:      alertManager,
-		ruleManager:       opts.RuleManager,
-		featureFlags:      opts.FeatureFlags,
+		reader:                        opts.Reader,
+		appDao:                        opts.AppDao,
+		skipConfig:                    opts.SkipConfig,
+		preferDelta:                   opts.PerferDelta,
+		preferSpanMetrics:             opts.PreferSpanMetrics,
+		maxIdleConns:                  opts.MaxIdleConns,
+		maxOpenConns:                  opts.MaxOpenConns,
+		dialTimeout:                   opts.DialTimeout,
+		alertManager:                  alertManager,
+		ruleManager:                   opts.RuleManager,
+		featureFlags:                  opts.FeatureFlags,
+		LogsParsingPipelineController: opts.LogsParsingPipelineController,
+		querier:                       querier,
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
@@ -123,7 +164,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
-	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
+	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
 
 	aH.ready = aH.testReady
 
@@ -186,7 +227,7 @@ func (aH *APIHandler) testReady(f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-type response struct {
+type ApiResponse struct {
 	Status    status          `json:"status"`
 	Data      interface{}     `json:"data,omitempty"`
 	ErrorType model.ErrorType `json:"errorType,omitempty"`
@@ -195,7 +236,7 @@ type response struct {
 
 func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	b, err := json.Marshal(&response{
+	b, err := json.Marshal(&ApiResponse{
 		Status:    statusError,
 		ErrorType: apiErr.Type(),
 		Error:     apiErr.Error(),
@@ -238,7 +279,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 
 func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	b, err := json.Marshal(&response{
+	b, err := json.Marshal(&ApiResponse{
 		Status: statusSuccess,
 		Data:   data,
 	})
@@ -274,7 +315,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 
 	// live logs
-	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
@@ -297,6 +338,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/channels", am.EditAccess(aH.createChannel)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/testChannel", am.EditAccess(aH.testChannel)).Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.getAlerts)).Methods(http.MethodGet)
+
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)
@@ -314,11 +357,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/variables/query", am.ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/explorer/queries", am.ViewAccess(aH.getExplorerQueries)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/queries", am.EditAccess(aH.createExplorerQueries)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/explorer/queries/{queryId}", am.ViewAccess(aH.getExplorerQuery)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/queries/{queryId}", am.EditAccess(aH.updateExplorerQuery)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/explorer/queries/{queryId}", am.EditAccess(aH.deleteExplorerQuery)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.getSavedViews)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.createSavedViews)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.getSavedView)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.updateSavedView)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
@@ -332,6 +375,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/dependency_graph", am.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.AdminAccess(aH.setTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.setApdexSettings)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/ingestion_key", am.AdminAccess(aH.insertIngestionKey)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/ingestion_key", am.ViewAccess(aH.getIngestionKeys)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/metric_meta", am.ViewAccess(aH.getLatencyMetricMetadata)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
@@ -360,6 +409,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.loginUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(aH.precheckLogin)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.listUsers)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.getUser)).Methods(http.MethodGet)
@@ -617,8 +667,8 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 					var s model.Series
 					s.QueryName = name
 					s.Labels = v.Metric.Copy().Map()
-					for _, p := range v.Points {
-						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.V})
+					for _, p := range v.Floats {
+						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.F})
 					}
 					seriesList = append(seriesList, &s)
 				}
@@ -1102,7 +1152,6 @@ func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-
 	// send alert
 	apiErrorObj := aH.alertManager.TestReceiver(receiver)
 	if apiErrorObj != nil {
@@ -1168,6 +1217,25 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, nil)
 
+}
+
+func (aH *APIHandler) getAlerts(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	amEndpoint := constants.GetAlertManagerApiPrefix()
+	resp, err := http.Get(amEndpoint + "v1/alerts" + "?" + params.Encode())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, string(body))
 }
 
 func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
@@ -1818,6 +1886,20 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, nil)
 }
 
+func (aH *APIHandler) precheckLogin(w http.ResponseWriter, r *http.Request) {
+
+	email := r.URL.Query().Get("email")
+	sourceUrl := r.URL.Query().Get("ref")
+
+	resp, apierr := aH.appDao.PrecheckLogin(context.Background(), email, sourceUrl)
+	if apierr != nil {
+		RespondError(w, apierr, resp)
+		return
+	}
+
+	aH.Respond(w, resp)
+}
+
 func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	req, err := parseLoginRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
@@ -1909,18 +1991,18 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	if len(update.Name) > 0 {
 		old.Name = update.Name
 	}
-	if len(update.ProfilePirctureURL) > 0 {
-		old.ProfilePirctureURL = update.ProfilePirctureURL
+	if len(update.ProfilePictureURL) > 0 {
+		old.ProfilePictureURL = update.ProfilePictureURL
 	}
 
 	_, apiErr = dao.DB().EditUser(ctx, &model.User{
-		Id:                 old.Id,
-		Name:               old.Name,
-		OrgId:              old.OrgId,
-		Email:              old.Email,
-		Password:           old.Password,
-		CreatedAt:          old.CreatedAt,
-		ProfilePirctureURL: old.ProfilePirctureURL,
+		Id:                old.Id,
+		Name:              old.Name,
+		OrgId:             old.OrgId,
+		Email:             old.Email,
+		Password:          old.Password,
+		CreatedAt:         old.CreatedAt,
+		ProfilePictureURL: old.ProfilePictureURL,
 	})
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -2236,6 +2318,11 @@ func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware)
 	subRouter.HandleFunc("/fields", am.ViewAccess(aH.logFields)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", am.EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/aggregate", am.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
+
+	// log pipelines
+	subRouter.HandleFunc("/pipelines/preview", am.ViewAccess(aH.PreviewLogsPipelinesHandler)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/pipelines/{version}", am.ViewAccess(aH.ListLogsPipelinesHandler)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/pipelines", am.EditAccess(aH.CreateLogsPipeline)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
@@ -2295,7 +2382,7 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create the client
-	client := &model.LogsTailClient{Name: r.RemoteAddr, Logs: make(chan *model.GetLogsResponse, 1000), Done: make(chan *bool), Error: make(chan error), Filter: *params}
+	client := &model.LogsTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error), Filter: *params}
 	go aH.reader.TailLogs(r.Context(), client)
 
 	w.Header().Set("Connection", "keep-alive")
@@ -2347,8 +2434,165 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, res)
 }
 
-func (aH *APIHandler) getExplorerQueries(w http.ResponseWriter, r *http.Request) {
-	queries, err := explorer.GetQueries()
+const logPipelines = "log_pipelines"
+
+func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
+	versionString := mux.Vars(r)["version"]
+
+	if versionString == "latest" {
+		return -1, nil
+	}
+
+	version64, err := strconv.ParseInt(versionString, 0, 8)
+
+	if err != nil {
+		return 0, model.BadRequestStr("invalid version number")
+	}
+
+	if version64 <= 0 {
+		return 0, model.BadRequestStr("invalid version number")
+	}
+
+	return int(version64), nil
+}
+
+func (ah *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+	req := logparsingpipeline.PipelinesPreviewRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	resultLogs, apiErr := ah.LogsParsingPipelineController.PreviewLogsPipelines(
+		r.Context(), &req,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, resultLogs)
+}
+
+func (ah *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+
+	version, err := parseAgentConfigVersion(r)
+	if err != nil {
+		RespondError(w, model.WrapApiError(err, "Failed to parse agent config version"), nil)
+		return
+	}
+
+	var payload *logparsingpipeline.PipelinesResponse
+	var apierr *model.ApiError
+
+	if version != -1 {
+		payload, apierr = ah.listLogsPipelinesByVersion(context.Background(), version)
+	} else {
+		payload, apierr = ah.listLogsPipelines(context.Background())
+	}
+
+	if apierr != nil {
+		RespondError(w, apierr, payload)
+		return
+	}
+	ah.Respond(w, payload)
+}
+
+// listLogsPipelines lists logs piplines for latest version
+func (ah *APIHandler) listLogsPipelines(ctx context.Context) (
+	*logparsingpipeline.PipelinesResponse, *model.ApiError,
+) {
+	// get lateset agent config
+	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
+	if err != nil {
+		if err.Type() != model.ErrorNotFound {
+			return nil, model.WrapApiError(err, "failed to get latest agent config version")
+		} else {
+			return nil, nil
+		}
+	}
+
+	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, lastestConfig.Version)
+	if err != nil {
+		return nil, model.WrapApiError(err, "failed to get pipelines")
+	}
+
+	// todo(Nitya): make a new API for history pagination
+	limit := 10
+	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
+	if err != nil {
+		return nil, model.WrapApiError(err, "failed to get config history")
+	}
+	payload.History = history
+	return payload, nil
+}
+
+// listLogsPipelinesByVersion lists pipelines along with config version history
+func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (
+	*logparsingpipeline.PipelinesResponse, *model.ApiError,
+) {
+	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
+	if err != nil {
+		return nil, model.WrapApiError(err, "failed to get pipelines by version")
+	}
+
+	// todo(Nitya): make a new API for history pagination
+	limit := 10
+	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
+	if err != nil {
+		return nil, model.WrapApiError(err, "failed to retrieve agent config history")
+	}
+
+	payload.History = history
+	return payload, nil
+}
+
+func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request) {
+
+	req := logparsingpipeline.PostablePipelines{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	ctx := auth.AttachJwtToContext(context.Background(), r)
+
+	createPipeline := func(
+		ctx context.Context,
+		postable []logparsingpipeline.PostablePipeline,
+	) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
+		if len(postable) == 0 {
+			zap.S().Warnf("found no pipelines in the http request, this will delete all the pipelines")
+		}
+
+		for _, p := range postable {
+			if err := p.IsValid(); err != nil {
+				return nil, model.BadRequestStr(err.Error())
+			}
+		}
+
+		return ah.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
+	}
+
+	res, err := createPipeline(ctx, req.Pipelines)
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	ah.Respond(w, res)
+}
+
+func (aH *APIHandler) getSavedViews(w http.ResponseWriter, r *http.Request) {
+	// get sourcePage, name, and category from the query params
+	sourcePage := r.URL.Query().Get("sourcePage")
+	name := r.URL.Query().Get("name")
+	category := r.URL.Query().Get("category")
+
+	queries, err := explorer.GetViewsForFilters(sourcePage, name, category)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -2356,19 +2600,20 @@ func (aH *APIHandler) getExplorerQueries(w http.ResponseWriter, r *http.Request)
 	aH.Respond(w, queries)
 }
 
-func (aH *APIHandler) createExplorerQueries(w http.ResponseWriter, r *http.Request) {
-	var query v3.ExplorerQuery
-	err := json.NewDecoder(r.Body).Decode(&query)
+func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
+	var view v3.SavedView
+	err := json.NewDecoder(r.Body).Decode(&view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 	// validate the query
-	if err := query.Validate(); err != nil {
+	if err := view.Validate(); err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-	uuid, err := explorer.CreateQuery(query)
+	ctx := auth.AttachJwtToContext(context.Background(), r)
+	uuid, err := explorer.CreateView(ctx, view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -2377,44 +2622,45 @@ func (aH *APIHandler) createExplorerQueries(w http.ResponseWriter, r *http.Reque
 	aH.Respond(w, uuid)
 }
 
-func (aH *APIHandler) getExplorerQuery(w http.ResponseWriter, r *http.Request) {
-	queryID := mux.Vars(r)["queryId"]
-	query, err := explorer.GetQuery(queryID)
+func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
+	viewID := mux.Vars(r)["viewId"]
+	view, err := explorer.GetView(viewID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	aH.Respond(w, query)
+	aH.Respond(w, view)
 }
 
-func (aH *APIHandler) updateExplorerQuery(w http.ResponseWriter, r *http.Request) {
-	queryID := mux.Vars(r)["queryId"]
-	var query v3.ExplorerQuery
-	err := json.NewDecoder(r.Body).Decode(&query)
+func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
+	viewID := mux.Vars(r)["viewId"]
+	var view v3.SavedView
+	err := json.NewDecoder(r.Body).Decode(&view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 	// validate the query
-	if err := query.Validate(); err != nil {
+	if err := view.Validate(); err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	err = explorer.UpdateQuery(queryID, query)
+	ctx := auth.AttachJwtToContext(context.Background(), r)
+	err = explorer.UpdateView(ctx, viewID, view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	aH.Respond(w, query)
+	aH.Respond(w, view)
 }
 
-func (aH *APIHandler) deleteExplorerQuery(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
 
-	queryID := mux.Vars(r)["queryId"]
-	err := explorer.DeleteQuery(queryID)
+	viewID := mux.Vars(r)["viewId"]
+	err := explorer.DeleteView(viewID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -2656,8 +2902,8 @@ func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangePara
 			for _, v := range matrix {
 				var s v3.Series
 				s.Labels = v.Metric.Copy().Map()
-				for _, p := range v.Points {
-					s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.V})
+				for _, p := range v.Floats {
+					s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.F})
 				}
 				seriesList = append(seriesList, &s)
 			}
@@ -2762,9 +3008,8 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	var result []*v3.Result
 	var err error
 	var errQuriesByName map[string]string
-	var queries map[string]string
-	switch queryRangeParams.CompositeQuery.QueryType {
-	case v3.QueryTypeBuilder:
+	var spanKeys map[string]v3.AttributeKey
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(queryRangeParams) {
 			// get the fields if any logs query is present
@@ -2778,41 +3023,15 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			logsv3.Enrich(queryRangeParams, fields)
 		}
 
-		var spanKeys map[string]v3.AttributeKey
 		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
 		if err != nil {
 			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-
-		queries, err = aH.queryBuilder.PrepareQueries(queryRangeParams, spanKeys)
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-			return
-		}
-
-		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList || queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTrace {
-			result, err, errQuriesByName = aH.execClickHouseListQueries(r.Context(), queries)
-		} else {
-			result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
-		}
-	case v3.QueryTypeClickHouseSQL:
-		queries := make(map[string]string)
-		for name, query := range queryRangeParams.CompositeQuery.ClickHouseQueries {
-			if query.Disabled {
-				continue
-			}
-			queries[name] = query.Query
-		}
-		result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
-	case v3.QueryTypePromQL:
-		result, err, errQuriesByName = aH.execPromQueries(r.Context(), queryRangeParams)
-	default:
-		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
-		return
 	}
+
+	result, err, errQuriesByName = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
@@ -2855,11 +3074,13 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 
 	for _, result := range results {
 		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
-		if builderQueries != nil && builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics {
+
+		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics ||
+			result.QueryName != builderQueries[result.QueryName].Expression) {
 			limit := builderQueries[result.QueryName].Limit
 
 			orderByList := builderQueries[result.QueryName].OrderBy
-			if limit != 0 {
+			if limit >= 0 {
 				if len(orderByList) == 0 {
 					// If no orderBy is specified, sort by value in descending order
 					orderByList = []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "desc"}}
@@ -2867,6 +3088,18 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 				sort.SliceStable(result.Series, func(i, j int) bool {
 					for _, orderBy := range orderByList {
 						if orderBy.ColumnName == constants.SigNozOrderByValue {
+
+							// For table type queries (we rely on the fact that one value for row), sort
+							// based on final aggregation value
+							if len(result.Series[i].Points) == 1 && len(result.Series[j].Points) == 1 {
+								if orderBy.Order == "asc" {
+									return result.Series[i].Points[0].Value < result.Series[j].Points[0].Value
+								} else if orderBy.Order == "desc" {
+									return result.Series[i].Points[0].Value > result.Series[j].Points[0].Value
+								}
+							}
+
+							// For graph type queries, sort based on GroupingSetsPoint
 							if result.Series[i].GroupingSetsPoint == nil || result.Series[j].GroupingSetsPoint == nil {
 								// Handle nil GroupingSetsPoint, if needed
 								// Here, we assume non-nil values are always less than nil values
@@ -2899,7 +3132,7 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 					return i < j
 				})
 
-				if len(result.Series) > int(limit) {
+				if limit > 0 && len(result.Series) > int(limit) {
 					result.Series = result.Series[:limit]
 				}
 			}
@@ -2908,6 +3141,10 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 }
 
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
+
+	// get the param from url and add it to body
+	stringReader := strings.NewReader(r.URL.Query().Get("q"))
+	r.Body = io.NopCloser(stringReader)
 
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 	if apiErrorObj != nil {
@@ -2946,7 +3183,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create the client
-	client := &v3.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.GetLogsResponse, 1000), Done: make(chan *bool), Error: make(chan error)}
+	client := &v3.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
 	go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
 
 	w.Header().Set("Connection", "keep-alive")
@@ -2969,7 +3206,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
 			enc.Encode(log)
-			fmt.Fprintf(w, "event: log\ndata: %v\n\n", buf.String())
+			fmt.Fprintf(w, "data: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
 			zap.S().Debug("done!")

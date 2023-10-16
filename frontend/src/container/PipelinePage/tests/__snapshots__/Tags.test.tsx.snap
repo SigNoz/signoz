@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PipelinePage container test should render Tags section 1`] = `
+<DocumentFragment>
+  <span>
+    <span
+      class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
+    >
+      server
+    </span>
+    <span
+      class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
+    >
+      app
+    </span>
+  </span>
+</DocumentFragment>
+`;
