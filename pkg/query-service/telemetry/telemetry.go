@@ -95,7 +95,7 @@ func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) 
 		}
 	} else if postData.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
 		for _, query := range postData.CompositeQuery.ClickHouseQueries {
-			if !strings.Contains(query.Query, "signoz_metrics") && len(query.Query) > 0 {
+			if strings.Contains(query.Query, "signoz_metrics") && len(query.Query) > 0 {
 				signozMetricsUsed = true
 			}
 		}

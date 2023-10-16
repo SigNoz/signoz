@@ -143,6 +143,7 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 	telemetry.GetInstance().SetCountUsers(int8(countUsers))
 	if countUsers > 0 {
 		telemetry.GetInstance().SetCompanyDomain(users[countUsers-1].Email)
+		telemetry.GetInstance().SetUserEmail(users[countUsers-1].Email)
 	}
 
 	return nil
