@@ -24,6 +24,7 @@ function ServiceOverview({
 	selectedTraceTags,
 	selectedTimeStamp,
 	topLevelOperationsRoute,
+	topLevelOperationsIsLoading,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
@@ -62,7 +63,8 @@ function ServiceOverview({
 		[servicename, isSpanMetricEnable, topLevelOperationsRoute, tagFilterItems],
 	);
 
-	const isQueryEnabled = topLevelOperationsRoute.length > 0;
+	const isQueryEnabled =
+		!topLevelOperationsIsLoading && topLevelOperationsRoute.length > 0;
 
 	return (
 		<>
@@ -99,6 +101,7 @@ interface ServiceOverviewProps {
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
 	topLevelOperationsRoute: string[];
+	topLevelOperationsIsLoading: boolean;
 }
 
 export default ServiceOverview;

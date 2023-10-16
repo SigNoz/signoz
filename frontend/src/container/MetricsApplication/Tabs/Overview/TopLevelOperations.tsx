@@ -15,6 +15,7 @@ function TopLevelOperation({
 	onDragSelect,
 	handleGraphClick,
 	widget,
+	topLevelOperationsIsLoading,
 }: TopLevelOperationProps): JSX.Element {
 	return (
 		<Card>
@@ -31,6 +32,7 @@ function TopLevelOperation({
 						widget={widget}
 						onClickHandler={handleGraphClick(opName)}
 						onDragSelect={onDragSelect}
+						isQueryEnabled={!topLevelOperationsIsLoading}
 					/>
 				</GraphContainer>
 			)}
@@ -46,6 +48,7 @@ interface TopLevelOperationProps {
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
 	widget: Widgets;
+	topLevelOperationsIsLoading: boolean;
 }
 
 export default TopLevelOperation;

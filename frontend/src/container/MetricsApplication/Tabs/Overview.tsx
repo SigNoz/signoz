@@ -93,6 +93,7 @@ function Application(): JSX.Element {
 	const {
 		data: topLevelOperations,
 		error: topLevelOperationsError,
+		isLoading: topLevelOperationsIsLoading,
 		isError: topLevelOperationsIsError,
 	} = useQuery<ServiceDataProps>({
 		queryKey: [servicename, minTime, maxTime, selectedTags],
@@ -198,6 +199,7 @@ function Application(): JSX.Element {
 						selectedTimeStamp={selectedTimeStamp}
 						selectedTraceTags={selectedTraceTags}
 						topLevelOperationsRoute={topLevelOperationsRoute}
+						topLevelOperationsIsLoading={topLevelOperationsIsLoading}
 					/>
 				</Col>
 
@@ -222,6 +224,7 @@ function Application(): JSX.Element {
 						name="operations_per_sec"
 						widget={operationPerSecWidget}
 						opName="Rate"
+						topLevelOperationsIsLoading={topLevelOperationsIsLoading}
 					/>
 				</Col>
 			</Row>
@@ -265,6 +268,7 @@ function Application(): JSX.Element {
 							name="error_percentage_%"
 							widget={errorPercentageWidget}
 							opName="Error"
+							topLevelOperationsIsLoading={topLevelOperationsIsLoading}
 						/>
 					</ColErrorContainer>
 				</Col>
