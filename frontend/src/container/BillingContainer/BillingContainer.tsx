@@ -6,9 +6,11 @@ import { Button, Col, Row, Skeleton, Table, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import updateCreditCardApi from 'api/billing/checkout';
 import getUsage from 'api/billing/getUsage';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAxiosError from 'hooks/useAxiosError';
 import useLicense from 'hooks/useLicense';
+import { useNotifications } from 'hooks/useNotifications';
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -132,6 +134,7 @@ export default function BillingContainer(): JSX.Element {
 	const { isFetching, data: licensesData, error: licenseError } = useLicense();
 
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { notifications } = useNotifications();
 
 	const handleError = useAxiosError();
 
@@ -283,9 +286,18 @@ export default function BillingContainer(): JSX.Element {
 		updateCreditCardApi,
 		{
 			onSuccess: (data) => {
-				window.open(data.payload?.redirectURL);
+				if (data.payload?.redirectURL) {
+					const newTab = document.createElement('a');
+					newTab.href = data.payload.redirectURL;
+					newTab.target = '_blank';
+					newTab.rel = 'noopener noreferrer';
+					newTab.click();
+				}
 			},
-			onError: () => console.log('error'),
+			onError: () =>
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				}),
 		},
 	);
 

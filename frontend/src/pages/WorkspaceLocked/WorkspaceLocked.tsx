@@ -4,8 +4,10 @@ import './WorkspaceLocked.styles.scss';
 import { CreditCardOutlined, LockOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
 import updateCreditCardApi from 'api/billing/checkout';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { getFormattedDate } from 'container/BillingContainer/BillingContainer';
 import useLicense from 'hooks/useLicense';
+import { useNotifications } from 'hooks/useNotifications';
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -17,6 +19,8 @@ export default function WorkspaceBlocked(): JSX.Element {
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const isAdmin = role === 'ADMIN';
 	const [activeLicense, setActiveLicense] = useState<License | null>(null);
+
+	const { notifications } = useNotifications();
 
 	const { isFetching, data: licensesData } = useLicense();
 
@@ -33,9 +37,18 @@ export default function WorkspaceBlocked(): JSX.Element {
 		updateCreditCardApi,
 		{
 			onSuccess: (data) => {
-				window.open(data.payload?.redirectURL);
+				if (data.payload?.redirectURL) {
+					const newTab = document.createElement('a');
+					newTab.href = data.payload.redirectURL;
+					newTab.target = '_blank';
+					newTab.rel = 'noopener noreferrer';
+					newTab.click();
+				}
 			},
-			onError: () => console.log('error'),
+			onError: () =>
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				}),
 		},
 	);
 
