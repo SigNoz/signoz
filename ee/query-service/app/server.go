@@ -90,6 +90,8 @@ type Server struct {
 	// Usage manager
 	usageManager *usage.Manager
 
+	opampServer *opamp.Server
+
 	unavailableChannel chan healthcheck.Status
 }
 
@@ -171,13 +173,18 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	// initiate agent config handler
-	if err := agentConf.Initiate(localDB, AppDbEngine); err != nil {
+	// ingestion pipelines manager
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	if err != nil {
 		return nil, err
 	}
 
-	// ingestion pipelines manager
-	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	// initiate agent config handler
+	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
+		DB:            localDB,
+		DBEngine:      AppDbEngine,
+		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -256,6 +263,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	s.privateHTTP = privateServer
+
+	s.opampServer = opamp.InitializeServer(
+		&opAmpModel.AllAgents, agentConfMgr,
+	)
 
 	return s, nil
 }
@@ -579,7 +590,7 @@ func (s *Server) Start() error {
 
 	go func() {
 		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", baseconst.OpAmpWsEndpoint))
-		err := opamp.InitializeAndStartServer(baseconst.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		err := s.opampServer.Start(baseconst.OpAmpWsEndpoint)
 		if err != nil {
 			zap.S().Info("opamp ws server failed to start", err)
 			s.unavailableChannel <- healthcheck.Unavailable
@@ -602,7 +613,7 @@ func (s *Server) Stop() error {
 		}
 	}
 
-	opamp.StopServer()
+	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
 		s.ruleManager.Stop()

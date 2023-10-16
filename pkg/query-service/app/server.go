@@ -77,6 +77,8 @@ type Server struct {
 	privateConn net.Listener
 	privateHTTP *http.Server
 
+	opampServer *opamp.Server
+
 	unavailableChannel chan healthcheck.Status
 }
 
@@ -202,9 +204,21 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := agentConf.Initiate(localDB, "sqlite"); err != nil {
+	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
+		DB:       localDB,
+		DBEngine: "sqlite",
+		AgentFeatures: []agentConf.AgentFeature{
+			logParsingPipelineController,
+		},
+	})
+	if err != nil {
 		return nil, err
 	}
+
+	s.opampServer = opamp.InitializeServer(
+		&opAmpModel.AllAgents, agentConfMgr,
+	)
+
 	return s, nil
 }
 
@@ -512,7 +526,7 @@ func (s *Server) Start() error {
 
 	go func() {
 		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
-		err := opamp.InitializeAndStartServer(constants.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		err := s.opampServer.Start(constants.OpAmpWsEndpoint)
 		if err != nil {
 			zap.S().Info("opamp ws server failed to start", err)
 			s.unavailableChannel <- healthcheck.Unavailable
@@ -535,7 +549,7 @@ func (s *Server) Stop() error {
 		}
 	}
 
-	opamp.StopServer()
+	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
 		s.ruleManager.Stop()
