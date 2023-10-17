@@ -32,6 +32,7 @@ import {
 } from './styles';
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
+import PreviewAction from './TableComponents/PipelineActions/components/PreviewAction';
 import TableExpandIcon from './TableComponents/TableExpandIcon';
 import {
 	getDataOnSearch,
@@ -198,6 +199,16 @@ function PipelineListsView({
 					),
 				},
 			);
+		} else {
+			fieldColumns.push({
+				title: 'Actions',
+				dataIndex: 'smartAction',
+				key: 'smartAction',
+				align: 'center',
+				render: (_value, record): JSX.Element => (
+					<PreviewAction pipeline={record} />
+				),
+			});
 		}
 		return fieldColumns;
 	}, [
