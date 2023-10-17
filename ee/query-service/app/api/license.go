@@ -224,3 +224,35 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 
 	ah.Respond(w, resp)
 }
+
+func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
+
+	type checkoutResponse struct {
+		Status string `json:"status"`
+		Data   struct {
+			RedirectURL string `json:"redirectURL"`
+		} `json:"data"`
+	}
+
+	hClient := &http.Client{}
+	req, err := http.NewRequest("POST", constants.LicenseSignozIo+"/portal", r.Body)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
+	licenseResp, err := hClient.Do(req)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	// decode response body
+	var resp checkoutResponse
+	if err := json.NewDecoder(licenseResp.Body).Decode(&resp); err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	ah.Respond(w, resp.Data)
+}

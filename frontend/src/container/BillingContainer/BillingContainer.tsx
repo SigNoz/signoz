@@ -4,8 +4,8 @@ import './BillingContainer.styles.scss';
 import { CheckCircleOutlined } from '@ant-design/icons';
 import { Button, Col, Row, Skeleton, Table, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import updateCreditCardApi from 'api/billing/checkout';
 import getUsage from 'api/billing/getUsage';
+import manageCreditCardApi from 'api/billing/manage';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAxiosError from 'hooks/useAxiosError';
@@ -285,7 +285,7 @@ export default function BillingContainer(): JSX.Element {
 	);
 
 	const { mutate: updateCreditCard, isLoading: isLoadingBilling } = useMutation(
-		updateCreditCardApi,
+		manageCreditCardApi,
 		{
 			onSuccess: (data) => {
 				if (data.payload?.redirectURL) {
