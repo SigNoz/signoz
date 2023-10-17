@@ -2,7 +2,7 @@ package telemetry
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"os"
@@ -12,12 +12,13 @@ import (
 	"time"
 
 	ph "github.com/posthog/posthog-go"
+	"gopkg.in/segmentio/analytics-go.v3"
+
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/version"
-	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 const (
@@ -248,7 +249,7 @@ func getOutboundIP() string {
 
 	defer resp.Body.Close()
 	if err == nil {
-		ipBody, err := ioutil.ReadAll(resp.Body)
+		ipBody, err := io.ReadAll(resp.Body)
 		if err == nil {
 			ip = ipBody
 		}

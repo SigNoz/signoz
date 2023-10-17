@@ -2,12 +2,13 @@ package dashboards
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
+	"path/filepath"
+
+	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.uber.org/zap"
 )
 
 func readCurrentDir(dir string, fm interfaces.FeatureLookup) error {
@@ -21,7 +22,10 @@ func readCurrentDir(dir string, fm interfaces.FeatureLookup) error {
 	list, _ := file.Readdirnames(0) // 0 to read all files and folders
 	for _, filename := range list {
 		zap.S().Info("Provisioning dashboard: ", filename)
-		plan, err := ioutil.ReadFile(dir + "/" + filename)
+
+		// using filepath.Join for platform specific path creation
+		// which is equivalent to "dir+/+filename" (on unix based systems) but cleaner
+		plan, err := os.ReadFile(filepath.Join(dir, filename))
 		if err != nil {
 			zap.S().Errorf("Creating Dashboards: Error in reading json fron file: %s\t%s", filename, err)
 			continue
