@@ -274,7 +274,7 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 		a.saasOperator.Enqueue(analytics.Group{
 			UserId:  a.userEmail,
 			GroupId: a.getCompanyDomain(),
-			Traits:  analytics.NewTraits().Set("companyDomain", a.getCompanyDomain()),
+			Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
 		})
 	}
 
