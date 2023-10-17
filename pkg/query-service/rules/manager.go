@@ -16,8 +16,9 @@ import (
 
 	"go.uber.org/zap"
 
+	"errors"
+
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 
 	// opentracing "github.com/opentracing/opentracing-go"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -27,8 +28,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
-// namespace for prom metrics
-const namespace = "signoz"
 const taskNamesuffix = "webAppEditor"
 
 func ruleIdFromTaskName(n string) string {
@@ -77,8 +76,6 @@ type Manager struct {
 	// datastore to store alert definitions
 	ruleDB RuleDB
 
-	// pause all rule tasks
-	pause  bool
 	logger log.Logger
 
 	featureFlags interfaces.FeatureLookup
@@ -142,7 +139,7 @@ func (m *Manager) Pause(b bool) {
 }
 
 func (m *Manager) initiate() error {
-	storedRules, err := m.ruleDB.GetStoredRules()
+	storedRules, err := m.ruleDB.GetStoredRules(context.Background())
 	if err != nil {
 		return err
 	}
@@ -195,6 +192,10 @@ func (m *Manager) initiate() error {
 		}
 	}
 
+	if len(loadErrors) > 0 {
+		return errors.Join(loadErrors...)
+	}
+
 	return nil
 }
 
@@ -227,7 +228,7 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error
 
 	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
 
-	currentRule, err := m.GetRule(id)
+	currentRule, err := m.GetRule(ctx, id)
 	if err != nil {
 		zap.S().Errorf("msg: ", "failed to get the rule from rule db", "\t ruleid: ", id)
 		return err
@@ -323,7 +324,7 @@ func (m *Manager) DeleteRule(ctx context.Context, id string) error {
 	}
 
 	// update feature usage
-	rule, err := m.GetRule(id)
+	rule, err := m.GetRule(ctx, id)
 	if err != nil {
 		zap.S().Errorf("msg: ", "failed to get the rule from rule db", "\t ruleid: ", id)
 		return err
@@ -665,10 +666,10 @@ func (m *Manager) ListActiveRules() ([]Rule, error) {
 	return ruleList, nil
 }
 
-func (m *Manager) ListRuleStates() (*GettableRules, error) {
+func (m *Manager) ListRuleStates(ctx context.Context) (*GettableRules, error) {
 
 	// fetch rules from DB
-	storedRules, err := m.ruleDB.GetStoredRules()
+	storedRules, err := m.ruleDB.GetStoredRules(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -703,8 +704,8 @@ func (m *Manager) ListRuleStates() (*GettableRules, error) {
 	return &GettableRules{Rules: resp}, nil
 }
 
-func (m *Manager) GetRule(id string) (*GettableRule, error) {
-	s, err := m.ruleDB.GetStoredRule(id)
+func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error) {
+	s, err := m.ruleDB.GetStoredRule(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -759,7 +760,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) 
 	taskName := prepareTaskName(ruleId)
 
 	// retrieve rule from DB
-	storedJSON, err := m.ruleDB.GetStoredRule(ruleId)
+	storedJSON, err := m.ruleDB.GetStoredRule(ctx, ruleId)
 	if err != nil {
 		zap.S().Errorf("msg:", "failed to get stored rule with given id", "\t error:", err)
 		return nil, err

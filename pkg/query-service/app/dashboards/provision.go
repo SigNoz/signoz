@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -38,13 +39,13 @@ func readCurrentDir(dir string, fm interfaces.FeatureLookup) error {
 			continue
 		}
 
-		_, apiErr := GetDashboard(data["uuid"].(string))
+		_, apiErr := GetDashboard(context.Background(), data["uuid"].(string))
 		if apiErr == nil {
 			zap.S().Infof("Creating Dashboards: Error in file: %s\t%s", filename, "Dashboard already present in database")
 			continue
 		}
 
-		_, apiErr = CreateDashboard(data, fm)
+		_, apiErr = CreateDashboard(context.Background(), data, fm)
 		if apiErr != nil {
 			zap.S().Errorf("Creating Dashboards: Error in file: %s\t%s", filename, apiErr.Err)
 			continue

@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.uber.org/zap"
 )
 
@@ -24,10 +23,10 @@ type RuleDB interface {
 	DeleteRuleTx(ctx context.Context, id string) (string, Tx, error)
 
 	// GetStoredRules fetches the rule definitions from db
-	GetStoredRules() ([]StoredRule, error)
+	GetStoredRules(ctx context.Context) ([]StoredRule, error)
 
 	// GetStoredRule for a given ID from DB
-	GetStoredRule(id string) (*StoredRule, error)
+	GetStoredRule(ctx context.Context, id string) (*StoredRule, error)
 }
 
 type StoredRule struct {
@@ -63,9 +62,9 @@ func (r *ruleDB) CreateRuleTx(ctx context.Context, rule string) (string, Tx, err
 	var groupName string
 	var lastInsertId int64
 
-	var userName string
-	if user := getUserFromContext(ctx); user != nil {
-		userName = user.Email
+	var userEmail string
+	if user := common.GetUserFromContext(ctx); user != nil {
+		userEmail = user.Email
 	}
 	createdAt := time.Now()
 	updatedAt := time.Now()
@@ -83,7 +82,7 @@ func (r *ruleDB) CreateRuleTx(ctx context.Context, rule string) (string, Tx, err
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(createdAt, userName, updatedAt, userName, rule)
+	result, err := stmt.Exec(createdAt, userEmail, updatedAt, userEmail, rule)
 	if err != nil {
 		zap.S().Errorf("Error in Executing prepared statement for INSERT to rules\n", err)
 		tx.Rollback() // return an error too, we may want to wrap them
@@ -108,9 +107,9 @@ func (r *ruleDB) EditRuleTx(ctx context.Context, rule string, id string) (string
 		return groupName, nil, fmt.Errorf("failed to read alert id from parameters")
 	}
 
-	var userName string
-	if user := getUserFromContext(ctx); user != nil {
-		userName = user.Email
+	var userEmail string
+	if user := common.GetUserFromContext(ctx); user != nil {
+		userEmail = user.Email
 	}
 	updatedAt := time.Now()
 	groupName = prepareTaskName(int64(idInt))
@@ -129,7 +128,7 @@ func (r *ruleDB) EditRuleTx(ctx context.Context, rule string, id string) (string
 	}
 	defer stmt.Close()
 
-	if _, err := stmt.Exec(userName, updatedAt, rule, idInt); err != nil {
+	if _, err := stmt.Exec(userEmail, updatedAt, rule, idInt); err != nil {
 		zap.S().Errorf("Error in Executing prepared statement for UPDATE to rules\n", err)
 		// tx.Rollback() // return an error too, we may want to wrap them
 		return groupName, nil, err
@@ -167,7 +166,7 @@ func (r *ruleDB) DeleteRuleTx(ctx context.Context, id string) (string, Tx, error
 	return groupName, nil, nil
 }
 
-func (r *ruleDB) GetStoredRules() ([]StoredRule, error) {
+func (r *ruleDB) GetStoredRules(ctx context.Context) ([]StoredRule, error) {
 
 	rules := []StoredRule{}
 
@@ -183,7 +182,7 @@ func (r *ruleDB) GetStoredRules() ([]StoredRule, error) {
 	return rules, nil
 }
 
-func (r *ruleDB) GetStoredRule(id string) (*StoredRule, error) {
+func (r *ruleDB) GetStoredRule(ctx context.Context, id string) (*StoredRule, error) {
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid id parameter")
@@ -202,12 +201,4 @@ func (r *ruleDB) GetStoredRule(id string) (*StoredRule, error) {
 	}
 
 	return rule, nil
-}
-
-func getUserFromContext(ctx context.Context) *model.UserPayload {
-	user, ok := ctx.Value(constants.ContextUserKey).(*model.UserPayload)
-	if !ok {
-		return nil
-	}
-	return user
 }
