@@ -64,6 +64,7 @@ function PipelineListsView({
 		expandedPipelineData,
 		setExpandedPipelineData,
 	] = useState<PipelineData>();
+
 	const [
 		selectedProcessorData,
 		setSelectedProcessorData,
@@ -163,6 +164,7 @@ function PipelineListsView({
 
 	const columns = useMemo(() => {
 		const fieldColumns = getTableColumn(pipelineColumns);
+
 		if (isEditingActionMode) {
 			fieldColumns.push(
 				{
@@ -172,7 +174,11 @@ function PipelineListsView({
 					align: 'center',
 					render: (_value, record): JSX.Element => (
 						<PipelineActions
-							pipeline={record}
+							pipeline={
+								expandedPipelineData?.id === record.id
+									? (expandedPipelineData as PipelineData)
+									: record
+							}
 							editAction={pipelineEditAction(record)}
 							deleteAction={pipelineDeleteAction(record)}
 						/>
@@ -199,6 +205,7 @@ function PipelineListsView({
 		pipelineEditAction,
 		pipelineDeleteAction,
 		onSwitchPipelineChange,
+		expandedPipelineData,
 	]);
 
 	const updatePipelineSequence = useCallback(
