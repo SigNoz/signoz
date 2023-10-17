@@ -13,6 +13,7 @@ import { useLocation } from 'react-router-dom';
 import { sideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
+import { isCloudUser } from 'utils/app';
 
 import { routeConfig, styles } from './config';
 import { getQueryString } from './helper';
@@ -50,8 +51,6 @@ function SideNav(): JSX.Element {
 				license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
 		) || data?.payload?.licenses === null;
 
-	const { hostname } = window.location;
-
 	const menuItems = useMemo(
 		() =>
 			defaultMenuItems.filter((item) => {
@@ -64,16 +63,13 @@ function SideNav(): JSX.Element {
 					return item.key !== ROUTES.BILLING;
 				}
 
-				if (
-					!isOnboardingEnabled ||
-					!(hostname && hostname.endsWith('signoz.cloud'))
-				) {
+				if (!isOnboardingEnabled || !isCloudUser()) {
 					return item.key !== ROUTES.GET_STARTED;
 				}
 
 				return true;
 			}),
-		[featureResponse.data, isOnBasicPlan, hostname, role],
+		[featureResponse.data, isOnBasicPlan, role],
 	);
 
 	const { pathname, search } = useLocation();

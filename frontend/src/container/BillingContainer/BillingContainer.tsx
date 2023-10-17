@@ -176,24 +176,26 @@ export default function BillingContainer(): JSX.Element {
 			} = data?.payload || {};
 			const formattedUsageData: any[] = [];
 
-			for (let index = 0; index < breakdown.length; index += 1) {
-				const element = breakdown[index];
+			if (breakdown && Array.isArray(breakdown)) {
+				for (let index = 0; index < breakdown.length; index += 1) {
+					const element = breakdown[index];
 
-				element?.tiers.forEach(
-					(
-						tier: { quantity: number; unitPrice: number; tierCost: number },
-						i: number,
-					) => {
-						formattedUsageData.push({
-							key: `${index}${i}`,
-							name: i === 0 ? element?.type : '',
-							unit: element?.unit,
-							dataIngested: tier.quantity,
-							pricePerUnit: tier.unitPrice,
-							cost: `$ ${tier.tierCost}`,
-						});
-					},
-				);
+					element?.tiers.forEach(
+						(
+							tier: { quantity: number; unitPrice: number; tierCost: number },
+							i: number,
+						) => {
+							formattedUsageData.push({
+								key: `${index}${i}`,
+								name: i === 0 ? element?.type : '',
+								unit: element?.unit,
+								dataIngested: tier.quantity,
+								pricePerUnit: tier.unitPrice,
+								cost: `$ ${tier.tierCost}`,
+							});
+						},
+					);
+				}
 			}
 
 			setData(formattedUsageData);
