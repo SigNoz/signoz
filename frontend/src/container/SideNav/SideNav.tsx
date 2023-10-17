@@ -4,6 +4,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import history from 'lib/history';
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -34,11 +35,20 @@ function SideNav(): JSX.Element {
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
 	const {
+		role,
 		currentVersion,
 		latestVersion,
 		isCurrentVersionError,
 		featureResponse,
 	} = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const { data } = useLicense();
+
+	const isOnBasicPlan =
+		data?.payload?.licenses?.some(
+			(license) =>
+				license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
+		) || data?.payload?.licenses === null;
 
 	const { hostname } = window.location;
 
@@ -50,6 +60,10 @@ function SideNav(): JSX.Element {
 						(feature) => feature.name === FeatureKeys.ONBOARDING,
 					)?.active || false;
 
+				if (role !== 'ADMIN' || isOnBasicPlan) {
+					return item.key !== ROUTES.BILLING;
+				}
+
 				if (
 					!isOnboardingEnabled ||
 					!(hostname && hostname.endsWith('signoz.cloud'))
@@ -59,7 +73,7 @@ function SideNav(): JSX.Element {
 
 				return true;
 			}),
-		[featureResponse.data, hostname],
+		[featureResponse.data, isOnBasicPlan, hostname, role],
 	);
 
 	const { pathname, search } = useLocation();
