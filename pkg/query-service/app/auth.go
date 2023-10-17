@@ -1,11 +1,13 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -39,10 +41,12 @@ func (am *AuthMiddleware) ViewAccess(f func(http.ResponseWriter, *http.Request))
 		if !(auth.IsViewer(user) || auth.IsEditor(user) || auth.IsAdmin(user)) {
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
-				Err: errors.New("API is accessible to viewers/editors/admins."),
+				Err: errors.New("API is accessible to viewers/editors/admins"),
 			}, nil)
 			return
 		}
+		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
+		r = r.WithContext(ctx)
 		f(w, r)
 	}
 }
@@ -64,6 +68,8 @@ func (am *AuthMiddleware) EditAccess(f func(http.ResponseWriter, *http.Request))
 			}, nil)
 			return
 		}
+		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
+		r = r.WithContext(ctx)
 		f(w, r)
 	}
 }
@@ -86,6 +92,8 @@ func (am *AuthMiddleware) SelfAccess(f func(http.ResponseWriter, *http.Request))
 			}, nil)
 			return
 		}
+		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
+		r = r.WithContext(ctx)
 		f(w, r)
 	}
 }
@@ -107,6 +115,8 @@ func (am *AuthMiddleware) AdminAccess(f func(http.ResponseWriter, *http.Request)
 			}, nil)
 			return
 		}
+		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
+		r = r.WithContext(ctx)
 		f(w, r)
 	}
 }
