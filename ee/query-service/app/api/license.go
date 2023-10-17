@@ -30,6 +30,7 @@ type details struct {
 	Total     float64         `json:"total"`
 	Breakdown []usageResponse `json:"breakdown"`
 	BaseFee   float64         `json:"baseFee"`
+	BillTotal float64         `json:"billTotal"`
 }
 
 type billingDetails struct {
@@ -147,11 +148,13 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := model.Licenses{
-		TrialStart:     -1,
-		TrialEnd:       -1,
-		OnTrial:        false,
-		WorkSpaceBlock: false,
-		Licenses:       licenses,
+		TrialStart:                   -1,
+		TrialEnd:                     -1,
+		OnTrial:                      false,
+		WorkSpaceBlock:               false,
+		TrialConvertedToSubscription: false,
+		GracePeriodEnd:               -1,
+		Licenses:                     licenses,
 	}
 
 	var currentActiveLicenseKey string
@@ -216,6 +219,8 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 	resp.TrialEnd = trialRespData.Data.TrialEnd
 	resp.OnTrial = trialRespData.Data.OnTrial
 	resp.WorkSpaceBlock = trialRespData.Data.WorkSpaceBlock
+	resp.TrialConvertedToSubscription = trialRespData.Data.TrialConvertedToSubscription
+	resp.GracePeriodEnd = trialRespData.Data.GracePeriodEnd
 
 	ah.Respond(w, resp)
 }

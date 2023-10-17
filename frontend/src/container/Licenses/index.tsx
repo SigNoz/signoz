@@ -19,7 +19,7 @@ function Licenses(): JSX.Element {
 	}
 
 	const allValidLicense =
-		data?.payload?.filter((license) => license.isCurrent) || [];
+		data?.payload?.licenses?.filter((license) => license.isCurrent) || [];
 
 	const tabs = [
 		{
