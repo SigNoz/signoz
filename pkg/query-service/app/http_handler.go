@@ -448,7 +448,7 @@ func Intersection(a, b []int) (c []int) {
 
 func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	ruleResponse, err := aH.ruleManager.GetRule(id)
+	ruleResponse, err := aH.ruleManager.GetRule(r.Context(), id)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -765,7 +765,7 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 
-	rules, err := aH.ruleManager.ListRuleStates()
+	rules, err := aH.ruleManager.ListRuleStates(r.Context())
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -778,7 +778,7 @@ func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
-	allDashboards, err := dashboards.GetDashboards()
+	allDashboards, err := dashboards.GetDashboards(r.Context())
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -829,7 +829,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	uuid := mux.Vars(r)["uuid"]
-	err := dashboards.DeleteDashboard(uuid, aH.featureFlags)
+	err := dashboards.DeleteDashboard(r.Context(), uuid, aH.featureFlags)
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -935,7 +935,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, apiError := dashboards.UpdateDashboard(uuid, postData, aH.featureFlags)
+	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), uuid, postData, aH.featureFlags)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -949,7 +949,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 	uuid := mux.Vars(r)["uuid"]
 
-	dashboard, apiError := dashboards.GetDashboard(uuid)
+	dashboard, apiError := dashboards.GetDashboard(r.Context(), uuid)
 
 	if apiError != nil {
 		RespondError(w, apiError, nil)
@@ -960,7 +960,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, signozDashboard model.DashboardData) {
+func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, r *http.Request, signozDashboard model.DashboardData) {
 	toSave := make(map[string]interface{})
 	toSave["title"] = signozDashboard.Title
 	toSave["description"] = signozDashboard.Description
@@ -969,7 +969,7 @@ func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, signozDashboard model
 	toSave["widgets"] = signozDashboard.Widgets
 	toSave["variables"] = signozDashboard.Variables
 
-	dashboard, apiError := dashboards.CreateDashboard(toSave, aH.featureFlags)
+	dashboard, apiError := dashboards.CreateDashboard(r.Context(), toSave, aH.featureFlags)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -988,7 +988,7 @@ func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.R
 	err = json.Unmarshal(b, &importData)
 	if err == nil {
 		signozDashboard := dashboards.TransformGrafanaJSONToSignoz(importData)
-		aH.saveAndReturn(w, signozDashboard)
+		aH.saveAndReturn(w, r, signozDashboard)
 		return
 	}
 	RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error while creating dashboard from grafana json")
@@ -1010,7 +1010,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dash, apiErr := dashboards.CreateDashboard(postData, aH.featureFlags)
+	dash, apiErr := dashboards.CreateDashboard(r.Context(), postData, aH.featureFlags)
 
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -1051,7 +1051,7 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
 
-	err := aH.ruleManager.DeleteRule(id)
+	err := aH.ruleManager.DeleteRule(r.Context(), id)
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1074,7 +1074,7 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	gettableRule, err := aH.ruleManager.PatchRule(string(body), id)
+	gettableRule, err := aH.ruleManager.PatchRule(r.Context(), string(body), id)
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1095,7 +1095,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = aH.ruleManager.EditRule(string(body), id)
+	err = aH.ruleManager.EditRule(r.Context(), string(body), id)
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1248,7 +1248,7 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = aH.ruleManager.CreateRule(string(body))
+	err = aH.ruleManager.CreateRule(r.Context(), string(body))
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
