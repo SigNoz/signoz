@@ -83,7 +83,9 @@ func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) 
 		for _, query := range postData.CompositeQuery.BuilderQueries {
 			if query.DataSource == v3.DataSourceLogs && len(query.Filters.Items) > 0 {
 				signozLogsUsed = true
-			} else if query.DataSource == v3.DataSourceMetrics && !strings.Contains(query.AggregateAttribute.Key, "signoz_") {
+			} else if query.DataSource == v3.DataSourceMetrics &&
+				!strings.Contains(query.AggregateAttribute.Key, "signoz_") &&
+				len(query.AggregateAttribute.Key) > 0 {
 				signozMetricsUsed = true
 			}
 		}
@@ -268,6 +270,11 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 		a.saasOperator.Enqueue(analytics.Identify{
 			UserId: a.userEmail,
 			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
+		})
+		a.saasOperator.Enqueue(analytics.Group{
+			UserId:  a.userEmail,
+			GroupId: a.getCompanyDomain(),
+			Traits:  analytics.NewTraits().Set("companyDomain", a.getCompanyDomain()),
 		})
 	}
 
