@@ -65,6 +65,7 @@ function PipelineListsView({
 		expandedPipelineData,
 		setExpandedPipelineData,
 	] = useState<PipelineData>();
+
 	const [
 		selectedProcessorData,
 		setSelectedProcessorData,
@@ -164,6 +165,7 @@ function PipelineListsView({
 
 	const columns = useMemo(() => {
 		const fieldColumns = getTableColumn(pipelineColumns);
+
 		if (isEditingActionMode) {
 			fieldColumns.push(
 				{
