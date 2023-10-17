@@ -17,3 +17,16 @@ export const isCloudUser = (): boolean => {
 
 	return hostname?.endsWith('signoz.cloud');
 };
+
+export const checkVersionState = (
+	currentVersion: string,
+	latestVersion: string,
+): boolean => {
+	const versionCore = currentVersion?.split('-')[0];
+
+	if (versionCore) {
+		return versionCore === latestVersion;
+	}
+
+	return false;
+};
