@@ -397,7 +397,7 @@ export default function BillingContainer(): JSX.Element {
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
 								<CheckCircleOutlined />
-								You will be charged only when trial period ends
+								Your billing will start only after the trial period
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
 								<CheckCircleOutlined />
