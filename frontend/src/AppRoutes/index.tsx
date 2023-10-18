@@ -1,3 +1,4 @@
+import { AnalyticsBrowser } from '@segment/analytics-next';
 import { ConfigProvider } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -28,6 +29,11 @@ import { trackPageView } from 'utils/segmentAnalytics';
 
 import PrivateRoute from './Private';
 import defaultRoutes from './routes';
+
+// We can export this instance to share with rest of our codebase.
+export const analytics = AnalyticsBrowser.load({
+	writeKey: process.env.SEGMENT_ID || '',
+});
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
@@ -108,9 +114,9 @@ function App(): JSX.Element {
 			company_domain: domain,
 		};
 
-		window.analytics.identify(user?.email, identifyPayload);
+		analytics.identify(user?.email, identifyPayload);
 
-		window.analytics.group(domain, groupTraits);
+		analytics.group(domain, groupTraits);
 
 		window.clarity('identify', user.email, user.name);
 	};

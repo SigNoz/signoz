@@ -1,12 +1,14 @@
+import { analytics } from 'AppRoutes';
+
 function trackPageView(pageName: string): void {
-	window.analytics.page(pageName);
+	analytics.page(pageName);
 }
 
 function trackEvent(
 	eventName: string,
 	properties?: Record<string, unknown>,
 ): void {
-	window.analytics.track(eventName, properties);
+	analytics.track(eventName, properties);
 }
 
 export { trackEvent, trackPageView };
