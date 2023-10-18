@@ -25,6 +25,7 @@ const breadcrumbNameMap = {
 	[ROUTES.LIVE_LOGS]: 'Live View',
 	[ROUTES.PIPELINES]: 'Pipelines',
 	[ROUTES.BILLING]: 'Billing',
+	[ROUTES.SUPPORT]: 'Support',
 	[ROUTES.WORKSPACE_LOCKED]: 'Workspace Locked',
 };
 

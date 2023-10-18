@@ -18,4 +18,5 @@ export interface SidebarItem {
 export enum SecondaryMenuItemKey {
 	Slack = 'slack',
 	Version = 'version',
+	Support = 'support',
 }

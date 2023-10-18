@@ -158,6 +158,10 @@ export const BillingPage = Loadable(
 	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Billing'),
 );
 
+export const SupportPage = Loadable(
+	() => import(/* webpackChunkName: "SupportPage" */ 'pages/Support'),
+);
+
 export const WorkspaceBlocked = Loadable(
 	() =>
 		import(/* webpackChunkName: "WorkspaceLocked" */ 'pages/WorkspaceLocked'),

@@ -34,6 +34,7 @@ import {
 	SignupPage,
 	SomethingWentWrong,
 	StatusPage,
+	SupportPage,
 	TraceDetail,
 	TraceFilter,
 	TracesExplorer,
@@ -287,12 +288,18 @@ const routes: AppRoutes[] = [
 		key: 'PIPELINES',
 		isPrivate: true,
 	},
-
 	{
 		path: ROUTES.BILLING,
 		exact: true,
 		component: BillingPage,
 		key: 'BILLING',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.SUPPORT,
+		exact: true,
+		component: SupportPage,
+		key: 'SUPPORT',
 		isPrivate: true,
 	},
 	{

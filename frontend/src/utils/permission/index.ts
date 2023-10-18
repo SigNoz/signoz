@@ -81,5 +81,6 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	GET_STARTED: ['ADMIN', 'EDITOR', 'VIEWER'],
 	WORKSPACE_LOCKED: ['ADMIN', 'EDITOR', 'VIEWER'],
 	BILLING: ['ADMIN', 'EDITOR', 'VIEWER'],
+	SUPPORT: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SOMETHING_WENT_WRONG: ['ADMIN', 'EDITOR', 'VIEWER'],
 };
