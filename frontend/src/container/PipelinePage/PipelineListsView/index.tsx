@@ -3,7 +3,8 @@ import { Modal, Table } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
 import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
-import { cloneDeep } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
+import isEqual from 'lodash-es/isEqual';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -61,10 +62,29 @@ function PipelineListsView({
 	const [currPipelineData, setCurrPipelineData] = useState<Array<PipelineData>>(
 		cloneDeep(pipelineData?.pipelines),
 	);
-	const [
-		expandedPipelineData,
-		setExpandedPipelineData,
-	] = useState<PipelineData>();
+
+	const [expandedPipelineId, setExpandedPipelineId] = useState<
+		string | undefined
+	>(undefined);
+	const expandedPipelineData = useCallback(
+		() => currPipelineData.find((p) => p.id === expandedPipelineId),
+		[currPipelineData, expandedPipelineId],
+	);
+	const setExpandedPipelineData = useCallback(
+		(newData: PipelineData): void => {
+			if (expandedPipelineId) {
+				const pipelineIdx = currPipelineData.findIndex(
+					(p) => p.id === expandedPipelineId,
+				);
+				if (pipelineIdx >= 0) {
+					const newPipelineData = [...currPipelineData];
+					newPipelineData[pipelineIdx] = newData;
+					setCurrPipelineData(newPipelineData);
+				}
+			}
+		},
+		[expandedPipelineId, currPipelineData],
+	);
 	const [
 		selectedProcessorData,
 		setSelectedProcessorData,
@@ -78,6 +98,10 @@ function PipelineListsView({
 	const isEditingActionMode = isActionMode === ActionMode.Editing;
 
 	useEffect(() => {
+		if (isEqual(prevPipelineData, pipelineData?.pipelines)) {
+			return;
+		}
+
 		if (pipelineSearchValue === '') setCurrPipelineData(pipelineData?.pipelines);
 		if (pipelineSearchValue !== '') {
 			const filterData = pipelineData?.pipelines.filter((data: PipelineData) =>
@@ -85,7 +109,7 @@ function PipelineListsView({
 			);
 			setCurrPipelineData(filterData);
 		}
-	}, [pipelineSearchValue, pipelineData?.pipelines]);
+	}, [pipelineSearchValue, pipelineData?.pipelines, prevPipelineData]);
 
 	const handleAlert = useCallback(
 		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
@@ -173,11 +197,7 @@ function PipelineListsView({
 					align: 'center',
 					render: (_value, record): JSX.Element => (
 						<PipelineActions
-							pipeline={
-								expandedPipelineData?.id === record.id
-									? (expandedPipelineData as PipelineData)
-									: record
-							}
+							pipeline={record}
 							editAction={pipelineEditAction(record)}
 							deleteAction={pipelineDeleteAction(record)}
 						/>
@@ -214,7 +234,6 @@ function PipelineListsView({
 		pipelineEditAction,
 		pipelineDeleteAction,
 		onSwitchPipelineChange,
-		expandedPipelineData,
 	]);
 
 	const updatePipelineSequence = useCallback(
@@ -268,7 +287,7 @@ function PipelineListsView({
 				setActionType={setActionType}
 				processorEditAction={processorEditAction}
 				setShowSaveButton={setShowSaveButton}
-				expandedPipelineData={expandedPipelineData}
+				expandedPipelineData={expandedPipelineData()}
 				setExpandedPipelineData={setExpandedPipelineData}
 				prevPipelineData={prevPipelineData}
 			/>
@@ -280,6 +299,7 @@ function PipelineListsView({
 			expandedPipelineData,
 			setActionType,
 			prevPipelineData,
+			setExpandedPipelineData,
 		],
 	);
 
@@ -290,7 +310,7 @@ function PipelineListsView({
 				keys.push(record?.id);
 			}
 			setExpandedRowKeys(keys);
-			setExpandedPipelineData(record);
+			setExpandedPipelineId(record.id);
 		},
 		[],
 	);
@@ -324,18 +344,7 @@ function PipelineListsView({
 
 	const onSaveConfigurationHandler = useCallback(async () => {
 		const modifiedPipelineData = currPipelineData.map((item: PipelineData) => {
-			const pipelineData = item;
-			if (
-				expandedPipelineData !== undefined &&
-				item.id === expandedPipelineData?.id
-			) {
-				pipelineData.config = expandedPipelineData?.config;
-			}
-			pipelineData.config = item.config;
-			return pipelineData;
-		});
-		modifiedPipelineData.forEach((item: PipelineData) => {
-			const pipelineData = item;
+			const pipelineData = { ...item };
 			delete pipelineData?.id;
 			return pipelineData;
 		});
@@ -363,14 +372,7 @@ function PipelineListsView({
 			setCurrPipelineData(modifiedPipelineData);
 			setPrevPipelineData(modifiedPipelineData);
 		}
-	}, [
-		currPipelineData,
-		expandedPipelineData,
-		notifications,
-		refetchPipelineLists,
-		setActionMode,
-		t,
-	]);
+	}, [currPipelineData, notifications, refetchPipelineLists, setActionMode, t]);
 
 	const onCancelConfigurationHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
@@ -424,7 +426,7 @@ function PipelineListsView({
 				setActionType={setActionType}
 				selectedProcessorData={selectedProcessorData}
 				setShowSaveButton={setShowSaveButton}
-				expandedPipelineData={expandedPipelineData}
+				expandedPipelineData={expandedPipelineData()}
 				setExpandedPipelineData={setExpandedPipelineData}
 			/>
 			<Container>
