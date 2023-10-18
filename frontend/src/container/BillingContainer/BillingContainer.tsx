@@ -4,6 +4,7 @@ import './BillingContainer.styles.scss';
 import { CheckCircleOutlined } from '@ant-design/icons';
 import { Button, Col, Row, Skeleton, Table, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import updateCreditCardApi from 'api/billing/checkout';
 import getUsage from 'api/billing/getUsage';
 import manageCreditCardApi from 'api/billing/manage';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -15,6 +16,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
 
@@ -284,32 +287,65 @@ export default function BillingContainer(): JSX.Element {
 		/>
 	);
 
+	const handleBillingOnSuccess = (
+		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
+	): void => {
+		if (data?.payload?.redirectURL) {
+			const newTab = document.createElement('a');
+			newTab.href = data.payload.redirectURL;
+			newTab.target = '_blank';
+			newTab.rel = 'noopener noreferrer';
+			newTab.click();
+		}
+	};
+
+	const handleBillingOnError = (): void => {
+		notifications.error({
+			message: SOMETHING_WENT_WRONG,
+		});
+	};
+
 	const { mutate: updateCreditCard, isLoading: isLoadingBilling } = useMutation(
-		manageCreditCardApi,
+		updateCreditCardApi,
 		{
 			onSuccess: (data) => {
-				if (data.payload?.redirectURL) {
-					const newTab = document.createElement('a');
-					newTab.href = data.payload.redirectURL;
-					newTab.target = '_blank';
-					newTab.rel = 'noopener noreferrer';
-					newTab.click();
-				}
+				handleBillingOnSuccess(data);
 			},
-			onError: () =>
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				}),
+			onError: handleBillingOnError,
 		},
 	);
 
+	const {
+		mutate: manageCreditCard,
+		isLoading: isLoadingManageBilling,
+	} = useMutation(manageCreditCardApi, {
+		onSuccess: (data) => {
+			handleBillingOnSuccess(data);
+		},
+		onError: handleBillingOnError,
+	});
+
 	const handleBilling = useCallback(async () => {
-		updateCreditCard({
-			licenseKey: activeLicense?.key || '',
-			successURL: window.location.href,
-			cancelURL: window.location.href,
-		});
-	}, [activeLicense?.key, updateCreditCard]);
+		if (isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription) {
+			updateCreditCard({
+				licenseKey: activeLicense?.key || '',
+				successURL: window.location.href,
+				cancelURL: window.location.href,
+			});
+		} else {
+			manageCreditCard({
+				licenseKey: activeLicense?.key || '',
+				successURL: window.location.href,
+				cancelURL: window.location.href,
+			});
+		}
+	}, [
+		activeLicense?.key,
+		isFreeTrial,
+		licensesData?.payload?.trialConvertedToSubscription,
+		manageCreditCard,
+		updateCreditCard,
+	]);
 
 	return (
 		<div className="billing-container">
@@ -343,7 +379,7 @@ export default function BillingContainer(): JSX.Element {
 					<Button
 						type="primary"
 						size="middle"
-						loading={isLoadingBilling}
+						loading={isLoadingBilling || isLoadingManageBilling}
 						onClick={handleBilling}
 					>
 						{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription
