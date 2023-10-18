@@ -247,7 +247,11 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 		// Build queries for each expression
 		for _, query := range compositeQuery.BuilderQueries {
 			if query.Expression != query.QueryName {
-				expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
+				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
+
+				if err != nil {
+					return nil, err
+				}
 
 				queryString, err := expressionToQuery(params, queries, expression, query.QueryName)
 				if err != nil {
