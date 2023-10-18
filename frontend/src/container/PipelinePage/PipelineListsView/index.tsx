@@ -4,8 +4,7 @@ import { ExpandableConfig } from 'antd/es/table/interface';
 import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
 import cloneDeep from 'lodash-es/cloneDeep';
-import isEqual from 'lodash-es/isEqual';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
@@ -63,6 +62,15 @@ function PipelineListsView({
 		cloneDeep(pipelineData?.pipelines),
 	);
 
+	const visibleCurrPipelines = useMemo((): Array<PipelineData> => {
+		if (pipelineSearchValue === '') {
+			return currPipelineData;
+		}
+		return currPipelineData.filter((data) =>
+			getDataOnSearch(data as never, pipelineSearchValue),
+		);
+	}, [currPipelineData, pipelineSearchValue]);
+
 	const [expandedPipelineId, setExpandedPipelineId] = useState<
 		string | undefined
 	>(undefined);
@@ -85,31 +93,20 @@ function PipelineListsView({
 		},
 		[expandedPipelineId, currPipelineData],
 	);
+
 	const [
 		selectedProcessorData,
 		setSelectedProcessorData,
 	] = useState<ProcessorData>();
+
 	const [
 		selectedPipelineData,
 		setSelectedPipelineData,
 	] = useState<PipelineData>();
+
 	const [expandedRowKeys, setExpandedRowKeys] = useState<Array<string>>();
 	const [showSaveButton, setShowSaveButton] = useState<string>();
 	const isEditingActionMode = isActionMode === ActionMode.Editing;
-
-	useEffect(() => {
-		if (isEqual(prevPipelineData, pipelineData?.pipelines)) {
-			return;
-		}
-
-		if (pipelineSearchValue === '') setCurrPipelineData(pipelineData?.pipelines);
-		if (pipelineSearchValue !== '') {
-			const filterData = pipelineData?.pipelines.filter((data: PipelineData) =>
-				getDataOnSearch(data as never, pipelineSearchValue),
-			);
-			setCurrPipelineData(filterData);
-		}
-	}, [pipelineSearchValue, pipelineData?.pipelines, prevPipelineData]);
 
 	const handleAlert = useCallback(
 		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
@@ -441,7 +438,7 @@ function PipelineListsView({
 						expandedRowRender={expandedRowView}
 						expandable={expandableConfig}
 						components={tableComponents}
-						dataSource={currPipelineData}
+						dataSource={visibleCurrPipelines}
 						onRow={onRowHandler}
 						footer={footer}
 						pagination={false}
