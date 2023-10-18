@@ -252,8 +252,14 @@ function PipelineListsView({
 		(dragIndex: number, hoverIndex: number) => {
 			if (currPipelineData && isEditingActionMode) {
 				const rawData = currPipelineData;
-				const updatedRow = getUpdatedRow(currPipelineData, dragIndex, hoverIndex);
-				updatedRow.forEach((item, index) => {
+
+				const updatedRows = getUpdatedRow(
+					currPipelineData,
+					visibleCurrPipelines[dragIndex].orderId - 1,
+					visibleCurrPipelines[hoverIndex].orderId - 1,
+				);
+
+				updatedRows.forEach((item, index) => {
 					const obj = item;
 					obj.orderId = index + 1;
 				});
@@ -261,7 +267,7 @@ function PipelineListsView({
 					title: t('reorder_pipeline'),
 					descrition: t('reorder_pipeline_description'),
 					buttontext: t('reorder'),
-					onOk: updatePipelineSequence(updatedRow),
+					onOk: updatePipelineSequence(updatedRows),
 					onCancel: onCancelPipelineSequence(rawData),
 				});
 			}
@@ -269,6 +275,7 @@ function PipelineListsView({
 		[
 			currPipelineData,
 			isEditingActionMode,
+			visibleCurrPipelines,
 			handleAlert,
 			t,
 			updatePipelineSequence,
