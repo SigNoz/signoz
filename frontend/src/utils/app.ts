@@ -23,10 +23,5 @@ export const checkVersionState = (
 	latestVersion: string,
 ): boolean => {
 	const versionCore = currentVersion?.split('-')[0];
-
-	if (versionCore) {
-		return versionCore === latestVersion;
-	}
-
-	return false;
+	return versionCore === latestVersion;
 };

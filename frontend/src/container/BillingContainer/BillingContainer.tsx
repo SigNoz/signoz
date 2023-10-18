@@ -161,9 +161,7 @@ export default function BillingContainer(): JSX.Element {
 			setTotalBillAmount(total);
 
 			if (!licensesData?.payload?.onTrial) {
-				const remainingDays = getRemainingDays(
-					getRemainingDays(billingPeriodEnd) - 1,
-				);
+				const remainingDays = getRemainingDays(billingPeriodEnd) - 1;
 
 				setHeaderText(
 					`Your current billing period is from ${getFormattedDate(
@@ -177,7 +175,7 @@ export default function BillingContainer(): JSX.Element {
 		[licensesData?.payload?.onTrial],
 	);
 
-	const { isLoading, data: usageData } = useQuery(
+	const { isLoading } = useQuery(
 		[REACT_QUERY_KEY.GET_BILLING_USAGE, user?.userId],
 		{
 			queryFn: () => getUsage(activeLicense?.key || ''),
@@ -208,12 +206,6 @@ export default function BillingContainer(): JSX.Element {
 			);
 		}
 	}, [isFetching, licensesData?.payload, licenseError]);
-
-	useEffect(() => {
-		if (!isLoading && usageData) {
-			processUsageData(usageData);
-		}
-	}, [isLoading, processUsageData, usageData]);
 
 	const columns: ColumnsType<DataType> = [
 		{
