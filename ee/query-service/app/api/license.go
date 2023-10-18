@@ -14,7 +14,7 @@ import (
 
 type tierBreakdown struct {
 	UnitPrice float64 `json:"unitPrice"`
-	Quantity  int64   `json:"quantity"`
+	Quantity  float64 `json:"quantity"`
 	TierStart int64   `json:"tierStart"`
 	TierEnd   int64   `json:"tierEnd"`
 	TierCost  float64 `json:"tierCost"`
