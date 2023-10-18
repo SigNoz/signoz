@@ -1,3 +1,4 @@
+import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
 import { MenuProps } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
@@ -7,30 +8,45 @@ import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import history from 'lib/history';
 import { LifeBuoy } from 'lucide-react';
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { sideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
-import { isCloudUser } from 'utils/app';
+import { checkVersionState, isCloudUser, isEECloudUser } from 'utils/app';
 
 import { routeConfig, styles } from './config';
 import { getQueryString } from './helper';
 import defaultMenuItems from './menuItems';
 import { MenuItem, SecondaryMenuItemKey } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
-import { Sider, StyledPrimaryMenu, StyledSecondaryMenu } from './styles';
+import Slack from './Slack';
+import {
+	MenuLabelContainer,
+	RedDot,
+	Sider,
+	StyledPrimaryMenu,
+	StyledSecondaryMenu,
+	StyledText,
+} from './styles';
 
 function SideNav(): JSX.Element {
 	const dispatch = useDispatch();
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
-	const { role, featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const {
+		role,
+		currentVersion,
+		latestVersion,
+		isCurrentVersionError,
+		featureResponse,
+	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const { data } = useLicense();
+
+	let secondaryMenuItems: MenuItem[] = [];
 
 	const isOnBasicPlan =
 		data?.payload?.licenses?.some(
@@ -61,6 +77,8 @@ function SideNav(): JSX.Element {
 
 	const { pathname, search } = useLocation();
 
+	const { t } = useTranslation('');
+
 	const onCollapse = useCallback(() => {
 		setCollapsed((collapsed) => !collapsed);
 	}, []);
@@ -87,13 +105,51 @@ function SideNav(): JSX.Element {
 		onClickHandler(e.key);
 	};
 
-	const secondaryMenuItems: MenuItem[] = [
-		{
-			key: SecondaryMenuItemKey.Support,
-			label: 'Support',
-			icon: <LifeBuoy />,
-		},
-	];
+	const onClickSlackHandler = (): void => {
+		window.open('https://signoz.io/slack', '_blank');
+	};
+
+	const onClickVersionHandler = (): void => {
+		history.push(ROUTES.VERSION);
+	};
+
+	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
+
+	if (isCloudUser() || isEECloudUser()) {
+		secondaryMenuItems = [
+			{
+				key: SecondaryMenuItemKey.Support,
+				label: 'Support',
+				icon: <LifeBuoy />,
+			},
+		];
+	} else {
+		secondaryMenuItems = [
+			{
+				key: SecondaryMenuItemKey.Version,
+				icon: !isLatestVersion ? (
+					<WarningOutlined style={{ color: '#E87040' }} />
+				) : (
+					<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
+				),
+				label: (
+					<MenuLabelContainer>
+						<StyledText ellipsis>
+							{!isCurrentVersionError ? currentVersion : t('n_a')}
+						</StyledText>
+						{!isLatestVersion && <RedDot />}
+					</MenuLabelContainer>
+				),
+				onClick: onClickVersionHandler,
+			},
+			{
+				key: SecondaryMenuItemKey.Slack,
+				icon: <Slack />,
+				label: <StyledText>Support</StyledText>,
+				onClick: onClickSlackHandler,
+			},
+		];
+	}
 
 	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
 		pathname,

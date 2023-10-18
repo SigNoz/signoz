@@ -68,7 +68,7 @@ const supportChannels = [
 		name: 'Schedule a call',
 		icon: <Calendar />,
 		title: 'Schedule a call with the founders.',
-		url: '',
+		url: 'https://calendly.com/pranay-signoz/signoz-intro-calls',
 		btnText: 'Schedule call',
 	},
 	{
@@ -86,24 +86,46 @@ export default function Support(): JSX.Element {
 		window.open(url, '_blank');
 	};
 
+	const handleSlackConnectRequest = (): void => {
+		const recipient = 'support@signoz.io';
+		const subject = 'Slack Connect Request';
+		const body = `I'd like to request a dedicated Slack Connect channel for me and my team. Users (emails) to include besides mine:`;
+
+		// Create the mailto link
+		const mailtoLink = `mailto:${recipient}?subject=${encodeURIComponent(
+			subject,
+		)}&body=${encodeURIComponent(body)}`;
+
+		// Open the default email client
+		window.location.href = mailtoLink;
+	};
+
+	const handleChat = (): void => {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		if (window.Intercom) {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			window.Intercom('show');
+		}
+	};
+
 	const handleChannelClick = (channel: Channel): void => {
 		switch (channel.key) {
 			case channelsMap.documentation:
 			case channelsMap.github:
 			case channelsMap.slack_community:
+			case channelsMap.schedule_call:
 				handleChannelWithRedirects(channel.url);
 				break;
 			case channelsMap.chat:
-				console.log(channelsMap.chat);
-				break;
-			case channelsMap.schedule_call:
-				console.log(channelsMap.chat);
+				handleChat();
 				break;
 			case channelsMap.slack_connect:
-				console.log(channelsMap.chat);
+				handleSlackConnectRequest();
 				break;
-
 			default:
+				handleChannelWithRedirects('https://signoz.io/slack');
 				break;
 		}
 	};

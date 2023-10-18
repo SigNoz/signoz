@@ -296,13 +296,6 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
-		path: ROUTES.SUPPORT,
-		exact: true,
-		component: SupportPage,
-		key: 'SUPPORT',
-		isPrivate: true,
-	},
-	{
 		path: ROUTES.WORKSPACE_LOCKED,
 		exact: true,
 		component: WorkspaceBlocked,
@@ -310,6 +303,14 @@ const routes: AppRoutes[] = [
 		key: 'WORKSPACE_LOCKED',
 	},
 ];
+
+export const SUPPORT_ROUTE: AppRoutes = {
+	path: ROUTES.SUPPORT,
+	exact: true,
+	component: SupportPage,
+	key: 'SUPPORT',
+	isPrivate: true,
+};
 
 export interface AppRoutes {
 	component: RouteProps['component'];
