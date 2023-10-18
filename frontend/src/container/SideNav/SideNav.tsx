@@ -13,7 +13,7 @@ import { useLocation } from 'react-router-dom';
 import { sideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
-import { isCloudUser } from 'utils/app';
+import { checkVersionState, isCloudUser } from 'utils/app';
 
 import { routeConfig, styles } from './config';
 import { getQueryString } from './helper';
@@ -110,22 +110,12 @@ function SideNav(): JSX.Element {
 		history.push(ROUTES.VERSION);
 	};
 
-	const checkVersionState = (): boolean => {
-		const versionCore = currentVersion?.split('-')[0];
-
-		if (versionCore) {
-			return versionCore !== latestVersion;
-		}
-
-		return false;
-	};
-
-	const isNotCurrentVersion = checkVersionState();
+	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
 	const secondaryMenuItems: MenuItem[] = [
 		{
 			key: SecondaryMenuItemKey.Version,
-			icon: isNotCurrentVersion ? (
+			icon: !isLatestVersion ? (
 				<WarningOutlined style={{ color: '#E87040' }} />
 			) : (
 				<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
@@ -135,7 +125,7 @@ function SideNav(): JSX.Element {
 					<StyledText ellipsis>
 						{!isCurrentVersionError ? currentVersion : t('n_a')}
 					</StyledText>
-					{isNotCurrentVersion && <RedDot />}
+					{!isLatestVersion && <RedDot />}
 				</MenuLabelContainer>
 			),
 			onClick: onClickVersionHandler,
