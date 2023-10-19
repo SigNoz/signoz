@@ -26,8 +26,6 @@ export const StyledPrimaryMenu = styled(Menu)`
 export const StyledSecondaryMenu = styled(Menu)`
 	&&& {
 		:not(.ant-menu-inline-collapsed) > .ant-menu-item {
-			padding-inline: 48px;
-
 			display: flex;
 			align-items: center;
 			justify-content: center;
