@@ -197,7 +197,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.79.8
+    image: signoz/signoz-otel-collector:0.79.9
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
@@ -232,7 +232,7 @@ services:
     <<: *clickhouse-depend
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:0.79.8
+    image: signoz/signoz-otel-collector:0.79.9
     command:
       [
         "--config=/etc/otel-collector-metrics-config.yaml",

@@ -244,7 +244,11 @@ services:
       # - "55678:55678"   # OpenCensus receiver
       # - "55679:55679"   # zPages extension
     restart: on-failure
-    <<: *clickhouse-depend
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      query-service:
+        condition: service_healthy
 
   otel-collector-metrics:
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.8}

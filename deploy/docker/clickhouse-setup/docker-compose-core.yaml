@@ -98,6 +98,8 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
+      query-service:
+        condition: service_healthy
 
   otel-collector-metrics:
     container_name: signoz-otel-collector-metrics

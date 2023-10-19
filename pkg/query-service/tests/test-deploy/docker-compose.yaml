@@ -222,6 +222,12 @@ services:
       # - "55679:55679"   # zPages extension
     restart: on-failure
     <<: *clickhouse-depends
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      query-service:
+        condition: service_healthy
+
 
   otel-collector-metrics:
     image: signoz/signoz-otel-collector:0.79.8
