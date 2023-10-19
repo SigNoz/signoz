@@ -1,0 +1,1 @@
+server_endpoint: ws://query-service:4320/v1/opamp
