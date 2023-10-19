@@ -19,6 +19,9 @@ export const commonRoutes = (t: TFunction): RouteTabProps['routes'] => [
 		route: ROUTES.ALL_CHANNELS,
 		key: ROUTES.ALL_CHANNELS,
 	},
+];
+
+export const ingestionSettings = (t: TFunction): RouteTabProps['routes'] => [
 	{
 		Component: IngestionSettings,
 		name: t('routes:ingestion_settings').toString(),

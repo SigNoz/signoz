@@ -1,9 +1,11 @@
 import ROUTES from 'constants/routes';
+import WorkspaceBlocked from 'pages/WorkspaceLocked';
 import { RouteProps } from 'react-router-dom';
 
 import {
 	AllAlertChannels,
 	AllErrors,
+	BillingPage,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
@@ -32,6 +34,7 @@ import {
 	SignupPage,
 	SomethingWentWrong,
 	StatusPage,
+	SupportPage,
 	TraceDetail,
 	TraceFilter,
 	TracesExplorer,
@@ -285,7 +288,29 @@ const routes: AppRoutes[] = [
 		key: 'PIPELINES',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.BILLING,
+		exact: true,
+		component: BillingPage,
+		key: 'BILLING',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.WORKSPACE_LOCKED,
+		exact: true,
+		component: WorkspaceBlocked,
+		isPrivate: false,
+		key: 'WORKSPACE_LOCKED',
+	},
 ];
+
+export const SUPPORT_ROUTE: AppRoutes = {
+	path: ROUTES.SUPPORT,
+	exact: true,
+	component: SupportPage,
+	key: 'SUPPORT',
+	isPrivate: true,
+};
 
 export interface AppRoutes {
 	component: RouteProps['component'];

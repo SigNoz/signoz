@@ -191,7 +191,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
-	const renderFullScreen = pathname === ROUTES.GET_STARTED;
+	const renderFullScreen =
+		pathname === ROUTES.GET_STARTED || pathname === ROUTES.WORKSPACE_LOCKED;
 
 	return (
 		<Layout>

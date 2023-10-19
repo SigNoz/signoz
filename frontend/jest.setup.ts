@@ -8,6 +8,9 @@
 import '@testing-library/jest-dom';
 import 'jest-styled-components';
 
+import { server } from './src/mocks-server/server';
+// Establish API mocking before all tests.
+
 // Mock window.matchMedia
 window.matchMedia =
 	window.matchMedia ||
@@ -18,3 +21,9 @@ window.matchMedia =
 			removeListener: function () {},
 		};
 	};
+
+beforeAll(() => server.listen());
+
+afterEach(() => server.resetHandlers());
+
+afterAll(() => server.close());

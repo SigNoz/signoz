@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
@@ -20,9 +20,11 @@ import (
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/signoz/ee/query-service/app/api"
 	"go.signoz.io/signoz/ee/query-service/app/db"
+	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/dao"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	baseInterface "go.signoz.io/signoz/pkg/query-service/interfaces"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
@@ -88,6 +90,8 @@ type Server struct {
 
 	// Usage manager
 	usageManager *usage.Manager
+
+	opampServer *opamp.Server
 
 	unavailableChannel chan healthcheck.Status
 }
@@ -171,13 +175,18 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	// initiate agent config handler
-	if err := agentConf.Initiate(localDB, AppDbEngine); err != nil {
+	// ingestion pipelines manager
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	if err != nil {
 		return nil, err
 	}
 
-	// ingestion pipelines manager
-	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	// initiate agent config handler
+	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
+		DB:            localDB,
+		DBEngine:      AppDbEngine,
+		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +202,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	telemetry.GetInstance().SetReader(reader)
+	telemetry.GetInstance().SetSaasOperator(constants.SaasSegmentKey)
 
 	var c cache.Cache
 	if serverOptions.CacheConfigPath != "" {
@@ -255,6 +265,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	s.privateHTTP = privateServer
+
+	s.opampServer = opamp.InitializeServer(
+		&opAmpModel.AllAgents, agentConfMgr,
+	)
 
 	return s, nil
 }
@@ -376,20 +390,20 @@ func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
 }
 
-func extractDashboardMetaData(path string, r *http.Request) (map[string]interface{}, bool) {
-	pathToExtractBodyFrom := "/api/v2/metrics/query_range"
+func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface{}, bool) {
+	pathToExtractBodyFrom := "/api/v3/query_range"
 
 	data := map[string]interface{}{}
-	var postData *basemodel.QueryRangeParamsV2
+	var postData *v3.QueryRangeParamsV3
 
 	if path == pathToExtractBodyFrom && (r.Method == "POST") {
 		if r.Body != nil {
-			bodyBytes, err := ioutil.ReadAll(r.Body)
+			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
 				return nil, false
 			}
 			r.Body.Close() //  must close
-			r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 			json.Unmarshal(bodyBytes, &postData)
 
 		} else {
@@ -400,24 +414,31 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 		return nil, false
 	}
 
-	signozMetricNotFound := false
-
+	signozMetricsUsed := false
+	signozLogsUsed := false
+	dataSources := []string{}
 	if postData != nil {
-		signozMetricNotFound = telemetry.GetInstance().CheckSigNozMetricsV2(postData.CompositeMetricQuery)
 
-		if postData.CompositeMetricQuery != nil {
-			data["queryType"] = postData.CompositeMetricQuery.QueryType
-			data["panelType"] = postData.CompositeMetricQuery.PanelType
+		if postData.CompositeQuery != nil {
+			data["queryType"] = postData.CompositeQuery.QueryType
+			data["panelType"] = postData.CompositeQuery.PanelType
+
+			signozLogsUsed, signozMetricsUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
 		}
-
-		data["datasource"] = postData.DataSource
 	}
 
-	if signozMetricNotFound {
-		telemetry.GetInstance().AddActiveMetricsUser()
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, true)
+	if signozMetricsUsed || signozLogsUsed {
+		if signozMetricsUsed {
+			dataSources = append(dataSources, "metrics")
+			telemetry.GetInstance().AddActiveMetricsUser()
+		}
+		if signozLogsUsed {
+			dataSources = append(dataSources, "logs")
+			telemetry.GetInstance().AddActiveLogsUser()
+		}
+		data["dataSources"] = dataSources
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_V3, data, true)
 	}
-
 	return data, true
 }
 
@@ -440,7 +461,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
-		dashboardMetadata, metadataExists := extractDashboardMetaData(path, r)
+		queryRangeV3data, metadataExists := extractQueryRangeV3Data(path, r)
 		getActiveLogs(path, r)
 
 		lrw := NewLoggingResponseWriter(w)
@@ -448,7 +469,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
 		if metadataExists {
-			for key, value := range dashboardMetadata {
+			for key, value := range queryRangeV3data {
 				data[key] = value
 			}
 		}
@@ -571,7 +592,7 @@ func (s *Server) Start() error {
 
 	go func() {
 		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", baseconst.OpAmpWsEndpoint))
-		err := opamp.InitializeAndStartServer(baseconst.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		err := s.opampServer.Start(baseconst.OpAmpWsEndpoint)
 		if err != nil {
 			zap.S().Info("opamp ws server failed to start", err)
 			s.unavailableChannel <- healthcheck.Unavailable
@@ -594,7 +615,7 @@ func (s *Server) Stop() error {
 		}
 	}
 
-	opamp.StopServer()
+	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
 		s.ruleManager.Stop()

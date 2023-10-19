@@ -190,16 +190,19 @@ services:
     <<: *clickhouse-depends
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.79.8
+    image: signoz/signoz-otel-collector:0.79.9
     container_name: signoz-otel-collector
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
+        "--manager-config=/etc/manager-config.yaml",
+        "--copy-path=/var/tmp/collector-config.yaml",
         "--feature-gates=-pkg.translator.prometheus.NormalizeName"
       ]
     user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ./otel-collector-opamp-config.yaml:/etc/manager-config.yaml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
@@ -218,7 +221,12 @@ services:
       # - "55678:55678"   # OpenCensus receiver
       # - "55679:55679"   # zPages extension
     restart: on-failure
-    <<: *clickhouse-depends
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      query-service:
+        condition: service_healthy
+
 
   otel-collector-metrics:
     image: signoz/signoz-otel-collector:0.79.8
