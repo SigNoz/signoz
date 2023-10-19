@@ -201,11 +201,13 @@ services:
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
+        "--manager-config=/etc/manager-config.yaml",
         "--feature-gates=-pkg.translator.prometheus.NormalizeName"
       ]
     user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ./otel-collector-opamp-config.yaml:/etc/manager-config.yaml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}},dockerswarm.service.name={{.Service.Name}},dockerswarm.task.name={{.Task.Name}}
