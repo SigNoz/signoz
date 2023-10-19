@@ -190,12 +190,13 @@ services:
     <<: *clickhouse-depends
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.79.8
+    image: signoz/signoz-otel-collector:0.79.9
     container_name: signoz-otel-collector
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
         "--manager-config=/etc/manager-config.yaml",
+        "--copy-path=/var/tmp/collector-config.yaml",
         "--feature-gates=-pkg.translator.prometheus.NormalizeName"
       ]
     user: root # required for reading docker container logs

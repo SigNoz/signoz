@@ -68,16 +68,14 @@ services:
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
   otel-collector:
     container_name: signoz-otel-collector
-    image: signoz/signoz-otel-collector:0.79.8
+    image: signoz/signoz-otel-collector:0.79.9
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
         "--manager-config=/etc/manager-config.yaml",
+        "--copy-path=/var/tmp/collector-config.yaml",
         "--feature-gates=-pkg.translator.prometheus.NormalizeName"
       ]
-    # required by opamp managed otel collector for copying config files around.
-    # TODO(Raj): Remove this requirement
-    user: root
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
       - ./otel-collector-opamp-config.yaml:/etc/manager-config.yaml
