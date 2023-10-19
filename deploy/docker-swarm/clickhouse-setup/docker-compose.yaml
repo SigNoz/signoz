@@ -229,7 +229,9 @@ services:
       mode: global
       restart_policy:
         condition: on-failure
-    <<: *clickhouse-depend
+    depends_on:
+      - clickhouse
+      - query-service
 
   otel-collector-metrics:
     image: signoz/signoz-otel-collector:0.79.9

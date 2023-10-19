@@ -221,7 +221,6 @@ services:
       # - "55678:55678"   # OpenCensus receiver
       # - "55679:55679"   # zPages extension
     restart: on-failure
-    <<: *clickhouse-depends
     depends_on:
       clickhouse:
         condition: service_healthy
