@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sort"
 	"strconv"
@@ -20,6 +19,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
+
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
@@ -37,6 +37,9 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
+	"go.uber.org/multierr"
+	"go.uber.org/zap"
+
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -46,8 +49,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/version"
-	"go.uber.org/multierr"
-	"go.uber.org/zap"
 )
 
 type status string
@@ -981,7 +982,7 @@ func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, r *http.Request, sign
 func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 
 	var importData model.GrafanaJSON
 
@@ -1024,7 +1025,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body in test rule API\n", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -1067,7 +1068,7 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("msg: error in getting req body of patch rule API\n", "\t error:", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -1088,7 +1089,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("msg: error in getting req body of edit rule API\n", "\t error:", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -1139,7 +1140,7 @@ func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body of testChannel API\n", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -1166,7 +1167,7 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body of editChannel API\n", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -1194,7 +1195,7 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body of createChannel API\n", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -1241,7 +1242,7 @@ func (aH *APIHandler) getAlerts(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body for create rule API\n", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -2065,7 +2066,7 @@ func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
 
 	// read input into user flag
 	defer r.Body.Close()
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("failed read user flags from http request for userId ", userId, "with error: ", err)
 		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)

@@ -5,10 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"math"
-
 	"fmt"
-	"io/ioutil"
+	"io"
+	"math"
 	"math/rand"
 	"net/http"
 	"os"
@@ -42,6 +41,8 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	promModel "github.com/prometheus/common/model"
+	"go.uber.org/zap"
+
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -51,7 +52,6 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
-	"go.uber.org/zap"
 )
 
 const (
@@ -329,15 +329,15 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 				// call query service to do this
 				// channels, apiErrorObj := r.GetChannels()
 
-				//if apiErrorObj != nil {
+				// if apiErrorObj != nil {
 				//	zap.S().Errorf("Not able to read channels from DB")
-				//}
-				//for _, channel := range *channels {
-				//apiErrorObj = r.LoadChannel(&channel)
-				//if apiErrorObj != nil {
+				// }
+				// for _, channel := range *channels {
+				// apiErrorObj = r.LoadChannel(&channel)
+				// if apiErrorObj != nil {
 				//	zap.S().Errorf("Not able to load channel with id=%d loaded from DB", channel.Id, channel.Data)
-				//}
-				//}
+				// }
+				// }
 
 				<-cancel
 
@@ -426,7 +426,7 @@ func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiErr
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	if response.StatusCode > 299 {
-		responseData, _ := ioutil.ReadAll(response.Body)
+		responseData, _ := io.ReadAll(response.Body)
 
 		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n Status: %s \n Data: %s", response.Status, string(responseData))
 		zap.S().Error(err)
