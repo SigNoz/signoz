@@ -23,20 +23,25 @@ import {
 } from './styles';
 import { GraphLayoutProps } from './types';
 
-function GraphLayout({
-	onAddPanelHandler,
-	widgets,
-}: GraphLayoutProps): JSX.Element {
+function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	const {
 		selectedDashboard,
 		layouts,
 		setLayouts,
 		setSelectedDashboard,
 	} = useDashboard();
+	const { data } = selectedDashboard || {};
+
+	const { widgets, variables } = data || {};
+
 	const { t } = useTranslation(['dashboard']);
 
-	const { featureResponse, role } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
+	const featureResponse = useSelector<AppState, AppReducer['featureResponse']>(
+		(state) => state.app.featureResponse,
+	);
+
+	const role = useSelector<AppState, AppReducer['role']>(
+		(state) => state.app.role,
 	);
 
 	const isDarkMode = useIsDarkMode();
@@ -128,6 +133,7 @@ function GraphLayout({
 									widget={currentWidget || ({ id } as Widgets)}
 									name={currentWidget?.id || ''}
 									headerMenuList={headerMenuList}
+									variables={variables}
 								/>
 							</Card>
 						</CardContainer>

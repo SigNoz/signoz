@@ -1,11 +1,13 @@
-import { Modal } from 'antd';
+import Modal from 'antd/es/modal';
 import get from 'api/dashboard/get';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
 import useTabVisibility from 'hooks/useTabFocus';
+import isEqual from 'lodash-es/isEqual';
+import isUndefined from 'lodash-es/isUndefined';
+import omitBy from 'lodash-es/omitBy';
 import {
 	createContext,
 	PropsWithChildren,
@@ -107,11 +109,7 @@ export function DashboardProvider({
 
 					dashboardRef.current = data;
 
-					setLayouts(
-						data.data.layout?.filter(
-							(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
-						) || [],
-					);
+					setLayouts(data.data.layout || []);
 				}
 
 				if (
@@ -147,11 +145,7 @@ export function DashboardProvider({
 
 							updatedTimeRef.current = dayjs(data.updated_at);
 
-							setLayouts(
-								data.data.layout?.filter(
-									(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
-								) || [],
-							);
+							setLayouts(data.data.layout || []);
 						},
 					});
 
@@ -162,13 +156,18 @@ export function DashboardProvider({
 
 					dashboardRef.current = data;
 
-					setSelectedDashboard(data);
+					if (!isEqual(selectedDashboard, data)) {
+						setSelectedDashboard(data);
+					}
 
-					setLayouts(
-						data.data.layout?.filter(
-							(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
-						) || [],
-					);
+					if (
+						!isEqual(
+							[omitBy(layouts, (value): boolean => isUndefined(value))[0]],
+							data.data.layout,
+						)
+					) {
+						setLayouts(data?.data?.layout || []);
+					}
 				}
 			},
 		},

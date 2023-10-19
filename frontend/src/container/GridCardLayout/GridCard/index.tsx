@@ -5,7 +5,6 @@ import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useMemo, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useDispatch, useSelector } from 'react-redux';
@@ -25,6 +24,7 @@ function GridCardGraph({
 	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
 	threshold,
+	variables,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -44,8 +44,6 @@ function GridCardGraph({
 		initialInView: false,
 	});
 
-	const { selectedDashboard } = useDashboard();
-
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -62,14 +60,14 @@ function GridCardGraph({
 			graphType: widget?.panelTypes,
 			query: updatedQuery,
 			globalSelectedInterval,
-			variables: getDashboardVariables(selectedDashboard?.data.variables),
+			variables: getDashboardVariables(variables),
 		},
 		{
 			queryKey: [
 				maxTime,
 				minTime,
 				globalSelectedInterval,
-				selectedDashboard?.data?.variables,
+				variables,
 				widget?.query,
 				widget?.panelTypes,
 				widget.timePreferance,
