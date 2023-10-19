@@ -131,6 +131,20 @@ processors:
   #   num_workers: 4
   #   queue_size: 100
   #   retry_on_failure: true
+  signozspanmetrics/delta:
+    metrics_exporter: prometheus
+    latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
+    dimensions_cache_size: 100000
+    aggregation_temporality: AGGREGATION_TEMPORALITY_DELTA
+    dimensions:
+      - name: service.namespace
+        default: default
+      - name: deployment.environment
+        default: default
+      # This is added to ensure the uniqueness of the timeseries
+      # Otherwise, identical timeseries produced by multiple replicas of
+      # collectors result in incorrect APM metrics
+      - name: signoz.collector.id
 
 exporters:
   clickhousetraces:
@@ -174,7 +188,7 @@ service:
   pipelines:
     traces:
       receivers: [jaeger, otlp]
-      processors: [signozspanmetrics/prometheus, batch]
+      processors: [signozspanmetrics/prometheus, signozspanmetrics/delta, batch]
       exporters: [clickhousetraces]
     metrics:
       receivers: [otlp]
