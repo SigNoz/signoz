@@ -76,6 +76,7 @@ services:
         "--copy-path=/var/tmp/collector-config.yaml",
         "--feature-gates=-pkg.translator.prometheus.NormalizeName"
       ]
+    # user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
       - ./otel-collector-opamp-config.yaml:/etc/manager-config.yaml
