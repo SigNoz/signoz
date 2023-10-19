@@ -32,6 +32,7 @@ import {
 } from './styles';
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
+import PreviewAction from './TableComponents/PipelineActions/components/PreviewAction';
 import TableExpandIcon from './TableComponents/TableExpandIcon';
 import {
 	getDataOnSearch,
@@ -172,7 +173,11 @@ function PipelineListsView({
 					align: 'center',
 					render: (_value, record): JSX.Element => (
 						<PipelineActions
-							pipeline={record}
+							pipeline={
+								expandedPipelineData?.id === record.id
+									? (expandedPipelineData as PipelineData)
+									: record
+							}
 							editAction={pipelineEditAction(record)}
 							deleteAction={pipelineDeleteAction(record)}
 						/>
@@ -192,6 +197,16 @@ function PipelineListsView({
 					),
 				},
 			);
+		} else {
+			fieldColumns.push({
+				title: 'Actions',
+				dataIndex: 'smartAction',
+				key: 'smartAction',
+				align: 'center',
+				render: (_value, record): JSX.Element => (
+					<PreviewAction pipeline={record} />
+				),
+			});
 		}
 		return fieldColumns;
 	}, [
@@ -199,6 +214,7 @@ function PipelineListsView({
 		pipelineEditAction,
 		pipelineDeleteAction,
 		onSwitchPipelineChange,
+		expandedPipelineData,
 	]);
 
 	const updatePipelineSequence = useCallback(
