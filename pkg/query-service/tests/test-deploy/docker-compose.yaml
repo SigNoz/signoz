@@ -190,7 +190,7 @@ services:
     <<: *clickhouse-depends
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.79.9
+    image: signoz/signoz-otel-collector:0.79.10
     container_name: signoz-otel-collector
     command:
       [
@@ -229,7 +229,7 @@ services:
 
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:0.79.8
+    image: signoz/signoz-otel-collector:0.79.10
     container_name: signoz-otel-collector-metrics
     command:
       [
