@@ -34,6 +34,7 @@ import {
 	SignupPage,
 	SomethingWentWrong,
 	StatusPage,
+	SupportPage,
 	TraceDetail,
 	TraceFilter,
 	TracesExplorer,
@@ -287,7 +288,6 @@ const routes: AppRoutes[] = [
 		key: 'PIPELINES',
 		isPrivate: true,
 	},
-
 	{
 		path: ROUTES.BILLING,
 		exact: true,
@@ -303,6 +303,14 @@ const routes: AppRoutes[] = [
 		key: 'WORKSPACE_LOCKED',
 	},
 ];
+
+export const SUPPORT_ROUTE: AppRoutes = {
+	path: ROUTES.SUPPORT,
+	exact: true,
+	component: SupportPage,
+	key: 'SUPPORT',
+	isPrivate: true,
+};
 
 export interface AppRoutes {
 	component: RouteProps['component'];

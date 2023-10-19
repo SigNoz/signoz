@@ -39,6 +39,7 @@ const ROUTES = {
 	TRACE_EXPLORER: '/trace-explorer',
 	PIPELINES: '/pipelines',
 	BILLING: '/billing',
+	SUPPORT: '/support',
 	WORKSPACE_LOCKED: '/workspace-locked',
 };
 

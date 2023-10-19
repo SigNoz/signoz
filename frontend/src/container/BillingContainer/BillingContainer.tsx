@@ -6,6 +6,7 @@ import { Button, Col, Row, Skeleton, Table, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import updateCreditCardApi from 'api/billing/checkout';
 import getUsage from 'api/billing/getUsage';
+import manageCreditCardApi from 'api/billing/manage';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAxiosError from 'hooks/useAxiosError';
@@ -15,8 +16,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
+import { getFormattedDate } from 'utils/timeUtils';
 
 interface DataType {
 	key: string;
@@ -107,19 +111,6 @@ export const getRemainingDays = (billingEndDate: number): number => {
 	return Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
 };
 
-export const getFormattedDate = (date?: number): string => {
-	if (!date) {
-		return new Date().toLocaleDateString();
-	}
-	const trialEndDate = new Date(date * 1000);
-
-	const options = { day: 'numeric', month: 'short', year: 'numeric' };
-
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	return trialEndDate.toLocaleDateString(undefined, options);
-};
-
 export default function BillingContainer(): JSX.Element {
 	const daysRemainingStr = 'days remaining in your billing period.';
 	const [headerText, setHeaderText] = useState('');
@@ -137,35 +128,6 @@ export default function BillingContainer(): JSX.Element {
 	const { notifications } = useNotifications();
 
 	const handleError = useAxiosError();
-
-	const { isLoading, data: usageData } = useQuery(
-		[REACT_QUERY_KEY.GET_BILLING_USAGE, user?.userId],
-		{
-			queryFn: () => getUsage(activeLicense?.key || ''),
-			onError: handleError,
-			enabled: activeLicense !== null,
-		},
-	);
-
-	useEffect(() => {
-		const activeValidLicense =
-			licensesData?.payload?.licenses?.find(
-				(license) => license.isCurrent === true,
-			) || null;
-
-		setActiveLicense(activeValidLicense);
-
-		if (!isFetching && licensesData?.payload?.onTrial && !licenseError) {
-			setIsFreeTrial(true);
-			setBillAmount(0);
-			setDaysRemaining(getRemainingDays(licensesData?.payload?.trialEnd));
-			setHeaderText(
-				`You are in free trial period. Your free trial will end on ${getFormattedDate(
-					licensesData?.payload?.trialEnd,
-				)}`,
-			);
-		}
-	}, [isFetching, licensesData?.payload, licenseError]);
 
 	const processUsageData = useCallback(
 		(data: any): void => {
@@ -202,23 +164,51 @@ export default function BillingContainer(): JSX.Element {
 			setTotalBillAmount(total);
 
 			if (!licensesData?.payload?.onTrial) {
+				const remainingDays = getRemainingDays(billingPeriodEnd) - 1;
+
 				setHeaderText(
 					`Your current billing period is from ${getFormattedDate(
 						billingPeriodStart,
 					)} to ${getFormattedDate(billingPeriodEnd)}`,
 				);
-				setDaysRemaining(getRemainingDays(billingPeriodEnd) - 1);
+				setDaysRemaining(remainingDays > 0 ? remainingDays : 0);
 				setBillAmount(billTotal);
 			}
 		},
 		[licensesData?.payload?.onTrial],
 	);
 
+	const { isLoading } = useQuery(
+		[REACT_QUERY_KEY.GET_BILLING_USAGE, user?.userId],
+		{
+			queryFn: () => getUsage(activeLicense?.key || ''),
+			onError: handleError,
+			enabled: activeLicense !== null,
+			onSuccess: processUsageData,
+		},
+	);
+
 	useEffect(() => {
-		if (!isLoading && usageData) {
-			processUsageData(usageData);
+		const activeValidLicense =
+			licensesData?.payload?.licenses?.find(
+				(license) => license.isCurrent === true,
+			) || null;
+
+		setActiveLicense(activeValidLicense);
+
+		if (!isFetching && licensesData?.payload?.onTrial && !licenseError) {
+			const remainingDays = getRemainingDays(licensesData?.payload?.trialEnd);
+
+			setIsFreeTrial(true);
+			setBillAmount(0);
+			setDaysRemaining(remainingDays > 0 ? remainingDays : 0);
+			setHeaderText(
+				`You are in free trial period. Your free trial will end on ${getFormattedDate(
+					licensesData?.payload?.trialEnd,
+				)}`,
+			);
 		}
-	}, [isLoading, processUsageData, usageData]);
+	}, [isFetching, licensesData?.payload, licenseError]);
 
 	const columns: ColumnsType<DataType> = [
 		{
@@ -284,32 +274,65 @@ export default function BillingContainer(): JSX.Element {
 		/>
 	);
 
+	const handleBillingOnSuccess = (
+		data: ErrorResponse | SuccessResponse<CheckoutSuccessPayloadProps, unknown>,
+	): void => {
+		if (data?.payload?.redirectURL) {
+			const newTab = document.createElement('a');
+			newTab.href = data.payload.redirectURL;
+			newTab.target = '_blank';
+			newTab.rel = 'noopener noreferrer';
+			newTab.click();
+		}
+	};
+
+	const handleBillingOnError = (): void => {
+		notifications.error({
+			message: SOMETHING_WENT_WRONG,
+		});
+	};
+
 	const { mutate: updateCreditCard, isLoading: isLoadingBilling } = useMutation(
 		updateCreditCardApi,
 		{
 			onSuccess: (data) => {
-				if (data.payload?.redirectURL) {
-					const newTab = document.createElement('a');
-					newTab.href = data.payload.redirectURL;
-					newTab.target = '_blank';
-					newTab.rel = 'noopener noreferrer';
-					newTab.click();
-				}
+				handleBillingOnSuccess(data);
 			},
-			onError: () =>
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				}),
+			onError: handleBillingOnError,
 		},
 	);
 
+	const {
+		mutate: manageCreditCard,
+		isLoading: isLoadingManageBilling,
+	} = useMutation(manageCreditCardApi, {
+		onSuccess: (data) => {
+			handleBillingOnSuccess(data);
+		},
+		onError: handleBillingOnError,
+	});
+
 	const handleBilling = useCallback(async () => {
-		updateCreditCard({
-			licenseKey: activeLicense?.key || '',
-			successURL: window.location.href,
-			cancelURL: window.location.href,
-		});
-	}, [activeLicense?.key, updateCreditCard]);
+		if (isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription) {
+			updateCreditCard({
+				licenseKey: activeLicense?.key || '',
+				successURL: window.location.href,
+				cancelURL: window.location.href,
+			});
+		} else {
+			manageCreditCard({
+				licenseKey: activeLicense?.key || '',
+				successURL: window.location.href,
+				cancelURL: window.location.href,
+			});
+		}
+	}, [
+		activeLicense?.key,
+		isFreeTrial,
+		licensesData?.payload?.trialConvertedToSubscription,
+		manageCreditCard,
+		updateCreditCard,
+	]);
 
 	return (
 		<div className="billing-container">
@@ -343,7 +366,7 @@ export default function BillingContainer(): JSX.Element {
 					<Button
 						type="primary"
 						size="middle"
-						loading={isLoadingBilling}
+						loading={isLoadingBilling || isLoadingManageBilling}
 						onClick={handleBilling}
 					>
 						{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription
@@ -402,7 +425,7 @@ export default function BillingContainer(): JSX.Element {
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
 								<CheckCircleOutlined />
-								You will be charged only when trial period ends
+								Your billing will start only after the trial period
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
 								<CheckCircleOutlined />

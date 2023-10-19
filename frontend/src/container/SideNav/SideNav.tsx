@@ -6,6 +6,7 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import history from 'lib/history';
+import { LifeBuoy } from 'lucide-react';
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -13,7 +14,7 @@ import { useLocation } from 'react-router-dom';
 import { sideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
-import { isCloudUser } from 'utils/app';
+import { checkVersionState, isCloudUser, isEECloudUser } from 'utils/app';
 
 import { routeConfig, styles } from './config';
 import { getQueryString } from './helper';
@@ -44,6 +45,8 @@ function SideNav(): JSX.Element {
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const { data } = useLicense();
+
+	let secondaryMenuItems: MenuItem[] = [];
 
 	const isOnBasicPlan =
 		data?.payload?.licenses?.some(
@@ -110,43 +113,43 @@ function SideNav(): JSX.Element {
 		history.push(ROUTES.VERSION);
 	};
 
-	const checkVersionState = (): boolean => {
-		const versionCore = currentVersion?.split('-')[0];
+	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
-		if (versionCore) {
-			return versionCore !== latestVersion;
-		}
-
-		return false;
-	};
-
-	const isNotCurrentVersion = checkVersionState();
-
-	const secondaryMenuItems: MenuItem[] = [
-		{
-			key: SecondaryMenuItemKey.Version,
-			icon: isNotCurrentVersion ? (
-				<WarningOutlined style={{ color: '#E87040' }} />
-			) : (
-				<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
-			),
-			label: (
-				<MenuLabelContainer>
-					<StyledText ellipsis>
-						{!isCurrentVersionError ? currentVersion : t('n_a')}
-					</StyledText>
-					{isNotCurrentVersion && <RedDot />}
-				</MenuLabelContainer>
-			),
-			onClick: onClickVersionHandler,
-		},
-		{
-			key: SecondaryMenuItemKey.Slack,
-			icon: <Slack />,
-			label: <StyledText>Support</StyledText>,
-			onClick: onClickSlackHandler,
-		},
-	];
+	if (isCloudUser() || isEECloudUser()) {
+		secondaryMenuItems = [
+			{
+				key: SecondaryMenuItemKey.Support,
+				label: 'Support',
+				icon: <LifeBuoy />,
+			},
+		];
+	} else {
+		secondaryMenuItems = [
+			{
+				key: SecondaryMenuItemKey.Version,
+				icon: !isLatestVersion ? (
+					<WarningOutlined style={{ color: '#E87040' }} />
+				) : (
+					<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
+				),
+				label: (
+					<MenuLabelContainer>
+						<StyledText ellipsis>
+							{!isCurrentVersionError ? currentVersion : t('n_a')}
+						</StyledText>
+						{!isLatestVersion && <RedDot />}
+					</MenuLabelContainer>
+				),
+				onClick: onClickVersionHandler,
+			},
+			{
+				key: SecondaryMenuItemKey.Slack,
+				icon: <Slack />,
+				label: <StyledText>Support</StyledText>,
+				onClick: onClickSlackHandler,
+			},
+		];
+	}
 
 	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
 		pathname,
@@ -169,6 +172,7 @@ function SideNav(): JSX.Element {
 				mode="vertical"
 				style={styles}
 				items={secondaryMenuItems}
+				onClick={onClickMenuHandler}
 			/>
 		</Sider>
 	);

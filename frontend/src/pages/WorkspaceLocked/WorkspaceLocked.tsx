@@ -5,7 +5,6 @@ import { CreditCardOutlined, LockOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
 import updateCreditCardApi from 'api/billing/checkout';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { getFormattedDate } from 'container/BillingContainer/BillingContainer';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { useCallback, useEffect, useState } from 'react';
@@ -14,6 +13,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
+import { getFormattedDate } from 'utils/timeUtils';
 
 export default function WorkspaceBlocked(): JSX.Element {
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -68,8 +68,8 @@ export default function WorkspaceBlocked(): JSX.Element {
 			<Typography.Paragraph className="workpace-locked-details">
 				You have been locked out of your workspace because your trial ended without
 				an upgrade to a paid plan. Your data will continue to be ingested till{' '}
-				{getFormattedDate(licensesData?.payload?.gracePeriodEnd)} , at which point
-				we will drop all the ingested data and terminate the account.
+				{getFormattedDate(licensesData?.payload?.gracePeriodEnd || Date.now())} , at
+				which point we will drop all the ingested data and terminate the account.
 				{!isAdmin && 'Please contact your administrator for further help'}
 			</Typography.Paragraph>
 
