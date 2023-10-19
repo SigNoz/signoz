@@ -33,15 +33,19 @@ function TopNav(): JSX.Element | null {
 		[location.pathname],
 	);
 
+	const hideBreadcrumbs = location.pathname === ROUTES.SUPPORT;
+
 	if (isSignUpPage || isDisabled) {
 		return null;
 	}
 
 	return (
 		<Container>
-			<Col span={16}>
-				<ShowBreadcrumbs />
-			</Col>
+			{!hideBreadcrumbs && (
+				<Col span={16}>
+					<ShowBreadcrumbs />
+				</Col>
+			)}
 
 			{!isRouteToSkip && (
 				<Col span={8}>
