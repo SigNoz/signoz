@@ -5,6 +5,7 @@ import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
+import configureStore from 'redux-mock-store';
 import store from 'store';
 
 const queryClient = new QueryClient({
@@ -18,6 +19,25 @@ const queryClient = new QueryClient({
 afterEach(() => {
 	queryClient.clear();
 });
+
+const mockStore = configureStore([]);
+
+const mockStored = (role?: string): any =>
+	mockStore({
+		...store.getState(),
+		app: {
+			...store.getState().app,
+			role, // Use the role provided
+			user: {
+				userId: '6f532456-8cc0-4514-a93b-aed665c32b47',
+				email: 'test@signoz.io',
+				name: 'TestUser',
+				profilePictureURL: '',
+				accessJwt: '',
+				refreshJwt: '',
+			},
+		},
+	});
 
 jest.mock('react-i18next', () => ({
 	useTranslation: (): {
@@ -42,13 +62,17 @@ jest.mock('react-router-dom', () => ({
 
 function AllTheProviders({
 	children,
+	role, // Accept the role as a prop
 }: {
 	children: React.ReactNode;
+	role: string; // Define the role prop
 }): ReactElement {
 	return (
 		<ResourceProvider>
 			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
+				<Provider store={mockStored(role)}>
+					{' '}
+					{/* Use the mock store with the provided role */}
 					<BrowserRouter>{children}</BrowserRouter>
 				</Provider>
 			</QueryClientProvider>
@@ -59,7 +83,12 @@ function AllTheProviders({
 const customRender = (
 	ui: ReactElement,
 	options?: Omit<RenderOptions, 'wrapper'>,
-): RenderResult => render(ui, { wrapper: AllTheProviders, ...options });
+	role = 'ADMIN', // Set a default role
+): RenderResult =>
+	render(ui, {
+		wrapper: () => <AllTheProviders role={role}>{ui}</AllTheProviders>,
+		...options,
+	});
 
 export * from '@testing-library/react';
 export { customRender as render };
