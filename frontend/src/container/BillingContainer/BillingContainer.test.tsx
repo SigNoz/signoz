@@ -1,3 +1,4 @@
+import { billingSuccessResponse } from 'mocks-server/__mockdata__/billing';
 import {
 	notOfTrailResponse,
 	trialConvertedToSubscriptionResponse,
@@ -5,6 +6,7 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { act, render, screen } from 'tests/test-utils';
+import { getFormattedDate } from 'utils/timeUtils';
 
 import BillingContainer from './BillingContainer';
 
@@ -154,8 +156,13 @@ describe('BillingContainer', () => {
 			),
 		);
 		render(<BillingContainer />);
+
+		const billingPeriodText = `Your current billing period is from ${getFormattedDate(
+			billingSuccessResponse.data.billingPeriodStart,
+		)} to ${getFormattedDate(billingSuccessResponse.data.billingPeriodEnd)}`;
+
 		const billingPeriod = await screen.findByRole('heading', {
-			name: /Your current billing period is from 13 Oct 2023 to 01 Nov 2023/i,
+			name: new RegExp(billingPeriodText, 'i'),
 		});
 		expect(billingPeriod).toBeInTheDocument();
 
@@ -187,6 +194,8 @@ describe('BillingContainer', () => {
 			name: /total \$1278/i,
 		});
 		expect(totalBillRow).toBeInTheDocument();
+
+		screen.debug();
 	});
 
 	test('Should render corrent day remaining in billing period', async () => {
