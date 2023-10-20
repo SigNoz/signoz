@@ -67,6 +67,7 @@ type ServerOptions struct {
 	DialTimeout       time.Duration
 	CacheConfigPath   string
 	FluxInterval      string
+	Cluster           string
 }
 
 // Server runs HTTP api service
@@ -139,6 +140,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.MaxIdleConns,
 			serverOptions.MaxOpenConns,
 			serverOptions.DialTimeout,
+			serverOptions.Cluster,
 		)
 		go qb.Start(readerReady)
 		reader = qb

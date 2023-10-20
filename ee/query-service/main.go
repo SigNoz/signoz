@@ -81,6 +81,7 @@ func main() {
 
 	// the url used to build link in the alert messages in slack and other systems
 	var ruleRepoURL string
+	var cluster string
 
 	var cacheConfigPath, fluxInterval string
 	var enableQueryServiceLogOTLPExport bool
@@ -103,6 +104,7 @@ func main() {
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
 	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
+	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 
 	flag.Parse()
 
@@ -128,6 +130,7 @@ func main() {
 		DialTimeout:       dialTimeout,
 		CacheConfigPath:   cacheConfigPath,
 		FluxInterval:      fluxInterval,
+		Cluster:           cluster,
 	}
 
 	// Read the jwt secret key
