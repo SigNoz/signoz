@@ -111,6 +111,8 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
+      otel-collector-migrator:
+        condition: service_completed_successfully
       query-service:
         condition: service_healthy
 
@@ -133,6 +135,8 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
+      otel-collector-migrator:
+        condition: service_completed_successfully
 
   logspout:
     image: "gliderlabs/logspout:v3.2.14"

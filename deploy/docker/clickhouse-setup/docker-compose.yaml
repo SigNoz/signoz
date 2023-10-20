@@ -263,6 +263,8 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
+      otel-collector-migrator:
+        condition: service_completed_successfully
       query-service:
         condition: service_healthy
 

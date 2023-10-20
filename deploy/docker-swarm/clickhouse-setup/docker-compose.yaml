@@ -233,6 +233,7 @@ services:
         condition: on-failure
     depends_on:
       - clickhouse
+      - otel-collector-migrator
       - query-service
 
   otel-collector-migrator:

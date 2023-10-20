@@ -31,10 +31,12 @@ x-clickhouse-defaults: &clickhouse-defaults
       soft: 262144
       hard: 262144
 
-x-clickhouse-depends: &clickhouse-depends
+x-db-depend: &db-depend
   depends_on:
     clickhouse:
       condition: service_healthy
+    otel-collector-migrator:
+      condition: service_completed_successfully
     # clickhouse-2:
     #   condition: service_healthy
     # clickhouse-3:
@@ -187,7 +189,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-    <<: *clickhouse-depends
+    <<: *db-depend
 
   otel-collector-migrator:
     image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.79.10}
@@ -237,6 +239,8 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
+      otel-collector-migrator:
+        condition: service_completed_successfully
       query-service:
         condition: service_healthy
 
@@ -256,7 +260,7 @@ services:
     #   - "13133:13133"   # Health check extension
     #   - "55679:55679"   # zPages extension
     restart: on-failure
-    <<: *clickhouse-depends
+    <<: *db-depend
 
   logspout:
     image: "gliderlabs/logspout:v3.2.14"
