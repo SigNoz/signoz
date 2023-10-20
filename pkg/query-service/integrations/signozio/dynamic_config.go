@@ -2,7 +2,7 @@ package signozio
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -51,7 +51,7 @@ func FetchDynamicConfigs() (map[string]Config, *model.ApiError) {
 		return DefaultConfig, nil
 	}
 
-	httpBody, err := ioutil.ReadAll(httpResponse.Body)
+	httpBody, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
 		return DefaultConfig, nil
 	}

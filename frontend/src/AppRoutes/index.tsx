@@ -9,6 +9,7 @@ import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
+import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
@@ -21,16 +22,18 @@ import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_FEATURE_FLAG_RESPONSE } from 'types/actions/app';
-import AppReducer from 'types/reducer/app';
+import AppReducer, { User } from 'types/reducer/app';
+import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
 import { trackPageView } from 'utils/segmentAnalytics';
 
 import PrivateRoute from './Private';
-import defaultRoutes from './routes';
+import defaultRoutes, { AppRoutes, SUPPORT_ROUTE } from './routes';
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
-	const [routes, setRoutes] = useState(defaultRoutes);
-	const { isLoggedIn: isLoggedInState, user } = useSelector<
+	const { data } = useLicense();
+	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
+	const { role, isLoggedIn: isLoggedInState, user, org } = useSelector<
 		AppState,
 		AppReducer
 	>((state) => state.app);
@@ -38,6 +41,8 @@ function App(): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const { hostname, pathname } = window.location;
+
+	const isCloudUserVal = isCloudUser();
 
 	const featureResponse = useGetFeatureFlag((allFlags) => {
 		const isOnboardingEnabled =
@@ -56,10 +61,7 @@ function App(): JSX.Element {
 			},
 		});
 
-		if (
-			!isOnboardingEnabled ||
-			!(hostname && hostname.endsWith('signoz.cloud'))
-		) {
+		if (!isOnboardingEnabled || !isCloudUserVal) {
 			const newRoutes = routes.filter(
 				(route) => route?.path !== ROUTES.GET_STARTED,
 			);
@@ -78,6 +80,41 @@ function App(): JSX.Element {
 		}
 	});
 
+	const isOnBasicPlan =
+		data?.payload?.licenses?.some(
+			(license) =>
+				license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
+		) || data?.payload?.licenses === null;
+
+	const enableAnalytics = (user: User): void => {
+		const orgName =
+			org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
+
+		const identifyPayload = {
+			email: user?.email,
+			name: user?.name,
+			company_name: orgName,
+			role,
+		};
+		const domain = extractDomain(user?.email);
+
+		const hostNameParts = hostname.split('.');
+
+		const groupTraits = {
+			name: orgName,
+			tenant_id: hostNameParts[0],
+			data_region: hostNameParts[1],
+			tenant_url: hostname,
+			company_domain: domain,
+		};
+
+		window.analytics.identify(user?.email, identifyPayload);
+
+		window.analytics.group(domain, groupTraits);
+
+		window.clarity('identify', user.email, user.name);
+	};
+
 	useEffect(() => {
 		const isIdentifiedUser = getLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER);
 
@@ -90,15 +127,24 @@ function App(): JSX.Element {
 		) {
 			setLocalStorageApi(LOCALSTORAGE.IS_IDENTIFIED_USER, 'true');
 
-			window.analytics.identify(user?.email, {
-				email: user?.email,
-				name: user?.name,
-			});
-
-			window.clarity('identify', user.email, user.name);
+			if (isCloudUserVal) {
+				enableAnalytics(user);
+			}
 		}
+
+		if (isOnBasicPlan || (isLoggedInState && role && role !== 'ADMIN')) {
+			const newRoutes = routes.filter((route) => route?.path !== ROUTES.BILLING);
+			setRoutes(newRoutes);
+		}
+
+		if (isCloudUserVal || isEECloudUser()) {
+			const newRoutes = [...routes, SUPPORT_ROUTE];
+
+			setRoutes(newRoutes);
+		}
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isLoggedInState, user]);
+	}, [isLoggedInState, isOnBasicPlan, user]);
 
 	useEffect(() => {
 		trackPageView(pathname);

@@ -11,7 +11,11 @@ function PipelineSimulationResult({
 	pipeline,
 }: PipelineSimulationResultProps): JSX.Element {
 	const { isLoading, outputLogs, isError, errorMsg } = usePipelinePreview({
-		pipeline,
+		pipeline: {
+			...pipeline,
+			// Ensure disabled pipelines can also be previewed
+			enabled: true,
+		},
 		inputLogs,
 	});
 

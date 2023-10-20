@@ -241,4 +241,8 @@ type GettableRule struct {
 	Id    string `json:"id"`
 	State string `json:"state"`
 	PostableRule
+	CreatedAt *time.Time `json:"createAt"`
+	CreatedBy *string    `json:"createBy"`
+	UpdatedAt *time.Time `json:"updateAt"`
+	UpdatedBy *string    `json:"updateBy"`
 }

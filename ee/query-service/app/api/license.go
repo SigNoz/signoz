@@ -14,7 +14,7 @@ import (
 
 type tierBreakdown struct {
 	UnitPrice float64 `json:"unitPrice"`
-	Quantity  int64   `json:"quantity"`
+	Quantity  float64 `json:"quantity"`
 	TierStart int64   `json:"tierStart"`
 	TierEnd   int64   `json:"tierEnd"`
 	TierCost  float64 `json:"tierCost"`
@@ -30,6 +30,7 @@ type details struct {
 	Total     float64         `json:"total"`
 	Breakdown []usageResponse `json:"breakdown"`
 	BaseFee   float64         `json:"baseFee"`
+	BillTotal float64         `json:"billTotal"`
 }
 
 type billingDetails struct {
@@ -147,11 +148,13 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := model.Licenses{
-		TrialStart:     -1,
-		TrialEnd:       -1,
-		OnTrial:        false,
-		WorkSpaceBlock: false,
-		Licenses:       licenses,
+		TrialStart:                   -1,
+		TrialEnd:                     -1,
+		OnTrial:                      false,
+		WorkSpaceBlock:               false,
+		TrialConvertedToSubscription: false,
+		GracePeriodEnd:               -1,
+		Licenses:                     licenses,
 	}
 
 	var currentActiveLicenseKey string
@@ -216,6 +219,40 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 	resp.TrialEnd = trialRespData.Data.TrialEnd
 	resp.OnTrial = trialRespData.Data.OnTrial
 	resp.WorkSpaceBlock = trialRespData.Data.WorkSpaceBlock
+	resp.TrialConvertedToSubscription = trialRespData.Data.TrialConvertedToSubscription
+	resp.GracePeriodEnd = trialRespData.Data.GracePeriodEnd
 
 	ah.Respond(w, resp)
+}
+
+func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
+
+	type checkoutResponse struct {
+		Status string `json:"status"`
+		Data   struct {
+			RedirectURL string `json:"redirectURL"`
+		} `json:"data"`
+	}
+
+	hClient := &http.Client{}
+	req, err := http.NewRequest("POST", constants.LicenseSignozIo+"/portal", r.Body)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
+	licenseResp, err := hClient.Do(req)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	// decode response body
+	var resp checkoutResponse
+	if err := json.NewDecoder(licenseResp.Body).Decode(&resp); err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	ah.Respond(w, resp.Data)
 }
