@@ -1,5 +1,7 @@
 import { rest } from 'msw';
 
+import { billingSuccessResponse } from './__mockdata__/billing';
+import { licensesSuccessResponse } from './__mockdata__/licenses';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
 import { serviceSuccessResponse } from './__mockdata__/services';
 import { topLevelOperationSuccessResponse } from './__mockdata__/top_level_operations';
@@ -69,5 +71,14 @@ export const handlers = [
 
 			return res(ctx.status(500));
 		},
+	),
+
+	rest.get('http://localhost/api/v2/licenses', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(licensesSuccessResponse)),
+	),
+
+	// ?licenseKey=58707e3d-3bdb-44e7-8c89-a9be237939f4
+	rest.get('http://localhost/api/v1/billing', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(billingSuccessResponse)),
 	),
 ];
