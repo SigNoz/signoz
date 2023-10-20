@@ -68,12 +68,7 @@ describe('BillingContainer', () => {
 
 		const dollar0 = await screen.findByText(/\$0/i);
 		expect(dollar0).toBeInTheDocument();
-	});
 
-	test('You are in free trial period. Your free trial will end on <Date> - Header Text', async () => {
-		act(() => {
-			render(<BillingContainer />);
-		});
 		const onTrail = await screen.findByText(
 			/You are in free trial period. Your free trial will end on 20 Oct 2023/i,
 		);
@@ -83,23 +78,13 @@ describe('BillingContainer', () => {
 			/1 days remaining in your billing period./i,
 		);
 		expect(numberOfDayRemaining).toBeInTheDocument();
-	});
 
-	test('Upgrade button should be visibile when onTrail', async () => {
-		act(() => {
-			render(<BillingContainer />);
-		});
 		const upgradeButton = await screen.findAllByRole('button', {
 			name: /upgrade/i,
 		});
 		expect(upgradeButton[1]).toBeInTheDocument();
 		expect(upgradeButton.length).toBe(2);
-	});
 
-	test('OnTrail Other text', async () => {
-		act(() => {
-			render(<BillingContainer />);
-		});
 		const checkPaidPlan = await screen.findByText(
 			/Check out features in paid plans/i,
 		);
@@ -194,8 +179,6 @@ describe('BillingContainer', () => {
 			name: /total \$1278/i,
 		});
 		expect(totalBillRow).toBeInTheDocument();
-
-		screen.debug();
 	});
 
 	test('Should render corrent day remaining in billing period', async () => {
