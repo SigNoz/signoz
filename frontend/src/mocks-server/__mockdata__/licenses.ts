@@ -9,8 +9,8 @@ export const licensesSuccessResponse = {
 		gracePeriodEnd: -1,
 		licenses: [
 			{
-				key: 'testKeyId-a092-4c62-b010-10453c9a5e41',
-				activationId: 'testActivationId-dd3f-4a4d-a8dc-fb39f17c9faa',
+				key: 'testKeyId1',
+				activationId: 'testActivationId1',
 				ValidationMessage: '',
 				isCurrent: false,
 				planKey: 'ENTERPRISE_PLAN',
@@ -19,8 +19,8 @@ export const licensesSuccessResponse = {
 				status: 'VALID',
 			},
 			{
-				key: 'testKeyId-3bdb-44e7-8c89-a9be237939f4',
-				activationId: 'testActivationId-cd13-47f7-8937-843a42eac592',
+				key: 'testKeyId2',
+				activationId: 'testActivationId2',
 				ValidationMessage: '',
 				isCurrent: true,
 				planKey: 'ENTERPRISE_PLAN',
@@ -43,8 +43,8 @@ export const trialConvertedToSubscriptionResponse = {
 		gracePeriodEnd: -1,
 		licenses: [
 			{
-				key: 'testKeyId-a092-4c62-b010-10453c9a5e41',
-				activationId: 'testActivationId-dd3f-4a4d-a8dc-fb39f17c9faa',
+				key: 'testKeyId1',
+				activationId: 'testActivationId1',
 				ValidationMessage: '',
 				isCurrent: false,
 				planKey: 'ENTERPRISE_PLAN',
@@ -53,8 +53,8 @@ export const trialConvertedToSubscriptionResponse = {
 				status: 'VALID',
 			},
 			{
-				key: 'testKeyId-3bdb-44e7-8c89-a9be237939f4',
-				activationId: 'testActivationId-cd13-47f7-8937-843a42eac592',
+				key: 'testKeyId2',
+				activationId: 'testActivationId2',
 				ValidationMessage: '',
 				isCurrent: true,
 				planKey: 'ENTERPRISE_PLAN',
