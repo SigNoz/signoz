@@ -65,6 +65,19 @@ services:
       - --queryService.url=http://query-service:8085
       - --storage.path=/data
 
+  otel-collector-migrator:
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.79.10}
+    container_name: otel-migrator
+    command:
+      - "--dsn=tcp://clickhouse:9000"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      # clickhouse-2:
+      #   condition: service_healthy
+      # clickhouse-3:
+      #   condition: service_healthy
+
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
   otel-collector:
     container_name: signoz-otel-collector
@@ -98,6 +111,8 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
+      otel-collector-migrator:
+        condition: service_completed_successfully
       query-service:
         condition: service_healthy
 
@@ -120,6 +135,8 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
+      otel-collector-migrator:
+        condition: service_completed_successfully
 
   logspout:
     image: "gliderlabs/logspout:v3.2.14"
