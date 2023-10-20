@@ -62,15 +62,6 @@ function PipelineListsView({
 		cloneDeep(pipelineData?.pipelines),
 	);
 
-	const visibleCurrPipelines = useMemo((): Array<PipelineData> => {
-		if (pipelineSearchValue === '') {
-			return currPipelineData;
-		}
-		return currPipelineData.filter((data) =>
-			getDataOnSearch(data as never, pipelineSearchValue),
-		);
-	}, [currPipelineData, pipelineSearchValue]);
-
 	const [expandedPipelineId, setExpandedPipelineId] = useState<
 		string | undefined
 	>(undefined);
@@ -107,6 +98,15 @@ function PipelineListsView({
 	const [expandedRowKeys, setExpandedRowKeys] = useState<Array<string>>();
 	const [showSaveButton, setShowSaveButton] = useState<string>();
 	const isEditingActionMode = isActionMode === ActionMode.Editing;
+
+	const visibleCurrPipelines = useMemo((): Array<PipelineData> => {
+		if (pipelineSearchValue === '') {
+			return currPipelineData;
+		}
+		return currPipelineData.filter((data) =>
+			getDataOnSearch(data as never, pipelineSearchValue),
+		);
+	}, [currPipelineData, pipelineSearchValue]);
 
 	const handleAlert = useCallback(
 		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
