@@ -68,7 +68,6 @@ describe('BillingContainer', () => {
 
 		const dollar0 = await screen.findByText(/\$0/i);
 		expect(dollar0).toBeInTheDocument();
-
 		const onTrail = await screen.findByText(
 			/You are in free trial period. Your free trial will end on 20 Oct 2023/i,
 		);
@@ -78,13 +77,11 @@ describe('BillingContainer', () => {
 			/1 days remaining in your billing period./i,
 		);
 		expect(numberOfDayRemaining).toBeInTheDocument();
-
 		const upgradeButton = await screen.findAllByRole('button', {
 			name: /upgrade/i,
 		});
 		expect(upgradeButton[1]).toBeInTheDocument();
 		expect(upgradeButton.length).toBe(2);
-
 		const checkPaidPlan = await screen.findByText(
 			/Check out features in paid plans/i,
 		);
