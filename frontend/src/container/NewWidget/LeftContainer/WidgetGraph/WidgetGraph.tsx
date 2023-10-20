@@ -1,6 +1,7 @@
 import { WarningOutlined } from '@ant-design/icons';
 import { Card, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	errorTooltipPosition,
 	tooltipStyles,
@@ -67,7 +68,7 @@ function WidgetGraph({
 			{ queryData: getWidgetQueryRange.data?.payload.data.result ?? [] },
 		],
 		createDataset: undefined,
-		isWarningLimit: true,
+		isWarningLimit: selectedWidget.panelTypes === PANEL_TYPES.TIME_SERIES,
 	});
 
 	return (
