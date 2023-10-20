@@ -3,6 +3,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import saveAlertApi from 'api/alerts/save';
+import DropDown from 'components/DropDown/DropDown';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import { QueryParams } from 'constants/query';
@@ -197,18 +198,28 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			key: 'action',
 			width: 120,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
-				<>
-					<ToggleAlertState disabled={record.disabled} setData={setData} id={id} />
-
-					<ColumnButton onClick={onEditHandler(record)} type="link">
-						Edit
-					</ColumnButton>
-					<ColumnButton onClick={onCloneHandler(record)} type="link">
-						Clone
-					</ColumnButton>
-
-					<DeleteAlert notifications={notificationsApi} setData={setData} id={id} />
-				</>
+				<DropDown
+					element={[
+						<ToggleAlertState
+							key="1"
+							disabled={record.disabled}
+							setData={setData}
+							id={id}
+						/>,
+						<ColumnButton key="2" onClick={onEditHandler(record)} type="link">
+							Edit
+						</ColumnButton>,
+						<ColumnButton key="3" onClick={onCloneHandler(record)} type="link">
+							Clone
+						</ColumnButton>,
+						<DeleteAlert
+							key="4"
+							notifications={notificationsApi}
+							setData={setData}
+							id={id}
+						/>,
+					]}
+				/>
 			),
 		});
 	}
