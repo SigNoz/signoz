@@ -4,7 +4,7 @@ import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import saveAlertApi from 'api/alerts/save';
 import DropDown from 'components/DropDown/DropDown';
-import { ResizeTable } from 'components/ResizeTable';
+import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
 import TextToolTip from 'components/TextToolTip';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -196,7 +196,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
-			width: 120,
+			width: 10,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
 				<DropDown
 					element={[
@@ -240,7 +240,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					</Button>
 				)}
 			</ButtonContainer>
-			<ResizeTable columns={columns} rowKey="id" dataSource={data} />
+			<DynamicColumnTable columns={columns} rowKey="id" dataSource={data} />
 		</>
 	);
 }
