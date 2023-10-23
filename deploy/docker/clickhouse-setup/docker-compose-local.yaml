@@ -4,8 +4,8 @@ services:
   query-service:
     hostname: query-service
     build:
-      context: "../../../pkg/query-service"
-      dockerfile: "./Dockerfile"
+      context: "../../../"
+      dockerfile: "./pkg/query-service/Dockerfile"
       args:
         LDFLAGS: ""
         TARGETPLATFORM: "${GOOS}/${GOARCH}"

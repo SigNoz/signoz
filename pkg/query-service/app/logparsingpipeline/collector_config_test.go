@@ -1,4 +1,4 @@
-package opamp
+package logparsingpipeline
 
 import (
 	"fmt"

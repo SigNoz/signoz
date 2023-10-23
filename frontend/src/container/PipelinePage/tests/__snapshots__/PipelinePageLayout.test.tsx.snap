@@ -250,6 +250,12 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
                       >
                         Edited By
                       </th>
+                      <th
+                        class="ant-table-cell"
+                        style="text-align: center;"
+                      >
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody
@@ -261,7 +267,7 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
                     >
                       <td
                         class="ant-table-cell"
-                        colspan="6"
+                        colspan="7"
                       >
                         <div
                           class="css-dev-only-do-not-override-1i536d8 ant-empty ant-empty-normal"
