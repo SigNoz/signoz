@@ -7,7 +7,13 @@ import ROUTES from 'constants/routes';
 import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import history from 'lib/history';
 import { LifeBuoy } from 'lucide-react';
-import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -33,6 +39,7 @@ import {
 
 function SideNav(): JSX.Element {
 	const dispatch = useDispatch();
+	const [menuItems, setMenuItems] = useState(defaultMenuItems);
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
@@ -44,36 +51,45 @@ function SideNav(): JSX.Element {
 		featureResponse,
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const { data } = useLicense();
+	const { data, isFetching } = useLicense();
 
 	let secondaryMenuItems: MenuItem[] = [];
 
-	const isOnBasicPlan =
-		data?.payload?.licenses?.some(
-			(license) =>
-				license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
-		) || data?.payload?.licenses === null;
+	useEffect((): void => {
+		const isOnboardingEnabled =
+			featureResponse.data?.find(
+				(feature) => feature.name === FeatureKeys.ONBOARDING,
+			)?.active || false;
 
-	const menuItems = useMemo(
-		() =>
-			defaultMenuItems.filter((item) => {
-				const isOnboardingEnabled =
-					featureResponse.data?.find(
-						(feature) => feature.name === FeatureKeys.ONBOARDING,
-					)?.active || false;
+		if (!isOnboardingEnabled || !isCloudUser()) {
+			let items = [...menuItems];
 
-				if (role !== 'ADMIN' || isOnBasicPlan) {
-					return item.key !== ROUTES.BILLING;
-				}
+			items = items.filter((item) => item.key !== ROUTES.GET_STARTED);
 
-				if (!isOnboardingEnabled || !isCloudUser()) {
-					return item.key !== ROUTES.GET_STARTED;
-				}
+			setMenuItems(items);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [featureResponse.data]);
 
-				return true;
-			}),
-		[featureResponse.data, isOnBasicPlan, role],
-	);
+	// using a separate useEffect as the license fetching call takes few milliseconds
+	useEffect(() => {
+		if (!isFetching) {
+			let items = [...menuItems];
+
+			const isOnBasicPlan =
+				data?.payload?.licenses?.some(
+					(license) =>
+						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
+				) || data?.payload?.licenses === null;
+
+			if (role !== 'ADMIN' || isOnBasicPlan) {
+				items = items.filter((item) => item.key !== ROUTES.BILLING);
+			}
+
+			setMenuItems(items);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload?.licenses, isFetching, role]);
 
 	const { pathname, search } = useLocation();
 
