@@ -20,9 +20,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
-import { getFormattedDate } from 'utils/timeUtils';
-
-import { getRemainingDays } from './utils';
+import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 interface DataType {
 	key: string;
