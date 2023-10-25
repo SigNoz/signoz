@@ -309,7 +309,7 @@ func (r *PromRule) getPqlQuery() (string, error) {
 				if r.ruleCondition.Target != nil && r.ruleCondition.CompareOp != CompareOpNone {
 					unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
 					value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
-					query = fmt.Sprintf("%s %s %f", query, ResolveCompareOp(r.ruleCondition.CompareOp), value.F)
+					query = fmt.Sprintf("(%s) %s %f", query, ResolveCompareOp(r.ruleCondition.CompareOp), value.F)
 					return query, nil
 				} else {
 					return query, nil
