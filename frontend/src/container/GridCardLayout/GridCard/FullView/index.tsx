@@ -22,6 +22,7 @@ import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
+import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
 
 function FullView({
 	widget,
@@ -33,7 +34,6 @@ function FullView({
 	isDependedDataLoaded = false,
 	graphsVisibilityStates,
 	onToggleModelHandler,
-	setGraphsVisibilityStates,
 	parentChartRef,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
@@ -77,16 +77,24 @@ function FullView({
 		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
 
-	const chartDataSet = useMemo(
-		() =>
-			getChartData({
-				queryData: [
-					{
-						queryData: response?.data?.payload?.data?.result || [],
-					},
-				],
-			}),
-		[response],
+	// const chartDataSet = useMemo(
+	// 	() =>
+	// 		getChartData({
+	// 			queryData: [
+	// 				{
+	// 					queryData: response?.data?.payload?.data?.result || [],
+	// 				},
+	// 			],
+	// 		}),
+	// 	[response],
+	// );
+
+	const chartData = getUPlotChartData(
+		response.data?.payload.data.newResult.data,
+	);
+
+	const chartOptions = getUPlotChartOptions(
+		response.data?.payload.data.newResult.data,
 	);
 
 	useEffect(() => {
@@ -124,9 +132,8 @@ function FullView({
 			<GraphContainer isGraphLegendToggleAvailable={canModifyChart}>
 				<GridPanelSwitch
 					panelType={widget.panelTypes}
-					data={chartDataSet.data}
-					isStacked={widget.isStacked}
-					opacity={widget.opacity}
+					data={chartData}
+					options={{ height: 300, width: 300, series: [] }}
 					title={widget.title}
 					onClickHandler={onClickHandler}
 					name={name}
@@ -144,7 +151,7 @@ function FullView({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
-					setGraphsVisibilityStates={setGraphsVisibilityStates}
+					// setGraphsVisibilityStates={setGraphsVisibilityStates}
 					graphsVisibilityStates={graphsVisibilityStates}
 					lineChartRef={lineChartRef}
 					parentChartRef={parentChartRef}

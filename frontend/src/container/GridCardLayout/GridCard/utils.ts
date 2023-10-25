@@ -14,7 +14,7 @@ export const getGraphVisibilityStateOnDataChange = ({
 	name,
 }: GetGraphVisibilityStateOnLegendClickProps): GraphVisibilityLegendEntryProps => {
 	const visibilityStateAndLegendEntry: GraphVisibilityLegendEntryProps = {
-		graphVisibilityStates: Array(data.datasets.length).fill(true),
+		graphVisibilityStates: Array(data.length).fill(true),
 		legendEntry: showAllDataSet(data),
 	};
 	if (localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) !== null) {
@@ -35,12 +35,12 @@ export const getGraphVisibilityStateOnDataChange = ({
 			);
 		}
 
-		const newGraphVisibilityStates = Array(data.datasets.length).fill(true);
+		const newGraphVisibilityStates = Array(data.length).fill(true);
 		legendFromLocalStore.forEach((item) => {
 			const newName = isExpandedName ? `${name}expanded` : name;
 			if (item.name === newName) {
 				visibilityStateAndLegendEntry.legendEntry = item.dataIndex;
-				data.datasets.forEach((datasets, i) => {
+				data.forEach((datasets, i) => {
 					const index = item.dataIndex.findIndex(
 						(dataKey) => dataKey.label === datasets.label,
 					);

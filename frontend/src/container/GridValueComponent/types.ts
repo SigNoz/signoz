@@ -1,8 +1,8 @@
-import { ChartData } from 'chart.js';
-import { ReactNode } from 'react';
+import uPlot from 'uplot';
 
 export type GridValueComponentProps = {
-	data: ChartData;
-	title?: ReactNode;
+	data: uPlot.AlignedData;
+	options?: uPlot.Options;
+	title?: React.ReactNode;
 	yAxisUnit?: string;
 };

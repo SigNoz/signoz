@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Skeleton, Typography } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import GridPanelSwitch from 'container/GridPanelSwitch';
@@ -7,15 +7,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { Dispatch, SetStateAction, useCallback, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -27,7 +19,6 @@ import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { FullViewContainer, Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
-import { getGraphVisibilityStateOnDataChange } from './utils';
 
 function WidgetGraphComponent({
 	data,
@@ -40,6 +31,7 @@ function WidgetGraphComponent({
 	threshold,
 	headerMenuList,
 	isWarning,
+	options,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [modal, setModal] = useState<boolean>(false);
@@ -49,33 +41,12 @@ function WidgetGraphComponent({
 
 	const lineChartRef = useRef<ToggleGraphProps>();
 
-	const { graphVisibilityStates: localStoredVisibilityStates } = useMemo(
-		() =>
-			getGraphVisibilityStateOnDataChange({
-				data,
-				isExpandedName: true,
-				name,
-			}),
-		[data, name],
-	);
-
-	useEffect(() => {
-		if (!lineChartRef.current) return;
-
-		localStoredVisibilityStates.forEach((state, index) => {
-			lineChartRef.current?.toggleGraph(index, state);
-		});
-	}, [localStoredVisibilityStates]);
-
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
-	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
-		boolean[]
-	>(localStoredVisibilityStates);
-
-	const { featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
+	const featureResponse = useSelector<AppState, AppReducer['featureResponse']>(
+		(state) => state.app.featureResponse,
 	);
+
 	const onToggleModal = useCallback(
 		(func: Dispatch<SetStateAction<boolean>>) => {
 			func((value) => !value);
@@ -185,8 +156,22 @@ function WidgetGraphComponent({
 		onToggleModal(setModal);
 	};
 
+	if (queryResponse.isLoading) {
+		return (
+			<Skeleton
+				style={{
+					height: '100%',
+				}}
+				round
+			/>
+		);
+	}
+
 	return (
-		<span
+		<div
+			style={{
+				height: '100%',
+			}}
 			onMouseOver={(): void => {
 				setHovered(true);
 			}}
@@ -199,6 +184,7 @@ function WidgetGraphComponent({
 			onBlur={(): void => {
 				setHovered(false);
 			}}
+			id={name}
 		>
 			<Modal
 				destroyOnClose
@@ -226,9 +212,7 @@ function WidgetGraphComponent({
 						name={`${name}expanded`}
 						widget={widget}
 						yAxisUnit={widget.yAxisUnit}
-						graphsVisibilityStates={graphsVisibilityStates}
 						onToggleModelHandler={onToggleModelHandler}
-						setGraphsVisibilityStates={setGraphsVisibilityStates}
 						parentChartRef={lineChartRef}
 					/>
 				</FullViewContainer>
@@ -252,18 +236,15 @@ function WidgetGraphComponent({
 			<GridPanelSwitch
 				panelType={widget.panelTypes}
 				data={data}
-				isStacked={widget.isStacked}
-				opacity={widget.opacity}
-				title={' '}
 				name={name}
+				options={options}
 				yAxisUnit={widget.yAxisUnit}
 				onClickHandler={onClickHandler}
 				onDragSelect={onDragSelect}
 				panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
 				query={widget.query}
-				ref={lineChartRef}
 			/>
-		</span>
+		</div>
 	);
 }
 

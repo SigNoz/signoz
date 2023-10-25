@@ -2,7 +2,7 @@ import isEqual from 'lodash-es/isEqual';
 import React, { Component, memo } from 'react';
 import UPlot from 'uplot';
 
-interface UplotProps {
+export interface UplotProps {
 	data: uPlot.AlignedData;
 	options: uPlot.Options;
 }
@@ -23,6 +23,11 @@ class UplotComponent extends Component<UplotProps> {
 
 	shouldComponentUpdate(nextProps: UplotProps): boolean {
 		const { data, options } = this.props;
+
+		if (data === undefined || options === undefined) {
+			return false;
+		}
+
 		return !isEqual(data, nextProps.data) || !isEqual(options, nextProps.options);
 	}
 
@@ -32,7 +37,7 @@ class UplotComponent extends Component<UplotProps> {
 		if (!isEqual(prevProps.options, options) && this.plot) {
 			this.plot?.destroy();
 			this.createPlot(); // This already uses the new data
-		} else if (!isEqual(prevProps.data, data) && this.plot && data) {
+		} else if (!isEqual(prevProps.data, data) && this.plot) {
 			this.plot?.setData(data);
 		}
 	}

@@ -1,23 +1,17 @@
-import { ChartData } from 'chart.js';
-import {
-	GraphOnClickHandler,
-	GraphProps,
-	StaticLineProps,
-} from 'components/Graph/types';
+import { GraphOnClickHandler, StaticLineProps } from 'components/Graph/types';
+import { UplotProps } from 'components/Uplot/Uplot';
 import { GridTableComponentProps } from 'container/GridTableComponent/types';
 import { GridValueComponentProps } from 'container/GridValueComponent/types';
-import { Widgets } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import uPlot from 'uplot';
 
 import { PANEL_TYPES } from '../../constants/queryBuilder';
 
 export type GridPanelSwitchProps = {
 	panelType: PANEL_TYPES;
-	data: ChartData;
-	title?: Widgets['title'];
-	opacity?: string;
-	isStacked?: boolean;
+	data: uPlot.AlignedData;
+	options: uPlot.Options;
 	onClickHandler?: GraphOnClickHandler;
 	name: string;
 	yAxisUnit?: string;
@@ -28,7 +22,9 @@ export type GridPanelSwitchProps = {
 };
 
 export type PropsTypePropsMap = {
-	[PANEL_TYPES.TIME_SERIES]: GraphProps;
+	[PANEL_TYPES.TIME_SERIES]: UplotProps & {
+		ref: any;
+	};
 	[PANEL_TYPES.VALUE]: GridValueComponentProps;
 	[PANEL_TYPES.TABLE]: GridTableComponentProps;
 	[PANEL_TYPES.TRACE]: null;

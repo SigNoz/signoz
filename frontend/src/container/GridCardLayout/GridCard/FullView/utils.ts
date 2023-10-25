@@ -6,6 +6,7 @@ import {
 	LegendEntryProps,
 	SaveLegendEntriesToLocalStoreProps,
 } from './types';
+import uPlot from 'uplot';
 
 function convertToTwoDecimalsOrZero(value: number): number {
 	if (
@@ -58,7 +59,7 @@ export const getAbbreviatedLabel = (label: string): string => {
 	return newLabel;
 };
 
-export const showAllDataSet = (data: ChartData): LegendEntryProps[] =>
+export const showAllDataSet = (data: uPlot.AlignedData): LegendEntryProps[] =>
 	data.datasets.map(
 		(item): LegendEntryProps => ({
 			label: item.label || '',

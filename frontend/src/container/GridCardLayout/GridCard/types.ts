@@ -1,10 +1,11 @@
-import { ChartData } from 'chart.js';
 import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
+import { UplotProps } from 'components/Uplot/Uplot';
 import { MutableRefObject, ReactNode } from 'react';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import uPlot from 'uplot';
 
 import { MenuItemKeys } from '../WidgetHeader/contants';
 import { LegendEntryProps } from './FullView/types';
@@ -14,13 +15,12 @@ export interface GraphVisibilityLegendEntryProps {
 	legendEntry: LegendEntryProps[];
 }
 
-export interface WidgetGraphComponentProps {
+export interface WidgetGraphComponentProps extends UplotProps {
 	widget: Widgets;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>;
 	errorMessage: string | undefined;
-	data: ChartData;
 	name: string;
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
@@ -41,7 +41,7 @@ export interface GridCardGraphProps {
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {
-	data: ChartData;
+	data: uPlot.AlignedData;
 	isExpandedName: boolean;
 	name: string;
 }

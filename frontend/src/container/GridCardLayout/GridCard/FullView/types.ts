@@ -51,7 +51,7 @@ export interface FullViewProps {
 	isDependedDataLoaded?: boolean;
 	graphsVisibilityStates?: boolean[];
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
-	setGraphsVisibilityStates: (graphsVisibilityStates: boolean[]) => void;
+	// setGraphsVisibilityStates: (graphsVisibilityStates: boolean[]) => void;
 	parentChartRef: GraphManagerProps['lineChartRef'];
 }
 
@@ -60,7 +60,7 @@ export interface GraphManagerProps {
 	name: string;
 	yAxisUnit?: string;
 	onToggleModelHandler?: () => void;
-	setGraphsVisibilityStates: FullViewProps['setGraphsVisibilityStates'];
+	// setGraphsVisibilityStates: FullViewProps['setGraphsVisibilityStates'];
 	graphsVisibilityStates: FullViewProps['graphsVisibilityStates'];
 	lineChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
 	parentChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
