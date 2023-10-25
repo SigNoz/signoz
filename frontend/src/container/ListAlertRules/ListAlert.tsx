@@ -5,6 +5,7 @@ import { ColumnsType } from 'antd/lib/table';
 import saveAlertApi from 'api/alerts/save';
 import DropDown from 'components/DropDown/DropDown';
 import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
+import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -23,7 +24,7 @@ import { GettableAlert } from 'types/api/alerts/get';
 import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
-import { Button, ButtonContainer, ColumnButton, StyledTag } from './styles';
+import { Button, ButtonContainer, ColumnButton } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
 
@@ -122,6 +123,37 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		}
 	};
 
+	const dynamicColumns: ColumnsType<GettableAlert> = [
+		{
+			title: 'Created At',
+			dataIndex: 'createAt',
+			width: 80,
+			key: 'createAt',
+			render: (value): JSX.Element => <div>{value}</div>,
+		},
+		{
+			title: 'Create By',
+			dataIndex: 'createBy',
+			width: 80,
+			key: 'createBy',
+			render: (value): JSX.Element => <div>{value}</div>,
+		},
+		{
+			title: 'Updated At',
+			dataIndex: 'updateAt',
+			width: 80,
+			key: 'updateAt',
+			render: (value): JSX.Element => <div>{value}</div>,
+		},
+		{
+			title: 'Updated By',
+			dataIndex: 'updateBy',
+			width: 80,
+			key: 'updateBy',
+			render: (value): JSX.Element => <div>{value}</div>,
+		},
+	];
+
 	const columns: ColumnsType<GettableAlert> = [
 		{
 			title: 'Status',
@@ -179,13 +211,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				}
 
 				return (
-					<>
-						{withOutSeverityKeys.map((e) => (
-							<StyledTag key={e} color="magenta">
-								{e}: {value[e]}
-							</StyledTag>
-						))}
-					</>
+					<LabelColumn labels={withOutSeverityKeys} value={value} color="magenta" />
 				);
 			},
 		},
@@ -240,7 +266,12 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					</Button>
 				)}
 			</ButtonContainer>
-			<DynamicColumnTable columns={columns} rowKey="id" dataSource={data} />
+			<DynamicColumnTable
+				columns={columns}
+				rowKey="id"
+				dataSource={data}
+				dynamicColumns={dynamicColumns}
+			/>
 		</>
 	);
 }
