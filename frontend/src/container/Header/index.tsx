@@ -8,7 +8,6 @@ import {
 import { Button, Divider, MenuProps, Space, Typography } from 'antd';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
-import { getRemainingDays } from 'container/BillingContainer/BillingContainer';
 import Config from 'container/ConfigDropdown';
 import { useIsDarkMode, useThemeMode } from 'hooks/useDarkMode';
 import useLicense, { LICENSE_PLAN_STATUS } from 'hooks/useLicense';
@@ -26,7 +25,7 @@ import { useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
-import { getFormattedDate } from 'utils/timeUtils';
+import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import CurrentOrganization from './CurrentOrganization';
 import ManageLicense from './ManageLicense';
