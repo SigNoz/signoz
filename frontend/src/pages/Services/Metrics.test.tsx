@@ -51,15 +51,13 @@ describe('Services', () => {
 	// const inOperator = await screen.findAllByText(/not in/i);
 	// expect(inOperator[1]).toBeInTheDocument();
 
-	// // await user.click(inOperator[1]);
+	// await user.click(inOperator[1]);
 
-	// // await user.type(inputBox, '6d');
+	// await user.type(inputBox, '6d');
 
-	// // const serviceId = await screen.findAllByText(
-	// // 	/6d4af7f0-4884-4a37-abd4-6bdbee29fa04/i,
-	// // );
-
-	// // console.log(serviceId);
+	// const serviceId = await screen.findAllByText(
+	// 	/6d4af7f0-4884-4a37-abd4-6bdbee29fa04/i,
+	// );
 
 	// expect(serviceId[1]).toBeInTheDocument();
 
