@@ -176,8 +176,6 @@ describe('BillingContainer', () => {
 			name: /total \$1278/i,
 		});
 		expect(totalBillRow).toBeInTheDocument();
-
-		screen.debug();
 	});
 
 	test('Should render corrent day remaining in billing period', async () => {
