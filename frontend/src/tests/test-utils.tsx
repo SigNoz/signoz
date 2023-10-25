@@ -16,8 +16,14 @@ const queryClient = new QueryClient({
 	},
 });
 
+beforeEach(() => {
+	jest.useFakeTimers();
+	jest.setSystemTime(new Date('2023-10-20'));
+});
+
 afterEach(() => {
 	queryClient.clear();
+	jest.useRealTimers();
 });
 
 const mockStore = configureStore([]);
