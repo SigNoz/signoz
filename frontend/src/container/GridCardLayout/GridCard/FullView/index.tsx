@@ -10,19 +10,21 @@ import {
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useChartMutable } from 'hooks/useChartMutable';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useDimensions } from 'hooks/useDimensions';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import getChartData from 'lib/getChartData';
+import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
+// import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
-import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
 
 function FullView({
 	widget,
@@ -40,6 +42,8 @@ function FullView({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const fullViewRef = useRef<HTMLDivElement>(null);
 
 	const { selectedDashboard } = useDashboard();
 
@@ -77,24 +81,17 @@ function FullView({
 		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
 
-	// const chartDataSet = useMemo(
-	// 	() =>
-	// 		getChartData({
-	// 			queryData: [
-	// 				{
-	// 					queryData: response?.data?.payload?.data?.result || [],
-	// 				},
-	// 			],
-	// 		}),
-	// 	[response],
-	// );
-
 	const chartData = getUPlotChartData(
 		response.data?.payload.data.newResult.data,
 	);
 
+	const containerDimensions = useDimensions(fullViewRef);
+	const isDarkMode = useIsDarkMode();
+
 	const chartOptions = getUPlotChartOptions(
 		response.data?.payload.data.newResult.data,
+		containerDimensions,
+		isDarkMode,
 	);
 
 	useEffect(() => {
@@ -129,26 +126,28 @@ function FullView({
 				</TimeContainer>
 			)}
 
-			<GraphContainer isGraphLegendToggleAvailable={canModifyChart}>
+			<GraphContainer
+				ref={fullViewRef}
+				isGraphLegendToggleAvailable={canModifyChart}
+			>
 				<GridPanelSwitch
 					panelType={widget.panelTypes}
 					data={chartData}
-					options={{ height: 300, width: 300, series: [] }}
-					title={widget.title}
+					options={chartOptions}
 					onClickHandler={onClickHandler}
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
 					panelData={response.data?.payload.data.newResult.data.result || []}
 					query={widget.query}
-					ref={lineChartRef}
 				/>
 			</GraphContainer>
 
 			{canModifyChart && (
 				<GraphManager
-					data={chartDataSet.data}
+					data={chartData}
 					name={name}
+					options={chartOptions}
 					yAxisUnit={yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
 					// setGraphsVisibilityStates={setGraphsVisibilityStates}

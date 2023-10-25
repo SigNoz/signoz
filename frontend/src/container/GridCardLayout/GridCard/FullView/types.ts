@@ -1,6 +1,7 @@
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ChartData, ChartDataset } from 'chart.js';
 import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
+import { UplotProps } from 'components/Uplot/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { MutableRefObject } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -55,8 +56,7 @@ export interface FullViewProps {
 	parentChartRef: GraphManagerProps['lineChartRef'];
 }
 
-export interface GraphManagerProps {
-	data: ChartData;
+export interface GraphManagerProps extends UplotProps {
 	name: string;
 	yAxisUnit?: string;
 	onToggleModelHandler?: () => void;

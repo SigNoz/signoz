@@ -1,12 +1,11 @@
+import { Skeleton } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
-import { useDimensions } from 'hooks/useDimensions';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
 import isEmpty from 'lodash-es/isEmpty';
-import { memo, useMemo, useRef, useState } from 'react';
+import { memo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -79,38 +78,25 @@ function GridCardGraph({
 		},
 	);
 
-	const containerDimensions = useDimensions(graphRef);
-
-	const chartData = getUPlotChartData(
-		queryResponse.data?.payload.data.newResult.data,
-	);
-
-	const options = useMemo(
-		() =>
-			getUPlotChartOptions(
-				queryResponse.data?.payload.data.newResult.data,
-				containerDimensions,
-			),
-		[queryResponse?.data?.payload?.data?.newResult?.data, containerDimensions],
-	);
-
-	console.log({
-		chartData,
-		data: queryResponse.data?.payload.data.newResult.data,
-		options,
-		title: widget?.title,
-	});
-
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
+
+	if (queryResponse.isLoading) {
+		return (
+			<Skeleton
+				style={{
+					height: '100%',
+				}}
+				round
+			/>
+		);
+	}
 
 	return (
 		<span ref={graphRef}>
 			<WidgetGraphComponent
-				options={options}
 				widget={widget}
 				queryResponse={queryResponse}
 				errorMessage={errorMessage}
-				data={chartData}
 				isWarning={false}
 				name={name}
 				onDragSelect={onDragSelect}
