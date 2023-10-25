@@ -39,8 +39,8 @@ describe('Services', () => {
 
 	// 	await user.click(inputBox);
 
-	// 	// const signozCollectorId = await screen.findAllByText(/signoz.collector.id/i);
-	// 	// expect(signozCollectorId[0]).toBeInTheDocument();
+	// 	const signozCollectorId = await screen.findAllByText(/signoz.collector.id/i);
+	// 	expect(signozCollectorId[0]).toBeInTheDocument();
 
 	// 	screen.debug();
 
