@@ -22,6 +22,8 @@ import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
 import { getFormattedDate } from 'utils/timeUtils';
 
+import { getRemainingDays } from './utils';
+
 interface DataType {
 	key: string;
 	name: string;
@@ -97,19 +99,6 @@ const dummyColumns: ColumnsType<DataType> = [
 		render: renderSkeletonInput,
 	},
 ];
-
-export const getRemainingDays = (billingEndDate: number): number => {
-	// Convert Epoch timestamps to Date objects
-	const startDate = new Date(); // Convert seconds to milliseconds
-	const endDate = new Date(billingEndDate * 1000); // Convert seconds to milliseconds
-
-	// Calculate the time difference in milliseconds
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	const timeDifference = endDate - startDate;
-
-	return Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-};
 
 export default function BillingContainer(): JSX.Element {
 	const daysRemainingStr = 'days remaining in your billing period.';
