@@ -1,11 +1,13 @@
-import { Skeleton } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useResizeObserver } from 'hooks/useDimensions';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
 import isEmpty from 'lodash-es/isEmpty';
-import { memo, useRef, useState } from 'react';
+import { memo, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -37,7 +39,7 @@ function GridCardGraph({
 		}
 	};
 
-	const graphRef = useRef<HTMLSpanElement>(null);
+	const graphRef = useRef<HTMLDivElement>(null);
 
 	const isVisible = useIntersectionObserver(graphRef, undefined, true);
 
@@ -80,20 +82,32 @@ function GridCardGraph({
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 
-	if (queryResponse.isLoading) {
-		return (
-			<Skeleton
-				style={{
-					height: '100%',
-				}}
-				round
-			/>
-		);
-	}
+	const containerDimensions = useResizeObserver(graphRef);
+
+	const chartData = getUPlotChartData(
+		queryResponse?.data?.payload?.data?.newResult?.data,
+	);
+	const isDarkMode = useIsDarkMode();
+
+	const options = useMemo(
+		() =>
+			getUPlotChartOptions(
+				queryResponse?.data?.payload?.data?.newResult?.data,
+				containerDimensions,
+				isDarkMode,
+			),
+		[
+			queryResponse?.data?.payload?.data?.newResult?.data,
+			containerDimensions,
+			isDarkMode,
+		],
+	);
 
 	return (
-		<span ref={graphRef}>
+		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			<WidgetGraphComponent
+				data={chartData}
+				options={options}
 				widget={widget}
 				queryResponse={queryResponse}
 				errorMessage={errorMessage}
@@ -106,7 +120,7 @@ function GridCardGraph({
 			/>
 
 			{isEmptyLayout && <EmptyWidget />}
-		</span>
+		</div>
 	);
 }
 

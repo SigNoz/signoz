@@ -1,23 +1,13 @@
-import { Typography } from 'antd';
+import { Skeleton, Typography } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useDimensions } from 'hooks/useDimensions';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
-import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { Dispatch, SetStateAction, useCallback, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -40,6 +30,8 @@ function WidgetGraphComponent({
 	threshold,
 	headerMenuList,
 	isWarning,
+	data,
+	options,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [modal, setModal] = useState<boolean>(false);
@@ -165,26 +157,16 @@ function WidgetGraphComponent({
 		onToggleModal(setModal);
 	};
 
-	const containerDimensions = useDimensions(graphRef);
-
-	const chartData = getUPlotChartData(
-		queryResponse?.data?.payload?.data?.newResult?.data,
-	);
-	const isDarkMode = useIsDarkMode();
-
-	const options = useMemo(
-		() =>
-			getUPlotChartOptions(
-				queryResponse?.data?.payload?.data?.newResult?.data,
-				containerDimensions,
-				isDarkMode,
-			),
-		[
-			queryResponse?.data?.payload?.data?.newResult?.data,
-			containerDimensions,
-			isDarkMode,
-		],
-	);
+	if (queryResponse.isLoading) {
+		return (
+			<Skeleton
+				active
+				style={{
+					height: '100%',
+				}}
+			/>
+		);
+	}
 
 	return (
 		<div
@@ -255,7 +237,7 @@ function WidgetGraphComponent({
 			<div style={{ height: '90%' }} ref={graphRef}>
 				<GridPanelSwitch
 					panelType={widget.panelTypes}
-					data={chartData}
+					data={data}
 					name={name}
 					options={options}
 					yAxisUnit={widget.yAxisUnit}

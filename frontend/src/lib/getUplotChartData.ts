@@ -73,6 +73,7 @@ export const getUPlotChartOptions = (
 		legend: {
 			live: false,
 			isolate: true,
+			show: false,
 		},
 		scales: {
 			x: {

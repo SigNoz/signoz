@@ -11,7 +11,7 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useDimensions } from 'hooks/useDimensions';
+import { useResizeObserver } from 'hooks/useDimensions';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -85,7 +85,8 @@ function FullView({
 		response.data?.payload.data.newResult.data,
 	);
 
-	const containerDimensions = useDimensions(fullViewRef);
+	const containerDimensions = useResizeObserver(fullViewRef);
+
 	const isDarkMode = useIsDarkMode();
 
 	const chartOptions = getUPlotChartOptions(

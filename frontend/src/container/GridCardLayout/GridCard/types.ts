@@ -1,4 +1,5 @@
 import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
+import { UplotProps } from 'components/Uplot/Uplot';
 import { MutableRefObject, ReactNode } from 'react';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -14,7 +15,7 @@ export interface GraphVisibilityLegendEntryProps {
 	legendEntry: LegendEntryProps[];
 }
 
-export interface WidgetGraphComponentProps {
+export interface WidgetGraphComponentProps extends UplotProps {
 	widget: Widgets;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
