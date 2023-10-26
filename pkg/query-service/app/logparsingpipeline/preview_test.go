@@ -174,7 +174,7 @@ func TestGrokParsingPreview(t *testing.T) {
 					OnError:   "send",
 					ParseFrom: "body",
 					ParseTo:   "attributes",
-					Pattern:   "%{TIMESTAMP_ISO8601:timestamp}%{SPACE}%{WORD:log_level}%{SPACE}%{NOTSPACE:location}%{SPACE}{GREEDYDATA:message}",
+					Pattern:   "%{TIMESTAMP_ISO8601:timestamp}%{SPACE}%{WORD:log_level}%{SPACE}%{NOTSPACE:location}%{SPACE}%{GREEDYDATA:message}",
 				},
 			},
 		},
