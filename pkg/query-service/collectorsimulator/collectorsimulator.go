@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -19,8 +20,6 @@ import (
 	"go.opentelemetry.io/collector/processor"
 	"go.opentelemetry.io/collector/receiver"
 	"go.opentelemetry.io/collector/service"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 
 	"go.signoz.io/signoz/pkg/query-service/collectorsimulator/inmemoryexporter"
 	"go.signoz.io/signoz/pkg/query-service/collectorsimulator/inmemoryreceiver"
@@ -44,6 +43,8 @@ type CollectorSimulator struct {
 	// will be created by collectorSvc
 	inMemoryReceiverId string
 	inMemoryExporterId string
+
+	collectorLogsOutputFilePath string
 }
 
 func NewCollectorSimulator(
@@ -71,8 +72,21 @@ func NewCollectorSimulator(
 	inMemoryReceiverId := uuid.NewString()
 	inMemoryExporterId := uuid.NewString()
 
+	logsOutputFile, err := os.CreateTemp("", "test-signoz-db-*")
+	if err != nil {
+		return nil, model.InternalError(errors.Wrap(
+			err, "could not create tmp file for capturing collector logs",
+		))
+	}
+	collectorLogsOutputFilePath := logsOutputFile.Name()
+	logsOutputFile.Close()
+
 	collectorConfYaml, err := generateSimulationConfig(
-		signalType, inMemoryReceiverId, processorConfigs, inMemoryExporterId,
+		signalType,
+		inMemoryReceiverId,
+		processorConfigs,
+		inMemoryExporterId,
+		collectorLogsOutputFilePath,
 	)
 	if err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, "could not generate collector config"))
@@ -108,9 +122,13 @@ func NewCollectorSimulator(
 		Connectors:        connector.NewBuilder(collectorCfg.Connectors, factories.Connectors),
 		Extensions:        extension.NewBuilder(collectorCfg.Extensions, factories.Extensions),
 		AsyncErrorChannel: collectorErrChan,
-		LoggingOptions: []zap.Option{
-			zap.ErrorOutput(zapcore.AddSync(&collectorErrBuf)),
-		},
+		// LoggingOptions: []zap.Option{
+		// 	zap.ErrorOutput(
+		// 		zapcore.Lock(
+		// 			zapcore.AddSync(&collectorErrBuf),
+		// 		),
+		// 	),
+		// },
 	}
 
 	collectorSvc, err := service.New(ctx, svcSettings, collectorCfg.Service)
@@ -119,11 +137,12 @@ func NewCollectorSimulator(
 	}
 
 	return &CollectorSimulator{
-		inMemoryReceiverId:       inMemoryReceiverId,
-		inMemoryExporterId:       inMemoryExporterId,
-		collectorSvc:             collectorSvc,
-		collectorErrorLogsBuffer: &collectorErrBuf,
-		collectorErrorChannel:    collectorErrChan,
+		inMemoryReceiverId:          inMemoryReceiverId,
+		inMemoryExporterId:          inMemoryExporterId,
+		collectorSvc:                collectorSvc,
+		collectorErrorLogsBuffer:    &collectorErrBuf,
+		collectorErrorChannel:       collectorErrChan,
+		collectorLogsOutputFilePath: collectorLogsOutputFilePath,
 	}, nil
 }
 
@@ -138,6 +157,7 @@ func (l *CollectorSimulator) Start(ctx context.Context) (
 	cleanupFn := func() {
 		inmemoryreceiver.CleanupInstance(l.inMemoryReceiverId)
 		inmemoryexporter.CleanupInstance(l.inMemoryExporterId)
+		os.Remove(l.collectorLogsOutputFilePath)
 	}
 
 	err := l.collectorSvc.Start(ctx)
@@ -174,6 +194,12 @@ func (l *CollectorSimulator) Shutdown(ctx context.Context) (
 		simulationErrs = append(simulationErrs, errBufLines...)
 	}
 
+	collectorLogs, err := os.ReadFile(l.collectorLogsOutputFilePath)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("\nDEBUG: Collector logs (%d):\n%s\n\nEND of DEBUG collector logs\n", len(collectorLogs), string(collectorLogs))
+
 	if shutdownErr != nil {
 		return simulationErrs, model.InternalError(errors.Wrap(
 			shutdownErr, "could not shutdown the collector service",
@@ -187,6 +213,7 @@ func generateSimulationConfig(
 	receiverId string,
 	processorConfigs []ProcessorConfig,
 	exporterId string,
+	collectorLogsOutputPath string,
 ) ([]byte, error) {
 	baseConf := fmt.Sprintf(`
     receivers:
@@ -201,7 +228,8 @@ func generateSimulationConfig(
           level: none
         logs:
           level: error
-    `, receiverId, exporterId)
+          output_paths: ["%s"]
+    `, receiverId, exporterId, collectorLogsOutputPath)
 
 	simulationConf, err := yaml.Parser().Unmarshal([]byte(baseConf))
 	if err != nil {

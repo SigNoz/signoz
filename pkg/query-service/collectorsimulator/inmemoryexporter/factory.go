@@ -16,8 +16,9 @@ func createDefaultConfig() component.Config {
 }
 
 func createLogsExporter(
-	_ context.Context, _ exporter.CreateSettings, config component.Config,
+	_ context.Context, exp exporter.CreateSettings, config component.Config,
 ) (exporter.Logs, error) {
+
 	if err := component.ValidateConfig(config); err != nil {
 		return nil, errors.Wrap(err, "invalid inmemory exporter config")
 	}

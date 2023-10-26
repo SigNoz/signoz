@@ -38,7 +38,9 @@ func SimulateLogsProcessing(
 
 	simulatorCleanup, apiErr := simulator.Start(ctx)
 	// We can not rely on collector service to shutdown successfully and cleanup refs to inmemory components.
-	defer simulatorCleanup()
+	if simulatorCleanup != nil {
+		defer simulatorCleanup()
+	}
 	if apiErr != nil {
 		return nil, nil, apiErr
 	}
