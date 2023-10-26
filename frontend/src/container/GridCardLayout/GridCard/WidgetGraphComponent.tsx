@@ -174,12 +174,14 @@ function WidgetGraphComponent({
 
 	const options = useMemo(
 		() =>
-			getUPlotChartOptions(
-				queryResponse?.data?.payload?.data?.newResult?.data,
-				containerDimensions,
+			getUPlotChartOptions({
+				yAxisUnit: widget.yAxisUnit || '',
+				apiResponse: queryResponse?.data?.payload?.data?.newResult?.data,
+				dimensions: containerDimensions,
 				isDarkMode,
-			),
+			}),
 		[
+			widget.yAxisUnit,
 			queryResponse?.data?.payload?.data?.newResult?.data,
 			containerDimensions,
 			isDarkMode,

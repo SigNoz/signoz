@@ -59,12 +59,20 @@ const getGridColor = (isDarkMode: boolean): string => {
 	return 'rgba(231,233,237,0.8)';
 };
 
-export const getUPlotChartOptions = (
-	apiResponse?: MetricRangePayloadV3['data'],
-	dimensions: Dimensions = { height: 0, width: 0 },
+type GetUPlotChartOptions = {
+	yAxisUnit: string;
+	apiResponse?: MetricRangePayloadV3['data'];
+	dimensions?: Dimensions;
+	isDarkMode?: boolean;
+};
+
+export const getUPlotChartOptions = ({
+	yAxisUnit,
+	apiResponse,
+	dimensions = { height: 0, width: 0 },
 	isDarkMode = false,
-	// eslint-disable-next-line arrow-body-style
-): uPlot.Options => {
+}: GetUPlotChartOptions): // eslint-disable-next-line arrow-body-style
+uPlot.Options => {
 	// console.log('getUPlotChartOptions');
 
 	return {
@@ -109,6 +117,7 @@ export const getUPlotChartOptions = (
 					stroke: 'white', // Color of the tick lines
 				},
 				gap: 5,
+				values: (_, t): string[] => t.map((v) => `${v}${yAxisUnit}`),
 			},
 		],
 	};
