@@ -20,6 +20,7 @@ import { useLocation } from 'react-router-dom';
 import { sideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
 import { checkVersionState, isCloudUser, isEECloudUser } from 'utils/app';
 
 import { routeConfig, styles } from './config';
@@ -82,7 +83,7 @@ function SideNav(): JSX.Element {
 						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
 				) || data?.payload?.licenses === null;
 
-			if (role !== 'ADMIN' || isOnBasicPlan) {
+			if (role !== USER_ROLES.ADMIN || isOnBasicPlan) {
 				items = items.filter((item) => item.key !== ROUTES.BILLING);
 			}
 
