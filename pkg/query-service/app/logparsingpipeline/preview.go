@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/SigNoz/signoz-otel-collector/pkg/parser/grok"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/logstransformprocessor"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/collector/pdata/pcommon"
