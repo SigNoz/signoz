@@ -1,5 +1,5 @@
 export type LabelColumnProps = {
 	labels: string[];
-	color: string;
+	color?: string;
 	value?: { [key: string]: string };
 };

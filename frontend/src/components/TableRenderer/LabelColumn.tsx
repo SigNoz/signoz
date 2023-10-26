@@ -18,7 +18,7 @@ function LabelColumn({ labels, value, color }: LabelColumnProps): JSX.Element {
 						value && value[label] ? `${label}: ${value[label]}` : label;
 					return (
 						<Tooltip title={tooltipTitle} key={label}>
-							<Tag className="LabelColumn-label-tag" color="magenta">
+							<Tag className="LabelColumn-label-tag" color={color}>
 								{getLabelRenderingValue(label, value && value[label])}
 							</Tag>
 						</Tooltip>
@@ -39,7 +39,7 @@ function LabelColumn({ labels, value, color }: LabelColumnProps): JSX.Element {
 									return (
 										<div className="labelColumn-popover" key={label}>
 											<Tooltip title={tooltipTitle}>
-												<Tag className="LabelColumn-label-tag" color="magenta">
+												<Tag className="LabelColumn-label-tag" color={color}>
 													{getLabelRenderingValue(label, value && value[label])}
 												</Tag>
 											</Tooltip>

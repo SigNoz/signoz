@@ -5,7 +5,7 @@ import { SettingOutlined } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps, Switch } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { useState } from 'react';
-import { GettableAlert } from 'types/api/alerts/get';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import ResizeTable from './ResizeTable';
 import { DynamicColumnTableProps } from './types';
@@ -16,9 +16,9 @@ function DynamicColumnTable({
 	onDragColumn,
 	...restProps
 }: DynamicColumnTableProps): JSX.Element {
-	const [columnsData, setColumnsData] = useState<
-		ColumnsType<GettableAlert> | undefined
-	>(columns);
+	const [columnsData, setColumnsData] = useState<ColumnsType | undefined>(
+		columns,
+	);
 
 	const onToggleHandler = (index: number) => (
 		checked: boolean,
@@ -27,7 +27,13 @@ function DynamicColumnTable({
 		event.stopPropagation();
 		setColumnsData((prevColumns) => {
 			if (checked && dynamicColumns) {
-				return prevColumns ? [...prevColumns, dynamicColumns[index]] : undefined;
+				return prevColumns
+					? [
+							...prevColumns.slice(0, prevColumns.length - 1),
+							dynamicColumns[index],
+							prevColumns[prevColumns.length - 1],
+					  ]
+					: undefined;
 			}
 			return prevColumns && dynamicColumns
 				? prevColumns.filter(
@@ -52,7 +58,11 @@ function DynamicColumnTable({
 	return (
 		<div className="DynamicColumnTable">
 			{dynamicColumns && (
-				<Dropdown menu={{ items }} trigger={['click']}>
+				<Dropdown
+					getPopupContainer={popupContainer}
+					menu={{ items }}
+					trigger={['click']}
+				>
 					<Button
 						className="dynamicColumnTable-button"
 						size="middle"

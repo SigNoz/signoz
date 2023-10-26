@@ -1,6 +1,7 @@
 .DynamicColumnTable {
     display: flex;
     flex-direction: column;
+    width: 100%;
 
     .dynamicColumnTable-button {
         align-self: flex-end;

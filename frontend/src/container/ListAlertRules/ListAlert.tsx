@@ -5,6 +5,7 @@ import { ColumnsType } from 'antd/lib/table';
 import saveAlertApi from 'api/alerts/save';
 import DropDown from 'components/DropDown/DropDown';
 import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
+import DateComponent from 'components/ResizeTable/TableComponent/Date';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
 import { QueryParams } from 'constants/query';
@@ -129,7 +130,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'createAt',
 			width: 80,
 			key: 'createAt',
-			render: (value): JSX.Element => <div>{value}</div>,
+			sorter: (a: GettableAlert, b: GettableAlert): number => {
+				const prev = new Date(a.createAt).getTime();
+				const next = new Date(b.createAt).getTime();
+
+				return prev - next;
+			},
+			render: DateComponent,
 		},
 		{
 			title: 'Create By',
@@ -143,7 +150,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'updateAt',
 			width: 80,
 			key: 'updateAt',
-			render: (value): JSX.Element => <div>{value}</div>,
+			sorter: (a: GettableAlert, b: GettableAlert): number => {
+				const prev = new Date(a.updateAt).getTime();
+				const next = new Date(b.updateAt).getTime();
+
+				return prev - next;
+			},
+			render: DateComponent,
 		},
 		{
 			title: 'Updated By',

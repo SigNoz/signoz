@@ -2,10 +2,10 @@ import { Typography } from 'antd';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
 
-import { Data } from '..';
-
-function DateComponent(lastUpdatedTime: Data['lastUpdatedTime']): JSX.Element {
-	const time = new Date(lastUpdatedTime);
+function DateComponent(
+	CreatedOrUpdateTime: string | number | Date,
+): JSX.Element {
+	const time = new Date(CreatedOrUpdateTime);
 
 	const date = getFormattedDate(time);
 
