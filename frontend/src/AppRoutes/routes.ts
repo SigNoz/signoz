@@ -299,7 +299,7 @@ const routes: AppRoutes[] = [
 		path: ROUTES.WORKSPACE_LOCKED,
 		exact: true,
 		component: WorkspaceBlocked,
-		isPrivate: false,
+		isPrivate: true,
 		key: 'WORKSPACE_LOCKED',
 	},
 ];
