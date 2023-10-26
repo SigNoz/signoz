@@ -84,7 +84,7 @@ export const getUPlotChartOptions = (
 		axes: [
 			{
 				// label: 'Date',
-				stroke: 'white', // Color of the axis line
+				stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
 				grid: {
 					stroke: getGridColor(isDarkMode), // Color of the grid lines
 					dash: [10, 10], // Dash pattern for grid lines,
@@ -92,7 +92,7 @@ export const getUPlotChartOptions = (
 					show: true,
 				},
 				ticks: {
-					stroke: 'white', // Color of the tick lines
+					stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
 					width: 0.3, // Width of the tick lines,
 					show: true,
 				},
@@ -100,14 +100,16 @@ export const getUPlotChartOptions = (
 			},
 			{
 				// label: 'Value',
-				stroke: 'white', // Color of the axis line
+				stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
 				grid: {
 					stroke: getGridColor(isDarkMode), // Color of the grid lines
 					dash: [10, 10], // Dash pattern for grid lines,
 					width: 0.3, // Width of the grid lines
 				},
 				ticks: {
-					stroke: 'white', // Color of the tick lines
+					stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
+					width: 0.3, // Width of the tick lines
+					show: true,
 				},
 				gap: 5,
 			},
