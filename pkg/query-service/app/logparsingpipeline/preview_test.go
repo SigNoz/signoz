@@ -141,6 +141,67 @@ func TestPipelinePreview(t *testing.T) {
 
 }
 
+func TestGrokParsingPreview(t *testing.T) {
+	require := require.New(t)
+
+	testPipelines := []Pipeline{
+		{
+			OrderId: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+			Filter: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "method",
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeTag,
+						},
+						Operator: "=",
+						Value:    "GET",
+					},
+				},
+			},
+			Config: []PipelineOperator{
+				{
+					OrderId:   1,
+					ID:        "grok",
+					Type:      "grok_parser",
+					Enabled:   true,
+					Name:      "test grok parser",
+					OnError:   "send",
+					ParseFrom: "body",
+					ParseTo:   "attributes",
+					Pattern:   "%{TIMESTAMP_ISO8601:timestamp}%{SPACE}%{WORD:log_level}%{SPACE}%{NOTSPACE:location}%{SPACE}{GREEDYDATA:message}",
+				},
+			},
+		},
+	}
+
+	testLog := makeTestLogEntry(
+		"2023-10-26T04:38:00.602Z INFO route/server.go:71 HTTP request received",
+		map[string]string{
+			"method": "GET",
+		},
+	)
+	result, err := SimulatePipelinesProcessing(
+		context.Background(),
+		testPipelines,
+		[]model.SignozLog{
+			testLog,
+		},
+	)
+
+	require.Nil(err)
+	require.Equal(1, len(result))
+	processed := result[0]
+
+	require.Equal("INFO", processed.Attributes_string["log_level"])
+	require.Equal("route/server.go:71", processed.Attributes_string["location"])
+}
+
 func makeTestLogEntry(
 	body string,
 	attributes map[string]string,
