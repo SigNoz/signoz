@@ -71,72 +71,68 @@ export const getUPlotChartOptions = ({
 	isDarkMode,
 	apiResponse,
 	onDragSelect,
-}: GetUPlotChartOptions): uPlot.Options => {
-	console.log('getUPlotChartOptions');
-
-	return {
-		width: dimensions.width,
-		height: dimensions.height - 30,
-		legend: {
-			live: false,
-			isolate: true,
-			show: false,
+}: GetUPlotChartOptions): uPlot.Options => ({
+	width: dimensions.width,
+	height: dimensions.height - 30,
+	legend: {
+		live: false,
+		isolate: true,
+		show: false,
+	},
+	scales: {
+		x: {
+			time: true,
 		},
-		scales: {
-			x: {
-				time: true,
-			},
-		},
-		hooks: {
-			setSelect: [
-				(self): void => {
-					const selection = self.select;
-					if (selection) {
-						const startTime = self.posToVal(selection.left, 'x');
-						const endTime = self.posToVal(selection.left + selection.width, 'x');
+	},
+	hooks: {
+		setSelect: [
+			(self): void => {
+				const selection = self.select;
+				if (selection) {
+					const startTime = self.posToVal(selection.left, 'x');
+					const endTime = self.posToVal(selection.left + selection.width, 'x');
 
-						const diff = endTime - startTime;
+					const diff = endTime - startTime;
 
-						if (diff > 0) {
-							onDragSelect(startTime * 1000, endTime * 1000);
-						}
+					if (diff > 0) {
+						onDragSelect(startTime * 1000, endTime * 1000);
 					}
-				},
-			],
-		},
-		series: getSeries(apiResponse),
-		axes: [
-			{
-				// label: 'Date',
-				stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
-				grid: {
-					stroke: getGridColor(isDarkMode), // Color of the grid lines
-					dash: [10, 10], // Dash pattern for grid lines,
-					width: 0.3, // Width of the grid lines,
-					show: true,
-				},
-				ticks: {
-					stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
-					width: 0.3, // Width of the tick lines,
-					show: true,
-				},
-				gap: 5,
-			},
-			{
-				// label: 'Value',
-				stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
-				grid: {
-					stroke: getGridColor(isDarkMode), // Color of the grid lines
-					dash: [10, 10], // Dash pattern for grid lines,
-					width: 0.3, // Width of the grid lines
-				},
-				ticks: {
-					stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
-					width: 0.3, // Width of the tick lines
-					show: true,
-				},
-				gap: 5,
+				}
 			},
 		],
-	};
-};
+	},
+	series: getSeries(apiResponse),
+	axes: [
+		{
+			// label: 'Date',
+			stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
+			grid: {
+				stroke: getGridColor(isDarkMode), // Color of the grid lines
+				dash: [10, 10], // Dash pattern for grid lines,
+				width: 0.3, // Width of the grid lines,
+				show: true,
+			},
+			ticks: {
+				stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
+				width: 0.3, // Width of the tick lines,
+				show: true,
+			},
+			gap: 5,
+		},
+		{
+			// label: 'Value',
+			stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
+			grid: {
+				stroke: getGridColor(isDarkMode), // Color of the grid lines
+				dash: [10, 10], // Dash pattern for grid lines,
+				width: 0.3, // Width of the grid lines
+			},
+			ticks: {
+				stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
+				width: 0.3, // Width of the tick lines
+				show: true,
+			},
+			gap: 5,
+		},
+	],
+});
