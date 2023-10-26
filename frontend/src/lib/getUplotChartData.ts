@@ -59,13 +59,20 @@ const getGridColor = (isDarkMode: boolean): string => {
 	return 'rgba(231,233,237,0.8)';
 };
 
-export const getUPlotChartOptions = (
-	apiResponse?: MetricRangePayloadV3['data'],
-	dimensions: Dimensions = { height: 0, width: 0 },
-	isDarkMode = false,
-	// eslint-disable-next-line arrow-body-style
-): uPlot.Options => {
-	// console.log('getUPlotChartOptions');
+interface GetUPlotChartOptions {
+	apiResponse?: MetricRangePayloadV3['data'];
+	dimensions: Dimensions;
+	isDarkMode: boolean;
+	onDragSelect: (startTime: number, endTime: number) => void;
+}
+
+export const getUPlotChartOptions = ({
+	dimensions,
+	isDarkMode,
+	apiResponse,
+	onDragSelect,
+}: GetUPlotChartOptions): uPlot.Options => {
+	console.log('getUPlotChartOptions');
 
 	return {
 		width: dimensions.width,
@@ -79,6 +86,23 @@ export const getUPlotChartOptions = (
 			x: {
 				time: true,
 			},
+		},
+		hooks: {
+			setSelect: [
+				(self): void => {
+					const selection = self.select;
+					if (selection) {
+						const startTime = self.posToVal(selection.left, 'x');
+						const endTime = self.posToVal(selection.left + selection.width, 'x');
+
+						const diff = endTime - startTime;
+
+						if (diff > 0) {
+							onDragSelect(startTime * 1000, endTime * 1000);
+						}
+					}
+				},
+			],
 		},
 		series: getSeries(apiResponse),
 		axes: [

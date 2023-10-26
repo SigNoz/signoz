@@ -7,7 +7,7 @@ import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
 import isEmpty from 'lodash-es/isEmpty';
-import { memo, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -30,14 +30,17 @@ function GridCardGraph({
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
 
-	const onDragSelect = (start: number, end: number): void => {
-		const startTimestamp = Math.trunc(start);
-		const endTimestamp = Math.trunc(end);
+	const onDragSelect = useCallback(
+		(start: number, end: number): void => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
 
-		if (startTimestamp !== endTimestamp) {
-			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
-		}
-	};
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch],
+	);
 
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -91,15 +94,17 @@ function GridCardGraph({
 
 	const options = useMemo(
 		() =>
-			getUPlotChartOptions(
-				queryResponse?.data?.payload?.data?.newResult?.data,
-				containerDimensions,
+			getUPlotChartOptions({
+				apiResponse: queryResponse?.data?.payload?.data?.newResult?.data,
+				dimensions: containerDimensions,
 				isDarkMode,
-			),
+				onDragSelect,
+			}),
 		[
 			queryResponse?.data?.payload?.data?.newResult?.data,
 			containerDimensions,
 			isDarkMode,
+			onDragSelect,
 		],
 	);
 

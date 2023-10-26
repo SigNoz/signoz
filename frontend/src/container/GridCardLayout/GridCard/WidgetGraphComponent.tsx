@@ -157,7 +157,7 @@ function WidgetGraphComponent({
 		onToggleModal(setModal);
 	};
 
-	if (queryResponse.isLoading) {
+	if (queryResponse.isLoading || queryResponse.status === 'idle') {
 		return (
 			<Skeleton
 				active
