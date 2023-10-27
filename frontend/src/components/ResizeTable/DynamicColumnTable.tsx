@@ -4,13 +4,15 @@ import './DynamicColumnTable.syles.scss';
 import { SettingOutlined } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps, Switch } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import { useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import ResizeTable from './ResizeTable';
 import { DynamicColumnTableProps } from './types';
+import { getVisibleColumns, setVisibleColumns } from './unit';
 
 function DynamicColumnTable({
+	tablesource,
 	columns,
 	dynamicColumns,
 	onDragColumn,
@@ -20,11 +22,35 @@ function DynamicColumnTable({
 		columns,
 	);
 
+	useEffect(() => {
+		const visibleColumns = getVisibleColumns({
+			tablesource,
+			columnsData: columns,
+			dynamicColumns,
+		});
+		setColumnsData((prevColumns) =>
+			prevColumns
+				? [
+						...prevColumns.slice(0, prevColumns.length - 1),
+						...visibleColumns,
+						prevColumns[prevColumns.length - 1],
+				  ]
+				: undefined,
+		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	const onToggleHandler = (index: number) => (
 		checked: boolean,
 		event: React.MouseEvent<HTMLButtonElement>,
 	): void => {
 		event.stopPropagation();
+		setVisibleColumns({
+			tablesource,
+			dynamicColumns,
+			index,
+			checked,
+		});
 		setColumnsData((prevColumns) => {
 			if (checked && dynamicColumns) {
 				return prevColumns
@@ -48,7 +74,10 @@ function DynamicColumnTable({
 			label: (
 				<div className="dynamicColumnsTable-items">
 					<div>{column.title?.toString()}</div>
-					<Switch onChange={onToggleHandler(index)} />
+					<Switch
+						checked={columnsData?.findIndex((c) => c.key === column.key) !== -1}
+						onChange={onToggleHandler(index)}
+					/>
 				</div>
 			),
 			key: index,
@@ -84,4 +113,4 @@ DynamicColumnTable.defaultProps = {
 	onDragColumn: undefined,
 };
 
-export default DynamicColumnTable;
+export default memo(DynamicColumnTable);

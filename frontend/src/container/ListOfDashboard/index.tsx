@@ -10,6 +10,10 @@ import {
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
+import {
+	DynamicColumnsKey,
+	TableDataSource,
+} from 'components/ResizeTable/contants';
 import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
@@ -75,6 +79,7 @@ function ListOfAllDashboard(): JSX.Element {
 			title: 'Created At',
 			dataIndex: 'createdAt',
 			width: 30,
+			key: DynamicColumnsKey.CreatedAt,
 			sorter: (a: Data, b: Data): number => {
 				console.log({ a });
 				const prev = new Date(a.createdAt).getTime();
@@ -88,12 +93,14 @@ function ListOfAllDashboard(): JSX.Element {
 			title: 'Created By',
 			dataIndex: 'createdBy',
 			width: 30,
+			key: DynamicColumnsKey.CreatedBy,
 			render: (value): JSX.Element => <div>{value}</div>,
 		},
 		{
 			title: 'Last Updated Time',
 			width: 30,
 			dataIndex: 'lastUpdatedTime',
+			key: DynamicColumnsKey.UpdatedAt,
 			sorter: (a: Data, b: Data): number => {
 				const prev = new Date(a.lastUpdatedTime).getTime();
 				const next = new Date(b.lastUpdatedTime).getTime();
@@ -106,6 +113,7 @@ function ListOfAllDashboard(): JSX.Element {
 			title: 'Last Updated By',
 			dataIndex: 'lastUpdatedBy',
 			width: 30,
+			key: DynamicColumnsKey.UpdatedBy,
 			render: (value): JSX.Element => <div>{value}</div>,
 		},
 	];
@@ -308,6 +316,7 @@ function ListOfAllDashboard(): JSX.Element {
 					onModalHandler={(): void => onModalHandler(false)}
 				/>
 				<DynamicColumnTable
+					tablesource={TableDataSource.Dashboard}
 					dynamicColumns={dynamicColumns}
 					columns={columns}
 					pagination={{

@@ -4,6 +4,10 @@ import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import saveAlertApi from 'api/alerts/save';
 import DropDown from 'components/DropDown/DropDown';
+import {
+	DynamicColumnsKey,
+	TableDataSource,
+} from 'components/ResizeTable/contants';
 import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
 import DateComponent from 'components/ResizeTable/TableComponent/Date';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
@@ -129,7 +133,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Created At',
 			dataIndex: 'createAt',
 			width: 80,
-			key: 'createAt',
+			key: DynamicColumnsKey.CreatedAt,
 			align: 'center',
 			sorter: (a: GettableAlert, b: GettableAlert): number => {
 				const prev = new Date(a.createAt).getTime();
@@ -143,7 +147,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Created By',
 			dataIndex: 'createBy',
 			width: 80,
-			key: 'createBy',
+			key: DynamicColumnsKey.CreatedBy,
 			align: 'center',
 			render: (value): JSX.Element => <div>{value}</div>,
 		},
@@ -151,7 +155,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Updated At',
 			dataIndex: 'updateAt',
 			width: 80,
-			key: 'updateAt',
+			key: DynamicColumnsKey.UpdatedAt,
 			align: 'center',
 			sorter: (a: GettableAlert, b: GettableAlert): number => {
 				const prev = new Date(a.updateAt).getTime();
@@ -165,7 +169,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Updated By',
 			dataIndex: 'updateBy',
 			width: 80,
-			key: 'updateBy',
+			key: DynamicColumnsKey.UpdatedBy,
 			align: 'center',
 			render: (value): JSX.Element => <div>{value}</div>,
 		},
@@ -284,6 +288,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				)}
 			</ButtonContainer>
 			<DynamicColumnTable
+				tablesource={TableDataSource.Alert}
 				columns={columns}
 				rowKey="id"
 				dataSource={data}
