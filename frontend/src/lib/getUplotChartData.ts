@@ -99,7 +99,6 @@ uPlot.Options => {
 					show: true,
 				},
 				ticks: {
-					stroke: 'white', // Color of the tick lines
 					width: 0.3, // Width of the tick lines,
 					show: true,
 				},
@@ -113,9 +112,7 @@ uPlot.Options => {
 					dash: [10, 10], // Dash pattern for grid lines,
 					width: 0.3, // Width of the grid lines
 				},
-				ticks: {
-					stroke: 'white', // Color of the tick lines
-				},
+				ticks: {},
 				gap: 5,
 				values: (_, t): string[] => t.map((v) => `${v}${yAxisUnit}`),
 			},
