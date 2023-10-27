@@ -49,7 +49,7 @@ function LabelColumn({ labels, value, color }: LabelColumnProps): JSX.Element {
 							)}
 						</div>
 					}
-					trigger="click"
+					trigger="hover"
 				>
 					<Tag className="LabelColumn-label-tag" color={color}>
 						+{remainingLabels.length}
