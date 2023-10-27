@@ -130,6 +130,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'createAt',
 			width: 80,
 			key: 'createAt',
+			align: 'center',
 			sorter: (a: GettableAlert, b: GettableAlert): number => {
 				const prev = new Date(a.createAt).getTime();
 				const next = new Date(b.createAt).getTime();
@@ -139,10 +140,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			render: DateComponent,
 		},
 		{
-			title: 'Create By',
+			title: 'Created By',
 			dataIndex: 'createBy',
 			width: 80,
 			key: 'createBy',
+			align: 'center',
 			render: (value): JSX.Element => <div>{value}</div>,
 		},
 		{
@@ -150,6 +152,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'updateAt',
 			width: 80,
 			key: 'updateAt',
+			align: 'center',
 			sorter: (a: GettableAlert, b: GettableAlert): number => {
 				const prev = new Date(a.updateAt).getTime();
 				const next = new Date(b.updateAt).getTime();
@@ -163,6 +166,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'updateBy',
 			width: 80,
 			key: 'updateBy',
+			align: 'center',
 			render: (value): JSX.Element => <div>{value}</div>,
 		},
 	];

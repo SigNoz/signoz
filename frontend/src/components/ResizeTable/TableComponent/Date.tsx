@@ -11,7 +11,13 @@ function DateComponent(
 
 	const timeString = `${date} ${convertDateToAmAndPm(time)}`;
 
-	return <Typography>{timeString}</Typography>;
+	if (CreatedOrUpdateTime === null) {
+		return <Typography> - </Typography>;
+	}
+
+	return (
+		<Typography className="DateComponent-container">{timeString}</Typography>
+	);
 }
 
 export default DateComponent;
