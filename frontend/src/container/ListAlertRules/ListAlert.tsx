@@ -3,7 +3,14 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import saveAlertApi from 'api/alerts/save';
-import { ResizeTable } from 'components/ResizeTable';
+import DropDown from 'components/DropDown/DropDown';
+import {
+	DynamicColumnsKey,
+	TableDataSource,
+} from 'components/ResizeTable/contants';
+import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
+import DateComponent from 'components/ResizeTable/TableComponent/Date';
+import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -22,7 +29,7 @@ import { GettableAlert } from 'types/api/alerts/get';
 import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
-import { Button, ButtonContainer, ColumnButton, StyledTag } from './styles';
+import { Button, ButtonContainer, ColumnButton } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
 
@@ -121,6 +128,53 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		}
 	};
 
+	const dynamicColumns: ColumnsType<GettableAlert> = [
+		{
+			title: 'Created At',
+			dataIndex: 'createAt',
+			width: 80,
+			key: DynamicColumnsKey.CreatedAt,
+			align: 'center',
+			sorter: (a: GettableAlert, b: GettableAlert): number => {
+				const prev = new Date(a.createAt).getTime();
+				const next = new Date(b.createAt).getTime();
+
+				return prev - next;
+			},
+			render: DateComponent,
+		},
+		{
+			title: 'Created By',
+			dataIndex: 'createBy',
+			width: 80,
+			key: DynamicColumnsKey.CreatedBy,
+			align: 'center',
+			render: (value): JSX.Element => <div>{value}</div>,
+		},
+		{
+			title: 'Updated At',
+			dataIndex: 'updateAt',
+			width: 80,
+			key: DynamicColumnsKey.UpdatedAt,
+			align: 'center',
+			sorter: (a: GettableAlert, b: GettableAlert): number => {
+				const prev = new Date(a.updateAt).getTime();
+				const next = new Date(b.updateAt).getTime();
+
+				return prev - next;
+			},
+			render: DateComponent,
+		},
+		{
+			title: 'Updated By',
+			dataIndex: 'updateBy',
+			width: 80,
+			key: DynamicColumnsKey.UpdatedBy,
+			align: 'center',
+			render: (value): JSX.Element => <div>{value}</div>,
+		},
+	];
+
 	const columns: ColumnsType<GettableAlert> = [
 		{
 			title: 'Status',
@@ -178,13 +232,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				}
 
 				return (
-					<>
-						{withOutSeverityKeys.map((e) => (
-							<StyledTag key={e} color="magenta">
-								{e}: {value[e]}
-							</StyledTag>
-						))}
-					</>
+					<LabelColumn labels={withOutSeverityKeys} value={value} color="magenta" />
 				);
 			},
 		},
@@ -195,20 +243,30 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
-			width: 120,
+			width: 10,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
-				<>
-					<ToggleAlertState disabled={record.disabled} setData={setData} id={id} />
-
-					<ColumnButton onClick={onEditHandler(record)} type="link">
-						Edit
-					</ColumnButton>
-					<ColumnButton onClick={onCloneHandler(record)} type="link">
-						Clone
-					</ColumnButton>
-
-					<DeleteAlert notifications={notificationsApi} setData={setData} id={id} />
-				</>
+				<DropDown
+					element={[
+						<ToggleAlertState
+							key="1"
+							disabled={record.disabled}
+							setData={setData}
+							id={id}
+						/>,
+						<ColumnButton key="2" onClick={onEditHandler(record)} type="link">
+							Edit
+						</ColumnButton>,
+						<ColumnButton key="3" onClick={onCloneHandler(record)} type="link">
+							Clone
+						</ColumnButton>,
+						<DeleteAlert
+							key="4"
+							notifications={notificationsApi}
+							setData={setData}
+							id={id}
+						/>,
+					]}
+				/>
 			),
 		});
 	}
@@ -229,7 +287,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					</Button>
 				)}
 			</ButtonContainer>
-			<ResizeTable columns={columns} rowKey="id" dataSource={data} />
+			<DynamicColumnTable
+				tablesource={TableDataSource.Alert}
+				columns={columns}
+				rowKey="id"
+				dataSource={data}
+				dynamicColumns={dynamicColumns}
+			/>
 		</>
 	);
 }
