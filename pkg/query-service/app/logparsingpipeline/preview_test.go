@@ -2,7 +2,8 @@ package logparsingpipeline
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
+	"strconv"
 	"testing"
 	"time"
 
@@ -227,28 +228,32 @@ func TestTraceParsingPreview(t *testing.T) {
 					},
 				},
 			},
-			Config: []PipelineOperator{
-				{
-					OrderId: 1,
-					ID:      "trace",
-					Type:    "trace_parser",
-					Enabled: true,
-					Name:    "test trace parser",
-					TraceParser: &TraceParser{
-						TraceId: &ParseFrom{
-							ParseFrom: "attributes.test_trace_id",
-						},
-						SpanId: &ParseFrom{
-							ParseFrom: "attributes.test_span_id",
-						},
-						TraceFlags: &ParseFrom{
-							ParseFrom: "attributes.test_trace_flags",
-						},
-					},
-				},
-			},
+			Config: []PipelineOperator{},
 		},
 	}
+
+	// Start with JSON serialized trace parser to validate deserialization too
+	var traceParserOp PipelineOperator
+	err := json.Unmarshal([]byte(`
+		{
+			"orderId": 1,
+			"enabled": true,
+			"type": "trace_parser",
+			"name": "Test trace parser",
+			"id": "test-trace-parser",
+			"trace_id": {
+					"parse_from": "attributes.test_trace_id"
+			},
+			"span_id": {
+					"parse_from": "attributes.test_span_id"
+			},
+			"trace_flags": {
+					"parse_from": "attributes.test_trace_flags"
+			}
+		}
+	`), &traceParserOp)
+	require.Nil(err)
+	testPipelines[0].Config = append(testPipelines[0].Config, traceParserOp)
 
 	testTraceId, err := utils.RandomHex(16)
 	require.Nil(err)
@@ -286,7 +291,10 @@ func TestTraceParsingPreview(t *testing.T) {
 
 	require.Equal(testTraceId, processed.TraceID)
 	require.Equal(testSpanId, processed.SpanID)
-	require.Equal(testTraceFlags, fmt.Sprintf("%x", processed.TraceFlags))
+
+	expectedTraceFlags, err := strconv.ParseUint(testTraceFlags, 16, 16)
+	require.Nil(err)
+	require.Equal(uint32(expectedTraceFlags), processed.TraceFlags)
 }
 
 func makeTestLogEntry(

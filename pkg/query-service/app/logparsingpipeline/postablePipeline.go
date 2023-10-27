@@ -165,7 +165,7 @@ func isValidOperator(op PipelineOperator) error {
 			return fmt.Errorf(fmt.Sprintf("fields of %s retain operator cannot be empty", op.ID))
 		}
 	default:
-		return fmt.Errorf(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, traceParser, retain)", op.Type, op.ID))
+		return fmt.Errorf(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, trace_parser, retain)", op.Type, op.ID))
 	}
 
 	if !isValidOtelValue(op.ParseFrom) ||
