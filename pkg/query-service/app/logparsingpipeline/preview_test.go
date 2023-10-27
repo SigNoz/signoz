@@ -202,6 +202,75 @@ func TestGrokParsingPreview(t *testing.T) {
 	require.Equal("route/server.go:71", processed.Attributes_string["location"])
 }
 
+func TestTraceParsingPreview(t *testing.T) {
+	require := require.New(t)
+
+	testPipelines := []Pipeline{
+		{
+			OrderId: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+			Filter: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "method",
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeTag,
+						},
+						Operator: "=",
+						Value:    "GET",
+					},
+				},
+			},
+			Config: []PipelineOperator{
+				{
+					OrderId: 1,
+					ID:      "trace",
+					Type:    "trace_parser",
+					Enabled: true,
+					Name:    "test trace parser",
+					TraceParser: &TraceParser{
+						TraceId: &ParseFrom{
+							ParseFrom: "attributes.test_trace_id",
+						},
+						SpanId: &ParseFrom{
+							ParseFrom: "attributes.test_span_id",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testTraceId := "test-trace-id"
+	testSpanId := "test-span-id"
+	testLog := makeTestLogEntry(
+		"test log",
+		map[string]string{
+			"method":        "GET",
+			"test_trace_id": testTraceId,
+			"test_span_id":  testSpanId,
+		},
+	)
+	result, err := SimulatePipelinesProcessing(
+		context.Background(),
+		testPipelines,
+		[]model.SignozLog{
+			testLog,
+		},
+	)
+
+	require.Nil(err)
+	require.Equal(1, len(result))
+	processed := result[0]
+
+	require.Equal(testTraceId, processed.TraceID)
+	require.Equal(testSpanId, processed.SpanID)
+}
+
 func makeTestLogEntry(
 	body string,
 	attributes map[string]string,
