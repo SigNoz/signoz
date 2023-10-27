@@ -2,6 +2,7 @@ package logparsingpipeline
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 func TestPipelinePreview(t *testing.T) {
@@ -239,22 +241,38 @@ func TestTraceParsingPreview(t *testing.T) {
 						SpanId: &ParseFrom{
 							ParseFrom: "attributes.test_span_id",
 						},
+						TraceFlags: &ParseFrom{
+							ParseFrom: "attributes.test_trace_flags",
+						},
 					},
 				},
 			},
 		},
 	}
 
-	testTraceId := "test-trace-id"
-	testSpanId := "test-span-id"
-	testLog := makeTestLogEntry(
-		"test log",
-		map[string]string{
-			"method":        "GET",
-			"test_trace_id": testTraceId,
-			"test_span_id":  testSpanId,
+	testTraceId, err := utils.RandomHex(16)
+	require.Nil(err)
+
+	testSpanId, err := utils.RandomHex(8)
+	require.Nil(err)
+
+	testTraceFlags, err := utils.RandomHex(1)
+	require.Nil(err)
+
+	testLog := model.SignozLog{
+		Timestamp: uint64(time.Now().UnixNano()),
+		Body:      "test log",
+		Attributes_string: map[string]string{
+			"method":           "GET",
+			"test_trace_id":    testTraceId,
+			"test_span_id":     testSpanId,
+			"test_trace_flags": testTraceFlags,
 		},
-	)
+		SpanID:     "",
+		TraceID:    "",
+		TraceFlags: 0,
+	}
+
 	result, err := SimulatePipelinesProcessing(
 		context.Background(),
 		testPipelines,
@@ -262,13 +280,13 @@ func TestTraceParsingPreview(t *testing.T) {
 			testLog,
 		},
 	)
-
 	require.Nil(err)
 	require.Equal(1, len(result))
 	processed := result[0]
 
 	require.Equal(testTraceId, processed.TraceID)
 	require.Equal(testSpanId, processed.SpanID)
+	require.Equal(testTraceFlags, fmt.Sprintf("%x", processed.TraceFlags))
 }
 
 func makeTestLogEntry(
