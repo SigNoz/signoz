@@ -85,8 +85,8 @@ function GridCardGraph({
 			<Skeleton
 				style={{
 					height: '100%',
+					padding: '16px',
 				}}
-				round
 			/>
 		);
 	}

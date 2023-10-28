@@ -17,6 +17,21 @@ body {
 .u-legend {
   max-height: 30px; // slicing the height of the widget Header height ;
   overflow-y: auto;
+
+  tr.u-series {
+    th {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 400;
+      font-size: 12px;
+      -webkit-font-smoothing: antialiased;
+
+      .u-marker {
+        border-radius: 50%;
+      }
+    }
+  }
 }
 
 #overlay {
@@ -24,15 +39,18 @@ body {
     'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
   font-size: 12px;
   position: absolute;
-  background: rgba(0, 0, 0, 0.9);
-  padding: 0.5rem;
   margin: 0.5rem;
+  background: rgba(0, 0, 0, 0.9);
   color: #fff;
   z-index: 100;
   pointer-events: none;
   overflow: auto;
   max-height: 300px;
   border-radius: 5px;
+
+  .tooltip-container {
+    padding: 0.5rem;
+  }
 }
 
 .tooltip-content-row {
@@ -40,6 +58,7 @@ body {
   align-items: center;
   gap: 4px;
 }
+
 `;
 
 export default GlobalStyles;
