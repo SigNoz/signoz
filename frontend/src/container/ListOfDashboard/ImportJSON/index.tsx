@@ -6,6 +6,7 @@ import Editor from 'components/Editor';
 import ROUTES from 'constants/routes';
 import { MESSAGE } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
+import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import history from 'lib/history';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -64,6 +65,10 @@ function ImportJSON({
 		try {
 			setDashboardCreating(true);
 			const dashboardData = JSON.parse(editorValue) as DashboardData;
+
+			if (dashboardData.layout) {
+				dashboardData.layout = getUpdatedLayout(dashboardData.layout);
+			}
 
 			const response = await createDashboard({
 				...dashboardData,
