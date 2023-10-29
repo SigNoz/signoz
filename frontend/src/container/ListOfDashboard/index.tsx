@@ -94,7 +94,6 @@ function ListOfAllDashboard(): JSX.Element {
 			dataIndex: 'createdBy',
 			width: 30,
 			key: DynamicColumnsKey.CreatedBy,
-			render: (value): JSX.Element => <div>{value}</div>,
 		},
 		{
 			title: 'Last Updated Time',
@@ -114,7 +113,6 @@ function ListOfAllDashboard(): JSX.Element {
 			dataIndex: 'lastUpdatedBy',
 			width: 30,
 			key: DynamicColumnsKey.UpdatedBy,
-			render: (value): JSX.Element => <div>{value}</div>,
 		},
 	];
 
