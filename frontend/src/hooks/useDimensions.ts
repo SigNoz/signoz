@@ -1,39 +1,36 @@
 import debounce from 'lodash-es/debounce';
 import { useEffect, useState } from 'react';
 
-export interface Dimensions {
+export type Dimensions = {
 	width: number;
 	height: number;
-}
+};
 
-export function useDimensions(ref: React.RefObject<HTMLElement>): Dimensions {
-	const [dimensions, setDimensions] = useState<Dimensions>({
-		width: 0,
-		height: 0,
-	});
+export function useResizeObserver<T extends HTMLElement>(
+	ref: React.RefObject<T>,
+	debounceTime = 300,
+): Dimensions {
+	const [size, setSize] = useState<Dimensions>({ width: 0, height: 0 });
 
+	// eslint-disable-next-line consistent-return
 	useEffect(() => {
-		const updateDimensions = debounce(() => {
-			const reference = ref.current;
+		if (ref.current) {
+			const handleResize = debounce((entries: ResizeObserverEntry[]) => {
+				const entry = entries[0];
+				if (entry) {
+					const { width, height } = entry.contentRect;
+					setSize({ width, height });
+				}
+			}, debounceTime);
 
-			if (reference) {
-				const width = ref.current.offsetWidth;
-				const height = ref.current.offsetHeight;
-				setDimensions({ width, height });
-			}
-		}, 250); // 250ms debounce delay
+			const ro = new ResizeObserver(handleResize);
+			ro.observe(ref.current);
 
-		// Initial dimensions update
-		updateDimensions();
+			return (): void => {
+				ro.disconnect();
+			};
+		}
+	}, [ref, debounceTime]);
 
-		window.addEventListener('resize', updateDimensions);
-
-		// Cleanup
-		return (): void => {
-			window.removeEventListener('resize', updateDimensions);
-			updateDimensions.cancel(); // Cancel any debounced calls
-		};
-	}, [ref]);
-
-	return dimensions;
+	return size;
 }

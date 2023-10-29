@@ -130,7 +130,11 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					const currentWidget = (widgets || [])?.find((e) => e.id === id);
 
 					return (
-						<CardContainer isDarkMode={isDarkMode} key={id} data-grid={layout}>
+						<CardContainer
+							isDarkMode={isDarkMode}
+							key={id}
+							data-grid={JSON.stringify(layout)}
+						>
 							<Card $panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}>
 								<GridCard
 									widget={currentWidget || ({ id } as Widgets)}

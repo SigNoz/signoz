@@ -1,7 +1,7 @@
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useDimensions } from 'hooks/useDimensions';
+import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
 import { useMemo, useRef } from 'react';
@@ -19,7 +19,7 @@ function WidgetGraph({
 
 	const graphRef = useRef<HTMLDivElement>(null);
 
-	const containerDimensions = useDimensions(graphRef);
+	const containerDimensions = useResizeObserver(graphRef);
 
 	const chartData = getUPlotChartData(
 		getWidgetQueryRange?.data?.payload?.data?.newResult?.data,

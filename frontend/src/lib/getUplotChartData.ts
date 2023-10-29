@@ -32,7 +32,7 @@ export const getUPlotChartData = (
 
 const getSeries = (
 	apiResponse?: MetricRangePayloadV3['data'],
-	widgetMetaData = [],
+	widgetMetaData: QueryData[] = [],
 ): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
@@ -73,18 +73,19 @@ const getGridColor = (isDarkMode: boolean): string => {
 	return 'rgba(231,233,237,0.8)';
 };
 
-type GetUPlotChartOptions = {
-	yAxisUnit: string;
+interface GetUPlotChartOptions {
 	apiResponse?: MetricRangePayloadV3['data'];
+	dimensions: Dimensions;
+	isDarkMode: boolean;
+	onDragSelect: (startTime: number, endTime: number) => void;
+	yAxisUnit?: string;
 	widgetMetaData?: QueryData[];
-	dimensions?: Dimensions;
-	isDarkMode?: boolean;
-};
+}
 
 const createDivsFromArray = (
 	data: any[],
 	idx: string | number,
-	yAxisUnit: string,
+	yAxisUnit?: string,
 ): HTMLElement => {
 	const container = document.createElement('div');
 	container.classList.add('tooltip-container');
@@ -122,7 +123,7 @@ const createDivsFromArray = (
 	return container;
 };
 
-const tooltipPlugin = (yAxisUnit: string): any => {
+const tooltipPlugin = (yAxisUnit?: string): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
 	let bLeft: any;
@@ -184,71 +185,91 @@ const tooltipPlugin = (yAxisUnit: string): any => {
 };
 
 export const getUPlotChartOptions = ({
-	yAxisUnit,
+	dimensions,
+	isDarkMode,
 	apiResponse,
+	onDragSelect,
 	widgetMetaData = [],
-	dimensions = { height: 0, width: 0 },
-	isDarkMode = false,
-}: GetUPlotChartOptions): // eslint-disable-next-line arrow-body-style
-uPlot.Options => {
-	return {
-		width: dimensions.width,
-		height: dimensions.height - 30,
+	yAxisUnit,
+}: GetUPlotChartOptions): uPlot.Options => ({
+	width: dimensions.width,
+	height: dimensions.height - 30,
+	legend: {
+		live: false,
+		isolate: true,
+		show: false,
+	},
+	focus: {
+		alpha: 1,
+	},
+	cursor: {
 		focus: {
-			alpha: 1,
+			prox: 1e6,
+			bias: 1,
 		},
-		cursor: {
-			focus: {
-				prox: 1e6,
-				bias: 1,
-			},
+	},
+	padding: [10, 10, 10, 10],
+	scales: {
+		x: {
+			time: true,
 		},
-		padding: [10, 10, 10, 10],
-		legend: {
-			live: false,
-			isolate: true,
-		},
-		plugins: [tooltipPlugin(yAxisUnit)],
-		scales: {
-			x: {
-				time: true,
-			},
-		},
-		series: getSeries(apiResponse, widgetMetaData),
-		axes: [
-			{
-				// label: 'Date',
-				stroke: 'white', // Color of the axis line
-				grid: {
-					stroke: getGridColor(isDarkMode), // Color of the grid lines
-					dash: [10, 10], // Dash pattern for grid lines,
-					width: 0.5, // Width of the grid lines,
-					show: true,
-				},
-				ticks: {
-					stroke: 'white', // Color of the tick lines
-					width: 0.5, // Width of the tick lines,
-					show: true,
-				},
-				gap: 5,
-			},
-			{
-				// label: 'Value',
-				stroke: 'white', // Color of the axis line
-				grid: {
-					stroke: getGridColor(isDarkMode), // Color of the grid lines
-					dash: [10, 10], // Dash pattern for grid lines,
-					width: 0.5, // Width of the grid lines
-				},
-				ticks: {},
-				gap: 5,
-				values: (_, t): string[] =>
-					t.map((v) => {
-						const value = getToolTipValue(v.toString(), yAxisUnit);
+	},
+	plugins: [tooltipPlugin(yAxisUnit)],
+	hooks: {
+		setSelect: [
+			(self): void => {
+				const selection = self.select;
+				if (selection) {
+					const startTime = self.posToVal(selection.left, 'x');
+					const endTime = self.posToVal(selection.left + selection.width, 'x');
 
-						return `${value}`;
-					}),
+					const diff = endTime - startTime;
+
+					if (diff > 0) {
+						onDragSelect(startTime * 1000, endTime * 1000);
+					}
+				}
 			},
 		],
-	};
-};
+	},
+	series: getSeries(apiResponse, widgetMetaData),
+	axes: [
+		{
+			// label: 'Date',
+			stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
+			grid: {
+				stroke: getGridColor(isDarkMode), // Color of the grid lines
+				dash: [10, 10], // Dash pattern for grid lines,
+				width: 0.5, // Width of the grid lines,
+				show: true,
+			},
+			ticks: {
+				stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
+				width: 0.3, // Width of the tick lines,
+				show: true,
+			},
+			gap: 5,
+		},
+		{
+			// label: 'Value',
+			stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
+			grid: {
+				stroke: getGridColor(isDarkMode), // Color of the grid lines
+				dash: [10, 10], // Dash pattern for grid lines,
+				width: 0.3, // Width of the grid lines
+			},
+			ticks: {
+				stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
+				width: 0.3, // Width of the tick lines
+				show: true,
+			},
+			values: (_, t): string[] =>
+				t.map((v) => {
+					const value = getToolTipValue(v.toString(), yAxisUnit);
+
+					return `${value}`;
+				}),
+			gap: 5,
+		},
+	],
+});

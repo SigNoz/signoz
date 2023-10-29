@@ -1,11 +1,13 @@
-import { Skeleton } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useResizeObserver } from 'hooks/useDimensions';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
 import isEmpty from 'lodash-es/isEmpty';
-import { memo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -28,16 +30,19 @@ function GridCardGraph({
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
 
-	const onDragSelect = (start: number, end: number): void => {
-		const startTimestamp = Math.trunc(start);
-		const endTimestamp = Math.trunc(end);
+	const onDragSelect = useCallback(
+		(start: number, end: number): void => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
 
-		if (startTimestamp !== endTimestamp) {
-			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
-		}
-	};
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch],
+	);
 
-	const graphRef = useRef<HTMLSpanElement>(null);
+	const graphRef = useRef<HTMLDivElement>(null);
 
 	const isVisible = useIntersectionObserver(graphRef, undefined, true);
 
@@ -80,20 +85,38 @@ function GridCardGraph({
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 
-	if (queryResponse.isLoading) {
-		return (
-			<Skeleton
-				style={{
-					height: '100%',
-					padding: '16px',
-				}}
-			/>
-		);
-	}
+	const containerDimensions = useResizeObserver(graphRef);
+
+	const chartData = getUPlotChartData(
+		queryResponse?.data?.payload?.data?.newResult?.data,
+	);
+	const isDarkMode = useIsDarkMode();
+
+	const options = useMemo(
+		() =>
+			getUPlotChartOptions({
+				apiResponse: queryResponse?.data?.payload?.data?.newResult?.data,
+				widgetMetaData: queryResponse?.data?.payload?.data?.result,
+				dimensions: containerDimensions,
+				isDarkMode,
+				onDragSelect,
+				yAxisUnit: widget?.yAxisUnit,
+			}),
+		[
+			queryResponse?.data?.payload?.data?.newResult?.data,
+			queryResponse?.data?.payload?.data?.result,
+			containerDimensions,
+			isDarkMode,
+			onDragSelect,
+			widget?.yAxisUnit,
+		],
+	);
 
 	return (
-		<span ref={graphRef}>
+		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			<WidgetGraphComponent
+				data={chartData}
+				options={options}
 				widget={widget}
 				queryResponse={queryResponse}
 				errorMessage={errorMessage}
@@ -106,7 +129,7 @@ function GridCardGraph({
 			/>
 
 			{isEmptyLayout && <EmptyWidget />}
-		</span>
+		</div>
 	);
 }
 
