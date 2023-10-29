@@ -10,7 +10,12 @@ import {
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
-import { ResizeTable } from 'components/ResizeTable';
+import {
+	DynamicColumnsKey,
+	TableDataSource,
+} from 'components/ResizeTable/contants';
+import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
+import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
@@ -26,13 +31,11 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import DateComponent from '../../components/ResizeTable/TableComponent/Date';
 import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
-import Createdby from './TableComponents/CreatedBy';
-import DateComponent from './TableComponents/Date';
 import DeleteButton from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
-import Tags from './TableComponents/Tags';
 
 function ListOfAllDashboard(): JSX.Element {
 	const {
@@ -71,48 +74,68 @@ function ListOfAllDashboard(): JSX.Element {
 		errorMessage: '',
 	});
 
+	const dynamicColumns: TableColumnProps<Data>[] = [
+		{
+			title: 'Created At',
+			dataIndex: 'createdAt',
+			width: 30,
+			key: DynamicColumnsKey.CreatedAt,
+			sorter: (a: Data, b: Data): number => {
+				console.log({ a });
+				const prev = new Date(a.createdAt).getTime();
+				const next = new Date(b.createdAt).getTime();
+
+				return prev - next;
+			},
+			render: DateComponent,
+		},
+		{
+			title: 'Created By',
+			dataIndex: 'createdBy',
+			width: 30,
+			key: DynamicColumnsKey.CreatedBy,
+			render: (value): JSX.Element => <div>{value}</div>,
+		},
+		{
+			title: 'Last Updated Time',
+			width: 30,
+			dataIndex: 'lastUpdatedTime',
+			key: DynamicColumnsKey.UpdatedAt,
+			sorter: (a: Data, b: Data): number => {
+				const prev = new Date(a.lastUpdatedTime).getTime();
+				const next = new Date(b.lastUpdatedTime).getTime();
+
+				return prev - next;
+			},
+			render: DateComponent,
+		},
+		{
+			title: 'Last Updated By',
+			dataIndex: 'lastUpdatedBy',
+			width: 30,
+			key: DynamicColumnsKey.UpdatedBy,
+			render: (value): JSX.Element => <div>{value}</div>,
+		},
+	];
+
 	const columns = useMemo(() => {
 		const tableColumns: TableColumnProps<Data>[] = [
 			{
 				title: 'Name',
 				dataIndex: 'name',
-				width: 100,
+				width: 40,
 				render: Name,
 			},
 			{
 				title: 'Description',
-				width: 100,
+				width: 50,
 				dataIndex: 'description',
 			},
 			{
 				title: 'Tags (can be multiple)',
 				dataIndex: 'tags',
-				width: 80,
-				render: Tags,
-			},
-			{
-				title: 'Created At',
-				dataIndex: 'createdBy',
-				width: 80,
-				sorter: (a: Data, b: Data): number => {
-					const prev = new Date(a.createdBy).getTime();
-					const next = new Date(b.createdBy).getTime();
-
-					return prev - next;
-				},
-				render: Createdby,
-			},
-			{
-				title: 'Last Updated Time',
-				width: 90,
-				dataIndex: 'lastUpdatedTime',
-				sorter: (a: Data, b: Data): number => {
-					const prev = new Date(a.lastUpdatedTime).getTime();
-					const next = new Date(b.lastUpdatedTime).getTime();
-
-					return prev - next;
-				},
-				render: DateComponent,
+				width: 50,
+				render: (value): JSX.Element => <LabelColumn labels={value} />,
 			},
 		];
 
@@ -130,13 +153,15 @@ function ListOfAllDashboard(): JSX.Element {
 
 	const data: Data[] =
 		filteredDashboards?.map((e) => ({
-			createdBy: e.created_at,
+			createdAt: e.created_at,
 			description: e.data.description || '',
 			id: e.uuid,
 			lastUpdatedTime: e.updated_at,
 			name: e.data.title,
 			tags: e.data.tags || [],
 			key: e.uuid,
+			createdBy: e.created_by,
+			lastUpdatedBy: e.updated_by,
 			refetchDashboardList,
 		})) || [];
 
@@ -290,7 +315,9 @@ function ListOfAllDashboard(): JSX.Element {
 					uploadedGrafana={uploadedGrafana}
 					onModalHandler={(): void => onModalHandler(false)}
 				/>
-				<ResizeTable
+				<DynamicColumnTable
+					tablesource={TableDataSource.Dashboard}
+					dynamicColumns={dynamicColumns}
 					columns={columns}
 					pagination={{
 						pageSize: 9,
@@ -314,7 +341,9 @@ export interface Data {
 	description: string;
 	tags: string[];
 	createdBy: string;
+	createdAt: string;
 	lastUpdatedTime: string;
+	lastUpdatedBy: string;
 	id: string;
 }
 
