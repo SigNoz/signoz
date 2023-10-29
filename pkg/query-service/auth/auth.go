@@ -31,7 +31,7 @@ var (
 func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteResponse, error) {
 	zap.S().Debugf("Got an invite request for email: %s\n", req.Email)
 
-	token, err := randomHex(opaqueTokenSize)
+	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate invite token")
 	}
@@ -140,7 +140,7 @@ func ValidateInvite(ctx context.Context, req *RegisterRequest) (*model.Invitatio
 }
 
 func CreateResetPasswordToken(ctx context.Context, userId string) (*model.ResetPasswordEntry, error) {
-	token, err := randomHex(opaqueTokenSize)
+	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate reset password token")
 	}

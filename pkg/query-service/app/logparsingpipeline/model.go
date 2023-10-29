@@ -48,20 +48,20 @@ type PipelineOperator struct {
 	Name    string `json:"name,omitempty" yaml:"-"`
 
 	// optional keys depending on the type
-	ParseTo     string           `json:"parse_to,omitempty" yaml:"parse_to,omitempty"`
-	Pattern     string           `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	Regex       string           `json:"regex,omitempty" yaml:"regex,omitempty"`
-	ParseFrom   string           `json:"parse_from,omitempty" yaml:"parse_from,omitempty"`
-	Timestamp   *TimestampParser `json:"timestamp,omitempty" yaml:"timestamp,omitempty"`
-	TraceParser *TraceParser     `json:"trace_parser,omitempty" yaml:"trace_parser,omitempty"`
-	Field       string           `json:"field,omitempty" yaml:"field,omitempty"`
-	Value       string           `json:"value,omitempty" yaml:"value,omitempty"`
-	From        string           `json:"from,omitempty" yaml:"from,omitempty"`
-	To          string           `json:"to,omitempty"  yaml:"to,omitempty"`
-	Expr        string           `json:"expr,omitempty" yaml:"expr,omitempty"`
-	Routes      *[]Route         `json:"routes,omitempty" yaml:"routes,omitempty"`
-	Fields      []string         `json:"fields,omitempty" yaml:"fields,omitempty"`
-	Default     string           `json:"default,omitempty" yaml:"default,omitempty"`
+	ParseTo      string           `json:"parse_to,omitempty" yaml:"parse_to,omitempty"`
+	Pattern      string           `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	Regex        string           `json:"regex,omitempty" yaml:"regex,omitempty"`
+	ParseFrom    string           `json:"parse_from,omitempty" yaml:"parse_from,omitempty"`
+	Timestamp    *TimestampParser `json:"timestamp,omitempty" yaml:"timestamp,omitempty"`
+	*TraceParser `yaml:",inline,omitempty"`
+	Field        string   `json:"field,omitempty" yaml:"field,omitempty"`
+	Value        string   `json:"value,omitempty" yaml:"value,omitempty"`
+	From         string   `json:"from,omitempty" yaml:"from,omitempty"`
+	To           string   `json:"to,omitempty"  yaml:"to,omitempty"`
+	Expr         string   `json:"expr,omitempty" yaml:"expr,omitempty"`
+	Routes       *[]Route `json:"routes,omitempty" yaml:"routes,omitempty"`
+	Fields       []string `json:"fields,omitempty" yaml:"fields,omitempty"`
+	Default      string   `json:"default,omitempty" yaml:"default,omitempty"`
 }
 
 type TimestampParser struct {
