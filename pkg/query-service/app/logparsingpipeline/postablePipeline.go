@@ -147,7 +147,7 @@ func isValidOperator(op PipelineOperator) error {
 		hasTraceFlagsParseFrom := (op.TraceParser.TraceFlags != nil && op.TraceParser.TraceFlags.ParseFrom != "")
 
 		if !(hasTraceIdParseFrom || hasSpanIdParseFrom || hasTraceFlagsParseFrom) {
-			return fmt.Errorf(fmt.Sprintf("one of trace_id,span_id,parse_from of %s traceParser operator must be present", op.ID))
+			return fmt.Errorf(fmt.Sprintf("one of trace_id, span_id, trace_flags of %s trace_parser operator must be present", op.ID))
 		}
 
 		if hasTraceIdParseFrom && !isValidOtelValue(op.TraceParser.TraceId.ParseFrom) {
