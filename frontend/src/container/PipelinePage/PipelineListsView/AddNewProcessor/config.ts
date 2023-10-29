@@ -24,7 +24,7 @@ export type ProcessorFormField = {
 	id: number;
 	fieldName: string;
 	placeholder: string;
-	name: string;
+	name: string | Array<string>;
 	rules?: Array<{ [key: string]: boolean }>;
 	initialValue?: string;
 };
@@ -152,21 +152,21 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		},
 		{
 			id: 2,
-			fieldName: 'Trace Id Parce From',
+			fieldName: 'Parse Trace Id From',
 			placeholder: 'processor_trace_id_placeholder',
-			name: 'traceId',
+			name: ['trace_id', 'parse_from'],
 		},
 		{
 			id: 3,
-			fieldName: 'Span id Parse From',
+			fieldName: 'Parse Span Id From',
 			placeholder: 'processor_span_id_placeholder',
-			name: 'spanId',
+			name: ['span_id', 'parse_from'],
 		},
 		{
 			id: 4,
-			fieldName: 'Trace flags parse from',
+			fieldName: 'Parse Trace flags From',
 			placeholder: 'processor_trace_flags_placeholder',
-			name: 'traceFlags',
+			name: ['trace_flags', 'parse_from'],
 		},
 	],
 	retain: [
