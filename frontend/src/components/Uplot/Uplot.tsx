@@ -1,5 +1,5 @@
 import isEqual from 'lodash-es/isEqual';
-import React, { Component, memo } from 'react';
+import { useEffect, useRef } from 'react';
 import UPlot from 'uplot';
 
 export interface UplotProps {
@@ -7,55 +7,38 @@ export interface UplotProps {
 	options: uPlot.Options;
 }
 
-class UplotComponent extends Component<UplotProps> {
-	private plotRef: React.RefObject<HTMLDivElement>;
+export default function Uplot(props: UplotProps): JSX.Element {
+	const plotRef = useRef<HTMLDivElement | null>(null);
+	const plot = useRef<uPlot | undefined>(undefined);
 
-	private plot?: uPlot;
-
-	constructor(props: UplotProps) {
-		super(props);
-		this.plotRef = React.createRef();
-	}
-
-	componentDidMount(): void {
-		this.createPlot();
-	}
-
-	shouldComponentUpdate(nextProps: UplotProps): boolean {
-		const { data, options } = this.props;
-
-		if (data === undefined || options === undefined) {
-			return false;
+	const createPlot = (): void => {
+		const { data, options } = props;
+		if (plotRef.current) {
+			plot.current = new UPlot(options, data, plotRef.current);
 		}
+	};
 
-		return !isEqual(data, nextProps.data) || !isEqual(options, nextProps.options);
-	}
+	useEffect(() => {
+		createPlot();
+		return (): void => {
+			plot.current?.destroy();
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
-	componentDidUpdate(prevProps: UplotProps): void {
-		const { data, options } = this.props;
+	useEffect(() => {
+		const { data, options } = props;
 
-		if (!isEqual(prevProps.options, options) && this.plot) {
-			this.plot?.destroy();
-			this.createPlot(); // This already uses the new data
-		} else if (!isEqual(prevProps.data, data) && this.plot) {
-			this.plot?.setData(data);
+		if (plot.current) {
+			if (!isEqual(options, plot.current.opts)) {
+				plot.current?.destroy();
+				createPlot();
+			} else if (!isEqual(data, plot.current.data)) {
+				plot.current?.setData(data);
+			}
 		}
-	}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [props]);
 
-	componentWillUnmount(): void {
-		this.plot?.destroy();
-	}
-
-	createPlot(): void {
-		const { data, options } = this.props;
-		if (this.plotRef.current) {
-			this.plot = new UPlot(options, data, this.plotRef.current);
-		}
-	}
-
-	render(): JSX.Element {
-		return <div ref={this.plotRef} />;
-	}
+	return <div ref={plotRef} />;
 }
-
-export default memo(UplotComponent, isEqual);

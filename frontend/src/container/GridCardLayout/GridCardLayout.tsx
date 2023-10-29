@@ -114,6 +114,9 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 				rowHeight={100}
 				autoSize
 				width={100}
+				style={{
+					border: 'none',
+				}}
 				isDraggable={addPanelPermission}
 				isDroppable={addPanelPermission}
 				isResizable={addPanelPermission}
