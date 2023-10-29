@@ -31,7 +31,7 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import DateComponent from '../../components/ResizeTable/TableComponent/Date';
+import DateComponent from '../../components/ResizeTable/TableComponent/DateComponent';
 import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import DeleteButton from './TableComponents/DeleteButton';
