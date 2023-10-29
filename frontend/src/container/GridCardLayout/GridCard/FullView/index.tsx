@@ -88,11 +88,12 @@ function FullView({
 	const containerDimensions = useDimensions(fullViewRef);
 	const isDarkMode = useIsDarkMode();
 
-	const chartOptions = getUPlotChartOptions(
-		response.data?.payload.data.newResult.data,
-		containerDimensions,
+	const chartOptions = getUPlotChartOptions({
+		yAxisUnit: yAxisUnit || '',
+		apiResponse: response.data?.payload.data.newResult.data,
+		dimensions: containerDimensions,
 		isDarkMode,
-	);
+	});
 
 	useEffect(() => {
 		if (!response.isFetching && lineChartRef.current) {

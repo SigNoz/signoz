@@ -32,15 +32,17 @@ function WidgetGraph({
 
 	const options = useMemo(
 		() =>
-			getUPlotChartOptions(
-				getWidgetQueryRange?.data?.payload?.data?.newResult?.data,
-				containerDimensions,
+			getUPlotChartOptions({
+				yAxisUnit,
+				apiResponse: getWidgetQueryRange?.data?.payload?.data?.newResult?.data,
+				dimensions: containerDimensions,
 				isDarkMode,
-			),
+			}),
 		[
 			getWidgetQueryRange?.data?.payload?.data?.newResult?.data,
 			containerDimensions,
 			isDarkMode,
+			yAxisUnit,
 		],
 	);
 

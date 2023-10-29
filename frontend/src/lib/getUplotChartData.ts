@@ -1,8 +1,12 @@
+import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { Dimensions } from 'hooks/useDimensions';
 import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
+import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 
+import getLabelName from './getLabelName';
 import { colors } from './getRandomColor';
+import { placement } from './uPlotLib/placement';
 
 export const getUPlotChartData = (
 	apiResponse?: MetricRangePayloadV3['data'],
@@ -28,6 +32,7 @@ export const getUPlotChartData = (
 
 const getSeries = (
 	apiResponse?: MetricRangePayloadV3['data'],
+	widgetMetaData = [],
 ): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
@@ -38,11 +43,20 @@ const getSeries = (
 	for (let i = 0; i < seriesList?.length; i += 1) {
 		const color = colors[i % colors.length]; // Use modulo to loop through colors if there are more series than colors
 
+		const { metric = {}, queryName = '', legend = '' } = widgetMetaData[i];
+
+		const label = getLabelName(
+			metric,
+			queryName || '', // query
+			legend || '',
+		);
+
 		const series: uPlot.Series = {
-			// label: `Series ${i + 1}`,
+			label,
 			stroke: color,
+			width: 1.5,
 			points: {
-				size: 2,
+				size: 5,
 			},
 		};
 
@@ -59,27 +73,148 @@ const getGridColor = (isDarkMode: boolean): string => {
 	return 'rgba(231,233,237,0.8)';
 };
 
-export const getUPlotChartOptions = (
-	apiResponse?: MetricRangePayloadV3['data'],
-	dimensions: Dimensions = { height: 0, width: 0 },
-	isDarkMode = false,
-	// eslint-disable-next-line arrow-body-style
-): uPlot.Options => {
-	// console.log('getUPlotChartOptions');
+type GetUPlotChartOptions = {
+	yAxisUnit: string;
+	apiResponse?: MetricRangePayloadV3['data'];
+	widgetMetaData?: QueryData[];
+	dimensions?: Dimensions;
+	isDarkMode?: boolean;
+};
 
+const createDivsFromArray = (
+	data: any[],
+	idx: string | number,
+	yAxisUnit: string,
+): HTMLElement => {
+	const container = document.createElement('div');
+	container.classList.add('tooltip-container');
+
+	if (Array.isArray(data) && data.length > 0) {
+		data.forEach((item, index) => {
+			const div = document.createElement('div');
+			div.classList.add('tooltip-content-row');
+
+			if (index === 0) {
+				div.textContent = new Date(item[idx] * 1000).toDateString();
+			} else {
+				const color = colors[(index - 1) % colors.length];
+
+				const squareBox = document.createElement('div');
+
+				squareBox.style.width = '10px';
+				squareBox.style.height = '10px';
+				squareBox.style.backgroundColor = color;
+
+				div.appendChild(squareBox);
+
+				const text = document.createElement('div');
+
+				text.textContent = getToolTipValue(item[idx], yAxisUnit);
+				text.style.color = color;
+
+				div.appendChild(text);
+			}
+
+			container.appendChild(div);
+		});
+	}
+
+	return container;
+};
+
+const tooltipPlugin = (yAxisUnit: string): any => {
+	let over: HTMLElement;
+	let bound: HTMLElement;
+	let bLeft: any;
+	let bTop: any;
+
+	const syncBounds = (): void => {
+		const bbox = over.getBoundingClientRect();
+		bLeft = bbox.left;
+		bTop = bbox.top;
+	};
+
+	let overlay = document.getElementById('overlay');
+
+	if (!overlay) {
+		overlay = document.createElement('div');
+		overlay.id = 'overlay';
+		overlay.style.display = 'none';
+		overlay.style.position = 'absolute';
+		document.body.appendChild(overlay);
+	}
+
+	return {
+		hooks: {
+			init: (u: any): void => {
+				over = u?.over;
+				bound = over;
+				over.onmouseenter = (): void => {
+					if (overlay) {
+						overlay.style.display = 'block';
+					}
+				};
+				over.onmouseleave = (): void => {
+					if (overlay) {
+						overlay.style.display = 'none';
+					}
+				};
+			},
+			setSize: (): void => {
+				syncBounds();
+			},
+			setCursor: (u: {
+				cursor: { left: any; top: any; idx: any };
+				data: any[];
+			}): void => {
+				if (overlay) {
+					overlay.textContent = '';
+					const { left, top, idx } = u.cursor;
+
+					if (idx) {
+						const anchor = { left: left + bLeft, top: top + bTop };
+						const content = createDivsFromArray(u.data, idx, yAxisUnit);
+						overlay.appendChild(content);
+						placement(overlay, anchor, 'right', 'start', { bound });
+					}
+				}
+			},
+		},
+	};
+};
+
+export const getUPlotChartOptions = ({
+	yAxisUnit,
+	apiResponse,
+	widgetMetaData = [],
+	dimensions = { height: 0, width: 0 },
+	isDarkMode = false,
+}: GetUPlotChartOptions): // eslint-disable-next-line arrow-body-style
+uPlot.Options => {
 	return {
 		width: dimensions.width,
 		height: dimensions.height - 30,
+		focus: {
+			alpha: 1,
+		},
+		cursor: {
+			focus: {
+				prox: 1e6,
+				bias: 1,
+			},
+		},
+		padding: [10, 10, 10, 10],
 		legend: {
 			live: false,
 			isolate: true,
 		},
+		plugins: [tooltipPlugin(yAxisUnit)],
 		scales: {
 			x: {
 				time: true,
 			},
 		},
-		series: getSeries(apiResponse),
+		series: getSeries(apiResponse, widgetMetaData),
 		axes: [
 			{
 				// label: 'Date',
@@ -87,12 +222,12 @@ export const getUPlotChartOptions = (
 				grid: {
 					stroke: getGridColor(isDarkMode), // Color of the grid lines
 					dash: [10, 10], // Dash pattern for grid lines,
-					width: 0.3, // Width of the grid lines,
+					width: 0.5, // Width of the grid lines,
 					show: true,
 				},
 				ticks: {
 					stroke: 'white', // Color of the tick lines
-					width: 0.3, // Width of the tick lines,
+					width: 0.5, // Width of the tick lines,
 					show: true,
 				},
 				gap: 5,
@@ -103,12 +238,16 @@ export const getUPlotChartOptions = (
 				grid: {
 					stroke: getGridColor(isDarkMode), // Color of the grid lines
 					dash: [10, 10], // Dash pattern for grid lines,
-					width: 0.3, // Width of the grid lines
+					width: 0.5, // Width of the grid lines
 				},
-				ticks: {
-					stroke: 'white', // Color of the tick lines
-				},
+				ticks: {},
 				gap: 5,
+				values: (_, t): string[] =>
+					t.map((v) => {
+						const value = getToolTipValue(v.toString(), yAxisUnit);
+
+						return `${value}`;
+					}),
 			},
 		],
 	};
