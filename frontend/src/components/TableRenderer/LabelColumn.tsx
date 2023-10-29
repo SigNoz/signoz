@@ -11,14 +11,14 @@ function LabelColumn({ labels, value, color }: LabelColumnProps): JSX.Element {
 	const remainingLabels = labels.length > 3 ? labels.slice(3) : [];
 
 	return (
-		<div className="LabelColumn">
+		<div className="label-column">
 			{newLabels.map(
 				(label: string): JSX.Element => {
 					const tooltipTitle =
 						value && value[label] ? `${label}: ${value[label]}` : label;
 					return (
 						<Tooltip title={tooltipTitle} key={label}>
-							<Tag className="LabelColumn-label-tag" color={color}>
+							<Tag className="label-column--tag" color={color}>
 								{getLabelRenderingValue(label, value && value[label])}
 							</Tag>
 						</Tooltip>
@@ -37,9 +37,9 @@ function LabelColumn({ labels, value, color }: LabelColumnProps): JSX.Element {
 									const tooltipTitle =
 										value && value[label] ? `${label}: ${value[label]}` : label;
 									return (
-										<div className="labelColumn-popover" key={label}>
+										<div className="label-column--popover" key={label}>
 											<Tooltip title={tooltipTitle}>
-												<Tag className="LabelColumn-label-tag" color={color}>
+												<Tag className="label-column--tag" color={color}>
 													{getLabelRenderingValue(label, value && value[label])}
 												</Tag>
 											</Tooltip>
@@ -51,7 +51,7 @@ function LabelColumn({ labels, value, color }: LabelColumnProps): JSX.Element {
 					}
 					trigger="hover"
 				>
-					<Tag className="LabelColumn-label-tag" color={color}>
+					<Tag className="label-column--tag" color={color}>
 						+{remainingLabels.length}
 					</Tag>
 				</Popover>
