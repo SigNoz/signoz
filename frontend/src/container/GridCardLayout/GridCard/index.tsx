@@ -96,15 +96,19 @@ function GridCardGraph({
 		() =>
 			getUPlotChartOptions({
 				apiResponse: queryResponse?.data?.payload?.data?.newResult?.data,
+				widgetMetaData: queryResponse?.data?.payload?.data?.result,
 				dimensions: containerDimensions,
 				isDarkMode,
 				onDragSelect,
+				yAxisUnit: widget?.yAxisUnit,
 			}),
 		[
 			queryResponse?.data?.payload?.data?.newResult?.data,
+			queryResponse?.data?.payload?.data?.result,
 			containerDimensions,
 			isDarkMode,
 			onDragSelect,
+			widget?.yAxisUnit,
 		],
 	);
 

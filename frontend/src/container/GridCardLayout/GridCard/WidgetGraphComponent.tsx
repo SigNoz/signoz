@@ -160,9 +160,9 @@ function WidgetGraphComponent({
 	if (queryResponse.isLoading || queryResponse.status === 'idle') {
 		return (
 			<Skeleton
-				active
 				style={{
 					height: '100%',
+					padding: '16px',
 				}}
 			/>
 		);
