@@ -1,44 +1,103 @@
-import isEqual from 'lodash-es/isEqual';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import UPlot from 'uplot';
 
+import { dataMatch, optionsUpdateState } from './utils';
+
 export interface UplotProps {
-	data: uPlot.AlignedData;
 	options: uPlot.Options;
+	data: uPlot.AlignedData;
+	onDelete?: (chart: uPlot) => void;
+	onCreate?: (chart: uPlot) => void;
+	resetScales?: boolean;
 }
 
-export default function Uplot(props: UplotProps): JSX.Element {
-	const plotRef = useRef<HTMLDivElement | null>(null);
-	const plot = useRef<uPlot | undefined>(undefined);
-
-	const createPlot = (): void => {
-		const { data, options } = props;
-		if (plotRef.current) {
-			plot.current = new UPlot(options, data, plotRef.current);
-		}
-	};
+function Uplot({
+	options,
+	data,
+	onDelete,
+	onCreate,
+	resetScales = true,
+}: UplotProps): JSX.Element | null {
+	const chartRef = useRef<uPlot | null>(null);
+	const propOptionsRef = useRef(options);
+	const targetRef = useRef<HTMLDivElement>(null);
+	const propDataRef = useRef(data);
+	const onCreateRef = useRef(onCreate);
+	const onDeleteRef = useRef(onDelete);
 
 	useEffect(() => {
-		createPlot();
-		return (): void => {
-			plot.current?.destroy();
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		onCreateRef.current = onCreate;
+		onDeleteRef.current = onDelete;
+	});
+
+	const destroy = useCallback((chart: uPlot | null) => {
+		if (chart) {
+			onDeleteRef.current?.(chart);
+			chart.destroy();
+			chartRef.current = null;
+		}
+	}, []);
+
+	const create = useCallback(() => {
+		if (targetRef.current === null) return;
+
+		const newChart = new UPlot(
+			propOptionsRef.current,
+			propDataRef.current,
+			targetRef.current,
+		);
+
+		chartRef.current = newChart;
+		onCreateRef.current?.(newChart);
 	}, []);
 
 	useEffect(() => {
-		const { data, options } = props;
+		create();
+		return (): void => {
+			destroy(chartRef.current);
+		};
+	}, [create, destroy]);
 
-		if (plot.current) {
-			if (!isEqual(options, plot.current.opts)) {
-				plot.current?.destroy();
-				createPlot();
-			} else if (!isEqual(data, plot.current.data)) {
-				plot.current?.setData(data);
+	useEffect(() => {
+		if (propOptionsRef.current !== options) {
+			const optionsState = optionsUpdateState(propOptionsRef.current, options);
+			propOptionsRef.current = options;
+			if (!chartRef.current || optionsState === 'create') {
+				destroy(chartRef.current);
+				create();
+			} else if (optionsState === 'update') {
+				chartRef.current.setSize({
+					width: options.width,
+					height: options.height,
+				});
 			}
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [props]);
+	}, [options, create, destroy]);
 
-	return <div ref={plotRef} />;
+	useEffect(() => {
+		if (propDataRef.current !== data) {
+			if (!chartRef.current) {
+				propDataRef.current = data;
+				create();
+			} else if (!dataMatch(propDataRef.current, data)) {
+				if (resetScales) {
+					chartRef.current.setData(data, true);
+				} else {
+					chartRef.current.setData(data, false);
+					chartRef.current.redraw();
+				}
+			}
+			propDataRef.current = data;
+		}
+	}, [data, resetScales, create]);
+
+	return <div ref={targetRef} />;
 }
+
+Uplot.defaultProps = {
+	onDelete: undefined,
+	onCreate: undefined,
+	resetScales: true,
+};
+
+export default Uplot;

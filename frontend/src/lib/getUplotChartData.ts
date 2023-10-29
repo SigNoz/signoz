@@ -195,9 +195,7 @@ export const getUPlotChartOptions = ({
 	width: dimensions.width,
 	height: dimensions.height - 30,
 	legend: {
-		live: false,
-		isolate: true,
-		show: false,
+		show: true,
 	},
 	focus: {
 		alpha: 1,
