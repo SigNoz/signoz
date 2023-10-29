@@ -25,13 +25,13 @@ function WidgetGraphComponent({
 	queryResponse,
 	errorMessage,
 	name,
-	onDragSelect,
 	onClickHandler,
 	threshold,
 	headerMenuList,
 	isWarning,
 	data,
 	options,
+	onDragSelect,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [modal, setModal] = useState<boolean>(false);
@@ -215,6 +215,7 @@ function WidgetGraphComponent({
 						yAxisUnit={widget.yAxisUnit}
 						onToggleModelHandler={onToggleModelHandler}
 						parentChartRef={lineChartRef}
+						onDragSelect={onDragSelect}
 					/>
 				</FullViewContainer>
 			</Modal>
@@ -242,7 +243,6 @@ function WidgetGraphComponent({
 					options={options}
 					yAxisUnit={widget.yAxisUnit}
 					onClickHandler={onClickHandler}
-					onDragSelect={onDragSelect}
 					panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
 					query={widget.query}
 				/>
@@ -254,7 +254,6 @@ function WidgetGraphComponent({
 WidgetGraphComponent.defaultProps = {
 	yAxisUnit: undefined,
 	setLayout: undefined,
-	onDragSelect: undefined,
 	onClickHandler: undefined,
 };
 

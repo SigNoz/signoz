@@ -94,6 +94,8 @@ function FullView({
 		apiResponse: response.data?.payload.data.newResult.data,
 		dimensions: containerDimensions,
 		isDarkMode,
+		onDragSelect,
+		widgetMetaData: response.data?.payload.data.result,
 	});
 
 	useEffect(() => {

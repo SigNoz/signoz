@@ -4,8 +4,10 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { UseQueryResult } from 'react-query';
+import { useDispatch } from 'react-redux';
+import { UpdateTimeInterval } from 'store/actions';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -30,6 +32,20 @@ function WidgetGraph({
 
 	const widgetId = params.get('widgetId');
 
+	const dispatch = useDispatch();
+
+	const onDragSelect = useCallback(
+		(start: number, end: number): void => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch],
+	);
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
@@ -37,12 +53,16 @@ function WidgetGraph({
 				apiResponse: getWidgetQueryRange?.data?.payload?.data?.newResult?.data,
 				dimensions: containerDimensions,
 				isDarkMode,
+				onDragSelect,
+				widgetMetaData: getWidgetQueryRange?.data?.payload?.data?.result,
 			}),
 		[
+			yAxisUnit,
 			getWidgetQueryRange?.data?.payload?.data?.newResult?.data,
+			getWidgetQueryRange?.data?.payload?.data?.result,
 			containerDimensions,
 			isDarkMode,
-			yAxisUnit,
+			onDragSelect,
 		],
 	);
 

@@ -22,7 +22,7 @@ export interface WidgetGraphComponentProps extends UplotProps {
 	>;
 	errorMessage: string | undefined;
 	name: string;
-	onDragSelect?: (start: number, end: number) => void;
+	onDragSelect: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
 	threshold?: ReactNode;
 	headerMenuList: MenuItemKeys[];

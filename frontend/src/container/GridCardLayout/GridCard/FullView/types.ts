@@ -48,7 +48,7 @@ export interface FullViewProps {
 	onClickHandler?: GraphOnClickHandler;
 	name: string;
 	yAxisUnit?: string;
-	onDragSelect?: (start: number, end: number) => void;
+	onDragSelect: (start: number, end: number) => void;
 	isDependedDataLoaded?: boolean;
 	graphsVisibilityStates?: boolean[];
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
