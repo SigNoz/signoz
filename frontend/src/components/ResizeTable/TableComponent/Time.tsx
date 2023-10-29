@@ -2,22 +2,15 @@ import { Typography } from 'antd';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
 
-function DateComponent(
-	CreatedOrUpdateTime: string | number | Date,
-): JSX.Element {
+function Time({ CreatedOrUpdateTime }: DateProps): JSX.Element {
 	const time = new Date(CreatedOrUpdateTime);
-
 	const date = getFormattedDate(time);
-
 	const timeString = `${date} ${convertDateToAmAndPm(time)}`;
-
-	if (CreatedOrUpdateTime === null) {
-		return <Typography> - </Typography>;
-	}
-
-	return (
-		<Typography className="DateComponent-container">{timeString}</Typography>
-	);
+	return <Typography>{timeString}</Typography>;
 }
 
-export default DateComponent;
+type DateProps = {
+	CreatedOrUpdateTime: string | number | Date;
+};
+
+export default Time;
