@@ -23,9 +23,8 @@ function WidgetGraph({
 
 	const containerDimensions = useResizeObserver(graphRef);
 
-	const chartData = getUPlotChartData(
-		getWidgetQueryRange?.data?.payload?.data?.newResult?.data,
-	);
+	const chartData = getUPlotChartData(getWidgetQueryRange?.data?.payload);
+
 	const isDarkMode = useIsDarkMode();
 
 	const params = useUrlQuery();
@@ -50,16 +49,14 @@ function WidgetGraph({
 		() =>
 			getUPlotChartOptions({
 				yAxisUnit,
-				apiResponse: getWidgetQueryRange?.data?.payload?.data?.newResult?.data,
+				apiResponse: getWidgetQueryRange?.data?.payload,
 				dimensions: containerDimensions,
 				isDarkMode,
 				onDragSelect,
-				widgetMetaData: getWidgetQueryRange?.data?.payload?.data?.result,
 			}),
 		[
 			yAxisUnit,
-			getWidgetQueryRange?.data?.payload?.data?.newResult?.data,
-			getWidgetQueryRange?.data?.payload?.data?.result,
+			getWidgetQueryRange?.data?.payload,
 			containerDimensions,
 			isDarkMode,
 			onDragSelect,

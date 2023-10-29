@@ -81,9 +81,7 @@ function FullView({
 		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
 
-	const chartData = getUPlotChartData(
-		response.data?.payload.data.newResult.data,
-	);
+	const chartData = getUPlotChartData(response?.data?.payload);
 
 	const containerDimensions = useResizeObserver(fullViewRef);
 
@@ -91,11 +89,10 @@ function FullView({
 
 	const chartOptions = getUPlotChartOptions({
 		yAxisUnit: yAxisUnit || '',
-		apiResponse: response.data?.payload.data.newResult.data,
+		apiResponse: response.data?.payload,
 		dimensions: containerDimensions,
 		isDarkMode,
 		onDragSelect,
-		widgetMetaData: response.data?.payload.data.result,
 	});
 
 	useEffect(() => {

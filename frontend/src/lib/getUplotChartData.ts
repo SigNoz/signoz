@@ -1,6 +1,6 @@
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { Dimensions } from 'hooks/useDimensions';
-import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 
@@ -9,41 +9,39 @@ import { colors } from './getRandomColor';
 import { placement } from './uPlotLib/placement';
 
 export const getUPlotChartData = (
-	apiResponse?: MetricRangePayloadV3['data'],
+	apiResponse?: MetricRangePayloadProps,
 ): uPlot.AlignedData => {
-	const seriesList = apiResponse?.result[0]?.series || [];
+	const seriesList = apiResponse?.data?.result || [];
 
 	const uPlotData: uPlot.AlignedData = [];
 
-	uPlotData.push(
-		new Float64Array(seriesList[0]?.values?.map((v) => v.timestamp / 1000)),
-	);
+	// timestamp
+	uPlotData.push(new Float64Array(seriesList[0]?.values?.map((v) => v[0])));
 
+	// for each series, push the values
 	seriesList.forEach((series) => {
-		const seriesData = new Float64Array(
-			series.values.map((v) => parseFloat(v.value)),
-		);
+		const seriesData = series?.values?.map((v) => parseFloat(v[1])) || [];
 
-		uPlotData.push(seriesData);
+		uPlotData.push(new Float64Array(seriesData));
 	});
 
 	return uPlotData;
 };
 
 const getSeries = (
-	apiResponse?: MetricRangePayloadV3['data'],
+	apiResponse?: MetricRangePayloadProps,
 	widgetMetaData: QueryData[] = [],
 ): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
 	];
 
-	const seriesList = apiResponse?.result[0]?.series || [];
+	const seriesList = apiResponse?.data.result || [];
 
 	for (let i = 0; i < seriesList?.length; i += 1) {
 		const color = colors[i % colors.length]; // Use modulo to loop through colors if there are more series than colors
 
-		const { metric = {}, queryName = '', legend = '' } = widgetMetaData[i];
+		const { metric = {}, queryName = '', legend = '' } = widgetMetaData[i] || {};
 
 		const label = getLabelName(
 			metric,
@@ -74,7 +72,7 @@ const getGridColor = (isDarkMode: boolean): string => {
 };
 
 interface GetUPlotChartOptions {
-	apiResponse?: MetricRangePayloadV3['data'];
+	apiResponse?: MetricRangePayloadProps;
 	dimensions: Dimensions;
 	isDarkMode: boolean;
 	onDragSelect: (startTime: number, endTime: number) => void;
@@ -189,13 +187,13 @@ export const getUPlotChartOptions = ({
 	isDarkMode,
 	apiResponse,
 	onDragSelect,
-	widgetMetaData = [],
 	yAxisUnit,
 }: GetUPlotChartOptions): uPlot.Options => ({
 	width: dimensions.width,
-	height: dimensions.height - 30,
+	height: dimensions.height - 45,
 	legend: {
 		show: true,
+		live: false,
 	},
 	focus: {
 		alpha: 1,
@@ -230,7 +228,7 @@ export const getUPlotChartOptions = ({
 			},
 		],
 	},
-	series: getSeries(apiResponse, widgetMetaData),
+	series: getSeries(apiResponse, apiResponse?.data.result),
 	axes: [
 		{
 			// label: 'Date',

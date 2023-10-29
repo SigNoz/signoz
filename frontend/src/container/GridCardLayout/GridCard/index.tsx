@@ -87,24 +87,21 @@ function GridCardGraph({
 
 	const containerDimensions = useResizeObserver(graphRef);
 
-	const chartData = getUPlotChartData(
-		queryResponse?.data?.payload?.data?.newResult?.data,
-	);
+	const chartData = getUPlotChartData(queryResponse?.data?.payload);
+
 	const isDarkMode = useIsDarkMode();
 
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
-				apiResponse: queryResponse?.data?.payload?.data?.newResult?.data,
-				widgetMetaData: queryResponse?.data?.payload?.data?.result,
+				apiResponse: queryResponse.data?.payload,
 				dimensions: containerDimensions,
 				isDarkMode,
 				onDragSelect,
 				yAxisUnit: widget?.yAxisUnit,
 			}),
 		[
-			queryResponse?.data?.payload?.data?.newResult?.data,
-			queryResponse?.data?.payload?.data?.result,
+			queryResponse.data?.payload,
 			containerDimensions,
 			isDarkMode,
 			onDragSelect,
