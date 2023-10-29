@@ -149,7 +149,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 80,
 			key: DynamicColumnsKey.CreatedBy,
 			align: 'center',
-			render: (value): JSX.Element => <div>{value}</div>,
 		},
 		{
 			title: 'Updated At',
@@ -171,7 +170,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 80,
 			key: DynamicColumnsKey.UpdatedBy,
 			align: 'center',
-			render: (value): JSX.Element => <div>{value}</div>,
 		},
 	];
 
