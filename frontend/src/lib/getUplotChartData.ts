@@ -15,6 +15,15 @@ export const getUPlotChartData = (
 
 	const uPlotData: uPlot.AlignedData = [];
 
+	const sortedSeriesList: uPlot.AlignedData = [];
+
+	console.log('seriesList,', sortedSeriesList);
+
+	// sort seriesList
+	for (let index = 0; index < seriesList.length; index += 1) {
+		seriesList[index]?.values?.sort((a, b) => a[0] - b[0]);
+	}
+
 	// timestamp
 	uPlotData.push(new Float64Array(seriesList[0]?.values?.map((v) => v[0])));
 
@@ -53,8 +62,9 @@ const getSeries = (
 			label,
 			stroke: color,
 			width: 1.5,
+			spanGaps: true,
 			points: {
-				size: 5,
+				show: false,
 			},
 		};
 
@@ -190,7 +200,7 @@ export const getUPlotChartOptions = ({
 	yAxisUnit,
 }: GetUPlotChartOptions): uPlot.Options => ({
 	width: dimensions.width,
-	height: dimensions.height - 45,
+	height: dimensions.height - 50,
 	legend: {
 		show: true,
 		live: false,
@@ -199,9 +209,19 @@ export const getUPlotChartOptions = ({
 		alpha: 1,
 	},
 	cursor: {
+		show: true,
 		focus: {
 			prox: 1e6,
 			bias: 1,
+		},
+		drag: {
+			// setScale: true, // Allow zooming using selection
+			setScale: false,
+			x: true,
+			y: false,
+		},
+		sync: {
+			key: 'select',
 		},
 	},
 	padding: [10, 10, 10, 10],
@@ -209,7 +229,11 @@ export const getUPlotChartOptions = ({
 		x: {
 			time: true,
 		},
+		y: {
+			auto: true,
+		},
 	},
+
 	plugins: [tooltipPlugin(yAxisUnit)],
 	hooks: {
 		setSelect: [
@@ -240,7 +264,7 @@ export const getUPlotChartOptions = ({
 				show: true,
 			},
 			ticks: {
-				stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
+				// stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
 				width: 0.3, // Width of the tick lines,
 				show: true,
 			},
@@ -255,7 +279,7 @@ export const getUPlotChartOptions = ({
 				width: 0.3, // Width of the grid lines
 			},
 			ticks: {
-				stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
+				// stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines
 				width: 0.3, // Width of the tick lines
 				show: true,
 			},
