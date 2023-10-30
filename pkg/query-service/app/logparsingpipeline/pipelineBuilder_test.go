@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 var prepareProcessorTestData = []struct {
@@ -194,4 +195,9 @@ func TestPreparePipelineProcessor(t *testing.T) {
 			So(res, ShouldResemble, test.Output)
 		})
 	}
+}
+
+func TestNoCollectorErrorsIfProcessorsTargetMismatchedLogs(t *testing.T) {
+	require := require.New(t)
+	require.NotNil(nil)
 }
