@@ -1,4 +1,6 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
+import { OPERATORS } from 'constants/queryBuilder';
+import { getDataTypes } from 'container/LogDetailedView/utils';
 import {
 	useAutoComplete,
 	WhereClauseConfig,
@@ -12,12 +14,16 @@ import {
 	useEffect,
 	useMemo,
 } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
@@ -36,6 +42,7 @@ function QueryBuilderSearch({
 	onChange,
 	whereClauseConfig,
 	className,
+	placeholder,
 }: QueryBuilderSearchProps): JSX.Element {
 	const {
 		updateTag,
@@ -80,15 +87,19 @@ function QueryBuilderSearch({
 			handleSearch(value);
 		};
 
+		const isDisabled = !!searchValue;
+
 		return (
 			<Tag closable={!searchValue && closable} onClose={onCloseHandler}>
 				<Tooltip title={chipValue}>
 					<TypographyText
 						ellipsis
 						$isInNin={isInNin}
-						disabled={!!searchValue}
+						disabled={isDisabled}
 						$isEnabled={!!searchValue}
-						onClick={(): void => tagEditHandler(value)}
+						onClick={(): void => {
+							if (!isDisabled) tagEditHandler(value);
+						}}
 					>
 						{chipValue}
 					</TypographyText>
@@ -119,6 +130,14 @@ function QueryBuilderSearch({
 		[query.dataSource],
 	);
 
+	const fetchValueDataType = (value: unknown, operator: string): DataTypes => {
+		if (operator === OPERATORS.HAS || operator === OPERATORS.NHAS) {
+			return getDataTypes([value]);
+		}
+
+		return DataTypes.EMPTY;
+	};
+
 	const queryTags = useMemo(() => {
 		if (!query.aggregateAttribute.key && isMetricsDataSource) return [];
 		return tags;
@@ -129,39 +148,49 @@ function QueryBuilderSearch({
 		const initialSourceKeys = query.filters.items?.map(
 			(item) => item.key as BaseAutocompleteData,
 		);
-		initialTagFilters.items = tags.map((tag) => {
+
+		initialTagFilters.items = tags.map((tag, index) => {
+			const isJsonTrue = query.filters?.items[index]?.key?.isJSON;
+
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
+
 			const filterAttribute = [...initialSourceKeys, ...sourceKeys].find(
 				(key) => key.key === getRemovePrefixFromKey(tagKey),
 			);
+
+			const computedTagValue =
+				tagValue && Array.isArray(tagValue) && tagValue[tagValue.length - 1] === ''
+					? tagValue?.slice(0, -1)
+					: tagValue ?? '';
+
 			return {
 				id: uuid().slice(0, 8),
 				key: filterAttribute ?? {
 					key: tagKey,
-					dataType: '',
+					dataType: fetchValueDataType(computedTagValue, tagOperator),
 					type: '',
 					isColumn: false,
+					isJSON: isJsonTrue,
 				},
 				op: getOperatorValue(tagOperator),
-				value:
-					tagValue[tagValue.length - 1] === ''
-						? tagValue?.slice(0, -1)
-						: tagValue ?? '',
+				value: computedTagValue,
 			};
 		});
+
 		onChange(initialTagFilters);
 		/* eslint-disable react-hooks/exhaustive-deps */
 	}, [sourceKeys]);
 
 	return (
 		<Select
+			getPopupContainer={popupContainer}
 			virtual
 			showSearch
 			tagRender={onTagRender}
 			filterOption={false}
 			autoClearSearchValue={false}
 			mode="multiple"
-			placeholder={PLACEHOLDER}
+			placeholder={placeholder}
 			value={queryTags}
 			searchValue={searchValue}
 			className={className}
@@ -189,11 +218,13 @@ interface QueryBuilderSearchProps {
 	onChange: (value: TagFilter) => void;
 	whereClauseConfig?: WhereClauseConfig;
 	className?: string;
+	placeholder?: string;
 }
 
 QueryBuilderSearch.defaultProps = {
 	whereClauseConfig: undefined,
 	className: '',
+	placeholder: PLACEHOLDER,
 };
 
 export interface CustomTagProps {

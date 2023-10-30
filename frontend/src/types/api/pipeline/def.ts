@@ -1,3 +1,5 @@
+import { TagFilter } from '../queryBuilder/queryBuilderData';
+
 export interface ProcessorData {
 	type: string;
 	id?: string;
@@ -14,6 +16,17 @@ export interface ProcessorData {
 	on_error?: string;
 	field?: string;
 	value?: string;
+
+	// trace parser fields.
+	trace_id?: {
+		parse_from: string;
+	};
+	span_id?: {
+		parse_from: string;
+	};
+	trace_flags?: {
+		parse_from: string;
+	};
 }
 
 export interface PipelineData {
@@ -23,7 +36,7 @@ export interface PipelineData {
 	description?: string;
 	createdBy: string;
 	enabled: boolean;
-	filter: string;
+	filter: TagFilter;
 	id?: string;
 	name: string;
 	orderId: number;

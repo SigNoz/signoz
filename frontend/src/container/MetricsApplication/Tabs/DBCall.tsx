@@ -1,6 +1,6 @@
 import { Col } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/GridGraphLayout/Graph/';
+import Graph from 'container/GridCardLayout/GridCard';
 import {
 	databaseCallsAvgDuration,
 	databaseCallsRPS,
@@ -65,6 +65,7 @@ function DBCall(): JSX.Element {
 				},
 				title: GraphTitle.DATABASE_CALLS_RPS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'reqps',
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -83,6 +84,7 @@ function DBCall(): JSX.Element {
 				},
 				title: GraphTitle.DATABASE_CALLS_AVG_DURATION,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ms',
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -107,7 +109,6 @@ function DBCall(): JSX.Element {
 						<Graph
 							name="database_call_rps"
 							widget={databaseCallsRPSWidget}
-							yAxisUnit="reqps"
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
 									ChartEvent,
@@ -135,12 +136,12 @@ function DBCall(): JSX.Element {
 				>
 					View Traces
 				</Button>
+
 				<Card>
 					<GraphContainer>
 						<Graph
 							name="database_call_avg_duration"
 							widget={databaseCallsAverageDurationWidget}
-							yAxisUnit="ms"
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
 									ChartEvent,

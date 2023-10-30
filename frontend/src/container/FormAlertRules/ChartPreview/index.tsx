@@ -25,6 +25,7 @@ export interface ChartPreviewProps {
 	headline?: JSX.Element;
 	alertDef?: AlertDef;
 	userQueryKey?: string;
+	allowSelectedIntervalForStepGen?: boolean;
 }
 
 function ChartPreview({
@@ -35,6 +36,7 @@ function ChartPreview({
 	selectedInterval = '5min',
 	headline,
 	userQueryKey,
+	allowSelectedIntervalForStepGen = false,
 	alertDef,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
@@ -89,6 +91,9 @@ function ChartPreview({
 			globalSelectedInterval: selectedInterval,
 			graphType,
 			selectedTime,
+			params: {
+				allowSelectedIntervalForStepGen,
+			},
 		},
 		{
 			queryKey: [
@@ -127,7 +132,7 @@ function ChartPreview({
 				<GridPanelSwitch
 					panelType={graphType}
 					title={name}
-					data={chartDataSet}
+					data={chartDataSet.data}
 					isStacked
 					name={name || 'Chart Preview'}
 					staticLine={staticLine}
@@ -146,6 +151,7 @@ ChartPreview.defaultProps = {
 	selectedInterval: '5min',
 	headline: undefined,
 	userQueryKey: '',
+	allowSelectedIntervalForStepGen: false,
 	alertDef: undefined,
 };
 

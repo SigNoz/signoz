@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type Organization struct {
@@ -42,6 +43,15 @@ type ApdexSettings struct {
 	ExcludeStatusCodes string  `json:"excludeStatusCodes" db:"exclude_status_codes"` // sqlite doesn't support array type
 }
 
+type IngestionKey struct {
+	KeyId        string    `json:"keyId" db:"key_id"`
+	Name         string    `json:"name" db:"name"`
+	CreatedAt    time.Time `json:"createdAt" db:"created_at"`
+	IngestionKey string    `json:"ingestionKey" db:"ingestion_key"`
+	IngestionURL string    `json:"ingestionURL" db:"ingestion_url"`
+	DataRegion   string    `json:"dataRegion" db:"data_region"`
+}
+
 type UserFlag map[string]string
 
 func (uf UserFlag) Value() (driver.Value, error) {
@@ -53,7 +63,6 @@ func (uf UserFlag) Value() (driver.Value, error) {
 }
 
 func (uf *UserFlag) Scan(value interface{}) error {
-	fmt.Println(" value:", value)
 	if value == "" {
 		return nil
 	}

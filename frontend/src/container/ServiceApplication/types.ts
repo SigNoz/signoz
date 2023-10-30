@@ -1,7 +1,7 @@
 import { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { UseQueryResult } from 'react-query';
-import { GetQueryResultsProps } from 'store/actions/dashboard/getQueryResults';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { ServicesList } from 'types/api/metrics/getService';

@@ -7,9 +7,7 @@ import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { isEmpty } from 'lodash-es';
 import { ReactNode, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
@@ -58,10 +56,7 @@ function TopOperationMetrics(): JSX.Element {
 
 	const updatedQuery = useStepInterval(keyOperationWidget.query);
 
-	const isEmptyWidget = useMemo(
-		() => keyOperationWidget.id === 'empty' || isEmpty(keyOperationWidget),
-		[keyOperationWidget],
-	);
+	const isEmptyWidget = keyOperationWidget.id === PANEL_TYPES.EMPTY_WIDGET;
 
 	const { data, isLoading } = useGetQueryRange(
 		{
@@ -69,7 +64,7 @@ function TopOperationMetrics(): JSX.Element {
 			graphType: keyOperationWidget?.panelTypes,
 			query: updatedQuery,
 			globalSelectedInterval,
-			variables: getDashboardVariables(),
+			variables: {},
 		},
 		{
 			queryKey: [

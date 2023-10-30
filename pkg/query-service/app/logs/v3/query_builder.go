@@ -49,7 +49,6 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotIn:           "NOT IN",
 	v3.FilterOperatorExists:          "has(%s_%s_key, '%s')",
 	v3.FilterOperatorNotExists:       "not has(%s_%s_key, '%s')",
-	// (todo) check contains/not contains/
 }
 
 func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
@@ -161,6 +160,15 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
+			if item.Key.IsJSON {
+				filter, err := GetJSONFilter(item)
+				if err != nil {
+					return "", err
+				}
+				conditions = append(conditions, filter)
+				continue
+			}
+
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
 
 			var value interface{}
@@ -272,7 +280,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	if graphLimitQtype == constants.SecondQueryGraphLimit {
-		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
+		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "#LIMIT_PLACEHOLDER)"
 	}
 
 	aggregationKey := ""

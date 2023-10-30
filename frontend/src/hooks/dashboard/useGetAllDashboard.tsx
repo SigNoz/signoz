@@ -1,16 +1,10 @@
-import getAll from 'api/dashboard/getAll';
+import { getAllDashboardList } from 'api/dashboard/getAll';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery, UseQueryResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/dashboard/getAll';
+import { Dashboard } from 'types/api/dashboard/getAll';
 
-export const useGetAllDashboard = (): DashboardProps =>
-	useQuery({
-		queryFn: getAll,
+export const useGetAllDashboard = (): UseQueryResult<Dashboard[], unknown> =>
+	useQuery<Dashboard[]>({
+		queryFn: getAllDashboardList,
 		queryKey: REACT_QUERY_KEY.GET_ALL_DASHBOARDS,
 	});
-
-type DashboardProps = UseQueryResult<
-	SuccessResponse<PayloadProps> | ErrorResponse,
-	unknown
->;

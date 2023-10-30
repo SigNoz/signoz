@@ -1,0 +1,36 @@
+.billing-container {
+	padding: 16px 0;
+	width: 100%;
+
+	.billing-summary {
+		margin: 24px 8px;
+	}
+
+	.billing-details {
+		margin: 36px 8px;
+	}
+
+	.upgrade-plan-benefits {
+		margin: 0px 8px;
+		border: 1px solid #333;
+		border-radius: 5px;
+		padding: 0 48px;
+		.plan-benefits {
+			.plan-benefit {
+				display: flex;
+				align-items: center;
+				gap: 16px;
+				margin: 16px 0;
+			}
+		}
+	}
+}
+
+.ant-skeleton.ant-skeleton-element.ant-skeleton-active {
+	width: 100%;
+	min-width: 100%;
+}
+
+.ant-skeleton.ant-skeleton-element .ant-skeleton-input {
+	min-width: 100% !important;
+}

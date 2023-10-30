@@ -1,4 +1,4 @@
-import { Button as ButtonComponent, Tag } from 'antd';
+import { Button as ButtonComponent } from 'antd';
 import styled from 'styled-components';
 
 export const ButtonContainer = styled.div`
@@ -21,11 +21,5 @@ export const ColumnButton = styled(ButtonComponent)`
 		padding-left: 0;
 		padding-right: 0;
 		margin-right: 1.5em;
-	}
-`;
-
-export const StyledTag = styled(Tag)`
-	&&& {
-		white-space: normal;
 	}
 `;

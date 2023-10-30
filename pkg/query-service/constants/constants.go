@@ -17,6 +17,10 @@ const (
 	OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket
 )
 
+type ContextKey string
+
+const ContextUserKey ContextKey = "user"
+
 var ConfigSignozIo = "https://config.signoz.io/api/v1"
 
 var DEFAULT_TELEMETRY_ANONYMOUS = false

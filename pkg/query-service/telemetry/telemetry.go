@@ -2,7 +2,7 @@ package telemetry
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"os"
@@ -12,11 +12,13 @@ import (
 	"time"
 
 	ph "github.com/posthog/posthog-go"
+	"gopkg.in/segmentio/analytics-go.v3"
+
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/version"
-	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 const (
@@ -35,7 +37,7 @@ const (
 	TELEMETRY_EVENT_LANGUAGE              = "Language"
 	TELEMETRY_EVENT_LOGS_FILTERS          = "Logs Filters"
 	TELEMETRY_EVENT_DISTRIBUTED           = "Distributed"
-	TELEMETRY_EVENT_DASHBOARDS_METADATA   = "Dashboards Metadata"
+	TELEMETRY_EVENT_QUERY_RANGE_V3        = "Query Range V3 Metadata"
 	TELEMETRY_EVENT_ACTIVE_USER           = "Active User"
 	TELEMETRY_EVENT_ACTIVE_USER_PH        = "Active User V2"
 )
@@ -74,28 +76,34 @@ func (a *Telemetry) IsSampled() bool {
 
 }
 
-func (telemetry *Telemetry) CheckSigNozMetricsV2(compositeQuery *model.CompositeMetricQuery) bool {
+func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) (bool, bool) {
+	signozLogsUsed := false
+	signozMetricsUsed := false
 
-	signozMetricsNotFound := false
-
-	if compositeQuery.BuilderQueries != nil && len(compositeQuery.BuilderQueries) > 0 {
-		if !strings.Contains(compositeQuery.BuilderQueries["A"].MetricName, "signoz_") && len(compositeQuery.BuilderQueries["A"].MetricName) > 0 {
-			signozMetricsNotFound = true
+	if postData.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		for _, query := range postData.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceLogs && len(query.Filters.Items) > 0 {
+				signozLogsUsed = true
+			} else if query.DataSource == v3.DataSourceMetrics &&
+				!strings.Contains(query.AggregateAttribute.Key, "signoz_") &&
+				len(query.AggregateAttribute.Key) > 0 {
+				signozMetricsUsed = true
+			}
+		}
+	} else if postData.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		for _, query := range postData.CompositeQuery.PromQueries {
+			if !strings.Contains(query.Query, "signoz_") && len(query.Query) > 0 {
+				signozMetricsUsed = true
+			}
+		}
+	} else if postData.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+		for _, query := range postData.CompositeQuery.ClickHouseQueries {
+			if strings.Contains(query.Query, "signoz_metrics") && len(query.Query) > 0 {
+				signozMetricsUsed = true
+			}
 		}
 	}
-
-	if compositeQuery.PromQueries != nil && len(compositeQuery.PromQueries) > 0 {
-		if !strings.Contains(compositeQuery.PromQueries["A"].Query, "signoz_") && len(compositeQuery.PromQueries["A"].Query) > 0 {
-			signozMetricsNotFound = true
-		}
-	}
-	if compositeQuery.ClickHouseQueries != nil && len(compositeQuery.ClickHouseQueries) > 0 {
-		if !strings.Contains(compositeQuery.ClickHouseQueries["A"].Query, "signoz_") && len(compositeQuery.ClickHouseQueries["A"].Query) > 0 {
-			signozMetricsNotFound = true
-		}
-	}
-
-	return signozMetricsNotFound
+	return signozLogsUsed, signozMetricsUsed
 }
 
 func (telemetry *Telemetry) AddActiveTracesUser() {
@@ -116,8 +124,10 @@ func (telemetry *Telemetry) AddActiveLogsUser() {
 
 type Telemetry struct {
 	operator      analytics.Client
+	saasOperator  analytics.Client
 	phOperator    ph.Client
 	ipAddress     string
+	userEmail     string
 	isEnabled     bool
 	isAnonymous   bool
 	distinctId    string
@@ -239,7 +249,7 @@ func getOutboundIP() string {
 
 	defer resp.Body.Close()
 	if err == nil {
-		ipBody, err := ioutil.ReadAll(resp.Body)
+		ipBody, err := io.ReadAll(resp.Body)
 		if err == nil {
 			ip = ipBody
 		}
@@ -249,9 +259,24 @@ func getOutboundIP() string {
 }
 
 func (a *Telemetry) IdentifyUser(user *model.User) {
+	if user.Email == "admin@admin.com" || user.Email == "admin@signoz.cloud" {
+		return
+	}
 	a.SetCompanyDomain(user.Email)
+	a.SetUserEmail(user.Email)
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
+	}
+	if a.saasOperator != nil {
+		a.saasOperator.Enqueue(analytics.Identify{
+			UserId: a.userEmail,
+			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
+		})
+		a.saasOperator.Enqueue(analytics.Group{
+			UserId:  a.userEmail,
+			GroupId: a.getCompanyDomain(),
+			Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
+		})
 	}
 
 	a.operator.Enqueue(analytics.Identify{
@@ -270,6 +295,21 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 
 func (a *Telemetry) SetCountUsers(countUsers int8) {
 	a.countUsers = countUsers
+}
+
+func (a *Telemetry) SetUserEmail(email string) {
+	a.userEmail = email
+}
+
+func (a *Telemetry) GetUserEmail() string {
+	return a.userEmail
+}
+
+func (a *Telemetry) SetSaasOperator(saasOperatorKey string) {
+	if saasOperatorKey == "" {
+		return
+	}
+	a.saasOperator = analytics.New(saasOperatorKey)
 }
 
 func (a *Telemetry) SetCompanyDomain(email string) {
@@ -340,6 +380,15 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, opts ..
 	userId := a.ipAddress
 	if a.isTelemetryAnonymous() || userId == IP_NOT_FOUND_PLACEHOLDER {
 		userId = a.GetDistinctId()
+	}
+
+	if a.saasOperator != nil && a.GetUserEmail() != "" &&
+		(event == TELEMETRY_EVENT_NUMBER_OF_SERVICES || event == TELEMETRY_EVENT_ACTIVE_USER) {
+		a.saasOperator.Enqueue(analytics.Track{
+			Event:      event,
+			UserId:     a.GetUserEmail(),
+			Properties: properties,
+		})
 	}
 
 	a.operator.Enqueue(analytics.Track{

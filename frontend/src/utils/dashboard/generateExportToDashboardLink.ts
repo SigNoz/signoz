@@ -1,6 +1,5 @@
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import { generatePath } from 'react-router-dom';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -19,5 +18,5 @@ export const generateExportToDashboardLink = ({
 	`${generatePath(ROUTES.DASHBOARD, {
 		dashboardId,
 	})}/new?${QueryParams.graphType}=${panelType}&${QueryParams.widgetId}=empty&${
-		queryParamNamesMap.compositeQuery
+		QueryParams.compositeQuery
 	}=${encodeURIComponent(JSON.stringify(query))}`;
