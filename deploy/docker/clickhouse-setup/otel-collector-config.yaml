@@ -66,11 +66,11 @@ processors:
     operators:
       - type: regex_parser
         id: traceid
-        # https://regex101.com/r/CXtgmL/1
-        regex: '(?i)(trace(|-|_||)id("|=| |-|:)*)(?P<trace_id>[A-Fa-f0-9]+)'
+        # https://regex101.com/r/MMfNjk/1
+        regex: '(?i)(trace(-|_||)id("|=| |-|:)*)(?P<trace_id>[A-Fa-f0-9]+)'
         parse_from: body
         parse_to: attributes.temp_trace
-        if: 'body matches "(?i)(trace(|-|_||)id(\"|=| |-|:)*)(?P<trace_id>[A-Fa-f0-9]+)"'
+        if: 'body matches "(?i)(trace(-|_||)id(\"|=| |-|:)*)(?P<trace_id>[A-Fa-f0-9]+)"'
         output: spanid
       - type: regex_parser
         id: spanid
