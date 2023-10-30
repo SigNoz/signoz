@@ -23,7 +23,7 @@ function NameInput({ fieldData }: NameInputProps): JSX.Element {
 					initialValue={fieldData.initialValue}
 					rules={fieldData.rules ? fieldData.rules : formValidationRules}
 				>
-					<Input placeholder={t(fieldData.placeholder)} name={fieldData.name} />
+					<Input placeholder={t(fieldData.placeholder)} />
 				</Form.Item>
 			</FormWrapper>
 		</Container>

@@ -13,6 +13,7 @@ import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
+import { identity, pickBy } from 'lodash-es';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useEffect, useState } from 'react';
@@ -90,13 +91,19 @@ function App(): JSX.Element {
 		const orgName =
 			org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
 
+		const { name, email } = user;
+
 		const identifyPayload = {
-			email: user?.email,
-			name: user?.name,
+			email,
+			name,
 			company_name: orgName,
 			role,
+			source: 'signoz-ui',
 		};
-		const domain = extractDomain(user?.email);
+
+		const sanitizedIdentifyPayload = pickBy(identifyPayload, identity);
+
+		const domain = extractDomain(email);
 
 		const hostNameParts = hostname.split('.');
 
@@ -106,13 +113,14 @@ function App(): JSX.Element {
 			data_region: hostNameParts[1],
 			tenant_url: hostname,
 			company_domain: domain,
+			source: 'signoz-ui',
 		};
 
-		window.analytics.identify(user?.email, identifyPayload);
+		window.analytics.identify(email, sanitizedIdentifyPayload);
 
 		window.analytics.group(domain, groupTraits);
 
-		window.clarity('identify', user.email, user.name);
+		window.clarity('identify', email, name);
 	};
 
 	useEffect(() => {
