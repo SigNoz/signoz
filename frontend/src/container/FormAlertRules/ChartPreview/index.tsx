@@ -2,7 +2,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { StaticLineProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import GridPanelSwitch from 'container/GridPanelSwitch';
+import AlertsPanelSwitch from 'container/AlertsPanelSwitch';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -129,7 +129,7 @@ function ChartPreview({
 				<Spinner size="large" tip="Loading..." height="70vh" />
 			)}
 			{chartDataSet && !queryResponse.isError && (
-				<GridPanelSwitch
+				<AlertsPanelSwitch
 					panelType={graphType}
 					title={name}
 					data={chartDataSet.data}
