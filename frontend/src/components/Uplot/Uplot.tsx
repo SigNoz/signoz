@@ -1,3 +1,6 @@
+import './uplot.scss';
+
+import { Typography } from 'antd';
 import { useCallback, useEffect, useRef } from 'react';
 import UPlot from 'uplot';
 
@@ -41,6 +44,14 @@ function Uplot({
 	const create = useCallback(() => {
 		if (targetRef.current === null) return;
 
+		// If data is empty, hide cursor
+		if (data && data[0] && data[0]?.length === 0) {
+			propOptionsRef.current = {
+				...propOptionsRef.current,
+				cursor: { show: false },
+			};
+		}
+
 		const newChart = new UPlot(
 			propOptionsRef.current,
 			propDataRef.current,
@@ -49,7 +60,7 @@ function Uplot({
 
 		chartRef.current = newChart;
 		onCreateRef.current?.(newChart);
-	}, []);
+	}, [data]);
 
 	useEffect(() => {
 		create();
@@ -91,7 +102,15 @@ function Uplot({
 		}
 	}, [data, resetScales, create]);
 
-	return <div ref={targetRef} />;
+	return (
+		<div ref={targetRef}>
+			{data && data[0] && data[0]?.length === 0 ? (
+				<div className="not-found">
+					<Typography>No Data</Typography>
+				</div>
+			) : null}
+		</div>
+	);
 }
 
 Uplot.defaultProps = {
