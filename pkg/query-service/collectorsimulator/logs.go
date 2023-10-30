@@ -29,9 +29,12 @@ func SimulateLogsProcessing(
 	outputLogs []plog.Logs, collectorErrs []string, apiErr *model.ApiError,
 ) {
 	// Construct and start a simulator (wraps a collector service)
-	simulator, apiErr := NewCollectorSimulator(
+	simulator, simulatorInitCleanup, apiErr := NewCollectorSimulator(
 		ctx, component.DataTypeLogs, processorFactories, processorConfigs,
 	)
+	if simulatorInitCleanup != nil {
+		defer simulatorInitCleanup()
+	}
 	if apiErr != nil {
 		return nil, nil, model.WrapApiError(apiErr, "could not create logs processing simulator")
 	}
