@@ -66,8 +66,10 @@ function ImportJSON({
 			setDashboardCreating(true);
 			const dashboardData = JSON.parse(editorValue) as DashboardData;
 
-			if (dashboardData.layout) {
+			if (dashboardData?.layout) {
 				dashboardData.layout = getUpdatedLayout(dashboardData.layout);
+			} else {
+				dashboardData.layout = [];
 			}
 
 			const response = await createDashboard({
