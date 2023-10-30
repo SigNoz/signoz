@@ -12,12 +12,7 @@ export const getUPlotChartData = (
 	apiResponse?: MetricRangePayloadProps,
 ): uPlot.AlignedData => {
 	const seriesList = apiResponse?.data?.result || [];
-
 	const uPlotData: uPlot.AlignedData = [];
-
-	const sortedSeriesList: uPlot.AlignedData = [];
-
-	console.log('seriesList,', sortedSeriesList);
 
 	// sort seriesList
 	for (let index = 0; index < seriesList.length; index += 1) {

@@ -16,6 +16,20 @@ body {
 	overflow-y: auto;
 	overflow-x: hidden;
 
+	&::-webkit-scrollbar {
+		width: 0.3rem;
+	}
+	&::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+	&::-webkit-scrollbar-thumb {
+		background: rgb(136, 136, 136);
+		border-radius: 0.625rem;
+	}
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
 	tr.u-series {
 		th {
 			display: flex;
