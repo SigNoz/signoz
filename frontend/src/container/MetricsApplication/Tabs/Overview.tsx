@@ -2,6 +2,7 @@ import getTopLevelOperations, {
 	ServiceDataProps,
 } from 'api/metrics/getTopLevelOperations';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
+import ErrorBoundary from 'components/ErrorBoundry/ErrorBoundry';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -234,6 +235,34 @@ function Application(): JSX.Element {
 						<Button
 							type="default"
 							size="small"
+							id="Rate_button"
+							onClick={onViewTracePopupClick({
+								servicename,
+								selectedTraceTags,
+								timestamp: selectedTimeStamp,
+							})}
+						>
+							View Traces
+						</Button>
+						<TopLevelOperation
+							handleGraphClick={handleGraphClick}
+							onDragSelect={onDragSelect}
+							topLevelOperationsError={topLevelOperationsError}
+							topLevelOperationsIsError={topLevelOperationsIsError}
+							name="error_percentage_%"
+							widget={errorPercentageWidget}
+							opName="Error"
+							topLevelOperationsIsLoading={topLevelOperationsIsLoading}
+						/>
+					</ColApDexContainer>
+				</Col>
+			</Row>
+			<Row gutter={24}>
+				<Col span={12}>
+					<ColApDexContainer>
+						<Button
+							type="default"
+							size="small"
 							id="ApDex_button"
 							onClick={onViewTracePopupClick({
 								servicename,
@@ -264,11 +293,11 @@ function Application(): JSX.Element {
 							handleGraphClick={handleGraphClick}
 							onDragSelect={onDragSelect}
 							topLevelOperationsError={topLevelOperationsError}
+							topLevelOperationsLoading={topLevelOperationsLoading}
 							topLevelOperationsIsError={topLevelOperationsIsError}
 							name="error_percentage_%"
 							widget={errorPercentageWidget}
 							opName="Error"
-							topLevelOperationsIsLoading={topLevelOperationsIsLoading}
 						/>
 					</ColErrorContainer>
 				</Col>

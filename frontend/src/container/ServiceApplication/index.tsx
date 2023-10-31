@@ -1,3 +1,4 @@
+import ErrorBoundary from 'components/ErrorBoundry/ErrorBoundry';
 import { FeatureKeys } from 'constants/features';
 import useFeatureFlag from 'hooks/useFeatureFlag';
 
@@ -10,9 +11,11 @@ function Services(): JSX.Element {
 		?.active;
 
 	return (
-		<Container>
-			{isSpanMetricEnabled ? <ServiceMetrics /> : <ServiceTraces />}
-		</Container>
+		<ErrorBoundary>
+			<Container>
+				{isSpanMetricEnabled ? <ServiceMetrics /> : <ServiceTraces />}
+			</Container>
+		</ErrorBoundary>
 	);
 }
 

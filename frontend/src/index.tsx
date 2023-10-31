@@ -1,6 +1,7 @@
 import './ReactI18';
 
 import AppRoutes from 'AppRoutes';
+import ErrorBoundary from 'components/ErrorBoundry/ErrorBoundry';
 import GlobalStyles from 'globalStyles';
 import { ThemeProvider } from 'hooks/useDarkMode';
 import { createRoot } from 'react-dom/client';
@@ -24,18 +25,21 @@ if (container) {
 	const root = createRoot(container);
 
 	root.render(
-		<HelmetProvider>
-			<ThemeProvider>
-				<QueryClientProvider client={queryClient}>
-					<Provider store={store}>
-						<GlobalStyles />
-						<AppRoutes />
-					</Provider>
-					{process.env.NODE_ENV === 'development' && (
-						<ReactQueryDevtools initialIsOpen />
-					)}
-				</QueryClientProvider>
-			</ThemeProvider>
-		</HelmetProvider>,
+		<ErrorBoundary>
+			<HelmetProvider>
+				<ThemeProvider>
+					<QueryClientProvider client={queryClient}>
+						<Provider store={store}>
+							<GlobalStyles />
+							<AppRoutes />
+						</Provider>
+						{process.env.NODE_ENV === 'development' && (
+							<ReactQueryDevtools initialIsOpen />
+						)}
+					</QueryClientProvider>
+				</ThemeProvider>
+			</HelmetProvider>
+			,
+		</ErrorBoundary>,
 	);
 }
