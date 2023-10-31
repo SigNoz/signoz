@@ -1,6 +1,9 @@
+import './TopOperationsTable.styles.scss';
+
 import { Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
+import Download from 'container/Download/Download';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSelector } from 'react-redux';
@@ -10,7 +13,10 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { getErrorRate, navigateToTrace } from './utils';
 
-function TopOperationsTable({ data }: TopOperationsTableProps): JSX.Element {
+function TopOperationsTable({
+	data,
+	isLoading,
+}: TopOperationsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -93,14 +99,24 @@ function TopOperationsTable({ data }: TopOperationsTableProps): JSX.Element {
 	];
 
 	return (
-		<ResizeTable
-			columns={columns}
-			showHeader
-			title={(): string => 'Key Operations'}
-			tableLayout="fixed"
-			dataSource={data}
-			rowKey="name"
-		/>
+		<div className="top-operation">
+			<div className="top-operation--download">
+				<Download
+					data={(data as unknown) as Record<string, string>[]}
+					isLoading={isLoading}
+					fileName="top_operations"
+				/>
+			</div>
+			<ResizeTable
+				columns={columns}
+				loading={isLoading}
+				showHeader
+				title={(): string => 'Key Operations'}
+				tableLayout="fixed"
+				dataSource={data}
+				rowKey="name"
+			/>
+		</div>
 	);
 }
 
@@ -115,6 +131,7 @@ export interface TopOperationList {
 
 interface TopOperationsTableProps {
 	data: TopOperationList[];
+	isLoading: boolean;
 }
 
 export default TopOperationsTable;
