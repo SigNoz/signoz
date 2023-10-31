@@ -5,7 +5,7 @@ import { Button, Dropdown, MenuProps, Space } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 function DropDown({ element }: { element: JSX.Element[] }): JSX.Element {
-	const isDardMode = useIsDarkMode();
+	const isDarkMode = useIsDarkMode();
 
 	const items: MenuProps['items'] = element.map(
 		(e: JSX.Element, index: number) => ({
@@ -18,7 +18,7 @@ function DropDown({ element }: { element: JSX.Element[] }): JSX.Element {
 		<Dropdown menu={{ items }} className="Dropdown-container">
 			<Button
 				type="link"
-				className={!isDardMode ? 'Dropdown-button--dark' : 'Dropdown-button'}
+				className={!isDarkMode ? 'Dropdown-button--dark' : 'Dropdown-button'}
 				onClick={(e): void => e.preventDefault()}
 			>
 				<Space>
