@@ -6,6 +6,7 @@ import { createTableColumnsFromQuery } from 'lib/query/createTableColumnsFromQue
 import { useMemo } from 'react';
 
 import { QueryTableProps } from './QueryTable.intefaces';
+import { createDownloadableData } from './utils';
 
 export function QueryTable({
 	queryTableData,
@@ -29,6 +30,9 @@ export function QueryTable({
 		[query, queryTableData, renderActionCell, renderColumnCell],
 	);
 
+	const downloadableData = createDownloadableData(dataSource);
+	console.log(downloadableData);
+
 	const tableColumns = modifyColumns ? modifyColumns(columns) : columns;
 
 	return (
@@ -36,7 +40,7 @@ export function QueryTable({
 			{isDownloadEnabled && (
 				<div className="query-table--download">
 					<Download
-						data={(dataSource as unknown) as Record<string, string>[]}
+						data={downloadableData}
 						fileName={fileName}
 						isLoading={loading as boolean}
 					/>
