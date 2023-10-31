@@ -17,7 +17,7 @@ import { v4 } from 'uuid';
 
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
-import { FullViewContainer, Modal } from './styles';
+import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
 
 function WidgetGraphComponent({
@@ -208,16 +208,14 @@ function WidgetGraphComponent({
 				width="85%"
 				destroyOnClose
 			>
-				<FullViewContainer>
-					<FullView
-						name={`${name}expanded`}
-						widget={widget}
-						yAxisUnit={widget.yAxisUnit}
-						onToggleModelHandler={onToggleModelHandler}
-						parentChartRef={lineChartRef}
-						onDragSelect={onDragSelect}
-					/>
-				</FullViewContainer>
+				<FullView
+					name={`${name}expanded`}
+					widget={widget}
+					yAxisUnit={widget.yAxisUnit}
+					onToggleModelHandler={onToggleModelHandler}
+					parentChartRef={lineChartRef}
+					onDragSelect={onDragSelect}
+				/>
 			</Modal>
 
 			<div style={{ height: '30px' }} className="drag-handle">
