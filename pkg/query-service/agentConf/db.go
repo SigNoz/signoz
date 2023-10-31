@@ -12,6 +12,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf/sqlite"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
 )
 
 func init() {
@@ -59,6 +60,13 @@ func (r *Repo) GetConfigHistory(
 
 	if err != nil {
 		return nil, model.InternalError(err)
+	}
+
+	incompleteStatuses := []DeployStatus{DeployInitiated, Deploying}
+	for idx := 1; idx < len(c); idx++ {
+		if slices.Contains(incompleteStatuses, c[idx].DeployStatus) {
+			c[idx].DeployStatus = DeployStatusUnknown
+		}
 	}
 
 	return c, nil
