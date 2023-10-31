@@ -15,6 +15,7 @@ import (
 	"github.com/gosimple/slug"
 	"github.com/jmoiron/sqlx"
 	"github.com/mitchellh/mapstructure"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -128,6 +129,12 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("error in adding column updated_by to dashboards table: %s", err.Error())
 	}
 
+	locked := `ALTER TABLE dashboards ADD COLUMN locked INTEGER DEFAULT 0;`
+	_, err = db.Exec(locked)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
+		return nil, fmt.Errorf("error in adding column locked to dashboards table: %s", err.Error())
+	}
+
 	return db, nil
 }
 
@@ -141,6 +148,7 @@ type Dashboard struct {
 	UpdateBy  *string   `json:"updated_by" db:"updated_by"`
 	Title     string    `json:"-" db:"-"`
 	Data      Data      `json:"data" db:"data"`
+	Locked    *int      `json:"locked" db:"locked"`
 }
 
 type Data map[string]interface{}
@@ -239,6 +247,14 @@ func DeleteDashboard(ctx context.Context, uuid string, fm interfaces.FeatureLook
 		return dErr
 	}
 
+	if user := common.GetUserFromContext(ctx); user != nil {
+		if dashboard.Locked != nil && *dashboard.Locked == 1 {
+			if !auth.IsAdmin(user) || (dashboard.CreateBy != nil && *dashboard.CreateBy != user.Email) {
+				return model.BadRequest(fmt.Errorf("dashboard is locked. Only admin or owner can delete the dashboard"))
+			}
+		}
+	}
+
 	query := `DELETE FROM dashboards WHERE uuid=?`
 
 	result, err := db.Exec(query, uuid)
@@ -289,6 +305,16 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 		return nil, apiErr
 	}
 
+	var userEmail string
+	if user := common.GetUserFromContext(ctx); user != nil {
+		userEmail = user.Email
+		if dashboard.Locked != nil && *dashboard.Locked == 1 {
+			if !auth.IsAdmin(user) || (dashboard.CreateBy != nil && *dashboard.CreateBy != user.Email) {
+				return nil, model.BadRequest(fmt.Errorf("dashboard is locked. Only admin or owner can update the dashboard"))
+			}
+		}
+	}
+
 	// check if the count of trace and logs QB panel has changed, if yes, then check feature flag count
 	existingCount, existingTotal := countTraceAndLogsPanel(dashboard.Data)
 	newCount, newTotal := countTraceAndLogsPanel(data)
@@ -306,10 +332,6 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 	}
 
 	dashboard.UpdatedAt = time.Now()
-	var userEmail string
-	if user := common.GetUserFromContext(ctx); user != nil {
-		userEmail = user.Email
-	}
 	dashboard.UpdateBy = &userEmail
 	dashboard.Data = data
 
@@ -325,6 +347,24 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 		updateFeatureUsage(fm, newCount-existingCount)
 	}
 	return dashboard, nil
+}
+
+func LockUnlockDashboard(ctx context.Context, uuid string, lock bool) *model.ApiError {
+	var query string
+	if lock {
+		query = `UPDATE dashboards SET locked=1 WHERE uuid=?;`
+	} else {
+		query = `UPDATE dashboards SET locked=0 WHERE uuid=?;`
+	}
+
+	_, err := db.Exec(query, uuid)
+
+	if err != nil {
+		zap.S().Errorf("Error in updating dashboard: ", uuid, err)
+		return &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	return nil
 }
 
 func updateFeatureUsage(fm interfaces.FeatureLookup, usage int64) *model.ApiError {
