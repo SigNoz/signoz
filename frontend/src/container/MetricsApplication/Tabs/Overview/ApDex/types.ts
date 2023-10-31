@@ -1,9 +1,8 @@
+import { OnClickPluginOpts } from 'lib/getUplotChartData';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
-import { ClickHandlerType } from '../../Overview';
-
 export interface ApDexApplicationProps {
-	handleGraphClick: (type: string) => ClickHandlerType;
+	handleGraphClick: (type: string) => OnClickPluginOpts['onClick'];
 	onDragSelect: (start: number, end: number) => void;
 	topLevelOperationsRoute: string[];
 	tagFilterItems: TagFilterItem[];

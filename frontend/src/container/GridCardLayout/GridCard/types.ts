@@ -1,5 +1,6 @@
-import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
+import { ToggleGraphProps } from 'components/Graph/types';
 import { UplotProps } from 'components/Uplot/Uplot';
+import { OnClickPluginOpts } from 'lib/getUplotChartData';
 import { MutableRefObject, ReactNode } from 'react';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -23,7 +24,7 @@ export interface WidgetGraphComponentProps extends UplotProps {
 	errorMessage: string | undefined;
 	name: string;
 	onDragSelect: (start: number, end: number) => void;
-	onClickHandler?: GraphOnClickHandler;
+	onClickHandler?: OnClickPluginOpts['onClick'];
 	threshold?: ReactNode;
 	headerMenuList: MenuItemKeys[];
 	isWarning: boolean;
@@ -33,7 +34,7 @@ export interface GridCardGraphProps {
 	widget: Widgets;
 	name: string;
 	onDragSelect?: (start: number, end: number) => void;
-	onClickHandler?: GraphOnClickHandler;
+	onClickHandler?: OnClickPluginOpts['onClick'];
 	threshold?: ReactNode;
 	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
 	isQueryEnabled: boolean;

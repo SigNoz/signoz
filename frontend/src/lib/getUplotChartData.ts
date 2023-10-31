@@ -1,5 +1,6 @@
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { Dimensions } from 'hooks/useDimensions';
+import _noop from 'lodash-es/noop';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
@@ -82,7 +83,7 @@ interface GetUPlotChartOptions {
 	isDarkMode: boolean;
 	onDragSelect: (startTime: number, endTime: number) => void;
 	yAxisUnit?: string;
-	widgetMetaData?: QueryData[];
+	onClickHandler?: OnClickPluginOpts['onClick'];
 }
 
 const createDivsFromArray = (
@@ -187,12 +188,51 @@ const tooltipPlugin = (yAxisUnit?: string): any => {
 	};
 };
 
+export interface OnClickPluginOpts {
+	onClick: (
+		xValue: number,
+		yValue: number,
+		mouseX: number,
+		mouseY: number,
+	) => void;
+}
+
+function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
+	let handleClick: (event: MouseEvent) => void;
+
+	const hooks: uPlot.Plugin['hooks'] = {
+		init: (u: uPlot) => {
+			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+			handleClick = function (event: MouseEvent) {
+				const mouseX = event.offsetX;
+				const mouseY = event.offsetY;
+
+				// Convert pixel positions to data values
+				const xValue = u.posToVal(mouseX, 'x');
+				const yValue = u.posToVal(mouseY, 'y');
+
+				opts.onClick(xValue, yValue, mouseX, mouseY);
+			};
+
+			u.over.addEventListener('click', handleClick);
+		},
+		destroy: (u: uPlot) => {
+			u.over.removeEventListener('click', handleClick);
+		},
+	};
+
+	return {
+		hooks,
+	};
+}
+
 export const getUPlotChartOptions = ({
 	dimensions,
 	isDarkMode,
 	apiResponse,
 	onDragSelect,
 	yAxisUnit,
+	onClickHandler = _noop,
 }: GetUPlotChartOptions): uPlot.Options => ({
 	width: dimensions.width,
 	height: dimensions.height - 50,
@@ -228,8 +268,12 @@ export const getUPlotChartOptions = ({
 			auto: true,
 		},
 	},
-
-	plugins: [tooltipPlugin(yAxisUnit)],
+	plugins: [
+		tooltipPlugin(yAxisUnit),
+		onClickPlugin({
+			onClick: onClickHandler,
+		}),
+	],
 	hooks: {
 		setSelect: [
 			(self): void => {
