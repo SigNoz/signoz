@@ -3,6 +3,7 @@ import {
 	CloseCircleFilled,
 	ExclamationCircleFilled,
 	LoadingOutlined,
+	MinusCircleFilled,
 } from '@ant-design/icons';
 import { Spin } from 'antd';
 
@@ -16,6 +17,8 @@ export function getDeploymentStage(value: string): string {
 			return 'Dirty';
 		case 'FAILED':
 			return 'Failed';
+		case 'UNKNOWN':
+			return 'Unknown';
 		default:
 			return '';
 	}
@@ -33,6 +36,8 @@ export function getDeploymentStageIcon(value: string): JSX.Element {
 			return <ExclamationCircleFilled />;
 		case 'FAILED':
 			return <CloseCircleFilled />;
+		case 'UNKNOWN':
+			return <MinusCircleFilled />;
 		default:
 			return <span />;
 	}
