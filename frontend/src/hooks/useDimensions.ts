@@ -10,7 +10,10 @@ export function useResizeObserver<T extends HTMLElement>(
 	ref: React.RefObject<T>,
 	debounceTime = 300,
 ): Dimensions {
-	const [size, setSize] = useState<Dimensions>({ width: 0, height: 0 });
+	const [size, setSize] = useState<Dimensions>({
+		width: ref.current?.clientWidth || 0,
+		height: ref.current?.clientHeight || 0,
+	});
 
 	// eslint-disable-next-line consistent-return
 	useEffect(() => {
