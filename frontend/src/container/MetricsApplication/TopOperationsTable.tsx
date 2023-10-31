@@ -14,7 +14,11 @@ import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { getErrorRate, navigateToTrace } from './utils';
+import {
+	convertedTracesToDownloadData,
+	getErrorRate,
+	navigateToTrace,
+} from './utils';
 
 function TopOperationsTable({
 	data,
@@ -118,11 +122,13 @@ function TopOperationsTable({
 		},
 	];
 
+	const downloadableData = convertedTracesToDownloadData(data);
+
 	return (
 		<div className="top-operation">
 			<div className="top-operation--download">
 				<Download
-					data={(data as unknown) as Record<string, string>[]}
+					data={downloadableData}
 					isLoading={isLoading}
 					fileName="top_operations"
 				/>

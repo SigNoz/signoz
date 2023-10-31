@@ -35,3 +35,20 @@ export const getNearestHighestBucketValue = (
 
 export const convertMilSecToNanoSec = (value: number): number =>
 	value * 1000000000;
+
+export const convertedTracesToDownloadData = (
+	originalData: TopOperationList[],
+): Record<string, string>[] =>
+	originalData.map((item) => {
+		// Create a new object with string values for each key
+		const newObj: Record<string, string> = {
+			name: item.name,
+			'p50 (in ms)': (item.p50 / 1000000).toFixed(2),
+			'p95 (in ms)': (item.p50 / 1000000).toFixed(2),
+			'p99 (in ms)': (item.p50 / 1000000).toFixed(2),
+			numCalls: item.numCalls.toString(),
+			'errorCount (%)': item.errorCount.toString(),
+		};
+
+		return newObj;
+	});
