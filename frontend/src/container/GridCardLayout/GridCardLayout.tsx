@@ -93,6 +93,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 			<ButtonContainer>
 				{saveLayoutPermission && (
 					<Button
+						size="small"
 						loading={updateDashboardMutation.isLoading}
 						onClick={onSaveHandler}
 						icon={<SaveFilled />}
@@ -103,7 +104,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 				)}
 
 				{addPanelPermission && (
-					<Button onClick={onAddPanelHandler} icon={<PlusOutlined />}>
+					<Button size="small" onClick={onAddPanelHandler} icon={<PlusOutlined />}>
 						{t('dashboard:add_panel')}
 					</Button>
 				)}
@@ -134,6 +135,9 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 							isDarkMode={isDarkMode}
 							key={id}
 							data-grid={JSON.stringify(layout)}
+							style={{
+								overflow: 'hidden',
+							}}
 						>
 							<Card $panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}>
 								<GridCard

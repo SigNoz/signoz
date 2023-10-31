@@ -1,4 +1,5 @@
-import { Button, Modal, Typography } from 'antd';
+import { CopyFilled, DownloadOutlined } from '@ant-design/icons';
+import { Button, Modal } from 'antd';
 import Editor from 'components/Editor';
 import { useNotifications } from 'hooks/useNotifications';
 import { useEffect, useMemo, useState } from 'react';
@@ -16,7 +17,6 @@ function ShareModal({
 	const getParsedValue = (): string => JSON.stringify(selectedData, null, 2);
 
 	const [jsonValue, setJSONValue] = useState<string>(getParsedValue());
-	const [isViewJSON, setIsViewJSON] = useState<boolean>(false);
 	const { t } = useTranslation(['dashboard', 'common']);
 	const [state, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
@@ -39,44 +39,41 @@ function ShareModal({
 		}
 	}, [state.error, state.value, t, notifications]);
 
+	// eslint-disable-next-line arrow-body-style
 	const GetFooterComponent = useMemo(() => {
-		if (!isViewJSON) {
-			return (
-				<>
-					<Button
-						onClick={(): void => {
-							setIsViewJSON(true);
-						}}
-					>
-						{t('view_json')}
-					</Button>
-
-					<Button
-						type="primary"
-						onClick={(): void => {
-							downloadObjectAsJson(selectedData, selectedData.title);
-						}}
-					>
-						{t('download_json')}
-					</Button>
-				</>
-			);
-		}
 		return (
-			<Button onClick={(): void => setCopy(jsonValue)} type="primary">
-				{t('copy_to_clipboard')}
-			</Button>
+			<>
+				<Button
+					style={{
+						marginTop: '16px',
+					}}
+					onClick={(): void => setCopy(jsonValue)}
+					type="primary"
+					size="small"
+				>
+					<CopyFilled /> {t('copy_to_clipboard')}
+				</Button>
+
+				<Button
+					type="primary"
+					size="small"
+					onClick={(): void => {
+						downloadObjectAsJson(selectedData, selectedData.title);
+					}}
+				>
+					<DownloadOutlined /> {t('download_json')}
+				</Button>
+			</>
 		);
-	}, [isViewJSON, jsonValue, selectedData, setCopy, t]);
+	}, [jsonValue, selectedData, setCopy, t]);
 
 	return (
 		<Modal
 			open={isJSONModalVisible}
 			onCancel={(): void => {
 				onToggleHandler();
-				setIsViewJSON(false);
 			}}
-			width="70vw"
+			width="80vw"
 			centered
 			title={t('share', {
 				ns: 'common',
@@ -86,11 +83,11 @@ function ShareModal({
 			destroyOnClose
 			footer={GetFooterComponent}
 		>
-			{!isViewJSON ? (
-				<Typography>{t('export_dashboard')}</Typography>
-			) : (
-				<Editor onChange={(value): void => setJSONValue(value)} value={jsonValue} />
-			)}
+			<Editor
+				height="70vh"
+				onChange={(value): void => setJSONValue(value)}
+				value={jsonValue}
+			/>
 		</Modal>
 	);
 }
