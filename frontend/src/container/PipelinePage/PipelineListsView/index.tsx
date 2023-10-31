@@ -56,23 +56,23 @@ function PipelineListsView({
 	const [modal, contextHolder] = Modal.useModal();
 	const { notifications } = useNotifications();
 	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(pipelineData?.pipelines),
+		cloneDeep(pipelineData?.pipelines || []),
 	);
 	const [currPipelineData, setCurrPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(pipelineData?.pipelines),
+		cloneDeep(pipelineData?.pipelines || []),
 	);
 
 	const [expandedPipelineId, setExpandedPipelineId] = useState<
 		string | undefined
 	>(undefined);
 	const expandedPipelineData = useCallback(
-		() => currPipelineData.find((p) => p.id === expandedPipelineId),
+		() => currPipelineData?.find((p) => p.id === expandedPipelineId),
 		[currPipelineData, expandedPipelineId],
 	);
 	const setExpandedPipelineData = useCallback(
 		(newData: PipelineData): void => {
 			if (expandedPipelineId) {
-				const pipelineIdx = currPipelineData.findIndex(
+				const pipelineIdx = currPipelineData?.findIndex(
 					(p) => p.id === expandedPipelineId,
 				);
 				if (pipelineIdx >= 0) {
@@ -359,8 +359,8 @@ function PipelineListsView({
 			refetchPipelineLists();
 			setActionMode(ActionMode.Viewing);
 			setShowSaveButton(undefined);
-			setCurrPipelineData(response.payload?.pipelines);
-			setPrevPipelineData(response.payload?.pipelines);
+			setCurrPipelineData(response.payload?.pipelines || []);
+			setPrevPipelineData(response.payload?.pipelines || []);
 		} else {
 			modifiedPipelineData.forEach((item: PipelineData) => {
 				const pipelineData = item;
