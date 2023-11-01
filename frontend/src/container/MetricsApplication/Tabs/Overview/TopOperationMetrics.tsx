@@ -1,4 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { topOperationMetricsDownloadOptions } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { topOperationQueries } from 'container/MetricsApplication/MetricsPageQueries/TopOperationQueries';
 import { QueryTable } from 'container/QueryTable';
@@ -109,6 +110,7 @@ function TopOperationMetrics(): JSX.Element {
 			queryTableData={queryTableData}
 			loading={isLoading}
 			renderColumnCell={renderColumnCell}
+			downloadOption={topOperationMetricsDownloadOptions}
 		/>
 	);
 }

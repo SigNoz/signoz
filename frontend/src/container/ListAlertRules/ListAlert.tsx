@@ -9,7 +9,7 @@ import {
 	TableDataSource,
 } from 'components/ResizeTable/contants';
 import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
-import DateComponent from 'components/ResizeTable/TableComponent/Date';
+import DateComponent from 'components/ResizeTable/TableComponent/DateComponent';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
 import { QueryParams } from 'constants/query';
@@ -149,7 +149,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 80,
 			key: DynamicColumnsKey.CreatedBy,
 			align: 'center',
-			render: (value): JSX.Element => <div>{value}</div>,
 		},
 		{
 			title: 'Updated At',
@@ -171,7 +170,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 80,
 			key: DynamicColumnsKey.UpdatedBy,
 			align: 'center',
-			render: (value): JSX.Element => <div>{value}</div>,
 		},
 	];
 

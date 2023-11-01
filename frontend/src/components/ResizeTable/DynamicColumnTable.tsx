@@ -9,7 +9,11 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import ResizeTable from './ResizeTable';
 import { DynamicColumnTableProps } from './types';
-import { getVisibleColumns, setVisibleColumns } from './unit';
+import {
+	getNewColumnData,
+	getVisibleColumns,
+	setVisibleColumns,
+} from './utils';
 
 function DynamicColumnTable({
 	tablesource,
@@ -51,22 +55,14 @@ function DynamicColumnTable({
 			index,
 			checked,
 		});
-		setColumnsData((prevColumns) => {
-			if (checked && dynamicColumns) {
-				return prevColumns
-					? [
-							...prevColumns.slice(0, prevColumns.length - 1),
-							dynamicColumns[index],
-							prevColumns[prevColumns.length - 1],
-					  ]
-					: undefined;
-			}
-			return prevColumns && dynamicColumns
-				? prevColumns.filter(
-						(column) => dynamicColumns[index].title !== column.title,
-				  )
-				: undefined;
-		});
+		setColumnsData((prevColumns) =>
+			getNewColumnData({
+				checked,
+				index,
+				prevColumns,
+				dynamicColumns,
+			}),
+		);
 	};
 
 	const items: MenuProps['items'] =

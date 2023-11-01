@@ -1,4 +1,3 @@
-import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
@@ -25,7 +24,7 @@ function ServiceOverview({
 	selectedTraceTags,
 	selectedTimeStamp,
 	topLevelOperationsRoute,
-	topLevelOperationsLoading,
+	topLevelOperationsIsLoading,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
@@ -64,15 +63,8 @@ function ServiceOverview({
 		[servicename, isSpanMetricEnable, topLevelOperationsRoute, tagFilterItems],
 	);
 
-	const isQueryEnabled = topLevelOperationsRoute.length > 0;
-
-	if (topLevelOperationsLoading) {
-		return (
-			<Card>
-				<Spinner height="40vh" tip="Loading..." />
-			</Card>
-		);
-	}
+	const isQueryEnabled =
+		!topLevelOperationsIsLoading && topLevelOperationsRoute.length > 0;
 
 	return (
 		<>
@@ -109,7 +101,7 @@ interface ServiceOverviewProps {
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
 	topLevelOperationsRoute: string[];
-	topLevelOperationsLoading: boolean;
+	topLevelOperationsIsLoading: boolean;
 }
 
 export default ServiceOverview;
