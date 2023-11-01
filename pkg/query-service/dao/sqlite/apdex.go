@@ -51,7 +51,6 @@ func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, services []stri
 
 func (mds *ModelDaoSqlite) SetApdexSettings(ctx context.Context, apdexSettings *model.ApdexSettings) *model.ApiError {
 
-	fmt.Println("apdexSettings:", apdexSettings)
 	_, err := mds.db.NamedExec(`
 	INSERT OR REPLACE INTO apdex_settings (
 		service_name,
