@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	_ "github.com/SigNoz/signoz-otel-collector/pkg/parser/grok"
@@ -23,11 +22,11 @@ func SimulatePipelinesProcessing(
 	pipelines []Pipeline,
 	logs []model.SignozLog,
 ) (
-	[]model.SignozLog, *model.ApiError,
+	output []model.SignozLog, collectorErrorLogs []string, apiErr *model.ApiError,
 ) {
 
 	if len(pipelines) < 1 {
-		return logs, nil
+		return logs, nil, nil
 	}
 
 	// Collector simulation does not guarantee that logs will come
@@ -46,7 +45,7 @@ func SimulatePipelinesProcessing(
 	// Simulate processing of logs through an otel collector
 	processorConfigs, err := collectorProcessorsForPipelines(pipelines)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(
+		return nil, nil, model.BadRequest(errors.Wrap(
 			err, "could not prepare otel processors for pipelines",
 		))
 	}
@@ -55,7 +54,7 @@ func SimulatePipelinesProcessing(
 		logstransformprocessor.NewFactory(),
 	)
 	if err != nil {
-		return nil, model.InternalError(errors.Wrap(
+		return nil, nil, model.InternalError(errors.Wrap(
 			err, "could not construct processor factory map",
 		))
 	}
@@ -75,10 +74,9 @@ func SimulatePipelinesProcessing(
 		simulatorInputPLogs,
 		timeout,
 	)
-	collectorErrsText := strings.Join(collectorErrs, "\n")
 	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
-			"could not simulate log pipelines processing.\nCollector errors: %s\n", collectorErrsText,
+		return nil, collectorErrs, model.WrapApiError(apiErr, fmt.Sprintf(
+			"could not simulate log pipelines processing.\nCollector errors",
 		))
 	}
 
@@ -94,7 +92,7 @@ func SimulatePipelinesProcessing(
 		delete(sigLog.Attributes_int64, inputOrderAttribute)
 	}
 
-	return outputSignozLogs, nil
+	return outputSignozLogs, collectorErrs, nil
 }
 
 func collectorProcessorsForPipelines(pipelines []Pipeline) (
