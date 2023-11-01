@@ -274,8 +274,6 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			},
 			makeTestLog("mismatching log", map[string]string{}),
 		},
-		// TODO(Raj): see if there is an error scenario for grok parser.
-		// TODO(Raj): see if there is an error scenario for trace parser.
 		{
 			"json parser should ignore non matching logs",
 			PipelineOperator{
@@ -300,7 +298,21 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 				To:      "attributes.test2",
 			},
 			makeTestLog("mismatching log", map[string]string{}),
+		}, {
+			"copy parser should ignore non matching logs",
+			PipelineOperator{
+				ID:      "copy",
+				Type:    "copy",
+				Enabled: true,
+				Name:    "copy",
+				From:    "attributes.test1",
+				To:      "attributes.test2",
+			},
+			makeTestLog("mismatching log", map[string]string{}),
 		},
+		// TODO(Raj): see if there is an error scenario for grok parser.
+		// TODO(Raj): see if there is an error scenario for trace parser.
+		// TODO(Raj): see if there is an error scenario for Add operator.
 	}
 
 	for _, testCase := range testCases {
