@@ -93,6 +93,10 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 				fromParts := strings.Split(operator.From, ".")
 				operator.If = fmt.Sprintf(`%s != nil`, strings.Join(fromParts, "?."))
 
+			} else if operator.Type == "remove" {
+				fromParts := strings.Split(operator.Field, ".")
+				operator.If = fmt.Sprintf(`%s != nil`, strings.Join(fromParts, "?."))
+
 			} else if operator.Type == "trace_parser" {
 				cleanTraceParser(&operator)
 			}
