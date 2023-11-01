@@ -2,8 +2,10 @@ import './QueryTable.styles.scss';
 
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
+import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import { createTableColumnsFromQuery } from 'lib/query/createTableColumnsFromQuery';
 import { useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 
 import { QueryTableProps } from './QueryTable.intefaces';
 import { createDownloadableData } from './utils';
@@ -18,6 +20,7 @@ export function QueryTable({
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
+	const { servicename } = useParams<IServiceName>();
 	const { loading } = props;
 	const { columns, dataSource } = useMemo(
 		() =>
@@ -31,7 +34,6 @@ export function QueryTable({
 	);
 
 	const downloadableData = createDownloadableData(dataSource);
-	console.log(downloadableData);
 
 	const tableColumns = modifyColumns ? modifyColumns(columns) : columns;
 
@@ -41,7 +43,7 @@ export function QueryTable({
 				<div className="query-table--download">
 					<Download
 						data={downloadableData}
-						fileName={fileName}
+						fileName={`${fileName}-${servicename}`}
 						isLoading={loading as boolean}
 					/>
 				</div>

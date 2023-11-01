@@ -72,5 +72,5 @@ export enum WidgetKeys {
 
 export const topOperationMetricsDownloadOptions: DownloadOptions = {
 	isDownloadEnabled: true,
-	fileName: 'top_operation_metrics',
+	fileName: 'top-operation',
 } as const;
