@@ -10,6 +10,10 @@ export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
 }
 
+export function isEqualityOrInequalityOperator(value: string): boolean {
+	return value === '=' || value === '!=';
+}
+
 interface ITagToken {
 	tagKey: string;
 	tagOperator: string;

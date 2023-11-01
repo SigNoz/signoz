@@ -33,6 +33,7 @@ import {
 	getOperatorValue,
 	getRemovePrefixFromKey,
 	getTagToken,
+	isEqualityOrInequalityOperator,
 	isExistsNotExistsOperator,
 	isInNInOperator,
 } from './utils';
@@ -70,11 +71,17 @@ function QueryBuilderSearch({
 		closable,
 		onClose,
 	}: CustomTagProps): ReactElement => {
-		const { tagOperator } = getTagToken(value);
+		const { tagOperator, tagValue } = getTagToken(value);
 		const isInNin = isInNInOperator(tagOperator);
-		const chipValue = isInNin
-			? value?.trim()?.replace(/,\s*$/, '')
-			: value?.trim();
+		const isEqualityOrInequality = isEqualityOrInequalityOperator(tagOperator);
+
+		let chipValue = value?.trim();
+
+		if (isEqualityOrInequality && !tagValue) {
+			chipValue += ' " "';
+		} else if (isInNin) {
+			chipValue = chipValue?.replace(/,\s*$/, '');
+		}
 
 		const onCloseHandler = (): void => {
 			onClose();
@@ -181,6 +188,20 @@ function QueryBuilderSearch({
 		/* eslint-disable react-hooks/exhaustive-deps */
 	}, [sourceKeys]);
 
+	const finalOptions = useMemo(() => {
+		const allLabelsContainEquality = options?.every(
+			(obj) => obj?.label.includes('=') || obj?.label.includes('!='),
+		);
+
+		if (options && options[0] && allLabelsContainEquality) {
+			return [
+				{ ...options[0], label: `${options[0].label} " "` },
+				...options.slice(1),
+			];
+		}
+		return options;
+	}, [options]);
+
 	return (
 		<Select
 			getPopupContainer={popupContainer}
@@ -203,7 +224,7 @@ function QueryBuilderSearch({
 			onInputKeyDown={onInputKeyDownHandler}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		>
-			{options.map((option) => (
+			{finalOptions.map((option) => (
 				<Select.Option key={option.label} value={option.value}>
 					{option.label}
 					{option.selected && <StyledCheckOutlined />}
