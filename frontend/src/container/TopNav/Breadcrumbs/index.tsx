@@ -23,7 +23,7 @@ const breadcrumbNameMap = {
 	[ROUTES.LOGS]: 'Logs',
 	[ROUTES.LOGS_EXPLORER]: 'Logs Explorer',
 	[ROUTES.LIVE_LOGS]: 'Live View',
-	[ROUTES.LOGS_PIPELINES]: 'Pipelines',
+	[ROUTES.LOGS_PIPELINES]: 'Logs Pipelines',
 	[ROUTES.BILLING]: 'Billing',
 	[ROUTES.SUPPORT]: 'Support',
 	[ROUTES.WORKSPACE_LOCKED]: 'Workspace Locked',

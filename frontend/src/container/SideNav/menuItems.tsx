@@ -9,6 +9,7 @@ import {
 	LineChartOutlined,
 	MenuOutlined,
 	RocketOutlined,
+	SearchOutlined,
 	SettingOutlined,
 } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
@@ -38,11 +39,13 @@ const menuItems: SidebarMenu[] = [
 		children: [
 			{
 				key: ROUTES.LOGS_EXPLORER,
-				label: 'Explorer',
+				icon: <SearchOutlined />,
+				label: 'Logs Explorer',
 			},
 			{
 				key: ROUTES.LOGS_PIPELINES,
-				label: 'Pipelines',
+				icon: <DeploymentUnitOutlined />,
+				label: 'Logs Pipelines',
 			},
 		],
 	},
