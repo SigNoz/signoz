@@ -14,8 +14,8 @@ import {
 
 import { tableComponents } from '../config';
 import { ModalFooterTitle } from '../styles';
-import { AlertMessage } from '.';
 import { processorColumns } from './config';
+import { AlertMessage } from './PipelineListsView';
 import { FooterButton, StyledTable } from './styles';
 import DragAction from './TableComponents/DragAction';
 import ProcessorActions from './TableComponents/ProcessorActions';
