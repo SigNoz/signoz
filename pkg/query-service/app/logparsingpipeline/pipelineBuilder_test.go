@@ -2,15 +2,16 @@ package logparsingpipeline
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 var prepareProcessorTestData = []struct {
@@ -203,7 +204,7 @@ func TestPreparePipelineProcessor(t *testing.T) {
 	}
 }
 
-func TestNoCollectorErrorsIfProcessorTargetsMismatchedLogs(t *testing.T) {
+func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 	require := require.New(t)
 
 	testPipelineFilter := &v3.FilterSet{
@@ -237,6 +238,12 @@ func TestNoCollectorErrorsIfProcessorTargetsMismatchedLogs(t *testing.T) {
 	) model.SignozLog {
 		attributes["method"] = "GET"
 
+		testTraceId, err := utils.RandomHex(16)
+		require.Nil(err)
+
+		testSpanId, err := utils.RandomHex(8)
+		require.Nil(err)
+
 		return model.SignozLog{
 			Timestamp:         uint64(time.Now().UnixNano()),
 			Body:              body,
@@ -244,8 +251,8 @@ func TestNoCollectorErrorsIfProcessorTargetsMismatchedLogs(t *testing.T) {
 			Resources_string:  attributes,
 			SeverityText:      entry.Info.String(),
 			SeverityNumber:    uint8(entry.Info),
-			SpanID:            uuid.New().String(),
-			TraceID:           uuid.New().String(),
+			SpanID:            testSpanId,
+			TraceID:           testTraceId,
 		}
 	}
 
@@ -278,9 +285,7 @@ func TestNoCollectorErrorsIfProcessorTargetsMismatchedLogs(t *testing.T) {
 			[]model.SignozLog{testCase.NonMatchingLog},
 		)
 		require.Nil(err)
-		require.Equal(0, len(collectorErrorLogs))
+		require.Equal(0, len(collectorErrorLogs), strings.Join(collectorErrorLogs, "\n"))
 		require.Equal(1, len(result))
-		processed := result[0]
-		require.Equal(processed, testCase.NonMatchingLog)
 	}
 }

@@ -1,6 +1,9 @@
 package logparsingpipeline
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
@@ -73,7 +76,9 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 				filteredOp[len(filteredOp)-1].Output = operator.ID
 			}
 
-			if operator.Type == "trace_parser" {
+			if operator.Type == "regex_parser" {
+				prepareRegexParser(&operator)
+			} else if operator.Type == "trace_parser" {
 				cleanTraceParser(&operator)
 			}
 
@@ -83,6 +88,17 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 		}
 	}
 	return filteredOp
+}
+
+func prepareRegexParser(operator *PipelineOperator) {
+	operator.If = fmt.Sprintf(
+		`%s matches "%s"`,
+		operator.ParseFrom,
+		strings.ReplaceAll(
+			strings.ReplaceAll(operator.Regex, `\`, `\\`),
+			`"`, `\"`,
+		),
+	)
 }
 
 func cleanTraceParser(operator *PipelineOperator) {

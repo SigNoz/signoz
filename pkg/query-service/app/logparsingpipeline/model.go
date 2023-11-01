@@ -41,6 +41,7 @@ type PipelineOperator struct {
 	ID      string `json:"id,omitempty" yaml:"id,omitempty"`
 	Output  string `json:"output,omitempty" yaml:"output,omitempty"`
 	OnError string `json:"on_error,omitempty" yaml:"on_error,omitempty"`
+	If      string `json:"if,omitempty" yaml:"if,omitempty"`
 
 	// don't need the following in the final config
 	OrderId int    `json:"orderId" yaml:"-"`
