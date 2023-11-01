@@ -40,14 +40,13 @@ export const convertedTracesToDownloadData = (
 	originalData: TopOperationList[],
 ): Record<string, string>[] =>
 	originalData.map((item) => {
-		// Create a new object with string values for each key
 		const newObj: Record<string, string> = {
 			name: item.name,
 			'p50 (in ms)': (item.p50 / 1000000).toFixed(2),
-			'p95 (in ms)': (item.p50 / 1000000).toFixed(2),
-			'p99 (in ms)': (item.p50 / 1000000).toFixed(2),
+			'p95 (in ms)': (item.p95 / 1000000).toFixed(2),
+			'p99 (in ms)': (item.p99 / 1000000).toFixed(2),
 			numCalls: item.numCalls.toString(),
-			'errorCount (%)': item.errorCount.toString(),
+			'error (%)': item.errorCount.toString(),
 		};
 
 		return newObj;
