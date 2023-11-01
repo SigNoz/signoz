@@ -275,19 +275,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			makeTestLog("mismatching log", map[string]string{}),
 		},
 		// TODO(Raj): see if there is an error scenario for grok parser.
-		// {
-		// 	"grok processor should ignore non-matching log",
-		// 	PipelineOperator{
-		// 		ID:        "grok",
-		// 		Type:      "grok_parser",
-		// 		Enabled:   true,
-		// 		Name:      "grok parser",
-		// 		ParseFrom: "body",
-		// 		ParseTo:   "attributes",
-		// 		Pattern:   "%{TIMESTAMP_ISO8601:timestamp}",
-		// 	},
-		// 	makeTestLog("20223-11-01T13:13:26.065Z", map[string]string{}),
-		// },
+		// TODO(Raj): see if there is an error scenario for trace parser.
 		{
 			"json parser should ignore non matching logs",
 			PipelineOperator{
@@ -301,6 +289,17 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			makeTestLog("mismatching log", map[string]string{
 				"test_json": "bad json",
 			}),
+		}, {
+			"move parser should ignore non matching logs",
+			PipelineOperator{
+				ID:      "move",
+				Type:    "move",
+				Enabled: true,
+				Name:    "move",
+				From:    "attributes.test1",
+				To:      "attributes.test2",
+			},
+			makeTestLog("mismatching log", map[string]string{}),
 		},
 	}
 
