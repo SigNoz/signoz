@@ -78,6 +78,8 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 
 			if operator.Type == "regex_parser" {
 				prepareRegexParser(&operator)
+			} else if operator.Type == "json_parser" {
+				prepareJsonParser(&operator)
 			} else if operator.Type == "trace_parser" {
 				cleanTraceParser(&operator)
 			}
@@ -99,6 +101,10 @@ func prepareRegexParser(operator *PipelineOperator) {
 			`"`, `\"`,
 		),
 	)
+}
+
+func prepareJsonParser(operator *PipelineOperator) {
+	operator.If = fmt.Sprintf(`%s matches "\\s*{.*}\\s*$"`, operator.ParseFrom)
 }
 
 func cleanTraceParser(operator *PipelineOperator) {
