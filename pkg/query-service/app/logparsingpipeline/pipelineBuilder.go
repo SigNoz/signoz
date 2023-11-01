@@ -77,9 +77,11 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 			}
 
 			if operator.Type == "regex_parser" {
+				parseFromParts := strings.Split(operator.ParseFrom, ".")
+				parseFromPath := strings.Join(parseFromParts, "?.")
 				operator.If = fmt.Sprintf(
 					`%s matches "%s"`,
-					operator.ParseFrom,
+					parseFromPath,
 					strings.ReplaceAll(
 						strings.ReplaceAll(operator.Regex, `\`, `\\`),
 						`"`, `\"`,
@@ -87,15 +89,19 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 				)
 
 			} else if operator.Type == "json_parser" {
-				operator.If = fmt.Sprintf(`%s matches "\\s*{.*}\\s*$"`, operator.ParseFrom)
+				parseFromParts := strings.Split(operator.ParseFrom, ".")
+				parseFromPath := strings.Join(parseFromParts, "?.")
+				operator.If = fmt.Sprintf(`%s != nil && %s matches "^\\s*{.*}\\s*$"`, parseFromPath, parseFromPath)
 
 			} else if operator.Type == "move" || operator.Type == "copy" {
 				fromParts := strings.Split(operator.From, ".")
-				operator.If = fmt.Sprintf(`%s != nil`, strings.Join(fromParts, "?."))
+				fromPath := strings.Join(fromParts, "?.")
+				operator.If = fmt.Sprintf(`%s != nil`, fromPath)
 
 			} else if operator.Type == "remove" {
-				fromParts := strings.Split(operator.Field, ".")
-				operator.If = fmt.Sprintf(`%s != nil`, strings.Join(fromParts, "?."))
+				fieldParts := strings.Split(operator.From, ".")
+				fieldPath := strings.Join(fieldParts, "?.")
+				operator.If = fmt.Sprintf(`%s != nil`, fieldPath)
 
 			} else if operator.Type == "trace_parser" {
 				cleanTraceParser(&operator)

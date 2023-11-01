@@ -273,9 +273,20 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 				Regex:     `^\s*(?P<body_json>{.*})\s*$`,
 			},
 			makeTestLog("mismatching log", map[string]string{}),
+		}, {
+			"json parser should ignore logs with missing field.",
+			PipelineOperator{
+				ID:        "json",
+				Type:      "json_parser",
+				Enabled:   true,
+				Name:      "json parser",
+				ParseFrom: "attributes.test_json",
+				ParseTo:   "attributes",
+			},
+			makeTestLog("mismatching log", map[string]string{}),
 		},
 		{
-			"json parser should ignore non matching logs",
+			"json parser should ignore log with non JSON target field value",
 			PipelineOperator{
 				ID:        "json",
 				Type:      "json_parser",
