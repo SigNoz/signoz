@@ -77,13 +77,24 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 			}
 
 			if operator.Type == "regex_parser" {
-				prepareRegexParser(&operator)
+				operator.If = fmt.Sprintf(
+					`%s matches "%s"`,
+					operator.ParseFrom,
+					strings.ReplaceAll(
+						strings.ReplaceAll(operator.Regex, `\`, `\\`),
+						`"`, `\"`,
+					),
+				)
+
 			} else if operator.Type == "json_parser" {
-				prepareJsonParser(&operator)
+				operator.If = fmt.Sprintf(`%s matches "\\s*{.*}\\s*$"`, operator.ParseFrom)
+
+			} else if operator.Type == "move" || operator.Type == "copy" {
+				fromParts := strings.Split(operator.From, ".")
+				operator.If = fmt.Sprintf(`%s != nil`, strings.Join(fromParts, "?."))
+
 			} else if operator.Type == "trace_parser" {
-				prepareTraceParser(&operator)
-			} else if operator.Type == "move" {
-				prepareMoveOperator(&operator)
+				cleanTraceParser(&operator)
 			}
 
 			filteredOp = append(filteredOp, operator)
@@ -94,27 +105,7 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 	return filteredOp
 }
 
-func prepareRegexParser(operator *PipelineOperator) {
-	operator.If = fmt.Sprintf(
-		`%s matches "%s"`,
-		operator.ParseFrom,
-		strings.ReplaceAll(
-			strings.ReplaceAll(operator.Regex, `\`, `\\`),
-			`"`, `\"`,
-		),
-	)
-}
-
-func prepareJsonParser(operator *PipelineOperator) {
-	operator.If = fmt.Sprintf(`%s matches "\\s*{.*}\\s*$"`, operator.ParseFrom)
-}
-
-func prepareMoveOperator(operator *PipelineOperator) {
-	fromParts := strings.Split(operator.From, ".")
-	operator.If = fmt.Sprintf(`%s != nil`, strings.Join(fromParts, "?."))
-}
-
-func prepareTraceParser(operator *PipelineOperator) {
+func cleanTraceParser(operator *PipelineOperator) {
 	if operator.TraceId != nil && len(operator.TraceId.ParseFrom) < 1 {
 		operator.TraceId = nil
 	}
