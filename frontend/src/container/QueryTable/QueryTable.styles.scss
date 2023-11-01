@@ -1,0 +1,9 @@
+.query-table {
+    position: relative;
+    .query-table--download {
+        position: absolute;
+        top: 15px;
+        right: 0px;
+        z-index: 1;
+    }
+}
