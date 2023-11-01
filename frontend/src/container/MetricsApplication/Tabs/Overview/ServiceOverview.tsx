@@ -9,12 +9,12 @@ import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import useFeatureFlag from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/utils';
+import { OnClickPluginOpts } from 'lib/getUplotChartData';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { ClickHandlerType } from '../Overview';
 import { Button } from '../styles';
 import { IServiceName } from '../types';
 import { handleNonInQueryRange, onViewTracePopupClick } from '../util';
@@ -107,7 +107,7 @@ interface ServiceOverviewProps {
 	selectedTimeStamp: number;
 	selectedTraceTags: string;
 	onDragSelect: (start: number, end: number) => void;
-	handleGraphClick: (type: string) => ClickHandlerType;
+	handleGraphClick: (type: string) => OnClickPluginOpts['onClick'];
 	topLevelOperationsRoute: string[];
 	topLevelOperationsLoading: boolean;
 }

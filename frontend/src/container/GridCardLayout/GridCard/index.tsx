@@ -7,6 +7,7 @@ import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
 import isEmpty from 'lodash-es/isEmpty';
+import _noop from 'lodash-es/noop';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
@@ -21,7 +22,7 @@ import WidgetGraphComponent from './WidgetGraphComponent';
 function GridCardGraph({
 	widget,
 	name,
-	onClickHandler,
+	onClickHandler = _noop,
 	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
 	threshold,
@@ -99,6 +100,7 @@ function GridCardGraph({
 				isDarkMode,
 				onDragSelect,
 				yAxisUnit: widget?.yAxisUnit,
+				onClickHandler,
 			}),
 		[
 			queryResponse.data?.payload,
@@ -106,6 +108,7 @@ function GridCardGraph({
 			isDarkMode,
 			onDragSelect,
 			widget?.yAxisUnit,
+			onClickHandler,
 		],
 	);
 

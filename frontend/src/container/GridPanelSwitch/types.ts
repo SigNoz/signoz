@@ -1,7 +1,8 @@
-import { GraphOnClickHandler, StaticLineProps } from 'components/Graph/types';
+import { StaticLineProps } from 'components/Graph/types';
 import { UplotProps } from 'components/Uplot/Uplot';
 import { GridTableComponentProps } from 'container/GridTableComponent/types';
 import { GridValueComponentProps } from 'container/GridValueComponent/types';
+import { OnClickPluginOpts } from 'lib/getUplotChartData';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
@@ -12,7 +13,7 @@ export type GridPanelSwitchProps = {
 	panelType: PANEL_TYPES;
 	data: uPlot.AlignedData;
 	options: uPlot.Options;
-	onClickHandler?: GraphOnClickHandler;
+	onClickHandler?: OnClickPluginOpts['onClick'];
 	name: string;
 	yAxisUnit?: string;
 	staticLine?: StaticLineProps;

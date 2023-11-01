@@ -1,7 +1,6 @@
 import getTopLevelOperations, {
 	ServiceDataProps,
 } from 'api/metrics/getTopLevelOperations';
-import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -14,6 +13,7 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
+import { OnClickPluginOpts } from 'lib/getUplotChartData';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -73,20 +73,19 @@ function Application(): JSX.Element {
 
 	const dispatch = useDispatch();
 	const handleGraphClick = useCallback(
-		(type: string): ClickHandlerType => (
-			ChartEvent: ChartEvent,
-			activeElements: ActiveElement[],
-			chart: Chart,
-			data: ChartData,
-		): void => {
+		(type: string): OnClickPluginOpts['onClick'] => (
+			xValue,
+			yValue,
+			mouseX,
+			mouseY,
+		): Promise<void> =>
 			onGraphClickHandler(handleSetTimeStamp)(
-				ChartEvent,
-				activeElements,
-				chart,
-				data,
+				xValue,
+				yValue,
+				mouseX,
+				mouseY,
 				type,
-			);
-		},
+			),
 		[handleSetTimeStamp],
 	);
 
@@ -283,12 +282,6 @@ function Application(): JSX.Element {
 	);
 }
 
-export type ClickHandlerType = (
-	ChartEvent: ChartEvent,
-	activeElements: ActiveElement[],
-	chart: Chart,
-	data: ChartData,
-	type?: string,
-) => void;
+export type ClickHandlerType = () => void;
 
 export default Application;

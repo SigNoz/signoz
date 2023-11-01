@@ -15,8 +15,6 @@ export function useResizeObserver<T extends HTMLElement>(
 		height: ref.current?.clientHeight || 0,
 	});
 
-	console.log('ref', ref.current?.clientHeight, ref.current?.clientWidth);
-
 	// eslint-disable-next-line consistent-return
 	useEffect(() => {
 		if (ref.current) {

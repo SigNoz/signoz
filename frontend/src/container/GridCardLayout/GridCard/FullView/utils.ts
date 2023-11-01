@@ -1,12 +1,12 @@
 import { ChartData, ChartDataset } from 'chart.js';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import uPlot from 'uplot';
 
 import {
 	ExtendedChartDataset,
 	LegendEntryProps,
 	SaveLegendEntriesToLocalStoreProps,
 } from './types';
-import uPlot from 'uplot';
 
 function convertToTwoDecimalsOrZero(value: number): number {
 	if (
@@ -60,8 +60,10 @@ export const getAbbreviatedLabel = (label: string): string => {
 };
 
 export const showAllDataSet = (data: uPlot.AlignedData): LegendEntryProps[] =>
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
 	data.datasets.map(
-		(item): LegendEntryProps => ({
+		(item: any): LegendEntryProps => ({
 			label: item.label || '',
 			show: true,
 		}),

@@ -28,7 +28,8 @@ import { downloadObjectAsJson } from './util';
 function DescriptionOfDashboard(): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 
-	const selectedData: DashboardData = selectedDashboard?.data;
+	const selectedData = selectedDashboard?.data || ({} as DashboardData);
+
 	const { title = '', tags, description } = selectedData || {};
 
 	const [openDashboardJSON, setOpenDashboardJSON] = useState<boolean>(false);

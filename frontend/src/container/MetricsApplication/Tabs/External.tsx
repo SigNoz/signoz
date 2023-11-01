@@ -150,12 +150,12 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_error_percentage"
 								widget={externalCallErrorWidget}
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
+										xValue,
+										yValue,
+										mouseX,
+										mouseY,
 										'external_call_error_percentage',
 									);
 								}}
@@ -184,12 +184,12 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_duration"
 								widget={externalCallDurationWidget}
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
+										xValue,
+										yValue,
+										mouseX,
+										mouseY,
 										'external_call_duration',
 									);
 								}}
@@ -219,12 +219,12 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_rps_by_address"
 								widget={externalCallRPSWidget}
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
+										xValue,
+										yValue,
+										mouseX,
+										mouseY,
 										'external_call_rps_by_address',
 									);
 								}}
@@ -253,12 +253,12 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_duration_by_address"
 								widget={externalCallDurationAddressWidget}
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
+										xValue,
+										yValue,
+										mouseX,
+										mouseY,
 										'external_call_duration_by_address',
 									);
 								}}
