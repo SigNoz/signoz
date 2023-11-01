@@ -18,10 +18,10 @@ function DropDown({ element }: { element: JSX.Element[] }): JSX.Element {
 		<Dropdown menu={{ items }}>
 			<Button
 				type="link"
-				className={!isDarkMode ? 'Dropdown-button--dark' : 'Dropdown-button'}
+				className={!isDarkMode ? 'dropdown-button--dark' : 'dropdown-button'}
 				onClick={(e): void => e.preventDefault()}
 			>
-				<EllipsisOutlined className="Dropdown-icon" />
+				<EllipsisOutlined className="dropdown-icon" />
 			</Button>
 		</Dropdown>
 	);
