@@ -45,18 +45,30 @@ function DeleteButton({ id }: Data): JSX.Element {
 
 // This is to avoid the type collision
 function Wrapper(props: Data): JSX.Element {
-	const { createdBy, description, id, key, lastUpdatedTime, name, tags } = props;
+	const {
+		createdAt,
+		description,
+		id,
+		key,
+		lastUpdatedTime,
+		name,
+		tags,
+		createdBy,
+		lastUpdatedBy,
+	} = props;
 
 	return (
 		<DeleteButton
 			{...{
-				createdBy,
+				createdAt,
 				description,
 				id,
 				key,
 				lastUpdatedTime,
 				name,
 				tags,
+				createdBy,
+				lastUpdatedBy,
 			}}
 		/>
 	);

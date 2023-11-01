@@ -34,8 +34,8 @@ function Version(): JSX.Element {
 	);
 
 	return (
-		<Card>
-			<Typography.Title ellipsis level={4}>
+		<Card style={{ margin: '16px 0' }}>
+			<Typography.Title ellipsis level={4} style={{ marginTop: 0 }}>
 				{t('version')}
 			</Typography.Title>
 

@@ -20,11 +20,7 @@ function ParsingRulesTextArea({
 					name={fieldData.name}
 					label={<ModalFooterTitle>{fieldData.fieldName}</ModalFooterTitle>}
 				>
-					<Input.TextArea
-						rows={4}
-						name={fieldData.name}
-						placeholder={t(fieldData.placeholder)}
-					/>
+					<Input.TextArea rows={4} placeholder={t(fieldData.placeholder)} />
 				</Form.Item>
 			</FormWrapper>
 		</Container>
