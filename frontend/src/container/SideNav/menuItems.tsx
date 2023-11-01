@@ -35,6 +35,16 @@ const menuItems: SidebarMenu[] = [
 		key: ROUTES.LOGS_EXPLORER,
 		label: 'Logs',
 		icon: <AlignLeftOutlined />,
+		children: [
+			{
+				key: ROUTES.LOGS_EXPLORER,
+				label: 'Explorer',
+			},
+			{
+				key: ROUTES.LOGS_PIPELINES,
+				label: 'Pipelines',
+			},
+		],
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,
