@@ -9,7 +9,7 @@ import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import useFeatureFlag from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/utils';
-import { OnClickPluginOpts } from 'lib/getUplotChartData';
+import { OnClickPluginOpts } from 'lib/uPlotLib/getUplotChartData';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';

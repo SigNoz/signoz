@@ -5,7 +5,10 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
+import {
+	getUPlotChartData,
+	getUPlotChartOptions,
+} from 'lib/uPlotLib/getUplotChartData';
 import isEmpty from 'lodash-es/isEmpty';
 import _noop from 'lodash-es/noop';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
@@ -95,6 +98,7 @@ function GridCardGraph({
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
+				id: widget?.id,
 				apiResponse: queryResponse.data?.payload,
 				dimensions: containerDimensions,
 				isDarkMode,
@@ -103,11 +107,12 @@ function GridCardGraph({
 				onClickHandler,
 			}),
 		[
+			widget?.id,
+			widget?.yAxisUnit,
 			queryResponse.data?.payload,
 			containerDimensions,
 			isDarkMode,
 			onDragSelect,
-			widget?.yAxisUnit,
 			onClickHandler,
 		],
 	);

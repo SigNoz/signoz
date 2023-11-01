@@ -13,8 +13,8 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
-import { OnClickPluginOpts } from 'lib/getUplotChartData';
 import history from 'lib/history';
+import { OnClickPluginOpts } from 'lib/uPlotLib/getUplotChartData';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';

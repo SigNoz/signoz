@@ -1,13 +1,19 @@
+import './uPlotLib.styles.scss';
+
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { Dimensions } from 'hooks/useDimensions';
 import _noop from 'lodash-es/noop';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 
-import getLabelName from './getLabelName';
-import { colors } from './getRandomColor';
-import { placement } from './uPlotLib/placement';
+import getLabelName from '../getLabelName';
+import { colors } from '../getRandomColor';
+import { placement } from './placement';
+
+dayjs.extend(customParseFormat);
 
 export const getUPlotChartData = (
 	apiResponse?: MetricRangePayloadProps,
@@ -42,6 +48,8 @@ const getSeries = (
 	];
 
 	const seriesList = apiResponse?.data.result || [];
+
+	// console.log('seriesList', seriesList);
 
 	for (let i = 0; i < seriesList?.length; i += 1) {
 		const color = colors[i % colors.length]; // Use modulo to loop through colors if there are more series than colors
@@ -78,6 +86,7 @@ const getGridColor = (isDarkMode: boolean): string => {
 };
 
 interface GetUPlotChartOptions {
+	id?: string;
 	apiResponse?: MetricRangePayloadProps;
 	dimensions: Dimensions;
 	isDarkMode: boolean;
@@ -87,6 +96,7 @@ interface GetUPlotChartOptions {
 }
 
 const createDivsFromArray = (
+	seriesList: any[],
 	data: any[],
 	idx: string | number,
 	yAxisUnit?: string,
@@ -94,30 +104,53 @@ const createDivsFromArray = (
 	const container = document.createElement('div');
 	container.classList.add('tooltip-container');
 
+	// console.log('seriesList', seriesList);
+
 	if (Array.isArray(data) && data.length > 0) {
 		data.forEach((item, index) => {
 			const div = document.createElement('div');
 			div.classList.add('tooltip-content-row');
 
 			if (index === 0) {
-				div.textContent = new Date(item[idx] * 1000).toDateString();
+				const formattedDate = dayjs(item[idx] * 1000).format(
+					'MMM DD YYYY HH:mm:ss',
+				);
+
+				// console.log('formattedDate', formattedDate);
+
+				div.textContent = formattedDate;
 			} else {
 				const color = colors[(index - 1) % colors.length];
 
-				const squareBox = document.createElement('div');
+				if (item[idx]) {
+					const squareBox = document.createElement('div');
+					squareBox.classList.add('pointSquare');
 
-				squareBox.style.width = '10px';
-				squareBox.style.height = '10px';
-				squareBox.style.backgroundColor = color;
+					squareBox.style.borderColor = color;
 
-				div.appendChild(squareBox);
+					div.appendChild(squareBox);
 
-				const text = document.createElement('div');
+					const text = document.createElement('div');
+					text.classList.add('tooltip-data-point');
 
-				text.textContent = getToolTipValue(item[idx], yAxisUnit);
-				text.style.color = color;
+					const { metric = {}, queryName = '', legend = '' } =
+						seriesList[index - 1] || {};
 
-				div.appendChild(text);
+					const label = getLabelName(
+						metric,
+						queryName || '', // query
+						legend || '',
+					);
+
+					// console.log('label', label);
+
+					const tooltipValue = getToolTipValue(item[idx], yAxisUnit);
+
+					text.textContent = `${label} : ${tooltipValue}`;
+					text.style.color = color;
+
+					div.appendChild(text);
+				}
 			}
 
 			container.appendChild(div);
@@ -127,7 +160,10 @@ const createDivsFromArray = (
 	return container;
 };
 
-const tooltipPlugin = (yAxisUnit?: string): any => {
+const tooltipPlugin = (
+	apiResponse: MetricRangePayloadProps | undefined,
+	yAxisUnit?: string,
+): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
 	let bLeft: any;
@@ -148,6 +184,8 @@ const tooltipPlugin = (yAxisUnit?: string): any => {
 		overlay.style.position = 'absolute';
 		document.body.appendChild(overlay);
 	}
+
+	const seriesList = apiResponse?.data?.result || [];
 
 	return {
 		hooks: {
@@ -172,13 +210,14 @@ const tooltipPlugin = (yAxisUnit?: string): any => {
 				cursor: { left: any; top: any; idx: any };
 				data: any[];
 			}): void => {
+				console.log('u', u);
 				if (overlay) {
 					overlay.textContent = '';
 					const { left, top, idx } = u.cursor;
 
 					if (idx) {
 						const anchor = { left: left + bLeft, top: top + bTop };
-						const content = createDivsFromArray(u.data, idx, yAxisUnit);
+						const content = createDivsFromArray(seriesList, u.data, idx, yAxisUnit);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });
 					}
@@ -227,6 +266,7 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 }
 
 export const getUPlotChartOptions = ({
+	id,
 	dimensions,
 	isDarkMode,
 	apiResponse,
@@ -234,6 +274,7 @@ export const getUPlotChartOptions = ({
 	yAxisUnit,
 	onClickHandler = _noop,
 }: GetUPlotChartOptions): uPlot.Options => ({
+	id,
 	width: dimensions.width,
 	height: dimensions.height - 50,
 	legend: {
@@ -242,22 +283,6 @@ export const getUPlotChartOptions = ({
 	},
 	focus: {
 		alpha: 1,
-	},
-	cursor: {
-		show: true,
-		focus: {
-			prox: 1e6,
-			bias: 1,
-		},
-		drag: {
-			// setScale: true, // Allow zooming using selection
-			setScale: false,
-			x: true,
-			y: false,
-		},
-		sync: {
-			key: 'select',
-		},
 	},
 	padding: [10, 10, 10, 10],
 	scales: {
@@ -269,7 +294,7 @@ export const getUPlotChartOptions = ({
 		},
 	},
 	plugins: [
-		tooltipPlugin(yAxisUnit),
+		tooltipPlugin(apiResponse, yAxisUnit),
 		onClickPlugin({
 			onClick: onClickHandler,
 		}),

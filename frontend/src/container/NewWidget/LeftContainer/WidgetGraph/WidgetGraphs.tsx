@@ -3,7 +3,10 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
+import {
+	getUPlotChartData,
+	getUPlotChartOptions,
+} from 'lib/uPlotLib/getUplotChartData';
 import { useCallback, useMemo, useRef } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useDispatch } from 'react-redux';
@@ -48,6 +51,7 @@ function WidgetGraph({
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
+				id: widgetId || 'legend_widget',
 				yAxisUnit,
 				apiResponse: getWidgetQueryRange?.data?.payload,
 				dimensions: containerDimensions,
@@ -55,6 +59,7 @@ function WidgetGraph({
 				onDragSelect,
 			}),
 		[
+			widgetId,
 			yAxisUnit,
 			getWidgetQueryRange?.data?.payload,
 			containerDimensions,
