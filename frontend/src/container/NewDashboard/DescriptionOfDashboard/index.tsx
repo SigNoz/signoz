@@ -15,10 +15,12 @@ import ShareModal from './ShareModal';
 function DescriptionOfDashboard(): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 
-	const selectedData = selectedDashboard ? {
-		...selectedDashboard.data,
-		uuid: selectedDashboard.uuid,
-	} : undefined ;
+	const selectedData = selectedDashboard
+		? {
+				...selectedDashboard.data,
+				uuid: selectedDashboard.uuid,
+		  }
+		: undefined;
 	const { title, tags, description } = selectedData || {};
 
 	const [isJSONModalVisible, isIsJSONModalVisible] = useState<boolean>(false);
