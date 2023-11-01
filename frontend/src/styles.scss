@@ -62,7 +62,7 @@ body {
 	z-index: 100;
 	pointer-events: none;
 	overflow: auto;
-	max-height: 300px;
+	max-height: 600px !important;
 	border-radius: 5px;
 
 	.tooltip-container {

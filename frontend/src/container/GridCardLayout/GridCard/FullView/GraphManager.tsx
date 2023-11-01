@@ -1,4 +1,4 @@
-import './GraphManager.styles.scss';
+import './WidgetFullView.styles.scss';
 
 import { Button, Input } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
