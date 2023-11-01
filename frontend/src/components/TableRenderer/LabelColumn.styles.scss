@@ -1,9 +1,10 @@
-.LabelColumn {
-    .LabelColumn-label-tag {
-        white-space: normal;
-    }
+.label-column {
 
-}
-.labelColumn-popover {
-    margin: 0.5rem 0;
+    display: flex;
+    flex-wrap: wrap;
+
+    .label-column--tag {
+        white-space: normal;
+        margin: 0.2rem 0.2rem;
+    }
 }

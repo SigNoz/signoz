@@ -30,3 +30,14 @@ export type SetVisibleColumnsProps = {
 	tablesource: typeof TableDataSource[keyof typeof TableDataSource];
 	dynamicColumns?: ColumnsType<any>;
 };
+
+type GetNewColumnDataProps = {
+	prevColumns?: ColumnsType;
+	checked: boolean;
+	dynamicColumns?: ColumnsType<any>;
+	index: number;
+};
+
+export type GetNewColumnDataFunction = (
+	props: GetNewColumnDataProps,
+) => ColumnsType | undefined;

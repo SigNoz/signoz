@@ -1,6 +1,6 @@
 import { DynamicColumnsKey } from './contants';
 import {
-	GetVisibleColumnProps,
+	GetNewColumnDataFunction,
 	GetVisibleColumnsFunction,
 	SetVisibleColumnsProps,
 } from './types';
@@ -9,7 +9,7 @@ export const getVisibleColumns: GetVisibleColumnsFunction = ({
 	tablesource,
 	dynamicColumns,
 	columnsData,
-}: GetVisibleColumnProps) => {
+}) => {
 	let columnVisibilityData: { [key: string]: boolean };
 	try {
 		const storedData = localStorage.getItem(tablesource);
@@ -54,4 +54,24 @@ export const setVisibleColumns = ({
 	} catch (error) {
 		console.error(error);
 	}
+};
+
+export const getNewColumnData: GetNewColumnDataFunction = ({
+	prevColumns,
+	checked,
+	dynamicColumns,
+	index,
+}) => {
+	if (checked && dynamicColumns) {
+		return prevColumns
+			? [
+					...prevColumns.slice(0, prevColumns.length - 1),
+					dynamicColumns[index],
+					prevColumns[prevColumns.length - 1],
+			  ]
+			: undefined;
+	}
+	return prevColumns && dynamicColumns
+		? prevColumns.filter((column) => dynamicColumns[index].title !== column.title)
+		: undefined;
 };
