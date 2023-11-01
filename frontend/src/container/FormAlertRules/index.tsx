@@ -366,7 +366,6 @@ function FormAlertRules({
 			query={stagedQuery}
 			selectedInterval={globalSelectedInterval}
 			alertDef={alertDef}
-			userQueryKey={`${maxTime}-${minTime}`}
 		/>
 	);
 
@@ -381,7 +380,6 @@ function FormAlertRules({
 			name="Chart Preview"
 			query={stagedQuery}
 			alertDef={alertDef}
-			userQueryKey={`${maxTime}-${minTime}`}
 		/>
 	);
 
@@ -397,7 +395,6 @@ function FormAlertRules({
 			query={stagedQuery}
 			alertDef={alertDef}
 			selectedInterval={globalSelectedInterval}
-			userQueryKey={`${maxTime}-${minTime}`}
 		/>
 	);
 
