@@ -295,6 +295,19 @@ func TestTraceParsingPreview(t *testing.T) {
 	expectedTraceFlags, err := strconv.ParseUint(testTraceFlags, 16, 16)
 	require.Nil(err)
 	require.Equal(uint32(expectedTraceFlags), processed.TraceFlags)
+
+	// trace parser should work even if parse_from value is empty
+	testPipelines[0].Config[0].SpanId.ParseFrom = ""
+	result, err = SimulatePipelinesProcessing(
+		context.Background(),
+		testPipelines,
+		[]model.SignozLog{
+			testLog,
+		},
+	)
+	require.Nil(err)
+	require.Equal(1, len(result))
+	require.Equal("", result[0].SpanID)
 }
 
 func makeTestLogEntry(
