@@ -309,6 +309,16 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 				To:      "attributes.test2",
 			},
 			makeTestLog("mismatching log", map[string]string{}),
+		}, {
+			"remove parser should ignore non matching logs",
+			PipelineOperator{
+				ID:      "remove",
+				Type:    "remove",
+				Enabled: true,
+				Name:    "remove",
+				Field:   "attributes.test",
+			},
+			makeTestLog("mismatching log", map[string]string{}),
 		},
 		// TODO(Raj): see if there is an error scenario for grok parser.
 		// TODO(Raj): see if there is an error scenario for trace parser.
