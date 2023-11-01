@@ -72,10 +72,27 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 			if len(filteredOp) > 0 {
 				filteredOp[len(filteredOp)-1].Output = operator.ID
 			}
+
+			if operator.Type == "trace_parser" {
+				cleanTraceParser(&operator)
+			}
+
 			filteredOp = append(filteredOp, operator)
 		} else if i == len(ops)-1 && len(filteredOp) != 0 {
 			filteredOp[len(filteredOp)-1].Output = ""
 		}
 	}
 	return filteredOp
+}
+
+func cleanTraceParser(operator *PipelineOperator) {
+	if operator.TraceId != nil && len(operator.TraceId.ParseFrom) < 1 {
+		operator.TraceId = nil
+	}
+	if operator.SpanId != nil && len(operator.SpanId.ParseFrom) < 1 {
+		operator.SpanId = nil
+	}
+	if operator.TraceFlags != nil && len(operator.TraceFlags.ParseFrom) < 1 {
+		operator.TraceFlags = nil
+	}
 }

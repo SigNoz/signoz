@@ -65,7 +65,9 @@ func getClickhouseLogsColumnDataType(columnDataType v3.AttributeKeyDataType) str
 	if columnDataType == v3.AttributeKeyDataTypeInt64 {
 		return "int64"
 	}
-	// for bool also we are returning string as we store bool data as string.
+	if columnDataType == v3.AttributeKeyDataTypeBool {
+		return "bool"
+	}
 	return "string"
 }
 
