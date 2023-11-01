@@ -39,10 +39,12 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		[pathname],
 	);
 
-	const { data: licensesData } = useLicense();
+	const {
+		data: licensesData,
+		isFetching: isFetchingLicensesData,
+	} = useLicense();
 
 	const {
-		user,
 		isUserFetching,
 		isUserFetchingError,
 		isLoggedIn: isLoggedInState,
@@ -116,7 +118,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		if (
 			localStorageUserAuthToken &&
 			localStorageUserAuthToken.refreshJwt &&
-			user?.userId === ''
+			isUserFetching
 		) {
 			handleUserLoginIfTokenPresent(key);
 		} else {
@@ -131,28 +133,34 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 		if (path && path !== ROUTES.WORKSPACE_LOCKED) {
 			history.push(ROUTES.WORKSPACE_LOCKED);
-		}
 
-		dispatch({
-			type: UPDATE_USER_IS_FETCH,
-			payload: {
-				isUserFetching: false,
-			},
-		});
+			dispatch({
+				type: UPDATE_USER_IS_FETCH,
+				payload: {
+					isUserFetching: false,
+				},
+			});
+		}
 	};
+
+	useEffect(() => {
+		if (!isFetchingLicensesData) {
+			const shouldBlockWorkspace = licensesData?.payload?.workSpaceBlock;
+
+			if (shouldBlockWorkspace) {
+				navigateToWorkSpaceBlocked(currentRoute);
+			}
+		}
+	}, [isFetchingLicensesData]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
-				const shouldBlockWorkspace = licensesData?.payload?.workSpaceBlock;
-
 				if (currentRoute) {
 					const { isPrivate, key } = currentRoute;
 
-					if (shouldBlockWorkspace) {
-						navigateToWorkSpaceBlocked(currentRoute);
-					} else if (isPrivate) {
+					if (isPrivate && key !== ROUTES.WORKSPACE_LOCKED) {
 						handlePrivateRoutes(key);
 					} else {
 						// no need to fetch the user and make user fetching false

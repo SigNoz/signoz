@@ -2,6 +2,7 @@ package agentConf
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"strings"
 	"sync"
@@ -101,7 +102,7 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 	err error,
 ) {
 	recommendation := currentConfYaml
-	settingVersions := []string{}
+	settingVersionsUsed := []string{}
 
 	for _, feature := range m.agentFeatures {
 		featureType := ElementTypeDef(feature.AgentFeatureType())
@@ -124,7 +125,7 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 		}
 		recommendation = updatedConf
 		configId := fmt.Sprintf("%s:%d", featureType, latestConfig.Version)
-		settingVersions = append(settingVersions, configId)
+		settingVersionsUsed = append(settingVersionsUsed, configId)
 
 		m.updateDeployStatus(
 			context.Background(),
@@ -138,7 +139,16 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 
 	}
 
-	configId = strings.Join(settingVersions, ",")
+	if len(settingVersionsUsed) > 0 {
+		configId = strings.Join(settingVersionsUsed, ",")
+
+	} else {
+		// Do not return an empty configId even if no recommendations were made
+		hash := sha256.New()
+		hash.Write(recommendation)
+		configId = string(hash.Sum(nil))
+	}
+
 	return recommendation, configId, nil
 }
 

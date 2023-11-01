@@ -137,20 +137,35 @@ func isValidOperator(op PipelineOperator) error {
 		if op.Field == "" {
 			return fmt.Errorf(fmt.Sprintf("field of %s remove operator cannot be empty", op.ID))
 		}
-	case "traceParser":
+	case "trace_parser":
 		if op.TraceParser == nil {
 			return fmt.Errorf(fmt.Sprintf("field of %s remove operator cannot be empty", op.ID))
 		}
 
-		if op.TraceParser.SpanId.ParseFrom == "" && op.TraceParser.TraceId.ParseFrom == "" && op.TraceParser.TraceFlags.ParseFrom == "" {
-			return fmt.Errorf(fmt.Sprintf("one of trace_id,span_id,parse_from of %s traceParser operator must be present", op.ID))
+		hasTraceIdParseFrom := (op.TraceParser.TraceId != nil && op.TraceParser.TraceId.ParseFrom != "")
+		hasSpanIdParseFrom := (op.TraceParser.SpanId != nil && op.TraceParser.SpanId.ParseFrom != "")
+		hasTraceFlagsParseFrom := (op.TraceParser.TraceFlags != nil && op.TraceParser.TraceFlags.ParseFrom != "")
+
+		if !(hasTraceIdParseFrom || hasSpanIdParseFrom || hasTraceFlagsParseFrom) {
+			return fmt.Errorf(fmt.Sprintf("one of trace_id, span_id, trace_flags of %s trace_parser operator must be present", op.ID))
 		}
+
+		if hasTraceIdParseFrom && !isValidOtelValue(op.TraceParser.TraceId.ParseFrom) {
+			return fmt.Errorf("trace id can't be parsed from %s", op.TraceParser.TraceId.ParseFrom)
+		}
+		if hasSpanIdParseFrom && !isValidOtelValue(op.TraceParser.SpanId.ParseFrom) {
+			return fmt.Errorf("span id can't be parsed from %s", op.TraceParser.SpanId.ParseFrom)
+		}
+		if hasTraceFlagsParseFrom && !isValidOtelValue(op.TraceParser.TraceFlags.ParseFrom) {
+			return fmt.Errorf("trace flags can't be parsed from %s", op.TraceParser.TraceFlags.ParseFrom)
+		}
+
 	case "retain":
 		if len(op.Fields) == 0 {
 			return fmt.Errorf(fmt.Sprintf("fields of %s retain operator cannot be empty", op.ID))
 		}
 	default:
-		return fmt.Errorf(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, traceParser, retain)", op.Type, op.ID))
+		return fmt.Errorf(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, trace_parser, retain)", op.Type, op.ID))
 	}
 
 	if !isValidOtelValue(op.ParseFrom) ||

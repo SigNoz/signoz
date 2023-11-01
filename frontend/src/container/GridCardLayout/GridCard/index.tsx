@@ -91,9 +91,9 @@ function GridCardGraph({
 					},
 				],
 				createDataset: undefined,
-				isWarningLimit: true,
+				isWarningLimit: widget.panelTypes === PANEL_TYPES.TIME_SERIES,
 			}),
-		[queryResponse],
+		[queryResponse, widget?.panelTypes],
 	);
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;

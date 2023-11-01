@@ -17,6 +17,7 @@ import { useLocation } from 'react-router-dom';
 import { SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
+import { isCloudUser } from 'utils/app';
 import { trackEvent } from 'utils/segmentAnalytics';
 
 import {
@@ -233,8 +234,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	const handleSubmit = (): void => {
 		(async (): Promise<void> => {
-			const { hostname } = window.location;
-
 			try {
 				const values = form.getFieldsValue();
 				setLoading(true);
@@ -260,11 +259,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					await commonHandler(
 						values,
 						async (): Promise<void> => {
-							if (
-								isOnboardingEnabled &&
-								hostname &&
-								hostname.endsWith('signoz.cloud')
-							) {
+							if (isOnboardingEnabled && isCloudUser()) {
 								history.push(ROUTES.GET_STARTED);
 							} else {
 								history.push(ROUTES.APPLICATION);

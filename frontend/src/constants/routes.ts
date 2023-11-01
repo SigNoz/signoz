@@ -31,14 +31,14 @@ const ROUTES = {
 	LOGS: '/logs',
 	LOGS_EXPLORER: '/logs-explorer',
 	LIVE_LOGS: '/logs-explorer/live',
+	LOGS_PIPELINES: '/pipelines',
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
 	LOGS_INDEX_FIELDS: '/logs-explorer/index-fields',
-	LOGS_PIPELINE: '/logs-explorer/pipeline',
 	TRACE_EXPLORER: '/trace-explorer',
-	PIPELINES: '/pipelines',
 	BILLING: '/billing',
+	SUPPORT: '/support',
 	WORKSPACE_LOCKED: '/workspace-locked',
 };
 
