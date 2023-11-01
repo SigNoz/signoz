@@ -14,6 +14,7 @@ import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { IServiceName } from './Tabs/types';
 import {
 	convertedTracesToDownloadData,
 	getErrorRate,
@@ -25,6 +26,7 @@ function TopOperationsTable({
 	isLoading,
 }: TopOperationsTableProps): JSX.Element {
 	const searchInput = useRef<InputRef>(null);
+	const { servicename } = useParams<IServiceName>();
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -130,7 +132,7 @@ function TopOperationsTable({
 				<Download
 					data={downloadableData}
 					isLoading={isLoading}
-					fileName="top_operations"
+					fileName={`top-operations-${servicename}`}
 				/>
 			</div>
 			<ResizeTable

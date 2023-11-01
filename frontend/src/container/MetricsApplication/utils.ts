@@ -41,12 +41,12 @@ export const convertedTracesToDownloadData = (
 ): Record<string, string>[] =>
 	originalData.map((item) => {
 		const newObj: Record<string, string> = {
-			name: item.name,
-			'p50 (in ms)': (item.p50 / 1000000).toFixed(2),
-			'p95 (in ms)': (item.p95 / 1000000).toFixed(2),
-			'p99 (in ms)': (item.p99 / 1000000).toFixed(2),
-			numCalls: item.numCalls.toString(),
-			'error (%)': item.errorCount.toString(),
+			Name: item.name,
+			'P50 (in ms)': (item.p50 / 1000000).toFixed(2),
+			'P95 (in ms)': (item.p95 / 1000000).toFixed(2),
+			'P99 (in ms)': (item.p99 / 1000000).toFixed(2),
+			'Number of calls': item.numCalls.toString(),
+			'Error Rate (%)': getErrorRate(item).toFixed(2),
 		};
 
 		return newObj;
