@@ -81,7 +81,9 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 			} else if operator.Type == "json_parser" {
 				prepareJsonParser(&operator)
 			} else if operator.Type == "trace_parser" {
-				cleanTraceParser(&operator)
+				prepareTraceParser(&operator)
+			} else if operator.Type == "move" {
+				prepareMoveOperator(&operator)
 			}
 
 			filteredOp = append(filteredOp, operator)
@@ -107,7 +109,12 @@ func prepareJsonParser(operator *PipelineOperator) {
 	operator.If = fmt.Sprintf(`%s matches "\\s*{.*}\\s*$"`, operator.ParseFrom)
 }
 
-func cleanTraceParser(operator *PipelineOperator) {
+func prepareMoveOperator(operator *PipelineOperator) {
+	fromParts := strings.Split(operator.From, ".")
+	operator.If = fmt.Sprintf(`%s != nil`, strings.Join(fromParts, "?."))
+}
+
+func prepareTraceParser(operator *PipelineOperator) {
 	if operator.TraceId != nil && len(operator.TraceId.ParseFrom) < 1 {
 		operator.TraceId = nil
 	}
