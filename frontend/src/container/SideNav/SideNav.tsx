@@ -138,6 +138,7 @@ function SideNav(): JSX.Element {
 				key: SecondaryMenuItemKey.Support,
 				label: 'Support',
 				icon: <LifeBuoy />,
+				onClick: onClickMenuHandler,
 			},
 		];
 	} else {
@@ -189,7 +190,6 @@ function SideNav(): JSX.Element {
 				mode="vertical"
 				style={styles}
 				items={secondaryMenuItems}
-				onClick={onClickMenuHandler}
 			/>
 		</Sider>
 	);
