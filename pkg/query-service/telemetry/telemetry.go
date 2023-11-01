@@ -267,7 +267,7 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
-	if a.saasOperator != nil {
+	if a.saasOperator != nil && user.Name != "" {
 		a.saasOperator.Enqueue(analytics.Identify{
 			UserId: a.userEmail,
 			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
