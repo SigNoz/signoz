@@ -1,7 +1,7 @@
 import './DropDown.styles.scss';
 
 import { EllipsisOutlined } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps, Space } from 'antd';
+import { Button, Dropdown, MenuProps } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 function DropDown({ element }: { element: JSX.Element[] }): JSX.Element {
@@ -15,15 +15,13 @@ function DropDown({ element }: { element: JSX.Element[] }): JSX.Element {
 	);
 
 	return (
-		<Dropdown menu={{ items }} className="Dropdown-container">
+		<Dropdown menu={{ items }}>
 			<Button
 				type="link"
-				className={!isDarkMode ? 'Dropdown-button--dark' : 'Dropdown-button'}
+				className={!isDarkMode ? 'dropdown-button--dark' : 'dropdown-button'}
 				onClick={(e): void => e.preventDefault()}
 			>
-				<Space>
-					<EllipsisOutlined className="Dropdown-icon" />
-				</Space>
+				<EllipsisOutlined className="dropdown-icon" />
 			</Button>
 		</Dropdown>
 	);
