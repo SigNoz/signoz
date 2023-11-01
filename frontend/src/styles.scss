@@ -68,6 +68,20 @@ body {
 	.tooltip-container {
 		padding: 0.5rem;
 	}
+
+	&::-webkit-scrollbar {
+		width: 0.3rem;
+	}
+	&::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+	&::-webkit-scrollbar-thumb {
+		background: rgb(136, 136, 136);
+		border-radius: 0.625rem;
+	}
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
 }
 
 .tooltip-content-row {

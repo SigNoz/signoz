@@ -14,7 +14,10 @@ import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import { getUPlotChartData, getUPlotChartOptions } from 'lib/getUplotChartData';
+import {
+	getUPlotChartData,
+	getUPlotChartOptions,
+} from 'lib/uPlotLib/getUplotChartData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -100,6 +103,7 @@ function FullView({
 				: 300;
 
 			const newChartOptions = getUPlotChartOptions({
+				id: widget?.id,
 				yAxisUnit: yAxisUnit || '',
 				apiResponse: response.data?.payload,
 				dimensions: {
