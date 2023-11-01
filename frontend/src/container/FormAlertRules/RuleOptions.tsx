@@ -20,6 +20,7 @@ import {
 	defaultMatchType,
 } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { FormContainer, InlineSelect, StepHeading } from './styles';
 
@@ -45,6 +46,7 @@ function RuleOptions({
 
 	const renderCompareOps = (): JSX.Element => (
 		<InlineSelect
+			getPopupContainer={popupContainer}
 			defaultValue={defaultCompareOp}
 			value={alertDef.condition?.op}
 			style={{ minWidth: '120px' }}
@@ -69,6 +71,7 @@ function RuleOptions({
 
 	const renderThresholdMatchOpts = (): JSX.Element => (
 		<InlineSelect
+			getPopupContainer={popupContainer}
 			defaultValue={defaultMatchType}
 			style={{ minWidth: '130px' }}
 			value={alertDef.condition?.matchType}
@@ -83,6 +86,7 @@ function RuleOptions({
 
 	const renderPromMatchOpts = (): JSX.Element => (
 		<InlineSelect
+			getPopupContainer={popupContainer}
 			defaultValue={defaultMatchType}
 			style={{ minWidth: '130px' }}
 			value={alertDef.condition?.matchType}
@@ -94,6 +98,7 @@ function RuleOptions({
 
 	const renderEvalWindows = (): JSX.Element => (
 		<InlineSelect
+			getPopupContainer={popupContainer}
 			defaultValue={defaultEvalWindow}
 			style={{ minWidth: '120px' }}
 			value={alertDef.evalWindow}
@@ -180,6 +185,7 @@ function RuleOptions({
 
 					<Form.Item>
 						<Select
+							getPopupContainer={popupContainer}
 							allowClear
 							showSearch
 							options={categorySelectOptions}

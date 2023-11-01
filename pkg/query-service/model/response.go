@@ -552,6 +552,7 @@ type SignozLog struct {
 	Attributes_string  map[string]string  `json:"attributes_string" ch:"attributes_string"`
 	Attributes_int64   map[string]int64   `json:"attributes_int" ch:"attributes_int64"`
 	Attributes_float64 map[string]float64 `json:"attributes_float" ch:"attributes_float64"`
+	Attributes_bool    map[string]bool    `json:"attributes_bool" ch:"attributes_bool"`
 }
 
 type LogsTailClient struct {
