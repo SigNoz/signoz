@@ -80,7 +80,8 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 				parseFromParts := strings.Split(operator.ParseFrom, ".")
 				parseFromPath := strings.Join(parseFromParts, "?.")
 				operator.If = fmt.Sprintf(
-					`%s matches "%s"`,
+					`%s != nil && %s matches "%s"`,
+					parseFromPath,
 					parseFromPath,
 					strings.ReplaceAll(
 						strings.ReplaceAll(operator.Regex, `\`, `\\`),
@@ -99,7 +100,7 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 				operator.If = fmt.Sprintf(`%s != nil`, fromPath)
 
 			} else if operator.Type == "remove" {
-				fieldParts := strings.Split(operator.From, ".")
+				fieldParts := strings.Split(operator.Field, ".")
 				fieldPath := strings.Join(fieldParts, "?.")
 				operator.If = fmt.Sprintf(`%s != nil`, fieldPath)
 

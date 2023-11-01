@@ -262,6 +262,18 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 		NonMatchingLog model.SignozLog
 	}{
 		{
+			"regex processor should ignore log with missing field",
+			PipelineOperator{
+				ID:        "regex",
+				Type:      "regex_parser",
+				Enabled:   true,
+				Name:      "regex parser",
+				ParseFrom: "attributes.test_regex_target",
+				ParseTo:   "attributes",
+				Regex:     `^\s*(?P<json_data>{.*})\s*$`,
+			},
+			makeTestLog("mismatching log", map[string]string{}),
+		}, {
 			"regex processor should ignore non-matching log",
 			PipelineOperator{
 				ID:        "regex",
