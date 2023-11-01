@@ -10,6 +10,7 @@
 	"SETTINGS": "SigNoz | Settings",
 	"USAGE_EXPLORER": "SigNoz | Usage Explorer",
 	"APPLICATION": "SigNoz | Home",
+	"BILLING": "SigNoz | Billing",
 	"ALL_DASHBOARD": "SigNoz | All Dashboards",
 	"DASHBOARD": "SigNoz | Dashboard",
 	"DASHBOARD_WIDGET": "SigNoz | Dashboard Widget",
@@ -24,6 +25,7 @@
 	"VERSION": "SigNoz | Version",
 	"MY_SETTINGS": "SigNoz | My Settings",
 	"ORG_SETTINGS": "SigNoz | Organization Settings",
+	"INGESTION_SETTINGS": "SigNoz | Ingestion Settings",
 	"SOMETHING_WENT_WRONG": "SigNoz | Something Went Wrong",
 	"UN_AUTHORIZED": "SigNoz | Unauthorized",
 	"NOT_FOUND": "SigNoz | Page Not Found",
@@ -33,5 +35,7 @@
 	"HOME_PAGE": "Open source Observability Platform | SigNoz",
 	"PASSWORD_RESET": "SigNoz | Password Reset",
 	"LIST_LICENSES": "SigNoz | List of Licenses",
+	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
+	"SUPPORT": "SigNoz | Support",
 	"DEFAULT": "Open source Observability Platform | SigNoz"
 }

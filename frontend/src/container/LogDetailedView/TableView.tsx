@@ -21,7 +21,12 @@ import { ILog } from 'types/api/logs/log';
 
 import ActionItem, { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
-import { flattenObject, jsonToDataNodes, recursiveParseJSON } from './utils';
+import {
+	flattenObject,
+	jsonToDataNodes,
+	recursiveParseJSON,
+	removeEscapeCharacters,
+} from './utils';
 
 // Fields which should be restricted from adding it to query
 const RESTRICTED_FIELDS = ['timestamp'];
@@ -177,7 +182,7 @@ function TableView({
 
 				return (
 					<CopyClipboardHOC textToCopy={textToCopy}>
-						<span style={{ color: orange[6] }}>{field}</span>
+						<span style={{ color: orange[6] }}>{removeEscapeCharacters(field)}</span>
 					</CopyClipboardHOC>
 				);
 			},

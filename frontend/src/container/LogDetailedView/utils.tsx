@@ -226,3 +226,17 @@ export const getDataTypes = (value: unknown): DataTypes => {
 
 	return determineType(value);
 };
+
+export const removeEscapeCharacters = (str: string): string =>
+	str.replace(/\\([ntfr'"\\])/g, (_: string, char: string) => {
+		const escapeMap: Record<string, string> = {
+			n: '\n',
+			t: '\t',
+			f: '\f',
+			r: '\r',
+			"'": "'",
+			'"': '"',
+			'\\': '\\',
+		};
+		return escapeMap[char as keyof typeof escapeMap];
+	});

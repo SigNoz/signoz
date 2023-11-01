@@ -3,8 +3,8 @@ import { Modal, Table } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
 import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
-import { cloneDeep } from 'lodash-es';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import cloneDeep from 'lodash-es/cloneDeep';
+import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +32,7 @@ import {
 } from './styles';
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
+import PreviewAction from './TableComponents/PipelineActions/components/PreviewAction';
 import TableExpandIcon from './TableComponents/TableExpandIcon';
 import {
 	getDataOnSearch,
@@ -55,36 +56,57 @@ function PipelineListsView({
 	const [modal, contextHolder] = Modal.useModal();
 	const { notifications } = useNotifications();
 	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(pipelineData?.pipelines),
+		cloneDeep(pipelineData?.pipelines || []),
 	);
 	const [currPipelineData, setCurrPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(pipelineData?.pipelines),
+		cloneDeep(pipelineData?.pipelines || []),
 	);
-	const [
-		expandedPipelineData,
-		setExpandedPipelineData,
-	] = useState<PipelineData>();
+
+	const [expandedPipelineId, setExpandedPipelineId] = useState<
+		string | undefined
+	>(undefined);
+	const expandedPipelineData = useCallback(
+		() => currPipelineData?.find((p) => p.id === expandedPipelineId),
+		[currPipelineData, expandedPipelineId],
+	);
+	const setExpandedPipelineData = useCallback(
+		(newData: PipelineData): void => {
+			if (expandedPipelineId) {
+				const pipelineIdx = currPipelineData?.findIndex(
+					(p) => p.id === expandedPipelineId,
+				);
+				if (pipelineIdx >= 0) {
+					const newPipelineData = [...currPipelineData];
+					newPipelineData[pipelineIdx] = newData;
+					setCurrPipelineData(newPipelineData);
+				}
+			}
+		},
+		[expandedPipelineId, currPipelineData],
+	);
+
 	const [
 		selectedProcessorData,
 		setSelectedProcessorData,
 	] = useState<ProcessorData>();
+
 	const [
 		selectedPipelineData,
 		setSelectedPipelineData,
 	] = useState<PipelineData>();
+
 	const [expandedRowKeys, setExpandedRowKeys] = useState<Array<string>>();
 	const [showSaveButton, setShowSaveButton] = useState<string>();
 	const isEditingActionMode = isActionMode === ActionMode.Editing;
 
-	useEffect(() => {
-		if (pipelineSearchValue === '') setCurrPipelineData(pipelineData?.pipelines);
-		if (pipelineSearchValue !== '') {
-			const filterData = pipelineData?.pipelines.filter((data: PipelineData) =>
-				getDataOnSearch(data as never, pipelineSearchValue),
-			);
-			setCurrPipelineData(filterData);
+	const visibleCurrPipelines = useMemo((): Array<PipelineData> => {
+		if (pipelineSearchValue === '') {
+			return currPipelineData;
 		}
-	}, [pipelineSearchValue, pipelineData?.pipelines]);
+		return currPipelineData.filter((data) =>
+			getDataOnSearch(data as never, pipelineSearchValue),
+		);
+	}, [currPipelineData, pipelineSearchValue]);
 
 	const handleAlert = useCallback(
 		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
@@ -172,7 +194,7 @@ function PipelineListsView({
 					align: 'center',
 					render: (_value, record): JSX.Element => (
 						<PipelineActions
-							isPipelineAction
+							pipeline={record}
 							editAction={pipelineEditAction(record)}
 							deleteAction={pipelineDeleteAction(record)}
 						/>
@@ -192,6 +214,16 @@ function PipelineListsView({
 					),
 				},
 			);
+		} else {
+			fieldColumns.push({
+				title: 'Actions',
+				dataIndex: 'smartAction',
+				key: 'smartAction',
+				align: 'center',
+				render: (_value, record): JSX.Element => (
+					<PreviewAction pipeline={record} />
+				),
+			});
 		}
 		return fieldColumns;
 	}, [
@@ -220,8 +252,14 @@ function PipelineListsView({
 		(dragIndex: number, hoverIndex: number) => {
 			if (currPipelineData && isEditingActionMode) {
 				const rawData = currPipelineData;
-				const updatedRow = getUpdatedRow(currPipelineData, dragIndex, hoverIndex);
-				updatedRow.forEach((item, index) => {
+
+				const updatedRows = getUpdatedRow(
+					currPipelineData,
+					visibleCurrPipelines[dragIndex].orderId - 1,
+					visibleCurrPipelines[hoverIndex].orderId - 1,
+				);
+
+				updatedRows.forEach((item, index) => {
 					const obj = item;
 					obj.orderId = index + 1;
 				});
@@ -229,7 +267,7 @@ function PipelineListsView({
 					title: t('reorder_pipeline'),
 					descrition: t('reorder_pipeline_description'),
 					buttontext: t('reorder'),
-					onOk: updatePipelineSequence(updatedRow),
+					onOk: updatePipelineSequence(updatedRows),
 					onCancel: onCancelPipelineSequence(rawData),
 				});
 			}
@@ -237,6 +275,7 @@ function PipelineListsView({
 		[
 			currPipelineData,
 			isEditingActionMode,
+			visibleCurrPipelines,
 			handleAlert,
 			t,
 			updatePipelineSequence,
@@ -252,7 +291,7 @@ function PipelineListsView({
 				setActionType={setActionType}
 				processorEditAction={processorEditAction}
 				setShowSaveButton={setShowSaveButton}
-				expandedPipelineData={expandedPipelineData}
+				expandedPipelineData={expandedPipelineData()}
 				setExpandedPipelineData={setExpandedPipelineData}
 				prevPipelineData={prevPipelineData}
 			/>
@@ -264,6 +303,7 @@ function PipelineListsView({
 			expandedPipelineData,
 			setActionType,
 			prevPipelineData,
+			setExpandedPipelineData,
 		],
 	);
 
@@ -274,7 +314,7 @@ function PipelineListsView({
 				keys.push(record?.id);
 			}
 			setExpandedRowKeys(keys);
-			setExpandedPipelineData(record);
+			setExpandedPipelineId(record.id);
 		},
 		[],
 	);
@@ -308,18 +348,7 @@ function PipelineListsView({
 
 	const onSaveConfigurationHandler = useCallback(async () => {
 		const modifiedPipelineData = currPipelineData.map((item: PipelineData) => {
-			const pipelineData = item;
-			if (
-				expandedPipelineData !== undefined &&
-				item.id === expandedPipelineData?.id
-			) {
-				pipelineData.config = expandedPipelineData?.config;
-			}
-			pipelineData.config = item.config;
-			return pipelineData;
-		});
-		modifiedPipelineData.forEach((item: PipelineData) => {
-			const pipelineData = item;
+			const pipelineData = { ...item };
 			delete pipelineData?.id;
 			return pipelineData;
 		});
@@ -330,8 +359,8 @@ function PipelineListsView({
 			refetchPipelineLists();
 			setActionMode(ActionMode.Viewing);
 			setShowSaveButton(undefined);
-			setCurrPipelineData(response.payload?.pipelines);
-			setPrevPipelineData(response.payload?.pipelines);
+			setCurrPipelineData(response.payload?.pipelines || []);
+			setPrevPipelineData(response.payload?.pipelines || []);
 		} else {
 			modifiedPipelineData.forEach((item: PipelineData) => {
 				const pipelineData = item;
@@ -347,14 +376,7 @@ function PipelineListsView({
 			setCurrPipelineData(modifiedPipelineData);
 			setPrevPipelineData(modifiedPipelineData);
 		}
-	}, [
-		currPipelineData,
-		expandedPipelineData,
-		notifications,
-		refetchPipelineLists,
-		setActionMode,
-		t,
-	]);
+	}, [currPipelineData, notifications, refetchPipelineLists, setActionMode, t]);
 
 	const onCancelConfigurationHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
@@ -408,7 +430,7 @@ function PipelineListsView({
 				setActionType={setActionType}
 				selectedProcessorData={selectedProcessorData}
 				setShowSaveButton={setShowSaveButton}
-				expandedPipelineData={expandedPipelineData}
+				expandedPipelineData={expandedPipelineData()}
 				setExpandedPipelineData={setExpandedPipelineData}
 			/>
 			<Container>
@@ -423,7 +445,7 @@ function PipelineListsView({
 						expandedRowRender={expandedRowView}
 						expandable={expandableConfig}
 						components={tableComponents}
-						dataSource={currPipelineData}
+						dataSource={visibleCurrPipelines}
 						onRow={onRowHandler}
 						footer={footer}
 						pagination={false}

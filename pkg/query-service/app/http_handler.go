@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sort"
 	"strconv"
@@ -20,6 +19,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
+
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
@@ -37,6 +37,9 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
+	"go.uber.org/multierr"
+	"go.uber.org/zap"
+
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -46,8 +49,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/version"
-	"go.uber.org/multierr"
-	"go.uber.org/zap"
 )
 
 type status string
@@ -377,6 +378,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.setApdexSettings)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/ingestion_key", am.AdminAccess(aH.insertIngestionKey)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/ingestion_key", am.ViewAccess(aH.getIngestionKeys)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/metric_meta", am.ViewAccess(aH.getLatencyMetricMetadata)).Methods(http.MethodGet)
 
@@ -446,7 +449,7 @@ func Intersection(a, b []int) (c []int) {
 
 func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	ruleResponse, err := aH.ruleManager.GetRule(id)
+	ruleResponse, err := aH.ruleManager.GetRule(r.Context(), id)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -763,7 +766,7 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 
-	rules, err := aH.ruleManager.ListRuleStates()
+	rules, err := aH.ruleManager.ListRuleStates(r.Context())
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -776,7 +779,7 @@ func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
-	allDashboards, err := dashboards.GetDashboards()
+	allDashboards, err := dashboards.GetDashboards(r.Context())
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -827,7 +830,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	uuid := mux.Vars(r)["uuid"]
-	err := dashboards.DeleteDashboard(uuid, aH.featureFlags)
+	err := dashboards.DeleteDashboard(r.Context(), uuid, aH.featureFlags)
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -933,7 +936,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, apiError := dashboards.UpdateDashboard(uuid, postData, aH.featureFlags)
+	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), uuid, postData, aH.featureFlags)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -947,7 +950,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 	uuid := mux.Vars(r)["uuid"]
 
-	dashboard, apiError := dashboards.GetDashboard(uuid)
+	dashboard, apiError := dashboards.GetDashboard(r.Context(), uuid)
 
 	if apiError != nil {
 		RespondError(w, apiError, nil)
@@ -958,7 +961,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, signozDashboard model.DashboardData) {
+func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, r *http.Request, signozDashboard model.DashboardData) {
 	toSave := make(map[string]interface{})
 	toSave["title"] = signozDashboard.Title
 	toSave["description"] = signozDashboard.Description
@@ -967,7 +970,7 @@ func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, signozDashboard model
 	toSave["widgets"] = signozDashboard.Widgets
 	toSave["variables"] = signozDashboard.Variables
 
-	dashboard, apiError := dashboards.CreateDashboard(toSave, aH.featureFlags)
+	dashboard, apiError := dashboards.CreateDashboard(r.Context(), toSave, aH.featureFlags)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -979,14 +982,14 @@ func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, signozDashboard model
 func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 
 	var importData model.GrafanaJSON
 
 	err = json.Unmarshal(b, &importData)
 	if err == nil {
 		signozDashboard := dashboards.TransformGrafanaJSONToSignoz(importData)
-		aH.saveAndReturn(w, signozDashboard)
+		aH.saveAndReturn(w, r, signozDashboard)
 		return
 	}
 	RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error while creating dashboard from grafana json")
@@ -1008,7 +1011,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dash, apiErr := dashboards.CreateDashboard(postData, aH.featureFlags)
+	dash, apiErr := dashboards.CreateDashboard(r.Context(), postData, aH.featureFlags)
 
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -1022,7 +1025,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body in test rule API\n", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -1049,7 +1052,7 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
 
-	err := aH.ruleManager.DeleteRule(id)
+	err := aH.ruleManager.DeleteRule(r.Context(), id)
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1065,14 +1068,14 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("msg: error in getting req body of patch rule API\n", "\t error:", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	gettableRule, err := aH.ruleManager.PatchRule(string(body), id)
+	gettableRule, err := aH.ruleManager.PatchRule(r.Context(), string(body), id)
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1086,14 +1089,14 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("msg: error in getting req body of edit rule API\n", "\t error:", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	err = aH.ruleManager.EditRule(string(body), id)
+	err = aH.ruleManager.EditRule(r.Context(), string(body), id)
 
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -1137,7 +1140,7 @@ func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body of testChannel API\n", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -1164,7 +1167,7 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body of editChannel API\n", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -1192,7 +1195,7 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body of createChannel API\n", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -1239,14 +1242,14 @@ func (aH *APIHandler) getAlerts(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("Error in getting req body for create rule API\n", err)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	err = aH.ruleManager.CreateRule(string(body))
+	err = aH.ruleManager.CreateRule(r.Context(), string(body))
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
@@ -2063,7 +2066,7 @@ func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
 
 	// read input into user flag
 	defer r.Body.Close()
-	b, err := ioutil.ReadAll(r.Body)
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("failed read user flags from http request for userId ", userId, "with error: ", err)
 		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
@@ -2318,6 +2321,7 @@ func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware)
 	subRouter.HandleFunc("/aggregate", am.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
 
 	// log pipelines
+	subRouter.HandleFunc("/pipelines/preview", am.ViewAccess(aH.PreviewLogsPipelinesHandler)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/pipelines/{version}", am.ViewAccess(aH.ListLogsPipelinesHandler)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/pipelines", am.EditAccess(aH.CreateLogsPipeline)).Methods(http.MethodPost)
 }
@@ -2379,7 +2383,7 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create the client
-	client := &model.LogsTailClient{Name: r.RemoteAddr, Logs: make(chan *model.GetLogsResponse, 1000), Done: make(chan *bool), Error: make(chan error), Filter: *params}
+	client := &model.LogsTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error), Filter: *params}
 	go aH.reader.TailLogs(r.Context(), client)
 
 	w.Header().Set("Connection", "keep-alive")
@@ -2451,6 +2455,26 @@ func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	}
 
 	return int(version64), nil
+}
+
+func (ah *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+	req := logparsingpipeline.PipelinesPreviewRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	resultLogs, apiErr := ah.LogsParsingPipelineController.PreviewLogsPipelines(
+		r.Context(), &req,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, resultLogs)
 }
 
 func (ah *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
@@ -3160,7 +3184,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create the client
-	client := &v3.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.GetLogsResponse, 1000), Done: make(chan *bool), Error: make(chan error)}
+	client := &v3.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error)}
 	go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
 
 	w.Header().Set("Connection", "keep-alive")

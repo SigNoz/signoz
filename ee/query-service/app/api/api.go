@@ -8,6 +8,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/dao"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
+	"go.signoz.io/signoz/ee/query-service/usage"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/cache"
@@ -27,6 +28,7 @@ type APIHandlerOptions struct {
 	DialTimeout                   time.Duration
 	AppDao                        dao.ModelDao
 	RulesManager                  *rules.Manager
+	UsageManager                  *usage.Manager
 	FeatureFlags                  baseint.FeatureLookup
 	LicenseManager                *license.Manager
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
@@ -80,6 +82,10 @@ func (ah *APIHandler) RM() *rules.Manager {
 
 func (ah *APIHandler) LM() *license.Manager {
 	return ah.opts.LicenseManager
+}
+
+func (ah *APIHandler) UM() *usage.Manager {
+	return ah.opts.UsageManager
 }
 
 func (ah *APIHandler) AppDao() dao.ModelDao {
@@ -149,6 +155,14 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v1/pat", am.OpenAccess(ah.createPAT)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/pat", am.OpenAccess(ah.getPATs)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/pat/{id}", am.OpenAccess(ah.deletePAT)).Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/checkout", am.AdminAccess(ah.checkout)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/billing", am.AdminAccess(ah.getBilling)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/portal", am.AdminAccess(ah.portalSession)).Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v2/licenses",
+		am.ViewAccess(ah.listLicensesV2)).
+		Methods(http.MethodGet)
 
 	ah.APIHandler.RegisterRoutes(router, am)
 

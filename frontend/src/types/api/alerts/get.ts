@@ -9,6 +9,10 @@ export interface GettableAlert extends AlertDef {
 	alert: string;
 	state: string;
 	disabled: boolean;
+	createAt: string;
+	createBy: string;
+	updateAt: string;
+	updateBy: string;
 }
 
 export type PayloadProps = {

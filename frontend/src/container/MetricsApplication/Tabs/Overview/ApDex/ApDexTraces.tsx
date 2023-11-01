@@ -1,7 +1,7 @@
 // This component is not been used in the application as we support only metrics for ApDex as of now.
 // This component is been kept for future reference.
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/GridGraphLayout/Graph';
+import Graph from 'container/GridCardLayout/GridCard';
 import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexTracesQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
@@ -52,7 +52,6 @@ function ApDexTraces({
 			widget={apDexTracesWidget}
 			onDragSelect={onDragSelect}
 			onClickHandler={handleGraphClick('ApDex')}
-			yAxisUnit=""
 			threshold={thresholdValue}
 			isQueryEnabled={isQueryEnabled}
 		/>

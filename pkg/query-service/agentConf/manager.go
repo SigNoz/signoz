@@ -2,10 +2,15 @@ package agentConf
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"strings"
+	"sync"
 	"sync/atomic"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	filterprocessor "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
 	tsp "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
@@ -20,10 +25,151 @@ func init() {
 	m = &Manager{}
 }
 
+type AgentFeatureType string
+
 type Manager struct {
 	Repo
 	// lock to make sure only one update is sent to remote agents at a time
 	lock uint32
+
+	// For AgentConfigProvider implementation
+	agentFeatures         []AgentFeature
+	configSubscribers     map[string]func()
+	configSubscribersLock sync.Mutex
+}
+
+type ManagerOptions struct {
+	DB       *sqlx.DB
+	DBEngine string
+
+	// When acting as opamp.AgentConfigProvider, agent conf recommendations are
+	// applied to the base conf in the order the features have been specified here.
+	AgentFeatures []AgentFeature
+}
+
+func Initiate(options *ManagerOptions) (*Manager, error) {
+	// featureType must be unqiue across registered AgentFeatures.
+	agentFeatureByType := map[AgentFeatureType]AgentFeature{}
+	for _, feature := range options.AgentFeatures {
+		featureType := feature.AgentFeatureType()
+		if agentFeatureByType[featureType] != nil {
+			panic(fmt.Sprintf(
+				"found multiple agent features with type: %s", featureType,
+			))
+		}
+		agentFeatureByType[featureType] = feature
+	}
+
+	m = &Manager{
+		Repo:              Repo{options.DB},
+		agentFeatures:     options.AgentFeatures,
+		configSubscribers: map[string]func(){},
+	}
+
+	err := m.initDB(options.DBEngine)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not init agentConf db")
+	}
+	return m, nil
+}
+
+// Implements opamp.AgentConfigProvider
+func (m *Manager) SubscribeToConfigUpdates(callback func()) (unsubscribe func()) {
+	m.configSubscribersLock.Lock()
+	defer m.configSubscribersLock.Unlock()
+
+	subscriberId := uuid.NewString()
+	m.configSubscribers[subscriberId] = callback
+
+	return func() {
+		delete(m.configSubscribers, subscriberId)
+	}
+}
+
+func (m *Manager) notifyConfigUpdateSubscribers() {
+	m.configSubscribersLock.Lock()
+	defer m.configSubscribersLock.Unlock()
+	for _, handler := range m.configSubscribers {
+		handler()
+	}
+}
+
+// Implements opamp.AgentConfigProvider
+func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
+	recommendedConfYaml []byte,
+	// Opaque id of the recommended config, used for reporting deployment status updates
+	configId string,
+	err error,
+) {
+	recommendation := currentConfYaml
+	settingVersionsUsed := []string{}
+
+	for _, feature := range m.agentFeatures {
+		featureType := ElementTypeDef(feature.AgentFeatureType())
+		latestConfig, apiErr := GetLatestVersion(context.Background(), featureType)
+		if apiErr != nil && apiErr.Type() != model.ErrorNotFound {
+			return nil, "", errors.Wrap(apiErr.ToError(), "failed to get latest agent config version")
+		}
+
+		if latestConfig == nil {
+			continue
+		}
+
+		updatedConf, serializedSettingsUsed, apiErr := feature.RecommendAgentConfig(
+			recommendation, latestConfig,
+		)
+		if apiErr != nil {
+			return nil, "", errors.Wrap(apiErr.ToError(), fmt.Sprintf(
+				"failed to generate agent config recommendation for %s", featureType,
+			))
+		}
+		recommendation = updatedConf
+		configId := fmt.Sprintf("%s:%d", featureType, latestConfig.Version)
+		settingVersionsUsed = append(settingVersionsUsed, configId)
+
+		m.updateDeployStatus(
+			context.Background(),
+			featureType,
+			latestConfig.Version,
+			string(DeployInitiated),
+			"Deployment has started",
+			configId,
+			serializedSettingsUsed,
+		)
+
+	}
+
+	if len(settingVersionsUsed) > 0 {
+		configId = strings.Join(settingVersionsUsed, ",")
+
+	} else {
+		// Do not return an empty configId even if no recommendations were made
+		hash := sha256.New()
+		hash.Write(recommendation)
+		configId = string(hash.Sum(nil))
+	}
+
+	return recommendation, configId, nil
+}
+
+// Implements opamp.AgentConfigProvider
+func (m *Manager) ReportConfigDeploymentStatus(
+	agentId string,
+	configId string,
+	err error,
+) {
+	featureConfigIds := strings.Split(configId, ",")
+	for _, featureConfId := range featureConfigIds {
+		newStatus := string(Deployed)
+		message := "Deployment was successful"
+		if err != nil {
+			newStatus = string(DeployFailed)
+			message = fmt.Sprintf("%s: %s", agentId, err.Error())
+		}
+		m.updateDeployStatusByHash(
+			context.Background(), featureConfId, newStatus, message,
+		)
+	}
 }
 
 // Ready indicates if Manager can accept new config update requests
@@ -34,10 +180,7 @@ func (mgr *Manager) Ready() bool {
 	return opamp.Ready()
 }
 
-func Initiate(db *sqlx.DB, engine string) error {
-	m.Repo = Repo{db}
-	return m.initDB(engine)
-}
+// Static methods for working with default manager instance in this module.
 
 // Ready indicates if Manager can accept new config update requests
 func Ready() bool {
@@ -80,6 +223,8 @@ func StartNewVersion(
 	if err != nil {
 		return nil, err
 	}
+
+	m.notifyConfigUpdateSubscribers()
 
 	return cfg, nil
 }
@@ -217,29 +362,5 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 	}
 
 	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
-	return nil
-}
-
-// UpsertLogParsingProcessors updates the agent with log parsing processors
-func UpsertLogParsingProcessor(
-	ctx context.Context,
-	version int,
-	rawPipelineData []byte,
-	config map[string]interface{},
-	names []string,
-) *model.ApiError {
-	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
-		return model.UnavailableError(fmt.Errorf("agent updater is busy"))
-	}
-	defer atomic.StoreUint32(&m.lock, 0)
-
-	// send the changes to opamp.
-	configHash, err := opamp.UpsertLogsParsingProcessor(context.Background(), config, names, m.OnConfigUpdate)
-	if err != nil {
-		zap.S().Errorf("failed to call agent config update for log parsing processor:", err)
-		return err
-	}
-
-	m.updateDeployStatus(ctx, ElementTypeLogPipelines, version, string(DeployInitiated), "Deployment has started", configHash, string(rawPipelineData))
 	return nil
 }

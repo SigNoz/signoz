@@ -1,0 +1,19 @@
+.pipeline-preview-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.4rem;
+  margin: 1.2rem 0 0.4rem 0;
+}
+
+.pipeline-preview-logs-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  height: 12em;
+  overflow: hidden;
+  border: 1px solid rgba(253, 253, 253, 0.12);
+}

@@ -48,7 +48,7 @@ function LogsExplorerChart({
 			) : (
 				<Graph
 					name="logsExplorerChart"
-					data={graphData}
+					data={graphData.data}
 					type="bar"
 					containerHeight="100%"
 					animate

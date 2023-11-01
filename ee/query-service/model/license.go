@@ -89,3 +89,18 @@ func (l *License) ParseFeatures() {
 		l.FeatureSet = BasicPlan
 	}
 }
+
+type Licenses struct {
+	TrialStart                   int64     `json:"trialStart"`
+	TrialEnd                     int64     `json:"trialEnd"`
+	OnTrial                      bool      `json:"onTrial"`
+	WorkSpaceBlock               bool      `json:"workSpaceBlock"`
+	TrialConvertedToSubscription bool      `json:"trialConvertedToSubscription"`
+	GracePeriodEnd               int64     `json:"gracePeriodEnd"`
+	Licenses                     []License `json:"licenses"`
+}
+
+type SubscriptionServerResp struct {
+	Status string   `json:"status"`
+	Data   Licenses `json:"data"`
+}

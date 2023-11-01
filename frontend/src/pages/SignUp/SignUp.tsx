@@ -17,6 +17,7 @@ import { useLocation } from 'react-router-dom';
 import { SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
+import { isCloudUser } from 'utils/app';
 import { trackEvent } from 'utils/segmentAnalytics';
 
 import {
@@ -258,7 +259,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					await commonHandler(
 						values,
 						async (): Promise<void> => {
-							if (isOnboardingEnabled) {
+							if (isOnboardingEnabled && isCloudUser()) {
 								history.push(ROUTES.GET_STARTED);
 							} else {
 								history.push(ROUTES.APPLICATION);

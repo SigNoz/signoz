@@ -10,6 +10,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 )
 
@@ -72,15 +73,6 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 
 	}
 
-	// prepare filter config (processor) from the pipelines
-	filterConfig, names, translationErr := PreparePipelineProcessor(pipelines)
-	if translationErr != nil {
-		zap.S().Errorf("failed to generate processor config from pipelines for deployment %w", translationErr)
-		return nil, model.BadRequest(errors.Wrap(
-			translationErr, "failed to generate processor config from pipelines for deployment",
-		))
-	}
-
 	if !agentConf.Ready() {
 		return nil, model.UnavailableError(fmt.Errorf(
 			"agent updater unavailable at the moment. Please try in sometime",
@@ -99,12 +91,6 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 		return nil, err
 	}
 
-	zap.S().Info("applying drop pipeline config", cfg)
-	// raw pipeline is needed since filterConfig doesn't contain inactive pipelines and operators
-	rawPipelineData, _ := json.Marshal(pipelines)
-
-	// queue up the config to push to opamp
-	err = agentConf.UpsertLogParsingProcessor(ctx, cfg.Version, rawPipelineData, filterConfig, names)
 	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeLogPipelines, 10)
 	insertedCfg, _ := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeLogPipelines, cfg.Version)
 
@@ -139,4 +125,73 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 		ConfigVersion: configVersion,
 		Pipelines:     pipelines,
 	}, nil
+}
+
+type PipelinesPreviewRequest struct {
+	Pipelines []Pipeline        `json:"pipelines"`
+	Logs      []model.SignozLog `json:"logs"`
+}
+
+type PipelinesPreviewResponse struct {
+	OutputLogs []model.SignozLog `json:"logs"`
+}
+
+func (ic *LogParsingPipelineController) PreviewLogsPipelines(
+	ctx context.Context,
+	request *PipelinesPreviewRequest,
+) (*PipelinesPreviewResponse, *model.ApiError) {
+	result, err := SimulatePipelinesProcessing(
+		ctx, request.Pipelines, request.Logs,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &PipelinesPreviewResponse{
+		OutputLogs: result,
+	}, nil
+}
+
+// Implements agentConf.AgentFeature interface.
+func (pc *LogParsingPipelineController) AgentFeatureType() agentConf.AgentFeatureType {
+	return LogPipelinesFeatureType
+}
+
+// Implements agentConf.AgentFeature interface.
+func (pc *LogParsingPipelineController) RecommendAgentConfig(
+	currentConfYaml []byte,
+	configVersion *agentConf.ConfigVersion,
+) (
+	recommendedConfYaml []byte,
+	serializedSettingsUsed string,
+	apiErr *model.ApiError,
+) {
+
+	pipelines, errs := pc.getPipelinesByVersion(
+		context.Background(), configVersion.Version,
+	)
+	if len(errs) > 0 {
+		return nil, "", model.InternalError(multierr.Combine(errs...))
+	}
+
+	processors, procNames, err := PreparePipelineProcessor(pipelines)
+	if err != nil {
+		return nil, "", model.BadRequest(errors.Wrap(err, "could not prepare otel collector processors for log pipelines"))
+	}
+
+	updatedConf, apiErr := GenerateCollectorConfigWithPipelines(
+		currentConfYaml, processors, procNames,
+	)
+	if apiErr != nil {
+		return nil, "", model.WrapApiError(apiErr, "could not marshal yaml for updated conf")
+	}
+
+	rawPipelineData, err := json.Marshal(pipelines)
+	if err != nil {
+		return nil, "", model.BadRequest(errors.Wrap(err, "could not serialize pipelines to JSON"))
+	}
+
+	return updatedConf, string(rawPipelineData), nil
+
 }

@@ -4,14 +4,24 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import history from 'lib/history';
-import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { LifeBuoy } from 'lucide-react';
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { sideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
+import { checkVersionState, isCloudUser, isEECloudUser } from 'utils/app';
 
 import { routeConfig, styles } from './config';
 import { getQueryString } from './helper';
@@ -30,37 +40,57 @@ import {
 
 function SideNav(): JSX.Element {
 	const dispatch = useDispatch();
+	const [menuItems, setMenuItems] = useState(defaultMenuItems);
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
 	const {
+		role,
 		currentVersion,
 		latestVersion,
 		isCurrentVersionError,
 		featureResponse,
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const { hostname } = window.location;
+	const { data, isFetching } = useLicense();
 
-	const menuItems = useMemo(
-		() =>
-			defaultMenuItems.filter((item) => {
-				const isOnboardingEnabled =
-					featureResponse.data?.find(
-						(feature) => feature.name === FeatureKeys.ONBOARDING,
-					)?.active || false;
+	let secondaryMenuItems: MenuItem[] = [];
 
-				if (
-					!isOnboardingEnabled ||
-					!(hostname && hostname.endsWith('signoz.cloud'))
-				) {
-					return item.key !== ROUTES.GET_STARTED;
-				}
+	useEffect((): void => {
+		const isOnboardingEnabled =
+			featureResponse.data?.find(
+				(feature) => feature.name === FeatureKeys.ONBOARDING,
+			)?.active || false;
 
-				return true;
-			}),
-		[featureResponse.data, hostname],
-	);
+		if (!isOnboardingEnabled || !isCloudUser()) {
+			let items = [...menuItems];
+
+			items = items.filter((item) => item.key !== ROUTES.GET_STARTED);
+
+			setMenuItems(items);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [featureResponse.data]);
+
+	// using a separate useEffect as the license fetching call takes few milliseconds
+	useEffect(() => {
+		if (!isFetching) {
+			let items = [...menuItems];
+
+			const isOnBasicPlan =
+				data?.payload?.licenses?.some(
+					(license) =>
+						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
+				) || data?.payload?.licenses === null;
+
+			if (role !== USER_ROLES.ADMIN || isOnBasicPlan) {
+				items = items.filter((item) => item.key !== ROUTES.BILLING);
+			}
+
+			setMenuItems(items);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data?.payload?.licenses, isFetching, role]);
 
 	const { pathname, search } = useLocation();
 
@@ -100,43 +130,44 @@ function SideNav(): JSX.Element {
 		history.push(ROUTES.VERSION);
 	};
 
-	const checkVersionState = (): boolean => {
-		const versionCore = currentVersion?.split('-')[0];
+	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
-		if (versionCore) {
-			return versionCore !== latestVersion;
-		}
-
-		return false;
-	};
-
-	const isNotCurrentVersion = checkVersionState();
-
-	const secondaryMenuItems: MenuItem[] = [
-		{
-			key: SecondaryMenuItemKey.Version,
-			icon: isNotCurrentVersion ? (
-				<WarningOutlined style={{ color: '#E87040' }} />
-			) : (
-				<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
-			),
-			label: (
-				<MenuLabelContainer>
-					<StyledText ellipsis>
-						{!isCurrentVersionError ? currentVersion : t('n_a')}
-					</StyledText>
-					{isNotCurrentVersion && <RedDot />}
-				</MenuLabelContainer>
-			),
-			onClick: onClickVersionHandler,
-		},
-		{
-			key: SecondaryMenuItemKey.Slack,
-			icon: <Slack />,
-			label: <StyledText>Support</StyledText>,
-			onClick: onClickSlackHandler,
-		},
-	];
+	if (isCloudUser() || isEECloudUser()) {
+		secondaryMenuItems = [
+			{
+				key: SecondaryMenuItemKey.Support,
+				label: 'Support',
+				icon: <LifeBuoy />,
+				onClick: onClickMenuHandler,
+			},
+		];
+	} else {
+		secondaryMenuItems = [
+			{
+				key: SecondaryMenuItemKey.Version,
+				icon: !isLatestVersion ? (
+					<WarningOutlined style={{ color: '#E87040' }} />
+				) : (
+					<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
+				),
+				label: (
+					<MenuLabelContainer>
+						<StyledText ellipsis>
+							{!isCurrentVersionError ? currentVersion : t('n_a')}
+						</StyledText>
+						{!isLatestVersion && <RedDot />}
+					</MenuLabelContainer>
+				),
+				onClick: onClickVersionHandler,
+			},
+			{
+				key: SecondaryMenuItemKey.Slack,
+				icon: <Slack />,
+				label: <StyledText>Support</StyledText>,
+				onClick: onClickSlackHandler,
+			},
+		];
+	}
 
 	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
 		pathname,
