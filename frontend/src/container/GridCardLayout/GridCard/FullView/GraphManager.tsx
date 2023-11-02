@@ -3,42 +3,41 @@ import './WidgetFullView.styles.scss';
 import { Button, Input } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ResizeTable } from 'components/ResizeTable';
-// import { useNotifications } from 'hooks/useNotifications';
+import { useNotifications } from 'hooks/useNotifications';
 import { memo, useCallback, useState } from 'react';
 
 import { getGraphManagerTableColumns } from './TableRender/GraphManagerColumns';
 import { ExtendedChartDataset, GraphManagerProps } from './types';
-import { getDefaultTableDataSet } from './utils';
+import {
+	getDefaultTableDataSet,
+	saveLegendEntriesToLocalStorage,
+} from './utils';
 
 function GraphManager({
 	data,
-	// name,
+	name,
 	yAxisUnit,
 	onToggleModelHandler,
-	// setGraphsVisibilityStates,
-	// graphsVisibilityStates = [],
+	setGraphsVisibilityStates,
+	graphsVisibilityStates = [], // not trimed
 	lineChartRef,
 	parentChartRef,
 	options,
 }: GraphManagerProps): JSX.Element {
 	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(
-		// remove the first element from the return array
 		getDefaultTableDataSet(options, data),
 	);
 
-	console.log({ tableDataSet });
-
-	// const { notifications } = useNotifications();
+	const { notifications } = useNotifications();
 
 	const checkBoxOnChangeHandler = useCallback(
 		(e: CheckboxChangeEvent, index: number): void => {
-			console.log({ e, index });
-			// const newStates = [...graphsVisibilityStates];
-			// newStates[index] = e.target.checked;
-			// lineChartRef?.current?.toggleGraph(index, e.target.checked);
-			// setGraphsVisibilityStates([...newStates]);
+			const newStates = [...graphsVisibilityStates];
+			newStates[index] = e.target.checked;
+			lineChartRef?.current?.toggleGraph(index, e.target.checked);
+			setGraphsVisibilityStates([...newStates]);
 		},
-		[],
+		[graphsVisibilityStates, lineChartRef, setGraphsVisibilityStates],
 	);
 
 	const labelClickedHandler = useCallback(
@@ -50,15 +49,15 @@ function GraphManager({
 				lineChartRef?.current?.toggleGraph(index, state);
 				parentChartRef?.current?.toggleGraph(index, state);
 			});
-			// setGraphsVisibilityStates(newGraphVisibilityStates);
+			setGraphsVisibilityStates(newGraphVisibilityStates);
 		},
-		[data.length, lineChartRef, parentChartRef],
+		[data.length, lineChartRef, parentChartRef, setGraphsVisibilityStates],
 	);
 
 	const columns = getGraphManagerTableColumns({
 		tableDataSet,
 		checkBoxOnChangeHandler,
-		graphVisibilityState: [],
+		graphVisibilityState: graphsVisibilityStates,
 		labelClickedHandler,
 		yAxisUnit,
 	});
@@ -77,19 +76,25 @@ function GraphManager({
 		[tableDataSet],
 	);
 
-	// const saveHandler = useCallback((): void => {
-	// 	saveLegendEntriesToLocalStorage({
-	// 		data,
-	// 		graphVisibilityState: graphsVisibilityStates || [],
-	// 		name,
-	// 	});
-	// 	notifications.success({
-	// 		message: 'The updated graphs & legends are saved',
-	// 	});
-	// 	if (onToggleModelHandler) {
-	// 		onToggleModelHandler();
-	// 	}
-	// }, [data, graphsVisibilityStates, name, notifications, onToggleModelHandler]);
+	const saveHandler = useCallback((): void => {
+		saveLegendEntriesToLocalStorage({
+			options,
+			graphVisibilityState: graphsVisibilityStates || [],
+			name,
+		});
+		notifications.success({
+			message: 'The updated graphs & legends are saved',
+		});
+		if (onToggleModelHandler) {
+			onToggleModelHandler();
+		}
+	}, [
+		graphsVisibilityStates,
+		name,
+		notifications,
+		onToggleModelHandler,
+		options,
+	]);
 
 	const dataSource = tableDataSet.filter(
 		(item, index) => index !== 0 && item.show,
@@ -114,7 +119,9 @@ function GraphManager({
 					</Button>
 				</span>
 				<span className="save-cancel-button">
-					<Button type="primary">Save</Button>
+					<Button type="primary" onClick={saveHandler}>
+						Save
+					</Button>
 				</span>
 			</div>
 		</div>

@@ -7,7 +7,15 @@ import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { Dispatch, SetStateAction, useCallback, useRef, useState } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -19,6 +27,7 @@ import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
+import { getGraphVisibilityStateOnDataChange } from './utils';
 
 function WidgetGraphComponent({
 	widget,
@@ -41,6 +50,29 @@ function WidgetGraphComponent({
 
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
+
+	const { graphVisibilityStates: localStoredVisibilityStates } = useMemo(
+		() =>
+			getGraphVisibilityStateOnDataChange({
+				options,
+				isExpandedName: true,
+				name,
+			}),
+		[options, name],
+	);
+
+	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
+		boolean[]
+	>(localStoredVisibilityStates);
+
+	useEffect(() => {
+		setGraphsVisibilityStates(localStoredVisibilityStates);
+		if (!lineChartRef.current) return;
+
+		localStoredVisibilityStates.forEach((state, index) => {
+			lineChartRef.current?.toggleGraph(index, state);
+		});
+	}, [localStoredVisibilityStates]);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -215,6 +247,8 @@ function WidgetGraphComponent({
 					onToggleModelHandler={onToggleModelHandler}
 					parentChartRef={lineChartRef}
 					onDragSelect={onDragSelect}
+					setGraphsVisibilityStates={setGraphsVisibilityStates}
+					graphsVisibilityStates={graphsVisibilityStates}
 				/>
 			</Modal>
 
@@ -243,6 +277,7 @@ function WidgetGraphComponent({
 					onClickHandler={onClickHandler}
 					panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
 					query={widget.query}
+					ref={lineChartRef}
 				/>
 			</div>
 		</div>

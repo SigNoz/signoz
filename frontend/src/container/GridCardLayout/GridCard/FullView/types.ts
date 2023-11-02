@@ -1,8 +1,8 @@
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { ChartData } from 'chart.js';
-import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
+import { ToggleGraphProps } from 'components/Graph/types';
 import { UplotProps } from 'components/Uplot/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { OnClickPluginOpts } from 'lib/uPlotLib/getUplotChartData';
 import { MutableRefObject } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import uPlot from 'uplot';
@@ -47,14 +47,14 @@ export interface LabelProps {
 export interface FullViewProps {
 	widget: Widgets;
 	fullViewOptions?: boolean;
-	onClickHandler?: GraphOnClickHandler;
+	onClickHandler?: OnClickPluginOpts['onClick'];
 	name: string;
 	yAxisUnit?: string;
 	onDragSelect: (start: number, end: number) => void;
 	isDependedDataLoaded?: boolean;
 	graphsVisibilityStates?: boolean[];
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
-	// setGraphsVisibilityStates: (graphsVisibilityStates: boolean[]) => void;
+	setGraphsVisibilityStates: (graphsVisibilityStates: boolean[]) => void;
 	parentChartRef: GraphManagerProps['lineChartRef'];
 }
 
@@ -63,8 +63,8 @@ export interface GraphManagerProps extends UplotProps {
 	yAxisUnit?: string;
 	onToggleModelHandler?: () => void;
 	options: uPlot.Options;
-	// setGraphsVisibilityStates: FullViewProps['setGraphsVisibilityStates'];
-	// graphsVisibilityStates: FullViewProps['graphsVisibilityStates'];
+	setGraphsVisibilityStates: FullViewProps['setGraphsVisibilityStates'];
+	graphsVisibilityStates: FullViewProps['graphsVisibilityStates'];
 	lineChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
 	parentChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
 }
@@ -77,7 +77,7 @@ export interface CheckBoxProps {
 }
 
 export interface SaveLegendEntriesToLocalStoreProps {
-	data: ChartData;
+	options: uPlot.Options;
 	graphVisibilityState: boolean[];
 	name: string;
 }

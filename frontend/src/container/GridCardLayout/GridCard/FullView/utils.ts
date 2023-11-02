@@ -48,24 +48,24 @@ export const getAbbreviatedLabel = (label: string): string => {
 	return newLabel;
 };
 
-export const showAllDataSet = (data: uPlot.AlignedData): LegendEntryProps[] =>
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	data.datasets.map(
-		(item: any): LegendEntryProps => ({
-			label: item.label || '',
-			show: true,
-		}),
-	);
+export const showAllDataSet = (options: uPlot.Options): LegendEntryProps[] =>
+	options.series
+		.map(
+			(item): LegendEntryProps => ({
+				label: item.label || '',
+				show: true,
+			}),
+		)
+		.filter((_, index) => index !== 0);
 
 export const saveLegendEntriesToLocalStorage = ({
-	data,
+	options,
 	graphVisibilityState,
 	name,
 }: SaveLegendEntriesToLocalStoreProps): void => {
 	const newLegendEntry = {
 		name,
-		dataIndex: data.datasets.map(
+		dataIndex: options.series.map(
 			(item, index): LegendEntryProps => ({
 				label: item.label || '',
 				show: graphVisibilityState[index],

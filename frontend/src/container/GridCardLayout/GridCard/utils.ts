@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { LOCALSTORAGE } from 'constants/localStorage';
 
 import { LegendEntryProps } from './FullView/types';
@@ -9,13 +10,13 @@ import {
 } from './types';
 
 export const getGraphVisibilityStateOnDataChange = ({
-	data,
+	options,
 	isExpandedName,
 	name,
 }: GetGraphVisibilityStateOnLegendClickProps): GraphVisibilityLegendEntryProps => {
 	const visibilityStateAndLegendEntry: GraphVisibilityLegendEntryProps = {
-		graphVisibilityStates: Array(data.length).fill(true),
-		legendEntry: showAllDataSet(data),
+		graphVisibilityStates: Array(options.series.length).fill(true),
+		legendEntry: showAllDataSet(options),
 	};
 	if (localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) !== null) {
 		const legendGraphFromLocalStore = localStorage.getItem(
@@ -35,17 +36,19 @@ export const getGraphVisibilityStateOnDataChange = ({
 			);
 		}
 
-		const newGraphVisibilityStates = Array(data.length).fill(true);
+		const newGraphVisibilityStates = Array(options.series.length).fill(true);
 		legendFromLocalStore.forEach((item) => {
 			const newName = isExpandedName ? `${name}expanded` : name;
 			if (item.name === newName) {
 				visibilityStateAndLegendEntry.legendEntry = item.dataIndex;
-				data.forEach((datasets, i) => {
-					const index = item.dataIndex.findIndex(
-						(dataKey) => dataKey.label === datasets.label,
-					);
-					if (index !== -1) {
-						newGraphVisibilityStates[i] = item.dataIndex[index].show;
+				options.series.forEach((datasets, i) => {
+					if (i !== 0) {
+						const index = item.dataIndex.findIndex(
+							(dataKey) => dataKey.label === datasets.label,
+						);
+						if (index !== -1) {
+							newGraphVisibilityStates[i] = item.dataIndex[index].show;
+						}
 					}
 				});
 				visibilityStateAndLegendEntry.graphVisibilityStates = newGraphVisibilityStates;

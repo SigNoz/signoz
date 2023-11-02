@@ -14,9 +14,6 @@ function CustomCheckBox({
 		checkBoxOnChangeHandler(e, index);
 	};
 
-	console.log({ data });
-	console.log({ index });
-
 	const color = data[index]?.stroke?.toString() || grey[0];
 
 	const isChecked = graphVisibilityState[index] || false;

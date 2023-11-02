@@ -210,7 +210,6 @@ const tooltipPlugin = (
 				cursor: { left: any; top: any; idx: any };
 				data: any[];
 			}): void => {
-				console.log('u', u);
 				if (overlay) {
 					overlay.textContent = '';
 					const { left, top, idx } = u.cursor;

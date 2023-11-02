@@ -27,7 +27,6 @@ import uPlot from 'uplot';
 
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
-// import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
 
@@ -42,6 +41,7 @@ function FullView({
 	graphsVisibilityStates,
 	onToggleModelHandler,
 	parentChartRef,
+	setGraphsVisibilityStates,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -183,8 +183,8 @@ function FullView({
 							options={chartOptions}
 							yAxisUnit={yAxisUnit}
 							onToggleModelHandler={onToggleModelHandler}
-							// setGraphsVisibilityStates={setGraphsVisibilityStates}
-							// graphsVisibilityStates={graphsVisibilityStates}
+							setGraphsVisibilityStates={setGraphsVisibilityStates}
+							graphsVisibilityStates={graphsVisibilityStates}
 							lineChartRef={lineChartRef}
 							parentChartRef={parentChartRef}
 						/>
