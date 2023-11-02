@@ -15,7 +15,6 @@ import (
 	"github.com/gosimple/slug"
 	"github.com/jmoiron/sqlx"
 	"github.com/mitchellh/mapstructure"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -148,7 +147,7 @@ type Dashboard struct {
 	UpdateBy  *string   `json:"updated_by" db:"updated_by"`
 	Title     string    `json:"-" db:"-"`
 	Data      Data      `json:"data" db:"data"`
-	Locked    *int      `json:"locked" db:"locked"`
+	Locked    *int      `json:"isLocked" db:"locked"`
 }
 
 type Data map[string]interface{}
@@ -249,9 +248,7 @@ func DeleteDashboard(ctx context.Context, uuid string, fm interfaces.FeatureLook
 
 	if user := common.GetUserFromContext(ctx); user != nil {
 		if dashboard.Locked != nil && *dashboard.Locked == 1 {
-			if !auth.IsAdmin(user) || (dashboard.CreateBy != nil && *dashboard.CreateBy != user.Email) {
-				return model.BadRequest(fmt.Errorf("dashboard is locked. Only admin or owner can delete the dashboard"))
-			}
+			return model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to delete it"))
 		}
 	}
 
@@ -309,9 +306,7 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 	if user := common.GetUserFromContext(ctx); user != nil {
 		userEmail = user.Email
 		if dashboard.Locked != nil && *dashboard.Locked == 1 {
-			if !auth.IsAdmin(user) || (dashboard.CreateBy != nil && *dashboard.CreateBy != user.Email) {
-				return nil, model.BadRequest(fmt.Errorf("dashboard is locked. Only admin or owner can update the dashboard"))
-			}
+			return nil, model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to edit it"))
 		}
 	}
 
