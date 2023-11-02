@@ -1,5 +1,5 @@
-import { ShareAltOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Row, Space, Tag, Typography } from 'antd';
+import { LockFilled, ShareAltOutlined, UnlockFilled } from '@ant-design/icons';
+import { Button, Card, Col, Row, Space, Tag, Tooltip, Typography } from 'antd';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useState } from 'react';
@@ -12,8 +12,12 @@ import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
 import ShareModal from './ShareModal';
 
-function DescriptionOfDashboard(): JSX.Element {
-	const { selectedDashboard } = useDashboard();
+function DashboardDescription(): JSX.Element {
+	const {
+		selectedDashboard,
+		isDashboardLocked,
+		handleDashboardLockToggle,
+	} = useDashboard();
 
 	const selectedData = selectedDashboard?.data;
 	const { title, tags, description } = selectedData || {};
@@ -28,11 +32,20 @@ function DescriptionOfDashboard(): JSX.Element {
 		isIsJSONModalVisible((state) => !state);
 	};
 
+	const handleLockDashboardToggle = (): void => {
+		handleDashboardLockToggle(!isDashboardLocked);
+	};
+
 	return (
 		<Card>
 			<Row>
 				<Col flex={1}>
 					<Typography.Title level={4} style={{ padding: 0, margin: 0 }}>
+						{isDashboardLocked && (
+							<Tooltip title="Dashboard Locked" placement="top">
+								<LockFilled /> &nbsp;
+							</Tooltip>
+						)}
 						{title}
 					</Typography.Title>
 					<Typography>{description}</Typography>
@@ -55,7 +68,7 @@ function DescriptionOfDashboard(): JSX.Element {
 					)}
 
 					<Space direction="vertical">
-						{editDashboard && <SettingsDrawer />}
+						{!isDashboardLocked && editDashboard && <SettingsDrawer />}
 						<Button
 							style={{ width: '100%' }}
 							type="dashed"
@@ -64,6 +77,19 @@ function DescriptionOfDashboard(): JSX.Element {
 						>
 							{t('share')}
 						</Button>
+						<Tooltip
+							placement="left"
+							title={isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
+						>
+							<Button
+								style={{ width: '100%' }}
+								type="dashed"
+								onClick={handleLockDashboardToggle}
+								icon={isDashboardLocked ? <LockFilled /> : <UnlockFilled />}
+							>
+								{isDashboardLocked ? 'Unlock' : 'Lock'}
+							</Button>
+						</Tooltip>{' '}
 					</Space>
 				</Col>
 			</Row>
@@ -71,4 +97,4 @@ function DescriptionOfDashboard(): JSX.Element {
 	);
 }
 
-export default DescriptionOfDashboard;
+export default DashboardDescription;

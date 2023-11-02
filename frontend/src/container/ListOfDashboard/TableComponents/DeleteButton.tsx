@@ -1,15 +1,23 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal } from 'antd';
+import { Modal, Tooltip } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
 
 import { Data } from '../index';
 import { TableLinkText } from './styles';
 
-function DeleteButton({ id }: Data): JSX.Element {
+function DeleteButton({ id, createdBy }: Data): JSX.Element {
 	const [modal, contextHolder] = Modal.useModal();
+	const { role, user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { isDashboardLocked } = useDashboard();
+	const isAuthor = user?.email === createdBy;
 
 	const queryClient = useQueryClient();
 
@@ -32,11 +40,33 @@ function DeleteButton({ id }: Data): JSX.Element {
 		});
 	}, [modal, deleteDashboardMutation, queryClient]);
 
+	const getDeleteTooltipContent = (): string => {
+		if (!isDashboardLocked) {
+			if (role === USER_ROLES.ADMIN || isAuthor) {
+				return 'Dashboard is locked. Please unlock the dashboard to enable delete.';
+			}
+
+			return 'Dashboard is locked. Please contact admin to delete the dashboard';
+		}
+
+		return '';
+	};
+
 	return (
 		<>
-			<TableLinkText type="danger" onClick={openConfirmationDialog}>
-				Delete
-			</TableLinkText>
+			<Tooltip placement="left" title={getDeleteTooltipContent()}>
+				<TableLinkText
+					type="danger"
+					onClick={(): void => {
+						if (isDashboardLocked) {
+							openConfirmationDialog();
+						}
+					}}
+					disabled={!isDashboardLocked}
+				>
+					Delete
+				</TableLinkText>
+			</Tooltip>
 
 			{contextHolder}
 		</>

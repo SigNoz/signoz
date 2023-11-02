@@ -1,5 +1,7 @@
 import { Modal } from 'antd';
 import get from 'api/dashboard/get';
+import lockDashboard from 'api/dashboard/lockDashboard';
+import unlockDashboard from 'api/dashboard/unlockDashboard';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
@@ -32,7 +34,9 @@ import { IDashboardContext } from './types';
 
 const DashboardContext = createContext<IDashboardContext>({
 	isDashboardSliderOpen: false,
+	isDashboardLocked: false,
 	handleToggleDashboardSlider: () => {},
+	handleDashboardLockToggle: () => {},
 	dashboardResponse: {} as UseQueryResult<Dashboard, unknown>,
 	selectedDashboard: {} as Dashboard,
 	dashboardId: '',
@@ -50,6 +54,9 @@ export function DashboardProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
+
+	const [isDashboardLocked, setIsDashboardLocked] = useState<boolean>(false);
+
 	const isDashboardPage = useRouteMatch<Props>({
 		path: ROUTES.DASHBOARD,
 		exact: true,
@@ -98,6 +105,8 @@ export function DashboardProvider({
 			refetchOnWindowFocus: false,
 			onSuccess: (data) => {
 				const updatedDate = dayjs(data.updated_at);
+
+				setIsDashboardLocked(data?.isLocked || false);
 
 				// on first render
 				if (updatedTimeRef.current === null) {
@@ -179,10 +188,25 @@ export function DashboardProvider({
 		setIsDashboardSlider(value);
 	};
 
+	const handleDashboardLockToggle = async (value: boolean): Promise<void> => {
+		if (selectedDashboard) {
+			if (value) {
+				await lockDashboard(selectedDashboard);
+				setIsDashboardSlider(false);
+			} else {
+				await unlockDashboard(selectedDashboard);
+			}
+
+			setIsDashboardLocked(value);
+		}
+	};
+
 	const value: IDashboardContext = useMemo(
 		() => ({
 			isDashboardSliderOpen,
+			isDashboardLocked,
 			handleToggleDashboardSlider,
+			handleDashboardLockToggle,
 			dashboardResponse,
 			selectedDashboard,
 			dashboardId,
@@ -191,8 +215,10 @@ export function DashboardProvider({
 			setSelectedDashboard,
 			updatedTimeRef,
 		}),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			isDashboardSliderOpen,
+			isDashboardLocked,
 			dashboardResponse,
 			selectedDashboard,
 			dashboardId,

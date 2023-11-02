@@ -18,7 +18,9 @@ export type ComponentTypes =
 	| 'new_alert_action'
 	| 'edit_widget'
 	| 'add_panel'
-	| 'page_pipelines';
+	| 'page_pipelines'
+	| 'edit_locked_dashboard'
+	| 'add_panel_locked_dashboard';
 
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
@@ -38,6 +40,8 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	edit_widget: ['ADMIN', 'EDITOR'],
 	add_panel: ['ADMIN', 'EDITOR'],
 	page_pipelines: ['ADMIN', 'EDITOR'],
+	edit_locked_dashboard: ['ADMIN', 'AUTHOR'],
+	add_panel_locked_dashboard: ['ADMIN', 'AUTHOR'],
 };
 
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
