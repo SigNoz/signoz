@@ -103,7 +103,6 @@ function FullView({
 				: 300;
 
 			const newChartOptions = getUPlotChartOptions({
-				id: widget?.id,
 				yAxisUnit: yAxisUnit || '',
 				apiResponse: response.data?.payload,
 				dimensions: {
@@ -122,11 +121,11 @@ function FullView({
 	useEffect(() => {
 		if (!response.isFetching && lineChartRef.current) {
 			graphsVisibilityStates?.forEach((e, i) => {
-				lineChartRef?.current?.toggleGraph(i, e);
+				lineChartRef.current?.toggleGraph(i, e);
 				parentChartRef?.current?.toggleGraph(i, e);
 			});
 		}
-	}, [graphsVisibilityStates, parentChartRef, response.isFetching]);
+	}, [graphsVisibilityStates, response.isFetching, parentChartRef]);
 
 	if (response.isFetching) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
@@ -171,6 +170,7 @@ function FullView({
 									onDragSelect={onDragSelect}
 									panelData={response.data?.payload.data.newResult.data.result || []}
 									query={widget.query}
+									ref={lineChartRef}
 								/>
 							)}
 						</GraphContainer>
@@ -184,7 +184,7 @@ function FullView({
 							yAxisUnit={yAxisUnit}
 							onToggleModelHandler={onToggleModelHandler}
 							// setGraphsVisibilityStates={setGraphsVisibilityStates}
-							graphsVisibilityStates={graphsVisibilityStates}
+							// graphsVisibilityStates={graphsVisibilityStates}
 							lineChartRef={lineChartRef}
 							parentChartRef={parentChartRef}
 						/>

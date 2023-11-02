@@ -1,10 +1,11 @@
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { ChartData, ChartDataset } from 'chart.js';
+import { ChartData } from 'chart.js';
 import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
 import { UplotProps } from 'components/Uplot/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { MutableRefObject } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
+import uPlot from 'uplot';
 
 export interface DataSetProps {
 	index: number;
@@ -23,12 +24,13 @@ export interface LegendEntryProps {
 	show: boolean;
 }
 
-export type ExtendedChartDataset = ChartDataset & {
+export type ExtendedChartDataset = uPlot.Series & {
 	show: boolean;
 	sum: number;
 	avg: number;
 	min: number;
 	max: number;
+	index: number;
 };
 
 export type PanelTypeAndGraphManagerVisibilityProps = Record<
@@ -60,14 +62,15 @@ export interface GraphManagerProps extends UplotProps {
 	name: string;
 	yAxisUnit?: string;
 	onToggleModelHandler?: () => void;
+	options: uPlot.Options;
 	// setGraphsVisibilityStates: FullViewProps['setGraphsVisibilityStates'];
-	graphsVisibilityStates: FullViewProps['graphsVisibilityStates'];
+	// graphsVisibilityStates: FullViewProps['graphsVisibilityStates'];
 	lineChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
 	parentChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
 }
 
 export interface CheckBoxProps {
-	data: ChartData;
+	data: ExtendedChartDataset[];
 	index: number;
 	graphVisibilityState: boolean[];
 	checkBoxOnChangeHandler: (e: CheckboxChangeEvent, index: number) => void;

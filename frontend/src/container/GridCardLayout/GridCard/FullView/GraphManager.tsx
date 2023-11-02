@@ -3,70 +3,62 @@ import './WidgetFullView.styles.scss';
 import { Button, Input } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ResizeTable } from 'components/ResizeTable';
-import { useNotifications } from 'hooks/useNotifications';
+// import { useNotifications } from 'hooks/useNotifications';
 import { memo, useCallback, useState } from 'react';
 
 import { getGraphManagerTableColumns } from './TableRender/GraphManagerColumns';
 import { ExtendedChartDataset, GraphManagerProps } from './types';
-import {
-	getDefaultTableDataSet,
-	saveLegendEntriesToLocalStorage,
-} from './utils';
+import { getDefaultTableDataSet } from './utils';
 
 function GraphManager({
 	data,
-	name,
+	// name,
 	yAxisUnit,
 	onToggleModelHandler,
-	setGraphsVisibilityStates,
-	graphsVisibilityStates = [],
+	// setGraphsVisibilityStates,
+	// graphsVisibilityStates = [],
 	lineChartRef,
 	parentChartRef,
+	options,
 }: GraphManagerProps): JSX.Element {
 	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(
-		getDefaultTableDataSet(data),
+		// remove the first element from the return array
+		getDefaultTableDataSet(options, data),
 	);
 
-	const { notifications } = useNotifications();
+	console.log({ tableDataSet });
+
+	// const { notifications } = useNotifications();
 
 	const checkBoxOnChangeHandler = useCallback(
 		(e: CheckboxChangeEvent, index: number): void => {
-			const newStates = [...graphsVisibilityStates];
-
-			newStates[index] = e.target.checked;
-
-			lineChartRef?.current?.toggleGraph(index, e.target.checked);
-
-			setGraphsVisibilityStates([...newStates]);
+			console.log({ e, index });
+			// const newStates = [...graphsVisibilityStates];
+			// newStates[index] = e.target.checked;
+			// lineChartRef?.current?.toggleGraph(index, e.target.checked);
+			// setGraphsVisibilityStates([...newStates]);
 		},
-		[graphsVisibilityStates, setGraphsVisibilityStates, lineChartRef],
+		[],
 	);
 
 	const labelClickedHandler = useCallback(
 		(labelIndex: number): void => {
-			const newGraphVisibilityStates = Array<boolean>(data.datasets.length).fill(
-				false,
-			);
+			const newGraphVisibilityStates = Array<boolean>(data.length).fill(false);
 			newGraphVisibilityStates[labelIndex] = true;
 
 			newGraphVisibilityStates.forEach((state, index) => {
 				lineChartRef?.current?.toggleGraph(index, state);
 				parentChartRef?.current?.toggleGraph(index, state);
 			});
-			setGraphsVisibilityStates(newGraphVisibilityStates);
+			// setGraphsVisibilityStates(newGraphVisibilityStates);
 		},
-		[
-			data.datasets.length,
-			setGraphsVisibilityStates,
-			lineChartRef,
-			parentChartRef,
-		],
+		[data.length, lineChartRef, parentChartRef],
 	);
 
 	const columns = getGraphManagerTableColumns({
-		data,
+		tableDataSet,
 		checkBoxOnChangeHandler,
-		graphVisibilityState: graphsVisibilityStates || [],
+		graphVisibilityState: [],
 		labelClickedHandler,
 		yAxisUnit,
 	});
@@ -85,21 +77,23 @@ function GraphManager({
 		[tableDataSet],
 	);
 
-	const saveHandler = useCallback((): void => {
-		saveLegendEntriesToLocalStorage({
-			data,
-			graphVisibilityState: graphsVisibilityStates || [],
-			name,
-		});
-		notifications.success({
-			message: 'The updated graphs & legends are saved',
-		});
-		if (onToggleModelHandler) {
-			onToggleModelHandler();
-		}
-	}, [data, graphsVisibilityStates, name, notifications, onToggleModelHandler]);
+	// const saveHandler = useCallback((): void => {
+	// 	saveLegendEntriesToLocalStorage({
+	// 		data,
+	// 		graphVisibilityState: graphsVisibilityStates || [],
+	// 		name,
+	// 	});
+	// 	notifications.success({
+	// 		message: 'The updated graphs & legends are saved',
+	// 	});
+	// 	if (onToggleModelHandler) {
+	// 		onToggleModelHandler();
+	// 	}
+	// }, [data, graphsVisibilityStates, name, notifications, onToggleModelHandler]);
 
-	const dataSource = tableDataSet.filter((item) => item.show);
+	const dataSource = tableDataSet.filter(
+		(item, index) => index !== 0 && item.show,
+	);
 
 	return (
 		<div className="graph-manager-container">
@@ -120,9 +114,7 @@ function GraphManager({
 					</Button>
 				</span>
 				<span className="save-cancel-button">
-					<Button onClick={saveHandler} type="primary">
-						Save
-					</Button>
+					<Button type="primary">Save</Button>
 				</span>
 			</div>
 		</div>

@@ -1,15 +1,14 @@
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ColumnType } from 'antd/es/table';
-import { ChartData } from 'chart.js';
 
 import { ColumnsKeyAndDataIndex, ColumnsTitle } from '../contants';
-import { DataSetProps } from '../types';
+import { DataSetProps, ExtendedChartDataset } from '../types';
 import { getGraphManagerTableHeaderTitle } from '../utils';
 import CustomCheckBox from './CustomCheckBox';
 import { getLabel } from './GetLabel';
 
 export const getGraphManagerTableColumns = ({
-	data,
+	tableDataSet,
 	checkBoxOnChangeHandler,
 	graphVisibilityState,
 	labelClickedHandler,
@@ -20,10 +19,10 @@ export const getGraphManagerTableColumns = ({
 		width: 50,
 		dataIndex: ColumnsKeyAndDataIndex.Index,
 		key: ColumnsKeyAndDataIndex.Index,
-		render: (_: string, __: DataSetProps, index: number): JSX.Element => (
+		render: (_: string, record: DataSetProps): JSX.Element => (
 			<CustomCheckBox
-				data={data}
-				index={index}
+				data={tableDataSet}
+				index={record.index}
 				checkBoxOnChangeHandler={checkBoxOnChangeHandler}
 				graphVisibilityState={graphVisibilityState}
 			/>
@@ -75,7 +74,7 @@ export const getGraphManagerTableColumns = ({
 ];
 
 interface GetGraphManagerTableColumnsProps {
-	data: ChartData;
+	tableDataSet: ExtendedChartDataset[];
 	checkBoxOnChangeHandler: (e: CheckboxChangeEvent, index: number) => void;
 	labelClickedHandler: (labelIndex: number) => void;
 	graphVisibilityState: boolean[];

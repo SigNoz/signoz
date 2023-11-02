@@ -1,4 +1,3 @@
-import { ChartData, ChartDataset } from 'chart.js';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import uPlot from 'uplot';
 
@@ -22,33 +21,23 @@ function convertToTwoDecimalsOrZero(value: number): number {
 }
 
 export const getDefaultTableDataSet = (
-	data: ChartData,
+	options: uPlot.Options,
+	data: uPlot.AlignedData,
 ): ExtendedChartDataset[] =>
-	data.datasets.map(
-		(item: ChartDataset): ExtendedChartDataset => {
-			if (item.data.length === 0) {
-				return {
-					...item,
-					show: true,
-					sum: 0,
-					avg: 0,
-					max: 0,
-					min: 0,
-				};
-			}
-			return {
-				...item,
-				show: true,
-				sum: convertToTwoDecimalsOrZero(
-					(item.data as number[]).reduce((a, b) => a + b, 0),
-				),
-				avg: convertToTwoDecimalsOrZero(
-					(item.data as number[]).reduce((a, b) => a + b, 0) / item.data.length,
-				),
-				max: convertToTwoDecimalsOrZero(Math.max(...(item.data as number[]))),
-				min: convertToTwoDecimalsOrZero(Math.min(...(item.data as number[]))),
-			};
-		},
+	options.series.map(
+		(item: uPlot.Series, index: number): ExtendedChartDataset => ({
+			...item,
+			index,
+			show: true,
+			sum: convertToTwoDecimalsOrZero(
+				(data[index] as number[]).reduce((a, b) => a + b, 0),
+			),
+			avg: convertToTwoDecimalsOrZero(
+				(data[index] as number[]).reduce((a, b) => a + b, 0) / data[index].length,
+			),
+			max: convertToTwoDecimalsOrZero(Math.max(...(data[index] as number[]))),
+			min: convertToTwoDecimalsOrZero(Math.min(...(data[index] as number[]))),
+		}),
 	);
 
 export const getAbbreviatedLabel = (label: string): string => {
