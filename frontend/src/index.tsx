@@ -1,10 +1,11 @@
 import './ReactI18';
 
 import AppRoutes from 'AppRoutes';
-import ErrorBoundary from 'components/ErrorBoundry/ErrorBoundry';
 import GlobalStyles from 'globalStyles';
 import { ThemeProvider } from 'hooks/useDarkMode';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { createRoot } from 'react-dom/client';
+import { ErrorBoundary } from 'react-error-boundary';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
@@ -25,7 +26,7 @@ if (container) {
 	const root = createRoot(container);
 
 	root.render(
-		<ErrorBoundary>
+		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
 			<HelmetProvider>
 				<ThemeProvider>
 					<QueryClientProvider client={queryClient}>
