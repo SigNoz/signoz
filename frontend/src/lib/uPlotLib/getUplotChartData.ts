@@ -49,8 +49,6 @@ const getSeries = (
 
 	const seriesList = apiResponse?.data.result || [];
 
-	// console.log('seriesList', seriesList);
-
 	for (let i = 0; i < seriesList?.length; i += 1) {
 		const color = colors[i % colors.length]; // Use modulo to loop through colors if there are more series than colors
 
@@ -98,37 +96,33 @@ interface GetUPlotChartOptions {
 const createDivsFromArray = (
 	seriesList: any[],
 	data: any[],
-	idx: string | number,
+	idx: number,
 	yAxisUnit?: string,
+	series?: uPlot.Options['series'],
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
 	container.classList.add('tooltip-container');
 
-	// console.log('seriesList', seriesList);
-
-	if (Array.isArray(data) && data.length > 0) {
-		data.forEach((item, index) => {
+	if (Array.isArray(series) && series.length > 0) {
+		series.forEach((item, index) => {
 			const div = document.createElement('div');
 			div.classList.add('tooltip-content-row');
 
 			if (index === 0) {
-				const formattedDate = dayjs(item[idx] * 1000).format(
+				const formattedDate = dayjs(data[0][idx] * 1000).format(
 					'MMM DD YYYY HH:mm:ss',
 				);
-
-				// console.log('formattedDate', formattedDate);
 
 				div.textContent = formattedDate;
 			} else {
 				const color = colors[(index - 1) % colors.length];
 
-				if (item[idx]) {
+				if (data[idx]) {
 					const squareBox = document.createElement('div');
 					squareBox.classList.add('pointSquare');
 
 					squareBox.style.borderColor = color;
-
-					div.appendChild(squareBox);
 
 					const text = document.createElement('div');
 					text.classList.add('tooltip-data-point');
@@ -142,14 +136,15 @@ const createDivsFromArray = (
 						legend || '',
 					);
 
-					// console.log('label', label);
-
-					const tooltipValue = getToolTipValue(item[idx], yAxisUnit);
+					const tooltipValue = getToolTipValue(data[idx], yAxisUnit);
 
 					text.textContent = `${label} : ${tooltipValue}`;
 					text.style.color = color;
 
-					div.appendChild(text);
+					if (item.show) {
+						div.appendChild(squareBox);
+						div.appendChild(text);
+					}
 				}
 			}
 
@@ -185,7 +180,7 @@ const tooltipPlugin = (
 		document.body.appendChild(overlay);
 	}
 
-	const seriesList = apiResponse?.data?.result || [];
+	const apiResult = apiResponse?.data?.result || [];
 
 	return {
 		hooks: {
@@ -209,15 +204,21 @@ const tooltipPlugin = (
 			setCursor: (u: {
 				cursor: { left: any; top: any; idx: any };
 				data: any[];
+				series: uPlot.Options['series'];
 			}): void => {
-				console.log('u', u);
 				if (overlay) {
 					overlay.textContent = '';
 					const { left, top, idx } = u.cursor;
 
 					if (idx) {
 						const anchor = { left: left + bLeft, top: top + bTop };
-						const content = createDivsFromArray(seriesList, u.data, idx, yAxisUnit);
+						const content = createDivsFromArray(
+							apiResult,
+							u.data,
+							idx,
+							yAxisUnit,
+							u.series,
+						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });
 					}
