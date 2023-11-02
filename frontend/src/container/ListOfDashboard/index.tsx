@@ -121,18 +121,18 @@ function ListOfAllDashboard(): JSX.Element {
 			{
 				title: 'Name',
 				dataIndex: 'name',
-				width: 40,
+				width: '35%',
 				render: Name,
 			},
 			{
 				title: 'Description',
-				width: 50,
+				width: '35%',
 				dataIndex: 'description',
 			},
 			{
 				title: 'Tags (can be multiple)',
 				dataIndex: 'tags',
-				width: 50,
+				width: '20%',
 				render: (value): JSX.Element => <LabelColumn labels={value} />,
 			},
 		];
@@ -141,7 +141,7 @@ function ListOfAllDashboard(): JSX.Element {
 			tableColumns.push({
 				title: 'Action',
 				dataIndex: '',
-				width: 40,
+				width: '10%',
 				render: DeleteButton,
 			});
 		}
@@ -159,6 +159,7 @@ function ListOfAllDashboard(): JSX.Element {
 			tags: e.data.tags || [],
 			key: e.uuid,
 			createdBy: e.created_by,
+			isLocked: !!e.isLocked || false,
 			lastUpdatedBy: e.updated_by,
 			refetchDashboardList,
 		})) || [];
@@ -342,6 +343,7 @@ export interface Data {
 	createdAt: string;
 	lastUpdatedTime: string;
 	lastUpdatedBy: string;
+	isLocked: boolean;
 	id: string;
 }
 

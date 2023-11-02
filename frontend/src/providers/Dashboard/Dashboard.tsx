@@ -1,11 +1,12 @@
 import { Modal } from 'antd';
 import get from 'api/dashboard/get';
-import lockDashboard from 'api/dashboard/lockDashboard';
-import unlockDashboard from 'api/dashboard/unlockDashboard';
+import lockDashboardApi from 'api/dashboard/lockDashboard';
+import unlockDashboardApi from 'api/dashboard/unlockDashboard';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
+import useAxiosError from 'hooks/useAxiosError';
 import useTabVisibility from 'hooks/useTabFocus';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import {
@@ -19,7 +20,7 @@ import {
 } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
-import { useQuery, UseQueryResult } from 'react-query';
+import { useMutation, useQuery, UseQueryResult } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouteMatch } from 'react-router-dom';
 import { Dispatch } from 'redux';
@@ -188,16 +189,38 @@ export function DashboardProvider({
 		setIsDashboardSlider(value);
 	};
 
+	const handleError = useAxiosError();
+
+	const { mutate: lockDashboard, isLoading: isLockingDashboard } = useMutation(
+		lockDashboardApi,
+		{
+			onSuccess: (data) => {
+				console.log('data', data);
+				setIsDashboardSlider(false);
+				setIsDashboardLocked(true);
+			},
+			onError: handleError,
+		},
+	);
+
+	const {
+		mutate: unlockDashboard,
+		isLoading: isUnlockingDashboard,
+	} = useMutation(unlockDashboardApi, {
+		onSuccess: (data) => {
+			console.log('data', data);
+			setIsDashboardLocked(false);
+		},
+		onError: handleError,
+	});
+
 	const handleDashboardLockToggle = async (value: boolean): Promise<void> => {
 		if (selectedDashboard) {
 			if (value) {
-				await lockDashboard(selectedDashboard);
-				setIsDashboardSlider(false);
+				lockDashboard(selectedDashboard);
 			} else {
-				await unlockDashboard(selectedDashboard);
+				unlockDashboard(selectedDashboard);
 			}
-
-			setIsDashboardLocked(value);
 		}
 	};
 
@@ -224,6 +247,12 @@ export function DashboardProvider({
 			dashboardId,
 			layouts,
 		],
+	);
+
+	console.log(
+		'isLockingDashboard - isUnlockingDashboard',
+		isLockingDashboard,
+		isUnlockingDashboard,
 	);
 
 	return (

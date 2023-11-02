@@ -1,4 +1,4 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal, Tooltip } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
@@ -41,7 +41,7 @@ function DeleteButton({ id, createdBy }: Data): JSX.Element {
 	}, [modal, deleteDashboardMutation, queryClient]);
 
 	const getDeleteTooltipContent = (): string => {
-		if (!isDashboardLocked) {
+		if (isDashboardLocked) {
 			if (role === USER_ROLES.ADMIN || isAuthor) {
 				return 'Dashboard is locked. Please unlock the dashboard to enable delete.';
 			}
@@ -58,13 +58,13 @@ function DeleteButton({ id, createdBy }: Data): JSX.Element {
 				<TableLinkText
 					type="danger"
 					onClick={(): void => {
-						if (isDashboardLocked) {
+						if (!isDashboardLocked) {
 							openConfirmationDialog();
 						}
 					}}
-					disabled={!isDashboardLocked}
+					disabled={isDashboardLocked}
 				>
-					Delete
+					<DeleteOutlined /> Delete
 				</TableLinkText>
 			</Tooltip>
 
@@ -85,6 +85,7 @@ function Wrapper(props: Data): JSX.Element {
 		tags,
 		createdBy,
 		lastUpdatedBy,
+		isLocked,
 	} = props;
 
 	return (
@@ -99,6 +100,7 @@ function Wrapper(props: Data): JSX.Element {
 				tags,
 				createdBy,
 				lastUpdatedBy,
+				isLocked,
 			}}
 		/>
 	);

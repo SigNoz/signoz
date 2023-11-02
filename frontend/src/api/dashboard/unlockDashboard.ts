@@ -5,7 +5,7 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 
 const unlockDashboard = (props: Props): Promise<Dashboard> =>
 	axios
-		.get<ApiResponse<any>>(`/dashboards/${props.uuid}/unlock`)
+		.put<ApiResponse<any>>(`/dashboards/${props.uuid}/unlock`)
 		.then((res) => res.data.data)
 		.catch((err) => {
 			console.log(err);

@@ -21,7 +21,7 @@ function Name(name: Data['name'], data: Data): JSX.Element {
 
 	return (
 		<TableLinkText onClick={onClickHandler}>
-			{!isDashboardLocked && <LockFilled />} {name}
+			{isDashboardLocked && <LockFilled />} {name}
 		</TableLinkText>
 	);
 }

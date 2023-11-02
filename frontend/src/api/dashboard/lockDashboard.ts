@@ -1,14 +1,27 @@
 import axios from 'api';
-import { ApiResponse } from 'types/api';
-import { Props } from 'types/api/dashboard/get';
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { AxiosError } from 'axios';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 
-const lockDashboard = (props: Props): Promise<Dashboard> =>
-	axios
-		.get<ApiResponse<any>>(`/dashboards/${props.uuid}/lock`)
-		.then((res) => res.data.data)
-		.catch((err) => {
-			console.log(err);
-		});
+interface PayloadProps {
+	uuid: string;
+}
+
+const lockDashboard = async (
+	props: any,
+): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
+	try {
+		const response = await axios.put(`/dashboards/${props.uuid}/lock`);
+
+		return {
+			statusCode: 200,
+			error: null,
+			message: response.data.status,
+			payload: response.data.data,
+		};
+	} catch (error) {
+		return ErrorResponseHandler(error as AxiosError);
+	}
+};
 
 export default lockDashboard;
