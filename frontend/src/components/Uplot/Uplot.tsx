@@ -1,7 +1,7 @@
 import './uplot.scss';
 
 import { Typography } from 'antd';
-import { useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import UPlot from 'uplot';
 
 import { dataMatch, optionsUpdateState } from './utils';
@@ -119,4 +119,4 @@ Uplot.defaultProps = {
 	resetScales: true,
 };
 
-export default Uplot;
+export default memo(Uplot);
