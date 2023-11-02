@@ -1,11 +1,11 @@
 import { Modal } from 'antd';
 import get from 'api/dashboard/get';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
 import useTabVisibility from 'hooks/useTabFocus';
+import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import {
 	createContext,
 	PropsWithChildren,
@@ -107,11 +107,7 @@ export function DashboardProvider({
 
 					dashboardRef.current = data;
 
-					setLayouts(
-						data.data.layout?.filter(
-							(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
-						) || [],
-					);
+					setLayouts(getUpdatedLayout(data.data.layout));
 				}
 
 				if (
@@ -147,11 +143,7 @@ export function DashboardProvider({
 
 							updatedTimeRef.current = dayjs(data.updated_at);
 
-							setLayouts(
-								data.data.layout?.filter(
-									(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
-								) || [],
-							);
+							setLayouts(getUpdatedLayout(data.data.layout));
 						},
 					});
 
@@ -164,11 +156,7 @@ export function DashboardProvider({
 
 					setSelectedDashboard(data);
 
-					setLayouts(
-						data.data.layout?.filter(
-							(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
-						) || [],
-					);
+					setLayouts(getUpdatedLayout(data.data.layout));
 				}
 			},
 		},
