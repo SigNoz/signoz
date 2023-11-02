@@ -59,19 +59,20 @@ function WidgetGraphComponent({
 		[data, name],
 	);
 
+	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
+		boolean[]
+	>(localStoredVisibilityStates);
+
 	useEffect(() => {
 		if (!lineChartRef.current) return;
 
 		localStoredVisibilityStates.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);
 		});
+		setGraphsVisibilityStates(localStoredVisibilityStates);
 	}, [localStoredVisibilityStates]);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
-
-	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
-		boolean[]
-	>(localStoredVisibilityStates);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
