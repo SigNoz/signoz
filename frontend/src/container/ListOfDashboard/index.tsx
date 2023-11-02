@@ -283,9 +283,9 @@ function ListOfAllDashboard(): JSX.Element {
 		});
 	};
 
-	const handleSearch = useDebouncedFn((event: React.SyntheticEvent): void => {
+	const handleSearch = useDebouncedFn((event: unknown): void => {
 		setIsFilteringDashboards(true);
-		const searchText = event?.target?.value || '';
+		const searchText = (event as React.BaseSyntheticEvent)?.target?.value || '';
 		const filteredDashboards = searchArrayOfObjects(searchText);
 		setDashboards(filteredDashboards);
 		setIsFilteringDashboards(false);
