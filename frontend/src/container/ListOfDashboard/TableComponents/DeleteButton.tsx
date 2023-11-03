@@ -3,6 +3,7 @@ import { Modal, Tooltip } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -18,6 +19,8 @@ function DeleteButton({ id, createdBy, isLocked }: Data): JSX.Element {
 	const isAuthor = user?.email === createdBy;
 
 	const queryClient = useQueryClient();
+
+	const { t } = useTranslation(['dashboard']);
 
 	const deleteDashboardMutation = useDeleteDashboard(id);
 
@@ -41,10 +44,10 @@ function DeleteButton({ id, createdBy, isLocked }: Data): JSX.Element {
 	const getDeleteTooltipContent = (): string => {
 		if (isLocked) {
 			if (role === USER_ROLES.ADMIN || isAuthor) {
-				return 'Dashboard is locked. Please unlock the dashboard to enable delete.';
+				return t('dashboard:locked_dashboard_delete_tooltip_admin_author');
 			}
 
-			return 'Dashboard is locked. Please contact admin to delete the dashboard';
+			return t('dashboard:locked_dashboard_delete_tooltip_editor');
 		}
 
 		return '';

@@ -192,8 +192,7 @@ export function DashboardProvider({
 	const handleError = useAxiosError();
 
 	const { mutate: lockDashboard } = useMutation(lockDashboardApi, {
-		onSuccess: (data) => {
-			console.log('data', data);
+		onSuccess: () => {
 			setIsDashboardSlider(false);
 			setIsDashboardLocked(true);
 		},
@@ -201,8 +200,7 @@ export function DashboardProvider({
 	});
 
 	const { mutate: unlockDashboard } = useMutation(unlockDashboardApi, {
-		onSuccess: (data) => {
-			console.log('data', data);
+		onSuccess: () => {
 			setIsDashboardLocked(false);
 		},
 		onError: handleError,
