@@ -270,7 +270,8 @@ export const getUPlotChartOptions = ({
 	onDragSelect,
 	yAxisUnit,
 	onClickHandler = _noop,
-}: GetUPlotChartOptions): uPlot.Options => ({
+}: // eslint-disable-next-line sonarjs/cognitive-complexity
+GetUPlotChartOptions): uPlot.Options => ({
 	id,
 	width: dimensions.width,
 	height: dimensions.height - 50,
@@ -285,9 +286,6 @@ export const getUPlotChartOptions = ({
 	scales: {
 		x: {
 			time: true,
-		},
-		y: {
-			auto: true,
 		},
 	},
 	plugins: [
@@ -351,6 +349,28 @@ export const getUPlotChartOptions = ({
 					return `${value}`;
 				}),
 			gap: 5,
+			size: (self, values, axisIdx, cycleNum): number => {
+				const axis = self.axes[axisIdx];
+
+				// bail out, force convergence
+				if (cycleNum > 1) return axis._size;
+
+				let axisSize = axis.ticks.size + axis.gap;
+
+				// find longest value
+				const longestVal = (values ?? []).reduce(
+					(acc, val) => (val.length > acc.length ? val : acc),
+					'',
+				);
+
+				if (longestVal !== '' && self) {
+					// eslint-disable-next-line prefer-destructuring, no-param-reassign
+					self.ctx.font = axis.font[0];
+					axisSize += self.ctx.measureText(longestVal).width / devicePixelRatio;
+				}
+
+				return Math.ceil(axisSize);
+			},
 		},
 	],
 });
