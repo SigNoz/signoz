@@ -115,37 +115,33 @@ const createDivsFromArray = (
 				);
 
 				div.textContent = formattedDate;
-			} else {
+			} else if (item.show && data[index][idx]) {
 				const color = colors[(index - 1) % colors.length];
 
-				if (data[idx]) {
-					const squareBox = document.createElement('div');
-					squareBox.classList.add('pointSquare');
+				const squareBox = document.createElement('div');
+				squareBox.classList.add('pointSquare');
 
-					squareBox.style.borderColor = color;
+				squareBox.style.borderColor = color;
 
-					const text = document.createElement('div');
-					text.classList.add('tooltip-data-point');
+				const text = document.createElement('div');
+				text.classList.add('tooltip-data-point');
 
-					const { metric = {}, queryName = '', legend = '' } =
-						seriesList[index - 1] || {};
+				const { metric = {}, queryName = '', legend = '' } =
+					seriesList[index - 1] || {};
 
-					const label = getLabelName(
-						metric,
-						queryName || '', // query
-						legend || '',
-					);
+				const label = getLabelName(
+					metric,
+					queryName || '', // query
+					legend || '',
+				);
 
-					const tooltipValue = getToolTipValue(data[idx], yAxisUnit);
+				const tooltipValue = getToolTipValue(data[index][idx], yAxisUnit);
 
-					text.textContent = `${label} : ${tooltipValue}`;
-					text.style.color = color;
+				text.textContent = `${label} : ${tooltipValue}`;
+				text.style.color = color;
 
-					if (item.show) {
-						div.appendChild(squareBox);
-						div.appendChild(text);
-					}
-				}
+				div.appendChild(squareBox);
+				div.appendChild(text);
 			}
 
 			container.appendChild(div);
