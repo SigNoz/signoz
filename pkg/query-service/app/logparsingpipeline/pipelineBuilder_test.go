@@ -351,13 +351,13 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 	for _, testCase := range testCases {
 		testPipelines := []Pipeline{makeTestPipeline([]PipelineOperator{testCase.Operator})}
 
-		result, collectorErrorLogs, err := SimulatePipelinesProcessing(
+		result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 			context.Background(),
 			testPipelines,
 			[]model.SignozLog{testCase.NonMatchingLog},
 		)
 		require.Nil(err)
-		require.Equal(0, len(collectorErrorLogs), strings.Join(collectorErrorLogs, "\n"))
+		require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
 		require.Equal(1, len(result))
 	}
 }
