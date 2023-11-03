@@ -38,12 +38,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		useImperativeHandle(
 			ref,
 			(): ToggleGraphProps => ({
-				toggleGraph(
-					graphIndex: number,
-					isVisible: boolean,
-					reference?: string,
-				): void {
-					console.log('Running', reference);
+				toggleGraph(graphIndex: number, isVisible: boolean): void {
 					chartRef.current?.setSeries(graphIndex, { show: isVisible });
 				},
 			}),

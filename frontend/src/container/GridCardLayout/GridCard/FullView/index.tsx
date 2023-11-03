@@ -111,20 +111,20 @@ function FullView({
 				},
 				isDarkMode,
 				onDragSelect,
+				graphsVisibilityStates,
 			});
 
 			setChartOptions(newChartOptions);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [response.isFetching]);
+	}, [response.isFetching, graphsVisibilityStates]);
 
 	useEffect(() => {
-		console.log({ graphsVisibilityStates });
 		graphsVisibilityStates?.forEach((e, i) => {
 			fullViewChartRef?.current?.toggleGraph(i, e);
 			parentChartRef?.current?.toggleGraph(i, e);
 		});
-	}, [graphsVisibilityStates, parentChartRef, response.isSuccess, chartOptions]);
+	}, [graphsVisibilityStates, parentChartRef]);
 
 	if (response.isFetching) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;

@@ -42,12 +42,15 @@ export const getUPlotChartData = (
 const getSeries = (
 	apiResponse?: MetricRangePayloadProps,
 	widgetMetaData: QueryData[] = [],
+	graphsVisibilityStates?: boolean[],
 ): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
 	];
 
 	const seriesList = apiResponse?.data.result || [];
+
+	const newGraphVisibilityStates = graphsVisibilityStates?.slice(1);
 
 	// console.log('seriesList', seriesList);
 
@@ -63,6 +66,7 @@ const getSeries = (
 		);
 
 		const series: uPlot.Series = {
+			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
 			label,
 			stroke: color,
 			width: 1.5,
@@ -93,6 +97,7 @@ interface GetUPlotChartOptions {
 	onDragSelect: (startTime: number, endTime: number) => void;
 	yAxisUnit?: string;
 	onClickHandler?: OnClickPluginOpts['onClick'];
+	graphsVisibilityStates?: boolean[];
 }
 
 const createDivsFromArray = (
@@ -272,6 +277,7 @@ export const getUPlotChartOptions = ({
 	onDragSelect,
 	yAxisUnit,
 	onClickHandler = _noop,
+	graphsVisibilityStates,
 }: GetUPlotChartOptions): uPlot.Options => ({
 	id,
 	width: dimensions.width,
@@ -315,7 +321,11 @@ export const getUPlotChartOptions = ({
 			},
 		],
 	},
-	series: getSeries(apiResponse, apiResponse?.data.result),
+	series: getSeries(
+		apiResponse,
+		apiResponse?.data.result,
+		graphsVisibilityStates,
+	),
 	axes: [
 		{
 			// label: 'Date',
