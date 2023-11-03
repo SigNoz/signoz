@@ -35,9 +35,15 @@ function GraphManager({
 			const newStates = [...graphsVisibilityStates];
 			newStates[index] = e.target.checked;
 			lineChartRef?.current?.toggleGraph(index, e.target.checked);
+			parentChartRef?.current?.toggleGraph(index, e.target.checked);
 			setGraphsVisibilityStates([...newStates]);
 		},
-		[graphsVisibilityStates, lineChartRef, setGraphsVisibilityStates],
+		[
+			graphsVisibilityStates,
+			lineChartRef,
+			parentChartRef,
+			setGraphsVisibilityStates,
+		],
 	);
 
 	const labelClickedHandler = useCallback(

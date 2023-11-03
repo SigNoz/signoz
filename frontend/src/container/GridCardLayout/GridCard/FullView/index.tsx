@@ -60,7 +60,7 @@ function FullView({
 		[widget],
 	);
 
-	const lineChartRef = useRef<ToggleGraphProps>();
+	const fullViewChartRef = useRef<ToggleGraphProps>();
 
 	const [selectedTime, setSelectedTime] = useState<timePreferance>({
 		name: getSelectedTime()?.name || '',
@@ -119,13 +119,12 @@ function FullView({
 	}, [response.isFetching]);
 
 	useEffect(() => {
-		if (!response.isFetching && lineChartRef.current) {
-			graphsVisibilityStates?.forEach((e, i) => {
-				lineChartRef.current?.toggleGraph(i, e);
-				parentChartRef?.current?.toggleGraph(i, e);
-			});
-		}
-	}, [graphsVisibilityStates, response.isFetching, parentChartRef]);
+		console.log({ graphsVisibilityStates });
+		graphsVisibilityStates?.forEach((e, i) => {
+			fullViewChartRef?.current?.toggleGraph(i, e);
+			parentChartRef?.current?.toggleGraph(i, e);
+		});
+	}, [graphsVisibilityStates, parentChartRef, response.isSuccess, chartOptions]);
 
 	if (response.isFetching) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
@@ -159,20 +158,18 @@ function FullView({
 							style={{ height: '90%' }}
 							isGraphLegendToggleAvailable={canModifyChart}
 						>
-							{chartOptions && (
-								<GridPanelSwitch
-									panelType={widget.panelTypes}
-									data={chartData}
-									options={chartOptions}
-									onClickHandler={onClickHandler}
-									name={name}
-									yAxisUnit={yAxisUnit}
-									onDragSelect={onDragSelect}
-									panelData={response.data?.payload.data.newResult.data.result || []}
-									query={widget.query}
-									ref={lineChartRef}
-								/>
-							)}
+							<GridPanelSwitch
+								panelType={widget.panelTypes}
+								data={chartData}
+								options={chartOptions}
+								onClickHandler={onClickHandler}
+								name={name}
+								yAxisUnit={yAxisUnit}
+								onDragSelect={onDragSelect}
+								panelData={response.data?.payload.data.newResult.data.result || []}
+								query={widget.query}
+								ref={fullViewChartRef}
+							/>
 						</GraphContainer>
 					</div>
 
@@ -185,7 +182,7 @@ function FullView({
 							onToggleModelHandler={onToggleModelHandler}
 							setGraphsVisibilityStates={setGraphsVisibilityStates}
 							graphsVisibilityStates={graphsVisibilityStates}
-							lineChartRef={lineChartRef}
+							lineChartRef={fullViewChartRef}
 							parentChartRef={parentChartRef}
 						/>
 					)}
