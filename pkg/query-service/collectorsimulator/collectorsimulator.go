@@ -181,14 +181,14 @@ func (l *CollectorSimulator) Shutdown(ctx context.Context) (
 		simulationErrs = append(simulationErrs, reportedErr.Error())
 	}
 
-	collectorErrorLogs, err := os.ReadFile(l.collectorLogsOutputFilePath)
+	collectorWarnAndErrorLogs, err := os.ReadFile(l.collectorLogsOutputFilePath)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
 			"could not read collector logs from tmp file: %w", err,
 		))
 	}
-	if len(collectorErrorLogs) > 0 {
-		errorLines := strings.Split(string(collectorErrorLogs), "\n")
+	if len(collectorWarnAndErrorLogs) > 0 {
+		errorLines := strings.Split(string(collectorWarnAndErrorLogs), "\n")
 		simulationErrs = append(simulationErrs, errorLines...)
 	}
 
@@ -219,7 +219,7 @@ func generateSimulationConfig(
         metrics:
           level: none
         logs:
-          level: error
+          level: warn
           output_paths: ["%s"]
     `, receiverId, exporterId, collectorLogsOutputPath)
 
