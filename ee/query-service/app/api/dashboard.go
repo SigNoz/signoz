@@ -35,7 +35,7 @@ func (ah *APIHandler) lockUnlockDashboard(w http.ResponseWriter, r *http.Request
 	}
 
 	user := common.GetUserFromContext(r.Context())
-	if !auth.IsAdmin(user) || (dashboard.CreateBy != nil && *dashboard.CreateBy != user.Email) {
+	if !auth.IsAdmin(user) && (dashboard.CreateBy != nil && *dashboard.CreateBy != user.Email) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorForbidden, Err: err}, "You are not authorized to lock/unlock this dashboard")
 		return
 	}
