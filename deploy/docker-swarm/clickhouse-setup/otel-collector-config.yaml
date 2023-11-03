@@ -65,19 +65,19 @@ processors:
     operators:
       - type: regex_parser
         id: traceid
-        # https://regex101.com/r/MMfNjk/1
-        regex: '(?i)(trace(-|_||)id("|=| |-|:)*)(?P<trace_id>[A-Fa-f0-9]+)'
+        # https://regex101.com/r/yFW5UC/1
+        regex: '(?i)(^trace|(("| )+trace))((-|_||)id("|=| |-|:)*)(?P<trace_id>[A-Fa-f0-9]+)'
         parse_from: body
         parse_to: attributes.temp_trace
-        if: 'body matches "(?i)(trace(-|_||)id(\"|=| |-|:)*)(?P<trace_id>[A-Fa-f0-9]+)"'
+        if: 'body matches "(?i)(^trace|((\"| )+trace))((-|_||)id(\"|=| |-|:)*)(?P<trace_id>[A-Fa-f0-9]+)"'
         output: spanid
       - type: regex_parser
         id: spanid
-        # https://regex101.com/r/uXSwLc/1
-        regex: '(?i)(span(-|_||)id("|=| |-|:)*)(?P<span_id>[A-Fa-f0-9]+)'
+        # https://regex101.com/r/DZ2gng/1
+        regex: '(?i)(^span|(("| )+span))((-|_||)id("|=| |-|:)*)(?P<span_id>[A-Fa-f0-9]+)'
         parse_from: body
         parse_to: attributes.temp_trace
-        if: 'body matches "(?i)(span(-|_||)id(\"|=| |-|:)*)(?P<span_id>[A-Fa-f0-9]+)"'
+        if: 'body matches "(?i)(^span|((\"| )+span))((-|_||)id(\"|=| |-|:)*)(?P<span_id>[A-Fa-f0-9]+)"'
         output: trace_parser
       - type: trace_parser
         id: trace_parser
