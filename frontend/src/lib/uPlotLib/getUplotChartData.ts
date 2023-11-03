@@ -115,7 +115,7 @@ const createDivsFromArray = (
 				);
 
 				div.textContent = formattedDate;
-			} else {
+			} else if (item.show) {
 				const color = colors[(index - 1) % colors.length];
 
 				const squareBox = document.createElement('div');
@@ -140,10 +140,8 @@ const createDivsFromArray = (
 				text.textContent = `${label} : ${tooltipValue}`;
 				text.style.color = color;
 
-				if (item.show) {
-					div.appendChild(squareBox);
-					div.appendChild(text);
-				}
+				div.appendChild(squareBox);
+				div.appendChild(text);
 			}
 
 			container.appendChild(div);
