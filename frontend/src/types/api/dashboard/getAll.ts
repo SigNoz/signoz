@@ -45,6 +45,7 @@ export interface Dashboard {
 	created_by: string;
 	updated_by: string;
 	data: DashboardData;
+	isLocked?: boolean;
 }
 
 export interface DashboardData {
