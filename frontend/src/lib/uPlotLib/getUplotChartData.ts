@@ -115,7 +115,7 @@ const createDivsFromArray = (
 				);
 
 				div.textContent = formattedDate;
-			} else if (item.show) {
+			} else if (item.show && data[index][idx]) {
 				const color = colors[(index - 1) % colors.length];
 
 				const squareBox = document.createElement('div');
