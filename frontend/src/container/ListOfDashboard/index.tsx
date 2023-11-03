@@ -121,18 +121,18 @@ function ListOfAllDashboard(): JSX.Element {
 			{
 				title: 'Name',
 				dataIndex: 'name',
-				width: '35%',
+				width: 40,
 				render: Name,
 			},
 			{
 				title: 'Description',
-				width: '35%',
+				width: 50,
 				dataIndex: 'description',
 			},
 			{
-				title: 'Tags (can be multiple)',
+				title: 'Tags',
 				dataIndex: 'tags',
-				width: '20%',
+				width: 50,
 				render: (value): JSX.Element => <LabelColumn labels={value} />,
 			},
 		];
@@ -141,7 +141,7 @@ function ListOfAllDashboard(): JSX.Element {
 			tableColumns.push({
 				title: 'Action',
 				dataIndex: '',
-				width: '10%',
+				width: 40,
 				render: DeleteButton,
 			});
 		}

@@ -191,22 +191,16 @@ export function DashboardProvider({
 
 	const handleError = useAxiosError();
 
-	const { mutate: lockDashboard, isLoading: isLockingDashboard } = useMutation(
-		lockDashboardApi,
-		{
-			onSuccess: (data) => {
-				console.log('data', data);
-				setIsDashboardSlider(false);
-				setIsDashboardLocked(true);
-			},
-			onError: handleError,
+	const { mutate: lockDashboard } = useMutation(lockDashboardApi, {
+		onSuccess: (data) => {
+			console.log('data', data);
+			setIsDashboardSlider(false);
+			setIsDashboardLocked(true);
 		},
-	);
+		onError: handleError,
+	});
 
-	const {
-		mutate: unlockDashboard,
-		isLoading: isUnlockingDashboard,
-	} = useMutation(unlockDashboardApi, {
+	const { mutate: unlockDashboard } = useMutation(unlockDashboardApi, {
 		onSuccess: (data) => {
 			console.log('data', data);
 			setIsDashboardLocked(false);
@@ -247,12 +241,6 @@ export function DashboardProvider({
 			dashboardId,
 			layouts,
 		],
-	);
-
-	console.log(
-		'isLockingDashboard - isUnlockingDashboard',
-		isLockingDashboard,
-		isUnlockingDashboard,
 	);
 
 	return (

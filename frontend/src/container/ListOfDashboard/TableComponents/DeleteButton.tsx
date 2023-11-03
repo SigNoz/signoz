@@ -2,7 +2,6 @@ import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal, Tooltip } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -13,10 +12,9 @@ import { USER_ROLES } from 'types/roles';
 import { Data } from '../index';
 import { TableLinkText } from './styles';
 
-function DeleteButton({ id, createdBy }: Data): JSX.Element {
+function DeleteButton({ id, createdBy, isLocked }: Data): JSX.Element {
 	const [modal, contextHolder] = Modal.useModal();
 	const { role, user } = useSelector<AppState, AppReducer>((state) => state.app);
-	const { isDashboardLocked } = useDashboard();
 	const isAuthor = user?.email === createdBy;
 
 	const queryClient = useQueryClient();
@@ -41,7 +39,7 @@ function DeleteButton({ id, createdBy }: Data): JSX.Element {
 	}, [modal, deleteDashboardMutation, queryClient]);
 
 	const getDeleteTooltipContent = (): string => {
-		if (isDashboardLocked) {
+		if (isLocked) {
 			if (role === USER_ROLES.ADMIN || isAuthor) {
 				return 'Dashboard is locked. Please unlock the dashboard to enable delete.';
 			}
@@ -58,11 +56,11 @@ function DeleteButton({ id, createdBy }: Data): JSX.Element {
 				<TableLinkText
 					type="danger"
 					onClick={(): void => {
-						if (!isDashboardLocked) {
+						if (!isLocked) {
 							openConfirmationDialog();
 						}
 					}}
-					disabled={isDashboardLocked}
+					disabled={isLocked}
 				>
 					<DeleteOutlined /> Delete
 				</TableLinkText>

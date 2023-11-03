@@ -97,15 +97,13 @@ function GraphLayout({
 		});
 	};
 
-	const allowEdit = (): boolean => !isDashboardLocked;
-
-	const widgetActions = allowEdit()
+	const widgetActions = !isDashboardLocked
 		? [...ViewMenuAction, ...EditMenuAction]
 		: [...ViewMenuAction];
 
 	return (
 		<>
-			{allowEdit() && (
+			{!isDashboardLocked && (
 				<ButtonContainer>
 					{saveLayoutPermission && (
 						<Button

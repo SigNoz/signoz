@@ -1,14 +1,7 @@
 import axios from 'api';
-import { ApiResponse } from 'types/api';
-import { Props } from 'types/api/dashboard/get';
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { AxiosResponse } from 'axios';
 
-const unlockDashboard = (props: Props): Promise<Dashboard> =>
-	axios
-		.put<ApiResponse<any>>(`/dashboards/${props.uuid}/unlock`)
-		.then((res) => res.data.data)
-		.catch((err) => {
-			console.log(err);
-		});
+const unlockDashboard = (props: any): Promise<AxiosResponse> =>
+	axios.put(`/dashboards/${props.uuid}/unlock`);
 
 export default unlockDashboard;

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
 
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
@@ -25,8 +26,14 @@ function DashboardDescription(): JSX.Element {
 	const [isJSONModalVisible, isIsJSONModalVisible] = useState<boolean>(false);
 
 	const { t } = useTranslation('common');
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user, role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], role);
+
+	let isAuthor = false;
+
+	if (selectedDashboard && user && user.email) {
+		isAuthor = selectedDashboard?.created_by === user?.email;
+	}
 
 	const onToggleHandler = (): void => {
 		isIsJSONModalVisible((state) => !state);
@@ -77,19 +84,21 @@ function DashboardDescription(): JSX.Element {
 						>
 							{t('share')}
 						</Button>
-						<Tooltip
-							placement="left"
-							title={isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
-						>
-							<Button
-								style={{ width: '100%' }}
-								type="dashed"
-								onClick={handleLockDashboardToggle}
-								icon={isDashboardLocked ? <LockFilled /> : <UnlockFilled />}
+						{(isAuthor || role === USER_ROLES.ADMIN) && (
+							<Tooltip
+								placement="left"
+								title={isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
 							>
-								{isDashboardLocked ? 'Unlock' : 'Lock'}
-							</Button>
-						</Tooltip>{' '}
+								<Button
+									style={{ width: '100%' }}
+									type="dashed"
+									onClick={handleLockDashboardToggle}
+									icon={isDashboardLocked ? <LockFilled /> : <UnlockFilled />}
+								>
+									{isDashboardLocked ? 'Unlock' : 'Lock'}
+								</Button>
+							</Tooltip>
+						)}
 					</Space>
 				</Col>
 			</Row>
