@@ -6,7 +6,7 @@ import Label from './Label';
 export const getLabel = (
 	labelClickedHandler: (labelIndex: number) => void,
 ): ColumnType<DataSetProps> => ({
-	render: (label, record): JSX.Element => (
+	render: (label: string, record): JSX.Element => (
 		<Label
 			label={label}
 			labelIndex={record.index}

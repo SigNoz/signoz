@@ -42,7 +42,7 @@ export interface GridCardGraphProps {
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {
-	data: uPlot.AlignedData;
+	options: uPlot.Options;
 	isExpandedName: boolean;
 	name: string;
 }

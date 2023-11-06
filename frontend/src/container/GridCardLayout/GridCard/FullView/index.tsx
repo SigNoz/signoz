@@ -42,6 +42,7 @@ function FullView({
 	graphsVisibilityStates,
 	onToggleModelHandler,
 	parentChartRef,
+	setGraphsVisibilityStates,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -60,7 +61,7 @@ function FullView({
 		[widget],
 	);
 
-	const lineChartRef = useRef<ToggleGraphProps>();
+	const fullViewChartRef = useRef<ToggleGraphProps>();
 
 	const [selectedTime, setSelectedTime] = useState<timePreferance>({
 		name: getSelectedTime()?.name || '',
@@ -93,7 +94,7 @@ function FullView({
 	const isDarkMode = useIsDarkMode();
 
 	useEffect(() => {
-		if (!response.isFetching) {
+		if (!response.isFetching && fullViewRef.current) {
 			const width = fullViewRef.current?.clientWidth
 				? fullViewRef.current.clientWidth - 50
 				: 700;
@@ -103,7 +104,6 @@ function FullView({
 				: 300;
 
 			const newChartOptions = getUPlotChartOptions({
-				id: widget?.id,
 				yAxisUnit: yAxisUnit || '',
 				apiResponse: response.data?.payload,
 				dimensions: {
@@ -112,21 +112,21 @@ function FullView({
 				},
 				isDarkMode,
 				onDragSelect,
+				graphsVisibilityStates,
+				setGraphsVisibilityStates,
 			});
 
 			setChartOptions(newChartOptions);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [response.isFetching]);
+	}, [response.isFetching, graphsVisibilityStates, fullViewRef.current]);
 
 	useEffect(() => {
-		if (!response.isFetching && lineChartRef.current) {
-			graphsVisibilityStates?.forEach((e, i) => {
-				lineChartRef?.current?.toggleGraph(i, e);
-				parentChartRef?.current?.toggleGraph(i, e);
-			});
-		}
-	}, [graphsVisibilityStates, parentChartRef, response.isFetching]);
+		graphsVisibilityStates?.forEach((e, i) => {
+			fullViewChartRef?.current?.toggleGraph(i, e);
+			parentChartRef?.current?.toggleGraph(i, e);
+		});
+	}, [graphsVisibilityStates, parentChartRef]);
 
 	if (response.isFetching) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
@@ -153,43 +153,40 @@ function FullView({
 				)}
 			</div>
 
-			{chartOptions && (
-				<>
-					<div className="graph-container" ref={fullViewRef}>
-						<GraphContainer
-							style={{ height: '90%' }}
-							isGraphLegendToggleAvailable={canModifyChart}
-						>
-							{chartOptions && (
-								<GridPanelSwitch
-									panelType={widget.panelTypes}
-									data={chartData}
-									name={name}
-									onClickHandler={onClickHandler}
-									options={chartOptions}
-									yAxisUnit={yAxisUnit}
-									onDragSelect={onDragSelect}
-									panelData={response.data?.payload.data.newResult.data.result || []}
-									query={widget.query}
-								/>
-							)}
-						</GraphContainer>
-					</div>
-
-					{canModifyChart && (
-						<GraphManager
+			<div className="graph-container" ref={fullViewRef}>
+				{chartOptions && (
+					<GraphContainer
+						style={{ height: '90%' }}
+						isGraphLegendToggleAvailable={canModifyChart}
+					>
+						<GridPanelSwitch
+							panelType={widget.panelTypes}
 							data={chartData}
-							name={name}
 							options={chartOptions}
+							onClickHandler={onClickHandler}
+							name={name}
 							yAxisUnit={yAxisUnit}
-							onToggleModelHandler={onToggleModelHandler}
-							// setGraphsVisibilityStates={setGraphsVisibilityStates}
-							graphsVisibilityStates={graphsVisibilityStates}
-							lineChartRef={lineChartRef}
-							parentChartRef={parentChartRef}
+							onDragSelect={onDragSelect}
+							panelData={response.data?.payload.data.newResult.data.result || []}
+							query={widget.query}
+							ref={fullViewChartRef}
 						/>
-					)}
-				</>
+					</GraphContainer>
+				)}
+			</div>
+
+			{canModifyChart && chartOptions && (
+				<GraphManager
+					data={chartData}
+					name={name}
+					options={chartOptions}
+					yAxisUnit={yAxisUnit}
+					onToggleModelHandler={onToggleModelHandler}
+					setGraphsVisibilityStates={setGraphsVisibilityStates}
+					graphsVisibilityStates={graphsVisibilityStates}
+					lineChartRef={fullViewChartRef}
+					parentChartRef={parentChartRef}
+				/>
 			)}
 		</div>
 	);

@@ -51,20 +51,14 @@ function WidgetGraphComponent({
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
 
-	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
-
-	const featureResponse = useSelector<AppState, AppReducer['featureResponse']>(
-		(state) => state.app.featureResponse,
-	);
-
 	const { graphVisibilityStates: localStoredVisibilityStates } = useMemo(
 		() =>
 			getGraphVisibilityStateOnDataChange({
-				data,
+				options,
 				isExpandedName: true,
 				name,
 			}),
-		[data, name],
+		[options, name],
 	);
 
 	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
@@ -72,6 +66,7 @@ function WidgetGraphComponent({
 	>(localStoredVisibilityStates);
 
 	useEffect(() => {
+		setGraphsVisibilityStates(localStoredVisibilityStates);
 		if (!lineChartRef.current) return;
 
 		localStoredVisibilityStates.forEach((state, index) => {
@@ -79,6 +74,12 @@ function WidgetGraphComponent({
 		});
 		setGraphsVisibilityStates(localStoredVisibilityStates);
 	}, [localStoredVisibilityStates]);
+
+	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
+
+	const featureResponse = useSelector<AppState, AppReducer['featureResponse']>(
+		(state) => state.app.featureResponse,
+	);
 
 	const onToggleModal = useCallback(
 		(func: Dispatch<SetStateAction<boolean>>) => {
@@ -247,6 +248,7 @@ function WidgetGraphComponent({
 					onToggleModelHandler={onToggleModelHandler}
 					parentChartRef={lineChartRef}
 					onDragSelect={onDragSelect}
+					setGraphsVisibilityStates={setGraphsVisibilityStates}
 					graphsVisibilityStates={graphsVisibilityStates}
 				/>
 			</Modal>

@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
 import { DashboardData } from 'types/api/dashboard/getAll';
 
-import { downloadObjectAsJson } from './util';
+import { downloadObjectAsJson } from './utils';
 
 function ShareModal({
 	isJSONModalVisible,

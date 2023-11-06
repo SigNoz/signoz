@@ -1,8 +1,9 @@
-import { StaticLineProps } from 'components/Graph/types';
+import { StaticLineProps, ToggleGraphProps } from 'components/Graph/types';
 import { UplotProps } from 'components/Uplot/Uplot';
 import { GridTableComponentProps } from 'container/GridTableComponent/types';
 import { GridValueComponentProps } from 'container/GridValueComponent/types';
 import { OnClickPluginOpts } from 'lib/uPlotLib/getUplotChartData';
+import { ForwardedRef } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
@@ -24,7 +25,7 @@ export type GridPanelSwitchProps = {
 
 export type PropsTypePropsMap = {
 	[PANEL_TYPES.TIME_SERIES]: UplotProps & {
-		ref: any;
+		ref: ForwardedRef<ToggleGraphProps | undefined>;
 	};
 	[PANEL_TYPES.VALUE]: GridValueComponentProps;
 	[PANEL_TYPES.TABLE]: GridTableComponentProps;

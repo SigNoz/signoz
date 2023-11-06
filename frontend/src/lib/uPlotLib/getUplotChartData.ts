@@ -1,6 +1,8 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './uPlotLib.styles.scss';
 
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { Dimensions } from 'hooks/useDimensions';
@@ -42,12 +44,17 @@ export const getUPlotChartData = (
 const getSeries = (
 	apiResponse?: MetricRangePayloadProps,
 	widgetMetaData: QueryData[] = [],
+	graphsVisibilityStates?: boolean[],
 ): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
 	];
 
 	const seriesList = apiResponse?.data.result || [];
+
+	const newGraphVisibilityStates = graphsVisibilityStates?.slice(1);
+
+	// console.log('seriesList', seriesList);
 
 	for (let i = 0; i < seriesList?.length; i += 1) {
 		const color = colors[i % colors.length]; // Use modulo to loop through colors if there are more series than colors
@@ -60,7 +67,10 @@ const getSeries = (
 			legend || '',
 		);
 
+		// set the click event listener on the table
+
 		const series: uPlot.Series = {
+			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
 			label,
 			stroke: color,
 			width: 1.5,
@@ -91,6 +101,8 @@ interface GetUPlotChartOptions {
 	onDragSelect: (startTime: number, endTime: number) => void;
 	yAxisUnit?: string;
 	onClickHandler?: OnClickPluginOpts['onClick'];
+	graphsVisibilityStates?: boolean[];
+	setGraphsVisibilityStates?: FullViewProps['setGraphsVisibilityStates'];
 }
 
 const createDivsFromArray = (
@@ -270,8 +282,9 @@ export const getUPlotChartOptions = ({
 	onDragSelect,
 	yAxisUnit,
 	onClickHandler = _noop,
-}: // eslint-disable-next-line sonarjs/cognitive-complexity
-GetUPlotChartOptions): uPlot.Options => ({
+	graphsVisibilityStates,
+	setGraphsVisibilityStates,
+}: GetUPlotChartOptions): uPlot.Options => ({
 	id,
 	width: dimensions.width,
 	height: dimensions.height - 50,
@@ -310,8 +323,34 @@ GetUPlotChartOptions): uPlot.Options => ({
 				}
 			},
 		],
+		ready: [
+			(self): void => {
+				const legend = self.root.querySelector('.u-legend');
+				if (legend) {
+					const seriesEls = legend.querySelectorAll('.u-label');
+					const seriesArray = Array.from(seriesEls);
+					seriesArray.forEach((seriesEl, index) => {
+						seriesEl.addEventListener('click', () => {
+							if (graphsVisibilityStates) {
+								setGraphsVisibilityStates?.((prev) => {
+									const newGraphVisibilityStates = [...prev];
+									newGraphVisibilityStates[index + 1] = !newGraphVisibilityStates[
+										index + 1
+									];
+									return newGraphVisibilityStates;
+								});
+							}
+						});
+					});
+				}
+			},
+		],
 	},
-	series: getSeries(apiResponse, apiResponse?.data.result),
+	series: getSeries(
+		apiResponse,
+		apiResponse?.data.result,
+		graphsVisibilityStates,
+	),
 	axes: [
 		{
 			// label: 'Date',

@@ -156,6 +156,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 								<GridCard
 									widget={currentWidget || ({ id, query: {} } as Widgets)}
 									name={currentWidget?.id || ''}
+									variables={variables}
 									headerMenuList={widgetActions}
 									variables={variables}
 								/>
