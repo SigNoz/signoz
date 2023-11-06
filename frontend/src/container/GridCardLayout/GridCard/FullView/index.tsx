@@ -112,6 +112,7 @@ function FullView({
 				isDarkMode,
 				onDragSelect,
 				graphsVisibilityStates,
+				setGraphsVisibilityStates,
 			});
 
 			setChartOptions(newChartOptions);

@@ -65,6 +65,8 @@ const getSeries = (
 			legend || '',
 		);
 
+		// set the click event listener on the table
+
 		const series: uPlot.Series = {
 			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
 			label,
@@ -98,6 +100,7 @@ interface GetUPlotChartOptions {
 	yAxisUnit?: string;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	graphsVisibilityStates?: boolean[];
+	setGraphsVisibilityStates?: (graphsVisibilityStates: boolean[]) => void;
 }
 
 const createDivsFromArray = (
@@ -278,6 +281,7 @@ export const getUPlotChartOptions = ({
 	yAxisUnit,
 	onClickHandler = _noop,
 	graphsVisibilityStates,
+	setGraphsVisibilityStates,
 }: GetUPlotChartOptions): uPlot.Options => ({
 	id,
 	width: dimensions.width,
@@ -317,6 +321,26 @@ export const getUPlotChartOptions = ({
 					if (diff > 0) {
 						onDragSelect(startTime * 1000, endTime * 1000);
 					}
+				}
+			},
+		],
+		ready: [
+			(self): void => {
+				const legend = self.root.querySelector('.u-legend');
+				if (legend) {
+					const seriesEls = legend.querySelectorAll('.u-label');
+					const seriesArray = Array.from(seriesEls);
+					seriesArray.forEach((seriesEl, index) => {
+						seriesEl.addEventListener('click', () => {
+							if (graphsVisibilityStates) {
+								const newGraphVisibilityStates = [...graphsVisibilityStates];
+								newGraphVisibilityStates[index + 1] = !newGraphVisibilityStates[
+									index + 1
+								];
+								setGraphsVisibilityStates?.(newGraphVisibilityStates);
+							}
+						});
+					});
 				}
 			},
 		],
