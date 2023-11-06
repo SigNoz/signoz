@@ -104,7 +104,7 @@ function HeaderContainer(): JSX.Element {
 		);
 	};
 
-	const { data: licenseData, isFetching } = useLicense();
+	const { data: licenseData, isFetching, status: licenseStatus } = useLicense();
 
 	const isLicenseActive =
 		licenseData?.payload?.licenses?.find((e) => e.isCurrent)?.status ===
@@ -169,7 +169,7 @@ function HeaderContainer(): JSX.Element {
 					</NavLink>
 
 					<Space size="middle" align="center">
-						{!isLicenseActive && (
+						{licenseStatus === 'success' && !isLicenseActive && (
 							<Button onClick={onClickSignozCloud} type="primary">
 								Try Signoz Cloud
 							</Button>
