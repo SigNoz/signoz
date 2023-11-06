@@ -102,7 +102,7 @@ interface GetUPlotChartOptions {
 	yAxisUnit?: string;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	graphsVisibilityStates?: boolean[];
-	setGraphsVisibilityStates: FullViewProps['setGraphsVisibilityStates'];
+	setGraphsVisibilityStates?: FullViewProps['setGraphsVisibilityStates'];
 }
 
 const createDivsFromArray = (
