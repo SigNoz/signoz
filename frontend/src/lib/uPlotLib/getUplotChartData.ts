@@ -106,59 +106,52 @@ interface GetUPlotChartOptions {
 const createDivsFromArray = (
 	seriesList: any[],
 	data: any[],
-	idx: string | number,
+	idx: number,
 	yAxisUnit?: string,
+	series?: uPlot.Options['series'],
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
 	container.classList.add('tooltip-container');
 
-	// console.log('seriesList', seriesList);
-
-	if (Array.isArray(data) && data.length > 0) {
-		data.forEach((item, index) => {
+	if (Array.isArray(series) && series.length > 0) {
+		series.forEach((item, index) => {
 			const div = document.createElement('div');
 			div.classList.add('tooltip-content-row');
 
 			if (index === 0) {
-				const formattedDate = dayjs(item[idx] * 1000).format(
+				const formattedDate = dayjs(data[0][idx] * 1000).format(
 					'MMM DD YYYY HH:mm:ss',
 				);
 
-				// console.log('formattedDate', formattedDate);
-
 				div.textContent = formattedDate;
-			} else {
+			} else if (item.show && data[index][idx]) {
 				const color = colors[(index - 1) % colors.length];
 
-				if (item[idx]) {
-					const squareBox = document.createElement('div');
-					squareBox.classList.add('pointSquare');
+				const squareBox = document.createElement('div');
+				squareBox.classList.add('pointSquare');
 
-					squareBox.style.borderColor = color;
+				squareBox.style.borderColor = color;
 
-					div.appendChild(squareBox);
+				const text = document.createElement('div');
+				text.classList.add('tooltip-data-point');
 
-					const text = document.createElement('div');
-					text.classList.add('tooltip-data-point');
+				const { metric = {}, queryName = '', legend = '' } =
+					seriesList[index - 1] || {};
 
-					const { metric = {}, queryName = '', legend = '' } =
-						seriesList[index - 1] || {};
+				const label = getLabelName(
+					metric,
+					queryName || '', // query
+					legend || '',
+				);
 
-					const label = getLabelName(
-						metric,
-						queryName || '', // query
-						legend || '',
-					);
+				const tooltipValue = getToolTipValue(data[index][idx], yAxisUnit);
 
-					// console.log('label', label);
+				text.textContent = `${label} : ${tooltipValue}`;
+				text.style.color = color;
 
-					const tooltipValue = getToolTipValue(item[idx], yAxisUnit);
-
-					text.textContent = `${label} : ${tooltipValue}`;
-					text.style.color = color;
-
-					div.appendChild(text);
-				}
+				div.appendChild(squareBox);
+				div.appendChild(text);
 			}
 
 			container.appendChild(div);
@@ -193,7 +186,7 @@ const tooltipPlugin = (
 		document.body.appendChild(overlay);
 	}
 
-	const seriesList = apiResponse?.data?.result || [];
+	const apiResult = apiResponse?.data?.result || [];
 
 	return {
 		hooks: {
@@ -217,6 +210,7 @@ const tooltipPlugin = (
 			setCursor: (u: {
 				cursor: { left: any; top: any; idx: any };
 				data: any[];
+				series: uPlot.Options['series'];
 			}): void => {
 				if (overlay) {
 					overlay.textContent = '';
@@ -224,7 +218,13 @@ const tooltipPlugin = (
 
 					if (idx) {
 						const anchor = { left: left + bLeft, top: top + bTop };
-						const content = createDivsFromArray(seriesList, u.data, idx, yAxisUnit);
+						const content = createDivsFromArray(
+							apiResult,
+							u.data,
+							idx,
+							yAxisUnit,
+							u.series,
+						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });
 					}
@@ -297,9 +297,6 @@ export const getUPlotChartOptions = ({
 	scales: {
 		x: {
 			time: true,
-		},
-		y: {
-			auto: true,
 		},
 	},
 	plugins: [
@@ -387,6 +384,28 @@ export const getUPlotChartOptions = ({
 					return `${value}`;
 				}),
 			gap: 5,
+			size: (self, values, axisIdx, cycleNum): number => {
+				const axis = self.axes[axisIdx];
+
+				// bail out, force convergence
+				if (cycleNum > 1) return axis._size;
+
+				let axisSize = axis.ticks.size + axis.gap;
+
+				// find longest value
+				const longestVal = (values ?? []).reduce(
+					(acc, val) => (val.length > acc.length ? val : acc),
+					'',
+				);
+
+				if (longestVal !== '' && self) {
+					// eslint-disable-next-line prefer-destructuring, no-param-reassign
+					self.ctx.font = axis.font[0];
+					axisSize += self.ctx.measureText(longestVal).width / devicePixelRatio;
+				}
+
+				return Math.ceil(axisSize);
+			},
 		},
 	],
 });
