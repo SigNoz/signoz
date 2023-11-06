@@ -99,5 +99,97 @@
 				}
 			})();
 		</script>
+
+		<script type="text/javascript">
+			//Set your SEGMENT_ID
+			const CLARITY_PROJECT_ID =
+				'<%= htmlWebpackPlugin.options.CLARITY_PROJECT_ID %>';
+
+			(function (c, l, a, r, i, t, y) {
+				c[a] =
+					c[a] ||
+					function () {
+						(c[a].q = c[a].q || []).push(arguments);
+					};
+				t = l.createElement(r);
+				t.async = 1;
+				t.src = 'https://www.clarity.ms/tag/' + i;
+				y = l.getElementsByTagName(r)[0];
+				y.parentNode.insertBefore(t, y);
+			})(window, document, 'clarity', 'script', CLARITY_PROJECT_ID);
+		</script>
+
+		<script>
+			//Set your SEGMENT_ID
+			const SEGMENT_ID = '<%= htmlWebpackPlugin.options.SEGMENT_ID %>';
+
+			!(function () {
+				var analytics = (window.analytics = window.analytics || []);
+				if (!analytics.initialize)
+					if (analytics.invoked)
+						window.console &&
+							console.error &&
+							console.error('Segment snippet included twice.');
+					else {
+						analytics.invoked = !0;
+						analytics.methods = [
+							'trackSubmit',
+							'trackClick',
+							'trackLink',
+							'trackForm',
+							'pageview',
+							'identify',
+							'reset',
+							'group',
+							'track',
+							'ready',
+							'alias',
+							'debug',
+							'page',
+							'once',
+							'off',
+							'on',
+							'addSourceMiddleware',
+							'addIntegrationMiddleware',
+							'setAnonymousId',
+							'addDestinationMiddleware',
+						];
+						analytics.factory = function (e) {
+							return function () {
+								if (window.analytics.initialized)
+									return window.analytics[e].apply(window.analytics, arguments);
+								var i = Array.prototype.slice.call(arguments);
+								i.unshift(e);
+								analytics.push(i);
+								return analytics;
+							};
+						};
+						for (var i = 0; i < analytics.methods.length; i++) {
+							var key = analytics.methods[i];
+							analytics[key] = analytics.factory(key);
+						}
+						analytics.load = function (key, i) {
+							var t = document.createElement('script');
+							t.type = 'text/javascript';
+							t.async = !0;
+							t.src =
+								'https://analytics-cdn.signoz.io/analytics.js/v1/' +
+								key +
+								'/analytics.min.js';
+							var n = document.getElementsByTagName('script')[0];
+							n.parentNode.insertBefore(t, n);
+							analytics._loadOptions = i;
+						};
+						analytics._writeKey = SEGMENT_ID;
+						analytics.SNIPPET_VERSION = '4.16.1';
+						analytics.load(SEGMENT_ID, {
+							integrations: {
+								'Segment.io': { apiHost: 'analytics-api.signoz.io/v1' },
+							},
+						});
+						analytics.page();
+					}
+			})();
+		</script>
 	</body>
 </html>

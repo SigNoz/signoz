@@ -1,4 +1,5 @@
-import { MenuItemKeys } from 'container/GridGraphLayout/WidgetHeader/contants';
+import { DownloadOptions } from 'container/Download/Download.types';
+import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 
 export const legend = {
 	address: '{{address}}',
@@ -73,3 +74,8 @@ export enum WidgetKeys {
 	SignozExternalCallLatencySum = 'signoz_external_call_latency_sum',
 	Signoz_latency_bucket = 'signoz_latency_bucket',
 }
+
+export const topOperationMetricsDownloadOptions: DownloadOptions = {
+	isDownloadEnabled: true,
+	fileName: 'top-operation',
+} as const;

@@ -1,10 +1,13 @@
 import './Python.styles.scss';
 
-import { MDXProvider } from '@mdx-js/react';
 import { Form, Input, Select } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { trackEvent } from 'utils/segmentAnalytics';
+import { popupContainer } from 'utils/selectPopupContainer';
 
+import { LangProps } from '../APM';
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import DjangoDocs from './md-docs/django.md';
 import FalconDocs from './md-docs/falcon.md';
@@ -21,26 +24,48 @@ const frameworksMap = {
 };
 
 export default function Python({
+	ingestionInfo,
 	activeStep,
-}: {
-	activeStep: number;
-}): JSX.Element {
+}: LangProps): JSX.Element {
 	const [selectedFrameWork, setSelectedFrameWork] = useState('django');
-
+	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(DjangoDocs);
 	const [form] = Form.useForm();
+	const serviceName = Form.useWatch('Service Name', form);
 
-	const renderDocs = (): JSX.Element => {
+	const variables = {
+		MYAPP: serviceName || '<service-name>',
+		SIGNOZ_INGESTION_KEY:
+			ingestionInfo.SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
+		REGION: ingestionInfo.REGION || 'region',
+	};
+
+	useEffect(() => {
+		// on language select
+		trackEvent('Onboarding: APM : Python', {
+			selectedFrameWork,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedFrameWork]);
+
+	const handleFrameworkChange = (selectedFrameWork: string): void => {
+		setSelectedFrameWork(selectedFrameWork);
+
 		switch (selectedFrameWork) {
 			case 'django':
-				return <DjangoDocs />;
+				setSelectedFrameWorkDocs(DjangoDocs);
+				break;
 			case 'fastAPI':
-				return <FastAPIDocs />;
+				setSelectedFrameWorkDocs(FastAPIDocs);
+				break;
 			case 'flask':
-				return <FlaskDocs />;
+				setSelectedFrameWorkDocs(FlaskDocs);
+				break;
 			case 'falcon':
-				return <FalconDocs />;
+				setSelectedFrameWorkDocs(FalconDocs);
+				break;
 			default:
-				return <PythonDocs />;
+				setSelectedFrameWorkDocs(PythonDocs);
+				break;
 		}
 	};
 
@@ -61,10 +86,11 @@ export default function Python({
 							<div className="label"> Select Framework </div>
 
 							<Select
+								getPopupContainer={popupContainer}
 								defaultValue="Django"
 								style={{ minWidth: 120 }}
 								placeholder="Select Framework"
-								onChange={(value): void => setSelectedFrameWork(value)}
+								onChange={(value): void => handleFrameworkChange(value)}
 								options={[
 									{
 										value: 'django',
@@ -107,7 +133,10 @@ export default function Python({
 					</div>
 
 					<div className="content-container">
-						<MDXProvider>{renderDocs()}</MDXProvider>
+						<MarkdownRenderer
+							markdownContent={selectedFrameWorkDocs}
+							variables={variables}
+						/>
 					</div>
 				</div>
 			)}

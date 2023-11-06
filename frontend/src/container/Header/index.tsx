@@ -1,3 +1,5 @@
+import './Header.styles.scss';
+
 import {
 	CaretDownFilled,
 	CaretUpFilled,
@@ -9,11 +11,13 @@ import ROUTES from 'constants/routes';
 import Config from 'container/ConfigDropdown';
 import { useIsDarkMode, useThemeMode } from 'hooks/useDarkMode';
 import useLicense, { LICENSE_PLAN_STATUS } from 'hooks/useLicense';
+import history from 'lib/history';
 import {
 	Dispatch,
 	KeyboardEvent,
 	SetStateAction,
 	useCallback,
+	useEffect,
 	useMemo,
 	useState,
 } from 'react';
@@ -21,6 +25,7 @@ import { useSelector } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
+import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import CurrentOrganization from './CurrentOrganization';
 import ManageLicense from './ManageLicense';
@@ -37,11 +42,13 @@ import {
 } from './styles';
 
 function HeaderContainer(): JSX.Element {
-	const { user, currentVersion } = useSelector<AppState, AppReducer>(
+	const { user, role, currentVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 	const isDarkMode = useIsDarkMode();
 	const { toggleTheme } = useThemeMode();
+	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
+	const [homeRoute, setHomeRoute] = useState(ROUTES.APPLICATION);
 
 	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>(false);
 
@@ -97,58 +104,103 @@ function HeaderContainer(): JSX.Element {
 		);
 	};
 
-	const { data } = useLicense();
+	const { data: licenseData, isFetching } = useLicense();
 
 	const isLicenseActive =
-		data?.payload?.find((e) => e.isCurrent)?.status === LICENSE_PLAN_STATUS.VALID;
+		licenseData?.payload?.licenses?.find((e) => e.isCurrent)?.status ===
+		LICENSE_PLAN_STATUS.VALID;
+
+	useEffect(() => {
+		if (
+			!isFetching &&
+			licenseData?.payload?.onTrial &&
+			!licenseData?.payload?.trialConvertedToSubscription &&
+			getRemainingDays(licenseData?.payload.trialEnd) < 7
+		) {
+			setShowTrialExpiryBanner(true);
+		}
+
+		if (!isFetching && licenseData?.payload?.workSpaceBlock) {
+			setHomeRoute(ROUTES.WORKSPACE_LOCKED);
+		}
+	}, [licenseData, isFetching]);
+
+	const handleUpgrade = (): void => {
+		if (role === 'ADMIN') {
+			history.push(ROUTES.BILLING);
+		}
+	};
 
 	return (
-		<Header>
-			<Container>
-				<NavLink to={ROUTES.APPLICATION}>
-					<NavLinkWrapper>
-						<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
-						<Typography.Title
-							style={{ margin: 0, color: 'rgb(219, 219, 219)' }}
-							level={4}
-						>
-							SigNoz
-						</Typography.Title>
-					</NavLinkWrapper>
-				</NavLink>
-
-				<Space size="middle" align="center">
-					{!isLicenseActive && (
-						<Button onClick={onClickSignozCloud} type="primary">
-							Try Signoz Cloud
-						</Button>
+		<>
+			{showTrialExpiryBanner && (
+				<div className="trial-expiry-banner">
+					You are in free trial period. Your free trial will end on{' '}
+					<span>
+						{getFormattedDate(licenseData?.payload?.trialEnd || Date.now())}.
+					</span>
+					{role === 'ADMIN' ? (
+						<span>
+							{' '}
+							Please{' '}
+							<Button className="upgrade-link" type="link" onClick={handleUpgrade}>
+								upgrade
+							</Button>
+							to continue using SigNoz features.
+						</span>
+					) : (
+						'Please contact your administrator for upgrading to a paid plan.'
 					)}
-					<Config frontendId="tooltip" />
+				</div>
+			)}
 
-					<ToggleButton
-						checked={isDarkMode}
-						onChange={toggleTheme}
-						defaultChecked={isDarkMode}
-						checkedChildren="🌜"
-						unCheckedChildren="🌞"
-					/>
+			<Header>
+				<Container>
+					<NavLink to={homeRoute}>
+						<NavLinkWrapper>
+							<img src={`/signoz.svg?currentVersion=${currentVersion}`} alt="SigNoz" />
+							<Typography.Title
+								style={{ margin: 0, color: 'rgb(219, 219, 219)' }}
+								level={4}
+							>
+								SigNoz
+							</Typography.Title>
+						</NavLinkWrapper>
+					</NavLink>
 
-					<UserDropdown
-						onOpenChange={onToggleHandler(setIsUserDropDownOpen)}
-						trigger={['click']}
-						menu={menu}
-						open={isUserDropDownOpen}
-					>
-						<Space>
-							<AvatarWrapper shape="circle">{user?.name[0]}</AvatarWrapper>
-							<IconContainer>
-								{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
-							</IconContainer>
-						</Space>
-					</UserDropdown>
-				</Space>
-			</Container>
-		</Header>
+					<Space size="middle" align="center">
+						{!isLicenseActive && (
+							<Button onClick={onClickSignozCloud} type="primary">
+								Try Signoz Cloud
+							</Button>
+						)}
+						<Config frontendId="tooltip" />
+
+						<ToggleButton
+							checked={isDarkMode}
+							onChange={toggleTheme}
+							defaultChecked={isDarkMode}
+							checkedChildren="🌜"
+							unCheckedChildren="🌞"
+						/>
+
+						<UserDropdown
+							onOpenChange={onToggleHandler(setIsUserDropDownOpen)}
+							trigger={['click']}
+							menu={menu}
+							open={isUserDropDownOpen}
+						>
+							<Space>
+								<AvatarWrapper shape="circle">{user?.name[0]}</AvatarWrapper>
+								<IconContainer>
+									{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
+								</IconContainer>
+							</Space>
+						</UserDropdown>
+					</Space>
+				</Container>
+			</Header>
+		</>
 	);
 }
 

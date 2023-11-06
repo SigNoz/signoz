@@ -23,7 +23,7 @@ function ApDexMetricsApplication({
 		<ApDexMetrics
 			handleGraphClick={handleGraphClick}
 			delta={data?.data.delta}
-			metricsBuckets={data?.data.le}
+			metricsBuckets={data?.data.le || []}
 			onDragSelect={onDragSelect}
 			tagFilterItems={tagFilterItems}
 			thresholdValue={thresholdValue}

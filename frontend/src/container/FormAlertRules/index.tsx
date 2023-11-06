@@ -44,7 +44,6 @@ import {
 	StyledLeftContainer,
 } from './styles';
 import UserGuide from './UserGuide';
-import { toChartInterval } from './utils';
 
 function FormAlertRules({
 	alertType,
@@ -55,9 +54,10 @@ function FormAlertRules({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const {
 		currentQuery,
@@ -364,7 +364,7 @@ function FormAlertRules({
 			}
 			name=""
 			query={stagedQuery}
-			selectedInterval={toChartInterval(alertDef.evalWindow)}
+			selectedInterval={globalSelectedInterval}
 			alertDef={alertDef}
 		/>
 	);
@@ -394,7 +394,7 @@ function FormAlertRules({
 			name="Chart Preview"
 			query={stagedQuery}
 			alertDef={alertDef}
-			selectedInterval={toChartInterval(alertDef.evalWindow)}
+			selectedInterval={globalSelectedInterval}
 		/>
 	);
 

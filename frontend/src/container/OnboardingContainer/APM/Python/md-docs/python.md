@@ -10,8 +10,8 @@ Based on your application environment, you can choose the setup below to send tr
 
 From VMs, there are two ways to send data to SigNoz Cloud.
 
-- [Send traces directly to SigNoz Cloud](#send-traces-directly-to-signoz-cloud)
-- [Send traces via OTel Collector binary](#send-traces-via-otel-collector-binary) (recommended)
+- Send traces directly to SigNoz Cloud (quick start)
+- Send traces via OTel Collector binary (recommended)
 
 #### **Send traces directly to SigNoz Cloud**
 
@@ -31,23 +31,12 @@ opentelemetry-bootstrap --action=install
 Step 3. Run your application
 
 ```bash
-OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
-OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.{region}.signoz.cloud:443" \
-OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=SIGNOZ_INGESTION_KEY" \
+OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \
+OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.{{REGION}}.signoz.cloud:443" \
+OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}" \
 opentelemetry-instrument <your_run_command>
 ```
-
-- *`<service_name>`* is the name of the service you want
 - *`<your_run_command>`* can be `python3 app.py` or `flask run`
-- Replace `SIGNOZ_INGESTION_KEY` with the api token provided by SigNoz. You can find it in the email sent by SigNoz with your cloud account details.
-
-Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
-
- US -	ingest.us.signoz.cloud:443 <br></br>
-
- IN -	ingest.in.signoz.cloud:443 <br></br>
-
- EU - ingest.eu.signoz.cloud:443 <br></br>
 
 Note:
 Don’t run app in reloader/hot-reload mode as it breaks instrumentation.
@@ -73,22 +62,17 @@ Step 2. Add automatic instrumentation
 opentelemetry-bootstrap --action=install
 ```
 
-Step 3. To run your application and send data to collector in same VM:
+Step 3. To run your application and send data to collector in same VM
 
 ```bash
-OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
+OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" \
-OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your run command>
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your_run_command>
 ```
 
 where,
 
-- *`<service_name>`* is the name of the service you want
 - *`<your_run_command>`* can be `python3 app.py` or `flask run`
-
-*<service_name>* is the name of service you want
-
-*<your_run_command>* can be `python3 app.py` or `flask run`
 
 `http://localhost:4317` for gRPC exporter and `http://localhost:4318` for HTTP exporter.
 
@@ -118,17 +102,16 @@ Step 2. Add automatic instrumentation
 opentelemetry-bootstrap --action=install
 ```
 
-Step 3. Run your application:
+Step 3. Run your application
 
 ```bash
-OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
+OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" \
-OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your run command>
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your_run_command>
 ```
 
 where,
 
-- *`<service_name>`* is the name of the service you want
 - *`<your_run_command>`* can be `python3 app.py` or `flask run`
 
 

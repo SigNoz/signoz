@@ -1,4 +1,4 @@
-import Graph from 'container/GridGraphLayout/Graph/';
+import Graph from 'container/GridCardLayout/GridCard';
 import { MENU_ITEMS } from 'container/MetricsApplication/constant';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -11,17 +11,15 @@ function TopLevelOperation({
 	onDragSelect,
 	handleGraphClick,
 	widget,
-	yAxisUnit,
 }: TopLevelOperationProps): JSX.Element {
 	return (
 		<Card>
 			<GraphContainer>
 				<Graph
-					name={name}
 					headerMenuList={MENU_ITEMS}
+					name={name}
 					widget={widget}
 					onClickHandler={handleGraphClick(opName)}
-					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
 				/>
 			</GraphContainer>
@@ -35,7 +33,6 @@ interface TopLevelOperationProps {
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
 	widget: Widgets;
-	yAxisUnit: string;
 }
 
 export default TopLevelOperation;

@@ -1,14 +1,19 @@
-import { Card, Typography } from 'antd';
+import { WarningOutlined } from '@ant-design/icons';
+import { Card, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	errorTooltipPosition,
+	tooltipStyles,
+	WARNING_MESSAGE,
+} from 'container/GridCardLayout/WidgetHeader/config';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import getChartData from 'lib/getChartData';
-import { useSelector } from 'react-redux';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import { NotFoundContainer } from './styles';
 
@@ -18,13 +23,10 @@ function WidgetGraph({
 	selectedTime,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
 
-	const [selectedDashboard] = dashboards;
-	const { data } = selectedDashboard;
-	const { widgets = [] } = data;
+	const { selectedDashboard } = useDashboard();
+
+	const { widgets = [] } = selectedDashboard?.data || {};
 	const { search } = useLocation();
 
 	const params = new URLSearchParams(search);
@@ -65,22 +67,32 @@ function WidgetGraph({
 		queryData: [
 			{ queryData: getWidgetQueryRange.data?.payload.data.result ?? [] },
 		],
+		createDataset: undefined,
+		isWarningLimit: selectedWidget.panelTypes === PANEL_TYPES.TIME_SERIES,
 	});
 
 	return (
-		<GridPanelSwitch
-			title={title}
-			isStacked={isStacked}
-			opacity={opacity}
-			data={chartDataSet}
-			panelType={selectedGraph}
-			name={widgetId || 'legend_widget'}
-			yAxisUnit={yAxisUnit}
-			panelData={
-				getWidgetQueryRange.data?.payload.data.newResult.data.result || []
-			}
-			query={stagedQuery || query}
-		/>
+		<>
+			{chartDataSet.isWarning && (
+				<Tooltip title={WARNING_MESSAGE} placement={errorTooltipPosition}>
+					<WarningOutlined style={tooltipStyles} />
+				</Tooltip>
+			)}
+
+			<GridPanelSwitch
+				title={title}
+				isStacked={isStacked}
+				opacity={opacity}
+				data={chartDataSet.data}
+				panelType={selectedGraph}
+				name={widgetId || 'legend_widget'}
+				yAxisUnit={yAxisUnit}
+				panelData={
+					getWidgetQueryRange.data?.payload.data.newResult.data.result || []
+				}
+				query={stagedQuery || query}
+			/>
+		</>
 	);
 }
 

@@ -74,7 +74,7 @@ export const mapOfOperators = {
 	traces: tracesAggregateOperatorOptions,
 };
 
-export const mapOfFilters: Record<DataSource, QueryAdditionalFilter[]> = {
+export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
 	metrics: [
 		// eslint-disable-next-line sonarjs/no-duplicate-string
 		{ text: 'Aggregation interval', field: 'stepInterval' },
@@ -92,6 +92,24 @@ export const mapOfFilters: Record<DataSource, QueryAdditionalFilter[]> = {
 		{ text: 'Having', field: 'having' },
 		{ text: 'Aggregation interval', field: 'stepInterval' },
 	],
+};
+
+const commonFormulaFilters: QueryAdditionalFilter[] = [
+	{
+		text: 'Having',
+		field: 'having',
+	},
+	{ text: 'Order by', field: 'orderBy' },
+	{ text: 'Limit', field: 'limit' },
+];
+
+export const mapOfFormulaToFilters: Record<
+	DataSource,
+	QueryAdditionalFilter[]
+> = {
+	metrics: commonFormulaFilters,
+	logs: commonFormulaFilters,
+	traces: commonFormulaFilters,
 };
 
 export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [

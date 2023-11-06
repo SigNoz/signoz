@@ -14,11 +14,11 @@ import {
 
 import { tableComponents } from '../config';
 import { ModalFooterTitle } from '../styles';
-import { AlertMessage } from '.';
 import { processorColumns } from './config';
+import { AlertMessage } from './PipelineListsView';
 import { FooterButton, StyledTable } from './styles';
 import DragAction from './TableComponents/DragAction';
-import PipelineActions from './TableComponents/PipelineActions';
+import ProcessorActions from './TableComponents/ProcessorActions';
 import {
 	getEditedDataSource,
 	getProcessorUpdatedRow,
@@ -112,8 +112,7 @@ function PipelineExpandView({
 					dataIndex: 'action',
 					key: 'action',
 					render: (_value, record): JSX.Element => (
-						<PipelineActions
-							isPipelineAction={false}
+						<ProcessorActions
 							editAction={processorEditAction(record)}
 							deleteAction={processorDeleteAction(record)}
 						/>

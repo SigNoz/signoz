@@ -1,6 +1,6 @@
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/GridGraphLayout/Graph/';
+import Graph from 'container/GridCardLayout/GridCard';
 import { GraphTitle, MENU_ITEMS } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
@@ -55,6 +55,7 @@ function ServiceOverview({
 				},
 				title: GraphTitle.LATENCY,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ns',
 			}),
 		[servicename, isSpanMetricEnable, tagFilterItems],
 	);
@@ -79,7 +80,6 @@ function ServiceOverview({
 						name="service_latency"
 						onDragSelect={onDragSelect}
 						widget={latencyWidget}
-						yAxisUnit="ns"
 						onClickHandler={handleGraphClick('Service')}
 						headerMenuList={MENU_ITEMS}
 					/>

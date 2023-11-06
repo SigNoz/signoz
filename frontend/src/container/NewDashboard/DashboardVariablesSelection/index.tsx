@@ -1,40 +1,67 @@
 import { Row } from 'antd';
-import { NotificationInstance } from 'antd/es/notification/interface';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { map, sortBy } from 'lodash-es';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useState } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { UpdateDashboardVariables } from 'store/actions/dashboard/updatedDashboardVariables';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import VariableItem from './VariableItem';
 
-function DashboardVariableSelection({
-	updateDashboardVariables,
-}: DispatchProps): JSX.Element {
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
-	const [selectedDashboard] = dashboards;
-	const {
-		data: { variables = {} },
-	} = selectedDashboard;
+function DashboardVariableSelection(): JSX.Element | null {
+	const { selectedDashboard, setSelectedDashboard } = useDashboard();
+
+	const { data } = selectedDashboard || {};
+
+	const { variables } = data || {};
 
 	const [update, setUpdate] = useState<boolean>(false);
 	const [lastUpdatedVar, setLastUpdatedVar] = useState<string>('');
-	const { notifications } = useNotifications();
 
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const onVarChanged = (name: string): void => {
 		setLastUpdatedVar(name);
 		setUpdate(!update);
+	};
+
+	const updateMutation = useUpdateDashboard();
+	const { notifications } = useNotifications();
+
+	const updateVariables = (
+		updatedVariablesData: Dashboard['data']['variables'],
+	): void => {
+		if (!selectedDashboard) {
+			return;
+		}
+
+		updateMutation.mutateAsync(
+			{
+				...selectedDashboard,
+				data: {
+					...selectedDashboard.data,
+					variables: updatedVariablesData,
+				},
+			},
+			{
+				onSuccess: (updatedDashboard) => {
+					if (updatedDashboard.payload) {
+						setSelectedDashboard(updatedDashboard.payload);
+						notifications.success({
+							message: 'Variable updated successfully',
+						});
+					}
+				},
+				onError: () => {
+					notifications.error({
+						message: 'Error while updating variable',
+					});
+				},
+			},
+		);
 	};
 
 	const onValueUpdate = (
@@ -44,8 +71,8 @@ function DashboardVariableSelection({
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].selectedValue = value;
 
-		if (role !== 'VIEWER') {
-			updateDashboardVariables(updatedVariablesData, notifications);
+		if (role !== 'VIEWER' && selectedDashboard) {
+			updateVariables(updatedVariablesData);
 		}
 
 		onVarChanged(name);
@@ -58,13 +85,17 @@ function DashboardVariableSelection({
 		updatedVariablesData[name].allSelected = value;
 
 		if (role !== 'VIEWER') {
-			updateDashboardVariables(updatedVariablesData, notifications);
+			updateVariables(updatedVariablesData);
 		}
 		onVarChanged(name);
 	};
 
+	if (!variables) {
+		return null;
+	}
+
 	return (
-		<Row style={{ gap: '1rem' }}>
+		<Row>
 			{map(sortBy(Object.keys(variables)), (variableName) => (
 				<VariableItem
 					key={`${variableName}${variables[variableName].modificationUUID}`}
@@ -74,8 +105,8 @@ function DashboardVariableSelection({
 						...variables[variableName],
 						change: update,
 					}}
-					onValueUpdate={onValueUpdate as never}
-					onAllSelectedUpdate={onAllSelectedUpdate as never}
+					onValueUpdate={onValueUpdate}
+					onAllSelectedUpdate={onAllSelectedUpdate}
 					lastUpdatedVar={lastUpdatedVar}
 				/>
 			))}
@@ -83,20 +114,4 @@ function DashboardVariableSelection({
 	);
 }
 
-interface DispatchProps {
-	updateDashboardVariables: (
-		props: Parameters<typeof UpdateDashboardVariables>[0],
-		notify: NotificationInstance,
-	) => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	updateDashboardVariables: bindActionCreators(
-		UpdateDashboardVariables,
-		dispatch,
-	),
-});
-
-export default connect(null, mapDispatchToProps)(DashboardVariableSelection);
+export default DashboardVariableSelection;

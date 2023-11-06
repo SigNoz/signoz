@@ -1,6 +1,7 @@
 import { Select, SelectProps, Space } from 'antd';
 import { getCategorySelectOptionByName } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { categoryToSupport } from './config';
 import { DefaultLabel, selectStyles } from './styles';
@@ -31,6 +32,7 @@ function BuilderUnitsFilter({
 		<Space>
 			<DefaultLabel>Y-axis unit</DefaultLabel>
 			<Select
+				getPopupContainer={popupContainer}
 				style={selectStyles}
 				onChange={onChangeHandler}
 				value={selectedValue}

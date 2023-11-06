@@ -5,10 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"math"
-
 	"fmt"
-	"io/ioutil"
+	"io"
+	"math"
 	"math/rand"
 	"net/http"
 	"os"
@@ -42,6 +41,8 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	promModel "github.com/prometheus/common/model"
+	"go.uber.org/zap"
+
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -51,11 +52,9 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
-	"go.uber.org/zap"
 )
 
 const (
-	cluster                    = "cluster"
 	primaryNamespace           = "clickhouse"
 	archiveNamespace           = "clickhouse-archive"
 	signozTraceDBName          = "signoz_traces"
@@ -116,6 +115,7 @@ type ClickHouseReader struct {
 	featureFlags   interfaces.FeatureLookup
 
 	liveTailRefreshSeconds int
+	cluster                string
 }
 
 // NewTraceReader returns a TraceReader for the database
@@ -126,6 +126,7 @@ func NewReader(
 	maxIdleConns int,
 	maxOpenConns int,
 	dialTimeout time.Duration,
+	cluster string,
 ) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
@@ -168,6 +169,7 @@ func NewReader(
 		liveTailRefreshSeconds:  options.primary.LiveTailRefreshSeconds,
 		promConfigFile:          configFile,
 		featureFlags:            featureFlag,
+		cluster:                 cluster,
 	}
 }
 
@@ -329,15 +331,15 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 				// call query service to do this
 				// channels, apiErrorObj := r.GetChannels()
 
-				//if apiErrorObj != nil {
+				// if apiErrorObj != nil {
 				//	zap.S().Errorf("Not able to read channels from DB")
-				//}
-				//for _, channel := range *channels {
-				//apiErrorObj = r.LoadChannel(&channel)
-				//if apiErrorObj != nil {
+				// }
+				// for _, channel := range *channels {
+				// apiErrorObj = r.LoadChannel(&channel)
+				// if apiErrorObj != nil {
 				//	zap.S().Errorf("Not able to load channel with id=%d loaded from DB", channel.Id, channel.Data)
-				//}
-				//}
+				// }
+				// }
 
 				<-cancel
 
@@ -426,7 +428,7 @@ func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiErr
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	if response.StatusCode > 299 {
-		responseData, _ := ioutil.ReadAll(response.Body)
+		responseData, _ := io.ReadAll(response.Body)
 
 		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n Status: %s \n Data: %s", response.Status, string(responseData))
 		zap.S().Error(err)
@@ -2287,7 +2289,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				}
 				req := fmt.Sprintf(
 					"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(timestamp) + INTERVAL %v SECOND DELETE",
-					tableName, cluster, params.DelDuration)
+					tableName, r.cluster, params.DelDuration)
 				if len(params.ColdStorageVolume) > 0 {
 					req += fmt.Sprintf(", toDateTime(timestamp) + INTERVAL %v SECOND TO VOLUME '%s'",
 						params.ToColdStorageDuration, params.ColdStorageVolume)
@@ -2342,7 +2344,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			}
 			req := fmt.Sprintf(
 				"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + "+
-					"INTERVAL %v SECOND DELETE", tableName, cluster, params.DelDuration)
+					"INTERVAL %v SECOND DELETE", tableName, r.cluster, params.DelDuration)
 			if len(params.ColdStorageVolume) > 0 {
 				req += fmt.Sprintf(", toDateTime(toUInt32(timestamp_ms / 1000), 'UTC')"+
 					" + INTERVAL %v SECOND TO VOLUME '%s'",
@@ -2396,7 +2398,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			}
 			req := fmt.Sprintf(
 				"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(timestamp / 1000000000) + "+
-					"INTERVAL %v SECOND DELETE", tableName, cluster, params.DelDuration)
+					"INTERVAL %v SECOND DELETE", tableName, r.cluster, params.DelDuration)
 			if len(params.ColdStorageVolume) > 0 {
 				req += fmt.Sprintf(", toDateTime(timestamp / 1000000000)"+
 					" + INTERVAL %v SECOND TO VOLUME '%s'",
@@ -2502,7 +2504,7 @@ func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string,
 	// Set the storage policy for the required table. If it is already set, then setting it again
 	// will not a problem.
 	if len(coldStorageVolume) > 0 {
-		policyReq := fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY SETTING storage_policy='tiered'", tableName, cluster)
+		policyReq := fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY SETTING storage_policy='tiered'", tableName, r.cluster)
 
 		zap.S().Debugf("Executing Storage policy request: %s\n", policyReq)
 		if err := r.db.Exec(ctx, policyReq); err != nil {
@@ -3480,7 +3482,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		// create materialized column
 		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s[indexOf(%s, '%s')] CODEC(ZSTD(1))",
 			r.logsDB, r.logsLocalTable,
-			cluster,
+			r.cluster,
 			colname, field.DataType,
 			valueColName,
 			keyColName,
@@ -3491,10 +3493,16 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED -1",
+		defaultValueDistributed := "-1"
+		if strings.ToLower(field.DataType) == "bool" {
+			defaultValueDistributed = "false"
+			field.IndexType = "set(2)"
+		}
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s",
 			r.logsDB, r.logsTable,
-			cluster,
+			r.cluster,
 			colname, field.DataType,
+			defaultValueDistributed,
 		)
 		err = r.db.Exec(ctx, query)
 		if err != nil {
@@ -3504,7 +3512,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		// create exists column
 		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
 			r.logsDB, r.logsLocalTable,
-			cluster,
+			r.cluster,
 			colname,
 			keyColName,
 			field.Name,
@@ -3516,7 +3524,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 
 		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED false",
 			r.logsDB, r.logsTable,
-			cluster,
+			r.cluster,
 			colname,
 		)
 		err = r.db.Exec(ctx, query)
@@ -3533,7 +3541,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		}
 		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d",
 			r.logsDB, r.logsLocalTable,
-			cluster,
+			r.cluster,
 			colname,
 			colname,
 			field.IndexType,
@@ -3546,7 +3554,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 
 	} else {
 		// Delete the index first
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsLocalTable, cluster, colname)
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsLocalTable, r.cluster, colname)
 		err := r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
@@ -3557,7 +3565,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			query := "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s "
 			err := r.db.Exec(ctx, fmt.Sprintf(query,
 				r.logsDB, table,
-				cluster,
+				r.cluster,
 				colname,
 			),
 			)
@@ -3569,7 +3577,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			query = "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s_exists "
 			err = r.db.Exec(ctx, fmt.Sprintf(query,
 				r.logsDB, table,
-				cluster,
+				r.cluster,
 				colname,
 			),
 			)
@@ -3581,8 +3589,8 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 	return nil
 }
 
-func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.GetLogsResponse, *model.ApiError) {
-	response := []model.GetLogsResponse{}
+func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.SignozLog, *model.ApiError) {
+	response := []model.SignozLog{}
 	fields, apiErr := r.GetLogFields(ctx)
 	if apiErr != nil {
 		return nil, apiErr
@@ -3678,7 +3686,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 			}
 			tmpQuery = fmt.Sprintf("%s order by timestamp desc, id desc limit 100", tmpQuery)
 			zap.S().Debug(tmpQuery)
-			response := []model.GetLogsResponse{}
+			response := []model.SignozLog{}
 			err := r.db.Select(ctx, &response, tmpQuery)
 			if err != nil {
 				zap.S().Error(err)
@@ -4702,7 +4710,7 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 			tmpQuery = query + tmpQuery + " order by timestamp desc, id desc limit 100"
 
 			// using the old structure since we can directly read it to the struct as use it.
-			response := []model.GetLogsResponse{}
+			response := []model.SignozLog{}
 			err := r.db.Select(ctx, &response, tmpQuery)
 			if err != nil {
 				zap.S().Error(err)

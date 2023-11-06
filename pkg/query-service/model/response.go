@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"time"
 
@@ -494,6 +495,12 @@ type Series struct {
 	Points    []MetricPoint     `json:"values"`
 }
 
+func (s *Series) SortPoints() {
+	sort.Slice(s.Points, func(i, j int) bool {
+		return s.Points[i].Timestamp < s.Points[j].Timestamp
+	})
+}
+
 type MetricPoint struct {
 	Timestamp int64
 	Value     float64
@@ -503,6 +510,17 @@ type MetricPoint struct {
 func (p *MetricPoint) MarshalJSON() ([]byte, error) {
 	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
 	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (p *MetricPoint) UnmarshalJSON(b []byte) error {
+	var a [2]interface{}
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+	p.Timestamp = int64(a[0].(float64) * 1000)
+	p.Value, _ = strconv.ParseFloat(a[1].(string), 64)
+	return nil
 }
 
 type ShowCreateTableStatement struct {
@@ -520,7 +538,8 @@ type GetFieldsResponse struct {
 	Interesting []LogField `json:"interesting"`
 }
 
-type GetLogsResponse struct {
+// Represents a log record in query service requests and responses.
+type SignozLog struct {
 	Timestamp          uint64             `json:"timestamp" ch:"timestamp"`
 	ID                 string             `json:"id" ch:"id"`
 	TraceID            string             `json:"trace_id" ch:"trace_id"`
@@ -533,11 +552,12 @@ type GetLogsResponse struct {
 	Attributes_string  map[string]string  `json:"attributes_string" ch:"attributes_string"`
 	Attributes_int64   map[string]int64   `json:"attributes_int" ch:"attributes_int64"`
 	Attributes_float64 map[string]float64 `json:"attributes_float" ch:"attributes_float64"`
+	Attributes_bool    map[string]bool    `json:"attributes_bool" ch:"attributes_bool"`
 }
 
 type LogsTailClient struct {
 	Name   string
-	Logs   chan *GetLogsResponse
+	Logs   chan *SignozLog
 	Done   chan *bool
 	Error  chan error
 	Filter LogsFilterParams

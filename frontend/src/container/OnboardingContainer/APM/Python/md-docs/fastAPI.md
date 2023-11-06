@@ -10,12 +10,12 @@ Based on your application environment, you can choose the setup below to send tr
 
 From VMs, there are two ways to send data to SigNoz Cloud.
 
-- [Send traces directly to SigNoz Cloud](#send-traces-directly-to-signoz-cloud)
-- [Send traces via OTel Collector binary](#send-traces-via-otel-collector-binary) (recommended)
+- Send traces directly to SigNoz Cloud (quick start)
+- Send traces via OTel Collector binary (recommended)
 
 #### **Send traces directly to SigNoz Cloud**
 
-Step 1. Create a virtual environment<br></br>
+Step 1. Create a virtual environment
     
 ```bash
 python3 -m venv .venv
@@ -40,24 +40,13 @@ Please make sure that you have installed all the dependencies of your applicatio
 Step 4. Run your application
 
 ```bash
-OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
-OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.{region}.signoz.cloud:443" \
-OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=SIGNOZ_INGESTION_KEY" \
+OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \
+OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.{{REGION}}.signoz.cloud:443" \
+OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}" \
 OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
 opentelemetry-instrument <your_run_command>
 ```
-
-- *`<service_name>`* is the name of the service you want
-- *<your_run_command>* can be `python3 app.py` or `python manage.py runserver --noreload`
-- Replace `SIGNOZ_INGESTION_KEY` with the api token provided by SigNoz. You can find it in the email sent by SigNoz with your cloud account details.
-
-Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
-
- US -	ingest.us.signoz.cloud:443 <br></br>
-
- IN -	ingest.in.signoz.cloud:443 <br></br>
-
- EU - ingest.eu.signoz.cloud:443 <br></br>
+- *<your_run_command>* can be `python3 app.py` or `uvicorn main:app --host localhost --port 5002`
 
 Note:
 Don’t run app in reloader/hot-reload mode as it breaks instrumentation. For example, you can disable the auto reload with `--noreload`.
@@ -70,7 +59,7 @@ OTel Collector binary helps to collect logs, hostmetrics, resource and infra att
 
 You can find instructions to install OTel Collector binary [here](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/) in your VM. Once you are done setting up your OTel Collector binary, you can follow the below steps for instrumenting your Python application.
 
-Step 1. Create a virtual environment<br></br>
+Step 1. Create a virtual environment
     
 ```bash
 python3 -m venv .venv
@@ -92,16 +81,13 @@ opentelemetry-bootstrap --action=install
 
 Please make sure that you have installed all the dependencies of your application before running the above command. The command will not install instrumentation for the dependencies which are not installed.
 
-Step 4. To run your application and send data to collector in same VM:
+Step 4. To run your application and send data to collector in same VM
 
 ```bash
-OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
+OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" \
-OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your run command>
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your_run_command>
 ```
-
-*<service_name>* is the name of service you want
-
 *<your_run_command>* can be `python3 app.py` or `python manage.py runserver --noreload`
 
 `http://localhost:4317` for gRPC exporter and `http://localhost:4318` for HTTP exporter.
@@ -119,7 +105,7 @@ For Python application deployed on Kubernetes, you need to install OTel Collecto
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry Python instrumentation by following the below steps:
 
-Step 1. Create a virtual environment<br></br>
+Step 1. Create a virtual environment
     
 ```bash
 python3 -m venv .venv
@@ -141,15 +127,13 @@ opentelemetry-bootstrap --action=install
 
 Please make sure that you have installed all the dependencies of your application before running the above command. The command will not install instrumentation for the dependencies which are not installed.
 
-Step 4. Run your application:
+Step 4. Run your application
 
 ```bash
-OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
+OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" \
-OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your run command>
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your_run_command>
 ```
-
-*<service_name>* is the name of service you want
 
 *<your_run_command>* can be `python3 app.py` or `python manage.py runserver --noreload`
 

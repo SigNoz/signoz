@@ -1,7 +1,12 @@
 import { RouteTabProps } from 'components/RouteTab/types';
 import { TFunction } from 'i18next';
+import { isCloudUser } from 'utils/app';
 
-import { commonRoutes, organizationSettings } from './config';
+import {
+	commonRoutes,
+	ingestionSettings,
+	organizationSettings,
+} from './config';
 
 export const getRoutes = (
 	isCurrentOrgSettings: boolean,
@@ -11,6 +16,10 @@ export const getRoutes = (
 
 	if (isCurrentOrgSettings) {
 		common = [...common, ...organizationSettings(t)];
+	}
+
+	if (isCloudUser()) {
+		common = [...common, ...ingestionSettings(t)];
 	}
 
 	return common;

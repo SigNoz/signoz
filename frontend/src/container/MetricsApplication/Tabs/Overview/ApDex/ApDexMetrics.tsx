@@ -6,8 +6,8 @@ import {
 	apDexToolTipUrlText,
 } from 'constants/apDex';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/GridGraphLayout/Graph';
-import DisplayThreshold from 'container/GridGraphLayout/WidgetHeader/DisplayThreshold';
+import Graph from 'container/GridCardLayout/GridCard';
+import DisplayThreshold from 'container/GridCardLayout/WidgetHeader/DisplayThreshold';
 import { GraphTitle, MENU_ITEMS } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
@@ -67,7 +67,7 @@ function ApDexMetrics({
 	}, [thresholdValue]);
 
 	const isQueryEnabled =
-		metricsBuckets && metricsBuckets?.length > 0 && delta !== undefined;
+		!!metricsBuckets && metricsBuckets?.length > 0 && delta !== undefined;
 
 	return (
 		<Graph
@@ -75,7 +75,6 @@ function ApDexMetrics({
 			widget={apDexMetricsWidget}
 			onDragSelect={onDragSelect}
 			onClickHandler={handleGraphClick('ApDex')}
-			yAxisUnit=""
 			threshold={threshold}
 			isQueryEnabled={isQueryEnabled}
 			headerMenuList={MENU_ITEMS}

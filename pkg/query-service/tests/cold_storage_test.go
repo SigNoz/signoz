@@ -3,12 +3,13 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -35,7 +36,7 @@ func setTTL(table, coldStorage, toColdTTL, deleteTTL string, jwtToken string) ([
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return b, err
 	}
@@ -59,7 +60,7 @@ func TestListDisks(t *testing.T) {
 	require.NoError(t, err)
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.JSONEq(t, `[{"name":"default","type":"local"}, {"name":"s3","type":"s3"}]`, string(b))
 }
@@ -134,7 +135,7 @@ func getTTL(t *testing.T, table string, jwtToken string) *model.GetTTLResponseIt
 	require.NoError(t, err)
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
 	res := &model.GetTTLResponseItem{}

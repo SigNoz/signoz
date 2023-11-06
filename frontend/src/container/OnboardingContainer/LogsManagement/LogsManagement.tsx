@@ -4,7 +4,8 @@
 import './LogsManagement.styles.scss';
 
 import cx from 'classnames';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 import ApplicationLogs from './ApplicationLogs/ApplicationLogs';
 import Docker from './Docker/Docker';
@@ -35,16 +36,6 @@ const supportedLogTypes = [
 		imgURL: `Logos/software-window.svg`,
 	},
 	{
-		name: 'NodeJS Winston Logs ',
-		id: 'nodejs',
-		imgURL: `Logos/node-js.svg`,
-	},
-	{
-		name: 'Application Logs using OTEL SDK',
-		id: 'application_logs_otel_sdk',
-		imgURL: `Logos/cmd-terminal.svg`,
-	},
-	{
 		name: 'Logs from existing collectors',
 		id: 'existing_collectors',
 		imgURL: `Logos/cmd-terminal.svg`,
@@ -59,6 +50,15 @@ export default function LogsManagement({
 	handleLogTypeSelect: (id: string) => any;
 }): JSX.Element {
 	const [selectedLogsType, setSelectedLogsType] = useState('kubernetes');
+
+	useEffect(() => {
+		// on language select
+		trackEvent('Onboarding: Logs Management', {
+			selectedLogsType,
+			activeStep,
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedLogsType]);
 
 	const renderSelectedLanguageSetupInstructions = ():
 		| JSX.Element

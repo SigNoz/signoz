@@ -23,6 +23,7 @@ import {
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
@@ -41,6 +42,7 @@ function QueryBuilderSearch({
 	onChange,
 	whereClauseConfig,
 	className,
+	placeholder,
 }: QueryBuilderSearchProps): JSX.Element {
 	const {
 		updateTag,
@@ -85,10 +87,7 @@ function QueryBuilderSearch({
 			handleSearch(value);
 		};
 
-		const isDisabled =
-			!!searchValue ||
-			OPERATORS.HAS === tagOperator ||
-			OPERATORS.NHAS === tagOperator;
+		const isDisabled = !!searchValue;
 
 		return (
 			<Tag closable={!searchValue && closable} onClose={onCloseHandler}>
@@ -184,13 +183,14 @@ function QueryBuilderSearch({
 
 	return (
 		<Select
+			getPopupContainer={popupContainer}
 			virtual
 			showSearch
 			tagRender={onTagRender}
 			filterOption={false}
 			autoClearSearchValue={false}
 			mode="multiple"
-			placeholder={PLACEHOLDER}
+			placeholder={placeholder}
 			value={queryTags}
 			searchValue={searchValue}
 			className={className}
@@ -218,11 +218,13 @@ interface QueryBuilderSearchProps {
 	onChange: (value: TagFilter) => void;
 	whereClauseConfig?: WhereClauseConfig;
 	className?: string;
+	placeholder?: string;
 }
 
 QueryBuilderSearch.defaultProps = {
 	whereClauseConfig: undefined,
 	className: '',
+	placeholder: PLACEHOLDER,
 };
 
 export interface CustomTagProps {

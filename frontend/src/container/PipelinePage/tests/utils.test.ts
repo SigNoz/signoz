@@ -1,4 +1,4 @@
-import { pipelineMockData } from '../mocks/pipeline';
+import { mockPipelineFilter, pipelineMockData } from '../mocks/pipeline';
 import {
 	processorFields,
 	processorTypes,
@@ -68,7 +68,7 @@ describe('Utils testing of Pipeline Page', () => {
 			...pipelineMockData[findRecordIndex],
 			name: 'updated name',
 			description: 'changed description',
-			filter: 'value == test',
+			filter: mockPipelineFilter('value', '=', 'test'),
 			tags: ['test'],
 		};
 		const editedData = getEditedDataSource(

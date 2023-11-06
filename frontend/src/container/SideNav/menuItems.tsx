@@ -5,9 +5,11 @@ import {
 	BugOutlined,
 	DashboardFilled,
 	DeploymentUnitOutlined,
+	FileDoneOutlined,
 	LineChartOutlined,
 	MenuOutlined,
 	RocketOutlined,
+	SearchOutlined,
 	SettingOutlined,
 } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
@@ -31,9 +33,21 @@ const menuItems: SidebarMenu[] = [
 		icon: <MenuOutlined />,
 	},
 	{
-		key: ROUTES.LOGS,
+		key: ROUTES.LOGS_EXPLORER,
 		label: 'Logs',
 		icon: <AlignLeftOutlined />,
+		children: [
+			{
+				key: ROUTES.LOGS_EXPLORER,
+				icon: <SearchOutlined />,
+				label: 'Logs Explorer',
+			},
+			{
+				key: ROUTES.LOGS_PIPELINES,
+				icon: <DeploymentUnitOutlined />,
+				label: 'Logs Pipelines',
+			},
+		],
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,
@@ -61,6 +75,11 @@ const menuItems: SidebarMenu[] = [
 		icon: <LineChartOutlined />,
 	},
 	{
+		key: ROUTES.BILLING,
+		label: 'Billing',
+		icon: <FileDoneOutlined />,
+	},
+	{
 		key: ROUTES.SETTINGS,
 		label: 'Settings',
 		icon: <SettingOutlined />,
@@ -71,7 +90,7 @@ const menuItems: SidebarMenu[] = [
 export const NEW_ROUTES_MENU_ITEM_KEY_MAP = {
 	[ROUTES.TRACES_EXPLORER]: ROUTES.TRACE,
 	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACE,
-	[ROUTES.LOGS_EXPLORER]: ROUTES.LOGS,
+	[ROUTES.LOGS_EXPLORER]: ROUTES.LOGS_EXPLORER,
 };
 
 export default menuItems;
