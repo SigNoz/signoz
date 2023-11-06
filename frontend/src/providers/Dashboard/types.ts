@@ -5,7 +5,9 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 
 export interface IDashboardContext {
 	isDashboardSliderOpen: boolean;
+	isDashboardLocked: boolean;
 	handleToggleDashboardSlider: (value: boolean) => void;
+	handleDashboardLockToggle: (value: boolean) => void;
 	dashboardResponse: UseQueryResult<Dashboard, unknown>;
 	selectedDashboard: Dashboard | undefined;
 	dashboardId: string;

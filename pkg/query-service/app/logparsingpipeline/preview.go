@@ -22,7 +22,7 @@ func SimulatePipelinesProcessing(
 	pipelines []Pipeline,
 	logs []model.SignozLog,
 ) (
-	output []model.SignozLog, collectorErrorLogs []string, apiErr *model.ApiError,
+	output []model.SignozLog, collectorWarnAndErrorLogs []string, apiErr *model.ApiError,
 ) {
 
 	if len(pipelines) < 1 {

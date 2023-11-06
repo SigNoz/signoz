@@ -130,7 +130,7 @@ function ListOfAllDashboard(): JSX.Element {
 				dataIndex: 'description',
 			},
 			{
-				title: 'Tags (can be multiple)',
+				title: 'Tags',
 				dataIndex: 'tags',
 				width: 50,
 				render: (value): JSX.Element => <LabelColumn labels={value} />,
@@ -159,6 +159,7 @@ function ListOfAllDashboard(): JSX.Element {
 			tags: e.data.tags || [],
 			key: e.uuid,
 			createdBy: e.created_by,
+			isLocked: !!e.isLocked || false,
 			lastUpdatedBy: e.updated_by,
 			refetchDashboardList,
 		})) || [];
@@ -342,6 +343,7 @@ export interface Data {
 	createdAt: string;
 	lastUpdatedTime: string;
 	lastUpdatedBy: string;
+	isLocked: boolean;
 	id: string;
 }
 

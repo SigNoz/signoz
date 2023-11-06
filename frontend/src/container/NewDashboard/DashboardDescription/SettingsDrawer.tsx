@@ -18,7 +18,7 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 
 	return (
 		<>
-			<Button type="dashed" onClick={showDrawer}>
+			<Button type="dashed" onClick={showDrawer} style={{ width: '100%' }}>
 				<SettingOutlined /> Configure
 			</Button>
 			<DrawerContainer
