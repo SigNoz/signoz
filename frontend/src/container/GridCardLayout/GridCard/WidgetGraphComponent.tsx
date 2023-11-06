@@ -72,6 +72,7 @@ function WidgetGraphComponent({
 		localStoredVisibilityStates.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);
 		});
+		setGraphsVisibilityStates(localStoredVisibilityStates);
 	}, [localStoredVisibilityStates]);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
@@ -267,19 +268,21 @@ function WidgetGraphComponent({
 					isWarning={isWarning}
 				/>
 			</div>
-			<div style={{ height: '90%' }} ref={graphRef}>
-				<GridPanelSwitch
-					panelType={widget.panelTypes}
-					data={data}
-					name={name}
-					options={options}
-					yAxisUnit={widget.yAxisUnit}
-					onClickHandler={onClickHandler}
-					panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
-					query={widget.query}
-					ref={lineChartRef}
-				/>
-			</div>
+			{queryResponse.isLoading && <Skeleton />}
+			{queryResponse.isSuccess && (
+				<div style={{ height: '90%' }} ref={graphRef}>
+					<GridPanelSwitch
+						panelType={widget.panelTypes}
+						data={data}
+						name={name}
+						options={options}
+						yAxisUnit={widget.yAxisUnit}
+						onClickHandler={onClickHandler}
+						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
+						query={widget.query}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }

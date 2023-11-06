@@ -1,6 +1,5 @@
 import { Typography } from 'antd';
 import axios from 'axios';
-import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import Graph from 'container/GridCardLayout/GridCard';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
@@ -12,10 +11,10 @@ function TopLevelOperation({
 	opName,
 	topLevelOperationsIsError,
 	topLevelOperationsError,
-	topLevelOperationsLoading,
 	onDragSelect,
 	handleGraphClick,
 	widget,
+	topLevelOperationsIsLoading,
 }: TopLevelOperationProps): JSX.Element {
 	return (
 		<Card>
@@ -27,17 +26,13 @@ function TopLevelOperation({
 				</Typography>
 			) : (
 				<GraphContainer>
-					{topLevelOperationsLoading && (
-						<Spinner size="large" tip="Loading..." height="40vh" />
-					)}
-					{!topLevelOperationsLoading && (
-						<Graph
-							name={name}
-							widget={widget}
-							onClickHandler={handleGraphClick(opName)}
-							onDragSelect={onDragSelect}
-						/>
-					)}
+					<Graph
+						name={name}
+						widget={widget}
+						onClickHandler={handleGraphClick(opName)}
+						onDragSelect={onDragSelect}
+						isQueryEnabled={!topLevelOperationsIsLoading}
+					/>
 				</GraphContainer>
 			)}
 		</Card>
@@ -49,10 +44,10 @@ interface TopLevelOperationProps {
 	opName: string;
 	topLevelOperationsIsError: boolean;
 	topLevelOperationsError: unknown;
-	topLevelOperationsLoading: boolean;
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => OnClickPluginOpts['onClick'];
 	widget: Widgets;
+	topLevelOperationsIsLoading: boolean;
 }
 
 export default TopLevelOperation;
