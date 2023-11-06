@@ -5,6 +5,7 @@ import { Logout } from 'api/utils';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
+import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { ReactChild, useEffect, useMemo } from 'react';
@@ -37,6 +38,12 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			),
 		[pathname],
 	);
+
+	const {
+		data: licensesData,
+		isFetching: isFetchingLicensesData,
+	} = useLicense();
+
 	const {
 		isUserFetching,
 		isUserFetchingError,
@@ -44,12 +51,16 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const { t } = useTranslation(['common']);
+	const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const { notifications } = useNotifications();
 
 	const currentRoute = mapRoutes.get('current');
+
+	const isLocalStorageLoggedIn =
+		getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true';
 
 	const navigateToLoginIfNotLoggedIn = (isLoggedIn = isLoggedInState): void => {
 		dispatch({
@@ -64,58 +75,93 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		}
 	};
 
+	const handleUserLoginIfTokenPresent = async (
+		key: keyof typeof ROUTES,
+	): Promise<void> => {
+		if (localStorageUserAuthToken?.refreshJwt) {
+			// localstorage token is present
+
+			// renew web access token
+			const response = await loginApi({
+				refreshToken: localStorageUserAuthToken?.refreshJwt,
+			});
+
+			if (response.statusCode === 200) {
+				const route = routePermission[key];
+
+				// get all resource and put it over redux
+				const userResponse = await afterLogin(
+					response.payload.userId,
+					response.payload.accessJwt,
+					response.payload.refreshJwt,
+				);
+
+				if (
+					userResponse &&
+					route.find((e) => e === userResponse.payload.role) === undefined
+				) {
+					history.push(ROUTES.UN_AUTHORIZED);
+				}
+			} else {
+				Logout();
+
+				notifications.error({
+					message: response.error || t('something_went_wrong'),
+				});
+			}
+		}
+	};
+
+	const handlePrivateRoutes = async (
+		key: keyof typeof ROUTES,
+	): Promise<void> => {
+		if (
+			localStorageUserAuthToken &&
+			localStorageUserAuthToken.refreshJwt &&
+			isUserFetching
+		) {
+			handleUserLoginIfTokenPresent(key);
+		} else {
+			// user does have localstorage values
+
+			navigateToLoginIfNotLoggedIn(isLocalStorageLoggedIn);
+		}
+	};
+
+	const navigateToWorkSpaceBlocked = (route: any): void => {
+		const { path } = route;
+
+		if (path && path !== ROUTES.WORKSPACE_LOCKED) {
+			history.push(ROUTES.WORKSPACE_LOCKED);
+
+			dispatch({
+				type: UPDATE_USER_IS_FETCH,
+				payload: {
+					isUserFetching: false,
+				},
+			});
+		}
+	};
+
+	useEffect(() => {
+		if (!isFetchingLicensesData) {
+			const shouldBlockWorkspace = licensesData?.payload?.workSpaceBlock;
+
+			if (shouldBlockWorkspace) {
+				navigateToWorkSpaceBlocked(currentRoute);
+			}
+		}
+	}, [isFetchingLicensesData]);
+
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
-				const isLocalStorageLoggedIn =
-					getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true';
 				if (currentRoute) {
 					const { isPrivate, key } = currentRoute;
 
-					if (isPrivate) {
-						const localStorageUserAuthToken = getInitialUserTokenRefreshToken();
-
-						if (
-							localStorageUserAuthToken &&
-							localStorageUserAuthToken.refreshJwt &&
-							isUserFetching
-						) {
-							// localstorage token is present
-							const { refreshJwt } = localStorageUserAuthToken;
-
-							// renew web access token
-							const response = await loginApi({
-								refreshToken: refreshJwt,
-							});
-
-							if (response.statusCode === 200) {
-								const route = routePermission[key];
-
-								// get all resource and put it over redux
-								const userResponse = await afterLogin(
-									response.payload.userId,
-									response.payload.accessJwt,
-									response.payload.refreshJwt,
-								);
-
-								if (
-									userResponse &&
-									route.find((e) => e === userResponse.payload.role) === undefined
-								) {
-									history.push(ROUTES.UN_AUTHORIZED);
-								}
-							} else {
-								Logout();
-
-								notifications.error({
-									message: response.error || t('something_went_wrong'),
-								});
-							}
-						} else {
-							// user does have localstorage values
-							navigateToLoginIfNotLoggedIn(isLocalStorageLoggedIn);
-						}
+					if (isPrivate && key !== ROUTES.WORKSPACE_LOCKED) {
+						handlePrivateRoutes(key);
 					} else {
 						// no need to fetch the user and make user fetching false
 
@@ -145,7 +191,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				history.push(ROUTES.SOMETHING_WENT_WRONG);
 			}
 		})();
-	}, [dispatch, isLoggedInState, currentRoute]);
+	}, [dispatch, isLoggedInState, currentRoute, licensesData]);
 
 	if (isUserFetchingError) {
 		return <Redirect to={ROUTES.SOMETHING_WENT_WRONG} />;

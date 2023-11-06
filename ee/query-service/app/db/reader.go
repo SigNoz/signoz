@@ -1,6 +1,8 @@
 package db
 
 import (
+	"time"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
 
 	"github.com/jmoiron/sqlx"
@@ -15,8 +17,16 @@ type ClickhouseReader struct {
 	*basechr.ClickHouseReader
 }
 
-func NewDataConnector(localDB *sqlx.DB, promConfigPath string, lm interfaces.FeatureLookup) *ClickhouseReader {
-	ch := basechr.NewReader(localDB, promConfigPath, lm)
+func NewDataConnector(
+	localDB *sqlx.DB,
+	promConfigPath string,
+	lm interfaces.FeatureLookup,
+	maxIdleConns int,
+	maxOpenConns int,
+	dialTimeout time.Duration,
+	cluster string,
+) *ClickhouseReader {
+	ch := basechr.NewReader(localDB, promConfigPath, lm, maxIdleConns, maxOpenConns, dialTimeout, cluster)
 	return &ClickhouseReader{
 		conn:             ch.GetConn(),
 		appdb:            localDB,

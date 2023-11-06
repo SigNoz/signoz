@@ -1,3 +1,5 @@
+import { DownloadOptions } from 'container/Download/Download.types';
+
 export const legend = {
 	address: '{{address}}',
 };
@@ -14,9 +16,13 @@ export const OPERATION_LEGENDS = ['Operations'];
 export enum FORMULA {
 	ERROR_PERCENTAGE = 'A*100/B',
 	DATABASE_CALLS_AVG_DURATION = 'A/B',
+	APDEX_TRACES = '((B + C)/2)/A',
+	APDEX_DELTA_SPAN_METRICS = '(B + C/2)/A',
+	APDEX_CUMULATIVE_SPAN_METRICS = '((B + C)/2)/A',
 }
 
 export enum GraphTitle {
+	APDEX = 'Apdex',
 	LATENCY = 'Latency',
 	RATE_PER_OPS = 'Rate (ops/s)',
 	ERROR_PERCENTAGE = 'Error Percentage',
@@ -37,19 +43,15 @@ export enum KeyOperationTableHeader {
 	OPERATION_PR_SECOND = 'Op/s',
 }
 
-export enum DataType {
-	STRING = 'string',
-	FLOAT64 = 'float64',
-	INT64 = 'int64',
-}
-
 export enum MetricsType {
 	Tag = 'tag',
 	Resource = 'resource',
 }
 
 export enum WidgetKeys {
+	Le = 'le',
 	Name = 'name',
+	HasError = 'hasError',
 	Address = 'address',
 	DurationNano = 'durationNano',
 	StatusCode = 'status_code',
@@ -67,3 +69,8 @@ export enum WidgetKeys {
 	SignozExternalCallLatencySum = 'signoz_external_call_latency_sum',
 	Signoz_latency_bucket = 'signoz_latency_bucket',
 }
+
+export const topOperationMetricsDownloadOptions: DownloadOptions = {
+	isDownloadEnabled: true,
+	fileName: 'top-operation',
+} as const;

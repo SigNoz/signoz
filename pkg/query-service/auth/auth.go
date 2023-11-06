@@ -31,7 +31,7 @@ var (
 func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteResponse, error) {
 	zap.S().Debugf("Got an invite request for email: %s\n", req.Email)
 
-	token, err := randomHex(opaqueTokenSize)
+	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate invite token")
 	}
@@ -140,7 +140,7 @@ func ValidateInvite(ctx context.Context, req *RegisterRequest) (*model.Invitatio
 }
 
 func CreateResetPasswordToken(ctx context.Context, userId string) (*model.ResetPasswordEntry, error) {
-	token, err := randomHex(opaqueTokenSize)
+	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate reset password token")
 	}
@@ -165,7 +165,7 @@ func ResetPassword(ctx context.Context, req *model.ResetPasswordRequest) error {
 		return errors.New("Invalid reset password request")
 	}
 
-	hash, err := passwordHash(req.Password)
+	hash, err := PasswordHash(req.Password)
 	if err != nil {
 		return errors.Wrap(err, "Failed to generate password hash")
 	}
@@ -192,7 +192,7 @@ func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) error
 		return ErrorInvalidCreds
 	}
 
-	hash, err := passwordHash(req.NewPassword)
+	hash, err := PasswordHash(req.NewPassword)
 	if err != nil {
 		return errors.Wrap(err, "Failed to generate password hash")
 	}
@@ -243,21 +243,21 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 	var hash string
 	var err error
 
-	hash, err = passwordHash(req.Password)
+	hash, err = PasswordHash(req.Password)
 	if err != nil {
 		zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
 		return nil, model.InternalError(model.ErrSignupFailed{})
 	}
 
 	user := &model.User{
-		Id:                 uuid.NewString(),
-		Name:               req.Name,
-		Email:              req.Email,
-		Password:           hash,
-		CreatedAt:          time.Now().Unix(),
-		ProfilePirctureURL: "", // Currently unused
-		GroupId:            group.Id,
-		OrgId:              org.Id,
+		Id:                uuid.NewString(),
+		Name:              req.Name,
+		Email:             req.Email,
+		Password:          hash,
+		CreatedAt:         time.Now().Unix(),
+		ProfilePictureURL: "", // Currently unused
+		GroupId:           group.Id,
+		OrgId:             org.Id,
 	}
 
 	return dao.DB().CreateUser(ctx, user, true)
@@ -314,13 +314,13 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 
 	// check if password is not empty, as for SSO case it can be
 	if req.Password != "" {
-		hash, err = passwordHash(req.Password)
+		hash, err = PasswordHash(req.Password)
 		if err != nil {
 			zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
 			return nil, model.InternalError(model.ErrSignupFailed{})
 		}
 	} else {
-		hash, err = passwordHash(utils.GeneratePassowrd())
+		hash, err = PasswordHash(utils.GeneratePassowrd())
 		if err != nil {
 			zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
 			return nil, model.InternalError(model.ErrSignupFailed{})
@@ -328,14 +328,14 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	}
 
 	user := &model.User{
-		Id:                 uuid.NewString(),
-		Name:               req.Name,
-		Email:              req.Email,
-		Password:           hash,
-		CreatedAt:          time.Now().Unix(),
-		ProfilePirctureURL: "", // Currently unused
-		GroupId:            group.Id,
-		OrgId:              invite.OrgId,
+		Id:                uuid.NewString(),
+		Name:              req.Name,
+		Email:             req.Email,
+		Password:          hash,
+		CreatedAt:         time.Now().Unix(),
+		ProfilePictureURL: "", // Currently unused
+		GroupId:           group.Id,
+		OrgId:             invite.OrgId,
 	}
 
 	// TODO(Ahsan): Ideally create user and delete invitation should happen in a txn.
@@ -419,7 +419,7 @@ func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.Use
 }
 
 // Generate hash from the password.
-func passwordHash(pass string) (string, error) {
+func PasswordHash(pass string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err

@@ -4,6 +4,7 @@ import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderIt
 import {
 	AutocompleteType,
 	BaseAutocompleteData,
+	DataTypes,
 	LocalDataType,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -46,12 +47,13 @@ export const selectValueDivider = '__';
 
 export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 	BaseAutocompleteData,
-	'id'
+	'id' | 'isJSON'
 >)[] = ['key', 'dataType', 'type', 'isColumn'];
 
 export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
 	resource: 'resource',
 	tag: 'tag',
+	'': '',
 };
 
 export const formulasNames: string[] = Array.from(
@@ -72,7 +74,7 @@ export const mapOfOperators = {
 	traces: tracesAggregateOperatorOptions,
 };
 
-export const mapOfFilters: Record<DataSource, QueryAdditionalFilter[]> = {
+export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
 	metrics: [
 		// eslint-disable-next-line sonarjs/no-duplicate-string
 		{ text: 'Aggregation interval', field: 'stepInterval' },
@@ -90,6 +92,24 @@ export const mapOfFilters: Record<DataSource, QueryAdditionalFilter[]> = {
 		{ text: 'Having', field: 'having' },
 		{ text: 'Aggregation interval', field: 'stepInterval' },
 	],
+};
+
+const commonFormulaFilters: QueryAdditionalFilter[] = [
+	{
+		text: 'Having',
+		field: 'having',
+	},
+	{ text: 'Order by', field: 'orderBy' },
+	{ text: 'Limit', field: 'limit' },
+];
+
+export const mapOfFormulaToFilters: Record<
+	DataSource,
+	QueryAdditionalFilter[]
+> = {
+	metrics: commonFormulaFilters,
+	logs: commonFormulaFilters,
+	traces: commonFormulaFilters,
 };
 
 export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
@@ -111,10 +131,11 @@ export const initialAutocompleteData: BaseAutocompleteData = {
 		{ dataType: null, key: '', isColumn: null, type: null },
 		baseAutoCompleteIdKeysOrder,
 	),
-	dataType: null,
+	dataType: DataTypes.EMPTY,
 	key: '',
-	isColumn: null,
-	type: null,
+	isColumn: false,
+	type: '',
+	isJSON: false,
 };
 
 export const initialFilters: TagFilter = {
@@ -260,6 +281,8 @@ export const OPERATORS = {
 	NIN: 'NOT_IN',
 	LIKE: 'LIKE',
 	NLIKE: 'NOT_LIKE',
+	REGEX: 'REGEX',
+	NREGEX: 'NOT_REGEX',
 	'=': '=',
 	'!=': '!=',
 	EXISTS: 'EXISTS',
@@ -270,6 +293,8 @@ export const OPERATORS = {
 	'>': '>',
 	'<=': '<=',
 	'<': '<',
+	HAS: 'HAS',
+	NHAS: 'NHAS',
 };
 
 export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
@@ -284,6 +309,8 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS.NOT_CONTAINS,
 		OPERATORS.EXISTS,
 		OPERATORS.NOT_EXISTS,
+		OPERATORS.REGEX,
+		OPERATORS.NREGEX,
 	],
 	int64: [
 		OPERATORS['='],

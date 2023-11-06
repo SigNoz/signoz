@@ -13,5 +13,12 @@
 	"import_dashboard_by_pasting": "Import dashboard by pasting JSON or importing JSON file",
 	"error_loading_json": "Error loading JSON file",
 	"empty_json_not_allowed": "Empty JSON is not allowed",
-	"new_dashboard_title": "Sample Title"
+	"new_dashboard_title": "Sample Title",
+	"layout_saved_successfully": "Layout saved successfully",
+	"add_panel": "Add Panel",
+	"save_layout": "Save Layout",
+	"variable_updated_successfully": "Variable updated successfully",
+	"error_while_updating_variable": "Error while updating variable",
+	"dashboard_has_been_updated": "Dashboard has been updated",
+	"do_you_want_to_refresh_the_dashboard": "Do you want to refresh the dashboard?"
 }

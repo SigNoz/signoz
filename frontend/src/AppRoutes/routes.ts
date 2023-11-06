@@ -1,25 +1,29 @@
 import ROUTES from 'constants/routes';
-import DashboardWidget from 'pages/DashboardWidget';
+import WorkspaceBlocked from 'pages/WorkspaceLocked';
 import { RouteProps } from 'react-router-dom';
 
 import {
 	AllAlertChannels,
 	AllErrors,
+	BillingPage,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
+	DashboardWidget,
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
-	GettingStarted,
+	IngestionSettings,
 	LicensePage,
 	ListAllALertsPage,
+	LiveLogs,
 	Login,
 	Logs,
 	LogsExplorer,
 	LogsIndexToFields,
 	MySettings,
 	NewDashboardPage,
+	Onboarding,
 	OrganizationSettings,
 	PasswordReset,
 	PipelinePage,
@@ -30,6 +34,7 @@ import {
 	SignupPage,
 	SomethingWentWrong,
 	StatusPage,
+	SupportPage,
 	TraceDetail,
 	TraceFilter,
 	TracesExplorer,
@@ -44,6 +49,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		isPrivate: false,
 		key: 'SIGN_UP',
+	},
+	{
+		path: ROUTES.GET_STARTED,
+		exact: true,
+		component: Onboarding,
+		isPrivate: true,
+		key: 'GET_STARTED',
 	},
 	{
 		component: LogsIndexToFields,
@@ -93,13 +105,6 @@ const routes: AppRoutes[] = [
 		component: UsageExplorerPage,
 		isPrivate: true,
 		key: 'USAGE_EXPLORER',
-	},
-	{
-		path: ROUTES.INSTRUMENTATION,
-		exact: true,
-		component: GettingStarted,
-		isPrivate: true,
-		key: 'INSTRUMENTATION',
 	},
 	{
 		path: ROUTES.ALL_DASHBOARD,
@@ -214,6 +219,13 @@ const routes: AppRoutes[] = [
 		key: 'ORG_SETTINGS',
 	},
 	{
+		path: ROUTES.INGESTION_SETTINGS,
+		exact: true,
+		component: IngestionSettings,
+		isPrivate: true,
+		key: 'INGESTION_SETTINGS',
+	},
+	{
 		path: ROUTES.MY_SETTINGS,
 		exact: true,
 		component: MySettings,
@@ -232,6 +244,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: LogsExplorer,
 		key: 'LOGS_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LIVE_LOGS,
+		exact: true,
+		component: LiveLogs,
+		key: 'LIVE_LOGS',
 		isPrivate: true,
 	},
 	{
@@ -263,13 +282,35 @@ const routes: AppRoutes[] = [
 		isPrivate: false,
 	},
 	{
-		path: ROUTES.PIPELINES,
+		path: ROUTES.LOGS_PIPELINES,
 		exact: true,
 		component: PipelinePage,
-		key: 'PIPELINES',
+		key: 'LOGS_PIPELINES',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.BILLING,
+		exact: true,
+		component: BillingPage,
+		key: 'BILLING',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.WORKSPACE_LOCKED,
+		exact: true,
+		component: WorkspaceBlocked,
+		isPrivate: true,
+		key: 'WORKSPACE_LOCKED',
+	},
 ];
+
+export const SUPPORT_ROUTE: AppRoutes = {
+	path: ROUTES.SUPPORT,
+	exact: true,
+	component: SupportPage,
+	key: 'SUPPORT',
+	isPrivate: true,
+};
 
 export interface AppRoutes {
 	component: RouteProps['component'];

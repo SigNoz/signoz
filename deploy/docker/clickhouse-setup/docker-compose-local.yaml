@@ -4,11 +4,11 @@ services:
   query-service:
     hostname: query-service
     build:
-      context: "../../../pkg/query-service"
-      dockerfile: "./Dockerfile"
+      context: "../../../"
+      dockerfile: "./pkg/query-service/Dockerfile"
       args:
         LDFLAGS: ""
-        TARGETPLATFORM: "${LOCAL_GOOS}/${LOCAL_GOARCH}"
+        TARGETPLATFORM: "${GOOS}/${GOARCH}"
     container_name: signoz-query-service
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
@@ -22,7 +22,11 @@ services:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
       - ./data/signoz/:/var/lib/signoz/
-    command: [ "-config=/root/config/prometheus.yml" ]
+    command:
+      [
+        "-config=/root/config/prometheus.yml",
+        "--prefer-delta=true"
+      ]
     ports:
       - "6060:6060"
       - "8080:8080"
@@ -48,8 +52,8 @@ services:
       context: "../../../frontend"
       dockerfile: "./Dockerfile"
       args:
-        TARGETOS: "${LOCAL_GOOS}"
-        TARGETPLATFORM: "${LOCAL_GOARCH}"
+        TARGETOS: "${GOOS}"
+        TARGETPLATFORM: "${GOARCH}"
     container_name: signoz-frontend
     environment:
       - FRONTEND_API_ENDPOINT=http://query-service:8080

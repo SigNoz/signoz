@@ -32,7 +32,14 @@ import {
 	errorPercentage,
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
-import { Card, Col, Row } from '../styles';
+import {
+	Card,
+	Col,
+	ColApDexContainer,
+	ColErrorContainer,
+	Row,
+} from '../styles';
+import ApDex from './Overview/ApDex';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
@@ -85,8 +92,8 @@ function Application(): JSX.Element {
 
 	const {
 		data: topLevelOperations,
-		isLoading: topLevelOperationsLoading,
 		error: topLevelOperationsError,
+		isLoading: topLevelOperationsIsLoading,
 		isError: topLevelOperationsIsError,
 	} = useQuery<ServiceDataProps>({
 		queryKey: [servicename, minTime, maxTime, selectedTags],
@@ -124,6 +131,7 @@ function Application(): JSX.Element {
 				},
 				title: GraphTitle.RATE_PER_OPS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ops',
 			}),
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
@@ -144,6 +152,7 @@ function Application(): JSX.Element {
 				},
 				title: GraphTitle.ERROR_PERCENTAGE,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: '%',
 			}),
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
@@ -160,7 +169,7 @@ function Application(): JSX.Element {
 		[dispatch],
 	);
 
-	const onErrorTrackHandler = (timestamp: number): void => {
+	const onErrorTrackHandler = (timestamp: number): (() => void) => (): void => {
 		const currentTime = timestamp;
 		const tPlusOne = timestamp + 60 * 1000;
 
@@ -189,8 +198,8 @@ function Application(): JSX.Element {
 						handleGraphClick={handleGraphClick}
 						selectedTimeStamp={selectedTimeStamp}
 						selectedTraceTags={selectedTraceTags}
-						tagFilterItems={tagFilterItems}
 						topLevelOperationsRoute={topLevelOperationsRoute}
+						topLevelOperationsIsLoading={topLevelOperationsIsLoading}
 					/>
 				</Col>
 
@@ -211,39 +220,57 @@ function Application(): JSX.Element {
 						handleGraphClick={handleGraphClick}
 						onDragSelect={onDragSelect}
 						topLevelOperationsError={topLevelOperationsError}
-						topLevelOperationsLoading={topLevelOperationsLoading}
 						topLevelOperationsIsError={topLevelOperationsIsError}
 						name="operations_per_sec"
 						widget={operationPerSecWidget}
-						yAxisUnit="ops"
 						opName="Rate"
+						topLevelOperationsIsLoading={topLevelOperationsIsLoading}
 					/>
 				</Col>
 			</Row>
 			<Row gutter={24}>
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
-						id="Error_button"
-						onClick={(): void => {
-							onErrorTrackHandler(selectedTimeStamp);
-						}}
-					>
-						View Traces
-					</Button>
+					<ColApDexContainer>
+						<Button
+							type="default"
+							size="small"
+							id="ApDex_button"
+							onClick={onViewTracePopupClick({
+								servicename,
+								selectedTraceTags,
+								timestamp: selectedTimeStamp,
+							})}
+						>
+							View Traces
+						</Button>
+						<ApDex
+							handleGraphClick={handleGraphClick}
+							onDragSelect={onDragSelect}
+							topLevelOperationsRoute={topLevelOperationsRoute}
+							tagFilterItems={tagFilterItems}
+						/>
+					</ColApDexContainer>
+					<ColErrorContainer>
+						<Button
+							type="default"
+							size="small"
+							id="Error_button"
+							onClick={onErrorTrackHandler(selectedTimeStamp)}
+						>
+							View Traces
+						</Button>
 
-					<TopLevelOperation
-						handleGraphClick={handleGraphClick}
-						onDragSelect={onDragSelect}
-						topLevelOperationsError={topLevelOperationsError}
-						topLevelOperationsLoading={topLevelOperationsLoading}
-						topLevelOperationsIsError={topLevelOperationsIsError}
-						name="error_percentage_%"
-						widget={errorPercentageWidget}
-						yAxisUnit="%"
-						opName="Error"
-					/>
+						<TopLevelOperation
+							handleGraphClick={handleGraphClick}
+							onDragSelect={onDragSelect}
+							topLevelOperationsError={topLevelOperationsError}
+							topLevelOperationsIsError={topLevelOperationsIsError}
+							name="error_percentage_%"
+							widget={errorPercentageWidget}
+							opName="Error"
+							topLevelOperationsIsLoading={topLevelOperationsIsLoading}
+						/>
+					</ColErrorContainer>
 				</Col>
 
 				<Col span={12}>

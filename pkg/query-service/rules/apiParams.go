@@ -198,7 +198,7 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 	}
 
 	// Trying to parse templates.
-	tmplData := AlertTemplateData(make(map[string]string), 0, 0)
+	tmplData := AlertTemplateData(make(map[string]string), "0", "0")
 	defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 	parseTest := func(text string) error {
 		tmpl := NewTemplateExpander(
@@ -241,4 +241,8 @@ type GettableRule struct {
 	Id    string `json:"id"`
 	State string `json:"state"`
 	PostableRule
+	CreatedAt *time.Time `json:"createAt"`
+	CreatedBy *string    `json:"createBy"`
+	UpdatedAt *time.Time `json:"updateAt"`
+	UpdatedBy *string    `json:"updateBy"`
 }

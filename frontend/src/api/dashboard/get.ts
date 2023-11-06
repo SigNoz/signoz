@@ -1,24 +1,11 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/dashboard/get';
+import { ApiResponse } from 'types/api';
+import { Props } from 'types/api/dashboard/get';
+import { Dashboard } from 'types/api/dashboard/getAll';
 
-const get = async (
-	props: Props,
-): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
-	try {
-		const response = await axios.get(`/dashboards/${props.uuid}`);
-
-		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data.data,
-		};
-	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
-	}
-};
+const get = (props: Props): Promise<Dashboard> =>
+	axios
+		.get<ApiResponse<Dashboard>>(`/dashboards/${props.uuid}`)
+		.then((res) => res.data.data);
 
 export default get;

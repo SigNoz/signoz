@@ -9,7 +9,10 @@ import useDebounceValue from 'hooks/useDebounce';
 import { isEqual, uniqWith } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -109,8 +112,8 @@ export const useFetchKeysAndValues = (
 			dataSource: query.dataSource,
 			aggregateAttribute: query.aggregateAttribute.key,
 			attributeKey: filterAttributeKey?.key ?? tagKey,
-			filterAttributeKeyDataType: filterAttributeKey?.dataType ?? null,
-			tagType: filterAttributeKey?.type ?? null,
+			filterAttributeKeyDataType: filterAttributeKey?.dataType ?? DataTypes.EMPTY,
+			tagType: filterAttributeKey?.type ?? '',
 			searchText: isInNInOperator(tagOperator)
 				? tagValue[tagValue.length - 1]?.toString() ?? '' // last element of tagvalue will be always user search value
 				: tagValue?.toString() ?? '',
