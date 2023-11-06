@@ -164,9 +164,9 @@ function FullView({
 								<GridPanelSwitch
 									panelType={widget.panelTypes}
 									data={chartData}
-									options={chartOptions}
-									onClickHandler={onClickHandler}
 									name={name}
+									onClickHandler={onClickHandler}
+									options={chartOptions}
 									yAxisUnit={yAxisUnit}
 									onDragSelect={onDragSelect}
 									panelData={response.data?.payload.data.newResult.data.result || []}

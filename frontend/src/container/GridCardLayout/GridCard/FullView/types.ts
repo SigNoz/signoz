@@ -1,8 +1,9 @@
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ChartData, ChartDataset } from 'chart.js';
-import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
+import { ToggleGraphProps } from 'components/Graph/types';
 import { UplotProps } from 'components/Uplot/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { OnClickPluginOpts } from 'lib/uPlotLib/getUplotChartData';
 import { MutableRefObject } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 
@@ -45,7 +46,7 @@ export interface LabelProps {
 export interface FullViewProps {
 	widget: Widgets;
 	fullViewOptions?: boolean;
-	onClickHandler?: GraphOnClickHandler;
+	onClickHandler?: OnClickPluginOpts['onClick'];
 	name: string;
 	yAxisUnit?: string;
 	onDragSelect: (start: number, end: number) => void;
