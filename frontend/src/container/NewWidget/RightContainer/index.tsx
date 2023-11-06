@@ -138,7 +138,12 @@ function RightContainer({
 						setSelectedTime,
 					}}
 				/>
-				<Button onClick={onCreateAlertsHandler}>Create Alerts</Button>
+				<Button
+					style={{ marginBottom: 12, marginTop: 12 }}
+					onClick={onCreateAlertsHandler}
+				>
+					Create Alerts
+				</Button>
 
 				<YAxisUnitSelector
 					defaultValue={yAxisUnit}
