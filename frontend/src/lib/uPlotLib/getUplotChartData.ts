@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './uPlotLib.styles.scss';
 
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
