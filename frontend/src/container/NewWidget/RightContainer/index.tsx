@@ -1,9 +1,13 @@
-import { Input, Select } from 'antd';
+import { Button, Input, Select, Space } from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
+import history from 'lib/history';
 import { Dispatch, SetStateAction, useCallback } from 'react';
+import { Widgets } from 'types/api/dashboard/getAll';
 
 import { Container, Title } from './styles';
 import { timePreferance } from './timeItems';
@@ -23,6 +27,7 @@ function RightContainer({
 	yAxisUnit,
 	setYAxisUnit,
 	setGraphHandler,
+	selectedWidget,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
 		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
@@ -33,6 +38,16 @@ function RightContainer({
 
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
+
+	const onCreateAlertsHandler = useCallback(() => {
+		if (!selectedWidget) return;
+
+		history.push(
+			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+				JSON.stringify(selectedWidget?.query),
+			)}`,
+		);
+	}, [selectedWidget]);
 
 	return (
 		<Container>
@@ -116,17 +131,21 @@ function RightContainer({
 
 			<Title light="true">Panel Time Preference</Title>
 
-			<TimePreference
-				{...{
-					selectedTime,
-					setSelectedTime,
-				}}
-			/>
-			<YAxisUnitSelector
-				defaultValue={yAxisUnit}
-				onSelect={setYAxisUnit}
-				fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
-			/>
+			<Space direction="vertical">
+				<TimePreference
+					{...{
+						selectedTime,
+						setSelectedTime,
+					}}
+				/>
+				<Button onClick={onCreateAlertsHandler}>Create Alerts</Button>
+
+				<YAxisUnitSelector
+					defaultValue={yAxisUnit}
+					onSelect={setYAxisUnit}
+					fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
+				/>
+			</Space>
 		</Container>
 	);
 }
@@ -148,6 +167,11 @@ interface RightContainerProps {
 	yAxisUnit: string;
 	setYAxisUnit: Dispatch<SetStateAction<string>>;
 	setGraphHandler: (type: PANEL_TYPES) => void;
+	selectedWidget?: Widgets;
 }
+
+RightContainer.defaultProps = {
+	selectedWidget: undefined,
+};
 
 export default RightContainer;
