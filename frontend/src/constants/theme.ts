@@ -9,7 +9,6 @@ const themeColors = {
 		silver: '#BDBDBD',
 		outrageousOrange: '#FF6633',
 		roseBud: '#FFB399',
-		magentaPink: '#FF33FF',
 		canary: '#FFFF99',
 		deepSkyBlue: '#00B3E6',
 		goldTips: '#E6B333',

@@ -108,27 +108,34 @@ function GraphManager({
 
 	return (
 		<div className="graph-manager-container">
-			<div className="filter-table-container">
+			<div className="graph-manager-header">
 				<Input onChange={filterHandler} placeholder="Filter Series" />
+				<div className="save-cancel-container">
+					<span className="save-cancel-button">
+						<Button type="default" onClick={onToggleModelHandler}>
+							Cancel
+						</Button>
+					</span>
+					<span className="save-cancel-button">
+						<Button type="primary" onClick={saveHandler}>
+							Save
+						</Button>
+					</span>
+				</div>
+			</div>
+
+			<div className="legends-list-container">
 				<ResizeTable
 					columns={columns}
 					dataSource={dataSource}
 					rowKey="index"
 					pagination={false}
-					scroll={{ y: 240 }}
+					style={{
+						maxHeight: 200,
+						overflowX: 'hidden',
+						overflowY: 'auto',
+					}}
 				/>
-			</div>
-			<div className="save-cancel-container">
-				<span className="save-cancel-button">
-					<Button type="default" onClick={onToggleModelHandler}>
-						Cancel
-					</Button>
-				</span>
-				<span className="save-cancel-button">
-					<Button type="primary" onClick={saveHandler}>
-						Save
-					</Button>
-				</span>
 			</div>
 		</div>
 	);

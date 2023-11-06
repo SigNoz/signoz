@@ -1,11 +1,22 @@
 .pointSquare {
 	width: 10px;
 	height: 10px;
-	background-color: white;
+	background-color: transparent;
 	border: 2px solid white;
 	box-sizing: border-box;
+	border-radius: 50%;
+}
+
+.tooltip-content-header {
+	margin-bottom: 8px;
 }
 
 .tooltip-data-point {
 	font-size: 11px;
+}
+
+.tooltip-content {
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }

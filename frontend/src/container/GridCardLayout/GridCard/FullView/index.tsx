@@ -1,5 +1,6 @@
 import './WidgetFullView.styles.scss';
 
+import { SyncOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
@@ -142,13 +143,15 @@ function FullView({
 							setSelectedTime={setSelectedTime}
 						/>
 						<Button
+							style={{
+								marginLeft: '4px',
+							}}
 							onClick={(): void => {
 								response.refetch();
 							}}
 							type="primary"
-						>
-							Refresh
-						</Button>
+							icon={<SyncOutlined />}
+						/>
 					</TimeContainer>
 				)}
 			</div>

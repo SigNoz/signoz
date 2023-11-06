@@ -41,6 +41,44 @@ export const getUPlotChartData = (
 	return uPlotData;
 };
 
+// Define type annotations for style and interp
+const drawStyles = {
+	line: 'line',
+	bars: 'bars',
+	barsLeft: 'barsLeft',
+	barsRight: 'barsRight',
+	points: 'points',
+};
+
+const lineInterpolations = {
+	linear: 'linear',
+	stepAfter: 'stepAfter',
+	stepBefore: 'stepBefore',
+	spline: 'spline',
+};
+
+const { spline: splinePath } = uPlot.paths;
+
+const spline = splinePath();
+
+const getRenderer = (style, interp): any => {
+	if (style === drawStyles.line && interp === lineInterpolations.spline) {
+		return spline;
+	}
+
+	return null;
+};
+
+const paths = (u, seriesIdx, idx0, idx1, extendGap, buildClip): any => {
+	const s = u.series[seriesIdx];
+	const style = s.drawStyle;
+	const interp = s.lineInterpolation;
+
+	const renderer = getRenderer(style, interp);
+
+	return renderer(u, seriesIdx, idx0, idx1, extendGap, buildClip);
+};
+
 const getSeries = (
 	apiResponse?: MetricRangePayloadProps,
 	widgetMetaData: QueryData[] = [],
@@ -67,20 +105,21 @@ const getSeries = (
 			legend || '',
 		);
 
-		// set the click event listener on the table
-
-		const series: uPlot.Series = {
+		const seriesObj = {
+			width: 1.4,
+			paths,
+			drawStyle: drawStyles.line,
+			lineInterpolation: lineInterpolations.spline,
 			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
 			label,
 			stroke: color,
-			width: 1.5,
 			spanGaps: true,
 			points: {
 				show: false,
 			},
 		};
 
-		configurations.push(series);
+		configurations.push(seriesObj);
 	}
 
 	return configurations;
@@ -127,7 +166,9 @@ const createDivsFromArray = (
 				);
 
 				div.textContent = formattedDate;
+				div.classList.add('tooltip-content-header');
 			} else if (item.show && data[index][idx]) {
+				div.classList.add('tooltip-content');
 				const color = colors[(index - 1) % colors.length];
 
 				const squareBox = document.createElement('div');
@@ -288,17 +329,35 @@ export const getUPlotChartOptions = ({
 	id,
 	width: dimensions.width,
 	height: dimensions.height - 50,
+	// tzDate: (ts) => uPlot.tzDate(new Date(ts * 1e3), ''), //  Pass timezone for 2nd param
 	legend: {
 		show: true,
 		live: false,
 	},
 	focus: {
-		alpha: 1,
+		alpha: 0.3,
 	},
-	padding: [10, 10, 10, 10],
+	cursor: {
+		focus: {
+			prox: 1e6,
+			bias: 1,
+		},
+		points: {
+			size: (u, seriesIdx): number => u.series[seriesIdx].points.size * 2.5,
+			width: (u, seriesIdx, size): number => size / 4,
+			stroke: (u, seriesIdx): string =>
+				`${u.series[seriesIdx].points.stroke(u, seriesIdx)}90`,
+			fill: (): string => '#fff',
+		},
+	},
+	padding: [16, 16, 16, 16],
 	scales: {
 		x: {
 			time: true,
+			auto: true, // Automatically adjust scale range
+		},
+		y: {
+			auto: true,
 		},
 	},
 	plugins: [
