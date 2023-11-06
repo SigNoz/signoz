@@ -6,10 +6,7 @@ import { FC, forwardRef, memo, useMemo } from 'react';
 
 import { GridPanelSwitchProps, PropsTypePropsMap } from './types';
 
-const GridPanelSwitch = forwardRef<
-	ToggleGraphProps | undefined,
-	GridPanelSwitchProps
->(
+const GridPanelSwitch = forwardRef<ToggleGraphProps, GridPanelSwitchProps>(
 	(
 		{ panelType, data, yAxisUnit, panelData, query, options },
 		ref,

@@ -158,6 +158,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 									name={currentWidget?.id || ''}
 									variables={variables}
 									headerMenuList={widgetActions}
+									variables={variables}
 								/>
 							</Card>
 						</CardContainer>
