@@ -93,7 +93,7 @@ function FullView({
 	const isDarkMode = useIsDarkMode();
 
 	useEffect(() => {
-		if (!response.isFetching) {
+		if (!response.isFetching && fullViewRef.current) {
 			const width = fullViewRef.current?.clientWidth
 				? fullViewRef.current.clientWidth - 50
 				: 700;
@@ -118,7 +118,7 @@ function FullView({
 			setChartOptions(newChartOptions);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [response.isFetching, graphsVisibilityStates]);
+	}, [response.isFetching, graphsVisibilityStates, fullViewRef.current]);
 
 	useEffect(() => {
 		graphsVisibilityStates?.forEach((e, i) => {
@@ -152,42 +152,40 @@ function FullView({
 				)}
 			</div>
 
-			{chartOptions && (
-				<>
-					<div className="graph-container" ref={fullViewRef}>
-						<GraphContainer
-							style={{ height: '90%' }}
-							isGraphLegendToggleAvailable={canModifyChart}
-						>
-							<GridPanelSwitch
-								panelType={widget.panelTypes}
-								data={chartData}
-								options={chartOptions}
-								onClickHandler={onClickHandler}
-								name={name}
-								yAxisUnit={yAxisUnit}
-								onDragSelect={onDragSelect}
-								panelData={response.data?.payload.data.newResult.data.result || []}
-								query={widget.query}
-								ref={fullViewChartRef}
-							/>
-						</GraphContainer>
-					</div>
-
-					{canModifyChart && (
-						<GraphManager
+			<div className="graph-container" ref={fullViewRef}>
+				{chartOptions && (
+					<GraphContainer
+						style={{ height: '90%' }}
+						isGraphLegendToggleAvailable={canModifyChart}
+					>
+						<GridPanelSwitch
+							panelType={widget.panelTypes}
 							data={chartData}
-							name={name}
 							options={chartOptions}
+							onClickHandler={onClickHandler}
+							name={name}
 							yAxisUnit={yAxisUnit}
-							onToggleModelHandler={onToggleModelHandler}
-							setGraphsVisibilityStates={setGraphsVisibilityStates}
-							graphsVisibilityStates={graphsVisibilityStates}
-							lineChartRef={fullViewChartRef}
-							parentChartRef={parentChartRef}
+							onDragSelect={onDragSelect}
+							panelData={response.data?.payload.data.newResult.data.result || []}
+							query={widget.query}
+							ref={fullViewChartRef}
 						/>
-					)}
-				</>
+					</GraphContainer>
+				)}
+			</div>
+
+			{canModifyChart && chartOptions && (
+				<GraphManager
+					data={chartData}
+					name={name}
+					options={chartOptions}
+					yAxisUnit={yAxisUnit}
+					onToggleModelHandler={onToggleModelHandler}
+					setGraphsVisibilityStates={setGraphsVisibilityStates}
+					graphsVisibilityStates={graphsVisibilityStates}
+					lineChartRef={fullViewChartRef}
+					parentChartRef={parentChartRef}
+				/>
 			)}
 		</div>
 	);

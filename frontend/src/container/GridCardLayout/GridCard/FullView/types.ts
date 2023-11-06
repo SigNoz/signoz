@@ -3,7 +3,7 @@ import { ToggleGraphProps } from 'components/Graph/types';
 import { UplotProps } from 'components/Uplot/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { OnClickPluginOpts } from 'lib/uPlotLib/getUplotChartData';
-import { MutableRefObject } from 'react';
+import { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import uPlot from 'uplot';
 
@@ -54,7 +54,7 @@ export interface FullViewProps {
 	isDependedDataLoaded?: boolean;
 	graphsVisibilityStates?: boolean[];
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
-	setGraphsVisibilityStates: (graphsVisibilityStates: boolean[]) => void;
+	setGraphsVisibilityStates: Dispatch<SetStateAction<boolean[]>>;
 	parentChartRef: GraphManagerProps['lineChartRef'];
 }
 

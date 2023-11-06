@@ -2,6 +2,7 @@
 import './uPlotLib.styles.scss';
 
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { Dimensions } from 'hooks/useDimensions';
@@ -101,7 +102,7 @@ interface GetUPlotChartOptions {
 	yAxisUnit?: string;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	graphsVisibilityStates?: boolean[];
-	setGraphsVisibilityStates?: (graphsVisibilityStates: boolean[]) => void;
+	setGraphsVisibilityStates: FullViewProps['setGraphsVisibilityStates'];
 }
 
 const createDivsFromArray = (
@@ -331,11 +332,13 @@ export const getUPlotChartOptions = ({
 					seriesArray.forEach((seriesEl, index) => {
 						seriesEl.addEventListener('click', () => {
 							if (graphsVisibilityStates) {
-								const newGraphVisibilityStates = [...graphsVisibilityStates];
-								newGraphVisibilityStates[index + 1] = !newGraphVisibilityStates[
-									index + 1
-								];
-								setGraphsVisibilityStates?.(newGraphVisibilityStates);
+								setGraphsVisibilityStates?.((prev) => {
+									const newGraphVisibilityStates = [...prev];
+									newGraphVisibilityStates[index + 1] = !newGraphVisibilityStates[
+										index + 1
+									];
+									return newGraphVisibilityStates;
+								});
 							}
 						});
 					});
