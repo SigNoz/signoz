@@ -30,9 +30,9 @@ var logOperatorsToExpr = map[v3.FilterOperator]string{
 
 func getName(v v3.AttributeKey) string {
 	if v.Type == v3.AttributeKeyTypeTag {
-		return "attributes." + v.Key
+		return "attributes?." + v.Key
 	} else if v.Type == v3.AttributeKeyTypeResource {
-		return "resources." + v.Key
+		return "resource?." + v.Key
 	}
 	return v.Key
 }
@@ -41,7 +41,7 @@ func getTypeName(v v3.AttributeKeyType) string {
 	if v == v3.AttributeKeyTypeTag {
 		return "attributes"
 	} else if v == v3.AttributeKeyTypeResource {
-		return "resources"
+		return "resource"
 	}
 	return ""
 }

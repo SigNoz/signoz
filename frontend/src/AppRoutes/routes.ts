@@ -282,10 +282,10 @@ const routes: AppRoutes[] = [
 		isPrivate: false,
 	},
 	{
-		path: ROUTES.PIPELINES,
+		path: ROUTES.LOGS_PIPELINES,
 		exact: true,
 		component: PipelinePage,
-		key: 'PIPELINES',
+		key: 'LOGS_PIPELINES',
 		isPrivate: true,
 	},
 	{
@@ -299,7 +299,7 @@ const routes: AppRoutes[] = [
 		path: ROUTES.WORKSPACE_LOCKED,
 		exact: true,
 		component: WorkspaceBlocked,
-		isPrivate: false,
+		isPrivate: true,
 		key: 'WORKSPACE_LOCKED',
 	},
 ];

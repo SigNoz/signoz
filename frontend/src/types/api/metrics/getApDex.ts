@@ -10,5 +10,5 @@ export interface SetApDexPayloadProps {
 
 export interface MetricMetaProps {
 	delta: boolean;
-	le: number[];
+	le: number[] | null;
 }

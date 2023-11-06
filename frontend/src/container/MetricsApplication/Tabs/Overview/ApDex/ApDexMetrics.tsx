@@ -77,7 +77,7 @@ function ApDexMetrics({
 
 	const isQueryEnabled =
 		topLevelOperationsRoute.length > 0 &&
-		metricsBuckets &&
+		!!metricsBuckets &&
 		metricsBuckets?.length > 0 &&
 		delta !== undefined;
 

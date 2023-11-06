@@ -1,3 +1,6 @@
+import { Rule, RuleRender } from 'antd/es/form';
+import { NamePath } from 'antd/es/form/interface';
+
 type ProcessorType = {
 	key: string;
 	value: string;
@@ -8,11 +11,11 @@ type ProcessorType = {
 
 export const processorTypes: Array<ProcessorType> = [
 	{ key: 'grok_parser', value: 'grok_parser', label: 'Grok' },
-	{ key: 'json_parser', value: 'json_parser', label: 'Json Parser' },
 	{ key: 'regex_parser', value: 'regex_parser', label: 'Regex' },
+	{ key: 'json_parser', value: 'json_parser', label: 'Json Parser' },
+	{ key: 'trace_parser', value: 'trace_parser', label: 'Trace Parser' },
 	{ key: 'add', value: 'add', label: 'Add' },
 	{ key: 'remove', value: 'remove', label: 'Remove' },
-	{ key: 'trace_parser', value: 'trace_parser', label: 'Trace Parser' },
 	// { key: 'retain', value: 'retain', label: 'Retain' }, @Chintan - Commented as per Nitya's suggestion
 	{ key: 'move', value: 'move', label: 'Move' },
 	{ key: 'copy', value: 'copy', label: 'Copy' },
@@ -24,10 +27,29 @@ export type ProcessorFormField = {
 	id: number;
 	fieldName: string;
 	placeholder: string;
-	name: string;
-	rules?: Array<{ [key: string]: boolean }>;
+	name: string | NamePath;
+	rules?: Array<Rule>;
 	initialValue?: string;
+	dependencies?: Array<string | NamePath>;
 };
+
+const traceParserFieldValidator: RuleRender = (form) => ({
+	validator: (): Promise<void> => {
+		const parseFromValues = [
+			['trace_id', 'parse_from'],
+			['span_id', 'parse_from'],
+			['trace_flags', 'parse_from'],
+		].map((np) => form.getFieldValue(np));
+
+		if (!parseFromValues.some((v) => v?.length > 0)) {
+			return Promise.reject(
+				new Error('At least one of the trace parser fields must be specified.'),
+			);
+		}
+
+		return Promise.resolve();
+	},
+});
 
 const commonFields = [
 	{
@@ -152,21 +174,36 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		},
 		{
 			id: 2,
-			fieldName: 'Trace Id Parce From',
+			fieldName: 'Parse Trace Id From',
 			placeholder: 'processor_trace_id_placeholder',
-			name: 'traceId',
+			name: ['trace_id', 'parse_from'],
+			rules: [traceParserFieldValidator],
+			dependencies: [
+				['span_id', 'parse_from'],
+				['trace_flags', 'parse_from'],
+			],
 		},
 		{
 			id: 3,
-			fieldName: 'Span id Parse From',
+			fieldName: 'Parse Span Id From',
 			placeholder: 'processor_span_id_placeholder',
-			name: 'spanId',
+			name: ['span_id', 'parse_from'],
+			rules: [traceParserFieldValidator],
+			dependencies: [
+				['trace_id', 'parse_from'],
+				['trace_flags', 'parse_from'],
+			],
 		},
 		{
 			id: 4,
-			fieldName: 'Trace flags parse from',
+			fieldName: 'Parse Trace flags From',
 			placeholder: 'processor_trace_flags_placeholder',
-			name: 'traceFlags',
+			name: ['trace_flags', 'parse_from'],
+			rules: [traceParserFieldValidator],
+			dependencies: [
+				['trace_id', 'parse_from'],
+				['span_id', 'parse_from'],
+			],
 		},
 	],
 	retain: [

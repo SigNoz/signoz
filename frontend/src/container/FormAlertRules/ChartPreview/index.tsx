@@ -9,9 +9,12 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import getChartData from 'lib/getChartData';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
 import { covertIntoDataFormats } from './utils';
@@ -41,6 +44,9 @@ function ChartPreview({
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const threshold = alertDef?.condition.target || 0;
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const thresholdValue = covertIntoDataFormats({
 		value: threshold,
@@ -100,6 +106,8 @@ function ChartPreview({
 				'chartPreview',
 				userQueryKey || JSON.stringify(query),
 				selectedInterval,
+				minTime,
+				maxTime,
 			],
 			retry: false,
 			enabled: canQuery,
