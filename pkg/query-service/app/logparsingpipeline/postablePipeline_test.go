@@ -250,6 +250,31 @@ var operatorTest = []struct {
 			ParseTo: "attributes",
 		},
 		IsValid: false,
+	}, {
+		Name: "Trace Parser - invalid - no trace_parser spec",
+		Operator: PipelineOperator{
+			ID:   "trace",
+			Type: "trace_parser",
+		},
+		IsValid: false,
+	}, {
+		Name: "Trace Parser - invalid - no ParseFrom specified",
+		Operator: PipelineOperator{
+			ID:          "trace",
+			Type:        "trace_parser",
+			TraceParser: &TraceParser{},
+		},
+		IsValid: false,
+	}, {
+		Name: "Trace Parser - invalid - bad parsefrom attribute",
+		Operator: PipelineOperator{
+			ID:   "trace",
+			Type: "trace_parser",
+			TraceParser: &TraceParser{
+				TraceId: &ParseFrom{ParseFrom: "trace_id"},
+			},
+		},
+		IsValid: false,
 	},
 }
 

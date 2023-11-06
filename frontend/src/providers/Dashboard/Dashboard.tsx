@@ -5,6 +5,7 @@ import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
 import useTabVisibility from 'hooks/useTabFocus';
+import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
 import omitBy from 'lodash-es/omitBy';
@@ -109,7 +110,7 @@ export function DashboardProvider({
 
 					dashboardRef.current = data;
 
-					setLayouts(data.data.layout || []);
+					setLayouts(getUpdatedLayout(data.data.layout));
 				}
 
 				if (
@@ -145,7 +146,7 @@ export function DashboardProvider({
 
 							updatedTimeRef.current = dayjs(data.updated_at);
 
-							setLayouts(data.data.layout || []);
+							setLayouts(getUpdatedLayout(data.data.layout));
 						},
 					});
 
@@ -166,7 +167,7 @@ export function DashboardProvider({
 							data.data.layout,
 						)
 					) {
-						setLayouts(data?.data?.layout || []);
+						setLayouts(getUpdatedLayout(data.data.layout));
 					}
 				}
 			},

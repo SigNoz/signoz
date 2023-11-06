@@ -1,5 +1,4 @@
 import getTopOperations from 'api/metrics/getTopOperations';
-import Spinner from 'components/Spinner';
 import TopOperationsTable from 'container/MetricsApplication/TopOperationsTable';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
@@ -36,12 +35,7 @@ function TopOperation(): JSX.Element {
 
 	const topOperationData = data || [];
 
-	return (
-		<>
-			{isLoading && <Spinner size="large" tip="Loading..." height="40vh" />}
-			{!isLoading && <TopOperationsTable data={topOperationData} />}
-		</>
-	);
+	return <TopOperationsTable data={topOperationData} isLoading={isLoading} />;
 }
 
 export default TopOperation;

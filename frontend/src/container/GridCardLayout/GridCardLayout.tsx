@@ -141,7 +141,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 						>
 							<Card $panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}>
 								<GridCard
-									widget={currentWidget || ({ id } as Widgets)}
+									widget={currentWidget || ({ id, query: {} } as Widgets)}
 									name={currentWidget?.id || ''}
 									headerMenuList={headerMenuList}
 									variables={variables}

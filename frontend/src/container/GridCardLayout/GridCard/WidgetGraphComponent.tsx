@@ -7,7 +7,15 @@ import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { Dispatch, SetStateAction, useCallback, useRef, useState } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -19,6 +27,7 @@ import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
+import { getGraphVisibilityStateOnDataChange } from './utils';
 
 function WidgetGraphComponent({
 	widget,
@@ -47,6 +56,29 @@ function WidgetGraphComponent({
 	const featureResponse = useSelector<AppState, AppReducer['featureResponse']>(
 		(state) => state.app.featureResponse,
 	);
+
+	const { graphVisibilityStates: localStoredVisibilityStates } = useMemo(
+		() =>
+			getGraphVisibilityStateOnDataChange({
+				data,
+				isExpandedName: true,
+				name,
+			}),
+		[data, name],
+	);
+
+	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
+		boolean[]
+	>(localStoredVisibilityStates);
+
+	useEffect(() => {
+		if (!lineChartRef.current) return;
+
+		localStoredVisibilityStates.forEach((state, index) => {
+			lineChartRef.current?.toggleGraph(index, state);
+		});
+		setGraphsVisibilityStates(localStoredVisibilityStates);
+	}, [localStoredVisibilityStates]);
 
 	const onToggleModal = useCallback(
 		(func: Dispatch<SetStateAction<boolean>>) => {
@@ -215,6 +247,7 @@ function WidgetGraphComponent({
 					onToggleModelHandler={onToggleModelHandler}
 					parentChartRef={lineChartRef}
 					onDragSelect={onDragSelect}
+					graphsVisibilityStates={graphsVisibilityStates}
 				/>
 			</Modal>
 
@@ -233,18 +266,21 @@ function WidgetGraphComponent({
 					isWarning={isWarning}
 				/>
 			</div>
-			<div style={{ height: '90%' }} ref={graphRef}>
-				<GridPanelSwitch
-					panelType={widget.panelTypes}
-					data={data}
-					name={name}
-					options={options}
-					yAxisUnit={widget.yAxisUnit}
-					onClickHandler={onClickHandler}
-					panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
-					query={widget.query}
-				/>
-			</div>
+			{queryResponse.isLoading && <Skeleton />}
+			{queryResponse.isSuccess && (
+				<div style={{ height: '90%' }} ref={graphRef}>
+					<GridPanelSwitch
+						panelType={widget.panelTypes}
+						data={data}
+						name={name}
+						options={options}
+						yAxisUnit={widget.yAxisUnit}
+						onClickHandler={onClickHandler}
+						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
+						query={widget.query}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }

@@ -140,7 +140,7 @@ func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 	ctx context.Context,
 	request *PipelinesPreviewRequest,
 ) (*PipelinesPreviewResponse, *model.ApiError) {
-	result, err := SimulatePipelinesProcessing(
+	result, _, err := SimulatePipelinesProcessing(
 		ctx, request.Pipelines, request.Logs,
 	)
 
