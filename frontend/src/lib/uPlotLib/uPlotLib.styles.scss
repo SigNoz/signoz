@@ -1,6 +1,6 @@
 .pointSquare {
-	width: 10px;
-	height: 10px;
+	width: 12px;
+	height: 12px;
 	background-color: transparent;
 	border: 2px solid white;
 	box-sizing: border-box;
@@ -9,6 +9,7 @@
 
 .tooltip-content-header {
 	margin-bottom: 8px;
+	font-size: 13px;
 }
 
 .tooltip-data-point {
@@ -20,4 +21,9 @@
 	align-items: center;
 	gap: 8px;
 	margin-bottom: 4px;
+
+	.pointSquare,
+	.tooltip-data-point {
+		font-size: 13px !important;
+	}
 }

@@ -35,7 +35,6 @@ body {
 			display: flex;
 			align-items: center;
 			gap: 4px;
-			font-weight: 400;
 			font-size: 12px;
 			-webkit-font-smoothing: antialiased;
 
@@ -59,12 +58,12 @@ body {
 	position: absolute;
 	margin: 0.5rem;
 	background: rgba(0, 0, 0, 0.9);
+	-webkit-font-smoothing: antialiased;
 	color: #fff;
 	z-index: 10000;
 	pointer-events: none;
 	overflow: auto;
 	max-height: 600px !important;
-	letter-spacing: 1px;
 	border-radius: 5px;
 
 	.tooltip-container {
