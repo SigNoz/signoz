@@ -3,10 +3,8 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
-import {
-	getUPlotChartData,
-	getUPlotChartOptions,
-} from 'lib/uPlotLib/getUplotChartData';
+import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartData';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getChartData';
 import { useCallback, useMemo, useRef } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useDispatch } from 'react-redux';

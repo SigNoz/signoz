@@ -52,8 +52,9 @@ body {
 }
 
 #overlay {
-	font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
-		'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+		'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
+		'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 	font-size: 12px;
 	position: absolute;
 	margin: 0.5rem;
@@ -63,6 +64,7 @@ body {
 	pointer-events: none;
 	overflow: auto;
 	max-height: 600px !important;
+	letter-spacing: 1px;
 	border-radius: 5px;
 
 	.tooltip-container {

@@ -15,10 +15,8 @@ import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import {
-	getUPlotChartData,
-	getUPlotChartOptions,
-} from 'lib/uPlotLib/getUplotChartData';
+import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartData';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getChartData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';

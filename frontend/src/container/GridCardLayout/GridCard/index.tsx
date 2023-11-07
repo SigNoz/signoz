@@ -5,10 +5,8 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import {
-	getUPlotChartData,
-	getUPlotChartOptions,
-} from 'lib/uPlotLib/getUplotChartData';
+import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartData';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
 import _noop from 'lodash-es/noop';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
