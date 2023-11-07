@@ -117,21 +117,23 @@ function GridCardGraph({
 
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
-			<WidgetGraphComponent
-				data={chartData}
-				options={options}
-				widget={widget}
-				queryResponse={queryResponse}
-				errorMessage={errorMessage}
-				isWarning={false}
-				name={name}
-				onDragSelect={onDragSelect}
-				threshold={threshold}
-				headerMenuList={headerMenuList}
-				onClickHandler={onClickHandler}
-			/>
-
-			{isEmptyLayout && <EmptyWidget />}
+			{isEmptyLayout ? (
+				<EmptyWidget />
+			) : (
+				<WidgetGraphComponent
+					data={chartData}
+					options={options}
+					widget={widget}
+					queryResponse={queryResponse}
+					errorMessage={errorMessage}
+					isWarning={false}
+					name={name}
+					onDragSelect={onDragSelect}
+					threshold={threshold}
+					headerMenuList={headerMenuList}
+					onClickHandler={onClickHandler}
+				/>
+			)}
 		</div>
 	);
 }
