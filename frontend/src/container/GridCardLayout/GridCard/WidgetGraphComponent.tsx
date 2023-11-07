@@ -137,7 +137,7 @@ function WidgetGraphComponent({
 				i: uuid,
 				w: 6,
 				x: 0,
-				h: 2,
+				h: 3,
 				y: 0,
 			},
 		];
@@ -233,7 +233,7 @@ function WidgetGraphComponent({
 			</Modal>
 
 			<Modal
-				title="View"
+				title={widget?.title || 'View'}
 				footer={[]}
 				centered
 				open={modal}

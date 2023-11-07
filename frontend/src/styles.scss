@@ -35,7 +35,6 @@ body {
 			display: flex;
 			align-items: center;
 			gap: 4px;
-			font-weight: 400;
 			font-size: 12px;
 			-webkit-font-smoothing: antialiased;
 
@@ -52,14 +51,16 @@ body {
 }
 
 #overlay {
-	font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande',
-		'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+		'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
+		'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 	font-size: 12px;
 	position: absolute;
 	margin: 0.5rem;
 	background: rgba(0, 0, 0, 0.9);
+	-webkit-font-smoothing: antialiased;
 	color: #fff;
-	z-index: 100;
+	z-index: 10000;
 	pointer-events: none;
 	overflow: auto;
 	max-height: 600px !important;
@@ -88,4 +89,36 @@ body {
 	display: flex;
 	align-items: center;
 	gap: 4px;
+}
+
+.uplot {
+	width: 100%;
+}
+
+::-webkit-scrollbar {
+	height: 1rem;
+	width: 0.5rem;
+}
+
+::-webkit-scrollbar:horizontal {
+	height: 0.5rem;
+	width: 1rem;
+}
+
+::-webkit-scrollbar-track {
+	background-color: transparent;
+	border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+	--tw-border-opacity: 1;
+	background-color: rgba(217, 217, 227, 0.8);
+	border-color: rgba(255, 255, 255, var(--tw-border-opacity));
+	border-radius: 9999px;
+	border-width: 1px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	--tw-bg-opacity: 1;
+	background-color: rgba(236, 236, 241, var(--tw-bg-opacity));
 }

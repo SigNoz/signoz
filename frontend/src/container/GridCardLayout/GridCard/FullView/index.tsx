@@ -1,5 +1,6 @@
 import './WidgetFullView.styles.scss';
 
+import { SyncOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
@@ -14,10 +15,8 @@ import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import {
-	getUPlotChartData,
-	getUPlotChartOptions,
-} from 'lib/uPlotLib/getUplotChartData';
+import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartData';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getChartData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -142,13 +141,15 @@ function FullView({
 							setSelectedTime={setSelectedTime}
 						/>
 						<Button
+							style={{
+								marginLeft: '4px',
+							}}
 							onClick={(): void => {
 								response.refetch();
 							}}
 							type="primary"
-						>
-							Refresh
-						</Button>
+							icon={<SyncOutlined />}
+						/>
 					</TimeContainer>
 				)}
 			</div>
