@@ -2,7 +2,7 @@ import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { UplotProps } from 'components/Uplot/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { OnClickPluginOpts } from 'lib/uPlotLib/getUplotChartData';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import uPlot from 'uplot';
