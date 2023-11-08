@@ -5,6 +5,7 @@ import { ClickHandlerType } from '../../Overview';
 export interface ApDexApplicationProps {
 	handleGraphClick: (type: string) => ClickHandlerType;
 	onDragSelect: (start: number, end: number) => void;
+	topLevelOperationsRoute: string[];
 	tagFilterItems: TagFilterItem[];
 }
 

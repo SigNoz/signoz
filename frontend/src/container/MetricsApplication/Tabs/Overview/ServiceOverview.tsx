@@ -1,7 +1,7 @@
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
-import { GraphTitle, MENU_ITEMS } from 'container/MetricsApplication/constant';
+import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
@@ -23,6 +23,8 @@ function ServiceOverview({
 	handleGraphClick,
 	selectedTraceTags,
 	selectedTimeStamp,
+	topLevelOperationsRoute,
+	topLevelOperationsIsLoading,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
@@ -49,6 +51,7 @@ function ServiceOverview({
 						servicename,
 						tagFilterItems,
 						isSpanMetricEnable,
+						topLevelOperationsRoute,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -57,8 +60,11 @@ function ServiceOverview({
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'ns',
 			}),
-		[servicename, isSpanMetricEnable, tagFilterItems],
+		[servicename, isSpanMetricEnable, topLevelOperationsRoute, tagFilterItems],
 	);
+
+	const isQueryEnabled =
+		!topLevelOperationsIsLoading && topLevelOperationsRoute.length > 0;
 
 	return (
 		<>
@@ -81,7 +87,7 @@ function ServiceOverview({
 						onDragSelect={onDragSelect}
 						widget={latencyWidget}
 						onClickHandler={handleGraphClick('Service')}
-						headerMenuList={MENU_ITEMS}
+						isQueryEnabled={isQueryEnabled}
 					/>
 				</GraphContainer>
 			</Card>
@@ -94,6 +100,8 @@ interface ServiceOverviewProps {
 	selectedTraceTags: string;
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
+	topLevelOperationsRoute: string[];
+	topLevelOperationsIsLoading: boolean;
 }
 
 export default ServiceOverview;

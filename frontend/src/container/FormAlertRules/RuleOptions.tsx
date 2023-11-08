@@ -45,6 +45,30 @@ function RuleOptions({
 		});
 	};
 
+	const queryOptions = useMemo(
+		() =>
+			[
+				...currentQuery.builder.queryData.map((query) => query.queryName),
+				...currentQuery.builder.queryFormulas.map((query) => query.queryName),
+			].map((query) => ({
+				label: query,
+				value: query,
+			})),
+		[currentQuery],
+	);
+
+	const onChangeSelectedQueryName = (value: string | unknown): void => {
+		if (typeof value !== 'string') return;
+
+		setAlertDef({
+			...alertDef,
+			condition: {
+				...alertDef.condition,
+				selectedQueryName: value,
+			},
+		});
+	};
+
 	const renderCompareOps = (): JSX.Element => (
 		<InlineSelect
 			getPopupContainer={popupContainer}
@@ -123,8 +147,19 @@ function RuleOptions({
 	const renderThresholdRuleOpts = (): JSX.Element => (
 		<Form.Item>
 			<Typography.Text>
-				{t('text_condition1')} {renderCompareOps()} {t('text_condition2')}{' '}
-				{renderThresholdMatchOpts()} {t('text_condition3')} {renderEvalWindows()}
+				{t('text_condition1')}
+				<InlineSelect
+					getPopupContainer={popupContainer}
+					allowClear
+					showSearch
+					options={queryOptions}
+					placeholder={t('selected_query_placeholder')}
+					value={alertDef.condition.selectedQueryName}
+					onChange={onChangeSelectedQueryName}
+				/>
+				<Typography.Text>is</Typography.Text>
+				{renderCompareOps()} {t('text_condition2')} {renderThresholdMatchOpts()}{' '}
+				{t('text_condition3')} {renderEvalWindows()}
 			</Typography.Text>
 		</Form.Item>
 	);
@@ -165,30 +200,6 @@ function RuleOptions({
 		selectedCategory?.name,
 	);
 
-	const queryOptions = useMemo(
-		() =>
-			[
-				...currentQuery.builder.queryData.map((query) => query.queryName),
-				...currentQuery.builder.queryFormulas.map((query) => query.queryName),
-			].map((query) => ({
-				label: query,
-				value: query,
-			})),
-		[currentQuery],
-	);
-
-	const onChangeSelectedQueryName = (value: string | unknown): void => {
-		if (typeof value !== 'string') return;
-
-		setAlertDef({
-			...alertDef,
-			condition: {
-				...alertDef.condition,
-				selectedQueryName: value,
-			},
-		});
-	};
-
 	return (
 		<>
 			<StepHeading>{t('alert_form_step2')}</StepHeading>
@@ -217,19 +228,6 @@ function RuleOptions({
 							placeholder={t('field_unit')}
 							value={alertDef.condition.targetUnit}
 							onChange={onChangeAlertUnit}
-						/>
-					</Form.Item>
-
-					<Typography.Text>{t('on_selected_query')}</Typography.Text>
-
-					<Form.Item noStyle>
-						<Select
-							allowClear
-							showSearch
-							options={queryOptions}
-							placeholder={t('selected_query_placeholder')}
-							value={alertDef.condition.selectedQueryName}
-							onChange={onChangeSelectedQueryName}
 						/>
 					</Form.Item>
 				</Space>

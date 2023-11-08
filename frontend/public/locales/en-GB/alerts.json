@@ -34,7 +34,7 @@
 	"button_returntorules": "Return to rules",
 	"button_cancelchanges": "Cancel",
 	"button_discard": "Discard",
-	"text_condition1": "Send a notification when the metric is",
+	"text_condition1": "Send a notification when",
 	"text_condition2": "the threshold",
 	"text_condition3": "during the last",
 	"option_5min": "5 mins",
@@ -110,6 +110,5 @@
 	"exceptions_based_alert": "Exceptions-based Alert",
 	"exceptions_based_alert_desc": "Send a notification when a condition occurs in the exceptions data.",
 	"field_unit": "Threshold unit",
-	"on_selected_query": "on selected Query",
-	"selected_query_placeholder": "Select a query"
+	"selected_query_placeholder": "Select query"
 }

@@ -18,7 +18,6 @@ import {
 	MetricsType,
 	OPERATION_LEGENDS,
 	QUERYNAME_AND_EXPRESSION,
-	TOP_LEVEL_OPERATIONS,
 	WidgetKeys,
 } from '../constant';
 import {
@@ -37,6 +36,7 @@ export const latency = ({
 	servicename,
 	tagFilterItems,
 	isSpanMetricEnable = false,
+	topLevelOperationsRoute,
 }: LatencyProps): QueryBuilderData => {
 	const newAutoCompleteData: BaseAutocompleteData = {
 		key: isSpanMetricEnable
@@ -69,8 +69,8 @@ export const latency = ({
 				key: isSpanMetricEnable ? WidgetKeys.Operation : WidgetKeys.Name,
 				type: MetricsType.Tag,
 			},
-			op: OPERATORS.IN,
-			value: TOP_LEVEL_OPERATIONS,
+			op: OPERATORS.IN.toLowerCase(), // TODO: need to remove toLowerCase() this once backend is changed
+			value: [...topLevelOperationsRoute],
 		},
 		...tagFilterItems,
 	];
@@ -96,6 +96,7 @@ export const latency = ({
 export const apDexTracesQueryBuilderQueries = ({
 	servicename,
 	tagFilterItems,
+	topLevelOperationsRoute,
 	threashold,
 }: ApDexProps): QueryBuilderData => {
 	const autoCompleteDataA: BaseAutocompleteData = {
@@ -140,7 +141,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: TOP_LEVEL_OPERATIONS,
+			value: [...topLevelOperationsRoute],
 		},
 		...tagFilterItems,
 	];
@@ -188,7 +189,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: TOP_LEVEL_OPERATIONS,
+			value: [...topLevelOperationsRoute],
 		},
 	];
 
@@ -235,7 +236,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: TOP_LEVEL_OPERATIONS,
+			value: [...topLevelOperationsRoute],
 		},
 	];
 
@@ -271,6 +272,7 @@ export const apDexTracesQueryBuilderQueries = ({
 export const apDexMetricsQueryBuilderQueries = ({
 	servicename,
 	tagFilterItems,
+	topLevelOperationsRoute,
 	threashold,
 	delta,
 	metricsBuckets,
@@ -317,7 +319,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: TOP_LEVEL_OPERATIONS,
+			value: [...topLevelOperationsRoute],
 		},
 		...tagFilterItems,
 	];
@@ -365,7 +367,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: TOP_LEVEL_OPERATIONS,
+			value: [...topLevelOperationsRoute],
 		},
 		...tagFilterItems,
 	];
@@ -413,7 +415,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: TOP_LEVEL_OPERATIONS,
+			value: [...topLevelOperationsRoute],
 		},
 		...tagFilterItems,
 	];
@@ -453,6 +455,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 export const operationPerSec = ({
 	servicename,
 	tagFilterItems,
+	topLevelOperations,
 }: OperationPerSecProps): QueryBuilderData => {
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
@@ -485,7 +488,7 @@ export const operationPerSec = ({
 					type: MetricsType.Tag,
 				},
 				op: OPERATORS.IN,
-				value: TOP_LEVEL_OPERATIONS,
+				value: topLevelOperations,
 			},
 			...tagFilterItems,
 		],
@@ -505,6 +508,7 @@ export const operationPerSec = ({
 export const errorPercentage = ({
 	servicename,
 	tagFilterItems,
+	topLevelOperations,
 }: OperationPerSecProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
@@ -542,7 +546,7 @@ export const errorPercentage = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: TOP_LEVEL_OPERATIONS,
+			value: topLevelOperations,
 		},
 		{
 			id: '',
@@ -568,7 +572,7 @@ export const errorPercentage = ({
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
-			value: [servicename],
+			value: [`${servicename}`],
 		},
 		{
 			id: '',
@@ -579,7 +583,7 @@ export const errorPercentage = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: TOP_LEVEL_OPERATIONS,
+			value: topLevelOperations,
 		},
 		...tagFilterItems,
 	];

@@ -29,7 +29,7 @@ function YAxisUnitSelector({
 		value: options.name,
 	}));
 	return (
-		<Col>
+		<Col style={{ marginBottom: 12, marginTop: 12 }}>
 			<Typography.Text>{fieldLabel}</Typography.Text>
 			<AutoComplete
 				style={{ width: '100%' }}

@@ -1,3 +1,4 @@
+import { UploadOutlined } from '@ant-design/icons';
 import { Button, Input, Select, Space } from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
@@ -138,18 +139,16 @@ function RightContainer({
 						setSelectedTime,
 					}}
 				/>
-				<Button
-					style={{ marginBottom: 12, marginTop: 12 }}
-					onClick={onCreateAlertsHandler}
-				>
-					Create Alerts
-				</Button>
 
 				<YAxisUnitSelector
 					defaultValue={yAxisUnit}
 					onSelect={setYAxisUnit}
 					fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
 				/>
+
+				<Button icon={<UploadOutlined />} onClick={onCreateAlertsHandler}>
+					Create Alerts from Queries
+				</Button>
 			</Space>
 		</Container>
 	);

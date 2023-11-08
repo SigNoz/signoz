@@ -12,6 +12,7 @@ import { ApDexApplicationProps } from './types';
 function ApDexApplication({
 	handleGraphClick,
 	onDragSelect,
+	topLevelOperationsRoute,
 	tagFilterItems,
 }: ApDexApplicationProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
@@ -34,6 +35,7 @@ function ApDexApplication({
 				<ApDexMetricsApplication
 					handleGraphClick={handleGraphClick}
 					onDragSelect={onDragSelect}
+					topLevelOperationsRoute={topLevelOperationsRoute}
 					tagFilterItems={tagFilterItems}
 					thresholdValue={data?.data[0].threshold}
 				/>
