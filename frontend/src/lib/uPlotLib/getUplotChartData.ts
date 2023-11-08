@@ -17,7 +17,7 @@ interface GetUPlotChartOptions {
 	apiResponse?: MetricRangePayloadProps;
 	dimensions: Dimensions;
 	isDarkMode: boolean;
-	onDragSelect: (startTime: number, endTime: number) => void;
+	onDragSelect?: (startTime: number, endTime: number) => void;
 	yAxisUnit?: string;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	graphsVisibilityStates?: boolean[];
@@ -85,7 +85,7 @@ export const getUPlotChartOptions = ({
 
 					const diff = endTime - startTime;
 
-					if (diff > 0) {
+					if (typeof onDragSelect === 'function' && diff > 0) {
 						onDragSelect(startTime * 1000, endTime * 1000);
 					}
 				}

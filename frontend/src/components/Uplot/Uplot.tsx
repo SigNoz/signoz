@@ -119,7 +119,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		}, [data, resetScales, create]);
 
 		return (
-			<div ref={targetRef}>
+			<div className="uplot-graph-container" ref={targetRef}>
 				{data && data[0] && data[0]?.length === 0 ? (
 					<div className="not-found">
 						<Typography>No Data</Typography>
