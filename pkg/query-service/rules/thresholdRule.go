@@ -723,6 +723,13 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 
 	zap.S().Debugf("ruleid:", r.ID(), "\t runQueries:", queries)
 
+	// if user has selected a query, run with it
+	if r.Condition().SelectedQuery != "" {
+		if queryString, ok := queries[r.Condition().SelectedQuery]; ok {
+			return r.runChQuery(ctx, ch, queryString)
+		}
+	}
+
 	// find target query label
 	if query, ok := queries["F1"]; ok {
 		// found a formula query, run with it

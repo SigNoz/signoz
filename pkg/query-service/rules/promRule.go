@@ -301,7 +301,11 @@ func (r *PromRule) getPqlQuery() (string, error) {
 
 	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
 		if len(r.ruleCondition.CompositeQuery.PromQueries) > 0 {
-			if promQuery, ok := r.ruleCondition.CompositeQuery.PromQueries["A"]; ok {
+			var selectedQuery string = "A"
+			if r.ruleCondition.SelectedQuery != "" {
+				selectedQuery = r.ruleCondition.SelectedQuery
+			}
+			if promQuery, ok := r.ruleCondition.CompositeQuery.PromQueries[selectedQuery]; ok {
 				query := promQuery.Query
 				if query == "" {
 					return query, fmt.Errorf("a promquery needs to be set for this rule to function")
