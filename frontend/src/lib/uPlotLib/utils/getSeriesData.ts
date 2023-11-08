@@ -5,7 +5,14 @@ import { QueryData } from 'types/api/widgets/getQuery';
 
 import getRenderer, { drawStyles, lineInterpolations } from './getRenderer';
 
-const paths = (u, seriesIdx, idx0, idx1, extendGap, buildClip): any => {
+const paths = (
+	u: any,
+	seriesIdx: number,
+	idx0: number,
+	idx1: number,
+	extendGap: boolean,
+	buildClip: boolean,
+): any => {
 	const s = u.series[seriesIdx];
 	const style = s.drawStyle;
 	const interp = s.lineInterpolation;
@@ -41,7 +48,7 @@ const getSeries = (
 			legend || '',
 		);
 
-		const seriesObj = {
+		const seriesObj: any = {
 			width: 1.4,
 			paths,
 			drawStyle: drawStyles.line,
