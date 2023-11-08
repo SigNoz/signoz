@@ -1,0 +1,44 @@
+.threahold-selector-container {
+
+    .threahold-selector-card {
+        padding: 0px;
+        border-radius: 10px;
+        position: relative;
+        background-color: #1F1F1F;
+        margin-top: 10px;
+
+        .threshold-card-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .ant-typography {
+            color: #FFFFFF73;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 22px;
+        }
+
+    }
+
+    .threshold-action-button {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+    }
+
+    .threshold-action-icon {
+        font-size: 16px;
+    }
+
+    .threshold-units-selector {
+        display: flex;
+        align-items: center;
+    }
+
+    .threshold-color-picker {
+        display: flex;
+        flex-direction: column;
+    }
+}

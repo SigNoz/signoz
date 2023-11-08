@@ -1,0 +1,14 @@
+.custom-color-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+
+    .ant-typography {
+        color: #fff !important;
+    }
+
+    .custom-color-tag {
+        width: 20px;
+        height: 20px;
+    }
+}

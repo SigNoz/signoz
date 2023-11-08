@@ -1,4 +1,4 @@
-import { Input, Select } from 'antd';
+import { Divider, Input, Select } from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -6,6 +6,7 @@ import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 
 import { Container, Title } from './styles';
+import Threshold from './Threshold/ThresholdSelector';
 import { timePreferance } from './timeItems';
 import YAxisUnitSelector from './YAxisUnitSelector';
 
@@ -127,6 +128,10 @@ function RightContainer({
 				onSelect={setYAxisUnit}
 				fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
 			/>
+
+			<Divider />
+
+			<Threshold />
 		</Container>
 	);
 }
