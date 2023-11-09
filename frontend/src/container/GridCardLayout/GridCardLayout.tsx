@@ -130,6 +130,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 				rowHeight={100}
 				autoSize
 				width={100}
+				useCSSTransforms
 				isDraggable={!isDashboardLocked && addPanelPermission}
 				isDroppable={!isDashboardLocked && addPanelPermission}
 				isResizable={!isDashboardLocked && addPanelPermission}

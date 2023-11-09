@@ -16,7 +16,7 @@ export const Card = styled(CardComponent)<CardProps>`
 	}
 
 	.ant-card-body {
-		height: 95%;
+		height: 90%;
 		padding: 0;
 		${({ $panelType }): FlattenSimpleInterpolation =>
 			$panelType === PANEL_TYPES.TABLE

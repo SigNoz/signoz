@@ -1,4 +1,19 @@
-/* eslint-disable */
+/* eslint-disable radix */
+/* eslint-disable guard-for-in */
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-var */
+/* eslint-disable vars-on-top */
+/* eslint-disable func-style */
+/* eslint-disable no-void */
+/* eslint-disable sonarjs/cognitive-complexity */
+/* eslint-disable func-names */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-sequences */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
+
 // https://tobyzerner.github.io/placement.js/dist/index.js
 
 export const placement = (function () {

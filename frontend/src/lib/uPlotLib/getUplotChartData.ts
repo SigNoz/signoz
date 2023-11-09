@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 /* eslint-disable sonarjs/cognitive-complexity */
 import './uPlotLib.styles.scss';
 
@@ -41,7 +43,7 @@ export const getUPlotChartOptions = ({
 }: GetUPlotChartOptions): uPlot.Options => ({
 	id,
 	width: dimensions.width,
-	height: dimensions.height - 50,
+	height: dimensions.height - 45,
 	// tzDate: (ts) => uPlot.tzDate(new Date(ts * 1e3), ''), //  Pass timezone for 2nd param
 	legend: {
 		show: true,
