@@ -1,94 +1,59 @@
 import './ThresholdSelector.styles.scss';
 
-import { CheckOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import { Card, Divider, InputNumber, Select, Space, Typography } from 'antd';
-import { useState } from 'react';
+import { Button, Typography } from 'antd';
+import { v4 as uuid } from 'uuid';
 
-import { formatOptions, operatorOptions, unitOptions } from '../constants';
-import ColorSelector from './ColorSelector';
+import Threshold from './Threshold';
+import { ThresholdSelectorProps } from './types';
 
-function Threshold({
-	thresholdOperator,
-	isEditEnabled = false,
-}: ThresholdProps): JSX.Element {
-	const [isEditMode, setIsEditMode] = useState<boolean>(isEditEnabled);
-	const [operator, setOperator] = useState<string | number>(
-		thresholdOperator as string | number,
-	);
-
-	const toggleEditMode = (): void => {
-		setIsEditMode(!isEditMode);
+function ThresholdSelector({
+	thresholds,
+	setThresholds,
+}: ThresholdSelectorProps): JSX.Element {
+	const addThresholdHandler = (): void => {
+		setThresholds([
+			...thresholds,
+			{
+				index: uuid(),
+				isEditEnabled: true,
+				thresholdColor: 'Red',
+				thresholdFormat: 'Text',
+				thresholdOperator: '>',
+				thresholdUnit: 'ms',
+				thresholdValue: 0,
+			},
+		]);
 	};
 
-	const handleOperatorChange = (value: string | number): void => {
-		setOperator(value);
+	const deleteThresholdHandler = (index: string): void => {
+		const newThresholds = thresholds.filter(
+			(threshold) => threshold.index !== index,
+		);
+		setThresholds(newThresholds);
 	};
 
 	return (
-		<div className="threahold-selector-container">
+		<div className="threshold-selector-container">
 			<Typography.Text>Thresholds</Typography.Text>
-			<Card className="threahold-selector-card">
-				<div className="threshold-card-container">
-					<div className="threshold-action-button">
-						{isEditMode ? (
-							<CheckOutlined onClick={toggleEditMode} />
-						) : (
-							<EditOutlined
-								className="threshold-action-icon"
-								onClick={toggleEditMode}
-							/>
-						)}
-						<Divider type="vertical" />
-						<DeleteOutlined className="threshold-action-icon" />
-					</div>
-					<div>
-						<Space>
-							<Typography.Text>If value is</Typography.Text>
-							<Select
-								style={{ width: '73px' }}
-								defaultValue={operator}
-								options={operatorOptions}
-								onChange={handleOperatorChange}
-							/>
-						</Space>
-					</div>
-					<div className="threshold-units-selector">
-						<InputNumber min={1} max={10} defaultValue={3} />
-						<Select
-							style={{ width: '200px' }}
-							defaultValue={unitOptions[0]?.value}
-							options={unitOptions}
-						/>
-					</div>
-					<div>
-						<Space direction="vertical">
-							<Typography.Text>Show with</Typography.Text>
-							<Space>
-								<ColorSelector />
-								<Select
-									style={{ width: '100px' }}
-									defaultValue={formatOptions[0]?.label}
-									options={formatOptions}
-								/>
-							</Space>
-						</Space>
-					</div>
-				</div>
-			</Card>
+			{thresholds.map((threshold) => (
+				<Threshold
+					key={threshold.index}
+					index={threshold.index}
+					isEditEnabled={threshold.isEditEnabled}
+					thresholdColor={threshold.thresholdColor}
+					thresholdFormat={threshold.thresholdFormat}
+					thresholdOperator={threshold.thresholdOperator}
+					thresholdUnit={threshold.thresholdUnit}
+					thresholdValue={threshold.thresholdValue}
+					thresholdDeleteHandler={deleteThresholdHandler}
+					setThresholds={setThresholds}
+				/>
+			))}
+			<Button className="threshold-selector-button" onClick={addThresholdHandler}>
+				+ Add threshold
+			</Button>
 		</div>
 	);
 }
 
-type ThresholdOperators = '>' | '<' | '>=' | '<=';
-
-type ThresholdProps = {
-	thresholdOperator?: ThresholdOperators;
-	isEditEnabled?: boolean;
-};
-
-Threshold.defaultProps = {
-	thresholdOperator: '>',
-	isEditEnabled: false,
-};
-
-export default Threshold;
+export default ThresholdSelector;

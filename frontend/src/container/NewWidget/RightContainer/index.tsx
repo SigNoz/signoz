@@ -6,7 +6,8 @@ import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 
 import { Container, Title } from './styles';
-import Threshold from './Threshold/ThresholdSelector';
+import ThresholdSelector from './Threshold/ThresholdSelector';
+import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
 import YAxisUnitSelector from './YAxisUnitSelector';
 
@@ -24,6 +25,8 @@ function RightContainer({
 	yAxisUnit,
 	setYAxisUnit,
 	setGraphHandler,
+	thresholds,
+	setThresholds,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
 		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
@@ -131,7 +134,7 @@ function RightContainer({
 
 			<Divider />
 
-			<Threshold />
+			<ThresholdSelector thresholds={thresholds} setThresholds={setThresholds} />
 		</Container>
 	);
 }
@@ -153,6 +156,8 @@ interface RightContainerProps {
 	yAxisUnit: string;
 	setYAxisUnit: Dispatch<SetStateAction<string>>;
 	setGraphHandler: (type: PANEL_TYPES) => void;
+	thresholds: ThresholdProps[];
+	setThresholds: Dispatch<SetStateAction<ThresholdProps[]>>;
 }
 
 export default RightContainer;

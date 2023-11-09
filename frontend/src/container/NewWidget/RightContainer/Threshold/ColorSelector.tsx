@@ -2,13 +2,14 @@ import { DownOutlined } from '@ant-design/icons';
 import { Button, ColorPicker, Dropdown, Space } from 'antd';
 import { Color } from 'antd/es/color-picker';
 import { MenuProps } from 'antd/lib';
-import { useState } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 
 import CustomColor from './CustomColor';
 
-function ColorSelector(): JSX.Element {
-	const [color, setColor] = useState<string>('Red');
-
+function ColorSelector({
+	thresholdColor = 'Red',
+	setColor,
+}: ColorSelectorProps): JSX.Element {
 	const handleColorChange = (_: Color, hex: string): void => {
 		setColor(hex);
 	};
@@ -52,12 +53,21 @@ function ColorSelector(): JSX.Element {
 		<Dropdown menu={{ items }} trigger={['click']}>
 			<Button onClick={(e): void => e.preventDefault()}>
 				<Space>
-					<CustomColor color={color} />
+					<CustomColor color={thresholdColor} />
 					<DownOutlined />
 				</Space>
 			</Button>
 		</Dropdown>
 	);
 }
+
+interface ColorSelectorProps {
+	thresholdColor?: string;
+	setColor: Dispatch<SetStateAction<string>>;
+}
+
+ColorSelector.defaultProps = {
+	thresholdColor: undefined,
+};
 
 export default ColorSelector;

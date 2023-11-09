@@ -16,12 +16,12 @@ export const unitOptions = flattenedCategories.map((options) => ({
 }));
 
 export const formatOptions: DefaultOptionType[] = [
-	{ value: 'text', label: 'Text' },
-	{ value: 'number', label: 'Number' },
-	{ value: 'percent', label: 'Percent' },
-	{ value: 'currency', label: 'Currency' },
-	{ value: 'date', label: 'Date' },
-	{ value: 'time', label: 'Time' },
-	{ value: 'date-time', label: 'Date Time' },
-	{ value: 'duration', label: 'Duration' },
+	{ value: 'Text', label: 'Text' },
+	{ value: 'Number', label: 'Number' },
+	{ value: 'Percent', label: 'Percent' },
+	{ value: 'Currency', label: 'Currency' },
+	{ value: 'Date', label: 'Date' },
+	{ value: 'Time', label: 'Time' },
+	{ value: 'Date time', label: 'Date Time' },
+	{ value: 'Duration', label: 'Duration' },
 ];

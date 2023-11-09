@@ -168,9 +168,11 @@ function WidgetHeader({
 
 	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
 
-	const onClickHandler = useCallback(() => {
-		setIsOpen((open) => !open);
-	}, []);
+	const onClickHandler = (): void => {
+		setIsOpen(!isOpen);
+	};
+
+	console.log('onClickHandler', isOpen);
 
 	const menu = useMemo(
 		() => ({

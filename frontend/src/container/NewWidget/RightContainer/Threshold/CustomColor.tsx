@@ -2,6 +2,8 @@ import './CustomColor.styles.scss';
 
 import { Typography } from 'antd';
 
+import { CustomColorProps } from './types';
+
 function CustomColor({ color }: CustomColorProps): JSX.Element {
 	return (
 		<div className="custom-color-container">
@@ -10,9 +12,5 @@ function CustomColor({ color }: CustomColorProps): JSX.Element {
 		</div>
 	);
 }
-
-type CustomColorProps = {
-	color: string;
-};
 
 export default CustomColor;
