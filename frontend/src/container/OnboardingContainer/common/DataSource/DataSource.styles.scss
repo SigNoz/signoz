@@ -1,0 +1,29 @@
+div[class*='-setup-instructions-container'] {
+	.header {
+		display: flex;
+		align-items: center;
+
+		margin: 16px 0;
+
+		img {
+			height: 40px;
+		}
+
+		h1 {
+			font-size: 18px;
+			display: flex;
+			align-items: center;
+			color: #e5e7eb;
+			gap: 16px;
+			margin: 12px;
+		}
+	}
+}
+
+.form-container {
+	display: flex;
+	align-items: flex-start;
+	width: 100%;
+	gap: 16px;
+	margin-top: 24px;
+}

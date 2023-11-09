@@ -1,0 +1,85 @@
+.onboarding-module-steps {
+	display: flex;
+	flex-direction: row;
+	height: 100%;
+
+	.step-data {
+		height: 90%;
+
+		.step-content {
+			.step-name {
+				margin: 16px 0;
+			}
+		}
+	}
+
+	.step-actions {
+		height: 10%;
+	}
+}
+
+.steps-container {
+	width: 20%;
+}
+
+.selected-step-content {
+	width: 80%;
+}
+
+.selected-step-pills {
+	display: flex;
+	margin-bottom: 24px;
+
+	.entity {
+		display: inline-block;
+		text-align: center;
+		margin-right: 24px;
+
+		.entity-name {
+			margin-bottom: 12px;
+		}
+
+		.entity-value {
+			border: 1px solid darkgray;
+			padding: 8px 24px;
+			border-radius: 20px;
+		}
+	}
+}
+
+.supported-languages-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+}
+
+.supported-language {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	gap: 12px;
+
+	width: 200px;
+	height: 120px;
+	background: #1d1d1d;
+	border: 1px solid #424242;
+	border-radius: 3px;
+	color: #424242;
+	text-transform: capitalize;
+
+	cursor: pointer;
+
+	&.selected {
+		background-color: #111a2c;
+		border: 0.5px solid #3c89e8;
+	}
+}
+
+.supported-langauge-img {
+	height: 48px;
+}
+
+.selected-langauage-setup-instructions {
+	padding: 24px 0;
+}
