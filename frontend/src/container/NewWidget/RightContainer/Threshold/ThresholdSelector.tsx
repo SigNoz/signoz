@@ -1,19 +1,43 @@
 import './ThresholdSelector.styles.scss';
 
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { CheckOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Card, Divider, InputNumber, Select, Space, Typography } from 'antd';
+import { useState } from 'react';
 
-import { formatOptions, unitOptions, valueSelect } from '../constants';
+import { formatOptions, operatorOptions, unitOptions } from '../constants';
 import ColorSelector from './ColorSelector';
 
-function Threshold(): JSX.Element {
+function Threshold({
+	thresholdOperator,
+	isEditEnabled = false,
+}: ThresholdProps): JSX.Element {
+	const [isEditMode, setIsEditMode] = useState<boolean>(isEditEnabled);
+	const [operator, setOperator] = useState<string | number>(
+		thresholdOperator as string | number,
+	);
+
+	const toggleEditMode = (): void => {
+		setIsEditMode(!isEditMode);
+	};
+
+	const handleOperatorChange = (value: string | number): void => {
+		setOperator(value);
+	};
+
 	return (
 		<div className="threahold-selector-container">
 			<Typography.Text>Thresholds</Typography.Text>
 			<Card className="threahold-selector-card">
 				<div className="threshold-card-container">
 					<div className="threshold-action-button">
-						<EditOutlined className="threshold-action-icon" />
+						{isEditMode ? (
+							<CheckOutlined onClick={toggleEditMode} />
+						) : (
+							<EditOutlined
+								className="threshold-action-icon"
+								onClick={toggleEditMode}
+							/>
+						)}
 						<Divider type="vertical" />
 						<DeleteOutlined className="threshold-action-icon" />
 					</div>
@@ -22,8 +46,9 @@ function Threshold(): JSX.Element {
 							<Typography.Text>If value is</Typography.Text>
 							<Select
 								style={{ width: '73px' }}
-								defaultValue={valueSelect[0]?.value}
-								options={valueSelect}
+								defaultValue={operator}
+								options={operatorOptions}
+								onChange={handleOperatorChange}
 							/>
 						</Space>
 					</div>
@@ -53,5 +78,17 @@ function Threshold(): JSX.Element {
 		</div>
 	);
 }
+
+type ThresholdOperators = '>' | '<' | '>=' | '<=';
+
+type ThresholdProps = {
+	thresholdOperator?: ThresholdOperators;
+	isEditEnabled?: boolean;
+};
+
+Threshold.defaultProps = {
+	thresholdOperator: '>',
+	isEditEnabled: false,
+};
 
 export default Threshold;

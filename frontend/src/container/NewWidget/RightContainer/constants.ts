@@ -3,7 +3,7 @@ import { DefaultOptionType } from 'antd/es/select';
 import { flattenedCategories } from './dataFormatCategories';
 
 // > >= < <=  are the options
-export const valueSelect: DefaultOptionType[] = [
+export const operatorOptions: DefaultOptionType[] = [
 	{ value: '>', label: '>' },
 	{ value: '>=', label: '>=' },
 	{ value: '<', label: '<' },
