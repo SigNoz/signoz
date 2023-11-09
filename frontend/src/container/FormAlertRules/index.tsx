@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
-import { Col, FormInstance, Modal, Tooltip, Typography } from 'antd';
+import { FormInstance, Modal, Tooltip, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import { FeatureKeys } from 'constants/features';
@@ -43,7 +43,6 @@ import {
 	StepContainer,
 	StyledLeftContainer,
 } from './styles';
-import UserGuide from './UserGuide';
 
 function FormAlertRules({
 	alertType,
@@ -423,7 +422,7 @@ function FormAlertRules({
 			{Element}
 
 			<PanelContainer>
-				<StyledLeftContainer flex="5 1 600px" md={18}>
+				<StyledLeftContainer flex={1}>
 					<MainFormContainer
 						initialValues={initialValue}
 						layout="vertical"
@@ -485,9 +484,9 @@ function FormAlertRules({
 						</ButtonContainer>
 					</MainFormContainer>
 				</StyledLeftContainer>
-				<Col flex="1 1 300px">
+				{/* <Col flex="1 1 300px">
 					<UserGuide queryType={currentQuery.queryType} />
-				</Col>
+				</Col> */}
 			</PanelContainer>
 		</>
 	);
