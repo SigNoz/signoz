@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Onboarding.styles.scss';
 
-import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Card, StepProps, Steps, Typography } from 'antd';
+import { ArrowRightOutlined } from '@ant-design/icons';
+import { Button, Card, StepProps, Typography } from 'antd';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -12,9 +13,7 @@ import { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 import { trackEvent } from 'utils/segmentAnalytics';
 
-import APM from './APM/APM';
-import InfrastructureMonitoring from './InfrastructureMonitoring/InfrastructureMonitoring';
-import LogsManagement from './LogsManagement/LogsManagement';
+import ModuleStepsContainer from './ModuleStepsContainer/ModuleStepsContainer';
 
 enum ModulesMap {
 	APM = 'APM',
@@ -82,7 +81,7 @@ export default function Onboarding(): JSX.Element {
 		useCases.APM,
 	);
 	const [steps, setsteps] = useState(defaultSteps);
-	const [activeStep, setActiveStep] = useState(1);
+	const [activeStep, setActiveStep] = useState(2);
 	const [current, setCurrent] = useState(0);
 	const [selectedLogsType, setSelectedLogsType] = useState<string | null>(
 		'kubernetes',
@@ -271,14 +270,9 @@ export default function Onboarding(): JSX.Element {
 
 			{activeStep > 1 && (
 				<div className="stepsContainer">
-					<Steps
-						current={current}
-						onChange={handleStepChange}
-						items={steps}
-						size="small"
-					/>
-					<div className="step-content">
-						{selectedModule.id === ModulesMap.APM && <APM activeStep={activeStep} />}
+					{/* <div className="step-content"> */}
+					<ModuleStepsContainer />
+					{/* {selectedModule.id === ModulesMap.APM && <APM activeStep={activeStep} />}
 						{selectedModule.id === ModulesMap.LogsManagement && (
 							<LogsManagement
 								activeStep={activeStep}
@@ -287,32 +281,8 @@ export default function Onboarding(): JSX.Element {
 						)}
 						{selectedModule.id === ModulesMap.InfrastructureMonitoring && (
 							<InfrastructureMonitoring activeStep={activeStep} />
-						)}
-					</div>
-
-					<div className="actionButtonsContainer">
-						{activeStep > 0 && (
-							<Button icon={<ArrowLeftOutlined />} onClick={handlePrev}>
-								Back
-							</Button>
-						)}
-
-						{activeStep < steps.length && (
-							<Button
-								type="primary"
-								icon={<ArrowRightOutlined />}
-								onClick={handleNext}
-							>
-								Continue to next step
-							</Button>
-						)}
-
-						{activeStep === steps.length && (
-							<Button type="primary" onClick={handleOnboardingComplete}>
-								Done
-							</Button>
-						)}
-					</div>
+						)} */}
+					{/* </div> */}
 				</div>
 			)}
 		</div>
