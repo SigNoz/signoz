@@ -58,27 +58,19 @@ test.describe('Service flow', () => {
 		await expect(breadcrumbServicesText).toEqual('Services');
 
 		// expect the services headers to be loaded correctly
-		const p99Latency = await page
-			.locator(
-				`th[aria-label*="this column's title is P99 latency (in ms)"] .ant-table-column-title`,
-			)
-			.textContent();
+		const p99Latency = page.locator('th:has-text("P99 latency (in ms)")');
 
-		await expect(p99Latency).toEqual('P99 latency (in ms)');
-		const errorRate = await page
-			.locator(
-				`th[aria-label*="this column's title is Error Rate (% of total)"] .ant-table-column-title`,
-			)
-			.textContent();
+		await expect(p99Latency).toBeVisible();
+		const errorRate = await page.locator(
+			`th:has-text("Error Rate (% of total)")`,
+		);
 
-		await expect(errorRate).toEqual('Error Rate (% of total)');
-		const operationsPerSecond = await page
-			.locator(
-				`th[aria-label="this column's title is Operations Per Second,this column is sortable"] .ant-table-column-title`,
-			)
-			.textContent();
+		await expect(errorRate).toBeVisible();
+		const operationsPerSecond = await page.locator(
+			'th:has-text("Operations Per Second")',
+		);
 
-		await expect(operationsPerSecond).toEqual('Operations Per Second');
+		await expect(operationsPerSecond).toBeVisible();
 
 		// expect services to be listed in the table
 		const redisService = await page
