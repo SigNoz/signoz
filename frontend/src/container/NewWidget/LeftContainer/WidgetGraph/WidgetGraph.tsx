@@ -21,6 +21,7 @@ function WidgetGraph({
 	selectedGraph,
 	yAxisUnit,
 	selectedTime,
+	fillSpans,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 
@@ -69,6 +70,7 @@ function WidgetGraph({
 		],
 		createDataset: undefined,
 		isWarningLimit: selectedWidget.panelTypes === PANEL_TYPES.TIME_SERIES,
+		isEmptyGraph: fillSpans,
 	});
 
 	return (

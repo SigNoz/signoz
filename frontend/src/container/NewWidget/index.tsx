@@ -72,6 +72,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedWidget?.yAxisUnit || 'none',
 	);
 
+	const [isFillSpans, setIsFillSpans] = useState(
+		selectedWidget?.fillSpans || false,
+	);
+
 	const [stacked, setStacked] = useState<boolean>(
 		selectedWidget?.isStacked || false,
 	);
@@ -137,6 +141,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							title,
 							yAxisUnit,
 							panelTypes: graphType,
+							fillSpans: isFillSpans,
 						},
 						...afterWidgets,
 					],
@@ -156,6 +161,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		);
 	}, [
 		selectedDashboard,
+		query,
 		updateDashboardMutation,
 		description,
 		selectedTime.enum,
@@ -165,7 +171,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		title,
 		yAxisUnit,
 		graphType,
-		query,
+		isFillSpans,
 		featureResponse,
 		dashboardId,
 		notifications,
@@ -250,6 +256,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						selectedTime={selectedTime}
 						selectedGraph={graphType}
 						yAxisUnit={yAxisUnit}
+						fillSpans={isFillSpans}
 					/>
 				</LeftContainerWrapper>
 
@@ -271,6 +278,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						setSelectedTime={setSelectedTime}
 						selectedTime={selectedTime}
 						setYAxisUnit={setYAxisUnit}
+						isFillSpans={isFillSpans}
+						setIsFillSpans={setIsFillSpans}
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>

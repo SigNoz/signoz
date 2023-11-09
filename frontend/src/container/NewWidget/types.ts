@@ -6,6 +6,7 @@ import { timePreferance } from './RightContainer/timeItems';
 export interface NewWidgetProps {
 	selectedGraph: PANEL_TYPES;
 	yAxisUnit: Widgets['yAxisUnit'];
+	fillSpans: Widgets['fillSpans'];
 }
 
 export interface WidgetGraphProps extends NewWidgetProps {

@@ -11,6 +11,7 @@ const getChartData = ({
 	queryData,
 	createDataset,
 	isWarningLimit = false,
+	isEmptyGraph,
 }: GetChartDataProps): {
 	data: ChartData;
 	isWarning: boolean;
@@ -57,8 +58,12 @@ const getChartData = ({
 
 				return {
 					label: labelNames !== 'undefined' ? labelNames : '',
-					first: filledDataValues.map((e) => e.first || 0),
-					second: filledDataValues.map((e) => e.second || 0),
+					first: filledDataValues.map((e) =>
+						isEmptyGraph ? e.first || 0 : e.first,
+					),
+					second: filledDataValues.map((e) =>
+						isEmptyGraph ? e.second || 0 : e.second,
+					),
 				};
 			}),
 	);
@@ -69,10 +74,12 @@ const getChartData = ({
 			const len = Math.min(a.second.length, b.second.length); // min length of both array
 
 			for (let i = 0; i < len; i += 1) {
-				const avearageOfArray = (arr: number[]): number =>
-					arr.reduce((a, b) => a + b, 0) / arr.length;
+				const averageOfArray = (arr: number[] = []): number =>
+					arr.reduce((a = 0, b = 0) => a + b, 0) / arr.length;
 
-				const diff = avearageOfArray(a.second) - avearageOfArray(b.second); // calculating the difference
+				const diff =
+					averageOfArray(a.second.map((e) => e || 0)) -
+					averageOfArray(b.second.map((e) => e || 0)); // calculating the difference
 
 				if (diff !== 0) return diff;
 			}
@@ -130,6 +137,7 @@ export interface GetChartDataProps {
 		allLabels: string[],
 	) => ChartDataset;
 	isWarningLimit?: boolean;
+	isEmptyGraph?: boolean;
 }
 
 export default getChartData;

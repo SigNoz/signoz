@@ -1,4 +1,4 @@
-import { Input, Select } from 'antd';
+import { Input, Select, Space, Switch, Typography } from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -23,6 +23,8 @@ function RightContainer({
 	yAxisUnit,
 	setYAxisUnit,
 	setGraphHandler,
+	isFillSpans,
+	setIsFillSpans,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
 		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
@@ -114,6 +116,15 @@ function RightContainer({
 				))}
 			</NullButtonContainer> */}
 
+			<Space style={{ marginTop: 10 }} direction="vertical">
+				<Typography>Fill span gaps</Typography>
+
+				<Switch
+					checked={isFillSpans}
+					onChange={(checked): void => setIsFillSpans(checked)}
+				/>
+			</Space>
+
 			<Title light="true">Panel Time Preference</Title>
 
 			<TimePreference
@@ -148,6 +159,8 @@ interface RightContainerProps {
 	yAxisUnit: string;
 	setYAxisUnit: Dispatch<SetStateAction<string>>;
 	setGraphHandler: (type: PANEL_TYPES) => void;
+	isFillSpans: boolean;
+	setIsFillSpans: Dispatch<SetStateAction<boolean>>;
 }
 
 export default RightContainer;
