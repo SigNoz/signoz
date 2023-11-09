@@ -12,6 +12,7 @@ import GoLang from './GoLang/GoLang';
 import Java from './Java/Java';
 import Javascript from './Javascript/Javascript';
 import Python from './Python/Python';
+import RoR from './RubyOnRails/ROR';
 
 interface IngestionInfoProps {
 	SIGNOZ_INGESTION_KEY?: string;
@@ -38,6 +39,10 @@ const supportedLanguages = [
 	{
 		name: 'go',
 		imgURL: `Logos/java.png`,
+	},
+	{
+		name: 'rails',
+		imgURL: `Logos/rails.png`,
 	},
 ];
 
@@ -91,6 +96,8 @@ export default function APM({
 				return <Javascript ingestionInfo={ingestionInfo} activeStep={activeStep} />;
 			case 'go':
 				return <GoLang ingestionInfo={ingestionInfo} activeStep={activeStep} />;
+			case 'rails':
+				return <RoR ingestionInfo={ingestionInfo} activeStep={activeStep} />;
 			default:
 				return <> </>;
 		}
