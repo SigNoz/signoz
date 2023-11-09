@@ -18,9 +18,9 @@ export const lineInterpolations = {
 
 const { spline: splinePath } = uPlot.paths;
 
-const spline = splinePath();
+const spline = splinePath && splinePath();
 
-const getRenderer = (style, interp): any => {
+const getRenderer = (style: any, interp: any): any => {
 	if (style === drawStyles.line && interp === lineInterpolations.spline) {
 		return spline;
 	}

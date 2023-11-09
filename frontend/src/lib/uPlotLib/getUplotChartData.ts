@@ -22,6 +22,8 @@ interface GetUPlotChartOptions {
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	graphsVisibilityStates?: boolean[];
 	setGraphsVisibilityStates?: FullViewProps['setGraphsVisibilityStates'];
+	thresholdValue?: number;
+	thresholdText?: string;
 }
 
 export const getUPlotChartOptions = ({
@@ -34,6 +36,8 @@ export const getUPlotChartOptions = ({
 	onClickHandler = _noop,
 	graphsVisibilityStates,
 	setGraphsVisibilityStates,
+	thresholdValue,
+	thresholdText,
 }: GetUPlotChartOptions): uPlot.Options => ({
 	id,
 	width: dimensions.width,
@@ -76,6 +80,41 @@ export const getUPlotChartOptions = ({
 		}),
 	],
 	hooks: {
+		draw: [
+			(u): void => {
+				if (thresholdValue) {
+					const { ctx } = u;
+					ctx.save();
+
+					const yPos = u.valToPos(thresholdValue, 'y', true);
+
+					ctx.strokeStyle = 'red';
+					ctx.lineWidth = 2;
+					ctx.setLineDash([10, 5]);
+
+					ctx.beginPath();
+
+					const plotLeft = u.bbox.left; // left edge of the plot area
+					const plotRight = plotLeft + u.bbox.width; // right edge of the plot area
+
+					ctx.moveTo(plotLeft, yPos);
+					ctx.lineTo(plotRight, yPos);
+
+					ctx.stroke();
+
+					// Text configuration
+					if (thresholdText) {
+						const text = thresholdText;
+						const textX = plotRight - ctx.measureText(text).width - 20;
+						const textY = yPos - 15;
+						ctx.fillStyle = 'red';
+						ctx.fillText(text, textX, textY);
+					}
+
+					ctx.restore();
+				}
+			},
+		],
 		setSelect: [
 			(self): void => {
 				const selection = self.select;
