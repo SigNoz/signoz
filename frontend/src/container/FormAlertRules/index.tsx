@@ -369,21 +369,7 @@ function FormAlertRules({
 		/>
 	);
 
-	const renderPromChartPreview = (): JSX.Element => (
-		<ChartPreview
-			headline={
-				<PlotTag
-					queryType={currentQuery.queryType}
-					panelType={panelType || PANEL_TYPES.TIME_SERIES}
-				/>
-			}
-			name="Chart Preview"
-			query={stagedQuery}
-			alertDef={alertDef}
-		/>
-	);
-
-	const renderChQueryChartPreview = (): JSX.Element => (
+	const renderPromAndChQueryChartPreview = (): JSX.Element => (
 		<ChartPreview
 			headline={
 				<PlotTag
@@ -431,9 +417,10 @@ function FormAlertRules({
 					>
 						{currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 							renderQBChartPreview()}
-						{currentQuery.queryType === EQueryType.PROM && renderPromChartPreview()}
+						{currentQuery.queryType === EQueryType.PROM &&
+							renderPromAndChQueryChartPreview()}
 						{currentQuery.queryType === EQueryType.CLICKHOUSE &&
-							renderChQueryChartPreview()}
+							renderPromAndChQueryChartPreview()}
 
 						<StepContainer>
 							<BuilderUnitsFilter onChange={onUnitChangeHandler} />
