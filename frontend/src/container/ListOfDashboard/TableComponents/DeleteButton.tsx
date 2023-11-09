@@ -1,17 +1,26 @@
-import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal } from 'antd';
+import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Modal, Tooltip } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
 
 import { Data } from '../index';
 import { TableLinkText } from './styles';
 
-function DeleteButton({ id }: Data): JSX.Element {
+function DeleteButton({ id, createdBy, isLocked }: Data): JSX.Element {
 	const [modal, contextHolder] = Modal.useModal();
+	const { role, user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isAuthor = user?.email === createdBy;
 
 	const queryClient = useQueryClient();
+
+	const { t } = useTranslation(['dashboard']);
 
 	const deleteDashboardMutation = useDeleteDashboard(id);
 
@@ -32,11 +41,33 @@ function DeleteButton({ id }: Data): JSX.Element {
 		});
 	}, [modal, deleteDashboardMutation, queryClient]);
 
+	const getDeleteTooltipContent = (): string => {
+		if (isLocked) {
+			if (role === USER_ROLES.ADMIN || isAuthor) {
+				return t('dashboard:locked_dashboard_delete_tooltip_admin_author');
+			}
+
+			return t('dashboard:locked_dashboard_delete_tooltip_editor');
+		}
+
+		return '';
+	};
+
 	return (
 		<>
-			<TableLinkText type="danger" onClick={openConfirmationDialog}>
-				Delete
-			</TableLinkText>
+			<Tooltip placement="left" title={getDeleteTooltipContent()}>
+				<TableLinkText
+					type="danger"
+					onClick={(): void => {
+						if (!isLocked) {
+							openConfirmationDialog();
+						}
+					}}
+					disabled={isLocked}
+				>
+					<DeleteOutlined /> Delete
+				</TableLinkText>
+			</Tooltip>
 
 			{contextHolder}
 		</>
@@ -55,6 +86,7 @@ function Wrapper(props: Data): JSX.Element {
 		tags,
 		createdBy,
 		lastUpdatedBy,
+		isLocked,
 	} = props;
 
 	return (
@@ -69,6 +101,7 @@ function Wrapper(props: Data): JSX.Element {
 				tags,
 				createdBy,
 				lastUpdatedBy,
+				isLocked,
 			}}
 		/>
 	);

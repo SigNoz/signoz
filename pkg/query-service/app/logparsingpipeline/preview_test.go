@@ -104,7 +104,7 @@ func TestPipelinePreview(t *testing.T) {
 		},
 	)
 
-	result, collectorErrorLogs, err := SimulatePipelinesProcessing(
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 		context.Background(),
 		testPipelines,
 		[]model.SignozLog{
@@ -114,7 +114,7 @@ func TestPipelinePreview(t *testing.T) {
 	)
 
 	require.Nil(err)
-	require.Equal(0, len(collectorErrorLogs))
+	require.Equal(0, len(collectorWarnAndErrorLogs))
 	require.Equal(2, len(result))
 
 	// matching log should have been modified as expected.
@@ -190,7 +190,7 @@ func TestGrokParsingPreview(t *testing.T) {
 			"method": "GET",
 		},
 	)
-	result, collectorErrorLogs, err := SimulatePipelinesProcessing(
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 		context.Background(),
 		testPipelines,
 		[]model.SignozLog{
@@ -199,7 +199,7 @@ func TestGrokParsingPreview(t *testing.T) {
 	)
 
 	require.Nil(err)
-	require.Equal(0, len(collectorErrorLogs))
+	require.Equal(0, len(collectorWarnAndErrorLogs))
 	require.Equal(1, len(result))
 	processed := result[0]
 
@@ -280,7 +280,7 @@ func TestTraceParsingPreview(t *testing.T) {
 		TraceFlags: 0,
 	}
 
-	result, collectorErrorLogs, err := SimulatePipelinesProcessing(
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 		context.Background(),
 		testPipelines,
 		[]model.SignozLog{
@@ -289,7 +289,7 @@ func TestTraceParsingPreview(t *testing.T) {
 	)
 	require.Nil(err)
 	require.Equal(1, len(result))
-	require.Equal(0, len(collectorErrorLogs))
+	require.Equal(0, len(collectorWarnAndErrorLogs))
 	processed := result[0]
 
 	require.Equal(testTraceId, processed.TraceID)
@@ -301,7 +301,7 @@ func TestTraceParsingPreview(t *testing.T) {
 
 	// trace parser should work even if parse_from value is empty
 	testPipelines[0].Config[0].SpanId.ParseFrom = ""
-	result, collectorErrorLogs, err = SimulatePipelinesProcessing(
+	result, collectorWarnAndErrorLogs, err = SimulatePipelinesProcessing(
 		context.Background(),
 		testPipelines,
 		[]model.SignozLog{
@@ -310,7 +310,7 @@ func TestTraceParsingPreview(t *testing.T) {
 	)
 	require.Nil(err)
 	require.Equal(1, len(result))
-	require.Equal(0, len(collectorErrorLogs))
+	require.Equal(0, len(collectorWarnAndErrorLogs))
 	require.Equal("", result[0].SpanID)
 }
 
