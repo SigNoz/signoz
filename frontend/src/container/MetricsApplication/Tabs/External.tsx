@@ -179,7 +179,7 @@ function External(): JSX.Element {
 						View Traces
 					</Button>
 
-					<Card>
+					<Card id="external_call_duration">
 						<GraphContainer>
 							<Graph
 								name="external_call_duration"
@@ -214,7 +214,7 @@ function External(): JSX.Element {
 					>
 						View Traces
 					</Button>
-					<Card>
+					<Card id="external_call_rps_by_address">
 						<GraphContainer>
 							<Graph
 								name="external_call_rps_by_address"
@@ -248,7 +248,7 @@ function External(): JSX.Element {
 						View Traces
 					</Button>
 
-					<Card>
+					<Card id="external_call_duration_by_address">
 						<GraphContainer>
 							<Graph
 								name="external_call_duration_by_address"

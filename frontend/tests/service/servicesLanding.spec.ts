@@ -6,7 +6,7 @@ import { loginApi } from '../fixtures/common';
 
 let page: Page;
 
-test.describe('Service Page', () => {
+test.describe('Service flow', () => {
 	test.beforeEach(async ({ baseURL, browser }) => {
 		const context = await browser.newContext({ storageState: 'tests/auth.json' });
 		const newPage = await context.newPage();
@@ -18,7 +18,7 @@ test.describe('Service Page', () => {
 		page = newPage;
 	});
 
-	test('Services Empty Page', async ({ baseURL }) => {
+	test('Services empty page', async ({ baseURL }) => {
 		// visit services page
 		await page.goto(`${baseURL}${ROUTES.APPLICATION}`);
 
@@ -33,13 +33,16 @@ test.describe('Service Page', () => {
 		await expect(page.getByText('No data')).toBeVisible();
 	});
 
-	test('Services Table Rendered with correct data', async ({ baseURL }) => {
+	test('Services table and service details page rendered with correct data', async ({
+		baseURL,
+	}) => {
 		// visit services page
 		await page.goto(`${baseURL}${ROUTES.APPLICATION}`);
 
 		// assert the URL of the services page
 		await expect(page).toHaveURL(`${baseURL}${ROUTES.APPLICATION}`);
 
+		// mock the services list call to return non-empty data
 		await page.route(`**/services`, (route) =>
 			route.fulfill({
 				status: 200,
@@ -76,7 +79,84 @@ test.describe('Service Page', () => {
 			.textContent();
 
 		await expect(operationsPerSecond).toEqual('Operations Per Second');
+
 		// expect services to be listed in the table
-		await page.locator('a[href="/services/redis"]').isVisible();
+		const redisService = await page
+			.locator('a[href="/services/redis"]')
+			.isVisible();
+
+		expect(redisService).toBeTruthy();
+
+		// route to a service details page
+		await page.locator('a[href="/services/redis"]').click();
+
+		// wait for the network calls to be settled
+		await page.waitForLoadState('networkidle');
+
+		// render the overview tab
+		await page.getByRole('tab', { name: 'Overview' }).click();
+
+		// check the presence of different graphs on the overview tab
+		const latencyGraph = await page
+			.locator('.ant-card-body:has-text("Latency")')
+			.isVisible();
+
+		expect(latencyGraph).toBeTruthy();
+
+		const rateOps = await page
+			.locator('.ant-card-body:has-text("Rate (ops/s)")')
+			.isVisible();
+
+		expect(rateOps).toBeTruthy();
+
+		const errorPercentage = await page
+			.locator('.ant-card-body:has-text("Error Percentage")')
+			.isVisible();
+
+		expect(errorPercentage).toBeTruthy();
+
+		// navigate to the DB call metrics and validate the tables
+		await page.getByRole('tab', { name: 'DB Call Metrics' }).click();
+
+		const databaseCallRps = await page
+			.locator('.ant-card-body:has-text("Database Calls RPS")')
+			.isVisible();
+
+		expect(databaseCallRps).toBeTruthy();
+
+		const databaseCallsAvgDuration = await page
+			.locator('.ant-card-body:has-text("Database Calls Avg Duration")')
+			.isVisible();
+
+		expect(databaseCallsAvgDuration).toBeTruthy();
+
+		// navigate to external metrics and validate the tables
+
+		await page.getByRole('tab', { name: 'External Metrics' }).click();
+		const externalCallErrorPerc = await page
+			.locator('.ant-card-body:has-text("External Call Error Percentage")')
+			.isVisible();
+
+		expect(externalCallErrorPerc).toBeTruthy();
+
+		const externalCallDuration = await page
+			.locator('#external_call_duration:has-text("External Call duration")')
+			.isVisible();
+
+		expect(externalCallDuration).toBeTruthy();
+
+		const externalCallRps = await page
+			.locator('.ant-card-body:has-text("External Call RPS(by Address)")')
+			.isVisible();
+
+		expect(externalCallRps).toBeTruthy();
+
+		const externalCallDurationByAddress = await page
+			.locator(
+				'#external_call_duration_by_address:has-text("External Call duration(by Address)")',
+			)
+			.isVisible();
+
+		expect(externalCallDurationByAddress).toBeTruthy();
 	});
 });
