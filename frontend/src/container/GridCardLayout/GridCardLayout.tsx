@@ -11,8 +11,10 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
+import { ROLES, USER_ROLES } from 'types/roles';
+import { ComponentTypes } from 'utils/permission';
 
-import { headerMenuList } from './config';
+import { EditMenuAction, ViewMenuAction } from './config';
 import GridCard from './GridCard';
 import {
 	Button,
@@ -32,10 +34,11 @@ function GraphLayout({
 		layouts,
 		setLayouts,
 		setSelectedDashboard,
+		isDashboardLocked,
 	} = useDashboard();
 	const { t } = useTranslation(['dashboard']);
 
-	const { featureResponse, role } = useSelector<AppState, AppReducer>(
+	const { featureResponse, role, user } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 
@@ -45,9 +48,20 @@ function GraphLayout({
 
 	const { notifications } = useNotifications();
 
+	let permissions: ComponentTypes[] = ['save_layout', 'add_panel'];
+
+	if (isDashboardLocked) {
+		permissions = ['edit_locked_dashboard', 'add_panel_locked_dashboard'];
+	}
+
+	const userRole: ROLES | null =
+		selectedDashboard?.created_by === user?.email
+			? (USER_ROLES.AUTHOR as ROLES)
+			: role;
+
 	const [saveLayoutPermission, addPanelPermission] = useComponentPermission(
-		['save_layout', 'add_panel'],
-		role,
+		permissions,
+		userRole,
 	);
 
 	const onSaveHandler = (): void => {
@@ -83,35 +97,41 @@ function GraphLayout({
 		});
 	};
 
+	const widgetActions = !isDashboardLocked
+		? [...ViewMenuAction, ...EditMenuAction]
+		: [...ViewMenuAction];
+
 	return (
 		<>
-			<ButtonContainer>
-				{saveLayoutPermission && (
-					<Button
-						loading={updateDashboardMutation.isLoading}
-						onClick={onSaveHandler}
-						icon={<SaveFilled />}
-						disabled={updateDashboardMutation.isLoading}
-					>
-						{t('dashboard:save_layout')}
-					</Button>
-				)}
+			{!isDashboardLocked && (
+				<ButtonContainer>
+					{saveLayoutPermission && (
+						<Button
+							loading={updateDashboardMutation.isLoading}
+							onClick={onSaveHandler}
+							icon={<SaveFilled />}
+							disabled={updateDashboardMutation.isLoading}
+						>
+							{t('dashboard:save_layout')}
+						</Button>
+					)}
 
-				{addPanelPermission && (
-					<Button onClick={onAddPanelHandler} icon={<PlusOutlined />}>
-						{t('dashboard:add_panel')}
-					</Button>
-				)}
-			</ButtonContainer>
+					{addPanelPermission && (
+						<Button onClick={onAddPanelHandler} icon={<PlusOutlined />}>
+							{t('dashboard:add_panel')}
+						</Button>
+					)}
+				</ButtonContainer>
+			)}
 
 			<ReactGridLayout
 				cols={12}
 				rowHeight={100}
 				autoSize
 				width={100}
-				isDraggable={addPanelPermission}
-				isDroppable={addPanelPermission}
-				isResizable={addPanelPermission}
+				isDraggable={!isDashboardLocked && addPanelPermission}
+				isDroppable={!isDashboardLocked && addPanelPermission}
+				isResizable={!isDashboardLocked && addPanelPermission}
 				allowOverlap={false}
 				onLayoutChange={setLayouts}
 				draggableHandle=".drag-handle"
@@ -122,12 +142,20 @@ function GraphLayout({
 					const currentWidget = (widgets || [])?.find((e) => e.id === id);
 
 					return (
-						<CardContainer isDarkMode={isDarkMode} key={id} data-grid={layout}>
-							<Card $panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}>
+						<CardContainer
+							className={isDashboardLocked ? '' : 'enable-resize'}
+							isDarkMode={isDarkMode}
+							key={id}
+							data-grid={layout}
+						>
+							<Card
+								className="grid-item"
+								$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
+							>
 								<GridCard
-									widget={currentWidget || ({ id } as Widgets)}
+									widget={currentWidget || ({ id, query: {} } as Widgets)}
 									name={currentWidget?.id || ''}
-									headerMenuList={headerMenuList}
+									headerMenuList={widgetActions}
 								/>
 							</Card>
 						</CardContainer>

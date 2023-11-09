@@ -20,10 +20,10 @@ export const getGraphManagerTableColumns = ({
 		width: 50,
 		dataIndex: ColumnsKeyAndDataIndex.Index,
 		key: ColumnsKeyAndDataIndex.Index,
-		render: (_: string, __: DataSetProps, index: number): JSX.Element => (
+		render: (_: string, record: DataSetProps): JSX.Element => (
 			<CustomCheckBox
 				data={data}
-				index={index}
+				index={record.index}
 				checkBoxOnChangeHandler={checkBoxOnChangeHandler}
 				graphVisibilityState={graphVisibilityState}
 			/>
