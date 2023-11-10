@@ -275,6 +275,7 @@ function WidgetGraphComponent({
 						panelType={widget.panelTypes}
 						data={data}
 						name={name}
+						ref={lineChartRef}
 						options={options}
 						yAxisUnit={widget.yAxisUnit}
 						onClickHandler={onClickHandler}
