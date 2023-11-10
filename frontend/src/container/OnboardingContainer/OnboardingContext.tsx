@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
 
+import { DataSourceType } from './common/DataSource/DataSource';
 import { ModuleProps } from './OnboardingContainer';
 
 // Define the shape of your context data
@@ -7,8 +8,9 @@ interface OnboardingContextData {
 	serviceName: string;
 	updateServiceName: (newValue: string) => void;
 	selectedModule: ModuleProps | null;
-	selectedDataSource: ModuleProps | null;
-	updateSelectedModule: (newValue: string) => void;
+	selectedDataSource: DataSourceType | null;
+	updateSelectedModule: (module: ModuleProps) => void;
+	updateSelectedDataSource: (module: DataSourceType) => void;
 }
 
 // Create the context with an initial state
@@ -29,10 +31,18 @@ function OnboardingContextProvider({
 	const [
 		selectedDataSource,
 		setSelectedDataSource,
-	] = useState<ModuleProps | null>(null);
+	] = useState<DataSourceType | null>(null);
 
 	const updateServiceName = (newValue: string): void => {
 		setServiceName(newValue);
+	};
+
+	const updateSelectedModule = (module: ModuleProps): void => {
+		setSelectedModule(module);
+	};
+
+	const updateSelectedDataSource = (dataSource: DataSourceType): void => {
+		setSelectedDataSource(dataSource);
 	};
 
 	// Provide the context value to the wrapped components
@@ -42,8 +52,8 @@ function OnboardingContextProvider({
 		updateServiceName,
 		selectedModule,
 		selectedDataSource,
-		setSelectedModule,
-		setSelectedDataSource,
+		updateSelectedModule,
+		updateSelectedDataSource,
 	};
 
 	return (
