@@ -5,6 +5,7 @@
 
 	.step-data {
 		height: 90%;
+		overflow: auto;
 
 		.step-content {
 			.step-name {
@@ -20,10 +21,12 @@
 
 .steps-container {
 	width: 20%;
+	height: 100%;
 }
 
 .selected-step-content {
 	width: 80%;
+	height: 100%;
 }
 
 .selected-step-pills {
@@ -60,8 +63,8 @@
 	flex-direction: column;
 	gap: 12px;
 
-	width: 200px;
-	height: 120px;
+	width: 160px;
+	height: 100px;
 	background: #1d1d1d;
 	border: 1px solid #424242;
 	border-radius: 3px;

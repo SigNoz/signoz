@@ -13,9 +13,17 @@ import { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 import { trackEvent } from 'utils/segmentAnalytics';
 
+import ConnectionStatus from './APM/common/ConnectionStatus/ConnectionStatus';
+import DataSource from './common/DataSource/DataSource';
+import EnvironmentDetails from './common/EnvironmentDetails/EnvironmentDetails';
+import InstallOpenTelemetry from './common/InstallOpenTelemetry/InstallOpenTelemetry';
+import RunApplication from './common/RunApplication/RunApplication';
+import SelectMethod from './common/SelectMethod/SelectMethod';
+import SetupOtelCollector from './common/SetupOtelCollector/SetupOtelCollector';
 import ModuleStepsContainer from './ModuleStepsContainer/ModuleStepsContainer';
+import { OnboardingContextProvider } from './OnboardingContext';
 
-enum ModulesMap {
+export enum ModulesMap {
 	APM = 'APM',
 	LogsManagement = 'LogsManagement',
 	InfrastructureMonitoring = 'InfrastructureMonitoring',
@@ -30,11 +38,16 @@ const verifyConnectionDesc = 'Verify that you’ve instrumented your application
 
 const verifyableLogsType = ['kubernetes', 'docker'];
 
-interface ModuleProps {
+export interface ModuleProps {
 	id: string;
 	title: string;
 	desc: string;
 	stepDesc: string;
+}
+
+export interface SelectedModuleStepProps {
+	title: string;
+	component: any;
 }
 
 const useCases = {
@@ -61,26 +74,77 @@ const useCases = {
 	},
 };
 
-const defaultSteps: StepProps[] = [
-	{
-		title: getStarted,
-		description: selectUseCase,
-	},
-	{
-		title: instrumentApp,
-		description: defaultStepDesc,
-	},
-	{
-		title: testConnection,
-		description: verifyConnectionDesc,
-	},
+const dataSourceStep: SelectedModuleStepProps = {
+	title: 'Data Source',
+	component: <DataSource />,
+};
+
+const envDetailsStep: SelectedModuleStepProps = {
+	title: 'Environment Details',
+	component: <EnvironmentDetails />,
+};
+
+const selectMethodStep: SelectedModuleStepProps = {
+	title: 'Select Method',
+	component: <SelectMethod />,
+};
+
+const setupOtelCollectorStep: SelectedModuleStepProps = {
+	title: 'Setup Otel Collector',
+	component: <SetupOtelCollector />,
+};
+
+const installOpenTelemetryStep: SelectedModuleStepProps = {
+	title: 'Install OpenTelemetry',
+	component: <InstallOpenTelemetry />,
+};
+
+const runApplicationStep: SelectedModuleStepProps = {
+	title: 'Run Application',
+	component: <RunApplication />,
+};
+
+const testConnectionStep: SelectedModuleStepProps = {
+	title: 'Test Connection',
+	component: (
+		<ConnectionStatus framework="flask" language="python" serviceName="" />
+	),
+};
+
+const APM_STEPS: SelectedModuleStepProps[] = [
+	dataSourceStep,
+	envDetailsStep,
+	selectMethodStep,
+	setupOtelCollectorStep,
+	installOpenTelemetryStep,
+	runApplicationStep,
+	testConnectionStep,
+];
+
+const LOGS_MANAGEMENT_STEPS: SelectedModuleStepProps[] = [
+	dataSourceStep,
+	envDetailsStep,
+	setupOtelCollectorStep,
+	installOpenTelemetryStep,
+	runApplicationStep,
+	testConnectionStep,
+];
+
+const INFRASTRUCTURE_MONITORING_STEPS: SelectedModuleStepProps[] = [
+	dataSourceStep,
+	envDetailsStep,
+	setupOtelCollectorStep,
+	installOpenTelemetryStep,
+	runApplicationStep,
+	testConnectionStep,
 ];
 
 export default function Onboarding(): JSX.Element {
 	const [selectedModule, setSelectedModule] = useState<ModuleProps>(
 		useCases.APM,
 	);
-	const [steps, setsteps] = useState(defaultSteps);
+
+	const [selectedModuleSteps, setSelectedModuleSteps] = useState(APM_STEPS);
 	const [activeStep, setActiveStep] = useState(2);
 	const [current, setCurrent] = useState(0);
 	const [selectedLogsType, setSelectedLogsType] = useState<string | null>(
@@ -88,45 +152,17 @@ export default function Onboarding(): JSX.Element {
 	);
 	const isDarkMode = useIsDarkMode();
 
-	const baseSteps = [
-		{
-			title: getStarted,
-			description: selectUseCase,
-		},
-		{
-			title: instrumentApp,
-			description: selectedModule.stepDesc,
-		},
-	];
-
 	useEffectOnce(() => {
 		trackEvent('Onboarding Started');
 	});
 
 	useEffect(() => {
 		if (selectedModule?.id === ModulesMap.InfrastructureMonitoring) {
-			setsteps([...baseSteps]);
+			setSelectedModuleSteps(INFRASTRUCTURE_MONITORING_STEPS);
 		} else if (selectedModule?.id === ModulesMap.LogsManagement) {
-			if (selectedLogsType && verifyableLogsType?.indexOf(selectedLogsType) > -1) {
-				setsteps([
-					...baseSteps,
-					{
-						title: testConnection,
-						description: verifyConnectionDesc,
-						disabled: true,
-					},
-				]);
-			} else {
-				setsteps([...baseSteps]);
-			}
+			setSelectedModuleSteps(LOGS_MANAGEMENT_STEPS);
 		} else {
-			setsteps([
-				...baseSteps,
-				{
-					title: testConnection,
-					description: verifyConnectionDesc,
-				},
-			]);
+			setSelectedModuleSteps(APM_STEPS);
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -213,78 +249,79 @@ export default function Onboarding(): JSX.Element {
 	};
 
 	return (
-		<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
-			{activeStep === 1 && (
-				<>
-					<div className="onboardingHeader">
-						<h1>Get Started with SigNoz</h1>
-						<div> Select a use-case to get started </div>
-					</div>
-
-					<div className="modulesContainer">
-						<div className="moduleContainerRowStyles">
-							{Object.keys(ModulesMap).map((module) => {
-								const selectedUseCase = (useCases as any)[module];
-
-								return (
-									<Card
-										className={cx(
-											'moduleStyles',
-											selectedModule.id === selectedUseCase.id ? 'selected' : '',
-										)}
-										style={{
-											backgroundColor: isDarkMode ? '#000' : '#FFF',
-										}}
-										key={selectedUseCase.id}
-										onClick={(): void => handleModuleSelect(selectedUseCase)}
-									>
-										<Typography.Title
-											className="moduleTitleStyle"
-											level={4}
-											style={{
-												borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #ddd',
-												backgroundColor: isDarkMode ? '#141414' : '#FFF',
-											}}
-										>
-											{selectedUseCase.title}
-										</Typography.Title>
-										<Typography.Paragraph
-											className="moduleDesc"
-											style={{ backgroundColor: isDarkMode ? '#000' : '#FFF' }}
-										>
-											{selectedUseCase.desc}
-										</Typography.Paragraph>
-									</Card>
-								);
-							})}
+		<OnboardingContextProvider>
+			<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
+				{activeStep === 1 && (
+					<>
+						<div className="onboardingHeader">
+							<h1>Get Started with SigNoz</h1>
+							<div> Select a use-case to get started </div>
 						</div>
-					</div>
 
-					<div className="continue-to-next-step">
-						<Button type="primary" icon={<ArrowRightOutlined />} onClick={handleNext}>
-							Continue to next step
-						</Button>
-					</div>
-				</>
-			)}
+						<div className="modulesContainer">
+							<div className="moduleContainerRowStyles">
+								{Object.keys(ModulesMap).map((module) => {
+									const selectedUseCase = (useCases as any)[module];
 
-			{activeStep > 1 && (
-				<div className="stepsContainer">
-					{/* <div className="step-content"> */}
-					<ModuleStepsContainer />
-					{/* {selectedModule.id === ModulesMap.APM && <APM activeStep={activeStep} />}
-						{selectedModule.id === ModulesMap.LogsManagement && (
-							<LogsManagement
-								activeStep={activeStep}
-								handleLogTypeSelect={handleLogTypeSelect}
-							/>
-						)}
-						{selectedModule.id === ModulesMap.InfrastructureMonitoring && (
-							<InfrastructureMonitoring activeStep={activeStep} />
-						)} */}
-					{/* </div> */}
-				</div>
-			)}
-		</div>
+									return (
+										<Card
+											className={cx(
+												'moduleStyles',
+												selectedModule.id === selectedUseCase.id ? 'selected' : '',
+											)}
+											style={{
+												backgroundColor: isDarkMode ? '#000' : '#FFF',
+											}}
+											key={selectedUseCase.id}
+											onClick={(): void => handleModuleSelect(selectedUseCase)}
+										>
+											<Typography.Title
+												className="moduleTitleStyle"
+												level={4}
+												style={{
+													borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #ddd',
+													backgroundColor: isDarkMode ? '#141414' : '#FFF',
+												}}
+											>
+												{selectedUseCase.title}
+											</Typography.Title>
+											<Typography.Paragraph
+												className="moduleDesc"
+												style={{ backgroundColor: isDarkMode ? '#000' : '#FFF' }}
+											>
+												{selectedUseCase.desc}
+											</Typography.Paragraph>
+										</Card>
+									);
+								})}
+							</div>
+						</div>
+
+						<div className="continue-to-next-step">
+							<Button
+								type="primary"
+								icon={<ArrowRightOutlined />}
+								onClick={handleNext}
+							>
+								Continue to next step
+							</Button>
+						</div>
+					</>
+				)}
+
+				{activeStep > 1 && (
+					<div className="stepsContainer">
+						<ModuleStepsContainer
+							onReselectModule={(): void => {
+								setCurrent(current - 1);
+								setActiveStep(activeStep - 1);
+							}}
+							selectedModule={selectedModule}
+							selectedModuleSteps={selectedModuleSteps}
+						/>
+					</div>
+				)}
+			</div>
+		</OnboardingContextProvider>
 	);
 }

@@ -8,65 +8,33 @@ import {
 import { Button, ConfigProvider, Space, Steps } from 'antd';
 import { useState } from 'react';
 
-import ConnectionStatus from '../APM/common/ConnectionStatus/ConnectionStatus';
-import DataSource from '../common/DataSource/DataSource';
-import EnvironmentDetails from '../common/EnvironmentDetails/EnvironmentDetails';
-import InstallOpenTelemetry from '../common/InstallOpenTelemetry/InstallOpenTelemetry';
-import RunApplication from '../common/RunApplication/RunApplication';
-import SelectMethod from '../common/SelectMethod/SelectMethod';
-import SetupOtelCollector from '../common/SetupOtelCollector/SetupOtelCollector';
+import { ModuleProps, SelectedModuleStepProps } from '../OnboardingContainer';
+import { useOnboardingContext } from '../OnboardingContext';
 
-const dataSourceStep = {
-	title: 'Data Source',
-	component: <DataSource />,
-};
+interface ModuleStepsContainerProps {
+	onReselectModule: any;
+	selectedModule: ModuleProps;
+	selectedModuleSteps: SelectedModuleStepProps[];
+}
 
-const envDetailsStep = {
-	title: 'Environment Details',
-	component: <EnvironmentDetails />,
-};
+export default function ModuleStepsContainer({
+	onReselectModule,
+	selectedModule,
+	selectedModuleSteps,
+}: ModuleStepsContainerProps): JSX.Element {
+	const { serviceName } = useOnboardingContext();
 
-const selectMethodStep = {
-	title: 'Select Method',
-	component: <SelectMethod />,
-};
-
-const setupOtelCollectorStep = {
-	title: 'Setup Otel Collector',
-	component: <SetupOtelCollector />,
-};
-
-const installOpenTelemetryStep = {
-	title: 'Install OpenTelemetry',
-	component: <InstallOpenTelemetry />,
-};
-
-const runApplicationStep = {
-	title: 'Run Application',
-	component: <RunApplication />,
-};
-
-const testConnectionStep = {
-	title: 'Test Connection',
-	component: (
-		<ConnectionStatus framework="flask" language="python" serviceName="" />
-	),
-};
-
-const APM_STEPS = [
-	dataSourceStep,
-	envDetailsStep,
-	selectMethodStep,
-	setupOtelCollectorStep,
-	installOpenTelemetryStep,
-	runApplicationStep,
-	testConnectionStep,
-];
-
-export default function ModuleStepsContainer(): JSX.Element {
 	const [current, setCurrent] = useState(0);
 
-	console.log('APM_STEPS', APM_STEPS);
+	const handleNext = (): void => {
+		if (current > 0) {
+			setCurrent(current + 1);
+		}
+	};
+
+	const handlePrev = (): void => {
+		setCurrent(current - 1);
+	};
 
 	return (
 		<div className="onboarding-module-steps">
@@ -79,8 +47,13 @@ export default function ModuleStepsContainer(): JSX.Element {
 			>
 				<div className="steps-container">
 					<Space style={{ marginBottom: '24px' }}>
-						<Button type="default" icon={<LeftCircleOutlined />}>
-							Reselect Module
+						<Button
+							style={{ display: 'flex', alignItems: 'center' }}
+							type="default"
+							icon={<LeftCircleOutlined />}
+							onClick={onReselectModule}
+						>
+							{selectedModule.title}
 						</Button>
 					</Space>
 
@@ -93,7 +66,7 @@ export default function ModuleStepsContainer(): JSX.Element {
 							setCurrent(current);
 							console.log('current', current);
 						}}
-						items={APM_STEPS}
+						items={selectedModuleSteps}
 					/>
 				</div>
 
@@ -107,15 +80,17 @@ export default function ModuleStepsContainer(): JSX.Element {
 						</div>
 
 						<div className="step-content">
-							<div className="step-name">{APM_STEPS[current].title}</div>
-							{APM_STEPS[current].component}
+							<div className="step-name">{selectedModuleSteps[current].title}</div>
+							{selectedModuleSteps[current].component}
 						</div>
 					</div>
 
 					<div className="step-actions actionButtonsContainer">
-						<Button icon={<ArrowLeftOutlined />}>Back</Button>
+						<Button onClick={handlePrev} icon={<ArrowLeftOutlined />}>
+							Back
+						</Button>
 
-						<Button type="primary" icon={<ArrowRightOutlined />}>
+						<Button onClick={handleNext} type="primary" icon={<ArrowRightOutlined />}>
 							Continue to next step
 						</Button>
 					</div>
