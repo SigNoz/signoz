@@ -113,6 +113,7 @@ function FullView({
 				onDragSelect,
 				graphsVisibilityStates,
 				setGraphsVisibilityStates,
+				thresholds: widget.thresholds,
 			});
 
 			setChartOptions(newChartOptions);

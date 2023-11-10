@@ -163,6 +163,7 @@ function RightContainer({
 				thresholds={thresholds}
 				setThresholds={setThresholds}
 				yAxisUnit={yAxisUnit}
+				selectedGraph={selectedGraph}
 			/>
 		</Container>
 	);

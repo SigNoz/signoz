@@ -57,6 +57,7 @@ function WidgetGraph({
 				dimensions: containerDimensions,
 				isDarkMode,
 				onDragSelect,
+				thresholds,
 			}),
 		[
 			widgetId,
@@ -65,6 +66,7 @@ function WidgetGraph({
 			containerDimensions,
 			isDarkMode,
 			onDragSelect,
+			thresholds,
 		],
 	);
 
