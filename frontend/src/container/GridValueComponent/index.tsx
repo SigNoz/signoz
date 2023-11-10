@@ -22,7 +22,7 @@ function GridValueComponent({
 
 	if (data.length === 0) {
 		return (
-			<ValueContainer isDashboardPage={isDashboardPage}>
+			<ValueContainer>
 				<Typography>No Data</Typography>
 			</ValueContainer>
 		);
@@ -33,7 +33,7 @@ function GridValueComponent({
 			<TitleContainer isDashboardPage={isDashboardPage}>
 				<Typography>{gridTitle}</Typography>
 			</TitleContainer>
-			<ValueContainer isDashboardPage={isDashboardPage}>
+			<ValueContainer>
 				<ValueGraph
 					value={
 						yAxisUnit
