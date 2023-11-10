@@ -2,56 +2,51 @@ import './DataSource.styles.scss';
 
 import { Form, Input, Select } from 'antd';
 import cx from 'classnames';
+import { useOnboardingContext } from 'container/OnboardingContainer/OnboardingContext';
+import { getDataSources } from 'container/OnboardingContainer/utils/dataSourceUtils';
+import { useEffect, useState } from 'react';
 
-const supportedLanguages = [
-	{
-		name: 'java',
-		imgURL: `Logos/java.png`,
-	},
-	{
-		name: 'python',
-		imgURL: `Logos/java.png`,
-	},
-	{
-		name: 'javascript',
-		imgURL: `Logos/java.png`,
-	},
-	{
-		name: 'go',
-		imgURL: `Logos/java.png`,
-	},
-	{
-		name: 'rails',
-		imgURL: `Logos/rails.png`,
-	},
-];
-
-const frameworksMap = {
-	django: 'Django',
-	fastAPI: 'Fast API',
-	flask: 'Flask',
-	falcon: 'Falcon',
-	other: 'Others',
-};
+export interface DataSourceType {
+	name: string;
+	imgURL: string;
+}
 
 export default function DataSource(): JSX.Element {
 	const [form] = Form.useForm();
 
+	const { serviceName } = useOnboardingContext();
+
+	const [supportedDataSources, setSupportedDataSources] = useState<
+		DataSourceType[]
+	>([]);
+	const [supportedframeworks, setSupportedframeworks] = useState<
+		DataSourceType[]
+	>([]);
+
+	useEffect(() => {
+		const dataSource = getDataSources('APM');
+
+		setSupportedDataSources(dataSource);
+		// const frameworks = getFrameworks();
+	}, []);
+
+	console.log('serviceName', serviceName);
+
 	return (
 		<div className="apm-module-container">
 			<div className="supported-languages-container">
-				{supportedLanguages.map((supportedLanguage) => (
+				{supportedDataSources?.map((dataSource) => (
 					<div
 						className={cx(
 							'supported-language',
 							// selectedLanguage === supportedLanguage.name ? 'selected' : '',
 						)}
-						key={supportedLanguage.name}
+						key={dataSource.name}
 						// onClick={(): void => setSelectedLanguage(supportedLanguage.name)}
 					>
 						<img
 							className={cx('supported-langauge-img')}
-							src={`/Logos/${supportedLanguage.name}.png`}
+							src={`/Logos/${dataSource.name}.png`}
 							alt=""
 						/>
 					</div>
@@ -61,6 +56,9 @@ export default function DataSource(): JSX.Element {
 			<div className="form-container">
 				<div className="service-name-container">
 					<Form
+						initialValues={{
+							serviceName,
+						}}
 						form={form}
 						name="service-name"
 						style={{ minWidth: '300px' }}
@@ -68,7 +66,7 @@ export default function DataSource(): JSX.Element {
 					>
 						<Form.Item
 							hasFeedback
-							name="Service Name"
+							name="serviceName"
 							label="Service Name"
 							rules={[{ required: true }]}
 							validateTrigger="onBlur"
@@ -84,28 +82,7 @@ export default function DataSource(): JSX.Element {
 									style={{ minWidth: 120 }}
 									placeholder="Select Framework"
 									// onChange={(value): void => handleFrameworkChange(value)}
-									options={[
-										{
-											value: 'django',
-											label: frameworksMap.django,
-										},
-										{
-											value: 'fastAPI',
-											label: frameworksMap.fastAPI,
-										},
-										{
-											value: 'flask',
-											label: frameworksMap.flask,
-										},
-										{
-											value: 'falcon',
-											label: frameworksMap.falcon,
-										},
-										{
-											value: 'other',
-											label: frameworksMap.other,
-										},
-									]}
+									options={supportedframeworks}
 								/>
 							</Form.Item>
 						</div>

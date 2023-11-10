@@ -108,9 +108,9 @@
 .actionButtonsContainer {
 	display: flex;
 	justify-content: space-between;
-	padding-bottom: 48px;
+	align-items: center;
 	box-sizing: border-box;
-	bottom: 0;
+	align-items: center;
 }
 
 .ant-steps-item-description {
