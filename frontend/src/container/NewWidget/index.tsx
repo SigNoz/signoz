@@ -256,6 +256,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						selectedTime={selectedTime}
 						selectedGraph={graphType}
 						yAxisUnit={yAxisUnit}
+						thresholds={thresholds}
 					/>
 				</LeftContainerWrapper>
 

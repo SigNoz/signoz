@@ -25,6 +25,7 @@ export type GridPanelSwitchProps = {
 	onDragSelect?: (start: number, end: number) => void;
 	panelData: QueryDataV3[];
 	query: Query;
+	thresholds?: Widgets['thresholds'];
 };
 
 export type PropsTypePropsMap = {

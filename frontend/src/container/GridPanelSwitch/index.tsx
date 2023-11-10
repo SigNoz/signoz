@@ -23,6 +23,7 @@ const GridPanelSwitch = forwardRef<
 			onDragSelect,
 			panelData,
 			query,
+			thresholds,
 		},
 		ref,
 	): JSX.Element | null => {
@@ -44,6 +45,7 @@ const GridPanelSwitch = forwardRef<
 					title,
 					data,
 					yAxisUnit,
+					thresholds,
 				},
 				[PANEL_TYPES.TABLE]: { ...GRID_TABLE_CONFIG, data: panelData, query },
 				[PANEL_TYPES.LIST]: null,
@@ -54,16 +56,17 @@ const GridPanelSwitch = forwardRef<
 			return result;
 		}, [
 			data,
-			isStacked,
-			name,
-			onClickHandler,
-			onDragSelect,
-			staticLine,
 			title,
+			isStacked,
+			onClickHandler,
+			name,
 			yAxisUnit,
+			staticLine,
+			onDragSelect,
+			ref,
+			thresholds,
 			panelData,
 			query,
-			ref,
 		]);
 
 		const Component = PANEL_TYPES_COMPONENT_MAP[panelType] as FC<

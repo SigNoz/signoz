@@ -265,6 +265,7 @@ function WidgetGraphComponent({
 					panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
 					query={widget.query}
 					ref={lineChartRef}
+					thresholds={widget.thresholds}
 				/>
 			)}
 		</span>

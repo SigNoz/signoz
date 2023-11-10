@@ -21,6 +21,7 @@ function WidgetGraph({
 	selectedGraph,
 	yAxisUnit,
 	selectedTime,
+	thresholds,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 
@@ -91,6 +92,7 @@ function WidgetGraph({
 					getWidgetQueryRange.data?.payload.data.newResult.data.result || []
 				}
 				query={stagedQuery || query}
+				thresholds={thresholds}
 			/>
 		</>
 	);

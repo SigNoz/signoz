@@ -103,7 +103,7 @@ function Threshold({
 							<Typography.Text>If value is</Typography.Text>
 							{isEditMode ? (
 								<Select
-									style={{ width: '73px' }}
+									style={{ minWidth: '73px' }}
 									defaultValue={operator}
 									options={operatorOptions}
 									onChange={handleOperatorChange}
@@ -122,7 +122,7 @@ function Threshold({
 							)}
 							{isEditMode ? (
 								<Select
-									style={{ width: '200px' }}
+									style={{ minWidth: '200px' }}
 									defaultValue={unit}
 									options={unitOptions}
 									onChange={handleUnitChange}
@@ -143,7 +143,7 @@ function Threshold({
 								)}
 								{isEditMode ? (
 									<Select
-										style={{ width: '100px' }}
+										style={{ minWidth: '100px' }}
 										defaultValue={format}
 										options={formatOptions}
 										onChange={handlerFormatChange}

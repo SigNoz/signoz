@@ -135,6 +135,7 @@ function FullView({
 					panelData={response.data?.payload.data.newResult.data.result || []}
 					query={widget.query}
 					ref={lineChartRef}
+					thresholds={widget.thresholds}
 				/>
 			</GraphContainer>
 

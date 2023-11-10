@@ -1,6 +1,6 @@
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 
-type ThresholdOperators = '>' | '<' | '>=' | '<=';
+type ThresholdOperators = '>' | '<' | '>=' | '<=' | '=';
 
 export type ThresholdProps = {
 	index: string;

@@ -15,6 +15,7 @@ function WidgetGraph({
 	selectedGraph,
 	yAxisUnit,
 	selectedTime,
+	thresholds,
 }: WidgetGraphProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const { selectedDashboard } = useDashboard();
@@ -47,6 +48,7 @@ function WidgetGraph({
 			)}
 
 			<WidgetGraphComponent
+				thresholds={thresholds}
 				selectedTime={selectedTime}
 				selectedGraph={selectedGraph}
 				yAxisUnit={yAxisUnit}
