@@ -1,23 +1,30 @@
 ## Collect Docker Container Logs in SigNoz Cloud
 
-- Clone this [repository](https://github.com/SigNoz/docker-container-logs)
+**Step 1. Clone this repository**
 
-- Update `otel-collector-config.yaml` and set the values of `<SIGNOZ_INGESTION_KEY>` and `{region}`.
+Clone the GitHub repository as a first step to collect logs 
 
-    Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary accordingly.
+```bash
+git clone https://github.com/SigNoz/docker-container-logs.git
+```
 
-    US -	ingest.us.signoz.cloud:443 
+**Step 2. Update your `.env` file**
 
-    IN -	ingest.in.signoz.cloud:443 
+In the repository that you cloned above, update `.env` file by putting the values of `<SIGNOZ_INGESTION_KEY>` and `{region}`.
 
-    EU - ingest.eu.signoz.cloud:443 
+Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary accordingly.
 
+US -	ingest.us.signoz.cloud:443 
 
- - Start the containers
+IN -	ingest.in.signoz.cloud:443 
+
+EU - ingest.eu.signoz.cloud:443 
+
+**Step 3. Start the containers**
  
-    ```bash
+   ```bash
     docker compose up -d
-    ```
+   ```
 
- - If there are no errors your logs will be exported and will be visible on the SigNoz UI.
+If there are no errors your logs will be exported and will be visible on the SigNoz UI.
 
