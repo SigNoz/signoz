@@ -3,6 +3,7 @@ import ROUTES from 'constants/routes';
 
 import servicesSuccessResponse from '../fixtures/api/services/200.json';
 import { loginApi } from '../fixtures/common';
+import { SERVICE_TABLE_HEADERS } from './utils';
 
 let page: Page;
 
@@ -58,16 +59,18 @@ test.describe('Service flow', () => {
 		await expect(breadcrumbServicesText).toEqual('Services');
 
 		// expect the services headers to be loaded correctly
-		const p99Latency = page.locator('th:has-text("P99 latency (in ms)")');
+		const p99Latency = page.locator(
+			`th:has-text("${SERVICE_TABLE_HEADERS.P99LATENCY}")`,
+		);
 
 		await expect(p99Latency).toBeVisible();
 		const errorRate = await page.locator(
-			`th:has-text("Error Rate (% of total)")`,
+			`th:has-text("${SERVICE_TABLE_HEADERS.ERROR_RATE}")`,
 		);
 
 		await expect(errorRate).toBeVisible();
 		const operationsPerSecond = await page.locator(
-			'th:has-text("Operations Per Second")',
+			`th:has-text("${SERVICE_TABLE_HEADERS.OPS_PER_SECOND}")`,
 		);
 
 		await expect(operationsPerSecond).toBeVisible();
@@ -90,19 +93,19 @@ test.describe('Service flow', () => {
 
 		// check the presence of different graphs on the overview tab
 		const latencyGraph = await page
-			.locator('.ant-card-body:has-text("Latency")')
+			.locator('[data-testid="service_latency"]')
 			.isVisible();
 
 		expect(latencyGraph).toBeTruthy();
 
 		const rateOps = await page
-			.locator('.ant-card-body:has-text("Rate (ops/s)")')
+			.locator('[data-testid="operations_per_sec"]')
 			.isVisible();
 
 		expect(rateOps).toBeTruthy();
 
 		const errorPercentage = await page
-			.locator('.ant-card-body:has-text("Error Percentage")')
+			.locator('[data-testid="error_percentage_%"]')
 			.isVisible();
 
 		expect(errorPercentage).toBeTruthy();
@@ -111,44 +114,37 @@ test.describe('Service flow', () => {
 		await page.getByRole('tab', { name: 'DB Call Metrics' }).click();
 
 		const databaseCallRps = await page
-			.locator('.ant-card-body:has-text("Database Calls RPS")')
+			.locator('[data-testid="database_call_rps"]')
 			.isVisible();
-
 		expect(databaseCallRps).toBeTruthy();
 
 		const databaseCallsAvgDuration = await page
-			.locator('.ant-card-body:has-text("Database Calls Avg Duration")')
+			.locator('[data-testid="database_call_avg_duration"]')
 			.isVisible();
-
 		expect(databaseCallsAvgDuration).toBeTruthy();
 
 		// navigate to external metrics and validate the tables
 
 		await page.getByRole('tab', { name: 'External Metrics' }).click();
-		const externalCallErrorPerc = await page
-			.locator('.ant-card-body:has-text("External Call Error Percentage")')
-			.isVisible();
 
+		const externalCallErrorPerc = await page
+			.locator('[data-testid="external_call_error_percentage"]')
+			.isVisible();
 		expect(externalCallErrorPerc).toBeTruthy();
 
 		const externalCallDuration = await page
-			.locator('#external_call_duration:has-text("External Call duration")')
+			.locator('[data-testid="external_call_duration"]')
 			.isVisible();
-
 		expect(externalCallDuration).toBeTruthy();
 
 		const externalCallRps = await page
-			.locator('.ant-card-body:has-text("External Call RPS(by Address)")')
+			.locator('[data-testid="external_call_rps_by_address"]')
 			.isVisible();
-
 		expect(externalCallRps).toBeTruthy();
 
 		const externalCallDurationByAddress = await page
-			.locator(
-				'#external_call_duration_by_address:has-text("External Call duration(by Address)")',
-			)
+			.locator('[data-testid="external_call_duration_by_address"]')
 			.isVisible();
-
 		expect(externalCallDurationByAddress).toBeTruthy();
 	});
 });
