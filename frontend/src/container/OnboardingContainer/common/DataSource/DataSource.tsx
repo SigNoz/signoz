@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './DataSource.styles.scss';
 
 import { Form, Input, Select } from 'antd';
@@ -14,7 +16,12 @@ export interface DataSourceType {
 export default function DataSource(): JSX.Element {
 	const [form] = Form.useForm();
 
-	const { serviceName } = useOnboardingContext();
+	const {
+		serviceName,
+		selectedModule,
+		selectedDataSource,
+		updateSelectedDataSource,
+	} = useOnboardingContext();
 
 	const [supportedDataSources, setSupportedDataSources] = useState<
 		DataSourceType[]
@@ -30,7 +37,7 @@ export default function DataSource(): JSX.Element {
 		// const frameworks = getFrameworks();
 	}, []);
 
-	console.log('serviceName', serviceName);
+	console.log('selectedDataSource', selectedModule, selectedDataSource);
 
 	return (
 		<div className="apm-module-container">
@@ -42,7 +49,9 @@ export default function DataSource(): JSX.Element {
 							// selectedLanguage === supportedLanguage.name ? 'selected' : '',
 						)}
 						key={dataSource.name}
-						// onClick={(): void => setSelectedLanguage(supportedLanguage.name)}
+						onClick={(): void => {
+							updateSelectedDataSource(dataSource);
+						}}
 					>
 						<img
 							className={cx('supported-langauge-img')}
