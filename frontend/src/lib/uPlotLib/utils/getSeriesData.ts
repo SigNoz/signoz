@@ -35,8 +35,6 @@ const getSeries = (
 
 	const newGraphVisibilityStates = graphsVisibilityStates?.slice(1);
 
-	// console.log('seriesList', seriesList);
-
 	for (let i = 0; i < seriesList?.length; i += 1) {
 		const color = colors[i % colors.length]; // Use modulo to loop through colors if there are more series than colors
 

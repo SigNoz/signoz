@@ -3,7 +3,7 @@ import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import Graph from 'container/GridCardLayout/GridCard';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
-import { OnClickPluginOpts } from 'lib/uPlotLib/getUplotChartData';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 function TopLevelOperation({

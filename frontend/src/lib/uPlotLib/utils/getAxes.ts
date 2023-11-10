@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 
 import getGridColor from './getGridColor';
 
-const getAxes = (isDarkMode, yAxisUnit): any => [
+const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
 	{
-		// label: 'Date',
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
 		grid: {
 			stroke: getGridColor(isDarkMode), // Color of the grid lines
@@ -20,7 +21,6 @@ const getAxes = (isDarkMode, yAxisUnit): any => [
 		gap: 5,
 	},
 	{
-		// label: 'Value',
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
 		grid: {
 			stroke: getGridColor(isDarkMode), // Color of the grid lines

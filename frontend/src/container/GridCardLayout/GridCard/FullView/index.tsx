@@ -95,7 +95,7 @@ function FullView({
 	useEffect(() => {
 		if (!response.isFetching && fullViewRef.current) {
 			const width = fullViewRef.current?.clientWidth
-				? fullViewRef.current.clientWidth - 50
+				? fullViewRef.current.clientWidth - 45
 				: 700;
 
 			const height = fullViewRef.current?.clientWidth

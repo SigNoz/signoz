@@ -253,7 +253,7 @@ function WidgetGraphComponent({
 				/>
 			</Modal>
 
-			<div style={{ height: '30px' }} className="drag-handle">
+			<div className="drag-handle">
 				<WidgetHeader
 					parentHover={hovered}
 					title={widget?.title}
