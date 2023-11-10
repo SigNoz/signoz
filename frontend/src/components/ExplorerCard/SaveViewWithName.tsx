@@ -55,7 +55,6 @@ function SaveViewWithName({
 				<Form.Item
 					name={['viewName']}
 					required
-					requiredMark
 					rules={[
 						{
 							required: true,
