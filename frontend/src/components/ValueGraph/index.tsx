@@ -16,8 +16,6 @@ function ValueGraph({
 		isConflictingThresholds,
 	} = getBackgroundColorAndThresholdCheck(thresholds, rawValue);
 
-	console.log({ threshold });
-
 	return (
 		<div
 			className="value-graph-container"
@@ -40,7 +38,13 @@ function ValueGraph({
 				{value}
 			</Typography.Text>
 			{isConflictingThresholds && (
-				<div className="value-graph-conflict">
+				<div
+					className={
+						threshold.thresholdFormat === 'Background'
+							? 'value-graph-bgconflict'
+							: 'value-graph-textconflict'
+					}
+				>
 					<Tooltip title="This value satisfies multiple thresholds">
 						<ExclamationCircleFilled style={{ color: '#E89A3C' }} />
 					</Tooltip>

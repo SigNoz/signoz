@@ -172,8 +172,6 @@ function WidgetHeader({
 		setIsOpen(!isOpen);
 	};
 
-	console.log('onClickHandler', isOpen);
-
 	const menu = useMemo(
 		() => ({
 			items: updatedMenuList,

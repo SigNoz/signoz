@@ -1,3 +1,4 @@
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 
 function compareThreshold(
@@ -26,6 +27,17 @@ function compareThreshold(
 	}
 }
 
+function extractNumbersFromString(inputString: string): number[] {
+	const regex = /[+-]?\d+(\.\d+)?/g;
+	const matches = inputString.match(regex);
+
+	if (matches) {
+		return matches.map(Number);
+	}
+
+	return [];
+}
+
 export function getBackgroundColorAndThresholdCheck(
 	thresholds: ThresholdProps[],
 	rawValue: number,
@@ -34,7 +46,12 @@ export function getBackgroundColorAndThresholdCheck(
 	isConflictingThresholds: boolean;
 } {
 	const matchingThresholds = thresholds.filter((threshold) =>
-		compareThreshold(rawValue, threshold),
+		compareThreshold(
+			extractNumbersFromString(
+				getYAxisFormattedValue(rawValue.toString(), threshold.thresholdUnit || ''),
+			)[0],
+			threshold,
+		),
 	);
 
 	if (matchingThresholds.length === 0) {

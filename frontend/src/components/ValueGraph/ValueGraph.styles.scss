@@ -14,9 +14,14 @@
         text-align: center;
     }
 
-    .value-graph-conflict {
+    .value-graph-bgconflict {
         position: absolute;
         right: 10px;
         bottom: 10px;
+    }
+
+    .value-graph-textconflict {
+        margin-left: 10px;
+        margin-top: 20px;
     }
 }

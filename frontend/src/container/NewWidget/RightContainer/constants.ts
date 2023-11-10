@@ -11,7 +11,7 @@ export const operatorOptions: DefaultOptionType[] = [
 ];
 
 export const unitOptions = flattenedCategories.map((options) => ({
-	value: options.name,
+	value: options.id,
 	label: options.name,
 }));
 
