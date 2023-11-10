@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Skeleton, Typography } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import GridPanelSwitch from 'container/GridPanelSwitch';
@@ -59,19 +59,20 @@ function WidgetGraphComponent({
 		[data, name],
 	);
 
+	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
+		boolean[]
+	>(localStoredVisibilityStates);
+
 	useEffect(() => {
 		if (!lineChartRef.current) return;
 
 		localStoredVisibilityStates.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);
 		});
+		setGraphsVisibilityStates(localStoredVisibilityStates);
 	}, [localStoredVisibilityStates]);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
-
-	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
-		boolean[]
-	>(localStoredVisibilityStates);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -249,20 +250,23 @@ function WidgetGraphComponent({
 					isWarning={isWarning}
 				/>
 			</div>
-			<GridPanelSwitch
-				panelType={widget.panelTypes}
-				data={data}
-				isStacked={widget.isStacked}
-				opacity={widget.opacity}
-				title={' '}
-				name={name}
-				yAxisUnit={widget.yAxisUnit}
-				onClickHandler={onClickHandler}
-				onDragSelect={onDragSelect}
-				panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
-				query={widget.query}
-				ref={lineChartRef}
-			/>
+			{queryResponse.isLoading && <Skeleton />}
+			{queryResponse.isSuccess && (
+				<GridPanelSwitch
+					panelType={widget.panelTypes}
+					data={data}
+					isStacked={widget.isStacked}
+					opacity={widget.opacity}
+					title={' '}
+					name={name}
+					yAxisUnit={widget.yAxisUnit}
+					onClickHandler={onClickHandler}
+					onDragSelect={onDragSelect}
+					panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
+					query={widget.query}
+					ref={lineChartRef}
+				/>
+			)}
 		</span>
 	);
 }

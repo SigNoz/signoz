@@ -282,10 +282,10 @@ const routes: AppRoutes[] = [
 		isPrivate: false,
 	},
 	{
-		path: ROUTES.PIPELINES,
+		path: ROUTES.LOGS_PIPELINES,
 		exact: true,
 		component: PipelinePage,
-		key: 'PIPELINES',
+		key: 'LOGS_PIPELINES',
 		isPrivate: true,
 	},
 	{

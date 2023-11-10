@@ -44,7 +44,6 @@ import {
 	StyledLeftContainer,
 } from './styles';
 import UserGuide from './UserGuide';
-import { getUpdatedStepInterval, toChartInterval } from './utils';
 
 function FormAlertRules({
 	alertType,
@@ -55,9 +54,10 @@ function FormAlertRules({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const {
 		currentQuery,
@@ -354,16 +354,6 @@ function FormAlertRules({
 		<BasicInfo alertDef={alertDef} setAlertDef={setAlertDef} />
 	);
 
-	const updatedStagedQuery = useMemo((): Query | null => {
-		const newQuery: Query | null = stagedQuery;
-		if (newQuery) {
-			newQuery.builder.queryData[0].stepInterval = getUpdatedStepInterval(
-				alertDef.evalWindow,
-			);
-		}
-		return newQuery;
-	}, [alertDef.evalWindow, stagedQuery]);
-
 	const renderQBChartPreview = (): JSX.Element => (
 		<ChartPreview
 			headline={
@@ -373,14 +363,13 @@ function FormAlertRules({
 				/>
 			}
 			name=""
-			query={updatedStagedQuery}
-			selectedInterval={toChartInterval(alertDef.evalWindow)}
+			query={stagedQuery}
+			selectedInterval={globalSelectedInterval}
 			alertDef={alertDef}
-			allowSelectedIntervalForStepGen
 		/>
 	);
 
-	const renderPromChartPreview = (): JSX.Element => (
+	const renderPromAndChQueryChartPreview = (): JSX.Element => (
 		<ChartPreview
 			headline={
 				<PlotTag
@@ -391,21 +380,7 @@ function FormAlertRules({
 			name="Chart Preview"
 			query={stagedQuery}
 			alertDef={alertDef}
-		/>
-	);
-
-	const renderChQueryChartPreview = (): JSX.Element => (
-		<ChartPreview
-			headline={
-				<PlotTag
-					queryType={currentQuery.queryType}
-					panelType={panelType || PANEL_TYPES.TIME_SERIES}
-				/>
-			}
-			name="Chart Preview"
-			query={stagedQuery}
-			alertDef={alertDef}
-			selectedInterval={toChartInterval(alertDef.evalWindow)}
+			selectedInterval={globalSelectedInterval}
 		/>
 	);
 
@@ -442,9 +417,10 @@ function FormAlertRules({
 					>
 						{currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 							renderQBChartPreview()}
-						{currentQuery.queryType === EQueryType.PROM && renderPromChartPreview()}
+						{currentQuery.queryType === EQueryType.PROM &&
+							renderPromAndChQueryChartPreview()}
 						{currentQuery.queryType === EQueryType.CLICKHOUSE &&
-							renderChQueryChartPreview()}
+							renderPromAndChQueryChartPreview()}
 
 						<StepContainer>
 							<BuilderUnitsFilter onChange={onUnitChangeHandler} />

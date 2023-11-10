@@ -24,7 +24,7 @@ interface ConnectionStatusProps {
 	framework: string;
 }
 
-const pollingInterval = 15000;
+const pollingInterval = 10000;
 
 export default function ConnectionStatus({
 	serviceName,
@@ -100,6 +100,16 @@ export default function ConnectionStatus({
 						heading="Go OpenTelemetry Instrumentation"
 						imgURL="/Logos/go.png"
 						docsURL="https://signoz.io/docs/instrumentation/golang/"
+						imgClassName="supported-language-img"
+					/>
+				);
+			case 'rails':
+				return (
+					<Header
+						entity="rails"
+						heading="Ruby on Rails OpenTelemetry Instrumentation"
+						imgURL="/Logos/rails.png"
+						docsURL="https://signoz.io/docs/instrumentation/ruby-on-rails/"
 						imgClassName="supported-language-img"
 					/>
 				);

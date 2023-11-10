@@ -31,7 +31,7 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import DateComponent from '../../components/ResizeTable/TableComponent/Date';
+import DateComponent from '../../components/ResizeTable/TableComponent/DateComponent';
 import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import DeleteButton from './TableComponents/DeleteButton';
@@ -94,7 +94,6 @@ function ListOfAllDashboard(): JSX.Element {
 			dataIndex: 'createdBy',
 			width: 30,
 			key: DynamicColumnsKey.CreatedBy,
-			render: (value): JSX.Element => <div>{value}</div>,
 		},
 		{
 			title: 'Last Updated Time',
@@ -114,7 +113,6 @@ function ListOfAllDashboard(): JSX.Element {
 			dataIndex: 'lastUpdatedBy',
 			width: 30,
 			key: DynamicColumnsKey.UpdatedBy,
-			render: (value): JSX.Element => <div>{value}</div>,
 		},
 	];
 
@@ -132,7 +130,7 @@ function ListOfAllDashboard(): JSX.Element {
 				dataIndex: 'description',
 			},
 			{
-				title: 'Tags (can be multiple)',
+				title: 'Tags',
 				dataIndex: 'tags',
 				width: 50,
 				render: (value): JSX.Element => <LabelColumn labels={value} />,
@@ -161,6 +159,7 @@ function ListOfAllDashboard(): JSX.Element {
 			tags: e.data.tags || [],
 			key: e.uuid,
 			createdBy: e.created_by,
+			isLocked: !!e.isLocked || false,
 			lastUpdatedBy: e.updated_by,
 			refetchDashboardList,
 		})) || [];
@@ -344,6 +343,7 @@ export interface Data {
 	createdAt: string;
 	lastUpdatedTime: string;
 	lastUpdatedBy: string;
+	isLocked: boolean;
 	id: string;
 }
 

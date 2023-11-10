@@ -172,6 +172,77 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	)
 }
 
+func TestLogPipelinesHistory(t *testing.T) {
+	require := require.New(t)
+	testbed := NewLogPipelinesTestBed(t)
+
+	// Only the latest config version can be "IN_PROGRESS",
+	// other incomplete deployments should have status "UNKNOWN"
+	getPipelinesResp := testbed.GetPipelinesFromQS()
+	require.Equal(0, len(getPipelinesResp.History))
+
+	postablePipelines := logparsingpipeline.PostablePipelines{
+		Pipelines: []logparsingpipeline.PostablePipeline{
+			{
+				OrderId: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "method",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: "=",
+							Value:    "GET",
+						},
+					},
+				},
+				Config: []logparsingpipeline.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "add",
+						Type:    "add",
+						Field:   "attributes.test",
+						Value:   "val",
+						Enabled: true,
+						Name:    "test add",
+					},
+				},
+			},
+		},
+	}
+
+	testbed.PostPipelinesToQS(postablePipelines)
+	getPipelinesResp = testbed.GetPipelinesFromQS()
+	require.Equal(1, len(getPipelinesResp.History))
+	require.Equal(agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
+
+	postablePipelines.Pipelines[0].Config = append(
+		postablePipelines.Pipelines[0].Config,
+		logparsingpipeline.PipelineOperator{
+			OrderId: 2,
+			ID:      "remove",
+			Type:    "remove",
+			Field:   "attributes.test",
+			Enabled: true,
+			Name:    "test remove",
+		},
+	)
+	postablePipelines.Pipelines[0].Config[0].Output = "remove"
+
+	testbed.PostPipelinesToQS(postablePipelines)
+	getPipelinesResp = testbed.GetPipelinesFromQS()
+
+	require.Equal(2, len(getPipelinesResp.History))
+	require.Equal(agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
+	require.Equal(agentConf.DeployStatusUnknown, getPipelinesResp.History[1].DeployStatus)
+}
+
 func TestLogPipelinesValidation(t *testing.T) {
 	validPipelineFilterSet := &v3.FilterSet{
 		Operator: "AND",
