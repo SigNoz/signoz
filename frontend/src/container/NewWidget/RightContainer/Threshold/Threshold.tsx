@@ -2,7 +2,8 @@ import './Threshold.styles.scss';
 
 import { CheckOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Card, Divider, InputNumber, Select, Space, Typography } from 'antd';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useDrag, useDrop, XYCoord } from 'react-dnd';
 
 import { operatorOptions, showAsOptions, unitOptions } from '../constants';
 import ColorSelector from './ColorSelector';
@@ -20,6 +21,8 @@ function Threshold({
 	thresholdFormat = 'Text',
 	thresholdDeleteHandler,
 	setThresholds,
+	keyIndex,
+	moveThreshold,
 }: ThresholdProps): JSX.Element {
 	const [isEditMode, setIsEditMode] = useState<boolean>(isEditEnabled);
 	const [operator, setOperator] = useState<string | number>(
@@ -86,8 +89,70 @@ function Threshold({
 		}
 	};
 
+	const ref = useRef<HTMLDivElement>(null);
+	const [{ handlerId }, drop] = useDrop<
+		ThresholdProps,
+		void,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		{ handlerId: any }
+	>({
+		accept: 'Threshold',
+		collect(monitor) {
+			return {
+				handlerId: monitor.getHandlerId(),
+			};
+		},
+		hover(item: ThresholdProps, monitor) {
+			if (!ref.current) {
+				return;
+			}
+			const dragIndex = item.keyIndex;
+			const hoverIndex = keyIndex;
+
+			if (dragIndex === hoverIndex) {
+				return;
+			}
+
+			const hoverBoundingRect = ref.current?.getBoundingClientRect();
+
+			const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+
+			const clientOffset = monitor.getClientOffset();
+
+			const hoverClientY = (clientOffset as XYCoord).y - hoverBoundingRect.top;
+
+			if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+				return;
+			}
+
+			if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+				return;
+			}
+
+			moveThreshold(dragIndex, hoverIndex);
+			// eslint-disable-next-line no-param-reassign
+			item.keyIndex = hoverIndex;
+		},
+	});
+
+	const [{ isDragging }, drag] = useDrag({
+		type: 'Threshold',
+		item: () => ({ keyIndex }),
+		collect: (monitor) => ({
+			isDragging: monitor.isDragging(),
+		}),
+	});
+
+	const opacity = isDragging ? 0 : 1;
+	drag(drop(ref));
+
 	return (
-		<div className="threahold-container">
+		<div
+			ref={ref}
+			style={{ opacity }}
+			data-handler-id={handlerId}
+			className="threahold-container"
+		>
 			<Card className="threahold-card">
 				<div className="threshold-card-container">
 					<div className="threshold-action-button">

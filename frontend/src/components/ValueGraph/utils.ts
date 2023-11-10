@@ -38,6 +38,28 @@ function extractNumbersFromString(inputString: string): number[] {
 	return [];
 }
 
+function getHighestPrecedenceThreshold(
+	matchingThresholds: ThresholdProps[],
+	thresholds: ThresholdProps[],
+): ThresholdProps | null {
+	if (matchingThresholds.length === 0) {
+		return null;
+	}
+
+	// whichever threshold from matchingThresholds is found first in thresholds array return the threshold from thresholds array
+	let highestPrecedenceThreshold = matchingThresholds[0];
+	for (let i = 1; i < matchingThresholds.length; i += 1) {
+		if (
+			thresholds.indexOf(matchingThresholds[i]) <
+			thresholds.indexOf(highestPrecedenceThreshold)
+		) {
+			highestPrecedenceThreshold = matchingThresholds[i];
+		}
+	}
+
+	return highestPrecedenceThreshold;
+}
+
 export function getBackgroundColorAndThresholdCheck(
 	thresholds: ThresholdProps[],
 	rawValue: number,
@@ -61,15 +83,17 @@ export function getBackgroundColorAndThresholdCheck(
 		};
 	}
 
-	const newThreshold = matchingThresholds.reduce((prev, curr) =>
-		// Assuming index is a string, you might want to convert it to a comparable type
-		parseFloat(curr.index) > parseFloat(prev.index) ? curr : prev,
+	console.log({ matchingThresholds });
+
+	const highestPrecedenceThreshold = getHighestPrecedenceThreshold(
+		matchingThresholds,
+		thresholds,
 	);
 
 	const isConflictingThresholds = matchingThresholds.length > 1;
 
 	return {
-		threshold: newThreshold,
+		threshold: highestPrecedenceThreshold || ({} as ThresholdProps),
 		isConflictingThresholds,
 	};
 }

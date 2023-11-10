@@ -4,6 +4,7 @@ type ThresholdOperators = '>' | '<' | '>=' | '<=' | '=';
 
 export type ThresholdProps = {
 	index: string;
+	keyIndex: number;
 	thresholdDeleteHandler?: (index: string) => void;
 	thresholdOperator?: ThresholdOperators;
 	thresholdValue?: number;
@@ -12,6 +13,7 @@ export type ThresholdProps = {
 	thresholdFormat?: 'Text' | 'Background';
 	isEditEnabled?: boolean;
 	setThresholds?: Dispatch<SetStateAction<ThresholdProps[]>>;
+	moveThreshold: (dragIndex: number, hoverIndex: number) => void;
 };
 
 export type ShowCaseValueProps = {
