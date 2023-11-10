@@ -714,6 +714,18 @@ func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error)
 		return nil, err
 	}
 	r.Id = fmt.Sprintf("%d", s.Id)
+	// fetch state of rule from memory
+	if rm, ok := m.rules[r.Id]; !ok {
+		r.State = StateDisabled.String()
+		r.Disabled = true
+	} else {
+		r.State = rm.State().String()
+	}
+	r.CreatedAt = s.CreatedAt
+	r.CreatedBy = s.CreatedBy
+	r.UpdatedAt = s.UpdatedAt
+	r.UpdatedBy = s.UpdatedBy
+
 	return r, nil
 }
 
