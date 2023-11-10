@@ -58,8 +58,12 @@ function AddNewProcessor({
 	const onFinish = (values: { name: string }): void => {
 		const totalDataLength = expandedPipelineData?.config?.length || 0;
 
+		const nameWithoutSpaces = (values?.name || '').replace(/\s/g, '');
+		const randomIdSuffix = Math.random().toString(36).slice(2, 6);
+		const processorId = `${nameWithoutSpaces}.${randomIdSuffix}`;
+
 		const newProcessorData = {
-			id: values.name.replace(/\s/g, ''),
+			id: processorId,
 			orderId: Number(totalDataLength || 0) + 1,
 			type: processorType,
 			enabled: true,
@@ -73,12 +77,14 @@ function AddNewProcessor({
 				'id',
 			);
 
+			const processorData = expandedPipelineData?.config?.[findRecordIndex];
+
 			const updatedProcessorData = {
-				id: values.name.replace(/\s/g, ''),
-				orderId: expandedPipelineData?.config?.[findRecordIndex].orderId,
+				id: processorData?.id || processorId,
+				orderId: processorData?.orderId,
 				type: processorType,
-				enabled: expandedPipelineData?.config?.[findRecordIndex].enabled,
-				output: expandedPipelineData?.config?.[findRecordIndex].output,
+				enabled: processorData?.enabled,
+				output: processorData?.output,
 				...values,
 			};
 
