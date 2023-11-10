@@ -1,4 +1,5 @@
 import GridPanelSwitch from 'container/GridPanelSwitch';
+import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -17,6 +18,7 @@ function WidgetGraph({
 	getWidgetQueryRange,
 	selectedWidget,
 	yAxisUnit,
+	thresholds,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 
@@ -55,6 +57,7 @@ function WidgetGraph({
 				dimensions: containerDimensions,
 				isDarkMode,
 				onDragSelect,
+				thresholds,
 			}),
 		[
 			widgetId,
@@ -63,6 +66,7 @@ function WidgetGraph({
 			containerDimensions,
 			isDarkMode,
 			onDragSelect,
+			thresholds,
 		],
 	);
 
@@ -78,12 +82,14 @@ function WidgetGraph({
 					getWidgetQueryRange.data?.payload.data.newResult.data.result || []
 				}
 				query={stagedQuery || selectedWidget.query}
+				thresholds={thresholds}
 			/>
 		</div>
 	);
 }
 
 interface WidgetGraphProps {
+	thresholds: ThresholdProps[];
 	yAxisUnit: string;
 	selectedWidget: Widgets;
 	getWidgetQueryRange: UseQueryResult<

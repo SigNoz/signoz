@@ -134,7 +134,11 @@ function RightContainer({
 
 			<Divider />
 
-			<ThresholdSelector thresholds={thresholds} setThresholds={setThresholds} />
+			<ThresholdSelector
+				thresholds={thresholds}
+				setThresholds={setThresholds}
+				selectedGraph={selectedGraph}
+			/>
 		</Container>
 	);
 }

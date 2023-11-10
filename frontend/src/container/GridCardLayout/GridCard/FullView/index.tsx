@@ -113,6 +113,7 @@ function FullView({
 				onDragSelect,
 				graphsVisibilityStates,
 				setGraphsVisibilityStates,
+				thresholds: widget.thresholds,
 			});
 
 			setChartOptions(newChartOptions);
@@ -187,7 +188,6 @@ function FullView({
 					graphsVisibilityStates={graphsVisibilityStates}
 					lineChartRef={fullViewChartRef}
 					parentChartRef={parentChartRef}
-					thresholds={widget.thresholds}
 				/>
 			)}
 		</div>

@@ -1,7 +1,16 @@
 import './Threshold.styles.scss';
 
 import { CheckOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import { Card, Divider, InputNumber, Select, Space, Typography } from 'antd';
+import {
+	Card,
+	Divider,
+	Input,
+	InputNumber,
+	Select,
+	Space,
+	Typography,
+} from 'antd';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useState } from 'react';
 
 import { operatorOptions, showAsOptions, unitOptions } from '../constants';
@@ -20,6 +29,8 @@ function Threshold({
 	thresholdFormat = 'Text',
 	thresholdDeleteHandler,
 	setThresholds,
+	selectedGraph,
+	thresholdLabel = '',
 }: ThresholdProps): JSX.Element {
 	const [isEditMode, setIsEditMode] = useState<boolean>(isEditEnabled);
 	const [operator, setOperator] = useState<string | number>(
@@ -31,6 +42,7 @@ function Threshold({
 	const [format, setFormat] = useState<ThresholdProps['thresholdFormat']>(
 		thresholdFormat,
 	);
+	const [label, setLabel] = useState<string>(thresholdLabel);
 
 	const saveHandler = (): void => {
 		setIsEditMode(false);
@@ -48,6 +60,7 @@ function Threshold({
 						thresholdOperator: operator as ThresholdProps['thresholdOperator'],
 						thresholdUnit: unit,
 						thresholdValue: value,
+						thresholdLabel: label,
 					};
 				}
 				return threshold;
@@ -86,6 +99,12 @@ function Threshold({
 		}
 	};
 
+	const handleLabelChange = (
+		event: React.ChangeEvent<HTMLInputElement>,
+	): void => {
+		setLabel(event.target.value);
+	};
+
 	return (
 		<div className="threahold-container">
 			<Card className="threahold-card">
@@ -104,16 +123,30 @@ function Threshold({
 					</div>
 					<div>
 						<Space>
-							<Typography.Text>If value is</Typography.Text>
-							{isEditMode ? (
-								<Select
-									style={{ minWidth: '73px' }}
-									defaultValue={operator}
-									options={operatorOptions}
-									onChange={handleOperatorChange}
-								/>
-							) : (
-								<ShowCaseValue width="49px" value={operator} />
+							{selectedGraph === PANEL_TYPES.TIME_SERIES && (
+								<>
+									<Typography.Text>Label</Typography.Text>
+									{isEditMode ? (
+										<Input defaultValue={label} onChange={handleLabelChange} />
+									) : (
+										<ShowCaseValue width="180px" value={label} />
+									)}
+								</>
+							)}
+							{selectedGraph === PANEL_TYPES.VALUE && (
+								<>
+									<Typography.Text>If value is</Typography.Text>
+									{isEditMode ? (
+										<Select
+											style={{ minWidth: '73px' }}
+											defaultValue={operator}
+											options={operatorOptions}
+											onChange={handleOperatorChange}
+										/>
+									) : (
+										<ShowCaseValue width="49px" value={operator} />
+									)}
+								</>
 							)}
 						</Space>
 					</div>
@@ -145,16 +178,17 @@ function Threshold({
 								) : (
 									<ShowCaseValue width="100px" value={<CustomColor color={color} />} />
 								)}
-								{isEditMode ? (
-									<Select
-										style={{ minWidth: '100px' }}
-										defaultValue={format}
-										options={showAsOptions}
-										onChange={handlerFormatChange}
-									/>
-								) : (
-									<ShowCaseValue width="100px" value={format} />
-								)}
+								{isEditMode && selectedGraph === PANEL_TYPES.VALUE ? (
+									<>
+										<Select
+											style={{ minWidth: '100px' }}
+											defaultValue={format}
+											options={showAsOptions}
+											onChange={handlerFormatChange}
+										/>
+										<ShowCaseValue width="100px" value={format} />
+									</>
+								) : null}
 							</Space>
 						</Space>
 					</div>
@@ -170,6 +204,7 @@ Threshold.defaultProps = {
 	thresholdUnit: undefined,
 	thresholdColor: undefined,
 	thresholdFormat: undefined,
+	thresholdLabel: undefined,
 	isEditEnabled: false,
 	thresholdDeleteHandler: undefined,
 };

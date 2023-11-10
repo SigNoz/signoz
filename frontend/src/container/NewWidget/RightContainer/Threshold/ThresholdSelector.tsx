@@ -9,6 +9,7 @@ import { ThresholdSelectorProps } from './types';
 function ThresholdSelector({
 	thresholds,
 	setThresholds,
+	selectedGraph,
 }: ThresholdSelectorProps): JSX.Element {
 	const addThresholdHandler = (): void => {
 		setThresholds([
@@ -21,6 +22,7 @@ function ThresholdSelector({
 				thresholdOperator: '>',
 				thresholdUnit: 'ms',
 				thresholdValue: 0,
+				selectedGraph,
 			},
 		]);
 	};
@@ -46,7 +48,9 @@ function ThresholdSelector({
 					thresholdUnit={threshold.thresholdUnit}
 					thresholdValue={threshold.thresholdValue}
 					thresholdDeleteHandler={deleteThresholdHandler}
+					thresholdLabel={threshold.thresholdLabel}
 					setThresholds={setThresholds}
+					selectedGraph={selectedGraph}
 				/>
 			))}
 			<Button className="threshold-selector-button" onClick={addThresholdHandler}>
