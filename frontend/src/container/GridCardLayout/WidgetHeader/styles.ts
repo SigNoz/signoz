@@ -32,6 +32,7 @@ export const DisplayThresholdContainer = styled.div`
 export const WidgetHeaderContainer = styled.div`
 	display: flex;
 	align-items: center;
+	justify-content: flex-end;
 	align-items: center;
 	height: 30px;
 	width: 100%;
