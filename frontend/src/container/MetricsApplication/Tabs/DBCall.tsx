@@ -109,12 +109,12 @@ function DBCall(): JSX.Element {
 						<Graph
 							name="database_call_rps"
 							widget={databaseCallsRPSWidget}
-							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
-									ChartEvent,
-									activeElements,
-									chart,
-									data,
+									xValue,
+									yValue,
+									mouseX,
+									mouseY,
 									'database_call_rps',
 								);
 							}}
@@ -142,12 +142,12 @@ function DBCall(): JSX.Element {
 						<Graph
 							name="database_call_avg_duration"
 							widget={databaseCallsAverageDurationWidget}
-							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
-									ChartEvent,
-									activeElements,
-									chart,
-									data,
+									xValue,
+									yValue,
+									mouseX,
+									mouseY,
 									'database_call_avg_duration',
 								);
 							}}

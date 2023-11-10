@@ -1,10 +1,10 @@
-import { ChartData } from 'chart.js';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
-import { ReactNode } from 'react';
+import uPlot from 'uplot';
 
 export type GridValueComponentProps = {
-	data: ChartData;
-	title?: ReactNode;
+	data: uPlot.AlignedData;
+	options?: uPlot.Options;
+	title?: React.ReactNode;
 	yAxisUnit?: string;
 	thresholds?: ThresholdProps[];
 };

@@ -10,13 +10,11 @@ function CustomCheckBox({
 	graphVisibilityState = [],
 	checkBoxOnChangeHandler,
 }: CheckBoxProps): JSX.Element {
-	const { datasets } = data;
-
 	const onChangeHandler = (e: CheckboxChangeEvent): void => {
 		checkBoxOnChangeHandler(e, index);
 	};
 
-	const color = datasets[index]?.borderColor?.toString() || grey[0];
+	const color = data[index]?.stroke?.toString() || grey[0];
 
 	const isChecked = graphVisibilityState[index] || false;
 

@@ -1,4 +1,3 @@
-import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
@@ -54,37 +53,25 @@ export function onGraphClickHandler(
 	setSelectedTimeStamp: (n: number) => void | Dispatch<SetStateAction<number>>,
 ) {
 	return async (
-		event: ChartEvent,
-		elements: ActiveElement[],
-		chart: Chart,
-		data: ChartData,
-		from: string,
+		xValue: number,
+		yValue: number,
+		mouseX: number,
+		mouseY: number,
+		type: string,
 	): Promise<void> => {
-		if (event.native) {
-			const points = chart.getElementsAtEventForMode(
-				event.native,
-				'nearest',
-				{ intersect: false },
-				true,
-			);
-			const id = `${from}_button`;
-			const buttonElement = document.getElementById(id);
+		const id = `${type}_button`;
 
-			if (points.length !== 0) {
-				const firstPoint = points[0];
+		const buttonElement = document.getElementById(id);
 
-				if (data.labels) {
-					const time = data?.labels[firstPoint.index] as Date;
-					if (buttonElement) {
-						buttonElement.style.display = 'block';
-						buttonElement.style.left = `${firstPoint.element.x}px`;
-						buttonElement.style.top = `${firstPoint.element.y}px`;
-						setSelectedTimeStamp(time.getTime());
-					}
-				}
-			} else if (buttonElement && buttonElement.style.display === 'block') {
-				buttonElement.style.display = 'none';
+		if (xValue) {
+			if (buttonElement) {
+				buttonElement.style.display = 'block';
+				buttonElement.style.left = `${mouseX}px`;
+				buttonElement.style.top = `${mouseY}px`;
+				setSelectedTimeStamp(xValue);
 			}
+		} else if (buttonElement && buttonElement.style.display === 'block') {
+			buttonElement.style.display = 'none';
 		}
 	};
 }

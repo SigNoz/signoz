@@ -46,7 +46,7 @@ export const getYAxisFormattedValue = (
 	return `${parseFloat(value)}`;
 };
 
-export const getToolTipValue = (value: string, format: string): string => {
+export const getToolTipValue = (value: string, format?: string): string => {
 	try {
 		return formattedValueToString(
 			getValueFormat(format)(parseFloat(value), undefined, undefined, undefined),

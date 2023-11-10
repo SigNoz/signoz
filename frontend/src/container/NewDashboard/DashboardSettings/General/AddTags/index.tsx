@@ -104,7 +104,13 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 
 			{!inputVisible && (
 				<NewTagContainer icon={<PlusOutlined />} onClick={showInput}>
-					<Typography>New Tag</Typography>
+					<Typography
+						style={{
+							fontSize: '12px',
+						}}
+					>
+						New Tag
+					</Typography>
 				</NewTagContainer>
 			)}
 		</TagsContainer>
