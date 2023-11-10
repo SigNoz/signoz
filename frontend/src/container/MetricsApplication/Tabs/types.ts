@@ -46,20 +46,17 @@ export interface BuilderQuerieswithFormulaProps {
 export interface OperationPerSecProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
-	topLevelOperations: string[];
 }
 
 export interface LatencyProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
 	isSpanMetricEnable?: boolean;
-	topLevelOperationsRoute: string[];
 }
 
 export interface ApDexProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
-	topLevelOperationsRoute: string[];
 	threashold: number;
 }
 

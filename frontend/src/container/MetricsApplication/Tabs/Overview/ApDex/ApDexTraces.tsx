@@ -2,7 +2,7 @@
 // This component is been kept for future reference.
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
-import { GraphTitle } from 'container/MetricsApplication/constant';
+import { GraphTitle, MENU_ITEMS } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexTracesQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { useMemo } from 'react';
@@ -16,7 +16,6 @@ import { ApDexDataSwitcherProps } from './types';
 function ApDexTraces({
 	handleGraphClick,
 	onDragSelect,
-	topLevelOperationsRoute,
 	tagFilterItems,
 	thresholdValue,
 }: ApDexDataSwitcherProps): JSX.Element {
@@ -31,7 +30,6 @@ function ApDexTraces({
 					builder: apDexTracesQueryBuilderQueries({
 						servicename,
 						tagFilterItems,
-						topLevelOperationsRoute,
 						threashold: thresholdValue || 0,
 					}),
 					clickhouse_sql: [],
@@ -40,11 +38,10 @@ function ApDexTraces({
 				title: GraphTitle.APDEX,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[servicename, tagFilterItems, thresholdValue, topLevelOperationsRoute],
+		[servicename, tagFilterItems, thresholdValue],
 	);
 
-	const isQueryEnabled =
-		topLevelOperationsRoute.length > 0 && thresholdValue !== undefined;
+	const isQueryEnabled = thresholdValue !== undefined;
 
 	return (
 		<Graph
@@ -54,6 +51,7 @@ function ApDexTraces({
 			onClickHandler={handleGraphClick('ApDex')}
 			threshold={thresholdValue}
 			isQueryEnabled={isQueryEnabled}
+			headerMenuList={MENU_ITEMS}
 		/>
 	);
 }

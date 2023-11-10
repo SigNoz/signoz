@@ -8,7 +8,7 @@ import {
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import DisplayThreshold from 'container/GridCardLayout/WidgetHeader/DisplayThreshold';
-import { GraphTitle } from 'container/MetricsApplication/constant';
+import { GraphTitle, MENU_ITEMS } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { ReactNode, useMemo } from 'react';
@@ -25,7 +25,6 @@ function ApDexMetrics({
 	thresholdValue,
 	onDragSelect,
 	tagFilterItems,
-	topLevelOperationsRoute,
 	handleGraphClick,
 }: ApDexMetricsProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
@@ -39,7 +38,6 @@ function ApDexMetrics({
 					builder: apDexMetricsQueryBuilderQueries({
 						servicename,
 						tagFilterItems,
-						topLevelOperationsRoute,
 						threashold: thresholdValue || 0,
 						delta: delta || false,
 						metricsBuckets: metricsBuckets || [],
@@ -60,14 +58,7 @@ function ApDexMetrics({
 				),
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[
-			delta,
-			metricsBuckets,
-			servicename,
-			tagFilterItems,
-			thresholdValue,
-			topLevelOperationsRoute,
-		],
+		[delta, metricsBuckets, servicename, tagFilterItems, thresholdValue],
 	);
 
 	const threshold: ReactNode = useMemo(() => {
@@ -76,10 +67,7 @@ function ApDexMetrics({
 	}, [thresholdValue]);
 
 	const isQueryEnabled =
-		topLevelOperationsRoute.length > 0 &&
-		!!metricsBuckets &&
-		metricsBuckets?.length > 0 &&
-		delta !== undefined;
+		!!metricsBuckets && metricsBuckets?.length > 0 && delta !== undefined;
 
 	return (
 		<Graph
@@ -89,6 +77,7 @@ function ApDexMetrics({
 			onClickHandler={handleGraphClick('ApDex')}
 			threshold={threshold}
 			isQueryEnabled={isQueryEnabled}
+			headerMenuList={MENU_ITEMS}
 		/>
 	);
 }
