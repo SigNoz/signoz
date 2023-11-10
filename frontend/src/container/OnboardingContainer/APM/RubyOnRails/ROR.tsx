@@ -30,7 +30,7 @@ export default function RoR({
 						entity="rails"
 						heading="Ruby on Rails OpenTelemetry Instrumentation"
 						imgURL="/Logos/rails.png"
-						docsURL="https://signoz.io/docs/instrumentation/golang/"
+						docsURL="https://signoz.io/docs/instrumentation/ruby-on-rails/"
 						imgClassName="supported-language-img"
 					/>
 
@@ -59,8 +59,8 @@ export default function RoR({
 			{activeStep === 3 && (
 				<ConnectionStatus
 					serviceName={form.getFieldValue('Service Name')}
-					framework="go"
-					language="go"
+					framework="rails"
+					language="rails"
 				/>
 			)}
 		</>
