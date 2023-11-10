@@ -62,35 +62,6 @@ receivers:
 
 
 processors:
-  logstransform/internal:
-    operators:
-      - type: regex_parser
-        id: traceid
-        # https://regex101.com/r/MMfNjk/1
-        regex: '(?i)(trace(-|_||)id("|=| |-|:)*)(?P<trace_id>[A-Fa-f0-9]+)'
-        parse_from: body
-        parse_to: attributes.temp_trace
-        if: 'body matches "(?i)(trace(-|_||)id(\"|=| |-|:)*)(?P<trace_id>[A-Fa-f0-9]+)"'
-        output: spanid
-      - type: regex_parser
-        id: spanid
-        # https://regex101.com/r/uXSwLc/1
-        regex: '(?i)(span(-|_||)id("|=| |-|:)*)(?P<span_id>[A-Fa-f0-9]+)'
-        parse_from: body
-        parse_to: attributes.temp_trace
-        if: 'body matches "(?i)(span(-|_||)id(\"|=| |-|:)*)(?P<span_id>[A-Fa-f0-9]+)"'
-        output: trace_parser
-      - type: trace_parser
-        id: trace_parser
-        trace_id:
-          parse_from: attributes.temp_trace.trace_id
-        span_id:
-          parse_from: attributes.temp_trace.span_id
-        output: remove_temp
-      - type: remove
-        id: remove_temp
-        field: attributes.temp_trace
-        if: '"temp_trace" in attributes'
   batch:
     send_batch_size: 10000
     send_batch_max_size: 11000
@@ -193,5 +164,5 @@ service:
       exporters: [prometheus]
     logs:
       receivers: [otlp, tcplog/docker]
-      processors: [logstransform/internal, batch]
+      processors: [batch]
       exporters: [clickhouselogsexporter]

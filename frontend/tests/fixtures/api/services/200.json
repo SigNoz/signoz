@@ -1,0 +1,68 @@
+[
+	{
+		"serviceName": "redis",
+		"p99": 35396180,
+		"avgDuration": 15149389.806977473,
+		"numCalls": 22329,
+		"callRate": 12.615254237288136,
+		"numErrors": 4135,
+		"errorRate": 18.51851851851852,
+		"num4XX": 0,
+		"fourXXRate": 0
+	},
+	{
+		"serviceName": "frontend",
+		"p99": 1173509510.0000002,
+		"avgDuration": 747007254.5344619,
+		"numCalls": 1654,
+		"callRate": 0.9344632768361582,
+		"numErrors": 0,
+		"errorRate": 0,
+		"num4XX": 0,
+		"fourXXRate": 0
+	},
+	{
+		"serviceName": "mysql",
+		"p99": 776834620,
+		"avgDuration": 349280732.76904476,
+		"numCalls": 1654,
+		"callRate": 0.9344632768361582,
+		"numErrors": 0,
+		"errorRate": 0,
+		"num4XX": 0,
+		"fourXXRate": 0
+	},
+	{
+		"serviceName": "customer",
+		"p99": 776995390,
+		"avgDuration": 349451783.5550181,
+		"numCalls": 1654,
+		"callRate": 0.9344632768361582,
+		"numErrors": 0,
+		"errorRate": 0,
+		"num4XX": 0,
+		"fourXXRate": 0
+	},
+	{
+		"serviceName": "route",
+		"p99": 79617600.00000001,
+		"avgDuration": 50698870.85852479,
+		"numCalls": 16540,
+		"callRate": 9.344632768361581,
+		"numErrors": 0,
+		"errorRate": 0,
+		"num4XX": 0,
+		"fourXXRate": 0
+	},
+	{
+		"serviceName": "driver",
+		"p99": 241056990,
+		"avgDuration": 204975300.48367593,
+		"numCalls": 1654,
+		"callRate": 0.9344632768361582,
+		"numErrors": 0,
+		"errorRate": 0,
+		"num4XX": 0,
+		"fourXXRate": 0
+	}
+]
