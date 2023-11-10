@@ -4,7 +4,7 @@ import { CheckOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Card, Divider, InputNumber, Select, Space, Typography } from 'antd';
 import { useState } from 'react';
 
-import { formatOptions, operatorOptions, unitOptions } from '../constants';
+import { operatorOptions, showAsOptions, unitOptions } from '../constants';
 import ColorSelector from './ColorSelector';
 import CustomColor from './CustomColor';
 import ShowCaseValue from './ShowCaseValue';
@@ -28,7 +28,9 @@ function Threshold({
 	const [value, setValue] = useState<number>(thresholdValue);
 	const [unit, setUnit] = useState<string>(thresholdUnit);
 	const [color, setColor] = useState<string>(thresholdColor);
-	const [format, setFormat] = useState<string>(thresholdFormat);
+	const [format, setFormat] = useState<ThresholdProps['thresholdFormat']>(
+		thresholdFormat,
+	);
 
 	const saveHandler = (): void => {
 		setIsEditMode(false);
@@ -72,7 +74,9 @@ function Threshold({
 		setUnit(value);
 	};
 
-	const handlerFormatChange = (value: string): void => {
+	const handlerFormatChange = (
+		value: ThresholdProps['thresholdFormat'],
+	): void => {
 		setFormat(value);
 	};
 
@@ -145,7 +149,7 @@ function Threshold({
 									<Select
 										style={{ minWidth: '100px' }}
 										defaultValue={format}
-										options={formatOptions}
+										options={showAsOptions}
 										onChange={handlerFormatChange}
 									/>
 								) : (

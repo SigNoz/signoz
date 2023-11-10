@@ -12,13 +12,33 @@ function ValueGraph({
 	thresholds,
 }: ValueGraphProps): JSX.Element {
 	const {
-		bgColor,
+		threshold,
 		isConflictingThresholds,
 	} = getBackgroundColorAndThresholdCheck(thresholds, rawValue);
 
+	console.log({ threshold });
+
 	return (
-		<div className="value-graph-container" style={{ backgroundColor: bgColor }}>
-			<Typography.Text className="value-graph-text">{value}</Typography.Text>
+		<div
+			className="value-graph-container"
+			style={{
+				backgroundColor:
+					threshold.thresholdFormat === 'Background'
+						? threshold.thresholdColor
+						: undefined,
+			}}
+		>
+			<Typography.Text
+				className="value-graph-text"
+				style={{
+					color:
+						threshold.thresholdFormat === 'Text'
+							? threshold.thresholdColor
+							: undefined,
+				}}
+			>
+				{value}
+			</Typography.Text>
 			{isConflictingThresholds && (
 				<div className="value-graph-conflict">
 					<Tooltip title="This value satisfies multiple thresholds">

@@ -9,7 +9,7 @@ export type ThresholdProps = {
 	thresholdValue?: number;
 	thresholdUnit?: string;
 	thresholdColor?: string;
-	thresholdFormat?: string;
+	thresholdFormat?: 'Text' | 'Background';
 	isEditEnabled?: boolean;
 	setThresholds?: Dispatch<SetStateAction<ThresholdProps[]>>;
 };

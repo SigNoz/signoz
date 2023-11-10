@@ -30,7 +30,7 @@ export function getBackgroundColorAndThresholdCheck(
 	thresholds: ThresholdProps[],
 	rawValue: number,
 ): {
-	bgColor: string;
+	threshold: ThresholdProps;
 	isConflictingThresholds: boolean;
 } {
 	const matchingThresholds = thresholds.filter((threshold) =>
@@ -39,19 +39,20 @@ export function getBackgroundColorAndThresholdCheck(
 
 	if (matchingThresholds.length === 0) {
 		return {
-			bgColor: '',
+			threshold: {} as ThresholdProps,
 			isConflictingThresholds: false,
 		};
 	}
 
-	const backgroundColorThreshold = matchingThresholds.reduce((prev, curr) =>
-		curr.index > prev.index ? curr : prev,
+	const newThreshold = matchingThresholds.reduce((prev, curr) =>
+		// Assuming index is a string, you might want to convert it to a comparable type
+		parseFloat(curr.index) > parseFloat(prev.index) ? curr : prev,
 	);
 
 	const isConflictingThresholds = matchingThresholds.length > 1;
 
 	return {
-		bgColor: backgroundColorThreshold.thresholdColor || '',
+		threshold: newThreshold,
 		isConflictingThresholds,
 	};
 }
