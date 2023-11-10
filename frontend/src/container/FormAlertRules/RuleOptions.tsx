@@ -7,12 +7,12 @@ import {
 	Space,
 	Typography,
 } from 'antd';
+import { DefaultOptionType } from 'antd/es/select';
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
 } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	AlertDef,
@@ -29,6 +29,7 @@ function RuleOptions({
 	alertDef,
 	setAlertDef,
 	queryCategory,
+	queryOptions,
 }: RuleOptionsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -44,18 +45,6 @@ function RuleOptions({
 			},
 		});
 	};
-
-	const queryOptions = useMemo(
-		() =>
-			[
-				...currentQuery.builder.queryData.map((query) => query.queryName),
-				...currentQuery.builder.queryFormulas.map((query) => query.queryName),
-			].map((query) => ({
-				label: query,
-				value: query,
-			})),
-		[currentQuery],
-	);
 
 	const onChangeSelectedQueryName = (value: string | unknown): void => {
 		if (typeof value !== 'string') return;
@@ -163,11 +152,22 @@ function RuleOptions({
 			</Typography.Text>
 		</Form.Item>
 	);
+
 	const renderPromRuleOptions = (): JSX.Element => (
 		<Form.Item>
 			<Typography.Text>
-				{t('text_condition1')} {renderCompareOps()} {t('text_condition2')}{' '}
-				{renderPromMatchOpts()}
+				{t('text_condition1')}
+				<InlineSelect
+					getPopupContainer={popupContainer}
+					allowClear
+					showSearch
+					options={queryOptions}
+					placeholder={t('selected_query_placeholder')}
+					value={alertDef.condition.selectedQueryName}
+					onChange={onChangeSelectedQueryName}
+				/>
+				<Typography.Text>is</Typography.Text>
+				{renderCompareOps()} {t('text_condition2')} {renderPromMatchOpts()}
 			</Typography.Text>
 		</Form.Item>
 	);
@@ -240,5 +240,6 @@ interface RuleOptionsProps {
 	alertDef: AlertDef;
 	setAlertDef: (a: AlertDef) => void;
 	queryCategory: EQueryType;
+	queryOptions: DefaultOptionType[];
 }
 export default RuleOptions;

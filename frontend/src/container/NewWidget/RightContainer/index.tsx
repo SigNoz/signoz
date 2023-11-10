@@ -146,9 +146,11 @@ function RightContainer({
 					fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
 				/>
 
-				<Button icon={<UploadOutlined />} onClick={onCreateAlertsHandler}>
-					Create Alerts from Queries
-				</Button>
+				{selectedWidget?.panelTypes !== PANEL_TYPES.TABLE && (
+					<Button icon={<UploadOutlined />} onClick={onCreateAlertsHandler}>
+						Create Alerts from Queries
+					</Button>
+				)}
 			</Space>
 		</Container>
 	);
