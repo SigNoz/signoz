@@ -2,6 +2,7 @@ import './Threshold.styles.scss';
 
 import { CheckOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Card, Divider, InputNumber, Select, Space, Typography } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
 
@@ -34,6 +35,8 @@ function Threshold({
 	const [format, setFormat] = useState<ThresholdProps['thresholdFormat']>(
 		thresholdFormat,
 	);
+
+	const isDarkMode = useIsDarkMode();
 
 	const saveHandler = (): void => {
 		setIsEditMode(false);
@@ -153,7 +156,13 @@ function Threshold({
 			data-handler-id={handlerId}
 			className="threahold-container"
 		>
-			<Card className="threahold-card">
+			<Card
+				className={
+					isDarkMode
+						? `threahold-card threahold-card-dark`
+						: `threahold-card threahold-card-light`
+				}
+			>
 				<div className="threshold-card-container">
 					<div className="threshold-action-button">
 						{isEditMode ? (

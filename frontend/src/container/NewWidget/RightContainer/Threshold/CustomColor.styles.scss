@@ -3,8 +3,12 @@
     gap: 10px;
     align-items: center;
 
-    .ant-typography {
+    .custom-color-typography-dark {
         color: #fff !important;
+    }
+
+    .custom-color-typography-light {
+        color: #000 !important;
     }
 
     .custom-color-tag {

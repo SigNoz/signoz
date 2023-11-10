@@ -4,7 +4,6 @@
         padding: 0px;
         border-radius: 10px;
         position: relative;
-        background-color: #1F1F1F;
         margin-top: 10px;
 
         .threshold-card-container {
@@ -14,12 +13,27 @@
         }
 
         .ant-typography {
-            color: #FFFFFF73;
             font-size: 14px;
             font-weight: 400;
             line-height: 22px;
         }
 
+        .ant-typograph-dark {
+            color: #FFFFFF73;
+        }
+
+        .ant-typograph-light {
+            color: #00000073;
+        }
+
+    }
+
+    .threahold-card-dark {
+        background-color: #1F1F1F;
+    }
+
+    .threahold-card-light {
+        background-color: rgb(255, 255, 255);
     }
 
     .threshold-action-button {
