@@ -83,8 +83,6 @@ export function getBackgroundColorAndThresholdCheck(
 		};
 	}
 
-	console.log({ matchingThresholds });
-
 	const highestPrecedenceThreshold = getHighestPrecedenceThreshold(
 		matchingThresholds,
 		thresholds,

@@ -16,9 +16,6 @@ function ValueGraph({
 		isConflictingThresholds,
 	} = getBackgroundColorAndThresholdCheck(thresholds, rawValue);
 
-	console.log({ thresholds });
-	console.log({ threshold });
-
 	return (
 		<div
 			className="value-graph-container"
