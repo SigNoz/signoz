@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/prefer-single-boolean-return */
 import './ModuleStepsContainer.styles.scss';
 
 import {
@@ -5,10 +6,15 @@ import {
 	ArrowRightOutlined,
 	LeftCircleOutlined,
 } from '@ant-design/icons';
-import { Button, ConfigProvider, Space, Steps } from 'antd';
+import { Button, ConfigProvider, Space, Steps, Typography } from 'antd';
+import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
+import { isEmpty } from 'lodash-es';
 import { useState } from 'react';
 
-import { useOnboardingContext } from '../../context/OnboardingContext';
+import {
+	OnboardingMethods,
+	useOnboardingContext,
+} from '../../context/OnboardingContext';
 import {
 	ModuleProps,
 	SelectedModuleStepProps,
@@ -28,19 +34,19 @@ interface MetaDataProps {
 const defaultMetaData = [
 	{
 		name: 'Service Name',
-		value: ' ',
+		value: '',
 	},
 	{
 		name: 'Data Source',
-		value: ' ',
+		value: '',
 	},
 	{
 		name: 'Framework',
-		value: ' ',
+		value: '',
 	},
 	{
 		name: 'Environment',
-		value: ' ',
+		value: '',
 	},
 ];
 
@@ -49,21 +55,89 @@ export default function ModuleStepsContainer({
 	selectedModule,
 	selectedModuleSteps,
 }: ModuleStepsContainerProps): JSX.Element {
-	const { serviceName } = useOnboardingContext();
+	const {
+		serviceName,
+		selectedDataSource,
+		selectedMethod,
+		selectedEnvironment,
+		selectedFramework,
+	} = useOnboardingContext();
 
 	const [current, setCurrent] = useState(0);
 
 	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
 
+	const isValidForm = (): boolean => {
+		if (selectedModuleSteps[current].id === 'data-source') {
+			if (serviceName !== '' && selectedDataSource?.name) {
+				const doesHaveFrameworks = hasFrameworks({
+					module: selectedModule,
+					dataSource: selectedDataSource,
+				});
+
+				console.log('doesHaveFrameworks', doesHaveFrameworks);
+				if (doesHaveFrameworks && selectedFramework !== '') {
+					return false;
+				}
+
+				return true;
+			}
+
+			return false;
+		}
+
+		return true;
+	};
+
 	const handleNext = (): void => {
-		if (current >= 0) {
-			setCurrent(current + 1);
+		const isValid = isValidForm();
+
+		if (isValid) {
+			if (current >= 0) {
+				if (
+					selectedModuleSteps[current].id === 'select-method' &&
+					selectedMethod === OnboardingMethods.QUICK_START
+				) {
+					setCurrent(current + 2);
+				} else {
+					setCurrent(current + 1);
+				}
+			}
+
+			// set meta data
+			if (current === 0 || current === 1) {
+				setMetaData([
+					{
+						name: 'Service Name',
+						value: serviceName,
+					},
+					{
+						name: 'Data Source',
+						value: selectedDataSource?.name || '',
+					},
+					{
+						name: 'Framework',
+						value: selectedFramework,
+					},
+					{
+						name: 'Environment',
+						value: selectedEnvironment,
+					},
+				]);
+			}
 		}
 	};
 
 	const handlePrev = (): void => {
 		if (current > 0) {
-			setCurrent(current - 1);
+			if (
+				selectedModuleSteps[current].id === 'install-openTelemetry' &&
+				selectedMethod === OnboardingMethods.QUICK_START
+			) {
+				setCurrent(current - 2);
+			} else {
+				setCurrent(current - 1);
+			}
 		}
 	};
 
@@ -101,12 +175,22 @@ export default function ModuleStepsContainer({
 					<div className="step-data">
 						{current > 0 && (
 							<div className="selected-step-pills">
-								{metaData.map((data) => (
-									<div key={data.name} className="entity">
-										<div className="entity-name"> {data.name}</div>
-										<div className="entity-value"> {data.value} </div>
-									</div>
-								))}
+								{metaData.map((data) => {
+									if (isEmpty(data?.value)) {
+										return <> </>;
+									}
+
+									return (
+										<div key={data.name} className="entity">
+											<Typography.Text className="entity-name">
+												{data.name}
+											</Typography.Text>
+											<Typography.Text className="entity-value">
+												{data.value}
+											</Typography.Text>
+										</div>
+									);
+								})}
 							</div>
 						)}
 
