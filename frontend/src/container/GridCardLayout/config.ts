@@ -7,6 +7,7 @@ export const EditMenuAction = [
 	MenuItemKeys.Clone,
 	MenuItemKeys.Delete,
 	MenuItemKeys.Edit,
+	MenuItemKeys.CreateAlerts,
 ];
 
 export const headerMenuList = [...ViewMenuAction];

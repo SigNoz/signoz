@@ -17,7 +17,7 @@ import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { GraphTitle, legend } from '../constant';
+import { GraphTitle, legend, MENU_ITEMS } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
@@ -148,6 +148,7 @@ function External(): JSX.Element {
 					<Card>
 						<GraphContainer>
 							<Graph
+								headerMenuList={MENU_ITEMS}
 								name="external_call_error_percentage"
 								widget={externalCallErrorWidget}
 								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
@@ -183,6 +184,7 @@ function External(): JSX.Element {
 						<GraphContainer>
 							<Graph
 								name="external_call_duration"
+								headerMenuList={MENU_ITEMS}
 								widget={externalCallDurationWidget}
 								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
@@ -219,15 +221,16 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_rps_by_address"
 								widget={externalCallRPSWidget}
-								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
+								headerMenuList={MENU_ITEMS}
+								onClickHandler={(xValue, yValue, mouseX, mouseY): Promise<void> =>
 									onGraphClickHandler(setSelectedTimeStamp)(
 										xValue,
 										yValue,
 										mouseX,
 										mouseY,
 										'external_call_rps_by_address',
-									);
-								}}
+									)
+								}
 							/>
 						</GraphContainer>
 					</Card>
@@ -253,6 +256,7 @@ function External(): JSX.Element {
 							<Graph
 								name="external_call_duration_by_address"
 								widget={externalCallDurationAddressWidget}
+								headerMenuList={MENU_ITEMS}
 								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										xValue,

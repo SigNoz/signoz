@@ -20,10 +20,10 @@ From VMs, there are two ways to send data to SigNoz Cloud.
 Step 1. Install OpenTelemetry packages
 
 ```bash
-npm install --save @opentelemetry/api@^1.4.1                                                                       
-npm install --save @opentelemetry/sdk-node@^0.39.1
-npm install --save @opentelemetry/auto-instrumentations-node@^0.37.0
-npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
+npm install --save @opentelemetry/api@^1.6.0                                                                       
+npm install --save @opentelemetry/sdk-node@^0.45.0
+npm install --save @opentelemetry/auto-instrumentations-node@^0.39.4
+npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 ```
 
 Step 2. Create tracing.js file
@@ -87,10 +87,10 @@ You can find instructions to install OTel Collector binary [here](https://signoz
 Step 1. Install OpenTelemetry packages
 
 ```js
-npm install --save @opentelemetry/api@^1.4.1
-npm install --save @opentelemetry/sdk-node@^0.39.1
-npm install --save @opentelemetry/auto-instrumentations-node@^0.37.0
-npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
+npm install --save @opentelemetry/api@^1.6.0                                                                       
+npm install --save @opentelemetry/sdk-node@^0.45.0
+npm install --save @opentelemetry/auto-instrumentations-node@^0.39.4
+npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 ```
 
 Step 2. Create tracing.js file
@@ -148,10 +148,10 @@ Once you have set up OTel Collector agent, you can proceed with OpenTelemetry Ja
 Step 1. Install OpenTelemetry packages
 
 ```bash
-npm install --save @opentelemetry/api@^1.4.1
-npm install --save @opentelemetry/sdk-node@^0.39.1
-npm install --save @opentelemetry/auto-instrumentations-node@^0.37.0
-npm install --save @opentelemetry/exporter-trace-otlp-http@^0.39.1
+npm install --save @opentelemetry/api@^1.6.0                                                                       
+npm install --save @opentelemetry/sdk-node@^0.45.0
+npm install --save @opentelemetry/auto-instrumentations-node@^0.39.4
+npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 ```
 
 Step 2. Create tracing.js file

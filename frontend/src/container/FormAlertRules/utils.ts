@@ -1,6 +1,13 @@
+import { SelectProps } from 'antd';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import getStep from 'lib/getStep';
+import {
+	IBuilderFormula,
+	IBuilderQuery,
+	IClickHouseQuery,
+	IPromQLQuery,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 // toChartInterval converts eval window to chart selection time interval
 export const toChartInterval = (evalWindow: string | undefined): Time => {
@@ -35,3 +42,15 @@ export const getUpdatedStepInterval = (evalWindow?: string): number => {
 		inputFormat: 'ns',
 	});
 };
+
+export const getSelectedQueryOptions = (
+	queries: Array<
+		IBuilderQuery | IBuilderFormula | IClickHouseQuery | IPromQLQuery
+	>,
+): SelectProps['options'] =>
+	queries
+		.filter((query) => !query.disabled)
+		.map((query) => ({
+			label: 'queryName' in query ? query.queryName : query.name,
+			value: 'queryName' in query ? query.queryName : query.name,
+		}));
