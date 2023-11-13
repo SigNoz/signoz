@@ -3,13 +3,25 @@ import { createContext, ReactNode, useContext, useState } from 'react';
 import { ModuleProps, useCases } from '../OnboardingContainer';
 import { DataSourceType } from '../Steps/DataSource/DataSource';
 
+export const OnboardingMethods = {
+	QUICK_START: 'QUICK_START',
+	RECOMMENDED_STEPS: 'RECOMMENDED_STEPS',
+};
+
 interface OnboardingContextData {
 	serviceName: string;
-	updateServiceName: (newValue: string) => void;
+	selectedEnvironment: string;
+	selectedFramework: string;
 	selectedModule: ModuleProps | null;
+	selectedMethod: any;
 	selectedDataSource: DataSourceType | null;
 	updateSelectedModule: (module: ModuleProps) => void;
 	updateSelectedDataSource: (module: DataSourceType) => void;
+	updateServiceName: (newValue: string) => void;
+	updateSelectedEnvironment: (environment: any) => void;
+	updateSelectedFramework: (framework: any) => void;
+	updateSelectedMethod: (method: any) => void;
+	resetProgress: () => void;
 }
 
 const OnboardingContext = createContext<OnboardingContextData | undefined>(
@@ -20,6 +32,10 @@ interface OnboardingContextProviderProps {
 	children: ReactNode;
 }
 
+const defaultDataSource = {
+	name: 'java',
+};
+
 function OnboardingContextProvider({
 	children,
 }: OnboardingContextProviderProps): any {
@@ -27,10 +43,17 @@ function OnboardingContextProvider({
 	const [selectedModule, setSelectedModule] = useState<ModuleProps | null>(
 		useCases.APM,
 	);
+	const [selectedEnvironment, setSelectedEnvironment] = useState<string>('');
+	const [selectedFramework, setSelectedFramework] = useState<string>('');
+
+	const [selectedMethod, setSelectedMethod] = useState(
+		OnboardingMethods.RECOMMENDED_STEPS,
+	);
+
 	const [
 		selectedDataSource,
 		setSelectedDataSource,
-	] = useState<DataSourceType | null>(null);
+	] = useState<DataSourceType | null>(defaultDataSource);
 
 	const updateServiceName = (newValue: string): void => {
 		setServiceName(newValue);
@@ -44,14 +67,42 @@ function OnboardingContextProvider({
 		setSelectedDataSource(dataSource);
 	};
 
+	const updateSelectedEnvironment = (environment: any): void => {
+		setSelectedEnvironment(environment);
+	};
+
+	const updateSelectedFramework = (framework: any): void => {
+		setSelectedFramework(framework);
+	};
+
+	const updateSelectedMethod = (method: any): void => {
+		setSelectedMethod(method);
+	};
+
+	const resetProgress = (): void => {
+		updateServiceName('');
+		setSelectedModule(useCases.APM);
+		setSelectedDataSource(defaultDataSource);
+		setSelectedEnvironment('');
+		setSelectedFramework('');
+		setSelectedMethod(OnboardingMethods.RECOMMENDED_STEPS);
+	};
+
 	// eslint-disable-next-line react/jsx-no-constructed-context-values
 	const contextValue: OnboardingContextData = {
 		serviceName,
-		updateServiceName,
 		selectedModule,
 		selectedDataSource,
+		selectedFramework,
+		selectedEnvironment,
+		selectedMethod,
+		updateServiceName,
 		updateSelectedModule,
+		updateSelectedFramework,
 		updateSelectedDataSource,
+		updateSelectedEnvironment,
+		updateSelectedMethod,
+		resetProgress,
 	};
 
 	return (

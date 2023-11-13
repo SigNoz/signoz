@@ -1,7 +1,7 @@
 import { ModuleProps, ModulesMap } from '../OnboardingContainer';
 import { DataSourceType } from '../Steps/DataSource/DataSource';
 
-const frameworksMap = {
+export const frameworksMap = {
 	APM: {
 		java: [
 			{
@@ -107,9 +107,19 @@ const supportedLogsTypes = [
 		imgURL: `Logos/software-window.svg`,
 	},
 	{
-		name: 'Logs from existing collectors',
-		id: 'existing_collectors',
-		imgURL: `Logos/cmd-terminal.svg`,
+		name: 'Logs from FluentBit',
+		id: 'fluentBit',
+		imgURL: `Logos/fluent-bit.png`,
+	},
+	{
+		name: 'Logs from FluentD',
+		id: 'fluentD',
+		imgURL: `Logos/fluentd.png`,
+	},
+	{
+		name: 'Logs from LogStash',
+		id: 'logStash',
+		imgURL: `Logos/logstash.svg`,
 	},
 ];
 
@@ -132,7 +142,6 @@ const supportedInfraMetrics = [
 ];
 
 export const getDataSources = (module: ModuleProps): DataSourceType[] => {
-	console.log('getDataSources - module', module);
 	if (module.id === ModulesMap.APM) {
 		return supportedLanguages;
 	}
@@ -151,14 +160,17 @@ export const getSupportedFrameworks = ({
 	module: ModuleProps;
 	dataSource: DataSourceType;
 }): [] => {
+	const { id: moduleID } = module;
+	const { name: dataSourceName } = dataSource;
+
 	if (
-		(module.id === ModulesMap.APM && dataSource.name === 'go') ||
-		(module.id === ModulesMap.APM && dataSource.name === 'rails')
+		(moduleID === ModulesMap.APM && dataSourceName === 'go') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'rails')
 	) {
 		return [];
 	}
 
-	return frameworksMap[module.id][dataSource.name];
+	return frameworksMap[moduleID][dataSourceName];
 };
 
 export const hasFrameworks = ({
@@ -168,10 +180,15 @@ export const hasFrameworks = ({
 	module: ModuleProps;
 	dataSource: any;
 }): boolean => {
+	const { id: moduleID } = module;
+	const { name: dataSourceName } = dataSource;
+
 	// eslint-disable-next-line sonarjs/prefer-single-boolean-return
 	if (
-		(module.id === ModulesMap.APM && dataSource.name === 'go') ||
-		(module.id === ModulesMap.APM && dataSource.name === 'rails')
+		moduleID === ModulesMap.LogsManagement ||
+		moduleID === ModulesMap.InfrastructureMonitoring ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'go') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'rails')
 	) {
 		return false;
 	}
