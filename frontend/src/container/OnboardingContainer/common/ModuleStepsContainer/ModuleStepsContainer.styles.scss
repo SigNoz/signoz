@@ -12,6 +12,22 @@
 			.step-name {
 				margin: 16px 0;
 			}
+
+			.data-source-title,
+			.environment-title,
+			.select-method-title {
+				display: block;
+				margin-bottom: 8px;
+
+				.required-symbol {
+					display: inline-block;
+					margin-inline-end: 0px;
+					color: #dc4446;
+					font-size: 14px;
+					font-family: SimSun, sans-serif;
+					line-height: 1;
+				}
+			}
 		}
 	}
 
@@ -42,19 +58,22 @@
 		display: flex;
 		flex-direction: column;
 		margin-right: 48px;
+		text-align: center;
 
 		.entity-name {
 			margin-bottom: 12px;
 		}
 
 		.entity-value {
-			border: 1px solid darkgray;
 			padding: 6px;
 			min-height: 30px;
 			border-radius: 3px;
-			font-weight: 500;
+			// font-weight: 500;
 			min-width: 120px;
 			text-transform: capitalize;
+			color: #1668dc;
+			background-color: #111a2c;
+			border-color: #111a2c;
 		}
 	}
 }
@@ -75,22 +94,23 @@
 
 	min-width: 200px;
 	height: 100px;
-	// border: 1px solid #424242;
+	border: none;
 	border-radius: 3px;
-	// color: #424242;
 	text-transform: capitalize;
 	text-align: center;
 
 	cursor: pointer;
 
 	&.selected {
-		background-color: rgba(17, 26, 44, 0.5);
-		border: 0.5px solid #424242;
+		color: #1668dc;
+		background-color: #111a2c;
+		border-color: #111a2c;
 	}
 
 	&:hover {
-		background-color: rgba(17, 26, 44, 0.5);
-		border: 0.5px solid #424242;
+		color: #1668dc;
+		background-color: #111a2c;
+		border-color: #111a2c;
 	}
 
 	.environment-name {
@@ -107,4 +127,26 @@
 
 .selected-langauage-setup-instructions {
 	padding: 24px 0;
+}
+
+.lightMode {
+	.entity-value {
+		background-color: #e6f4ff !important;
+		border-color: #e6f4ff !important;
+	}
+
+	.environment,
+	.supported-language {
+		&.selected {
+			color: #1668dc;
+			background-color: #e6f4ff !important;
+			border-color: #e6f4ff !important;
+		}
+
+		&:hover {
+			color: #1668dc;
+			background-color: #e6f4ff !important;
+			border-color: #e6f4ff !important;
+		}
+	}
 }

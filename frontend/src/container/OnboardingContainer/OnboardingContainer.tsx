@@ -10,9 +10,9 @@ import { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 import { trackEvent } from 'utils/segmentAnalytics';
 
-import ConnectionStatus from './common/ConnectionStatus/ConnectionStatus';
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
 import { useOnboardingContext } from './context/OnboardingContext';
+import ConnectionStatus from './Steps/ConnectionStatus/ConnectionStatus';
 import DataSource from './Steps/DataSource/DataSource';
 import EnvironmentDetails from './Steps/EnvironmentDetails/EnvironmentDetails';
 import InstallOpenTelemetry from './Steps/InstallOpenTelemetry/InstallOpenTelemetry';
@@ -98,9 +98,7 @@ const runApplicationStep: SelectedModuleStepProps = {
 const testConnectionStep: SelectedModuleStepProps = {
 	id: 'test-connection',
 	title: 'Test Connection',
-	component: (
-		<ConnectionStatus framework="flask" language="python" serviceName="" />
-	),
+	component: <ConnectionStatus />,
 };
 
 const APM_STEPS: SelectedModuleStepProps[] = [
@@ -137,7 +135,7 @@ export default function Onboarding(): JSX.Element {
 	);
 
 	const [selectedModuleSteps, setSelectedModuleSteps] = useState(APM_STEPS);
-	const [activeStep, setActiveStep] = useState(2);
+	const [activeStep, setActiveStep] = useState(1);
 	const [current, setCurrent] = useState(0);
 	const isDarkMode = useIsDarkMode();
 
@@ -152,7 +150,7 @@ export default function Onboarding(): JSX.Element {
 			setSelectedModuleSteps(INFRASTRUCTURE_MONITORING_STEPS);
 		} else if (selectedModule?.id === ModulesMap.LogsManagement) {
 			setSelectedModuleSteps(LOGS_MANAGEMENT_STEPS);
-		} else {
+		} else if (selectedModule?.id === ModulesMap.APM) {
 			setSelectedModuleSteps(APM_STEPS);
 		}
 
@@ -251,7 +249,7 @@ export default function Onboarding(): JSX.Element {
 						onReselectModule={(): void => {
 							setCurrent(current - 1);
 							setActiveStep(activeStep - 1);
-
+							setSelectedModule(useCases.APM);
 							resetProgress();
 						}}
 						selectedModule={selectedModule}

@@ -4,7 +4,7 @@ import { Form, Input } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 
-import ConnectionStatus from '../../../common/ConnectionStatus/ConnectionStatus';
+import ConnectionStatus from '../../../Steps/ConnectionStatus/ConnectionStatus';
 import { LangProps } from '../APM';
 import GoLangDocs from './goLang.md';
 

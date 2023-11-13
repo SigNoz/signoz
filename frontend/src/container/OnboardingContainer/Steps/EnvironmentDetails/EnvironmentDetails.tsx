@@ -49,25 +49,31 @@ export default function EnvironmentDetails(): JSX.Element {
 		updateSelectedEnvironment,
 	} = useOnboardingContext();
 	return (
-		<div className="supported-environments-container">
-			{supportedEnvironments.map((environment) => (
-				<Card
-					className={cx(
-						'environment',
-						selectedEnvironment === environment.name ? 'selected' : '',
-					)}
-					key={environment.name}
-					onClick={(): void => updateSelectedEnvironment(environment.name)}
-				>
-					<div>
-						<Server size={36} />
-					</div>
+		<>
+			<Typography.Text className="environment-title">
+				<span className="required-symbol">*</span> Select Environment
+			</Typography.Text>
 
-					<div className="environment-name">
-						<Typography.Text> {environment.name} </Typography.Text>
-					</div>
-				</Card>
-			))}
-		</div>
+			<div className="supported-environments-container">
+				{supportedEnvironments.map((environment) => (
+					<Card
+						className={cx(
+							'environment',
+							selectedEnvironment === environment.name ? 'selected' : '',
+						)}
+						key={environment.name}
+						onClick={(): void => updateSelectedEnvironment(environment.name)}
+					>
+						<div>
+							<Server size={36} />
+						</div>
+
+						<div className="environment-name">
+							<Typography.Text> {environment.name} </Typography.Text>
+						</div>
+					</Card>
+				))}
+			</div>
+		</>
 	);
 }
