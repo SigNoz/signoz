@@ -1,4 +1,4 @@
-import './Python.styles.scss';
+import './Javascript.styles.scss';
 
 import { Form, Input, Select } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
@@ -8,27 +8,25 @@ import { trackEvent } from 'utils/segmentAnalytics';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { LangProps } from '../APM';
-import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
-import DjangoDocs from './md-docs/django.md';
-import FalconDocs from './md-docs/falcon.md';
-import FastAPIDocs from './md-docs/fastAPI.md';
-import FlaskDocs from './md-docs/flask.md';
-import PythonDocs from './md-docs/python.md';
+import ConnectionStatus from '../../../common/ConnectionStatus/ConnectionStatus';
+import ExpressDocs from './md-docs/express.md';
+import JavascriptDocs from './md-docs/javascript.md';
+import NestJsDocs from './md-docs/nestjs.md';
 
 const frameworksMap = {
-	django: 'Django',
-	fastAPI: 'Fast API',
-	flask: 'Flask',
-	falcon: 'Falcon',
-	other: 'Others',
+	express: 'Express',
+	nestjs: 'Nest JS',
+	nodejs: 'Nodejs',
 };
 
-export default function Python({
+export default function Javascript({
 	ingestionInfo,
 	activeStep,
 }: LangProps): JSX.Element {
-	const [selectedFrameWork, setSelectedFrameWork] = useState('django');
-	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(DjangoDocs);
+	const [selectedFrameWork, setSelectedFrameWork] = useState('express');
+	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(
+		ExpressDocs,
+	);
 	const [form] = Form.useForm();
 	const serviceName = Form.useWatch('Service Name', form);
 
@@ -41,7 +39,7 @@ export default function Python({
 
 	useEffect(() => {
 		// on language select
-		trackEvent('Onboarding: APM : Python', {
+		trackEvent('Onboarding: APM : Javascript', {
 			selectedFrameWork,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -51,20 +49,14 @@ export default function Python({
 		setSelectedFrameWork(selectedFrameWork);
 
 		switch (selectedFrameWork) {
-			case 'django':
-				setSelectedFrameWorkDocs(DjangoDocs);
+			case 'nodejs':
+				setSelectedFrameWorkDocs(JavascriptDocs);
 				break;
-			case 'fastAPI':
-				setSelectedFrameWorkDocs(FastAPIDocs);
-				break;
-			case 'flask':
-				setSelectedFrameWorkDocs(FlaskDocs);
-				break;
-			case 'falcon':
-				setSelectedFrameWorkDocs(FalconDocs);
+			case 'nestjs':
+				setSelectedFrameWorkDocs(NestJsDocs);
 				break;
 			default:
-				setSelectedFrameWorkDocs(PythonDocs);
+				setSelectedFrameWorkDocs(ExpressDocs);
 				break;
 		}
 	};
@@ -72,12 +64,12 @@ export default function Python({
 	return (
 		<>
 			{activeStep === 2 && (
-				<div className="python-setup-instructions-container">
+				<div className="javascript-setup-instructions-container">
 					<Header
-						entity="python"
-						heading="Python OpenTelemetry Instrumentation"
-						imgURL="/Logos/python.png"
-						docsURL="https://signoz.io/docs/instrumentation/python/"
+						entity="javascript"
+						heading="Javascript OpenTelemetry Instrumentation"
+						imgURL="/Logos/javascript.png"
+						docsURL="https://signoz.io/docs/instrumentation/javascript/"
 						imgClassName="supported-language-img"
 					/>
 
@@ -87,30 +79,22 @@ export default function Python({
 
 							<Select
 								getPopupContainer={popupContainer}
-								defaultValue="Django"
+								defaultValue="express"
 								style={{ minWidth: 120 }}
 								placeholder="Select Framework"
 								onChange={(value): void => handleFrameworkChange(value)}
 								options={[
 									{
-										value: 'django',
-										label: frameworksMap.django,
+										value: 'nodejs',
+										label: frameworksMap.nodejs,
 									},
 									{
-										value: 'fastAPI',
-										label: frameworksMap.fastAPI,
+										value: 'express',
+										label: frameworksMap.express,
 									},
 									{
-										value: 'flask',
-										label: frameworksMap.flask,
-									},
-									{
-										value: 'falcon',
-										label: frameworksMap.falcon,
-									},
-									{
-										value: 'other',
-										label: frameworksMap.other,
+										value: 'nestjs',
+										label: frameworksMap.nestjs,
 									},
 								]}
 							/>
@@ -119,12 +103,18 @@ export default function Python({
 						<div className="service-name-container">
 							<div className="label"> Service Name </div>
 
-							<Form form={form} name="service-name" style={{ minWidth: '300px' }}>
+							<Form
+								form={form}
+								name="service-name"
+								style={{ minWidth: '300px' }}
+								scrollToFirstError
+							>
 								<Form.Item
 									hasFeedback
 									name="Service Name"
 									rules={[{ required: true }]}
 									validateTrigger="onBlur"
+									requiredMark
 								>
 									<Input autoFocus />
 								</Form.Item>
@@ -143,7 +133,7 @@ export default function Python({
 			{activeStep === 3 && (
 				<ConnectionStatus
 					serviceName={form.getFieldValue('Service Name')}
-					language="python"
+					language="javascript"
 					framework={selectedFrameWork}
 				/>
 			)}

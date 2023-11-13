@@ -44,8 +44,11 @@
 
 		.entity-value {
 			border: 1px solid darkgray;
-			padding: 8px 24px;
+			padding: 6px 24px;
+			min-height: 30px;
 			border-radius: 20px;
+			font-size: 12px;
+			font-weight: 500;
 		}
 	}
 }
@@ -56,6 +59,7 @@
 	gap: 24px;
 }
 
+.environment,
 .supported-language {
 	display: flex;
 	justify-content: center;
@@ -65,22 +69,33 @@
 
 	width: 160px;
 	height: 100px;
-	background: #1d1d1d;
-	border: 1px solid #424242;
+	// background: #1d1d1d;
+	// border: 1px solid #424242;
 	border-radius: 3px;
-	color: #424242;
+	// color: #424242;
 	text-transform: capitalize;
+	text-align: center;
 
 	cursor: pointer;
 
 	&.selected {
-		background-color: #111a2c;
+		// background-color: #111a2c;
 		border: 0.5px solid #3c89e8;
+	}
+
+	&:hover {
+		// background-color: #111a2c;
+		border: 0.5px solid #3c89e8;
+	}
+
+	.environment-name {
+		font-size: 12px;
 	}
 }
 
 .supported-langauge-img {
-	height: 48px;
+	height: 40px;
+	width: 40px;
 }
 
 .selected-langauage-setup-instructions {
