@@ -7,8 +7,8 @@ import { useEffect, useState } from 'react';
 import { trackEvent } from 'utils/segmentAnalytics';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import ConnectionStatus from '../../../Steps/ConnectionStatus/ConnectionStatus';
 import { LangProps } from '../APM';
-import ConnectionStatus from '../../../common/ConnectionStatus/ConnectionStatus';
 import ExpressDocs from './md-docs/express.md';
 import JavascriptDocs from './md-docs/javascript.md';
 import NestJsDocs from './md-docs/nestjs.md';

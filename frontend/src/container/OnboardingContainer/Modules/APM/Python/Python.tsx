@@ -7,8 +7,8 @@ import { useEffect, useState } from 'react';
 import { trackEvent } from 'utils/segmentAnalytics';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import ConnectionStatus from '../../../Steps/ConnectionStatus/ConnectionStatus';
 import { LangProps } from '../APM';
-import ConnectionStatus from '../../../common/ConnectionStatus/ConnectionStatus';
 import DjangoDocs from './md-docs/django.md';
 import FalconDocs from './md-docs/falcon.md';
 import FastAPIDocs from './md-docs/fastAPI.md';
