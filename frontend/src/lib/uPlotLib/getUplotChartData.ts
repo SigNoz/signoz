@@ -26,6 +26,7 @@ interface GetUPlotChartOptions {
 	setGraphsVisibilityStates?: FullViewProps['setGraphsVisibilityStates'];
 	thresholdValue?: number;
 	thresholdText?: string;
+	fillSpans?: boolean;
 }
 
 export const getUPlotChartOptions = ({
@@ -40,6 +41,7 @@ export const getUPlotChartOptions = ({
 	setGraphsVisibilityStates,
 	thresholdValue,
 	thresholdText,
+	fillSpans,
 }: GetUPlotChartOptions): uPlot.Options => ({
 	id,
 	width: dimensions.width,
@@ -159,6 +161,7 @@ export const getUPlotChartOptions = ({
 		apiResponse,
 		apiResponse?.data.result,
 		graphsVisibilityStates,
+		fillSpans,
 	),
 	axes: getAxes(isDarkMode, yAxisUnit),
 });
