@@ -12,7 +12,8 @@ import (
 )
 
 type Options struct {
-	PreferRPM bool
+	PreferRPM      bool
+	TimeSeriesLimt int
 }
 
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
@@ -131,7 +132,7 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.Attribut
 		}
 	}
 
-	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_LOCAL_TABLENAME, queryString)
+	filterSubQuery := fmt.Sprintf("SELECT DISTINCT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_LOCAL_TABLENAME, queryString)
 
 	return filterSubQuery, nil
 }
@@ -476,6 +477,18 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 
 	if panelType == v3.PanelTypeValue {
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
+	}
+	// We want to prevent the query from returning too many time series, which can cause
+	// excessive resource usage and slow query times. This usually happens when there are
+	// no filters on the query.
+	//
+	// We use the DISTINCT to remove duplicate time series, and use the max_rows_in_distinct
+	// setting to throw an error if the number of time series is too high.
+	// See https://clickhouse.com/docs/en/operations/settings/query-complexity#max-rows-in-distinct
+	//
+	// This can be disabled by setting the limit to 0.
+	if options.TimeSeriesLimt != 0 {
+		query = query + " SETTINGS max_rows_in_distinct= " + fmt.Sprintf("%d", options.TimeSeriesLimt)
 	}
 	return query, err
 }

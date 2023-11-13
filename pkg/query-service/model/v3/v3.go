@@ -448,24 +448,25 @@ const (
 )
 
 type BuilderQuery struct {
-	QueryName          string            `json:"queryName"`
-	StepInterval       int64             `json:"stepInterval"`
-	DataSource         DataSource        `json:"dataSource"`
-	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
-	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
-	Temporality        Temporality       `json:"temporality,omitempty"`
-	Filters            *FilterSet        `json:"filters,omitempty"`
-	GroupBy            []AttributeKey    `json:"groupBy,omitempty"`
-	Expression         string            `json:"expression"`
-	Disabled           bool              `json:"disabled"`
-	Having             []Having          `json:"having,omitempty"`
-	Legend             string            `json:"legend,omitempty"`
-	Limit              uint64            `json:"limit"`
-	Offset             uint64            `json:"offset"`
-	PageSize           uint64            `json:"pageSize"`
-	OrderBy            []OrderBy         `json:"orderBy,omitempty"`
-	ReduceTo           ReduceToOperator  `json:"reduceTo,omitempty"`
-	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
+	QueryName              string            `json:"queryName"`
+	StepInterval           int64             `json:"stepInterval"`
+	DataSource             DataSource        `json:"dataSource"`
+	AggregateOperator      AggregateOperator `json:"aggregateOperator"`
+	AggregateAttribute     AttributeKey      `json:"aggregateAttribute,omitempty"`
+	Temporality            Temporality       `json:"temporality,omitempty"`
+	Filters                *FilterSet        `json:"filters,omitempty"`
+	GroupBy                []AttributeKey    `json:"groupBy,omitempty"`
+	Expression             string            `json:"expression"`
+	Disabled               bool              `json:"disabled"`
+	Having                 []Having          `json:"having,omitempty"`
+	Legend                 string            `json:"legend,omitempty"`
+	Limit                  uint64            `json:"limit"`
+	Offset                 uint64            `json:"offset"`
+	PageSize               uint64            `json:"pageSize"`
+	OrderBy                []OrderBy         `json:"orderBy,omitempty"`
+	ReduceTo               ReduceToOperator  `json:"reduceTo,omitempty"`
+	SelectColumns          []AttributeKey    `json:"selectColumns,omitempty"`
+	DisableTimeSeriesLimit bool              `json:"disableTimeSeriesLimit,omitempty"`
 }
 
 func (b *BuilderQuery) Validate() error {

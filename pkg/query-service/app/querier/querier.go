@@ -42,8 +42,9 @@ type querier struct {
 
 	fluxInterval time.Duration
 
-	builder       *queryBuilder.QueryBuilder
-	featureLookUp interfaces.FeatureLookup
+	builder         *queryBuilder.QueryBuilder
+	featureLookUp   interfaces.FeatureLookup
+	timeSeriesLimit int
 
 	// used for testing
 	// TODO(srikanthccv): remove this once we have a proper mock
@@ -54,11 +55,12 @@ type querier struct {
 }
 
 type QuerierOptions struct {
-	Reader        interfaces.Reader
-	Cache         cache.Cache
-	KeyGenerator  cache.KeyGenerator
-	FluxInterval  time.Duration
-	FeatureLookup interfaces.FeatureLookup
+	Reader          interfaces.Reader
+	Cache           cache.Cache
+	KeyGenerator    cache.KeyGenerator
+	FluxInterval    time.Duration
+	FeatureLookup   interfaces.FeatureLookup
+	TimeSeriesLimit int
 
 	// used for testing
 	TestingMode    bool
@@ -77,8 +79,10 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 			BuildTraceQuery:  tracesV3.PrepareTracesQuery,
 			BuildLogQuery:    logsV3.PrepareLogsQuery,
 			BuildMetricQuery: metricsV3.PrepareMetricQuery,
+			TimeSeriesLimit:  opts.TimeSeriesLimit,
 		}, opts.FeatureLookup),
-		featureLookUp: opts.FeatureLookup,
+		featureLookUp:   opts.FeatureLookup,
+		timeSeriesLimit: opts.TimeSeriesLimit,
 
 		testingMode:    opts.TestingMode,
 		returnedSeries: opts.ReturnedSeries,

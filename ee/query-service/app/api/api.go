@@ -34,7 +34,8 @@ type APIHandlerOptions struct {
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	Cache                         cache.Cache
 	// Querier Influx Interval
-	FluxInterval time.Duration
+	FluxInterval    time.Duration
+	TimeSeriesLimit int
 }
 
 type APIHandler struct {
@@ -59,6 +60,7 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		Cache:                         opts.Cache,
 		FluxInterval:                  opts.FluxInterval,
+		TimeSeriesLimit:               opts.TimeSeriesLimit,
 	})
 
 	if err != nil {

@@ -124,6 +124,8 @@ type APIHandlerOpts struct {
 
 	// Querier Influx Interval
 	FluxInterval time.Duration
+
+	TimeSeriesLimit int
 }
 
 // NewAPIHandler returns an APIHandler
@@ -135,11 +137,12 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	querierOpts := querier.QuerierOptions{
-		Reader:        opts.Reader,
-		Cache:         opts.Cache,
-		KeyGenerator:  queryBuilder.NewKeyGenerator(),
-		FluxInterval:  opts.FluxInterval,
-		FeatureLookup: opts.FeatureFlags,
+		Reader:          opts.Reader,
+		Cache:           opts.Cache,
+		KeyGenerator:    queryBuilder.NewKeyGenerator(),
+		FluxInterval:    opts.FluxInterval,
+		FeatureLookup:   opts.FeatureFlags,
+		TimeSeriesLimit: opts.TimeSeriesLimit,
 	}
 
 	querier := querier.NewQuerier(querierOpts)

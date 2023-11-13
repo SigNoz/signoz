@@ -145,7 +145,14 @@ func (q *querier) runBuilderQuery(
 	// We are only caching the graph panel queries. A non-existant cache key means that the query is not cached.
 	// If the query is not cached, we execute the query and return the result without caching it.
 	if _, ok := cacheKeys[queryName]; !ok {
-		query, err := metricsV3.PrepareMetricQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{PreferRPM: preferRPM})
+		query, err := metricsV3.PrepareMetricQuery(
+			params.Start,
+			params.End,
+			params.CompositeQuery.QueryType,
+			params.CompositeQuery.PanelType,
+			builderQuery,
+			metricsV3.Options{PreferRPM: preferRPM, TimeSeriesLimt: q.timeSeriesLimit},
+		)
 		if err != nil {
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 			return
@@ -175,7 +182,7 @@ func (q *querier) runBuilderQuery(
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
-			metricsV3.Options{},
+			metricsV3.Options{TimeSeriesLimt: q.timeSeriesLimit, PreferRPM: preferRPM},
 		)
 		if err != nil {
 			ch <- channelResult{

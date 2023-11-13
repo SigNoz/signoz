@@ -4369,6 +4369,14 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 		seriesToPoints[key] = append(seriesToPoints[key], metricPoint)
 	}
 
+	if rows.Err() != nil {
+		zap.S().Errorf("error while reading time series result %v", rows.Err())
+		if strings.Contains(rows.Err().Error(), "code: 191") {
+			return nil, fmt.Errorf("exceeded max number of series")
+		}
+		return nil, rows.Err()
+	}
+
 	var seriesList []*v3.Series
 	for _, key := range keys {
 		points := seriesToPoints[key]
