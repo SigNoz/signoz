@@ -59,6 +59,7 @@ function WidgetGraph({
 				dimensions: containerDimensions,
 				isDarkMode,
 				onDragSelect,
+				fillSpans,
 			}),
 		[
 			widgetId,
@@ -67,6 +68,7 @@ function WidgetGraph({
 			containerDimensions,
 			isDarkMode,
 			onDragSelect,
+			fillSpans,
 		],
 	);
 
