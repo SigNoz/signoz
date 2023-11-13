@@ -7,6 +7,7 @@ import {
 	PipelineData,
 	ProcessorData,
 } from 'types/api/pipeline/def';
+import { v4 } from 'uuid';
 
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
@@ -58,12 +59,8 @@ function AddNewProcessor({
 	const onFinish = (values: { name: string }): void => {
 		const totalDataLength = expandedPipelineData?.config?.length || 0;
 
-		const nameWithoutSpaces = (values?.name || '').replace(/\s/g, '');
-		const randomIdSuffix = Math.random().toString(36).slice(2, 6);
-		const processorId = `${nameWithoutSpaces}.${randomIdSuffix}`;
-
 		const newProcessorData = {
-			id: processorId,
+			id: v4(),
 			orderId: Number(totalDataLength || 0) + 1,
 			type: processorType,
 			enabled: true,
@@ -80,7 +77,7 @@ function AddNewProcessor({
 			const processorData = expandedPipelineData?.config?.[findRecordIndex];
 
 			const updatedProcessorData = {
-				id: processorData?.id || processorId,
+				id: processorData?.id || v4(),
 				orderId: processorData?.orderId,
 				type: processorType,
 				enabled: processorData?.enabled,
