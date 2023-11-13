@@ -78,7 +78,7 @@ export const getUPlotChartOptions = ({
 		},
 	},
 	plugins: [
-		tooltipPlugin(apiResponse, yAxisUnit),
+		tooltipPlugin(apiResponse, yAxisUnit, fillSpans),
 		onClickPlugin({
 			onClick: onClickHandler,
 		}),
