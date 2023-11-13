@@ -1,4 +1,4 @@
-import './Java.styles.scss';
+import './Javascript.styles.scss';
 
 import { Form, Input, Select } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
@@ -8,34 +8,38 @@ import { trackEvent } from 'utils/segmentAnalytics';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { LangProps } from '../APM';
-import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
-import JavaDocs from './md-docs/java.md';
-import JbossDocs from './md-docs/jboss.md';
-import SprintBootDocs from './md-docs/spring_boot.md';
-import TomcatDocs from './md-docs/tomcat.md';
+import ConnectionStatus from '../../../common/ConnectionStatus/ConnectionStatus';
+import ExpressDocs from './md-docs/express.md';
+import JavascriptDocs from './md-docs/javascript.md';
+import NestJsDocs from './md-docs/nestjs.md';
 
-enum FrameworksMap {
-	tomcat = 'Tomcat',
-	spring_boot = 'Spring Boot',
-	jboss = 'JBoss',
-	other = 'Others',
-}
+const frameworksMap = {
+	express: 'Express',
+	nestjs: 'Nest JS',
+	nodejs: 'Nodejs',
+};
 
-export default function Java({
+export default function Javascript({
 	ingestionInfo,
 	activeStep,
 }: LangProps): JSX.Element {
-	const [selectedFrameWork, setSelectedFrameWork] = useState('spring_boot');
+	const [selectedFrameWork, setSelectedFrameWork] = useState('express');
 	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(
-		SprintBootDocs,
+		ExpressDocs,
 	);
-
 	const [form] = Form.useForm();
 	const serviceName = Form.useWatch('Service Name', form);
 
+	const variables = {
+		MYAPP: serviceName || '<service-name>',
+		SIGNOZ_INGESTION_KEY:
+			ingestionInfo.SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
+		REGION: ingestionInfo.REGION || 'region',
+	};
+
 	useEffect(() => {
 		// on language select
-		trackEvent('Onboarding: APM : Java', {
+		trackEvent('Onboarding: APM : Javascript', {
 			selectedFrameWork,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -45,37 +49,27 @@ export default function Java({
 		setSelectedFrameWork(selectedFrameWork);
 
 		switch (selectedFrameWork) {
-			case 'tomcat':
-				setSelectedFrameWorkDocs(TomcatDocs);
+			case 'nodejs':
+				setSelectedFrameWorkDocs(JavascriptDocs);
 				break;
-			case 'spring_boot':
-				setSelectedFrameWorkDocs(SprintBootDocs);
-				break;
-			case 'jboss':
-				setSelectedFrameWorkDocs(JbossDocs);
+			case 'nestjs':
+				setSelectedFrameWorkDocs(NestJsDocs);
 				break;
 			default:
-				setSelectedFrameWorkDocs(JavaDocs);
+				setSelectedFrameWorkDocs(ExpressDocs);
 				break;
 		}
-	};
-
-	const variables = {
-		MYAPP: serviceName || '<service-name>',
-		SIGNOZ_INGESTION_KEY:
-			ingestionInfo.SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
-		REGION: ingestionInfo.REGION || 'region',
 	};
 
 	return (
 		<>
 			{activeStep === 2 && (
-				<div className="java-setup-instructions-container">
+				<div className="javascript-setup-instructions-container">
 					<Header
-						entity="java"
-						heading="Java OpenTelemetry Instrumentation"
-						imgURL="/Logos/java.png"
-						docsURL="https://signoz.io/docs/instrumentation/java/"
+						entity="javascript"
+						heading="Javascript OpenTelemetry Instrumentation"
+						imgURL="/Logos/javascript.png"
+						docsURL="https://signoz.io/docs/instrumentation/javascript/"
 						imgClassName="supported-language-img"
 					/>
 
@@ -85,26 +79,22 @@ export default function Java({
 
 							<Select
 								getPopupContainer={popupContainer}
-								defaultValue="spring_boot"
+								defaultValue="express"
 								style={{ minWidth: 120 }}
 								placeholder="Select Framework"
 								onChange={(value): void => handleFrameworkChange(value)}
 								options={[
 									{
-										value: 'spring_boot',
-										label: FrameworksMap.spring_boot,
+										value: 'nodejs',
+										label: frameworksMap.nodejs,
 									},
 									{
-										value: 'tomcat',
-										label: FrameworksMap.tomcat,
+										value: 'express',
+										label: frameworksMap.express,
 									},
 									{
-										value: 'jboss',
-										label: FrameworksMap.jboss,
-									},
-									{
-										value: 'other',
-										label: FrameworksMap.other,
+										value: 'nestjs',
+										label: frameworksMap.nestjs,
 									},
 								]}
 							/>
@@ -113,12 +103,19 @@ export default function Java({
 						<div className="service-name-container">
 							<div className="label"> Service Name </div>
 
-							<Form form={form} name="service-name" style={{ minWidth: '300px' }}>
+							<Form
+								form={form}
+								name="service-name"
+								style={{ minWidth: '300px' }}
+								scrollToFirstError
+								requiredMark
+							>
 								<Form.Item
 									hasFeedback
 									name="Service Name"
 									rules={[{ required: true }]}
 									validateTrigger="onBlur"
+									required
 								>
 									<Input autoFocus />
 								</Form.Item>
@@ -137,8 +134,8 @@ export default function Java({
 			{activeStep === 3 && (
 				<ConnectionStatus
 					serviceName={form.getFieldValue('Service Name')}
-					language="java"
-					framework={(FrameworksMap as any)[selectedFrameWork]}
+					language="javascript"
+					framework={selectedFrameWork}
 				/>
 			)}
 		</>

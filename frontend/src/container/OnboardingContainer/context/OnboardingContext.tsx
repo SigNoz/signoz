@@ -1,9 +1,8 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
 
-import { DataSourceType } from './common/DataSource/DataSource';
-import { ModuleProps } from './OnboardingContainer';
+import { ModuleProps, useCases } from '../OnboardingContainer';
+import { DataSourceType } from '../Steps/DataSource/DataSource';
 
-// Define the shape of your context data
 interface OnboardingContextData {
 	serviceName: string;
 	updateServiceName: (newValue: string) => void;
@@ -13,12 +12,10 @@ interface OnboardingContextData {
 	updateSelectedDataSource: (module: DataSourceType) => void;
 }
 
-// Create the context with an initial state
 const OnboardingContext = createContext<OnboardingContextData | undefined>(
 	undefined,
 );
 
-// Create a provider component to wrap your app with
 interface OnboardingContextProviderProps {
 	children: ReactNode;
 }
@@ -26,8 +23,10 @@ interface OnboardingContextProviderProps {
 function OnboardingContextProvider({
 	children,
 }: OnboardingContextProviderProps): any {
-	const [serviceName, setServiceName] = useState<string>('Service Name');
-	const [selectedModule, setSelectedModule] = useState<ModuleProps | null>(null);
+	const [serviceName, setServiceName] = useState<string>('');
+	const [selectedModule, setSelectedModule] = useState<ModuleProps | null>(
+		useCases.APM,
+	);
 	const [
 		selectedDataSource,
 		setSelectedDataSource,
@@ -45,7 +44,6 @@ function OnboardingContextProvider({
 		setSelectedDataSource(dataSource);
 	};
 
-	// Provide the context value to the wrapped components
 	// eslint-disable-next-line react/jsx-no-constructed-context-values
 	const contextValue: OnboardingContextData = {
 		serviceName,
@@ -63,12 +61,11 @@ function OnboardingContextProvider({
 	);
 }
 
-// Create a custom hook to use the context in functional components
 const useOnboardingContext = (): OnboardingContextData => {
 	const context = useContext(OnboardingContext);
 	if (!context) {
 		throw new Error(
-			'useMyContext must be used within a OnboardingContextProvider',
+			'useOnboardingContext must be used within a OnboardingContextProvider',
 		);
 	}
 	return context;

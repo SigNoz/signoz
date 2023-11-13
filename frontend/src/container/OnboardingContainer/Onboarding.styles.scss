@@ -117,3 +117,9 @@
 	font-size: 12px !important;
 	max-width: 100% !important;
 }
+
+.supported-environments-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+}

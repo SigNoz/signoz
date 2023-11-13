@@ -1,8 +1,8 @@
-import { Typography } from 'antd';
+import { Card, Typography } from 'antd';
 import cx from 'classnames';
 import { Server } from 'lucide-react';
 
-const supportedLanguages = [
+const supportedEnvironments = [
 	{
 		name: 'Local/Virtual Machine',
 	},
@@ -31,14 +31,14 @@ const supportedLanguages = [
 
 export default function EnvironmentDetails(): JSX.Element {
 	return (
-		<div className="supported-languages-container">
-			{supportedLanguages.map((supportedLanguage) => (
-				<div
+		<div className="supported-environments-container">
+			{supportedEnvironments.map((environment) => (
+				<Card
 					className={cx(
-						'supported-language',
+						'environment',
 						// selectedLanguage === supportedLanguage.name ? 'selected' : '',
 					)}
-					key={supportedLanguage.name}
+					key={environment.name}
 					// onClick={(): void => setSelectedLanguage(supportedLanguage.name)}
 				>
 					{/* <img
@@ -47,10 +47,14 @@ export default function EnvironmentDetails(): JSX.Element {
 						alt=""
 					/> */}
 
-					<Server size={36} />
+					<div>
+						<Server size={36} />
+					</div>
 
-					<Typography.Text> {supportedLanguage.name} </Typography.Text>
-				</div>
+					<div className="environment-name">
+						<Typography.Text> {environment.name} </Typography.Text>
+					</div>
+				</Card>
 			))}
 		</div>
 	);

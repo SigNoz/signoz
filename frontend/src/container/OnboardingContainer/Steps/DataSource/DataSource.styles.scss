@@ -27,3 +27,12 @@ div[class*='-setup-instructions-container'] {
 	gap: 16px;
 	margin-top: 24px;
 }
+
+.source-name {
+	width: 80%;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: center;
+	font-size: 12px;
+}
