@@ -21,6 +21,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
@@ -100,9 +101,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const updateDashboardMutation = useUpdateDashboard();
 
-	const onClickSaveHandler = useCallback(() => {
+	const { afterWidgets, preWidgets } = useMemo(() => {
 		if (!selectedDashboard) {
-			return;
+			return {
+				selectedWidget: {} as Widgets,
+				preWidgets: [],
+				afterWidgets: [],
+			};
 		}
 
 		const widgetId = query.get('widgetId');
@@ -120,6 +125,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			selectedWidgetIndex || 0
 		];
 
+		return { selectedWidget, preWidgets, afterWidgets };
+	}, [selectedDashboard, query]);
+
+	const onClickSaveHandler = useCallback(() => {
+		if (!selectedDashboard) {
+			return;
+		}
+
 		updateDashboardMutation.mutateAsync(
 			{
 				uuid: selectedDashboard.uuid,
@@ -128,7 +141,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					widgets: [
 						...preWidgets,
 						{
-							...selectedWidget,
+							...(selectedWidget || ({} as Widgets)),
 							description,
 							timePreferance: selectedTime.enum,
 							isStacked: stacked,
@@ -157,6 +170,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	}, [
 		selectedDashboard,
 		updateDashboardMutation,
+		preWidgets,
+		selectedWidget,
 		description,
 		selectedTime.enum,
 		stacked,
@@ -165,7 +180,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		title,
 		yAxisUnit,
 		graphType,
-		query,
+		afterWidgets,
 		featureResponse,
 		dashboardId,
 		notifications,
@@ -271,6 +286,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						setSelectedTime={setSelectedTime}
 						selectedTime={selectedTime}
 						setYAxisUnit={setYAxisUnit}
+						selectedWidget={selectedWidget}
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>
