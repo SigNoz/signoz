@@ -8,14 +8,41 @@ import {
 import { Button, ConfigProvider, Space, Steps } from 'antd';
 import { useState } from 'react';
 
-import { ModuleProps, SelectedModuleStepProps } from '../OnboardingContainer';
-import { useOnboardingContext } from '../OnboardingContext';
+import { useOnboardingContext } from '../../context/OnboardingContext';
+import {
+	ModuleProps,
+	SelectedModuleStepProps,
+} from '../../OnboardingContainer';
 
 interface ModuleStepsContainerProps {
 	onReselectModule: any;
 	selectedModule: ModuleProps;
 	selectedModuleSteps: SelectedModuleStepProps[];
 }
+
+interface MetaDataProps {
+	name: string;
+	value: string;
+}
+
+const defaultMetaData = [
+	{
+		name: 'Service Name',
+		value: ' ',
+	},
+	{
+		name: 'Data Source',
+		value: ' ',
+	},
+	{
+		name: 'Framework',
+		value: ' ',
+	},
+	{
+		name: 'Environment',
+		value: ' ',
+	},
+];
 
 export default function ModuleStepsContainer({
 	onReselectModule,
@@ -26,14 +53,18 @@ export default function ModuleStepsContainer({
 
 	const [current, setCurrent] = useState(0);
 
+	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
+
 	const handleNext = (): void => {
-		if (current > 0) {
+		if (current >= 0) {
 			setCurrent(current + 1);
 		}
 	};
 
 	const handlePrev = (): void => {
-		setCurrent(current - 1);
+		if (current > 0) {
+			setCurrent(current - 1);
+		}
 	};
 
 	return (
@@ -62,31 +93,35 @@ export default function ModuleStepsContainer({
 						size="small"
 						status="finish"
 						current={current}
-						onChange={(current: number): void => {
-							setCurrent(current);
-							console.log('current', current);
-						}}
 						items={selectedModuleSteps}
 					/>
 				</div>
 
 				<div className="selected-step-content">
 					<div className="step-data">
-						<div className="selected-step-pills">
-							<div className="entity">
-								<div className="entity-name">Data Source</div>
-								<div className="entity-value">Download</div>
+						{current > 0 && (
+							<div className="selected-step-pills">
+								{metaData.map((data) => (
+									<div key={data.name} className="entity">
+										<div className="entity-name"> {data.name}</div>
+										<div className="entity-value"> {data.value} </div>
+									</div>
+								))}
 							</div>
-						</div>
+						)}
 
 						<div className="step-content">
-							<div className="step-name">{selectedModuleSteps[current].title}</div>
+							{/* <div className="step-name">{selectedModuleSteps[current].title}</div> */}
 							{selectedModuleSteps[current].component}
 						</div>
 					</div>
 
 					<div className="step-actions actionButtonsContainer">
-						<Button onClick={handlePrev} icon={<ArrowLeftOutlined />}>
+						<Button
+							onClick={handlePrev}
+							disabled={current === 0}
+							icon={<ArrowLeftOutlined />}
+						>
 							Back
 						</Button>
 

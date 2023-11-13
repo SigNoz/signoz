@@ -13,15 +13,18 @@ import { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 import { trackEvent } from 'utils/segmentAnalytics';
 
-import ConnectionStatus from './APM/common/ConnectionStatus/ConnectionStatus';
-import DataSource from './common/DataSource/DataSource';
-import EnvironmentDetails from './common/EnvironmentDetails/EnvironmentDetails';
-import InstallOpenTelemetry from './common/InstallOpenTelemetry/InstallOpenTelemetry';
-import RunApplication from './common/RunApplication/RunApplication';
-import SelectMethod from './common/SelectMethod/SelectMethod';
-import SetupOtelCollector from './common/SetupOtelCollector/SetupOtelCollector';
-import ModuleStepsContainer from './ModuleStepsContainer/ModuleStepsContainer';
-import { OnboardingContextProvider } from './OnboardingContext';
+import ConnectionStatus from './common/ConnectionStatus/ConnectionStatus';
+import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
+import {
+	OnboardingContextProvider,
+	useOnboardingContext,
+} from './context/OnboardingContext';
+import DataSource from './Steps/DataSource/DataSource';
+import EnvironmentDetails from './Steps/EnvironmentDetails/EnvironmentDetails';
+import InstallOpenTelemetry from './Steps/InstallOpenTelemetry/InstallOpenTelemetry';
+import RunApplication from './Steps/RunApplication/RunApplication';
+import SelectMethod from './Steps/SelectMethod/SelectMethod';
+import SetupOtelCollector from './Steps/SetupOtelCollector/SetupOtelCollector';
 
 export enum ModulesMap {
 	APM = 'APM',
@@ -50,7 +53,7 @@ export interface SelectedModuleStepProps {
 	component: any;
 }
 
-const useCases = {
+export const useCases = {
 	APM: {
 		id: ModulesMap.APM,
 		title: 'Application Monitoring',
@@ -152,6 +155,11 @@ export default function Onboarding(): JSX.Element {
 	);
 	const isDarkMode = useIsDarkMode();
 
+	const {
+		selectedModule: selectedModuleContext,
+		updateSelectedModule,
+	} = useOnboardingContext();
+
 	useEffectOnce(() => {
 		trackEvent('Onboarding Started');
 	});
@@ -174,6 +182,10 @@ export default function Onboarding(): JSX.Element {
 			selectedModule: selectedModule.id,
 		});
 	}, [selectedModule]);
+
+	useEffect(() => {
+		console.log('selectedModuleContext', selectedModuleContext);
+	}, [selectedModuleContext]);
 
 	const handleNext = (): void => {
 		// Need to add logic to validate service name and then allow next step transition in APM module
@@ -242,6 +254,7 @@ export default function Onboarding(): JSX.Element {
 
 	const handleModuleSelect = (module: ModuleProps): void => {
 		setSelectedModule(module);
+		updateSelectedModule(module);
 	};
 
 	const handleLogTypeSelect = (logType: string): void => {
@@ -249,79 +262,73 @@ export default function Onboarding(): JSX.Element {
 	};
 
 	return (
-		<OnboardingContextProvider>
-			<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
-				{activeStep === 1 && (
-					<>
-						<div className="onboardingHeader">
-							<h1>Get Started with SigNoz</h1>
-							<div> Select a use-case to get started </div>
-						</div>
-
-						<div className="modulesContainer">
-							<div className="moduleContainerRowStyles">
-								{Object.keys(ModulesMap).map((module) => {
-									const selectedUseCase = (useCases as any)[module];
-
-									return (
-										<Card
-											className={cx(
-												'moduleStyles',
-												selectedModule.id === selectedUseCase.id ? 'selected' : '',
-											)}
-											style={{
-												backgroundColor: isDarkMode ? '#000' : '#FFF',
-											}}
-											key={selectedUseCase.id}
-											onClick={(): void => handleModuleSelect(selectedUseCase)}
-										>
-											<Typography.Title
-												className="moduleTitleStyle"
-												level={4}
-												style={{
-													borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #ddd',
-													backgroundColor: isDarkMode ? '#141414' : '#FFF',
-												}}
-											>
-												{selectedUseCase.title}
-											</Typography.Title>
-											<Typography.Paragraph
-												className="moduleDesc"
-												style={{ backgroundColor: isDarkMode ? '#000' : '#FFF' }}
-											>
-												{selectedUseCase.desc}
-											</Typography.Paragraph>
-										</Card>
-									);
-								})}
-							</div>
-						</div>
-
-						<div className="continue-to-next-step">
-							<Button
-								type="primary"
-								icon={<ArrowRightOutlined />}
-								onClick={handleNext}
-							>
-								Continue to next step
-							</Button>
-						</div>
-					</>
-				)}
-
-				{activeStep > 1 && (
-					<div className="stepsContainer">
-						<ModuleStepsContainer
-							onReselectModule={(): void => {
-								setCurrent(current - 1);
-								setActiveStep(activeStep - 1);
-							}}
-							selectedModule={selectedModule}
-							selectedModuleSteps={selectedModuleSteps}
-						/>
+		<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
+			{activeStep === 1 && (
+				<>
+					<div className="onboardingHeader">
+						<h1>Get Started with SigNoz</h1>
+						<div> Select a use-case to get started </div>
 					</div>
-				)}
-			</div>
-		</OnboardingContextProvider>
+
+					<div className="modulesContainer">
+						<div className="moduleContainerRowStyles">
+							{Object.keys(ModulesMap).map((module) => {
+								const selectedUseCase = (useCases as any)[module];
+
+								return (
+									<Card
+										className={cx(
+											'moduleStyles',
+											selectedModule.id === selectedUseCase.id ? 'selected' : '',
+										)}
+										style={{
+											backgroundColor: isDarkMode ? '#000' : '#FFF',
+										}}
+										key={selectedUseCase.id}
+										onClick={(): void => handleModuleSelect(selectedUseCase)}
+									>
+										<Typography.Title
+											className="moduleTitleStyle"
+											level={4}
+											style={{
+												borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #ddd',
+												backgroundColor: isDarkMode ? '#141414' : '#FFF',
+											}}
+										>
+											{selectedUseCase.title}
+										</Typography.Title>
+										<Typography.Paragraph
+											className="moduleDesc"
+											style={{ backgroundColor: isDarkMode ? '#000' : '#FFF' }}
+										>
+											{selectedUseCase.desc}
+										</Typography.Paragraph>
+									</Card>
+								);
+							})}
+						</div>
+					</div>
+
+					<div className="continue-to-next-step">
+						<Button type="primary" icon={<ArrowRightOutlined />} onClick={handleNext}>
+							Get Started
+						</Button>
+					</div>
+				</>
+			)}
+
+			{activeStep > 1 && (
+				<div className="stepsContainer">
+					<ModuleStepsContainer
+						onReselectModule={(): void => {
+							setCurrent(current - 1);
+							setActiveStep(activeStep - 1);
+						}}
+						selectedModule={selectedModule}
+						selectedModuleSteps={selectedModuleSteps}
+					/>
+				</div>
+			)}
+		</div>
 	);
 }

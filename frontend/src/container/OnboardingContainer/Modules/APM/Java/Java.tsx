@@ -1,4 +1,4 @@
-import './Python.styles.scss';
+import './Java.styles.scss';
 
 import { Form, Input, Select } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
@@ -7,41 +7,35 @@ import { useEffect, useState } from 'react';
 import { trackEvent } from 'utils/segmentAnalytics';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import ConnectionStatus from '../../../common/ConnectionStatus/ConnectionStatus';
 import { LangProps } from '../APM';
-import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
-import DjangoDocs from './md-docs/django.md';
-import FalconDocs from './md-docs/falcon.md';
-import FastAPIDocs from './md-docs/fastAPI.md';
-import FlaskDocs from './md-docs/flask.md';
-import PythonDocs from './md-docs/python.md';
+import JavaDocs from './md-docs/java.md';
+import JbossDocs from './md-docs/jboss.md';
+import SprintBootDocs from './md-docs/spring_boot.md';
+import TomcatDocs from './md-docs/tomcat.md';
 
-const frameworksMap = {
-	django: 'Django',
-	fastAPI: 'Fast API',
-	flask: 'Flask',
-	falcon: 'Falcon',
-	other: 'Others',
-};
+enum FrameworksMap {
+	tomcat = 'Tomcat',
+	spring_boot = 'Spring Boot',
+	jboss = 'JBoss',
+	other = 'Others',
+}
 
-export default function Python({
+export default function Java({
 	ingestionInfo,
 	activeStep,
 }: LangProps): JSX.Element {
-	const [selectedFrameWork, setSelectedFrameWork] = useState('django');
-	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(DjangoDocs);
+	const [selectedFrameWork, setSelectedFrameWork] = useState('spring_boot');
+	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(
+		SprintBootDocs,
+	);
+
 	const [form] = Form.useForm();
 	const serviceName = Form.useWatch('Service Name', form);
 
-	const variables = {
-		MYAPP: serviceName || '<service-name>',
-		SIGNOZ_INGESTION_KEY:
-			ingestionInfo.SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
-		REGION: ingestionInfo.REGION || 'region',
-	};
-
 	useEffect(() => {
 		// on language select
-		trackEvent('Onboarding: APM : Python', {
+		trackEvent('Onboarding: APM : Java', {
 			selectedFrameWork,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -51,33 +45,37 @@ export default function Python({
 		setSelectedFrameWork(selectedFrameWork);
 
 		switch (selectedFrameWork) {
-			case 'django':
-				setSelectedFrameWorkDocs(DjangoDocs);
+			case 'tomcat':
+				setSelectedFrameWorkDocs(TomcatDocs);
 				break;
-			case 'fastAPI':
-				setSelectedFrameWorkDocs(FastAPIDocs);
+			case 'spring_boot':
+				setSelectedFrameWorkDocs(SprintBootDocs);
 				break;
-			case 'flask':
-				setSelectedFrameWorkDocs(FlaskDocs);
-				break;
-			case 'falcon':
-				setSelectedFrameWorkDocs(FalconDocs);
+			case 'jboss':
+				setSelectedFrameWorkDocs(JbossDocs);
 				break;
 			default:
-				setSelectedFrameWorkDocs(PythonDocs);
+				setSelectedFrameWorkDocs(JavaDocs);
 				break;
 		}
+	};
+
+	const variables = {
+		MYAPP: serviceName || '<service-name>',
+		SIGNOZ_INGESTION_KEY:
+			ingestionInfo.SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
+		REGION: ingestionInfo.REGION || 'region',
 	};
 
 	return (
 		<>
 			{activeStep === 2 && (
-				<div className="python-setup-instructions-container">
+				<div className="java-setup-instructions-container">
 					<Header
-						entity="python"
-						heading="Python OpenTelemetry Instrumentation"
-						imgURL="/Logos/python.png"
-						docsURL="https://signoz.io/docs/instrumentation/python/"
+						entity="java"
+						heading="Java OpenTelemetry Instrumentation"
+						imgURL="/Logos/java.png"
+						docsURL="https://signoz.io/docs/instrumentation/java/"
 						imgClassName="supported-language-img"
 					/>
 
@@ -87,30 +85,26 @@ export default function Python({
 
 							<Select
 								getPopupContainer={popupContainer}
-								defaultValue="Django"
+								defaultValue="spring_boot"
 								style={{ minWidth: 120 }}
 								placeholder="Select Framework"
 								onChange={(value): void => handleFrameworkChange(value)}
 								options={[
 									{
-										value: 'django',
-										label: frameworksMap.django,
+										value: 'spring_boot',
+										label: FrameworksMap.spring_boot,
 									},
 									{
-										value: 'fastAPI',
-										label: frameworksMap.fastAPI,
+										value: 'tomcat',
+										label: FrameworksMap.tomcat,
 									},
 									{
-										value: 'flask',
-										label: frameworksMap.flask,
-									},
-									{
-										value: 'falcon',
-										label: frameworksMap.falcon,
+										value: 'jboss',
+										label: FrameworksMap.jboss,
 									},
 									{
 										value: 'other',
-										label: frameworksMap.other,
+										label: FrameworksMap.other,
 									},
 								]}
 							/>
@@ -143,8 +137,8 @@ export default function Python({
 			{activeStep === 3 && (
 				<ConnectionStatus
 					serviceName={form.getFieldValue('Service Name')}
-					language="python"
-					framework={selectedFrameWork}
+					language="java"
+					framework={(FrameworksMap as any)[selectedFrameWork]}
 				/>
 			)}
 		</>
