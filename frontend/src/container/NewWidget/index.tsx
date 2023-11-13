@@ -80,6 +80,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [selectedNullZeroValue, setSelectedNullZeroValue] = useState<string>(
 		selectedWidget?.nullZeroValues || 'zero',
 	);
+	const [isFillSpans, setIsFillSpans] = useState<boolean>(
+		selectedWidget?.fillSpans || false,
+	);
 	const [saveModal, setSaveModal] = useState(false);
 
 	const [graphType, setGraphType] = useState(selectedGraph);
@@ -265,6 +268,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						selectedTime={selectedTime}
 						selectedGraph={graphType}
 						yAxisUnit={yAxisUnit}
+						fillSpans={isFillSpans}
 					/>
 				</LeftContainerWrapper>
 
@@ -287,6 +291,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						selectedTime={selectedTime}
 						setYAxisUnit={setYAxisUnit}
 						selectedWidget={selectedWidget}
+						isFillSpans={isFillSpans}
+						setIsFillSpans={setIsFillSpans}
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>

@@ -17,6 +17,7 @@ function WidgetGraph({
 	getWidgetQueryRange,
 	selectedWidget,
 	yAxisUnit,
+	fillSpans,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 
@@ -24,7 +25,10 @@ function WidgetGraph({
 
 	const containerDimensions = useResizeObserver(graphRef);
 
-	const chartData = getUPlotChartData(getWidgetQueryRange?.data?.payload);
+	const chartData = getUPlotChartData(
+		getWidgetQueryRange?.data?.payload,
+		fillSpans,
+	);
 
 	const isDarkMode = useIsDarkMode();
 
@@ -86,6 +90,7 @@ function WidgetGraph({
 interface WidgetGraphProps {
 	yAxisUnit: string;
 	selectedWidget: Widgets;
+	fillSpans: boolean;
 	getWidgetQueryRange: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error

@@ -15,6 +15,7 @@ function WidgetGraph({
 	selectedGraph,
 	yAxisUnit,
 	selectedTime,
+	fillSpans,
 }: WidgetGraphProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const { selectedDashboard } = useDashboard();
@@ -49,6 +50,7 @@ function WidgetGraph({
 				selectedTime={selectedTime}
 				selectedGraph={selectedGraph}
 				yAxisUnit={yAxisUnit}
+				fillSpans={fillSpans}
 			/>
 		</Container>
 	);

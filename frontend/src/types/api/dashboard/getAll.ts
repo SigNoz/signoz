@@ -69,6 +69,7 @@ export interface IBaseWidget {
 	timePreferance: timePreferenceType;
 	stepSize?: number;
 	yAxisUnit?: string;
+	fillSpans?: boolean;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;
