@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { trackEvent } from 'utils/segmentAnalytics';
 
-import Header from '../common/Header/Header';
+import Header from '../../common/Header/Header';
 import hostMetricsMonitoring from './md-docs/hostMetricsMonitoring.md';
 import k8sInfraMonitoringDocs from './md-docs/kubernetesInfraMonitoring.md';
 import otherMetrics from './md-docs/otherMetrics.md';

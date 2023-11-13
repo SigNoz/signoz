@@ -5,6 +5,7 @@ import './DataSource.styles.scss';
 import { Card, Form, Input, Select, Typography } from 'antd';
 import cx from 'classnames';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
+import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
 import {
 	getDataSources,
 	getSupportedFrameworks,
@@ -15,7 +16,8 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 export interface DataSourceType {
 	name: string;
-	imgURL: string;
+	imgURL?: string;
+	label?: string;
 }
 
 export default function DataSource(): JSX.Element {
@@ -26,6 +28,8 @@ export default function DataSource(): JSX.Element {
 		selectedModule,
 		selectedDataSource,
 		updateSelectedDataSource,
+		updateServiceName,
+		updateSelectedFramework,
 	} = useOnboardingContext();
 
 	const [supportedDataSources, setSupportedDataSources] = useState<
@@ -67,15 +71,8 @@ export default function DataSource(): JSX.Element {
 		}
 	}, [selectedModule, selectedDataSource]);
 
-	console.log(
-		'selectedDataSource',
-		selectedModule,
-		selectedDataSource,
-		supportedframeworks,
-	);
-
 	return (
-		<div className="apm-module-container">
+		<div className="module-container">
 			<div className="supported-languages-container">
 				{supportedDataSources?.map((dataSource) => (
 					<Card
@@ -97,52 +94,75 @@ export default function DataSource(): JSX.Element {
 						</div>
 
 						<div>
-							<Typography.Text className="source-name">
-								{' '}
-								{dataSource.name}{' '}
+							<Typography.Text className="serviceName">
+								{dataSource.name}
 							</Typography.Text>
 						</div>
 					</Card>
 				))}
 			</div>
 
-			<div className="form-container">
-				<div className="service-name-container">
-					<Form
-						initialValues={{
-							serviceName,
-						}}
-						form={form}
-						name="service-name"
-						style={{ minWidth: '300px' }}
-						layout="vertical"
-					>
-						<Form.Item
-							hasFeedback
-							name="serviceName"
-							label="Service Name"
-							rules={[{ required: true }]}
-							validateTrigger="onBlur"
-						>
-							<Input autoFocus />
-						</Form.Item>
+			{selectedModule?.id === useCases.APM.id && (
+				<>
+					<div className="form-container">
+						<div className="service-name-container">
+							<Form
+								initialValues={{
+									serviceName,
+								}}
+								form={form}
+								onValuesChange={(): void => {
+									const serviceName = form.getFieldValue('serviceName');
 
-						{enableFrameworks && (
-							<div className="framework-selector">
-								<Form.Item label="Select Framework">
-									<Select
-										getPopupContainer={popupContainer}
-										style={{ minWidth: 120 }}
-										placeholder="Select Framework"
-										// onChange={(value): void => handleFrameworkChange(value)}
-										options={supportedframeworks}
-									/>
+									updateServiceName(serviceName);
+								}}
+								name="data-source-form"
+								style={{ minWidth: '300px' }}
+								layout="vertical"
+								validateTrigger="onBlur"
+							>
+								<Form.Item
+									hasFeedback
+									name="serviceName"
+									label="Service Name"
+									rules={[{ required: true, message: 'Please enter service name' }]}
+									validateTrigger="onBlur"
+								>
+									<Input autoFocus />
 								</Form.Item>
-							</div>
+
+								{enableFrameworks && (
+									<div className="framework-selector">
+										<Form.Item
+											label="Select Framework"
+											name="select-framework"
+											hasFeedback
+											rules={[{ required: true, message: 'Please select framework' }]}
+											validateTrigger=""
+										>
+											<Select
+												getPopupContainer={popupContainer}
+												style={{ minWidth: 120 }}
+												placeholder="Select Framework"
+												onChange={(value): void => updateSelectedFramework(value)}
+												options={supportedframeworks}
+											/>
+										</Form.Item>
+									</div>
+								)}
+							</Form>
+						</div>
+					</div>
+					<div className="form-errors">
+						{form.isFieldsTouched() && selectedDataSource !== null && (
+							<Typography.Text type="danger">
+								{' '}
+								Please select data source{' '}
+							</Typography.Text>
 						)}
-					</Form>
-				</div>
-			</div>
+					</div>
+				</>
+			)}
 		</div>
 	);
 }

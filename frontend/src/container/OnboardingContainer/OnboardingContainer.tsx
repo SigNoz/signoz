@@ -49,6 +49,7 @@ export interface ModuleProps {
 }
 
 export interface SelectedModuleStepProps {
+	id: string;
 	title: string;
 	component: any;
 }
@@ -78,36 +79,43 @@ export const useCases = {
 };
 
 const dataSourceStep: SelectedModuleStepProps = {
+	id: 'data-source',
 	title: 'Data Source',
 	component: <DataSource />,
 };
 
 const envDetailsStep: SelectedModuleStepProps = {
+	id: 'environment-details',
 	title: 'Environment Details',
 	component: <EnvironmentDetails />,
 };
 
 const selectMethodStep: SelectedModuleStepProps = {
+	id: 'select-method',
 	title: 'Select Method',
 	component: <SelectMethod />,
 };
 
 const setupOtelCollectorStep: SelectedModuleStepProps = {
+	id: 'setup-otel-collector',
 	title: 'Setup Otel Collector',
 	component: <SetupOtelCollector />,
 };
 
 const installOpenTelemetryStep: SelectedModuleStepProps = {
+	id: 'install-openTelemetry',
 	title: 'Install OpenTelemetry',
 	component: <InstallOpenTelemetry />,
 };
 
 const runApplicationStep: SelectedModuleStepProps = {
+	id: 'run-application',
 	title: 'Run Application',
 	component: <RunApplication />,
 };
 
 const testConnectionStep: SelectedModuleStepProps = {
+	id: 'test-connection',
 	title: 'Test Connection',
 	component: (
 		<ConnectionStatus framework="flask" language="python" serviceName="" />
@@ -155,10 +163,7 @@ export default function Onboarding(): JSX.Element {
 	);
 	const isDarkMode = useIsDarkMode();
 
-	const {
-		selectedModule: selectedModuleContext,
-		updateSelectedModule,
-	} = useOnboardingContext();
+	const { updateSelectedModule, resetProgress } = useOnboardingContext();
 
 	useEffectOnce(() => {
 		trackEvent('Onboarding Started');
@@ -183,9 +188,9 @@ export default function Onboarding(): JSX.Element {
 		});
 	}, [selectedModule]);
 
-	useEffect(() => {
-		console.log('selectedModuleContext', selectedModuleContext);
-	}, [selectedModuleContext]);
+	// useEffect(() => {
+	// 	console.log('selectedModuleContext', selectedModuleContext);
+	// }, [selectedModuleContext]);
 
 	const handleNext = (): void => {
 		// Need to add logic to validate service name and then allow next step transition in APM module
@@ -323,6 +328,8 @@ export default function Onboarding(): JSX.Element {
 						onReselectModule={(): void => {
 							setCurrent(current - 1);
 							setActiveStep(activeStep - 1);
+
+							resetProgress();
 						}}
 						selectedModule={selectedModule}
 						selectedModuleSteps={selectedModuleSteps}
