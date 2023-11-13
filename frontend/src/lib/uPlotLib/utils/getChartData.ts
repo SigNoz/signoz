@@ -32,6 +32,5 @@ export const getUPlotChartData = (
 		uPlotData.push(new Float64Array(seriesData));
 	});
 
-	console.log({ uPlotData, seriesList });
 	return uPlotData;
 };
