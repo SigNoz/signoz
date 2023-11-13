@@ -122,4 +122,8 @@
 	display: flex;
 	flex-wrap: wrap;
 	gap: 24px;
+
+	.environment {
+		cursor: pointer;
+	}
 }

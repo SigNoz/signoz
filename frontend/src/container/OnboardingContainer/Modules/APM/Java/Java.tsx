@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { trackEvent } from 'utils/segmentAnalytics';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import ConnectionStatus from '../../../common/ConnectionStatus/ConnectionStatus';
+import ConnectionStatus from '../../../Steps/ConnectionStatus/ConnectionStatus';
 import { LangProps } from '../APM';
 import JavaDocs from './md-docs/java.md';
 import JbossDocs from './md-docs/jboss.md';

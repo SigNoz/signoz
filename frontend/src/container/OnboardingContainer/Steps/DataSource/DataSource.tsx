@@ -27,6 +27,7 @@ export default function DataSource(): JSX.Element {
 		serviceName,
 		selectedModule,
 		selectedDataSource,
+		selectedFramework,
 		updateSelectedDataSource,
 		updateServiceName,
 		updateSelectedFramework,
@@ -73,6 +74,10 @@ export default function DataSource(): JSX.Element {
 
 	return (
 		<div className="module-container">
+			<Typography.Text className="data-source-title">
+				<span className="required-symbol">*</span> Select Data Source
+			</Typography.Text>
+
 			<div className="supported-languages-container">
 				{supportedDataSources?.map((dataSource) => (
 					<Card
@@ -103,65 +108,56 @@ export default function DataSource(): JSX.Element {
 			</div>
 
 			{selectedModule?.id === useCases.APM.id && (
-				<>
-					<div className="form-container">
-						<div className="service-name-container">
-							<Form
-								initialValues={{
-									serviceName,
-								}}
-								form={form}
-								onValuesChange={(): void => {
-									const serviceName = form.getFieldValue('serviceName');
+				<div className="form-container">
+					<div className="service-name-container">
+						<Form
+							initialValues={{
+								serviceName,
+							}}
+							form={form}
+							onValuesChange={(): void => {
+								const serviceName = form.getFieldValue('serviceName');
 
-									updateServiceName(serviceName);
-								}}
-								name="data-source-form"
-								style={{ minWidth: '300px' }}
-								layout="vertical"
+								updateServiceName(serviceName);
+							}}
+							name="data-source-form"
+							style={{ minWidth: '300px' }}
+							layout="vertical"
+							validateTrigger="onBlur"
+						>
+							<Form.Item
+								hasFeedback
+								name="serviceName"
+								label="Service Name"
+								rules={[{ required: true, message: 'Please enter service name' }]}
 								validateTrigger="onBlur"
 							>
-								<Form.Item
-									hasFeedback
-									name="serviceName"
-									label="Service Name"
-									rules={[{ required: true, message: 'Please enter service name' }]}
-									validateTrigger="onBlur"
-								>
-									<Input autoFocus />
-								</Form.Item>
+								<Input autoFocus />
+							</Form.Item>
 
-								{enableFrameworks && (
-									<div className="framework-selector">
-										<Form.Item
-											label="Select Framework"
-											name="select-framework"
-											hasFeedback
-											rules={[{ required: true, message: 'Please select framework' }]}
-											validateTrigger=""
-										>
-											<Select
-												getPopupContainer={popupContainer}
-												style={{ minWidth: 120 }}
-												placeholder="Select Framework"
-												onChange={(value): void => updateSelectedFramework(value)}
-												options={supportedframeworks}
-											/>
-										</Form.Item>
-									</div>
-								)}
-							</Form>
-						</div>
+							{enableFrameworks && (
+								<div className="framework-selector">
+									<Form.Item
+										label="Select Framework"
+										name="select-framework"
+										hasFeedback
+										rules={[{ required: true, message: 'Please select framework' }]}
+										validateTrigger=""
+									>
+										<Select
+											defaultValue={selectedFramework}
+											getPopupContainer={popupContainer}
+											style={{ minWidth: 120 }}
+											placeholder="Select Framework"
+											onChange={(value): void => updateSelectedFramework(value)}
+											options={supportedframeworks}
+										/>
+									</Form.Item>
+								</div>
+							)}
+						</Form>
 					</div>
-					<div className="form-errors">
-						{form.isFieldsTouched() && selectedDataSource !== null && (
-							<Typography.Text type="danger">
-								{' '}
-								Please select data source{' '}
-							</Typography.Text>
-						)}
-					</div>
-				</>
+				</div>
 			)}
 		</div>
 	);

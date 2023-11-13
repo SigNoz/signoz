@@ -6,7 +6,8 @@ import {
 	ArrowRightOutlined,
 	LeftCircleOutlined,
 } from '@ant-design/icons';
-import { Button, ConfigProvider, Space, Steps, Typography } from 'antd';
+import { Button, Space, Steps, Typography } from 'antd';
+import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import { isEmpty } from 'lodash-es';
 import { useState } from 'react';
@@ -18,6 +19,7 @@ import {
 import {
 	ModuleProps,
 	SelectedModuleStepProps,
+	useCases,
 } from '../../OnboardingContainer';
 
 interface ModuleStepsContainerProps {
@@ -68,21 +70,40 @@ export default function ModuleStepsContainer({
 	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
 
 	const isValidForm = (): boolean => {
-		if (selectedModuleSteps[current].id === 'data-source') {
-			if (serviceName !== '' && selectedDataSource?.name) {
+		const { id: selectedModuleID } = selectedModule;
+		const dataSourceStep = 'data-source';
+		const {
+			name: selectedDataSourceName = '',
+		} = selectedDataSource as DataSourceType;
+
+		if (
+			selectedModuleID === useCases.APM.id &&
+			selectedModuleSteps[current].id === dataSourceStep
+		) {
+			if (serviceName !== '' && selectedDataSourceName) {
 				const doesHaveFrameworks = hasFrameworks({
 					module: selectedModule,
 					dataSource: selectedDataSource,
 				});
 
-				console.log('doesHaveFrameworks', doesHaveFrameworks);
-				if (doesHaveFrameworks && selectedFramework !== '') {
+				if (doesHaveFrameworks && selectedFramework === '') {
 					return false;
 				}
 
 				return true;
 			}
 
+			return false;
+		}
+
+		if (
+			(selectedModuleID === useCases.InfrastructureMonitoring.id &&
+				selectedModuleSteps[current].id === dataSourceStep &&
+				!selectedDataSourceName) ||
+			(selectedModuleID === useCases.LogsManagement.id &&
+				selectedModuleSteps[current].id === dataSourceStep &&
+				!selectedDataSourceName)
+		) {
 			return false;
 		}
 
@@ -143,78 +164,75 @@ export default function ModuleStepsContainer({
 
 	return (
 		<div className="onboarding-module-steps">
-			<ConfigProvider
-				theme={{
-					token: {
-						colorPrimary: '#00b96b',
-					},
-				}}
-			>
-				<div className="steps-container">
-					<Space style={{ marginBottom: '24px' }}>
-						<Button
-							style={{ display: 'flex', alignItems: 'center' }}
-							type="default"
-							icon={<LeftCircleOutlined />}
-							onClick={onReselectModule}
-						>
-							{selectedModule.title}
-						</Button>
-					</Space>
+			<div className="steps-container">
+				<Space style={{ marginBottom: '24px' }}>
+					<Button
+						style={{ display: 'flex', alignItems: 'center' }}
+						type="default"
+						icon={<LeftCircleOutlined />}
+						onClick={onReselectModule}
+					>
+						{selectedModule.title}
+					</Button>
+				</Space>
 
-					<Steps
-						direction="vertical"
-						size="small"
-						status="finish"
-						current={current}
-						items={selectedModuleSteps}
-					/>
-				</div>
+				<Steps
+					direction="vertical"
+					size="small"
+					status="finish"
+					current={current}
+					items={selectedModuleSteps}
+				/>
+			</div>
 
-				<div className="selected-step-content">
-					<div className="step-data">
-						{current > 0 && (
-							<div className="selected-step-pills">
-								{metaData.map((data) => {
-									if (isEmpty(data?.value)) {
-										return <> </>;
-									}
+			<div className="selected-step-content">
+				<div className="step-data">
+					{current > 0 && (
+						<div className="selected-step-pills">
+							{metaData.map((data) => {
+								if (isEmpty(data?.value)) {
+									return <> </>;
+								}
 
-									return (
-										<div key={data.name} className="entity">
-											<Typography.Text className="entity-name">
-												{data.name}
-											</Typography.Text>
-											<Typography.Text className="entity-value">
-												{data.value}
-											</Typography.Text>
-										</div>
-									);
-								})}
-							</div>
-						)}
+								if (
+									selectedModuleSteps[current].id === 'environment-details' &&
+									data.name === 'Environment'
+								) {
+									return null;
+								}
 
-						<div className="step-content">
-							{/* <div className="step-name">{selectedModuleSteps[current].title}</div> */}
-							{selectedModuleSteps[current].component}
+								return (
+									<div key={data.name} className="entity">
+										<Typography.Text className="entity-name">{data.name}</Typography.Text>
+										<Typography.Text className="entity-value">
+											{data.value}
+										</Typography.Text>
+									</div>
+								);
+							})}
 						</div>
-					</div>
+					)}
 
-					<div className="step-actions actionButtonsContainer">
-						<Button
-							onClick={handlePrev}
-							disabled={current === 0}
-							icon={<ArrowLeftOutlined />}
-						>
-							Back
-						</Button>
-
-						<Button onClick={handleNext} type="primary" icon={<ArrowRightOutlined />}>
-							Continue to next step
-						</Button>
+					<div className="step-content">
+						{/* <div className="step-name">{selectedModuleSteps[current].title}</div> */}
+						{selectedModuleSteps[current].component}
 					</div>
 				</div>
-			</ConfigProvider>
+
+				<div className="step-actions actionButtonsContainer">
+					<Button
+						onClick={handlePrev}
+						disabled={current === 0}
+						icon={<ArrowLeftOutlined />}
+					>
+						Back
+					</Button>
+
+					<Button onClick={handleNext} type="primary" icon={<ArrowRightOutlined />}>
+						Continue to next step
+					</Button>
+				</div>
+			</div>
 		</div>
 	);
 }
