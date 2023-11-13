@@ -71,6 +71,7 @@ export interface IBaseWidget {
 	stepSize?: number;
 	yAxisUnit?: string;
 	thresholds?: ThresholdProps[];
+	fillSpans?: boolean;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;
