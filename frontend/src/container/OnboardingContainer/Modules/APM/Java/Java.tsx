@@ -134,13 +134,7 @@ export default function Java({
 					</div>
 				</div>
 			)}
-			{activeStep === 3 && (
-				<ConnectionStatus
-					serviceName={form.getFieldValue('Service Name')}
-					language="java"
-					framework={(FrameworksMap as any)[selectedFrameWork]}
-				/>
-			)}
+			{activeStep === 3 && <ConnectionStatus />}
 		</>
 	);
 }
