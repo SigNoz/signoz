@@ -5,92 +5,110 @@ import EnvironmentDetails from '../Steps/EnvironmentDetails/EnvironmentDetails';
 import MarkdownStep from '../Steps/MarkdownStep/MarkdownStep';
 import SelectMethod from '../Steps/SelectMethod/SelectMethod';
 
+export const stepsMap = {
+	dataSource: 'dataSource',
+	environmentDetails: 'environmentDetails',
+	selectMethod: 'selectMethod',
+	setupOtelCollector: 'setupOtelCollector',
+	instrumentApplication: 'instrumentApplication',
+	cloneRepository: 'cloneRepository',
+	startContainer: 'startContainer',
+	runApplication: 'runApplication',
+	testConnection: 'testConnection',
+	configureReceiver: 'configureReceiver',
+	checkServiceStatus: 'checkServiceStatus',
+	restartOtelCollector: 'restartOtelCollector',
+	plotMetrics: 'plotMetrics',
+	configureHostmetricsJson: 'configureHostmetricsJson',
+	configureMetricsReceiver: 'configureMetricsReceiver',
+};
+
 export const DataSourceStep: SelectedModuleStepProps = {
-	id: 'data-source',
+	id: stepsMap.dataSource,
 	title: 'Data Source',
 	component: <DataSource />,
 };
 
 export const EnvDetailsStep: SelectedModuleStepProps = {
-	id: 'environment-details',
+	id: stepsMap.environmentDetails,
 	title: 'Environment Details',
 	component: <EnvironmentDetails />,
 };
 
 export const SelectMethodStep: SelectedModuleStepProps = {
-	id: 'select-method',
+	id: stepsMap.selectMethod,
 	title: 'Select Method',
 	component: <SelectMethod />,
 };
 
 export const SetupOtelCollectorStep: SelectedModuleStepProps = {
-	id: 'setup-otel-collector',
+	id: stepsMap.setupOtelCollector,
 	title: 'Setup Otel Collector',
 	component: <MarkdownStep />,
 };
 
 export const InstallOpenTelemetryStep: SelectedModuleStepProps = {
-	id: 'install-openTelemetry',
+	id: stepsMap.instrumentApplication,
 	title: 'Instrument Application',
 	component: <MarkdownStep />,
 };
 
 export const CloneRepo: SelectedModuleStepProps = {
-	id: 'clone-repo',
-	title: 'Clone Repo',
+	id: stepsMap.cloneRepository,
+	title: 'Clone Repository',
 	component: <MarkdownStep />,
 };
 
 export const StartContainer: SelectedModuleStepProps = {
-	id: 'start-container',
+	id: stepsMap.startContainer,
 	title: 'Start Container',
 	component: <MarkdownStep />,
 };
 
 export const RunApplicationStep: SelectedModuleStepProps = {
-	id: 'run-application',
+	id: stepsMap.runApplication,
 	title: 'Run Application',
 	component: <MarkdownStep />,
 };
 
 export const TestConnectionStep: SelectedModuleStepProps = {
-	id: 'test-connection',
+	id: stepsMap.testConnection,
 	title: 'Test Connection',
 	component: <ConnectionStatus />,
 };
 
 export const ConfigureReceiver: SelectedModuleStepProps = {
-	id: 'configure-receiver',
+	id: stepsMap.configureReceiver,
 	title: 'Configure Receiver',
 	component: <MarkdownStep />,
 };
 
 export const CheckServiceStatus: SelectedModuleStepProps = {
-	id: 'check-service-status',
+	id: stepsMap.checkServiceStatus,
 	title: 'Check Service Status',
 	component: <MarkdownStep />,
 };
 
 export const RestartOtelCollector: SelectedModuleStepProps = {
-	id: 'restart-otel-collector',
+	id: stepsMap.restartOtelCollector,
 	title: 'Restart Otel Collector',
 	component: <MarkdownStep />,
 };
 
 export const PlotMetrics: SelectedModuleStepProps = {
-	id: 'plot-metrics',
+	id: stepsMap.plotMetrics,
 	title: 'Plot Metrics',
 	component: <MarkdownStep />,
 };
 
 export const ConfigureHostmetricsJSON: SelectedModuleStepProps = {
-	id: 'configure-hostmetrics-json',
+	id: stepsMap.configureHostmetricsJson,
 	title: 'Configure Hostmetrics JSON',
 	component: <MarkdownStep />,
 };
 
 export const ConfigureMetricsReceiver: SelectedModuleStepProps = {
-	id: 'configure-metrics-receiver',
+	id: stepsMap.configureMetricsReceiver,
 	title: 'Configure Metrics Receiver',
 	component: <MarkdownStep />,
 };

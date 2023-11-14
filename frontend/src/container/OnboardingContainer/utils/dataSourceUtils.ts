@@ -62,25 +62,36 @@ export const frameworksMap = {
 	InfrastructureMonitoring: {},
 };
 
+export const defaultApplicationDataSource = {
+	name: 'java',
+	id: 'java',
+	imgURL: `Logos/java.png`,
+};
+
 const supportedLanguages = [
 	{
 		name: 'java',
+		id: 'java',
 		imgURL: `Logos/java.png`,
 	},
 	{
 		name: 'python',
+		id: 'python',
 		imgURL: `Logos/python.png`,
 	},
 	{
 		name: 'go',
+		id: 'go',
 		imgURL: `Logos/go.png`,
 	},
 	{
 		name: 'javascript',
+		id: 'javascript',
 		imgURL: `Logos/javascript.png`,
 	},
 	{
 		name: 'rails',
+		id: 'rails',
 		imgURL: `Logos/rails.png`,
 	},
 ];
