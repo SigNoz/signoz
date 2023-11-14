@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 export interface DataSourceType {
+	id?: string;
 	name: string;
 	imgURL?: string;
 	label?: string;
@@ -88,6 +89,7 @@ export default function DataSource(): JSX.Element {
 						key={dataSource.name}
 						onClick={(): void => {
 							updateSelectedDataSource(dataSource);
+							updateSelectedFramework('');
 						}}
 					>
 						<div>

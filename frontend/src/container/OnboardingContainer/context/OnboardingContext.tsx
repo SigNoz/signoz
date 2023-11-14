@@ -16,7 +16,7 @@ interface OnboardingContextData {
 	selectedMethod: any;
 	selectedDataSource: DataSourceType | null;
 	updateSelectedModule: (module: ModuleProps) => void;
-	updateSelectedDataSource: (module: DataSourceType) => void;
+	updateSelectedDataSource: (module: DataSourceType | null) => void;
 	updateServiceName: (newValue: string) => void;
 	updateSelectedEnvironment: (environment: any) => void;
 	updateSelectedFramework: (framework: any) => void;
@@ -34,6 +34,7 @@ interface OnboardingContextProviderProps {
 
 const defaultDataSource = {
 	name: 'java',
+	id: 'java',
 };
 
 function OnboardingContextProvider({
@@ -63,7 +64,7 @@ function OnboardingContextProvider({
 		setSelectedModule(module);
 	};
 
-	const updateSelectedDataSource = (dataSource: DataSourceType): void => {
+	const updateSelectedDataSource = (dataSource: DataSourceType | null): void => {
 		setSelectedDataSource(dataSource);
 	};
 
