@@ -7,17 +7,18 @@ import {
 	LeftCircleOutlined,
 } from '@ant-design/icons';
 import { Button, Space, Steps, Typography } from 'antd';
+import ROUTES from 'constants/routes';
+import { stepsMap } from 'container/OnboardingContainer/constants/stepsConfig';
 import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
+import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { useState } from 'react';
 
-import {
-	OnboardingMethods,
-	useOnboardingContext,
-} from '../../context/OnboardingContext';
+import { useOnboardingContext } from '../../context/OnboardingContext';
 import {
 	ModuleProps,
+	ModulesMap,
 	SelectedModuleStepProps,
 	useCases,
 } from '../../OnboardingContainer';
@@ -60,18 +61,18 @@ export default function ModuleStepsContainer({
 	const {
 		serviceName,
 		selectedDataSource,
-		selectedMethod,
 		selectedEnvironment,
 		selectedFramework,
+		updateActiveStep,
 	} = useOnboardingContext();
 
 	const [current, setCurrent] = useState(0);
-
 	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
+	const lastStepIndex = selectedModuleSteps.length - 1;
 
 	const isValidForm = (): boolean => {
 		const { id: selectedModuleID } = selectedModule;
-		const dataSourceStep = 'data-source';
+		const dataSourceStep = stepsMap.dataSource;
 		const {
 			name: selectedDataSourceName = '',
 		} = selectedDataSource as DataSourceType;
@@ -110,19 +111,33 @@ export default function ModuleStepsContainer({
 		return true;
 	};
 
+	const redirectToModules = (): void => {
+		if (selectedModule.id === ModulesMap.APM) {
+			history.push(ROUTES.APPLICATION);
+		} else if (selectedModule.id === ModulesMap.LogsManagement) {
+			history.push(ROUTES.LOGS);
+		} else if (selectedModule.id === ModulesMap.InfrastructureMonitoring) {
+			history.push(ROUTES.APPLICATION);
+		}
+	};
+
 	const handleNext = (): void => {
 		const isValid = isValidForm();
 
 		if (isValid) {
+			if (current === lastStepIndex) {
+				redirectToModules();
+				return;
+			}
+
 			if (current >= 0) {
-				if (
-					selectedModuleSteps[current].id === 'select-method' &&
-					selectedMethod === OnboardingMethods.QUICK_START
-				) {
-					setCurrent(current + 2);
-				} else {
-					setCurrent(current + 1);
-				}
+				setCurrent(current + 1);
+
+				// set the active step info
+				updateActiveStep({
+					module: selectedModule,
+					step: selectedModuleSteps[current + 1],
+				});
 			}
 
 			// set meta data
@@ -151,18 +166,15 @@ export default function ModuleStepsContainer({
 
 	const handlePrev = (): void => {
 		if (current > 0) {
-			if (
-				selectedModuleSteps[current].id === 'install-openTelemetry' &&
-				selectedMethod === OnboardingMethods.QUICK_START
-			) {
-				setCurrent(current - 2);
-			} else {
-				setCurrent(current - 1);
-			}
+			setCurrent(current - 1);
+
+			// set the active step info
+			updateActiveStep({
+				module: selectedModule,
+				step: selectedModuleSteps[current - 1],
+			});
 		}
 	};
-
-	const lastStepIndex = selectedModuleSteps.length - 1;
 
 	return (
 		<div className="onboarding-module-steps">
@@ -193,12 +205,12 @@ export default function ModuleStepsContainer({
 						<div className="selected-step-pills">
 							{metaData.map((data) => {
 								if (isEmpty(data?.value)) {
-									return <> </>;
+									return null;
 								}
 
 								if (
-									selectedModuleSteps[current].id === 'environment-details' &&
-									data.name === 'Environment'
+									selectedModuleSteps[current]?.id === 'environment-details' &&
+									data?.name === 'Environment'
 								) {
 									return null;
 								}

@@ -11,6 +11,7 @@ import { useEffectOnce } from 'react-use';
 import { trackEvent } from 'utils/segmentAnalytics';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
+import { stepsMap } from './constants/stepsConfig';
 import {
 	OnboardingMethods,
 	useOnboardingContext,
@@ -77,12 +78,13 @@ export default function Onboarding(): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const {
-		updateSelectedModule,
-		updateSelectedDataSource,
-		resetProgress,
 		selectedDataSource,
 		selectedEnvironment,
 		selectedMethod,
+		updateSelectedModule,
+		updateSelectedDataSource,
+		resetProgress,
+		updateActiveStep,
 	} = useOnboardingContext();
 
 	useEffectOnce(() => {
@@ -110,16 +112,15 @@ export default function Onboarding(): JSX.Element {
 		steps.filter((step) => step.id !== stepToRemove);
 
 	const handleAPMSteps = (): void => {
-		console.log('selectedEnvironment', selectedEnvironment);
 		if (selectedEnvironment === 'kubernetes') {
-			const updatedSteps = removeStep('select-method', APM_STEPS);
+			const updatedSteps = removeStep(stepsMap.selectMethod, APM_STEPS);
 			setSelectedModuleSteps(updatedSteps);
 
 			return;
 		}
 
 		if (selectedMethod === OnboardingMethods.QUICK_START) {
-			const updatedSteps = removeStep('setup-otel-collector', APM_STEPS);
+			const updatedSteps = removeStep(stepsMap.setupOtelCollector, APM_STEPS);
 			setSelectedModuleSteps(updatedSteps);
 
 			return;
@@ -172,6 +173,12 @@ export default function Onboarding(): JSX.Element {
 
 			setActiveStep(nextStep);
 			setCurrent(current + 1);
+
+			// set the active step info
+			updateActiveStep({
+				module: selectedModule,
+				step: selectedModuleSteps[current],
+			});
 		}
 	};
 
