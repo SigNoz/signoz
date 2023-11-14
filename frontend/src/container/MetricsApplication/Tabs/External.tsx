@@ -145,7 +145,7 @@ function External(): JSX.Element {
 					>
 						View Traces
 					</Button>
-					<Card>
+					<Card data-testid="external_call_error_percentage">
 						<GraphContainer>
 							<Graph
 								headerMenuList={MENU_ITEMS}
@@ -180,7 +180,7 @@ function External(): JSX.Element {
 						View Traces
 					</Button>
 
-					<Card>
+					<Card data-testid="external_call_duration">
 						<GraphContainer>
 							<Graph
 								name="external_call_duration"
@@ -216,7 +216,7 @@ function External(): JSX.Element {
 					>
 						View Traces
 					</Button>
-					<Card>
+					<Card data-testid="external_call_rps_by_address">
 						<GraphContainer>
 							<Graph
 								name="external_call_rps_by_address"
@@ -251,7 +251,7 @@ function External(): JSX.Element {
 						View Traces
 					</Button>
 
-					<Card>
+					<Card data-testid="external_call_duration_by_address">
 						<GraphContainer>
 							<Graph
 								name="external_call_duration_by_address"

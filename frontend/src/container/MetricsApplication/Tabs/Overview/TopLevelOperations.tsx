@@ -18,7 +18,7 @@ function TopLevelOperation({
 	topLevelOperationsIsLoading,
 }: TopLevelOperationProps): JSX.Element {
 	return (
-		<Card>
+		<Card data-testid={name}>
 			{topLevelOperationsIsError ? (
 				<Typography>
 					{axios.isAxiosError(topLevelOperationsError)
