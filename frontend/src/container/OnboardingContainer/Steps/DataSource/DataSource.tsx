@@ -88,8 +88,8 @@ export default function DataSource(): JSX.Element {
 						)}
 						key={dataSource.name}
 						onClick={(): void => {
-							updateSelectedDataSource(dataSource);
 							updateSelectedFramework('');
+							updateSelectedDataSource(dataSource);
 						}}
 					>
 						<div>

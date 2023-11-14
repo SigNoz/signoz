@@ -14,7 +14,7 @@ import Javascript from './Javascript/Javascript';
 import Python from './Python/Python';
 import RoR from './RubyOnRails/ROR';
 
-interface IngestionInfoProps {
+export interface IngestionInfoProps {
 	SIGNOZ_INGESTION_KEY?: string;
 	REGION?: string;
 }
