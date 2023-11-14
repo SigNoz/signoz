@@ -140,13 +140,7 @@ export default function Python({
 					</div>
 				</div>
 			)}
-			{activeStep === 3 && (
-				<ConnectionStatus
-					serviceName={form.getFieldValue('Service Name')}
-					language="python"
-					framework={selectedFrameWork}
-				/>
-			)}
+			{activeStep === 3 && <ConnectionStatus />}
 		</>
 	);
 }

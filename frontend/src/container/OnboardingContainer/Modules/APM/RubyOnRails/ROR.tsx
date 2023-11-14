@@ -3,9 +3,9 @@ import './ROR.styles.scss';
 import { Form, Input } from 'antd';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Header from 'container/OnboardingContainer/common/Header/Header';
+import ConnectionStatus from 'container/OnboardingContainer/Steps/ConnectionStatus/ConnectionStatus';
 
 import { LangProps } from '../APM';
-import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import RORDocs from './RubyOnRails.md';
 
 export default function RoR({
@@ -56,13 +56,7 @@ export default function RoR({
 					</div>
 				</div>
 			)}
-			{activeStep === 3 && (
-				<ConnectionStatus
-					serviceName={form.getFieldValue('Service Name')}
-					framework="rails"
-					language="rails"
-				/>
-			)}
+			{activeStep === 3 && <ConnectionStatus />}
 		</>
 	);
 }
