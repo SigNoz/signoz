@@ -127,3 +127,13 @@
 		cursor: pointer;
 	}
 }
+
+.detailed-docs-link {
+	display: flex;
+	margin: 8px 0;
+	font-size: 12px;
+
+	a {
+		padding-left: 4px;
+	}
+}

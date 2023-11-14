@@ -18,7 +18,7 @@ export const frameworksMap = {
 			},
 			{
 				value: 'other',
-				label: 'Other',
+				label: 'Others',
 			},
 		],
 		javascript: [
@@ -38,7 +38,7 @@ export const frameworksMap = {
 		python: [
 			{
 				value: 'django',
-				label: 'Express',
+				label: 'Django',
 			},
 			{
 				value: 'fastAPI',
@@ -49,7 +49,7 @@ export const frameworksMap = {
 				label: 'Flask',
 			},
 			{
-				value: 'flask',
+				value: 'falcon',
 				label: 'Falcon',
 			},
 			{
@@ -85,6 +85,12 @@ const supportedLanguages = [
 	},
 ];
 
+export const defaultLogsType = {
+	name: 'Kubernetes Pod Logs',
+	id: 'kubernetes',
+	imgURL: `Logos/kubernetes.svg`,
+};
+
 const supportedLogsTypes = [
 	{
 		name: 'Kubernetes Pod Logs',
@@ -103,30 +109,36 @@ const supportedLogsTypes = [
 	},
 	{
 		name: 'Application Logs',
-		id: 'application_logs_log_file',
+		id: 'application_logs',
 		imgURL: `Logos/software-window.svg`,
 	},
 	{
-		name: 'Logs from FluentBit',
+		name: 'FluentBit',
 		id: 'fluentBit',
 		imgURL: `Logos/fluent-bit.png`,
 	},
 	{
-		name: 'Logs from FluentD',
+		name: 'FluentD',
 		id: 'fluentD',
 		imgURL: `Logos/fluentd.png`,
 	},
 	{
-		name: 'Logs from LogStash',
+		name: 'LogStash',
 		id: 'logStash',
 		imgURL: `Logos/logstash.svg`,
 	},
 ];
 
+export const defaultInfraMetricsType = {
+	name: 'Kubernetes Infra Metrics',
+	id: 'kubernetesInfraMetrics',
+	imgURL: `Logos/kubernetes.svg`,
+};
+
 const supportedInfraMetrics = [
 	{
 		name: 'Kubernetes Infra Metrics',
-		id: 'kubernetes',
+		id: 'kubernetesInfraMetrics',
 		imgURL: `Logos/kubernetes.svg`,
 	},
 	{
