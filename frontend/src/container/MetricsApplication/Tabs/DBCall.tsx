@@ -104,7 +104,7 @@ function DBCall(): JSX.Element {
 				>
 					View Traces
 				</Button>
-				<Card>
+				<Card data-testid="database_call_rps">
 					<GraphContainer>
 						<Graph
 							name="database_call_rps"
@@ -138,7 +138,7 @@ function DBCall(): JSX.Element {
 					View Traces
 				</Button>
 
-				<Card>
+				<Card data-testid="database_call_avg_duration">
 					<GraphContainer>
 						<Graph
 							name="database_call_avg_duration"
