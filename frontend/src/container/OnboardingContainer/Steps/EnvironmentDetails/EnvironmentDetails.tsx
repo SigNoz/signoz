@@ -1,6 +1,7 @@
 import { Card, Typography } from 'antd';
 import cx from 'classnames';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
+import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
 import { Server } from 'lucide-react';
 
 interface SupportedEnvironmentsProps {
@@ -10,20 +11,8 @@ interface SupportedEnvironmentsProps {
 
 const supportedEnvironments: SupportedEnvironmentsProps[] = [
 	{
-		name: 'Local/Virtual Machine',
-		id: 'local-virtual-machine',
-	},
-	{
 		name: 'Kubernetes',
 		id: 'kubernetes',
-	},
-	{
-		name: 'Docker',
-		id: 'docker',
-	},
-	{
-		name: 'Windows',
-		id: 'windows',
 	},
 	{
 		name: 'Linux AMD64',
@@ -47,6 +36,7 @@ export default function EnvironmentDetails(): JSX.Element {
 	const {
 		selectedEnvironment,
 		updateSelectedEnvironment,
+		selectedModule,
 	} = useOnboardingContext();
 	return (
 		<>
@@ -55,24 +45,33 @@ export default function EnvironmentDetails(): JSX.Element {
 			</Typography.Text>
 
 			<div className="supported-environments-container">
-				{supportedEnvironments.map((environment) => (
-					<Card
-						className={cx(
-							'environment',
-							selectedEnvironment === environment.name ? 'selected' : '',
-						)}
-						key={environment.name}
-						onClick={(): void => updateSelectedEnvironment(environment.name)}
-					>
-						<div>
-							<Server size={36} />
-						</div>
+				{supportedEnvironments.map((environment) => {
+					if (
+						selectedModule?.id !== useCases.APM.id &&
+						environment.id === 'kubernetes'
+					) {
+						return null;
+					}
 
-						<div className="environment-name">
-							<Typography.Text> {environment.name} </Typography.Text>
-						</div>
-					</Card>
-				))}
+					return (
+						<Card
+							className={cx(
+								'environment',
+								selectedEnvironment === environment.id ? 'selected' : '',
+							)}
+							key={environment.id}
+							onClick={(): void => updateSelectedEnvironment(environment.id)}
+						>
+							<div>
+								<Server size={36} />
+							</div>
+
+							<div className="environment-name">
+								<Typography.Text> {environment.name} </Typography.Text>
+							</div>
+						</Card>
+					);
+				})}
 			</div>
 		</>
 	);

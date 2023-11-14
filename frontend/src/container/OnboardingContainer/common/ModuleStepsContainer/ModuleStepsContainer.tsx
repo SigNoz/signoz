@@ -162,6 +162,8 @@ export default function ModuleStepsContainer({
 		}
 	};
 
+	const lastStepIndex = selectedModuleSteps.length - 1;
+
 	return (
 		<div className="onboarding-module-steps">
 			<div className="steps-container">
@@ -214,7 +216,6 @@ export default function ModuleStepsContainer({
 					)}
 
 					<div className="step-content">
-						{/* <div className="step-name">{selectedModuleSteps[current].title}</div> */}
 						{selectedModuleSteps[current].component}
 					</div>
 				</div>
@@ -229,7 +230,7 @@ export default function ModuleStepsContainer({
 					</Button>
 
 					<Button onClick={handleNext} type="primary" icon={<ArrowRightOutlined />}>
-						Continue to next step
+						{current < lastStepIndex ? 'Continue to next step' : 'Done'}
 					</Button>
 				</div>
 			</div>

@@ -11,14 +11,21 @@ import { useEffectOnce } from 'react-use';
 import { trackEvent } from 'utils/segmentAnalytics';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
-import { useOnboardingContext } from './context/OnboardingContext';
-import ConnectionStatus from './Steps/ConnectionStatus/ConnectionStatus';
-import DataSource from './Steps/DataSource/DataSource';
-import EnvironmentDetails from './Steps/EnvironmentDetails/EnvironmentDetails';
-import InstallOpenTelemetry from './Steps/InstallOpenTelemetry/InstallOpenTelemetry';
-import RunApplication from './Steps/RunApplication/RunApplication';
-import SelectMethod from './Steps/SelectMethod/SelectMethod';
-import SetupOtelCollector from './Steps/SetupOtelCollector/SetupOtelCollector';
+import {
+	OnboardingMethods,
+	useOnboardingContext,
+} from './context/OnboardingContext';
+import { DataSourceType } from './Steps/DataSource/DataSource';
+import {
+	defaultInfraMetricsType,
+	defaultLogsType,
+} from './utils/dataSourceUtils';
+import {
+	APM_STEPS,
+	getSteps,
+	INFRASTRUCTURE_MONITORING_STEPS,
+	LOGS_MANAGEMENT_STEPS,
+} from './utils/getSteps';
 
 export enum ModulesMap {
 	APM = 'APM',
@@ -59,76 +66,6 @@ export const useCases = {
 	},
 };
 
-const dataSourceStep: SelectedModuleStepProps = {
-	id: 'data-source',
-	title: 'Data Source',
-	component: <DataSource />,
-};
-
-const envDetailsStep: SelectedModuleStepProps = {
-	id: 'environment-details',
-	title: 'Environment Details',
-	component: <EnvironmentDetails />,
-};
-
-const selectMethodStep: SelectedModuleStepProps = {
-	id: 'select-method',
-	title: 'Select Method',
-	component: <SelectMethod />,
-};
-
-const setupOtelCollectorStep: SelectedModuleStepProps = {
-	id: 'setup-otel-collector',
-	title: 'Setup Otel Collector',
-	component: <SetupOtelCollector />,
-};
-
-const installOpenTelemetryStep: SelectedModuleStepProps = {
-	id: 'install-openTelemetry',
-	title: 'Install OpenTelemetry',
-	component: <InstallOpenTelemetry />,
-};
-
-const runApplicationStep: SelectedModuleStepProps = {
-	id: 'run-application',
-	title: 'Run Application',
-	component: <RunApplication />,
-};
-
-const testConnectionStep: SelectedModuleStepProps = {
-	id: 'test-connection',
-	title: 'Test Connection',
-	component: <ConnectionStatus />,
-};
-
-const APM_STEPS: SelectedModuleStepProps[] = [
-	dataSourceStep,
-	envDetailsStep,
-	selectMethodStep,
-	setupOtelCollectorStep,
-	installOpenTelemetryStep,
-	runApplicationStep,
-	testConnectionStep,
-];
-
-const LOGS_MANAGEMENT_STEPS: SelectedModuleStepProps[] = [
-	dataSourceStep,
-	envDetailsStep,
-	setupOtelCollectorStep,
-	installOpenTelemetryStep,
-	runApplicationStep,
-	testConnectionStep,
-];
-
-const INFRASTRUCTURE_MONITORING_STEPS: SelectedModuleStepProps[] = [
-	dataSourceStep,
-	envDetailsStep,
-	setupOtelCollectorStep,
-	installOpenTelemetryStep,
-	runApplicationStep,
-	testConnectionStep,
-];
-
 export default function Onboarding(): JSX.Element {
 	const [selectedModule, setSelectedModule] = useState<ModuleProps>(
 		useCases.APM,
@@ -139,23 +76,79 @@ export default function Onboarding(): JSX.Element {
 	const [current, setCurrent] = useState(0);
 	const isDarkMode = useIsDarkMode();
 
-	const { updateSelectedModule, resetProgress } = useOnboardingContext();
+	const {
+		updateSelectedModule,
+		updateSelectedDataSource,
+		resetProgress,
+		selectedDataSource,
+		selectedEnvironment,
+		selectedMethod,
+	} = useOnboardingContext();
 
 	useEffectOnce(() => {
 		trackEvent('Onboarding Started');
 	});
 
+	const setModuleStepsBasedOnSelectedDataSource = (
+		selectedDataSource: DataSourceType | null,
+	): void => {
+		if (selectedDataSource) {
+			let steps: SelectedModuleStepProps[] = [];
+
+			steps = getSteps({
+				selectedDataSource,
+			});
+
+			setSelectedModuleSteps(steps);
+		}
+	};
+
+	const removeStep = (
+		stepToRemove: string,
+		steps: SelectedModuleStepProps[],
+	): SelectedModuleStepProps[] =>
+		steps.filter((step) => step.id !== stepToRemove);
+
+	const handleAPMSteps = (): void => {
+		console.log('selectedEnvironment', selectedEnvironment);
+		if (selectedEnvironment === 'kubernetes') {
+			const updatedSteps = removeStep('select-method', APM_STEPS);
+			setSelectedModuleSteps(updatedSteps);
+
+			return;
+		}
+
+		if (selectedMethod === OnboardingMethods.QUICK_START) {
+			const updatedSteps = removeStep('setup-otel-collector', APM_STEPS);
+			setSelectedModuleSteps(updatedSteps);
+
+			return;
+		}
+
+		setSelectedModuleSteps(APM_STEPS);
+	};
+
 	useEffect(() => {
 		if (selectedModule?.id === ModulesMap.InfrastructureMonitoring) {
-			setSelectedModuleSteps(INFRASTRUCTURE_MONITORING_STEPS);
+			if (selectedDataSource) {
+				setModuleStepsBasedOnSelectedDataSource(selectedDataSource);
+			} else {
+				setSelectedModuleSteps(INFRASTRUCTURE_MONITORING_STEPS);
+				updateSelectedDataSource(defaultInfraMetricsType);
+			}
 		} else if (selectedModule?.id === ModulesMap.LogsManagement) {
-			setSelectedModuleSteps(LOGS_MANAGEMENT_STEPS);
+			if (selectedDataSource) {
+				setModuleStepsBasedOnSelectedDataSource(selectedDataSource);
+			} else {
+				setSelectedModuleSteps(LOGS_MANAGEMENT_STEPS);
+				updateSelectedDataSource(defaultLogsType);
+			}
 		} else if (selectedModule?.id === ModulesMap.APM) {
-			setSelectedModuleSteps(APM_STEPS);
+			handleAPMSteps();
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedModule]);
+	}, [selectedModule, selectedDataSource, selectedEnvironment, selectedMethod]);
 
 	useEffect(() => {
 		// on select
@@ -185,6 +178,7 @@ export default function Onboarding(): JSX.Element {
 	const handleModuleSelect = (module: ModuleProps): void => {
 		setSelectedModule(module);
 		updateSelectedModule(module);
+		updateSelectedDataSource(null);
 	};
 
 	return (
