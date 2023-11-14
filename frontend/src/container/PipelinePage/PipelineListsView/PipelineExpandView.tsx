@@ -239,7 +239,7 @@ function PipelineExpandView({
 				isDarkMode={isDarkMode}
 				showHeader={false}
 				columns={columns}
-				rowKey="name"
+				rowKey="id"
 				size="small"
 				components={tableComponents}
 				dataSource={processorData}
