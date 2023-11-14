@@ -56,13 +56,7 @@ export default function GoLang({
 					</div>
 				</div>
 			)}
-			{activeStep === 3 && (
-				<ConnectionStatus
-					serviceName={form.getFieldValue('Service Name')}
-					framework="go"
-					language="go"
-				/>
-			)}
+			{activeStep === 3 && <ConnectionStatus />}
 		</>
 	);
 }

@@ -131,13 +131,7 @@ export default function Javascript({
 					</div>
 				</div>
 			)}
-			{activeStep === 3 && (
-				<ConnectionStatus
-					serviceName={form.getFieldValue('Service Name')}
-					language="javascript"
-					framework={selectedFrameWork}
-				/>
-			)}
+			{activeStep === 3 && <ConnectionStatus />}
 		</>
 	);
 }
