@@ -1,6 +1,6 @@
 import './ErrorBoundaryFallback.styles.scss';
 
-import { BugOutlined } from '@ant-design/icons';
+import { BugOutlined, UndoOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
 import Slack from 'container/SideNav/Slack';
 
@@ -9,9 +9,12 @@ function ErrorBoundaryFallback(): JSX.Element {
 		window.open('https://signoz.io/slack', '_blank');
 	};
 
+	const handleReload = (): void => {
+		window.location.reload();
+	};
 	return (
-		<Card size="small">
-			<div className="flex">
+		<Card size="small" className="error-boundary-fallback-container">
+			<div className="title">
 				<BugOutlined />
 				<Typography.Title type="danger" level={4} style={{ margin: 0 }}>
 					{' '}
@@ -24,15 +27,26 @@ function ErrorBoundaryFallback(): JSX.Element {
 					Don&apos;t worry, our team is here to help. Please contact support if the
 					issue persists.
 				</p>
-				<Button
-					className="flex"
-					type="default"
-					onClick={onClickSlackHandler}
-					icon={<Slack />}
-				>
-					{' '}
-					Support{' '}
-				</Button>
+
+				<div className="actions">
+					<Button
+						className="actionBtn"
+						type="default"
+						onClick={handleReload}
+						icon={<UndoOutlined />}
+					>
+						Reload
+					</Button>
+
+					<Button
+						className="actionBtn"
+						type="default"
+						onClick={onClickSlackHandler}
+						icon={<Slack />}
+					>
+						&nbsp; Support
+					</Button>
+				</div>
 			</>
 		</Card>
 	);
