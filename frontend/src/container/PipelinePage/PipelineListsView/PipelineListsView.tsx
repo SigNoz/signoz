@@ -15,6 +15,7 @@ import {
 	PipelineData,
 	ProcessorData,
 } from 'types/api/pipeline/def';
+import { trackEvent } from 'utils/segmentAnalytics';
 import { v4 } from 'uuid';
 
 import { tableComponents } from '../config';
@@ -329,6 +330,10 @@ function PipelineListsView({
 
 	const addNewPipelineHandler = useCallback((): void => {
 		setActionType(ActionType.AddPipeline);
+
+		trackEvent('Logs: Pipelines: Clicked Add New Pipeline', {
+			source: 'signoz-ui',
+		});
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
@@ -359,8 +364,16 @@ function PipelineListsView({
 			refetchPipelineLists();
 			setActionMode(ActionMode.Viewing);
 			setShowSaveButton(undefined);
-			setCurrPipelineData(response.payload?.pipelines || []);
-			setPrevPipelineData(response.payload?.pipelines || []);
+
+			const pipelinesInDB = response.payload?.pipelines || [];
+			setCurrPipelineData(pipelinesInDB);
+			setPrevPipelineData(pipelinesInDB);
+
+			trackEvent('Logs: Pipelines: Saved Pipelines', {
+				count: pipelinesInDB.length,
+				enabled: pipelinesInDB.filter((p) => p.enabled).length,
+				source: 'signoz-ui',
+			});
 		} else {
 			modifiedPipelineData.forEach((item: PipelineData) => {
 				const pipelineData = item;
