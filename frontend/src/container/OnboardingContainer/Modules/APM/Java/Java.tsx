@@ -16,7 +16,7 @@ import TomcatDocs from './md-docs/tomcat.md';
 
 enum FrameworksMap {
 	tomcat = 'Tomcat',
-	spring_boot = 'Spring Boot',
+	springBoot = 'Spring Boot',
 	jboss = 'JBoss',
 	other = 'Others',
 }
@@ -25,7 +25,7 @@ export default function Java({
 	ingestionInfo,
 	activeStep,
 }: LangProps): JSX.Element {
-	const [selectedFrameWork, setSelectedFrameWork] = useState('spring_boot');
+	const [selectedFrameWork, setSelectedFrameWork] = useState('springBoot');
 	const [selectedFrameWorkDocs, setSelectedFrameWorkDocs] = useState(
 		SprintBootDocs,
 	);
@@ -48,7 +48,7 @@ export default function Java({
 			case 'tomcat':
 				setSelectedFrameWorkDocs(TomcatDocs);
 				break;
-			case 'spring_boot':
+			case 'springBoot':
 				setSelectedFrameWorkDocs(SprintBootDocs);
 				break;
 			case 'jboss':
@@ -85,14 +85,14 @@ export default function Java({
 
 							<Select
 								getPopupContainer={popupContainer}
-								defaultValue="spring_boot"
+								defaultValue="springBoot"
 								style={{ minWidth: 120 }}
 								placeholder="Select Framework"
 								onChange={(value): void => handleFrameworkChange(value)}
 								options={[
 									{
-										value: 'spring_boot',
-										label: FrameworksMap.spring_boot,
+										value: 'springBoot',
+										label: FrameworksMap.springBoot,
 									},
 									{
 										value: 'tomcat',

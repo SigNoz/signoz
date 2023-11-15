@@ -5,7 +5,7 @@ export const frameworksMap = {
 	APM: {
 		java: [
 			{
-				value: 'spring_boot',
+				value: 'springBoot',
 				label: 'Spring Boot',
 			},
 			{
