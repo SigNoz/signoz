@@ -13,6 +13,7 @@ function ThresholdSelector({
 	thresholds,
 	setThresholds,
 	yAxisUnit,
+	selectedGraph,
 }: ThresholdSelectorProps): JSX.Element {
 	const moveThreshold = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
@@ -42,6 +43,7 @@ function ThresholdSelector({
 				thresholdValue: 0,
 				moveThreshold,
 				keyIndex: thresholds.length,
+				selectedGraph,
 			},
 		]);
 	};
@@ -71,6 +73,8 @@ function ThresholdSelector({
 						setThresholds={setThresholds}
 						keyIndex={idx}
 						moveThreshold={moveThreshold}
+						selectedGraph={selectedGraph}
+						thresholdLabel={threshold.thresholdLabel}
 					/>
 				))}
 				<Button className="threshold-selector-button" onClick={addThresholdHandler}>

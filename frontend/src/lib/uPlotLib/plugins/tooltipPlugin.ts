@@ -15,6 +15,7 @@ const createDivsFromArray = (
 	idx: number,
 	yAxisUnit?: string,
 	series?: uPlot.Options['series'],
+	fillSpans?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -32,7 +33,7 @@ const createDivsFromArray = (
 
 				div.textContent = formattedDate;
 				div.classList.add('tooltip-content-header');
-			} else if (item.show && data[index][idx]) {
+			} else if (fillSpans ? item.show : item.show && data[index][idx]) {
 				div.classList.add('tooltip-content');
 				const color = colors[(index - 1) % colors.length];
 
@@ -53,9 +54,11 @@ const createDivsFromArray = (
 					legend || '',
 				);
 
-				const tooltipValue = getToolTipValue(data[index][idx], yAxisUnit);
+				const value = data[index][idx] || 0;
 
-				text.textContent = `${label} : ${tooltipValue}`;
+				const tooltipValue = getToolTipValue(value, yAxisUnit);
+
+				text.textContent = `${label} : ${tooltipValue || 0}`;
 				text.style.color = color;
 
 				div.appendChild(squareBox);
@@ -72,6 +75,7 @@ const createDivsFromArray = (
 const tooltipPlugin = (
 	apiResponse: MetricRangePayloadProps | undefined,
 	yAxisUnit?: string,
+	fillSpans?: boolean,
 ): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
@@ -132,6 +136,7 @@ const tooltipPlugin = (
 							idx,
 							yAxisUnit,
 							u.series,
+							fillSpans,
 						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });

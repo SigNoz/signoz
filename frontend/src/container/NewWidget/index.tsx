@@ -84,6 +84,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [selectedNullZeroValue, setSelectedNullZeroValue] = useState<string>(
 		selectedWidget?.nullZeroValues || 'zero',
 	);
+	const [isFillSpans, setIsFillSpans] = useState<boolean>(
+		selectedWidget?.fillSpans || false,
+	);
 	const [saveModal, setSaveModal] = useState(false);
 
 	const [graphType, setGraphType] = useState(selectedGraph);
@@ -272,6 +275,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						selectedGraph={graphType}
 						yAxisUnit={yAxisUnit}
 						thresholds={thresholds}
+						fillSpans={isFillSpans}
 					/>
 				</LeftContainerWrapper>
 
@@ -296,6 +300,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						thresholds={thresholds}
 						setThresholds={setThresholds}
 						selectedWidget={selectedWidget}
+						isFillSpans={isFillSpans}
+						setIsFillSpans={setIsFillSpans}
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>

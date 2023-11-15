@@ -13,6 +13,7 @@ function WidgetGraphContainer({
 	yAxisUnit,
 	selectedTime,
 	thresholds,
+	fillSpans = false,
 }: WidgetGraphProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 
@@ -57,6 +58,7 @@ function WidgetGraphContainer({
 			getWidgetQueryRange={getWidgetQueryRange}
 			selectedWidget={selectedWidget}
 			thresholds={thresholds}
+			fillSpans={fillSpans}
 		/>
 	);
 }

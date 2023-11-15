@@ -4,7 +4,9 @@
 import './uPlotLib.styles.scss';
 
 import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
+import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { Dimensions } from 'hooks/useDimensions';
+import { convertValue } from 'lib/getConvertedValue';
 import _noop from 'lodash-es/noop';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
@@ -24,8 +26,10 @@ interface GetUPlotChartOptions {
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	graphsVisibilityStates?: boolean[];
 	setGraphsVisibilityStates?: FullViewProps['setGraphsVisibilityStates'];
+	thresholds?: ThresholdProps[];
 	thresholdValue?: number;
 	thresholdText?: string;
+	fillSpans?: boolean;
 }
 
 export const getUPlotChartOptions = ({
@@ -38,8 +42,8 @@ export const getUPlotChartOptions = ({
 	onClickHandler = _noop,
 	graphsVisibilityStates,
 	setGraphsVisibilityStates,
-	thresholdValue,
-	thresholdText,
+	thresholds,
+	fillSpans,
 }: GetUPlotChartOptions): uPlot.Options => ({
 	id,
 	width: dimensions.width,
@@ -76,7 +80,7 @@ export const getUPlotChartOptions = ({
 		},
 	},
 	plugins: [
-		tooltipPlugin(apiResponse, yAxisUnit),
+		tooltipPlugin(apiResponse, yAxisUnit, fillSpans),
 		onClickPlugin({
 			onClick: onClickHandler,
 		}),
@@ -84,37 +88,47 @@ export const getUPlotChartOptions = ({
 	hooks: {
 		draw: [
 			(u): void => {
-				if (thresholdValue) {
-					const { ctx } = u;
-					ctx.save();
+				thresholds?.forEach((threshold) => {
+					if (threshold.thresholdValue !== undefined) {
+						const { ctx } = u;
+						ctx.save();
 
-					const yPos = u.valToPos(thresholdValue, 'y', true);
+						const yPos = u.valToPos(
+							convertValue(
+								threshold.thresholdValue,
+								threshold.thresholdUnit,
+								yAxisUnit,
+							),
+							'y',
+							true,
+						);
 
-					ctx.strokeStyle = 'red';
-					ctx.lineWidth = 2;
-					ctx.setLineDash([10, 5]);
+						ctx.strokeStyle = threshold.thresholdColor || 'red';
+						ctx.lineWidth = 2;
+						ctx.setLineDash([10, 5]);
 
-					ctx.beginPath();
+						ctx.beginPath();
 
-					const plotLeft = u.bbox.left; // left edge of the plot area
-					const plotRight = plotLeft + u.bbox.width; // right edge of the plot area
+						const plotLeft = u.bbox.left; // left edge of the plot area
+						const plotRight = plotLeft + u.bbox.width; // right edge of the plot area
 
-					ctx.moveTo(plotLeft, yPos);
-					ctx.lineTo(plotRight, yPos);
+						ctx.moveTo(plotLeft, yPos);
+						ctx.lineTo(plotRight, yPos);
 
-					ctx.stroke();
+						ctx.stroke();
 
-					// Text configuration
-					if (thresholdText) {
-						const text = thresholdText;
-						const textX = plotRight - ctx.measureText(text).width - 20;
-						const textY = yPos - 15;
-						ctx.fillStyle = 'red';
-						ctx.fillText(text, textX, textY);
+						// Text configuration
+						if (threshold.thresholdLabel) {
+							const text = threshold.thresholdLabel;
+							const textX = plotRight - ctx.measureText(text).width - 20;
+							const textY = yPos - 15;
+							ctx.fillStyle = threshold.thresholdColor || 'red';
+							ctx.fillText(text, textX, textY);
+						}
+
+						ctx.restore();
 					}
-
-					ctx.restore();
-				}
+				});
 			},
 		],
 		setSelect: [
@@ -159,6 +173,7 @@ export const getUPlotChartOptions = ({
 		apiResponse,
 		apiResponse?.data.result,
 		graphsVisibilityStates,
+		fillSpans,
 	),
 	axes: getAxes(isDarkMode, yAxisUnit),
 });
