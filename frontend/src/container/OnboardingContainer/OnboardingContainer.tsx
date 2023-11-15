@@ -5,10 +5,10 @@ import './Onboarding.styles.scss';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
 import cx from 'classnames';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
-import { trackEvent } from 'utils/segmentAnalytics';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
 import { stepsMap } from './constants/stepsConfig';
@@ -76,6 +76,7 @@ export default function Onboarding(): JSX.Element {
 	const [activeStep, setActiveStep] = useState(1);
 	const [current, setCurrent] = useState(0);
 	const isDarkMode = useIsDarkMode();
+	const { trackEvent } = useAnalytics();
 
 	const {
 		selectedDataSource,
@@ -156,6 +157,7 @@ export default function Onboarding(): JSX.Element {
 		trackEvent('Onboarding: Module Selected', {
 			selectedModule: selectedModule.id,
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedModule]);
 
 	const handleNext = (): void => {
