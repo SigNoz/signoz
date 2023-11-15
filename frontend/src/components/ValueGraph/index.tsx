@@ -3,6 +3,7 @@ import './ValueGraph.styles.scss';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import { useTranslation } from 'react-i18next';
 
 import { getBackgroundColorAndThresholdCheck } from './utils';
 
@@ -11,6 +12,8 @@ function ValueGraph({
 	rawValue,
 	thresholds,
 }: ValueGraphProps): JSX.Element {
+	const { t } = useTranslation(['valueGraph']);
+
 	const {
 		threshold,
 		isConflictingThresholds,
@@ -45,8 +48,8 @@ function ValueGraph({
 							: 'value-graph-textconflict'
 					}
 				>
-					<Tooltip title="This value satisfies multiple thresholds">
-						<ExclamationCircleFilled style={{ color: '#E89A3C' }} />
+					<Tooltip title={t('this_value_satisfies_multiple_thresholds')}>
+						<ExclamationCircleFilled className="value-graph-icon" />
 					</Tooltip>
 				</div>
 			)}

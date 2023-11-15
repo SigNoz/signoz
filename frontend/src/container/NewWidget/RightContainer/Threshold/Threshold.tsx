@@ -154,13 +154,13 @@ function Threshold({
 			ref={ref}
 			style={{ opacity }}
 			data-handler-id={handlerId}
-			className="threahold-container"
+			className="threshold-container"
 		>
 			<Card
 				className={
 					isDarkMode
-						? `threahold-card threahold-card-dark`
-						: `threahold-card threahold-card-light`
+						? `threshold-card threshold-card-dark`
+						: `threshold-card threshold-card-light`
 				}
 			>
 				<div className="threshold-card-container">
@@ -181,7 +181,7 @@ function Threshold({
 							<Typography.Text>If value is</Typography.Text>
 							{isEditMode ? (
 								<Select
-									style={{ minWidth: '73px', backgroundColor: '#141414' }}
+									style={{ maxWidth: '73px', backgroundColor: '#141414' }}
 									bordered={false}
 									defaultValue={operator}
 									options={operatorOptions}
@@ -207,7 +207,7 @@ function Threshold({
 							)}
 							{isEditMode ? (
 								<Select
-									style={{ minWidth: '200px', backgroundColor: '#141414' }}
+									style={{ maxWidth: '200px', backgroundColor: '#141414' }}
 									bordered={false}
 									defaultValue={unit}
 									options={unitOptions}
@@ -230,7 +230,7 @@ function Threshold({
 								)}
 								{isEditMode ? (
 									<Select
-										style={{ minWidth: '100px', backgroundColor: '#141414' }}
+										style={{ maxWidth: '100px', backgroundColor: '#141414' }}
 										bordered={false}
 										defaultValue={format}
 										options={showAsOptions}

@@ -3,18 +3,12 @@ import { categoryToSupport } from 'container/QueryBuilder/filters/BuilderUnitsFi
 
 import { getCategorySelectOptionByName } from './alertFomatCategories';
 
-// > >= < <=  are the options
 export const operatorOptions: DefaultOptionType[] = [
 	{ value: '>', label: '>' },
 	{ value: '>=', label: '>=' },
 	{ value: '<', label: '<' },
 	{ value: '<=', label: '<=' },
 ];
-
-// export const unitOptions = flattenedCategories.map((options) => ({
-// 	value: options.id,
-// 	label: options.name,
-// }));
 
 export const unitOptions = categoryToSupport.map((category) => ({
 	label: category,

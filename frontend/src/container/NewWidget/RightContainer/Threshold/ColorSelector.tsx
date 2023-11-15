@@ -29,27 +29,27 @@ function ColorSelector({
 
 	const items: MenuProps['items'] = [
 		{
-			key: '1',
+			key: 'Red',
 			label: <CustomColor color="Red" />,
 			onClick: (): void => setColor('Red'),
 		},
 		{
-			key: '2',
+			key: 'Orange',
 			label: <CustomColor color="Orange" />,
 			onClick: (): void => setColor('Orange'),
 		},
 		{
-			key: '3',
+			key: 'Green',
 			label: <CustomColor color="Green" />,
 			onClick: (): void => setColor('Green'),
 		},
 		{
-			key: '4',
+			key: 'Blue',
 			label: <CustomColor color="Blue" />,
 			onClick: (): void => setColor('Blue'),
 		},
 		{
-			key: '5',
+			key: 'Custom Color',
 			label: (
 				<ColorPicker
 					trigger="hover"
