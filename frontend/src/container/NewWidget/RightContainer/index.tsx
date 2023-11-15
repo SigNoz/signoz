@@ -1,5 +1,5 @@
 import { UploadOutlined } from '@ant-design/icons';
-import { Button, Input, Select, Space } from 'antd';
+import { Button, Divider, Input, Select, Space } from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { QueryParams } from 'constants/query';
@@ -11,6 +11,8 @@ import { Dispatch, SetStateAction, useCallback } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import { Container, Title } from './styles';
+import ThresholdSelector from './Threshold/ThresholdSelector';
+import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
 import YAxisUnitSelector from './YAxisUnitSelector';
 
@@ -28,6 +30,8 @@ function RightContainer({
 	yAxisUnit,
 	setYAxisUnit,
 	setGraphHandler,
+	thresholds,
+	setThresholds,
 	selectedWidget,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
@@ -152,6 +156,14 @@ function RightContainer({
 					</Button>
 				)}
 			</Space>
+
+			<Divider />
+
+			<ThresholdSelector
+				thresholds={thresholds}
+				setThresholds={setThresholds}
+				yAxisUnit={yAxisUnit}
+			/>
 		</Container>
 	);
 }
@@ -173,6 +185,8 @@ interface RightContainerProps {
 	yAxisUnit: string;
 	setYAxisUnit: Dispatch<SetStateAction<string>>;
 	setGraphHandler: (type: PANEL_TYPES) => void;
+	thresholds: ThresholdProps[];
+	setThresholds: Dispatch<SetStateAction<ThresholdProps[]>>;
 	selectedWidget?: Widgets;
 }
 

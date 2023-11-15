@@ -12,6 +12,7 @@ function GridValueComponent({
 	data,
 	title,
 	yAxisUnit,
+	thresholds,
 }: GridValueComponentProps): JSX.Element {
 	const value = ((data[1] || [])[0] || 0) as number;
 
@@ -35,6 +36,8 @@ function GridValueComponent({
 			</TitleContainer>
 			<ValueContainer>
 				<ValueGraph
+					thresholds={thresholds || []}
+					rawValue={value}
 					value={
 						yAxisUnit
 							? getYAxisFormattedValue(String(value), yAxisUnit)

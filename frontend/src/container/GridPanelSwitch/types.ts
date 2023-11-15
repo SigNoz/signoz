@@ -4,6 +4,7 @@ import { GridTableComponentProps } from 'container/GridTableComponent/types';
 import { GridValueComponentProps } from 'container/GridValueComponent/types';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { ForwardedRef } from 'react';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
@@ -21,6 +22,7 @@ export type GridPanelSwitchProps = {
 	onDragSelect?: (start: number, end: number) => void;
 	panelData: QueryDataV3[];
 	query: Query;
+	thresholds?: Widgets['thresholds'];
 };
 
 export type PropsTypePropsMap = {
