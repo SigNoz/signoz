@@ -3,7 +3,7 @@
 
 // Temp file paths, need to update as per the folder structure
 
-export const docFilePaths = {
+export const docFilePaths: Record<any, string> = {
 	// LogsManagement_docker_cloneRepository,
 	// LogsManagement_docker_startContainer,
 };

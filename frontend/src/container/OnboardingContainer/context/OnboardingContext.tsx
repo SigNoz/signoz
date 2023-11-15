@@ -17,6 +17,7 @@ interface OnboardingContextData {
 	selectedModule: ModuleProps | null;
 	selectedMethod: any;
 	selectedDataSource: DataSourceType | null;
+	errorDetails: string | null;
 	updateSelectedModule: (module: ModuleProps) => void;
 	updateSelectedDataSource: (module: DataSourceType | null) => void;
 	updateServiceName: (newValue: string) => void;
@@ -24,6 +25,7 @@ interface OnboardingContextData {
 	updateSelectedFramework: (framework: any) => void;
 	updateSelectedMethod: (method: any) => void;
 	updateActiveStep: (step: any) => void;
+	updateErrorDetails: (errorDetails: any) => void;
 	resetProgress: () => void;
 }
 
@@ -43,6 +45,8 @@ function OnboardingContextProvider({
 	const [selectedModule, setSelectedModule] = useState<ModuleProps | null>(
 		useCases.APM,
 	);
+
+	const [errorDetails, setErrorDetails] = useState(null);
 	const [selectedEnvironment, setSelectedEnvironment] = useState<string>('');
 	const [selectedFramework, setSelectedFramework] = useState<string>('');
 
@@ -79,6 +83,10 @@ function OnboardingContextProvider({
 		setSelectedMethod(method);
 	};
 
+	const updateErrorDetails = (errorDetails: any): void => {
+		setErrorDetails(errorDetails);
+	};
+
 	const updateActiveStep = (step: any): void => {
 		setActiveStep(step);
 	};
@@ -102,6 +110,7 @@ function OnboardingContextProvider({
 		selectedFramework,
 		selectedEnvironment,
 		selectedMethod,
+		errorDetails,
 		updateServiceName,
 		updateSelectedModule,
 		updateSelectedFramework,
@@ -110,6 +119,7 @@ function OnboardingContextProvider({
 		updateSelectedMethod,
 		resetProgress,
 		updateActiveStep,
+		updateErrorDetails,
 	};
 
 	return (

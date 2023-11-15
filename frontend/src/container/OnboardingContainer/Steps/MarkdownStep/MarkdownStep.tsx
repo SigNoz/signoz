@@ -22,15 +22,6 @@ export default function MarkdownStep(): JSX.Element {
 		selectedMethod,
 	} = useOnboardingContext();
 
-	console.log({
-		activeStep,
-		serviceName,
-		selectedModule,
-		selectedDataSource,
-		selectedEnvironment,
-		selectedFramework,
-	});
-
 	const [ingestionInfo, setIngestionInfo] = useState<IngestionInfoProps>({});
 
 	const [markdownContent, setMarkdownContent] = useState('');
@@ -79,8 +70,6 @@ export default function MarkdownStep(): JSX.Element {
 		}
 
 		path += `_${step?.id}`;
-
-		console.log(path);
 
 		return path;
 	};
