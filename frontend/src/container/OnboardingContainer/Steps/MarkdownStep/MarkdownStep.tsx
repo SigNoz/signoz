@@ -18,6 +18,7 @@ export default function MarkdownStep(): JSX.Element {
 		selectedModule,
 		selectedEnvironment,
 		selectedFramework,
+		selectedMethod,
 	} = useOnboardingContext();
 
 	console.log({
@@ -58,14 +59,34 @@ export default function MarkdownStep(): JSX.Element {
 	const { step } = activeStep;
 
 	const getFilePath = (): any => {
-		const path = `${selectedModule?.id}_${selectedDataSource?.id}_${step?.id}`;
+		let path = `${selectedModule?.id}_${selectedDataSource?.id}`;
+
+		if (selectedFramework) {
+			path += `_${selectedFramework}`;
+		}
+
+		if (selectedEnvironment) {
+			path += `_${selectedEnvironment}`;
+		}
+
+		if (selectedMethod) {
+			path += `_${selectedMethod}`;
+		}
+
+		path += `_${step?.id}`;
 
 		console.log(path);
+
+		return path;
 	};
 
 	useEffect(() => {
-		getFilePath();
-		setMarkdownContent(docFilePaths.LogsManagement_Docker_CloneRepository);
+		const path = getFilePath();
+
+		if (docFilePaths[path]) {
+			setMarkdownContent(docFilePaths[path]);
+		}
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [step]);
 
