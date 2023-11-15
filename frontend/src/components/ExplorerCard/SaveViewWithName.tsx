@@ -51,7 +51,7 @@ function SaveViewWithName({
 	return (
 		<Card>
 			<Typography>{t('name_of_the_view')}</Typography>
-			<Form form={form} onFinish={onSaveHandler}>
+			<Form form={form} onFinish={onSaveHandler} requiredMark>
 				<Form.Item
 					name={['viewName']}
 					required
