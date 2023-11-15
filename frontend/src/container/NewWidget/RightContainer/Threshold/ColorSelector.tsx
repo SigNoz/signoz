@@ -1,3 +1,5 @@
+import './ColorSelector.styles.scss';
+
 import { DownOutlined } from '@ant-design/icons';
 import { Button, ColorPicker, Dropdown, Space } from 'antd';
 import { Color } from 'antd/es/color-picker';
@@ -62,7 +64,10 @@ function ColorSelector({
 
 	return (
 		<Dropdown menu={{ items }} trigger={['click']}>
-			<Button onClick={(e): void => e.preventDefault()}>
+			<Button
+				onClick={(e): void => e.preventDefault()}
+				className="color-selector-button"
+			>
 				<Space>
 					<CustomColor color={thresholdColor} />
 					<DownOutlined />

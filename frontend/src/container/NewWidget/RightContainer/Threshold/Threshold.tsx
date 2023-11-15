@@ -181,7 +181,8 @@ function Threshold({
 							<Typography.Text>If value is</Typography.Text>
 							{isEditMode ? (
 								<Select
-									style={{ minWidth: '73px' }}
+									style={{ minWidth: '73px', backgroundColor: '#141414' }}
+									bordered={false}
 									defaultValue={operator}
 									options={operatorOptions}
 									onChange={handleOperatorChange}
@@ -195,13 +196,19 @@ function Threshold({
 					<div className="threshold-units-selector">
 						<Space>
 							{isEditMode ? (
-								<InputNumber defaultValue={value} onChange={handleValueChange} />
+								<InputNumber
+									style={{ backgroundColor: '#141414' }}
+									defaultValue={value}
+									onChange={handleValueChange}
+									bordered={false}
+								/>
 							) : (
 								<ShowCaseValue width="60px" value={value} />
 							)}
 							{isEditMode ? (
 								<Select
-									style={{ minWidth: '200px' }}
+									style={{ minWidth: '200px', backgroundColor: '#141414' }}
+									bordered={false}
 									defaultValue={unit}
 									options={unitOptions}
 									onChange={handleUnitChange}
@@ -223,7 +230,8 @@ function Threshold({
 								)}
 								{isEditMode ? (
 									<Select
-										style={{ minWidth: '100px' }}
+										style={{ minWidth: '100px', backgroundColor: '#141414' }}
+										bordered={false}
 										defaultValue={format}
 										options={showAsOptions}
 										onChange={handlerFormatChange}
