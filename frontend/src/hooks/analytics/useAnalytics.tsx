@@ -1,16 +1,12 @@
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
+import { extractDomain } from 'utils/app';
 
 const useAnalytics = (): any => {
-	const { isLoggedIn: isLoggedInState, user } = useSelector<
-		AppState,
-		AppReducer
-	>((state) => state.app);
+	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const trackPageView = (pageName: string): void => {
-		console.log('isLoggedInState, user', isLoggedInState, user);
-
 		window.analytics.page(pageName);
 	};
 
@@ -18,8 +14,14 @@ const useAnalytics = (): any => {
 		eventName: string,
 		properties?: Record<string, unknown>,
 	): void => {
-		console.log('isLoggedInState, user');
-		window.analytics.track(eventName, properties);
+		if (user && user.email) {
+			const context = {
+				context: {
+					groupId: extractDomain(user?.email),
+				},
+			};
+			window.analytics.track(eventName, properties, context);
+		}
 	};
 
 	// useEffect(() => {

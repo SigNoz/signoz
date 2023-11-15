@@ -59,11 +59,13 @@ export default function ModuleStepsContainer({
 	selectedModuleSteps,
 }: ModuleStepsContainerProps): JSX.Element {
 	const {
+		activeStep,
 		serviceName,
 		selectedDataSource,
 		selectedEnvironment,
 		selectedFramework,
 		updateActiveStep,
+		updateErrorDetails,
 	} = useOnboardingContext();
 
 	const [current, setCurrent] = useState(0);
@@ -73,9 +75,21 @@ export default function ModuleStepsContainer({
 	const isValidForm = (): boolean => {
 		const { id: selectedModuleID } = selectedModule;
 		const dataSourceStep = stepsMap.dataSource;
+		const environmentDetailsStep = stepsMap.environmentDetails;
+
+		const { step } = activeStep;
+
 		const {
 			name: selectedDataSourceName = '',
 		} = selectedDataSource as DataSourceType;
+
+		if (step.id === environmentDetailsStep && selectedEnvironment === '') {
+			console.log('hasError');
+			updateErrorDetails('Please select environment');
+			return false;
+		}
+
+		updateErrorDetails(null);
 
 		if (
 			selectedModuleID === useCases.APM.id &&
