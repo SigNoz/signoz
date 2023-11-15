@@ -43,8 +43,6 @@ export const getUPlotChartOptions = ({
 	graphsVisibilityStates,
 	setGraphsVisibilityStates,
 	thresholds,
-	thresholdValue,
-	thresholdText,
 	fillSpans,
 }: GetUPlotChartOptions): uPlot.Options => ({
 	id,
