@@ -37,6 +37,8 @@ export default function EnvironmentDetails(): JSX.Element {
 		selectedEnvironment,
 		updateSelectedEnvironment,
 		selectedModule,
+		errorDetails,
+		updateErrorDetails,
 	} = useOnboardingContext();
 	return (
 		<>
@@ -60,7 +62,10 @@ export default function EnvironmentDetails(): JSX.Element {
 								selectedEnvironment === environment.id ? 'selected' : '',
 							)}
 							key={environment.id}
-							onClick={(): void => updateSelectedEnvironment(environment.id)}
+							onClick={(): void => {
+								updateSelectedEnvironment(environment.id);
+								updateErrorDetails(null);
+							}}
 						>
 							<div>
 								<Server size={36} />
@@ -73,6 +78,12 @@ export default function EnvironmentDetails(): JSX.Element {
 					);
 				})}
 			</div>
+
+			{errorDetails && (
+				<div className="error-container">
+					<Typography.Text type="danger"> {errorDetails} </Typography.Text>
+				</div>
+			)}
 		</>
 	);
 }
