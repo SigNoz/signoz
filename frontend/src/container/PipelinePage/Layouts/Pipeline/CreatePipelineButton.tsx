@@ -3,6 +3,7 @@ import TextToolTip from 'components/TextToolTip';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 import { ButtonContainer, CustomButton } from '../../styles';
 import { checkDataLength } from '../utils';
@@ -21,10 +22,16 @@ function CreatePipelineButton({
 	);
 	const isDisabled = isActionMode === ActionMode.Editing;
 
-	const onEnterEditMode = (): void => setActionMode(ActionMode.Editing);
+	const onEnterEditMode = (): void => {
+		setActionMode(ActionMode.Editing);
+
+		trackEvent('logs/pipelines/ui/entered-edit-mode', {});
+	};
 	const onAddNewPipeline = (): void => {
 		setActionMode(ActionMode.Editing);
 		setActionType(ActionType.AddPipeline);
+
+		trackEvent('logs/pipelines/ui/clicked-add-new-pipeline', {});
 	};
 
 	return (

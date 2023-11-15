@@ -330,6 +330,8 @@ function PipelineListsView({
 
 	const addNewPipelineHandler = useCallback((): void => {
 		setActionType(ActionType.AddPipeline);
+
+		trackEvent('logs/pipelines/ui/clicked-add-new-pipeline', {});
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
