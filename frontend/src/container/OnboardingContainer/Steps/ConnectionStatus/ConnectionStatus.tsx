@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
@@ -17,7 +18,6 @@ import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { PayloadProps as QueryServicePayloadProps } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
-import { trackEvent } from 'utils/segmentAnalytics';
 
 const pollingInterval = 10000;
 
@@ -37,6 +37,8 @@ export default function ConnectionStatus(): JSX.Element {
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
 		[queries],
 	);
+
+	const { trackEvent } = useAnalytics();
 
 	const [retryCount, setRetryCount] = useState(20); // Retry for 5 mins
 	const [loading, setLoading] = useState(true);

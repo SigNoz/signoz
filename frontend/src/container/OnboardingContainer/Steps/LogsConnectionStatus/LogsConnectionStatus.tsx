@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Header from 'container/OnboardingContainer/common/Header/Header';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useEffect, useState } from 'react';
 import { SuccessResponse } from 'types/api';
@@ -16,7 +17,6 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
-import { trackEvent } from 'utils/segmentAnalytics';
 
 interface ConnectionStatusProps {
 	logType: string;
@@ -31,6 +31,7 @@ export default function LogsConnectionStatus({
 	logType,
 }: ConnectionStatusProps): JSX.Element {
 	const [loading, setLoading] = useState(true);
+	const { trackEvent } = useAnalytics();
 	const [isReceivingData, setIsReceivingData] = useState(false);
 	const [pollingInterval, setPollingInterval] = useState<number | false>(15000); // initial Polling interval of 15 secs , Set to false after 5 mins
 	const [retryCount, setRetryCount] = useState(20); // Retry for 5 mins

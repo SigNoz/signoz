@@ -2,6 +2,7 @@ import getIngestionData from 'api/settings/getIngestionData';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { docFilePaths } from 'container/OnboardingContainer/constants/docFilePaths';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
+import { ModulesMap } from 'container/OnboardingContainer/OnboardingContainer';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 
@@ -69,7 +70,11 @@ export default function MarkdownStep(): JSX.Element {
 			path += `_${selectedEnvironment}`;
 		}
 
-		if (selectedMethod) {
+		if (
+			selectedModule?.id === ModulesMap.APM &&
+			selectedDataSource?.id !== 'kubernetes' &&
+			selectedMethod
+		) {
 			path += `_${selectedMethod}`;
 		}
 
