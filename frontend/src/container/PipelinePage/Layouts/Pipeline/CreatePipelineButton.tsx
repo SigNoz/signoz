@@ -25,13 +25,17 @@ function CreatePipelineButton({
 	const onEnterEditMode = (): void => {
 		setActionMode(ActionMode.Editing);
 
-		trackEvent('logs/pipelines/ui/entered-edit-mode', {});
+		trackEvent('Logs: Pipelines: Entered Edit Mode', {
+			source: 'signoz-ui',
+		});
 	};
 	const onAddNewPipeline = (): void => {
 		setActionMode(ActionMode.Editing);
 		setActionType(ActionType.AddPipeline);
 
-		trackEvent('logs/pipelines/ui/clicked-add-new-pipeline', {});
+		trackEvent('Logs: Pipelines: Clicked Add New Pipeline', {
+			source: 'signoz-ui',
+		});
 	};
 
 	return (

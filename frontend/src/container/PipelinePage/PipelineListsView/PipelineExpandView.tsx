@@ -191,7 +191,9 @@ function PipelineExpandView({
 	const addNewProcessorHandler = useCallback((): void => {
 		setActionType(ActionType.AddProcessor);
 
-		trackEvent('logs/pipelines/ui/clicked-add-new-processor', {});
+		trackEvent('Logs: Pipelines: Clicked Add New Processor', {
+			source: 'signoz-ui',
+		});
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {

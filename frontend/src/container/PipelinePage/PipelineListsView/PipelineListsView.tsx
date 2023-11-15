@@ -331,7 +331,9 @@ function PipelineListsView({
 	const addNewPipelineHandler = useCallback((): void => {
 		setActionType(ActionType.AddPipeline);
 
-		trackEvent('logs/pipelines/ui/clicked-add-new-pipeline', {});
+		trackEvent('Logs: Pipelines: Clicked Add New Pipeline', {
+			source: 'signoz-ui',
+		});
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
@@ -367,9 +369,10 @@ function PipelineListsView({
 			setCurrPipelineData(pipelinesInDB);
 			setPrevPipelineData(pipelinesInDB);
 
-			trackEvent('logs/pipelines/ui/saved-pipelines', {
+			trackEvent('Logs: Pipelines: Saved Pipelines', {
 				count: pipelinesInDB.length,
 				enabled: pipelinesInDB.filter((p) => p.enabled).length,
+				source: 'signoz-ui',
 			});
 		} else {
 			modifiedPipelineData.forEach((item: PipelineData) => {
