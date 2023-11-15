@@ -12,6 +12,7 @@ import { ThresholdSelectorProps } from './types';
 function ThresholdSelector({
 	thresholds,
 	setThresholds,
+	yAxisUnit,
 }: ThresholdSelectorProps): JSX.Element {
 	const moveThreshold = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
@@ -37,7 +38,7 @@ function ThresholdSelector({
 				thresholdColor: 'Red',
 				thresholdFormat: 'Text',
 				thresholdOperator: '>',
-				thresholdUnit: 'ms',
+				thresholdUnit: yAxisUnit,
 				thresholdValue: 0,
 				moveThreshold,
 				keyIndex: thresholds.length,

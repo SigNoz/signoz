@@ -26,6 +26,7 @@ export type CustomColorProps = {
 };
 
 export type ThresholdSelectorProps = {
+	yAxisUnit: string;
 	thresholds: ThresholdProps[];
 	setThresholds: Dispatch<SetStateAction<ThresholdProps[]>>;
 };

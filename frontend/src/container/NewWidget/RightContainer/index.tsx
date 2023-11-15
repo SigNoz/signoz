@@ -155,11 +155,15 @@ function RightContainer({
 						Create Alerts from Queries
 					</Button>
 				)}
-
-        <Divider />
-        
-        <ThresholdSelector thresholds={thresholds} setThresholds={setThresholds} />
 			</Space>
+
+			<Divider />
+
+			<ThresholdSelector
+				thresholds={thresholds}
+				setThresholds={setThresholds}
+				yAxisUnit={yAxisUnit}
+			/>
 		</Container>
 	);
 }

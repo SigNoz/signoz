@@ -174,7 +174,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		);
 	}, [
 		selectedDashboard,
-		query,
 		updateDashboardMutation,
 		preWidgets,
 		selectedWidget,

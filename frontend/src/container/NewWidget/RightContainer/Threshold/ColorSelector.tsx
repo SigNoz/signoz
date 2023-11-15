@@ -2,7 +2,8 @@ import { DownOutlined } from '@ant-design/icons';
 import { Button, ColorPicker, Dropdown, Space } from 'antd';
 import { Color } from 'antd/es/color-picker';
 import { MenuProps } from 'antd/lib';
-import { Dispatch, SetStateAction } from 'react';
+import useDebounce from 'hooks/useDebounce';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
 import CustomColor from './CustomColor';
 
@@ -10,8 +11,18 @@ function ColorSelector({
 	thresholdColor = 'Red',
 	setColor,
 }: ColorSelectorProps): JSX.Element {
+	const [colorFromPicker, setColorFromPicker] = useState<string>('');
+
+	const debounceColor = useDebounce(colorFromPicker);
+
+	useEffect(() => {
+		if (debounceColor) {
+			setColor(debounceColor);
+		}
+	}, [debounceColor, setColor]);
+
 	const handleColorChange = (_: Color, hex: string): void => {
-		setColor(hex);
+		setColorFromPicker(hex);
 	};
 
 	const items: MenuProps['items'] = [

@@ -185,6 +185,7 @@ function Threshold({
 									defaultValue={operator}
 									options={operatorOptions}
 									onChange={handleOperatorChange}
+									showSearch
 								/>
 							) : (
 								<ShowCaseValue width="49px" value={operator} />
@@ -204,6 +205,7 @@ function Threshold({
 									defaultValue={unit}
 									options={unitOptions}
 									onChange={handleUnitChange}
+									showSearch
 								/>
 							) : (
 								<ShowCaseValue width="200px" value={unit} />
@@ -225,6 +227,7 @@ function Threshold({
 										defaultValue={format}
 										options={showAsOptions}
 										onChange={handlerFormatChange}
+										showSearch
 									/>
 								) : (
 									<ShowCaseValue width="100px" value={format} />
