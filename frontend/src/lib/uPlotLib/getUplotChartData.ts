@@ -27,6 +27,9 @@ interface GetUPlotChartOptions {
 	graphsVisibilityStates?: boolean[];
 	setGraphsVisibilityStates?: FullViewProps['setGraphsVisibilityStates'];
 	thresholds?: ThresholdProps[];
+	thresholdValue?: number;
+	thresholdText?: string;
+	fillSpans?: boolean;
 }
 
 export const getUPlotChartOptions = ({
@@ -40,6 +43,9 @@ export const getUPlotChartOptions = ({
 	graphsVisibilityStates,
 	setGraphsVisibilityStates,
 	thresholds,
+	thresholdValue,
+	thresholdText,
+	fillSpans,
 }: GetUPlotChartOptions): uPlot.Options => ({
 	id,
 	width: dimensions.width,
@@ -76,7 +82,7 @@ export const getUPlotChartOptions = ({
 		},
 	},
 	plugins: [
-		tooltipPlugin(apiResponse, yAxisUnit),
+		tooltipPlugin(apiResponse, yAxisUnit, fillSpans),
 		onClickPlugin({
 			onClick: onClickHandler,
 		}),
@@ -169,6 +175,7 @@ export const getUPlotChartOptions = ({
 		apiResponse,
 		apiResponse?.data.result,
 		graphsVisibilityStates,
+		fillSpans,
 	),
 	axes: getAxes(isDarkMode, yAxisUnit),
 });
