@@ -3,8 +3,11 @@ import './ErrorBoundaryFallback.styles.scss';
 import { BugOutlined, UndoOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
 import Slack from 'container/SideNav/Slack';
+import { useTranslation } from 'react-i18next';
 
 function ErrorBoundaryFallback(): JSX.Element {
+	const { t } = useTranslation(['errorDetails']);
+
 	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
 	};
@@ -17,16 +20,12 @@ function ErrorBoundaryFallback(): JSX.Element {
 			<div className="title">
 				<BugOutlined />
 				<Typography.Title type="danger" level={4} style={{ margin: 0 }}>
-					{' '}
-					Oops !!! Something went wrong
+					{t('something_went_wrong')}
 				</Typography.Title>
 			</div>
 
 			<>
-				<p>
-					Don&apos;t worry, our team is here to help. Please contact support if the
-					issue persists.
-				</p>
+				<p>{t('contact_if_issue_exists')}</p>
 
 				<div className="actions">
 					<Button
