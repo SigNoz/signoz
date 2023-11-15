@@ -15,6 +15,7 @@ import {
 	PipelineData,
 	ProcessorData,
 } from 'types/api/pipeline/def';
+import { trackEvent } from 'utils/segmentAnalytics';
 import { v4 } from 'uuid';
 
 import { tableComponents } from '../config';
@@ -359,8 +360,15 @@ function PipelineListsView({
 			refetchPipelineLists();
 			setActionMode(ActionMode.Viewing);
 			setShowSaveButton(undefined);
-			setCurrPipelineData(response.payload?.pipelines || []);
-			setPrevPipelineData(response.payload?.pipelines || []);
+
+			const pipelinesInDB = response.payload?.pipelines || [];
+			setCurrPipelineData(pipelinesInDB);
+			setPrevPipelineData(pipelinesInDB);
+
+			trackEvent('logs/pipelines/ui/saved-pipelines', {
+				count: pipelinesInDB.length,
+				enabled: pipelinesInDB.filter((p) => p.enabled).length,
+			});
 		} else {
 			modifiedPipelineData.forEach((item: PipelineData) => {
 				const pipelineData = item;
