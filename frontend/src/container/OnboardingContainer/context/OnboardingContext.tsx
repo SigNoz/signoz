@@ -5,8 +5,8 @@ import { DataSourceType } from '../Steps/DataSource/DataSource';
 import { defaultApplicationDataSource } from '../utils/dataSourceUtils';
 
 export const OnboardingMethods = {
-	QUICK_START: 'QUICK_START',
-	RECOMMENDED_STEPS: 'RECOMMENDED_STEPS',
+	QUICK_START: 'quickStart',
+	RECOMMENDED_STEPS: 'recommendedSteps',
 };
 
 interface OnboardingContextData {
