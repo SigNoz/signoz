@@ -108,10 +108,12 @@ function GridCardGraph({
 				onDragSelect,
 				yAxisUnit: widget?.yAxisUnit,
 				onClickHandler,
+				thresholds: widget.thresholds,
 			}),
 		[
 			widget?.id,
 			widget?.yAxisUnit,
+			widget.thresholds,
 			queryResponse.data?.payload,
 			containerDimensions,
 			isDarkMode,
