@@ -35,7 +35,7 @@ export type GraphOnClickHandler = (
 ) => void;
 
 export type ToggleGraphProps = {
-	toggleGraph(graphIndex: number, isVisible: boolean): void;
+	toggleGraph(graphIndex: number, isVisible: boolean, reference?: string): void;
 };
 
 export type CustomChartOptions = ChartOptions & {

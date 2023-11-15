@@ -13,10 +13,11 @@ interface CardProps {
 export const Card = styled(CardComponent)<CardProps>`
 	&&& {
 		height: 100%;
+		overflow: hidden;
 	}
 
 	.ant-card-body {
-		height: 95%;
+		height: 90%;
 		padding: 0;
 		${({ $panelType }): FlattenSimpleInterpolation =>
 			$panelType === PANEL_TYPES.TABLE

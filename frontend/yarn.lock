@@ -12801,11 +12801,6 @@ react-i18next@^11.16.1:
     "@babel/runtime" "^7.14.5"
     html-parse-stringify "^3.0.1"
 
-react-intersection-observer@9.4.1:
-  version "9.4.1"
-  resolved "https://registry.npmjs.org/react-intersection-observer/-/react-intersection-observer-9.4.1.tgz"
-  integrity sha512-IXpIsPe6BleFOEHKzKh5UjwRUaz/JYS0lT/HPsupWEQou2hDqjhLMStc5zyE3eQVT4Fk3FufM8Fw33qW1uyeiw==
-
 react-is@^16.12.0, react-is@^16.13.1, react-is@^16.6.0, react-is@^16.7.0:
   version "16.13.1"
   resolved "https://registry.npmjs.org/react-is/-/react-is-16.13.1.tgz"
@@ -14966,6 +14961,11 @@ uplot@1.6.24:
   version "1.6.24"
   resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.24.tgz#dfa213fa7da92763261920ea972ed1a5f9f6af12"
   integrity sha512-WpH2BsrFrqxkMu+4XBvc0eCDsRBhzoq9crttYeSI0bfxpzR5YoSVzZXOKFVWcVC7sp/aDXrdDPbDZGCtck2PVg==
+
+uplot@1.6.26:
+  version "1.6.26"
+  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.26.tgz#a6012fd141ad4a71741c75af0c71283d0ade45a7"
+  integrity sha512-qN0mveL6UsP40TnHzHAJkUQvpfA3y8zSLXtXKVlJo/sLfj2+vjan/Z3g81MCZjy/hEDUFNtnLftPmETDA4s7Rg==
 
 uri-js@^4.2.2:
   version "4.4.1"

@@ -1,7 +1,7 @@
 import './ReactI18';
+import 'styles.scss';
 
 import AppRoutes from 'AppRoutes';
-import GlobalStyles from 'globalStyles';
 import { ThemeProvider } from 'hooks/useDarkMode';
 import { createRoot } from 'react-dom/client';
 import { HelmetProvider } from 'react-helmet-async';
@@ -28,7 +28,6 @@ if (container) {
 			<ThemeProvider>
 				<QueryClientProvider client={queryClient}>
 					<Provider store={store}>
-						<GlobalStyles />
 						<AppRoutes />
 					</Provider>
 					{process.env.NODE_ENV === 'development' && (
