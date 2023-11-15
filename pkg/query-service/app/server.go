@@ -374,7 +374,11 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 			telemetry.GetInstance().AddActiveLogsUser()
 		}
 		data["dataSources"] = dataSources
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_V3, data, true)
+		ctx := auth.AttachJwtToContext(r.Context(), r)
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_V3, data, userEmail, true)
+		}
 	}
 	return data, true
 }
@@ -413,7 +417,11 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 		// if telemetry.GetInstance().IsSampled() {
 		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+			ctx := auth.AttachJwtToContext(r.Context(), r)
+			userEmail, err := auth.GetEmailFromJwt(ctx)
+			if err == nil {
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail)
+			}
 		}
 		// }
 

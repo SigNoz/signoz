@@ -9,6 +9,7 @@ import (
 
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.uber.org/zap"
 )
 
@@ -52,7 +53,6 @@ func (ah *APIHandler) listLicenses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
 	var l model.License
 
 	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
@@ -64,7 +64,7 @@ func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
 		return
 	}
-
+	ctx := auth.AttachJwtToContext(r.Context(), r)
 	license, apiError := ah.LM().Activate(ctx, l.Key)
 	if apiError != nil {
 		RespondError(w, apiError, nil)

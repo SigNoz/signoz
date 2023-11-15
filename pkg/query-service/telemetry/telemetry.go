@@ -165,7 +165,7 @@ func createTelemetry() {
 	data := map[string]interface{}{}
 
 	telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
-	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
+	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
 
 	ticker := time.NewTicker(HEART_BEAT_DURATION)
 	activeUserTicker := time.NewTicker(ACTIVE_USER_DURATION)
@@ -187,7 +187,7 @@ func createTelemetry() {
 				if (telemetry.activeUser["traces"] != 0) || (telemetry.activeUser["metrics"] != 0) || (telemetry.activeUser["logs"] != 0) {
 					telemetry.activeUser["any"] = 1
 				}
-				telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{"traces": telemetry.activeUser["traces"], "metrics": telemetry.activeUser["metrics"], "logs": telemetry.activeUser["logs"], "any": telemetry.activeUser["any"]})
+				telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{"traces": telemetry.activeUser["traces"], "metrics": telemetry.activeUser["metrics"], "logs": telemetry.activeUser["logs"], "any": telemetry.activeUser["any"]}, "")
 				telemetry.activeUser = map[string]int8{"traces": 0, "metrics": 0, "logs": 0, "any": 0}
 
 			case <-ticker.C:
@@ -195,11 +195,11 @@ func createTelemetry() {
 				tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(context.Background())
 
 				if len(tagsInfo.Env) != 0 {
-					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env})
+					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "")
 				}
 
 				for language, _ := range tagsInfo.Languages {
-					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": language})
+					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": language}, "")
 				}
 
 				totalSpans, _ := telemetry.reader.GetTotalSpans(context.Background())
@@ -226,10 +226,10 @@ func createTelemetry() {
 				for key, value := range tsInfo {
 					data[key] = value
 				}
-				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
+				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
 
 				getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(context.Background())
-				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval)
+				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval, "")
 
 			}
 		}
@@ -334,8 +334,16 @@ func (a *Telemetry) checkEvents(event string) bool {
 	return sendEvent
 }
 
-func (a *Telemetry) SendEvent(event string, data map[string]interface{}, opts ...bool) {
+func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, opts ...bool) {
 
+	// ignore telemetry for default user
+	if userEmail == "admin@signoz.cloud" {
+		return
+	}
+
+	if userEmail != "" {
+		a.SetUserEmail(userEmail)
+	}
 	rateLimitFlag := true
 	if len(opts) > 0 {
 		rateLimitFlag = opts[0]
@@ -388,6 +396,11 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, opts ..
 			Event:      event,
 			UserId:     a.GetUserEmail(),
 			Properties: properties,
+			Context: &analytics.Context{
+				Extra: map[string]interface{}{
+					"groupId": a.getCompanyDomain(),
+				},
+			},
 		})
 	}
 
