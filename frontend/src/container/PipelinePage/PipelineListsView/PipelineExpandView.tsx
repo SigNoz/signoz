@@ -11,6 +11,7 @@ import {
 	PipelineData,
 	ProcessorData,
 } from 'types/api/pipeline/def';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 import { tableComponents } from '../config';
 import { ModalFooterTitle } from '../styles';
@@ -189,6 +190,8 @@ function PipelineExpandView({
 
 	const addNewProcessorHandler = useCallback((): void => {
 		setActionType(ActionType.AddProcessor);
+
+		trackEvent('logs/pipelines/ui/clicked-add-new-processor', {});
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
