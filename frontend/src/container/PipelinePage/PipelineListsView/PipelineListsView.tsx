@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Modal, Table } from 'antd';
+import { Modal, Table, Typography } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
 import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
@@ -43,6 +43,35 @@ import {
 	getTableColumn,
 	getUpdatedRow,
 } from './utils';
+
+function PipelinesListEmptyState(): JSX.Element {
+	const { t } = useTranslation(['pipeline']);
+	return (
+		<div>
+			<iframe
+				width="100%"
+				src="https://www.youtube.com/embed/OneENGNmLd0"
+				frameBorder="0"
+				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+				allowFullScreen
+				title={t('learn_more')}
+				style={{ maxWidth: 600, height: 'min(60vh, 400px)' }}
+			/>
+			<div>
+				<Typography>
+					{t('learn_more')}&nbsp;
+					<a
+						href="https://signoz.io/docs/logs-pipelines/introduction/"
+						target="_blank"
+						rel="noreferrer"
+					>
+						here
+					</a>
+				</Typography>
+			</div>
+		</div>
+	);
+}
 
 function PipelineListsView({
 	isActionType,
@@ -462,6 +491,9 @@ function PipelineListsView({
 						onRow={onRowHandler}
 						footer={footer}
 						pagination={false}
+						locale={{
+							emptyText: <PipelinesListEmptyState />,
+						}}
 					/>
 				</DndProvider>
 				{showSaveButton && (
