@@ -98,6 +98,11 @@ function GridCardGraph({
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 
+	const menuList =
+		widget.panelTypes === PANEL_TYPES.TABLE
+			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
+			: headerMenuList;
+
 	return (
 		<span ref={graphRef}>
 			<WidgetGraphComponent
@@ -109,7 +114,7 @@ function GridCardGraph({
 				name={name}
 				onDragSelect={onDragSelect}
 				threshold={threshold}
-				headerMenuList={headerMenuList}
+				headerMenuList={menuList}
 				onClickHandler={onClickHandler}
 			/>
 

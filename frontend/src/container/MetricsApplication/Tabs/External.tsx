@@ -17,7 +17,7 @@ import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { GraphTitle, legend } from '../constant';
+import { GraphTitle, legend, MENU_ITEMS } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
@@ -145,9 +145,10 @@ function External(): JSX.Element {
 					>
 						View Traces
 					</Button>
-					<Card>
+					<Card data-testid="external_call_error_percentage">
 						<GraphContainer>
 							<Graph
+								headerMenuList={MENU_ITEMS}
 								name="external_call_error_percentage"
 								widget={externalCallErrorWidget}
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -179,10 +180,11 @@ function External(): JSX.Element {
 						View Traces
 					</Button>
 
-					<Card>
+					<Card data-testid="external_call_duration">
 						<GraphContainer>
 							<Graph
 								name="external_call_duration"
+								headerMenuList={MENU_ITEMS}
 								widget={externalCallDurationWidget}
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
@@ -214,11 +216,12 @@ function External(): JSX.Element {
 					>
 						View Traces
 					</Button>
-					<Card>
+					<Card data-testid="external_call_rps_by_address">
 						<GraphContainer>
 							<Graph
 								name="external_call_rps_by_address"
 								widget={externalCallRPSWidget}
+								headerMenuList={MENU_ITEMS}
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
@@ -248,11 +251,12 @@ function External(): JSX.Element {
 						View Traces
 					</Button>
 
-					<Card>
+					<Card data-testid="external_call_duration_by_address">
 						<GraphContainer>
 							<Graph
 								name="external_call_duration_by_address"
 								widget={externalCallDurationAddressWidget}
+								headerMenuList={MENU_ITEMS}
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,

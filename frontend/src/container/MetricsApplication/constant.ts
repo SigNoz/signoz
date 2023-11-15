@@ -1,4 +1,5 @@
 import { DownloadOptions } from 'container/Download/Download.types';
+import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 
 export const legend = {
 	address: '{{address}}',
@@ -13,6 +14,8 @@ export const LATENCY_AGGREGATEOPERATOR_SPAN_METRICS = [
 ];
 export const OPERATION_LEGENDS = ['Operations'];
 
+export const MENU_ITEMS = [MenuItemKeys.View, MenuItemKeys.CreateAlerts];
+
 export enum FORMULA {
 	ERROR_PERCENTAGE = 'A*100/B',
 	DATABASE_CALLS_AVG_DURATION = 'A/B',
@@ -20,6 +23,8 @@ export enum FORMULA {
 	APDEX_DELTA_SPAN_METRICS = '(B + C/2)/A',
 	APDEX_CUMULATIVE_SPAN_METRICS = '((B + C)/2)/A',
 }
+
+export const TOP_LEVEL_OPERATIONS = ['{{.top_level_operations}}'];
 
 export enum GraphTitle {
 	APDEX = 'Apdex',
