@@ -3,6 +3,7 @@ import { Divider, Modal } from 'antd';
 import PipelineProcessingPreview from 'container/PipelinePage/PipelineListsView/Preview/PipelineProcessingPreview';
 import { useState } from 'react';
 import { PipelineData } from 'types/api/pipeline/def';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 import { iconStyle } from '../../../config';
 
@@ -18,9 +19,14 @@ function PreviewAction({ pipeline }: PreviewActionProps): JSX.Element | null {
 		return null;
 	}
 
+	const onOpenPreview = (): void => {
+		openModal();
+		trackEvent('logs/pipelines/ui/clicked-preview-pipeline', {});
+	};
+
 	return (
 		<>
-			<EyeFilled style={iconStyle} onClick={openModal} />
+			<EyeFilled style={iconStyle} onClick={onOpenPreview} />
 			<Modal
 				open={isModalOpen}
 				onCancel={closeModal}
