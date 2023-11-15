@@ -3,9 +3,8 @@ import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import Graph from 'container/GridCardLayout/GridCard';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Widgets } from 'types/api/dashboard/getAll';
-
-import { ClickHandlerType } from '../Overview';
 
 function TopLevelOperation({
 	name,
@@ -46,7 +45,7 @@ interface TopLevelOperationProps {
 	topLevelOperationsIsError: boolean;
 	topLevelOperationsError: unknown;
 	onDragSelect: (start: number, end: number) => void;
-	handleGraphClick: (type: string) => ClickHandlerType;
+	handleGraphClick: (type: string) => OnClickPluginOpts['onClick'];
 	widget: Widgets;
 	topLevelOperationsIsLoading: boolean;
 }

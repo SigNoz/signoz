@@ -1,13 +1,15 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { StaticLineProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import getChartData from 'lib/getChartData';
-import { useMemo } from 'react';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useResizeObserver } from 'hooks/useDimensions';
+import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartData';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getChartData';
+import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -53,20 +55,6 @@ function ChartPreview({
 		sourceUnit: alertDef?.condition.targetUnit,
 		targetUnit: query?.unit,
 	});
-
-	const staticLine: StaticLineProps | undefined =
-		threshold !== undefined
-			? {
-					yMin: thresholdValue,
-					yMax: thresholdValue,
-					borderColor: '#f14',
-					borderWidth: 1,
-					lineText: `${t('preview_chart_threshold_label')} (y=${thresholdValue} ${
-						query?.unit || ''
-					})`,
-					textColor: '#f14',
-			  }
-			: undefined;
 
 	const canQuery = useMemo((): boolean => {
 		if (!query || query == null) {
@@ -114,15 +102,36 @@ function ChartPreview({
 		},
 	);
 
-	const chartDataSet = queryResponse.isError
-		? null
-		: getChartData({
-				queryData: [
-					{
-						queryData: queryResponse?.data?.payload?.data?.result ?? [],
-					},
-				],
-		  });
+	const graphRef = useRef<HTMLDivElement>(null);
+
+	const chartData = getUPlotChartData(queryResponse?.data?.payload);
+
+	const containerDimensions = useResizeObserver(graphRef);
+
+	const isDarkMode = useIsDarkMode();
+
+	const options = useMemo(
+		() =>
+			getUPlotChartOptions({
+				id: 'alert_legend_widget',
+				yAxisUnit: query?.unit,
+				apiResponse: queryResponse?.data?.payload,
+				dimensions: containerDimensions,
+				isDarkMode,
+				thresholdText: `${t(
+					'preview_chart_threshold_label',
+				)} (y=${thresholdValue} ${query?.unit || ''})`,
+				thresholdValue,
+			}),
+		[
+			query?.unit,
+			queryResponse?.data?.payload,
+			containerDimensions,
+			isDarkMode,
+			t,
+			thresholdValue,
+		],
+	);
 
 	return (
 		<ChartContainer>
@@ -136,18 +145,18 @@ function ChartPreview({
 			{queryResponse.isLoading && (
 				<Spinner size="large" tip="Loading..." height="70vh" />
 			)}
-			{chartDataSet && !queryResponse.isError && (
-				<GridPanelSwitch
-					panelType={graphType}
-					title={name}
-					data={chartDataSet.data}
-					isStacked
-					name={name || 'Chart Preview'}
-					staticLine={staticLine}
-					panelData={queryResponse.data?.payload.data.newResult.data.result || []}
-					query={query || initialQueriesMap.metrics}
-					yAxisUnit={query?.unit}
-				/>
+			{chartData && !queryResponse.isError && (
+				<div ref={graphRef} style={{ height: '100%' }}>
+					<GridPanelSwitch
+						options={options}
+						panelType={graphType}
+						data={chartData}
+						name={name || 'Chart Preview'}
+						panelData={queryResponse.data?.payload.data.newResult.data.result || []}
+						query={query || initialQueriesMap.metrics}
+						yAxisUnit={query?.unit}
+					/>
+				</div>
 			)}
 		</ChartContainer>
 	);
