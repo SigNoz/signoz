@@ -36,7 +36,7 @@
 		"@uiw/react-md-editor": "3.23.5",
 		"@xstate/react": "^3.0.0",
 		"ansi-to-html": "0.7.2",
-		"antd": "5.0.5",
+		"antd": "5.11.0",
 		"antd-table-saveas-excel": "2.2.1",
 		"axios": "^0.21.0",
 		"babel-eslint": "^10.1.0",

@@ -1,6 +1,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Widgets } from 'types/api/dashboard/getAll';
 
+import { ThresholdProps } from './RightContainer/Threshold/types';
 import { timePreferance } from './RightContainer/timeItems';
 
 export interface NewWidgetProps {
@@ -10,4 +11,5 @@ export interface NewWidgetProps {
 
 export interface WidgetGraphProps extends NewWidgetProps {
 	selectedTime: timePreferance;
+	thresholds: ThresholdProps[];
 }

@@ -9,10 +9,12 @@ function LeftContainer({
 	selectedGraph,
 	yAxisUnit,
 	selectedTime,
+	thresholds,
 }: WidgetGraphProps): JSX.Element {
 	return (
 		<>
 			<WidgetGraph
+				thresholds={thresholds}
 				selectedTime={selectedTime}
 				selectedGraph={selectedGraph}
 				yAxisUnit={yAxisUnit}

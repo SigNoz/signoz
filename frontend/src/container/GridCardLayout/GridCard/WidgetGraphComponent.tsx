@@ -281,6 +281,7 @@ function WidgetGraphComponent({
 						onClickHandler={onClickHandler}
 						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
 						query={widget.query}
+						thresholds={widget.thresholds}
 					/>
 				</div>
 			)}
