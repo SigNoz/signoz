@@ -13,6 +13,7 @@ interface CardProps {
 export const Card = styled(CardComponent)<CardProps>`
 	&&& {
 		height: 100%;
+		overflow: hidden;
 	}
 
 	.ant-card-body {
