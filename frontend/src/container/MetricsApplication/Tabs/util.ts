@@ -32,7 +32,7 @@ export function onViewTracePopupClick({
 	return (): void => {
 		const currentTime = timestamp;
 
-		const tPlusOne = timestamp + 50;
+		const tPlusOne = timestamp + 60;
 
 		const urlParams = new URLSearchParams(window.location.search);
 		urlParams.set(QueryParams.startTime, currentTime.toString());
