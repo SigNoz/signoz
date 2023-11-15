@@ -6,7 +6,9 @@ import Header from 'container/Header';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import { useNotifications } from 'hooks/useNotifications';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ReactNode, useEffect, useMemo, useRef } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
@@ -203,12 +205,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			{isToDisplayLayout && <Header />}
 			<Layout>
 				{isToDisplayLayout && !renderFullScreen && <SideNav />}
-				<LayoutContent>
-					<ChildrenContainer>
-						{isToDisplayLayout && !renderFullScreen && <TopNav />}
-						{children}
-					</ChildrenContainer>
-				</LayoutContent>
+
+				<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+					<LayoutContent>
+						<ChildrenContainer>
+							{isToDisplayLayout && !renderFullScreen && <TopNav />}
+							{children}
+						</ChildrenContainer>
+					</LayoutContent>
+				</ErrorBoundary>
 			</Layout>
 		</Layout>
 	);
