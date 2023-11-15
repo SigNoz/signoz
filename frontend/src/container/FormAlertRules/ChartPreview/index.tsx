@@ -121,6 +121,8 @@ function ChartPreview({
 				thresholds: [
 					{
 						index: '0', // no impact
+						keyIndex: 0,
+						moveThreshold: (): void => {},
 						selectedGraph: PANEL_TYPES.TIME_SERIES, // no impact
 						thresholdValue,
 						thresholdLabel: `${t(
