@@ -1,0 +1,1 @@
+falsk install otel collector

@@ -20,7 +20,7 @@ const supportedEnvironments: SupportedEnvironmentsProps[] = [
 	},
 	{
 		name: 'Linux ARM64',
-		id: 'linuxARD64',
+		id: 'linuxARM64',
 	},
 	{
 		name: 'MacOS AMD64',
@@ -28,7 +28,7 @@ const supportedEnvironments: SupportedEnvironmentsProps[] = [
 	},
 	{
 		name: 'MacOS ARM64',
-		id: 'macOsARD64',
+		id: 'macOsARM64',
 	},
 ];
 
