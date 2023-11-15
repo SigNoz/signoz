@@ -80,7 +80,7 @@ function ServiceOverview({
 			>
 				View Traces
 			</Button>
-			<Card>
+			<Card data-testid="service_latency">
 				<GraphContainer>
 					<Graph
 						name="service_latency"

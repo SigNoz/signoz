@@ -11,6 +11,7 @@ import {
 	PipelineData,
 	ProcessorData,
 } from 'types/api/pipeline/def';
+import { trackEvent } from 'utils/segmentAnalytics';
 
 import { tableComponents } from '../config';
 import { ModalFooterTitle } from '../styles';
@@ -189,6 +190,10 @@ function PipelineExpandView({
 
 	const addNewProcessorHandler = useCallback((): void => {
 		setActionType(ActionType.AddProcessor);
+
+		trackEvent('Logs: Pipelines: Clicked Add New Processor', {
+			source: 'signoz-ui',
+		});
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
@@ -239,7 +244,7 @@ function PipelineExpandView({
 				isDarkMode={isDarkMode}
 				showHeader={false}
 				columns={columns}
-				rowKey="name"
+				rowKey="id"
 				size="small"
 				components={tableComponents}
 				dataSource={processorData}
