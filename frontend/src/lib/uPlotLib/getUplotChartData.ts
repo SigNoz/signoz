@@ -6,6 +6,7 @@ import './uPlotLib.styles.scss';
 import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { Dimensions } from 'hooks/useDimensions';
+import { convertValue } from 'lib/getConvertedValue';
 import _noop from 'lodash-es/noop';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
@@ -88,7 +89,15 @@ export const getUPlotChartOptions = ({
 						const { ctx } = u;
 						ctx.save();
 
-						const yPos = u.valToPos(threshold.thresholdValue, 'y', true);
+						const yPos = u.valToPos(
+							convertValue(
+								threshold.thresholdValue,
+								threshold.thresholdUnit,
+								yAxisUnit,
+							),
+							'y',
+							true,
+						);
 
 						ctx.strokeStyle = threshold.thresholdColor || 'red';
 						ctx.lineWidth = 2;
