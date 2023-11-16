@@ -40,6 +40,7 @@ const (
 	TELEMETRY_EVENT_QUERY_RANGE_V3        = "Query Range V3 Metadata"
 	TELEMETRY_EVENT_ACTIVE_USER           = "Active User"
 	TELEMETRY_EVENT_ACTIVE_USER_PH        = "Active User V2"
+	DEFAULT_CLOUD_EMAIL                   = "admin@signoz.cloud"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -259,7 +260,7 @@ func getOutboundIP() string {
 }
 
 func (a *Telemetry) IdentifyUser(user *model.User) {
-	if user.Email == "admin@admin.com" || user.Email == "admin@signoz.cloud" {
+	if user.Email == DEFAULT_CLOUD_EMAIL {
 		return
 	}
 	a.SetCompanyDomain(user.Email)
@@ -337,7 +338,7 @@ func (a *Telemetry) checkEvents(event string) bool {
 func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, opts ...bool) {
 
 	// ignore telemetry for default user
-	if userEmail == "admin@signoz.cloud" {
+	if userEmail == DEFAULT_CLOUD_EMAIL {
 		return
 	}
 
