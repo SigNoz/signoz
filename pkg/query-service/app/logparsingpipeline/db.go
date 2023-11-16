@@ -55,8 +55,8 @@ func (r *Repo) insertPipeline(
 		))
 	}
 
-	jwt, err := auth.ExtractJwtFromContext(ctx)
-	if err != nil {
+	jwt, ok := auth.ExtractJwtFromContext(ctx)
+	if !ok {
 		return nil, model.UnauthorizedError(err)
 	}
 
