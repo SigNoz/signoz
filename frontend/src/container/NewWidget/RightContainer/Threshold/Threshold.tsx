@@ -167,6 +167,8 @@ function Threshold({
 		setLabel(event.target.value);
 	};
 
+	const backgroundColor = !isDarkMode ? '#ffffff' : '#141414';
+
 	return (
 		<div
 			ref={ref}
@@ -203,8 +205,8 @@ function Threshold({
 										<Input
 											defaultValue={label}
 											onChange={handleLabelChange}
-											bordered={false}
-											style={{ backgroundColor: '#141414' }}
+											bordered={!isDarkMode}
+											style={{ backgroundColor }}
 										/>
 									) : (
 										<ShowCaseValue width="180px" value={label || 'none'} />
@@ -216,11 +218,11 @@ function Threshold({
 									<Typography.Text>If value is</Typography.Text>
 									{isEditMode ? (
 										<Select
-											style={{ minWidth: '73px', backgroundColor: '#141414' }}
+											style={{ minWidth: '73px', backgroundColor }}
 											defaultValue={operator}
 											options={operatorOptions}
 											onChange={handleOperatorChange}
-											bordered={false}
+											bordered={!isDarkMode}
 										/>
 									) : (
 										<ShowCaseValue width="49px" value={operator} />
@@ -233,18 +235,18 @@ function Threshold({
 						<Space>
 							{isEditMode ? (
 								<InputNumber
-									style={{ backgroundColor: '#141414' }}
+									style={{ backgroundColor }}
 									defaultValue={value}
 									onChange={handleValueChange}
-									bordered={false}
+									bordered={!isDarkMode}
 								/>
 							) : (
 								<ShowCaseValue width="60px" value={value} />
 							)}
 							{isEditMode ? (
 								<Select
-									style={{ minWidth: '200px', backgroundColor: '#141414' }}
-									bordered={false}
+									style={{ minWidth: '200px', backgroundColor }}
+									bordered={!isDarkMode}
 									defaultValue={unit}
 									options={unitOptions}
 									onChange={handleUnitChange}
@@ -263,11 +265,11 @@ function Threshold({
 									<>
 										<ColorSelector setColor={setColor} thresholdColor={color} />
 										<Select
-											style={{ minWidth: '100px', backgroundColor: '#141414' }}
+											style={{ minWidth: '100px', backgroundColor }}
 											defaultValue={format}
 											options={showAsOptions}
 											onChange={handlerFormatChange}
-											bordered={false}
+											bordered={!isDarkMode}
 										/>
 									</>
 								) : (
