@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/metadata"
 )
 
 var (
@@ -65,29 +64,12 @@ func AttachJwtToContext(ctx context.Context, r *http.Request) context.Context {
 		return ctx
 	}
 
-	if len(token) > 0 {
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			md = metadata.New(nil)
-		}
-
-		md.Append("accessJwt", token)
-		ctx = metadata.NewIncomingContext(ctx, md)
-	}
-	return ctx
+	return context.WithValue(ctx, "accessJwt", token)
 }
 
-func ExtractJwtFromContext(ctx context.Context) (string, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return "", errors.New("No JWT metadata token found")
-	}
-	accessJwt := md.Get("accessJwt")
-	if len(accessJwt) == 0 {
-		return "", errors.New("No JWT token found")
-	}
-
-	return accessJwt[0], nil
+func ExtractJwtFromContext(ctx context.Context) (string, bool) {
+	jwtToken, ok := ctx.Value("accessJwt").(string)
+	return jwtToken, ok
 }
 
 func ExtractJwtFromRequest(r *http.Request) (string, error) {
@@ -96,9 +78,9 @@ func ExtractJwtFromRequest(r *http.Request) (string, error) {
 
 func ExtractUserIdFromContext(ctx context.Context) (string, error) {
 	userId := ""
-	jwt, err := ExtractJwtFromContext(ctx)
-	if err != nil {
-		return "", model.InternalError(fmt.Errorf("failed to extract jwt from context %v", err))
+	jwt, ok := ExtractJwtFromContext(ctx)
+	if !ok {
+		return "", model.InternalError(fmt.Errorf("failed to extract jwt from context"))
 	}
 
 	claims, err := ParseJWT(jwt)
@@ -110,4 +92,18 @@ func ExtractUserIdFromContext(ctx context.Context) (string, error) {
 		userId = v.(string)
 	}
 	return userId, nil
+}
+
+func GetEmailFromJwt(ctx context.Context) (string, error) {
+	jwt, ok := ExtractJwtFromContext(ctx)
+	if !ok {
+		return "", model.InternalError(fmt.Errorf("failed to extract jwt from context"))
+	}
+
+	claims, err := ParseJWT(jwt)
+	if err != nil {
+		return "", model.InternalError(fmt.Errorf("failed get claims from jwt %v", err))
+	}
+
+	return claims["email"].(string), nil
 }

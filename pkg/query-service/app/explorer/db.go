@@ -144,7 +144,7 @@ func CreateView(ctx context.Context, view v3.SavedView) (string, error) {
 	createdAt := time.Now()
 	updatedAt := time.Now()
 
-	email, err := getEmailFromJwt(ctx)
+	email, err := auth.GetEmailFromJwt(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -205,7 +205,7 @@ func UpdateView(ctx context.Context, uuid_ string, view v3.SavedView) error {
 		return fmt.Errorf("error in marshalling explorer query data: %s", err.Error())
 	}
 
-	email, err := getEmailFromJwt(ctx)
+	email, err := auth.GetEmailFromJwt(ctx)
 	if err != nil {
 		return err
 	}
@@ -227,18 +227,4 @@ func DeleteView(uuid_ string) error {
 		return fmt.Errorf("error in deleting explorer query: %s", err.Error())
 	}
 	return nil
-}
-
-func getEmailFromJwt(ctx context.Context) (string, error) {
-	jwt, err := auth.ExtractJwtFromContext(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	claims, err := auth.ParseJWT(jwt)
-	if err != nil {
-		return "", err
-	}
-
-	return claims["email"].(string), nil
 }

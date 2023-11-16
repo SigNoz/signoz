@@ -436,6 +436,8 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 	}
 
 	respWriter := httptest.NewRecorder()
+	ctx := auth.AttachJwtToContext(req.Context(), req)
+	req = req.WithContext(ctx)
 	tb.apiHandler.CreateLogsPipeline(respWriter, req)
 
 	response := respWriter.Result()
