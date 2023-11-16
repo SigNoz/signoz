@@ -49,8 +49,8 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.Wrap(err, "invalid invite request")
 	}
 
-	jwtAdmin, err := ExtractJwtFromContext(ctx)
-	if err != nil {
+	jwtAdmin, ok := ExtractJwtFromContext(ctx)
+	if !ok {
 		return nil, errors.Wrap(err, "failed to extract admin jwt token")
 	}
 
