@@ -1397,8 +1397,7 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 		"email":   email,
 		"message": message,
 	}
-	ctx := auth.AttachJwtToContext(r.Context(), r)
-	userEmail, err := auth.GetEmailFromJwt(ctx)
+	userEmail, err := auth.GetEmailFromJwt(r.Context())
 	if err == nil {
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail)
 	}
@@ -1479,8 +1478,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"number": len(*result),
 	}
-	ctx := auth.AttachJwtToContext(r.Context(), r)
-	userEmail, err := auth.GetEmailFromJwt(ctx)
+	userEmail, err := auth.GetEmailFromJwt(r.Context())
 	if err == nil {
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail)
 	}
@@ -1803,8 +1801,7 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := auth.AttachJwtToContext(r.Context(), r)
-	resp, err := auth.Invite(ctx, req)
+	resp, err := auth.Invite(r.Context(), req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
 		return
@@ -1829,8 +1826,7 @@ func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
 	email := mux.Vars(r)["email"]
 
-	ctx := auth.AttachJwtToContext(r.Context(), r)
-	if err := auth.RevokeInvite(ctx, email); err != nil {
+	if err := auth.RevokeInvite(r.Context(), email); err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
 		return
 	}
@@ -2208,8 +2204,7 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		"isAnonymous":      req.IsAnonymous,
 		"organizationName": req.Name,
 	}
-	ctx := auth.AttachJwtToContext(r.Context(), r)
-	userEmail, err := auth.GetEmailFromJwt(ctx)
+	userEmail, err := auth.GetEmailFromJwt(r.Context())
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail)
 
 	aH.WriteJSON(w, r, map[string]string{"data": "org updated successfully"})
@@ -2373,8 +2368,7 @@ func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErr, "Incorrect params")
 		return
 	}
-	ctx := auth.AttachJwtToContext(r.Context(), r)
-	res, apiErr := aH.reader.GetLogs(ctx, params)
+	res, apiErr := aH.reader.GetLogs(r.Context(), params)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch logs from the DB")
 		return
@@ -2392,8 +2386,7 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 
 	// create the client
 	client := &model.LogsTailClient{Name: r.RemoteAddr, Logs: make(chan *model.SignozLog, 1000), Done: make(chan *bool), Error: make(chan error), Filter: *params}
-	ctx := auth.AttachJwtToContext(r.Context(), r)
-	go aH.reader.TailLogs(ctx, client)
+	go aH.reader.TailLogs(r.Context(), client)
 
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Content-Type", "text/event-stream")
@@ -2435,8 +2428,7 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErr, "Incorrect params")
 		return
 	}
-	ctx := auth.AttachJwtToContext(r.Context(), r)
-	res, apiErr := aH.reader.AggregateLogs(ctx, params)
+	res, apiErr := aH.reader.AggregateLogs(r.Context(), params)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch logs aggregate from the DB")
 		return
@@ -2568,8 +2560,6 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ctx := auth.AttachJwtToContext(r.Context(), r)
-
 	createPipeline := func(
 		ctx context.Context,
 		postable []logparsingpipeline.PostablePipeline,
@@ -2587,7 +2577,7 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		return ah.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
 	}
 
-	res, err := createPipeline(ctx, req.Pipelines)
+	res, err := createPipeline(r.Context(), req.Pipelines)
 	if err != nil {
 		RespondError(w, err, nil)
 		return
@@ -2622,8 +2612,7 @@ func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-	ctx := auth.AttachJwtToContext(r.Context(), r)
-	uuid, err := explorer.CreateView(ctx, view)
+	uuid, err := explorer.CreateView(r.Context(), view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -2657,8 +2646,7 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := auth.AttachJwtToContext(r.Context(), r)
-	err = explorer.UpdateView(ctx, viewID, view)
+	err = explorer.UpdateView(r.Context(), viewID, view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return

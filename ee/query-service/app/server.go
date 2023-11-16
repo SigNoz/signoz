@@ -438,8 +438,7 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 			telemetry.GetInstance().AddActiveLogsUser()
 		}
 		data["dataSources"] = dataSources
-		ctx := auth.AttachJwtToContext(r.Context(), r)
-		userEmail, err := auth.GetEmailFromJwt(ctx)
+		userEmail, err := auth.GetEmailFromJwt(r.Context())
 		if err == nil {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_V3, data, userEmail, true)
 		}
@@ -463,6 +462,8 @@ func getActiveLogs(path string, r *http.Request) {
 
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := auth.AttachJwtToContext(r.Context(), r)
+		r = r.WithContext(ctx)
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
@@ -480,8 +481,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		}
 
 		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
-			ctx := auth.AttachJwtToContext(r.Context(), r)
-			userEmail, err := auth.GetEmailFromJwt(ctx)
+			userEmail, err := auth.GetEmailFromJwt(r.Context())
 			if err == nil {
 				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail)
 			}
