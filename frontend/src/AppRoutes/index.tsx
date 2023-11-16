@@ -27,7 +27,6 @@ import { UPDATE_FEATURE_FLAG_RESPONSE } from 'types/actions/app';
 import AppReducer, { User } from 'types/reducer/app';
 import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
 
-// import { trackPageView } from 'utils/segmentAnalytics';
 import PrivateRoute from './Private';
 import defaultRoutes, { AppRoutes, SUPPORT_ROUTE } from './routes';
 
