@@ -1,11 +1,17 @@
-import { Modal } from 'antd';
+import Modal from 'antd/es/modal';
 import get from 'api/dashboard/get';
+import lockDashboardApi from 'api/dashboard/lockDashboard';
+import unlockDashboardApi from 'api/dashboard/unlockDashboard';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
+import useAxiosError from 'hooks/useAxiosError';
 import useTabVisibility from 'hooks/useTabFocus';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
+import isEqual from 'lodash-es/isEqual';
+import isUndefined from 'lodash-es/isUndefined';
+import omitBy from 'lodash-es/omitBy';
 import {
 	createContext,
 	PropsWithChildren,
@@ -17,7 +23,7 @@ import {
 } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
-import { useQuery, UseQueryResult } from 'react-query';
+import { useMutation, useQuery, UseQueryResult } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouteMatch } from 'react-router-dom';
 import { Dispatch } from 'redux';
@@ -32,7 +38,9 @@ import { IDashboardContext } from './types';
 
 const DashboardContext = createContext<IDashboardContext>({
 	isDashboardSliderOpen: false,
+	isDashboardLocked: false,
 	handleToggleDashboardSlider: () => {},
+	handleDashboardLockToggle: () => {},
 	dashboardResponse: {} as UseQueryResult<Dashboard, unknown>,
 	selectedDashboard: {} as Dashboard,
 	dashboardId: '',
@@ -50,6 +58,9 @@ export function DashboardProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
+
+	const [isDashboardLocked, setIsDashboardLocked] = useState<boolean>(false);
+
 	const isDashboardPage = useRouteMatch<Props>({
 		path: ROUTES.DASHBOARD,
 		exact: true,
@@ -98,6 +109,8 @@ export function DashboardProvider({
 			refetchOnWindowFocus: false,
 			onSuccess: (data) => {
 				const updatedDate = dayjs(data.updated_at);
+
+				setIsDashboardLocked(data?.isLocked || false);
 
 				// on first render
 				if (updatedTimeRef.current === null) {
@@ -154,9 +167,18 @@ export function DashboardProvider({
 
 					dashboardRef.current = data;
 
-					setSelectedDashboard(data);
+					if (!isEqual(selectedDashboard, data)) {
+						setSelectedDashboard(data);
+					}
 
-					setLayouts(getUpdatedLayout(data.data.layout));
+					if (
+						!isEqual(
+							[omitBy(layouts, (value): boolean => isUndefined(value))[0]],
+							data.data.layout,
+						)
+					) {
+						setLayouts(getUpdatedLayout(data.data.layout));
+					}
 				}
 			},
 		},
@@ -179,10 +201,39 @@ export function DashboardProvider({
 		setIsDashboardSlider(value);
 	};
 
+	const handleError = useAxiosError();
+
+	const { mutate: lockDashboard } = useMutation(lockDashboardApi, {
+		onSuccess: () => {
+			setIsDashboardSlider(false);
+			setIsDashboardLocked(true);
+		},
+		onError: handleError,
+	});
+
+	const { mutate: unlockDashboard } = useMutation(unlockDashboardApi, {
+		onSuccess: () => {
+			setIsDashboardLocked(false);
+		},
+		onError: handleError,
+	});
+
+	const handleDashboardLockToggle = async (value: boolean): Promise<void> => {
+		if (selectedDashboard) {
+			if (value) {
+				lockDashboard(selectedDashboard);
+			} else {
+				unlockDashboard(selectedDashboard);
+			}
+		}
+	};
+
 	const value: IDashboardContext = useMemo(
 		() => ({
 			isDashboardSliderOpen,
+			isDashboardLocked,
 			handleToggleDashboardSlider,
+			handleDashboardLockToggle,
 			dashboardResponse,
 			selectedDashboard,
 			dashboardId,
@@ -191,8 +242,10 @@ export function DashboardProvider({
 			setSelectedDashboard,
 			updatedTimeRef,
 		}),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			isDashboardSliderOpen,
+			isDashboardLocked,
 			dashboardResponse,
 			selectedDashboard,
 			dashboardId,

@@ -17,7 +17,7 @@ import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { GraphTitle, legend } from '../constant';
+import { GraphTitle, legend, MENU_ITEMS } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
@@ -145,17 +145,18 @@ function External(): JSX.Element {
 					>
 						View Traces
 					</Button>
-					<Card>
+					<Card data-testid="external_call_error_percentage">
 						<GraphContainer>
 							<Graph
+								headerMenuList={MENU_ITEMS}
 								name="external_call_error_percentage"
 								widget={externalCallErrorWidget}
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
+										xValue,
+										yValue,
+										mouseX,
+										mouseY,
 										'external_call_error_percentage',
 									);
 								}}
@@ -179,17 +180,18 @@ function External(): JSX.Element {
 						View Traces
 					</Button>
 
-					<Card>
+					<Card data-testid="external_call_duration">
 						<GraphContainer>
 							<Graph
 								name="external_call_duration"
+								headerMenuList={MENU_ITEMS}
 								widget={externalCallDurationWidget}
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
+										xValue,
+										yValue,
+										mouseX,
+										mouseY,
 										'external_call_duration',
 									);
 								}}
@@ -214,20 +216,21 @@ function External(): JSX.Element {
 					>
 						View Traces
 					</Button>
-					<Card>
+					<Card data-testid="external_call_rps_by_address">
 						<GraphContainer>
 							<Graph
 								name="external_call_rps_by_address"
 								widget={externalCallRPSWidget}
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+								headerMenuList={MENU_ITEMS}
+								onClickHandler={(xValue, yValue, mouseX, mouseY): Promise<void> =>
 									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
+										xValue,
+										yValue,
+										mouseX,
+										mouseY,
 										'external_call_rps_by_address',
-									);
-								}}
+									)
+								}
 							/>
 						</GraphContainer>
 					</Card>
@@ -248,17 +251,18 @@ function External(): JSX.Element {
 						View Traces
 					</Button>
 
-					<Card>
+					<Card data-testid="external_call_duration_by_address">
 						<GraphContainer>
 							<Graph
 								name="external_call_duration_by_address"
 								widget={externalCallDurationAddressWidget}
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+								headerMenuList={MENU_ITEMS}
+								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
+										xValue,
+										yValue,
+										mouseX,
+										mouseY,
 										'external_call_duration_by_address',
 									);
 								}}

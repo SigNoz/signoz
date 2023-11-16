@@ -1,4 +1,5 @@
 import {
+	AlertOutlined,
 	CopyOutlined,
 	DeleteOutlined,
 	DownOutlined,
@@ -157,7 +158,7 @@ function WidgetHeader({
 			},
 			{
 				key: MenuItemKeys.CreateAlerts,
-				icon: <DeleteOutlined />,
+				icon: <AlertOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
 				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
 				disabled: false,
@@ -168,9 +169,9 @@ function WidgetHeader({
 
 	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
 
-	const onClickHandler = useCallback(() => {
-		setIsOpen((open) => !open);
-	}, []);
+	const onClickHandler = (): void => {
+		setIsOpen(!isOpen);
+	};
 
 	const menu = useMemo(
 		() => ({

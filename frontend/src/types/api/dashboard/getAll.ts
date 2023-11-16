@@ -1,4 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { ReactNode } from 'react';
 import { Layout } from 'react-grid-layout';
@@ -45,6 +46,7 @@ export interface Dashboard {
 	created_by: string;
 	updated_by: string;
 	data: DashboardData;
+	isLocked?: boolean;
 }
 
 export interface DashboardData {
@@ -68,6 +70,8 @@ export interface IBaseWidget {
 	timePreferance: timePreferenceType;
 	stepSize?: number;
 	yAxisUnit?: string;
+	thresholds?: ThresholdProps[];
+	fillSpans?: boolean;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

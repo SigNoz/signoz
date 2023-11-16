@@ -108,13 +108,14 @@ export default function Javascript({
 								name="service-name"
 								style={{ minWidth: '300px' }}
 								scrollToFirstError
+								requiredMark
 							>
 								<Form.Item
 									hasFeedback
 									name="Service Name"
 									rules={[{ required: true }]}
 									validateTrigger="onBlur"
-									requiredMark
+									required
 								>
 									<Input autoFocus />
 								</Form.Item>

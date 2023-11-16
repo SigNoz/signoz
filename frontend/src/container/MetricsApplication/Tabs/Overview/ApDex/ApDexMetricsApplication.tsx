@@ -10,8 +10,8 @@ function ApDexMetricsApplication({
 	handleGraphClick,
 	onDragSelect,
 	tagFilterItems,
-	topLevelOperationsRoute,
 	thresholdValue,
+	topLevelOperationsRoute,
 }: ApDexDataSwitcherProps): JSX.Element {
 	const { data, isLoading, error } = useGetMetricMeta(metricMeta);
 	useErrorNotification(error);
@@ -22,11 +22,11 @@ function ApDexMetricsApplication({
 
 	return (
 		<ApDexMetrics
+			topLevelOperationsRoute={topLevelOperationsRoute}
 			handleGraphClick={handleGraphClick}
 			delta={data?.data.delta}
-			metricsBuckets={data?.data.le}
+			metricsBuckets={data?.data.le || []}
 			onDragSelect={onDragSelect}
-			topLevelOperationsRoute={topLevelOperationsRoute}
 			tagFilterItems={tagFilterItems}
 			thresholdValue={thresholdValue}
 		/>

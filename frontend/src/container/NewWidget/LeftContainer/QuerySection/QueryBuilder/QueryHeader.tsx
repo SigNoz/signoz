@@ -33,21 +33,29 @@ function QueryHeader({
 			<Row style={{ justifyContent: 'space-between' }}>
 				<Row>
 					<Button
-						type="ghost"
+						type="default"
+						ghost
 						icon={disabled ? <EyeInvisibleFilled /> : <EyeFilled />}
 						onClick={onDisable}
 					>
 						{name}
 					</Button>
 					<Button
-						type="ghost"
+						type="default"
+						ghost
 						icon={collapse ? <RightOutlined /> : <DownOutlined />}
 						onClick={(): void => setCollapse(!collapse)}
 					/>
 				</Row>
 
 				{deletable && (
-					<Button type="ghost" danger icon={<DeleteOutlined />} onClick={onDelete} />
+					<Button
+						type="default"
+						ghost
+						danger
+						icon={<DeleteOutlined />}
+						onClick={onDelete}
+					/>
 				)}
 			</Row>
 			{!collapse && children}
