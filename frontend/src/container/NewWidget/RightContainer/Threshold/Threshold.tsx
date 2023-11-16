@@ -200,9 +200,14 @@ function Threshold({
 								<>
 									<Typography.Text>Label</Typography.Text>
 									{isEditMode ? (
-										<Input defaultValue={label} onChange={handleLabelChange} />
+										<Input
+											defaultValue={label}
+											onChange={handleLabelChange}
+											bordered={false}
+											style={{ backgroundColor: '#141414' }}
+										/>
 									) : (
-										<ShowCaseValue width="180px" value={label} />
+										<ShowCaseValue width="180px" value={label || 'none'} />
 									)}
 								</>
 							)}
@@ -211,10 +216,11 @@ function Threshold({
 									<Typography.Text>If value is</Typography.Text>
 									{isEditMode ? (
 										<Select
-											style={{ minWidth: '73px' }}
+											style={{ minWidth: '73px', backgroundColor: '#141414' }}
 											defaultValue={operator}
 											options={operatorOptions}
 											onChange={handleOperatorChange}
+											bordered={false}
 										/>
 									) : (
 										<ShowCaseValue width="49px" value={operator} />
@@ -253,20 +259,22 @@ function Threshold({
 						<Space direction="vertical">
 							<Typography.Text>Show with</Typography.Text>
 							<Space>
-								{isEditMode && selectedGraph === PANEL_TYPES.TIME_SERIES ? (
-									<ColorSelector setColor={setColor} thresholdColor={color} />
+								{isEditMode ? (
+									<>
+										<ColorSelector setColor={setColor} thresholdColor={color} />
+										<Select
+											style={{ minWidth: '100px', backgroundColor: '#141414' }}
+											defaultValue={format}
+											options={showAsOptions}
+											onChange={handlerFormatChange}
+											bordered={false}
+										/>
+									</>
 								) : (
-									<ShowCaseValue width="100px" value={<CustomColor color={color} />} />
-								)}
-								{isEditMode && selectedGraph === PANEL_TYPES.VALUE ? (
-									<Select
-										style={{ minWidth: '100px' }}
-										defaultValue={format}
-										options={showAsOptions}
-										onChange={handlerFormatChange}
-									/>
-								) : (
-									<ShowCaseValue width="100px" value={format} />
+									<>
+										<ShowCaseValue width="100px" value={<CustomColor color={color} />} />
+										<ShowCaseValue width="100px" value={format} />
+									</>
 								)}
 							</Space>
 						</Space>
