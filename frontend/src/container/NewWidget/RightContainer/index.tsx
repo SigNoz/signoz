@@ -18,6 +18,7 @@ import history from 'lib/history';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 
+import { panelTypeVsThreshold } from './constants';
 import { Container, Title } from './styles';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
@@ -63,6 +64,8 @@ function RightContainer({
 			)}`,
 		);
 	}, [selectedWidget]);
+
+	const allowThreshold = panelTypeVsThreshold[selectedGraph];
 
 	return (
 		<Container>
@@ -176,14 +179,17 @@ function RightContainer({
 				)}
 			</Space>
 
-			<Divider />
-
-			<ThresholdSelector
-				thresholds={thresholds}
-				setThresholds={setThresholds}
-				yAxisUnit={yAxisUnit}
-				selectedGraph={selectedGraph}
-			/>
+			{allowThreshold && (
+				<>
+					<Divider />
+					<ThresholdSelector
+						thresholds={thresholds}
+						setThresholds={setThresholds}
+						yAxisUnit={yAxisUnit}
+						selectedGraph={selectedGraph}
+					/>
+				</>
+			)}
 		</Container>
 	);
 }

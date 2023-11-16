@@ -4,6 +4,7 @@ import { DownOutlined } from '@ant-design/icons';
 import { Button, ColorPicker, Dropdown, Space } from 'antd';
 import { Color } from 'antd/es/color-picker';
 import { MenuProps } from 'antd/lib';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
@@ -16,6 +17,8 @@ function ColorSelector({
 	const [colorFromPicker, setColorFromPicker] = useState<string>('');
 
 	const debounceColor = useDebounce(colorFromPicker);
+
+	const isDarkMode = useIsDarkMode();
 
 	useEffect(() => {
 		if (debounceColor) {
@@ -66,7 +69,9 @@ function ColorSelector({
 		<Dropdown menu={{ items }} trigger={['click']}>
 			<Button
 				onClick={(e): void => e.preventDefault()}
-				className="color-selector-button"
+				className={
+					isDarkMode ? 'color-selector-button' : 'color-selector-button-light'
+				}
 			>
 				<Space>
 					<CustomColor color={thresholdColor} />
