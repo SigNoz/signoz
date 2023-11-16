@@ -237,7 +237,7 @@ function Threshold({
 							)}
 							{isEditMode ? (
 								<Select
-									style={{ maxWidth: '200px', backgroundColor: '#141414' }}
+									style={{ minWidth: '200px', backgroundColor: '#141414' }}
 									bordered={false}
 									defaultValue={unit}
 									options={unitOptions}
