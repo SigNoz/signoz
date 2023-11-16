@@ -351,13 +351,72 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 	for _, testCase := range testCases {
 		testPipelines := []Pipeline{makeTestPipeline([]PipelineOperator{testCase.Operator})}
 
-		result, collectorErrorLogs, err := SimulatePipelinesProcessing(
+		result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 			context.Background(),
 			testPipelines,
 			[]model.SignozLog{testCase.NonMatchingLog},
 		)
 		require.Nil(err)
-		require.Equal(0, len(collectorErrorLogs), strings.Join(collectorErrorLogs, "\n"))
+		require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
 		require.Equal(1, len(result))
 	}
+}
+
+func TestResourceFiltersWork(t *testing.T) {
+	require := require.New(t)
+
+	testPipeline := Pipeline{
+		OrderId: 1,
+		Name:    "pipeline1",
+		Alias:   "pipeline1",
+		Enabled: true,
+		Filter: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "service",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+					Operator: "=",
+					Value:    "nginx",
+				},
+			},
+		},
+		Config: []PipelineOperator{
+			{
+				ID:      "add",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add",
+				Field:   "attributes.test",
+				Value:   "test-value",
+			},
+		},
+	}
+
+	testLog := model.SignozLog{
+		Timestamp:         uint64(time.Now().UnixNano()),
+		Body:              "test log",
+		Attributes_string: map[string]string{},
+		Resources_string: map[string]string{
+			"service": "nginx",
+		},
+		SeverityText:   entry.Info.String(),
+		SeverityNumber: uint8(entry.Info),
+		SpanID:         "",
+		TraceID:        "",
+	}
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(),
+		[]Pipeline{testPipeline},
+		[]model.SignozLog{testLog},
+	)
+	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+	require.Equal(1, len(result))
+
+	require.Equal(result[0].Attributes_string["test"], "test-value")
 }

@@ -14,7 +14,11 @@ export const Button = styled(ButtonComponent)`
 
 export const DrawerContainer = styled(Drawer)`
 	.ant-drawer-header {
-		padding: 0;
+		padding: 16px;
 		border: none;
+	}
+
+	.ant-drawer-body {
+		padding-top: 0;
 	}
 `;

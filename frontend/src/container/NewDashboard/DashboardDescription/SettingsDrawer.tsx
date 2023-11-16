@@ -5,7 +5,7 @@ import { useState } from 'react';
 import DashboardSettingsContent from '../DashboardSettings';
 import { DrawerContainer } from './styles';
 
-function SettingsDrawer(): JSX.Element {
+function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 	const [visible, setVisible] = useState<boolean>(false);
 
 	const showDrawer = (): void => {
@@ -18,12 +18,13 @@ function SettingsDrawer(): JSX.Element {
 
 	return (
 		<>
-			<Button type="dashed" onClick={showDrawer}>
+			<Button type="dashed" onClick={showDrawer} style={{ width: '100%' }}>
 				<SettingOutlined /> Configure
 			</Button>
 			<DrawerContainer
+				title={drawerTitle}
 				placement="right"
-				width="70%"
+				width="50%"
 				onClose={onClose}
 				open={visible}
 			>

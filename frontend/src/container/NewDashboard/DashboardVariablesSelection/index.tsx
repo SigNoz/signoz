@@ -3,7 +3,7 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { map, sortBy } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -114,4 +114,4 @@ function DashboardVariableSelection(): JSX.Element | null {
 	);
 }
 
-export default DashboardVariableSelection;
+export default memo(DashboardVariableSelection);

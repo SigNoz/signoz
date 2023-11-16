@@ -1,12 +1,15 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useResizeObserver } from 'hooks/useDimensions';
+import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import getChartData from 'lib/getChartData';
+import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartData';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { memo, useMemo, useState } from 'react';
-import { useInView } from 'react-intersection-observer';
+import _noop from 'lodash-es/noop';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -20,30 +23,30 @@ import WidgetGraphComponent from './WidgetGraphComponent';
 function GridCardGraph({
 	widget,
 	name,
-	onClickHandler,
+	onClickHandler = _noop,
 	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
 	threshold,
+	variables,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
 
-	const onDragSelect = (start: number, end: number): void => {
-		const startTimestamp = Math.trunc(start);
-		const endTimestamp = Math.trunc(end);
+	const onDragSelect = useCallback(
+		(start: number, end: number): void => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
 
-		if (startTimestamp !== endTimestamp) {
-			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
-		}
-	};
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch],
+	);
 
-	const { ref: graphRef, inView: isGraphVisible } = useInView({
-		threshold: 0,
-		triggerOnce: true,
-		initialInView: false,
-	});
+	const graphRef = useRef<HTMLDivElement>(null);
 
-	const { selectedDashboard } = useDashboard();
+	const isVisible = useIntersectionObserver(graphRef, undefined, true);
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -61,20 +64,20 @@ function GridCardGraph({
 			graphType: widget?.panelTypes,
 			query: updatedQuery,
 			globalSelectedInterval,
-			variables: getDashboardVariables(selectedDashboard?.data.variables),
+			variables: getDashboardVariables(variables),
 		},
 		{
 			queryKey: [
 				maxTime,
 				minTime,
 				globalSelectedInterval,
-				selectedDashboard?.data?.variables,
+				variables,
 				widget?.query,
 				widget?.panelTypes,
 				widget.timePreferance,
 			],
 			keepPreviousData: true,
-			enabled: isGraphVisible && !isEmptyWidget && isQueryEnabled,
+			enabled: isVisible && !isEmptyWidget && isQueryEnabled,
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
@@ -82,39 +85,63 @@ function GridCardGraph({
 		},
 	);
 
-	const chartData = useMemo(
-		() =>
-			getChartData({
-				queryData: [
-					{
-						queryData: queryResponse?.data?.payload?.data?.result || [],
-					},
-				],
-				createDataset: undefined,
-				isWarningLimit: widget.panelTypes === PANEL_TYPES.TIME_SERIES,
-			}),
-		[queryResponse, widget?.panelTypes],
-	);
-
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 
-	return (
-		<span ref={graphRef}>
-			<WidgetGraphComponent
-				widget={widget}
-				queryResponse={queryResponse}
-				errorMessage={errorMessage}
-				data={chartData.data}
-				isWarning={chartData.isWarning}
-				name={name}
-				onDragSelect={onDragSelect}
-				threshold={threshold}
-				headerMenuList={headerMenuList}
-				onClickHandler={onClickHandler}
-			/>
+	const containerDimensions = useResizeObserver(graphRef);
 
-			{isEmptyLayout && <EmptyWidget />}
-		</span>
+	const chartData = getUPlotChartData(queryResponse?.data?.payload);
+
+	const isDarkMode = useIsDarkMode();
+
+	const menuList =
+		widget.panelTypes === PANEL_TYPES.TABLE
+			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
+			: headerMenuList;
+
+	const options = useMemo(
+		() =>
+			getUPlotChartOptions({
+				id: widget?.id,
+				apiResponse: queryResponse.data?.payload,
+				dimensions: containerDimensions,
+				isDarkMode,
+				onDragSelect,
+				yAxisUnit: widget?.yAxisUnit,
+				onClickHandler,
+				thresholds: widget.thresholds,
+			}),
+		[
+			widget?.id,
+			widget?.yAxisUnit,
+			widget.thresholds,
+			queryResponse.data?.payload,
+			containerDimensions,
+			isDarkMode,
+			onDragSelect,
+			onClickHandler,
+		],
+	);
+
+	return (
+		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
+			{isEmptyLayout ? (
+				<EmptyWidget />
+			) : (
+				<WidgetGraphComponent
+					data={chartData}
+					options={options}
+					widget={widget}
+					queryResponse={queryResponse}
+					errorMessage={errorMessage}
+					isWarning={false}
+					name={name}
+					onDragSelect={onDragSelect}
+					threshold={threshold}
+					headerMenuList={menuList}
+					onClickHandler={onClickHandler}
+				/>
+			)}
+		</div>
 	);
 }
 
