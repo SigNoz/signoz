@@ -253,22 +253,21 @@ function Threshold({
 						<Space direction="vertical">
 							<Typography.Text>Show with</Typography.Text>
 							<Space>
-								{isEditMode ? (
+								{isEditMode && selectedGraph === PANEL_TYPES.TIME_SERIES ? (
 									<ColorSelector setColor={setColor} thresholdColor={color} />
 								) : (
 									<ShowCaseValue width="100px" value={<CustomColor color={color} />} />
 								)}
 								{isEditMode && selectedGraph === PANEL_TYPES.VALUE ? (
-									<>
-										<Select
-											style={{ minWidth: '100px' }}
-											defaultValue={format}
-											options={showAsOptions}
-											onChange={handlerFormatChange}
-										/>
-										<ShowCaseValue width="100px" value={format} />
-									</>
-								) : null}
+									<Select
+										style={{ minWidth: '100px' }}
+										defaultValue={format}
+										options={showAsOptions}
+										onChange={handlerFormatChange}
+									/>
+								) : (
+									<ShowCaseValue width="100px" value={format} />
+								)}
 							</Space>
 						</Space>
 					</div>
