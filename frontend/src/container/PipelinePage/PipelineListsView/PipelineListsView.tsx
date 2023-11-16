@@ -4,6 +4,7 @@ import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Card, Modal, Table, Typography } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
 import savePipeline from 'api/pipeline/post';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useNotifications } from 'hooks/useNotifications';
 import cloneDeep from 'lodash-es/cloneDeep';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -17,7 +18,6 @@ import {
 	PipelineData,
 	ProcessorData,
 } from 'types/api/pipeline/def';
-import { trackEvent } from 'utils/segmentAnalytics';
 import { v4 } from 'uuid';
 
 import { tableComponents } from '../config';
@@ -92,6 +92,7 @@ function PipelineListsView({
 	const [modal, contextHolder] = Modal.useModal();
 	const { notifications } = useNotifications();
 	const [pipelineSearchValue, setPipelineSearchValue] = useState<string>('');
+	const { trackEvent } = useAnalytics();
 	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
 		cloneDeep(pipelineData?.pipelines || []),
 	);
@@ -370,6 +371,7 @@ function PipelineListsView({
 		trackEvent('Logs: Pipelines: Clicked Add New Pipeline', {
 			source: 'signoz-ui',
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
@@ -425,6 +427,7 @@ function PipelineListsView({
 			setCurrPipelineData(modifiedPipelineData);
 			setPrevPipelineData(modifiedPipelineData);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [currPipelineData, notifications, refetchPipelineLists, setActionMode, t]);
 
 	const onCancelConfigurationHandler = useCallback((): void => {
