@@ -29,3 +29,12 @@ export const panelTypeVsThreshold: { [key in PANEL_TYPES]: boolean } = {
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
+
+export const panelTypeVsDragAndDrop: { [key in PANEL_TYPES]: boolean } = {
+	[PANEL_TYPES.TIME_SERIES]: false,
+	[PANEL_TYPES.VALUE]: true,
+	[PANEL_TYPES.TABLE]: true,
+	[PANEL_TYPES.LIST]: false,
+	[PANEL_TYPES.TRACE]: false,
+	[PANEL_TYPES.EMPTY_WIDGET]: false,
+} as const;

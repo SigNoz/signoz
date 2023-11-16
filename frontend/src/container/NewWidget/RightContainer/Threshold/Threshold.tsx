@@ -15,7 +15,12 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
 
-import { operatorOptions, showAsOptions, unitOptions } from '../constants';
+import {
+	operatorOptions,
+	panelTypeVsDragAndDrop,
+	showAsOptions,
+	unitOptions,
+} from '../constants';
 import ColorSelector from './ColorSelector';
 import CustomColor from './CustomColor';
 import ShowCaseValue from './ShowCaseValue';
@@ -168,10 +173,11 @@ function Threshold({
 	};
 
 	const backgroundColor = !isDarkMode ? '#ffffff' : '#141414';
+	const allowDragAndDrop = panelTypeVsDragAndDrop[selectedGraph];
 
 	return (
 		<div
-			ref={ref}
+			ref={allowDragAndDrop ? ref : null}
 			style={{ opacity }}
 			data-handler-id={handlerId}
 			className="threshold-container"
