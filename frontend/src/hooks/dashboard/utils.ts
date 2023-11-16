@@ -15,7 +15,7 @@ export const addEmptyWidgetInDashboardJSONWithQuery = (
 				i: 'empty',
 				w: 6,
 				x: 0,
-				h: 2,
+				h: 3,
 				y: 0,
 			},
 			...(dashboard?.data?.layout || []),

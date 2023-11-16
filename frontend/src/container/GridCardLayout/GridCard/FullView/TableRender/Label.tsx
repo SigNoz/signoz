@@ -1,3 +1,5 @@
+import { useIsDarkMode } from 'hooks/useDarkMode';
+
 import { LabelContainer } from '../styles';
 import { LabelProps } from '../types';
 import { getAbbreviatedLabel } from '../utils';
@@ -7,12 +9,18 @@ function Label({
 	labelIndex,
 	label,
 }: LabelProps): JSX.Element {
+	const isDarkMode = useIsDarkMode();
+
 	const onClickHandler = (): void => {
 		labelClickedHandler(labelIndex);
 	};
 
 	return (
-		<LabelContainer type="button" onClick={onClickHandler}>
+		<LabelContainer
+			isDarkMode={isDarkMode}
+			type="button"
+			onClick={onClickHandler}
+		>
 			{getAbbreviatedLabel(label)}
 		</LabelContainer>
 	);

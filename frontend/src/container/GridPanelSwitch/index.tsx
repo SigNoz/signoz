@@ -11,39 +11,20 @@ const GridPanelSwitch = forwardRef<
 	GridPanelSwitchProps
 >(
 	(
-		{
-			panelType,
-			data,
-			title,
-			isStacked,
-			onClickHandler,
-			name,
-			yAxisUnit,
-			staticLine,
-			onDragSelect,
-			panelData,
-			query,
-		},
+		{ panelType, data, yAxisUnit, panelData, query, options, thresholds },
 		ref,
 	): JSX.Element | null => {
 		const currentProps: PropsTypePropsMap = useMemo(() => {
 			const result: PropsTypePropsMap = {
 				[PANEL_TYPES.TIME_SERIES]: {
-					type: 'line',
 					data,
-					title,
-					isStacked,
-					onClickHandler,
-					name,
-					yAxisUnit,
-					staticLine,
-					onDragSelect,
+					options,
 					ref,
 				},
 				[PANEL_TYPES.VALUE]: {
-					title,
 					data,
 					yAxisUnit,
+					thresholds,
 				},
 				[PANEL_TYPES.TABLE]: { ...GRID_TABLE_CONFIG, data: panelData, query },
 				[PANEL_TYPES.LIST]: null,
@@ -52,19 +33,7 @@ const GridPanelSwitch = forwardRef<
 			};
 
 			return result;
-		}, [
-			data,
-			isStacked,
-			name,
-			onClickHandler,
-			onDragSelect,
-			staticLine,
-			title,
-			yAxisUnit,
-			panelData,
-			query,
-			ref,
-		]);
+		}, [data, options, ref, yAxisUnit, thresholds, panelData, query]);
 
 		const Component = PANEL_TYPES_COMPONENT_MAP[panelType] as FC<
 			PropsTypePropsMap[typeof panelType]

@@ -6,14 +6,7 @@ import { EMPTY_WIDGET_LAYOUT } from './config';
 import GraphLayoutContainer from './GridCardLayout';
 
 function GridGraph(): JSX.Element {
-	const {
-		selectedDashboard,
-		setLayouts,
-		handleToggleDashboardSlider,
-	} = useDashboard();
-
-	const { data } = selectedDashboard || {};
-	const { widgets } = data || {};
+	const { handleToggleDashboardSlider, setLayouts } = useDashboard();
 
 	const onEmptyWidgetHandler = useCallback(() => {
 		handleToggleDashboardSlider(true);
@@ -24,12 +17,7 @@ function GridGraph(): JSX.Element {
 		]);
 	}, [handleToggleDashboardSlider, setLayouts]);
 
-	return (
-		<GraphLayoutContainer
-			onAddPanelHandler={onEmptyWidgetHandler}
-			widgets={widgets}
-		/>
-	);
+	return <GraphLayoutContainer onAddPanelHandler={onEmptyWidgetHandler} />;
 }
 
 export default GridGraph;
