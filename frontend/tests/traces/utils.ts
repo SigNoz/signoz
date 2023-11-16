@@ -14,6 +14,15 @@ export const attributeKeysApiEndpoint = 'autocomplete/attribute_keys';
 export const traceExplorerViewsGetEndpoint = 'explorer/views?sourcePage=traces';
 export const traceExplorerViewsPostEndpoint = 'explorer/views';
 
+export const newExplorerCtaID = 'newExplorerCTA';
+export const serviceAttributeID = 'serviceName';
+export const httpMethodAttributeID = 'httpMethod';
+export const traceTabID = 'rc-tabs-0-tab-trace';
+export const traceRowTraceTabID = 'trace-id';
+export const tableViewTabID = 'rc-tabs-0-tab-table';
+export const saveNewViewID = 'traces-save-view-action';
+export const saveNewViewWithNameID = 'save-view-name-action-button';
+
 const DefaultAttributesExplorerPage = [
 	'serviceName',
 	'name',

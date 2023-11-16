@@ -6,7 +6,17 @@ import tracesSuccessResponse from '../fixtures/api/traces/tracesRange200.json';
 import tracesTableSuccessResponse from '../fixtures/api/traces/tracesTableView200.json';
 import {
 	defaultAttributeKeysData,
+	httpMethodAttributeID,
+	newExplorerCtaID,
 	queryRangeApiEndpoint,
+	saveNewViewID,
+	saveNewViewWithNameID,
+	serviceAttributeID,
+	tableViewTabID,
+	traceExplorerViewsGetEndpoint,
+	traceExplorerViewsPostEndpoint,
+	traceRowTraceTabID,
+	traceTabID,
 	tracesExplorerQueryData,
 	tracesExplorerViewsData,
 	tracesExplorerViewsPostData,
@@ -37,33 +47,39 @@ test.describe('New Traces Explorer', () => {
 
 		const queryRangeRequest = page.waitForRequest(`**/${queryRangeApiEndpoint}`);
 
-		await page.locator('data-testid=newExplorerCTA').click();
+		await page.locator(`data-testid=${newExplorerCtaID}`).click();
 
 		await queryRangeRequest;
 
 		await page.getByText('List View').click();
 
 		const serviceName = await page
-			.locator('data-testid=serviceName')
+			.locator(`data-testid=${serviceAttributeID}`)
 			.textContent();
 
 		expect(serviceName).toBe('route');
 
-		const httpMethod = await page.locator('data-testid=httpMethod').textContent();
+		const httpMethod = await page
+			.locator(`data-testid=${httpMethodAttributeID}`)
+			.textContent();
 
 		expect(httpMethod).toBe('GET');
 
 		await tracesExplorerQueryData(page, tracesSuccessResponse);
 
-		await page.locator('id=rc-tabs-0-tab-trace').click();
+		await page.locator(`id=${traceTabID}`).click();
 
-		const traceID = await page.locator('data-testid=trace-id').textContent();
+		const traceID = await page
+			.locator(`data-testid=${traceRowTraceTabID}`)
+			.textContent();
 
-		expect(traceID).toBe('0000000000000000013e51e33c929173');
+		expect(traceID).toBe(
+			tracesSuccessResponse.data.result[0].list[0].data.traceID,
+		);
 
 		await tracesExplorerQueryData(page, tracesTableSuccessResponse);
 
-		await page.locator('id=rc-tabs-0-tab-table').click();
+		await page.locator(`id=${tableViewTabID}`).click();
 
 		await page.waitForLoadState('networkidle');
 
@@ -71,7 +87,7 @@ test.describe('New Traces Explorer', () => {
 
 		await expect(count).toBeTruthy();
 
-		await page.locator('data-testid=traces-save-view-action').click();
+		await page.locator(`data-testid=${saveNewViewID}`).click();
 
 		await page.locator('id=viewName').type('Playwright');
 
@@ -81,7 +97,19 @@ test.describe('New Traces Explorer', () => {
 
 		await tracesExplorerViewsPostData(page);
 
-		await page.locator('data-testid=save-view-name-action-button').click();
+		const viewsSaveRequest = page.waitForRequest(
+			`**/${traceExplorerViewsPostEndpoint}`,
+		);
+
+		const viewsGetRequest = page.waitForRequest(
+			`**/${traceExplorerViewsGetEndpoint}`,
+		);
+
+		await page.locator(`data-testid=${saveNewViewWithNameID}`).click();
+
+		await viewsSaveRequest;
+
+		await viewsGetRequest;
 
 		const viewName = await page.getByText('Playwright').isVisible();
 
