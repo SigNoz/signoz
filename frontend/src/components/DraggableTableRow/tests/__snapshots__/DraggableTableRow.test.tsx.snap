@@ -3,10 +3,10 @@
 exports[`DraggableTableRow Snapshot test should render DraggableTableRow 1`] = `
 <DocumentFragment>
   <div
-    class="ant-table-wrapper css-dev-only-do-not-override-1i536d8"
+    class="ant-table-wrapper css-dev-only-do-not-override-2i2tap"
   >
     <div
-      class="ant-spin-nested-loading css-dev-only-do-not-override-1i536d8"
+      class="ant-spin-nested-loading css-dev-only-do-not-override-2i2tap"
     >
       <div
         class="ant-spin-container"
@@ -28,7 +28,7 @@ exports[`DraggableTableRow Snapshot test should render DraggableTableRow 1`] = `
                   class="ant-table-thead"
                 >
                   <tr>
-                    <th
+                    <td
                       class="ant-table-cell"
                     />
                   </tr>
@@ -43,7 +43,7 @@ exports[`DraggableTableRow Snapshot test should render DraggableTableRow 1`] = `
                       class="ant-table-cell"
                     >
                       <div
-                        class="css-dev-only-do-not-override-1i536d8 ant-empty ant-empty-normal"
+                        class="css-dev-only-do-not-override-2i2tap ant-empty ant-empty-normal"
                       >
                         <div
                           class="ant-empty-image"

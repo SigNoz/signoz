@@ -1,11 +1,26 @@
-import { Input, Select } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
+import {
+	Button,
+	Divider,
+	Input,
+	Select,
+	Space,
+	Switch,
+	Typography,
+} from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
+import history from 'lib/history';
 import { Dispatch, SetStateAction, useCallback } from 'react';
+import { Widgets } from 'types/api/dashboard/getAll';
 
 import { Container, Title } from './styles';
+import ThresholdSelector from './Threshold/ThresholdSelector';
+import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
 import YAxisUnitSelector from './YAxisUnitSelector';
 
@@ -23,6 +38,11 @@ function RightContainer({
 	yAxisUnit,
 	setYAxisUnit,
 	setGraphHandler,
+	thresholds,
+	setThresholds,
+	selectedWidget,
+	isFillSpans,
+	setIsFillSpans,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
 		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
@@ -33,6 +53,16 @@ function RightContainer({
 
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
+
+	const onCreateAlertsHandler = useCallback(() => {
+		if (!selectedWidget) return;
+
+		history.push(
+			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+				JSON.stringify(selectedWidget?.query),
+			)}`,
+		);
+	}, [selectedWidget]);
 
 	return (
 		<Container>
@@ -114,18 +144,45 @@ function RightContainer({
 				))}
 			</NullButtonContainer> */}
 
+			<Space style={{ marginTop: 10 }} direction="vertical">
+				<Typography>Fill span gaps</Typography>
+
+				<Switch
+					checked={isFillSpans}
+					onChange={(checked): void => setIsFillSpans(checked)}
+				/>
+			</Space>
+
 			<Title light="true">Panel Time Preference</Title>
 
-			<TimePreference
-				{...{
-					selectedTime,
-					setSelectedTime,
-				}}
-			/>
-			<YAxisUnitSelector
-				defaultValue={yAxisUnit}
-				onSelect={setYAxisUnit}
-				fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
+			<Space direction="vertical">
+				<TimePreference
+					{...{
+						selectedTime,
+						setSelectedTime,
+					}}
+				/>
+
+				<YAxisUnitSelector
+					defaultValue={yAxisUnit}
+					onSelect={setYAxisUnit}
+					fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
+				/>
+
+				{selectedWidget?.panelTypes !== PANEL_TYPES.TABLE && (
+					<Button icon={<UploadOutlined />} onClick={onCreateAlertsHandler}>
+						Create Alerts from Queries
+					</Button>
+				)}
+			</Space>
+
+			<Divider />
+
+			<ThresholdSelector
+				thresholds={thresholds}
+				setThresholds={setThresholds}
+				yAxisUnit={yAxisUnit}
+				selectedGraph={selectedGraph}
 			/>
 		</Container>
 	);
@@ -148,6 +205,15 @@ interface RightContainerProps {
 	yAxisUnit: string;
 	setYAxisUnit: Dispatch<SetStateAction<string>>;
 	setGraphHandler: (type: PANEL_TYPES) => void;
+	thresholds: ThresholdProps[];
+	setThresholds: Dispatch<SetStateAction<ThresholdProps[]>>;
+	selectedWidget?: Widgets;
+	isFillSpans: boolean;
+	setIsFillSpans: Dispatch<SetStateAction<boolean>>;
 }
+
+RightContainer.defaultProps = {
+	selectedWidget: undefined,
+};
 
 export default RightContainer;

@@ -152,6 +152,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
+	if err != nil {
+		return nil, err
+	}
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
 	if err != nil {

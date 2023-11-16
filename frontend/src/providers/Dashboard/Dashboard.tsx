@@ -1,4 +1,4 @@
-import { Modal } from 'antd';
+import Modal from 'antd/es/modal';
 import get from 'api/dashboard/get';
 import lockDashboardApi from 'api/dashboard/lockDashboard';
 import unlockDashboardApi from 'api/dashboard/unlockDashboard';
@@ -9,6 +9,9 @@ import dayjs, { Dayjs } from 'dayjs';
 import useAxiosError from 'hooks/useAxiosError';
 import useTabVisibility from 'hooks/useTabFocus';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
+import isEqual from 'lodash-es/isEqual';
+import isUndefined from 'lodash-es/isUndefined';
+import omitBy from 'lodash-es/omitBy';
 import {
 	createContext,
 	PropsWithChildren,
@@ -164,9 +167,18 @@ export function DashboardProvider({
 
 					dashboardRef.current = data;
 
-					setSelectedDashboard(data);
+					if (!isEqual(selectedDashboard, data)) {
+						setSelectedDashboard(data);
+					}
 
-					setLayouts(getUpdatedLayout(data.data.layout));
+					if (
+						!isEqual(
+							[omitBy(layouts, (value): boolean => isUndefined(value))[0]],
+							data.data.layout,
+						)
+					) {
+						setLayouts(getUpdatedLayout(data.data.layout));
+					}
 				}
 			},
 		},
