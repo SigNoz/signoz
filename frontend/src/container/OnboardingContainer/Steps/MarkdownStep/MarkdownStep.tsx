@@ -57,8 +57,6 @@ export default function MarkdownStep(): JSX.Element {
 	useEffect(() => {
 		const path = getFilePath();
 
-		console.log('path', path);
-
 		let docFilePaths;
 
 		if (selectedModule?.id === ModulesMap.APM) {
