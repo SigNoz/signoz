@@ -48,12 +48,15 @@ export default function SelectMethod(): JSX.Element {
 				<Space direction="vertical">
 					<Radio value={OnboardingMethods.RECOMMENDED_STEPS}>
 						<Typography.Text> Use Recommended Steps </Typography.Text> <br />
-						<small>Enter a short text about why we need the recommended steps.</small>
+						<small>
+							Send data to SigNoz via OpenTelemetry Collector (better control on data
+							you send to SigNoz, collect host metrics & logs).
+						</small>
 					</Radio>
 
 					<Radio value={OnboardingMethods.QUICK_START}>
 						<Typography.Text> Quick Start </Typography.Text> <br />
-						<small>Enter a short text about why we need the quick start</small>
+						<small>Send data to SigNoz directly from OpenTelemetry SDK.</small>
 					</Radio>
 				</Space>
 			</Radio.Group>
