@@ -55,6 +55,7 @@ function PipelinesListEmptyState(): JSX.Element {
 				<div className="logs-pipelines-empty-state-centered-container">
 					<iframe
 						className="logs-pipelines-empty-state-video-iframe"
+						sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
 						src="https://www.youtube.com/embed/OneENGNmLd0"
 						frameBorder="0"
 						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
