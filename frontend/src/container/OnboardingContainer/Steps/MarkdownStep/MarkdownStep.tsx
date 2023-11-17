@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { ApmDocFilePaths } from 'container/OnboardingContainer/constants/apmDocFilePaths';
 import { InfraMonitoringDocFilePaths } from 'container/OnboardingContainer/constants/infraMonitoringDocFilePaths';
@@ -67,7 +68,9 @@ export default function MarkdownStep(): JSX.Element {
 			docFilePaths = InfraMonitoringDocFilePaths;
 		}
 
-		if (docFilePaths[path]) {
+		// @ts-ignore
+		if (docFilePaths && docFilePaths[path]) {
+			// @ts-ignore
 			setMarkdownContent(docFilePaths[path]);
 		}
 
