@@ -3,9 +3,13 @@ import { loginApi } from '../fixtures/common';
 import ROUTES from 'constants/routes';
 import dashboardsListEmptyResponse from '../fixtures/api/dashboard/getDashboardListEmpty200.json';
 import createNewDashboardPostResponse from '../fixtures/api/dashboard/createNewDashboardPost200.json';
+import queryRangeSuccessResponse from '../fixtures/api/traces/queryRange200.json';
 import getIndividualDashboardResponse from '../fixtures/api/dashboard/getIndividualDashboard200.json';
 import putNewDashboardResponse from '../fixtures/api/dashboard/putNewDashboardUpdate200.json';
+import putDashboardTimeSeriesResponse from '../fixtures/api/dashboard/putDashboardWithTimeSeries200.json';
+import dashboardGetCallWithTimeSeriesWidgetResponse from '../fixtures/api/dashboard/dashboardGetCallWithTimeSeriesWidget200.json';
 import {
+	addPanelID,
 	configureDashboardDescriptonID,
 	configureDashboardNameID,
 	configureDashboardSettings,
@@ -17,8 +21,11 @@ import {
 	getDashboardsListEndpoint,
 	getIndividualDashboard,
 	getIndividualDashboardsEndpoint,
+	getTimeSeriesQueryData,
 	newDashboardBtnID,
 	saveConfigureDashboardID,
+	timeSeriesGraphName,
+	timeSeriesPanelID,
 } from './utils';
 
 let page: Page;
@@ -99,5 +106,38 @@ test.describe('Dashboards Landing Page', () => {
 			.textContent();
 
 		expect(dashboardDesc).toBe(`${dashboardDescription}`);
+
+		await page.locator(`data-testid=${addPanelID}`).click();
+
+		await getIndividualDashboard(page, putDashboardTimeSeriesResponse, true);
+
+		await getTimeSeriesQueryData(page, queryRangeSuccessResponse);
+
+		await page.locator(`id=${timeSeriesPanelID}`).click();
+
+		await page.waitForRequest(`**/${getIndividualDashboardsEndpoint}`);
+
+		const panelTitle = await page.getByText('Panel Title').isVisible();
+
+		await expect(panelTitle).toBeTruthy();
+
+		await page.getByPlaceholder('Title').type(`${timeSeriesGraphName}`);
+
+		await page.locator('data-testid=new-widget-save').click();
+
+		await getIndividualDashboard(
+			page,
+			dashboardGetCallWithTimeSeriesWidgetResponse,
+		);
+
+		await page.locator('span:has-text("OK")').click();
+
+		await page.waitForLoadState('networkidle');
+
+		const timeSeriesWidget = await await page.locator(
+			`data-testid=${timeSeriesGraphName}`,
+		);
+
+		await expect(timeSeriesWidget).toBeTruthy();
 	});
 });
