@@ -1,12 +1,15 @@
 import './OnboardingPage.styles.scss';
 
 import OnboardingContainer from 'container/OnboardingContainer';
+import { OnboardingContextProvider } from 'container/OnboardingContainer/context/OnboardingContext';
 
 function OnboardingPage(): JSX.Element {
 	return (
-		<div className="onboardingPageContainer">
-			<OnboardingContainer />
-		</div>
+		<OnboardingContextProvider>
+			<div className="onboardingPageContainer">
+				<OnboardingContainer />
+			</div>
+		</OnboardingContextProvider>
 	);
 }
 

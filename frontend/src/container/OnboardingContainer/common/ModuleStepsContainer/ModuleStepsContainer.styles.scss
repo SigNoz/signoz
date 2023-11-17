@@ -1,0 +1,155 @@
+.onboarding-module-steps {
+	display: flex;
+	flex-direction: row;
+	height: 100%;
+
+	.step-data {
+		height: 90%;
+		overflow: auto;
+		padding: 16px 0;
+
+		.step-content {
+			.step-name {
+				margin: 16px 0;
+			}
+
+			.data-source-title,
+			.environment-title,
+			.select-method-title {
+				display: block;
+				margin-bottom: 8px;
+
+				.required-symbol {
+					display: inline-block;
+					margin-inline-end: 0px;
+					color: #dc4446;
+					font-size: 14px;
+					font-family: SimSun, sans-serif;
+					line-height: 1;
+				}
+			}
+		}
+	}
+
+	.step-actions {
+		height: 10%;
+	}
+}
+
+.steps-container {
+	width: 20%;
+	height: 100%;
+}
+
+.selected-step-content {
+	width: 80%;
+	height: 100%;
+}
+
+.selected-step-pills {
+	display: flex;
+	margin-bottom: 24px;
+
+	.entity {
+		display: flex;
+		flex-direction: column;
+		margin-right: 48px;
+		text-align: center;
+
+		.entity-name {
+			margin-bottom: 12px;
+		}
+
+		.entity-value {
+			padding: 6px;
+			min-height: 30px;
+			border-radius: 3px;
+			min-width: 120px;
+			// text-transform: capitalize;
+			color: #1668dc;
+			background-color: #111a2c;
+			border-color: #111a2c;
+		}
+	}
+}
+
+.supported-languages-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+}
+
+.environment,
+.supported-language {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	gap: 12px;
+
+	min-width: 200px;
+	height: 100px;
+	border: none;
+	border-radius: 3px;
+	text-transform: capitalize;
+	text-align: center;
+
+	cursor: pointer;
+
+	&.selected {
+		color: #1668dc;
+		background-color: #111a2c;
+		border-color: #111a2c;
+	}
+
+	&:hover {
+		color: #1668dc;
+		background-color: #111a2c;
+		border-color: #111a2c;
+	}
+
+	.environment-name {
+		.ant-typography {
+			font-size: 12px !important;
+		}
+	}
+}
+
+.supported-langauge-img {
+	height: 40px;
+	width: 40px;
+}
+
+.selected-langauage-setup-instructions {
+	padding: 24px 0;
+}
+
+.lightMode {
+	.entity-value {
+		background-color: #e6f4ff !important;
+		border-color: #e6f4ff !important;
+	}
+
+	.environment,
+	.supported-language {
+		&.selected {
+			color: #1668dc;
+			background-color: #e6f4ff !important;
+			border-color: #e6f4ff !important;
+		}
+
+		&:hover {
+			color: #1668dc;
+			background-color: #e6f4ff !important;
+			border-color: #e6f4ff !important;
+		}
+	}
+
+	.markdown-container {
+		color: rgba(0, 0, 0, 0.88);
+	}
+}
+
+.error-container {
+	margin: 8px 0;
+}
