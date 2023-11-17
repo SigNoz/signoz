@@ -54,6 +54,72 @@ import LogsManagement_syslogs_macOsARM64_setupOtelCollector from '../Modules/Log
 import LogsManagement_syslogs_macOsARM64_configureReceiver from '../Modules/LogsManagement/SysLogs/md-docs/MacOsARM64/syslogs-macosamd64-configureReceiver.md';
 import LogsManagement_syslogs_macOsARM64_checkServiceStatus from '../Modules/LogsManagement/SysLogs/md-docs/MacOsARM64/syslogs-macosamd64-checkServiceStatus.md';
 
+// FluentD
+
+// //fluentbit-LinuxAMD64
+import LogsManagement_fluentBit_linuxAMD64_setupOtelCollector from '../Modules/LogsManagement/FluentBit/md-docs/LinuxAMD64/fluentbit-linuxamd64-installOtelCollector.md';
+import LogsManagement_fluentBit_linuxAMD64_configureReceiver from '../Modules/LogsManagement/FluentBit/md-docs/LinuxAMD64/fluentbit-linuxamd64-configureReceiver.md';
+import LogsManagement_fluentBit_linuxAMD64_restartOtelCollector from '../Modules/LogsManagement/FluentBit/md-docs/LinuxAMD64/fluentbit-linuxamd64-restartOtelCollector.md';
+
+// //fluentbit-LinuxARM64
+import LogsManagement_fluentBit_linuxARM64_setupOtelCollector from '../Modules/LogsManagement/FluentBit/md-docs/LinuxARM64/fluentbit-linuxarm64-installOtelCollector.md';
+import LogsManagement_fluentBit_linuxARM64_configureReceiver from '../Modules/LogsManagement/FluentBit/md-docs/LinuxARM64/fluentbit-linuxarm64-configureReceiver.md';
+import LogsManagement_fluentBit_linuxARM64_restartOtelCollector from '../Modules/LogsManagement/FluentBit/md-docs/LinuxARM64/fluentbit-linuxarm64-restartOtelCollector.md';
+
+// //fluentbit-MacOsAMD64
+import LogsManagement_fluentBit_macOsAMD64_setupOtelCollector from '../Modules/LogsManagement/FluentBit/md-docs/MacOsAMD64/fluentbit-macosamd64-installOtelCollector.md';
+import LogsManagement_fluentBit_macOsAMD64_configureReceiver from '../Modules/LogsManagement/FluentBit/md-docs/MacOsAMD64/fluentbit-macosamd64-configureReceiver.md';
+import LogsManagement_fluentBit_macOsAMD64_restartOtelCollector from '../Modules/LogsManagement/FluentBit/md-docs/MacOsAMD64/fluentbit-macosamd64-restartOtelCollector.md';
+
+// //fluentbit-MacOsARM64
+import LogsManagement_fluentBit_macOsARM64_setupOtelCollector from '../Modules/LogsManagement/FluentBit/md-docs/MacOsARM64/fluentbit-macosarm64-installOtelCollector.md';
+import LogsManagement_fluentBit_macOsARM64_configureReceiver from '../Modules/LogsManagement/FluentBit/md-docs/MacOsARM64/fluentbit-macosarm64-configureReceiver.md';
+import LogsManagement_fluentBit_macOsARM64_restartOtelCollector from '../Modules/LogsManagement/FluentBit/md-docs/MacOsARM64/fluentBit-macosarm64-restartOtelCollector.md';
+
+// FluentD
+
+// //fluentD-LinuxAMD64
+import LogsManagement_fluentD_linuxAMD64_setupOtelCollector from '../Modules/LogsManagement/FluentD/md-docs/LinuxAMD64/fluentd-linuxamd64-installOtelCollector.md';
+import LogsManagement_fluentD_linuxAMD64_configureReceiver from '../Modules/LogsManagement/FluentD/md-docs/LinuxAMD64/fluentd-linuxamd64-configureReceiver.md';
+import LogsManagement_fluentD_linuxAMD64_restartOtelCollector from '../Modules/LogsManagement/FluentD/md-docs/LinuxAMD64/fluentd-linuxamd64-restartOtelCollector.md';
+
+// //fluentd-LinuxARM64
+import LogsManagement_fluentD_linuxARM64_setupOtelCollector from '../Modules/LogsManagement/FluentD/md-docs/LinuxARM64/fluentd-linuxarm64-installOtelCollector.md';
+import LogsManagement_fluentD_linuxARM64_configureReceiver from '../Modules/LogsManagement/FluentD/md-docs/LinuxARM64/fluentd-linuxarm64-configureReceiver.md';
+import LogsManagement_fluentD_linuxARM64_restartOtelCollector from '../Modules/LogsManagement/FluentD/md-docs/LinuxARM64/fluentd-linuxarm64-restartOtelCollector.md';
+
+// //fluentd-MacOsAMD64
+import LogsManagement_fluentD_macOsAMD64_setupOtelCollector from '../Modules/LogsManagement/FluentD/md-docs/MacOsAMD64/fluentd-macosamd64-installOtelCollector.md';
+import LogsManagement_fluentD_macOsAMD64_configureReceiver from '../Modules/LogsManagement/FluentD/md-docs/MacOsAMD64/fluentd-macosamd64-configureReceiver.md';
+import LogsManagement_fluentD_macOsAMD64_restartOtelCollector from '../Modules/LogsManagement/FluentD/md-docs/MacOsAMD64/fluentd-macosamd64-restartOtelCollector.md';
+
+// //fluentd-MacOsARM64
+import LogsManagement_fluentD_macOsARM64_setupOtelCollector from '../Modules/LogsManagement/FluentD/md-docs/MacOsARM64/fluentd-macosarm64-installOtelCollector.md';
+import LogsManagement_fluentD_macOsARM64_configureReceiver from '../Modules/LogsManagement/FluentD/md-docs/MacOsARM64/fluentd-macosarm64-configureReceiver.md';
+import LogsManagement_fluentD_macOsARM64_restartOtelCollector from '../Modules/LogsManagement/FluentD/md-docs/MacOsARM64/fluentd-macosarm64-restartOtelCollector.md';
+
+// Logstash
+
+// //fluentD-LinuxAMD64
+import LogsManagement_logStash_linuxAMD64_setupOtelCollector from '../Modules/LogsManagement/Logstash/md-docs/LinuxAMD64/logstash-linuxamd64-installOtelCollector.md';
+import LogsManagement_logStash_linuxAMD64_configureReceiver from '../Modules/LogsManagement/Logstash/md-docs/LinuxAMD64/logstash-linuxamd64-configureReceiver.md';
+import LogsManagement_logStash_linuxAMD64_restartOtelCollector from '../Modules/LogsManagement/Logstash/md-docs/LinuxAMD64/logstash-linuxamd64-restartOtelCollector.md';
+
+// //logstash-LinuxARM64
+import LogsManagement_logStash_linuxARM64_setupOtelCollector from '../Modules/LogsManagement/Logstash/md-docs/LinuxARM64/logstash-linuxarm64-installOtelCollector.md';
+import LogsManagement_logStash_linuxARM64_configureReceiver from '../Modules/LogsManagement/Logstash/md-docs/LinuxARM64/logstash-linuxarm64-configureReceiver.md';
+import LogsManagement_logStash_linuxARM64_restartOtelCollector from '../Modules/LogsManagement/Logstash/md-docs/LinuxARM64/logstash-linuxarm64-restartOtelCollector.md';
+
+// //logstash-MacOsAMD64
+import LogsManagement_logStash_macOsAMD64_setupOtelCollector from '../Modules/LogsManagement/Logstash/md-docs/MacOsAMD64/logstash-macosamd64-installOtelCollector.md';
+import LogsManagement_logStash_macOsAMD64_configureReceiver from '../Modules/LogsManagement/Logstash/md-docs/MacOsAMD64/logstash-macosamd64-configureReceiver.md';
+import LogsManagement_logStash_macOsAMD64_restartOtelCollector from '../Modules/LogsManagement/Logstash/md-docs/MacOsAMD64/logstash-macosamd64-restartOtelCollector.md';
+
+// //logstash-MacOsARM64
+import LogsManagement_logStash_macOsARM64_setupOtelCollector from '../Modules/LogsManagement/Logstash/md-docs/MacOsARM64/logstash-macosarm64-installOtelCollector.md';
+import LogsManagement_logStash_macOsARM64_configureReceiver from '../Modules/LogsManagement/Logstash/md-docs/MacOsARM64/logstash-macosarm64-configureReceiver.md';
+import LogsManagement_logStash_macOsARM64_restartOtelCollector from '../Modules/LogsManagement/Logstash/md-docs/MacOsARM64/logstash-macosarm64-restartOtelCollector.md';
+
 export const LogsManagementDocFilePaths = {
 	// Kubernetes Pod Logs
 	LogsManagement_kubernetes_setupOtelCollector,
@@ -104,5 +170,69 @@ export const LogsManagementDocFilePaths = {
 	LogsManagement_application_logs_macOsARM64_recommendedSteps_configureReceiver,
 	LogsManagement_application_logs_macOsARM64_recommendedSteps_restartOtelCollector,
 
+	// FluentBit
+
+	// //FluentBit-LinuxAMD64
+	LogsManagement_fluentBit_linuxAMD64_setupOtelCollector,
+	LogsManagement_fluentBit_linuxAMD64_configureReceiver,
+	LogsManagement_fluentBit_linuxAMD64_restartOtelCollector,
+
+	// //FluentBit-LinuxARM64
+	LogsManagement_fluentBit_linuxARM64_setupOtelCollector,
+	LogsManagement_fluentBit_linuxARM64_configureReceiver,
+	LogsManagement_fluentBit_linuxARM64_restartOtelCollector,
+
+	// //FluentBit-MacOsAMD64
+	LogsManagement_fluentBit_macOsAMD64_setupOtelCollector,
+	LogsManagement_fluentBit_macOsAMD64_configureReceiver,
+	LogsManagement_fluentBit_macOsAMD64_restartOtelCollector,
+
+	// //FluentBit-MacOsARM64
+	LogsManagement_fluentBit_macOsARM64_setupOtelCollector,
+	LogsManagement_fluentBit_macOsARM64_configureReceiver,
+	LogsManagement_fluentBit_macOsARM64_restartOtelCollector,
+
+	// FluentD
+
+	// //FluentD-LinuxAMD64
+	LogsManagement_fluentD_linuxAMD64_setupOtelCollector,
+	LogsManagement_fluentD_linuxAMD64_configureReceiver,
+	LogsManagement_fluentD_linuxAMD64_restartOtelCollector,
+
+	// //FluentD-LinuxARM64
+	LogsManagement_fluentD_linuxARM64_setupOtelCollector,
+	LogsManagement_fluentD_linuxARM64_configureReceiver,
+	LogsManagement_fluentD_linuxARM64_restartOtelCollector,
+
+	// //FluentD-MacOsAMD64
+	LogsManagement_fluentD_macOsAMD64_setupOtelCollector,
+	LogsManagement_fluentD_macOsAMD64_configureReceiver,
+	LogsManagement_fluentD_macOsAMD64_restartOtelCollector,
+
+	// //FluentD-MacOsARM64
+	LogsManagement_fluentD_macOsARM64_setupOtelCollector,
+	LogsManagement_fluentD_macOsARM64_configureReceiver,
+	LogsManagement_fluentD_macOsARM64_restartOtelCollector,
+
+	// LogStash
+	// //LogStash-LinuxAMD64
+	LogsManagement_logStash_linuxAMD64_setupOtelCollector,
+	LogsManagement_logStash_linuxAMD64_configureReceiver,
+	LogsManagement_logStash_linuxAMD64_restartOtelCollector,
+
+	// //LogStash-LinuxARM64
+	LogsManagement_logStash_linuxARM64_setupOtelCollector,
+	LogsManagement_logStash_linuxARM64_configureReceiver,
+	LogsManagement_logStash_linuxARM64_restartOtelCollector,
+
+	// //LogStash-MacOsAMD64
+	LogsManagement_logStash_macOsAMD64_setupOtelCollector,
+	LogsManagement_logStash_macOsAMD64_configureReceiver,
+	LogsManagement_logStash_macOsAMD64_restartOtelCollector,
+
+	// //LogStash-MacOsARM64
+	LogsManagement_logStash_macOsARM64_setupOtelCollector,
+	LogsManagement_logStash_macOsARM64_configureReceiver,
+	LogsManagement_logStash_macOsARM64_restartOtelCollector,
 	// ------------------------------------------------------------------------------------------------
 };
