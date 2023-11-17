@@ -328,6 +328,7 @@ function ListOfAllDashboard(): JSX.Element {
 								<NewDashboardButton
 									icon={<PlusOutlined />}
 									type="primary"
+									data-testid="create-new-dashboard"
 									loading={newDashboardState.loading}
 									danger={newDashboardState.error}
 								>
