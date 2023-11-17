@@ -203,7 +203,7 @@ func (mds *ModelDaoSqlite) CreateUser(ctx context.Context,
 	}
 
 	telemetry.GetInstance().IdentifyUser(user)
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data, user.Email)
 
 	return user, nil
 }
