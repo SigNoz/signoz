@@ -2,7 +2,9 @@ import { Card, Typography } from 'antd';
 import cx from 'classnames';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { Server } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface SupportedEnvironmentsProps {
 	name: string;
@@ -34,12 +36,36 @@ const supportedEnvironments: SupportedEnvironmentsProps[] = [
 
 export default function EnvironmentDetails(): JSX.Element {
 	const {
+		activeStep,
+		selectedDataSource,
+		selectedFramework,
 		selectedEnvironment,
 		updateSelectedEnvironment,
 		selectedModule,
 		errorDetails,
 		updateErrorDetails,
 	} = useOnboardingContext();
+
+	const { trackEvent } = useAnalytics();
+
+	useEffect(() => {
+		// on language select
+		trackEvent('Onboarding: Environment Selected', {
+			dataSource: selectedDataSource,
+			framework: selectedFramework,
+			environment: selectedEnvironment,
+			module: {
+				name: activeStep?.module?.title,
+				id: activeStep?.module?.id,
+			},
+			step: {
+				name: activeStep?.step?.title,
+				id: activeStep?.step?.id,
+			},
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [selectedEnvironment]);
+
 	return (
 		<>
 			<Typography.Text className="environment-title">

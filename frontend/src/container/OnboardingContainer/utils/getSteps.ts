@@ -7,6 +7,7 @@ import {
 	DataSourceStep,
 	EnvDetailsStep,
 	InstallOpenTelemetryStep,
+	LogsTestConnectionStep,
 	PlotMetrics,
 	RestartOtelCollector,
 	RunApplicationStep,
@@ -48,15 +49,16 @@ export const getSteps = ({
 
 	switch (selectedDataSourceID) {
 		case 'kubernetes':
-			return [DataSourceStep, SetupOtelCollectorStep];
+			return [DataSourceStep, SetupOtelCollectorStep, LogsTestConnectionStep];
 
 		case 'docker':
-			return [DataSourceStep, CloneRepo, StartContainer];
+			return [DataSourceStep, CloneRepo, StartContainer, LogsTestConnectionStep];
 
 		case 'syslogs':
 			return [
 				DataSourceStep,
 				EnvDetailsStep,
+				SetupOtelCollectorStep,
 				ConfigureReceiver,
 				CheckServiceStatus,
 			];

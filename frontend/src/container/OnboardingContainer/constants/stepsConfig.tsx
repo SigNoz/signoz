@@ -2,6 +2,7 @@ import { SelectedModuleStepProps } from '../OnboardingContainer';
 import ConnectionStatus from '../Steps/ConnectionStatus/ConnectionStatus';
 import DataSource from '../Steps/DataSource/DataSource';
 import EnvironmentDetails from '../Steps/EnvironmentDetails/EnvironmentDetails';
+import LogsConnectionStatus from '../Steps/LogsConnectionStatus/LogsConnectionStatus';
 import MarkdownStep from '../Steps/MarkdownStep/MarkdownStep';
 import SelectMethod from '../Steps/SelectMethod/SelectMethod';
 
@@ -75,6 +76,12 @@ export const TestConnectionStep: SelectedModuleStepProps = {
 	id: stepsMap.testConnection,
 	title: 'Test Connection',
 	component: <ConnectionStatus />,
+};
+
+export const LogsTestConnectionStep: SelectedModuleStepProps = {
+	id: stepsMap.testConnection,
+	title: 'Test Connection',
+	component: <LogsConnectionStatus />,
 };
 
 export const ConfigureReceiver: SelectedModuleStepProps = {

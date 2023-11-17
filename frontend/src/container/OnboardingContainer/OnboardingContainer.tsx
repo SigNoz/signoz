@@ -4,10 +4,12 @@ import './Onboarding.styles.scss';
 
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
+import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
@@ -86,11 +88,36 @@ export default function Onboarding(): JSX.Element {
 		updateSelectedDataSource,
 		resetProgress,
 		updateActiveStep,
+		updateIngestionData,
 	} = useOnboardingContext();
 
 	useEffectOnce(() => {
 		trackEvent('Onboarding Started');
 	});
+
+	const { status, data: ingestionData } = useQuery({
+		queryFn: () => getIngestionData(),
+	});
+
+	useEffect(() => {
+		if (
+			status === 'success' &&
+			ingestionData &&
+			ingestionData &&
+			Array.isArray(ingestionData.payload)
+		) {
+			const payload = ingestionData.payload[0] || {
+				ingestionKey: '',
+				dataRegion: '',
+			};
+
+			updateIngestionData({
+				SIGNOZ_INGESTION_KEY: payload?.ingestionKey,
+				REGION: payload?.dataRegion,
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [status, ingestionData?.payload]);
 
 	const setModuleStepsBasedOnSelectedDataSource = (
 		selectedDataSource: DataSourceType | null,
@@ -161,14 +188,11 @@ export default function Onboarding(): JSX.Element {
 	}, [selectedModule]);
 
 	const handleNext = (): void => {
-		// Need to add logic to validate service name and then allow next step transition in APM module
-		const isFormValid = true;
-
-		if (isFormValid && activeStep <= 3) {
+		if (activeStep <= 3) {
 			const nextStep = activeStep + 1;
 
 			// on next
-			trackEvent('Onboarding: Next', {
+			trackEvent('Onboarding: Get Started', {
 				selectedModule: selectedModule.id,
 				nextStepId: nextStep,
 			});
