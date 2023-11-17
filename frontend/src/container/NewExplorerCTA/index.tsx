@@ -34,6 +34,7 @@ function NewExplorerCTA(): JSX.Element | null {
 				icon={<CompassOutlined />}
 				onClick={onClickHandler}
 				danger
+				data-testid="newExplorerCTA"
 				type="primary"
 			>
 				{buttonText[location.pathname]}

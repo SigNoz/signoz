@@ -1,0 +1,14 @@
+{
+	"status": "success",
+	"data": {
+		"attributeKeys": [
+			{
+				"key": "durationNano",
+				"dataType": "float64",
+				"type": "tag",
+				"isColumn": true,
+				"isJSON": false
+			}
+		]
+	}
+}
