@@ -1,5 +1,6 @@
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { TableLocale } from 'antd/es/table/interface';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
@@ -11,7 +12,6 @@ import {
 	PipelineData,
 	ProcessorData,
 } from 'types/api/pipeline/def';
-import { trackEvent } from 'utils/segmentAnalytics';
 
 import { tableComponents } from '../config';
 import { ModalFooterTitle } from '../styles';
@@ -39,6 +39,7 @@ function PipelineExpandView({
 }: PipelineExpandViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
+	const { trackEvent } = useAnalytics();
 	const isEditingActionMode = isActionMode === ActionMode.Editing;
 
 	const deleteProcessorHandler = useCallback(
@@ -194,6 +195,7 @@ function PipelineExpandView({
 		trackEvent('Logs: Pipelines: Clicked Add New Processor', {
 			source: 'signoz-ui',
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {

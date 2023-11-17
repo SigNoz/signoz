@@ -7,6 +7,7 @@ import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
 import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
@@ -25,7 +26,6 @@ import AppActions from 'types/actions';
 import { UPDATE_FEATURE_FLAG_RESPONSE } from 'types/actions/app';
 import AppReducer, { User } from 'types/reducer/app';
 import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
-import { trackPageView } from 'utils/segmentAnalytics';
 
 import PrivateRoute from './Private';
 import defaultRoutes, { AppRoutes, SUPPORT_ROUTE } from './routes';
@@ -40,6 +40,8 @@ function App(): JSX.Element {
 	>((state) => state.app);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+
+	const { trackPageView } = useAnalytics();
 
 	const { hostname, pathname } = window.location;
 
@@ -156,6 +158,7 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		trackPageView(pathname);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [pathname]);
 
 	return (

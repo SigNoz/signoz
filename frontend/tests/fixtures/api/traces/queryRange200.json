@@ -1,0 +1,26 @@
+{
+	"status": "success",
+	"data": {
+		"resultType": "",
+		"result": [
+			{
+				"queryName": "A",
+				"series": null,
+				"list": [
+					{
+						"timestamp": "2023-11-14T18:26:59.966905Z",
+						"data": {
+							"durationNano": 57896000,
+							"httpMethod": "GET",
+							"name": "HTTP GET /route",
+							"responseStatusCode": "200",
+							"serviceName": "route",
+							"spanID": "0e5da5411ccc8ea5",
+							"traceID": "00000000000000007008a05a3d9e5b97"
+						}
+					}
+				]
+			}
+		]
+	}
+}

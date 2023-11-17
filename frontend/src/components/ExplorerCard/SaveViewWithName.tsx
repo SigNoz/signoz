@@ -64,7 +64,12 @@ function SaveViewWithName({
 				>
 					<Input placeholder="Enter Name" />
 				</Form.Item>
-				<SaveButton htmlType="submit" type="primary" loading={isLoading}>
+				<SaveButton
+					htmlType="submit"
+					type="primary"
+					loading={isLoading}
+					data-testid="save-view-name-action-button"
+				>
 					Save
 				</SaveButton>
 			</Form>
