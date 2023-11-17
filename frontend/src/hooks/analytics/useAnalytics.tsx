@@ -7,7 +7,9 @@ const useAnalytics = (): any => {
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const trackPageView = (pageName: string): void => {
-		window.analytics.page(pageName);
+		if (user && user.email) {
+			window.analytics.page(pageName);
+		}
 	};
 
 	const trackEvent = (

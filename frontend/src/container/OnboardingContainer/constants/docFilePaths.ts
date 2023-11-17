@@ -734,8 +734,8 @@ export const docFilePaths = {
 
 	// Flask-Kubernetes
 	APM_python_flask_kubernetes_recommendedSteps_setupOtelCollector,
-	APM_python_flask_kubernetes_recommendedSteps_instrumentApplication,
-	APM_python_flask_kubernetes_recommendedSteps_runApplication,
+	// APM_python_flask_kubernetes_recommendedSteps_instrumentApplication,
+	// APM_python_flask_kubernetes_recommendedSteps_runApplication,
 
 	// Flask-LinuxAMD64-recommended
 	APM_python_flask_linuxAMD64_recommendedSteps_setupOtelCollector,

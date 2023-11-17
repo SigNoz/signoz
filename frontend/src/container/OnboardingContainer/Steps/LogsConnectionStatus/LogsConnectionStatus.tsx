@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Header from 'container/OnboardingContainer/common/Header/Header';
+import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useEffect, useState } from 'react';
@@ -18,23 +19,19 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
-interface ConnectionStatusProps {
-	logType: string;
-}
-
 const enum ApplicationLogsType {
 	FROM_LOG_FILE = 'from-log-file',
 	USING_OTEL_COLLECTOR = 'using-otel-sdk',
 }
 
-export default function LogsConnectionStatus({
-	logType,
-}: ConnectionStatusProps): JSX.Element {
+export default function LogsConnectionStatus(): JSX.Element {
 	const [loading, setLoading] = useState(true);
+	const { selectedDataSource } = useOnboardingContext();
 	const { trackEvent } = useAnalytics();
 	const [isReceivingData, setIsReceivingData] = useState(false);
 	const [pollingInterval, setPollingInterval] = useState<number | false>(15000); // initial Polling interval of 15 secs , Set to false after 5 mins
 	const [retryCount, setRetryCount] = useState(20); // Retry for 5 mins
+	const logType = selectedDataSource?.id;
 
 	const requestData: Query = {
 		queryType: EQueryType.QUERY_BUILDER,

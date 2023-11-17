@@ -157,11 +157,9 @@ function App(): JSX.Element {
 	}, [isLoggedInState, isOnBasicPlan, user]);
 
 	useEffect(() => {
-		if (user && user.email) {
-			trackPageView(pathname);
-		}
+		trackPageView(pathname);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [user, pathname]);
+	}, [pathname]);
 
 	return (
 		<ConfigProvider theme={themeConfig}>

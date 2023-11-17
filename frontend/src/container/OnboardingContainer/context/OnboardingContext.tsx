@@ -11,6 +11,7 @@ export const OnboardingMethods = {
 
 interface OnboardingContextData {
 	activeStep: any;
+	ingestionData: any;
 	serviceName: string;
 	selectedEnvironment: string;
 	selectedFramework: string;
@@ -26,6 +27,7 @@ interface OnboardingContextData {
 	updateSelectedMethod: (method: any) => void;
 	updateActiveStep: (step: any) => void;
 	updateErrorDetails: (errorDetails: any) => void;
+	updateIngestionData: (ingestionData: any) => void;
 	resetProgress: () => void;
 }
 
@@ -41,6 +43,7 @@ function OnboardingContextProvider({
 	children,
 }: OnboardingContextProviderProps): any {
 	const [serviceName, setServiceName] = useState<string>('');
+	const [ingestionData, setIngestionData] = useState<string>('');
 	const [activeStep, setActiveStep] = useState<any>(null);
 	const [selectedModule, setSelectedModule] = useState<ModuleProps | null>(
 		useCases.APM,
@@ -91,6 +94,10 @@ function OnboardingContextProvider({
 		setActiveStep(step);
 	};
 
+	const updateIngestionData = (ingestionData: any): void => {
+		setIngestionData(ingestionData);
+	};
+
 	const resetProgress = (): void => {
 		updateServiceName('');
 		setSelectedModule(useCases.APM);
@@ -111,6 +118,7 @@ function OnboardingContextProvider({
 		selectedEnvironment,
 		selectedMethod,
 		errorDetails,
+		ingestionData,
 		updateServiceName,
 		updateSelectedModule,
 		updateSelectedFramework,
@@ -120,6 +128,7 @@ function OnboardingContextProvider({
 		resetProgress,
 		updateActiveStep,
 		updateErrorDetails,
+		updateIngestionData,
 	};
 
 	return (
