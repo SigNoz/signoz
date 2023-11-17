@@ -1,5 +1,7 @@
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
-import { docFilePaths } from 'container/OnboardingContainer/constants/docFilePaths';
+import { ApmDocFilePaths } from 'container/OnboardingContainer/constants/apmDocFilePaths';
+import { InfraMonitoringDocFilePaths } from 'container/OnboardingContainer/constants/infraMonitoringDocFilePaths';
+import { LogsManagementDocFilePaths } from 'container/OnboardingContainer/constants/logsManagementDocFilePaths';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import { ModulesMap } from 'container/OnboardingContainer/OnboardingContainer';
 import useAnalytics from 'hooks/analytics/useAnalytics';
@@ -54,6 +56,18 @@ export default function MarkdownStep(): JSX.Element {
 
 	useEffect(() => {
 		const path = getFilePath();
+
+		console.log('path', path);
+
+		let docFilePaths;
+
+		if (selectedModule?.id === ModulesMap.APM) {
+			docFilePaths = ApmDocFilePaths;
+		} else if (selectedModule?.id === ModulesMap.LogsManagement) {
+			docFilePaths = LogsManagementDocFilePaths;
+		} else if (selectedModule?.id === ModulesMap.InfrastructureMonitoring) {
+			docFilePaths = InfraMonitoringDocFilePaths;
+		}
 
 		if (docFilePaths[path]) {
 			setMarkdownContent(docFilePaths[path]);

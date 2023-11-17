@@ -1,6 +1,3 @@
-// import LogsManagement_docker_cloneRepository from '../Modules/LogsManagement/Docker/md-docs/docker-cloneRepository.md';
-// import LogsManagement_docker_startContainer from '../Modules/LogsManagement/Docker/md-docs/docker-startContainers.md';
-
 /// ///////// APM
 
 /// // Java Start
@@ -482,24 +479,8 @@ import APM_rails_macOsARM64_quickStart_runApplication from '../Modules/APM/RubyO
 import APM_rails_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/RubyOnRails/md-docs/MacOsARM64/Recommended/ror-macosarm64-recommended-installOtelCollector.md';
 import APM_rails_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/RubyOnRails/md-docs/MacOsARM64/Recommended/ror-macosarm64-recommended-instrumentApplication.md';
 import APM_rails_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/RubyOnRails/md-docs/MacOsARM64/Recommended/ror-macosarm64-recommended-runApplication.md';
-// TODO: import Plot Metrics Step here
-// ----------------------------------------------------------------------------
-// Kubernetes Pod Logs Done
-// Docker Logs Start
-import LogsManagement_docker_cloneRepository from '../Modules/LogsManagement/Docker/md-docs/docker-cloneRepository.md';
-import LogsManagement_docker_startContainer from '../Modules/LogsManagement/Docker/md-docs/docker-startContainers.md';
-// ----------------------------------------------------------------------------
-// ROR Done
-/// /////// APM Done
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------
-/// ////////  Logs
-// Kubernetes Pod Logs Start
-import LogsManagement_kubernetes_setupOtelCollector from '../Modules/LogsManagement/Kubernetes/md-docs/kubernetes-installOtelCollector.md';
 
-// ----------------------------------------------------------------------------
-// Docekr Logs Done
-
-export const docFilePaths = {
+export const ApmDocFilePaths = {
 	// APM
 
 	/// //// Java Start
@@ -1140,49 +1121,4 @@ export const docFilePaths = {
 	// ROR-MacOsARM64-quickstart
 	APM_rails_macOsARM64_quickStart_instrumentApplication,
 	APM_rails_macOsARM64_quickStart_runApplication,
-
-	// ------------------------------------------------------------------------------------------------
-
-	/// ////////  Logs
-
-	// Kubernetes Pod Logs Start
-
-	LogsManagement_kubernetes_setupOtelCollector,
-	// TODO: import Plot Metrics Step here
-
-	// ----------------------------------------------------------------------------
-	// Kubernetes Pod Logs Done
-
-	// Docker Logs Start
-
-	// LogsManagement_kubernetes_setupOtelCollector,
-
-	LogsManagement_docker_cloneRepository,
-	LogsManagement_docker_startContainer,
-	// ----------------------------------------------------------------------------
-	// Docker Logs Done
-
-	// Application-Logs Start
-	// Application-Logs-LinuxAMD64
-
-	// LogsManagement_application_logs_linuxAMD64_setupOtelCollector,
-	// LogsManagement_application_logs_linuxAMD64_recommendedSteps_configureReceiver,
-	// LogsManagement_application_logs_linuxAMD64_recommendedSteps_restartOtelCollector,
-
-	// //Application-Logs-LinuxARM64
-	// LogsManagement_application_logs_linuxARM64_recommendedSteps_setupOtelCollector,
-	// LogsManagement_application_logs_linuxARM64_recommendedSteps_configureReceiver,
-	// LogsManagement_application_logs_linuxARM64_recommendedSteps_restartOtelCollector,
-
-	// //Application-Logs-MacOsAMD64
-	// LogsManagement_application_logs_macOsAMD64_recommendedSteps_setupOtelCollector,
-	// LogsManagement_application_logs_macOsAMD64_recommendedSteps_configureReceiver,
-	// LogsManagement_application_logs_macOsAMD64_recommendedSteps_restartOtelCollector,
-
-	// //Application-Logs-MacOsARM64
-	// LogsManagement_application_logs_macOsARM64_recommendedSteps_setupOtelCollector,
-	// LogsManagement_application_logs_macOsARM64_recommendedSteps_configureReceiver,
-	// LogsManagement_application_logs_macOsARM64_recommendedSteps_restartOtelCollector,
-
-	// ------------------------------------------------------------------------------------------------
 };

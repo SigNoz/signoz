@@ -89,8 +89,6 @@ export default function DataSource(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedFramework]);
 
-	console.log('activeStep', activeStep);
-
 	useEffect(() => {
 		if (selectedModule && selectedDataSource) {
 			const frameworks = hasFrameworks({
