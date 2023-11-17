@@ -84,7 +84,6 @@ export default function ModuleStepsContainer({
 		} = selectedDataSource as DataSourceType;
 
 		if (step.id === environmentDetailsStep && selectedEnvironment === '') {
-			console.log('hasError');
 			updateErrorDetails('Please select environment');
 			return false;
 		}
