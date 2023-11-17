@@ -50,9 +50,9 @@ import LogsManagement_syslogs_macOsAMD64_configureReceiver from '../Modules/Logs
 import LogsManagement_syslogs_macOsAMD64_checkServiceStatus from '../Modules/LogsManagement/SysLogs/md-docs/MacOsAMD64/syslogs-macosamd64-checkServiceStatus.md';
 
 // //Syslogs-MacOsARM64
-import LogsManagement_syslogs_macOsARM64_setupOtelCollector from '../Modules/LogsManagement/SysLogs/md-docs/MacOsARM64/syslogs-macosamd64-installOtelCollector.md';
-import LogsManagement_syslogs_macOsARM64_configureReceiver from '../Modules/LogsManagement/SysLogs/md-docs/MacOsARM64/syslogs-macosamd64-configureReceiver.md';
-import LogsManagement_syslogs_macOsARM64_checkServiceStatus from '../Modules/LogsManagement/SysLogs/md-docs/MacOsARM64/syslogs-macosamd64-checkServiceStatus.md';
+import LogsManagement_syslogs_macOsARM64_setupOtelCollector from '../Modules/LogsManagement/SysLogs/md-docs/MacOsARM64/syslogs-macosarm64-installOtelCollector.md';
+import LogsManagement_syslogs_macOsARM64_configureReceiver from '../Modules/LogsManagement/SysLogs/md-docs/MacOsARM64/syslogs-macosarm64-configureReceiver.md';
+import LogsManagement_syslogs_macOsARM64_checkServiceStatus from '../Modules/LogsManagement/SysLogs/md-docs/MacOsARM64/syslogs-macosarm64-checkServiceStatus.md';
 
 // FluentD
 
