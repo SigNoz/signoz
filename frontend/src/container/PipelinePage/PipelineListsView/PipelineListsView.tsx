@@ -1,5 +1,7 @@
+import './styles.scss';
+
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Modal, Table, Typography } from 'antd';
+import { Card, Modal, Table, Typography } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
 import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
@@ -19,6 +21,7 @@ import { trackEvent } from 'utils/segmentAnalytics';
 import { v4 } from 'uuid';
 
 import { tableComponents } from '../config';
+import PipelinesSearchSection from '../Layouts/Pipeline/PipelinesSearchSection';
 import AddNewPipeline from './AddNewPipeline';
 import AddNewProcessor from './AddNewProcessor';
 import { pipelineColumns } from './config';
@@ -47,28 +50,31 @@ import {
 function PipelinesListEmptyState(): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	return (
-		<div>
-			<iframe
-				width="100%"
-				src="https://www.youtube.com/embed/OneENGNmLd0"
-				frameBorder="0"
-				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-				allowFullScreen
-				title={t('learn_more')}
-				style={{ maxWidth: 600, height: 'min(60vh, 400px)' }}
-			/>
-			<div>
-				<Typography>
-					{t('learn_more')}&nbsp;
-					<a
-						href="https://signoz.io/docs/logs-pipelines/introduction/"
-						target="_blank"
-						rel="noreferrer"
-					>
-						here
-					</a>
-				</Typography>
-			</div>
+		<div className="logs-pipelines-empty-state-centered-container">
+			<Card size="small">
+				<div className="logs-pipelines-empty-state-centered-container">
+					<iframe
+						className="logs-pipelines-empty-state-video-iframe"
+						src="https://www.youtube.com/embed/OneENGNmLd0"
+						frameBorder="0"
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+						allowFullScreen
+						title={t('learn_more')}
+					/>
+					<div>
+						<Typography>
+							{t('learn_more')}&nbsp;
+							<a
+								href="https://signoz.io/docs/logs-pipelines/introduction/"
+								target="_blank"
+								rel="noreferrer"
+							>
+								here
+							</a>
+						</Typography>
+					</div>
+				</div>
+			</Card>
 		</div>
 	);
 }
@@ -80,11 +86,11 @@ function PipelineListsView({
 	setActionMode,
 	pipelineData,
 	refetchPipelineLists,
-	pipelineSearchValue,
 }: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline', 'common']);
 	const [modal, contextHolder] = Modal.useModal();
 	const { notifications } = useNotifications();
+	const [pipelineSearchValue, setPipelineSearchValue] = useState<string>('');
 	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
 		cloneDeep(pipelineData?.pipelines || []),
 	);
@@ -475,34 +481,40 @@ function PipelineListsView({
 				expandedPipelineData={expandedPipelineData()}
 				setExpandedPipelineData={setExpandedPipelineData}
 			/>
-			<Container>
-				<ModeAndConfiguration
-					isActionMode={isActionMode}
-					version={pipelineData?.version}
-				/>
-				<DndProvider backend={HTML5Backend}>
-					<Table
-						rowKey="id"
-						columns={columns}
-						expandedRowRender={expandedRowView}
-						expandable={expandableConfig}
-						components={tableComponents}
-						dataSource={visibleCurrPipelines}
-						onRow={onRowHandler}
-						footer={footer}
-						pagination={false}
-						locale={{
-							emptyText: <PipelinesListEmptyState />,
-						}}
-					/>
-				</DndProvider>
-				{showSaveButton && (
-					<SaveConfigButton
-						onSaveConfigurationHandler={onSaveConfigurationHandler}
-						onCancelConfigurationHandler={onCancelConfigurationHandler}
-					/>
-				)}
-			</Container>
+			{prevPipelineData?.length > 0 ? (
+				<>
+					<PipelinesSearchSection setPipelineSearchValue={setPipelineSearchValue} />
+					<Container>
+						<ModeAndConfiguration
+							isActionMode={isActionMode}
+							version={pipelineData?.version}
+						/>
+						<DndProvider backend={HTML5Backend}>
+							<Table
+								rowKey="id"
+								columns={columns}
+								expandedRowRender={expandedRowView}
+								expandable={expandableConfig}
+								components={tableComponents}
+								dataSource={visibleCurrPipelines}
+								onRow={onRowHandler}
+								footer={footer}
+								pagination={false}
+							/>
+						</DndProvider>
+						{showSaveButton && (
+							<SaveConfigButton
+								onSaveConfigurationHandler={onSaveConfigurationHandler}
+								onCancelConfigurationHandler={onCancelConfigurationHandler}
+							/>
+						)}
+					</Container>
+				</>
+			) : (
+				<Container>
+					<PipelinesListEmptyState />
+				</Container>
+			)}
 		</>
 	);
 }
@@ -514,7 +526,6 @@ interface PipelineListsViewProps {
 	setActionMode: (actionMode: ActionMode) => void;
 	pipelineData: Pipeline;
 	refetchPipelineLists: VoidFunction;
-	pipelineSearchValue: string;
 }
 
 interface ExpandRowConfig {
