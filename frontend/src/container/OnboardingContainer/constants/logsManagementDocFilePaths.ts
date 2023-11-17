@@ -13,23 +13,24 @@ import LogsManagement_kubernetes_setupOtelCollector from '../Modules/LogsManagem
 
 // LINUX AMD 64
 import LogsManagement_application_logs_linuxAMD64_setupOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/LinuxAMD64/appplicationLogs-linuxamd64-installOtelCollector.md';
-import LogsManagement_application_logs_linuxAMD64_recommendedSteps_configureReceiver from '../Modules/LogsManagement/ApplicationLogs/md-docs/LinuxAMD64/appplicationLogs-linuxamd64-configureReceiver.md';
-import LogsManagement_application_logs_linuxAMD64_recommendedSteps_restartOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/LinuxAMD64/appplicationLogs-linuxamd64-runOtelCollector.md';
+
+import LogsManagement_application_logs_linuxAMD64_configureReceiver from '../Modules/LogsManagement/ApplicationLogs/md-docs/LinuxAMD64/appplicationLogs-linuxamd64-configureReceiver.md';
+import LogsManagement_application_logs_linuxAMD64_restartOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/LinuxAMD64/appplicationLogs-linuxamd64-runOtelCollector.md';
 
 // LINUX ARM 64
-import LogsManagement_application_logs_linuxARM64_recommendedSteps_setupOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/LinuxARM64/appplicationLogs-linuxarm64-installOtelCollector.md';
-import LogsManagement_application_logs_linuxARM64_recommendedSteps_configureReceiver from '../Modules/LogsManagement/ApplicationLogs/md-docs/LinuxARM64/appplicationLogs-linuxarm64-configureReceiver.md';
-import LogsManagement_application_logs_linuxARM64_recommendedSteps_restartOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/LinuxARM64/appplicationLogs-linuxarm64-runOtelCollector.md';
+import LogsManagement_application_logs_linuxARM64_setupOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/LinuxARM64/appplicationLogs-linuxarm64-installOtelCollector.md';
+import LogsManagement_application_logs_linuxARM64_configureReceiver from '../Modules/LogsManagement/ApplicationLogs/md-docs/LinuxARM64/appplicationLogs-linuxarm64-configureReceiver.md';
+import LogsManagement_application_logs_linuxARM64_restartOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/LinuxARM64/appplicationLogs-linuxarm64-runOtelCollector.md';
 
 // MacOS AMD 64
-import LogsManagement_application_logs_macOsAMD64_recommendedSteps_setupOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/MacOsAMD64/appplicationLogs-macosamd64-installOtelCollector.md';
-import LogsManagement_application_logs_macOsAMD64_recommendedSteps_configureReceiver from '../Modules/LogsManagement/ApplicationLogs/md-docs/MacOsAMD64/appplicationLogs-macosamd64-configureReceiver.md';
-import LogsManagement_application_logs_macOsAMD64_recommendedSteps_restartOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/MacOsAMD64/appplicationLogs-macosamd64-runOtelCollector.md';
+import LogsManagement_application_logs_macOsAMD64_setupOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/MacOsAMD64/appplicationLogs-macosamd64-installOtelCollector.md';
+import LogsManagement_application_logs_macOsAMD64_configureReceiver from '../Modules/LogsManagement/ApplicationLogs/md-docs/MacOsAMD64/appplicationLogs-macosamd64-configureReceiver.md';
+import LogsManagement_application_logs_macOsAMD64_restartOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/MacOsAMD64/appplicationLogs-macosamd64-runOtelCollector.md';
 
 // MacOS ARM 64
-import LogsManagement_application_logs_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/MacOsARM64/appplicationLogs-macosarm64-installOtelCollector.md';
-import LogsManagement_application_logs_macOsARM64_recommendedSteps_configureReceiver from '../Modules/LogsManagement/ApplicationLogs/md-docs/MacOsARM64/appplicationLogs-macosarm64-configureReceiver.md';
-import LogsManagement_application_logs_macOsARM64_recommendedSteps_restartOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/MacOsARM64/appplicationLogs-macosarm64-runOtelCollector.md';
+import LogsManagement_application_logs_macOsARM64_setupOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/MacOsARM64/appplicationLogs-macosarm64-installOtelCollector.md';
+import LogsManagement_application_logs_macOsARM64_configureReceiver from '../Modules/LogsManagement/ApplicationLogs/md-docs/MacOsARM64/appplicationLogs-macosarm64-configureReceiver.md';
+import LogsManagement_application_logs_macOsARM64_restartOtelCollector from '../Modules/LogsManagement/ApplicationLogs/md-docs/MacOsARM64/appplicationLogs-macosarm64-runOtelCollector.md';
 // Application Logs End
 
 // Syslogs
@@ -152,23 +153,23 @@ export const LogsManagementDocFilePaths = {
 
 	// Application-Logs
 	LogsManagement_application_logs_linuxAMD64_setupOtelCollector,
-	LogsManagement_application_logs_linuxAMD64_recommendedSteps_configureReceiver,
-	LogsManagement_application_logs_linuxAMD64_recommendedSteps_restartOtelCollector,
+	LogsManagement_application_logs_linuxAMD64_configureReceiver,
+	LogsManagement_application_logs_linuxAMD64_restartOtelCollector,
 
 	// //Application-Logs-LinuxARM64
-	LogsManagement_application_logs_linuxARM64_recommendedSteps_setupOtelCollector,
-	LogsManagement_application_logs_linuxARM64_recommendedSteps_configureReceiver,
-	LogsManagement_application_logs_linuxARM64_recommendedSteps_restartOtelCollector,
+	LogsManagement_application_logs_linuxARM64_setupOtelCollector,
+	LogsManagement_application_logs_linuxARM64_configureReceiver,
+	LogsManagement_application_logs_linuxARM64_restartOtelCollector,
 
 	// //Application-Logs-MacOsAMD64
-	LogsManagement_application_logs_macOsAMD64_recommendedSteps_setupOtelCollector,
-	LogsManagement_application_logs_macOsAMD64_recommendedSteps_configureReceiver,
-	LogsManagement_application_logs_macOsAMD64_recommendedSteps_restartOtelCollector,
+	LogsManagement_application_logs_macOsAMD64_setupOtelCollector,
+	LogsManagement_application_logs_macOsAMD64_configureReceiver,
+	LogsManagement_application_logs_macOsAMD64_restartOtelCollector,
 
 	// //Application-Logs-MacOsARM64
-	LogsManagement_application_logs_macOsARM64_recommendedSteps_setupOtelCollector,
-	LogsManagement_application_logs_macOsARM64_recommendedSteps_configureReceiver,
-	LogsManagement_application_logs_macOsARM64_recommendedSteps_restartOtelCollector,
+	LogsManagement_application_logs_macOsARM64_setupOtelCollector,
+	LogsManagement_application_logs_macOsARM64_configureReceiver,
+	LogsManagement_application_logs_macOsARM64_restartOtelCollector,
 
 	// FluentBit
 

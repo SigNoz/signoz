@@ -66,6 +66,7 @@ export default function ModuleStepsContainer({
 		selectedFramework,
 		updateActiveStep,
 		updateErrorDetails,
+		resetProgress,
 	} = useOnboardingContext();
 
 	const [current, setCurrent] = useState(0);
@@ -139,6 +140,7 @@ export default function ModuleStepsContainer({
 
 		if (isValid) {
 			if (current === lastStepIndex) {
+				resetProgress();
 				redirectToModules();
 				return;
 			}
