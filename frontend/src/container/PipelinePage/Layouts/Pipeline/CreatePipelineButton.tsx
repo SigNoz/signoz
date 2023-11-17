@@ -40,7 +40,10 @@ function CreatePipelineButton({
 
 	return (
 		<ButtonContainer>
-			<TextToolTip text={t('add_new_pipeline')} />
+			<TextToolTip
+				text={t('learn_more')}
+				url="https://signoz.io/docs/logs-pipelines/introduction/"
+			/>
 			{isAddNewPipelineVisible && (
 				<CustomButton
 					icon={<EditFilled />}
