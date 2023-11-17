@@ -66,6 +66,7 @@ export default function ModuleStepsContainer({
 		selectedFramework,
 		updateActiveStep,
 		updateErrorDetails,
+		resetProgress,
 	} = useOnboardingContext();
 
 	const [current, setCurrent] = useState(0);
@@ -84,7 +85,6 @@ export default function ModuleStepsContainer({
 		} = selectedDataSource as DataSourceType;
 
 		if (step.id === environmentDetailsStep && selectedEnvironment === '') {
-			console.log('hasError');
 			updateErrorDetails('Please select environment');
 			return false;
 		}
@@ -140,6 +140,7 @@ export default function ModuleStepsContainer({
 
 		if (isValid) {
 			if (current === lastStepIndex) {
+				resetProgress();
 				redirectToModules();
 				return;
 			}
