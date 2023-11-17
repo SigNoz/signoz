@@ -383,8 +383,8 @@ import APM_python_fastAPI_macOsARM64_recommendedSteps_runApplication from '../Mo
 // Flask
 // Flask-Kubernetes
 import APM_python_flask_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/Flask/Kubernetes/flask-kubernetes-installOtelCollector.md';
-import APM_python_flask_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Flask/Kubernetes/flask-kubernetes-instrumentApplication.md';
-import APM_python_flask_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Flask/Kubernetes/flask-kubernetes-runApplication.md';
+// import APM_python_flask_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Flask/Kubernetes/flask-kubernetes-instrumentApplication.md';
+// import APM_python_flask_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Flask/Kubernetes/flask-kubernetes-runApplication.md';
 // Flask-LinuxAMD64-quickstart
 import APM_python_flask_linuxAMD64_quickStart_instrumentApplication from '../Modules/APM/Python/md-docs/Flask/LinuxAMD64/QuickStart/flask-linuxamd64-quickStart-instrumentApplication.md';
 import APM_python_flask_linuxAMD64_quickStart_runApplication from '../Modules/APM/Python/md-docs/Flask/LinuxAMD64/QuickStart/flask-linuxamd64-quickStart-runApplication.md';
