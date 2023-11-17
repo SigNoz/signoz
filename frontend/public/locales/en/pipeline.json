@@ -5,6 +5,7 @@
 	"create": "Create",
 	"reorder": "Reorder",
 	"cancel": "Cancel",
+	"learn_more": "Learn more about pipelines",
 	"reorder_pipeline": "Do you want to reorder pipeline?",
 	"reorder_pipeline_description": "Logs are processed sequentially in processors and pipelines. Reordering it may change how data is processed by them.",
 	"delete_pipeline": "Do you want to delete pipeline",
