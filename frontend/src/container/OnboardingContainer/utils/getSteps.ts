@@ -78,9 +78,19 @@ export const getSteps = ({
 		case 'kubernetesInfraMetrics':
 			return [DataSourceStep, SetupOtelCollectorStep, PlotMetrics];
 		case 'hostMetrics':
-			return [DataSourceStep, SetupOtelCollectorStep, ConfigureHostmetricsJSON];
+			return [
+				DataSourceStep,
+				EnvDetailsStep,
+				SetupOtelCollectorStep,
+				ConfigureHostmetricsJSON,
+			];
 		case 'otherMetrics':
-			return [DataSourceStep, SetupOtelCollectorStep, ConfigureMetricsReceiver];
+			return [
+				DataSourceStep,
+				EnvDetailsStep,
+				SetupOtelCollectorStep,
+				ConfigureMetricsReceiver,
+			];
 		default:
 			return [DataSourceStep];
 	}
