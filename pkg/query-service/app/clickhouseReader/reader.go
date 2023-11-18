@@ -2456,11 +2456,18 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTr
 func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName string) (model.TTLStatusItem, *model.ApiError) {
 	statusItem := []model.TTLStatusItem{}
 
-	query := fmt.Sprintf("SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = '%s' ORDER BY created_at DESC", tableName)
+	query := `SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = ? ORDER BY created_at DESC`
 
-	err := r.localDB.Select(&statusItem, query)
+	zap.S().Info(query, tableName)
 
-	zap.S().Info(query)
+	stmt, err := r.localDB.Preparex(query)
+
+	if err != nil {
+		zap.S().Debug("Error preparing query for checkTTLStatusItem: ", err)
+		return model.TTLStatusItem{}, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	err = stmt.Select(&statusItem, tableName)
 
 	if len(statusItem) == 0 {
 		return model.TTLStatusItem{}, nil
