@@ -42,6 +42,7 @@ export const columns: ColumnsType<ListItem['data']> = [
 				href={generatePath(ROUTES.TRACE_DETAIL, {
 					id: traceID,
 				})}
+				data-testid="trace-id"
 			>
 				{traceID}
 			</Typography.Link>

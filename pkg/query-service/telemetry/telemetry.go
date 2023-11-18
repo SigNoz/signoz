@@ -22,26 +22,38 @@ import (
 )
 
 const (
-	TELEMETRY_EVENT_PATH                  = "API Call"
-	TELEMETRY_EVENT_USER                  = "User"
-	TELEMETRY_EVENT_INPRODUCT_FEEDBACK    = "InProduct Feeback Submitted"
-	TELEMETRY_EVENT_NUMBER_OF_SERVICES    = "Number of Services"
-	TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH = "Number of Services V2"
-	TELEMETRY_EVENT_HEART_BEAT            = "Heart Beat"
-	TELEMETRY_EVENT_ORG_SETTINGS          = "Org Settings"
-	DEFAULT_SAMPLING                      = 0.1
-	TELEMETRY_LICENSE_CHECK_FAILED        = "License Check Failed"
-	TELEMETRY_LICENSE_UPDATED             = "License Updated"
-	TELEMETRY_LICENSE_ACT_FAILED          = "License Activation Failed"
-	TELEMETRY_EVENT_ENVIRONMENT           = "Environment"
-	TELEMETRY_EVENT_LANGUAGE              = "Language"
-	TELEMETRY_EVENT_LOGS_FILTERS          = "Logs Filters"
-	TELEMETRY_EVENT_DISTRIBUTED           = "Distributed"
-	TELEMETRY_EVENT_QUERY_RANGE_V3        = "Query Range V3 Metadata"
-	TELEMETRY_EVENT_ACTIVE_USER           = "Active User"
-	TELEMETRY_EVENT_ACTIVE_USER_PH        = "Active User V2"
-	DEFAULT_CLOUD_EMAIL                   = "admin@signoz.cloud"
+	TELEMETRY_EVENT_PATH                     = "API Call"
+	TELEMETRY_EVENT_USER                     = "User"
+	TELEMETRY_EVENT_INPRODUCT_FEEDBACK       = "InProduct Feedback Submitted"
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES       = "Number of Services"
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH    = "Number of Services V2"
+	TELEMETRY_EVENT_HEART_BEAT               = "Heart Beat"
+	TELEMETRY_EVENT_ORG_SETTINGS             = "Org Settings"
+	DEFAULT_SAMPLING                         = 0.1
+	TELEMETRY_LICENSE_CHECK_FAILED           = "License Check Failed"
+	TELEMETRY_LICENSE_UPDATED                = "License Updated"
+	TELEMETRY_LICENSE_ACT_FAILED             = "License Activation Failed"
+	TELEMETRY_EVENT_ENVIRONMENT              = "Environment"
+	TELEMETRY_EVENT_LANGUAGE                 = "Language"
+	TELEMETRY_EVENT_LOGS_FILTERS             = "Logs Filters"
+	TELEMETRY_EVENT_DISTRIBUTED              = "Distributed"
+	TELEMETRY_EVENT_QUERY_RANGE_V3           = "Query Range V3 Metadata"
+	TELEMETRY_EVENT_ACTIVE_USER              = "Active User"
+	TELEMETRY_EVENT_ACTIVE_USER_PH           = "Active User V2"
+	TELEMETRY_EVENT_USER_INVITATION_SENT     = "User Invitation Sent"
+	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED = "User Invitation Accepted"
+	DEFAULT_CLOUD_EMAIL                      = "admin@signoz.cloud"
 )
+
+var SAAS_EVENTS_LIST = map[string]struct{}{
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES:       {},
+	TELEMETRY_EVENT_ACTIVE_USER:              {},
+	TELEMETRY_EVENT_HEART_BEAT:               {},
+	TELEMETRY_EVENT_LANGUAGE:                 {},
+	TELEMETRY_EVENT_ENVIRONMENT:              {},
+	TELEMETRY_EVENT_USER_INVITATION_SENT:     {},
+	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED: {},
+}
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
 const ph_api_key = "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w"
@@ -268,7 +280,7 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
-	if a.saasOperator != nil && user.Name != "" {
+	if a.saasOperator != nil {
 		a.saasOperator.Enqueue(analytics.Identify{
 			UserId: a.userEmail,
 			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
@@ -391,8 +403,10 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 		userId = a.GetDistinctId()
 	}
 
-	if a.saasOperator != nil && a.GetUserEmail() != "" &&
-		(event == TELEMETRY_EVENT_NUMBER_OF_SERVICES || event == TELEMETRY_EVENT_ACTIVE_USER) {
+	// check if event is part of SAAS_EVENTS_LIST
+	_, isSaaSEvent := SAAS_EVENTS_LIST[event]
+
+	if a.saasOperator != nil && a.GetUserEmail() != "" && isSaaSEvent {
 		a.saasOperator.Enqueue(analytics.Track{
 			Event:      event,
 			UserId:     a.GetUserEmail(),
