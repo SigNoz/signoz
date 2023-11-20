@@ -237,7 +237,9 @@ function Threshold({
 							{(selectedGraph === PANEL_TYPES.VALUE ||
 								selectedGraph === PANEL_TYPES.TABLE) && (
 								<>
-									<Typography.Text>If value is</Typography.Text>
+									<Typography.Text>
+										If value {selectedGraph === PANEL_TYPES.TABLE ? 'in' : 'is'}
+									</Typography.Text>
 									{isEditMode ? (
 										<>
 											{selectedGraph === PANEL_TYPES.TABLE && (
