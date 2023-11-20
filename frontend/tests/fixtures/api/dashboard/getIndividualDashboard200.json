@@ -1,0 +1,16 @@
+{
+	"status": "success",
+	"data": {
+		"id": 219,
+		"uuid": "d697fddb-a771-4bb4-aa38-810f000ed96a",
+		"created_at": "2023-11-17T18:36:36.185916891Z",
+		"created_by": "vikrant@signoz.io",
+		"updated_at": "2023-11-17T18:36:36.185916989Z",
+		"updated_by": "vikrant@signoz.io",
+		"data": {
+			"title": "Sample Title",
+			"uploadedGrafana": false
+		},
+		"isLocked": 0
+	}
+}

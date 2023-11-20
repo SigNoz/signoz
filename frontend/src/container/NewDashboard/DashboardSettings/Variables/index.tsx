@@ -181,6 +181,7 @@ function VariablesSetting(): JSX.Element {
 				<>
 					<Row style={{ flexDirection: 'row-reverse', padding: '0.5rem 0' }}>
 						<Button
+							data-testid="add-new-variable"
 							type="primary"
 							onClick={(): void =>
 								onVariableViewModeEnter('ADD', {} as IDashboardVariable)
