@@ -1,7 +1,7 @@
 import patchAlert from 'api/alerts/patch';
 import { State } from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { GettableAlert } from 'types/api/alerts/get';
 import { PayloadProps as PatchPayloadProps } from 'types/api/alerts/patch';
 
@@ -104,7 +104,7 @@ function ToggleAlertState({
 interface ToggleAlertStateProps {
 	id: GettableAlert['id'];
 	disabled: boolean;
-	setData: React.Dispatch<React.SetStateAction<GettableAlert[]>>;
+	setData: Dispatch<SetStateAction<GettableAlert[]>>;
 }
 
 export default ToggleAlertState;

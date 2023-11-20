@@ -1,56 +1,60 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { StaticLineProps } from 'components/Graph';
 import Spinner from 'components/Spinner';
-import GridGraphComponent from 'container/GridGraphComponent';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import GridPanelSwitch from 'container/GridPanelSwitch';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
-import getChartData from 'lib/getChartData';
-import React, { useMemo } from 'react';
+import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useResizeObserver } from 'hooks/useDimensions';
+import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartData';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getChartData';
+import { useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
-import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
-import { Query } from 'types/api/dashboard/getAll';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { AlertDef } from 'types/api/alerts/def';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
+import { covertIntoDataFormats } from './utils';
 
 export interface ChartPreviewProps {
 	name: string;
-	query: Query | undefined;
-	graphType?: GRAPH_TYPES;
+	query: Query | null;
+	graphType?: PANEL_TYPES;
 	selectedTime?: timePreferenceType;
 	selectedInterval?: Time;
 	headline?: JSX.Element;
-	threshold?: number | undefined;
+	alertDef?: AlertDef;
 	userQueryKey?: string;
-}
-interface QueryResponseError {
-	message?: string;
+	allowSelectedIntervalForStepGen?: boolean;
 }
 
 function ChartPreview({
 	name,
 	query,
-	graphType = 'TIME_SERIES',
+	graphType = PANEL_TYPES.TIME_SERIES,
 	selectedTime = 'GLOBAL_TIME',
 	selectedInterval = '5min',
 	headline,
-	threshold,
 	userQueryKey,
+	allowSelectedIntervalForStepGen = false,
+	alertDef,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
-	const staticLine: StaticLineProps | undefined =
-		threshold !== undefined
-			? {
-					yMin: threshold,
-					yMax: threshold,
-					borderColor: '#f14',
-					borderWidth: 1,
-					lineText: `${t('preview_chart_threshold_label')} (y=${threshold})`,
-					textColor: '#f14',
-			  }
-			: undefined;
+	const threshold = alertDef?.condition.target || 0;
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const thresholdValue = covertIntoDataFormats({
+		value: threshold,
+		sourceUnit: alertDef?.condition.targetUnit,
+		targetUnit: query?.unit,
+	});
 
 	const canQuery = useMemo((): boolean => {
 		if (!query || query == null) {
@@ -59,57 +63,83 @@ function ChartPreview({
 
 		switch (query?.queryType) {
 			case EQueryType.PROM:
-				return query.promQL?.length > 0 && query.promQL[0].query !== '';
+				return query.promql?.length > 0 && query.promql[0].query !== '';
 			case EQueryType.CLICKHOUSE:
 				return (
-					query.clickHouse?.length > 0 && query.clickHouse[0].rawQuery?.length > 0
+					query.clickhouse_sql?.length > 0 &&
+					query.clickhouse_sql[0].query?.length > 0
 				);
 			case EQueryType.QUERY_BUILDER:
 				return (
-					query.metricsBuilder?.queryBuilder?.length > 0 &&
-					query.metricsBuilder?.queryBuilder[0].metricName !== ''
+					query.builder.queryData.length > 0 &&
+					query.builder.queryData[0].queryName !== ''
 				);
 			default:
 				return false;
 		}
 	}, [query]);
 
-	const queryResponse = useQuery({
-		queryKey: [
-			'chartPreview',
-			userQueryKey || JSON.stringify(query),
-			selectedInterval,
-		],
-		queryFn: () =>
-			GetMetricQueryRange({
-				query: query || {
-					queryType: 1,
-					promQL: [],
-					metricsBuilder: {
-						formulas: [],
-						queryBuilder: [],
-					},
-					clickHouse: [],
-				},
-				globalSelectedInterval: selectedInterval,
-				graphType,
-				selectedTime,
-			}),
-		retry: false,
-		enabled: canQuery,
-	});
+	const queryResponse = useGetQueryRange(
+		{
+			query: query || initialQueriesMap.metrics,
+			globalSelectedInterval: selectedInterval,
+			graphType,
+			selectedTime,
+			params: {
+				allowSelectedIntervalForStepGen,
+			},
+		},
+		{
+			queryKey: [
+				'chartPreview',
+				userQueryKey || JSON.stringify(query),
+				selectedInterval,
+				minTime,
+				maxTime,
+			],
+			retry: false,
+			enabled: canQuery,
+		},
+	);
 
-	const chartDataSet = queryResponse.isError
-		? null
-		: getChartData({
-				queryData: [
+	const graphRef = useRef<HTMLDivElement>(null);
+
+	const chartData = getUPlotChartData(queryResponse?.data?.payload);
+
+	const containerDimensions = useResizeObserver(graphRef);
+
+	const isDarkMode = useIsDarkMode();
+
+	const options = useMemo(
+		() =>
+			getUPlotChartOptions({
+				id: 'alert_legend_widget',
+				yAxisUnit: query?.unit,
+				apiResponse: queryResponse?.data?.payload,
+				dimensions: containerDimensions,
+				isDarkMode,
+				thresholds: [
 					{
-						queryData: queryResponse?.data?.payload?.data?.result
-							? queryResponse?.data?.payload?.data?.result
-							: [],
+						index: '0', // no impact
+						keyIndex: 0,
+						moveThreshold: (): void => {},
+						selectedGraph: PANEL_TYPES.TIME_SERIES, // no impact
+						thresholdValue,
+						thresholdLabel: `${t(
+							'preview_chart_threshold_label',
+						)} (y=${thresholdValue} ${query?.unit || ''})`,
 					},
 				],
-		  });
+			}),
+		[
+			query?.unit,
+			queryResponse?.data?.payload,
+			containerDimensions,
+			isDarkMode,
+			t,
+			thresholdValue,
+		],
+	);
 
 	return (
 		<ChartContainer>
@@ -117,32 +147,37 @@ function ChartPreview({
 			{(queryResponse?.isError || queryResponse?.error) && (
 				<FailedMessageContainer color="red" title="Failed to refresh the chart">
 					<InfoCircleOutlined />{' '}
-					{(queryResponse?.error as QueryResponseError).message ||
-						t('preview_chart_unexpected_error')}
+					{queryResponse.error.message || t('preview_chart_unexpected_error')}
 				</FailedMessageContainer>
 			)}
-			{queryResponse.isLoading && <Spinner size="large" tip="Loading..." />}
-			{chartDataSet && !queryResponse.isError && (
-				<GridGraphComponent
-					title={name}
-					data={chartDataSet}
-					isStacked
-					GRAPH_TYPES={graphType || 'TIME_SERIES'}
-					name={name || 'Chart Preview'}
-					staticLine={staticLine}
-				/>
+			{queryResponse.isLoading && (
+				<Spinner size="large" tip="Loading..." height="70vh" />
+			)}
+			{chartData && !queryResponse.isError && (
+				<div ref={graphRef} style={{ height: '100%' }}>
+					<GridPanelSwitch
+						options={options}
+						panelType={graphType}
+						data={chartData}
+						name={name || 'Chart Preview'}
+						panelData={queryResponse.data?.payload.data.newResult.data.result || []}
+						query={query || initialQueriesMap.metrics}
+						yAxisUnit={query?.unit}
+					/>
+				</div>
 			)}
 		</ChartContainer>
 	);
 }
 
 ChartPreview.defaultProps = {
-	graphType: 'TIME_SERIES',
+	graphType: PANEL_TYPES.TIME_SERIES,
 	selectedTime: 'GLOBAL_TIME',
 	selectedInterval: '5min',
 	headline: undefined,
-	threshold: undefined,
 	userQueryKey: '',
+	allowSelectedIntervalForStepGen: false,
+	alertDef: undefined,
 };
 
 export default ChartPreview;

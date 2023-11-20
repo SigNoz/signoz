@@ -1,7 +1,6 @@
-/* eslint-disable react/jsx-no-bind */
 import { DatePicker, Modal } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export type DateTimeRangeType = [Dayjs | null, Dayjs | null] | null;
 
@@ -12,18 +11,22 @@ function CustomDateTimeModal({
 	onCreate,
 	onCancel,
 }: CustomDateTimeModalProps): JSX.Element {
-	const [customDateTimeRange, setCustomDateTimeRange] = useState();
+	const [selectedDate, setDateTime] = useState<DateTimeRangeType>();
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function handleRangePickerOk(date_time: any): void {
-		setCustomDateTimeRange(date_time);
-	}
+	const onModalOkHandler = (date_time: any): void => {
+		onCreate(date_time);
+		setDateTime(date_time);
+	};
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function disabledDate(current: any): boolean {
+	const disabledDate = (current: Dayjs): boolean => {
 		const currentDay = dayjs(current);
 		return currentDay.isAfter(dayjs());
-	}
+	};
+
+	const onOk = (): void => {
+		if (selectedDate) onCreate(selectedDate);
+	};
 
 	return (
 		<Modal
@@ -32,13 +35,14 @@ function CustomDateTimeModal({
 			okText="Apply"
 			cancelText="Cancel"
 			onCancel={onCancel}
-			style={{ position: 'absolute', top: 60, right: 40 }}
-			onOk={(): void => onCreate(customDateTimeRange || null)}
+			onOk={onOk}
 		>
 			<RangePicker
 				disabledDate={disabledDate}
-				onOk={handleRangePickerOk}
+				allowClear
+				onOk={onModalOkHandler}
 				showTime
+				onCalendarChange={onModalOkHandler}
 			/>
 		</Modal>
 	);

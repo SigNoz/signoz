@@ -6,7 +6,7 @@ import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { Label } from 'pages/SignUp/styles';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-use';
 

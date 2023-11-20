@@ -18,10 +18,12 @@ import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -93,9 +95,11 @@ function AllErrors(): JSX.Element {
 		],
 	);
 
+	const { queries } = useResourceAttribute();
+
 	const [{ isLoading, data }, errorCountResponse] = useQueries([
 		{
-			queryKey: ['getAllErrors', updatedPath, maxTime, minTime],
+			queryKey: ['getAllErrors', updatedPath, maxTime, minTime, queries],
 			queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> =>
 				getAll({
 					end: maxTime,
@@ -106,6 +110,7 @@ function AllErrors(): JSX.Element {
 					orderParam: getUpdatedParams,
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
+					tags: convertRawQueriesToTraceSelectedTags(queries),
 				}),
 			enabled: !loading,
 		},
@@ -116,6 +121,7 @@ function AllErrors(): JSX.Element {
 				minTime,
 				getUpdatedExceptionType,
 				getUpdatedServiceName,
+				queries,
 			],
 			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
 				getErrorCounts({
@@ -123,6 +129,7 @@ function AllErrors(): JSX.Element {
 					start: minTime,
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
+					tags: convertRawQueriesToTraceSelectedTags(queries),
 				}),
 			enabled: !loading,
 		},

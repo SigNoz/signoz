@@ -7,10 +7,10 @@ import updateDomain from 'api/SAML/updateDomain';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
-import { FeatureKeys } from 'constants/featureKeys';
-import useFeatureFlag from 'hooks/useFeatureFlag';
+import { FeatureKeys } from 'constants/features';
+import useFeatureFlag from 'hooks/useFeatureFlag/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useCallback, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -68,7 +68,7 @@ function AuthDomains(): JSX.Element {
 	);
 
 	const onCloseHandler = useCallback(
-		(func: React.Dispatch<React.SetStateAction<boolean>>) => (): void => {
+		(func: Dispatch<SetStateAction<boolean>>) => (): void => {
 			func(false);
 		},
 		[],
@@ -111,7 +111,7 @@ function AuthDomains(): JSX.Element {
 	);
 
 	const onOpenHandler = useCallback(
-		(func: React.Dispatch<React.SetStateAction<boolean>>) => (): void => {
+		(func: Dispatch<SetStateAction<boolean>>) => (): void => {
 			func(true);
 		},
 		[],

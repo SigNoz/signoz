@@ -1,6 +1,4 @@
-import React from 'react';
-
-import Description from './DescriptionOfDashboard';
+import Description from './DashboardDescription';
 import GridGraphs from './GridGraphs';
 
 function NewDashboard(): JSX.Element {

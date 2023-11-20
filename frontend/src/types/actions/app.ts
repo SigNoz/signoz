@@ -1,3 +1,4 @@
+import { QueryObserverBaseResult } from 'react-query';
 import { PayloadProps as FeatureFlagPayload } from 'types/api/features/getFeaturesFlags';
 import {
 	Organization,
@@ -22,9 +23,9 @@ export const UPDATE_USER_ORG_ROLE = 'UPDATE_USER_ORG_ROLE';
 export const UPDATE_USER = 'UPDATE_USER';
 export const UPDATE_ORG_NAME = 'UPDATE_ORG_NAME';
 export const UPDATE_ORG = 'UPDATE_ORG';
-export const UPDATE_FEATURE_FLAGS = 'UPDATE_FEATURE_FLAGS';
 export const UPDATE_CONFIGS = 'UPDATE_CONFIGS';
 export const UPDATE_USER_FLAG = 'UPDATE_USER_FLAG';
+export const UPDATE_FEATURE_FLAG_RESPONSE = 'UPDATE_FEATURE_FLAG_RESPONSE';
 
 export interface LoggedInUser {
 	type: typeof LOGGED_IN;
@@ -38,10 +39,6 @@ export interface SideBarCollapse {
 	payload: boolean;
 }
 
-export interface UpdateFeatureFlags {
-	type: typeof UPDATE_FEATURE_FLAGS;
-	payload: null | FeatureFlagPayload;
-}
 export interface UpdateAppVersion {
 	type: typeof UPDATE_CURRENT_VERSION;
 	payload: {
@@ -130,6 +127,14 @@ export interface UpdateConfigs {
 	};
 }
 
+export interface UpdateFeatureFlag {
+	type: typeof UPDATE_FEATURE_FLAG_RESPONSE;
+	payload: {
+		featureFlag: FeatureFlagPayload;
+		refetch: QueryObserverBaseResult['refetch'];
+	};
+}
+
 export type AppAction =
 	| LoggedInUser
 	| SideBarCollapse
@@ -142,6 +147,6 @@ export type AppAction =
 	| UpdateUser
 	| UpdateOrgName
 	| UpdateOrg
-	| UpdateFeatureFlags
 	| UpdateConfigs
-	| UpdateUserFlag;
+	| UpdateUserFlag
+	| UpdateFeatureFlag;

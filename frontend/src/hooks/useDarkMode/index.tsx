@@ -3,7 +3,14 @@ import { ThemeConfig } from 'antd/es/config-provider/context';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import React, { createContext, useCallback, useMemo, useState } from 'react';
+import {
+	createContext,
+	ReactNode,
+	useCallback,
+	useContext,
+	useMemo,
+	useState,
+} from 'react';
 
 import { THEME_MODE } from './constant';
 
@@ -37,7 +44,7 @@ export function ThemeProvider({ children }: ThemeProviderProps): JSX.Element {
 }
 
 interface ThemeProviderProps {
-	children: React.ReactNode;
+	children: ReactNode;
 }
 
 interface ThemeMode {
@@ -46,13 +53,13 @@ interface ThemeMode {
 }
 
 export const useThemeMode = (): ThemeMode => {
-	const { theme, toggleTheme } = React.useContext(ThemeContext);
+	const { theme, toggleTheme } = useContext(ThemeContext);
 
 	return { theme, toggleTheme };
 };
 
 export const useIsDarkMode = (): boolean => {
-	const { theme } = React.useContext(ThemeContext);
+	const { theme } = useContext(ThemeContext);
 
 	return theme === THEME_MODE.DARK;
 };

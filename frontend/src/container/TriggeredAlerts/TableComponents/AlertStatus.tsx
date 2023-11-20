@@ -1,5 +1,4 @@
 import { Tag } from 'antd';
-import React from 'react';
 
 function Severity({ severity }: SeverityProps): JSX.Element {
 	switch (severity) {

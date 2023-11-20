@@ -1,4 +1,3 @@
-import React from 'react';
 import { TraceFilterEnum } from 'types/reducer/trace';
 
 import Panel from './Panel';

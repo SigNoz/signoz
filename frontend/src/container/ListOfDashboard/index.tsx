@@ -1,44 +1,49 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Card, Dropdown, Menu, Row, TableColumnProps, Typography } from 'antd';
+import {
+	Card,
+	Dropdown,
+	MenuProps,
+	Row,
+	TableColumnProps,
+	Typography,
+} from 'antd';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
-import { ResizeTable } from 'components/ResizeTable';
+import {
+	DynamicColumnsKey,
+	TableDataSource,
+} from 'components/ResizeTable/contants';
+import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
+import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
+import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React, {
-	Dispatch,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import { Key, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { GET_ALL_DASHBOARD_SUCCESS } from 'types/actions/dashboard';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
-import DashboardReducer from 'types/reducer/dashboards';
+import { popupContainer } from 'utils/selectPopupContainer';
 
+import DateComponent from '../../components/ResizeTable/TableComponent/DateComponent';
 import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
-import Createdby from './TableComponents/CreatedBy';
-import DateComponent from './TableComponents/Date';
 import DeleteButton from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
-import Tags from './TableComponents/Tags';
 
 function ListOfAllDashboard(): JSX.Element {
-	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
-	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const {
+		data: dashboardListResponse = [],
+		isLoading: isDashboardListLoading,
+		refetch: refetchDashboardList,
+	} = useGetAllDashboard();
+
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [action, createNewDashboard, newDashboard] = useComponentPermission(
@@ -47,57 +52,54 @@ function ListOfAllDashboard(): JSX.Element {
 	);
 
 	const { t } = useTranslation('dashboard');
+
 	const [
 		isImportJSONModalVisible,
 		setIsImportJSONModalVisible,
 	] = useState<boolean>(false);
+
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
 
 	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>();
 
 	useEffect(() => {
-		setFilteredDashboards(dashboards);
-	}, [dashboards]);
+		if (dashboardListResponse.length) {
+			setFilteredDashboards(dashboardListResponse);
+		}
+	}, [dashboardListResponse]);
+
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
 		error: false,
 		errorMessage: '',
 	});
 
-	const columns: TableColumnProps<Data>[] = [
-		{
-			title: 'Name',
-			dataIndex: 'name',
-			width: 100,
-			render: Name,
-		},
-		{
-			title: 'Description',
-			width: 100,
-			dataIndex: 'description',
-		},
-		{
-			title: 'Tags (can be multiple)',
-			dataIndex: 'tags',
-			width: 80,
-			render: Tags,
-		},
+	const dynamicColumns: TableColumnProps<Data>[] = [
 		{
 			title: 'Created At',
-			dataIndex: 'createdBy',
-			width: 80,
+			dataIndex: 'createdAt',
+			width: 30,
+			key: DynamicColumnsKey.CreatedAt,
 			sorter: (a: Data, b: Data): number => {
-				const prev = new Date(a.createdBy).getTime();
-				const next = new Date(b.createdBy).getTime();
+				console.log({ a });
+				const prev = new Date(a.createdAt).getTime();
+				const next = new Date(b.createdAt).getTime();
 
 				return prev - next;
 			},
-			render: Createdby,
+			render: DateComponent,
+		},
+		{
+			title: 'Created By',
+			dataIndex: 'createdBy',
+			width: 30,
+			key: DynamicColumnsKey.CreatedBy,
 		},
 		{
 			title: 'Last Updated Time',
-			width: 90,
+			width: 30,
 			dataIndex: 'lastUpdatedTime',
+			key: DynamicColumnsKey.UpdatedAt,
 			sorter: (a: Data, b: Data): number => {
 				const prev = new Date(a.lastUpdatedTime).getTime();
 				const next = new Date(b.lastUpdatedTime).getTime();
@@ -106,27 +108,61 @@ function ListOfAllDashboard(): JSX.Element {
 			},
 			render: DateComponent,
 		},
+		{
+			title: 'Last Updated By',
+			dataIndex: 'lastUpdatedBy',
+			width: 30,
+			key: DynamicColumnsKey.UpdatedBy,
+		},
 	];
 
-	if (action) {
-		columns.push({
-			title: 'Action',
-			dataIndex: '',
-			key: 'x',
-			width: 40,
-			render: DeleteButton,
-		});
-	}
+	const columns = useMemo(() => {
+		const tableColumns: TableColumnProps<Data>[] = [
+			{
+				title: 'Name',
+				dataIndex: 'name',
+				width: 40,
+				render: Name,
+			},
+			{
+				title: 'Description',
+				width: 50,
+				dataIndex: 'description',
+			},
+			{
+				title: 'Tags',
+				dataIndex: 'tags',
+				width: 50,
+				render: (value): JSX.Element => <LabelColumn labels={value} />,
+			},
+		];
 
-	const data: Data[] = (filteredDashboards || dashboards).map((e) => ({
-		createdBy: e.created_at,
-		description: e.data.description || '',
-		id: e.uuid,
-		lastUpdatedTime: e.updated_at,
-		name: e.data.title,
-		tags: e.data.tags || [],
-		key: e.uuid,
-	}));
+		if (action) {
+			tableColumns.push({
+				title: 'Action',
+				dataIndex: '',
+				width: 40,
+				render: DeleteButton,
+			});
+		}
+
+		return tableColumns;
+	}, [action]);
+
+	const data: Data[] =
+		filteredDashboards?.map((e) => ({
+			createdAt: e.created_at,
+			description: e.data.description || '',
+			id: e.uuid,
+			lastUpdatedTime: e.updated_at,
+			name: e.data.title,
+			tags: e.data.tags || [],
+			key: e.uuid,
+			createdBy: e.created_by,
+			isLocked: !!e.isLocked || false,
+			lastUpdatedBy: e.updated_by,
+			refetchDashboardList,
+		})) || [];
 
 	const onNewDashboardHandler = useCallback(async () => {
 		try {
@@ -142,10 +178,6 @@ function ListOfAllDashboard(): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				dispatch({
-					type: GET_ALL_DASHBOARD_SUCCESS,
-					payload: [],
-				});
 				history.push(
 					generatePath(ROUTES.DASHBOARD, {
 						dashboardId: response.payload.uuid,
@@ -166,7 +198,7 @@ function ListOfAllDashboard(): JSX.Element {
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState, t, dispatch]);
+	}, [newDashboardState, t]);
 
 	const getText = useCallback(() => {
 		if (!newDashboardState.error && !newDashboardState.loading) {
@@ -189,13 +221,13 @@ function ListOfAllDashboard(): JSX.Element {
 		setUploadedGrafana(uploadedGrafana);
 	};
 
-	const getMenuItems = useCallback(() => {
+	const getMenuItems = useMemo(() => {
 		const menuItems: ItemType[] = [];
 		if (createNewDashboard) {
 			menuItems.push({
 				key: t('create_dashboard').toString(),
 				label: t('create_dashboard'),
-				disabled: loading,
+				disabled: isDashboardListLoading,
 				onClick: onNewDashboardHandler,
 			});
 		}
@@ -210,12 +242,18 @@ function ListOfAllDashboard(): JSX.Element {
 			key: t('import_grafana_json').toString(),
 			label: t('import_grafana_json'),
 			onClick: (): void => onModalHandler(true),
+			disabled: true,
 		});
 
 		return menuItems;
-	}, [createNewDashboard, loading, onNewDashboardHandler, t]);
+	}, [createNewDashboard, isDashboardListLoading, onNewDashboardHandler, t]);
 
-	const menuItems = getMenuItems();
+	const menu: MenuProps = useMemo(
+		() => ({
+			items: getMenuItems,
+		}),
+		[getMenuItems],
+	);
 
 	const GetHeader = useMemo(
 		() => (
@@ -230,7 +268,12 @@ function ListOfAllDashboard(): JSX.Element {
 						}}
 					/>
 					{newDashboard && (
-						<Dropdown trigger={['click']} overlay={<Menu items={menuItems} />}>
+						<Dropdown
+							getPopupContainer={popupContainer}
+							disabled={isDashboardListLoading}
+							trigger={['click']}
+							menu={menu}
+						>
 							<NewDashboardButton
 								icon={<PlusOutlined />}
 								type="primary"
@@ -245,11 +288,12 @@ function ListOfAllDashboard(): JSX.Element {
 			</Row>
 		),
 		[
-			getText,
 			newDashboard,
-			newDashboardState.error,
+			isDashboardListLoading,
+			menu,
 			newDashboardState.loading,
-			menuItems,
+			newDashboardState.error,
+			getText,
 		],
 	);
 
@@ -257,9 +301,9 @@ function ListOfAllDashboard(): JSX.Element {
 		<Card>
 			{GetHeader}
 
-			{!loading && (
+			{!isDashboardListLoading && (
 				<SearchFilter
-					searchData={dashboards}
+					searchData={dashboardListResponse}
 					filterDashboards={setFilteredDashboards}
 				/>
 			)}
@@ -270,7 +314,9 @@ function ListOfAllDashboard(): JSX.Element {
 					uploadedGrafana={uploadedGrafana}
 					onModalHandler={(): void => onModalHandler(false)}
 				/>
-				<ResizeTable
+				<DynamicColumnTable
+					tablesource={TableDataSource.Dashboard}
+					dynamicColumns={dynamicColumns}
 					columns={columns}
 					pagination={{
 						pageSize: 9,
@@ -279,7 +325,7 @@ function ListOfAllDashboard(): JSX.Element {
 					showHeader
 					bordered
 					sticky
-					loading={loading}
+					loading={isDashboardListLoading}
 					dataSource={data}
 					showSorterTooltip
 				/>
@@ -289,12 +335,15 @@ function ListOfAllDashboard(): JSX.Element {
 }
 
 export interface Data {
-	key: React.Key;
+	key: Key;
 	name: string;
 	description: string;
 	tags: string[];
 	createdBy: string;
+	createdAt: string;
 	lastUpdatedTime: string;
+	lastUpdatedBy: string;
+	isLocked: boolean;
 	id: string;
 }
 

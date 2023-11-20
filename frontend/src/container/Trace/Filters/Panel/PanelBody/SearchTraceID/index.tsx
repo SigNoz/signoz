@@ -2,7 +2,7 @@ import { Input } from 'antd';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
@@ -103,7 +103,7 @@ function TraceID(): JSX.Element {
 			setIsLoading(false);
 		}
 	};
-	const onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+	const onChange = (e: ChangeEvent<HTMLInputElement>): void => {
 		setUserEnteredValue(e.target.value);
 	};
 	const onBlur = (): void => {

@@ -1,26 +1,27 @@
 import { Form, FormInstance, Input, Select, Typography } from 'antd';
 import { Store } from 'antd/lib/form/interface';
+import UpgradePrompt from 'components/Upgrade/UpgradePrompt';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
+	OpsgenieChannel,
 	PagerChannel,
-	PagerType,
 	SlackChannel,
-	SlackType,
 	WebhookChannel,
-	WebhookType,
 } from 'container/CreateAlertChannels/config';
+import useFeatureFlags from 'hooks/useFeatureFlag';
+import { isFeatureKeys } from 'hooks/useFeatureFlag/utils';
 import history from 'lib/history';
-import React from 'react';
+import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import MsTeamsSettings from './Settings/MsTeams';
+import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/Webhook';
 import { Button } from './styles';
-
-const { Option } = Select;
-const { Title } = Typography;
 
 function FormAlertChannels({
 	formInstance,
@@ -36,23 +37,46 @@ function FormAlertChannels({
 	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
+	const isUserOnEEPlan = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN);
 
-	const renderSettings = (): React.ReactElement | null => {
+	const feature = `ALERT_CHANNEL_${type.toUpperCase()}`;
+
+	const hasFeature = useFeatureFlags(
+		isFeatureKeys(feature) ? feature : FeatureKeys.ALERT_CHANNEL_SLACK,
+	);
+
+	const isOssFeature = useFeatureFlags(FeatureKeys.OSS);
+
+	const renderSettings = (): ReactElement | null => {
+		if (
+			// for ee plan
+			!isOssFeature?.active &&
+			(!hasFeature || !hasFeature.active) &&
+			type === 'msteams'
+		) {
+			// channel type is not available for users plan
+			return <UpgradePrompt />;
+		}
+
 		switch (type) {
-			case SlackType:
+			case ChannelType.Slack:
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
-			case WebhookType:
+			case ChannelType.Webhook:
 				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
-			case PagerType:
+			case ChannelType.Pagerduty:
 				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
-
+			case ChannelType.MsTeams:
+				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.Opsgenie:
+				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
 			default:
 				return null;
 		}
 	};
+
 	return (
 		<>
-			<Title level={3}>{title}</Title>
+			<Typography.Title level={3}>{title}</Typography.Title>
 
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
 				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
@@ -69,15 +93,25 @@ function FormAlertChannels({
 
 				<Form.Item label={t('field_channel_type')} labelAlign="left" name="type">
 					<Select disabled={editing} onChange={onTypeChangeHandler} value={type}>
-						<Option value="slack" key="slack">
+						<Select.Option value="slack" key="slack">
 							Slack
-						</Option>
-						<Option value="webhook" key="webhook">
+						</Select.Option>
+						<Select.Option value="webhook" key="webhook">
 							Webhook
-						</Option>
-						<Option value="pagerduty" key="pagerduty">
+						</Select.Option>
+						<Select.Option value="pagerduty" key="pagerduty">
 							Pagerduty
-						</Option>
+						</Select.Option>
+						<Select.Option value="opsgenie" key="opsgenie">
+							Opsgenie
+						</Select.Option>
+						{!isOssFeature?.active && (
+							<Select.Option value="msteams" key="msteams">
+								<div>
+									Microsoft Teams {!isUserOnEEPlan && '(Supported in Paid Plans Only)'}{' '}
+								</div>
+							</Select.Option>
+						)}
 					</Select>
 				</Form.Item>
 
@@ -85,7 +119,7 @@ function FormAlertChannels({
 
 				<Form.Item>
 					<Button
-						disabled={savingState}
+						disabled={savingState || !hasFeature}
 						loading={savingState}
 						type="primary"
 						onClick={(): void => onSaveHandler(type)}
@@ -93,7 +127,7 @@ function FormAlertChannels({
 						{t('button_save_channel')}
 					</Button>
 					<Button
-						disabled={testingState}
+						disabled={testingState || !hasFeature}
 						loading={testingState}
 						onClick={(): void => onTestHandler(type)}
 					>
@@ -115,8 +149,10 @@ function FormAlertChannels({
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
-	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<SlackChannel & WebhookChannel & PagerChannel>>
+	setSelectedConfig: Dispatch<
+		SetStateAction<
+			Partial<SlackChannel & WebhookChannel & PagerChannel & OpsgenieChannel>
+		>
 	>;
 	onTypeChangeHandler: (value: ChannelType) => void;
 	onSaveHandler: (props: ChannelType) => void;

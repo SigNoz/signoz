@@ -4,16 +4,16 @@ import {
 	QuestionCircleFilled,
 	QuestionCircleOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Space } from 'antd';
+import { Space } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
 import AppReducer from 'types/reducer/app';
 
 import HelpToolTip from './Config';
-import { MenuDropdown } from './Config/styles';
+import { ConfigDropdown } from './styles';
 
 function DynamicConfigDropdown({
 	frontendId,
@@ -34,13 +34,15 @@ function DynamicConfigDropdown({
 		setIsHelpDropDownOpen(!isHelpDropDownOpen);
 	};
 
-	const menuItems = useMemo(
-		() => [
-			{
-				key: '1',
-				label: <HelpToolTip config={config as ConfigProps} />,
-			},
-		],
+	const menu = useMemo(
+		() => ({
+			items: [
+				{
+					key: '1',
+					label: <HelpToolTip config={config as ConfigProps} />,
+				},
+			],
+		}),
 		[config],
 	);
 
@@ -52,19 +54,17 @@ function DynamicConfigDropdown({
 	const DropDownIcon = isHelpDropDownOpen ? CaretUpFilled : CaretDownFilled;
 
 	return (
-		<Dropdown
-			onVisibleChange={onToggleHandler}
+		<ConfigDropdown
+			onOpenChange={onToggleHandler}
 			trigger={['click']}
-			overlay={<MenuDropdown items={menuItems} />}
-			visible={isHelpDropDownOpen}
+			menu={menu}
+			open={isHelpDropDownOpen}
 		>
 			<Space align="center">
-				<Icon
-					style={{ fontSize: 26, color: 'white', paddingTop: 26, cursor: 'pointer' }}
-				/>
+				<Icon style={{ fontSize: 26, color: 'white', paddingTop: 26 }} />
 				<DropDownIcon style={{ color: 'white' }} />
 			</Space>
-		</Dropdown>
+		</ConfigDropdown>
 	);
 }
 

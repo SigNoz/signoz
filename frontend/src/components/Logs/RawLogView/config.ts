@@ -1,1 +1,3 @@
-export const rawLineStyle: React.CSSProperties = {};
+import { CSSProperties } from 'react';
+
+export const rawLineStyle: CSSProperties = {};

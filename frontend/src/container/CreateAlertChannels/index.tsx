@@ -1,7 +1,11 @@
 import { Form } from 'antd';
+import createMsTeamsApi from 'api/channels/createMsTeams';
+import createOpsgenie from 'api/channels/createOpsgenie';
 import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
+import testMsTeamsApi from 'api/channels/testMsTeams';
+import testOpsGenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
@@ -9,23 +13,23 @@ import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
 	ChannelType,
+	MsTeamsChannel,
+	OpsgenieChannel,
 	PagerChannel,
-	PagerType,
 	SlackChannel,
-	SlackType,
 	ValidatePagerChannel,
 	WebhookChannel,
-	WebhookType,
 } from './config';
-import { PagerInitialConfig } from './defaults';
+import { OpsgenieInitialConfig, PagerInitialConfig } from './defaults';
+import { isChannelType } from './utils';
 
 function CreateAlertChannels({
-	preType = 'slack',
+	preType = ChannelType.Slack,
 }: CreateAlertChannelsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('channels');
@@ -33,7 +37,13 @@ function CreateAlertChannels({
 	const [formInstance] = Form.useForm();
 
 	const [selectedConfig, setSelectedConfig] = useState<
-		Partial<SlackChannel & WebhookChannel & PagerChannel>
+		Partial<
+			SlackChannel &
+				WebhookChannel &
+				PagerChannel &
+				MsTeamsChannel &
+				OpsgenieChannel
+		>
 	>({
 		text: `{{ range .Alerts -}}
      *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
@@ -67,13 +77,20 @@ function CreateAlertChannels({
 			const currentType = type;
 			setType(value as ChannelType);
 
-			if (value === PagerType && currentType !== value) {
+			if (value === ChannelType.Pagerduty && currentType !== value) {
 				// reset config to pager defaults
 				setSelectedConfig({
 					name: selectedConfig?.name,
 					send_resolved: selectedConfig.send_resolved,
 					...PagerInitialConfig,
 				});
+			}
+
+			if (value === ChannelType.Opsgenie && currentType !== value) {
+				setSelectedConfig((selectedConfig) => ({
+					...selectedConfig,
+					...OpsgenieInitialConfig,
+				}));
 			}
 		},
 		[type, selectedConfig],
@@ -102,9 +119,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				setTimeout(() => {
-					history.replace(ROUTES.SETTINGS);
-				}, 2000);
+				history.replace(ROUTES.ALL_CHANNELS);
 			} else {
 				notifications.error({
 					message: 'Error',
@@ -165,9 +180,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				setTimeout(() => {
-					history.replace(ROUTES.SETTINGS);
-				}, 2000);
+				history.replace(ROUTES.ALL_CHANNELS);
 			} else {
 				notifications.error({
 					message: 'Error',
@@ -222,9 +235,7 @@ function CreateAlertChannels({
 						message: 'Success',
 						description: t('channel_creation_done'),
 					});
-					setTimeout(() => {
-						history.replace(ROUTES.SETTINGS);
-					}, 2000);
+					history.replace(ROUTES.ALL_CHANNELS);
 				} else {
 					notifications.error({
 						message: 'Error',
@@ -241,26 +252,115 @@ function CreateAlertChannels({
 		setSavingState(false);
 	}, [t, notifications, preparePagerRequest]);
 
+	const prepareOpsgenieRequest = useCallback(
+		() => ({
+			api_key: selectedConfig?.api_key || '',
+			name: selectedConfig?.name || '',
+			send_resolved: true,
+			description: selectedConfig?.description || '',
+			message: selectedConfig?.message || '',
+			priority: selectedConfig?.priority || '',
+		}),
+		[selectedConfig],
+	);
+
+	const onOpsgenieHandler = useCallback(async () => {
+		setSavingState(true);
+
+		try {
+			const response = await createOpsgenie(prepareOpsgenieRequest());
+
+			if (response.statusCode === 200) {
+				notifications.success({
+					message: 'Success',
+					description: t('channel_creation_done'),
+				});
+				history.replace(ROUTES.ALL_CHANNELS);
+			} else {
+				notifications.error({
+					message: 'Error',
+					description: response.error || t('channel_creation_failed'),
+				});
+			}
+		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description: t('channel_creation_failed'),
+			});
+		}
+		setSavingState(false);
+	}, [prepareOpsgenieRequest, t, notifications]);
+
+	const prepareMsTeamsRequest = useCallback(
+		() => ({
+			webhook_url: selectedConfig?.webhook_url || '',
+			name: selectedConfig?.name || '',
+			send_resolved: true,
+			text: selectedConfig?.text || '',
+			title: selectedConfig?.title || '',
+		}),
+		[selectedConfig],
+	);
+
+	const onMsTeamsHandler = useCallback(async () => {
+		setSavingState(true);
+
+		try {
+			const response = await createMsTeamsApi(prepareMsTeamsRequest());
+
+			if (response.statusCode === 200) {
+				notifications.success({
+					message: 'Success',
+					description: t('channel_creation_done'),
+				});
+				history.replace(ROUTES.ALL_CHANNELS);
+			} else {
+				notifications.error({
+					message: 'Error',
+					description: response.error || t('channel_creation_failed'),
+				});
+			}
+		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description: t('channel_creation_failed'),
+			});
+		}
+		setSavingState(false);
+	}, [prepareMsTeamsRequest, t, notifications]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
-			switch (value) {
-				case SlackType:
-					onSlackHandler();
-					break;
-				case WebhookType:
-					onWebhookHandler();
-					break;
-				case PagerType:
-					onPagerHandler();
-					break;
-				default:
+			const functionMapper = {
+				[ChannelType.Slack]: onSlackHandler,
+				[ChannelType.Webhook]: onWebhookHandler,
+				[ChannelType.Pagerduty]: onPagerHandler,
+				[ChannelType.Opsgenie]: onOpsgenieHandler,
+				[ChannelType.MsTeams]: onMsTeamsHandler,
+			};
+
+			if (isChannelType(value)) {
+				const functionToCall = functionMapper[value as keyof typeof functionMapper];
+
+				if (functionToCall) {
+					functionToCall();
+				} else {
 					notifications.error({
 						message: 'Error',
 						description: t('selected_channel_invalid'),
 					});
+				}
 			}
 		},
-		[onSlackHandler, t, onPagerHandler, onWebhookHandler, notifications],
+		[
+			onSlackHandler,
+			onWebhookHandler,
+			onPagerHandler,
+			onOpsgenieHandler,
+			onMsTeamsHandler,
+			notifications,
+			t,
+		],
 	);
 
 	const performChannelTest = useCallback(
@@ -270,17 +370,25 @@ function CreateAlertChannels({
 				let request;
 				let response;
 				switch (channelType) {
-					case WebhookType:
+					case ChannelType.Webhook:
 						request = prepareWebhookRequest();
 						response = await testWebhookApi(request);
 						break;
-					case SlackType:
+					case ChannelType.Slack:
 						request = prepareSlackRequest();
 						response = await testSlackApi(request);
 						break;
-					case PagerType:
+					case ChannelType.Pagerduty:
 						request = preparePagerRequest();
 						if (request) response = await testPagerApi(request);
+						break;
+					case ChannelType.MsTeams:
+						request = prepareMsTeamsRequest();
+						response = await testMsTeamsApi(request);
+						break;
+					case ChannelType.Opsgenie:
+						request = prepareOpsgenieRequest();
+						response = await testOpsGenie(request);
 						break;
 					default:
 						notifications.error({
@@ -314,7 +422,9 @@ function CreateAlertChannels({
 			prepareWebhookRequest,
 			t,
 			preparePagerRequest,
+			prepareOpsgenieRequest,
 			prepareSlackRequest,
+			prepareMsTeamsRequest,
 			notifications,
 		],
 	);
@@ -342,6 +452,7 @@ function CreateAlertChannels({
 					type,
 					...selectedConfig,
 					...PagerInitialConfig,
+					...OpsgenieInitialConfig,
 				},
 			}}
 		/>

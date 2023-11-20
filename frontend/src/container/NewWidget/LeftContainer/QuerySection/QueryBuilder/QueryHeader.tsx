@@ -6,7 +6,7 @@ import {
 	RightOutlined,
 } from '@ant-design/icons';
 import { Button, Row } from 'antd';
-import React, { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { QueryWrapper } from '../styles';
 
@@ -14,8 +14,9 @@ interface IQueryHeaderProps {
 	disabled: boolean;
 	onDisable: VoidFunction;
 	name: string;
+	deletable: boolean;
 	onDelete: VoidFunction;
-	children: React.ReactNode;
+	children: ReactNode;
 }
 
 function QueryHeader({
@@ -23,6 +24,7 @@ function QueryHeader({
 	onDisable,
 	name,
 	onDelete,
+	deletable,
 	children,
 }: IQueryHeaderProps): JSX.Element {
 	const [collapse, setCollapse] = useState(false);
@@ -31,20 +33,30 @@ function QueryHeader({
 			<Row style={{ justifyContent: 'space-between' }}>
 				<Row>
 					<Button
-						type="ghost"
+						type="default"
+						ghost
 						icon={disabled ? <EyeInvisibleFilled /> : <EyeFilled />}
 						onClick={onDisable}
 					>
 						{name}
 					</Button>
 					<Button
-						type="ghost"
+						type="default"
+						ghost
 						icon={collapse ? <RightOutlined /> : <DownOutlined />}
 						onClick={(): void => setCollapse(!collapse)}
 					/>
 				</Row>
 
-				<Button type="ghost" danger icon={<DeleteOutlined />} onClick={onDelete} />
+				{deletable && (
+					<Button
+						type="default"
+						ghost
+						danger
+						icon={<DeleteOutlined />}
+						onClick={onDelete}
+					/>
+				)}
 			</Row>
 			{!collapse && children}
 		</QueryWrapper>

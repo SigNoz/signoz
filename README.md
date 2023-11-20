@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-    <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/query-service?label=Downloads"> </a>
+    <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/query-service?label=Docker Downloads"> </a>
     <img alt="GitHub issues" src="https://img.shields.io/github/issues/signoz/signoz"> </a>
     <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"> 
         <img alt="tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"> </a> 
@@ -35,19 +35,41 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 
 👉 Filter and query logs, build dashboards and alerts based on attributes in logs
 
-![screenzy-1670570187181](https://user-images.githubusercontent.com/504541/206646629-829fdafe-70e2-4503-a9c4-1301b7918586.png)
-<br />
-![screenzy-1670570193901](https://user-images.githubusercontent.com/504541/206646676-a676fdeb-331c-4847-aea9-d1cabf7c47e1.png)
-<br />
-![screenzy-1670570199026](https://user-images.githubusercontent.com/504541/206646754-28c5534f-0377-428c-9c6e-5c7c0d9dd22d.png)
-<br />
-![screenzy-1670569888865](https://user-images.githubusercontent.com/504541/206645819-1e865a56-71b4-4fde-80cc-fbdb137a4da5.png)
+👉 Record exceptions automatically in Python, Java, Ruby, and Javascript
 
+👉 Easy to set alerts with DIY query builder
+
+
+### Application Metrics
+
+![application_metrics](https://user-images.githubusercontent.com/83692067/226637410-900dbc5e-6705-4b11-a10c-bd0faeb2a92f.png)
+
+
+### Distributed Tracing
+<img width="2068" alt="distributed_tracing_2 2" src="https://user-images.githubusercontent.com/83692067/226536447-bae58321-6a22-4ed3-af80-e3e964cb3489.png">
+
+<img width="2068" alt="distributed_tracing_1" src="https://user-images.githubusercontent.com/83692067/226536462-939745b6-4f9d-45a6-8016-814837e7f7b4.png">
+
+### Logs Management
+
+<img width="2068" alt="logs_management" src="https://user-images.githubusercontent.com/83692067/226536482-b8a5c4af-b69c-43d5-969c-338bd5eaf1a5.png">
+
+### Infrastructure Monitoring
+
+<img width="2068" alt="infrastructure_monitoring" src="https://user-images.githubusercontent.com/83692067/226536496-f38c4dbf-e03c-4158-8be0-32d4a61158c7.png">
+
+### Exceptions Monitoring
+
+![exceptions_light](https://user-images.githubusercontent.com/83692067/226637967-4188d024-3ac9-4799-be95-f5ea9c45436f.png)
+
+
+### Alerts
+
+<img width="2068" alt="alerts_management" src="https://user-images.githubusercontent.com/83692067/226536548-2c81e2e8-c12d-47e8-bad7-c6be79055def.png">
 
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributing.svg" width="50px" />
 
 ## Join our Slack community
 
@@ -55,7 +77,6 @@ Come say Hi to us on [Slack](https://signoz.io/slack) 👋
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Features.svg" width="50px" />
 
 ## Features:
 
@@ -65,10 +86,13 @@ Come say Hi to us on [Slack](https://signoz.io/slack) 👋
 - See exact request trace to figure out issues in downstream services, slow DB queries, call to 3rd party services like payment gateways, etc
 - Filter traces by service name, operation, latency, error, tags/annotations.
 - Run aggregates on trace data (events/spans) to get business relevant metrics. e.g. You can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
+- Native support for OpenTelemetry Logs, advanced log query builder, and automatic log collection from k8s cluster
+- Lightning quick log analytics ([Logs Perf. Benchmark](https://signoz.io/blog/logs-performance-benchmark/))
+- End-to-End visibility into infrastructure performance, ingest metrics from all kinds of host environments
+- Easy to set alerts with DIY query builder
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/WhatsCool.svg" width="50px" />
 
 ## Why SigNoz?
 
@@ -97,15 +121,14 @@ You can find the complete list of languages here - https://opentelemetry.io/docs
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Philosophy.svg" width="50px" />
 
 ## Getting Started
 
 ### Deploy using Docker
 
-Please follow the steps listed [here](https://signoz.io/docs/deployment/docker/) to install using docker
+Please follow the steps listed [here](https://signoz.io/docs/install/docker/) to install using docker
 
-The [troubleshooting instructions](https://signoz.io/docs/deployment/troubleshooting) may be helpful if you face any issues.
+The [troubleshooting instructions](https://signoz.io/docs/install/troubleshooting/) may be helpful if you face any issues.
 
 <p>&nbsp  </p>
   
@@ -116,7 +139,6 @@ Please follow the steps listed [here](https://signoz.io/docs/deployment/helm_cha
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/UseSigNoz.svg" width="50px" />
 
 ## Comparisons to Familiar Tools
 
@@ -158,7 +180,6 @@ We have published benchmarks comparing Loki with SigNoz. Check it out [here](htt
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributors.svg" width="50px" />
 
 ## Contributing
 
@@ -185,7 +206,6 @@ Not sure how to get started? Just ping us on `#contributing` in our [slack commu
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/DevelopingLocally.svg" width="50px" />
 
 ## Documentation
 
@@ -193,7 +213,6 @@ You can find docs at https://signoz.io/docs/. If you need any clarification or f
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributing.svg" width="50px" />
 
 ## Community
 

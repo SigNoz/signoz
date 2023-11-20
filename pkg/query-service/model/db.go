@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type Organization struct {
@@ -26,14 +27,29 @@ type InvitationObject struct {
 }
 
 type User struct {
-	Id                 string `json:"id" db:"id"`
-	Name               string `json:"name" db:"name"`
-	Email              string `json:"email" db:"email"`
-	Password           string `json:"password,omitempty" db:"password"`
-	CreatedAt          int64  `json:"createdAt" db:"created_at"`
-	ProfilePirctureURL string `json:"profilePictureURL" db:"profile_picture_url"`
-	OrgId              string `json:"orgId,omitempty" db:"org_id"`
-	GroupId            string `json:"groupId,omitempty" db:"group_id"`
+	Id                string `json:"id" db:"id"`
+	Name              string `json:"name" db:"name"`
+	Email             string `json:"email" db:"email"`
+	Password          string `json:"password,omitempty" db:"password"`
+	CreatedAt         int64  `json:"createdAt" db:"created_at"`
+	ProfilePictureURL string `json:"profilePictureURL" db:"profile_picture_url"`
+	OrgId             string `json:"orgId,omitempty" db:"org_id"`
+	GroupId           string `json:"groupId,omitempty" db:"group_id"`
+}
+
+type ApdexSettings struct {
+	ServiceName        string  `json:"serviceName" db:"service_name"`
+	Threshold          float64 `json:"threshold" db:"threshold"`
+	ExcludeStatusCodes string  `json:"excludeStatusCodes" db:"exclude_status_codes"` // sqlite doesn't support array type
+}
+
+type IngestionKey struct {
+	KeyId        string    `json:"keyId" db:"key_id"`
+	Name         string    `json:"name" db:"name"`
+	CreatedAt    time.Time `json:"createdAt" db:"created_at"`
+	IngestionKey string    `json:"ingestionKey" db:"ingestion_key"`
+	IngestionURL string    `json:"ingestionURL" db:"ingestion_url"`
+	DataRegion   string    `json:"dataRegion" db:"data_region"`
 }
 
 type UserFlag map[string]string
@@ -47,7 +63,6 @@ func (uf UserFlag) Value() (driver.Value, error) {
 }
 
 func (uf *UserFlag) Scan(value interface{}) error {
-	fmt.Println(" value:", value)
 	if value == "" {
 		return nil
 	}

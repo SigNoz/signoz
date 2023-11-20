@@ -3,7 +3,14 @@ import { Button, Input, Select, Space, Tooltip } from 'antd';
 import getResetPasswordToken from 'api/user/getResetPasswordToken';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useCallback, useEffect, useState } from 'react';
+import {
+	ChangeEventHandler,
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
 import { ROLES } from 'types/roles';
@@ -31,7 +38,7 @@ function EditMembersDetails({
 		`${window.location.origin}${ROUTES.PASSWORD_RESET}?token=${token}`;
 
 	const onChangeHandler = useCallback(
-		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
+		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
 			setFunc(value);
 		},
 		[],
@@ -53,7 +60,7 @@ function EditMembersDetails({
 		}
 	}, [state.error, state.value, t, notifications]);
 
-	const onPasswordChangeHandler: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+	const onPasswordChangeHandler: ChangeEventHandler<HTMLInputElement> = useCallback(
 		(event) => {
 			setPasswordLink(event.target.value);
 		},
@@ -163,9 +170,9 @@ interface EditMembersDetailsProps {
 	emailAddress: string;
 	name: string;
 	role: ROLES;
-	setEmailAddress: React.Dispatch<React.SetStateAction<string>>;
-	setName: React.Dispatch<React.SetStateAction<string>>;
-	setRole: React.Dispatch<React.SetStateAction<ROLES>>;
+	setEmailAddress: Dispatch<SetStateAction<string>>;
+	setName: Dispatch<SetStateAction<string>>;
+	setRole: Dispatch<SetStateAction<ROLES>>;
 	id: string;
 }
 

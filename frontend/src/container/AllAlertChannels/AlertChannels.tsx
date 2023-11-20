@@ -6,7 +6,7 @@ import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';

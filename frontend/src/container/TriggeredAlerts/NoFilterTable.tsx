@@ -1,11 +1,11 @@
 /* eslint-disable react/display-name */
-import { Tag, Typography } from 'antd';
+import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
+import LabelColumn from 'components/TableRenderer/LabelColumn';
 import AlertStatus from 'container/TriggeredAlerts/TableComponents/AlertStatus';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
-import React from 'react';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Value } from './Filter';
@@ -55,11 +55,7 @@ function NoFilterTable({
 				}
 
 				return (
-					<>
-						{withOutSeverityKeys.map((e) => (
-							<Tag key={e} color="magenta">{`${e} : ${labels[e]}`}</Tag>
-						))}
-					</>
+					<LabelColumn labels={withOutSeverityKeys} value={labels} color="magenta" />
 				);
 			},
 		},

@@ -9,7 +9,9 @@ import TraceTable from 'container/Trace/TraceTable';
 import { useNotifications } from 'hooks/useNotifications';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useState } from 'react';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -127,7 +129,7 @@ function Trace({
 		[dispatch],
 	);
 
-	const onClickHandler: React.MouseEventHandler<HTMLElement> = useCallback(
+	const onClickHandler: MouseEventHandler<HTMLElement> = useCallback(
 		(e) => {
 			e.preventDefault();
 			e.stopPropagation();
@@ -144,7 +146,7 @@ function Trace({
 	);
 
 	return (
-		<>
+		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
 			<Search />
 			<Container>
 				<div>
@@ -167,7 +169,7 @@ function Trace({
 					</Card>
 				</RightContainer>
 			</Container>
-		</>
+		</ErrorBoundary>
 	);
 }
 

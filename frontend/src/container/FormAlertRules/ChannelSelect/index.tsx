@@ -2,7 +2,7 @@ import { Select } from 'antd';
 import getChannels from 'api/channels/getAll';
 import useFetch from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
-import React from 'react';
+import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { StyledSelect } from './styles';
@@ -33,8 +33,8 @@ function ChannelSelect({
 			description: errorMessage,
 		});
 	}
-	const renderOptions = (): React.ReactNode[] => {
-		const children: React.ReactNode[] = [];
+	const renderOptions = (): ReactNode[] => {
+		const children: ReactNode[] = [];
 
 		if (loading || payload === undefined || payload.length === 0) {
 			return children;

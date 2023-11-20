@@ -2,12 +2,12 @@ package signozio
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
-	"go.signoz.io/signoz/ee/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 var C *Client
@@ -51,7 +51,7 @@ func FetchDynamicConfigs() (map[string]Config, *model.ApiError) {
 		return DefaultConfig, nil
 	}
 
-	httpBody, err := ioutil.ReadAll(httpResponse.Body)
+	httpBody, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
 		return DefaultConfig, nil
 	}

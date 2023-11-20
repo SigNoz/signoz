@@ -1,7 +1,5 @@
 
 node_modules
-yarn.lock
-package.json
 
 deploy/docker/environment_tiny/common_test
 frontend/node_modules
@@ -39,7 +37,7 @@ frontend/src/constants/env.ts
 **/locust-scripts/__pycache__/
 **/__debug_bin
 
-frontend/*.env
+frontend/.env
 pkg/query-service/signoz.db
 
 pkg/query-service/tests/test-deploy/data/

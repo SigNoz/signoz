@@ -5,16 +5,20 @@ import loginApi from 'api/user/login';
 import signUpApi from 'api/user/signup';
 import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import useAnalytics from 'hooks/analytics/useAnalytics';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
-import * as loginPrecheck from 'types/api/user/loginPrecheck';
+import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
+import { isCloudUser } from 'utils/app';
 
 import {
 	ButtonContainer,
@@ -41,7 +45,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const { t } = useTranslation(['signup']);
 	const [loading, setLoading] = useState(false);
 
-	const [precheck, setPrecheck] = useState<loginPrecheck.PayloadProps>({
+	const [precheck, setPrecheck] = useState<LoginPrecheckPayloadProps>({
 		sso: false,
 		isUser: false,
 	});
@@ -53,16 +57,19 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		false,
 	);
 	const { search } = useLocation();
+	const { trackEvent } = useAnalytics();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
+
+	const isOnboardingEnabled = useFeatureFlag(FeatureKeys.ONBOARDING)?.active;
 
 	const getInviteDetailsResponse = useQuery({
 		queryFn: () =>
 			getInviteDetails({
 				inviteId: token || '',
 			}),
-		queryKey: 'getInviteDetails',
+		queryKey: ['getInviteDetails', token],
 		enabled: token !== null,
 	});
 
@@ -80,7 +87,22 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			form.setFieldValue('email', responseDetails.email);
 			form.setFieldValue('organizationName', responseDetails.organization);
 			setIsDetailsDisable(true);
+
+			trackEvent('Account Creation Page Visited', {
+				email: responseDetails.email,
+				name: responseDetails.name,
+				company_name: responseDetails.organization,
+				source: 'SigNoz Cloud',
+			});
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		getInviteDetailsResponse.data?.payload,
+		form,
+		getInviteDetailsResponse.status,
+	]);
+
+	useEffect(() => {
 		if (
 			getInviteDetailsResponse.status === 'success' &&
 			getInviteDetailsResponse.data?.error
@@ -91,19 +113,19 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			});
 		}
 	}, [
-		getInviteDetailsResponse.data?.payload,
-		getInviteDetailsResponse.data?.error,
+		getInviteDetailsResponse.data,
 		getInviteDetailsResponse.status,
-		getInviteDetailsResponse,
 		notifications,
-		form,
 	]);
 
 	const isPreferenceVisible = token === null;
 
 	const commonHandler = async (
 		values: FormValues,
-		callback: (e: SuccessResponse<PayloadProps>) => Promise<void> | VoidFunction,
+		callback: (
+			e: SuccessResponse<PayloadProps>,
+			values: FormValues,
+		) => Promise<void> | VoidFunction,
 	): Promise<void> => {
 		try {
 			const { organizationName, password, firstName, email } = values;
@@ -129,7 +151,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						payload.refreshJwt,
 					);
 					if (userResponse) {
-						callback(userResponse);
+						callback(userResponse, values);
 					}
 				} else {
 					notifications.error({
@@ -150,16 +172,12 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	const onAdminAfterLogin = async (
 		userResponse: SuccessResponse<PayloadProps>,
+		values: FormValues,
 	): Promise<void> => {
-		const {
-			organizationName,
-			isAnonymous,
-			hasOptedUpdates,
-		} = form.getFieldsValue();
 		const editResponse = await editOrg({
-			isAnonymous,
-			name: organizationName,
-			hasOptedUpdates,
+			isAnonymous: values.isAnonymous,
+			name: values.organizationName,
+			hasOptedUpdates: values.hasOptedUpdates,
 			orgId: userResponse.payload.orgId,
 		});
 		if (editResponse.statusCode === 200) {
@@ -223,6 +241,10 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				setLoading(true);
 
 				if (!isPasswordValid(values.password)) {
+					trackEvent('Account Creation Page - Invalid Password', {
+						email: values.email,
+						name: values.firstName,
+					});
 					setIsPasswordPolicyError(true);
 					setLoading(false);
 					return;
@@ -231,10 +253,19 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				if (isPreferenceVisible) {
 					await commonHandler(values, onAdminAfterLogin);
 				} else {
+					trackEvent('Account Created Successfully', {
+						email: values.email,
+						name: values.firstName,
+					});
+
 					await commonHandler(
 						values,
 						async (): Promise<void> => {
-							history.push(ROUTES.APPLICATION);
+							if (isOnboardingEnabled && isCloudUser()) {
+								history.push(ROUTES.GET_STARTED);
+							} else {
+								history.push(ROUTES.APPLICATION);
+							}
 						},
 					);
 				}

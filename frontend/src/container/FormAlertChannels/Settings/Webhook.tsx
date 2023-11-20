@@ -1,5 +1,5 @@
 import { Form, Input } from 'antd';
-import React from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { WebhookChannel } from '../../CreateAlertChannels/config';
@@ -53,9 +53,7 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 }
 
 interface WebhookProps {
-	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<WebhookChannel>>
-	>;
+	setSelectedConfig: Dispatch<SetStateAction<Partial<WebhookChannel>>>;
 }
 
 export default WebhookSettings;

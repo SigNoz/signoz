@@ -1,5 +1,5 @@
 import { Button, Input } from 'antd';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';

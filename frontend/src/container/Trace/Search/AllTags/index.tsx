@@ -1,6 +1,6 @@
 import { CaretRightFilled, PlusOutlined } from '@ant-design/icons';
 import { Button, Space, Typography } from 'antd';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';

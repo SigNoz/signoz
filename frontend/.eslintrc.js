@@ -16,6 +16,7 @@ module.exports = {
 		'plugin:sonarjs/recommended',
 		'plugin:import/errors',
 		'plugin:import/warnings',
+		'plugin:react/jsx-runtime',
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {

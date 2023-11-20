@@ -41,7 +41,7 @@ export interface Option {
 	label: string;
 }
 
-export const ServiceMapOptions: Option[] = [
+export const RelativeDurationOptions: Option[] = [
 	{ value: '5min', label: 'Last 5 min' },
 	{ value: '15min', label: 'Last 15 min' },
 	{ value: '30min', label: 'Last 30 min' },
@@ -53,17 +53,17 @@ export const ServiceMapOptions: Option[] = [
 
 export const getDefaultOption = (route: string): Time => {
 	if (route === ROUTES.SERVICE_MAP) {
-		return ServiceMapOptions[0].value;
+		return RelativeDurationOptions[2].value;
 	}
 	if (route === ROUTES.APPLICATION) {
-		return Options[0].value;
+		return Options[2].value;
 	}
 	return Options[2].value;
 };
 
 export const getOptions = (routes: string): Option[] => {
 	if (routes === ROUTES.SERVICE_MAP) {
-		return ServiceMapOptions;
+		return RelativeDurationOptions;
 	}
 	return Options;
 };
@@ -74,12 +74,16 @@ export const routesToSkip = [
 	ROUTES.TRACE_DETAIL,
 	ROUTES.ALL_CHANNELS,
 	ROUTES.USAGE_EXPLORER,
-	ROUTES.INSTRUMENTATION,
+	ROUTES.GET_STARTED,
 	ROUTES.VERSION,
 	ROUTES.ALL_DASHBOARD,
 	ROUTES.ORG_SETTINGS,
+	ROUTES.INGESTION_SETTINGS,
 	ROUTES.ERROR_DETAIL,
-	ROUTES.ALERTS_NEW,
-	ROUTES.EDIT_ALERTS,
-	ROUTES.LIST_ALL_ALERT,
+	ROUTES.LOGS_PIPELINES,
+	ROUTES.BILLING,
+	ROUTES.SUPPORT,
+	ROUTES.WORKSPACE_LOCKED,
 ];
+
+export const routesToDisable = [ROUTES.LOGS_EXPLORER, ROUTES.LIVE_LOGS];

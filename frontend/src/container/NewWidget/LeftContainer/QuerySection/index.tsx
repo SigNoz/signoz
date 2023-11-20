@@ -1,63 +1,55 @@
-/* eslint-disable  */
-//@ts-nocheck
-
-import { Button, Tabs } from 'antd';
+import { Button, Tabs, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
-import { cloneDeep, isEqual } from 'lodash-es';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { WidgetGraphProps } from 'container/NewWidget/types';
+import { QueryBuilder } from 'container/QueryBuilder';
+import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
+import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
-	UpdateQuery,
-	UpdateQueryProps,
-} from 'store/actions/dashboard/updateQuery';
+	getNextWidgets,
+	getPreviousWidgets,
+	getSelectedWidgetIndex,
+} from 'providers/Dashboard/util';
+import { useCallback, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { Query, Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import DashboardReducer from 'types/reducer/dashboards';
-import { v4 as uuid } from 'uuid';
+import AppReducer from 'types/reducer/app';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
-import {
-	WIDGET_CLICKHOUSE_QUERY_KEY_NAME,
-	WIDGET_PROMQL_QUERY_KEY_NAME,
-	WIDGET_QUERY_BUILDER_QUERY_KEY_NAME,
-} from './constants';
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
-import QueryBuilderQueryContainer from './QueryBuilder/queryBuilder';
-import TabHeader from './TabHeader';
-import { getQueryKey } from './utils/getQueryKey';
-import { showUnstagedStashConfirmBox } from './utils/userSettings';
 
-const { TabPane } = Tabs;
 function QuerySection({
-	handleUnstagedChanges,
-	updateQuery,
 	selectedGraph,
+	selectedTime,
 }: QueryProps): JSX.Element {
-	const [localQueryChanges, setLocalQueryChanges] = useState<Query>({} as Query);
-	const [rctTabKey, setRctTabKey] = useState<
-		Record<keyof typeof EQueryType, string>
-	>({
-		QUERY_BUILDER: uuid(),
-		CLICKHOUSE: uuid(),
-		PROM: uuid(),
-	});
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
-	const [selectedDashboards] = dashboards;
-	const { search } = useLocation();
-	const { widgets } = selectedDashboards.data;
+	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const urlQuery = useUrlQuery();
 
-	const urlQuery = useMemo(() => {
-		return new URLSearchParams(search);
-	}, [search]);
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
+
+	const { selectedDashboard, setSelectedDashboard } = useDashboard();
+
+	const getWidgetQueryRange = useGetWidgetQueryRange({
+		graphType: selectedGraph,
+		selectedTime: selectedTime.enum,
+	});
+
+	const { widgets } = selectedDashboard?.data || {};
 
 	const getWidget = useCallback(() => {
 		const widgetId = urlQuery.get('widgetId');
@@ -65,231 +57,128 @@ function QuerySection({
 	}, [widgets, urlQuery]);
 
 	const selectedWidget = getWidget() as Widgets;
-	const [queryCategory, setQueryCategory] = useState<EQueryType>(
-		selectedWidget.query.queryType,
-	);
 
-	const { query } = selectedWidget || {};
-	useEffect(() => {
-		setLocalQueryChanges(cloneDeep(query) as Query);
-	}, [query]);
+	const { query } = selectedWidget;
 
-	const queryDiff = (
-		queryA: Query,
-		queryB: Query,
-		queryCategory: EQueryType,
-	): boolean => {
-		const keyOfConcern = getQueryKey(queryCategory);
-		return !isEqual(queryA[keyOfConcern], queryB[keyOfConcern]);
-	};
+	useShareBuilderUrl(query);
 
-	useEffect(() => {
-		handleUnstagedChanges(
-			queryDiff(query, localQueryChanges, parseInt(`${queryCategory}`, 10)),
-		);
-	}, [handleUnstagedChanges, localQueryChanges, query, queryCategory]);
+	const handleStageQuery = useCallback(
+		(query: Query): void => {
+			if (selectedDashboard === undefined) {
+				return;
+			}
 
-	const regenRctKeys = (): void => {
-		setRctTabKey((prevState) => {
-			const newState = prevState;
-			Object.keys(newState).forEach((key) => {
-				newState[key as keyof typeof EQueryType] = uuid();
+			const updatedQuery = updateStepInterval(query, maxTime, minTime);
+
+			const selectedWidgetIndex = getSelectedWidgetIndex(
+				selectedDashboard,
+				selectedWidget.id,
+			);
+
+			const previousWidgets = getPreviousWidgets(
+				selectedDashboard,
+				selectedWidgetIndex,
+			);
+
+			const nextWidgets = getNextWidgets(selectedDashboard, selectedWidgetIndex);
+
+			setSelectedDashboard({
+				...selectedDashboard,
+				data: {
+					...selectedDashboard?.data,
+					widgets: [
+						...previousWidgets,
+						{
+							...selectedWidget,
+							query: updatedQuery,
+						},
+						...nextWidgets,
+					],
+				},
 			});
 
-			return cloneDeep(newState);
-		});
-	};
-
-	const handleStageQuery = (): void => {
-		updateQuery({
-			updatedQuery: localQueryChanges,
-			widgetId: urlQuery.get('widgetId') || '',
-			yAxisUnit: selectedWidget.yAxisUnit,
-		});
-	};
+			redirectWithQueryBuilderData(updatedQuery);
+		},
+		[
+			selectedDashboard,
+			maxTime,
+			minTime,
+			selectedWidget,
+			setSelectedDashboard,
+			redirectWithQueryBuilderData,
+		],
+	);
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
-		// If true, then it means that the user has made some changes and haven't staged them
-		const unstagedChanges = queryDiff(
-			query,
-			localQueryChanges,
-			parseInt(`${queryCategory}`, 10),
-		);
+		const currentQueryType = qCategory as EQueryType;
 
-		if (unstagedChanges && showUnstagedStashConfirmBox()) {
-			// eslint-disable-next-line no-alert
-			window.confirm(
-				"You are trying to navigate to different tab with unstaged changes. Your current changes will be purged. Press 'Stage & Run Query' to stage them.",
-			);
-			return;
-		}
-
-		setQueryCategory(parseInt(`${qCategory}`, 10));
-		const newLocalQuery = {
-			...cloneDeep(query),
-			queryType: parseInt(`${qCategory}`, 10),
-		};
-		setLocalQueryChanges(newLocalQuery);
-		regenRctKeys();
-		updateQuery({
-			updatedQuery: newLocalQuery,
-			widgetId: urlQuery.get('widgetId') || '',
-			yAxisUnit: selectedWidget.yAxisUnit,
+		featureResponse.refetch().then(() => {
+			handleStageQuery({ ...currentQuery, queryType: currentQueryType });
 		});
 	};
 
-	const handleLocalQueryUpdate = ({
-		updatedQuery,
-	}: IHandleUpdatedQuery): void => {
-		setLocalQueryChanges(cloneDeep(updatedQuery));
+	const handleRunQuery = (): void => {
+		handleStageQuery(currentQuery);
 	};
 
+	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
+		const config: QueryBuilderProps['filterConfigs'] = {
+			stepInterval: { isHidden: false, isDisabled: true },
+		};
+
+		return config;
+	}, []);
+
+	const items = [
+		{
+			key: EQueryType.QUERY_BUILDER,
+			label: 'Query Builder',
+			tab: <Typography>Query Builder</Typography>,
+			children: (
+				<QueryBuilder panelType={selectedGraph} filterConfigs={filterConfigs} />
+			),
+		},
+		{
+			key: EQueryType.CLICKHOUSE,
+			label: 'ClickHouse Query',
+			tab: <Typography>ClickHouse Query</Typography>,
+			children: <ClickHouseQueryContainer />,
+		},
+		{
+			key: EQueryType.PROM,
+			label: 'PromQL',
+			tab: <Typography>PromQL</Typography>,
+			children: <PromQLQueryContainer />,
+		},
+	];
+
 	return (
-		<>
-			<div style={{ display: 'flex' }}>
-				<Tabs
-					type="card"
-					style={{ width: '100%' }}
-					defaultActiveKey={queryCategory.toString()}
-					activeKey={queryCategory.toString()}
-					onChange={handleQueryCategoryChange}
-					tabBarExtraContent={
-						<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-							<TextToolTip
-								{...{
-									text: `This will temporarily save the current query and graph state. This will persist across tab change`,
-								}}
-							/>
-							<Button type="primary" onClick={handleStageQuery}>
-								Stage & Run Query
-							</Button>
-						</span>
-					}
-				>
-					<TabPane
-						tab={
-							<TabHeader
-								tabName="Query Builder"
-								hasUnstagedChanges={queryDiff(
-									query,
-									localQueryChanges,
-									EQueryType.QUERY_BUILDER,
-								)}
-							/>
-						}
-						key={EQueryType.QUERY_BUILDER.toString()}
+		<Tabs
+			type="card"
+			style={{ width: '100%' }}
+			defaultActiveKey={currentQuery.queryType}
+			activeKey={currentQuery.queryType}
+			onChange={handleQueryCategoryChange}
+			tabBarExtraContent={
+				<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+					<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
+					<Button
+						loading={getWidgetQueryRange.isFetching}
+						type="primary"
+						onClick={handleRunQuery}
 					>
-						<QueryBuilderQueryContainer
-							key={rctTabKey.QUERY_BUILDER}
-							queryData={localQueryChanges}
-							updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
-								handleLocalQueryUpdate({ updatedQuery });
-							}}
-							metricsBuilderQueries={
-								localQueryChanges[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME]
-							}
-							selectedGraph={selectedGraph}
-						/>
-					</TabPane>
-					<TabPane
-						tab={
-							<TabHeader
-								tabName="ClickHouse Query"
-								hasUnstagedChanges={queryDiff(
-									query,
-									localQueryChanges,
-									EQueryType.CLICKHOUSE,
-								)}
-							/>
-						}
-						key={EQueryType.CLICKHOUSE.toString()}
-					>
-						<ClickHouseQueryContainer
-							key={rctTabKey.CLICKHOUSE}
-							queryData={localQueryChanges}
-							updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
-								handleLocalQueryUpdate({ updatedQuery });
-							}}
-							clickHouseQueries={localQueryChanges[WIDGET_CLICKHOUSE_QUERY_KEY_NAME]}
-						/>
-					</TabPane>
-					<TabPane
-						tab={
-							<TabHeader
-								tabName="PromQL"
-								hasUnstagedChanges={queryDiff(
-									query,
-									localQueryChanges,
-									EQueryType.PROM,
-								)}
-							/>
-						}
-						key={EQueryType.PROM.toString()}
-					>
-						<PromQLQueryContainer
-							key={rctTabKey.PROM}
-							queryData={localQueryChanges}
-							updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
-								handleLocalQueryUpdate({ updatedQuery });
-							}}
-							promQLQueries={localQueryChanges[WIDGET_PROMQL_QUERY_KEY_NAME]}
-						/>
-					</TabPane>
-				</Tabs>
-			</div>
-			{/* {localQueryChanges.map((e, index) => (
-				// <Query
-				// 	name={e.name}
-				// 	currentIndex={index}
-				// 	selectedTime={selectedTime}
-				// 	key={JSON.stringify(e)}
-				// 	queryInput={e}
-				// 	updatedLocalQuery={handleLocalQueryUpdate}
-				// 	queryCategory={queryCategory}
-				// />
-				<QueryBuilder
-					key={`${JSON.stringify(e)}`}
-					name={e.name}
-					updateQueryData={(updatedQuery) =>
-						handleLocalQueryUpdate({ currentIndex: index, updatedQuery })
-					}
-					onDelete={() => handleDeleteQuery({ currentIndex: index })}
-					queryData={e}
-					queryCategory={queryCategory}
-				/>
-			))} */}
-		</>
+						Stage & Run Query
+					</Button>
+				</span>
+			}
+			items={items}
+		/>
 	);
 }
 
-interface DispatchProps {
-	// createQuery: ({
-	// 	widgetId,
-	// }: CreateQueryProps) => (dispatch: Dispatch<AppActions>) => void;
-	updateQuery: (
-		props: UpdateQueryProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
-	// getQueryResults: (
-	// 	props: GetQueryResultsProps,
-	// ) => (dispatch: Dispatch<AppActions>) => void;
-	// updateQueryType: (
-	// 	props: UpdateQueryTypeProps,
-	// ) => (dispatch: Dispatch<AppActions>) => void;
+interface QueryProps {
+	selectedGraph: PANEL_TYPES;
+	selectedTime: WidgetGraphProps['selectedTime'];
 }
 
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	// createQuery: bindActionCreators(CreateQuery, dispatch),
-	updateQuery: bindActionCreators(UpdateQuery, dispatch),
-	// getQueryResults: bindActionCreators(GetQueryResults, dispatch),
-	// updateQueryType: bindActionCreators(UpdateQueryType, dispatch),
-});
-
-interface QueryProps extends DispatchProps {
-	selectedGraph: GRAPH_TYPES;
-	selectedTime: timePreferance;
-	handleUnstagedChanges: (arg0: boolean) => void;
-}
-
-export default connect(null, mapDispatchToProps)(QuerySection);
+export default QuerySection;

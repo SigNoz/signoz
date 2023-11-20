@@ -1,6 +1,5 @@
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React from 'react';
 import { toFixed } from 'utils/toFixed';
 
 import { SpanBorder, SpanLine, SpanText, SpanWrapper } from './styles';

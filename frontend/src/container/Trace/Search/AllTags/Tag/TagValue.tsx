@@ -1,7 +1,14 @@
 import { Select } from 'antd';
 import { BaseOptionType } from 'antd/es/select';
 import getTagValue from 'api/trace/getTagValue';
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import {
+	Dispatch,
+	memo,
+	SetStateAction,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -139,9 +146,7 @@ function TagValue(props: TagValueProps): JSX.Element {
 interface TagValueProps {
 	index: number;
 	tag: FlatArray<TraceReducer['selectedTags'], 1>;
-	setLocalSelectedTags: React.Dispatch<
-		React.SetStateAction<TraceReducer['selectedTags']>
-	>;
+	setLocalSelectedTags: Dispatch<SetStateAction<TraceReducer['selectedTags']>>;
 	tagKey: string;
 }
 

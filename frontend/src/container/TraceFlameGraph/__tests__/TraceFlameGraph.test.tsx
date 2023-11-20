@@ -1,6 +1,6 @@
 import { render, renderHook } from '@testing-library/react';
 import TraceFlameGraph from 'container/TraceFlameGraph';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Provider } from 'react-redux';
 import store from 'store';
 

@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -12,7 +13,9 @@ import (
 
 	plabels "github.com/prometheus/prometheus/model/labels"
 	pql "github.com/prometheus/prometheus/promql"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/converter"
+	"go.signoz.io/signoz/pkg/query-service/formatter"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
@@ -190,8 +193,9 @@ func (r *PromRule) sample(alert *Alert, ts time.Time) pql.Sample {
 	lb.Set(qslabels.AlertStateLabel, alert.State.String())
 
 	s := pql.Sample{
-		Metric: lb.Labels(nil),
-		Point:  pql.Point{T: timestamp.FromTime(ts), V: 1},
+		Metric: lb.Labels(),
+		T:      timestamp.FromTime(ts),
+		F:      1,
 	}
 	return s
 }
@@ -255,6 +259,13 @@ func (r *PromRule) ActiveAlerts() []*Alert {
 	return res
 }
 
+func (r *PromRule) Unit() string {
+	if r.ruleCondition != nil && r.ruleCondition.CompositeQuery != nil {
+		return r.ruleCondition.CompositeQuery.Unit
+	}
+	return ""
+}
+
 // ForEachActiveAlert runs the given function on each alert.
 // This should be used when you want to use the actual alerts from the ThresholdRule
 // and not on its copy.
@@ -286,17 +297,36 @@ func (r *PromRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 	notifyFunc(ctx, "", alerts...)
 }
 
+func (r *PromRule) GetSelectedQuery() string {
+	if r.ruleCondition != nil {
+		// If the user has explicitly set the selected query, we return that.
+		if r.ruleCondition.SelectedQuery != "" {
+			return r.ruleCondition.SelectedQuery
+		}
+		// Historically, we used to have only one query in the alerts for promql.
+		// So, if there is only one query, we return that.
+		// This is to maintain backward compatibility.
+		// For new rules, we will have to explicitly set the selected query.
+		return "A"
+	}
+	// This should never happen.
+	return ""
+}
+
 func (r *PromRule) getPqlQuery() (string, error) {
 
-	if r.ruleCondition.CompositeMetricQuery.QueryType == model.PROM {
-		if len(r.ruleCondition.CompositeMetricQuery.PromQueries) > 0 {
-			if promQuery, ok := r.ruleCondition.CompositeMetricQuery.PromQueries["A"]; ok {
+	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		if len(r.ruleCondition.CompositeQuery.PromQueries) > 0 {
+			selectedQuery := r.GetSelectedQuery()
+			if promQuery, ok := r.ruleCondition.CompositeQuery.PromQueries[selectedQuery]; ok {
 				query := promQuery.Query
 				if query == "" {
 					return query, fmt.Errorf("a promquery needs to be set for this rule to function")
 				}
 				if r.ruleCondition.Target != nil && r.ruleCondition.CompareOp != CompareOpNone {
-					query = fmt.Sprintf("%s %s %f", query, ResolveCompareOp(r.ruleCondition.CompareOp), *r.ruleCondition.Target)
+					unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
+					value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
+					query = fmt.Sprintf("(%s) %s %f", query, ResolveCompareOp(r.ruleCondition.CompareOp), value.F)
 					return query, nil
 				} else {
 					return query, nil
@@ -309,6 +339,8 @@ func (r *PromRule) getPqlQuery() (string, error) {
 }
 
 func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
+
+	valueFormatter := formatter.FromUnit(r.Unit())
 
 	q, err := r.getPqlQuery()
 	if err != nil {
@@ -335,7 +367,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, smpl.V, r.targetVal())
+		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.F, r.Unit()), strconv.FormatFloat(r.targetVal(), 'f', 2, 64)+converter.UnitToName(r.ruleCondition.TargetUnit))
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
@@ -373,7 +405,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			annotations = append(annotations, plabels.Label{Name: a.Name, Value: expand(a.Value)})
 		}
 
-		lbs := lb.Labels(nil)
+		lbs := lb.Labels()
 		h := lbs.Hash()
 		resultFPs[h] = struct{}{}
 
@@ -391,7 +423,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			Annotations:  annotations,
 			ActiveAt:     ts,
 			State:        StatePending,
-			Value:        smpl.V,
+			Value:        smpl.F,
 			GeneratorURL: r.GeneratorURL(),
 			Receivers:    r.preferredChannels,
 		}

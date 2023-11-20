@@ -4,12 +4,12 @@ services:
   query-service:
     hostname: query-service
     build:
-      context: "../../../pkg/query-service"
-      dockerfile: "./Dockerfile"
+      context: "../../../"
+      dockerfile: "./pkg/query-service/Dockerfile"
       args:
         LDFLAGS: ""
-        TARGETPLATFORM: "${LOCAL_GOOS}/${LOCAL_GOARCH}"
-    container_name: query-service
+        TARGETPLATFORM: "${GOOS}/${GOARCH}"
+    container_name: signoz-query-service
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
       - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
@@ -22,13 +22,24 @@ services:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
       - ./data/signoz/:/var/lib/signoz/
-    command: ["-config=/root/config/prometheus.yml"]
+    command:
+      [
+        "-config=/root/config/prometheus.yml",
+        "--prefer-delta=true"
+      ]
     ports:
       - "6060:6060"
       - "8080:8080"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "localhost:8080/api/v1/health"
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -41,9 +52,9 @@ services:
       context: "../../../frontend"
       dockerfile: "./Dockerfile"
       args:
-        TARGETOS: "${LOCAL_GOOS}"
-        TARGETPLATFORM: "${LOCAL_GOARCH}"
-    container_name: frontend
+        TARGETOS: "${GOOS}"
+        TARGETPLATFORM: "${GOARCH}"
+    container_name: signoz-frontend
     environment:
       - FRONTEND_API_ENDPOINT=http://query-service:8080
     restart: unless-stopped

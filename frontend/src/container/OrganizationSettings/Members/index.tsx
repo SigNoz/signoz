@@ -7,7 +7,7 @@ import updateRole from 'api/user/updateRole';
 import { ResizeTable } from 'components/ResizeTable';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -29,7 +29,7 @@ function UserFunction({
 	const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
 	const onModalToggleHandler = (
-		func: React.Dispatch<React.SetStateAction<boolean>>,
+		func: Dispatch<SetStateAction<boolean>>,
 		value: boolean,
 	): void => {
 		func(value);
@@ -236,7 +236,7 @@ function Members(): JSX.Element {
 			getOrgUser({
 				orgId: (org || [])[0].id,
 			}),
-		queryKey: 'getOrgUser',
+		queryKey: ['getOrgUser', org?.[0].id],
 	});
 
 	const [dataSource, setDataSource] = useState<DataType[]>([]);
@@ -329,7 +329,7 @@ interface DataType {
 }
 
 interface UserFunctionProps extends DataType {
-	setDataSource: React.Dispatch<React.SetStateAction<DataType[]>>;
+	setDataSource: Dispatch<SetStateAction<DataType[]>>;
 }
 
 export default Members;

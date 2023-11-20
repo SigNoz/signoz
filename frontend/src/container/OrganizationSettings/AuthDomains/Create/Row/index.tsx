@@ -1,5 +1,5 @@
 import { Button, Space, Typography } from 'antd';
-import React from 'react';
+import { ReactNode } from 'react';
 
 import { IconContainer, TitleContainer, TitleText } from './styles';
 
@@ -29,7 +29,7 @@ function Row({
 
 export interface RowProps {
 	onClickHandler: VoidFunction;
-	Icon: React.ReactNode;
+	Icon: ReactNode;
 	title: string;
 	subTitle: string;
 	buttonText: string;

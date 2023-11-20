@@ -14,7 +14,7 @@ import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import useUrlQuery from 'hooks/useUrlQuery';
 import _omit from 'lodash-es/omit';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
@@ -26,6 +26,7 @@ import {
 	UPDATE_TIME_INTERVAL,
 } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { getMinMax, options } from './config';
 import { ButtonContainer, Container } from './styles';
@@ -142,6 +143,7 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 
 	return (
 		<Popover
+			getPopupContainer={popupContainer}
 			placement="bottomLeft"
 			trigger={['click']}
 			content={

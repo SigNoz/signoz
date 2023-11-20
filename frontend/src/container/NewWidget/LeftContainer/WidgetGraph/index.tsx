@@ -1,63 +1,61 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
-import { Card } from 'container/GridGraphLayout/styles';
-import React, { memo } from 'react';
-import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
-import DashboardReducer from 'types/reducer/dashboards';
+import { Card } from 'container/GridCardLayout/styles';
+import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { memo } from 'react';
 
-import { NewWidgetProps } from '../../index';
+import { WidgetGraphProps } from '../../types';
 import PlotTag from './PlotTag';
-import { AlertIconContainer, Container, NotFoundContainer } from './styles';
-import WidgetGraphComponent from './WidgetGraph';
+import { AlertIconContainer, Container } from './styles';
+import WidgetGraphComponent from './WidgetGraphContainer';
 
 function WidgetGraph({
 	selectedGraph,
 	yAxisUnit,
+	selectedTime,
+	thresholds,
+	fillSpans,
 }: WidgetGraphProps): JSX.Element {
-	const { dashboards, isQueryFired } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
-	const [selectedDashboard] = dashboards;
-	const { search } = useLocation();
+	const { currentQuery } = useQueryBuilder();
+	const { selectedDashboard } = useDashboard();
 
-	const { data } = selectedDashboard;
+	const { widgets = [] } = selectedDashboard?.data || {};
 
-	const { widgets = [] } = data;
+	const params = useUrlQuery();
 
-	const params = new URLSearchParams(search);
 	const widgetId = params.get('widgetId');
 
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
+	const getWidgetQueryRange = useGetWidgetQueryRange({
+		graphType: selectedGraph,
+		selectedTime: selectedTime.enum,
+	});
+
 	if (selectedWidget === undefined) {
-		return <Card>Invalid widget</Card>;
+		return <Card $panelType={selectedGraph}>Invalid widget</Card>;
 	}
 
-	const { queryData } = selectedWidget;
 	return (
-		<Container>
-			<PlotTag queryType={selectedWidget.query.queryType} />
-			{queryData.error && (
-				<AlertIconContainer color="red" title={queryData.errorMessage}>
+		<Container $panelType={selectedGraph}>
+			<PlotTag queryType={currentQuery.queryType} panelType={selectedGraph} />
+			{getWidgetQueryRange.error && (
+				<AlertIconContainer color="red" title={getWidgetQueryRange.error.message}>
 					<InfoCircleOutlined />
 				</AlertIconContainer>
 			)}
 
-			{!isQueryFired && (
-				<NotFoundContainer>
-					<Typography>No Data</Typography>
-				</NotFoundContainer>
-			)}
-
-			{isQueryFired && (
-				<WidgetGraphComponent selectedGraph={selectedGraph} yAxisUnit={yAxisUnit} />
-			)}
+			<WidgetGraphComponent
+				thresholds={thresholds}
+				selectedTime={selectedTime}
+				selectedGraph={selectedGraph}
+				yAxisUnit={yAxisUnit}
+				fillSpans={fillSpans}
+			/>
 		</Container>
 	);
 }
-
-type WidgetGraphProps = NewWidgetProps;
 
 export default memo(WidgetGraph);

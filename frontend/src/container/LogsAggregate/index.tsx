@@ -4,7 +4,7 @@ import Spinner from 'components/Spinner';
 import dayjs from 'dayjs';
 import useInterval from 'hooks/useInterval';
 import getStep from 'lib/getStep';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';

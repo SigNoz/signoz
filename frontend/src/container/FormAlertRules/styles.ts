@@ -1,14 +1,4 @@
-import {
-	Button,
-	Card,
-	Col,
-	Form,
-	Input,
-	InputNumber,
-	Row,
-	Select,
-	Typography,
-} from 'antd';
+import { Button, Card, Col, Form, Input, Row, Select, Typography } from 'antd';
 import styled from 'styled-components';
 
 const { TextArea } = Input;
@@ -69,8 +59,8 @@ export const StepHeading = styled.p`
 export const InlineSelect = styled(Select)`
 	display: inline-block;
 	width: 10% !important;
-	margin-left: 0.2em;
-	margin-right: 0.2em;
+	margin-left: 0.3em;
+	margin-right: 0.3em;
 `;
 
 export const SeveritySelect = styled(Select)`
@@ -82,27 +72,10 @@ export const InputSmall = styled(Input)`
 `;
 
 export const FormContainer = styled(Card)`
-	padding: 2em;
 	margin-top: 1rem;
 	display: flex;
 	flex-direction: column;
 	border-radius: 4px;
-`;
-
-export const ThresholdInput = styled(InputNumber)`
-	& > div {
-		display: flex;
-		align-items: center;
-		& > .ant-input-number-group-addon {
-			width: 130px;
-			border: 0;
-			background: transparent;
-		}
-		& > .ant-input-number {
-			width: 50%;
-			margin-left: 1em;
-		}
-	}
 `;
 
 export const TextareaMedium = styled(TextArea)`
@@ -115,4 +88,8 @@ export const FormItemMedium = styled(Item)`
 
 export const ChannelSelectTip = styled(Typography.Text)`
 	color: hsla(0, 0%, 100%, 0.3);
+`;
+
+export const StepContainer = styled.div`
+	margin-top: 2rem;
 `;

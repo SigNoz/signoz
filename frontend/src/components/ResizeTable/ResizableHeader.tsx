@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { SyntheticEvent, useMemo } from 'react';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 
 import { enableUserSelectHack } from './config';
@@ -37,7 +37,7 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 }
 
 interface ResizableHeaderProps {
-	onResize: (e: React.SyntheticEvent<Element>, data: ResizeCallbackData) => void;
+	onResize: (e: SyntheticEvent<Element>, data: ResizeCallbackData) => void;
 	width: number;
 }
 

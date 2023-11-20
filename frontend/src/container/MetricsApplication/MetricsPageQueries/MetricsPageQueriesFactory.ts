@@ -1,103 +1,101 @@
 import {
-	IMetricsBuilderFormula,
-	IMetricsBuilderQuery,
-	IQueryBuilderTagFilterItems,
-} from 'types/api/dashboard/getAll';
+	alphabet,
+	initialFormulaBuilderFormValues,
+	initialQueryBuilderFormValuesMap,
+} from 'constants/queryBuilder';
+import getStep from 'lib/getStep';
+import store from 'store';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	MetricAggregateOperator,
+	QueryBuilderData,
+} from 'types/common/queryBuilder';
+
+import {
+	BuilderQueriesProps,
+	BuilderQuerieswithFormulaProps,
+} from '../Tabs/types';
 
 export const getQueryBuilderQueries = ({
-	metricName,
-	groupBy,
-	legend,
-	itemsA,
-}: BuilderQueriesProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => ({
-	formulas: [],
-	queryBuilder: [
-		{
-			aggregateOperator: 18,
+	autocompleteData,
+	groupBy = [],
+	legends,
+	filterItems,
+	aggregateOperator,
+	dataSource,
+	queryNameAndExpression,
+}: BuilderQueriesProps): QueryBuilderData => ({
+	queryFormulas: [],
+	queryData: autocompleteData.map((item, index) => {
+		const newQueryData: IBuilderQuery = {
+			...initialQueryBuilderFormValuesMap.metrics,
+			aggregateOperator: ((): string => {
+				if (aggregateOperator) {
+					return aggregateOperator[index];
+				}
+				return MetricAggregateOperator.SUM_RATE;
+			})(),
 			disabled: false,
 			groupBy,
-			legend,
-			metricName,
-			name: 'A',
-			reduceTo: 1,
-			tagFilters: {
-				items: itemsA,
+			aggregateAttribute: item,
+			legend: legends[index],
+			stepInterval: getStep({
+				end: store.getState().globalTime.maxTime,
+				inputFormat: 'ns',
+				start: store.getState().globalTime.minTime,
+			}),
+			filters: {
+				items: filterItems[index],
 				op: 'AND',
 			},
-		},
-	],
+			reduceTo: 'sum',
+			dataSource,
+		};
+
+		if (queryNameAndExpression) {
+			newQueryData.queryName = queryNameAndExpression[index];
+			newQueryData.expression = queryNameAndExpression[index];
+		}
+
+		return newQueryData;
+	}),
 });
 
 export const getQueryBuilderQuerieswithFormula = ({
-	metricNameA,
-	metricNameB,
-	additionalItemsA,
-	additionalItemsB,
-	legend,
-	groupBy,
+	autocompleteData,
+	additionalItems,
+	legends,
+	groupBy = [],
 	disabled,
-	expression,
-	legendFormula,
-}: BuilderQuerieswithFormulaProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => ({
-	formulas: [
-		{
-			disabled: false,
-			expression,
-			name: 'F1',
-			legend: legendFormula,
+	expressions,
+	legendFormulas,
+	aggregateOperators,
+	dataSource,
+}: BuilderQuerieswithFormulaProps): QueryBuilderData => ({
+	queryFormulas: expressions.map((expression, index) => ({
+		...initialFormulaBuilderFormValues,
+		expression,
+		legend: legendFormulas[index],
+	})),
+	queryData: autocompleteData.map((_, index) => ({
+		...initialQueryBuilderFormValuesMap.metrics,
+		aggregateOperator: aggregateOperators[index],
+		disabled: disabled[index],
+		groupBy,
+		legend: legends[index],
+		aggregateAttribute: autocompleteData[index],
+		queryName: alphabet[index],
+		expression: alphabet[index],
+		reduceTo: 'sum',
+		filters: {
+			items: additionalItems[index],
+			op: 'AND',
 		},
-	],
-	queryBuilder: [
-		{
-			aggregateOperator: 18,
-			disabled,
-			groupBy,
-			legend,
-			metricName: metricNameA,
-			name: 'A',
-			reduceTo: 1,
-			tagFilters: {
-				items: additionalItemsA,
-				op: 'AND',
-			},
-		},
-		{
-			aggregateOperator: 18,
-			disabled,
-			groupBy,
-			legend,
-			metricName: metricNameB,
-			name: 'B',
-			reduceTo: 1,
-			tagFilters: {
-				items: additionalItemsB,
-				op: 'AND',
-			},
-		},
-	],
+		stepInterval: getStep({
+			end: store.getState().globalTime.maxTime,
+			inputFormat: 'ns',
+			start: store.getState().globalTime.minTime,
+		}),
+		dataSource,
+	})),
 });
-
-interface BuilderQueriesProps {
-	metricName: string;
-	groupBy?: string[];
-	legend: string;
-	itemsA: IQueryBuilderTagFilterItems[];
-}
-
-interface BuilderQuerieswithFormulaProps {
-	metricNameA: string;
-	metricNameB: string;
-	legend: string;
-	disabled: boolean;
-	groupBy?: string[];
-	expression: string;
-	legendFormula: string;
-	additionalItemsA: IQueryBuilderTagFilterItems[];
-	additionalItemsB: IQueryBuilderTagFilterItems[];
-}

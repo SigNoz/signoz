@@ -1,4 +1,5 @@
 import { GlobalTime } from 'types/actions/globalTime';
+import { Tags } from 'types/reducer/trace';
 
 export type Order = 'ascending' | 'descending';
 export type OrderBy =
@@ -17,6 +18,7 @@ export interface Props {
 	offset?: number;
 	exceptionType?: string;
 	serviceName?: string;
+	tags?: Tags[];
 }
 
 export interface Exception {

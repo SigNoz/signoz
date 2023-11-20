@@ -1,4 +1,4 @@
-import React from 'react';
+import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 function LinkContainer({ children, href }: LinkContainerProps): JSX.Element {
@@ -16,7 +16,7 @@ function LinkContainer({ children, href }: LinkContainerProps): JSX.Element {
 }
 
 interface LinkContainerProps {
-	children: React.ReactNode;
+	children: ReactNode;
 	href: string;
 }
 

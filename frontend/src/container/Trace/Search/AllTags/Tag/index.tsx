@@ -1,6 +1,6 @@
 import { CloseOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
-import React from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { Container, IconContainer, SelectComponent } from './styles';
@@ -172,9 +172,7 @@ interface AllTagsProps {
 	onCloseHandler: (index: number) => void;
 	index: number;
 	tag: FlatArray<TraceReducer['selectedTags'], 1>;
-	setLocalSelectedTags: React.Dispatch<
-		React.SetStateAction<TraceReducer['selectedTags']>
-	>;
+	setLocalSelectedTags: Dispatch<SetStateAction<TraceReducer['selectedTags']>>;
 	localSelectedTags: TraceReducer['selectedTags'];
 }
 

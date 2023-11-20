@@ -1,9 +1,7 @@
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { License } from 'types/api/licenses/def';
-import { PayloadProps } from 'types/api/licenses/getAll';
 
 function ListLicenses({ licenses }: ListLicensesProps): JSX.Element {
 	const { t } = useTranslation(['licenses']);
@@ -39,7 +37,7 @@ function ListLicenses({ licenses }: ListLicensesProps): JSX.Element {
 }
 
 interface ListLicensesProps {
-	licenses: PayloadProps;
+	licenses: License[];
 }
 
 export default ListLicenses;

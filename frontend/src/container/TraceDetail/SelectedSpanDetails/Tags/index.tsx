@@ -1,7 +1,14 @@
 import { Input, List, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { formUrlParams } from 'container/TraceDetail/utils';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	ChangeEvent,
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { ITraceTag } from 'types/api/trace/getTraceItem';
 
@@ -16,12 +23,8 @@ function Tags({
 	setText,
 }: TagsProps): JSX.Element {
 	const { t } = useTranslation(['traceDetails']);
-	const [allRenderedTags, setAllRenderedTags] = useState(tags);
+	const [searchText, setSearchText] = useState('');
 	const isSearchVisible = useMemo(() => tags.length > 5, [tags]);
-
-	useEffect(() => {
-		setAllRenderedTags(tags);
-	}, [tags]);
 
 	const getLink = useCallback(
 		(item: Record<string, string>) =>
@@ -33,14 +36,12 @@ function Tags({
 		[],
 	);
 
-	const onChangeHandler = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>): void => {
-			const { value } = e.target;
-			const filteredTags = tags.filter((tag) => tag.key.includes(value));
-			setAllRenderedTags(filteredTags);
-		},
-		[tags],
-	);
+	const onChangeHandler = (e: ChangeEvent<HTMLInputElement>): void => {
+		const { value } = e.target;
+		setSearchText(value);
+	};
+
+	const filteredTags = tags.filter((tag) => tag.key.includes(searchText));
 
 	if (tags.length === 0) {
 		return <Typography>No tags in selected span</Typography>;
@@ -53,9 +54,10 @@ function Tags({
 					placeholder={t('traceDetails:search_tags')}
 					allowClear
 					onChange={onChangeHandler}
+					value={searchText}
 				/>
 			)}
-			{allRenderedTags.map((tag) => (
+			{filteredTags.map((tag) => (
 				<Tag
 					key={JSON.stringify(tag)}
 					{...{
@@ -87,7 +89,7 @@ interface TagsProps extends CommonTagsProps {
 
 export interface CommonTagsProps {
 	onToggleHandler: (state: boolean) => void;
-	setText: React.Dispatch<React.SetStateAction<ModalText>>;
+	setText: Dispatch<SetStateAction<ModalText>>;
 }
 
 Tags.defaultProps = {

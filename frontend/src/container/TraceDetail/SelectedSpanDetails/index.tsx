@@ -1,10 +1,19 @@
-import { Modal, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Modal, Tabs, Tooltip, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useMemo, useState } from 'react';
+import createQueryParams from 'lib/createQueryParams';
+import history from 'lib/history';
+import { useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
+import { AppState } from 'store/reducers';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { getTraceToLogsQuery } from './config';
 import Events from './Events';
 import {
 	CardContainer,
@@ -15,10 +24,14 @@ import {
 } from './styles';
 import Tags from './Tags';
 
-const { TabPane } = Tabs;
-
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { tree, firstSpanStartTime } = props;
+
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const { id: traceId } = useParams<Params>();
 
 	const isDarkMode = useIsDarkMode();
 
@@ -44,6 +57,45 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 
 	const { tags, nonChildReferences } = tree;
 
+	const items = [
+		{
+			label: 'Tags',
+			key: '1',
+			children: (
+				<Tags
+					onToggleHandler={onToggleHandler}
+					setText={setText}
+					tags={tags}
+					linkedSpans={nonChildReferences}
+				/>
+			),
+		},
+		{
+			label: 'Events',
+			key: '2',
+			children: (
+				<Events
+					events={tree.event}
+					onToggleHandler={onToggleHandler}
+					setText={setText}
+					firstSpanStartTime={firstSpanStartTime}
+				/>
+			),
+		},
+	];
+
+	const onLogsHandler = (): void => {
+		const query = getTraceToLogsQuery(traceId, minTime, maxTime);
+
+		history.push(
+			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
+				[QueryParams.compositeQuery]: JSON.stringify(query),
+				[QueryParams.startTime]: minTime,
+				[QueryParams.endTime]: maxTime,
+			})}`,
+		);
+	};
+
 	return (
 		<CardContainer>
 			<StyledSpace
@@ -53,6 +105,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				<Typography.Text strong> Details for selected Span </Typography.Text>
 
 				<CustomTitle>Service</CustomTitle>
+
 				<Tooltip overlay={OverLayComponentServiceName}>
 					<CustomText ellipsis>{tree.serviceName}</CustomText>
 				</Tooltip>
@@ -61,6 +114,8 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				<Tooltip overlay={OverLayComponentName}>
 					<CustomText ellipsis>{tree.name}</CustomText>
 				</Tooltip>
+
+				<Button onClick={onLogsHandler}>Go to Related logs</Button>
 			</StyledSpace>
 
 			<Modal
@@ -81,24 +136,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				)}
 			</Modal>
 
-			<Tabs defaultActiveKey="1">
-				<TabPane tab="Tags" key="1">
-					<Tags
-						onToggleHandler={onToggleHandler}
-						setText={setText}
-						tags={tags}
-						linkedSpans={nonChildReferences}
-					/>
-				</TabPane>
-				<TabPane tab="Events" key="2">
-					<Events
-						events={tree.event}
-						onToggleHandler={onToggleHandler}
-						setText={setText}
-						firstSpanStartTime={firstSpanStartTime}
-					/>
-				</TabPane>
-			</Tabs>
+			<Tabs defaultActiveKey="1" items={items} />
 		</CardContainer>
 	);
 }
@@ -115,6 +153,10 @@ SelectedSpanDetails.defaultProps = {
 export interface ModalText {
 	text: string;
 	subText: string;
+}
+
+interface Params {
+	id: string;
 }
 
 export default SelectedSpanDetails;

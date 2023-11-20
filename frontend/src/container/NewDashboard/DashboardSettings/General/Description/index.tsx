@@ -1,5 +1,5 @@
 import { Input } from 'antd';
-import React, { useCallback } from 'react';
+import { ChangeEvent, Dispatch, SetStateAction, useCallback } from 'react';
 
 import { Container } from './styles';
 
@@ -10,7 +10,7 @@ function Description({
 	setDescription,
 }: DescriptionProps): JSX.Element {
 	const onChangeHandler = useCallback(
-		(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+		(e: ChangeEvent<HTMLTextAreaElement>) => {
 			setDescription(e.target.value);
 		},
 		[setDescription],
@@ -29,7 +29,7 @@ function Description({
 
 interface DescriptionProps {
 	description: string;
-	setDescription: React.Dispatch<React.SetStateAction<string>>;
+	setDescription: Dispatch<SetStateAction<string>>;
 }
 
 export default Description;

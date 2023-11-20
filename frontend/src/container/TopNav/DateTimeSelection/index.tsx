@@ -4,8 +4,11 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs, { Dayjs } from 'dayjs';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -14,6 +17,7 @@ import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
@@ -65,6 +69,8 @@ function DateTimeSelection({
 	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
 		false,
 	);
+
+	const { stagedQuery, initQueryBuilderData } = useQueryBuilder();
 
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
@@ -174,6 +180,14 @@ function DateTimeSelection({
 			setRefreshButtonHidden(true);
 			setCustomDTPickerVisible(true);
 		}
+
+		if (!stagedQuery) {
+			return;
+		}
+
+		const { maxTime, minTime } = GetMinMax(value, getTime());
+
+		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime));
 	};
 
 	const onRefreshHandler = (): void => {
@@ -258,6 +272,7 @@ function DateTimeSelection({
 			>
 				<FormContainer>
 					<DefaultSelect
+						getPopupContainer={popupContainer}
 						onSelect={(value: unknown): void => onSelectHandler(value as Time)}
 						value={getInputLabel(
 							dayjs(minTime / 1000000),

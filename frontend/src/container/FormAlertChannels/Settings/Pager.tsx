@@ -1,5 +1,5 @@
 import { Form, Input } from 'antd';
-import React from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PagerChannel } from '../../CreateAlertChannels/config';
@@ -148,7 +148,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 }
 
 interface PagerFormProps {
-	setSelectedConfig: React.Dispatch<React.SetStateAction<Partial<PagerChannel>>>;
+	setSelectedConfig: Dispatch<SetStateAction<Partial<PagerChannel>>>;
 }
 
 export default PagerForm;

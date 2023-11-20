@@ -1,11 +1,21 @@
-import { ChartData } from 'chart.js';
+import { ChartData, ChartDataset } from 'chart.js';
 import getLabelName from 'lib/getLabelName';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { QueryData } from 'types/api/widgets/getQuery';
 
 import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
 
-const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
+export const limit = 30;
+
+const getChartData = ({
+	queryData,
+	createDataset,
+	isWarningLimit = false,
+}: GetChartDataProps): {
+	data: ChartData;
+	isWarning: boolean;
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+} => {
 	const uniqueTimeLabels = new Set<number>();
 	queryData.forEach((data) => {
 		data.queryData.forEach((query) => {
@@ -14,6 +24,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 			});
 		});
 	});
+
 	const labels = Array.from(uniqueTimeLabels).sort((a, b) => a - b);
 
 	const response = queryData.map(
@@ -46,38 +57,79 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 
 				return {
 					label: labelNames !== 'undefined' ? labelNames : '',
-					first: filledDataValues.map((e) => e.first),
-					second: filledDataValues.map((e) => e.second),
+					first: filledDataValues.map((e) => e.first || 0),
+					second: filledDataValues.map((e) => e.second || 0),
 				};
 			}),
 	);
-	const allLabels = response
-		.map((e) => e.map((e) => e.label))
-		.reduce((a, b) => [...a, ...b], []);
 
-	const alldata = response
-		.map((e) => e.map((e) => e.second))
-		.reduce((a, b) => [...a, ...b], []);
+	const modifiedData = response
+		.flat()
+		.sort((a, b) => {
+			const len = Math.min(a.second.length, b.second.length); // min length of both array
 
-	return {
-		datasets: alldata.map((e, index) => ({
-			data: e,
+			for (let i = 0; i < len; i += 1) {
+				const avearageOfArray = (arr: number[]): number =>
+					arr.reduce((a, b) => a + b, 0) / arr.length;
+
+				const diff = avearageOfArray(a.second) - avearageOfArray(b.second); // calculating the difference
+
+				if (diff !== 0) return diff;
+			}
+
+			return a.second.length - b.second.length;
+		})
+		.reverse();
+
+	const updatedSortedData = isWarningLimit
+		? modifiedData.slice(0, limit)
+		: modifiedData;
+
+	const allLabels = modifiedData.map((e) => e.label);
+
+	const updatedDataSet = updatedSortedData.map((e, index) => {
+		const datasetBaseConfig = {
+			index,
 			label: allLabels[index],
+			borderColor: colors[index % colors.length] || 'red',
+			data: e.second,
 			borderWidth: 1.5,
 			spanGaps: true,
 			animations: false,
-			borderColor: colors[index % colors.length] || 'red',
 			showLine: true,
 			pointRadius: 0,
-		})),
-		labels: response
-			.map((e) => e.map((e) => e.first))
-			.reduce((a, b) => [...a, ...b], [])[0],
+		};
+
+		return createDataset
+			? createDataset(e.second, index, allLabels)
+			: datasetBaseConfig;
+	});
+
+	const updatedLabels = modifiedData.map((e) => e.first).flat();
+
+	const updatedData = {
+		datasets: updatedDataSet,
+		labels: updatedLabels,
+	};
+
+	return {
+		data: updatedData,
+		isWarning: isWarningLimit && (allLabels?.length || 0) > limit,
 	};
 };
 
-interface GetChartDataProps {
-	queryData: Widgets['queryData']['data'][];
+export interface GetChartDataProps {
+	queryData: {
+		query?: string;
+		legend?: string;
+		queryData: QueryData[];
+	}[];
+	createDataset?: (
+		element: (number | null)[],
+		index: number,
+		allLabels: string[],
+	) => ChartDataset;
+	isWarningLimit?: boolean;
 }
 
 export default getChartData;

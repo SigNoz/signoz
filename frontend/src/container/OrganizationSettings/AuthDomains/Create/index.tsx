@@ -1,6 +1,6 @@
 import { GoogleSquareFilled, KeyOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { AuthDomain, GOOGLE_AUTH, SAML } from 'types/api/SAML/listDomain';
 
 import Row, { RowProps } from './Row';

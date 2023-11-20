@@ -2,7 +2,7 @@ import { StyledDiv } from 'components/Styled';
 import { ITraceMetaData } from 'container/GantChart';
 import { IIntervalUnit, INTERVAL_UNITS } from 'container/TraceDetail/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { styles, Svg, TimelineInterval } from './styles';
@@ -105,7 +105,7 @@ interface TimelineProps {
 		levels: number;
 	};
 	globalTraceMetadata: ITraceMetaData;
-	setIntervalUnit: React.Dispatch<React.SetStateAction<IIntervalUnit>>;
+	setIntervalUnit: Dispatch<SetStateAction<IIntervalUnit>>;
 }
 
 export default Timeline;

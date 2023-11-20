@@ -1,9 +1,17 @@
+import { OPERATORS } from 'constants/queryBuilder';
 import {
-	IMetricsBuilderFormula,
-	IMetricsBuilderQuery,
-	IQueryBuilderTagFilterItems,
-} from 'types/api/dashboard/getAll';
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	QueryBuilderData,
+} from 'types/common/queryBuilder';
 
+import { FORMULA, MetricsType, WidgetKeys } from '../constant';
+import { DatabaseCallProps, DatabaseCallsRPSProps } from '../types';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -13,71 +21,112 @@ export const databaseCallsRPS = ({
 	servicename,
 	legend,
 	tagFilterItems,
-}: DatabaseCallsRPSProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => {
-	const metricName = 'signoz_db_latency_count';
-	const groupBy = ['db_system'];
-	const itemsA = [
+}: DatabaseCallsRPSProps): QueryBuilderData => {
+	const autocompleteData: BaseAutocompleteData[] = [
 		{
-			id: '',
-			key: 'service_name',
-			op: 'IN',
-			value: [`${servicename}`],
+			key: WidgetKeys.SignozDBLatencyCount,
+			dataType: DataTypes.Float64,
+			isColumn: true,
+			type: '',
 		},
-		...tagFilterItems,
+	];
+	const groupBy: BaseAutocompleteData[] = [
+		{
+			dataType: DataTypes.String,
+			isColumn: false,
+			key: 'db_system',
+			type: 'tag',
+		},
+	];
+	const filterItems: TagFilterItem[][] = [
+		[
+			{
+				id: '',
+				key: {
+					key: WidgetKeys.Service_name,
+					dataType: DataTypes.String,
+					isColumn: false,
+					type: MetricsType.Resource,
+				},
+				op: OPERATORS.IN,
+				value: [`${servicename}`],
+			},
+			...tagFilterItems,
+		],
 	];
 
+	const legends = [legend];
+	const dataSource = DataSource.METRICS;
+
 	return getQueryBuilderQueries({
-		metricName,
+		autocompleteData,
 		groupBy,
-		legend,
-		itemsA,
+		legends,
+		filterItems,
+		dataSource,
 	});
 };
 
 export const databaseCallsAvgDuration = ({
 	servicename,
 	tagFilterItems,
-}: DatabaseCallProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => {
-	const metricNameA = 'signoz_db_latency_sum';
-	const metricNameB = 'signoz_db_latency_count';
-	const expression = 'A/B';
-	const legendFormula = 'Average Duration';
-	const legend = '';
-	const disabled = true;
-	const additionalItemsA = [
+}: DatabaseCallProps): QueryBuilderData => {
+	const autocompleteDataA: BaseAutocompleteData = {
+		key: WidgetKeys.SignozDbLatencySum,
+		dataType: DataTypes.Float64,
+		isColumn: true,
+		type: '',
+	};
+	const autocompleteDataB: BaseAutocompleteData = {
+		key: WidgetKeys.SignozDBLatencyCount,
+		dataType: DataTypes.Float64,
+		isColumn: true,
+		type: '',
+	};
+
+	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
-			key: 'service_name',
-			op: 'IN',
-			value: [`${servicename}`],
+			key: {
+				key: WidgetKeys.Service_name,
+				dataType: DataTypes.String,
+				isColumn: false,
+				type: MetricsType.Resource,
+			},
+			op: OPERATORS.IN,
+			value: [servicename],
 		},
 		...tagFilterItems,
 	];
-	const additionalItemsB = additionalItemsA;
+
+	const autocompleteData: BaseAutocompleteData[] = [
+		autocompleteDataA,
+		autocompleteDataB,
+	];
+
+	const additionalItems: TagFilterItem[][] = [
+		additionalItemsA,
+		additionalItemsA,
+	];
+
+	const legends = ['', ''];
+	const disabled = [true, true];
+	const legendFormulas = ['Average Duration'];
+	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
+	];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
-		metricNameA,
-		metricNameB,
-		additionalItemsA,
-		additionalItemsB,
-		legend,
+		autocompleteData,
+		additionalItems,
+		legends,
 		disabled,
-		expression,
-		legendFormula,
+		expressions,
+		legendFormulas,
+		aggregateOperators,
+		dataSource,
 	});
 };
-
-interface DatabaseCallsRPSProps extends DatabaseCallProps {
-	legend: '{{db_system}}';
-}
-
-interface DatabaseCallProps {
-	servicename: string | undefined;
-	tagFilterItems: IQueryBuilderTagFilterItems[] | [];
-}

@@ -1,6 +1,6 @@
 import { Form, Input, Select } from 'antd';
 import { LabelFilterStatement } from 'container/CreateAlertChannels/config';
-import React from 'react';
+import { Dispatch, SetStateAction } from 'react';
 
 const { Option } = Select;
 
@@ -55,9 +55,7 @@ function LabelFilterForm({ setFilter }: LabelFilterProps): JSX.Element {
 }
 
 export interface LabelFilterProps {
-	setFilter: React.Dispatch<
-		React.SetStateAction<Partial<Array<LabelFilterStatement>>>
-	>;
+	setFilter: Dispatch<SetStateAction<Partial<Array<LabelFilterStatement>>>>;
 }
 
 export default LabelFilterForm;

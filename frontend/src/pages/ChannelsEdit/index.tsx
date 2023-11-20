@@ -1,16 +1,15 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { Typography } from 'antd';
 import get from 'api/channels/get';
 import Spinner from 'components/Spinner';
 import {
+	ChannelType,
+	MsTeamsChannel,
 	PagerChannel,
-	PagerType,
 	SlackChannel,
-	SlackType,
 	WebhookChannel,
-	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import EditAlertChannels from 'container/EditAlertChannels';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
@@ -40,14 +39,25 @@ function ChannelsEdit(): JSX.Element {
 
 	const prepChannelConfig = (): {
 		type: string;
-		channel: SlackChannel & WebhookChannel & PagerChannel;
+		channel: SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel;
 	} => {
-		let channel: SlackChannel & WebhookChannel & PagerChannel = { name: '' };
+		let channel: SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel = {
+			name: '',
+		};
 		if (value && 'slack_configs' in value) {
 			const slackConfig = value.slack_configs[0];
 			channel = slackConfig;
 			return {
-				type: SlackType,
+				type: ChannelType.Slack,
+				channel,
+			};
+		}
+
+		if (value && 'msteams_configs' in value) {
+			const msteamsConfig = value.msteams_configs[0];
+			channel = msteamsConfig;
+			return {
+				type: ChannelType.MsTeams,
 				channel,
 			};
 		}
@@ -57,7 +67,16 @@ function ChannelsEdit(): JSX.Element {
 			channel.details = JSON.stringify(pagerConfig.details);
 			channel.detailsArray = { ...pagerConfig.details };
 			return {
-				type: PagerType,
+				type: ChannelType.Pagerduty,
+				channel,
+			};
+		}
+
+		if (value && 'opsgenie_configs' in value) {
+			const opsgenieConfig = value.opsgenie_configs[0];
+			channel = opsgenieConfig;
+			return {
+				type: ChannelType.Opsgenie,
 				channel,
 			};
 		}
@@ -77,12 +96,12 @@ function ChannelsEdit(): JSX.Element {
 				}
 			}
 			return {
-				type: WebhookType,
+				type: ChannelType.Webhook,
 				channel,
 			};
 		}
 		return {
-			type: SlackType,
+			type: ChannelType.Slack,
 			channel,
 		};
 	};

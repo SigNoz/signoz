@@ -1,25 +1,18 @@
 import RouteTab from 'components/RouteTab';
-import ROUTES from 'constants/routes';
-import AllErrorsContainer from 'container/AllError';
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
+import history from 'lib/history';
+import { useLocation } from 'react-router-dom';
+
+import { routes } from './config';
 
 function AllErrors(): JSX.Element {
-	const { t } = useTranslation();
+	const { pathname } = useLocation();
 
 	return (
-		<RouteTab
-			{...{
-				routes: [
-					{
-						Component: AllErrorsContainer,
-						name: t('routes.all_errors'),
-						route: ROUTES.ALL_ERROR,
-					},
-				],
-				activeKey: t('routes.all_errors'),
-			}}
-		/>
+		<>
+			<ResourceAttributesFilter />
+			<RouteTab routes={routes} activeKey={pathname} history={history} />
+		</>
 	);
 }
 

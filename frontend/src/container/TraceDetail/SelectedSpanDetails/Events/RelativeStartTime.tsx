@@ -2,7 +2,6 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Popover, Space } from 'antd';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React from 'react';
 
 import { CustomSubText, CustomSubTitle } from '../styles';
 

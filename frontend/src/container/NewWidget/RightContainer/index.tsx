@@ -1,13 +1,27 @@
-import { Input, Select } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
+import {
+	Button,
+	Divider,
+	Input,
+	Select,
+	Space,
+	Switch,
+	Typography,
+} from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import GraphTypes, {
-	ITEMS,
-} from 'container/NewDashboard/ComponentsSlider/menuItems';
-import React, { useCallback } from 'react';
+import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
+import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
+import history from 'lib/history';
+import { Dispatch, SetStateAction, useCallback } from 'react';
+import { Widgets } from 'types/api/dashboard/getAll';
 
+import { panelTypeVsThreshold } from './constants';
 import { Container, Title } from './styles';
+import ThresholdSelector from './Threshold/ThresholdSelector';
+import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
 import YAxisUnitSelector from './YAxisUnitSelector';
 
@@ -25,9 +39,14 @@ function RightContainer({
 	yAxisUnit,
 	setYAxisUnit,
 	setGraphHandler,
+	thresholds,
+	setThresholds,
+	selectedWidget,
+	isFillSpans,
+	setIsFillSpans,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
-		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
+		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
 			setFunc(value);
 		},
 		[],
@@ -35,6 +54,18 @@ function RightContainer({
 
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
+
+	const onCreateAlertsHandler = useCallback(() => {
+		if (!selectedWidget) return;
+
+		history.push(
+			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+				JSON.stringify(selectedWidget?.query),
+			)}`,
+		);
+	}, [selectedWidget]);
+
+	const allowThreshold = panelTypeVsThreshold[selectedGraph];
 
 	return (
 		<Container>
@@ -116,40 +147,79 @@ function RightContainer({
 				))}
 			</NullButtonContainer> */}
 
+			<Space style={{ marginTop: 10 }} direction="vertical">
+				<Typography>Fill span gaps</Typography>
+
+				<Switch
+					checked={isFillSpans}
+					onChange={(checked): void => setIsFillSpans(checked)}
+				/>
+			</Space>
+
 			<Title light="true">Panel Time Preference</Title>
 
-			<TimePreference
-				{...{
-					selectedTime,
-					setSelectedTime,
-				}}
-			/>
-			<YAxisUnitSelector
-				defaultValue={yAxisUnit}
-				onSelect={setYAxisUnit}
-				fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
-			/>
+			<Space direction="vertical">
+				<TimePreference
+					{...{
+						selectedTime,
+						setSelectedTime,
+					}}
+				/>
+
+				<YAxisUnitSelector
+					defaultValue={yAxisUnit}
+					onSelect={setYAxisUnit}
+					fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
+				/>
+
+				{selectedWidget?.panelTypes !== PANEL_TYPES.TABLE && (
+					<Button icon={<UploadOutlined />} onClick={onCreateAlertsHandler}>
+						Create Alerts from Queries
+					</Button>
+				)}
+			</Space>
+
+			{allowThreshold && (
+				<>
+					<Divider />
+					<ThresholdSelector
+						thresholds={thresholds}
+						setThresholds={setThresholds}
+						yAxisUnit={yAxisUnit}
+						selectedGraph={selectedGraph}
+					/>
+				</>
+			)}
 		</Container>
 	);
 }
 
 interface RightContainerProps {
 	title: string;
-	setTitle: React.Dispatch<React.SetStateAction<string>>;
+	setTitle: Dispatch<SetStateAction<string>>;
 	description: string;
-	setDescription: React.Dispatch<React.SetStateAction<string>>;
+	setDescription: Dispatch<SetStateAction<string>>;
 	stacked: boolean;
-	setStacked: React.Dispatch<React.SetStateAction<boolean>>;
+	setStacked: Dispatch<SetStateAction<boolean>>;
 	opacity: string;
-	setOpacity: React.Dispatch<React.SetStateAction<string>>;
+	setOpacity: Dispatch<SetStateAction<string>>;
 	selectedNullZeroValue: string;
-	setSelectedNullZeroValue: React.Dispatch<React.SetStateAction<string>>;
-	selectedGraph: GRAPH_TYPES;
-	setSelectedTime: React.Dispatch<React.SetStateAction<timePreferance>>;
+	setSelectedNullZeroValue: Dispatch<SetStateAction<string>>;
+	selectedGraph: PANEL_TYPES;
+	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 	yAxisUnit: string;
-	setYAxisUnit: React.Dispatch<React.SetStateAction<string>>;
-	setGraphHandler: (type: ITEMS) => void;
+	setYAxisUnit: Dispatch<SetStateAction<string>>;
+	setGraphHandler: (type: PANEL_TYPES) => void;
+	thresholds: ThresholdProps[];
+	setThresholds: Dispatch<SetStateAction<ThresholdProps[]>>;
+	selectedWidget?: Widgets;
+	isFillSpans: boolean;
+	setIsFillSpans: Dispatch<SetStateAction<boolean>>;
 }
+
+RightContainer.defaultProps = {
+	selectedWidget: undefined,
+};
 
 export default RightContainer;

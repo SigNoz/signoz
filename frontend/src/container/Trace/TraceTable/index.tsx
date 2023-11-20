@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
 import omit from 'lodash-es/omit';
-import React from 'react';
+import { HTMLAttributes } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { updateURL } from 'store/actions/trace/util';
@@ -198,7 +198,7 @@ function TraceTable(): JSX.Element {
 			style={{
 				cursor: 'pointer',
 			}}
-			onRow={(record: TableType): React.HTMLAttributes<TableType> => ({
+			onRow={(record: TableType): HTMLAttributes<TableType> => ({
 				onClick: (event): void => {
 					event.preventDefault();
 					event.stopPropagation();

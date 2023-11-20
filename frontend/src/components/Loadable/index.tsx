@@ -1,8 +1,8 @@
-import { ComponentType, lazy } from 'react';
+import { ComponentType, lazy, LazyExoticComponent } from 'react';
 
 function Loadable(importPath: {
 	(): LoadableProps;
-}): React.LazyExoticComponent<LazyComponent> {
+}): LazyExoticComponent<LazyComponent> {
 	return lazy(() => importPath());
 }
 

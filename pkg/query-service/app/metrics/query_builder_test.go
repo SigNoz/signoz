@@ -28,7 +28,30 @@ func TestBuildQuery(t *testing.T) {
 		queries := PrepareBuilderMetricQueries(q, "table").Queries
 		So(len(queries), ShouldEqual, 1)
 		So(queries["A"], ShouldContainSubstring, "WHERE metric_name = 'name'")
-		So(queries["A"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
+		So(queries["A"], ShouldContainSubstring, rateWithoutNegative)
+	})
+
+	Convey("TestSimpleQueryWithHistQuantile", t, func() {
+		q := &model.QueryRangeParamsV2{
+			Start: 1650991982000,
+			End:   1651078382000,
+			Step:  60,
+			CompositeMetricQuery: &model.CompositeMetricQuery{
+				BuilderQueries: map[string]*model.MetricQuery{
+					"A": {
+						QueryName:         "A",
+						MetricName:        "name",
+						AggregateOperator: model.HIST_QUANTILE_99,
+						Expression:        "A",
+					},
+				},
+			},
+		}
+		queries := PrepareBuilderMetricQueries(q, "table").Queries
+		So(len(queries), ShouldEqual, 1)
+		So(queries["A"], ShouldContainSubstring, "WHERE metric_name = 'name'")
+		So(queries["A"], ShouldContainSubstring, rateWithoutNegative)
+		So(queries["A"], ShouldContainSubstring, "HAVING isNaN(value) = 0")
 	})
 }
 
@@ -57,7 +80,7 @@ func TestBuildQueryWithFilters(t *testing.T) {
 		So(len(queries), ShouldEqual, 1)
 
 		So(queries["A"], ShouldContainSubstring, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'a') != 'b'")
-		So(queries["A"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
+		So(queries["A"], ShouldContainSubstring, rateWithoutNegative)
 		So(queries["A"], ShouldContainSubstring, "not match(JSONExtractString(labels, 'code'), 'ERROR_*')")
 	})
 }
@@ -91,7 +114,7 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 		queries := PrepareBuilderMetricQueries(q, "table").Queries
 		So(len(queries), ShouldEqual, 2)
 		So(queries["A"], ShouldContainSubstring, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")
-		So(queries["A"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
+		So(queries["A"], ShouldContainSubstring, rateWithoutNegative)
 	})
 }
 
@@ -128,7 +151,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 		So(len(queries), ShouldEqual, 3)
 		So(queries["C"], ShouldContainSubstring, "SELECT A.ts as ts, A.value / B.value")
 		So(queries["C"], ShouldContainSubstring, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")
-		So(queries["C"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
+		So(queries["C"], ShouldContainSubstring, rateWithoutNegative)
 	})
 }
 

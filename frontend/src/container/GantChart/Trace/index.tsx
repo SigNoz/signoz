@@ -4,7 +4,15 @@ import { StyledCol, StyledRow } from 'components/Styled';
 import { IIntervalUnit } from 'container/TraceDetail/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+	Dispatch,
+	MouseEventHandler,
+	SetStateAction,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import { ITraceMetaData } from '..';
@@ -71,7 +79,7 @@ function Trace(props: TraceProps): JSX.Element {
 
 	const ref = useRef<HTMLUListElement>(null);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (activeSelectedId === id) {
 			ref.current?.scrollIntoView({
 				block: 'nearest',
@@ -97,7 +105,7 @@ function Trace(props: TraceProps): JSX.Element {
 		setActiveSelectedId(id);
 	};
 
-	const onClickTreeExpansion: React.MouseEventHandler<HTMLDivElement> = (
+	const onClickTreeExpansion: MouseEventHandler<HTMLDivElement> = (
 		event,
 	): void => {
 		event.stopPropagation();
@@ -207,8 +215,8 @@ interface ITraceGlobal {
 
 interface TraceProps extends ITraceTree, ITraceGlobal {
 	activeHoverId: string;
-	setActiveHoverId: React.Dispatch<React.SetStateAction<string>>;
-	setActiveSelectedId: React.Dispatch<React.SetStateAction<string>>;
+	setActiveHoverId: Dispatch<SetStateAction<string>>;
+	setActiveSelectedId: Dispatch<SetStateAction<string>>;
 	activeSelectedId: string;
 	level: number;
 	activeSpanPath: string[];

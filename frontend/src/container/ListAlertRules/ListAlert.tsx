@@ -2,14 +2,24 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import { ResizeTable } from 'components/ResizeTable';
+import saveAlertApi from 'api/alerts/save';
+import DropDown from 'components/DropDown/DropDown';
+import {
+	DynamicColumnsKey,
+	TableDataSource,
+} from 'components/ResizeTable/contants';
+import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
+import DateComponent from 'components/ResizeTable/TableComponent/DateComponent';
+import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useInterval from 'hooks/useInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
+import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -19,14 +29,16 @@ import { GettableAlert } from 'types/api/alerts/get';
 import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
-import { Button, ButtonContainer, ColumnButton, StyledTag } from './styles';
+import { Button, ButtonContainer, ColumnButton } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
 
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<GettableAlert[]>(allAlertRules || []);
 	const { t } = useTranslation('common');
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { role, featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 	const [addNewAlert, action] = useComponentPermission(
 		['add_new_alert', 'action'],
 		role,
@@ -48,13 +60,118 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		})();
 	}, 30000);
 
-	const onClickNewAlertHandler = useCallback(() => {
-		history.push(ROUTES.ALERTS_NEW);
-	}, []);
+	const handleError = useCallback((): void => {
+		notificationsApi.error({
+			message: t('something_went_wrong'),
+		});
+	}, [notificationsApi, t]);
 
-	const onEditHandler = (id: string): void => {
-		history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${id}`);
+	const onClickNewAlertHandler = useCallback(() => {
+		featureResponse
+			.refetch()
+			.then(() => {
+				history.push(ROUTES.ALERTS_NEW);
+			})
+			.catch(handleError);
+	}, [featureResponse, handleError]);
+
+	const onEditHandler = (record: GettableAlert) => (): void => {
+		featureResponse
+			.refetch()
+			.then(() => {
+				const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
+
+				history.push(
+					`${ROUTES.EDIT_ALERTS}?ruleId=${record.id.toString()}&${
+						QueryParams.compositeQuery
+					}=${encodeURIComponent(JSON.stringify(compositeQuery))}`,
+				);
+			})
+			.catch(handleError);
 	};
+
+	const onCloneHandler = (
+		originalAlert: GettableAlert,
+	) => async (): Promise<void> => {
+		const copyAlert = {
+			...originalAlert,
+			alert: originalAlert.alert.concat(' - Copy'),
+		};
+		const apiReq = { data: copyAlert };
+
+		const response = await saveAlertApi(apiReq);
+
+		if (response.statusCode === 200) {
+			notificationsApi.success({
+				message: 'Success',
+				description: 'Alert cloned successfully',
+			});
+
+			const { data: refetchData, status } = await refetch();
+			if (status === 'success' && refetchData.payload) {
+				setData(refetchData.payload || []);
+				setTimeout(() => {
+					const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
+					history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${clonedAlert.id}`);
+				}, 2000);
+			}
+			if (status === 'error') {
+				notificationsApi.error({
+					message: t('something_went_wrong'),
+				});
+			}
+		} else {
+			notificationsApi.error({
+				message: 'Error',
+				description: response.error || t('something_went_wrong'),
+			});
+		}
+	};
+
+	const dynamicColumns: ColumnsType<GettableAlert> = [
+		{
+			title: 'Created At',
+			dataIndex: 'createAt',
+			width: 80,
+			key: DynamicColumnsKey.CreatedAt,
+			align: 'center',
+			sorter: (a: GettableAlert, b: GettableAlert): number => {
+				const prev = new Date(a.createAt).getTime();
+				const next = new Date(b.createAt).getTime();
+
+				return prev - next;
+			},
+			render: DateComponent,
+		},
+		{
+			title: 'Created By',
+			dataIndex: 'createBy',
+			width: 80,
+			key: DynamicColumnsKey.CreatedBy,
+			align: 'center',
+		},
+		{
+			title: 'Updated At',
+			dataIndex: 'updateAt',
+			width: 80,
+			key: DynamicColumnsKey.UpdatedAt,
+			align: 'center',
+			sorter: (a: GettableAlert, b: GettableAlert): number => {
+				const prev = new Date(a.updateAt).getTime();
+				const next = new Date(b.updateAt).getTime();
+
+				return prev - next;
+			},
+			render: DateComponent,
+		},
+		{
+			title: 'Updated By',
+			dataIndex: 'updateBy',
+			width: 80,
+			key: DynamicColumnsKey.UpdatedBy,
+			align: 'center',
+		},
+	];
 
 	const columns: ColumnsType<GettableAlert> = [
 		{
@@ -72,15 +189,14 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'alert',
 			width: 100,
 			key: 'name',
-			sorter: (a, b): number =>
-				(a.alert ? a.alert.charCodeAt(0) : 1000) -
-				(b.alert ? b.alert.charCodeAt(0) : 1000),
+			sorter: (alertA, alertB): number => {
+				if (alertA.alert && alertB.alert) {
+					return alertA.alert.localeCompare(alertB.alert);
+				}
+				return 0;
+			},
 			render: (value, record): JSX.Element => (
-				<Typography.Link
-					onClick={(): void => onEditHandler(record.id ? record.id.toString() : '')}
-				>
-					{value}
-				</Typography.Link>
+				<Typography.Link onClick={onEditHandler(record)}>{value}</Typography.Link>
 			),
 		},
 		{
@@ -114,13 +230,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				}
 
 				return (
-					<>
-						{withOutSeverityKeys.map((e) => (
-							<StyledTag key={e} color="magenta">
-								{e}: {value[e]}
-							</StyledTag>
-						))}
-					</>
+					<LabelColumn labels={withOutSeverityKeys} value={value} color="magenta" />
 				);
 			},
 		},
@@ -131,20 +241,30 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
-			width: 120,
+			width: 10,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
-				<>
-					<ToggleAlertState disabled={record.disabled} setData={setData} id={id} />
-
-					<ColumnButton
-						onClick={(): void => onEditHandler(id.toString())}
-						type="link"
-					>
-						Edit
-					</ColumnButton>
-
-					<DeleteAlert notifications={notificationsApi} setData={setData} id={id} />
-				</>
+				<DropDown
+					element={[
+						<ToggleAlertState
+							key="1"
+							disabled={record.disabled}
+							setData={setData}
+							id={id}
+						/>,
+						<ColumnButton key="2" onClick={onEditHandler(record)} type="link">
+							Edit
+						</ColumnButton>,
+						<ColumnButton key="3" onClick={onCloneHandler(record)} type="link">
+							Clone
+						</ColumnButton>,
+						<DeleteAlert
+							key="4"
+							notifications={notificationsApi}
+							setData={setData}
+							id={id}
+						/>,
+					]}
+				/>
 			),
 		});
 	}
@@ -165,7 +285,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					</Button>
 				)}
 			</ButtonContainer>
-			<ResizeTable columns={columns} rowKey="id" dataSource={data} />
+			<DynamicColumnTable
+				tablesource={TableDataSource.Alert}
+				columns={columns}
+				rowKey="id"
+				dataSource={data}
+				dynamicColumns={dynamicColumns}
+			/>
 		</>
 	);
 }

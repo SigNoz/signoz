@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { QueryChipContainer, QueryChipItem } from './styles';
 import { ILabelRecord } from './types';
 

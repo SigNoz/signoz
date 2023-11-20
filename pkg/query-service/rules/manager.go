@@ -16,17 +16,18 @@ import (
 
 	"go.uber.org/zap"
 
+	"errors"
+
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 
 	// opentracing "github.com/opentracing/opentracing-go"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
-// namespace for prom metrics
-const namespace = "signoz"
 const taskNamesuffix = "webAppEditor"
 
 func ruleIdFromTaskName(n string) string {
@@ -59,6 +60,7 @@ type ManagerOptions struct {
 	Logger       log.Logger
 	ResendDelay  time.Duration
 	DisableRules bool
+	FeatureFlags interfaces.FeatureLookup
 }
 
 // The Manager manages recording and alerting rules.
@@ -74,9 +76,9 @@ type Manager struct {
 	// datastore to store alert definitions
 	ruleDB RuleDB
 
-	// pause all rule tasks
-	pause  bool
 	logger log.Logger
+
+	featureFlags interfaces.FeatureLookup
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -109,13 +111,14 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 	db := newRuleDB(o.DBConn)
 
 	m := &Manager{
-		tasks:    map[string]Task{},
-		rules:    map[string]Rule{},
-		notifier: notifier,
-		ruleDB:   db,
-		opts:     o,
-		block:    make(chan struct{}),
-		logger:   o.Logger,
+		tasks:        map[string]Task{},
+		rules:        map[string]Rule{},
+		notifier:     notifier,
+		ruleDB:       db,
+		opts:         o,
+		block:        make(chan struct{}),
+		logger:       o.Logger,
+		featureFlags: o.FeatureFlags,
 	}
 	return m, nil
 }
@@ -136,7 +139,7 @@ func (m *Manager) Pause(b bool) {
 }
 
 func (m *Manager) initiate() error {
-	storedRules, err := m.ruleDB.GetStoredRules()
+	storedRules, err := m.ruleDB.GetStoredRules(context.Background())
 	if err != nil {
 		return err
 	}
@@ -166,7 +169,7 @@ func (m *Manager) initiate() error {
 					zap.S().Info("msg:", "migrating rule from JSON to yaml", "\t rule:", rec.Data, "\t parsed rule:", parsedRule)
 					ruleJSON, err := json.Marshal(parsedRule)
 					if err == nil {
-						taskName, _, err := m.ruleDB.EditRuleTx(string(ruleJSON), fmt.Sprintf("%d", rec.Id))
+						taskName, _, err := m.ruleDB.EditRuleTx(context.Background(), string(ruleJSON), fmt.Sprintf("%d", rec.Id))
 						if err != nil {
 							zap.S().Errorf("msg: failed to migrate rule ", "/t error:", err)
 						} else {
@@ -187,6 +190,10 @@ func (m *Manager) initiate() error {
 				zap.S().Errorf("failed to load the rule definition (%s): %v", taskName, err)
 			}
 		}
+	}
+
+	if len(loadErrors) > 0 {
+		return errors.Join(loadErrors...)
 	}
 
 	return nil
@@ -217,9 +224,23 @@ func (m *Manager) Stop() {
 
 // EditRuleDefinition writes the rule definition to the
 // datastore and also updates the rule executor
-func (m *Manager) EditRule(ruleStr string, id string) error {
+func (m *Manager) EditRule(ctx context.Context, ruleStr string, id string) error {
 
 	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
+
+	currentRule, err := m.GetRule(ctx, id)
+	if err != nil {
+		zap.S().Errorf("msg: ", "failed to get the rule from rule db", "\t ruleid: ", id)
+		return err
+	}
+
+	if !checkIfTraceOrLogQB(&currentRule.PostableRule) {
+		// check if the new rule uses any feature that is not enabled
+		err = m.checkFeatureUsage(parsedRule)
+		if err != nil {
+			return err
+		}
+	}
 
 	if len(errs) > 0 {
 		zap.S().Errorf("failed to parse rules:", errs)
@@ -227,13 +248,30 @@ func (m *Manager) EditRule(ruleStr string, id string) error {
 		return errs[0]
 	}
 
-	taskName, _, err := m.ruleDB.EditRuleTx(ruleStr, id)
+	taskName, _, err := m.ruleDB.EditRuleTx(ctx, ruleStr, id)
 	if err != nil {
 		return err
 	}
 
 	if !m.opts.DisableRules {
-		return m.syncRuleStateWithTask(taskName, parsedRule)
+		err = m.syncRuleStateWithTask(taskName, parsedRule)
+		if err != nil {
+			return err
+		}
+	}
+
+	// update feature usage if the current rule is not a trace or log query builder
+	if !checkIfTraceOrLogQB(&currentRule.PostableRule) {
+		err = m.updateFeatureUsage(parsedRule, 1)
+		if err != nil {
+			zap.S().Errorf("error updating feature usage: %v", err)
+		}
+		// update feature usage if the new rule is not a trace or log query builder and the current rule is
+	} else if !checkIfTraceOrLogQB(parsedRule) {
+		err = m.updateFeatureUsage(&currentRule.PostableRule, -1)
+		if err != nil {
+			zap.S().Errorf("error updating feature usage: %v", err)
+		}
 	}
 
 	return nil
@@ -277,7 +315,7 @@ func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 	return nil
 }
 
-func (m *Manager) DeleteRule(id string) error {
+func (m *Manager) DeleteRule(ctx context.Context, id string) error {
 
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
@@ -285,14 +323,26 @@ func (m *Manager) DeleteRule(id string) error {
 		return fmt.Errorf("delete rule received an rule id in invalid format, must be a number")
 	}
 
+	// update feature usage
+	rule, err := m.GetRule(ctx, id)
+	if err != nil {
+		zap.S().Errorf("msg: ", "failed to get the rule from rule db", "\t ruleid: ", id)
+		return err
+	}
+
 	taskName := prepareTaskName(int64(idInt))
 	if !m.opts.DisableRules {
 		m.deleteTask(taskName)
 	}
 
-	if _, _, err := m.ruleDB.DeleteRuleTx(id); err != nil {
+	if _, _, err := m.ruleDB.DeleteRuleTx(ctx, id); err != nil {
 		zap.S().Errorf("msg: ", "failed to delete the rule from rule db", "\t ruleid: ", id)
 		return err
+	}
+
+	err = m.updateFeatureUsage(&rule.PostableRule, -1)
+	if err != nil {
+		zap.S().Errorf("error updating feature usage: %v", err)
 	}
 
 	return nil
@@ -316,8 +366,14 @@ func (m *Manager) deleteTask(taskName string) {
 
 // CreateRule stores rule def into db and also
 // starts an executor for the rule
-func (m *Manager) CreateRule(ruleStr string) error {
+func (m *Manager) CreateRule(ctx context.Context, ruleStr string) error {
 	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
+
+	// check if the rule uses any feature that is not enabled
+	err := m.checkFeatureUsage(parsedRule)
+	if err != nil {
+		return err
+	}
 
 	if len(errs) > 0 {
 		zap.S().Errorf("failed to parse rules:", errs)
@@ -325,7 +381,7 @@ func (m *Manager) CreateRule(ruleStr string) error {
 		return errs[0]
 	}
 
-	taskName, tx, err := m.ruleDB.CreateRuleTx(ruleStr)
+	taskName, tx, err := m.ruleDB.CreateRuleTx(ctx, ruleStr)
 	if err != nil {
 		return err
 	}
@@ -335,7 +391,70 @@ func (m *Manager) CreateRule(ruleStr string) error {
 			return err
 		}
 	}
-	return tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	// update feature usage
+	err = m.updateFeatureUsage(parsedRule, 1)
+	if err != nil {
+		zap.S().Errorf("error updating feature usage: %v", err)
+	}
+	return nil
+}
+
+func (m *Manager) updateFeatureUsage(parsedRule *PostableRule, usage int64) error {
+	isTraceOrLogQB := checkIfTraceOrLogQB(parsedRule)
+	if isTraceOrLogQB {
+		feature, err := m.featureFlags.GetFeatureFlag(model.QueryBuilderAlerts)
+		if err != nil {
+			return err
+		}
+		feature.Usage += usage
+		if feature.Usage == feature.UsageLimit && feature.UsageLimit != -1 {
+			feature.Active = false
+		}
+		if feature.Usage < feature.UsageLimit || feature.UsageLimit == -1 {
+			feature.Active = true
+		}
+		err = m.featureFlags.UpdateFeatureFlag(feature)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Manager) checkFeatureUsage(parsedRule *PostableRule) error {
+	isTraceOrLogQB := checkIfTraceOrLogQB(parsedRule)
+	if isTraceOrLogQB {
+		err := m.featureFlags.CheckFeature(model.QueryBuilderAlerts)
+		if err != nil {
+			switch err.(type) {
+			case model.ErrFeatureUnavailable:
+				zap.S().Errorf("feature unavailable", zap.String("featureKey", model.QueryBuilderAlerts), zap.Error(err))
+				return model.BadRequest(err)
+			default:
+				zap.S().Errorf("feature check failed", zap.String("featureKey", model.QueryBuilderAlerts), zap.Error(err))
+				return model.BadRequest(err)
+			}
+		}
+	}
+	return nil
+}
+
+func checkIfTraceOrLogQB(parsedRule *PostableRule) bool {
+	if parsedRule != nil {
+		if parsedRule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
+			for _, query := range parsedRule.RuleCondition.CompositeQuery.BuilderQueries {
+				if query.DataSource == v3.DataSourceTraces || query.DataSource == v3.DataSourceLogs {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func (m *Manager) addTask(rule *PostableRule, taskName string) error {
@@ -391,6 +510,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 			ruleId,
 			r,
 			ThresholdRuleOpts{},
+			m.featureFlags,
 		)
 
 		if err != nil {
@@ -546,10 +666,10 @@ func (m *Manager) ListActiveRules() ([]Rule, error) {
 	return ruleList, nil
 }
 
-func (m *Manager) ListRuleStates() (*GettableRules, error) {
+func (m *Manager) ListRuleStates(ctx context.Context) (*GettableRules, error) {
 
 	// fetch rules from DB
-	storedRules, err := m.ruleDB.GetStoredRules()
+	storedRules, err := m.ruleDB.GetStoredRules(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -574,14 +694,18 @@ func (m *Manager) ListRuleStates() (*GettableRules, error) {
 		} else {
 			ruleResponse.State = rm.State().String()
 		}
+		ruleResponse.CreatedAt = s.CreatedAt
+		ruleResponse.CreatedBy = s.CreatedBy
+		ruleResponse.UpdatedAt = s.UpdatedAt
+		ruleResponse.UpdatedBy = s.UpdatedBy
 		resp = append(resp, ruleResponse)
 	}
 
 	return &GettableRules{Rules: resp}, nil
 }
 
-func (m *Manager) GetRule(id string) (*GettableRule, error) {
-	s, err := m.ruleDB.GetStoredRule(id)
+func (m *Manager) GetRule(ctx context.Context, id string) (*GettableRule, error) {
+	s, err := m.ruleDB.GetStoredRule(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -590,6 +714,18 @@ func (m *Manager) GetRule(id string) (*GettableRule, error) {
 		return nil, err
 	}
 	r.Id = fmt.Sprintf("%d", s.Id)
+	// fetch state of rule from memory
+	if rm, ok := m.rules[r.Id]; !ok {
+		r.State = StateDisabled.String()
+		r.Disabled = true
+	} else {
+		r.State = rm.State().String()
+	}
+	r.CreatedAt = s.CreatedAt
+	r.CreatedBy = s.CreatedBy
+	r.UpdatedAt = s.UpdatedAt
+	r.UpdatedBy = s.UpdatedBy
+
 	return r, nil
 }
 
@@ -623,11 +759,11 @@ func (m *Manager) syncRuleStateWithTask(taskName string, rule *PostableRule) err
 // PatchRule supports attribute level changes to the rule definition unlike
 // EditRule, which updates entire rule definition in the DB.
 // the process:
-//  - get the latest rule from db
-//  - over write the patch attributes received in input (ruleStr)
-//  - re-deploy or undeploy task as necessary
-//  - update the patched rule in the DB
-func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error) {
+//   - get the latest rule from db
+//   - over write the patch attributes received in input (ruleStr)
+//   - re-deploy or undeploy task as necessary
+//   - update the patched rule in the DB
+func (m *Manager) PatchRule(ctx context.Context, ruleStr string, ruleId string) (*GettableRule, error) {
 
 	if ruleId == "" {
 		return nil, fmt.Errorf("id is mandatory for patching rule")
@@ -636,7 +772,7 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error
 	taskName := prepareTaskName(ruleId)
 
 	// retrieve rule from DB
-	storedJSON, err := m.ruleDB.GetStoredRule(ruleId)
+	storedJSON, err := m.ruleDB.GetStoredRule(ctx, ruleId)
 	if err != nil {
 		zap.S().Errorf("msg:", "failed to get stored rule with given id", "\t error:", err)
 		return nil, err
@@ -670,7 +806,7 @@ func (m *Manager) PatchRule(ruleStr string, ruleId string) (*GettableRule, error
 	}
 
 	// write updated rule to db
-	if _, _, err = m.ruleDB.EditRuleTx(string(patchedRuleBytes), ruleId); err != nil {
+	if _, _, err = m.ruleDB.EditRuleTx(ctx, string(patchedRuleBytes), ruleId); err != nil {
 		// write failed, rollback task state
 
 		// restore task state from the stored rule
@@ -738,6 +874,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 				SendUnmatched: true,
 				SendAlways:    true,
 			},
+			m.featureFlags,
 		)
 
 		if err != nil {

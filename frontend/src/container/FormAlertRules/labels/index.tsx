@@ -6,7 +6,7 @@ import { useMachine } from '@xstate/react';
 import { Button, Input, message, Modal } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { map } from 'lodash-es';
-import React, { useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Labels } from 'types/api/alerts/def';
 import { v4 as uuid } from 'uuid';
@@ -84,8 +84,8 @@ function LabelSelect({
 		handleBlur();
 	}, [handleBlur]);
 
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		setCurrentVal(e.target?.value);
+	const handleLabelChange = (event: ChangeEvent<HTMLInputElement>): void => {
+		setCurrentVal(event.target?.value.replace(':', ''));
 	};
 
 	const handleClose = (key: string): void => {
@@ -133,9 +133,9 @@ function LabelSelect({
 			<div style={{ display: 'flex', width: '100%' }}>
 				<Input
 					placeholder={renderPlaceholder()}
-					onChange={handleChange}
+					onChange={handleLabelChange}
 					onKeyUp={(e): void => {
-						if (e.key === 'Enter' || e.code === 'Enter') {
+						if (e.key === 'Enter' || e.code === 'Enter' || e.key === ':') {
 							send('NEXT');
 						}
 					}}

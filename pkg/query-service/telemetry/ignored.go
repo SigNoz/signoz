@@ -7,6 +7,7 @@ func IgnoredPaths() map[string]struct{} {
 		"/api/v1/query_range":         {},
 		"/api/v2/metrics/query_range": {},
 		"/api/v1/health":              {},
+		"/api/v1/featureFlags":        {},
 	}
 
 	return ignoredPaths

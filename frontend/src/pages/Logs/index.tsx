@@ -1,4 +1,7 @@
+import './logs.styles.scss';
+
 import { Button, Col, Divider, Popover, Row, Select, Space } from 'antd';
+import { QueryParams } from 'constants/query';
 import LogControls from 'container/LogControls';
 import LogDetailedView from 'container/LogDetailedView';
 import LogLiveTail from 'container/LogLiveTail';
@@ -6,30 +9,31 @@ import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
-import React, { useCallback, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
+import history from 'lib/history';
+import { useCallback, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
+import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
-import { ILog } from 'types/api/logs/log';
+import { SET_LOGS_ORDER } from 'types/actions/logs';
+import { ILogsReducer } from 'types/reducer/logs';
+import { popupContainer } from 'utils/selectPopupContainer';
 
-import { defaultSelectStyle, logsOptions } from './config';
+import {
+	defaultSelectStyle,
+	logsOptions,
+	orderItems,
+	OrderPreferenceItems,
+} from './config';
 import { useSelectedLogView } from './hooks';
 import PopoverContent from './PopoverContent';
 import SpaceContainer from './styles';
 
 function Logs(): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
-
-	const showExpandedLog = useCallback(
-		(logData: ILog) => {
-			dispatch({
-				type: SET_DETAILED_LOG_DATA,
-				payload: logData,
-			});
-		},
-		[dispatch],
-	);
+	const { order } = useSelector<AppState, ILogsReducer>((store) => store.logs);
+	const location = useLocation();
 
 	const {
 		viewModeOptionList,
@@ -67,6 +71,16 @@ function Logs(): JSX.Element {
 		[handleViewModeOptionChange],
 	);
 
+	const handleChangeOrder = (value: OrderPreferenceItems): void => {
+		dispatch({
+			type: SET_LOGS_ORDER,
+			payload: value,
+		});
+		const params = new URLSearchParams(location.search);
+		params.set(QueryParams.order, value);
+		history.push({ search: params.toString() });
+	};
+
 	return (
 		<>
 			<SpaceContainer
@@ -82,11 +96,12 @@ function Logs(): JSX.Element {
 
 			<Row gutter={20} wrap={false}>
 				<LogsFilters />
-				<Col flex={1}>
+				<Col flex={1} className="logs-col-container">
 					<Row>
 						<Col flex={1}>
 							<Space align="baseline" direction="horizontal">
 								<Select
+									getPopupContainer={popupContainer}
 									style={defaultSelectStyle}
 									value={selectedViewModeOption}
 									onChange={onChangeVeiwMode}
@@ -97,10 +112,25 @@ function Logs(): JSX.Element {
 								</Select>
 
 								{isFormatButtonVisible && (
-									<Popover placement="right" content={renderPopoverContent}>
+									<Popover
+										getPopupContainer={popupContainer}
+										placement="right"
+										content={renderPopoverContent}
+									>
 										<Button>Format</Button>
 									</Popover>
 								)}
+
+								<Select
+									getPopupContainer={popupContainer}
+									style={defaultSelectStyle}
+									defaultValue={order}
+									onChange={handleChangeOrder}
+								>
+									{orderItems.map((item) => (
+										<Select.Option key={item.enum}>{item.name}</Select.Option>
+									))}
+								</Select>
 							</Space>
 						</Col>
 
@@ -109,11 +139,7 @@ function Logs(): JSX.Element {
 						</Col>
 					</Row>
 
-					<LogsTable
-						viewMode={viewMode}
-						linesPerRow={linesPerRow}
-						onClickExpand={showExpandedLog}
-					/>
+					<LogsTable viewMode={viewMode} linesPerRow={linesPerRow} />
 				</Col>
 			</Row>
 

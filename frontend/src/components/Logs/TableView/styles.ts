@@ -16,6 +16,4 @@ export const TableBodyContent = styled.div<TableBodyContentProps>`
 	font-size: 0.875rem;
 
 	line-height: 2rem;
-
-	cursor: pointer;
 `;

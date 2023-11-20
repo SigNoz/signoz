@@ -6,7 +6,7 @@ import {
 	QueryOperatorsMultiVal,
 	QueryOperatorsSingleVal,
 } from 'lib/logql/tokens';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
@@ -27,8 +27,9 @@ function QueryConditionField({
 	return (
 		<Select
 			defaultValue={
-				(query as any).value &&
-				(((query as any)?.value as any) as string).toUpperCase()
+				(query as QueryFields).value &&
+				(((((query as QueryFields)
+					?.value as unknown) as QueryFields) as unknown) as string).toUpperCase()
 			}
 			onChange={(e): void => {
 				onUpdate({ ...query, value: e }, queryIndex);
@@ -55,6 +56,8 @@ function QueryField({
 	onUpdate,
 	onDelete,
 }: QueryFieldProps): JSX.Element | null {
+	const [isDropDownOpen, setIsDropDownOpen] = useState(false);
+
 	const {
 		fields: { selected },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
@@ -135,9 +138,12 @@ function QueryField({
 					<Select
 						mode="tags"
 						style={{ width: '100%' }}
+						open={isDropDownOpen}
 						onChange={(e): void => handleChange(2, e as never)}
 						defaultValue={(query[2] && query[2].value) || []}
 						notFoundContent={null}
+						onInputKeyDown={(): void => setIsDropDownOpen(true)}
+						onSelect={(): void => setIsDropDownOpen(false)}
 					/>
 				) : (
 					<Input

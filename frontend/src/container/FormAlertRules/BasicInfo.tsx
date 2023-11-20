@@ -1,7 +1,8 @@
 import { Form, Select } from 'antd';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
+import { requireErrorMessage } from 'utils/form/requireErrorMessage';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import ChannelSelect from './ChannelSelect';
 import LabelSelect from './labels';
@@ -36,6 +37,7 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 					name={['labels', 'severity']}
 				>
 					<SeveritySelect
+						getPopupContainer={popupContainer}
 						defaultValue="critical"
 						onChange={(value: unknown | string): void => {
 							const s = (value as string) || 'critical';
@@ -55,7 +57,15 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 					</SeveritySelect>
 				</Form.Item>
 
-				<Form.Item label={t('field_alert_name')} labelAlign="left" name="alert">
+				<Form.Item
+					required
+					name="alert"
+					labelAlign="left"
+					label={t('field_alert_name')}
+					rules={[
+						{ required: true, message: requireErrorMessage(t('field_alert_name')) },
+					]}
+				>
 					<InputSmall
 						onChange={(e): void => {
 							setAlertDef({
@@ -98,10 +108,10 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 				<FormItemMedium label="Notification Channels">
 					<ChannelSelect
 						currentValue={alertDef.preferredChannels}
-						onSelectChannels={(s: string[]): void => {
+						onSelectChannels={(preferredChannels): void => {
 							setAlertDef({
 								...alertDef,
-								preferredChannels: s,
+								preferredChannels,
 							});
 						}}
 					/>

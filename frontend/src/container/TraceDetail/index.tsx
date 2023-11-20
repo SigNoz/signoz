@@ -8,7 +8,7 @@ import {
 	StyledSpace,
 	StyledTypography,
 } from 'components/Styled';
-import * as StyledStyles from 'components/Styled/styles';
+import { Flex, Spacing } from 'components/Styled/styles';
 import GanttChart, { ITraceMetaData } from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
@@ -19,7 +19,7 @@ import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import history from 'lib/history';
 import { map } from 'lodash-es';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ITraceForest, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';
@@ -128,7 +128,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	const isGlobalTimeVisible = tree && traceMetaData.globalStart;
 
 	return (
-		<StyledRow styledclass={[StyledStyles.Flex({ flex: 1 })]}>
+		<StyledRow styledclass={[Flex({ flex: 1 })]}>
 			<StyledCol flex="auto" styledclass={styles.leftContainer}>
 				<StyledRow styledclass={styles.flameAndTimelineContainer}>
 					<StyledCol
@@ -199,7 +199,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 				<StyledRow
 					styledclass={[
 						styles.traceDetailContentSpacing,
-						StyledStyles.Spacing({
+						Spacing({
 							margin: '1.5rem 1rem 0.5rem',
 						}),
 					]}

@@ -2,16 +2,19 @@ import { blue } from '@ant-design/colors';
 import { CopyFilled } from '@ant-design/icons';
 import { Button, Row } from 'antd';
 import Editor from 'components/Editor';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { ILog } from 'types/api/logs/log';
 
-interface JSONViewProps {
-	logData: ILog;
-}
+import { JSONViewProps } from './LogDetailedView.types';
+import { aggregateAttributesResourcesToString } from './utils';
+
 function JSONView({ logData }: JSONViewProps): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
-	const LogJsonData = useMemo(() => JSON.stringify(logData, null, 2), [logData]);
+
+	const LogJsonData = useMemo(
+		() => aggregateAttributesResourcesToString(logData),
+		[logData],
+	);
 	return (
 		<div>
 			<Row

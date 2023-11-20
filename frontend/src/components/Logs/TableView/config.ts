@@ -1,14 +1,14 @@
 import { TableProps } from 'antd';
-import React from 'react';
+import { CSSProperties } from 'react';
 
-export const defaultCellStyle: React.CSSProperties = {
+export const defaultCellStyle: CSSProperties = {
 	paddingTop: 4,
 	paddingBottom: 6,
 	paddingRight: 8,
 	paddingLeft: 8,
 };
 
-export const defaultTableStyle: React.CSSProperties = {
+export const defaultTableStyle: CSSProperties = {
 	minWidth: '40rem',
 	maxWidth: '40rem',
 };

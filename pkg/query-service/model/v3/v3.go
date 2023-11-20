@@ -1,10 +1,16 @@
 package v3
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
+	"sort"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type DataSource string
@@ -28,7 +34,7 @@ type AggregateOperator string
 
 const (
 	AggregateOperatorNoOp          AggregateOperator = "noop"
-	AggregateOpeatorCount          AggregateOperator = "count"
+	AggregateOperatorCount         AggregateOperator = "count"
 	AggregateOperatorCountDistinct AggregateOperator = "count_distinct"
 	AggregateOperatorSum           AggregateOperator = "sum"
 	AggregateOperatorAvg           AggregateOperator = "avg"
@@ -62,7 +68,7 @@ const (
 func (a AggregateOperator) Validate() error {
 	switch a {
 	case AggregateOperatorNoOp,
-		AggregateOpeatorCount,
+		AggregateOperatorCount,
 		AggregateOperatorCountDistinct,
 		AggregateOperatorSum,
 		AggregateOperatorAvg,
@@ -99,14 +105,54 @@ func (a AggregateOperator) Validate() error {
 
 // RequireAttribute returns true if the aggregate operator requires an attribute
 // to be specified.
-func (a AggregateOperator) RequireAttribute() bool {
-	switch a {
-	case AggregateOperatorNoOp,
-		AggregateOpeatorCount,
-		AggregateOperatorCountDistinct:
-		return false
+func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
+	switch dataSource {
+	case DataSourceMetrics:
+		switch a {
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount:
+			return false
+		default:
+			return true
+		}
+	case DataSourceLogs:
+		switch a {
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount,
+			AggregateOperatorRate:
+			return false
+		default:
+			return true
+		}
+	case DataSourceTraces:
+		switch a {
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount,
+			AggregateOperatorRate:
+			return false
+		default:
+			return true
+		}
 	default:
+		return false
+	}
+}
+
+func (a AggregateOperator) IsRateOperator() bool {
+	switch a {
+	case AggregateOperatorRate,
+		AggregateOperatorSumRate,
+		AggregateOperatorAvgRate,
+		AggregateOperatorMinRate,
+		AggregateOperatorMaxRate,
+		AggregateOperatorRateSum,
+		AggregateOperatorRateAvg,
+		AggregateOperatorRateMin,
+		AggregateOperatorRateMax:
 		return true
+
+	default:
+		return false
 	}
 }
 
@@ -132,6 +178,7 @@ func (r ReduceToOperator) Validate() error {
 type QueryType string
 
 const (
+	QueryTypeUnknown       QueryType = "unknown"
 	QueryTypeBuilder       QueryType = "builder"
 	QueryTypeClickHouseSQL QueryType = "clickhouse_sql"
 	QueryTypePromQL        QueryType = "promql"
@@ -153,11 +200,12 @@ const (
 	PanelTypeGraph PanelType = "graph"
 	PanelTypeTable PanelType = "table"
 	PanelTypeList  PanelType = "list"
+	PanelTypeTrace PanelType = "trace"
 )
 
 func (p PanelType) Validate() error {
 	switch p {
-	case PanelTypeValue, PanelTypeGraph, PanelTypeTable, PanelTypeList:
+	case PanelTypeValue, PanelTypeGraph, PanelTypeTable, PanelTypeList, PanelTypeTrace:
 		return nil
 	default:
 		return fmt.Errorf("invalid panel type: %s", p)
@@ -180,10 +228,18 @@ type AggregateAttributeRequest struct {
 type TagType string
 
 const (
-	TagTypeColumn   TagType = "column"
 	TagTypeTag      TagType = "tag"
 	TagTypeResource TagType = "resource"
 )
+
+func (q TagType) Validate() error {
+	switch q {
+	case TagTypeTag, TagTypeResource:
+		return nil
+	default:
+		return fmt.Errorf("invalid tag type: %s", q)
+	}
+}
 
 // FilterAttributeKeyRequest is a request to fetch possible attribute keys
 // for a selected aggregate operator and aggregate attribute and search text.
@@ -191,7 +247,6 @@ type FilterAttributeKeyRequest struct {
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute string            `json:"aggregateAttribute"`
-	TagType            TagType           `json:"tagType"`
 	SearchText         string            `json:"searchText"`
 	Limit              int               `json:"limit"`
 }
@@ -199,10 +254,25 @@ type FilterAttributeKeyRequest struct {
 type AttributeKeyDataType string
 
 const (
-	AttributeKeyDataTypeString AttributeKeyDataType = "string"
-	AttributeKeyDataTypeNumber AttributeKeyDataType = "number"
-	AttributeKeyDataTypeBool   AttributeKeyDataType = "bool"
+	AttributeKeyDataTypeUnspecified  AttributeKeyDataType = ""
+	AttributeKeyDataTypeString       AttributeKeyDataType = "string"
+	AttributeKeyDataTypeInt64        AttributeKeyDataType = "int64"
+	AttributeKeyDataTypeFloat64      AttributeKeyDataType = "float64"
+	AttributeKeyDataTypeBool         AttributeKeyDataType = "bool"
+	AttributeKeyDataTypeArrayString  AttributeKeyDataType = "array(string)"
+	AttributeKeyDataTypeArrayInt64   AttributeKeyDataType = "array(int64)"
+	AttributeKeyDataTypeArrayFloat64 AttributeKeyDataType = "array(float64)"
+	AttributeKeyDataTypeArrayBool    AttributeKeyDataType = "array(bool)"
 )
+
+func (q AttributeKeyDataType) Validate() error {
+	switch q {
+	case AttributeKeyDataTypeString, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeBool:
+		return nil
+	default:
+		return fmt.Errorf("invalid tag data type: %s", q)
+	}
+}
 
 // FilterAttributeValueRequest is a request to fetch possible attribute values
 // for a selected aggregate operator, aggregate attribute, filter attribute key
@@ -229,15 +299,45 @@ type FilterAttributeKeyResponse struct {
 type AttributeKeyType string
 
 const (
-	AttributeKeyTypeColumn   AttributeKeyType = "column"
-	AttributeKeyTypeTag      AttributeKeyType = "tag"
-	AttributeKeyTypeResource AttributeKeyType = "resource"
+	AttributeKeyTypeUnspecified AttributeKeyType = ""
+	AttributeKeyTypeTag         AttributeKeyType = "tag"
+	AttributeKeyTypeResource    AttributeKeyType = "resource"
 )
 
 type AttributeKey struct {
 	Key      string               `json:"key"`
 	DataType AttributeKeyDataType `json:"dataType"`
 	Type     AttributeKeyType     `json:"type"`
+	IsColumn bool                 `json:"isColumn"`
+	IsJSON   bool                 `json:"isJSON"`
+}
+
+func (a AttributeKey) CacheKey() string {
+	return fmt.Sprintf("%s-%s-%s-%t", a.Key, a.DataType, a.Type, a.IsColumn)
+}
+
+func (a AttributeKey) Validate() error {
+	switch a.DataType {
+	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeArrayFloat64, AttributeKeyDataTypeArrayString, AttributeKeyDataTypeArrayInt64, AttributeKeyDataTypeArrayBool, AttributeKeyDataTypeUnspecified:
+		break
+	default:
+		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
+	}
+
+	if a.IsColumn {
+		switch a.Type {
+		case AttributeKeyTypeResource, AttributeKeyTypeTag, AttributeKeyTypeUnspecified:
+			break
+		default:
+			return fmt.Errorf("invalid attribute type: %s", a.Type)
+		}
+	}
+
+	if a.Key == "" {
+		return fmt.Errorf("key is empty")
+	}
+
+	return nil
 }
 
 type FilterAttributeValueResponse struct {
@@ -249,15 +349,17 @@ type FilterAttributeValueResponse struct {
 type QueryRangeParamsV3 struct {
 	Start          int64                  `json:"start"`
 	End            int64                  `json:"end"`
-	Step           int64                  `json:"step"`
+	Step           int64                  `json:"step"` // step is in seconds; used for prometheus queries
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
+	NoCache        bool                   `json:"noCache"`
 }
 
 type PromQuery struct {
 	Query    string `json:"query"`
 	Stats    string `json:"stats,omitempty"`
 	Disabled bool   `json:"disabled"`
+	Legend   string `json:"legend,omitempty"`
 }
 
 func (p *PromQuery) Validate() error {
@@ -275,6 +377,7 @@ func (p *PromQuery) Validate() error {
 type ClickHouseQuery struct {
 	Query    string `json:"query"`
 	Disabled bool   `json:"disabled"`
+	Legend   string `json:"legend,omitempty"`
 }
 
 func (c *ClickHouseQuery) Validate() error {
@@ -295,6 +398,7 @@ type CompositeQuery struct {
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
+	Unit              string                      `json:"unit,omitempty"`
 }
 
 func (c *CompositeQuery) Validate() error {
@@ -306,27 +410,21 @@ func (c *CompositeQuery) Validate() error {
 		return fmt.Errorf("composite query must contain at least one query")
 	}
 
-	if c.BuilderQueries != nil {
-		for name, query := range c.BuilderQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("builder query %s is invalid: %w", name, err)
-			}
+	for name, query := range c.BuilderQueries {
+		if err := query.Validate(); err != nil {
+			return fmt.Errorf("builder query %s is invalid: %w", name, err)
 		}
 	}
 
-	if c.ClickHouseQueries != nil {
-		for name, query := range c.ClickHouseQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
-			}
+	for name, query := range c.ClickHouseQueries {
+		if err := query.Validate(); err != nil {
+			return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
 		}
 	}
 
-	if c.PromQueries != nil {
-		for name, query := range c.PromQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("prom query %s is invalid: %w", name, err)
-			}
+	for name, query := range c.PromQueries {
+		if err := query.Validate(); err != nil {
+			return fmt.Errorf("prom query %s is invalid: %w", name, err)
 		}
 	}
 
@@ -341,22 +439,33 @@ func (c *CompositeQuery) Validate() error {
 	return nil
 }
 
+type Temporality string
+
+const (
+	Unspecified Temporality = "Unspecified"
+	Delta       Temporality = "Delta"
+	Cumulative  Temporality = "Cumulative"
+)
+
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
+	StepInterval       int64             `json:"stepInterval"`
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
-	AggregateAttribute string            `json:"aggregateAttribute,omitempty"`
+	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
+	Temporality        Temporality       `json:"temporality,omitempty"`
 	Filters            *FilterSet        `json:"filters,omitempty"`
-	GroupBy            []string          `json:"groupBy,omitempty"`
+	GroupBy            []AttributeKey    `json:"groupBy,omitempty"`
 	Expression         string            `json:"expression"`
 	Disabled           bool              `json:"disabled"`
 	Having             []Having          `json:"having,omitempty"`
+	Legend             string            `json:"legend,omitempty"`
 	Limit              uint64            `json:"limit"`
 	Offset             uint64            `json:"offset"`
 	PageSize           uint64            `json:"pageSize"`
 	OrderBy            []OrderBy         `json:"orderBy,omitempty"`
 	ReduceTo           ReduceToOperator  `json:"reduceTo,omitempty"`
-	SelectColumns      []string          `json:"selectColumns,omitempty"`
+	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
 }
 
 func (b *BuilderQuery) Validate() error {
@@ -376,7 +485,7 @@ func (b *BuilderQuery) Validate() error {
 		if err := b.AggregateOperator.Validate(); err != nil {
 			return fmt.Errorf("aggregate operator is invalid: %w", err)
 		}
-		if b.AggregateAttribute == "" && b.AggregateOperator.RequireAttribute() {
+		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute(b.DataSource) {
 			return fmt.Errorf("aggregate attribute is required")
 		}
 	}
@@ -388,11 +497,24 @@ func (b *BuilderQuery) Validate() error {
 	}
 	if b.GroupBy != nil {
 		for _, groupBy := range b.GroupBy {
-			if groupBy == "" {
-				return fmt.Errorf("group by cannot be empty")
+			if err := groupBy.Validate(); err != nil {
+				return fmt.Errorf("group by is invalid %w", err)
+			}
+		}
+
+		if b.DataSource == DataSourceMetrics && len(b.GroupBy) > 0 {
+			if b.AggregateOperator == AggregateOperatorNoOp || b.AggregateOperator == AggregateOperatorRate {
+				return fmt.Errorf("group by requires aggregate operator other than noop or rate")
 			}
 		}
 	}
+
+	for _, selectColumn := range b.SelectColumns {
+		if err := selectColumn.Validate(); err != nil {
+			return fmt.Errorf("select column is invalid %w", err)
+		}
+	}
+
 	if b.Expression == "" {
 		return fmt.Errorf("expression is required")
 	}
@@ -411,24 +533,83 @@ func (f *FilterSet) Validate() error {
 	if f.Operator != "" && f.Operator != "AND" && f.Operator != "OR" {
 		return fmt.Errorf("operator must be AND or OR")
 	}
+	for _, item := range f.Items {
+		if err := item.Key.Validate(); err != nil {
+			return fmt.Errorf("filter item key is invalid: %w", err)
+		}
+	}
 	return nil
 }
 
+// For serializing to and from db
+func (f *FilterSet) Scan(src interface{}) error {
+	if data, ok := src.([]byte); ok {
+		return json.Unmarshal(data, &f)
+	}
+	return nil
+}
+
+func (f *FilterSet) Value() (driver.Value, error) {
+	filterSetJson, err := json.Marshal(f)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not serialize FilterSet to JSON")
+	}
+	return filterSetJson, nil
+}
+
+type FilterOperator string
+
+const (
+	FilterOperatorEqual           FilterOperator = "="
+	FilterOperatorNotEqual        FilterOperator = "!="
+	FilterOperatorGreaterThan     FilterOperator = ">"
+	FilterOperatorGreaterThanOrEq FilterOperator = ">="
+	FilterOperatorLessThan        FilterOperator = "<"
+	FilterOperatorLessThanOrEq    FilterOperator = "<="
+	FilterOperatorIn              FilterOperator = "in"
+	FilterOperatorNotIn           FilterOperator = "nin"
+	FilterOperatorContains        FilterOperator = "contains"
+	FilterOperatorNotContains     FilterOperator = "ncontains"
+	FilterOperatorRegex           FilterOperator = "regex"
+	FilterOperatorNotRegex        FilterOperator = "nregex"
+	// (I)LIKE is faster than REGEX and supports index
+	FilterOperatorLike    FilterOperator = "like"
+	FilterOperatorNotLike FilterOperator = "nlike"
+
+	FilterOperatorExists    FilterOperator = "exists"
+	FilterOperatorNotExists FilterOperator = "nexists"
+
+	FilterOperatorHas    FilterOperator = "has"
+	FilterOperatorNotHas FilterOperator = "nhas"
+)
+
 type FilterItem struct {
-	Key      string      `json:"key"`
-	Value    interface{} `json:"value"`
-	Operator string      `json:"op"`
+	Key      AttributeKey   `json:"key"`
+	Value    interface{}    `json:"value"`
+	Operator FilterOperator `json:"op"`
+}
+
+func (f *FilterItem) CacheKey() string {
+	return fmt.Sprintf("key:%s,op:%s,value:%v", f.Key.CacheKey(), f.Operator, f.Value)
 }
 
 type OrderBy struct {
-	ColumnName string `json:"columnName"`
-	Order      string `json:"order"`
+	ColumnName string               `json:"columnName"`
+	Order      string               `json:"order"`
+	Key        string               `json:"-"`
+	DataType   AttributeKeyDataType `json:"-"`
+	Type       AttributeKeyType     `json:"-"`
+	IsColumn   bool                 `json:"-"`
 }
 
 type Having struct {
 	ColumnName string      `json:"columnName"`
-	Operator   string      `json:"operator"`
+	Operator   string      `json:"op"`
 	Value      interface{} `json:"value"`
+}
+
+func (h *Having) CacheKey() string {
+	return fmt.Sprintf("column:%s,op:%s,value:%v", h.ColumnName, h.Operator, h.Value)
 }
 
 type QueryRangeResponse struct {
@@ -437,44 +618,82 @@ type QueryRangeResponse struct {
 }
 
 type Result struct {
-	QueryName string  `json:"queryName"`
-	Series    *Series `json:"series"`
-	List      []*Row  `json:"list"`
+	QueryName string    `json:"queryName"`
+	Series    []*Series `json:"series"`
+	List      []*Row    `json:"list"`
+}
+
+type LogsLiveTailClient struct {
+	Name  string
+	Logs  chan *model.SignozLog
+	Done  chan *bool
+	Error chan error
 }
 
 type Series struct {
-	Labels map[string]string `json:"labels"`
-	Points []Point           `json:"values"`
+	Labels            map[string]string   `json:"labels"`
+	LabelsArray       []map[string]string `json:"labelsArray"`
+	Points            []Point             `json:"values"`
+	GroupingSetsPoint *Point              `json:"-"`
+}
+
+func (s *Series) SortPoints() {
+	sort.Slice(s.Points, func(i, j int) bool {
+		return s.Points[i].Timestamp < s.Points[j].Timestamp
+	})
 }
 
 type Row struct {
-	Timestamp time.Time         `json:"timestamp"`
-	Data      map[string]string `json:"data"`
+	Timestamp time.Time              `json:"timestamp"`
+	Data      map[string]interface{} `json:"data"`
 }
 
 type Point struct {
-	Timestamp int64   `json:"timestamp"`
-	Value     float64 `json:"value"`
+	Timestamp int64
+	Value     float64
 }
 
-// ExploreQuery is a query for the explore page
-// It is a composite query with a source page name
+// MarshalJSON implements json.Marshaler.
+func (p *Point) MarshalJSON() ([]byte, error) {
+	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
+	return json.Marshal(map[string]interface{}{"timestamp": p.Timestamp, "value": v})
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (p *Point) UnmarshalJSON(data []byte) error {
+	var v struct {
+		Timestamp int64  `json:"timestamp"`
+		Value     string `json:"value"`
+	}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	p.Timestamp = v.Timestamp
+	var err error
+	p.Value, err = strconv.ParseFloat(v.Value, 64)
+	return err
+}
+
+// SavedView is a saved query for the explore page
+// It is a composite query with a source page name and user defined tags
 // The source page name is used to identify the page that initiated the query
-// The source page could be "traces", "logs", "metrics" or "dashboards", "alerts" etc.
-type ExplorerQuery struct {
+// The source page could be "traces", "logs", "metrics".
+type SavedView struct {
 	UUID           string          `json:"uuid,omitempty"`
+	Name           string          `json:"name"`
+	Category       string          `json:"category"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	CreatedBy      string          `json:"createdBy"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
+	UpdatedBy      string          `json:"updatedBy"`
 	SourcePage     string          `json:"sourcePage"`
+	Tags           []string        `json:"tags"`
 	CompositeQuery *CompositeQuery `json:"compositeQuery"`
 	// ExtraData is JSON encoded data used by frontend to store additional data
 	ExtraData string `json:"extraData"`
-	// 0 - false, 1 - true; this is int8 because sqlite doesn't support bool
-	IsView int8 `json:"isView"`
 }
 
-func (eq *ExplorerQuery) Validate() error {
-	if eq.IsView != 0 && eq.IsView != 1 {
-		return fmt.Errorf("isView must be 0 or 1")
-	}
+func (eq *SavedView) Validate() error {
 
 	if eq.CompositeQuery == nil {
 		return fmt.Errorf("composite query is required")
@@ -484,4 +703,9 @@ func (eq *ExplorerQuery) Validate() error {
 		eq.UUID = uuid.New().String()
 	}
 	return eq.CompositeQuery.Validate()
+}
+
+type LatencyMetricMetadataResponse struct {
+	Delta bool      `json:"delta"`
+	Le    []float64 `json:"le"`
 }

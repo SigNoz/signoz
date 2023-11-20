@@ -1,0 +1,14 @@
+{
+	"status": "success",
+	"data": {
+		"attributeKeys": [
+			{
+				"key": "serviceName",
+				"dataType": "string",
+				"type": "tag",
+				"isColumn": true,
+				"isJSON": false
+			}
+		]
+	}
+}

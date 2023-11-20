@@ -1,0 +1,36 @@
+.code-snippet-container {
+	position: relative;
+	// background-color: rgb(43, 43, 43);
+	background-color: #111a2c;
+	border-color: #111a2c;
+}
+
+.code-copy-btn {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+
+	button {
+		cursor: pointer;
+
+		background-color: rgba($color: #1d1d1d, $alpha: 0.7);
+		color: white;
+		border: none;
+		padding: 8px;
+		border-radius: 3px;
+		transition: all 0.1s;
+
+		&:hover {
+			background-color: rgba($color: #1d1d1d, $alpha: 1);
+		}
+	}
+
+	&.copied {
+		button {
+			background-color: rgba($color: #52c41a, $alpha: 1);
+		}
+	}
+}

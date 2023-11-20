@@ -4,7 +4,6 @@ import { INVITE_MEMBERS_HASH } from 'constants/app';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';

@@ -2,7 +2,7 @@ import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
 import { Col, Input } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
-import React, { useCallback, useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
@@ -24,7 +24,7 @@ function LogsFilters(): JSX.Element {
 	>([]);
 
 	const [filterValuesInput, setFilterValuesInput] = useState('');
-	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>): void => {
+	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setFilterValuesInput((e.target as HTMLInputElement).value);
 	};
 

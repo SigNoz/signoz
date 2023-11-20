@@ -1,7 +1,10 @@
-import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
-import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { routeConfig } from 'container/SideNav/config';
+import { getQueryString } from 'container/SideNav/helper';
 import history from 'lib/history';
+import { Dispatch, SetStateAction } from 'react';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { Tags } from 'types/reducer/trace';
 
 export const dbSystemTags: Tags[] = [
@@ -28,59 +31,59 @@ export function onViewTracePopupClick({
 }: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
 		const currentTime = timestamp;
-		const tPlusOne = timestamp + 60 * 1000;
 
-		const urlParams = new URLSearchParams();
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
+		const tPlusOne = timestamp + 60;
+
+		const urlParams = new URLSearchParams(window.location.search);
+		urlParams.set(QueryParams.startTime, currentTime.toString());
+		urlParams.set(QueryParams.endTime, tPlusOne.toString());
+		const avialableParams = routeConfig[ROUTES.TRACE];
+		const queryString = getQueryString(avialableParams, urlParams);
 
 		history.replace(
 			`${
 				ROUTES.TRACE
 			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1${
 				isExternalCall ? '&spanKind=3' : ''
-			}`,
+			}&${queryString.join('&')}`,
 		);
 	};
 }
 
 export function onGraphClickHandler(
-	setSelectedTimeStamp: (
-		n: number,
-	) => void | React.Dispatch<React.SetStateAction<number>>,
+	setSelectedTimeStamp: (n: number) => void | Dispatch<SetStateAction<number>>,
 ) {
 	return async (
-		event: ChartEvent,
-		elements: ActiveElement[],
-		chart: Chart,
-		data: ChartData,
-		from: string,
+		xValue: number,
+		yValue: number,
+		mouseX: number,
+		mouseY: number,
+		type: string,
 	): Promise<void> => {
-		if (event.native) {
-			const points = chart.getElementsAtEventForMode(
-				event.native,
-				'nearest',
-				{ intersect: false },
-				true,
-			);
-			const id = `${from}_button`;
-			const buttonElement = document.getElementById(id);
+		const id = `${type}_button`;
 
-			if (points.length !== 0) {
-				const firstPoint = points[0];
+		const buttonElement = document.getElementById(id);
 
-				if (data.labels) {
-					const time = data?.labels[firstPoint.index] as Date;
-					if (buttonElement) {
-						buttonElement.style.display = 'block';
-						buttonElement.style.left = `${firstPoint.element.x}px`;
-						buttonElement.style.top = `${firstPoint.element.y}px`;
-						setSelectedTimeStamp(time.getTime());
-					}
-				}
-			} else if (buttonElement && buttonElement.style.display === 'block') {
-				buttonElement.style.display = 'none';
+		if (xValue) {
+			if (buttonElement) {
+				buttonElement.style.display = 'block';
+				buttonElement.style.left = `${mouseX}px`;
+				buttonElement.style.top = `${mouseY}px`;
+				setSelectedTimeStamp(xValue);
 			}
+		} else if (buttonElement && buttonElement.style.display === 'block') {
+			buttonElement.style.display = 'none';
 		}
 	};
 }
+
+export const handleNonInQueryRange = (tags: TagFilterItem[]): TagFilterItem[] =>
+	tags.map((tag) => {
+		if (tag.op === 'Not IN') {
+			return {
+				...tag,
+				op: 'NIN',
+			};
+		}
+		return tag;
+	});

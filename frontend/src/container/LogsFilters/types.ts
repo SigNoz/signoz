@@ -1,10 +1,11 @@
+import { SetStateAction } from 'react';
 import {
 	IField,
 	IInterestingFields,
 	ISelectedFields,
 } from 'types/api/logs/fields';
 
-type SetLoading = (value: React.SetStateAction<number[]>) => void;
+type SetLoading = (value: SetStateAction<number[]>) => void;
 
 export type IHandleInterestProps = {
 	fieldData: IInterestingFields;

@@ -1,0 +1,8 @@
+export const LICENSE_PLAN_KEY = {
+	ENTERPRISE_PLAN: 'ENTERPRISE_PLAN',
+	BASIC_PLAN: 'BASIC_PLAN',
+};
+
+export const LICENSE_PLAN_STATUS = {
+	VALID: 'VALID',
+};

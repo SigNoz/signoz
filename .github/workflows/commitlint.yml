@@ -7,12 +7,7 @@ jobs:
   lint-commits:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.1
+      - uses: actions/checkout@v4
         with:
-          # we actually need "github.event.pull_request.commits + 1" commit
           fetch-depth: 0
-      - uses: actions/setup-node@v2.1.0
-      # or just "yarn" if you depend on "@commitlint/cli" already
-      - run: yarn add @commitlint/cli
-      - run: yarn add @commitlint/config-conventional
-      - run: yarn run commitlint --config ./node_modules/@commitlint/config-conventional/index.js  --from HEAD~${{ github.event.pull_request.commits }} --to HEAD
+      - uses: wagoid/commitlint-github-action@v5
