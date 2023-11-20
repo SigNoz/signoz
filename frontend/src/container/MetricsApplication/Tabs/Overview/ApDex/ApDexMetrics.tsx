@@ -84,6 +84,7 @@ function ApDexMetrics({
 	return (
 		<Graph
 			name="apdex"
+			filterNaN
 			widget={apDexMetricsWidget}
 			onDragSelect={onDragSelect}
 			onClickHandler={handleGraphClick('ApDex')}

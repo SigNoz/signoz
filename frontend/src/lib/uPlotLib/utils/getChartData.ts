@@ -1,8 +1,17 @@
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
+function filterIsNan(
+	value: [number, string],
+	isFilterNaNEnabled?: boolean,
+): boolean {
+	const val = value[1];
+	return isFilterNaNEnabled ? val !== 'NaN' : true;
+}
+
 export const getUPlotChartData = (
 	apiResponse?: MetricRangePayloadProps,
 	fillSpans?: boolean,
+	filterNaN?: boolean,
 ): uPlot.AlignedData => {
 	const seriesList = apiResponse?.data?.result || [];
 	const uPlotData: uPlot.AlignedData = [];
@@ -19,7 +28,9 @@ export const getUPlotChartData = (
 		seriesList[index]?.values?.sort((a, b) => a[0] - b[0]);
 	}
 
-	const timestampArr = xSeries?.values?.map((v) => v[0]);
+	const timestampArr = xSeries?.values
+		?.filter((response) => filterIsNan(response, filterNaN))
+		.map((v) => v[0]);
 
 	const uplotDataFormatArr = new Float64Array(timestampArr);
 
@@ -31,15 +42,9 @@ export const getUPlotChartData = (
 	// for each series, push the values
 	seriesList.forEach((series) => {
 		const seriesData =
-			series?.values?.map((v) => {
-				const value = parseFloat(v[1]);
-
-				if (Number.isNaN(value)) {
-					return null;
-				}
-
-				return value;
-			}) || [];
+			series?.values
+				?.filter((response) => filterIsNan(response, filterNaN))
+				.map((v) => parseFloat(v[1])) || [];
 
 		// fill rest of the value with zero
 		if (seriesData.length < numberOfTimestamps && fillSpans) {
