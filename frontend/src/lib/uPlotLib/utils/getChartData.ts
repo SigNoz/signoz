@@ -30,7 +30,16 @@ export const getUPlotChartData = (
 
 	// for each series, push the values
 	seriesList.forEach((series) => {
-		const seriesData = series?.values?.map((v) => parseFloat(v[1])) || [];
+		const seriesData =
+			series?.values?.map((v) => {
+				const value = parseFloat(v[1]);
+
+				if (Number.isNaN(value)) {
+					return null;
+				}
+
+				return value;
+			}) || [];
 
 		// fill rest of the value with zero
 		if (seriesData.length < numberOfTimestamps && fillSpans) {
@@ -40,7 +49,7 @@ export const getUPlotChartData = (
 			}
 		}
 
-		uPlotData.push(new Float64Array(seriesData));
+		uPlotData.push(new Float64Array(seriesData as number[]));
 	});
 
 	return uPlotData;
