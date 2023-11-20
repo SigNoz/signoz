@@ -19,6 +19,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
+import { v4 } from 'uuid';
 
 import { ActionsWrapper, Container } from './styles';
 import { getTabsItems } from './utils';
@@ -99,9 +100,12 @@ function TracesExplorer(): JSX.Element {
 				? panelType
 				: PANEL_TYPES.TIME_SERIES;
 
+			const widgetId = v4();
+
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
 				exportDefaultQuery,
+				widgetId,
 				panelTypeParam,
 			);
 
@@ -134,6 +138,7 @@ function TracesExplorer(): JSX.Element {
 						query: exportDefaultQuery,
 						panelType: panelTypeParam,
 						dashboardId: data.payload?.uuid || '',
+						widgetId,
 					});
 
 					history.push(dashboardEditView);
