@@ -54,7 +54,7 @@ export const getUPlotChartData = (
 			}
 		}
 
-		uPlotData.push(new Float64Array(seriesData as number[]));
+		uPlotData.push(new Float64Array(seriesData));
 	});
 
 	return uPlotData;
