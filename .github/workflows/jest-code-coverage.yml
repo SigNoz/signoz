@@ -4,6 +4,8 @@ on:
   pull_request:
     branches:
       - develop
+      - main
+      - release/v*
 
 jobs:
   coverage:
@@ -22,6 +24,6 @@ jobs:
           name: coverage
           path: coverage
       - name: Comment on PR with Coverage
-        uses: github/codeql-action/jest@v1
+        uses: ArtiomTr/jest-coverage-report-action@v2
         with:
           github-token: ${{ secrets.CI_BOT_TOKEN }}
