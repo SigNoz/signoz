@@ -30,6 +30,7 @@ jobs:
         id: findPr
       - uses: ArtiomTr/jest-coverage-report-action@v2
         with:
+          working-directory: frontend
           github-token: ${{ secrets.GITHUB_TOKEN }}
           output: comment
           prnumber: ${{ steps.findPr.outputs.number }}
