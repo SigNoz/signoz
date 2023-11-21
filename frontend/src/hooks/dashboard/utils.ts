@@ -5,6 +5,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 export const addEmptyWidgetInDashboardJSONWithQuery = (
 	dashboard: Dashboard,
 	query: Query,
+	widgetId: string,
 	panelTypes?: PANEL_TYPES,
 ): Dashboard => ({
 	...dashboard,
@@ -12,7 +13,7 @@ export const addEmptyWidgetInDashboardJSONWithQuery = (
 		...dashboard.data,
 		layout: [
 			{
-				i: 'empty',
+				i: widgetId,
 				w: 6,
 				x: 0,
 				h: 3,
@@ -23,7 +24,7 @@ export const addEmptyWidgetInDashboardJSONWithQuery = (
 		widgets: [
 			...(dashboard?.data?.widgets || []),
 			{
-				id: 'empty',
+				id: widgetId,
 				query,
 				description: '',
 				isStacked: false,
