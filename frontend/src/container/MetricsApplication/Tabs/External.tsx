@@ -148,6 +148,7 @@ function External(): JSX.Element {
 					<Card data-testid="external_call_error_percentage">
 						<GraphContainer>
 							<Graph
+								filterNaN
 								headerMenuList={MENU_ITEMS}
 								name="external_call_error_percentage"
 								widget={externalCallErrorWidget}
@@ -183,6 +184,7 @@ function External(): JSX.Element {
 					<Card data-testid="external_call_duration">
 						<GraphContainer>
 							<Graph
+								filterNaN
 								name="external_call_duration"
 								headerMenuList={MENU_ITEMS}
 								widget={externalCallDurationWidget}
@@ -219,6 +221,7 @@ function External(): JSX.Element {
 					<Card data-testid="external_call_rps_by_address">
 						<GraphContainer>
 							<Graph
+								filterNaN
 								name="external_call_rps_by_address"
 								widget={externalCallRPSWidget}
 								headerMenuList={MENU_ITEMS}
@@ -257,6 +260,7 @@ function External(): JSX.Element {
 								name="external_call_duration_by_address"
 								widget={externalCallDurationAddressWidget}
 								headerMenuList={MENU_ITEMS}
+								filterNaN
 								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										xValue,

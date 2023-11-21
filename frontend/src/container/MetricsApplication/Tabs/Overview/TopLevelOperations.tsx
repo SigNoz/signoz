@@ -27,6 +27,7 @@ function TopLevelOperation({
 			) : (
 				<GraphContainer>
 					<Graph
+						filterNaN
 						name={name}
 						widget={widget}
 						onClickHandler={handleGraphClick(opName)}

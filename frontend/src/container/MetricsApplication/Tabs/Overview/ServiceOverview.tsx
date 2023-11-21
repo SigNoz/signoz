@@ -88,6 +88,7 @@ function ServiceOverview({
 						widget={latencyWidget}
 						onClickHandler={handleGraphClick('Service')}
 						isQueryEnabled={isQueryEnabled}
+						filterNaN
 					/>
 				</GraphContainer>
 			</Card>
