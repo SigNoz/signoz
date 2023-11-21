@@ -1,15 +1,17 @@
-### Setup OpenTelemetry Binary as an agent
+## Setup OpenTelemetry Binary as an agent
+&nbsp;
 
 ### Step 1: Download otel-collector tar.gz
 ```bash
 wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v0.79.0/otelcol-contrib_0.79.0_darwin_arm64.tar.gz
-
+```
 ### Step 2: Extract otel-collector tar.gz to the `otelcol-contrib` folder
 ```bash
 mkdir otelcol-contrib && tar xvzf otelcol-contrib_0.79.0_darwin_arm64.tar.gz -C otelcol-contrib
 ```
+&nbsp;
 
-### Step 3: Create config.yaml in folder otelcol-contrib with the below content in it
+### Step 3: Create `config.yaml` in folder `otelcol-contrib` with the below content in it
 ```bash
 receivers:
   otlp:
@@ -88,12 +90,15 @@ service:
       processors: [batch]
       exporters: [otlp]
 ```
+&nbsp;
+
 ### Step 4: Run OTel Collector
  Run this command inside the `otelcol-contrib` directory
 
 ```bash
 ./otelcol-contrib --config ./config.yaml &> otelcol-output.log & echo "$!" > otel-pid
 ```
+&nbsp;
 
 ### (Optional Step): View last 50 lines of `otelcol` logs
 ```bash

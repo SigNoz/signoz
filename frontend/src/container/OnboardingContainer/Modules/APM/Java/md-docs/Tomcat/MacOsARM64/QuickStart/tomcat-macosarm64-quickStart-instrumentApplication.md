@@ -1,5 +1,6 @@
 #### Requirements
 - Java 8 or higher
+&nbsp;
 
 ### Download otel java binary agent
 
