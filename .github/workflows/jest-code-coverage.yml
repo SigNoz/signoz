@@ -26,4 +26,4 @@ jobs:
       - name: Comment on PR with Coverage
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
-          github-token: ${{ secrets.CI_BOT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
