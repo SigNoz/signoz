@@ -45,7 +45,6 @@ describe('VariableItem', () => {
 				variableData={mockVariableData}
 				existingVariables={{}}
 				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
 				lastUpdatedVar=""
 			/>,
 		);
@@ -59,7 +58,6 @@ describe('VariableItem', () => {
 				variableData={mockVariableData}
 				existingVariables={{}}
 				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
 				lastUpdatedVar=""
 			/>,
 		);
@@ -72,7 +70,6 @@ describe('VariableItem', () => {
 				variableData={mockVariableData}
 				existingVariables={{}}
 				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
 				lastUpdatedVar=""
 			/>,
 		);
@@ -91,7 +88,6 @@ describe('VariableItem', () => {
 				variableData={mockCustomVariableData}
 				existingVariables={{}}
 				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
 				lastUpdatedVar=""
 			/>,
 		);
@@ -111,7 +107,6 @@ describe('VariableItem', () => {
 				variableData={customVariableData}
 				existingVariables={{}}
 				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
 				lastUpdatedVar=""
 			/>,
 		);
@@ -125,7 +120,6 @@ describe('VariableItem', () => {
 				variableData={mockCustomVariableData}
 				existingVariables={{}}
 				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
 				lastUpdatedVar=""
 			/>,
 		);
@@ -140,7 +134,6 @@ describe('VariableItem', () => {
 				variableData={mockCustomVariableData}
 				existingVariables={{}}
 				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
 				lastUpdatedVar=""
 			/>,
 		);
@@ -157,7 +150,6 @@ describe('VariableItem', () => {
 				variableData={updatedMockCustomVariableData}
 				existingVariables={{}}
 				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
 				lastUpdatedVar=""
 			/>,
 		);

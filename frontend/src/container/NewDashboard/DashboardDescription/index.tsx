@@ -50,7 +50,7 @@ function DashboardDescription(): JSX.Element {
 	return (
 		<Card>
 			<Row gutter={16}>
-				<Col flex={1} span={12}>
+				<Col flex={1} span={9}>
 					<Typography.Title
 						level={4}
 						style={{ padding: 0, margin: 0 }}
@@ -80,12 +80,12 @@ function DashboardDescription(): JSX.Element {
 						</div>
 					)}
 				</Col>
-				<Col span={8}>
+				<Col span={12}>
 					<Row justify="end">
 						<DashboardVariableSelection />
 					</Row>
 				</Col>
-				<Col span={4} style={{ textAlign: 'right' }}>
+				<Col span={3} style={{ textAlign: 'right' }}>
 					{selectedData && (
 						<ShareModal
 							isJSONModalVisible={openDashboardJSON}
