@@ -1,4 +1,4 @@
-import './GraphManager.styles.scss';
+import './WidgetFullView.styles.scss';
 
 import { Button, Input } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
@@ -19,12 +19,13 @@ function GraphManager({
 	yAxisUnit,
 	onToggleModelHandler,
 	setGraphsVisibilityStates,
-	graphsVisibilityStates = [],
+	graphsVisibilityStates = [], // not trimed
 	lineChartRef,
 	parentChartRef,
+	options,
 }: GraphManagerProps): JSX.Element {
 	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(
-		getDefaultTableDataSet(data),
+		getDefaultTableDataSet(options, data),
 	);
 
 	const { notifications } = useNotifications();
@@ -32,21 +33,22 @@ function GraphManager({
 	const checkBoxOnChangeHandler = useCallback(
 		(e: CheckboxChangeEvent, index: number): void => {
 			const newStates = [...graphsVisibilityStates];
-
 			newStates[index] = e.target.checked;
-
 			lineChartRef?.current?.toggleGraph(index, e.target.checked);
-
+			parentChartRef?.current?.toggleGraph(index, e.target.checked);
 			setGraphsVisibilityStates([...newStates]);
 		},
-		[graphsVisibilityStates, setGraphsVisibilityStates, lineChartRef],
+		[
+			graphsVisibilityStates,
+			lineChartRef,
+			parentChartRef,
+			setGraphsVisibilityStates,
+		],
 	);
 
 	const labelClickedHandler = useCallback(
 		(labelIndex: number): void => {
-			const newGraphVisibilityStates = Array<boolean>(data.datasets.length).fill(
-				false,
-			);
+			const newGraphVisibilityStates = Array<boolean>(data.length).fill(false);
 			newGraphVisibilityStates[labelIndex] = true;
 
 			newGraphVisibilityStates.forEach((state, index) => {
@@ -55,18 +57,13 @@ function GraphManager({
 			});
 			setGraphsVisibilityStates(newGraphVisibilityStates);
 		},
-		[
-			data.datasets.length,
-			setGraphsVisibilityStates,
-			lineChartRef,
-			parentChartRef,
-		],
+		[data.length, lineChartRef, parentChartRef, setGraphsVisibilityStates],
 	);
 
 	const columns = getGraphManagerTableColumns({
-		data,
+		tableDataSet,
 		checkBoxOnChangeHandler,
-		graphVisibilityState: graphsVisibilityStates || [],
+		graphVisibilityState: graphsVisibilityStates,
 		labelClickedHandler,
 		yAxisUnit,
 	});
@@ -87,7 +84,7 @@ function GraphManager({
 
 	const saveHandler = useCallback((): void => {
 		saveLegendEntriesToLocalStorage({
-			data,
+			options,
 			graphVisibilityState: graphsVisibilityStates || [],
 			name,
 		});
@@ -97,33 +94,48 @@ function GraphManager({
 		if (onToggleModelHandler) {
 			onToggleModelHandler();
 		}
-	}, [data, graphsVisibilityStates, name, notifications, onToggleModelHandler]);
+	}, [
+		graphsVisibilityStates,
+		name,
+		notifications,
+		onToggleModelHandler,
+		options,
+	]);
 
-	const dataSource = tableDataSet.filter((item) => item.show);
+	const dataSource = tableDataSet.filter(
+		(item, index) => index !== 0 && item.show,
+	);
 
 	return (
 		<div className="graph-manager-container">
-			<div className="filter-table-container">
+			<div className="graph-manager-header">
 				<Input onChange={filterHandler} placeholder="Filter Series" />
+				<div className="save-cancel-container">
+					<span className="save-cancel-button">
+						<Button type="default" onClick={onToggleModelHandler}>
+							Cancel
+						</Button>
+					</span>
+					<span className="save-cancel-button">
+						<Button type="primary" onClick={saveHandler}>
+							Save
+						</Button>
+					</span>
+				</div>
+			</div>
+
+			<div className="legends-list-container">
 				<ResizeTable
 					columns={columns}
 					dataSource={dataSource}
 					rowKey="index"
 					pagination={false}
-					scroll={{ y: 240 }}
+					style={{
+						maxHeight: 200,
+						overflowX: 'hidden',
+						overflowY: 'auto',
+					}}
 				/>
-			</div>
-			<div className="save-cancel-container">
-				<span className="save-cancel-button">
-					<Button type="default" onClick={onToggleModelHandler}>
-						Cancel
-					</Button>
-				</span>
-				<span className="save-cancel-button">
-					<Button onClick={saveHandler} type="primary">
-						Save
-					</Button>
-				</span>
 			</div>
 		</div>
 	);

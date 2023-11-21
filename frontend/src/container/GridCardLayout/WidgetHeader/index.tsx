@@ -169,9 +169,9 @@ function WidgetHeader({
 
 	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
 
-	const onClickHandler = useCallback(() => {
-		setIsOpen((open) => !open);
-	}, []);
+	const onClickHandler = (): void => {
+		setIsOpen(!isOpen);
+	};
 
 	const menu = useMemo(
 		() => ({
@@ -203,7 +203,7 @@ function WidgetHeader({
 					onClick={onClickHandler}
 				>
 					<HeaderContentContainer>
-						<Typography.Text style={{ maxWidth: '80%' }} ellipsis>
+						<Typography.Text style={{ maxWidth: '80%' }} ellipsis data-testid={title}>
 							{title}
 						</Typography.Text>
 						<ArrowContainer hover={parentHover}>

@@ -1,5 +1,5 @@
 import { SaveOutlined } from '@ant-design/icons';
-import { Col, Divider, Input, Space, Typography } from 'antd';
+import { Col, Input, Space, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import AddTags from 'container/NewDashboard/DashboardSettings/General/AddTags';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
@@ -63,6 +63,7 @@ function GeneralDashboardSettings(): JSX.Element {
 				<div>
 					<Typography style={{ marginBottom: '0.5rem' }}>Name</Typography>
 					<Input
+						data-testid="dashboard-name"
 						value={updatedTitle}
 						onChange={(e): void => setUpdatedTitle(e.target.value)}
 					/>
@@ -71,6 +72,8 @@ function GeneralDashboardSettings(): JSX.Element {
 				<div>
 					<Typography style={{ marginBottom: '0.5rem' }}>Description</Typography>
 					<Input.TextArea
+						data-testid="dashboard-desc"
+						rows={5}
 						value={updatedDescription}
 						onChange={(e): void => setUpdatedDescription(e.target.value)}
 					/>
@@ -80,11 +83,14 @@ function GeneralDashboardSettings(): JSX.Element {
 					<AddTags tags={updatedTags} setTags={setUpdatedTags} />
 				</div>
 				<div>
-					<Divider />
 					<Button
+						style={{
+							margin: '16px 0',
+						}}
 						disabled={updateDashboardMutation.isLoading}
 						loading={updateDashboardMutation.isLoading}
 						icon={<SaveOutlined />}
+						data-testid="save-dashboard-config"
 						onClick={onSaveHandler}
 						type="primary"
 					>

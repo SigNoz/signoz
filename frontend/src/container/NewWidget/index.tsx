@@ -29,6 +29,7 @@ import AppReducer from 'types/reducer/app';
 import LeftContainer from './LeftContainer';
 import QueryTypeTag from './LeftContainer/QueryTypeTag';
 import RightContainer from './RightContainer';
+import { ThresholdProps } from './RightContainer/Threshold/types';
 import TimeItems, { timePreferance } from './RightContainer/timeItems';
 import {
 	ButtonContainer,
@@ -77,8 +78,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedWidget?.isStacked || false,
 	);
 	const [opacity, setOpacity] = useState<string>(selectedWidget?.opacity || '1');
+	const [thresholds, setThresholds] = useState<ThresholdProps[]>(
+		selectedWidget?.thresholds || [],
+	);
 	const [selectedNullZeroValue, setSelectedNullZeroValue] = useState<string>(
 		selectedWidget?.nullZeroValues || 'zero',
+	);
+	const [isFillSpans, setIsFillSpans] = useState<boolean>(
+		selectedWidget?.fillSpans || false,
 	);
 	const [saveModal, setSaveModal] = useState(false);
 
@@ -150,6 +157,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							title,
 							yAxisUnit,
 							panelTypes: graphType,
+							thresholds,
 						},
 						...afterWidgets,
 					],
@@ -180,6 +188,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		title,
 		yAxisUnit,
 		graphType,
+		thresholds,
 		afterWidgets,
 		featureResponse,
 		dashboardId,
@@ -252,7 +261,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				)}
 
 				{!isSaveDisabled && (
-					<Button type="primary" disabled={isSaveDisabled} onClick={onSaveDashboard}>
+					<Button
+						type="primary"
+						data-testid="new-widget-save"
+						disabled={isSaveDisabled}
+						onClick={onSaveDashboard}
+					>
 						Save
 					</Button>
 				)}
@@ -265,6 +279,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						selectedTime={selectedTime}
 						selectedGraph={graphType}
 						yAxisUnit={yAxisUnit}
+						thresholds={thresholds}
+						fillSpans={isFillSpans}
 					/>
 				</LeftContainerWrapper>
 
@@ -286,7 +302,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						setSelectedTime={setSelectedTime}
 						selectedTime={selectedTime}
 						setYAxisUnit={setYAxisUnit}
+						thresholds={thresholds}
+						setThresholds={setThresholds}
 						selectedWidget={selectedWidget}
+						isFillSpans={isFillSpans}
+						setIsFillSpans={setIsFillSpans}
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>

@@ -52,7 +52,6 @@ func (ah *APIHandler) listLicenses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
 	var l model.License
 
 	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
@@ -64,8 +63,7 @@ func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
 		return
 	}
-
-	license, apiError := ah.LM().Activate(ctx, l.Key)
+	license, apiError := ah.LM().Activate(r.Context(), l.Key)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return

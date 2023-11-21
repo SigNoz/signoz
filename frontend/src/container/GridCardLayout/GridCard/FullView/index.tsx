@@ -1,3 +1,6 @@
+import './WidgetFullView.styles.scss';
+
+import { SyncOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
@@ -10,16 +13,20 @@ import {
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useChartMutable } from 'hooks/useChartMutable';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import getChartData from 'lib/getChartData';
+import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartData';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getChartData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import uPlot from 'uplot';
 
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
+// import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
 
@@ -33,13 +40,17 @@ function FullView({
 	isDependedDataLoaded = false,
 	graphsVisibilityStates,
 	onToggleModelHandler,
-	setGraphsVisibilityStates,
 	parentChartRef,
+	setGraphsVisibilityStates,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const fullViewRef = useRef<HTMLDivElement>(null);
+
+	const [chartOptions, setChartOptions] = useState<uPlot.Options>();
 
 	const { selectedDashboard } = useDashboard();
 
@@ -49,7 +60,7 @@ function FullView({
 		[widget],
 	);
 
-	const lineChartRef = useRef<ToggleGraphProps>();
+	const fullViewChartRef = useRef<ToggleGraphProps>();
 
 	const [selectedTime, setSelectedTime] = useState<timePreferance>({
 		name: getSelectedTime()?.name || '',
@@ -77,80 +88,110 @@ function FullView({
 		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
 
-	const chartDataSet = useMemo(
-		() =>
-			getChartData({
-				queryData: [
-					{
-						queryData: response?.data?.payload?.data?.result || [],
-					},
-				],
-			}),
-		[response],
-	);
+	const chartData = getUPlotChartData(response?.data?.payload);
+
+	const isDarkMode = useIsDarkMode();
 
 	useEffect(() => {
-		if (!response.isFetching && lineChartRef.current) {
-			graphsVisibilityStates?.forEach((e, i) => {
-				lineChartRef?.current?.toggleGraph(i, e);
-				parentChartRef?.current?.toggleGraph(i, e);
+		if (!response.isFetching && fullViewRef.current) {
+			const width = fullViewRef.current?.clientWidth
+				? fullViewRef.current.clientWidth - 45
+				: 700;
+
+			const height = fullViewRef.current?.clientWidth
+				? fullViewRef.current.clientHeight
+				: 300;
+
+			const newChartOptions = getUPlotChartOptions({
+				yAxisUnit: yAxisUnit || '',
+				apiResponse: response.data?.payload,
+				dimensions: {
+					height,
+					width,
+				},
+				isDarkMode,
+				onDragSelect,
+				graphsVisibilityStates,
+				setGraphsVisibilityStates,
+				thresholds: widget.thresholds,
 			});
+
+			setChartOptions(newChartOptions);
 		}
-	}, [graphsVisibilityStates, parentChartRef, response.isFetching]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [response.isFetching, graphsVisibilityStates, fullViewRef.current]);
+
+	useEffect(() => {
+		graphsVisibilityStates?.forEach((e, i) => {
+			fullViewChartRef?.current?.toggleGraph(i, e);
+			parentChartRef?.current?.toggleGraph(i, e);
+		});
+	}, [graphsVisibilityStates, parentChartRef]);
 
 	if (response.isFetching) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
 
 	return (
-		<>
-			{fullViewOptions && (
-				<TimeContainer $panelType={widget.panelTypes}>
-					<TimePreference
-						selectedTime={selectedTime}
-						setSelectedTime={setSelectedTime}
-					/>
-					<Button
-						onClick={(): void => {
-							response.refetch();
-						}}
-						type="primary"
+		<div className="full-view-container">
+			<div className="full-view-header-container">
+				{fullViewOptions && (
+					<TimeContainer $panelType={widget.panelTypes}>
+						<TimePreference
+							selectedTime={selectedTime}
+							setSelectedTime={setSelectedTime}
+						/>
+						<Button
+							style={{
+								marginLeft: '4px',
+							}}
+							onClick={(): void => {
+								response.refetch();
+							}}
+							type="primary"
+							icon={<SyncOutlined />}
+						/>
+					</TimeContainer>
+				)}
+			</div>
+
+			<div className="graph-container" ref={fullViewRef}>
+				{chartOptions && (
+					<GraphContainer
+						style={{ height: '90%' }}
+						isGraphLegendToggleAvailable={canModifyChart}
 					>
-						Refresh
-					</Button>
-				</TimeContainer>
-			)}
+						<GridPanelSwitch
+							panelType={widget.panelTypes}
+							data={chartData}
+							options={chartOptions}
+							onClickHandler={onClickHandler}
+							name={name}
+							yAxisUnit={yAxisUnit}
+							onDragSelect={onDragSelect}
+							panelData={response.data?.payload.data.newResult.data.result || []}
+							query={widget.query}
+							ref={fullViewChartRef}
+							thresholds={widget.thresholds}
+						/>
+					</GraphContainer>
+				)}
+			</div>
 
-			<GraphContainer isGraphLegendToggleAvailable={canModifyChart}>
-				<GridPanelSwitch
-					panelType={widget.panelTypes}
-					data={chartDataSet.data}
-					isStacked={widget.isStacked}
-					opacity={widget.opacity}
-					title={widget.title}
-					onClickHandler={onClickHandler}
-					name={name}
-					yAxisUnit={yAxisUnit}
-					onDragSelect={onDragSelect}
-					panelData={response.data?.payload.data.newResult.data.result || []}
-					query={widget.query}
-					ref={lineChartRef}
-				/>
-			</GraphContainer>
-
-			{canModifyChart && (
+			{canModifyChart && chartOptions && (
 				<GraphManager
-					data={chartDataSet.data}
+					data={chartData}
 					name={name}
+					options={chartOptions}
 					yAxisUnit={yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
 					setGraphsVisibilityStates={setGraphsVisibilityStates}
 					graphsVisibilityStates={graphsVisibilityStates}
-					lineChartRef={lineChartRef}
+					lineChartRef={fullViewChartRef}
 					parentChartRef={parentChartRef}
 				/>
 			)}
-		</>
+		</div>
 	);
 }
 

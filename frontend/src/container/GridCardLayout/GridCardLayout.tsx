@@ -25,10 +25,7 @@ import {
 } from './styles';
 import { GraphLayoutProps } from './types';
 
-function GraphLayout({
-	onAddPanelHandler,
-	widgets,
-}: GraphLayoutProps): JSX.Element {
+function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	const {
 		selectedDashboard,
 		layouts,
@@ -36,6 +33,10 @@ function GraphLayout({
 		setSelectedDashboard,
 		isDashboardLocked,
 	} = useDashboard();
+	const { data } = selectedDashboard || {};
+
+	const { widgets, variables } = data || {};
+
 	const { t } = useTranslation(['dashboard']);
 
 	const { featureResponse, role, user } = useSelector<AppState, AppReducer>(
@@ -117,7 +118,11 @@ function GraphLayout({
 					)}
 
 					{addPanelPermission && (
-						<Button onClick={onAddPanelHandler} icon={<PlusOutlined />}>
+						<Button
+							onClick={onAddPanelHandler}
+							icon={<PlusOutlined />}
+							data-testid="add-panel"
+						>
 							{t('dashboard:add_panel')}
 						</Button>
 					)}
@@ -129,6 +134,7 @@ function GraphLayout({
 				rowHeight={100}
 				autoSize
 				width={100}
+				useCSSTransforms
 				isDraggable={!isDashboardLocked && addPanelPermission}
 				isDroppable={!isDashboardLocked && addPanelPermission}
 				isResizable={!isDashboardLocked && addPanelPermission}
@@ -156,6 +162,7 @@ function GraphLayout({
 									widget={currentWidget || ({ id, query: {} } as Widgets)}
 									name={currentWidget?.id || ''}
 									headerMenuList={widgetActions}
+									variables={variables}
 								/>
 							</Card>
 						</CardContainer>

@@ -104,18 +104,17 @@ function DBCall(): JSX.Element {
 				>
 					View Traces
 				</Button>
-				<Card>
+				<Card data-testid="database_call_rps">
 					<GraphContainer>
 						<Graph
 							name="database_call_rps"
 							widget={databaseCallsRPSWidget}
-							headerMenuList={MENU_ITEMS}
-							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
-									ChartEvent,
-									activeElements,
-									chart,
-									data,
+									xValue,
+									yValue,
+									mouseX,
+									mouseY,
 									'database_call_rps',
 								);
 							}}
@@ -138,18 +137,18 @@ function DBCall(): JSX.Element {
 					View Traces
 				</Button>
 
-				<Card>
+				<Card data-testid="database_call_avg_duration">
 					<GraphContainer>
 						<Graph
 							name="database_call_avg_duration"
 							widget={databaseCallsAverageDurationWidget}
 							headerMenuList={MENU_ITEMS}
-							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
-									ChartEvent,
-									activeElements,
-									chart,
-									data,
+									xValue,
+									yValue,
+									mouseX,
+									mouseY,
 									'database_call_avg_duration',
 								);
 							}}

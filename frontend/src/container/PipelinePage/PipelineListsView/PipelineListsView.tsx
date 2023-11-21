@@ -1,7 +1,10 @@
+import './styles.scss';
+
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Modal, Table } from 'antd';
+import { Card, Modal, Table, Typography } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
 import savePipeline from 'api/pipeline/post';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useNotifications } from 'hooks/useNotifications';
 import cloneDeep from 'lodash-es/cloneDeep';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -18,6 +21,7 @@ import {
 import { v4 } from 'uuid';
 
 import { tableComponents } from '../config';
+import PipelinesSearchSection from '../Layouts/Pipeline/PipelinesSearchSection';
 import AddNewPipeline from './AddNewPipeline';
 import AddNewProcessor from './AddNewProcessor';
 import { pipelineColumns } from './config';
@@ -43,6 +47,39 @@ import {
 	getUpdatedRow,
 } from './utils';
 
+function PipelinesListEmptyState(): JSX.Element {
+	const { t } = useTranslation(['pipeline']);
+	return (
+		<div className="logs-pipelines-empty-state-centered-container">
+			<Card size="small">
+				<div className="logs-pipelines-empty-state-centered-container">
+					<iframe
+						className="logs-pipelines-empty-state-video-iframe"
+						sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+						src="https://www.youtube.com/embed/OneENGNmLd0"
+						frameBorder="0"
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+						allowFullScreen
+						title={t('learn_more')}
+					/>
+					<div>
+						<Typography>
+							{t('learn_more')}&nbsp;
+							<a
+								href="https://signoz.io/docs/logs-pipelines/introduction/"
+								target="_blank"
+								rel="noreferrer"
+							>
+								here
+							</a>
+						</Typography>
+					</div>
+				</div>
+			</Card>
+		</div>
+	);
+}
+
 function PipelineListsView({
 	isActionType,
 	setActionType,
@@ -50,11 +87,12 @@ function PipelineListsView({
 	setActionMode,
 	pipelineData,
 	refetchPipelineLists,
-	pipelineSearchValue,
 }: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline', 'common']);
 	const [modal, contextHolder] = Modal.useModal();
 	const { notifications } = useNotifications();
+	const [pipelineSearchValue, setPipelineSearchValue] = useState<string>('');
+	const { trackEvent } = useAnalytics();
 	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
 		cloneDeep(pipelineData?.pipelines || []),
 	);
@@ -329,6 +367,11 @@ function PipelineListsView({
 
 	const addNewPipelineHandler = useCallback((): void => {
 		setActionType(ActionType.AddPipeline);
+
+		trackEvent('Logs: Pipelines: Clicked Add New Pipeline', {
+			source: 'signoz-ui',
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
@@ -359,8 +402,16 @@ function PipelineListsView({
 			refetchPipelineLists();
 			setActionMode(ActionMode.Viewing);
 			setShowSaveButton(undefined);
-			setCurrPipelineData(response.payload?.pipelines || []);
-			setPrevPipelineData(response.payload?.pipelines || []);
+
+			const pipelinesInDB = response.payload?.pipelines || [];
+			setCurrPipelineData(pipelinesInDB);
+			setPrevPipelineData(pipelinesInDB);
+
+			trackEvent('Logs: Pipelines: Saved Pipelines', {
+				count: pipelinesInDB.length,
+				enabled: pipelinesInDB.filter((p) => p.enabled).length,
+				source: 'signoz-ui',
+			});
 		} else {
 			modifiedPipelineData.forEach((item: PipelineData) => {
 				const pipelineData = item;
@@ -376,6 +427,7 @@ function PipelineListsView({
 			setCurrPipelineData(modifiedPipelineData);
 			setPrevPipelineData(modifiedPipelineData);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [currPipelineData, notifications, refetchPipelineLists, setActionMode, t]);
 
 	const onCancelConfigurationHandler = useCallback((): void => {
@@ -433,31 +485,40 @@ function PipelineListsView({
 				expandedPipelineData={expandedPipelineData()}
 				setExpandedPipelineData={setExpandedPipelineData}
 			/>
-			<Container>
-				<ModeAndConfiguration
-					isActionMode={isActionMode}
-					version={pipelineData?.version}
-				/>
-				<DndProvider backend={HTML5Backend}>
-					<Table
-						rowKey="id"
-						columns={columns}
-						expandedRowRender={expandedRowView}
-						expandable={expandableConfig}
-						components={tableComponents}
-						dataSource={visibleCurrPipelines}
-						onRow={onRowHandler}
-						footer={footer}
-						pagination={false}
-					/>
-				</DndProvider>
-				{showSaveButton && (
-					<SaveConfigButton
-						onSaveConfigurationHandler={onSaveConfigurationHandler}
-						onCancelConfigurationHandler={onCancelConfigurationHandler}
-					/>
-				)}
-			</Container>
+			{prevPipelineData?.length > 0 ? (
+				<>
+					<PipelinesSearchSection setPipelineSearchValue={setPipelineSearchValue} />
+					<Container>
+						<ModeAndConfiguration
+							isActionMode={isActionMode}
+							version={pipelineData?.version}
+						/>
+						<DndProvider backend={HTML5Backend}>
+							<Table
+								rowKey="id"
+								columns={columns}
+								expandedRowRender={expandedRowView}
+								expandable={expandableConfig}
+								components={tableComponents}
+								dataSource={visibleCurrPipelines}
+								onRow={onRowHandler}
+								footer={footer}
+								pagination={false}
+							/>
+						</DndProvider>
+						{showSaveButton && (
+							<SaveConfigButton
+								onSaveConfigurationHandler={onSaveConfigurationHandler}
+								onCancelConfigurationHandler={onCancelConfigurationHandler}
+							/>
+						)}
+					</Container>
+				</>
+			) : (
+				<Container>
+					<PipelinesListEmptyState />
+				</Container>
+			)}
 		</>
 	);
 }
@@ -469,7 +530,6 @@ interface PipelineListsViewProps {
 	setActionMode: (actionMode: ActionMode) => void;
 	pipelineData: Pipeline;
 	refetchPipelineLists: VoidFunction;
-	pipelineSearchValue: string;
 }
 
 interface ExpandRowConfig {

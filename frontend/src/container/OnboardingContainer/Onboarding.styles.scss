@@ -1,6 +1,6 @@
 .container {
 	width: 100%;
-	max-width: 1440px;
+	// max-width: 1440px;
 	margin: 0 auto;
 
 	&.darkMode {
@@ -102,18 +102,38 @@
 .stepsContainer {
 	position: relative;
 	height: 100%;
-	padding: 48px;
+	padding: 24px;
 }
 
 .actionButtonsContainer {
 	display: flex;
 	justify-content: space-between;
-	padding-bottom: 48px;
+	align-items: center;
 	box-sizing: border-box;
-	bottom: 0;
+	align-items: center;
 }
 
 .ant-steps-item-description {
 	font-size: 12px !important;
 	max-width: 100% !important;
+}
+
+.supported-environments-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+
+	.environment {
+		cursor: pointer;
+	}
+}
+
+.detailed-docs-link {
+	display: flex;
+	margin: 8px 0;
+	font-size: 12px;
+
+	a {
+		padding-left: 4px;
+	}
 }
