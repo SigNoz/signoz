@@ -1,8 +1,8 @@
 import Spinner from 'components/Spinner';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartData';
-import { getUPlotChartData } from 'lib/uPlotLib/utils/getChartData';
+import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useMemo, useRef } from 'react';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

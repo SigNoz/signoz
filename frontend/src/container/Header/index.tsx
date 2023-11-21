@@ -135,14 +135,13 @@ function HeaderContainer(): JSX.Element {
 		<>
 			{showTrialExpiryBanner && (
 				<div className="trial-expiry-banner">
-					You are in free trial period. Your free trial will end on{' '}
+					You are in free trial period. Your free trial will end on
 					<span>
 						{getFormattedDate(licenseData?.payload?.trialEnd || Date.now())}.
 					</span>
 					{role === 'ADMIN' ? (
 						<span>
-							{' '}
-							Please{' '}
+							Please
 							<Button className="upgrade-link" type="link" onClick={handleUpgrade}>
 								upgrade
 							</Button>

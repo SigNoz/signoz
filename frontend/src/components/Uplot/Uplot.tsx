@@ -3,6 +3,7 @@ import './uplot.scss';
 
 import { Typography } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import {
 	forwardRef,
 	memo,
@@ -11,6 +12,7 @@ import {
 	useImperativeHandle,
 	useRef,
 } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import UPlot from 'uplot';
 
 import { dataMatch, optionsUpdateState } from './utils';
@@ -119,13 +121,15 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		}, [data, resetScales, create]);
 
 		return (
-			<div className="uplot-graph-container" ref={targetRef}>
-				{data && data[0] && data[0]?.length === 0 ? (
-					<div className="not-found">
-						<Typography>No Data</Typography>
-					</div>
-				) : null}
-			</div>
+			<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+				<div className="uplot-graph-container" ref={targetRef}>
+					{data && data[0] && data[0]?.length === 0 ? (
+						<div className="not-found">
+							<Typography>No Data</Typography>
+						</div>
+					) : null}
+				</div>
+			</ErrorBoundary>
 		);
 	},
 );

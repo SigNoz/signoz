@@ -203,7 +203,7 @@ function WidgetHeader({
 					onClick={onClickHandler}
 				>
 					<HeaderContentContainer>
-						<Typography.Text style={{ maxWidth: '80%' }} ellipsis>
+						<Typography.Text style={{ maxWidth: '80%' }} ellipsis data-testid={title}>
 							{title}
 						</Typography.Text>
 						<ArrowContainer hover={parentHover}>

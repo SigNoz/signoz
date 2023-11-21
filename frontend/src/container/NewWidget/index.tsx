@@ -261,7 +261,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				)}
 
 				{!isSaveDisabled && (
-					<Button type="primary" disabled={isSaveDisabled} onClick={onSaveDashboard}>
+					<Button
+						type="primary"
+						data-testid="new-widget-save"
+						disabled={isSaveDisabled}
+						onClick={onSaveDashboard}
+					>
 						Save
 					</Button>
 				)}
