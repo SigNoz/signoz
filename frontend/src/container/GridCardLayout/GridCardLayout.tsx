@@ -118,7 +118,11 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					)}
 
 					{addPanelPermission && (
-						<Button onClick={onAddPanelHandler} icon={<PlusOutlined />}>
+						<Button
+							onClick={onAddPanelHandler}
+							icon={<PlusOutlined />}
+							data-testid="add-panel"
+						>
 							{t('dashboard:add_panel')}
 						</Button>
 					)}
