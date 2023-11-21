@@ -6,6 +6,11 @@ on:
       - develop
       - main
       - release/v*
+  pull_request:
+    branches:
+      - develop
+      - main
+      - release/v*
 
 jobs:
   coverage:
