@@ -1,7 +1,7 @@
 name: Code Coverage
 
 on:
-  pull_request:
+  push:
     branches:
       - develop
       - main
@@ -17,10 +17,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: Install Dependencies
-        run: cd frontend && yarn install
-      - name: Run Tests and Generate Coverage Report
-        run: cd frontend && yarn jest --coverage
       - uses: jwalton/gh-find-current-pr@v1
         id: findPr
       - uses: ArtiomTr/jest-coverage-report-action@v2
