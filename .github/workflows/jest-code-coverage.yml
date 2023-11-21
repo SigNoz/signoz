@@ -1,0 +1,29 @@
+name: Code Coverage
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: cd frontend && yarn install
+
+      - name: Run Tests and Generate Coverage Report
+        run: yarn test -- --coverage
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage
+          path: coverage
+      - name: Comment on PR with Coverage
+        uses: github/codeql-action/jest@v1
+        with:
+          github-token: ${{ secrets.CI_BOT_TOKEN }}
