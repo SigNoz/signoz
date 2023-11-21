@@ -3,3 +3,7 @@ Once you are done intrumenting your JavaScript application, you can run it using
 ```bash
 OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}" node -r ./tracing.js app.js
 ```
+
+&nbsp;
+
+If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/javascript/#troubleshooting-your-installation) for assistance.

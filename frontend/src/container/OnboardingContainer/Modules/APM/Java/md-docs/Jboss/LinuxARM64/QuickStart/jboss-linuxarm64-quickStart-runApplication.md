@@ -2,6 +2,7 @@
 ```bash
 vim /opt/jboss-eap-7.1/bin/standalone.conf
 ```
+&nbsp;
 
 ### Update `JAVA_OPTS` environment variable
 Update `JAVA_OPTS` environment variable with configurations required to send data to SigNoz cloud in your configuration file.
@@ -15,9 +16,13 @@ JAVA_OPTS="-javaagent:/<path>/opentelemetry-javaagent.jar
 
 <path> - update it to the path where you downloaded the Java JAR agent in previous step
 
+&nbsp;
 
-### (Optional step) Write the output/logs of standalone.sh script to a file nohup.out as a background thread
+#### (Optional step) Write the output/logs of standalone.sh script to a file nohup.out as a background thread
 ```bash
 /opt/jboss-eap-7.1/bin/standalone.sh > /opt/jboss-eap-7.1/bin/nohup.out &
 
 ```
+&nbsp;
+
+If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/jboss/#troubleshooting-your-installation) for assistance.
