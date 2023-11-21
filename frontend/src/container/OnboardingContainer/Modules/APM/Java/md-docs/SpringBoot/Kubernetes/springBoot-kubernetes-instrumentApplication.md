@@ -1,7 +1,9 @@
-After setting up the Otel collector agent, follow the steps below to instrumnet your JavaScript Application
+&nbsp;
+After setting up the Otel collector agent, follow the steps below to instrument your Java Application
 
 #### Requirements
 - Java 8 or higher
+&nbsp;
 
 ### Download otel java binary
 
