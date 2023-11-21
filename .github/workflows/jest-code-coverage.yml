@@ -17,7 +17,7 @@ jobs:
       - name: Install Dependencies
         run: cd frontend && yarn install
       - name: Run Tests and Generate Coverage Report
-        run: cd frontend && yarn test --coverage
+        run: cd frontend && yarn jest --coverage
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v2
         with:
