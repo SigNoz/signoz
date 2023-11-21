@@ -41,6 +41,7 @@ import {
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
+import { v4 } from 'uuid';
 
 import { ActionsWrapper } from './LogsExplorerViews.styled';
 
@@ -268,9 +269,12 @@ function LogsExplorerViews(): JSX.Element {
 				? panelType
 				: PANEL_TYPES.TIME_SERIES;
 
+			const widgetId = v4();
+
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
 				exportDefaultQuery,
+				widgetId,
 				panelTypeParam,
 			);
 
@@ -304,6 +308,7 @@ function LogsExplorerViews(): JSX.Element {
 						query: exportDefaultQuery,
 						panelType: panelTypeParam,
 						dashboardId: data.payload?.uuid || '',
+						widgetId,
 					});
 
 					history.push(dashboardEditView);
