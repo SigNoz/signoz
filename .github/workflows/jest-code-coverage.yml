@@ -1,5 +1,4 @@
 name: Code Coverage
-
 on:
   push:
     branches:
@@ -11,7 +10,6 @@ on:
       - develop
       - main
       - release/v*
-
 jobs:
   coverage:
     runs-on: ubuntu-latest
