@@ -5,8 +5,8 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartData';
-import { getUPlotChartData } from 'lib/uPlotLib/utils/getChartData';
+import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import isEmpty from 'lodash-es/isEmpty';
 import _noop from 'lodash-es/noop';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
@@ -28,6 +28,7 @@ function GridCardGraph({
 	isQueryEnabled,
 	threshold,
 	variables,
+	filterNaN,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -89,7 +90,11 @@ function GridCardGraph({
 
 	const containerDimensions = useResizeObserver(graphRef);
 
-	const chartData = getUPlotChartData(queryResponse?.data?.payload);
+	const chartData = getUPlotChartData(
+		queryResponse?.data?.payload,
+		undefined,
+		filterNaN,
+	);
 
 	const isDarkMode = useIsDarkMode();
 

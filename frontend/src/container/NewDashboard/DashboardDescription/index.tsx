@@ -51,7 +51,11 @@ function DashboardDescription(): JSX.Element {
 		<Card>
 			<Row gutter={16}>
 				<Col flex={1} span={12}>
-					<Typography.Title level={4} style={{ padding: 0, margin: 0 }}>
+					<Typography.Title
+						level={4}
+						style={{ padding: 0, margin: 0 }}
+						data-testid="dashboard-landing-name"
+					>
 						{isDashboardLocked && (
 							<Tooltip title="Dashboard Locked" placement="top">
 								<LockFilled /> &nbsp;
@@ -60,7 +64,12 @@ function DashboardDescription(): JSX.Element {
 						{title}
 					</Typography.Title>
 					{description && (
-						<Typography className="dashboard-description">{description}</Typography>
+						<Typography
+							className="dashboard-description"
+							data-testid="dashboard-landing-desc"
+						>
+							{description}
+						</Typography>
 					)}
 
 					{tags && (
