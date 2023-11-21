@@ -10,7 +10,10 @@ on:
 jobs:
   coverage:
     runs-on: ubuntu-latest
-
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -23,7 +26,10 @@ jobs:
         with:
           name: coverage
           path: coverage
-      - name: Comment on PR with Coverage
-        uses: ArtiomTr/jest-coverage-report-action@v2
+      - uses: jwalton/gh-find-current-pr@v1
+        id: findPr
+      - uses: ArtiomTr/jest-coverage-report-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          output: comment
+          prnumber: ${{ steps.findPr.outputs.number }}
