@@ -485,7 +485,7 @@ function PipelineListsView({
 				expandedPipelineData={expandedPipelineData()}
 				setExpandedPipelineData={setExpandedPipelineData}
 			/>
-			{prevPipelineData?.length > 0 ? (
+			{prevPipelineData?.length > 0 || currPipelineData?.length > 0 ? (
 				<>
 					<PipelinesSearchSection setPipelineSearchValue={setPipelineSearchValue} />
 					<Container>
