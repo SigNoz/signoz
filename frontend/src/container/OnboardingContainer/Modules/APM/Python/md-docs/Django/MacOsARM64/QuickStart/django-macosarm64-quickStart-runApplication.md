@@ -10,5 +10,11 @@ opentelemetry-instrument <your_run_command>
 
 `<your_run_command>` can be something like `python3 app.py` or `python manage.py runserver --noreload`
 
+&nbsp;
+
 **Note**
 - Don’t run app in reloader/hot-reload mode as it breaks instrumentation. For example, you can disable the auto reload with --noreload.
+
+&nbsp;
+
+If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/django/#troubleshooting-your-installation) for assistance.
