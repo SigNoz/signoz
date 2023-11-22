@@ -428,6 +428,22 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func getRouteContextTimeout(overrideTimeout string) time.Duration {
+	var timeout time.Duration
+	var err error
+	if overrideTimeout != "" {
+		timeout, err = time.ParseDuration(overrideTimeout + "s")
+		if err != nil {
+			timeout = constants.ContextTimeout
+		}
+		if timeout > constants.ContextTimeoutMaxAllowed {
+			timeout = constants.ContextTimeoutMaxAllowed
+		}
+		return timeout
+	}
+	return constants.ContextTimeout
+}
+
 func setTimeoutMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -435,7 +451,7 @@ func setTimeoutMiddleware(next http.Handler) http.Handler {
 		// check if route is not excluded
 		url := r.URL.Path
 		if _, ok := constants.TimeoutExcludedRoutes[url]; !ok {
-			ctx, cancel = context.WithTimeout(r.Context(), constants.ContextTimeout)
+			ctx, cancel = context.WithTimeout(r.Context(), getRouteContextTimeout(r.Header.Get("timeout")))
 			defer cancel()
 		}
 
