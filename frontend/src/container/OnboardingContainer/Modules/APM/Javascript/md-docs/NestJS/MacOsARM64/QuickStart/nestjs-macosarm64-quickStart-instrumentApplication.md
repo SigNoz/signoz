@@ -1,6 +1,8 @@
 #### Requirements
 - Supported Versions >= `4.0.0`
 
+&nbsp;
+
 ### Step 1: Install OpenTelemetry packages
 
 ```bash
@@ -9,6 +11,7 @@ npm install --save @opentelemetry/sdk-node@^0.45.0
 npm install --save @opentelemetry/auto-instrumentations-node@^0.39.4
 npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 ```
+&nbsp;
 
 ### Step 2: Create tracing.js file
 
@@ -51,6 +54,7 @@ process.on('SIGTERM', () => {
 
 export default sdk;
 ```
+&nbsp;
 
 ### Step 3: Import tracer in the `main.js file`
 
@@ -58,6 +62,7 @@ export default sdk;
 ```bash
 const tracer = require('./tracer')
 ```
+&nbsp;
 
 ### Step 4: Start the tracer
 In the `async function boostrap` section of the application code, initialize the tracer as follows:

@@ -68,7 +68,7 @@ service:
 ```
 For details about configuring OpenTelemetry receivers, see the [README](https://github.com/open-telemetry/opentelemetry-collector/blob/main/receiver/README.md) page of the opentelemetry-collector GitHub repository.
 
-# Enable a specific metrics Receiver
+# Enable Prometheus Receiver
 
 SigNoz supports all the exporters that are listed on the [Exporters and Integrations](https://prometheus.io/docs/instrumenting/exporters/) page of the Prometheus documentation. If you have a running Prometheus instance, and you expose metrics in Prometheus, then you can scrape them in SigNoz by configuring Prometheus receivers in the **`receivers::prometheus::config::scrape_configs`** section of the **`config.yaml`** file you created in the previous step.
 

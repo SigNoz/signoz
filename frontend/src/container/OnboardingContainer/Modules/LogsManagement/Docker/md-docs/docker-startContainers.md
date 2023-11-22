@@ -1,4 +1,4 @@
-### Start the docker conteiners
+### Start the docker containers
 
 ```bash
  docker compose up -d 

@@ -1,14 +1,17 @@
-### Install otel-collector in your Kubernetes infra
+## Install otel-collector in your Kubernetes infra
+&nbsp;
 
 Add the SigNoz Helm Chart repository
 ```bash
 helm repo add signoz https://charts.signoz.io
 ```
+&nbsp;
 
 If the chart is already present, update the chart to the latest using:
 ```bash
 helm repo update
 ```
+&nbsp;
 
 Install the Kubernetes Infrastructure chart provided by SigNoz
 ```bash

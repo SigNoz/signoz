@@ -2,6 +2,8 @@
 #### Requirements
 - NodeJS Version 14 or newer
 
+&nbsp;
+
 ### Step 1: Install OpenTelemetry packages
 
 ```bash
@@ -10,6 +12,7 @@ npm install --save @opentelemetry/sdk-node@^0.45.0
 npm install --save @opentelemetry/auto-instrumentations-node@^0.39.4
 npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 ```
+&nbsp;
 
 ### Step 2: Create tracing.js file
 
