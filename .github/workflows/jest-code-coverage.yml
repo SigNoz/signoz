@@ -25,7 +25,8 @@ jobs:
       - uses: ArtiomTr/jest-coverage-report-action@v2
         with:
           package-manager: yarn
-          working-directory: frontend/*
+          working-directory: frontend
+          test-script: yarn jest:coverage
           github-token: ${{ secrets.GITHUB_TOKEN }}
           output: comment
           prnumber: ${{ steps.findPr.outputs.number }}
