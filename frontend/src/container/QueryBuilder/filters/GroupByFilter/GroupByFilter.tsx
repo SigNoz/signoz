@@ -88,7 +88,6 @@ export const GroupByFilter = memo(function GroupByFilter({
 							prefix: item.type || '',
 							condition: !item.isColumn,
 						})}${selectValueDivider}${item.id}`,
-						dataType: item.dataType,
 					})) || [];
 
 				setOptionsData(options);
