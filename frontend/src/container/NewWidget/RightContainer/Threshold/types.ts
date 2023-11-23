@@ -1,7 +1,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 
-type ThresholdOperators = '>' | '<' | '>=' | '<=' | '=';
+export type ThresholdOperators = '>' | '<' | '>=' | '<=' | '=';
 
 export type ThresholdProps = {
 	index: string;
@@ -14,9 +14,11 @@ export type ThresholdProps = {
 	thresholdFormat?: 'Text' | 'Background';
 	isEditEnabled?: boolean;
 	thresholdLabel?: string;
+	thresholdTableOptions?: string;
 	setThresholds?: Dispatch<SetStateAction<ThresholdProps[]>>;
 	moveThreshold: (dragIndex: number, hoverIndex: number) => void;
 	selectedGraph: PANEL_TYPES;
+	tableOptions?: Array<{ value: string; label: string }>;
 };
 
 export type ShowCaseValueProps = {
