@@ -21,7 +21,9 @@ import { SelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
+import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
+import { removePrefix } from './utils';
 
 export const GroupByFilter = memo(function GroupByFilter({
 	query,
@@ -73,6 +75,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 							prefix: item.type || '',
 							condition: !item.isColumn,
 						})}${selectValueDivider}${item.id}`,
+						dataType: item.dataType,
 					})) || [];
 
 				setOptionsData(options);
@@ -181,7 +184,17 @@ export const GroupByFilter = memo(function GroupByFilter({
 			onBlur={handleBlur}
 			onFocus={handleFocus}
 			onDeselect={clearSearch}
-			options={optionsData}
+			options={optionsData.map((item) => ({
+				label: (
+					<OptionRenderer
+						key={item.value}
+						label={item.label}
+						value={removePrefix(item.label)}
+						dataType={item.dataType || ''}
+					/>
+				),
+				value: item.value,
+			}))}
 			value={localValues}
 			labelInValue
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
