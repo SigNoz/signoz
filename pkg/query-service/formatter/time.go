@@ -20,7 +20,7 @@ func (f *durationFormatter) Format(value float64, unit string) string {
 	switch unit {
 	case "ns":
 		return toNanoSeconds(value)
-	case "µs":
+	case "µs", "us":
 		return toMicroSeconds(value)
 	case "ms":
 		return toMilliSeconds(value)

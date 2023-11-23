@@ -31,7 +31,7 @@ func FromTimeUnit(u Unit) Duration {
 	switch u {
 	case "ns":
 		return Nanosecond
-	case "us":
+	case "us", "µs":
 		return Microsecond
 	case "ms":
 		return Millisecond

@@ -1,3 +1,5 @@
+import './GridCardLayout.styles.scss';
+
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -5,7 +7,9 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import { FullscreenIcon } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -34,6 +38,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 		isDashboardLocked,
 	} = useDashboard();
 	const { data } = selectedDashboard || {};
+	const handle = useFullScreenHandle();
 
 	const { widgets, variables } = data || {};
 
@@ -106,6 +111,15 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 		<>
 			{!isDashboardLocked && (
 				<ButtonContainer>
+					<Button
+						loading={updateDashboardMutation.isLoading}
+						onClick={handle.enter}
+						icon={<FullscreenIcon size={16} />}
+						disabled={updateDashboardMutation.isLoading}
+					>
+						{t('dashboard:full_view')}
+					</Button>
+
 					{saveLayoutPermission && (
 						<Button
 							loading={updateDashboardMutation.isLoading}
@@ -129,46 +143,48 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 				</ButtonContainer>
 			)}
 
-			<ReactGridLayout
-				cols={12}
-				rowHeight={100}
-				autoSize
-				width={100}
-				useCSSTransforms
-				isDraggable={!isDashboardLocked && addPanelPermission}
-				isDroppable={!isDashboardLocked && addPanelPermission}
-				isResizable={!isDashboardLocked && addPanelPermission}
-				allowOverlap={false}
-				onLayoutChange={setLayouts}
-				draggableHandle=".drag-handle"
-				layout={layouts}
-			>
-				{layouts.map((layout) => {
-					const { i: id } = layout;
-					const currentWidget = (widgets || [])?.find((e) => e.id === id);
+			<FullScreen handle={handle} className="fullscreen-grid-container">
+				<ReactGridLayout
+					cols={12}
+					rowHeight={100}
+					autoSize
+					width={100}
+					useCSSTransforms
+					isDraggable={!isDashboardLocked && addPanelPermission}
+					isDroppable={!isDashboardLocked && addPanelPermission}
+					isResizable={!isDashboardLocked && addPanelPermission}
+					allowOverlap={false}
+					onLayoutChange={setLayouts}
+					draggableHandle=".drag-handle"
+					layout={layouts}
+				>
+					{layouts.map((layout) => {
+						const { i: id } = layout;
+						const currentWidget = (widgets || [])?.find((e) => e.id === id);
 
-					return (
-						<CardContainer
-							className={isDashboardLocked ? '' : 'enable-resize'}
-							isDarkMode={isDarkMode}
-							key={id}
-							data-grid={layout}
-						>
-							<Card
-								className="grid-item"
-								$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
+						return (
+							<CardContainer
+								className={isDashboardLocked ? '' : 'enable-resize'}
+								isDarkMode={isDarkMode}
+								key={id}
+								data-grid={layout}
 							>
-								<GridCard
-									widget={currentWidget || ({ id, query: {} } as Widgets)}
-									name={currentWidget?.id || ''}
-									headerMenuList={widgetActions}
-									variables={variables}
-								/>
-							</Card>
-						</CardContainer>
-					);
-				})}
-			</ReactGridLayout>
+								<Card
+									className="grid-item"
+									$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
+								>
+									<GridCard
+										widget={currentWidget || ({ id, query: {} } as Widgets)}
+										name={currentWidget?.id || ''}
+										headerMenuList={widgetActions}
+										variables={variables}
+									/>
+								</Card>
+							</CardContainer>
+						);
+					})}
+				</ReactGridLayout>
+			</FullScreen>
 		</>
 	);
 }
