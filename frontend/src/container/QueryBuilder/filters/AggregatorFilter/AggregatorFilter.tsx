@@ -179,11 +179,13 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		[getAttributesData, handleChangeCustomValue, onChange],
 	);
 
-	const value = transformStringWithPrefix({
-		str: query.aggregateAttribute.key,
-		prefix: query.aggregateAttribute.type || '',
-		condition: !query.aggregateAttribute.isColumn,
-	});
+	const value = removePrefix(
+		transformStringWithPrefix({
+			str: query.aggregateAttribute.key,
+			prefix: query.aggregateAttribute.type || '',
+			condition: !query.aggregateAttribute.isColumn,
+		}),
+	);
 
 	return (
 		<AutoComplete

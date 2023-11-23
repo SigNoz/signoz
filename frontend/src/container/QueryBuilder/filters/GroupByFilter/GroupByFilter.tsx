@@ -167,11 +167,13 @@ export const GroupByFilter = memo(function GroupByFilter({
 	useEffect(() => {
 		const currentValues: SelectOption<string, string>[] = query.groupBy.map(
 			(item) => ({
-				label: `${transformStringWithPrefix({
-					str: item.key,
-					prefix: item.type || '',
-					condition: !item.isColumn,
-				})}`,
+				label: `${removePrefix(
+					transformStringWithPrefix({
+						str: item.key,
+						prefix: item.type || '',
+						condition: !item.isColumn,
+					}),
+				)}`,
 				value: `${transformStringWithPrefix({
 					str: item.key,
 					prefix: item.type || '',
@@ -191,7 +193,6 @@ export const GroupByFilter = memo(function GroupByFilter({
 			onSearch={handleSearchKeys}
 			showSearch
 			disabled={disabled}
-			showArrow={false}
 			filterOption={false}
 			onBlur={handleBlur}
 			onFocus={handleFocus}
