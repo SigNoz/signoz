@@ -14,7 +14,7 @@ import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAut
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { isEqual, uniqWith } from 'lodash-es';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SelectOption } from 'types/common/select';
@@ -32,9 +32,9 @@ export const GroupByFilter = memo(function GroupByFilter({
 }: GroupByFilterProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const [searchText, setSearchText] = useState<string>('');
-	const [optionsData, setOptionsData] = useState<SelectOption<string, string>[]>(
-		[],
-	);
+	const [optionsData, setOptionsData] = useState<
+		SelectOption<string, ReactNode>[]
+	>([]);
 	const [localValues, setLocalValues] = useState<SelectOption<string, string>[]>(
 		[],
 	);
@@ -63,13 +63,26 @@ export const GroupByFilter = memo(function GroupByFilter({
 						(attrKey) => !keys.includes(attrKey.key),
 					) || [];
 
-				const options: SelectOption<string, string>[] =
+				const options: SelectOption<string, ReactNode>[] =
 					filteredOptions.map((item) => ({
-						label: transformStringWithPrefix({
-							str: item.key,
-							prefix: item.type || '',
-							condition: !item.isColumn,
-						}),
+						label: (
+							<OptionRenderer
+								key={item.key}
+								label={transformStringWithPrefix({
+									str: item.key,
+									prefix: item.type || '',
+									condition: !item.isColumn,
+								})}
+								value={removePrefix(
+									transformStringWithPrefix({
+										str: item.key,
+										prefix: item.type || '',
+										condition: !item.isColumn,
+									}),
+								)}
+								dataType={item.dataType || ''}
+							/>
+						),
 						value: `${transformStringWithPrefix({
 							str: item.key,
 							prefix: item.type || '',
@@ -184,17 +197,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			onBlur={handleBlur}
 			onFocus={handleFocus}
 			onDeselect={clearSearch}
-			options={optionsData.map((item) => ({
-				label: (
-					<OptionRenderer
-						key={item.value}
-						label={item.label}
-						value={removePrefix(item.label)}
-						dataType={item.dataType || ''}
-					/>
-				),
-				value: item.value,
-			}))}
+			options={optionsData}
 			value={localValues}
 			labelInValue
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
