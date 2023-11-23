@@ -8,6 +8,7 @@ import (
 	expr "github.com/antonmedv/expr"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
 )
 
 var logOperatorsToExpr = map[v3.FilterOperator]string{
@@ -64,6 +65,18 @@ func Parse(filters *v3.FilterSet) (string, error) {
 			filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], getTypeName(v.Key.Type))
 		default:
 			filter = fmt.Sprintf("%s %s %s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
+		}
+
+		if slices.Contains(
+			[]v3.FilterOperator{
+				v3.FilterOperatorContains,
+				v3.FilterOperatorNotContains,
+				v3.FilterOperatorRegex,
+				v3.FilterOperatorNotRegex,
+			},
+			v.Operator,
+		) {
+			filter = fmt.Sprintf("%s != nil && %s", name, filter)
 		}
 
 		// check if the filter is a correct expression language
