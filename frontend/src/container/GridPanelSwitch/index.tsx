@@ -26,7 +26,12 @@ const GridPanelSwitch = forwardRef<
 					yAxisUnit,
 					thresholds,
 				},
-				[PANEL_TYPES.TABLE]: { ...GRID_TABLE_CONFIG, data: panelData, query },
+				[PANEL_TYPES.TABLE]: {
+					...GRID_TABLE_CONFIG,
+					data: panelData,
+					query,
+					thresholds,
+				},
 				[PANEL_TYPES.LIST]: null,
 				[PANEL_TYPES.TRACE]: null,
 				[PANEL_TYPES.EMPTY_WIDGET]: null,
