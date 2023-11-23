@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const authFile = ".auth/user.json";
+
 test("E2E Login Test", async ({ page }) => {
   await Promise.all([page.goto("/"), page.waitForRequest("**/version")]);
 
@@ -30,4 +32,6 @@ test("E2E Login Test", async ({ page }) => {
   await page.locator('button[data-attr="signup"]').click();
 
   await expect(page).toHaveURL(ROUTES.APPLICATION);
+
+  await page.context().storageState({ path: authFile });
 });
