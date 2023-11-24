@@ -64,6 +64,11 @@ func Parse(filters *v3.FilterSet) (string, error) {
 			filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], getTypeName(v.Key.Type))
 		default:
 			filter = fmt.Sprintf("%s %s %s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
+
+			// Avoid running operators on nil values
+			if v.Operator != v3.FilterOperatorEqual && v.Operator != v3.FilterOperatorNotEqual {
+				filter = fmt.Sprintf("%s != nil && %s", name, filter)
+			}
 		}
 
 		// check if the filter is a correct expression language
