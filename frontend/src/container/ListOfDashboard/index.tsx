@@ -66,9 +66,7 @@ function ListOfAllDashboard(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (dashboardListResponse.length) {
-			sortDashboardsByCreatedAt(dashboardListResponse);
-		}
+		sortDashboardsByCreatedAt(dashboardListResponse);
 	}, [dashboardListResponse]);
 
 	const [newDashboardState, setNewDashboardState] = useState({
