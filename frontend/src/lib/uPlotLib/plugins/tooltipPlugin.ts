@@ -9,7 +9,17 @@ import { placement } from '../placement';
 
 dayjs.extend(customParseFormat);
 
-const createDivsFromArray = (
+interface UplotTooltipDataProps {
+	show: boolean;
+	color: string;
+	label: string;
+	focus: boolean;
+	value: string | number;
+	tooltipValue: string;
+	textContent: string;
+}
+
+const generateTooltipContent = (
 	seriesList: any[],
 	data: any[],
 	idx: number,
@@ -21,30 +31,14 @@ const createDivsFromArray = (
 	const container = document.createElement('div');
 	container.classList.add('tooltip-container');
 
+	let tooltipTitle = '';
+	const formattedData: Record<string, UplotTooltipDataProps> = {};
+
 	if (Array.isArray(series) && series.length > 0) {
 		series.forEach((item, index) => {
-			const div = document.createElement('div');
-			div.classList.add('tooltip-content-row');
-
 			if (index === 0) {
-				const formattedDate = dayjs(data[0][idx] * 1000).format(
-					'MMM DD YYYY HH:mm:ss',
-				);
-
-				div.textContent = formattedDate;
-				div.classList.add('tooltip-content-header');
+				tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY HH:mm:ss');
 			} else if (fillSpans ? item.show : item.show && data[index][idx]) {
-				div.classList.add('tooltip-content');
-				const color = colors[(index - 1) % colors.length];
-
-				const squareBox = document.createElement('div');
-				squareBox.classList.add('pointSquare');
-
-				squareBox.style.borderColor = color;
-
-				const text = document.createElement('div');
-				text.classList.add('tooltip-data-point');
-
 				const { metric = {}, queryName = '', legend = '' } =
 					seriesList[index - 1] || {};
 
@@ -55,18 +49,74 @@ const createDivsFromArray = (
 				);
 
 				const value = data[index][idx] || 0;
-
 				const tooltipValue = getToolTipValue(value, yAxisUnit);
 
-				text.textContent = `${label} : ${tooltipValue || 0}`;
+				const dataObj = {
+					show: item.show || false,
+					color: colors[(index - 1) % colors.length],
+					label,
+					focus: item._focus || false,
+					value,
+					tooltipValue,
+					textContent: `${label} : ${tooltipValue || 0}`,
+				};
+
+				formattedData[value] = dataObj;
+			}
+		});
+	}
+
+	// Get the keys and sort them
+	const sortedKeys = Object.keys(formattedData).sort((a, b) => b - a);
+
+	// Create a new object with sorted keys
+	const sortedData: Record<string, UplotTooltipDataProps> = {};
+	sortedKeys.forEach((key) => {
+		sortedData[key] = formattedData[key];
+	});
+
+	const div = document.createElement('div');
+	div.classList.add('tooltip-content-row');
+	div.textContent = tooltipTitle;
+	div.classList.add('tooltip-content-header');
+	container.appendChild(div);
+
+	if (Array.isArray(sortedKeys) && sortedKeys.length > 0) {
+		sortedKeys.forEach((key) => {
+			if (sortedData[key]) {
+				const { textContent, color, focus } = sortedData[key];
+				const div = document.createElement('div');
+				div.classList.add('tooltip-content-row');
+				div.classList.add('tooltip-content');
+				const squareBox = document.createElement('div');
+				squareBox.classList.add('pointSquare');
+
+				squareBox.style.borderColor = color;
+
+				const text = document.createElement('div');
+				text.classList.add('tooltip-data-point');
+
+				text.textContent = textContent;
 				text.style.color = color;
+
+				if (focus) {
+					text.classList.add('focus');
+				} else {
+					text.classList.remove('focus');
+				}
 
 				div.appendChild(squareBox);
 				div.appendChild(text);
-			}
 
-			container.appendChild(div);
+				container.appendChild(div);
+			}
 		});
+	}
+
+	const overlay = document.getElementById('overlay');
+
+	if (overlay && overlay.style.display === 'none') {
+		overlay.style.display = 'block';
 	}
 
 	return container;
@@ -127,10 +177,9 @@ const tooltipPlugin = (
 				if (overlay) {
 					overlay.textContent = '';
 					const { left, top, idx } = u.cursor;
-
 					if (idx) {
 						const anchor = { left: left + bLeft, top: top + bTop };
-						const content = createDivsFromArray(
+						const content = generateTooltipContent(
 							apiResult,
 							u.data,
 							idx,
