@@ -3955,8 +3955,8 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	return &attributeValues, nil
 }
 
-func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricName string, preferDelta bool) (*v3.LatencyMetricMetadataResponse, error) {
-	query := fmt.Sprintf("SELECT DISTINCT(temporality) from %s.%s WHERE metric_name='%s'", signozMetricDBName, signozTSTableName, metricName)
+func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName string, preferDelta bool) (*v3.MetricMetadataResponse, error) {
+	query := fmt.Sprintf("SELECT DISTINCT temporality, description, type, unit, is_monotonic from %s.%s WHERE metric_name='%s'", signozMetricDBName, signozTSTableName, metricName)
 	rows, err := r.db.Query(ctx, query, metricName)
 	if err != nil {
 		zap.S().Error(err)
@@ -3964,10 +3964,10 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 	}
 	defer rows.Close()
 
-	var deltaExists bool
+	var deltaExists, isMonotonic bool
+	var temporality, description, metricType, unit string
 	for rows.Next() {
-		var temporality string
-		if err := rows.Scan(&temporality); err != nil {
+		if err := rows.Scan(&temporality, &description, &metricType, &unit, &isMonotonic); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
 		if temporality == string(v3.Delta) {
@@ -3975,7 +3975,7 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 		}
 	}
 
-	query = fmt.Sprintf("SELECT DISTINCT(toFloat64(JSONExtractString(labels, 'le'))) as le from %s.%s WHERE metric_name='%s' ORDER BY le", signozMetricDBName, signozTSTableName, metricName)
+	query = fmt.Sprintf("SELECT DISTINCT(toFloat64(JSONExtractString(labels, 'le'))) as le from %s.%s WHERE metric_name='%s' and type = 'Histogram' ORDER BY le", signozMetricDBName, signozTSTableName, metricName)
 	rows, err = r.db.Query(ctx, query, metricName)
 	if err != nil {
 		zap.S().Error(err)
@@ -3995,9 +3995,14 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 		leFloat64 = append(leFloat64, le)
 	}
 
-	return &v3.LatencyMetricMetadataResponse{
-		Delta: deltaExists && preferDelta,
-		Le:    leFloat64,
+	return &v3.MetricMetadataResponse{
+		Delta:       deltaExists && preferDelta,
+		Le:          leFloat64,
+		Description: description,
+		Unit:        unit,
+		Type:        metricType,
+		IsMonotonic: isMonotonic,
+		Temporality: temporality,
 	}, nil
 }
 

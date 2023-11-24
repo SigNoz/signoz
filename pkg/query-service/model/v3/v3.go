@@ -705,7 +705,12 @@ func (eq *SavedView) Validate() error {
 	return eq.CompositeQuery.Validate()
 }
 
-type LatencyMetricMetadataResponse struct {
-	Delta bool      `json:"delta"`
-	Le    []float64 `json:"le"`
+type MetricMetadataResponse struct {
+	Delta       bool      `json:"delta"`
+	Le          []float64 `json:"le"`
+	Description string    `json:"description"`
+	Unit        string    `json:"unit"`
+	Type        string    `json:"type"`
+	IsMonotonic bool      `json:"isMonotonic"`
+	Temporality string    `json:"temporality"`
 }
