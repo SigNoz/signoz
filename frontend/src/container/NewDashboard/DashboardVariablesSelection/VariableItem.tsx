@@ -64,8 +64,6 @@ function VariableItem({
 		false,
 	);
 
-	// console.log(variableData);
-
 	// on mount
 	useEffect(() => {
 		setIsOptionsFetchEnabled(true);
@@ -100,8 +98,6 @@ function VariableItem({
 		});
 
 		const variableKey = dependentVariablesStr.replace(/\s/g, '');
-
-		// console.log('variableKey', variableKey);
 
 		return [REACT_QUERY_KEY.DASHBOARD_BY_ID, variableData.name, variableKey];
 	};
