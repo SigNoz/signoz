@@ -19,7 +19,7 @@ function TextOverflowTooltip({
 	return (
 		<Tooltip
 			placement="left"
-			title={JSON.stringify(option)}
+			title={option.value}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...(!isOverflow ? { open: false } : {})}
 		>
