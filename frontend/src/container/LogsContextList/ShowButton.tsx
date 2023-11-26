@@ -7,6 +7,7 @@ interface ShowButtonProps {
 	isLoading: boolean;
 	isDisabled: boolean;
 	order: string;
+	lines: number;
 	onClick: () => void;
 }
 
@@ -14,12 +15,14 @@ function ShowButton({
 	isLoading,
 	isDisabled,
 	order,
+	lines,
 	onClick,
 }: ShowButtonProps): JSX.Element {
 	return (
 		<ShowButtonWrapper>
 			<Typography>
-				Showing 10 lines {order === ORDERBY_FILTERS.ASC ? 'after' : 'before'} match
+				Showing {lines} lines {order === ORDERBY_FILTERS.ASC ? 'after' : 'before'}{' '}
+				match
 			</Typography>
 			<Button
 				size="small"

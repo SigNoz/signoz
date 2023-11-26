@@ -38,6 +38,10 @@ function LogsContextList({
 	const isDarkMode = useIsDarkMode();
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [page, setPage] = useState<number>(1);
+	const [lines, setLines] = useState({
+		after: 10,
+		before: 10,
+	});
 
 	const firstLog = useMemo(() => logs[0], [logs]);
 	const lastLog = useMemo(() => logs[logs.length - 1], [logs]);
@@ -121,7 +125,17 @@ function LogsContextList({
 			page: page + 1,
 			pageSize: LOGS_MORE_PAGE_SIZE,
 		});
-
+		if (order === ORDERBY_FILTERS.ASC) {
+			setLines((prevLine) => ({
+				...prevLine,
+				after: prevLine.after + 10,
+			}));
+		} else if (order === ORDERBY_FILTERS.DESC) {
+			setLines((prevLine) => ({
+				...prevLine,
+				before: prevLine.before + 10,
+			}));
+		}
 		setPage((prevPage) => prevPage + 1);
 		setRequestData(newRequestData);
 	}, [
@@ -172,6 +186,7 @@ function LogsContextList({
 					isLoading={isFetching}
 					isDisabled={isDisabledFetch}
 					order={order}
+					lines={lines.after}
 					onClick={handleShowNextLines}
 				/>
 			)}
@@ -195,6 +210,7 @@ function LogsContextList({
 					isLoading={isFetching}
 					isDisabled={isDisabledFetch}
 					order={order}
+					lines={lines.before}
 					onClick={handleShowNextLines}
 				/>
 			)}
