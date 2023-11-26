@@ -28,7 +28,7 @@ function GridCardGraph({
 	isQueryEnabled,
 	threshold,
 	variables,
-	filterNaN,
+	fillSpans = false,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -90,11 +90,7 @@ function GridCardGraph({
 
 	const containerDimensions = useResizeObserver(graphRef);
 
-	const chartData = getUPlotChartData(
-		queryResponse?.data?.payload,
-		undefined,
-		filterNaN,
-	);
+	const chartData = getUPlotChartData(queryResponse?.data?.payload, fillSpans);
 
 	const isDarkMode = useIsDarkMode();
 
