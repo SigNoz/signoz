@@ -1,7 +1,7 @@
 const DEFAULT_TITLE = 'Open source Observability platform | SigNoz';
 const SIGNOZ = 'SigNoz';
 
-const SigleRouteMap: { [key: string]: string } = {
+const SingleRouteMap: { [key: string]: string } = {
 	Services: 'services',
 };
 
@@ -14,7 +14,7 @@ function getWordAfterFirstSlash(inputString: string): string | undefined {
 		return segments[1];
 	}
 	if (segments.length >= 2) {
-		if (!SigleRouteMap[segments[1]]) {
+		if (!SingleRouteMap[segments[1]]) {
 			return segments[2];
 		}
 		return segments[1];
