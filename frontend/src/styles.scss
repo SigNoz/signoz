@@ -51,23 +51,23 @@ body {
 }
 
 #overlay {
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
-		'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+	font-family: 'Inter';
 	font-size: 12px;
 	position: absolute;
 	margin: 0.5rem;
-	background: rgba(0, 0, 0, 0.9);
+	background: rgba(0, 0, 0);
 	-webkit-font-smoothing: antialiased;
 	color: #fff;
 	z-index: 10000;
-	pointer-events: none;
+	// pointer-events: none;
 	overflow: auto;
-	max-height: 600px !important;
+	max-height: 480px !important;
+	max-width: 240px !important;
 	border-radius: 5px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
 
 	.tooltip-container {
-		padding: 0.5rem;
+		padding: 1rem;
 	}
 
 	&::-webkit-scrollbar {
