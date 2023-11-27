@@ -185,6 +185,7 @@ func (ah *APIHandler) precheckLogin(w http.ResponseWriter, r *http.Request) {
 	resp, apierr := ah.AppDao().PrecheckLogin(ctx, email, sourceUrl)
 	if apierr != nil {
 		RespondError(w, apierr, resp)
+		return
 	}
 
 	ah.Respond(w, resp)
