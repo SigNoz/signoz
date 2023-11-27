@@ -342,6 +342,32 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 				Field:   "attributes.test",
 			},
 			makeTestLog("mismatching log", map[string]string{}),
+		}, {
+			"time parser should ignore logs with missing field.",
+			PipelineOperator{
+				ID:         "time",
+				Type:       "time_parser",
+				Enabled:    true,
+				Name:       "time parser",
+				ParseFrom:  "attributes.test_timestamp",
+				LayoutType: "strptime",
+				Layout:     "%Y-%m-%dT%H:%M:%S.%f%z",
+			},
+			makeTestLog("mismatching log", map[string]string{}),
+		}, {
+			"time parser should ignore logs timestamp values that don't contain expected layout.",
+			PipelineOperator{
+				ID:         "time",
+				Type:       "time_parser",
+				Enabled:    true,
+				Name:       "time parser",
+				ParseFrom:  "attributes.test_timestamp",
+				LayoutType: "epoch",
+				Layout:     "s",
+			},
+			makeTestLog("mismatching log", map[string]string{
+				"test_timestamp": "not-an-epoch",
+			}),
 		},
 		// TODO(Raj): see if there is an error scenario for grok parser.
 		// TODO(Raj): see if there is an error scenario for trace parser.
