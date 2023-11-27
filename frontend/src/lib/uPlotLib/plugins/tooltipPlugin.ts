@@ -55,7 +55,9 @@ const generateTooltipContent = (
 					show: item.show || false,
 					color: colors[(index - 1) % colors.length],
 					label,
-					focus: item._focus || false,
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-ignore
+					focus: item?._focus || false,
 					value,
 					tooltipValue,
 					textContent: `${label} : ${tooltipValue || 0}`,
@@ -67,7 +69,9 @@ const generateTooltipContent = (
 	}
 
 	// Get the keys and sort them
-	const sortedKeys = Object.keys(formattedData).sort((a, b) => b - a);
+	const sortedKeys = Object.keys(formattedData).sort(
+		(a, b) => parseInt(b, 10) - parseInt(a, 10),
+	);
 
 	// Create a new object with sorted keys
 	const sortedData: Record<string, UplotTooltipDataProps> = {};
