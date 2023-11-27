@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 export const WrapperStyled = styled.div`
-	height: 100%;
+	height: 95%;
 	overflow: hidden;
 
 	& .ant-table-wrapper {
