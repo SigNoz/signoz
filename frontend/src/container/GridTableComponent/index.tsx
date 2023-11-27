@@ -41,7 +41,7 @@ function GridTableComponent({
 				const idx = thresholds.findIndex(
 					(t) => t.thresholdTableOptions === e.title,
 				);
-				if (idx !== -1) {
+				if (threshold && idx !== -1) {
 					return (
 						<div
 							style={

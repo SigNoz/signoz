@@ -420,3 +420,138 @@ func TestResourceFiltersWork(t *testing.T) {
 
 	require.Equal(result[0].Attributes_string["test"], "test-value")
 }
+
+func TestPipelineFilterWithStringOpsShouldNotSpamWarningsIfAttributeIsMissing(t *testing.T) {
+	require := require.New(t)
+
+	for _, operator := range []v3.FilterOperator{
+		v3.FilterOperatorContains,
+		v3.FilterOperatorNotContains,
+		v3.FilterOperatorRegex,
+		v3.FilterOperatorNotRegex,
+	} {
+		testPipeline := Pipeline{
+			OrderId: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+			Filter: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "service",
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeResource,
+						},
+						Operator: operator,
+						Value:    "nginx",
+					},
+				},
+			},
+			Config: []PipelineOperator{
+				{
+					ID:      "add",
+					Type:    "add",
+					Enabled: true,
+					Name:    "add",
+					Field:   "attributes.test",
+					Value:   "test-value",
+				},
+			},
+		}
+
+		testLog := model.SignozLog{
+			Timestamp:         uint64(time.Now().UnixNano()),
+			Body:              "test log",
+			Attributes_string: map[string]string{},
+			Resources_string:  map[string]string{},
+			SeverityText:      entry.Info.String(),
+			SeverityNumber:    uint8(entry.Info),
+			SpanID:            "",
+			TraceID:           "",
+		}
+
+		result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+			context.Background(),
+			[]Pipeline{testPipeline},
+			[]model.SignozLog{testLog},
+		)
+		require.Nil(err)
+		require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+		require.Equal(1, len(result))
+	}
+}
+
+func TestTemporaryWorkaroundForSupportingAttribsContainingDots(t *testing.T) {
+	// TODO(Raj): Remove this after dots are supported
+
+	require := require.New(t)
+
+	testPipeline := Pipeline{
+		OrderId: 1,
+		Name:    "pipeline1",
+		Alias:   "pipeline1",
+		Enabled: true,
+		Filter: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "k8s_deployment_name",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+					Operator: "=",
+					Value:    "ingress",
+				},
+			},
+		},
+		Config: []PipelineOperator{
+			{
+				ID:      "add",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add",
+				Field:   "attributes.test",
+				Value:   "test-value",
+			},
+		},
+	}
+
+	testLogs := []model.SignozLog{{
+		Timestamp:         uint64(time.Now().UnixNano()),
+		Body:              "test log",
+		Attributes_string: map[string]string{},
+		Resources_string: map[string]string{
+			"k8s_deployment_name": "ingress",
+		},
+		SeverityText:   entry.Info.String(),
+		SeverityNumber: uint8(entry.Info),
+		SpanID:         "",
+		TraceID:        "",
+	}, {
+		Timestamp:         uint64(time.Now().UnixNano()),
+		Body:              "test log",
+		Attributes_string: map[string]string{},
+		Resources_string: map[string]string{
+			"k8s.deployment.name": "ingress",
+		},
+		SeverityText:   entry.Info.String(),
+		SeverityNumber: uint8(entry.Info),
+		SpanID:         "",
+		TraceID:        "",
+	}}
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(),
+		[]Pipeline{testPipeline},
+		testLogs,
+	)
+	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+	require.Equal(2, len(result))
+	for _, processedLog := range result {
+		require.Equal(processedLog.Attributes_string["test"], "test-value")
+	}
+}
