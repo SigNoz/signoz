@@ -30,4 +30,17 @@ export default defineConfig({
     baseURL:
       process.env.PLAYWRIGHT_TEST_BASE_URL || "https://stagingapp.signoz.io/",
   },
+
+  projects: [
+    { name: "setup", testMatch: /.*\.setup\.ts/ },
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        // Use prepared auth state.
+        storageState: ".auth/user.json",
+      },
+      dependencies: ["setup"],
+    },
+  ],
 });
