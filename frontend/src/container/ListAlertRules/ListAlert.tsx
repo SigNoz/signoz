@@ -1,4 +1,3 @@
-/* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
@@ -15,16 +14,13 @@ import TextToolTip from 'components/TextToolTip';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
-import useInterval from 'hooks/useInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { GettableAlert } from 'types/api/alerts/get';
 import AppReducer from 'types/reducer/app';
 
@@ -33,7 +29,7 @@ import { Button, ButtonContainer, ColumnButton } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
 
-function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
+function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<GettableAlert[]>(allAlertRules || []);
 	const { t } = useTranslation('common');
 	const { role, featureResponse } = useSelector<AppState, AppReducer>(
@@ -45,20 +41,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	);
 
 	const { notifications: notificationsApi } = useNotifications();
-
-	useInterval(() => {
-		(async (): Promise<void> => {
-			const { data: refetchData, status } = await refetch();
-			if (status === 'success') {
-				setData(refetchData?.payload || []);
-			}
-			if (status === 'error') {
-				notificationsApi.error({
-					message: t('something_went_wrong'),
-				});
-			}
-		})();
-	}, 30000);
 
 	const handleError = useCallback((): void => {
 		notificationsApi.error({
@@ -93,13 +75,12 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const onCloneHandler = (
 		originalAlert: GettableAlert,
 	) => async (): Promise<void> => {
-		const copyAlert = {
-			...originalAlert,
-			alert: originalAlert.alert.concat(' - Copy'),
-		};
-		const apiReq = { data: copyAlert };
-
-		const response = await saveAlertApi(apiReq);
+		const response = await saveAlertApi({
+			data: {
+				...originalAlert,
+				alert: originalAlert.alert.concat(' - Copy'),
+			},
+		});
 
 		if (response.statusCode === 200) {
 			notificationsApi.success({
@@ -107,19 +88,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				description: 'Alert cloned successfully',
 			});
 
-			const { data: refetchData, status } = await refetch();
-			if (status === 'success' && refetchData.payload) {
-				setData(refetchData.payload || []);
-				setTimeout(() => {
-					const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
-					history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${clonedAlert.id}`);
-				}, 2000);
-			}
-			if (status === 'error') {
-				notificationsApi.error({
-					message: t('something_went_wrong'),
-				});
-			}
+			history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${response.payload.data.id}`);
 		} else {
 			notificationsApi.error({
 				message: 'Error',
@@ -298,9 +267,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 interface ListAlertProps {
 	allAlertRules: GettableAlert[];
-	refetch: UseQueryResult<
-		ErrorResponse | SuccessResponse<GettableAlert[]>
-	>['refetch'];
 }
 
 export default ListAlert;

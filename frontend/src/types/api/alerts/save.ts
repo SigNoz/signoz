@@ -2,7 +2,9 @@ import { AlertDef } from './def';
 
 export type PayloadProps = {
 	status: string;
-	data: string;
+	data: {
+		id: string;
+	};
 };
 
 export interface Props {
