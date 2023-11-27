@@ -16,12 +16,18 @@ function fillMissingTimestamps(
 			timestamp === subsetArray[subsetIndex][0]
 		) {
 			// Timestamp is present in subsetArray
+			const seriesPointData = subsetArray[subsetIndex];
 
-			if (subsetArray[subsetIndex] !== 'NaN') {
+			if (
+				seriesPointData &&
+				Array.isArray(seriesPointData) &&
+				seriesPointData.length > 0 &&
+				seriesPointData[1] !== 'NaN'
+			) {
 				filledArray.push(subsetArray[subsetIndex]);
 			} else {
 				const value = fillSpans ? 0 : null;
-				filledArray.push(value);
+				filledArray.push([seriesPointData[0], value]);
 			}
 
 			subsetIndex += 1;
