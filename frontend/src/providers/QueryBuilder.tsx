@@ -494,6 +494,12 @@ export function QueryBuilderProvider({
 				unit: query.unit || initialQueryState.unit,
 			};
 
+			const pagination = urlQuery.get(QueryParams.pagination);
+
+			if (pagination) {
+				urlQuery.delete(QueryParams.pagination);
+			}
+
 			urlQuery.set(
 				QueryParams.compositeQuery,
 				encodeURIComponent(JSON.stringify(currentGeneratedQuery)),
