@@ -124,10 +124,11 @@ function ChartPreview({
 						keyIndex: 0,
 						moveThreshold: (): void => {},
 						selectedGraph: PANEL_TYPES.TIME_SERIES, // no impact
-						thresholdValue,
+						thresholdValue: threshold,
 						thresholdLabel: `${t(
 							'preview_chart_threshold_label',
 						)} (y=${thresholdValue} ${query?.unit || ''})`,
+						thresholdUnit: alertDef?.condition.targetUnit,
 					},
 				],
 			}),
@@ -136,8 +137,10 @@ function ChartPreview({
 			queryResponse?.data?.payload,
 			containerDimensions,
 			isDarkMode,
+			threshold,
 			t,
 			thresholdValue,
+			alertDef?.condition.targetUnit,
 		],
 	);
 

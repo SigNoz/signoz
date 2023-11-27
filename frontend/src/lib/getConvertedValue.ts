@@ -1,3 +1,5 @@
+import { MiscellaneousFormats } from 'container/NewWidget/RightContainer/types';
+
 const unitsMapping = [
 	{
 		label: 'Data',
@@ -268,7 +270,19 @@ export function convertValue(
 	currentUnit: string,
 	targetUnit: string,
 ): number | null {
-	if (targetUnit === 'none') {
+	if (
+		targetUnit === 'none' ||
+		!currentUnit ||
+		!targetUnit ||
+		currentUnit === targetUnit
+	) {
+		if (
+			(currentUnit === MiscellaneousFormats.PercentUnit ||
+				targetUnit === MiscellaneousFormats.PercentUnit) &&
+			value > 1
+		) {
+			return value / 100;
+		}
 		return value;
 	}
 	const currentUnitObj = findUnitObject(currentUnit);
