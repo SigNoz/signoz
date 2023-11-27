@@ -107,7 +107,7 @@ function DBCall(): JSX.Element {
 				<Card data-testid="database_call_rps">
 					<GraphContainer>
 						<Graph
-							filterNaN
+							fillSpans={false}
 							name="database_call_rps"
 							widget={databaseCallsRPSWidget}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
@@ -141,7 +141,7 @@ function DBCall(): JSX.Element {
 				<Card data-testid="database_call_avg_duration">
 					<GraphContainer>
 						<Graph
-							filterNaN
+							fillSpans
 							name="database_call_avg_duration"
 							widget={databaseCallsAverageDurationWidget}
 							headerMenuList={MENU_ITEMS}

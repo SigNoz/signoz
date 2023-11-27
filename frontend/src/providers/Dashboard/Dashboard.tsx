@@ -185,7 +185,12 @@ export function DashboardProvider({
 	);
 
 	useEffect(() => {
-		if (isVisible && updatedTimeRef.current) {
+		// make the call on tab visibility only if the user is on dashboard / widget page
+		if (
+			isVisible &&
+			updatedTimeRef.current &&
+			(!!isDashboardPage || !!isDashboardWidgetPage)
+		) {
 			dashboardResponse.refetch();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
