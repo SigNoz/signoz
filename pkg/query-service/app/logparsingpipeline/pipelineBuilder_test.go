@@ -198,7 +198,8 @@ var prepareProcessorTestData = []struct {
 func TestPreparePipelineProcessor(t *testing.T) {
 	for _, test := range prepareProcessorTestData {
 		Convey(test.Name, t, func() {
-			res := getOperators(test.Operators)
+			res, err := getOperators(test.Operators)
+			So(err, ShouldBeNil)
 			So(res, ShouldResemble, test.Output)
 		})
 	}
@@ -355,7 +356,21 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			},
 			makeTestLog("mismatching log", map[string]string{}),
 		}, {
-			"time parser should ignore logs timestamp values that don't contain expected layout.",
+			"time parser should ignore logs timestamp values that don't contain expected strptime layout.",
+			PipelineOperator{
+				ID:         "time",
+				Type:       "time_parser",
+				Enabled:    true,
+				Name:       "time parser",
+				ParseFrom:  "attributes.test_timestamp",
+				LayoutType: "strptime",
+				Layout:     "%Y-%m-%dT%H:%M:%S.%f%z",
+			},
+			makeTestLog("mismatching log", map[string]string{
+				"test_timestamp": "not-an-strptime-value",
+			}),
+		}, {
+			"time parser should ignore logs timestamp values that don't contain expected epoch layout",
 			PipelineOperator{
 				ID:         "time",
 				Type:       "time_parser",

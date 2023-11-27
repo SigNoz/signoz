@@ -25,7 +25,11 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 			continue
 		}
 
-		operators := getOperators(v.Config)
+		operators, err := getOperators(v.Config)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "failed to prepare operators")
+		}
+
 		if len(operators) == 0 {
 			continue
 		}
@@ -68,7 +72,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 	return processors, names, nil
 }
 
-func getOperators(ops []PipelineOperator) []PipelineOperator {
+func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 	filteredOp := []PipelineOperator{}
 	for i, operator := range ops {
 		if operator.Enabled {
@@ -106,6 +110,24 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 
 			} else if operator.Type == "trace_parser" {
 				cleanTraceParser(&operator)
+
+			} else if operator.Type == "time_parser" {
+				parseFromParts := strings.Split(operator.ParseFrom, ".")
+				parseFromPath := strings.Join(parseFromParts, "?.")
+
+				operator.If = fmt.Sprintf(`%s != nil`, parseFromPath)
+
+				if operator.LayoutType == "strptime" {
+					regex, err := RegexForStrptimeLayout(operator.Layout)
+					if err != nil {
+						return nil, fmt.Errorf("could not generate time_parser processor: %w", err)
+					}
+
+					operator.If = fmt.Sprintf(
+						`%s && %s matches "%s"`, operator.If, parseFromPath, regex,
+					)
+				}
+
 			}
 
 			filteredOp = append(filteredOp, operator)
@@ -113,7 +135,7 @@ func getOperators(ops []PipelineOperator) []PipelineOperator {
 			filteredOp[len(filteredOp)-1].Output = ""
 		}
 	}
-	return filteredOp
+	return filteredOp, nil
 }
 
 func cleanTraceParser(operator *PipelineOperator) {
