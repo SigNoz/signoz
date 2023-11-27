@@ -13,8 +13,6 @@ const dashboardVariablesQuery = async (
 	try {
 		const response = await axios.post(`/variables/query`, props);
 
-		console.log('response', response);
-
 		return {
 			statusCode: 200,
 			error: null,

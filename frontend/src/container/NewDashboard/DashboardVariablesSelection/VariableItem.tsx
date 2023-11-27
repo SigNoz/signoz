@@ -60,15 +60,6 @@ function VariableItem({
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
-	const [isOptionsFetchEnabled, setIsOptionsFetchEnabled] = useState<boolean>(
-		false,
-	);
-
-	// on mount
-	useEffect(() => {
-		setIsOptionsFetchEnabled(true);
-	}, []);
-
 	useEffect(() => {
 		const { selectedValue } = variableData;
 
@@ -165,7 +156,7 @@ function VariableItem({
 	};
 
 	const { isLoading } = useQuery(getQueryKey(variableData), {
-		enabled: variableData.type === 'QUERY' && isOptionsFetchEnabled,
+		enabled: variableData.type === 'QUERY',
 		queryFn: () =>
 			dashboardVariablesQuery({
 				query: variableData.queryValue || '',
