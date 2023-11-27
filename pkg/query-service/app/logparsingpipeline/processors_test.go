@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -227,7 +228,7 @@ func TestTimestampParsingProcessor(t *testing.T) {
 	require.Nil(err)
 	testPipelines[0].Config = append(testPipelines[0].Config, timestampParserOp)
 
-	testTimestampStr := "2023-11-27T12:03:28.239907+05:30"
+	testTimestampStr := "2023-11-27T12:03:28.239907+0530"
 	testLog := makeTestLogEntry(
 		"test log",
 		map[string]string{
@@ -245,12 +246,12 @@ func TestTimestampParsingProcessor(t *testing.T) {
 	)
 	require.Nil(err)
 	require.Equal(1, len(result))
-	require.Equal(0, len(collectorWarnAndErrorLogs))
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
 	processed := result[0]
 
-	expectedTimestamp, err := time.Parse(time.RFC3339, testTimestampStr)
+	expectedTimestamp, err := time.Parse("2006-01-02T15:04:05.999999-0700", testTimestampStr)
 	require.Nil(err)
 
-	require.Equal(expectedTimestamp.UnixNano(), processed.Timestamp)
+	require.Equal(uint64(expectedTimestamp.UnixNano()), processed.Timestamp)
 
 }
