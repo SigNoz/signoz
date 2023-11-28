@@ -111,26 +111,23 @@ function GraphManager({
 
 	return (
 		<div className="graph-manager-container">
-			<div className="graph-manager-header">
-				<Input onChange={filterHandler} placeholder="Filter Series" />
-				<div className="save-cancel-container">
-					{!isDashboardLocked && (
-						<>
-							<span className="save-cancel-button">
-								<Button type="default" onClick={onToggleModelHandler}>
-									Cancel
-								</Button>
-							</span>
-							<span className="save-cancel-button">
-								<Button type="primary" onClick={saveHandler}>
-									Save
-								</Button>
-							</span>
-						</>
-					)}
+			{!isDashboardLocked && (
+				<div className="graph-manager-header">
+					<Input onChange={filterHandler} placeholder="Filter Series" />
+					<div className="save-cancel-container">
+						<span className="save-cancel-button">
+							<Button type="default" onClick={onToggleModelHandler}>
+								Cancel
+							</Button>
+						</span>
+						<span className="save-cancel-button">
+							<Button type="primary" onClick={saveHandler}>
+								Save
+							</Button>
+						</span>
+					</div>
 				</div>
-			</div>
-
+			)}
 			<div className="legends-list-container">
 				<ResizeTable
 					columns={columns}
