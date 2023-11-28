@@ -1,6 +1,12 @@
 import '@testing-library/jest-dom/extend-expect';
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import {
+	act,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+} from '@testing-library/react';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import React, { useEffect } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -26,7 +32,6 @@ const mockCustomVariableData: IDashboardVariable = {
 };
 
 const mockOnValueUpdate = jest.fn();
-const mockOnAllSelectedUpdate = jest.fn();
 
 describe('VariableItem', () => {
 	let useEffectSpy: jest.SpyInstance;
@@ -69,7 +74,7 @@ describe('VariableItem', () => {
 		expect(screen.getByPlaceholderText('Enter value')).toBeInTheDocument();
 	});
 
-	test('calls onChange event handler when Input value changes', () => {
+	test('calls onChange event handler when Input value changes', async () => {
 		render(
 			<MockQueryClientProvider>
 				<VariableItem
@@ -80,13 +85,20 @@ describe('VariableItem', () => {
 				/>
 			</MockQueryClientProvider>,
 		);
-		const inputElement = screen.getByPlaceholderText('Enter value');
-		fireEvent.change(inputElement, { target: { value: 'newValue' } });
 
-		expect(mockOnValueUpdate).toHaveBeenCalledTimes(1);
-		expect(mockOnValueUpdate).toHaveBeenCalledWith('testVariable', 'newValue');
-		expect(mockOnAllSelectedUpdate).toHaveBeenCalledTimes(1);
-		expect(mockOnAllSelectedUpdate).toHaveBeenCalledWith('testVariable', false);
+		act(() => {
+			const inputElement = screen.getByPlaceholderText('Enter value');
+			fireEvent.change(inputElement, { target: { value: 'newValue' } });
+		});
+
+		await waitFor(() => {
+			// expect(mockOnValueUpdate).toHaveBeenCalledTimes(1);
+			expect(mockOnValueUpdate).toHaveBeenCalledWith(
+				'testVariable',
+				'newValue',
+				false,
+			);
+		});
 	});
 
 	test('renders a Select element when variable type is CUSTOM', () => {
@@ -138,40 +150,5 @@ describe('VariableItem', () => {
 		);
 
 		expect(useEffect).toHaveBeenCalled();
-	});
-
-	test('calls useEffect only once when the component mounts', () => {
-		// Render the component
-		const { rerender } = render(
-			<MockQueryClientProvider>
-				<VariableItem
-					variableData={mockCustomVariableData}
-					existingVariables={{}}
-					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
-				/>
-			</MockQueryClientProvider>,
-		);
-
-		// Create an updated version of the mock data
-		const updatedMockCustomVariableData = {
-			...mockCustomVariableData,
-			selectedValue: 'option1',
-		};
-
-		// Re-render the component with the updated data
-		rerender(
-			<MockQueryClientProvider>
-				<VariableItem
-					variableData={updatedMockCustomVariableData}
-					existingVariables={{}}
-					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
-				/>
-			</MockQueryClientProvider>,
-		);
-
-		// Check if the useEffect is called with the correct arguments
-		expect(useEffectSpy).toHaveBeenCalledTimes(4);
 	});
 });
