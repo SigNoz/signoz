@@ -367,7 +367,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 				Layout:     "%Y-%m-%dT%H:%M:%S.%f%z",
 			},
 			makeTestLog("mismatching log", map[string]string{
-				"test_timestamp": "not-an-strptime-value",
+				"test_timestamp": "2023-11-27T12:03:28A239907+0530",
 			}),
 		}, {
 			"time parser should ignore logs timestamp values that don't contain expected epoch layout",

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // Regex for strptime format placeholders supported by the time parser.
@@ -88,10 +89,15 @@ var ctimeRegex = map[string]string{
 }
 
 func RegexForStrptimeLayout(layout string) (string, error) {
-	ctimeRegexp := regexp.MustCompile(`%.`)
+	layoutRegex := layout
+	for _, regexSpecialChar := range []string{
+		".", "+", "*", "?", "^", "$", "(", ")", "[", "]", "{", "}", "|", `\`,
+	} {
+		layoutRegex = strings.ReplaceAll(layoutRegex, regexSpecialChar, `\`+regexSpecialChar)
+	}
 
 	var errs []error
-	replaceFunc := func(directive string) string {
+	replaceStrptimeDirectiveWithRegex := func(directive string) string {
 		if regex, ok := ctimeRegex[directive]; ok {
 			return regex
 		}
@@ -99,10 +105,11 @@ func RegexForStrptimeLayout(layout string) (string, error) {
 		return ""
 	}
 
-	replaced := ctimeRegexp.ReplaceAllStringFunc(layout, replaceFunc)
+	ctimeRegexp := regexp.MustCompile(`%.`)
+	layoutRegex = ctimeRegexp.ReplaceAllStringFunc(layoutRegex, replaceStrptimeDirectiveWithRegex)
 	if len(errs) != 0 {
 		return "", fmt.Errorf("couldn't generate regex for ctime format: %v", errs)
 	}
 
-	return replaced, nil
+	return layoutRegex, nil
 }
