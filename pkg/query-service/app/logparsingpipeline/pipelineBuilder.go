@@ -127,9 +127,15 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 						`%s && %s matches "%s"`, operator.If, parseFromPath, regex,
 					)
 				} else if operator.LayoutType == "epoch" {
+					valueRegex := `^\\s*[0-9]+\\s*$`
+					if strings.Contains(operator.Layout, ".") {
+						valueRegex = `^\\s*[0-9]+\\.[0-9]+\\s*$`
+					}
+
 					operator.If = fmt.Sprintf(
-						`%s && %s matches "%s"`, operator.If, parseFromPath, `^\\s*[0-9]+(\\.[0-9]+)?\\s*$`,
+						`%s && %s matches "%s"`, operator.If, parseFromPath, valueRegex,
 					)
+
 				}
 				// TODO(Raj): Maybe add support for gotime too eventually
 			}
