@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/extend-expect';
 
 import { fireEvent, render, screen } from '@testing-library/react';
+import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import React, { useEffect } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
@@ -41,12 +42,14 @@ describe('VariableItem', () => {
 
 	test('renders component with default props', () => {
 		render(
-			<VariableItem
-				variableData={mockVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				lastUpdatedVar=""
-			/>,
+			<MockQueryClientProvider>
+				<VariableItem
+					variableData={mockVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					lastUpdatedVar=""
+				/>
+			</MockQueryClientProvider>,
 		);
 
 		expect(screen.getByText('$testVariable')).toBeInTheDocument();
@@ -54,24 +57,28 @@ describe('VariableItem', () => {
 
 	test('renders Input when the variable type is TEXTBOX', () => {
 		render(
-			<VariableItem
-				variableData={mockVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				lastUpdatedVar=""
-			/>,
+			<MockQueryClientProvider>
+				<VariableItem
+					variableData={mockVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					lastUpdatedVar=""
+				/>
+			</MockQueryClientProvider>,
 		);
 		expect(screen.getByPlaceholderText('Enter value')).toBeInTheDocument();
 	});
 
 	test('calls onChange event handler when Input value changes', () => {
 		render(
-			<VariableItem
-				variableData={mockVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				lastUpdatedVar=""
-			/>,
+			<MockQueryClientProvider>
+				<VariableItem
+					variableData={mockVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					lastUpdatedVar=""
+				/>
+			</MockQueryClientProvider>,
 		);
 		const inputElement = screen.getByPlaceholderText('Enter value');
 		fireEvent.change(inputElement, { target: { value: 'newValue' } });
@@ -84,12 +91,14 @@ describe('VariableItem', () => {
 
 	test('renders a Select element when variable type is CUSTOM', () => {
 		render(
-			<VariableItem
-				variableData={mockCustomVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				lastUpdatedVar=""
-			/>,
+			<MockQueryClientProvider>
+				<VariableItem
+					variableData={mockCustomVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					lastUpdatedVar=""
+				/>
+			</MockQueryClientProvider>,
 		);
 
 		expect(screen.getByText('$customVariable')).toBeInTheDocument();
@@ -103,12 +112,14 @@ describe('VariableItem', () => {
 		};
 
 		render(
-			<VariableItem
-				variableData={customVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				lastUpdatedVar=""
-			/>,
+			<MockQueryClientProvider>
+				<VariableItem
+					variableData={customVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					lastUpdatedVar=""
+				/>
+			</MockQueryClientProvider>,
 		);
 
 		expect(screen.getByTitle('ALL')).toBeInTheDocument();
@@ -116,12 +127,14 @@ describe('VariableItem', () => {
 
 	test('calls useEffect when the component mounts', () => {
 		render(
-			<VariableItem
-				variableData={mockCustomVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				lastUpdatedVar=""
-			/>,
+			<MockQueryClientProvider>
+				<VariableItem
+					variableData={mockCustomVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					lastUpdatedVar=""
+				/>
+			</MockQueryClientProvider>,
 		);
 
 		expect(useEffect).toHaveBeenCalled();
@@ -130,12 +143,14 @@ describe('VariableItem', () => {
 	test('calls useEffect only once when the component mounts', () => {
 		// Render the component
 		const { rerender } = render(
-			<VariableItem
-				variableData={mockCustomVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				lastUpdatedVar=""
-			/>,
+			<MockQueryClientProvider>
+				<VariableItem
+					variableData={mockCustomVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					lastUpdatedVar=""
+				/>
+			</MockQueryClientProvider>,
 		);
 
 		// Create an updated version of the mock data
@@ -146,12 +161,14 @@ describe('VariableItem', () => {
 
 		// Re-render the component with the updated data
 		rerender(
-			<VariableItem
-				variableData={updatedMockCustomVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				lastUpdatedVar=""
-			/>,
+			<MockQueryClientProvider>
+				<VariableItem
+					variableData={updatedMockCustomVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					lastUpdatedVar=""
+				/>
+			</MockQueryClientProvider>,
 		);
 
 		// Check if the useEffect is called with the correct arguments

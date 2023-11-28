@@ -79,10 +79,14 @@ function VariableItem({
 			: [];
 	};
 
-	const getQueryKey = (variableData: any): string[] => {
+	const getQueryKey = (variableData: IDashboardVariable): string[] => {
 		let dependentVariablesStr = '';
 
-		const dependentVariables = getDependentVariables(variableData.queryValue);
+		const dependentVariables = getDependentVariables(
+			variableData.queryValue || '',
+		);
+
+		const variableName = variableData.name || '';
 
 		dependentVariables?.forEach((element) => {
 			dependentVariablesStr += `${element}${existingVariables[element]?.selectedValue}`;
@@ -90,7 +94,7 @@ function VariableItem({
 
 		const variableKey = dependentVariablesStr.replace(/\s/g, '');
 
-		return [REACT_QUERY_KEY.DASHBOARD_BY_ID, variableData.name, variableKey];
+		return [REACT_QUERY_KEY.DASHBOARD_BY_ID, variableName, variableKey];
 	};
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -156,7 +160,7 @@ function VariableItem({
 	};
 
 	const { isLoading } = useQuery(getQueryKey(variableData), {
-		enabled: variableData.type === 'QUERY',
+		enabled: variableData && variableData.type === 'QUERY',
 		queryFn: () =>
 			dashboardVariablesQuery({
 				query: variableData.queryValue || '',
