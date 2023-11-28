@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import saveAlertApi from 'api/alerts/save';
+import saveAlertApi from 'api/alerts/create';
 import DropDown from 'components/DropDown/DropDown';
 import {
 	DynamicColumnsKey,
@@ -17,7 +17,7 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -31,6 +31,11 @@ import ToggleAlertState from './ToggleAlertState';
 
 function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<GettableAlert[]>(allAlertRules || []);
+
+	useEffect(() => {
+		setData(allAlertRules);
+	}, [allAlertRules]);
+
 	const { t } = useTranslation('common');
 	const { role, featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -88,7 +93,7 @@ function ListAlert({ allAlertRules }: ListAlertProps): JSX.Element {
 				description: 'Alert cloned successfully',
 			});
 
-			history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${response.payload.data.id}`);
+			history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${response.payload.id}`);
 		} else {
 			notificationsApi.error({
 				message: 'Error',

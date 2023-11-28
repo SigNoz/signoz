@@ -7,7 +7,8 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import saveAlertApi from 'api/alerts/save';
+import createAlert from 'api/alerts/create';
+import editAlertApi from 'api/alerts/put';
 import testAlertApi from 'api/alerts/testAlert';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -290,6 +291,8 @@ function FormAlertRules({
 				ruleId && ruleId > 0
 					? { data: postableAlert, id: ruleId }
 					: { data: postableAlert };
+
+			const saveAlertApi = ruleId && ruleId > 0 ? editAlertApi : createAlert;
 
 			const response = await saveAlertApi(apiReq);
 
