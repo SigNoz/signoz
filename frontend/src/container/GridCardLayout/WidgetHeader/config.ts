@@ -22,7 +22,8 @@ export const errorTooltipPosition = 'top';
 export const overlayStyles: CSSProperties = {
 	display: 'flex',
 	flexDirection: 'column',
-	alignItems: 'center',
+	alignItems: 'flex-end',
+	paddingRight: '0.5rem',
 	justifyContent: 'center',
 	position: 'absolute',
 };

@@ -2,10 +2,10 @@ import {
 	AlertOutlined,
 	CopyOutlined,
 	DeleteOutlined,
-	DownOutlined,
 	EditFilled,
 	ExclamationCircleOutlined,
 	FullscreenOutlined,
+	MoreOutlined,
 	WarningOutlined,
 } from '@ant-design/icons';
 import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
@@ -187,47 +187,52 @@ function WidgetHeader({
 
 	return (
 		<WidgetHeaderContainer>
-			<Dropdown
-				getPopupContainer={popupContainer}
-				destroyPopupOnHide
-				open={isOpen}
-				onOpenChange={setIsOpen}
-				menu={menu}
-				trigger={['click']}
-				overlayStyle={overlayStyles}
+			<Typography.Text
+				style={{ maxWidth: '80%', paddingLeft: '0.5rem', fontWeight: '500' }}
+				ellipsis
+				data-testid={title}
 			>
-				<HeaderContainer
-					onMouseOver={(): void => setLocalHover(true)}
-					onMouseOut={(): void => setLocalHover(false)}
-					hover={localHover}
-					onClick={onClickHandler}
-				>
-					<HeaderContentContainer>
-						<Typography.Text style={{ maxWidth: '80%' }} ellipsis data-testid={title}>
-							{title}
-						</Typography.Text>
-						<ArrowContainer hover={parentHover}>
-							<DownOutlined />
-						</ArrowContainer>
-					</HeaderContentContainer>
-				</HeaderContainer>
-			</Dropdown>
-
+				{title}
+			</Typography.Text>
 			<ThesholdContainer>{threshold}</ThesholdContainer>
-			{queryResponse.isFetching && !queryResponse.isError && (
-				<Spinner height="5vh" style={spinnerStyles} />
-			)}
-			{queryResponse.isError && (
-				<Tooltip title={errorMessage} placement={errorTooltipPosition}>
-					<ExclamationCircleOutlined style={tooltipStyles} />
-				</Tooltip>
-			)}
+			<div>
+				{queryResponse.isFetching && !queryResponse.isError && (
+					<Spinner height="5vh" style={spinnerStyles} />
+				)}
+				{queryResponse.isError && (
+					<Tooltip title={errorMessage} placement={errorTooltipPosition}>
+						<ExclamationCircleOutlined style={tooltipStyles} />
+					</Tooltip>
+				)}
 
-			{isWarning && (
-				<Tooltip title={WARNING_MESSAGE} placement={errorTooltipPosition}>
-					<WarningOutlined style={tooltipStyles} />
-				</Tooltip>
-			)}
+				{isWarning && (
+					<Tooltip title={WARNING_MESSAGE} placement={errorTooltipPosition}>
+						<WarningOutlined style={tooltipStyles} />
+					</Tooltip>
+				)}
+				<Dropdown
+					getPopupContainer={popupContainer}
+					destroyPopupOnHide
+					open={isOpen}
+					onOpenChange={setIsOpen}
+					menu={menu}
+					trigger={['click']}
+					overlayStyle={overlayStyles}
+				>
+					<HeaderContainer
+						onMouseOver={(): void => setLocalHover(true)}
+						onMouseOut={(): void => setLocalHover(false)}
+						hover={localHover}
+						onClick={onClickHandler}
+					>
+						<HeaderContentContainer>
+							<ArrowContainer hover={parentHover}>
+								<MoreOutlined />
+							</ArrowContainer>
+						</HeaderContentContainer>
+					</HeaderContainer>
+				</Dropdown>
+			</div>
 		</WidgetHeaderContainer>
 	);
 }
