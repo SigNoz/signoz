@@ -1249,13 +1249,13 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = aH.ruleManager.CreateRule(r.Context(), string(body))
+	rule, err := aH.ruleManager.CreateRule(r.Context(), string(body))
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	aH.Respond(w, "rule successfully added")
+	aH.Respond(w, rule)
 
 }
 
