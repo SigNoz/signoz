@@ -13,7 +13,7 @@ import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
 import { DEFAULT_PROCESSOR_TYPE } from './config';
 import TypeSelect from './FormFields/TypeSelect';
-import { renderProcessorForm } from './utils';
+import ProcessorForm from './ProcessorForm';
 
 function AddNewProcessor({
 	isActionType,
@@ -159,7 +159,7 @@ function AddNewProcessor({
 				form={form}
 			>
 				<TypeSelect value={processorType} onChange={handleProcessorType} />
-				{renderProcessorForm(processorType)}
+				<ProcessorForm processorType={processorType} />
 				<Divider plain />
 				<Form.Item>
 					<ModalButtonWrapper>
