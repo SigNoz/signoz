@@ -1,9 +1,11 @@
 import { Skeleton, Typography } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -43,10 +45,13 @@ function WidgetGraphComponent({
 	onDragSelect,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
-	const [modal, setModal] = useState<boolean>(false);
 	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
 	const { pathname } = useLocation();
+
+	const params = useUrlQuery();
+
+	const isFullViewOpen = params.get(QueryParams.expandedWidgetId) === widget.id;
 
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
@@ -175,7 +180,14 @@ function WidgetGraphComponent({
 	};
 
 	const handleOnView = (): void => {
-		onToggleModal(setModal);
+		const queryParams = {
+			[QueryParams.expandedWidgetId]: widget.id,
+		};
+
+		history.push({
+			pathname,
+			search: createQueryParams(queryParams),
+		});
 	};
 
 	const handleOnDelete = (): void => {
@@ -187,7 +199,10 @@ function WidgetGraphComponent({
 	};
 
 	const onToggleModelHandler = (): void => {
-		onToggleModal(setModal);
+		history.push({
+			pathname,
+			search: createQueryParams({}),
+		});
 	};
 
 	if (queryResponse.isLoading || queryResponse.status === 'idle') {
@@ -236,7 +251,7 @@ function WidgetGraphComponent({
 				title={widget?.title || 'View'}
 				footer={[]}
 				centered
-				open={modal}
+				open={isFullViewOpen}
 				onCancel={onToggleModelHandler}
 				width="85%"
 				destroyOnClose

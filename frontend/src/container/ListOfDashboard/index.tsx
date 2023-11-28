@@ -29,9 +29,9 @@ import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import DeleteButton from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
 
-function ListOfAllDashboard(): JSX.Element {
-	const { Search } = Input;
+const { Search } = Input;
 
+function ListOfAllDashboard(): JSX.Element {
 	const {
 		data: dashboardListResponse = [],
 		isLoading: isDashboardListLoading,
@@ -321,7 +321,6 @@ function ListOfAllDashboard(): JSX.Element {
 			</Row>
 		),
 		[
-			Search,
 			isDashboardListLoading,
 			handleSearch,
 			isFilteringDashboards,
