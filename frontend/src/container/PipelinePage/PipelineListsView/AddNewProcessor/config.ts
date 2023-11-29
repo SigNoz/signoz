@@ -3,8 +3,6 @@ import { Rule, RuleRender } from 'antd/es/form';
 import { NamePath } from 'antd/es/form/interface';
 import { ProcessorData } from 'types/api/pipeline/def';
 
-import { SelectInputOption } from './FormFields/SelectInput';
-
 type ProcessorType = {
 	key: string;
 	value: string;
@@ -28,6 +26,11 @@ export const processorTypes: Array<ProcessorType> = [
 
 export const DEFAULT_PROCESSOR_TYPE = processorTypes[0].value;
 
+export type ProcessorFieldOption = {
+	label: string;
+	value: string;
+};
+
 export type ProcessorFormField = {
 	id: number;
 	fieldName: string;
@@ -36,7 +39,7 @@ export type ProcessorFormField = {
 	rules?: Array<Rule>;
 	initialValue?: string;
 	dependencies?: Array<string | NamePath>;
-	options?: Array<SelectInputOption>;
+	options?: Array<ProcessorFieldOption>;
 	shouldRender?: (form: FormInstance) => boolean;
 	onFormValuesChanged?: (
 		changedValues: ProcessorData,

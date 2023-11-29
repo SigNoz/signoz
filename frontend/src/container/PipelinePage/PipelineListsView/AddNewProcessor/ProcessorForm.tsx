@@ -16,11 +16,12 @@ function ProcessorFieldInput({
 	fieldData,
 }: ProcessorFieldInputProps): JSX.Element | null {
 	const { t } = useTranslation('pipeline');
-	const form = Form.useFormInstance();
 
 	// Watch form values so we can evaluate shouldRender on
 	// conditional fields when form values are updated.
+	const form = Form.useFormInstance();
 	useWatch(fieldData?.dependencies || [], form);
+
 	if (fieldData.shouldRender && !fieldData.shouldRender(form)) {
 		return null;
 	}
