@@ -42,6 +42,7 @@ export interface LabelProps {
 	labelClickedHandler: (labelIndex: number) => void;
 	labelIndex: number;
 	label: string;
+	disabled?: boolean;
 }
 
 export interface FullViewProps {
@@ -74,6 +75,7 @@ export interface CheckBoxProps {
 	index: number;
 	graphVisibilityState: boolean[];
 	checkBoxOnChangeHandler: (e: CheckboxChangeEvent, index: number) => void;
+	disabled?: boolean;
 }
 
 export interface SaveLegendEntriesToLocalStoreProps {

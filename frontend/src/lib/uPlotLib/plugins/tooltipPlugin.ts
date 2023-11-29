@@ -14,7 +14,7 @@ interface UplotTooltipDataProps {
 	color: string;
 	label: string;
 	focus: boolean;
-	value: string | number;
+	value: number;
 	tooltipValue: string;
 	textContent: string;
 }
@@ -25,7 +25,6 @@ const generateTooltipContent = (
 	idx: number,
 	yAxisUnit?: string,
 	series?: uPlot.Options['series'],
-	fillSpans?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -34,19 +33,23 @@ const generateTooltipContent = (
 	let tooltipTitle = '';
 	const formattedData: Record<string, UplotTooltipDataProps> = {};
 
+	function sortTooltipContentBasedOnValue(
+		tooltipDataObj: Record<string, UplotTooltipDataProps>,
+	): Record<string, UplotTooltipDataProps> {
+		const entries = Object.entries(tooltipDataObj);
+		entries.sort((a, b) => b[1].value - a[1].value);
+		return Object.fromEntries(entries);
+	}
+
 	if (Array.isArray(series) && series.length > 0) {
 		series.forEach((item, index) => {
 			if (index === 0) {
 				tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY HH:mm:ss');
-			} else if (fillSpans ? item.show : item.show && data[index][idx]) {
+			} else if (item.show) {
 				const { metric = {}, queryName = '', legend = '' } =
 					seriesList[index - 1] || {};
 
-				const label = getLabelName(
-					metric,
-					queryName || '', // query
-					legend || '',
-				);
+				const label = getLabelName(metric, queryName || '', legend || '');
 
 				const value = data[index][idx] || 0;
 				const tooltipValue = getToolTipValue(value, yAxisUnit);
@@ -60,30 +63,26 @@ const generateTooltipContent = (
 					focus: item?._focus || false,
 					value,
 					tooltipValue,
-					textContent: `${label} : ${tooltipValue || 0}`,
+					textContent: `${label} : ${tooltipValue}`,
 				};
 
-				formattedData[value] = dataObj;
+				formattedData[label] = dataObj;
 			}
 		});
 	}
 
-	// Get the keys and sort them
-	const sortedKeys = Object.keys(formattedData).sort(
-		(a, b) => parseInt(b, 10) - parseInt(a, 10),
-	);
-
-	// Create a new object with sorted keys
-	const sortedData: Record<string, UplotTooltipDataProps> = {};
-	sortedKeys.forEach((key) => {
-		sortedData[key] = formattedData[key];
-	});
+	const sortedData: Record<
+		string,
+		UplotTooltipDataProps
+	> = sortTooltipContentBasedOnValue(formattedData);
 
 	const div = document.createElement('div');
 	div.classList.add('tooltip-content-row');
 	div.textContent = tooltipTitle;
 	div.classList.add('tooltip-content-header');
 	container.appendChild(div);
+
+	const sortedKeys = Object.keys(sortedData);
 
 	if (Array.isArray(sortedKeys) && sortedKeys.length > 0) {
 		sortedKeys.forEach((key) => {
@@ -129,7 +128,6 @@ const generateTooltipContent = (
 const tooltipPlugin = (
 	apiResponse: MetricRangePayloadProps | undefined,
 	yAxisUnit?: string,
-	fillSpans?: boolean,
 ): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
@@ -189,7 +187,6 @@ const tooltipPlugin = (
 							idx,
 							yAxisUnit,
 							u.series,
-							fillSpans,
 						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });
