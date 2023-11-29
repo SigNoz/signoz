@@ -48,7 +48,7 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 }
 
 // See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
-var rateWithoutNegative = `if(runningDifference(ts) <= 0, nan, if(runningDifference(value) < 0, (value) / runningDifference(ts), runningDifference(value) / runningDifference(ts))) `
+var rateWithoutNegative = `If((value - lagInFrame(value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window))) `
 
 // buildMetricsTimeSeriesFilterQuery builds the sub-query to be used for filtering
 // timeseries based on search criteria
@@ -219,35 +219,46 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		groupBy = "fingerprint, ts"
 		orderBy = "fingerprint, "
 		groupTags = "fingerprint,"
+		partitionBy := "fingerprint"
 		op := "max(value)" // max value should be the closest value for point in time
 		subQuery := fmt.Sprintf(
 			queryTmpl, "any(labels) as labels, "+groupTags, step, op, filterSubQuery, groupBy, orderBy,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WINDOW rate_window as (PARTITION BY %s ORDER BY %s ts) `
 
-		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
+		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery, partitionBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorSumRate, v3.AggregateOperatorAvgRate, v3.AggregateOperatorMaxRate, v3.AggregateOperatorMinRate:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
 		rateOrderBy := "fingerprint, " + orderBy
+		partitionBy := "fingerprint"
+		if len(groupTags) != 0 {
+			partitionBy += ", " + groupTags
+			partitionBy = strings.Trim(partitionBy, ", ")
+		}
 		op := "max(value)"
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, step, op, filterSubQuery, rateGroupBy, rateOrderBy,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
-		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s ts, %s(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, aggregateOperatorToSQLFunc[mq.AggregateOperator], query, groupSets, orderBy)
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as rate_value FROM(%s) WINDOW rate_window as (PARTITION BY %s ORDER BY %s ts) `
+		query = fmt.Sprintf(query, groupTags, subQuery, partitionBy, rateOrderBy)
+		query = fmt.Sprintf(`SELECT %s ts, %s(rate_value) as value FROM (%s) WHERE isNaN(rate_value) = 0 GROUP BY %s ORDER BY %s ts`, groupTags, aggregateOperatorToSQLFunc[mq.AggregateOperator], query, groupSets, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
 		v3.AggregateOperatorRateMax,
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin:
+		partitionBy := ""
+		if len(groupTags) != 0 {
+			partitionBy = "PARTITION BY " + groupTags
+			partitionBy = strings.Trim(partitionBy, ", ")
+		}
 		op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
 		subQuery := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupSets, orderBy)
-		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
-		query = fmt.Sprintf(query, groupTags, subQuery)
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WINDOW rate_window as (%s ORDER BY %s ts) `
+		query = fmt.Sprintf(query, groupTags, subQuery, partitionBy, groupTags)
 		return query, nil
 	case
 		v3.AggregateOperatorP05,
@@ -266,13 +277,18 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
 		rateOrderBy := "fingerprint, " + orderBy
+		partitionBy := "fingerprint"
+		if len(groupTags) != 0 {
+			partitionBy += ", " + groupTags
+			partitionBy = strings.Trim(partitionBy, ", ")
+		}
 		op := "max(value)"
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, step, op, filterSubQuery, rateGroupBy, rateOrderBy,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
-		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, query, groupSets, orderBy)
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as rate_value FROM(%s) WINDOW rate_window as (PARTITION BY %s ORDER BY %s ts) `
+		query = fmt.Sprintf(query, groupTags, subQuery, partitionBy, rateOrderBy)
+		query = fmt.Sprintf(`SELECT %s ts, sum(rate_value) as value FROM (%s) WHERE isNaN(rate_value) = 0 GROUP BY %s ORDER BY %s ts`, groupTags, query, groupSets, orderBy)
 		value := aggregateOperatorToPercentile[mq.AggregateOperator]
 
 		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, orderWithoutLe)

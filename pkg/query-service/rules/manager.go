@@ -366,34 +366,35 @@ func (m *Manager) deleteTask(taskName string) {
 
 // CreateRule stores rule def into db and also
 // starts an executor for the rule
-func (m *Manager) CreateRule(ctx context.Context, ruleStr string) error {
+func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*GettableRule, error) {
 	parsedRule, errs := ParsePostableRule([]byte(ruleStr))
 
 	// check if the rule uses any feature that is not enabled
 	err := m.checkFeatureUsage(parsedRule)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(errs) > 0 {
 		zap.S().Errorf("failed to parse rules:", errs)
 		// just one rule is being parsed so expect just one error
-		return errs[0]
+		return nil, errs[0]
 	}
 
-	taskName, tx, err := m.ruleDB.CreateRuleTx(ctx, ruleStr)
+	lastInsertId, tx, err := m.ruleDB.CreateRuleTx(ctx, ruleStr)
+	taskName := prepareTaskName(lastInsertId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !m.opts.DisableRules {
 		if err := m.addTask(parsedRule, taskName); err != nil {
 			tx.Rollback()
-			return err
+			return nil, err
 		}
 	}
 	err = tx.Commit()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// update feature usage
@@ -401,7 +402,11 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) error {
 	if err != nil {
 		zap.S().Errorf("error updating feature usage: %v", err)
 	}
-	return nil
+	gettableRule := &GettableRule{
+		Id:           fmt.Sprintf("%d", lastInsertId),
+		PostableRule: *parsedRule,
+	}
+	return gettableRule, nil
 }
 
 func (m *Manager) updateFeatureUsage(parsedRule *PostableRule, usage int64) error {

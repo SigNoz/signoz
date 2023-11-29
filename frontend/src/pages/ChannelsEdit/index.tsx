@@ -18,7 +18,7 @@ function ChannelsEdit(): JSX.Element {
 	const { id } = useParams<Params>();
 	const { t } = useTranslation();
 
-	const { isLoading, isError, data } = useQuery(['getChannel', id], {
+	const { isFetching, isError, data } = useQuery(['getChannel', id], {
 		queryFn: () =>
 			get({
 				id,
@@ -29,7 +29,7 @@ function ChannelsEdit(): JSX.Element {
 		return <Typography>{data?.error || t('something_went_wrong')}</Typography>;
 	}
 
-	if (isLoading || !data?.payload) {
+	if (isFetching || !data?.payload) {
 		return <Spinner tip="Loading Channels..." />;
 	}
 

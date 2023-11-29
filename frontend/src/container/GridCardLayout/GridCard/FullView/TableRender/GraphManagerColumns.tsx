@@ -13,6 +13,7 @@ export const getGraphManagerTableColumns = ({
 	graphVisibilityState,
 	labelClickedHandler,
 	yAxisUnit,
+	isGraphDisabled,
 }: GetGraphManagerTableColumnsProps): ColumnType<DataSetProps>[] => [
 	{
 		title: '',
@@ -25,6 +26,7 @@ export const getGraphManagerTableColumns = ({
 				index={record.index}
 				checkBoxOnChangeHandler={checkBoxOnChangeHandler}
 				graphVisibilityState={graphVisibilityState}
+				disabled={isGraphDisabled}
 			/>
 		),
 	},
@@ -33,7 +35,7 @@ export const getGraphManagerTableColumns = ({
 		width: 300,
 		dataIndex: ColumnsKeyAndDataIndex.Label,
 		key: ColumnsKeyAndDataIndex.Label,
-		...getLabel(labelClickedHandler),
+		...getLabel(labelClickedHandler, isGraphDisabled),
 	},
 	{
 		title: getGraphManagerTableHeaderTitle(
@@ -79,4 +81,5 @@ interface GetGraphManagerTableColumnsProps {
 	labelClickedHandler: (labelIndex: number) => void;
 	graphVisibilityState: boolean[];
 	yAxisUnit?: string;
+	isGraphDisabled?: boolean;
 }
