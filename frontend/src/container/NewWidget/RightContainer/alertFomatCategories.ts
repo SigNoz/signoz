@@ -119,3 +119,8 @@ export const getCategoryByOptionId = (id: string): Category | undefined =>
 
 export const isCategoryName = (name: string): name is CategoryNames =>
 	alertsCategory.some((category) => category.name === name);
+
+export const getFormatNameByOptionId = (id: string): string | undefined =>
+	alertsCategory
+		.map((category) => category.formats.find((format) => format.id === id)?.name)
+		.find((name) => name !== undefined);

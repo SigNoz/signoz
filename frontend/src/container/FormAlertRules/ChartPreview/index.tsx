@@ -2,6 +2,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import Spinner from 'components/Spinner';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
+import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -19,7 +20,6 @@ import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
-import { covertIntoDataFormats } from './utils';
 
 export interface ChartPreviewProps {
 	name: string;
@@ -50,11 +50,11 @@ function ChartPreview({
 		(state) => state.globalTime,
 	);
 
-	const thresholdValue = covertIntoDataFormats({
-		value: threshold,
-		sourceUnit: alertDef?.condition.targetUnit,
-		targetUnit: query?.unit,
-	});
+	// const thresholdValue = covertIntoDataFormats({
+	// 	value: threshold,
+	// 	sourceUnit: alertDef?.condition.targetUnit,
+	// 	targetUnit: query?.unit,
+	// });
 
 	const canQuery = useMemo((): boolean => {
 		if (!query || query == null) {
@@ -110,6 +110,9 @@ function ChartPreview({
 
 	const isDarkMode = useIsDarkMode();
 
+	const optionName =
+		getFormatNameByOptionId(alertDef?.condition.targetUnit || '') || '';
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
@@ -127,7 +130,7 @@ function ChartPreview({
 						thresholdValue: threshold,
 						thresholdLabel: `${t(
 							'preview_chart_threshold_label',
-						)} (y=${thresholdValue} ${query?.unit || ''})`,
+						)} (y=${threshold} ${optionName})`,
 						thresholdUnit: alertDef?.condition.targetUnit,
 					},
 				],
@@ -139,7 +142,7 @@ function ChartPreview({
 			isDarkMode,
 			threshold,
 			t,
-			thresholdValue,
+			optionName,
 			alertDef?.condition.targetUnit,
 		],
 	);
