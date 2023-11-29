@@ -1,5 +1,4 @@
 import { Form, Input, Select } from 'antd';
-import { useWatch } from 'antd/es/form/Form';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import { useTranslation } from 'react-i18next';
 
@@ -20,7 +19,7 @@ function ProcessorFieldInput({
 	// Watch form values so we can evaluate shouldRender on
 	// conditional fields when form values are updated.
 	const form = Form.useFormInstance();
-	useWatch(fieldData?.dependencies || [], form);
+	Form.useWatch(fieldData?.dependencies || [], form);
 
 	if (fieldData.shouldRender && !fieldData.shouldRender(form)) {
 		return null;
