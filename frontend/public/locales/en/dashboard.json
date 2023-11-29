@@ -22,6 +22,7 @@
 	"error_while_updating_variable": "Error while updating variable",
 	"dashboard_has_been_updated": "Dashboard has been updated",
 	"do_you_want_to_refresh_the_dashboard": "Do you want to refresh the dashboard?",
-"locked_dashboard_delete_tooltip_admin_author": "Dashboard is locked. Please unlock the dashboard to enable delete.",
-"locked_dashboard_delete_tooltip_editor": "Dashboard is locked. Please contact admin to delete the dashboard." 
+	"locked_dashboard_delete_tooltip_admin_author": "Dashboard is locked. Please unlock the dashboard to enable delete.",
+	"locked_dashboard_delete_tooltip_editor": "Dashboard is locked. Please contact admin to delete the dashboard.",
+	"delete_dashboard_success": "{{name}} dashboard deleted successfully"
 }

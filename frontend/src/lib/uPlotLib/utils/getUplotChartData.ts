@@ -1,20 +1,52 @@
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
-function filterIsNan(
-	value: [number, string],
-	isFilterNaNEnabled?: boolean,
-): boolean {
-	const val = value[1];
-	return isFilterNaNEnabled ? val !== 'NaN' : true;
+// eslint-disable-next-line sonarjs/cognitive-complexity
+function fillMissingTimestamps(
+	sortedTimestamps: number[],
+	subsetArray: any[],
+	fillSpans: boolean | undefined,
+): any[] {
+	const filledArray = [];
+
+	let subsetIndex = 0;
+	// eslint-disable-next-line no-restricted-syntax
+	for (const timestamp of sortedTimestamps) {
+		if (
+			subsetIndex < subsetArray.length &&
+			timestamp === subsetArray[subsetIndex][0]
+		) {
+			// Timestamp is present in subsetArray
+			const seriesPointData = subsetArray[subsetIndex];
+
+			if (
+				seriesPointData &&
+				Array.isArray(seriesPointData) &&
+				seriesPointData.length > 0 &&
+				seriesPointData[1] !== 'NaN'
+			) {
+				filledArray.push(subsetArray[subsetIndex]);
+			} else {
+				const value = fillSpans ? 0 : null;
+				filledArray.push([seriesPointData[0], value]);
+			}
+
+			subsetIndex += 1;
+		} else {
+			// Timestamp is missing in subsetArray, fill with [timestamp, 0]
+			const value = fillSpans ? 0 : null;
+			filledArray.push([timestamp, value]);
+		}
+	}
+
+	return filledArray;
 }
 
 export const getUPlotChartData = (
 	apiResponse?: MetricRangePayloadProps,
 	fillSpans?: boolean,
-	filterNaN?: boolean,
-): uPlot.AlignedData => {
+): any[] => {
 	const seriesList = apiResponse?.data?.result || [];
-	const uPlotData: uPlot.AlignedData = [];
+	const uPlotData = [];
 
 	// this helps us identify the series with the max number of values and helps define the x axis - timestamps
 	const xSeries = seriesList.reduce(
@@ -28,33 +60,28 @@ export const getUPlotChartData = (
 		seriesList[index]?.values?.sort((a, b) => a[0] - b[0]);
 	}
 
-	const timestampArr = xSeries?.values
-		?.filter((response) => filterIsNan(response, filterNaN))
-		.map((v) => v[0]);
-
-	const uplotDataFormatArr = new Float64Array(timestampArr);
+	const timestampArr = xSeries?.values?.map((v) => v[0]);
 
 	// timestamp
-	uPlotData.push(uplotDataFormatArr);
-
-	const numberOfTimestamps = uPlotData[0].length;
+	uPlotData.push(timestampArr);
 
 	// for each series, push the values
 	seriesList.forEach((series) => {
+		const updatedSeries = fillMissingTimestamps(
+			timestampArr,
+			series?.values || [],
+			fillSpans,
+		);
+
 		const seriesData =
-			series?.values
-				?.filter((response) => filterIsNan(response, filterNaN))
-				.map((v) => parseFloat(v[1])) || [];
+			updatedSeries?.map((v) => {
+				if (v[1] === null) {
+					return v[1];
+				}
+				return parseFloat(v[1]);
+			}) || [];
 
-		// fill rest of the value with zero
-		if (seriesData.length < numberOfTimestamps && fillSpans) {
-			const diff = numberOfTimestamps - seriesData.length;
-			for (let i = 0; i < diff; i += 1) {
-				seriesData.push(0);
-			}
-		}
-
-		uPlotData.push(new Float64Array(seriesData));
+		uPlotData.push(seriesData);
 	});
 
 	return uPlotData;

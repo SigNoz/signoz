@@ -2,6 +2,7 @@ package logparsingpipeline
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -198,7 +199,8 @@ var prepareProcessorTestData = []struct {
 func TestPreparePipelineProcessor(t *testing.T) {
 	for _, test := range prepareProcessorTestData {
 		Convey(test.Name, t, func() {
-			res := getOperators(test.Operators)
+			res, err := getOperators(test.Operators)
+			So(err, ShouldBeNil)
 			So(res, ShouldResemble, test.Output)
 		})
 	}
@@ -256,11 +258,13 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 		}
 	}
 
-	testCases := []struct {
+	type pipelineTestCase struct {
 		Name           string
 		Operator       PipelineOperator
 		NonMatchingLog model.SignozLog
-	}{
+	}
+
+	testCases := []pipelineTestCase{
 		{
 			"regex processor should ignore log with missing field",
 			PipelineOperator{
@@ -342,10 +346,80 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 				Field:   "attributes.test",
 			},
 			makeTestLog("mismatching log", map[string]string{}),
+		}, {
+			"time parser should ignore logs with missing field.",
+			PipelineOperator{
+				ID:         "time",
+				Type:       "time_parser",
+				Enabled:    true,
+				Name:       "time parser",
+				ParseFrom:  "attributes.test_timestamp",
+				LayoutType: "strptime",
+				Layout:     "%Y-%m-%dT%H:%M:%S.%f%z",
+			},
+			makeTestLog("mismatching log", map[string]string{}),
+		}, {
+			"time parser should ignore logs timestamp values that don't contain expected strptime layout.",
+			PipelineOperator{
+				ID:         "time",
+				Type:       "time_parser",
+				Enabled:    true,
+				Name:       "time parser",
+				ParseFrom:  "attributes.test_timestamp",
+				LayoutType: "strptime",
+				Layout:     "%Y-%m-%dT%H:%M:%S.%f%z",
+			},
+			makeTestLog("mismatching log", map[string]string{
+				"test_timestamp": "2023-11-27T12:03:28A239907+0530",
+			}),
+		}, {
+			"time parser should ignore logs timestamp values that don't contain an epoch",
+			PipelineOperator{
+				ID:         "time",
+				Type:       "time_parser",
+				Enabled:    true,
+				Name:       "time parser",
+				ParseFrom:  "attributes.test_timestamp",
+				LayoutType: "epoch",
+				Layout:     "s",
+			},
+			makeTestLog("mismatching log", map[string]string{
+				"test_timestamp": "not-an-epoch",
+			}),
 		},
 		// TODO(Raj): see if there is an error scenario for grok parser.
 		// TODO(Raj): see if there is an error scenario for trace parser.
 		// TODO(Raj): see if there is an error scenario for Add operator.
+	}
+
+	// Some more timeparser test cases
+	epochLayouts := []string{"s", "ms", "us", "ns", "s.ms", "s.us", "s.ns"}
+	epochTestValues := []string{
+		"1136214245", "1136214245123", "1136214245123456",
+		"1136214245123456789", "1136214245.123",
+		"1136214245.123456", "1136214245.123456789",
+	}
+	for _, epochLayout := range epochLayouts {
+		for _, testValue := range epochTestValues {
+			testCases = append(testCases, pipelineTestCase{
+				fmt.Sprintf(
+					"time parser should ignore log with timestamp value %s that doesn't match layout type %s",
+					testValue, epochLayout,
+				),
+				PipelineOperator{
+					ID:         "time",
+					Type:       "time_parser",
+					Enabled:    true,
+					Name:       "time parser",
+					ParseFrom:  "attributes.test_timestamp",
+					LayoutType: "epoch",
+					Layout:     epochLayout,
+				},
+				makeTestLog("mismatching log", map[string]string{
+					"test_timestamp": testValue,
+				}),
+			})
+		}
 	}
 
 	for _, testCase := range testCases {
@@ -419,4 +493,139 @@ func TestResourceFiltersWork(t *testing.T) {
 	require.Equal(1, len(result))
 
 	require.Equal(result[0].Attributes_string["test"], "test-value")
+}
+
+func TestPipelineFilterWithStringOpsShouldNotSpamWarningsIfAttributeIsMissing(t *testing.T) {
+	require := require.New(t)
+
+	for _, operator := range []v3.FilterOperator{
+		v3.FilterOperatorContains,
+		v3.FilterOperatorNotContains,
+		v3.FilterOperatorRegex,
+		v3.FilterOperatorNotRegex,
+	} {
+		testPipeline := Pipeline{
+			OrderId: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+			Filter: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "service",
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeResource,
+						},
+						Operator: operator,
+						Value:    "nginx",
+					},
+				},
+			},
+			Config: []PipelineOperator{
+				{
+					ID:      "add",
+					Type:    "add",
+					Enabled: true,
+					Name:    "add",
+					Field:   "attributes.test",
+					Value:   "test-value",
+				},
+			},
+		}
+
+		testLog := model.SignozLog{
+			Timestamp:         uint64(time.Now().UnixNano()),
+			Body:              "test log",
+			Attributes_string: map[string]string{},
+			Resources_string:  map[string]string{},
+			SeverityText:      entry.Info.String(),
+			SeverityNumber:    uint8(entry.Info),
+			SpanID:            "",
+			TraceID:           "",
+		}
+
+		result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+			context.Background(),
+			[]Pipeline{testPipeline},
+			[]model.SignozLog{testLog},
+		)
+		require.Nil(err)
+		require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+		require.Equal(1, len(result))
+	}
+}
+
+func TestTemporaryWorkaroundForSupportingAttribsContainingDots(t *testing.T) {
+	// TODO(Raj): Remove this after dots are supported
+
+	require := require.New(t)
+
+	testPipeline := Pipeline{
+		OrderId: 1,
+		Name:    "pipeline1",
+		Alias:   "pipeline1",
+		Enabled: true,
+		Filter: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "k8s_deployment_name",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeResource,
+					},
+					Operator: "=",
+					Value:    "ingress",
+				},
+			},
+		},
+		Config: []PipelineOperator{
+			{
+				ID:      "add",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add",
+				Field:   "attributes.test",
+				Value:   "test-value",
+			},
+		},
+	}
+
+	testLogs := []model.SignozLog{{
+		Timestamp:         uint64(time.Now().UnixNano()),
+		Body:              "test log",
+		Attributes_string: map[string]string{},
+		Resources_string: map[string]string{
+			"k8s_deployment_name": "ingress",
+		},
+		SeverityText:   entry.Info.String(),
+		SeverityNumber: uint8(entry.Info),
+		SpanID:         "",
+		TraceID:        "",
+	}, {
+		Timestamp:         uint64(time.Now().UnixNano()),
+		Body:              "test log",
+		Attributes_string: map[string]string{},
+		Resources_string: map[string]string{
+			"k8s.deployment.name": "ingress",
+		},
+		SeverityText:   entry.Info.String(),
+		SeverityNumber: uint8(entry.Info),
+		SpanID:         "",
+		TraceID:        "",
+	}}
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(),
+		[]Pipeline{testPipeline},
+		testLogs,
+	)
+	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+	require.Equal(2, len(result))
+	for _, processedLog := range result {
+		require.Equal(processedLog.Attributes_string["test"], "test-value")
+	}
 }

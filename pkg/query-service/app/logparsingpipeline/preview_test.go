@@ -145,7 +145,7 @@ func TestPipelinePreview(t *testing.T) {
 
 }
 
-func TestGrokParsingPreview(t *testing.T) {
+func TestGrokParsingProcessor(t *testing.T) {
 	require := require.New(t)
 
 	testPipelines := []Pipeline{
@@ -207,7 +207,7 @@ func TestGrokParsingPreview(t *testing.T) {
 	require.Equal("route/server.go:71", processed.Attributes_string["location"])
 }
 
-func TestTraceParsingPreview(t *testing.T) {
+func TestTraceParsingProcessor(t *testing.T) {
 	require := require.New(t)
 
 	testPipelines := []Pipeline{

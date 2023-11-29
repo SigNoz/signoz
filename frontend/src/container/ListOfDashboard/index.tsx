@@ -1,13 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import {
-	Card,
-	Col,
-	Dropdown,
-	Input,
-	MenuProps,
-	Row,
-	TableColumnProps,
-} from 'antd';
+import { Card, Col, Dropdown, Input, Row, TableColumnProps } from 'antd';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
@@ -30,7 +22,6 @@ import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import DateComponent from '../../components/ResizeTable/TableComponent/DateComponent';
 import ImportJSON from './ImportJSON';
@@ -38,9 +29,9 @@ import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import DeleteButton from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
 
-function ListOfAllDashboard(): JSX.Element {
-	const { Search } = Input;
+const { Search } = Input;
 
+function ListOfAllDashboard(): JSX.Element {
 	const {
 		data: dashboardListResponse = [],
 		isLoading: isDashboardListLoading,
@@ -49,8 +40,8 @@ function ListOfAllDashboard(): JSX.Element {
 
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const [action, createNewDashboard, newDashboard] = useComponentPermission(
-		['action', 'create_new_dashboards', 'new_dashboard'],
+	const [action, createNewDashboard] = useComponentPermission(
+		['action', 'create_new_dashboards'],
 		role,
 	);
 
@@ -75,9 +66,7 @@ function ListOfAllDashboard(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (dashboardListResponse.length) {
-			sortDashboardsByCreatedAt(dashboardListResponse);
-		}
+		sortDashboardsByCreatedAt(dashboardListResponse);
 	}, [dashboardListResponse]);
 
 	const [newDashboardState, setNewDashboardState] = useState({
@@ -234,9 +223,22 @@ function ListOfAllDashboard(): JSX.Element {
 	};
 
 	const getMenuItems = useMemo(() => {
-		const menuItems: ItemType[] = [];
+		const menuItems: ItemType[] = [
+			{
+				key: t('import_json').toString(),
+				label: t('import_json'),
+				onClick: (): void => onModalHandler(false),
+			},
+			{
+				key: t('import_grafana_json').toString(),
+				label: t('import_grafana_json'),
+				onClick: (): void => onModalHandler(true),
+				disabled: true,
+			},
+		];
+
 		if (createNewDashboard) {
-			menuItems.push({
+			menuItems.unshift({
 				key: t('create_dashboard').toString(),
 				label: t('create_dashboard'),
 				disabled: isDashboardListLoading,
@@ -244,28 +246,8 @@ function ListOfAllDashboard(): JSX.Element {
 			});
 		}
 
-		menuItems.push({
-			key: t('import_json').toString(),
-			label: t('import_json'),
-			onClick: (): void => onModalHandler(false),
-		});
-
-		menuItems.push({
-			key: t('import_grafana_json').toString(),
-			label: t('import_grafana_json'),
-			onClick: (): void => onModalHandler(true),
-			disabled: true,
-		});
-
 		return menuItems;
 	}, [createNewDashboard, isDashboardListLoading, onNewDashboardHandler, t]);
-
-	const menu: MenuProps = useMemo(
-		() => ({
-			items: getMenuItems,
-		}),
-		[getMenuItems],
-	);
 
 	const searchArrayOfObjects = (searchValue: string): any[] => {
 		// Convert the searchValue to lowercase for case-insensitive search
@@ -318,35 +300,31 @@ function ListOfAllDashboard(): JSX.Element {
 								url: 'https://signoz.io/docs/userguide/dashboards',
 							}}
 						/>
-						{newDashboard && (
-							<Dropdown
-								getPopupContainer={popupContainer}
-								disabled={isDashboardListLoading}
-								trigger={['click']}
-								menu={menu}
-							>
-								<NewDashboardButton
-									icon={<PlusOutlined />}
-									type="primary"
-									data-testid="create-new-dashboard"
-									loading={newDashboardState.loading}
-									danger={newDashboardState.error}
-								>
-									{getText()}
-								</NewDashboardButton>
-							</Dropdown>
-						)}
 					</ButtonContainer>
+
+					<Dropdown
+						menu={{ items: getMenuItems }}
+						disabled={isDashboardListLoading}
+						placement="bottomRight"
+					>
+						<NewDashboardButton
+							icon={<PlusOutlined />}
+							type="primary"
+							data-testid="create-new-dashboard"
+							loading={newDashboardState.loading}
+							danger={newDashboardState.error}
+						>
+							{getText()}
+						</NewDashboardButton>
+					</Dropdown>
 				</Col>
 			</Row>
 		),
 		[
-			Search,
 			isDashboardListLoading,
 			handleSearch,
 			isFilteringDashboards,
-			newDashboard,
-			menu,
+			getMenuItems,
 			newDashboardState.loading,
 			newDashboardState.error,
 			getText,
