@@ -26,4 +26,5 @@ export enum QueryParams {
 	linesPerRow = 'linesPerRow',
 	viewName = 'viewName',
 	viewKey = 'viewKey',
+	expandedWidgetId = 'expandedWidgetId',
 }

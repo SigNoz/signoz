@@ -9,6 +9,7 @@ function CustomCheckBox({
 	index,
 	graphVisibilityState = [],
 	checkBoxOnChangeHandler,
+	disabled = false,
 }: CheckBoxProps): JSX.Element {
 	const onChangeHandler = (e: CheckboxChangeEvent): void => {
 		checkBoxOnChangeHandler(e, index);
@@ -28,7 +29,11 @@ function CustomCheckBox({
 				},
 			}}
 		>
-			<Checkbox onChange={onChangeHandler} checked={isChecked} />
+			<Checkbox
+				onChange={onChangeHandler}
+				checked={isChecked}
+				disabled={disabled}
+			/>
 		</ConfigProvider>
 	);
 }
