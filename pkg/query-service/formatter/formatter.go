@@ -18,9 +18,9 @@ var (
 
 func FromUnit(u string) Formatter {
 	switch u {
-	case "ns", "us", "ms", "s", "m", "h", "d":
+	case "ns", "us", "µs", "ms", "s", "m", "h", "d":
 		return DurationFormatter
-	case "bytes", "decbytes", "bits", "decbits", "kbytes", "decKbytes", "mbytes", "decMbytes", "gbytes", "decGbytes", "tbytes", "decTbytes", "pbytes", "decPbytes":
+	case "bytes", "decbytes", "bits", "decbits", "kbytes", "decKbytes", "deckbytes", "mbytes", "decMbytes", "decmbytes", "gbytes", "decGbytes", "decgbytes", "tbytes", "decTbytes", "dectbytes", "pbytes", "decPbytes", "decpbytes":
 		return DataFormatter
 	case "binBps", "Bps", "binbps", "bps", "KiBs", "Kibits", "KBs", "Kbits", "MiBs", "Mibits", "MBs", "Mbits", "GiBs", "Gibits", "GBs", "Gbits", "TiBs", "Tibits", "TBs", "Tbits", "PiBs", "Pibits", "PBs", "Pbits":
 		return DataRateFormatter

@@ -30,9 +30,9 @@ var logOperatorsToExpr = map[v3.FilterOperator]string{
 
 func getName(v v3.AttributeKey) string {
 	if v.Type == v3.AttributeKeyTypeTag {
-		return "attributes?." + v.Key
+		return fmt.Sprintf(`attributes["%s"]`, v.Key)
 	} else if v.Type == v3.AttributeKeyTypeResource {
-		return "resource?." + v.Key
+		return fmt.Sprintf(`resource["%s"]`, v.Key)
 	}
 	return v.Key
 }
@@ -53,18 +53,39 @@ func Parse(filters *v3.FilterSet) (string, error) {
 			return "", fmt.Errorf("operator not supported")
 		}
 
-		name := getName(v.Key)
-		var filter string
-		switch v.Operator {
-		// uncomment following lines when new version of expr is used
-		// case v3.FilterOperatorIn, v3.FilterOperatorNotIn:
-		// 	filter = fmt.Sprintf("%s %s list%s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
-
-		case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
-			filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], getTypeName(v.Key.Type))
-		default:
-			filter = fmt.Sprintf("%s %s %s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
+		// TODO(Raj): Remove the use of dot replaced alternative when key
+		// contains underscore after dots are supported in keys
+		names := []string{getName(v.Key)}
+		if strings.Contains(v.Key.Key, "_") {
+			dotKey := v.Key
+			dotKey.Key = strings.Replace(v.Key.Key, "_", ".", -1)
+			names = append(names, getName(dotKey))
 		}
+
+		filterParts := []string{}
+		for _, name := range names {
+			var filter string
+
+			switch v.Operator {
+			// uncomment following lines when new version of expr is used
+			// case v3.FilterOperatorIn, v3.FilterOperatorNotIn:
+			// 	filter = fmt.Sprintf("%s %s list%s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
+
+			case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
+				filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], getTypeName(v.Key.Type))
+			default:
+				filter = fmt.Sprintf("%s %s %s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
+
+				// Avoid running operators on nil values
+				if v.Operator != v3.FilterOperatorEqual && v.Operator != v3.FilterOperatorNotEqual {
+					filter = fmt.Sprintf("%s != nil && %s", name, filter)
+				}
+			}
+
+			filterParts = append(filterParts, filter)
+		}
+
+		filter := strings.Join(filterParts, " || ")
 
 		// check if the filter is a correct expression language
 		_, err := expr.Compile(filter)

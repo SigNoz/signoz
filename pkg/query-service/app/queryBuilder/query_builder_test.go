@@ -55,7 +55,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 
 		require.Contains(t, queries["C"], "SELECT A.ts as ts, A.value / B.value")
 		require.Contains(t, queries["C"], "WHERE metric_name = 'name' AND temporality IN ['Cumulative', 'Unspecified'] AND JSONExtractString(labels, 'in') IN ['a','b','c']")
-		require.Contains(t, queries["C"], "runningDifference(value) / runningDifference(ts)")
+		require.Contains(t, queries["C"], "(value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)))")
 	})
 }
 
