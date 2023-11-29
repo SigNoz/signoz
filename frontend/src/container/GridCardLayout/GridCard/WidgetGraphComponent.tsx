@@ -269,19 +269,21 @@ function WidgetGraphComponent({
 			</Modal>
 
 			<div className="drag-handle">
-				<WidgetHeader
-					parentHover={hovered}
-					title={widget?.title}
-					widget={widget}
-					onView={handleOnView}
-					onDelete={handleOnDelete}
-					onClone={onCloneHandler}
-					queryResponse={queryResponse}
-					errorMessage={errorMessage}
-					threshold={threshold}
-					headerMenuList={headerMenuList}
-					isWarning={isWarning}
-				/>
+				{headerMenuList.length > 0 && (
+					<WidgetHeader
+						parentHover={hovered}
+						title={widget?.title}
+						widget={widget}
+						onView={handleOnView}
+						onDelete={handleOnDelete}
+						onClone={onCloneHandler}
+						queryResponse={queryResponse}
+						errorMessage={errorMessage}
+						threshold={threshold}
+						headerMenuList={headerMenuList}
+						isWarning={isWarning}
+					/>
+				)}
 			</div>
 			{queryResponse.isLoading && <Skeleton />}
 			{queryResponse.isSuccess && (

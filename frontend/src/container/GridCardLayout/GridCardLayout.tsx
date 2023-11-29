@@ -174,7 +174,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 									<GridCard
 										widget={currentWidget || ({ id, query: {} } as Widgets)}
 										name={currentWidget?.id || ''}
-										headerMenuList={widgetActions}
+										headerMenuList={handle.active ? [] : widgetActions}
 										variables={variables}
 									/>
 								</Card>
