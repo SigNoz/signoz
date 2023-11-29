@@ -133,11 +133,12 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 					}
 
 					operator.If = fmt.Sprintf(
-						`%s && %s matches "%s"`, operator.If, parseFromPath, valueRegex,
+						`%s && string(%s) matches "%s"`, operator.If, parseFromPath, valueRegex,
 					)
 
 				}
 				// TODO(Raj): Maybe add support for gotime too eventually
+				operator.OnError = "send"
 			}
 
 			filteredOp = append(filteredOp, operator)
