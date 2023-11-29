@@ -1,6 +1,7 @@
 import { FormInstance } from 'antd';
 import { Rule, RuleRender } from 'antd/es/form';
 import { NamePath } from 'antd/es/form/interface';
+import { ProcessorData } from 'types/api/pipeline/def';
 
 import { SelectInputOption } from './FormFields/SelectInput';
 
@@ -37,6 +38,10 @@ export type ProcessorFormField = {
 	dependencies?: Array<string | NamePath>;
 	options?: Array<SelectInputOption>;
 	shouldRender?: (form: FormInstance) => boolean;
+	onFormValuesChanged?: (
+		changedValues: ProcessorData,
+		form: FormInstance,
+	) => void;
 };
 
 const traceParserFieldValidator: RuleRender = (form) => ({
@@ -244,6 +249,17 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 					value: 'strptime',
 				},
 			],
+			onFormValuesChanged: (
+				changedValues: ProcessorData,
+				form: FormInstance,
+			): void => {
+				if (changedValues?.layout_type) {
+					const newLayoutValue =
+						changedValues.layout_type === 'strptime' ? '%Y-%m-%dT%H:%M:%S.%f%z' : 's';
+
+					form.setFieldValue('layout', newLayoutValue);
+				}
+			},
 		},
 		{
 			id: 4,

@@ -27,6 +27,10 @@ export interface ProcessorData {
 	trace_flags?: {
 		parse_from: string;
 	};
+
+	// time parser fields
+	layout_type?: string;
+	layout?: string;
 }
 
 export interface PipelineData {
