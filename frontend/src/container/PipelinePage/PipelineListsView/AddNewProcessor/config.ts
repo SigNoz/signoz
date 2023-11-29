@@ -105,21 +105,6 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		},
 		...commonFields,
 	],
-	regex_parser: [
-		{
-			id: 1,
-			fieldName: 'Name of Regex Processor',
-			placeholder: 'processor_name_placeholder',
-			name: 'name',
-		},
-		{
-			id: 2,
-			fieldName: 'Define Regex',
-			placeholder: 'processor_regex_placeholder',
-			name: 'regex',
-		},
-		...commonFields,
-	],
 	json_parser: [
 		{
 			id: 1,
@@ -141,6 +126,21 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			name: 'parse_to',
 			initialValue: 'attributes',
 		},
+	],
+	regex_parser: [
+		{
+			id: 1,
+			fieldName: 'Name of Regex Processor',
+			placeholder: 'processor_name_placeholder',
+			name: 'name',
+		},
+		{
+			id: 2,
+			fieldName: 'Define Regex',
+			placeholder: 'processor_regex_placeholder',
+			name: 'regex',
+		},
+		...commonFields,
 	],
 	add: [
 		{
