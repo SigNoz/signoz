@@ -316,6 +316,16 @@ var operatorTest = []struct {
 			Layout:     "%Y-%m-%d",
 		},
 		IsValid: false,
+	}, {
+		Name: "Timestamp Parser - invalid strptime layout",
+		Operator: PipelineOperator{
+			ID:         "time",
+			Type:       "time_parser",
+			ParseFrom:  "attributes.test_timestamp",
+			LayoutType: "strptime",
+			Layout:     "%U",
+		},
+		IsValid: false,
 	},
 }
 
