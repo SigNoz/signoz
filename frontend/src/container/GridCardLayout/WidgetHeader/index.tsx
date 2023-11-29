@@ -206,9 +206,11 @@ function WidgetHeader({
 						<Typography.Text style={{ maxWidth: '80%' }} ellipsis data-testid={title}>
 							{title}
 						</Typography.Text>
-						<ArrowContainer hover={parentHover}>
-							<DownOutlined />
-						</ArrowContainer>
+						{headerMenuList && headerMenuList?.length > 0 && (
+							<ArrowContainer hover={parentHover}>
+								<DownOutlined />
+							</ArrowContainer>
+						)}
 					</HeaderContentContainer>
 				</HeaderContainer>
 			</Dropdown>
