@@ -309,10 +309,9 @@ var operatorTest = []struct {
 	}, {
 		Name: "Timestamp Parser - invalid epoch layout",
 		Operator: PipelineOperator{
-			ID:        "time",
-			Type:      "time_parser",
-			ParseFrom: "attributes.test_timestamp",
-			// TODO(Raj): Maybe add support for gotime format
+			ID:         "time",
+			Type:       "time_parser",
+			ParseFrom:  "attributes.test_timestamp",
 			LayoutType: "epoch",
 			Layout:     "%Y-%m-%d",
 		},

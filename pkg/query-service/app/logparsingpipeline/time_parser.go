@@ -8,7 +8,12 @@ import (
 )
 
 // Regex for strptime format placeholders supported by the time parser.
+// Used for defining if conditions on time parsing operators so they do not
+// spam collector logs when encountering values that can't be parsed.
+//
 // Based on ctimeSubstitutes defined in https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/internal/coreinternal/timeutils/internal/ctimefmt/ctimefmt.go#L22
+//
+// TODO(Raj): Maybe make the expressions tighter.
 var ctimeRegex = map[string]string{
 	//	%Y - Year, zero-padded (0001, 0002, ..., 2019, 2020, ..., 9999)
 	"%Y": "[0-9]{4}",
@@ -105,8 +110,8 @@ func RegexForStrptimeLayout(layout string) (string, error) {
 		return ""
 	}
 
-	ctimeRegexp := regexp.MustCompile(`%.`)
-	layoutRegex = ctimeRegexp.ReplaceAllStringFunc(layoutRegex, replaceStrptimeDirectiveWithRegex)
+	strptimeDirectiveRegexp := regexp.MustCompile(`%.`)
+	layoutRegex = strptimeDirectiveRegexp.ReplaceAllStringFunc(layoutRegex, replaceStrptimeDirectiveWithRegex)
 	if len(errs) != 0 {
 		return "", fmt.Errorf("couldn't generate regex for ctime format: %v", errs)
 	}

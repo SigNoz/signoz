@@ -171,6 +171,7 @@ func isValidOperator(op PipelineOperator) error {
 			return fmt.Errorf(fmt.Sprintf("parse from of time parsing processor %s cannot be empty", op.ID))
 		}
 		if op.LayoutType != "epoch" && op.LayoutType != "strptime" {
+			// TODO(Raj): Maybe add support for gotime format
 			return fmt.Errorf(fmt.Sprintf(
 				"invalid format type '%s' of time parsing processor %s", op.LayoutType, op.ID,
 			))
@@ -185,6 +186,9 @@ func isValidOperator(op PipelineOperator) error {
 				"invalid epoch format '%s' of time parsing processor %s", op.LayoutType, op.ID,
 			))
 		}
+
+		// TODO(Raj): Add validation for strptime layouts via
+		// collector simulator maybe.
 
 	default:
 		return fmt.Errorf(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, trace_parser, retain)", op.Type, op.ID))

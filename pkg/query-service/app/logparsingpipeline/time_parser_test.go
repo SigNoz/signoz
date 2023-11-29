@@ -91,8 +91,6 @@ func TestTimestampParsingProcessor(t *testing.T) {
 		},
 	}
 
-	// Start with JSON serialized timestamp parser to validate deserialization too
-	// TODO(Raj): Is this needed?
 	var timestampParserOp PipelineOperator
 	err := json.Unmarshal([]byte(`
 		{

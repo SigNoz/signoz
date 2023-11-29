@@ -138,7 +138,6 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 
 				}
 				// TODO(Raj): Maybe add support for gotime too eventually
-				operator.OnError = "send"
 			}
 
 			filteredOp = append(filteredOp, operator)
