@@ -165,7 +165,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 								className={isDashboardLocked ? '' : 'enable-resize'}
 								isDarkMode={isDarkMode}
 								key={id}
-								data-grid={layout}
+								data-grid={JSON.stringify(currentWidget)}
 							>
 								<Card
 									className="grid-item"
