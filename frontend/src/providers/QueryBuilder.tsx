@@ -497,7 +497,15 @@ export function QueryBuilderProvider({
 			const pagination = urlQuery.get(QueryParams.pagination);
 
 			if (pagination) {
-				urlQuery.delete(QueryParams.pagination);
+				const parsedPagination = JSON.parse(pagination);
+
+				urlQuery.set(
+					QueryParams.pagination,
+					JSON.stringify({
+						limit: parsedPagination.limit,
+						offset: 0,
+					}),
+				);
 			}
 
 			urlQuery.set(
