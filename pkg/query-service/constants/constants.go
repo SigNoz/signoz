@@ -135,6 +135,17 @@ func GetContextTimeout() time.Duration {
 
 var ContextTimeout = GetContextTimeout()
 
+func GetContextTimeoutMaxAllowed() time.Duration {
+	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT_MAX_ALLOWED", "600")
+	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
+	if err != nil {
+		return time.Minute
+	}
+	return contextTimeoutDuration
+}
+
+var ContextTimeoutMaxAllowed = GetContextTimeoutMaxAllowed()
+
 const (
 	TraceID                        = "traceID"
 	ServiceName                    = "serviceName"
