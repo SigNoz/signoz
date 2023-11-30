@@ -119,3 +119,93 @@ func TestSeverityParsingProcessor(t *testing.T) {
 	}
 
 }
+
+func TestNoCollectorErrorsFromSeverityParserForMismatchedLogs(t *testing.T) {
+	require := require.New(t)
+
+	testPipelineFilter := &v3.FilterSet{
+		Operator: "AND",
+		Items: []v3.FilterItem{
+			{
+				Key: v3.AttributeKey{
+					Key:      "method",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+				},
+				Operator: "=",
+				Value:    "GET",
+			},
+		},
+	}
+	makeTestPipeline := func(config []PipelineOperator) Pipeline {
+		return Pipeline{
+			OrderId: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+			Filter:  testPipelineFilter,
+			Config:  config,
+		}
+	}
+
+	makeTestLog := func(
+		body string,
+		attributes map[string]interface{},
+	) model.SignozLog {
+		attributes["method"] = "GET"
+		return makeTestSignozLog(body, attributes)
+	}
+
+	type pipelineTestCase struct {
+		Name           string
+		Operator       PipelineOperator
+		NonMatchingLog model.SignozLog
+	}
+
+	testCases := []pipelineTestCase{
+		{
+			"severity parser should ignore logs with missing field",
+			PipelineOperator{
+				ID:        "severity",
+				Type:      "severity_parser",
+				Enabled:   true,
+				Name:      "severity parser",
+				ParseFrom: "attributes.test_severity",
+				SeverityMapping: map[string][]string{
+					"debug": {"debug"},
+				},
+				OverwriteSeverityText: true,
+			},
+			makeTestLog("mismatching log", map[string]interface{}{}),
+		}, {
+			"severity parser should ignore logs with invalid values.",
+			PipelineOperator{
+				ID:        "severity",
+				Type:      "severity_parser",
+				Enabled:   true,
+				Name:      "severity parser",
+				ParseFrom: "attributes.test_severity",
+				SeverityMapping: map[string][]string{
+					"debug": {"debug"},
+				},
+				OverwriteSeverityText: true,
+			},
+			makeTestLog("mismatching log", map[string]interface{}{
+				"test_severity": "sjkdjkjfk",
+			}),
+		},
+	}
+
+	for _, testCase := range testCases {
+		testPipelines := []Pipeline{makeTestPipeline([]PipelineOperator{testCase.Operator})}
+
+		result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+			context.Background(),
+			testPipelines,
+			[]model.SignozLog{testCase.NonMatchingLog},
+		)
+		require.Nil(err)
+		require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+		require.Equal(1, len(result))
+	}
+}
