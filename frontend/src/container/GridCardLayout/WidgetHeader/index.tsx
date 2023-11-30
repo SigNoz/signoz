@@ -1,14 +1,16 @@
+import './WidgetHeader.styles.scss';
+
 import {
 	AlertOutlined,
 	CopyOutlined,
 	DeleteOutlined,
-	DownOutlined,
+	MoreOutlined,
 	EditFilled,
 	ExclamationCircleOutlined,
 	FullscreenOutlined,
 	WarningOutlined,
 } from '@ant-design/icons';
-import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
+import { Button, Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -23,23 +25,9 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
-import { popupContainer } from 'utils/selectPopupContainer';
 
-import {
-	errorTooltipPosition,
-	overlayStyles,
-	spinnerStyles,
-	tooltipStyles,
-	WARNING_MESSAGE,
-} from './config';
+import { errorTooltipPosition, WARNING_MESSAGE } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
-import {
-	ArrowContainer,
-	HeaderContainer,
-	HeaderContentContainer,
-	ThesholdContainer,
-	WidgetHeaderContainer,
-} from './styles';
 import { MenuItem } from './types';
 import { generateMenuList, isTWidgetOptions } from './utils';
 
@@ -72,9 +60,6 @@ function WidgetHeader({
 	headerMenuList,
 	isWarning,
 }: IWidgetHeaderProps): JSX.Element | null {
-	const [localHover, setLocalHover] = useState(false);
-	const [isOpen, setIsOpen] = useState<boolean>(false);
-
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
 		history.push(
@@ -112,7 +97,6 @@ function WidgetHeader({
 
 				if (functionToCall) {
 					functionToCall();
-					setIsOpen(false);
 				}
 			}
 		},
@@ -169,10 +153,6 @@ function WidgetHeader({
 
 	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
 
-	const onClickHandler = (): void => {
-		setIsOpen(!isOpen);
-	};
-
 	const menu = useMemo(
 		() => ({
 			items: updatedMenuList,
@@ -186,49 +166,49 @@ function WidgetHeader({
 	}
 
 	return (
-		<WidgetHeaderContainer>
-			<Dropdown
-				getPopupContainer={popupContainer}
-				destroyPopupOnHide
-				open={isOpen}
-				onOpenChange={setIsOpen}
-				menu={menu}
-				trigger={['click']}
-				overlayStyle={overlayStyles}
+		<div className="widget-header-container">
+			<Typography.Text
+				ellipsis
+				data-testid={title}
+				className="widget-header-title"
 			>
-				<HeaderContainer
-					onMouseOver={(): void => setLocalHover(true)}
-					onMouseOut={(): void => setLocalHover(false)}
-					hover={localHover}
-					onClick={onClickHandler}
-				>
-					<HeaderContentContainer>
-						<Typography.Text style={{ maxWidth: '80%' }} ellipsis data-testid={title}>
-							{title}
-						</Typography.Text>
-						<ArrowContainer hover={parentHover}>
-							<DownOutlined />
-						</ArrowContainer>
-					</HeaderContentContainer>
-				</HeaderContainer>
-			</Dropdown>
+				{title}
+			</Typography.Text>
+			<div className="widget-header-actions">
+				<div className="widget-api-actions">{threshold}</div>
+				{queryResponse.isFetching && !queryResponse.isError && (
+					<Spinner style={{ paddingRight: '0.25rem' }} />
+				)}
+				{queryResponse.isError && (
+					<Tooltip
+						title={errorMessage}
+						placement={errorTooltipPosition}
+						className="widget-api-actions"
+					>
+						<ExclamationCircleOutlined />
+					</Tooltip>
+				)}
 
-			<ThesholdContainer>{threshold}</ThesholdContainer>
-			{queryResponse.isFetching && !queryResponse.isError && (
-				<Spinner height="5vh" style={spinnerStyles} />
-			)}
-			{queryResponse.isError && (
-				<Tooltip title={errorMessage} placement={errorTooltipPosition}>
-					<ExclamationCircleOutlined style={tooltipStyles} />
-				</Tooltip>
-			)}
-
-			{isWarning && (
-				<Tooltip title={WARNING_MESSAGE} placement={errorTooltipPosition}>
-					<WarningOutlined style={tooltipStyles} />
-				</Tooltip>
-			)}
-		</WidgetHeaderContainer>
+				{isWarning && (
+					<Tooltip
+						title={WARNING_MESSAGE}
+						placement={errorTooltipPosition}
+						className="widget-api-actions"
+					>
+						<WarningOutlined />
+					</Tooltip>
+				)}
+				<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
+					<Button
+						type="default"
+						icon={<MoreOutlined />}
+						className={`widget-header-more-options ${
+							parentHover ? 'widget-header-hover' : ''
+						}`}
+					/>
+				</Dropdown>
+			</div>
+		</div>
 	);
 }
 
