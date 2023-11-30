@@ -106,7 +106,7 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 	} else {
 		for _, tag := range groupBy {
 			columnName := getClickhouseColumnName(tag)
-			selectLabels += fmt.Sprintf(" %s as %s,", columnName, tag.Key)
+			selectLabels += fmt.Sprintf(" %s as `%s`,", columnName, tag.Key)
 		}
 	}
 	return selectLabels
@@ -378,7 +378,7 @@ func groupBy(panelType v3.PanelType, graphLimitQtype string, tags ...string) str
 func groupByAttributeKeyTags(panelType v3.PanelType, graphLimitQtype string, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
-		groupTags = append(groupTags, tag.Key)
+		groupTags = append(groupTags, "`"+tag.Key+"`")
 	}
 	return groupBy(panelType, graphLimitQtype, groupTags...)
 }
@@ -393,11 +393,11 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 		if item.ColumnName == constants.SigNozOrderByValue {
 			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
 		} else if _, ok := tagLookup[item.ColumnName]; ok {
-			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
+			orderBy = append(orderBy, fmt.Sprintf("`%s` %s", item.ColumnName, item.Order))
 		} else if panelType == v3.PanelTypeList {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name := getClickhouseColumnName(attr)
-			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
+			orderBy = append(orderBy, fmt.Sprintf("`%s` %s", name, item.Order))
 		}
 	}
 	return orderBy

@@ -4475,11 +4475,67 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 				row[columnNames[idx]] = v
 			}
 		}
+
+		// remove duplicate _ attribute for logs.
+		// remove this function after a month
+		removeDuplicateUnderscoreAttributes(row)
+
 		rowList = append(rowList, &v3.Row{Timestamp: t, Data: row})
 	}
 
 	return rowList, nil
 
+}
+
+func removeDuplicateUnderscoreAttributes(row map[string]interface{}) {
+	if val, ok := row["attributes_int64"]; ok {
+		attributes := val.(*map[string]int64)
+		for key := range *attributes {
+			if strings.Contains(key, ".") {
+				// check if has an existing
+				uKey := strings.ReplaceAll(key, ".", "_")
+				delete(*attributes, uKey)
+			}
+		}
+
+	}
+
+	if val, ok := row["attributes_float64"]; ok {
+		attributes := val.(*map[string]float64)
+		for key := range *attributes {
+			if strings.Contains(key, ".") {
+				// check if has an existing
+				uKey := strings.ReplaceAll(key, ".", "_")
+				delete(*attributes, uKey)
+			}
+		}
+
+	}
+
+	if val, ok := row["attributes_bool"]; ok {
+		attributes := val.(*map[string]bool)
+		for key := range *attributes {
+			if strings.Contains(key, ".") {
+				// check if has an existing
+				uKey := strings.ReplaceAll(key, ".", "_")
+				delete(*attributes, uKey)
+			}
+		}
+
+	}
+	for _, k := range []string{"attributes_string", "resources_string"} {
+		if val, ok := row[k]; ok {
+			attributes := val.(*map[string]string)
+			for key := range *attributes {
+				if strings.Contains(key, ".") {
+					// check if has an existing
+					uKey := strings.ReplaceAll(key, ".", "_")
+					delete(*attributes, uKey)
+				}
+			}
+
+		}
+	}
 }
 func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	rows, err := r.db.Query(ctx, "SELECT 1")
