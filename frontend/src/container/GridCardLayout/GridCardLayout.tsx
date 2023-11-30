@@ -109,39 +109,37 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 
 	return (
 		<>
-			{!isDashboardLocked && (
-				<ButtonContainer>
+			<ButtonContainer>
+				<Button
+					loading={updateDashboardMutation.isLoading}
+					onClick={handle.enter}
+					icon={<FullscreenIcon size={16} />}
+					disabled={updateDashboardMutation.isLoading}
+				>
+					{t('dashboard:full_view')}
+				</Button>
+
+				{!isDashboardLocked && saveLayoutPermission && (
 					<Button
 						loading={updateDashboardMutation.isLoading}
-						onClick={handle.enter}
-						icon={<FullscreenIcon size={16} />}
+						onClick={onSaveHandler}
+						icon={<SaveFilled />}
 						disabled={updateDashboardMutation.isLoading}
 					>
-						{t('dashboard:full_view')}
+						{t('dashboard:save_layout')}
 					</Button>
+				)}
 
-					{saveLayoutPermission && (
-						<Button
-							loading={updateDashboardMutation.isLoading}
-							onClick={onSaveHandler}
-							icon={<SaveFilled />}
-							disabled={updateDashboardMutation.isLoading}
-						>
-							{t('dashboard:save_layout')}
-						</Button>
-					)}
-
-					{addPanelPermission && (
-						<Button
-							onClick={onAddPanelHandler}
-							icon={<PlusOutlined />}
-							data-testid="add-panel"
-						>
-							{t('dashboard:add_panel')}
-						</Button>
-					)}
-				</ButtonContainer>
-			)}
+				{!isDashboardLocked && addPanelPermission && (
+					<Button
+						onClick={onAddPanelHandler}
+						icon={<PlusOutlined />}
+						data-testid="add-panel"
+					>
+						{t('dashboard:add_panel')}
+					</Button>
+				)}
+			</ButtonContainer>
 
 			<FullScreen handle={handle} className="fullscreen-grid-container">
 				<ReactGridLayout
@@ -167,7 +165,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 								className={isDashboardLocked ? '' : 'enable-resize'}
 								isDarkMode={isDarkMode}
 								key={id}
-								data-grid={layout}
+								data-grid={JSON.stringify(currentWidget)}
 							>
 								<Card
 									className="grid-item"

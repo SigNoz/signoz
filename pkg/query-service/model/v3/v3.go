@@ -613,8 +613,10 @@ func (h *Having) CacheKey() string {
 }
 
 type QueryRangeResponse struct {
-	ResultType string    `json:"resultType"`
-	Result     []*Result `json:"result"`
+	ContextTimeout        bool      `json:"contextTimeout,omitempty"`
+	ContextTimeoutMessage string    `json:"contextTimeoutMessage,omitempty"`
+	ResultType            string    `json:"resultType"`
+	Result                []*Result `json:"result"`
 }
 
 type Result struct {

@@ -14,7 +14,7 @@ export const optionsUpdateState = (
 	if (lhsHeight !== rhsHeight || lhsWidth !== rhsWidth) {
 		state = 'update';
 	}
-	if (Object.keys(lhs).length !== Object.keys(rhs).length) {
+	if (Object.keys(lhs)?.length !== Object.keys(rhs)?.length) {
 		return 'create';
 	}
 	// eslint-disable-next-line no-restricted-syntax
@@ -31,12 +31,12 @@ export const dataMatch = (
 	lhs: uPlot.AlignedData,
 	rhs: uPlot.AlignedData,
 ): boolean => {
-	if (lhs.length !== rhs.length) {
+	if (lhs?.length !== rhs?.length) {
 		return false;
 	}
 	return lhs.every((lhsOneSeries, seriesIdx) => {
 		const rhsOneSeries = rhs[seriesIdx];
-		if (lhsOneSeries.length !== rhsOneSeries.length) {
+		if (lhsOneSeries?.length !== rhsOneSeries?.length) {
 			return false;
 		}
 

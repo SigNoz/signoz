@@ -22,7 +22,7 @@ import {
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
@@ -56,6 +56,12 @@ function EditAlertChannels({
 	const onTypeChangeHandler = useCallback((value: string) => {
 		setType(value as ChannelType);
 	}, []);
+
+	useEffect(() => {
+		formInstance.setFieldsValue({
+			...initialValue,
+		});
+	}, [formInstance, initialValue]);
 
 	const prepareSlackRequest = useCallback(
 		() => ({
