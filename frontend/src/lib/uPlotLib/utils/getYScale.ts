@@ -3,12 +3,13 @@ import { convertValue } from 'lib/getConvertedValue';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 function findMinMaxValues(data: QueryDataV3[]): [number, number] {
-	let min = Number.POSITIVE_INFINITY;
-	let max = Number.NEGATIVE_INFINITY;
+	let min = 0;
+	let max = 0;
 	data?.forEach((entry) => {
 		entry.series?.forEach((series) => {
 			series.values.forEach((valueObj) => {
 				const value = parseFloat(valueObj.value);
+				if (!value) return;
 				min = Math.min(min, value);
 				max = Math.max(max, value);
 			});
@@ -22,8 +23,8 @@ function findMinMaxThresholdValues(
 	thresholds: ThresholdProps[],
 	yAxisUnit: string | undefined,
 ): [number, number] {
-	let minThresholdValue = Number.POSITIVE_INFINITY;
-	let maxThresholdValue = Number.NEGATIVE_INFINITY;
+	let minThresholdValue = 0;
+	let maxThresholdValue = 0;
 
 	thresholds.forEach((entry) => {
 		const { thresholdValue, thresholdUnit } = entry;

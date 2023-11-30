@@ -20,6 +20,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
+import { getThresholdLabel } from './utils';
 
 export interface ChartPreviewProps {
 	name: string;
@@ -49,12 +50,6 @@ function ChartPreview({
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-
-	// const thresholdValue = covertIntoDataFormats({
-	// 	value: threshold,
-	// 	sourceUnit: alertDef?.condition.targetUnit,
-	// 	targetUnit: query?.unit,
-	// });
 
 	const canQuery = useMemo((): boolean => {
 		if (!query || query == null) {
@@ -130,7 +125,11 @@ function ChartPreview({
 						thresholdValue: threshold,
 						thresholdLabel: `${t(
 							'preview_chart_threshold_label',
-						)} (y=${threshold} ${optionName})`,
+						)} (y=${getThresholdLabel(
+							optionName,
+							threshold,
+							alertDef?.condition.targetUnit,
+						)})`,
 						thresholdUnit: alertDef?.condition.targetUnit,
 					},
 				],
