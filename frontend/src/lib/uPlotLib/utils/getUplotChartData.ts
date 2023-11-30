@@ -1,44 +1,63 @@
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
-function fillMissingTimestamps(
-	sortedTimestamps: number[],
-	subsetArray: any[],
-	fillSpans: boolean | undefined,
-): any[] {
-	const filledArray = [];
+function getXAxisTimestamps(seriesList: any): any[] {
+	const timestamps = new Set();
 
-	let subsetIndex = 0;
-	// eslint-disable-next-line no-restricted-syntax
-	for (const timestamp of sortedTimestamps) {
-		if (
-			subsetIndex < subsetArray.length &&
-			timestamp === subsetArray[subsetIndex][0]
-		) {
-			// Timestamp is present in subsetArray
-			const seriesPointData = subsetArray[subsetIndex];
+	seriesList.forEach((series: { values: any[] }) => {
+		series.values.forEach((value) => {
+			timestamps.add(value[0]);
+		});
+	});
 
-			if (
-				seriesPointData &&
-				Array.isArray(seriesPointData) &&
-				seriesPointData.length > 0 &&
-				seriesPointData[1] !== 'NaN'
-			) {
-				filledArray.push(subsetArray[subsetIndex]);
-			} else {
-				const value = fillSpans ? 0 : null;
-				filledArray.push([seriesPointData[0], value]);
-			}
+	return Array.from(timestamps).sort((a, b) => a - b);
+}
 
-			subsetIndex += 1;
-		} else {
-			// Timestamp is missing in subsetArray, fill with [timestamp, 0]
+function fillMissingXAxisTimestamps(
+	timestampArr: number[],
+	data: any[],
+	fillSpans: boolean,
+): any {
+	// Generate a set of all timestamps in the range
+	const allTimestampsSet = new Set(timestampArr);
+
+	const processedData = JSON.parse(JSON.stringify(data));
+
+	// Fill missing timestamps with null values
+	processedData.forEach((entry: { values: (number | null)[][] }) => {
+		const existingTimestamps = new Set(
+			entry.values.map((value: any[]) => value[0]),
+		);
+
+		const missingTimestamps = Array.from(allTimestampsSet).filter(
+			(timestamp) => !existingTimestamps.has(timestamp),
+		);
+
+		missingTimestamps.forEach((timestamp) => {
 			const value = fillSpans ? 0 : null;
-			filledArray.push([timestamp, value]);
-		}
-	}
 
-	return filledArray;
+			entry.values.push([timestamp, value]);
+		});
+
+		entry.values.forEach((v) => {
+			if (Number.isNaN(v[1])) {
+				const replaceValue = fillSpans ? 0 : null;
+
+				// eslint-disable-next-line no-param-reassign
+				v[1] = replaceValue;
+			} else if (v[1] !== null) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				// eslint-disable-next-line no-param-reassign
+				v[1] = parseFloat(v[1]);
+			}
+		});
+
+		entry.values.sort((a: number[], b: number[]) => a[0] - b[0]);
+	});
+
+	return processedData.map((entry: { values: any[][] }) =>
+		entry.values.map((value: any[]) => value[1]),
+	);
 }
 
 export const getUPlotChartData = (
@@ -46,43 +65,12 @@ export const getUPlotChartData = (
 	fillSpans?: boolean,
 ): any[] => {
 	const seriesList = apiResponse?.data?.result || [];
-	const uPlotData = [];
-
-	// this helps us identify the series with the max number of values and helps define the x axis - timestamps
-	const xSeries = seriesList.reduce(
-		(maxObj, currentObj) =>
-			currentObj.values.length > maxObj.values.length ? currentObj : maxObj,
-		seriesList[0],
+	const timestampArr = getXAxisTimestamps(seriesList);
+	const yAxisValuesArr = fillMissingXAxisTimestamps(
+		timestampArr,
+		seriesList,
+		fillSpans || false,
 	);
 
-	// sort seriesList
-	for (let index = 0; index < seriesList.length; index += 1) {
-		seriesList[index]?.values?.sort((a, b) => a[0] - b[0]);
-	}
-
-	const timestampArr = xSeries?.values?.map((v) => v[0]);
-
-	// timestamp
-	uPlotData.push(timestampArr);
-
-	// for each series, push the values
-	seriesList.forEach((series) => {
-		const updatedSeries = fillMissingTimestamps(
-			timestampArr,
-			series?.values || [],
-			fillSpans,
-		);
-
-		const seriesData =
-			updatedSeries?.map((v) => {
-				if (v[1] === null) {
-					return v[1];
-				}
-				return parseFloat(v[1]);
-			}) || [];
-
-		uPlotData.push(seriesData);
-	});
-
-	return uPlotData;
+	return [timestampArr, ...yAxisValuesArr];
 };

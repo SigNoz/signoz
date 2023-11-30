@@ -49,10 +49,11 @@ const generateTooltipContent = (
 				const { metric = {}, queryName = '', legend = '' } =
 					seriesList[index - 1] || {};
 
+				const value = data[index][idx];
 				const label = getLabelName(metric, queryName || '', legend || '');
 
-				const value = data[index][idx] || 0;
-				const tooltipValue = getToolTipValue(value, yAxisUnit);
+				const tooltipValue =
+					value !== null ? getToolTipValue(value, yAxisUnit) : 'NULL';
 
 				const dataObj = {
 					show: item.show || false,
