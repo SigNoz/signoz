@@ -1,0 +1,8 @@
+.query-container {
+	display: flex;
+	flex-flow: row wrap;
+	min-width: 0;
+	gap: 1rem;
+	margin-bottom: 1rem;
+	flex-direction: column;
+}
