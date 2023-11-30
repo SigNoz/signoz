@@ -58,6 +58,13 @@ function getRange(
 	return [min, max];
 }
 
+function areAllSeriesEmpty(series: QueryDataV3[]): boolean {
+	return series.every((entry) => {
+		if (!entry.series) return true;
+		return entry.series.every((series) => series.values.length === 0);
+	});
+}
+
 export const getYScale = (
 	thresholds: ThresholdProps[] | undefined,
 	series: QueryDataV3[] | undefined,
@@ -66,9 +73,12 @@ export const getYScale = (
 	auto: boolean;
 	range?: [number, number];
 } => {
+	console.log({ thresholds, series, yAxisUnit });
 	if (!thresholds || !series) return { auto: true };
 
-	const [min, max] = getRange(thresholds, series, yAxisUnit);
+	if (areAllSeriesEmpty(series)) return { auto: true };
 
+	const [min, max] = getRange(thresholds, series, yAxisUnit);
+	console.log({ min, max, thresholds, series });
 	return { auto: false, range: [min, max] };
 };
