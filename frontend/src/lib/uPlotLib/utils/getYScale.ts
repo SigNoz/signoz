@@ -73,12 +73,10 @@ export const getYScale = (
 	auto: boolean;
 	range?: [number, number];
 } => {
-	console.log({ thresholds, series, yAxisUnit });
 	if (!thresholds || !series) return { auto: true };
 
 	if (areAllSeriesEmpty(series)) return { auto: true };
 
 	const [min, max] = getRange(thresholds, series, yAxisUnit);
-	console.log({ min, max, thresholds, series });
 	return { auto: false, range: [min, max] };
 };
