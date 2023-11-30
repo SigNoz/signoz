@@ -326,6 +326,37 @@ var operatorTest = []struct {
 			Layout:     "%U",
 		},
 		IsValid: false,
+	}, {
+		Name: "Severity Parser - valid",
+		Operator: PipelineOperator{
+			ID:                    "severity",
+			Type:                  "severity_parser",
+			ParseFrom:             "attributes.test_severity",
+			SeverityMapping:       map[string][]string{},
+			OverwriteSeverityText: true,
+		},
+		IsValid: true,
+	}, {
+		Name: "Severity Parser - Parse from is required",
+		Operator: PipelineOperator{
+			ID:                    "severity",
+			Type:                  "severity_parser",
+			SeverityMapping:       map[string][]string{},
+			OverwriteSeverityText: true,
+		},
+		IsValid: false,
+	}, {
+		Name: "Severity Parser - mapping level must be valid",
+		Operator: PipelineOperator{
+			ID:        "severity",
+			Type:      "severity_parser",
+			ParseFrom: "attributes.test",
+			SeverityMapping: map[string][]string{
+				"not-a-level": {"bad-level"},
+			},
+			OverwriteSeverityText: true,
+		},
+		IsValid: false,
 	},
 }
 

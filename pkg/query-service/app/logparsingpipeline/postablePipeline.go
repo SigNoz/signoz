@@ -198,6 +198,18 @@ func isValidOperator(op PipelineOperator) error {
 			}
 		}
 
+	case "severity_parser":
+		if op.ParseFrom == "" {
+			return fmt.Errorf("parse from of severity parsing processor %s cannot be empty", op.ID)
+		}
+
+		validMappingLevels := []string{"debug", "info", "warn", "error"}
+		for k, _ := range op.SeverityMapping {
+			if !slices.Contains(validMappingLevels, strings.ToLower(k)) {
+				return fmt.Errorf("%s is not a valid severity in processor %s", k, op.ID)
+			}
+		}
+
 	default:
 		return fmt.Errorf(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, trace_parser, retain)", op.Type, op.ID))
 	}
