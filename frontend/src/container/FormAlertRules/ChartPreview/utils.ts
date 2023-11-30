@@ -55,12 +55,12 @@ export const getThresholdLabel = (
 	optionName: string,
 	value: number,
 	unit?: string,
+	yAxisUnit?: string,
 ): string => {
-	console.log({ unit });
-	if (unit === undefined) {
-		return `${value}`;
-	}
-	if (unit === MiscellaneousFormats.PercentUnit) {
+	if (
+		unit === MiscellaneousFormats.PercentUnit ||
+		yAxisUnit === MiscellaneousFormats.PercentUnit
+	) {
 		return `${value * 100}%`;
 	}
 	return `${value} ${optionName}`;

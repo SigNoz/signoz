@@ -129,6 +129,7 @@ function ChartPreview({
 							optionName,
 							threshold,
 							alertDef?.condition.targetUnit,
+							query?.unit,
 						)})`,
 						thresholdUnit: alertDef?.condition.targetUnit,
 					},
