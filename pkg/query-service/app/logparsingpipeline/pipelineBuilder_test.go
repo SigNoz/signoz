@@ -2,6 +2,7 @@ package logparsingpipeline
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -198,7 +199,8 @@ var prepareProcessorTestData = []struct {
 func TestPreparePipelineProcessor(t *testing.T) {
 	for _, test := range prepareProcessorTestData {
 		Convey(test.Name, t, func() {
-			res := getOperators(test.Operators)
+			res, err := getOperators(test.Operators)
+			So(err, ShouldBeNil)
 			So(res, ShouldResemble, test.Output)
 		})
 	}
@@ -256,11 +258,13 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 		}
 	}
 
-	testCases := []struct {
+	type pipelineTestCase struct {
 		Name           string
 		Operator       PipelineOperator
 		NonMatchingLog model.SignozLog
-	}{
+	}
+
+	testCases := []pipelineTestCase{
 		{
 			"regex processor should ignore log with missing field",
 			PipelineOperator{
@@ -342,10 +346,80 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 				Field:   "attributes.test",
 			},
 			makeTestLog("mismatching log", map[string]string{}),
+		}, {
+			"time parser should ignore logs with missing field.",
+			PipelineOperator{
+				ID:         "time",
+				Type:       "time_parser",
+				Enabled:    true,
+				Name:       "time parser",
+				ParseFrom:  "attributes.test_timestamp",
+				LayoutType: "strptime",
+				Layout:     "%Y-%m-%dT%H:%M:%S.%f%z",
+			},
+			makeTestLog("mismatching log", map[string]string{}),
+		}, {
+			"time parser should ignore logs timestamp values that don't contain expected strptime layout.",
+			PipelineOperator{
+				ID:         "time",
+				Type:       "time_parser",
+				Enabled:    true,
+				Name:       "time parser",
+				ParseFrom:  "attributes.test_timestamp",
+				LayoutType: "strptime",
+				Layout:     "%Y-%m-%dT%H:%M:%S.%f%z",
+			},
+			makeTestLog("mismatching log", map[string]string{
+				"test_timestamp": "2023-11-27T12:03:28A239907+0530",
+			}),
+		}, {
+			"time parser should ignore logs timestamp values that don't contain an epoch",
+			PipelineOperator{
+				ID:         "time",
+				Type:       "time_parser",
+				Enabled:    true,
+				Name:       "time parser",
+				ParseFrom:  "attributes.test_timestamp",
+				LayoutType: "epoch",
+				Layout:     "s",
+			},
+			makeTestLog("mismatching log", map[string]string{
+				"test_timestamp": "not-an-epoch",
+			}),
 		},
 		// TODO(Raj): see if there is an error scenario for grok parser.
 		// TODO(Raj): see if there is an error scenario for trace parser.
 		// TODO(Raj): see if there is an error scenario for Add operator.
+	}
+
+	// Some more timeparser test cases
+	epochLayouts := []string{"s", "ms", "us", "ns", "s.ms", "s.us", "s.ns"}
+	epochTestValues := []string{
+		"1136214245", "1136214245123", "1136214245123456",
+		"1136214245123456789", "1136214245.123",
+		"1136214245.123456", "1136214245.123456789",
+	}
+	for _, epochLayout := range epochLayouts {
+		for _, testValue := range epochTestValues {
+			testCases = append(testCases, pipelineTestCase{
+				fmt.Sprintf(
+					"time parser should ignore log with timestamp value %s that doesn't match layout type %s",
+					testValue, epochLayout,
+				),
+				PipelineOperator{
+					ID:         "time",
+					Type:       "time_parser",
+					Enabled:    true,
+					Name:       "time parser",
+					ParseFrom:  "attributes.test_timestamp",
+					LayoutType: "epoch",
+					Layout:     epochLayout,
+				},
+				makeTestLog("mismatching log", map[string]string{
+					"test_timestamp": testValue,
+				}),
+			})
+		}
 	}
 
 	for _, testCase := range testCases {
