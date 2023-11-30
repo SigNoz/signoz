@@ -8,6 +8,7 @@ function Label({
 	labelClickedHandler,
 	labelIndex,
 	label,
+	disabled = false,
 }: LabelProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
@@ -19,6 +20,7 @@ function Label({
 		<LabelContainer
 			isDarkMode={isDarkMode}
 			type="button"
+			disabled={disabled}
 			onClick={onClickHandler}
 		>
 			{getAbbreviatedLabel(label)}
