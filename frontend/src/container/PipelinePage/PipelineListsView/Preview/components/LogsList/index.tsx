@@ -21,7 +21,7 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 			{logs.map((log) => (
 				<div key={log.id} className="logs-preview-list-item">
 					<div className="logs-preview-list-item-timestamp">
-						{dayjs(String(log.timestamp)).format('MMM DD HH:mm:ss.SSS')}
+						{dayjs(log.timestamp).format('MMM DD HH:mm:ss.SSS')}
 					</div>
 					<div className="logs-preview-list-item-body">{log.body}</div>
 					<div
