@@ -15,6 +15,7 @@ import onClickPlugin, { OnClickPluginOpts } from './plugins/onClickPlugin';
 import tooltipPlugin from './plugins/tooltipPlugin';
 import getAxes from './utils/getAxes';
 import getSeries from './utils/getSeriesData';
+import { getYScale } from './utils/getYScale';
 
 interface GetUPlotChartOptions {
 	id?: string;
@@ -79,7 +80,7 @@ export const getUPlotChartOptions = ({
 				auto: true, // Automatically adjust scale range
 			},
 			y: {
-				auto: true,
+				...getYScale(thresholds, apiResponse?.data.result, yAxisUnit),
 			},
 		},
 		plugins: [
