@@ -66,7 +66,7 @@ function areAllSeriesEmpty(series: QueryDataV3[]): boolean {
 	});
 }
 
-export const getYScale = (
+export const getYAxisScale = (
 	thresholds: ThresholdProps[] | undefined,
 	series: QueryDataV3[] | undefined,
 	yAxisUnit: string | undefined,
