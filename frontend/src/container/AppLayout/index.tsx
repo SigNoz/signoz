@@ -1,12 +1,15 @@
 import getDynamicConfigs from 'api/dynamicConfigs/getDynamicConfigs';
-import getFeaturesFlags from 'api/features/getFeatureFlags';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
+import ROUTES from 'constants/routes';
 import Header from 'container/Header';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import { useNotifications } from 'hooks/useNotifications';
-import { ReactNode, useEffect, useRef } from 'react';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { ReactNode, useEffect, useMemo, useRef } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
@@ -18,25 +21,25 @@ import {
 	UPDATE_CONFIGS,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
-	UPDATE_FEATURE_FLAG_RESPONSE,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
-import { ChildrenContainer, Layout } from './styles';
+import { ChildrenContainer, Layout, LayoutContent } from './styles';
+import { getRouteKey } from './utils';
 
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn, user } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
+
 	const { pathname } = useLocation();
-	const { t } = useTranslation();
+	const { t } = useTranslation(['titles']);
 
 	const [
 		getUserVersionResponse,
 		getUserLatestVersionResponse,
-		getFeaturesResponse,
 		getDynamicConfigsResponse,
 	] = useQueries([
 		{
@@ -50,20 +53,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			enabled: isLoggedIn,
 		},
 		{
-			queryFn: getFeaturesFlags,
-			queryKey: ['getFeatureFlags', user?.accessJwt],
-		},
-		{
 			queryFn: getDynamicConfigs,
 			queryKey: ['getDynamicConfigs', user?.accessJwt],
 		},
 	]);
 
 	useEffect(() => {
-		if (getFeaturesResponse.status === 'idle') {
-			getFeaturesResponse.refetch();
-		}
-
 		if (getUserLatestVersionResponse.status === 'idle' && isLoggedIn) {
 			getUserLatestVersionResponse.refetch();
 		}
@@ -71,14 +66,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (getUserVersionResponse.status === 'idle' && isLoggedIn) {
 			getUserVersionResponse.refetch();
 		}
-		if (getFeaturesResponse.status === 'idle') {
-			getFeaturesResponse.refetch();
-		}
 		if (getDynamicConfigsResponse.status === 'idle') {
 			getDynamicConfigsResponse.refetch();
 		}
 	}, [
-		getFeaturesResponse,
 		getUserLatestVersionResponse,
 		getUserVersionResponse,
 		isLoggedIn,
@@ -192,51 +183,37 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getUserLatestVersionResponse.isFetched,
 		getUserVersionResponse.isFetched,
 		getUserLatestVersionResponse.isSuccess,
-		getFeaturesResponse.isFetched,
-		getFeaturesResponse.isSuccess,
-		getFeaturesResponse.data,
 		getDynamicConfigsResponse.data,
 		getDynamicConfigsResponse.isFetched,
 		getDynamicConfigsResponse.isSuccess,
 		notifications,
 	]);
 
-	useEffect(() => {
-		if (
-			getFeaturesResponse.isFetched &&
-			getFeaturesResponse.isSuccess &&
-			getFeaturesResponse.data &&
-			getFeaturesResponse.data.payload
-		) {
-			dispatch({
-				type: UPDATE_FEATURE_FLAG_RESPONSE,
-				payload: {
-					featureFlag: getFeaturesResponse.data.payload,
-					refetch: getFeaturesResponse.refetch,
-				},
-			});
-		}
-	}, [
-		dispatch,
-		getFeaturesResponse.data,
-		getFeaturesResponse.isFetched,
-		getFeaturesResponse.isSuccess,
-		getFeaturesResponse.refetch,
-	]);
-
 	const isToDisplayLayout = isLoggedIn;
+
+	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
+	const pageTitle = t(routeKey);
+	const renderFullScreen =
+		pathname === ROUTES.GET_STARTED || pathname === ROUTES.WORKSPACE_LOCKED;
 
 	return (
 		<Layout>
+			<Helmet>
+				<title>{pageTitle}</title>
+			</Helmet>
+
 			{isToDisplayLayout && <Header />}
 			<Layout>
-				{isToDisplayLayout && <SideNav />}
-				<Layout.Content>
-					<ChildrenContainer>
-						{isToDisplayLayout && <TopNav />}
-						{children}
-					</ChildrenContainer>
-				</Layout.Content>
+				{isToDisplayLayout && !renderFullScreen && <SideNav />}
+
+				<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+					<LayoutContent>
+						<ChildrenContainer>
+							{isToDisplayLayout && !renderFullScreen && <TopNav />}
+							{children}
+						</ChildrenContainer>
+					</LayoutContent>
+				</ErrorBoundary>
 			</Layout>
 		</Layout>
 	);

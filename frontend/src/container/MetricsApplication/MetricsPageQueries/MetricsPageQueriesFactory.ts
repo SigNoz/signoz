@@ -67,18 +67,16 @@ export const getQueryBuilderQuerieswithFormula = ({
 	legends,
 	groupBy = [],
 	disabled,
-	expression,
-	legendFormula,
+	expressions,
+	legendFormulas,
 	aggregateOperators,
 	dataSource,
 }: BuilderQuerieswithFormulaProps): QueryBuilderData => ({
-	queryFormulas: [
-		{
-			...initialFormulaBuilderFormValues,
-			expression,
-			legend: legendFormula,
-		},
-	],
+	queryFormulas: expressions.map((expression, index) => ({
+		...initialFormulaBuilderFormValues,
+		expression,
+		legend: legendFormulas[index],
+	})),
 	queryData: autocompleteData.map((_, index) => ({
 		...initialQueryBuilderFormValuesMap.metrics,
 		aggregateOperator: aggregateOperators[index],

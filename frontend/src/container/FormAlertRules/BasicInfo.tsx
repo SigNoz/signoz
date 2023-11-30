@@ -2,6 +2,7 @@ import { Form, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import ChannelSelect from './ChannelSelect';
 import LabelSelect from './labels';
@@ -36,6 +37,7 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 					name={['labels', 'severity']}
 				>
 					<SeveritySelect
+						getPopupContainer={popupContainer}
 						defaultValue="critical"
 						onChange={(value: unknown | string): void => {
 							const s = (value as string) || 'critical';

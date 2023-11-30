@@ -1,5 +1,8 @@
 import { OPERATORS } from 'constants/queryBuilder';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DataSource,
@@ -7,7 +10,7 @@ import {
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
 
-import { DataType, FORMULA, MetricsType, WidgetKeys } from '../constant';
+import { FORMULA, MetricsType, WidgetKeys } from '../constant';
 import {
 	ExternalCallDurationByAddressProps,
 	ExternalCallProps,
@@ -19,7 +22,7 @@ import {
 
 const groupBy: BaseAutocompleteData[] = [
 	{
-		dataType: DataType.STRING,
+		dataType: DataTypes.String,
 		isColumn: false,
 		key: WidgetKeys.Address,
 		type: MetricsType.Tag,
@@ -33,15 +36,15 @@ export const externalCallErrorPercent = ({
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozExternalCallLatencyCount,
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.SignozExternalCallLatencyCount,
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 
 	const additionalItemsA: TagFilterItem[] = [
@@ -49,18 +52,18 @@ export const externalCallErrorPercent = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Service_name,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
-			value: [`${servicename}`],
+			value: [servicename],
 		},
 		{
 			id: '',
 			key: {
 				key: WidgetKeys.StatusCode,
-				dataType: DataType.INT64,
+				dataType: DataTypes.Int64,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -74,7 +77,7 @@ export const externalCallErrorPercent = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Service_name,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Resource,
 			},
@@ -83,22 +86,18 @@ export const externalCallErrorPercent = ({
 		},
 		...tagFilterItems,
 	];
+	const legendFormulas = [legend];
+	const expressions = [FORMULA.ERROR_PERCENTAGE];
+	const disabled = [true, true];
+	const autocompleteData = [autocompleteDataA, autocompleteDataB];
 
-	const legendFormula = legend;
-	const expression = FORMULA.ERROR_PERCENTAGE;
-	const autocompleteData: BaseAutocompleteData[] = [
-		autocompleteDataA,
-		autocompleteDataB,
+	const additionalItems = [additionalItemsA, additionalItemsB];
+
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM_RATE,
+		MetricAggregateOperator.SUM_RATE,
 	];
-
-	const additionalItems: TagFilterItem[][] = [
-		additionalItemsA,
-		additionalItemsB,
-	];
-
-	const legends = Array(2).fill(legend);
-	const aggregateOperators = Array(2).fill(MetricAggregateOperator.SUM);
-	const disabled = Array(2).fill(true);
+	const legends = [legend, legend];
 	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
@@ -107,8 +106,8 @@ export const externalCallErrorPercent = ({
 		legends,
 		groupBy,
 		disabled,
-		expression,
-		legendFormula,
+		expressions,
+		legendFormulas,
 		aggregateOperators,
 		dataSource,
 	});
@@ -119,59 +118,55 @@ export const externalCallDuration = ({
 	tagFilterItems,
 }: ExternalCallProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencySum,
-		type: null,
+		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencyCount,
-		type: null,
+		type: '',
 	};
-
-	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
-	const legendFormula = 'Average Duration';
+	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
+	const legendFormulas = ['Average Duration'];
 	const legend = '';
-	const disabled = Array(2).fill(true);
+	const disabled = [true, true];
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				key: WidgetKeys.Service_name,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
-			value: [`${servicename}`],
+			value: [servicename],
 		},
 		...tagFilterItems,
 	];
 
-	const autocompleteData: BaseAutocompleteData[] = [
-		autocompleteDataA,
-		autocompleteDataB,
-	];
+	const autocompleteData = [autocompleteDataA, autocompleteDataB];
 
-	const additionalItems: TagFilterItem[][] = [
-		additionalItemsA,
-		additionalItemsA,
+	const additionalItems = [additionalItemsA, additionalItemsA];
+	const legends = [legend, legend];
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM_RATE,
+		MetricAggregateOperator.SUM_RATE,
 	];
-
-	const legends = Array(2).fill(legend);
-	const aggregateOperators = Array(2).fill(MetricAggregateOperator.SUM);
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
 		legends,
 		disabled,
-		expression,
-		legendFormula,
+		expressions,
+		legendFormulas,
 		aggregateOperators,
-		dataSource: DataSource.METRICS,
+		dataSource,
 	});
 };
 
@@ -182,10 +177,10 @@ export const externalCallRpsByAddress = ({
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
-			dataType: DataType.FLOAT64,
+			dataType: DataTypes.Float64,
 			isColumn: true,
 			key: WidgetKeys.SignozExternalCallLatencyCount,
-			type: null,
+			type: '',
 		},
 	];
 	const filterItems: TagFilterItem[][] = [
@@ -193,13 +188,13 @@ export const externalCallRpsByAddress = ({
 			{
 				id: '',
 				key: {
-					dataType: DataType.STRING,
+					dataType: DataTypes.String,
 					isColumn: false,
 					key: WidgetKeys.Service_name,
 					type: MetricsType.Resource,
 				},
 				op: OPERATORS.IN,
-				value: [`${servicename}`],
+				value: [servicename],
 			},
 			...tagFilterItems,
 		],
@@ -223,47 +218,42 @@ export const externalCallDurationByAddress = ({
 	tagFilterItems,
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencySum,
-		type: null,
+		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencyCount,
-		type: null,
+		type: '',
 	};
-	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
-	const legendFormula = legend;
+	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
+	const legendFormulas = [legend];
 	const disabled = [true, true];
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				key: WidgetKeys.Service_name,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
-			value: [`${servicename}`],
+			value: [servicename],
 		},
 		...tagFilterItems,
 	];
 
-	const autocompleteData: BaseAutocompleteData[] = [
-		autocompleteDataA,
-		autocompleteDataB,
+	const autocompleteData = [autocompleteDataA, autocompleteDataB];
+	const additionalItems = [additionalItemsA, additionalItemsA];
+	const legends = [legend, legend];
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM_RATE,
+		MetricAggregateOperator.SUM_RATE,
 	];
-
-	const additionalItems: TagFilterItem[][] = [
-		additionalItemsA,
-		additionalItemsA,
-	];
-
-	const legends = Array(2).fill(legend);
-	const aggregateOperators = Array(2).fill(MetricAggregateOperator.SUM_RATE);
 	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
@@ -272,8 +262,8 @@ export const externalCallDurationByAddress = ({
 		legends,
 		groupBy,
 		disabled,
-		expression,
-		legendFormula,
+		expressions,
+		legendFormulas,
 		aggregateOperators,
 		dataSource,
 	});

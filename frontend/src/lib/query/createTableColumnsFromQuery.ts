@@ -28,14 +28,13 @@ export type RowData = {
 	[key: string]: string | number;
 };
 
-type DynamicColumn = {
+export type DynamicColumn = {
 	query: IBuilderQuery | IBuilderFormula;
 	field: string;
 	dataIndex: string;
 	title: string;
 	data: (string | number)[];
 	type: 'field' | 'operator' | 'formula';
-	// sortable: boolean;
 };
 
 type DynamicColumns = DynamicColumn[];
@@ -91,36 +90,12 @@ const getQueryByName = <T extends keyof QueryBuilderData>(
 	return currentQuery as T extends 'queryData' ? IBuilderQuery : IBuilderFormula;
 };
 
-const addListLabels = (
+const addLabels = (
 	query: IBuilderQuery | IBuilderFormula,
-	label: ListItemKey,
-	dynamicColumns: DynamicColumns,
-): void => {
-	if (isValueExist('dataIndex', label, dynamicColumns)) return;
-
-	const fieldObj: DynamicColumn = {
-		query,
-		field: 'label',
-		dataIndex: label as string,
-		title: label as string,
-		data: [],
-		type: 'field',
-		// sortable: isNumber,
-	};
-
-	dynamicColumns.push(fieldObj);
-};
-
-const addSeriaLabels = (
 	label: string,
 	dynamicColumns: DynamicColumns,
-	query: IBuilderQuery | IBuilderFormula,
 ): void => {
 	if (isValueExist('dataIndex', label, dynamicColumns)) return;
-
-	// const labelValue = labels[label];
-
-	// const isNumber = !Number.isNaN(parseFloat(String(labelValue)));
 
 	const fieldObj: DynamicColumn = {
 		query,
@@ -129,7 +104,6 @@ const addSeriaLabels = (
 		title: label,
 		data: [],
 		type: 'field',
-		// sortable: isNumber,
 	};
 
 	dynamicColumns.push(fieldObj);
@@ -155,7 +129,6 @@ const addOperatorFormulaColumns = (
 			title: customLabel || formulaLabel,
 			data: [],
 			type: 'formula',
-			// sortable: isNumber,
 		};
 
 		dynamicColumns.push(formulaColumn);
@@ -181,7 +154,6 @@ const addOperatorFormulaColumns = (
 		title: customLabel || operatorLabel,
 		data: [],
 		type: 'operator',
-		// sortable: isNumber,
 	};
 
 	dynamicColumns.push(operatorColumn);
@@ -224,7 +196,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 		if (list) {
 			list.forEach((listItem) => {
 				Object.keys(listItem.data).forEach((label) => {
-					addListLabels(currentStagedQuery, label as ListItemKey, dynamicColumns);
+					addLabels(currentStagedQuery, label, dynamicColumns);
 				});
 			});
 		}
@@ -245,7 +217,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 				Object.keys(seria.labels).forEach((label) => {
 					if (label === currentQuery?.queryName) return;
 
-					addSeriaLabels(label as string, dynamicColumns, currentStagedQuery);
+					addLabels(currentStagedQuery, label, dynamicColumns);
 				});
 			});
 		}
@@ -305,13 +277,61 @@ const isEqualQueriesByLabel = (
 	queryName: string,
 ): boolean => equalQueries.includes(queryName);
 
+const fillAggregationData = (
+	column: DynamicColumn,
+	value: string,
+	unusedColumnsKeys: Set<keyof RowData>,
+): void => {
+	column.data.push(parseFloat(value).toFixed(2));
+	unusedColumnsKeys.delete(column.field);
+};
+
+const fillRestAggregationData = (
+	column: DynamicColumn,
+	queryTableData: QueryDataV3[],
+	seria: SeriesItem,
+	equalQueriesByLabels: string[],
+): void => {
+	const nextQueryData =
+		queryTableData.find((q) => q.queryName === column.field) || null;
+
+	const targetSeria = findSeriaValueFromAnotherQuery(
+		seria.labels,
+		nextQueryData,
+	);
+
+	if (targetSeria) {
+		const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
+		if (!isEqual) {
+			equalQueriesByLabels.push(column.field);
+		}
+
+		column.data.push(parseFloat(targetSeria.values[0].value).toFixed(2));
+	} else {
+		column.data.push('N/A');
+	}
+};
+
+const fillLabelsData = (
+	column: DynamicColumn,
+	seria: SeriesItem,
+	unusedColumnsKeys: Set<keyof RowData>,
+): void => {
+	const labelEntries = Object.entries(seria.labels);
+
+	labelEntries.forEach(([key, currentValue]) => {
+		if (column.field === key) {
+			column.data.push(currentValue);
+			unusedColumnsKeys.delete(key);
+		}
+	});
+};
+
 const fillDataFromSeries = (
 	currentQuery: QueryDataV3,
 	queryTableData: QueryDataV3[],
 	columns: DynamicColumns,
 	equalQueriesByLabels: string[],
-	// TODO: fix it
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): void => {
 	const { series, queryName } = currentQuery;
 	const isEqualQuery = isEqualQueriesByLabel(equalQueriesByLabels, queryName);
@@ -319,8 +339,6 @@ const fillDataFromSeries = (
 	if (!series) return;
 
 	series.forEach((seria) => {
-		const labelEntries = Object.entries(seria.labels);
-
 		const unusedColumnsKeys = new Set<keyof RowData>(
 			columns.map((item) => item.field),
 		);
@@ -329,44 +347,28 @@ const fillDataFromSeries = (
 			if (queryName === column.field) {
 				if (seria.values.length === 0) return;
 
-				column.data.push(parseFloat(seria.values[0].value).toFixed(2));
-				unusedColumnsKeys.delete(column.field);
+				fillAggregationData(
+					column,
+					parseFloat(seria.values[0].value).toFixed(2),
+					unusedColumnsKeys,
+				);
 				return;
 			}
 
 			if (column.type !== 'field' && column.field !== queryName) {
-				const nextQueryData =
-					queryTableData.find((q) => q.queryName === column.field) || null;
-
-				const targetSeria = findSeriaValueFromAnotherQuery(
-					seria.labels,
-					nextQueryData,
+				fillRestAggregationData(
+					column,
+					queryTableData,
+					seria,
+					equalQueriesByLabels,
 				);
-
-				if (targetSeria) {
-					const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
-					if (!isEqual) {
-						equalQueriesByLabels.push(column.field);
-					}
-
-					column.data.push(parseFloat(targetSeria.values[0].value).toFixed(2));
-				} else {
-					column.data.push('N/A');
-				}
-
-				unusedColumnsKeys.delete(column.field);
 
 				return;
 			}
 
 			if (isEqualQuery) return;
 
-			labelEntries.forEach(([key, currentValue]) => {
-				if (column.field === key) {
-					column.data.push(currentValue);
-					unusedColumnsKeys.delete(key);
-				}
-			});
+			fillLabelsData(column, seria, unusedColumnsKeys);
 
 			fillEmptyRowCells(unusedColumnsKeys, columns, column);
 		});
@@ -456,10 +458,6 @@ const generateTableColumns = (
 			title: item.title,
 			width: QUERY_TABLE_CONFIG.width,
 			render: renderColumnCell && renderColumnCell[item.dataIndex],
-			// sorter: item.sortable
-			// 	? (a: RowData, b: RowData): number =>
-			// 			(a[item.key] as number) - (b[item.key] as number)
-			// 	: false,
 		};
 
 		return [...acc, column];
@@ -474,10 +472,14 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 	renderActionCell,
 	renderColumnCell,
 }) => {
-	const dynamicColumns = getDynamicColumns(queryTableData, query);
+	const sortedQueryTableData = queryTableData.sort((a, b) =>
+		a.queryName < b.queryName ? -1 : 1,
+	);
+
+	const dynamicColumns = getDynamicColumns(sortedQueryTableData, query);
 
 	const { filledDynamicColumns, rowsLength } = fillColumnsData(
-		queryTableData,
+		sortedQueryTableData,
 		dynamicColumns,
 	);
 

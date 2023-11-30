@@ -1,10 +1,13 @@
+import './logsTable.styles.scss';
+
 import { Card, Typography } from 'antd';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
-import { contentStyle } from 'container/Trace/Search/config';
+import { CARD_BODY_STYLE } from 'constants/card';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -25,6 +28,8 @@ type LogsTableProps = {
 
 function LogsTable(props: LogsTableProps): JSX.Element {
 	const { viewMode, linesPerRow } = props;
+
+	const { onSetActiveLog } = useActiveLog();
 
 	useFontFaceObserver(
 		[
@@ -72,20 +77,21 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 	const renderContent = useMemo(() => {
 		if (viewMode === 'table') {
 			return (
-				<LogsTableView logs={logs} fields={selected} linesPerRow={linesPerRow} />
+				<LogsTableView
+					onClickExpand={onSetActiveLog}
+					logs={logs}
+					fields={selected}
+					linesPerRow={linesPerRow}
+				/>
 			);
 		}
 
 		return (
-			<Card bodyStyle={contentStyle}>
-				<Virtuoso
-					useWindowScroll
-					totalCount={logs.length}
-					itemContent={getItemContent}
-				/>
+			<Card className="logs-card" bodyStyle={CARD_BODY_STYLE}>
+				<Virtuoso totalCount={logs.length} itemContent={getItemContent} />
 			</Card>
 		);
-	}, [getItemContent, linesPerRow, logs, selected, viewMode]);
+	}, [getItemContent, linesPerRow, logs, onSetActiveLog, selected, viewMode]);
 
 	if (isLoading) {
 		return <Spinner height={20} tip="Getting Logs" />;

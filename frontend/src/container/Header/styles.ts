@@ -1,8 +1,10 @@
-import { Avatar, Layout, Switch, Typography } from 'antd';
+import { Avatar, Dropdown, Layout, Switch, Typography } from 'antd';
 import styled from 'styled-components';
 
 export const Header = styled(Layout.Header)`
 	background: #1f1f1f !important;
+	padding-left: 16px;
+	padding-right: 16px;
 `;
 
 export const Container = styled.div`
@@ -81,4 +83,8 @@ export const NavLinkWrapper = styled.div`
 
 export const AvatarWrapper = styled(Avatar)`
 	background-color: rgba(255, 255, 255, 0.25);
+`;
+
+export const UserDropdown = styled(Dropdown)`
+	cursor: pointer;
 `;

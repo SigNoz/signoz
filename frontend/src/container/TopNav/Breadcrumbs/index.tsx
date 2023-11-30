@@ -8,19 +8,25 @@ const breadcrumbNameMap = {
 	[ROUTES.TRACES_EXPLORER]: 'Traces Explorer',
 	[ROUTES.SERVICE_MAP]: 'Service Map',
 	[ROUTES.USAGE_EXPLORER]: 'Usage Explorer',
-	[ROUTES.INSTRUMENTATION]: 'Get Started',
+	[ROUTES.GET_STARTED]: 'Get Started',
 	[ROUTES.ALL_CHANNELS]: 'Channels',
 	[ROUTES.SETTINGS]: 'Settings',
 	[ROUTES.DASHBOARD]: 'Dashboard',
 	[ROUTES.ALL_ERROR]: 'Exceptions',
 	[ROUTES.VERSION]: 'Status',
 	[ROUTES.ORG_SETTINGS]: 'Organization Settings',
+	[ROUTES.INGESTION_SETTINGS]: 'Ingestion Settings',
 	[ROUTES.MY_SETTINGS]: 'My Settings',
 	[ROUTES.ERROR_DETAIL]: 'Exceptions',
 	[ROUTES.LIST_ALL_ALERT]: 'Alerts',
 	[ROUTES.ALL_DASHBOARD]: 'Dashboard',
 	[ROUTES.LOGS]: 'Logs',
 	[ROUTES.LOGS_EXPLORER]: 'Logs Explorer',
+	[ROUTES.LIVE_LOGS]: 'Live View',
+	[ROUTES.LOGS_PIPELINES]: 'Logs Pipelines',
+	[ROUTES.BILLING]: 'Billing',
+	[ROUTES.SUPPORT]: 'Support',
+	[ROUTES.WORKSPACE_LOCKED]: 'Workspace Locked',
 };
 
 function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {
@@ -47,7 +53,7 @@ function ShowBreadcrumbs(props: RouteComponentProps): JSX.Element {
 
 	const breadcrumbItems = [
 		<Breadcrumb.Item key="home">
-			<Link to="/">Home</Link>
+			<Link to="/services">Home</Link>
 		</Breadcrumb.Item>,
 	].concat(extraBreadcrumbItems);
 

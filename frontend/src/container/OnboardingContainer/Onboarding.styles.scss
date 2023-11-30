@@ -1,0 +1,139 @@
+.container {
+	width: 100%;
+	// max-width: 1440px;
+	margin: 0 auto;
+
+	&.darkMode {
+	}
+
+	&.lightMode {
+		.onboardingHeader {
+			color: #1d1d1d;
+		}
+	}
+}
+
+.moduleSelectContainer {
+	width: 100%;
+}
+
+.onboardingContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	text-align: center;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	width: 100%;
+	color: #e5e7eb;
+}
+
+.onboardingHeader {
+	text-align: center;
+	margin-top: 48px;
+	margin-bottom: 24px;
+}
+
+.onboardingHeader h1 {
+	font-size: 24px;
+	font-weight: 500;
+}
+
+.modulesContainer {
+	display: block;
+	padding: 24px;
+}
+
+.moduleContainerRowStyles {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	gap: 36px;
+	margin: 36px;
+}
+
+.moduleStyles {
+	padding: 0;
+	box-sizing: border-box;
+	cursor: pointer;
+	width: 400px;
+
+	.ant-card-body {
+		padding: 0px;
+	}
+}
+
+.moduleTitleStyle {
+	font-size: 16px;
+	font-weight: 500;
+	padding: 16px;
+	margin: 0px !important;
+
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.moduleStyles.selected {
+	border: 1px solid rgb(232, 112, 64, 0.6) !important;
+
+	.moduleTitleStyle {
+		border-bottom: 1px solid rgb(232, 112, 64, 0.6) !important;
+	}
+}
+
+.moduleDesc {
+	padding: 24px;
+	margin: 0px !important;
+	min-height: 100px;
+}
+
+.modules-container {
+	display: flex;
+}
+
+.continue-to-next-step {
+	display: flex;
+	justify-content: center;
+	margin: 48px 0;
+}
+
+.stepsContainer {
+	position: relative;
+	height: 100%;
+	padding: 24px;
+}
+
+.actionButtonsContainer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	box-sizing: border-box;
+	align-items: center;
+}
+
+.ant-steps-item-description {
+	font-size: 12px !important;
+	max-width: 100% !important;
+}
+
+.supported-environments-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+
+	.environment {
+		cursor: pointer;
+	}
+}
+
+.detailed-docs-link {
+	display: flex;
+	margin: 8px 0;
+	font-size: 12px;
+
+	a {
+		padding-left: 4px;
+	}
+}

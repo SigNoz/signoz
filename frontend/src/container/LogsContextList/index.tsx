@@ -1,7 +1,7 @@
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -87,7 +87,7 @@ function LogsContextList({
 					timestamp: item.timestamp,
 				}));
 
-				if (order === FILTERS.ASC) {
+				if (order === ORDERBY_FILTERS.ASC) {
 					const reversedCurrentLogs = currentLogs.reverse();
 					setLogs((prevLogs) => [...reversedCurrentLogs, ...prevLogs]);
 				} else {
@@ -103,6 +103,7 @@ function LogsContextList({
 		PANEL_TYPES.LIST,
 		{
 			keepPreviousData: true,
+			enabled: !!requestData,
 			onSuccess: handleSuccess,
 		},
 	);
@@ -110,7 +111,7 @@ function LogsContextList({
 	const handleShowNextLines = useCallback(() => {
 		if (isDisabledFetch) return;
 
-		const log = order === FILTERS.ASC ? firstLog : lastLog;
+		const log = order === ORDERBY_FILTERS.ASC ? firstLog : lastLog;
 
 		const newRequestData = getRequestData({
 			stagedQueryData: currentStagedQueryData,
@@ -153,14 +154,20 @@ function LogsContextList({
 
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => (
-			<RawLogView isReadOnly key={log.id} data={log} linesPerRow={1} />
+			<RawLogView
+				isReadOnly
+				isTextOverflowEllipsisDisabled
+				key={log.id}
+				data={log}
+				linesPerRow={1}
+			/>
 		),
 		[],
 	);
 
 	return (
 		<>
-			{order === FILTERS.ASC && (
+			{order === ORDERBY_FILTERS.ASC && (
 				<ShowButton
 					isLoading={isFetching}
 					isDisabled={isDisabledFetch}
@@ -179,11 +186,11 @@ function LogsContextList({
 					initialTopMostItemIndex={0}
 					data={logs}
 					itemContent={getItemContent}
-					followOutput={order === FILTERS.DESC}
+					followOutput={order === ORDERBY_FILTERS.DESC}
 				/>
 			</ListContainer>
 
-			{order === FILTERS.DESC && (
+			{order === ORDERBY_FILTERS.DESC && (
 				<ShowButton
 					isLoading={isFetching}
 					isDisabled={isDisabledFetch}

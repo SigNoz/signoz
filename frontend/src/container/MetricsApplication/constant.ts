@@ -1,3 +1,6 @@
+import { DownloadOptions } from 'container/Download/Download.types';
+import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
+
 export const legend = {
 	address: '{{address}}',
 };
@@ -11,12 +14,20 @@ export const LATENCY_AGGREGATEOPERATOR_SPAN_METRICS = [
 ];
 export const OPERATION_LEGENDS = ['Operations'];
 
+export const MENU_ITEMS = [MenuItemKeys.View, MenuItemKeys.CreateAlerts];
+
 export enum FORMULA {
 	ERROR_PERCENTAGE = 'A*100/B',
 	DATABASE_CALLS_AVG_DURATION = 'A/B',
+	APDEX_TRACES = '((B + C)/2)/A',
+	APDEX_DELTA_SPAN_METRICS = '(B + C/2)/A',
+	APDEX_CUMULATIVE_SPAN_METRICS = '((B + C)/2)/A',
 }
 
+export const TOP_LEVEL_OPERATIONS = ['{{.top_level_operations}}'];
+
 export enum GraphTitle {
+	APDEX = 'Apdex',
 	LATENCY = 'Latency',
 	RATE_PER_OPS = 'Rate (ops/s)',
 	ERROR_PERCENTAGE = 'Error Percentage',
@@ -34,12 +45,7 @@ export enum KeyOperationTableHeader {
 	P99 = 'P99',
 	NUM_OF_CALLS = 'Number of Calls',
 	ERROR_RATE = 'Error Rate',
-}
-
-export enum DataType {
-	STRING = 'string',
-	FLOAT64 = 'float64',
-	INT64 = 'int64',
+	OPERATION_PR_SECOND = 'Op/s',
 }
 
 export enum MetricsType {
@@ -48,7 +54,9 @@ export enum MetricsType {
 }
 
 export enum WidgetKeys {
+	Le = 'le',
 	Name = 'name',
+	HasError = 'hasError',
 	Address = 'address',
 	DurationNano = 'durationNano',
 	StatusCode = 'status_code',
@@ -66,3 +74,8 @@ export enum WidgetKeys {
 	SignozExternalCallLatencySum = 'signoz_external_call_latency_sum',
 	Signoz_latency_bucket = 'signoz_latency_bucket',
 }
+
+export const topOperationMetricsDownloadOptions: DownloadOptions = {
+	isDownloadEnabled: true,
+	fileName: 'top-operation',
+} as const;

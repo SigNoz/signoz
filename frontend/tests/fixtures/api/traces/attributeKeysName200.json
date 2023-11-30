@@ -1,0 +1,56 @@
+{
+	"status": "success",
+	"data": {
+		"attributeKeys": [
+			{
+				"key": "dbName",
+				"dataType": "string",
+				"type": "tag",
+				"isColumn": true,
+				"isJSON": false
+			},
+			{
+				"key": "host.name",
+				"dataType": "string",
+				"type": "resource",
+				"isColumn": false,
+				"isJSON": false
+			},
+			{
+				"key": "process.runtime.name",
+				"dataType": "string",
+				"type": "resource",
+				"isColumn": false,
+				"isJSON": false
+			},
+			{
+				"key": "service.name",
+				"dataType": "string",
+				"type": "resource",
+				"isColumn": false,
+				"isJSON": false
+			},
+			{
+				"key": "serviceName",
+				"dataType": "string",
+				"type": "tag",
+				"isColumn": true,
+				"isJSON": false
+			},
+			{
+				"key": "name",
+				"dataType": "string",
+				"type": "tag",
+				"isColumn": true,
+				"isJSON": false
+			},
+			{
+				"key": "telemetry.sdk.name",
+				"dataType": "string",
+				"type": "resource",
+				"isColumn": false,
+				"isJSON": false
+			}
+		]
+	}
+}

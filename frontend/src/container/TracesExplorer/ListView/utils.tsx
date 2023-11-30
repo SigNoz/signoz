@@ -36,7 +36,11 @@ export const getListColumns = (
 			width: 145,
 			render: (date: string): JSX.Element => {
 				const day = dayjs(date);
-				return <DateText>{day.format('YYYY/MM/DD HH:mm:ss')}</DateText>;
+				return (
+					<DateText data-testid="trace-explorer-date">
+						{day.format('YYYY/MM/DD HH:mm:ss')}
+					</DateText>
+				);
 			},
 		},
 	];
@@ -48,18 +52,22 @@ export const getListColumns = (
 			key: `${key}-${dataType}-${type}`,
 			render: (value): JSX.Element => {
 				if (value === '') {
-					return <Typography>N/A</Typography>;
+					return <Typography data-testid={key}>N/A</Typography>;
 				}
 
 				if (key === 'httpMethod' || key === 'responseStatusCode') {
-					return <Tag color="magenta">{value}</Tag>;
+					return (
+						<Tag data-testid={key} color="magenta">
+							{value}
+						</Tag>
+					);
 				}
 
 				if (key === 'durationNano') {
-					return <Typography>{getMs(value)}ms</Typography>;
+					return <Typography data-testid={key}>{getMs(value)}ms</Typography>;
 				}
 
-				return <Typography>{value}</Typography>;
+				return <Typography data-testid={key}>{value}</Typography>;
 			},
 		})) || [];
 

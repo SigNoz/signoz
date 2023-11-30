@@ -11,7 +11,6 @@ import (
 	plog "github.com/prometheus/common/promlog"
 	pconfig "github.com/prometheus/prometheus/config"
 	plabels "github.com/prometheus/prometheus/model/labels"
-	"github.com/prometheus/prometheus/promql"
 	pql "github.com/prometheus/prometheus/promql"
 	pstorage "github.com/prometheus/prometheus/storage"
 	premote "github.com/prometheus/prometheus/storage/remote"
@@ -91,7 +90,7 @@ func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 }
 
 func (p *PqlEngine) RunAlertQuery(ctx context.Context, qs string, t time.Time) (pql.Vector, error) {
-	q, err := p.engine.NewInstantQuery(p.fanoutStorage, &promql.QueryOpts{}, qs, t)
+	q, err := p.engine.NewInstantQuery(ctx, p.fanoutStorage, nil, qs, t)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +106,9 @@ func (p *PqlEngine) RunAlertQuery(ctx context.Context, qs string, t time.Time) (
 		return v, nil
 	case pql.Scalar:
 		return pql.Vector{pql.Sample{
-			Point:  pql.Point{T: v.T, V: v.V, H: nil},
+			T:      v.T,
+			F:      v.V,
+			H:      nil,
 			Metric: plabels.Labels{},
 		}}, nil
 	default:

@@ -1,0 +1,141 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PipelinePage container test should render AddNewPipeline section 1`] = `<DocumentFragment />`;
+
+exports[`PipelinePage should render PipelineExpandView section 1`] = `
+<DocumentFragment>
+  .c2 {
+  margin: 0.125rem;
+  padding: 0.313rem;
+  border: none;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+}
+
+.c1 {
+  background-color: #1668DC;
+  height: 1rem;
+  width: 1rem;
+  font-size: 0.75rem;
+  line-height: 0.813rem;
+  font-weight: 400;
+}
+
+.c0 .ant-table-tbody > tr > td {
+  border: none;
+}
+
+.c0 .ant-table-tbody > tr:last-child > td {
+  border: none;
+}
+
+.c0 .ant-table-content {
+  background: #1d1d1d;
+}
+
+<div
+    class="ant-table-wrapper c0 css-dev-only-do-not-override-2i2tap"
+  >
+    <div
+      class="ant-spin-nested-loading css-dev-only-do-not-override-2i2tap"
+    >
+      <div
+        class="ant-spin-container"
+      >
+        <div
+          class="ant-table ant-table-small"
+        >
+          <div
+            class="ant-table-container"
+          >
+            <div
+              class="ant-table-content"
+            >
+              <table
+                style="table-layout: auto;"
+              >
+                <colgroup>
+                  <col
+                    style="width: 150px;"
+                  />
+                </colgroup>
+                <tbody
+                  class="ant-table-tbody"
+                >
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="grokusecommon"
+                    draggable="true"
+                  >
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: right;"
+                    >
+                      <span
+                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-2i2tap"
+                      >
+                        <span
+                          class="ant-avatar-string"
+                          style="transform: scale(1) translateX(-50%);"
+                        >
+                          1
+                        </span>
+                      </span>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: left;"
+                    >
+                      <div
+                        class="c2"
+                      >
+                        grok use common asd
+                      </div>
+                    </td>
+                  </tr>
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    data-row-key="renameauth"
+                    draggable="true"
+                  >
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: right;"
+                    >
+                      <span
+                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-2i2tap"
+                      >
+                        <span
+                          class="ant-avatar-string"
+                          style="transform: scale(1) translateX(-50%);"
+                        >
+                          2
+                        </span>
+                      </span>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: left;"
+                    >
+                      <div
+                        class="c2"
+                      >
+                        rename auth
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div
+            class="ant-table-footer"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

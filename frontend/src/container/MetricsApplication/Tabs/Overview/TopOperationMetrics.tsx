@@ -1,15 +1,15 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { topOperationMetricsDownloadOptions } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { topOperationQueries } from 'container/MetricsApplication/MetricsPageQueries/TopOperationQueries';
 import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { isEmpty } from 'lodash-es';
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -25,11 +25,13 @@ import { getTableColumnRenderer } from './TableRenderer/TableColumnRenderer';
 function TopOperationMetrics(): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
-	const [errorMessage, setErrorMessage] = useState<string | undefined>('');
+	const { notifications } = useNotifications();
+
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
 	const { queries } = useResourceAttribute();
 
 	const selectedTraceTags = JSON.stringify(
@@ -55,10 +57,7 @@ function TopOperationMetrics(): JSX.Element {
 
 	const updatedQuery = useStepInterval(keyOperationWidget.query);
 
-	const isEmptyWidget = useMemo(
-		() => keyOperationWidget.id === 'empty' || isEmpty(keyOperationWidget),
-		[keyOperationWidget],
-	);
+	const isEmptyWidget = keyOperationWidget.id === PANEL_TYPES.EMPTY_WIDGET;
 
 	const { data, isLoading } = useGetQueryRange(
 		{
@@ -66,7 +65,7 @@ function TopOperationMetrics(): JSX.Element {
 			graphType: keyOperationWidget?.panelTypes,
 			query: updatedQuery,
 			globalSelectedInterval,
-			variables: getDashboardVariables(),
+			variables: {},
 		},
 		{
 			queryKey: [
@@ -80,7 +79,7 @@ function TopOperationMetrics(): JSX.Element {
 			enabled: !isEmptyWidget,
 			refetchOnMount: false,
 			onError: (error) => {
-				setErrorMessage(error.message);
+				notifications.error({ message: error.message });
 			},
 		},
 	);
@@ -104,10 +103,6 @@ function TopOperationMetrics(): JSX.Element {
 		[servicename, minTime, maxTime, selectedTraceTags],
 	);
 
-	if (errorMessage) {
-		return <div>{errorMessage}</div>;
-	}
-
 	return (
 		<QueryTable
 			title={title}
@@ -115,6 +110,7 @@ function TopOperationMetrics(): JSX.Element {
 			queryTableData={queryTableData}
 			loading={isLoading}
 			renderColumnCell={renderColumnCell}
+			downloadOption={topOperationMetricsDownloadOptions}
 		/>
 	);
 }

@@ -1,0 +1,31 @@
+.value-graph-container {
+    width: 50%;
+    height: 50%;
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+
+    .value-graph-text {
+        font-size: 2.5vw;
+        text-align: center;
+    }
+
+    .value-graph-bgconflict {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+    }
+
+    .value-graph-textconflict {
+        margin-left: 10px;
+        margin-top: 20px;
+    }
+
+    .value-graph-icon {
+        color: #E89A3C;
+    }
+}

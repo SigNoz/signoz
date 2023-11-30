@@ -36,8 +36,8 @@ export interface BuilderQuerieswithFormulaProps {
 	legends: string[];
 	disabled: boolean[];
 	groupBy?: BaseAutocompleteData[];
-	expression: string;
-	legendFormula: string;
+	expressions: string[];
+	legendFormulas: string[];
 	additionalItems: TagFilterItem[][];
 	aggregateOperators: MetricAggregateOperator[];
 	dataSource: DataSource;
@@ -56,7 +56,19 @@ export interface LatencyProps {
 	topLevelOperationsRoute: string[];
 }
 
+export interface ApDexProps {
+	servicename: IServiceName['servicename'];
+	tagFilterItems: TagFilterItem[];
+	topLevelOperationsRoute: string[];
+	threashold: number;
+}
+
 export interface TableRendererProps {
 	columnName: string;
 	renderFunction: (record: RowData) => ReactNode;
+}
+
+export interface ApDexMetricsQueryBuilderQueriesProps extends ApDexProps {
+	delta: boolean;
+	metricsBuckets: number[];
 }

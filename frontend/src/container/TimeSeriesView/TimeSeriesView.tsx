@@ -1,7 +1,9 @@
-import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
-import getChartData from 'lib/getChartData';
-import { useMemo } from 'react';
+import Uplot from 'components/Uplot';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { useMemo, useRef } from 'react';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
@@ -13,31 +15,45 @@ function TimeSeriesView({
 	isError,
 	yAxisUnit,
 }: TimeSeriesViewProps): JSX.Element {
-	const chartData = useMemo(
-		() =>
-			getChartData({
-				queryData: [
-					{
-						queryData: data?.payload?.data?.result || [],
-					},
-				],
-			}),
-		[data?.payload?.data?.result],
-	);
+	const graphRef = useRef<HTMLDivElement>(null);
+
+	const chartData = useMemo(() => getUPlotChartData(data?.payload), [
+		data?.payload,
+	]);
+
+	const isDarkMode = useIsDarkMode();
+
+	const width = graphRef.current?.clientWidth
+		? graphRef.current.clientWidth
+		: 700;
+
+	const height = graphRef.current?.clientWidth
+		? graphRef.current.clientHeight
+		: 300;
+
+	const chartOptions = getUPlotChartOptions({
+		yAxisUnit: yAxisUnit || '',
+		apiResponse: data?.payload,
+		dimensions: {
+			width,
+			height,
+		},
+		isDarkMode,
+	});
 
 	return (
 		<Container>
 			{isLoading && <Spinner height="50vh" size="small" tip="Loading..." />}
 			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
-			{!isLoading && !isError && (
-				<Graph
-					animate={false}
-					data={chartData}
-					yAxisUnit={yAxisUnit}
-					name="tracesExplorerGraph"
-					type="line"
-				/>
-			)}
+			<div
+				className="graph-container"
+				style={{ height: '100%', width: '100%' }}
+				ref={graphRef}
+			>
+				{!isLoading && !isError && chartData && chartOptions && (
+					<Uplot data={chartData} options={chartOptions} />
+				)}
+			</div>
 		</Container>
 	);
 }

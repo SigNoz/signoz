@@ -3,6 +3,7 @@ import {
 	initialQueryPromQLData,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	AlertDef,
@@ -40,6 +41,7 @@ export const alertDefaults: AlertDef = {
 			},
 			queryType: EQueryType.QUERY_BUILDER,
 			panelType: PANEL_TYPES.TIME_SERIES,
+			unit: undefined,
 		},
 		op: defaultCompareOp,
 		matchType: defaultMatchType,
@@ -69,13 +71,14 @@ export const logAlertDefaults: AlertDef = {
 			},
 			queryType: EQueryType.QUERY_BUILDER,
 			panelType: PANEL_TYPES.TIME_SERIES,
+			unit: undefined,
 		},
 		op: defaultCompareOp,
 		matchType: '4',
 	},
 	labels: {
 		severity: 'warning',
-		details: `${window.location.protocol}//${window.location.host}/logs`,
+		details: `${window.location.protocol}//${window.location.host}${ROUTES.LOGS_EXPLORER}`,
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
@@ -99,6 +102,7 @@ export const traceAlertDefaults: AlertDef = {
 			},
 			queryType: EQueryType.QUERY_BUILDER,
 			panelType: PANEL_TYPES.TIME_SERIES,
+			unit: undefined,
 		},
 		op: defaultCompareOp,
 		matchType: '4',
@@ -129,6 +133,7 @@ export const exceptionAlertDefaults: AlertDef = {
 			},
 			queryType: EQueryType.QUERY_BUILDER,
 			panelType: PANEL_TYPES.TIME_SERIES,
+			unit: undefined,
 		},
 		op: defaultCompareOp,
 		matchType: '4',

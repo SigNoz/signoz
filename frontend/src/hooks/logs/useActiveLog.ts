@@ -1,6 +1,10 @@
-import { OPERATORS, QueryBuilderKeys } from 'constants/queryBuilder';
+import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useNotifications } from 'hooks/useNotifications';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { useCallback, useMemo, useState } from 'react';
@@ -9,11 +13,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
-import { SuccessResponse } from 'types/api';
 import { ILog } from 'types/api/logs/log';
 import {
 	BaseAutocompleteData,
-	IQueryAutocompleteResponse,
+	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ILogsReducer } from 'types/reducer/logs';
@@ -31,6 +34,7 @@ export const useActiveLog = (): UseActiveLog => {
 	const { pathname } = useLocation();
 	const history = useHistory();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const { notifications } = useNotifications();
 
 	const isLogsPage = useMemo(() => pathname === ROUTES.LOGS, [pathname]);
 
@@ -60,48 +64,66 @@ export const useActiveLog = (): UseActiveLog => {
 	const onClearActiveLog = useCallback((): void => setActiveLog(null), []);
 
 	const onAddToQueryExplorer = useCallback(
-		(fieldKey: string, fieldValue: string, operator: string): void => {
-			const keysAutocomplete: BaseAutocompleteData[] =
-				queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
-					[QueryBuilderKeys.GET_AGGREGATE_KEYS],
-					{ exact: false },
-				)?.payload.attributeKeys || [];
+		async (
+			fieldKey: string,
+			fieldValue: string,
+			operator: string,
+			isJSON?: boolean,
+			dataType?: DataTypes,
+		): Promise<void> => {
+			try {
+				const keysAutocompleteResponse = await queryClient.fetchQuery(
+					[QueryBuilderKeys.GET_AGGREGATE_KEYS, fieldKey],
+					async () =>
+						getAggregateKeys({
+							searchText: fieldKey,
+							aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
+							dataSource: currentQuery.builder.queryData[0].dataSource,
+							aggregateAttribute:
+								currentQuery.builder.queryData[0].aggregateAttribute.key,
+						}),
+				);
 
-			const existAutocompleteKey = chooseAutocompleteFromCustomValue(
-				keysAutocomplete,
-				fieldKey,
-			);
+				const keysAutocomplete: BaseAutocompleteData[] =
+					keysAutocompleteResponse.payload?.attributeKeys || [];
 
-			const currentOperator =
-				Object.keys(OPERATORS).find((op) => op === operator) || '';
+				const existAutocompleteKey = chooseAutocompleteFromCustomValue(
+					keysAutocomplete,
+					fieldKey,
+					isJSON,
+					dataType,
+				);
 
-			const nextQuery: Query = {
-				...currentQuery,
-				builder: {
-					...currentQuery.builder,
-					queryData: currentQuery.builder.queryData.map((item) => ({
-						...item,
-						filters: {
-							...item.filters,
-							items: [
-								...item.filters.items.filter(
-									(item) => item.key?.id !== existAutocompleteKey.id,
-								),
-								{
-									id: uuid(),
-									key: existAutocompleteKey,
-									op: currentOperator,
-									value: fieldValue,
-								},
-							],
-						},
-					})),
-				},
-			};
+				const currentOperator = getOperatorValue(operator);
 
-			redirectWithQueryBuilderData(nextQuery);
+				const nextQuery: Query = {
+					...currentQuery,
+					builder: {
+						...currentQuery.builder,
+						queryData: currentQuery.builder.queryData.map((item) => ({
+							...item,
+							filters: {
+								...item.filters,
+								items: [
+									...item.filters.items,
+									{
+										id: uuid(),
+										key: existAutocompleteKey,
+										op: currentOperator,
+										value: fieldValue,
+									},
+								],
+							},
+						})),
+					},
+				};
+
+				redirectWithQueryBuilderData(nextQuery);
+			} catch {
+				notifications.error({ message: SOMETHING_WENT_WRONG });
+			}
 		},
-		[currentQuery, queryClient, redirectWithQueryBuilderData],
+		[currentQuery, notifications, queryClient, redirectWithQueryBuilderData],
 	);
 
 	const onAddToQueryLogs = useCallback(
