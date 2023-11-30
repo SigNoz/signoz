@@ -275,6 +275,57 @@ var operatorTest = []struct {
 			},
 		},
 		IsValid: false,
+	}, {
+		Name: "Timestamp Parser - valid",
+		Operator: PipelineOperator{
+			ID:         "time",
+			Type:       "time_parser",
+			ParseFrom:  "attributes.test_timestamp",
+			LayoutType: "epoch",
+			Layout:     "s",
+		},
+		IsValid: true,
+	}, {
+		Name: "Timestamp Parser - invalid - bad parsefrom attribute",
+		Operator: PipelineOperator{
+			ID:         "time",
+			Type:       "time_parser",
+			ParseFrom:  "timestamp",
+			LayoutType: "epoch",
+			Layout:     "s",
+		},
+		IsValid: false,
+	}, {
+		Name: "Timestamp Parser - unsupported layout_type",
+		Operator: PipelineOperator{
+			ID:        "time",
+			Type:      "time_parser",
+			ParseFrom: "attributes.test_timestamp",
+			// TODO(Raj): Maybe add support for gotime format
+			LayoutType: "gotime",
+			Layout:     "Mon Jan 2 15:04:05 -0700 MST 2006",
+		},
+		IsValid: false,
+	}, {
+		Name: "Timestamp Parser - invalid epoch layout",
+		Operator: PipelineOperator{
+			ID:         "time",
+			Type:       "time_parser",
+			ParseFrom:  "attributes.test_timestamp",
+			LayoutType: "epoch",
+			Layout:     "%Y-%m-%d",
+		},
+		IsValid: false,
+	}, {
+		Name: "Timestamp Parser - invalid strptime layout",
+		Operator: PipelineOperator{
+			ID:         "time",
+			Type:       "time_parser",
+			ParseFrom:  "attributes.test_timestamp",
+			LayoutType: "strptime",
+			Layout:     "%U",
+		},
+		IsValid: false,
 	},
 }
 

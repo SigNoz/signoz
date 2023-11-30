@@ -2,6 +2,7 @@ import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal, Tooltip, Typography } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
+import { useNotifications } from 'hooks/useNotifications';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
@@ -32,6 +33,8 @@ function DeleteButton({
 
 	const queryClient = useQueryClient();
 
+	const { notifications } = useNotifications();
+
 	const { t } = useTranslation(['dashboard']);
 
 	const deleteDashboardMutation = useDeleteDashboard(id);
@@ -49,6 +52,11 @@ function DeleteButton({
 			onOk() {
 				deleteDashboardMutation.mutateAsync(undefined, {
 					onSuccess: () => {
+						notifications.success({
+							message: t('dashboard:delete_dashboard_success', {
+								name,
+							}),
+						});
 						queryClient.invalidateQueries([REACT_QUERY_KEY.GET_ALL_DASHBOARDS]);
 					},
 				});
@@ -57,7 +65,7 @@ function DeleteButton({
 			okButtonProps: { danger: true },
 			centered: true,
 		});
-	}, [modal, name, deleteDashboardMutation, queryClient]);
+	}, [modal, name, deleteDashboardMutation, notifications, t, queryClient]);
 
 	const getDeleteTooltipContent = (): string => {
 		if (isLocked) {
