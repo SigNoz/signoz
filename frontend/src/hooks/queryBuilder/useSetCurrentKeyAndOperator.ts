@@ -19,7 +19,10 @@ export const useSetCurrentKeyAndOperator = (
 		const isSuggestKey = keys?.some(
 			(el) => el?.key === getRemovePrefixFromKey(tagKey),
 		);
-		if (isSuggestKey || keys.length === 0) {
+		if (
+			isSuggestKey ||
+			(keys.filter((key) => key.id === tagKey) || []).length === 0
+		) {
 			key = tagKey || '';
 			operator = tagOperator || '';
 			result = tagValue || [];
