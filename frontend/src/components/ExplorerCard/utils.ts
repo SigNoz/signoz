@@ -153,7 +153,7 @@ export const deleteViewHandler = ({
 			if (viewId === viewKey) {
 				redirectWithQueryBuilderData(
 					updateAllQueriesOperators(
-						initialQueriesMap.traces,
+						initialQueriesMap[sourcePage],
 						panelType || PANEL_TYPES.LIST,
 						sourcePage,
 					),
