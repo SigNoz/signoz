@@ -17,6 +17,7 @@ export const processorTypes: Array<ProcessorType> = [
 	{ key: 'json_parser', value: 'json_parser', label: 'Json Parser' },
 	{ key: 'trace_parser', value: 'trace_parser', label: 'Trace Parser' },
 	{ key: 'time_parser', value: 'time_parser', label: 'Timestamp Parser' },
+	{ key: 'severity_parser', value: 'severity_parser', label: 'Severity Parser' },
 	{ key: 'add', value: 'add', label: 'Add' },
 	{ key: 'remove', value: 'remove', label: 'Remove' },
 	// { key: 'retain', value: 'retain', label: 'Retain' }, @Chintan - Commented as per Nitya's suggestion
@@ -315,6 +316,53 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 				return layoutType === 'strptime';
 			},
 			initialValue: '%Y-%m-%dT%H:%M:%S.%f%z',
+		},
+	],
+	severity_parser: [
+		{
+			id: 1,
+			fieldName: 'Name of Severity Parsing Processor',
+			placeholder: 'processor_name_placeholder',
+			name: 'name',
+		},
+		{
+			id: 2,
+			fieldName: 'Parse Severity Value From',
+			placeholder: 'processor_parsefrom_placeholder',
+			name: 'parse_from',
+			initialValue: 'attributes.logLevel',
+		},
+		{
+			id: 3,
+			fieldName: 'Values for level DEBUG',
+			placeholder: 'Specify comma separated values. Eg: debug, 2xx',
+			name: 'mapping.debug',
+			rules: [],
+			initialValue: 'debug',
+		},
+		{
+			id: 4,
+			fieldName: 'Values for level INFO',
+			placeholder: 'Specify comma separated values. Eg: info, 3xx',
+			name: 'mapping.info',
+			rules: [],
+			initialValue: 'info',
+		},
+		{
+			id: 5,
+			fieldName: 'Values for level WARN',
+			placeholder: 'Specify comma separated values. Eg: warning, 4xx',
+			name: 'mapping.warn',
+			rules: [],
+			initialValue: 'warn',
+		},
+		{
+			id: 6,
+			fieldName: 'Values for level ERROR',
+			placeholder: 'Specify comma separated values. Eg: error, 5xx',
+			name: 'mapping.error',
+			rules: [],
+			initialValue: 'error',
 		},
 	],
 	retain: [
