@@ -80,7 +80,11 @@ export const getUPlotChartOptions = ({
 				auto: true, // Automatically adjust scale range
 			},
 			y: {
-				...getYScale(thresholds, apiResponse?.data.result, yAxisUnit),
+				...getYScale(
+					thresholds,
+					apiResponse?.data.newResult.data.result,
+					yAxisUnit,
+				),
 			},
 		},
 		plugins: [
