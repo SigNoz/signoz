@@ -1,3 +1,5 @@
+import './logs.styles.scss';
+
 import { Button, Col, Divider, Popover, Row, Select, Space } from 'antd';
 import { QueryParams } from 'constants/query';
 import LogControls from 'container/LogControls';
@@ -14,9 +16,9 @@ import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { SET_DETAILED_LOG_DATA, SET_LOGS_ORDER } from 'types/actions/logs';
-import { ILog } from 'types/api/logs/log';
+import { SET_LOGS_ORDER } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import {
 	defaultSelectStyle,
@@ -32,16 +34,6 @@ function Logs(): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const { order } = useSelector<AppState, ILogsReducer>((store) => store.logs);
 	const location = useLocation();
-
-	const showExpandedLog = useCallback(
-		(logData: ILog) => {
-			dispatch({
-				type: SET_DETAILED_LOG_DATA,
-				payload: logData,
-			});
-		},
-		[dispatch],
-	);
 
 	const {
 		viewModeOptionList,
@@ -104,11 +96,12 @@ function Logs(): JSX.Element {
 
 			<Row gutter={20} wrap={false}>
 				<LogsFilters />
-				<Col flex={1}>
+				<Col flex={1} className="logs-col-container">
 					<Row>
 						<Col flex={1}>
 							<Space align="baseline" direction="horizontal">
 								<Select
+									getPopupContainer={popupContainer}
 									style={defaultSelectStyle}
 									value={selectedViewModeOption}
 									onChange={onChangeVeiwMode}
@@ -119,12 +112,17 @@ function Logs(): JSX.Element {
 								</Select>
 
 								{isFormatButtonVisible && (
-									<Popover placement="right" content={renderPopoverContent}>
+									<Popover
+										getPopupContainer={popupContainer}
+										placement="right"
+										content={renderPopoverContent}
+									>
 										<Button>Format</Button>
 									</Popover>
 								)}
 
 								<Select
+									getPopupContainer={popupContainer}
 									style={defaultSelectStyle}
 									defaultValue={order}
 									onChange={handleChangeOrder}
@@ -141,11 +139,7 @@ function Logs(): JSX.Element {
 						</Col>
 					</Row>
 
-					<LogsTable
-						viewMode={viewMode}
-						linesPerRow={linesPerRow}
-						onClickExpand={showExpandedLog}
-					/>
+					<LogsTable viewMode={viewMode} linesPerRow={linesPerRow} />
 				</Col>
 			</Row>
 

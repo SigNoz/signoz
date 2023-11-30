@@ -1,0 +1,24 @@
+{
+	"status": "success",
+	"data": {
+		"resultType": "",
+		"result": [
+			{
+				"queryName": "A",
+				"series": null,
+				"list": [
+					{
+						"timestamp": "0001-01-01T00:00:00Z",
+						"data": {
+							"span_count": 51,
+							"subQuery.durationNano": 1533445000,
+							"subQuery.name": "HTTP GET /dispatch",
+							"subQuery.serviceName": "frontend",
+							"traceID": "0000000000000000013e51e33c929173"
+						}
+					}
+				]
+			}
+		]
+	}
+}

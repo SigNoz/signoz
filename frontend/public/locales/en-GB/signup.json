@@ -8,7 +8,7 @@
   "label_orgname": "Organization Name",
   "placeholder_orgname": "Your Company",
   "prompt_keepme_posted": "Keep me updated on new SigNoz features",
-  "prompt_anonymise": "Anonymise my usage date. We collect data to measure product usage",
+  "prompt_anonymise": "Anonymise my usage data. We collect data to measure product usage",
   "failed_confirm_password": "Passwords don’t match. Please try again",
   "unexpected_error": "Something went wrong",
   "failed_to_initiate_login": "Signup completed but failed to initiate login",

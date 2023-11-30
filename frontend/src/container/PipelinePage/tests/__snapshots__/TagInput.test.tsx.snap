@@ -1,0 +1,32 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Pipeline Page should render TagInput section 1`] = `
+<DocumentFragment>
+  .c0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  width: 100%;
+}
+
+<div
+    class="c0"
+  >
+    <span
+      class="ant-input-affix-wrapper css-dev-only-do-not-override-2i2tap"
+      style="width: 78px; vertical-align: top; flex: 1;"
+    >
+      <span
+        class="ant-input-prefix"
+      />
+      <input
+        class="ant-input css-dev-only-do-not-override-2i2tap"
+        placeholder=""
+        type="text"
+        value=""
+      />
+    </span>
+  </div>
+</DocumentFragment>
+`;

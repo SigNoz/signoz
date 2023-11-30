@@ -10,6 +10,8 @@ describe('executeSearchQueries', () => {
 		uuid: uuid(),
 		created_at: '',
 		updated_at: '',
+		created_by: '',
+		updated_by: '',
 		data: {
 			title: 'first dashboard',
 			variables: {},
@@ -20,6 +22,8 @@ describe('executeSearchQueries', () => {
 		uuid: uuid(),
 		created_at: '',
 		updated_at: '',
+		created_by: '',
+		updated_by: '',
 		data: {
 			title: 'second dashboard',
 			variables: {},
@@ -30,6 +34,8 @@ describe('executeSearchQueries', () => {
 		uuid: uuid(),
 		created_at: '',
 		updated_at: '',
+		created_by: '',
+		updated_by: '',
 		data: {
 			title: 'third dashboard (with special characters +?\\)',
 			variables: {},

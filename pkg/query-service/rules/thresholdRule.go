@@ -14,9 +14,11 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"go.signoz.io/signoz/pkg/query-service/converter"
 
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
@@ -26,6 +28,7 @@ import (
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	"go.signoz.io/signoz/pkg/query-service/formatter"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -72,6 +75,7 @@ func NewThresholdRule(
 	id string,
 	p *PostableRule,
 	opts ThresholdRuleOpts,
+	featureFlags interfaces.FeatureLookup,
 ) (*ThresholdRule, error) {
 
 	if p.RuleCondition == nil {
@@ -103,7 +107,7 @@ func NewThresholdRule(
 		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
-	t.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
+	t.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, featureFlags)
 
 	zap.S().Info("msg:", "creating new alerting rule", "\t name:", t.name, "\t condition:", t.ruleCondition.String(), "\t generatorURL:", t.GeneratorURL())
 
@@ -128,13 +132,6 @@ func (r *ThresholdRule) GeneratorURL() string {
 
 func (r *ThresholdRule) PreferredChannels() []string {
 	return r.preferredChannels
-}
-
-func (r *ThresholdRule) target() *float64 {
-	if r.ruleCondition == nil {
-		return nil
-	}
-	return r.ruleCondition.Target
 }
 
 func (r *ThresholdRule) targetVal() float64 {
@@ -210,26 +207,6 @@ func (r *ThresholdRule) Labels() labels.BaseLabels {
 // Annotations returns the annotations of the alerting rule.
 func (r *ThresholdRule) Annotations() labels.BaseLabels {
 	return r.annotations
-}
-
-func (r *ThresholdRule) sample(alert *Alert, ts time.Time) Sample {
-	lb := labels.NewBuilder(r.labels)
-	alertLabels := alert.Labels.(labels.Labels)
-	for _, l := range alertLabels {
-		lb.Set(l.Name, l.Value)
-	}
-
-	lb.Set(labels.MetricNameLabel, alertMetricName)
-	lb.Set(labels.AlertNameLabel, r.name)
-	lb.Set(labels.AlertRuleIdLabel, r.ID())
-	lb.Set(labels.AlertStateLabel, alert.State.String())
-
-	s := Sample{
-		Metric: lb.Labels(),
-		Point:  Point{T: timestamp.FromTime(ts), V: 1},
-	}
-
-	return s
 }
 
 // GetEvaluationDuration returns the time in seconds it took to evaluate the alerting rule.
@@ -324,6 +301,14 @@ func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDela
 	})
 	notifyFunc(ctx, "", alerts...)
 }
+
+func (r *ThresholdRule) Unit() string {
+	if r.ruleCondition != nil && r.ruleCondition.CompositeQuery != nil {
+		return r.ruleCondition.CompositeQuery.Unit
+	}
+	return ""
+}
+
 func (r *ThresholdRule) CheckCondition(v float64) bool {
 
 	if math.IsNaN(v) {
@@ -336,16 +321,20 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 		return false
 	}
 
-	zap.S().Debugf("target:", v, *r.ruleCondition.Target)
+	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
+
+	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
+
+	zap.S().Debugf("Checking condition for rule: %s, Converter=%s, Value=%f, Target=%f, CompareOp=%s", r.Name(), unitConverter.Name(), v, value.F, r.ruleCondition.CompareOp)
 	switch r.ruleCondition.CompareOp {
 	case ValueIsEq:
-		return v == *r.ruleCondition.Target
+		return v == value.F
 	case ValueIsNotEq:
-		return v != *r.ruleCondition.Target
+		return v != value.F
 	case ValueIsBelow:
-		return v < *r.ruleCondition.Target
+		return v < value.F
 	case ValueIsAbove:
-		return v > *r.ruleCondition.Target
+		return v > value.F
 	default:
 		return false
 	}
@@ -387,6 +376,16 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 		Step:           60,
 		CompositeQuery: r.ruleCondition.CompositeQuery,
 	}
+}
+
+func (r *ThresholdRule) shouldSkipFirstRecord() bool {
+	shouldSkip := false
+	for _, q := range r.ruleCondition.CompositeQuery.BuilderQueries {
+		if q.DataSource == v3.DataSourceMetrics && q.AggregateOperator.IsRateOperator() {
+			shouldSkip = true
+		}
+	}
+	return shouldSkip
 }
 
 // queryClickhouse runs actual query against clickhouse
@@ -494,6 +493,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		if math.IsNaN(sample.Point.V) {
 			continue
 		}
+		sample.Point.Vs = append(sample.Point.Vs, sample.Point.V)
 
 		// capture lables in result
 		sample.Metric = lbls.Labels()
@@ -513,6 +513,9 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 				} else if r.compareOp() == ValueIsBelow {
 					sample.Point.V = math.Max(existing.Point.V, sample.Point.V)
 					resultMap[labelHash] = sample
+				} else {
+					sample.Point.Vs = append(existing.Point.Vs, sample.Point.V)
+					resultMap[labelHash] = sample
 				}
 			case AtleastOnce:
 				if r.compareOp() == ValueIsAbove {
@@ -520,6 +523,9 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					resultMap[labelHash] = sample
 				} else if r.compareOp() == ValueIsBelow {
 					sample.Point.V = math.Min(existing.Point.V, sample.Point.V)
+					resultMap[labelHash] = sample
+				} else {
+					sample.Point.Vs = append(existing.Point.Vs, sample.Point.V)
 					resultMap[labelHash] = sample
 				}
 			case OnAverage:
@@ -536,7 +542,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 				// we skip the first record to support rate cases correctly
 				// improvement(amol): explore approaches to limit this only for
 				// rate uses cases
-				if exists := skipFirstRecord[labelHash]; exists {
+				if exists := skipFirstRecord[labelHash]; exists || !r.shouldSkipFirstRecord() {
 					resultMap[labelHash] = sample
 				} else {
 					// looks like the first record for this label combo, skip it
@@ -550,7 +556,41 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			}
 
 		}
+
 	}
+
+	for hash, s := range resultMap {
+		if r.matchType() == AllTheTimes && r.compareOp() == ValueIsEq {
+			for _, v := range s.Point.Vs {
+				if v != r.targetVal() { // if any of the values is not equal to target, alert shouldn't be sent
+					s.Point.V = v
+				}
+			}
+			resultMap[hash] = s
+		} else if r.matchType() == AllTheTimes && r.compareOp() == ValueIsNotEq {
+			for _, v := range s.Point.Vs {
+				if v == r.targetVal() { // if any of the values is equal to target, alert shouldn't be sent
+					s.Point.V = v
+				}
+			}
+			resultMap[hash] = s
+		} else if r.matchType() == AtleastOnce && r.compareOp() == ValueIsEq {
+			for _, v := range s.Point.Vs {
+				if v == r.targetVal() { // if any of the values is equal to target, alert should be sent
+					s.Point.V = v
+				}
+			}
+			resultMap[hash] = s
+		} else if r.matchType() == AtleastOnce && r.compareOp() == ValueIsNotEq {
+			for _, v := range s.Point.Vs {
+				if v != r.targetVal() { // if any of the values is not equal to target, alert should be sent
+					s.Point.V = v
+				}
+			}
+			resultMap[hash] = s
+		}
+	}
+
 	zap.S().Debugf("ruleid:", r.ID(), "\t resultmap(potential alerts):", len(resultMap))
 
 	for _, sample := range resultMap {
@@ -614,6 +654,54 @@ func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]strin
 	return queries, nil
 }
 
+func (r *ThresholdRule) GetSelectedQuery() string {
+
+	// The acutal query string is not relevant here
+	// we just need to know the selected query
+
+	var queries map[string]string
+	var err error
+
+	if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
+		queries, err = r.prepareBuilderQueries(time.Now())
+		if err != nil {
+			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare metric queries", zap.Error(err))
+			return ""
+		}
+	} else if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
+		queries, err = r.prepareClickhouseQueries(time.Now())
+		if err != nil {
+			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare clickhouse queries", zap.Error(err))
+			return ""
+		}
+	}
+
+	if r.ruleCondition != nil {
+		if r.ruleCondition.SelectedQuery != "" {
+			return r.ruleCondition.SelectedQuery
+		}
+
+		// The following logic exists for backward compatibility
+		// If there is no selected query, then
+		// - check if F1 is present, if yes, return F1
+		// - else return the query with max ascii value
+		// this logic is not really correct. we should be considering
+		// whether the query is enabled or not. but this is a temporary
+		// fix to support backward compatibility
+		if _, ok := queries["F1"]; ok {
+			return "F1"
+		}
+		keys := make([]string, 0, len(queries))
+		for k := range queries {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		return keys[len(keys)-1]
+	}
+	// This should never happen
+	return ""
+}
+
 // query looks if alert condition is being
 // satisfied and returns the signals
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch clickhouse.Conn) (Vector, error) {
@@ -623,7 +711,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	}
 
 	// var to hold target query to be executed
-	queries := make(map[string]string)
+	var queries map[string]string
 	var err error
 
 	// fetch the target query based on query type
@@ -655,22 +743,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 
 	zap.S().Debugf("ruleid:", r.ID(), "\t runQueries:", queries)
 
-	// find target query label
-	if query, ok := queries["F1"]; ok {
-		// found a formula query, run with it
-		return r.runChQuery(ctx, ch, query)
-	}
-
-	// no formula in rule condition, now look for
-	// query label with max ascii val
-	keys := make([]string, 0, len(queries))
-	for k := range queries {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	queryLabel := keys[len(keys)-1]
-
+	queryLabel := r.GetSelectedQuery()
 	zap.S().Debugf("ruleId: ", r.ID(), "\t result query label:", queryLabel)
 
 	if queryString, ok := queries[queryLabel]; ok {
@@ -683,6 +756,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
+	valueFormatter := formatter.FromUnit(r.Unit())
 	res, err := r.buildAndRunQuery(ctx, ts, queriers.Ch)
 
 	if err != nil {
@@ -704,7 +778,12 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, smpl.V, r.targetVal())
+		value := valueFormatter.Format(smpl.V, r.Unit())
+		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
+		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
+		zap.S().Debugf("Alert template data for rule %s: Formatter=%s, Value=%s, Threshold=%s", r.Name(), valueFormatter.Name(), value, threshold)
+
+		tmplData := AlertTemplateData(l, value, threshold)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"

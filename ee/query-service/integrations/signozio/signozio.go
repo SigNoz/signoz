@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
+
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
-	"go.uber.org/zap"
 )
 
 var C *Client
@@ -51,7 +51,7 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 		return nil, model.BadRequest(fmt.Errorf("unable to connect with license.signoz.io, please check your network connection"))
 	}
 
-	httpBody, err := ioutil.ReadAll(httpResponse.Body)
+	httpBody, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
 		zap.S().Errorf("failed to read activation response from license.signoz.io", err)
 		return nil, model.BadRequest(fmt.Errorf("failed to read activation response from license.signoz.io"))
@@ -91,7 +91,7 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 		return nil, model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, "failed to read validation response from license.signoz.io"))
 	}

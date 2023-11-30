@@ -1,0 +1,125 @@
+#root,
+html,
+body {
+	height: 100%;
+	overflow: hidden;
+}
+
+body {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+}
+
+.u-legend {
+	max-height: 30px; // slicing the height of the widget Header height ;
+	overflow-y: auto;
+	overflow-x: hidden;
+
+	&::-webkit-scrollbar {
+		width: 0.3rem;
+	}
+	&::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+	&::-webkit-scrollbar-thumb {
+		background: rgb(136, 136, 136);
+		border-radius: 0.625rem;
+	}
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	tr.u-series {
+		th {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			font-size: 12px;
+			-webkit-font-smoothing: antialiased;
+
+			.u-marker {
+				border-radius: 50%;
+			}
+		}
+	}
+}
+
+/* Style the selected background */
+.u-select {
+	background: rgba(0, 0, 0, 0.5) !important;
+}
+
+#overlay {
+	font-family: 'Inter';
+	font-size: 12px;
+	position: absolute;
+	margin: 0.5rem;
+	background: rgba(0, 0, 0);
+	-webkit-font-smoothing: antialiased;
+	color: #fff;
+	z-index: 10000;
+	// pointer-events: none;
+	overflow: auto;
+	max-height: 480px !important;
+	max-width: 240px !important;
+	border-radius: 5px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+
+	.tooltip-container {
+		padding: 1rem;
+	}
+
+	&::-webkit-scrollbar {
+		width: 0.3rem;
+	}
+	&::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+	&::-webkit-scrollbar-thumb {
+		background: rgb(136, 136, 136);
+		border-radius: 0.625rem;
+	}
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+}
+
+.tooltip-content-row {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.uplot {
+	width: 100%;
+	height: 100%;
+}
+
+::-webkit-scrollbar {
+	height: 1rem;
+	width: 0.5rem;
+}
+
+::-webkit-scrollbar:horizontal {
+	height: 0.5rem;
+	width: 1rem;
+}
+
+::-webkit-scrollbar-track {
+	background-color: transparent;
+	border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+	--tw-border-opacity: 1;
+	background-color: rgba(217, 217, 227, 0.8);
+	border-color: rgba(255, 255, 255, var(--tw-border-opacity));
+	border-radius: 9999px;
+	border-width: 1px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	--tw-bg-opacity: 1;
+	background-color: rgba(236, 236, 241, var(--tw-bg-opacity));
+}

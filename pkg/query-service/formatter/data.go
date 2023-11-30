@@ -14,6 +14,10 @@ func NewDataFormatter() Formatter {
 	return &dataFormatter{}
 }
 
+func (*dataFormatter) Name() string {
+	return "data"
+}
+
 func (f *dataFormatter) Format(value float64, unit string) string {
 	switch unit {
 	case "bytes":
@@ -26,23 +30,23 @@ func (f *dataFormatter) Format(value float64, unit string) string {
 		return humanize.Bytes(uint64(value * converter.Bit))
 	case "kbytes":
 		return humanize.IBytes(uint64(value * converter.Kibibit))
-	case "deckbytes":
+	case "decKbytes", "deckbytes":
 		return humanize.IBytes(uint64(value * converter.Kilobit))
 	case "mbytes":
 		return humanize.IBytes(uint64(value * converter.Mebibit))
-	case "decmbytes":
+	case "decMbytes", "decmbytes":
 		return humanize.Bytes(uint64(value * converter.Megabit))
 	case "gbytes":
 		return humanize.IBytes(uint64(value * converter.Gibibit))
-	case "decgbytes":
+	case "decGbytes", "decgbytes":
 		return humanize.Bytes(uint64(value * converter.Gigabit))
 	case "tbytes":
 		return humanize.IBytes(uint64(value * converter.Tebibit))
-	case "dectbytes":
+	case "decTbytes", "dectbytes":
 		return humanize.Bytes(uint64(value * converter.Terabit))
 	case "pbytes":
 		return humanize.IBytes(uint64(value * converter.Pebibit))
-	case "decpbytes":
+	case "decPbytes", "decpbytes":
 		return humanize.Bytes(uint64(value * converter.Petabit))
 	}
 	// When unit is not matched, return the value as it is.

@@ -1,0 +1,18 @@
+{
+	"status": "success",
+	"data": {
+		"id": 219,
+		"uuid": "d697fddb-a771-4bb4-aa38-810f000ed96a",
+		"created_at": "2023-11-17T18:47:15.740385406Z",
+		"created_by": "vikrant@signoz.io",
+		"updated_at": "2023-11-17T19:11:25.052190048Z",
+		"updated_by": "vikrant@signoz.io",
+		"data": {
+			"description": "Playwright Dashboard Description",
+			"tags": [],
+			"title": "Playwright Dashboard",
+			"uploadedGrafana": false
+		},
+		"isLocked": 0
+	}
+}

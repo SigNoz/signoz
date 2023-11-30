@@ -2,42 +2,58 @@ package telemetry
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
+	"testing"
 	"time"
 
 	ph "github.com/posthog/posthog-go"
+	"gopkg.in/segmentio/analytics-go.v3"
+
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/version"
-	"gopkg.in/segmentio/analytics-go.v3"
 )
 
 const (
-	TELEMETRY_EVENT_PATH                  = "API Call"
-	TELEMETRY_EVENT_USER                  = "User"
-	TELEMETRY_EVENT_INPRODUCT_FEEDBACK    = "InProduct Feeback Submitted"
-	TELEMETRY_EVENT_NUMBER_OF_SERVICES    = "Number of Services"
-	TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH = "Number of Services V2"
-	TELEMETRY_EVENT_HEART_BEAT            = "Heart Beat"
-	TELEMETRY_EVENT_ORG_SETTINGS          = "Org Settings"
-	DEFAULT_SAMPLING                      = 0.1
-	TELEMETRY_LICENSE_CHECK_FAILED        = "License Check Failed"
-	TELEMETRY_LICENSE_UPDATED             = "License Updated"
-	TELEMETRY_LICENSE_ACT_FAILED          = "License Activation Failed"
-	TELEMETRY_EVENT_ENVIRONMENT           = "Environment"
-	TELEMETRY_EVENT_LANGUAGE              = "Language"
-	TELEMETRY_EVENT_LOGS_FILTERS          = "Logs Filters"
-	TELEMETRY_EVENT_DISTRIBUTED           = "Distributed"
-	TELEMETRY_EVENT_DASHBOARDS_METADATA   = "Dashboards Metadata"
-	TELEMETRY_EVENT_ACTIVE_USER           = "Active User"
-	TELEMETRY_EVENT_ACTIVE_USER_PH        = "Active User V2"
+	TELEMETRY_EVENT_PATH                     = "API Call"
+	TELEMETRY_EVENT_USER                     = "User"
+	TELEMETRY_EVENT_INPRODUCT_FEEDBACK       = "InProduct Feedback Submitted"
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES       = "Number of Services"
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH    = "Number of Services V2"
+	TELEMETRY_EVENT_HEART_BEAT               = "Heart Beat"
+	TELEMETRY_EVENT_ORG_SETTINGS             = "Org Settings"
+	DEFAULT_SAMPLING                         = 0.1
+	TELEMETRY_LICENSE_CHECK_FAILED           = "License Check Failed"
+	TELEMETRY_LICENSE_UPDATED                = "License Updated"
+	TELEMETRY_LICENSE_ACT_FAILED             = "License Activation Failed"
+	TELEMETRY_EVENT_ENVIRONMENT              = "Environment"
+	TELEMETRY_EVENT_LANGUAGE                 = "Language"
+	TELEMETRY_EVENT_LOGS_FILTERS             = "Logs Filters"
+	TELEMETRY_EVENT_DISTRIBUTED              = "Distributed"
+	TELEMETRY_EVENT_QUERY_RANGE_V3           = "Query Range V3 Metadata"
+	TELEMETRY_EVENT_ACTIVE_USER              = "Active User"
+	TELEMETRY_EVENT_ACTIVE_USER_PH           = "Active User V2"
+	TELEMETRY_EVENT_USER_INVITATION_SENT     = "User Invitation Sent"
+	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED = "User Invitation Accepted"
+	DEFAULT_CLOUD_EMAIL                      = "admin@signoz.cloud"
 )
+
+var SAAS_EVENTS_LIST = map[string]struct{}{
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES:       {},
+	TELEMETRY_EVENT_ACTIVE_USER:              {},
+	TELEMETRY_EVENT_HEART_BEAT:               {},
+	TELEMETRY_EVENT_LANGUAGE:                 {},
+	TELEMETRY_EVENT_ENVIRONMENT:              {},
+	TELEMETRY_EVENT_USER_INVITATION_SENT:     {},
+	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED: {},
+}
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
 const ph_api_key = "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w"
@@ -73,28 +89,34 @@ func (a *Telemetry) IsSampled() bool {
 
 }
 
-func (telemetry *Telemetry) CheckSigNozMetricsV2(compositeQuery *model.CompositeMetricQuery) bool {
+func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) (bool, bool) {
+	signozLogsUsed := false
+	signozMetricsUsed := false
 
-	signozMetricsNotFound := false
-
-	if compositeQuery.BuilderQueries != nil && len(compositeQuery.BuilderQueries) > 0 {
-		if !strings.Contains(compositeQuery.BuilderQueries["A"].MetricName, "signoz_") && len(compositeQuery.BuilderQueries["A"].MetricName) > 0 {
-			signozMetricsNotFound = true
+	if postData.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		for _, query := range postData.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceLogs && len(query.Filters.Items) > 0 {
+				signozLogsUsed = true
+			} else if query.DataSource == v3.DataSourceMetrics &&
+				!strings.Contains(query.AggregateAttribute.Key, "signoz_") &&
+				len(query.AggregateAttribute.Key) > 0 {
+				signozMetricsUsed = true
+			}
+		}
+	} else if postData.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		for _, query := range postData.CompositeQuery.PromQueries {
+			if !strings.Contains(query.Query, "signoz_") && len(query.Query) > 0 {
+				signozMetricsUsed = true
+			}
+		}
+	} else if postData.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+		for _, query := range postData.CompositeQuery.ClickHouseQueries {
+			if strings.Contains(query.Query, "signoz_metrics") && len(query.Query) > 0 {
+				signozMetricsUsed = true
+			}
 		}
 	}
-
-	if compositeQuery.PromQueries != nil && len(compositeQuery.PromQueries) > 0 {
-		if !strings.Contains(compositeQuery.PromQueries["A"].Query, "signoz_") && len(compositeQuery.PromQueries["A"].Query) > 0 {
-			signozMetricsNotFound = true
-		}
-	}
-	if compositeQuery.ClickHouseQueries != nil && len(compositeQuery.ClickHouseQueries) > 0 {
-		if !strings.Contains(compositeQuery.ClickHouseQueries["A"].Query, "signoz_") && len(compositeQuery.ClickHouseQueries["A"].Query) > 0 {
-			signozMetricsNotFound = true
-		}
-	}
-
-	return signozMetricsNotFound
+	return signozLogsUsed, signozMetricsUsed
 }
 
 func (telemetry *Telemetry) AddActiveTracesUser() {
@@ -115,8 +137,10 @@ func (telemetry *Telemetry) AddActiveLogsUser() {
 
 type Telemetry struct {
 	operator      analytics.Client
+	saasOperator  analytics.Client
 	phOperator    ph.Client
 	ipAddress     string
+	userEmail     string
 	isEnabled     bool
 	isAnonymous   bool
 	distinctId    string
@@ -131,6 +155,13 @@ type Telemetry struct {
 }
 
 func createTelemetry() {
+	// Do not do anything in CI (not even resolving the outbound IP address)
+	if testing.Testing() {
+		telemetry = &Telemetry{
+			isEnabled: false,
+		}
+		return
+	}
 
 	telemetry = &Telemetry{
 		operator:   analytics.New(api_key),
@@ -147,7 +178,7 @@ func createTelemetry() {
 	data := map[string]interface{}{}
 
 	telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
-	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
+	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
 
 	ticker := time.NewTicker(HEART_BEAT_DURATION)
 	activeUserTicker := time.NewTicker(ACTIVE_USER_DURATION)
@@ -169,7 +200,7 @@ func createTelemetry() {
 				if (telemetry.activeUser["traces"] != 0) || (telemetry.activeUser["metrics"] != 0) || (telemetry.activeUser["logs"] != 0) {
 					telemetry.activeUser["any"] = 1
 				}
-				telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{"traces": telemetry.activeUser["traces"], "metrics": telemetry.activeUser["metrics"], "logs": telemetry.activeUser["logs"], "any": telemetry.activeUser["any"]})
+				telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{"traces": telemetry.activeUser["traces"], "metrics": telemetry.activeUser["metrics"], "logs": telemetry.activeUser["logs"], "any": telemetry.activeUser["any"]}, "")
 				telemetry.activeUser = map[string]int8{"traces": 0, "metrics": 0, "logs": 0, "any": 0}
 
 			case <-ticker.C:
@@ -177,11 +208,11 @@ func createTelemetry() {
 				tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(context.Background())
 
 				if len(tagsInfo.Env) != 0 {
-					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env})
+					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "")
 				}
 
 				for language, _ := range tagsInfo.Languages {
-					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": language})
+					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": language}, "")
 				}
 
 				totalSpans, _ := telemetry.reader.GetTotalSpans(context.Background())
@@ -208,10 +239,10 @@ func createTelemetry() {
 				for key, value := range tsInfo {
 					data[key] = value
 				}
-				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
+				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
 
 				getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(context.Background())
-				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval)
+				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval, "")
 
 			}
 		}
@@ -231,7 +262,7 @@ func getOutboundIP() string {
 
 	defer resp.Body.Close()
 	if err == nil {
-		ipBody, err := ioutil.ReadAll(resp.Body)
+		ipBody, err := io.ReadAll(resp.Body)
 		if err == nil {
 			ip = ipBody
 		}
@@ -241,9 +272,24 @@ func getOutboundIP() string {
 }
 
 func (a *Telemetry) IdentifyUser(user *model.User) {
+	if user.Email == DEFAULT_CLOUD_EMAIL {
+		return
+	}
 	a.SetCompanyDomain(user.Email)
+	a.SetUserEmail(user.Email)
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
+	}
+	if a.saasOperator != nil {
+		a.saasOperator.Enqueue(analytics.Identify{
+			UserId: a.userEmail,
+			Traits: analytics.NewTraits().SetName(user.Name).SetEmail(user.Email),
+		})
+		a.saasOperator.Enqueue(analytics.Group{
+			UserId:  a.userEmail,
+			GroupId: a.getCompanyDomain(),
+			Traits:  analytics.NewTraits().Set("company_domain", a.getCompanyDomain()),
+		})
 	}
 
 	a.operator.Enqueue(analytics.Identify{
@@ -262,6 +308,21 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 
 func (a *Telemetry) SetCountUsers(countUsers int8) {
 	a.countUsers = countUsers
+}
+
+func (a *Telemetry) SetUserEmail(email string) {
+	a.userEmail = email
+}
+
+func (a *Telemetry) GetUserEmail() string {
+	return a.userEmail
+}
+
+func (a *Telemetry) SetSaasOperator(saasOperatorKey string) {
+	if saasOperatorKey == "" {
+		return
+	}
+	a.saasOperator = analytics.New(saasOperatorKey)
 }
 
 func (a *Telemetry) SetCompanyDomain(email string) {
@@ -286,8 +347,16 @@ func (a *Telemetry) checkEvents(event string) bool {
 	return sendEvent
 }
 
-func (a *Telemetry) SendEvent(event string, data map[string]interface{}, opts ...bool) {
+func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, opts ...bool) {
 
+	// ignore telemetry for default user
+	if userEmail == DEFAULT_CLOUD_EMAIL {
+		return
+	}
+
+	if userEmail != "" {
+		a.SetUserEmail(userEmail)
+	}
 	rateLimitFlag := true
 	if len(opts) > 0 {
 		rateLimitFlag = opts[0]
@@ -332,6 +401,22 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, opts ..
 	userId := a.ipAddress
 	if a.isTelemetryAnonymous() || userId == IP_NOT_FOUND_PLACEHOLDER {
 		userId = a.GetDistinctId()
+	}
+
+	// check if event is part of SAAS_EVENTS_LIST
+	_, isSaaSEvent := SAAS_EVENTS_LIST[event]
+
+	if a.saasOperator != nil && a.GetUserEmail() != "" && isSaaSEvent {
+		a.saasOperator.Enqueue(analytics.Track{
+			Event:      event,
+			UserId:     a.GetUserEmail(),
+			Properties: properties,
+			Context: &analytics.Context{
+				Extra: map[string]interface{}{
+					"groupId": a.getCompanyDomain(),
+				},
+			},
+		})
 	}
 
 	a.operator.Enqueue(analytics.Track{

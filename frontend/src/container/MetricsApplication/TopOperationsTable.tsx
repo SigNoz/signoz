@@ -1,19 +1,32 @@
-import { Tooltip, Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import './TopOperationsTable.styles.scss';
+
+import { SearchOutlined } from '@ant-design/icons';
+import { InputRef, Tooltip, Typography } from 'antd';
+import { ColumnsType, ColumnType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
-import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
+import Download from 'container/Download/Download';
+import { filterDropdown } from 'container/ServiceApplication/Filter/FilterDropdown';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import history from 'lib/history';
+import { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { getErrorRate } from './utils';
+import { IServiceName } from './Tabs/types';
+import {
+	convertedTracesToDownloadData,
+	getErrorRate,
+	navigateToTrace,
+} from './utils';
 
-function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
+function TopOperationsTable({
+	data,
+	isLoading,
+}: TopOperationsTableProps): JSX.Element {
+	const searchInput = useRef<InputRef>(null);
+	const { servicename } = useParams<IServiceName>();
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -23,22 +36,41 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
 
-	const { data } = props;
-
 	const params = useParams<{ servicename: string }>();
 
 	const handleOnClick = (operation: string): void => {
-		const urlParams = new URLSearchParams();
 		const { servicename } = params;
-		urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
-		urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
 
-		history.push(
-			`${
-				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false,"operation":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&spanAggregateCurrentPage=1`,
-		);
+		navigateToTrace({
+			servicename,
+			operation,
+			minTime,
+			maxTime,
+			selectedTraceTags,
+		});
 	};
+
+	const getSearchOption = (): ColumnType<TopOperationList> => ({
+		filterDropdown,
+		filterIcon: <SearchOutlined />,
+		onFilter: (value, record): boolean =>
+			record.name
+				.toString()
+				.toLowerCase()
+				.includes((value as string).toLowerCase()),
+		onFilterDropdownOpenChange: (visible): void => {
+			if (visible) {
+				setTimeout(() => searchInput.current?.select(), 100);
+			}
+		},
+		render: (text: string): JSX.Element => (
+			<Tooltip placement="topLeft" title={text}>
+				<Typography.Link onClick={(): void => handleOnClick(text)}>
+					{text}
+				</Typography.Link>
+			</Tooltip>
+		),
+	});
 
 	const columns: ColumnsType<TopOperationList> = [
 		{
@@ -46,13 +78,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			dataIndex: 'name',
 			key: 'name',
 			width: 100,
-			render: (text: string): JSX.Element => (
-				<Tooltip placement="topLeft" title={text}>
-					<Typography.Link onClick={(): void => handleOnClick(text)}>
-						{text}
-					</Typography.Link>
-				</Tooltip>
-			),
+			...getSearchOption(),
 		},
 		{
 			title: 'P50  (in ms)',
@@ -98,15 +124,27 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 		},
 	];
 
+	const downloadableData = convertedTracesToDownloadData(data);
+
 	return (
-		<ResizeTable
-			columns={columns}
-			showHeader
-			title={(): string => 'Key Operations'}
-			tableLayout="fixed"
-			dataSource={data}
-			rowKey="name"
-		/>
+		<div className="top-operation">
+			<div className="top-operation--download">
+				<Download
+					data={downloadableData}
+					isLoading={isLoading}
+					fileName={`top-operations-${servicename}`}
+				/>
+			</div>
+			<ResizeTable
+				columns={columns}
+				loading={isLoading}
+				showHeader
+				title={(): string => 'Key Operations'}
+				tableLayout="fixed"
+				dataSource={data}
+				rowKey="name"
+			/>
+		</div>
 	);
 }
 
@@ -121,6 +159,7 @@ export interface TopOperationList {
 
 interface TopOperationsTableProps {
 	data: TopOperationList[];
+	isLoading: boolean;
 }
 
 export default TopOperationsTable;

@@ -78,6 +78,14 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			threshold FLOAT NOT NULL,
 			exclude_status_codes TEXT NOT NULL
 		);
+		CREATE TABLE IF NOT EXISTS ingestion_keys (
+			key_id TEXT PRIMARY KEY,
+			name TEXT,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			ingestion_key TEXT NOT NULL,
+			ingestion_url TEXT NOT NULL,
+			data_region TEXT NOT NULL
+		);
 	`
 
 	_, err = db.Exec(table_schema)
@@ -135,6 +143,7 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 	telemetry.GetInstance().SetCountUsers(int8(countUsers))
 	if countUsers > 0 {
 		telemetry.GetInstance().SetCompanyDomain(users[countUsers-1].Email)
+		telemetry.GetInstance().SetUserEmail(users[countUsers-1].Email)
 	}
 
 	return nil

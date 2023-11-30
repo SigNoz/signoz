@@ -1,13 +1,19 @@
 import { Button, Modal, Tabs, Tooltip, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import { AppState } from 'store/reducers';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { getTraceToLogsQuery } from './config';
 import Events from './Events';
 import {
 	CardContainer,
@@ -20,6 +26,10 @@ import Tags from './Tags';
 
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { tree, firstSpanStartTime } = props;
+
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const { id: traceId } = useParams<Params>();
 
@@ -75,9 +85,15 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	];
 
 	const onLogsHandler = (): void => {
-		const query = encodeURIComponent(`trace_id IN ('${traceId}')`);
+		const query = getTraceToLogsQuery(traceId, minTime, maxTime);
 
-		history.push(`${ROUTES.LOGS}?q=${query}`);
+		history.push(
+			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
+				[QueryParams.compositeQuery]: JSON.stringify(query),
+				[QueryParams.startTime]: minTime,
+				[QueryParams.endTime]: maxTime,
+			})}`,
+		);
 	};
 
 	return (

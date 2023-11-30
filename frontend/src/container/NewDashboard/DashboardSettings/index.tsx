@@ -5,7 +5,11 @@ import VariablesSetting from './Variables';
 
 function DashboardSettingsContent(): JSX.Element {
 	const items = [
-		{ label: 'General', key: 'general', children: <GeneralDashboardSettings /> },
+		{
+			label: 'General',
+			key: 'general',
+			children: <GeneralDashboardSettings />,
+		},
 		{ label: 'Variables', key: 'variables', children: <VariablesSetting /> },
 	];
 

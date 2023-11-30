@@ -734,6 +734,14 @@ func parseSetApdexScoreRequest(r *http.Request) (*model.ApdexSettings, error) {
 	return &req, nil
 }
 
+func parseInsertIngestionKeyRequest(r *http.Request) (*model.IngestionKey, error) {
+	var req model.IngestionKey
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	return &req, nil
+}
+
 func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {
 	var req auth.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -844,7 +852,6 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
-
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
 		limit = 50
@@ -1042,6 +1049,30 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 			}
 			chQuery.Query = query.String()
+		}
+	}
+
+	// replace go template variables in prometheus query
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		for _, promQuery := range queryRangeParams.CompositeQuery.PromQueries {
+			if promQuery.Disabled {
+				continue
+			}
+			tmpl := template.New("prometheus-query")
+			tmpl, err := tmpl.Parse(promQuery.Query)
+			if err != nil {
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			}
+			var query bytes.Buffer
+
+			// replace go template variables
+			querytemplate.AssignReservedVarsV3(queryRangeParams)
+
+			err = tmpl.Execute(&query, queryRangeParams.Variables)
+			if err != nil {
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			}
+			promQuery.Query = query.String()
 		}
 	}
 

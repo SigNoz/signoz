@@ -18,6 +18,7 @@ import { memo, useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SelectOption } from 'types/common/select';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
@@ -169,6 +170,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	return (
 		<Select
+			getPopupContainer={popupContainer}
 			mode="tags"
 			style={selectStyle}
 			onSearch={handleSearchKeys}
