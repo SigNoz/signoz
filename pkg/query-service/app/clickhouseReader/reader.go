@@ -4476,7 +4476,7 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 			}
 		}
 
-		// remove duplicate _ attribute for logs.
+		// remove duplicate _ attributes for logs.
 		// remove this function after a month
 		removeDuplicateUnderscoreAttributes(row)
 
@@ -4492,7 +4492,6 @@ func removeDuplicateUnderscoreAttributes(row map[string]interface{}) {
 		attributes := val.(*map[string]int64)
 		for key := range *attributes {
 			if strings.Contains(key, ".") {
-				// check if has an existing
 				uKey := strings.ReplaceAll(key, ".", "_")
 				delete(*attributes, uKey)
 			}
@@ -4504,7 +4503,6 @@ func removeDuplicateUnderscoreAttributes(row map[string]interface{}) {
 		attributes := val.(*map[string]float64)
 		for key := range *attributes {
 			if strings.Contains(key, ".") {
-				// check if has an existing
 				uKey := strings.ReplaceAll(key, ".", "_")
 				delete(*attributes, uKey)
 			}
@@ -4516,7 +4514,6 @@ func removeDuplicateUnderscoreAttributes(row map[string]interface{}) {
 		attributes := val.(*map[string]bool)
 		for key := range *attributes {
 			if strings.Contains(key, ".") {
-				// check if has an existing
 				uKey := strings.ReplaceAll(key, ".", "_")
 				delete(*attributes, uKey)
 			}
@@ -4528,7 +4525,6 @@ func removeDuplicateUnderscoreAttributes(row map[string]interface{}) {
 			attributes := val.(*map[string]string)
 			for key := range *attributes {
 				if strings.Contains(key, ".") {
-					// check if has an existing
 					uKey := strings.ReplaceAll(key, ".", "_")
 					delete(*attributes, uKey)
 				}
