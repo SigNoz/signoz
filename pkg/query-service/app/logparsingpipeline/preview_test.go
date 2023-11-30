@@ -3,6 +3,7 @@ package logparsingpipeline
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -339,10 +340,12 @@ func makeTestSignozLog(
 			testLog.Attributes_bool[k] = v.(bool)
 		case string:
 			testLog.Attributes_string[k] = v.(string)
-		case int64:
-			testLog.Attributes_int64[k] = v.(int64)
+		case int:
+			testLog.Attributes_int64[k] = int64(v.(int))
 		case float64:
 			testLog.Attributes_float64[k] = v.(float64)
+		default:
+			panic(fmt.Sprintf("found attribute value of unsupported type %T in test log", v))
 		}
 	}
 

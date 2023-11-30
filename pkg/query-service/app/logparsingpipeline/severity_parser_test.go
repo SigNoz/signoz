@@ -60,48 +60,57 @@ func TestSeverityParsingProcessor(t *testing.T) {
 	testPipelines[0].Config = append(testPipelines[0].Config, severityParserOp)
 
 	testCases := []struct {
-		severityValue          interface{}
+		severityValues         []interface{}
 		expectedSeverityText   string
 		expectedSeverityNumber uint8
 	}{
 		{
-			severityValue:          "test_debug",
+			severityValues: []interface{}{
+				"test_debug", "TEST_DEBUG", "debug", "DEBUG", 202.0,
+			},
 			expectedSeverityText:   "DEBUG",
 			expectedSeverityNumber: 5,
 		}, {
-			severityValue:          "test_info",
+			severityValues: []interface{}{
+				"test_info", "TEST_INFO", "info", "INFO", 302.0,
+			},
 			expectedSeverityText:   "INFO",
 			expectedSeverityNumber: 9,
 		}, {
-			severityValue:          "test_warn",
+			severityValues: []interface{}{
+				"test_warn", "TEST_WARN", "warn", "WARN", 404.0,
+			},
 			expectedSeverityText:   "WARN",
 			expectedSeverityNumber: 13,
 		}, {
-			severityValue:          "test_error",
+			severityValues: []interface{}{
+				"test_error", "TEST_ERROR", "error", "ERROR", 500.0,
+			},
 			expectedSeverityText:   "ERROR",
 			expectedSeverityNumber: 17,
 		},
 	}
 
 	for _, testCase := range testCases {
-
-		testLog := makeTestSignozLog(
-			"test log",
-			map[string]interface{}{
-				"method":        "GET",
-				"test_severity": testCase.severityValue,
-			},
-		)
+		inputLogs := []model.SignozLog{}
+		for _, severityAttribValue := range testCase.severityValues {
+			inputLogs = append(inputLogs, makeTestSignozLog(
+				"test log",
+				map[string]interface{}{
+					"method":        "GET",
+					"test_severity": severityAttribValue,
+				},
+			))
+		}
 
 		result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 			context.Background(),
 			testPipelines,
-			[]model.SignozLog{
-				testLog,
-			},
+			inputLogs,
 		)
+
 		require.Nil(err)
-		require.Equal(1, len(result))
+		require.Equal(len(inputLogs), len(result))
 		require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
 		processed := result[0]
 
