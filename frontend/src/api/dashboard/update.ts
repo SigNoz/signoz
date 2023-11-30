@@ -4,7 +4,7 @@ import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/dashboard/update';
 
-const update = async (
+const updateDashboard = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
@@ -23,4 +23,4 @@ const update = async (
 	}
 };
 
-export default update;
+export default updateDashboard;
