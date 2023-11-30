@@ -362,3 +362,13 @@ export type Category = {
 };
 
 export type DataTypeCategories = Category[];
+
+export interface NewFormat {
+	name: string;
+	id: string;
+}
+
+export interface NewCategory {
+	name: string;
+	formats: Format[];
+}
