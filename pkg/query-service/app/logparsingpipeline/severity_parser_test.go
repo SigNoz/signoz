@@ -191,7 +191,7 @@ func TestNoCollectorErrorsFromSeverityParserForMismatchedLogs(t *testing.T) {
 				OverwriteSeverityText: true,
 			},
 			makeTestLog("mismatching log", map[string]interface{}{
-				"test_severity": "sjkdjkjfk",
+				"test_severity": 200.3,
 			}),
 		},
 	}
