@@ -4,10 +4,10 @@ import {
 	AlertOutlined,
 	CopyOutlined,
 	DeleteOutlined,
-	MoreOutlined,
 	EditFilled,
 	ExclamationCircleOutlined,
 	FullscreenOutlined,
+	MoreOutlined,
 	WarningOutlined,
 } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps, Tooltip, Typography } from 'antd';
@@ -17,7 +17,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
