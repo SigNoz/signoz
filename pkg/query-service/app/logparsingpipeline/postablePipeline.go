@@ -8,6 +8,7 @@ import (
 
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
+	"golang.org/x/exp/slices"
 )
 
 // PostablePipelines are a list of user defined pielines
@@ -164,6 +165,39 @@ func isValidOperator(op PipelineOperator) error {
 		if len(op.Fields) == 0 {
 			return fmt.Errorf(fmt.Sprintf("fields of %s retain operator cannot be empty", op.ID))
 		}
+
+	case "time_parser":
+		if op.ParseFrom == "" {
+			return fmt.Errorf("parse from of time parsing processor %s cannot be empty", op.ID)
+		}
+		if op.LayoutType != "epoch" && op.LayoutType != "strptime" {
+			// TODO(Raj): Maybe add support for gotime format
+			return fmt.Errorf(
+				"invalid format type '%s' of time parsing processor %s", op.LayoutType, op.ID,
+			)
+		}
+		if op.Layout == "" {
+			return fmt.Errorf(fmt.Sprintf("format can not be empty for time parsing processor %s", op.ID))
+		}
+
+		validEpochLayouts := []string{"s", "ms", "us", "ns", "s.ms", "s.us", "s.ns"}
+		if op.LayoutType == "epoch" && !slices.Contains(validEpochLayouts, op.Layout) {
+			return fmt.Errorf(
+				"invalid epoch format '%s' of time parsing processor %s", op.LayoutType, op.ID,
+			)
+		}
+
+		// TODO(Raj): Add validation for strptime layouts via
+		// collector simulator maybe.
+		if op.LayoutType == "strptime" {
+			_, err := RegexForStrptimeLayout(op.Layout)
+			if err != nil {
+				return fmt.Errorf(
+					"invalid strptime format '%s' of time parsing processor %s: %w", op.LayoutType, op.ID, err,
+				)
+			}
+		}
+
 	default:
 		return fmt.Errorf(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, trace_parser, retain)", op.Type, op.ID))
 	}

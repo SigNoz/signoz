@@ -11,7 +11,7 @@ import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
-import { Data } from '..';
+import { Data } from '../DashboardsList';
 import { TableLinkText } from './styles';
 
 interface DeleteButtonProps {
