@@ -17,7 +17,7 @@ import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { GraphTitle, legend, MENU_ITEMS } from '../constant';
+import { GraphTitle, legend, MENU_ITEMS, SERVICE_CHART_ID } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
@@ -57,6 +57,7 @@ function External(): JSX.Element {
 				title: GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: '%',
+				id: SERVICE_CHART_ID.externalCallErrorPercentage,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -82,6 +83,7 @@ function External(): JSX.Element {
 				title: GraphTitle.EXTERNAL_CALL_DURATION,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'ms',
+				id: SERVICE_CHART_ID.externalCallDuration,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -103,6 +105,7 @@ function External(): JSX.Element {
 				title: GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'reqps',
+				id: SERVICE_CHART_ID.externalCallRPSByAddress,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -124,6 +127,7 @@ function External(): JSX.Element {
 				title: GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'ms',
+				id: SERVICE_CHART_ID.externalCallDurationByAddress,
 			}),
 		[servicename, tagFilterItems],
 	);
