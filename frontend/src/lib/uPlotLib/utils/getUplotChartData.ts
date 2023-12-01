@@ -1,15 +1,19 @@
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { QueryData } from 'types/api/widgets/getQuery';
 
-function getXAxisTimestamps(seriesList: any): any[] {
+function getXAxisTimestamps(seriesList: QueryData[]): number[] {
 	const timestamps = new Set();
 
-	seriesList.forEach((series: { values: any[] }) => {
+	seriesList.forEach((series: { values: [number, string][] }) => {
 		series.values.forEach((value) => {
 			timestamps.add(value[0]);
 		});
 	});
 
-	return Array.from(timestamps).sort((a: any, b: any) => a - b);
+	const timestampsArr: number[] | unknown[] = Array.from(timestamps) || [];
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	return timestampsArr.sort((a, b) => a - b);
 }
 
 function fillMissingXAxisTimestamps(
@@ -23,9 +27,7 @@ function fillMissingXAxisTimestamps(
 
 	// Fill missing timestamps with null values
 	processedData.forEach((entry: { values: (number | null)[][] }) => {
-		const existingTimestamps = new Set(
-			entry.values.map((value: any[]) => value[0]),
-		);
+		const existingTimestamps = new Set(entry.values.map((value) => value[0]));
 
 		const missingTimestamps = Array.from(allTimestampsSet).filter(
 			(timestamp) => !existingTimestamps.has(timestamp),
@@ -50,11 +52,13 @@ function fillMissingXAxisTimestamps(
 			}
 		});
 
-		entry.values.sort((a: any[], b: any[]) => a[0] - b[0]);
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		entry.values.sort((a, b) => a[0] - b[0]);
 	});
 
-	return processedData.map((entry: { values: any[][] }) =>
-		entry.values.map((value: any[]) => value[1]),
+	return processedData.map((entry: { values: [number, string][] }) =>
+		entry.values.map((value) => value[1]),
 	);
 }
 

@@ -54,8 +54,6 @@ const generateTooltipContent = (
 				const value = data[index][idx];
 				const label = getLabelName(metric, queryName || '', legend || '');
 
-				console.log('item', item);
-
 				if (value) {
 					const tooltipValue = getToolTipValue(value, yAxisUnit);
 
