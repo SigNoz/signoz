@@ -265,10 +265,15 @@ function findUnitObject(
 
 export function convertValue(
 	value: number,
-	currentUnit: string,
-	targetUnit: string,
+	currentUnit?: string,
+	targetUnit?: string,
 ): number | null {
-	if (targetUnit === 'none') {
+	if (
+		targetUnit === 'none' ||
+		!currentUnit ||
+		!targetUnit ||
+		currentUnit === targetUnit
+	) {
 		return value;
 	}
 	const currentUnitObj = findUnitObject(currentUnit);
