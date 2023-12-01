@@ -231,16 +231,14 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			id: 2,
 			fieldName: 'Parse Timestamp Value From',
 			placeholder: 'processor_parsefrom_placeholder',
-			name: 'parse_from', // optional
-			rules: [],
+			name: 'parse_from',
 			initialValue: 'attributes.timestamp',
 		},
 		{
 			id: 3,
 			fieldName: 'Timestamp Format Type',
 			placeholder: '',
-			name: 'layout_type', // optional
-			rules: [],
+			name: 'layout_type',
 			initialValue: 'strptime',
 			options: [
 				{
@@ -268,8 +266,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			id: 4,
 			fieldName: 'Epoch Format',
 			placeholder: '',
-			name: 'layout', // optional
-			rules: [],
+			name: 'layout',
 			dependencies: ['layout_type'],
 			shouldRender: (form: FormInstance): boolean => {
 				const layoutType = form.getFieldValue('layout_type');
@@ -311,8 +308,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			id: 5,
 			fieldName: 'Timestamp Format',
 			placeholder: 'strptime directives based format. Eg: %Y-%m-%dT%H:%M:%S.%f%z',
-			name: 'layout', // optional
-			rules: [],
+			name: 'layout',
 			dependencies: ['layout_type'],
 			shouldRender: (form: FormInstance): boolean => {
 				const layoutType = form.getFieldValue('layout_type');
