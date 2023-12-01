@@ -21,7 +21,7 @@ function findMinMaxValues(data: QueryDataV3[]): [number, number] {
 
 function findMinMaxThresholdValues(
 	thresholds: ThresholdProps[],
-	yAxisUnit: string | undefined,
+	yAxisUnit?: string,
 ): [number, number] {
 	let minThresholdValue = 0;
 	let maxThresholdValue = 0;
@@ -45,7 +45,7 @@ function findMinMaxThresholdValues(
 function getRange(
 	thresholds: ThresholdProps[],
 	series: QueryDataV3[],
-	yAxisUnit: string | undefined,
+	yAxisUnit?: string,
 ): [number, number] {
 	const [minThresholdValue, maxThresholdValue] = findMinMaxThresholdValues(
 		thresholds,
@@ -67,9 +67,9 @@ function areAllSeriesEmpty(series: QueryDataV3[]): boolean {
 }
 
 export const getYAxisScale = (
-	thresholds: ThresholdProps[] | undefined,
-	series: QueryDataV3[] | undefined,
-	yAxisUnit: string | undefined,
+	thresholds?: ThresholdProps[],
+	series?: QueryDataV3[],
+	yAxisUnit?: string,
 ): {
 	auto: boolean;
 	range?: [number, number];

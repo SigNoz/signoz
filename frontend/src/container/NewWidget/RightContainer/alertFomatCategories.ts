@@ -6,9 +6,9 @@ import {
 	CategoryNames,
 	DataFormats,
 	DataRateFormats,
+	HelperCategory,
+	HelperFormat,
 	MiscellaneousFormats,
-	NewCategory,
-	NewFormat,
 	ThroughputFormats,
 	TimeFormats,
 } from './types';
@@ -122,8 +122,8 @@ export const getCategoryByOptionId = (id: string): Category | undefined =>
 export const isCategoryName = (name: string): name is CategoryNames =>
 	alertsCategory.some((category) => category.name === name);
 
-const allFormats: NewFormat[] = alertsCategory.flatMap(
-	(category: NewCategory) => category.formats,
+const allFormats: HelperFormat[] = alertsCategory.flatMap(
+	(category: HelperCategory) => category.formats,
 );
 
 export const getFormatNameByOptionId = (id: string): string | undefined =>

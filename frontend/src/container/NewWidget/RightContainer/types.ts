@@ -363,12 +363,12 @@ export type Category = {
 
 export type DataTypeCategories = Category[];
 
-export interface NewFormat {
+export interface HelperFormat {
 	name: string;
 	id: string;
 }
 
-export interface NewCategory {
+export interface HelperCategory {
 	name: string;
 	formats: Format[];
 }

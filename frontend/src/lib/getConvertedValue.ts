@@ -265,8 +265,8 @@ function findUnitObject(
 
 export function convertValue(
 	value: number,
-	currentUnit: string | undefined,
-	targetUnit: string | undefined,
+	currentUnit?: string,
+	targetUnit?: string,
 ): number | null {
 	if (
 		targetUnit === 'none' ||
