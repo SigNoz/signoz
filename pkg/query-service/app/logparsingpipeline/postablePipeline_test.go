@@ -329,10 +329,13 @@ var operatorTest = []struct {
 	}, {
 		Name: "Severity Parser - valid",
 		Operator: PipelineOperator{
-			ID:                    "severity",
-			Type:                  "severity_parser",
-			ParseFrom:             "attributes.test_severity",
-			SeverityMapping:       map[string][]string{},
+			ID:        "severity",
+			Type:      "severity_parser",
+			ParseFrom: "attributes.test_severity",
+			SeverityMapping: map[string][]string{
+				"trace": {"test_trace"},
+				"fatal": {"test_fatal"},
+			},
 			OverwriteSeverityText: true,
 		},
 		IsValid: true,

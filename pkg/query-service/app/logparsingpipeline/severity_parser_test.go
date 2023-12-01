@@ -48,10 +48,12 @@ func TestSeverityParsingProcessor(t *testing.T) {
 			"id": "test-severity-parser",
 			"parse_from": "attributes.test_severity",
 			"mapping": {
+				"trace": ["test_trace"],
 				"debug": ["test_debug", "2xx"],
 				"info": ["test_info", "3xx"],
 				"warn": ["test_warn", "4xx"],
-				"error": ["test_error", "5xx"]
+				"error": ["test_error", "5xx"],
+				"fatal": ["test_fatal"]
 			},
 			"overwrite_text": true
 		}
@@ -64,6 +66,13 @@ func TestSeverityParsingProcessor(t *testing.T) {
 		expectedSeverityText   string
 		expectedSeverityNumber uint8
 	}{
+		{
+			severityValues: []interface{}{
+				"test_trace", "TEST_TRACE", "trace", "Trace",
+			},
+			expectedSeverityText:   "TRACE",
+			expectedSeverityNumber: 1,
+		},
 		{
 			severityValues: []interface{}{
 				"test_debug", "TEST_DEBUG", "debug", "DEBUG", 202.0,
@@ -88,6 +97,12 @@ func TestSeverityParsingProcessor(t *testing.T) {
 			},
 			expectedSeverityText:   "ERROR",
 			expectedSeverityNumber: 17,
+		}, {
+			severityValues: []interface{}{
+				"test_fatal", "TEST_FATAL", "fatal", "FATAL",
+			},
+			expectedSeverityText:   "FATAL",
+			expectedSeverityNumber: 21,
 		},
 	}
 

@@ -203,7 +203,7 @@ func isValidOperator(op PipelineOperator) error {
 			return fmt.Errorf("parse from of severity parsing processor %s cannot be empty", op.ID)
 		}
 
-		validMappingLevels := []string{"debug", "info", "warn", "error"}
+		validMappingLevels := []string{"trace", "debug", "info", "warn", "error", "fatal"}
 		for k, _ := range op.SeverityMapping {
 			if !slices.Contains(validMappingLevels, strings.ToLower(k)) {
 				return fmt.Errorf("%s is not a valid severity in processor %s", k, op.ID)
