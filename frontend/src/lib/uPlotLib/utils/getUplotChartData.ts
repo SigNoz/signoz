@@ -9,7 +9,7 @@ function getXAxisTimestamps(seriesList: any): any[] {
 		});
 	});
 
-	return Array.from(timestamps).sort((a, b) => a - b);
+	return Array.from(timestamps).sort((a: any, b: any) => a - b);
 }
 
 function fillMissingXAxisTimestamps(
@@ -19,7 +19,6 @@ function fillMissingXAxisTimestamps(
 ): any {
 	// Generate a set of all timestamps in the range
 	const allTimestampsSet = new Set(timestampArr);
-
 	const processedData = JSON.parse(JSON.stringify(data));
 
 	// Fill missing timestamps with null values
@@ -41,7 +40,6 @@ function fillMissingXAxisTimestamps(
 		entry.values.forEach((v) => {
 			if (Number.isNaN(v[1])) {
 				const replaceValue = fillSpans ? 0 : null;
-
 				// eslint-disable-next-line no-param-reassign
 				v[1] = replaceValue;
 			} else if (v[1] !== null) {
@@ -52,7 +50,7 @@ function fillMissingXAxisTimestamps(
 			}
 		});
 
-		entry.values.sort((a: number[], b: number[]) => a[0] - b[0]);
+		entry.values.sort((a: any[], b: any[]) => a[0] - b[0]);
 	});
 
 	return processedData.map((entry: { values: any[][] }) =>

@@ -29,6 +29,8 @@ const generateTooltipContent = (
 ): HTMLElement => {
 	const container = document.createElement('div');
 	container.classList.add('tooltip-container');
+	const overlay = document.getElementById('overlay');
+	let tooltipCount = 0;
 
 	let tooltipTitle = '';
 	const formattedData: Record<string, UplotTooltipDataProps> = {};
@@ -52,24 +54,37 @@ const generateTooltipContent = (
 				const value = data[index][idx];
 				const label = getLabelName(metric, queryName || '', legend || '');
 
-				const tooltipValue =
-					value !== null ? getToolTipValue(value, yAxisUnit) : 'NULL';
+				console.log('item', item);
 
-				const dataObj = {
-					show: item.show || false,
-					color: colors[(index - 1) % colors.length],
-					label,
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
-					focus: item?._focus || false,
-					value,
-					tooltipValue,
-					textContent: `${label} : ${tooltipValue}`,
-				};
+				if (value) {
+					const tooltipValue = getToolTipValue(value, yAxisUnit);
 
-				formattedData[label] = dataObj;
+					const dataObj = {
+						show: item.show || false,
+						color: colors[(index - 1) % colors.length],
+						label,
+						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+						// @ts-ignore
+						focus: item?._focus || false,
+						value,
+						tooltipValue,
+						textContent: `${label} : ${tooltipValue}`,
+					};
+
+					tooltipCount += 1;
+					formattedData[label] = dataObj;
+				}
 			}
 		});
+	}
+
+	// Show tooltip only if atleast only series has a value at the hovered timestamp
+	if (tooltipCount <= 0) {
+		if (overlay && overlay.style.display === 'block') {
+			overlay.style.display = 'none';
+		}
+
+		return container;
 	}
 
 	const sortedData: Record<
@@ -116,8 +131,6 @@ const generateTooltipContent = (
 			}
 		});
 	}
-
-	const overlay = document.getElementById('overlay');
 
 	if (overlay && overlay.style.display === 'none') {
 		overlay.style.display = 'block';
