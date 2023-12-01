@@ -3421,6 +3421,26 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 	return &tagsInfo, nil
 }
 
+// remove this after sometime
+func removeUnderscoreDuplicateFields(fields []model.LogField) []model.LogField {
+	lookup := map[string]model.LogField{}
+	for _, v := range fields {
+		lookup[v.Name+v.DataType] = v
+	}
+
+	for k := range lookup {
+		if strings.Contains(k, ".") {
+			delete(lookup, strings.ReplaceAll(k, ".", "_"))
+		}
+	}
+
+	updatedFields := []model.LogField{}
+	for _, v := range lookup {
+		updatedFields = append(updatedFields, v)
+	}
+	return updatedFields
+}
+
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
 	// response will contain top level fields from the otel log model
 	response := model.GetFieldsResponse{
@@ -3443,6 +3463,10 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
+
+	//remove this code after sometime
+	attributes = removeUnderscoreDuplicateFields(attributes)
+	resources = removeUnderscoreDuplicateFields(resources)
 
 	statements := []model.ShowCreateTableStatement{}
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTable)
