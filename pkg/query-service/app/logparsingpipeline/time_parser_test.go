@@ -108,9 +108,9 @@ func TestTimestampParsingProcessor(t *testing.T) {
 	testPipelines[0].Config = append(testPipelines[0].Config, timestampParserOp)
 
 	testTimestampStr := "2023-11-27T12:03:28.239907+0530"
-	testLog := makeTestLogEntry(
+	testLog := makeTestSignozLog(
 		"test log",
-		map[string]string{
+		map[string]interface{}{
 			"method":         "GET",
 			"test_timestamp": testTimestampStr,
 		},
