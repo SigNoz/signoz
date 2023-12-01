@@ -148,14 +148,6 @@ func TestNoCollectorErrorsFromSeverityParserForMismatchedLogs(t *testing.T) {
 		}
 	}
 
-	makeTestLog := func(
-		body string,
-		attributes map[string]interface{},
-	) model.SignozLog {
-		attributes["method"] = "GET"
-		return makeTestSignozLog(body, attributes)
-	}
-
 	type pipelineTestCase struct {
 		Name           string
 		Operator       PipelineOperator
@@ -176,7 +168,9 @@ func TestNoCollectorErrorsFromSeverityParserForMismatchedLogs(t *testing.T) {
 				},
 				OverwriteSeverityText: true,
 			},
-			makeTestLog("mismatching log", map[string]interface{}{}),
+			makeTestSignozLog("mismatching log", map[string]interface{}{
+				"method": "GET",
+			}),
 		}, {
 			"severity parser should ignore logs with invalid values.",
 			PipelineOperator{
@@ -190,7 +184,8 @@ func TestNoCollectorErrorsFromSeverityParserForMismatchedLogs(t *testing.T) {
 				},
 				OverwriteSeverityText: true,
 			},
-			makeTestLog("mismatching log", map[string]interface{}{
+			makeTestSignozLog("mismatching log", map[string]interface{}{
+				"method":        "GET",
 				"test_severity": 200.3,
 			}),
 		},
