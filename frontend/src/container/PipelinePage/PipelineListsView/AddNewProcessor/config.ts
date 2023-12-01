@@ -38,7 +38,7 @@ export type ProcessorFormField = {
 	placeholder: string;
 	name: string | NamePath;
 	rules?: Array<Rule>;
-	initialValue?: string;
+	initialValue?: string | Array<string>;
 	dependencies?: Array<string | NamePath>;
 	options?: Array<ProcessorFieldOption>;
 	shouldRender?: (form: FormInstance) => boolean;
@@ -336,33 +336,33 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			id: 3,
 			fieldName: 'Values for level DEBUG',
 			placeholder: 'Specify comma separated values. Eg: debug, 2xx',
-			name: 'mapping.debug',
+			name: ['mapping', 'debug'],
 			rules: [],
-			initialValue: 'debug',
+			initialValue: ['debug'],
 		},
 		{
 			id: 4,
 			fieldName: 'Values for level INFO',
 			placeholder: 'Specify comma separated values. Eg: info, 3xx',
-			name: 'mapping.info',
+			name: ['mapping', 'info'],
 			rules: [],
-			initialValue: 'info',
+			initialValue: ['info'],
 		},
 		{
 			id: 5,
 			fieldName: 'Values for level WARN',
 			placeholder: 'Specify comma separated values. Eg: warning, 4xx',
-			name: 'mapping.warn',
+			name: ['mapping', 'warn'],
 			rules: [],
-			initialValue: 'warn',
+			initialValue: ['warn'],
 		},
 		{
 			id: 6,
 			fieldName: 'Values for level ERROR',
 			placeholder: 'Specify comma separated values. Eg: error, 5xx',
-			name: 'mapping.error',
+			name: ['mapping', 'error'],
 			rules: [],
-			initialValue: 'error',
+			initialValue: ['error'],
 		},
 	],
 	retain: [

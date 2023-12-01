@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { formValidationRules } from '../config';
 import { processorFields, ProcessorFormField } from './config';
+import CSVInput from './FormFields/CSVInput';
 import {
 	Container,
 	FormWrapper,
@@ -25,6 +26,23 @@ function ProcessorFieldInput({
 		return null;
 	}
 
+	let inputField;
+	if (fieldData?.options) {
+		inputField = (
+			<StyledSelect>
+				{fieldData.options.map(({ value, label }) => (
+					<Select.Option key={value + label} value={value}>
+						{label}
+					</Select.Option>
+				))}
+			</StyledSelect>
+		);
+	} else if (Array.isArray(fieldData?.initialValue)) {
+		inputField = <CSVInput placeholder={t(fieldData.placeholder)} />;
+	} else {
+		inputField = <Input placeholder={t(fieldData.placeholder)} />;
+	}
+
 	return (
 		<Container>
 			<PipelineIndexIcon size="small">
@@ -40,17 +58,7 @@ function ProcessorFieldInput({
 					rules={fieldData.rules ? fieldData.rules : formValidationRules}
 					dependencies={fieldData.dependencies || []}
 				>
-					{fieldData?.options ? (
-						<StyledSelect>
-							{fieldData.options.map(({ value, label }) => (
-								<Select.Option key={value + label} value={value}>
-									{label}
-								</Select.Option>
-							))}
-						</StyledSelect>
-					) : (
-						<Input placeholder={t(fieldData.placeholder)} />
-					)}
+					{inputField}
 				</Form.Item>
 			</FormWrapper>
 		</Container>
