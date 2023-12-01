@@ -79,3 +79,17 @@ export const topOperationMetricsDownloadOptions: DownloadOptions = {
 	isDownloadEnabled: true,
 	fileName: 'top-operation',
 } as const;
+
+export const SERVICE_CHART_ID = {
+	latency: 'SERVICE_OVERVIEW_LATENCY',
+	error: 'SERVICE_OVERVIEW_ERROR',
+	rps: 'SERVICE_OVERVIEW_RPS',
+	apdex: 'SERVICE_OVERVIEW_APDEX',
+	errorPercentage: 'SERVICE_OVERVIEW_ERROR_PERCENTAGE',
+	dbCallsRPS: 'SERVICE_DATABASE_CALLS_RPS',
+	dbCallsAvgDuration: 'SERVICE_DATABASE_CALLS_AVG_DURATION',
+	externalCallDurationByAddress: 'SERVICE_EXTERNAL_CALLS_DURATION_BY_ADDRESS',
+	externalCallErrorPercentage: 'SERVICE_EXTERNAL_CALLS_ERROR_PERCENTAGE',
+	externalCallDuration: 'SERVICE_EXTERNAL_CALLS_DURATION',
+	externalCallRPSByAddress: 'SERVICE_EXTERNAL_CALLS_RPS_BY_ADDRESS',
+};
