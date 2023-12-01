@@ -42,6 +42,11 @@ body {
 				border-radius: 50%;
 			}
 		}
+
+		&.u-off {
+			text-decoration: line-through;
+			text-decoration-thickness: 3px;
+		}
 	}
 }
 
