@@ -23,6 +23,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
+import { getTimeRange } from 'utils/getTimeRange';
 
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
@@ -92,6 +93,21 @@ function FullView({
 
 	const isDarkMode = useIsDarkMode();
 
+	const [minTimeScale, setMinTimeScale] = useState<number>();
+	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
+	useEffect((): void => {
+		const { startTime, endTime } = getTimeRange();
+
+		setMinTimeScale(startTime);
+		setMaxTimeScale(endTime);
+	}, [maxTime, minTime, globalSelectedInterval]);
+
 	useEffect(() => {
 		if (!response.isFetching && fullViewRef.current) {
 			const width = fullViewRef.current?.clientWidth
@@ -114,6 +130,8 @@ function FullView({
 				graphsVisibilityStates,
 				setGraphsVisibilityStates,
 				thresholds: widget.thresholds,
+				minTimeScale,
+				maxTimeScale,
 			});
 
 			setChartOptions(newChartOptions);

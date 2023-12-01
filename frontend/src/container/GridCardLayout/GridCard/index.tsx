@@ -15,6 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getTimeRange } from 'utils/getTimeRange';
 
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
@@ -34,6 +35,8 @@ function GridCardGraph({
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
+	const [minTimeScale, setMinTimeScale] = useState<number>();
+	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
@@ -62,15 +65,22 @@ function GridCardGraph({
 		}
 	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
 
+	const updatedQuery = useStepInterval(widget?.query);
+
+	const isEmptyWidget =
+		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
+
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const updatedQuery = useStepInterval(widget?.query);
+	useEffect((): void => {
+		const { startTime, endTime } = getTimeRange();
 
-	const isEmptyWidget =
-		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
+		setMinTimeScale(startTime);
+		setMaxTimeScale(endTime);
+	}, [maxTime, minTime, globalSelectedInterval]);
 
 	const queryResponse = useGetQueryRange(
 		{
@@ -123,6 +133,8 @@ function GridCardGraph({
 				yAxisUnit: widget?.yAxisUnit,
 				onClickHandler,
 				thresholds: widget.thresholds,
+				minTimeScale,
+				maxTimeScale,
 			}),
 		[
 			widget?.id,
@@ -133,6 +145,8 @@ function GridCardGraph({
 			isDarkMode,
 			onDragSelect,
 			onClickHandler,
+			minTimeScale,
+			maxTimeScale,
 		],
 	);
 

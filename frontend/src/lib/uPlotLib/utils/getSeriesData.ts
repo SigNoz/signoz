@@ -47,16 +47,19 @@ const getSeries = (
 		);
 
 		const seriesObj: any = {
-			width: 1.4,
 			paths,
 			drawStyle: drawStyles.line,
 			lineInterpolation: lineInterpolations.spline,
 			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
 			label,
 			stroke: color,
+			width: 2,
 			spanGaps: true,
 			points: {
-				show: false,
+				size: 2,
+				show: true,
+				stroke: color,
+				fill: color,
 			},
 		};
 

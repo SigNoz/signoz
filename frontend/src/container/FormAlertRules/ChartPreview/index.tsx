@@ -10,7 +10,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -18,6 +18,7 @@ import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getTimeRange } from 'utils/getTimeRange';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
 import { getThresholdLabel } from './utils';
@@ -49,9 +50,20 @@ function ChartPreview({
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const threshold = alertDef?.condition.target || 0;
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const [minTimeScale, setMinTimeScale] = useState<number>();
+	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
+	useEffect((): void => {
+		const { startTime, endTime } = getTimeRange();
+
+		setMinTimeScale(startTime);
+		setMaxTimeScale(endTime);
+	}, [maxTime, minTime, globalSelectedInterval]);
 
 	const canQuery = useMemo((): boolean => {
 		if (!query || query == null) {
@@ -117,6 +129,8 @@ function ChartPreview({
 				yAxisUnit,
 				apiResponse: queryResponse?.data?.payload,
 				dimensions: containerDimensions,
+				minTimeScale,
+				maxTimeScale,
 				isDarkMode,
 				thresholds: [
 					{
@@ -141,6 +155,8 @@ function ChartPreview({
 			yAxisUnit,
 			queryResponse?.data?.payload,
 			containerDimensions,
+			minTimeScale,
+			maxTimeScale,
 			isDarkMode,
 			threshold,
 			t,

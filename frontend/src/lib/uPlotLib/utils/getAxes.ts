@@ -9,8 +9,8 @@ const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
 		grid: {
 			stroke: getGridColor(isDarkMode), // Color of the grid lines
-			dash: [10, 10], // Dash pattern for grid lines,
-			width: 0.5, // Width of the grid lines,
+			// dash: [10, 10], // Dash pattern for grid lines,
+			width: 0.2, // Width of the grid lines,
 			show: true,
 		},
 		ticks: {
@@ -24,8 +24,8 @@ const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
 		stroke: isDarkMode ? 'white' : 'black', // Color of the axis line
 		grid: {
 			stroke: getGridColor(isDarkMode), // Color of the grid lines
-			dash: [10, 10], // Dash pattern for grid lines,
-			width: 0.3, // Width of the grid lines
+			// dash: [10, 10], // Dash pattern for grid lines,
+			width: 0.2, // Width of the grid lines
 		},
 		ticks: {
 			// stroke: isDarkMode ? 'white' : 'black', // Color of the tick lines

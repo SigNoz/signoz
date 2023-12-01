@@ -15,6 +15,7 @@ import onClickPlugin, { OnClickPluginOpts } from './plugins/onClickPlugin';
 import tooltipPlugin from './plugins/tooltipPlugin';
 import getAxes from './utils/getAxes';
 import getSeries from './utils/getSeriesData';
+import { getXAxisScale } from './utils/getXAxisScale';
 import { getYAxisScale } from './utils/getYAxisScale';
 
 interface GetUPlotChartOptions {
@@ -31,6 +32,8 @@ interface GetUPlotChartOptions {
 	thresholdValue?: number;
 	thresholdText?: string;
 	fillSpans?: boolean;
+	minTimeScale?: number;
+	maxTimeScale?: number;
 }
 
 export const getUPlotChartOptions = ({
@@ -40,18 +43,20 @@ export const getUPlotChartOptions = ({
 	apiResponse,
 	onDragSelect,
 	yAxisUnit,
+	minTimeScale,
+	maxTimeScale,
 	onClickHandler = _noop,
 	graphsVisibilityStates,
 	setGraphsVisibilityStates,
 	thresholds,
 	fillSpans,
 }: GetUPlotChartOptions): uPlot.Options => {
-	// eslint-disable-next-line sonarjs/prefer-immediate-return
-	const chartOptions = {
+	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
+
+	return {
 		id,
 		width: dimensions.width,
 		height: dimensions.height - 45,
-		// tzDate: (ts) => uPlot.tzDate(new Date(ts * 1e3), ''), //  Pass timezone for 2nd param
 		legend: {
 			show: true,
 			live: false,
@@ -74,11 +79,11 @@ export const getUPlotChartOptions = ({
 				fill: (): string => '#fff',
 			},
 		},
-		padding: [16, 16, 16, 16],
+		padding: [16, 16, 8, 8],
 		scales: {
 			x: {
-				time: true,
-				auto: true, // Automatically adjust scale range
+				spanGaps: true,
+				...timeScaleProps,
 			},
 			y: {
 				...getYAxisScale(
@@ -194,6 +199,4 @@ export const getUPlotChartOptions = ({
 		),
 		axes: getAxes(isDarkMode, yAxisUnit),
 	};
-
-	return chartOptions;
 };
