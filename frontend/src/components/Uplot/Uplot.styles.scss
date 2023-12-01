@@ -13,3 +13,10 @@
 	height: 100%;
 	width: 100%;
 }
+
+.uplot-no-data {
+	display: flex;
+	width: 100%;
+	flex-direction: column;
+	gap: 8px;
+}
