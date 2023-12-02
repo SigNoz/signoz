@@ -47,7 +47,7 @@ function WidgetGraphComponent({
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
 
 	const params = useUrlQuery();
 
@@ -183,10 +183,20 @@ function WidgetGraphComponent({
 		const queryParams = {
 			[QueryParams.expandedWidgetId]: widget.id,
 		};
+		const updatedSearch = createQueryParams(queryParams);
+		const existingSearch = new URLSearchParams(search);
+		const isExpandedWidgetIdPresent = existingSearch.has(
+			QueryParams.expandedWidgetId,
+		);
+		if (isExpandedWidgetIdPresent) {
+			existingSearch.delete(QueryParams.expandedWidgetId);
+		}
+		const separator = existingSearch.toString() ? '&' : '';
+		const newSearch = `${existingSearch}${separator}${updatedSearch}`;
 
 		history.push({
 			pathname,
-			search: createQueryParams(queryParams),
+			search: newSearch,
 		});
 	};
 
@@ -199,9 +209,12 @@ function WidgetGraphComponent({
 	};
 
 	const onToggleModelHandler = (): void => {
+		const existingSearchParams = new URLSearchParams(search);
+		existingSearchParams.delete(QueryParams.expandedWidgetId);
+		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
 		history.push({
 			pathname,
-			search: createQueryParams({}),
+			search: createQueryParams(updatedQueryParams),
 		});
 	};
 
