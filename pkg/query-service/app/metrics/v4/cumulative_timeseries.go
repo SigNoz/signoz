@@ -9,36 +9,21 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-var rateWithoutNegative = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)))`
-var increaseWithoutNegative = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window)))`
+const rateWithoutNegative = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)))`
+
+const increaseWithoutNegative = `If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window)))`
 
 // buildMetricsTimeSeriesFilterQuery builds the sub-query to be used for filtering
 // timeseries based on search criteria
 func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.AttributeKey, mq *v3.BuilderQuery) (string, error) {
-	metricName := mq.AggregateAttribute.Key
 	var conditions []string
-	if mq.Temporality == v3.Delta {
-		conditions = append(conditions, fmt.Sprintf("metric_name = %s AND temporality = '%s' ", utils.ClickHouseFormattedValue(metricName), v3.Delta))
-	} else {
-		conditions = append(conditions, fmt.Sprintf("metric_name = %s AND temporality IN ['%s', '%s']", utils.ClickHouseFormattedValue(metricName), v3.Cumulative, v3.Unspecified))
-	}
+	conditions = append(conditions, fmt.Sprintf("metric_name = %s", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key)))
+	conditions = append(conditions, fmt.Sprintf("temporality = '%s' ", mq.Temporality))
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
 			toFormat := item.Value
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
-			// if the received value is an array for like/match op, just take the first value
-			// or should we throw an error?
-			if op == v3.FilterOperatorLike || op == v3.FilterOperatorRegex || op == v3.FilterOperatorNotLike || op == v3.FilterOperatorNotRegex {
-				x, ok := item.Value.([]interface{})
-				if ok {
-					if len(x) == 0 {
-						continue
-					}
-					toFormat = x[0]
-				}
-			}
-
 			if op == v3.FilterOperatorContains || op == v3.FilterOperatorNotContains {
 				toFormat = fmt.Sprintf("%%%s%%", toFormat)
 			}
@@ -77,25 +62,30 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.Attribut
 			case v3.FilterOperatorNotExists:
 				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", item.Key.Key))
 			default:
-				return "", fmt.Errorf("unsupported operation")
+				return "", fmt.Errorf("unsupported filter operator")
 			}
 		}
 	}
-	queryString := strings.Join(conditions, " AND ")
+	whereClause := strings.Join(conditions, " AND ")
 
 	var selectLabels string
 	for _, tag := range groupTags {
 		selectLabels += fmt.Sprintf(" JSONExtractString(labels, '%s') as %s,", tag.Key, tag.Key)
 	}
 
-	filterSubQuery := fmt.Sprintf("SELECT DISTINCT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_LOCAL_TABLENAME, queryString)
+	filterSubQuery := fmt.Sprintf(
+		"SELECT DISTINCT %s fingerprint FROM %s.%s WHERE %s",
+		selectLabels,
+		constants.SIGNOZ_METRIC_DBNAME,
+		constants.SIGNOZ_TIMESERIES_LOCAL_TABLENAME,
+		whereClause,
+	)
 
 	return filterSubQuery, nil
 }
 
-// buildTemporalAggregationSubQuery builds the sub-query to be used for temporal aggregation
-func buildTemporalAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
-
+// buildTemporalAggregationSubQueryCumulativeTimeSeries builds the sub-query to be used for temporal aggregation
+func buildTemporalAggregationSubQueryCumulativeTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 	var subQuery string
 
 	timeSeriesSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq)
@@ -103,7 +93,7 @@ func buildTemporalAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuer
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -114,7 +104,7 @@ func buildTemporalAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuer
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
-			" WHERE " + samplesTableTimeFilter +
+			" WHERE " + samplesTableFilter +
 			" GROUP BY fingerprint, ts" +
 			" ORDER BY fingerprint, ts"
 
@@ -168,12 +158,11 @@ func buildTemporalAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuer
 	return subQuery, nil
 }
 
-// buildMetricQuery builds the query to be used for fetching metrics
-func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
-
+// buildMetricQueryCumulativeTimeSeries builds the query to be used for fetching metrics
+func buildMetricQueryCumulativeTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 	var query string
 
-	temporalAggSubQuery, err := buildTemporalAggregationSubQuery(start, end, step, mq)
+	temporalAggSubQuery, err := buildTemporalAggregationSubQueryCumulativeTimeSeries(start, end, step, mq)
 	if err != nil {
 		return "", err
 	}
@@ -218,6 +207,7 @@ func groupingSets(tags ...string) string {
 	return fmt.Sprintf(`GROUPING SETS ( (%s), (%s) )`, strings.Join(withTs, ", "), strings.Join(tags, ", "))
 }
 
+// groupingSetsByAttributeKeyTags returns a string of comma separated tags for group by clause
 func groupingSetsByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
@@ -226,6 +216,7 @@ func groupingSetsByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	return groupingSets(groupTags...)
 }
 
+// groupBy returns a string of comma separated tags for group by clause
 func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {

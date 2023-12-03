@@ -8,8 +8,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-// buildTemporalAggregationSubQuery builds the sub-query to be used for temporal aggregation
-func buildTemporalAggregationSubQueryForDelta(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+// buildTemporalAggregationSubQueryForDeltaTimeSeries builds the sub-query to be used for temporal aggregation
+func buildTemporalAggregationSubQueryForDeltaTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	var subQuery string
 
@@ -18,7 +18,7 @@ func buildTemporalAggregationSubQueryForDelta(start, end, step int64, mq *v3.Bui
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -29,7 +29,7 @@ func buildTemporalAggregationSubQueryForDelta(start, end, step int64, mq *v3.Bui
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
-			" WHERE " + samplesTableTimeFilter +
+			" WHERE " + samplesTableFilter +
 			" GROUP BY fingerprint, ts" +
 			" ORDER BY fingerprint, ts"
 
@@ -75,12 +75,12 @@ func buildTemporalAggregationSubQueryForDelta(start, end, step int64, mq *v3.Bui
 	return subQuery, nil
 }
 
-// buildMetricQuery builds the query to be used for fetching metrics
-func buildMetricQueryForDelta(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+// buildMetricQueryForDeltaTimeSeries builds the query to be used for fetching metrics
+func buildMetricQueryForDeltaTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	var query string
 
-	temporalAggSubQuery, err := buildTemporalAggregationSubQuery(start, end, step, mq)
+	temporalAggSubQuery, err := buildTemporalAggregationSubQueryForDeltaTimeSeries(start, end, step, mq)
 	if err != nil {
 		return "", err
 	}

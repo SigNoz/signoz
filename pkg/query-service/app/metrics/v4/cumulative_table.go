@@ -12,7 +12,7 @@ import (
 // This logic is little convoluted for a reason.
 // When we work with cumulative metrics, the table view need to show the data for the entire time range.
 // In some cases, we could take the points at the start and end of the time range and divide it by the
-// duration. But, the problem is there is no guarantee that the trend will be linear between the start and end.
+// duration. But, the problem is there could be resets.
 // We can sum the rate of change for some interval X, this interval can be step size of time series.
 // However, the speed of query depends on the number of timestamps, so we bump up the xx the step size.
 // This should be a good balance between speed and accuracy.
@@ -28,16 +28,16 @@ func stepForTableCumulative(start, end int64) int64 {
 }
 
 // buildTemporalAggregationSubQueryCumulativeTable builds the sub-query to be used for temporal aggregation
-func buildTemporalAggregationSubQueryCumulativeTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
-
+func buildTemporalAggregationSubQueryCumulativeTable(start, end, _ int64, mq *v3.BuilderQuery) (string, error) {
 	var subQuery string
+	step := stepForTableCumulative(start, end)
 
 	timeSeriesSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq)
 	if err != nil {
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -48,7 +48,7 @@ func buildTemporalAggregationSubQueryCumulativeTable(start, end, step int64, mq 
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
-			" WHERE " + samplesTableTimeFilter +
+			" WHERE " + samplesTableFilter +
 			" GROUP BY fingerprint, ts" +
 			" ORDER BY fingerprint, ts"
 
@@ -103,11 +103,13 @@ func buildTemporalAggregationSubQueryCumulativeTable(start, end, step int64, mq 
 }
 
 // buildMetricQueryCumulativeTable builds the query to be used for fetching metrics
-func buildMetricQueryCumulativeTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
-
+func buildMetricQueryCumulativeTable(start, end, _ int64, mq *v3.BuilderQuery) (string, error) {
 	var query string
 
-	temporalAggSubQuery, err := buildTemporalAggregationSubQuery(start, end, step, mq)
+	step := stepForTableCumulative(start, end)
+	points := ((end - start + 1) / 1000) / step
+
+	temporalAggSubQuery, err := buildTemporalAggregationSubQueryCumulativeTable(start, end, step, mq)
 	if err != nil {
 		return "", err
 	}
@@ -117,7 +119,7 @@ func buildMetricQueryCumulativeTable(start, end, step int64, mq *v3.BuilderQuery
 	selectLabels := groupByAttributeKeyTags(mq.GroupBy...)
 
 	queryTmpl :=
-		"SELECT %s," +
+		"SELECT %s, toStartOfHour(now()) as ts, " +
 			" %s as value" +
 			" FROM (%s)" +
 			" WHERE isNaN(per_series_value) = 0" +
@@ -127,9 +129,15 @@ func buildMetricQueryCumulativeTable(start, end, step int64, mq *v3.BuilderQuery
 	switch mq.SpatialAggregation {
 	case v3.SpatialAggregationAvg:
 		op := "avg(per_series_value)"
+		if mq.TemporalAggregation == v3.TemporalAggregationRate {
+			op = "avg(per_series_value)/" + fmt.Sprintf("%d", points)
+		}
 		query = fmt.Sprintf(queryTmpl, selectLabels, op, temporalAggSubQuery, groupBy, orderBy)
 	case v3.SpatialAggregationSum:
 		op := "sum(per_series_value)"
+		if mq.TemporalAggregation == v3.TemporalAggregationRate {
+			op = "sum(per_series_value)/" + fmt.Sprintf("%d", points)
+		}
 		query = fmt.Sprintf(queryTmpl, selectLabels, op, temporalAggSubQuery, groupBy, orderBy)
 	case v3.SpatialAggregationMin:
 		op := "min(per_series_value)"

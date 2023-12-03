@@ -8,7 +8,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-// buildTemporalAggregationSubQuery builds the sub-query to be used for temporal aggregation
+// buildTemporalAggregationSubQueryForDeltaTable builds the sub-query to be used for temporal aggregation
 func buildTemporalAggregationSubQueryForDeltaTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	var subQuery string
@@ -18,7 +18,7 @@ func buildTemporalAggregationSubQueryForDeltaTable(start, end, step int64, mq *v
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -29,7 +29,7 @@ func buildTemporalAggregationSubQueryForDeltaTable(start, end, step int64, mq *v
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
-			" WHERE " + samplesTableTimeFilter +
+			" WHERE " + samplesTableFilter +
 			" GROUP BY fingerprint, ts" +
 			" ORDER BY fingerprint, ts"
 
@@ -79,8 +79,9 @@ func buildTemporalAggregationSubQueryForDeltaTable(start, end, step int64, mq *v
 func buildMetricQueryForDeltaTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	var query string
+	points := ((end - start + 1) / 1000) / step
 
-	temporalAggSubQuery, err := buildTemporalAggregationSubQuery(start, end, step, mq)
+	temporalAggSubQuery, err := buildTemporalAggregationSubQueryForDeltaTable(start, end, step, mq)
 	if err != nil {
 		return "", err
 	}
@@ -90,7 +91,7 @@ func buildMetricQueryForDeltaTable(start, end, step int64, mq *v3.BuilderQuery) 
 	selectLabels := groupByAttributeKeyTags(mq.GroupBy...)
 
 	queryTmpl :=
-		"SELECT %s," +
+		"SELECT %s, toStartOfHour(now()) as ts," +
 			" %s as value" +
 			" FROM (%s)" +
 			" WHERE isNaN(per_series_value) = 0" +
@@ -100,9 +101,15 @@ func buildMetricQueryForDeltaTable(start, end, step int64, mq *v3.BuilderQuery) 
 	switch mq.SpatialAggregation {
 	case v3.SpatialAggregationAvg:
 		op := "avg(per_series_value)"
+		if mq.TemporalAggregation == v3.TemporalAggregationRate {
+			op = "avg(per_series_value)/" + fmt.Sprintf("%d", points)
+		}
 		query = fmt.Sprintf(queryTmpl, selectLabels, op, temporalAggSubQuery, groupBy, orderBy)
 	case v3.SpatialAggregationSum:
 		op := "sum(per_series_value)"
+		if mq.TemporalAggregation == v3.TemporalAggregationRate {
+			op = "sum(per_series_value)/" + fmt.Sprintf("%d", points)
+		}
 		query = fmt.Sprintf(queryTmpl, selectLabels, op, temporalAggSubQuery, groupBy, orderBy)
 	case v3.SpatialAggregationMin:
 		op := "min(per_series_value)"
