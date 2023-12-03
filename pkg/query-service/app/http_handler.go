@@ -27,8 +27,10 @@ import (
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	metricsv4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
+	"go.signoz.io/signoz/pkg/query-service/app/querierv2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -78,7 +80,9 @@ type APIHandler struct {
 	featureFlags      interfaces.FeatureLookup
 	ready             func(http.HandlerFunc) http.HandlerFunc
 	querier           interfaces.Querier
+	querierV2         interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
+	queryBuilderV2    *queryBuilder.QueryBuilder
 	preferDelta       bool
 	preferSpanMetrics bool
 
@@ -144,6 +148,16 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
 	querier := querier.NewQuerier(querierOpts)
 
+	querierOptsV2 := querierv2.QuerierOptions{
+		Reader:        opts.Reader,
+		Cache:         opts.Cache,
+		KeyGenerator:  queryBuilder.NewKeyGenerator(),
+		FluxInterval:  opts.FluxInterval,
+		FeatureLookup: opts.FeatureFlags,
+	}
+
+	querierv2Instance := querierv2.NewQuerier(querierOptsV2)
+
 	aH := &APIHandler{
 		reader:                        opts.Reader,
 		appDao:                        opts.AppDao,
@@ -158,6 +172,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		featureFlags:                  opts.FeatureFlags,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
+		querierV2:                     querierv2Instance,
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
@@ -166,6 +181,13 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
 	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
+
+	builderOpts = queryBuilder.QueryBuilderOptions{
+		BuildMetricQuery: metricsv4.PrepareMetricQuery,
+		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
+		BuildLogQuery:    logsv3.PrepareLogsQuery,
+	}
+	aH.queryBuilderV2 = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
 
 	aH.ready = aH.testReady
 
@@ -317,6 +339,11 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v4").Subrouter()
+	subRouter.HandleFunc("/query_range", am.OpenAccess(aH.QueryRangeV4)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
@@ -3075,6 +3102,82 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
+}
+
+func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
+
+	var result []*v3.Result
+	var err error
+	var errQuriesByName map[string]string
+	var spanKeys map[string]v3.AttributeKey
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(queryRangeParams) {
+			// get the fields if any logs query is present
+			var fields map[string]v3.AttributeKey
+			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			logsv3.Enrich(queryRangeParams, fields)
+		}
+
+		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+		if err != nil {
+			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+			RespondError(w, apiErrObj, errQuriesByName)
+			return
+		}
+	}
+
+	result, err, errQuriesByName = aH.querierV2.QueryRange(ctx, queryRangeParams, spanKeys)
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
+	applyMetricLimit(result, queryRangeParams)
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+
+	// This checks if the time for context to complete has exceeded.
+	// it adds flag to notify the user of incomplete respone
+	select {
+	case <-ctx.Done():
+		resp.ContextTimeout = true
+		resp.ContextTimeoutMessage = "result might contain incomplete data due to context timeout, for custom timeout set the timeout header eg:- timeout:120"
+	default:
+		break
+	}
+
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+
+	if apiErrorObj != nil {
+		zap.S().Errorf(apiErrorObj.Err.Error())
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	// add temporality for each metric
+
+	temporalityErr := aH.addTemporality(r.Context(), queryRangeParams)
+	if temporalityErr != nil {
+		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
+		return
+	}
+
+	aH.queryRangeV4(r.Context(), queryRangeParams, w, r)
 }
 
 func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
