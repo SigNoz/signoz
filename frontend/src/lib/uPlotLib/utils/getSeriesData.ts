@@ -46,6 +46,8 @@ const getSeries = (
 			legend || '',
 		);
 
+		const pointSize = seriesList[i].values.length > 1 ? 2 : 10;
+
 		const seriesObj: any = {
 			paths,
 			drawStyle: drawStyles.line,
@@ -56,7 +58,7 @@ const getSeries = (
 			width: 2,
 			spanGaps: true,
 			points: {
-				size: seriesList[i].values.length >= 1 ? 2 : 10,
+				size: pointSize,
 				show: true,
 				stroke: color,
 				fill: color,
