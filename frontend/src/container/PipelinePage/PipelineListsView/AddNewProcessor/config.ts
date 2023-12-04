@@ -334,6 +334,14 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		},
 		{
 			id: 3,
+			fieldName: 'Values for level TRACE',
+			placeholder: 'Specify comma separated values. Eg: trace, 0',
+			name: ['mapping', 'trace'],
+			rules: [],
+			initialValue: ['trace'],
+		},
+		{
+			id: 4,
 			fieldName: 'Values for level DEBUG',
 			placeholder: 'Specify comma separated values. Eg: debug, 2xx',
 			name: ['mapping', 'debug'],
@@ -341,7 +349,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			initialValue: ['debug'],
 		},
 		{
-			id: 4,
+			id: 5,
 			fieldName: 'Values for level INFO',
 			placeholder: 'Specify comma separated values. Eg: info, 3xx',
 			name: ['mapping', 'info'],
@@ -349,7 +357,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			initialValue: ['info'],
 		},
 		{
-			id: 5,
+			id: 6,
 			fieldName: 'Values for level WARN',
 			placeholder: 'Specify comma separated values. Eg: warning, 4xx',
 			name: ['mapping', 'warn'],
@@ -357,12 +365,20 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			initialValue: ['warn'],
 		},
 		{
-			id: 6,
+			id: 7,
 			fieldName: 'Values for level ERROR',
 			placeholder: 'Specify comma separated values. Eg: error, 5xx',
 			name: ['mapping', 'error'],
 			rules: [],
 			initialValue: ['error'],
+		},
+		{
+			id: 8,
+			fieldName: 'Values for level FATAL',
+			placeholder: 'Specify comma separated values. Eg: fatal, panic',
+			name: ['mapping', 'fatal'],
+			rules: [],
+			initialValue: ['fatal'],
 		},
 	],
 	retain: [
