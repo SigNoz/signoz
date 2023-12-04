@@ -68,10 +68,13 @@ function DashboardVariableSelection(): JSX.Element | null {
 		allSelected: boolean,
 	): void => {
 		const updatedVariablesData = { ...variables };
-		updatedVariablesData[name].selectedValue = value;
-		updatedVariablesData[name].allSelected = allSelected;
 
-		console.log('onValue Update', name);
+		console.log('updatedVariablesData', updatedVariablesData, value, allSelected);
+
+		// updatedVariablesData[name]?.selectedValue = value;
+		// updatedVariablesData[name]?.allSelected = allSelected;
+
+		return false;
 
 		if (role !== 'VIEWER' && selectedDashboard) {
 			updateVariables(name, updatedVariablesData);
@@ -85,14 +88,21 @@ function DashboardVariableSelection(): JSX.Element | null {
 		return null;
 	}
 
-	const variablesKeys = sortBy(Object.keys(variables));
+	const varriablesKeyValuePairs = Object.entries(variables);
+	varriablesKeyValuePairs.sort(([, a], [, b]) => a.order - b.order);
+
+	const orderBasedSortedVariables = Object.fromEntries(varriablesKeyValuePairs);
+
+	const variablesKeys = Object.keys(orderBasedSortedVariables);
+
+	// console.log('arrayOfKeyValuePairs', variablesKeys);
 
 	return (
 		<Row>
 			{variablesKeys &&
 				map(variablesKeys, (variableName) => (
 					<VariableItem
-						key={`${variableName}${variables[variableName].modificationUUID}`}
+						key={`${variableName}${variables[variableName].id}}${variables[variableName].order}`}
 						existingVariables={variables}
 						lastUpdatedVar={lastUpdatedVar}
 						variableData={{

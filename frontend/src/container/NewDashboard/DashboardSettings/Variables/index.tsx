@@ -1,17 +1,63 @@
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable react/jsx-props-no-spreading */
+/* eslint-disable react/destructuring-assignment */
+/* eslint-disable import/no-extraneous-dependencies */
 import { blue, red } from '@ant-design/colors';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, Row, Space, Tag } from 'antd';
-import { ResizeTable } from 'components/ResizeTable';
+import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
+import {
+	DndContext,
+	PointerSensor,
+	useSensor,
+	useSensors,
+} from '@dnd-kit/core';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Button, Modal, Row, Space, Table, Tag } from 'antd';
+import { RowProps } from 'antd/lib';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { PencilIcon, TrashIcon } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
+import { v4 as generateUUID } from 'uuid';
 
-import { TVariableViewMode } from './types';
+import { TVariableMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
+
+function TableRow(props: RowProps): JSX.Element {
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({
+		id: props['data-row-key'],
+	});
+
+	const style: React.CSSProperties = {
+		...props.style,
+		transform: CSS.Transform.toString(transform && { ...transform, scaleY: 1 }),
+		transition,
+		cursor: 'move',
+		...(isDragging ? { position: 'relative', zIndex: 9999 } : {}),
+	};
+
+	return (
+		<tr
+			{...props}
+			ref={setNodeRef}
+			style={style}
+			{...attributes}
+			{...listeners}
+		/>
+	);
+}
 
 function VariablesSetting(): JSX.Element {
 	const variableToDelete = useRef<string | null>(null);
@@ -25,16 +71,12 @@ function VariablesSetting(): JSX.Element {
 
 	const { variables = {} } = selectedDashboard?.data || {};
 
-	const variablesTableData = Object.keys(variables).map((variableName) => ({
-		key: variableName,
-		name: variableName,
-		...variables[variableName],
-	}));
+	const [variablesTableData, setVariablesTableData] = useState<any>([]);
+	const [variblesOrderArr, setVariablesOrderArr] = useState<number[]>([]);
 
-	const [
-		variableViewMode,
-		setVariableViewMode,
-	] = useState<null | TVariableViewMode>(null);
+	const [variableViewMode, setVariableViewMode] = useState<null | TVariableMode>(
+		null,
+	);
 
 	const [
 		variableEditData,
@@ -47,7 +89,7 @@ function VariablesSetting(): JSX.Element {
 	};
 
 	const onVariableViewModeEnter = (
-		viewType: TVariableViewMode,
+		viewType: TVariableMode,
 		varData: IDashboardVariable,
 	): void => {
 		setVariableEditData(varData);
@@ -55,6 +97,39 @@ function VariablesSetting(): JSX.Element {
 	};
 
 	const updateMutation = useUpdateDashboard();
+
+	useEffect(() => {
+		console.log('variables', variables);
+
+		const tableRowData = [];
+		const variableOrderArr = [];
+
+		for (const [key, value] of Object.entries(variables)) {
+			console.log(`${key}: ${value}`);
+
+			const { order, id } = value;
+
+			tableRowData.push({
+				key,
+				name: key,
+				...variables[key],
+				id: id || generateUUID(),
+			});
+
+			if (order) {
+				variableOrderArr.push(order);
+			}
+		}
+
+		tableRowData.sort((a, b) => a.order - b.order);
+		variableOrderArr.sort((a, b) => a - b);
+
+		console.log('tableRowData', tableRowData);
+		console.log('variableOrderArr', variableOrderArr);
+
+		setVariablesTableData(tableRowData);
+		setVariablesOrderArr(variableOrderArr);
+	}, [variables]);
 
 	const updateVariables = (
 		updatedVariablesData: Dashboard['data']['variables'],
@@ -89,22 +164,66 @@ function VariablesSetting(): JSX.Element {
 		);
 	};
 
+	const getVariableOrder = (): number => {
+		if (variblesOrderArr && variblesOrderArr.length > 0) {
+			return variblesOrderArr[variblesOrderArr.length - 1] + 1;
+		}
+
+		return 0;
+	};
+
+	const convertVariablesToDbFormat = (
+		variblesArr: IDashboardVariable[],
+	): Dashboard['data']['variables'] =>
+		variblesArr.reduce((result, obj: IDashboardVariable) => {
+			const { id } = obj;
+			result[id] = obj;
+			return result;
+		}, {});
+
 	const onVariableSaveHandler = (
-		name: string,
+		mode: TVariableMode,
 		variableData: IDashboardVariable,
-		oldName: string,
 	): void => {
-		if (!variableData.name) {
-			return;
+		console.log('variable Data', variableData, mode);
+
+		const updatedVariableData = {
+			...variableData,
+			order:
+				variableData.order && variableData.order >= 0
+					? variableData.order
+					: getVariableOrder(),
+		};
+
+		console.log('updatedVariableData', updatedVariableData);
+
+		const newVariablesArr = variablesTableData.map(
+			(variable: IDashboardVariable) => {
+				if (variable.id === updatedVariableData.id) {
+					return updatedVariableData;
+				}
+
+				return variable;
+			},
+		);
+
+		if (mode === 'ADD') {
+			newVariablesArr.push(updatedVariableData);
 		}
 
-		const newVariables = { ...variables };
-		newVariables[name] = variableData;
+		console.log('newVariablesArr', newVariablesArr);
 
-		if (oldName) {
-			delete newVariables[oldName];
-		}
-		updateVariables(newVariables);
+		const variables = convertVariablesToDbFormat(newVariablesArr);
+
+		// if (newVariables[name]) {
+		// 	newVariables[name] = updatedVariableData;
+		// }
+
+		// console.log('final update', newVariables);
+
+		console.log('variables', variables);
+
+		updateVariables(variables);
 		onDoneVariableViewMode();
 	};
 
@@ -167,6 +286,51 @@ function VariablesSetting(): JSX.Element {
 		},
 	];
 
+	const sensors = useSensors(
+		useSensor(PointerSensor, {
+			activationConstraint: {
+				// https://docs.dndkit.com/api-documentation/sensors/pointer#activation-constraints
+				distance: 1,
+			},
+		}),
+	);
+
+	const onDragEnd = ({ active, over }: DragEndEvent): void => {
+		if (active.id !== over?.id) {
+			const activeIndex = variablesTableData.findIndex(
+				(i: { key: UniqueIdentifier }) => i.key === active.id,
+			);
+			const overIndex = variablesTableData.findIndex(
+				(i: { key: UniqueIdentifier | undefined }) => i.key === over?.id,
+			);
+
+			const updatedVariables: IDashboardVariable[] = arrayMove(
+				variablesTableData,
+				activeIndex,
+				overIndex,
+			);
+
+			const reArrangedVariables = {};
+
+			for (let index = 0; index < updatedVariables.length; index += 1) {
+				const variableName = updatedVariables[index].name;
+
+				if (variableName) {
+					reArrangedVariables[variableName] = {
+						...updatedVariables[index],
+						order: index,
+					};
+				}
+			}
+
+			updateVariables(reArrangedVariables);
+
+			setVariablesTableData(updatedVariables);
+		}
+	};
+
+	console.log('variableViewMode', variableViewMode);
+
 	return (
 		<>
 			{variableViewMode ? (
@@ -176,11 +340,17 @@ function VariablesSetting(): JSX.Element {
 					onSave={onVariableSaveHandler}
 					onCancel={onDoneVariableViewMode}
 					validateName={validateVariableName}
-					variableViewMode={variableViewMode}
+					mode={variableViewMode}
 				/>
 			) : (
 				<>
-					<Row style={{ flexDirection: 'row-reverse', padding: '0.5rem 0' }}>
+					<Row
+						style={{
+							flexDirection: 'row',
+							justifyContent: 'flex-end',
+							padding: '0.5rem 0',
+						}}
+					>
 						<Button
 							data-testid="add-new-variable"
 							type="primary"
@@ -192,7 +362,29 @@ function VariablesSetting(): JSX.Element {
 						</Button>
 					</Row>
 
-					<ResizeTable columns={columns} dataSource={variablesTableData} />
+					<DndContext
+						sensors={sensors}
+						modifiers={[restrictToVerticalAxis]}
+						onDragEnd={onDragEnd}
+					>
+						<SortableContext
+							// rowKey array
+							items={variablesTableData.map((variable) => variable.key)}
+						>
+							<Table
+								components={{
+									body: {
+										row: TableRow,
+									},
+								}}
+								rowKey="key"
+								// size={100}
+								columns={columns}
+								pagination={false}
+								dataSource={variablesTableData}
+							/>
+						</SortableContext>
+					</DndContext>
 				</>
 			)}
 			<Modal

@@ -26,7 +26,7 @@ interface VariableItemProps {
 	variableData: IDashboardVariable;
 	existingVariables: Record<string, IDashboardVariable>;
 	onValueUpdate: (
-		name: string,
+		data: IDashboardVariable,
 		arg1: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
 	) => void;
@@ -137,8 +137,9 @@ function VariableItem({
 							} else {
 								[value] = newOptionsData;
 							}
-							if (variableData.name) {
-								onValueUpdate(variableData.name, value, allSelected);
+
+							if (variableData) {
+								onValueUpdate(variableData, value, allSelected);
 							}
 						}
 
@@ -189,15 +190,16 @@ function VariableItem({
 	});
 
 	const handleChange = (value: string | string[]): void => {
+		console.log('handle change', variableData);
 		if (variableData.name)
 			if (
 				value === ALL_SELECT_VALUE ||
 				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE)) ||
 				(Array.isArray(value) && value.length === 0)
 			) {
-				onValueUpdate(variableData.name, optionsData, true);
+				onValueUpdate(variableData, optionsData, true);
 			} else {
-				onValueUpdate(variableData.name, value, false);
+				onValueUpdate(variableData, value, false);
 			}
 	};
 

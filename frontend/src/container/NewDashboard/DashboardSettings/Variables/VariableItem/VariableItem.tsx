@@ -18,10 +18,10 @@ import {
 	VariableQueryTypeArr,
 	VariableSortTypeArr,
 } from 'types/api/dashboard/getAll';
-import { v4 } from 'uuid';
+import { v4 as generateUUID } from 'uuid';
 
 import { variablePropsToPayloadVariables } from '../../../utils';
-import { TVariableViewMode } from '../types';
+import { TVariableMode } from '../types';
 import { LabelContainer, VariableItemRow } from './styles';
 
 const { Option } = Select;
@@ -30,9 +30,9 @@ interface VariableItemProps {
 	variableData: IDashboardVariable;
 	existingVariables: Record<string, IDashboardVariable>;
 	onCancel: () => void;
-	onSave: (name: string, arg0: IDashboardVariable, arg1: string) => void;
+	onSave: (mode: TVariableMode, variableData: IDashboardVariable) => void;
 	validateName: (arg0: string) => boolean;
-	variableViewMode: TVariableViewMode;
+	mode: TVariableMode;
 }
 function VariableItem({
 	variableData,
@@ -40,7 +40,7 @@ function VariableItem({
 	onCancel,
 	onSave,
 	validateName,
-	variableViewMode,
+	mode,
 }: VariableItemProps): JSX.Element {
 	const [variableName, setVariableName] = useState<string>(
 		variableData.name || '',
@@ -97,7 +97,9 @@ function VariableItem({
 	]);
 
 	const handleSave = (): void => {
-		const newVariableData: IDashboardVariable = {
+		console.log('handle Save', variableData);
+
+		const variable: IDashboardVariable = {
 			name: variableName,
 			description: variableDescription,
 			type: queryType,
@@ -111,16 +113,12 @@ function VariableItem({
 				selectedValue: (variableData.selectedValue ||
 					variableTextboxValue) as never,
 			}),
-			modificationUUID: v4(),
+			modificationUUID: generateUUID(),
+			id: variableData.id || generateUUID(),
+			order: variableData.order,
 		};
-		onSave(
-			variableName,
-			newVariableData,
-			(variableViewMode === 'EDIT' && variableName !== variableData.name
-				? variableData.name
-				: '') as string,
-		);
-		onCancel();
+
+		onSave(mode, variable);
 	};
 
 	// Fetches the preview values for the SQL variable query
@@ -175,7 +173,6 @@ function VariableItem({
 	return (
 		<div className="variable-item-container">
 			<div className="variable-item-content">
-				{/* <Typography.Title level={3}>Add Variable</Typography.Title> */}
 				<VariableItemRow>
 					<LabelContainer>
 						<Typography>Name</Typography>
