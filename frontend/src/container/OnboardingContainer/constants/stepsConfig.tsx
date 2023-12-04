@@ -22,6 +22,7 @@ export const stepsMap = {
 	plotMetrics: 'plotMetrics',
 	configureHostmetricsJson: 'configureHostmetricsJson',
 	configureMetricsReceiver: 'configureMetricsReceiver',
+	addHttpDrain: 'addHttpDrain',
 };
 
 export const DataSourceStep: SelectedModuleStepProps = {
@@ -117,5 +118,11 @@ export const ConfigureHostmetricsJSON: SelectedModuleStepProps = {
 export const ConfigureMetricsReceiver: SelectedModuleStepProps = {
 	id: stepsMap.configureMetricsReceiver,
 	title: 'Configure Metrics Receiver',
+	component: <MarkdownStep />,
+};
+
+export const AddHttpDrain: SelectedModuleStepProps = {
+	id: stepsMap.addHttpDrain,
+	title: 'Add HTTP Drain',
 	component: <MarkdownStep />,
 };

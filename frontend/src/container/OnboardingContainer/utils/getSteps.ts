@@ -1,4 +1,5 @@
 import {
+	AddHttpDrain,
 	CheckServiceStatus,
 	CloneRepo,
 	ConfigureHostmetricsJSON,
@@ -74,6 +75,8 @@ export const getSteps = ({
 				ConfigureReceiver,
 				RestartOtelCollector,
 			];
+		case 'heroku':
+			return [DataSourceStep, AddHttpDrain];
 
 		case 'kubernetesInfraMetrics':
 			return [DataSourceStep, SetupOtelCollectorStep, PlotMetrics];

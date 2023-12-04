@@ -121,6 +121,10 @@ import LogsManagement_logStash_macOsARM64_setupOtelCollector from '../Modules/Lo
 import LogsManagement_logStash_macOsARM64_configureReceiver from '../Modules/LogsManagement/Logstash/md-docs/MacOsARM64/logstash-macosarm64-configureReceiver.md';
 import LogsManagement_logStash_macOsARM64_restartOtelCollector from '../Modules/LogsManagement/Logstash/md-docs/MacOsARM64/logstash-macosarm64-restartOtelCollector.md';
 
+// Heroku
+
+import LogsManagement_heroku_addHttpDrain from '../Modules/LogsManagement/Heroku/md-docs/heroku-addHttpDrain.md';
+
 export const LogsManagementDocFilePaths = {
 	// Kubernetes Pod Logs
 	LogsManagement_kubernetes_setupOtelCollector,
@@ -235,5 +239,8 @@ export const LogsManagementDocFilePaths = {
 	LogsManagement_logStash_macOsARM64_setupOtelCollector,
 	LogsManagement_logStash_macOsARM64_configureReceiver,
 	LogsManagement_logStash_macOsARM64_restartOtelCollector,
+
+	// Heroku
+	LogsManagement_heroku_addHttpDrain,
 	// ------------------------------------------------------------------------------------------------
 };
