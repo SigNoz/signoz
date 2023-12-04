@@ -26,6 +26,21 @@ function ProcessorFieldInput({
 		return null;
 	}
 
+	// Do not render display elements for hidden inputs.
+	if (fieldData?.hidden) {
+		return (
+			<Form.Item
+				key={fieldData.id}
+				name={fieldData.name}
+				initialValue={fieldData.initialValue}
+				dependencies={fieldData.dependencies || []}
+				style={{ display: 'none' }}
+			>
+				<Input type="hidden" />
+			</Form.Item>
+		);
+	}
+
 	let inputField;
 	if (fieldData?.options) {
 		inputField = (

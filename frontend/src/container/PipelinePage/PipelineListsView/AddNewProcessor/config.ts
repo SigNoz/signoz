@@ -38,7 +38,8 @@ export type ProcessorFormField = {
 	placeholder: string;
 	name: string | NamePath;
 	rules?: Array<Rule>;
-	initialValue?: string | Array<string>;
+	hidden?: boolean;
+	initialValue?: boolean | string | Array<string>;
 	dependencies?: Array<string | NamePath>;
 	options?: Array<ProcessorFieldOption>;
 	shouldRender?: (form: FormInstance) => boolean;
@@ -379,6 +380,16 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			name: ['mapping', 'fatal'],
 			rules: [],
 			initialValue: ['fatal'],
+		},
+		{
+			id: 9,
+			fieldName: 'Override Severity Text',
+			placeholder:
+				'Should the parsed severity set both severity and severityText?',
+			name: ['overwrite_text'],
+			rules: [],
+			initialValue: true,
+			hidden: true,
 		},
 	],
 	retain: [
