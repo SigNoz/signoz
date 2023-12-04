@@ -305,7 +305,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			],
 		},
 		{
-			id: 5,
+			id: 4,
 			fieldName: 'Timestamp Format',
 			placeholder: 'strptime directives based format. Eg: %Y-%m-%dT%H:%M:%S.%f%z',
 			name: 'layout',
