@@ -32,6 +32,8 @@ export type ProcessorFieldOption = {
 	value: string;
 };
 
+// TODO(Raj): Refactor Processor Form code after putting
+// e2e UI tests in place.
 export type ProcessorFormField = {
 	id: number;
 	fieldName: string;
@@ -47,6 +49,10 @@ export type ProcessorFormField = {
 		changedValues: ProcessorData,
 		form: FormInstance,
 	) => void;
+
+	// Should this field have its own row or should it
+	// be packed with other compact fields.
+	compact?: boolean;
 };
 
 const traceParserFieldValidator: RuleRender = (form) => ({
@@ -340,6 +346,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			name: ['mapping', 'trace'],
 			rules: [],
 			initialValue: ['trace'],
+			compact: true,
 		},
 		{
 			id: 4,
@@ -348,6 +355,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			name: ['mapping', 'debug'],
 			rules: [],
 			initialValue: ['debug'],
+			compact: true,
 		},
 		{
 			id: 5,
@@ -356,6 +364,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			name: ['mapping', 'info'],
 			rules: [],
 			initialValue: ['info'],
+			compact: true,
 		},
 		{
 			id: 6,
@@ -364,6 +373,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			name: ['mapping', 'warn'],
 			rules: [],
 			initialValue: ['warn'],
+			compact: true,
 		},
 		{
 			id: 7,
@@ -372,6 +382,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			name: ['mapping', 'error'],
 			rules: [],
 			initialValue: ['error'],
+			compact: true,
 		},
 		{
 			id: 8,
@@ -380,6 +391,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			name: ['mapping', 'fatal'],
 			rules: [],
 			initialValue: ['fatal'],
+			compact: true,
 		},
 		{
 			id: 9,

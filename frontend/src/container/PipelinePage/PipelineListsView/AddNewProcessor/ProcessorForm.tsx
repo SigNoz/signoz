@@ -1,3 +1,5 @@
+import './styles.scss';
+
 import { Form, Input, Select } from 'antd';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import { useTranslation } from 'react-i18next';
@@ -5,12 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { formValidationRules } from '../config';
 import { processorFields, ProcessorFormField } from './config';
 import CSVInput from './FormFields/CSVInput';
-import {
-	Container,
-	FormWrapper,
-	PipelineIndexIcon,
-	StyledSelect,
-} from './styles';
+import { FormWrapper, PipelineIndexIcon, StyledSelect } from './styles';
 
 function ProcessorFieldInput({
 	fieldData,
@@ -59,10 +56,18 @@ function ProcessorFieldInput({
 	}
 
 	return (
-		<Container>
-			<PipelineIndexIcon size="small">
-				{Number(fieldData.id) + 1}
-			</PipelineIndexIcon>
+		<div
+			className={
+				fieldData?.compact
+					? 'compact-processor-field-container'
+					: 'processor-field-container'
+			}
+		>
+			{!fieldData?.compact && (
+				<PipelineIndexIcon size="small">
+					{Number(fieldData.id) + 1}
+				</PipelineIndexIcon>
+			)}
 			<FormWrapper>
 				<Form.Item
 					required={false}
@@ -76,7 +81,7 @@ function ProcessorFieldInput({
 					{inputField}
 				</Form.Item>
 			</FormWrapper>
-		</Container>
+		</div>
 	);
 }
 
@@ -86,7 +91,7 @@ interface ProcessorFieldInputProps {
 
 function ProcessorForm({ processorType }: ProcessorFormProps): JSX.Element {
 	return (
-		<div>
+		<div className="processor-form-container">
 			{processorFields[processorType]?.map((fieldData: ProcessorFormField) => (
 				<ProcessorFieldInput key={fieldData.id} fieldData={fieldData} />
 			))}
