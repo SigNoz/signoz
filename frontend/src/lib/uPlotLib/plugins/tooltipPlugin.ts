@@ -191,7 +191,7 @@ const tooltipPlugin = (
 				if (overlay) {
 					overlay.textContent = '';
 					const { left, top, idx } = u.cursor;
-					if (idx) {
+					if (Number.isInteger(idx)) {
 						const anchor = { left: left + bLeft, top: top + bTop };
 						const content = generateTooltipContent(
 							apiResult,

@@ -56,7 +56,7 @@ const getSeries = (
 			width: 2,
 			spanGaps: true,
 			points: {
-				size: 2,
+				size: seriesList[i].values.length >= 1 ? 2 : 10,
 				show: true,
 				stroke: color,
 				fill: color,
