@@ -9,7 +9,8 @@ import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import isEmpty from 'lodash-es/isEmpty';
 import _noop from 'lodash-es/noop';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -28,10 +29,11 @@ function GridCardGraph({
 	isQueryEnabled,
 	threshold,
 	variables,
-	filterNaN,
+	fillSpans = false,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
+	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
@@ -48,6 +50,17 @@ function GridCardGraph({
 	const graphRef = useRef<HTMLDivElement>(null);
 
 	const isVisible = useIntersectionObserver(graphRef, undefined, true);
+
+	useEffect(() => {
+		if (toScrollWidgetId === widget.id) {
+			graphRef.current?.scrollIntoView({
+				behavior: 'smooth',
+				block: 'center',
+			});
+			graphRef.current?.focus();
+			setToScrollWidgetId('');
+		}
+	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -90,11 +103,7 @@ function GridCardGraph({
 
 	const containerDimensions = useResizeObserver(graphRef);
 
-	const chartData = getUPlotChartData(
-		queryResponse?.data?.payload,
-		undefined,
-		filterNaN,
-	);
+	const chartData = getUPlotChartData(queryResponse?.data?.payload, fillSpans);
 
 	const isDarkMode = useIsDarkMode();
 

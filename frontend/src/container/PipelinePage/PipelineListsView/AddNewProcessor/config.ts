@@ -1,5 +1,7 @@
+import { FormInstance } from 'antd';
 import { Rule, RuleRender } from 'antd/es/form';
 import { NamePath } from 'antd/es/form/interface';
+import { ProcessorData } from 'types/api/pipeline/def';
 
 type ProcessorType = {
 	key: string;
@@ -14,6 +16,7 @@ export const processorTypes: Array<ProcessorType> = [
 	{ key: 'regex_parser', value: 'regex_parser', label: 'Regex' },
 	{ key: 'json_parser', value: 'json_parser', label: 'Json Parser' },
 	{ key: 'trace_parser', value: 'trace_parser', label: 'Trace Parser' },
+	{ key: 'time_parser', value: 'time_parser', label: 'Timestamp Parser' },
 	{ key: 'add', value: 'add', label: 'Add' },
 	{ key: 'remove', value: 'remove', label: 'Remove' },
 	// { key: 'retain', value: 'retain', label: 'Retain' }, @Chintan - Commented as per Nitya's suggestion
@@ -23,6 +26,11 @@ export const processorTypes: Array<ProcessorType> = [
 
 export const DEFAULT_PROCESSOR_TYPE = processorTypes[0].value;
 
+export type ProcessorFieldOption = {
+	label: string;
+	value: string;
+};
+
 export type ProcessorFormField = {
 	id: number;
 	fieldName: string;
@@ -31,6 +39,12 @@ export type ProcessorFormField = {
 	rules?: Array<Rule>;
 	initialValue?: string;
 	dependencies?: Array<string | NamePath>;
+	options?: Array<ProcessorFieldOption>;
+	shouldRender?: (form: FormInstance) => boolean;
+	onFormValuesChanged?: (
+		changedValues: ProcessorData,
+		form: FormInstance,
+	) => void;
 };
 
 const traceParserFieldValidator: RuleRender = (form) => ({
@@ -204,6 +218,103 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 				['trace_id', 'parse_from'],
 				['span_id', 'parse_from'],
 			],
+		},
+	],
+	time_parser: [
+		{
+			id: 1,
+			fieldName: 'Name of Timestamp Parsing Processor',
+			placeholder: 'processor_name_placeholder',
+			name: 'name',
+		},
+		{
+			id: 2,
+			fieldName: 'Parse Timestamp Value From',
+			placeholder: 'processor_parsefrom_placeholder',
+			name: 'parse_from',
+			initialValue: 'attributes.timestamp',
+		},
+		{
+			id: 3,
+			fieldName: 'Timestamp Format Type',
+			placeholder: '',
+			name: 'layout_type',
+			initialValue: 'strptime',
+			options: [
+				{
+					label: 'Unix Epoch',
+					value: 'epoch',
+				},
+				{
+					label: 'strptime Format',
+					value: 'strptime',
+				},
+			],
+			onFormValuesChanged: (
+				changedValues: ProcessorData,
+				form: FormInstance,
+			): void => {
+				if (changedValues?.layout_type) {
+					const newLayoutValue =
+						changedValues.layout_type === 'strptime' ? '%Y-%m-%dT%H:%M:%S.%f%z' : 's';
+
+					form.setFieldValue('layout', newLayoutValue);
+				}
+			},
+		},
+		{
+			id: 4,
+			fieldName: 'Epoch Format',
+			placeholder: '',
+			name: 'layout',
+			dependencies: ['layout_type'],
+			shouldRender: (form: FormInstance): boolean => {
+				const layoutType = form.getFieldValue('layout_type');
+				return layoutType === 'epoch';
+			},
+			initialValue: 's',
+			options: [
+				{
+					label: 'seconds',
+					value: 's',
+				},
+				{
+					label: 'milliseconds',
+					value: 'ms',
+				},
+				{
+					label: 'microseconds',
+					value: 'us',
+				},
+				{
+					label: 'nanoseconds',
+					value: 'ns',
+				},
+				{
+					label: 'seconds.milliseconds (eg: 1136214245.123)',
+					value: 's.ms',
+				},
+				{
+					label: 'seconds.microseconds (eg: 1136214245.123456)',
+					value: 's.us',
+				},
+				{
+					label: 'seconds.nanoseconds (eg: 1136214245.123456789)',
+					value: 's.ns',
+				},
+			],
+		},
+		{
+			id: 4,
+			fieldName: 'Timestamp Format',
+			placeholder: 'strptime directives based format. Eg: %Y-%m-%dT%H:%M:%S.%f%z',
+			name: 'layout',
+			dependencies: ['layout_type'],
+			shouldRender: (form: FormInstance): boolean => {
+				const layoutType = form.getFieldValue('layout_type');
+				return layoutType === 'strptime';
+			},
+			initialValue: '%Y-%m-%dT%H:%M:%S.%f%z',
 		},
 	],
 	retain: [

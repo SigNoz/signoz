@@ -1,7 +1,10 @@
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
-import { GraphTitle } from 'container/MetricsApplication/constant';
+import {
+	GraphTitle,
+	SERVICE_CHART_ID,
+} from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
@@ -59,6 +62,7 @@ function ServiceOverview({
 				title: GraphTitle.LATENCY,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'ns',
+				id: SERVICE_CHART_ID.latency,
 			}),
 		[servicename, isSpanMetricEnable, topLevelOperationsRoute, tagFilterItems],
 	);
@@ -88,7 +92,7 @@ function ServiceOverview({
 						widget={latencyWidget}
 						onClickHandler={handleGraphClick('Service')}
 						isQueryEnabled={isQueryEnabled}
-						filterNaN
+						fillSpans={false}
 					/>
 				</GraphContainer>
 			</Card>

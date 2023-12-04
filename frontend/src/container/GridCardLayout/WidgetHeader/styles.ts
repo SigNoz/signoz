@@ -41,8 +41,6 @@ export const WidgetHeaderContainer = styled.div`
 
 export const ArrowContainer = styled.span<{ hover: boolean }>`
 	visibility: ${({ hover }): string => (hover ? 'visible' : 'hidden')};
-	position: absolute;
-	right: -1rem;
 `;
 
 export const Typography = styled(TypographyComponent)`
