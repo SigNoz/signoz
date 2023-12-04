@@ -27,7 +27,6 @@ function ProcessorFieldInput({
 	if (fieldData?.hidden) {
 		return (
 			<Form.Item
-				key={fieldData.id}
 				name={fieldData.name}
 				initialValue={fieldData.initialValue}
 				dependencies={fieldData.dependencies || []}
@@ -72,7 +71,6 @@ function ProcessorFieldInput({
 				<Form.Item
 					required={false}
 					label={<ModalFooterTitle>{fieldData.fieldName}</ModalFooterTitle>}
-					key={fieldData.id}
 					name={fieldData.name}
 					initialValue={fieldData.initialValue}
 					rules={fieldData.rules ? fieldData.rules : formValidationRules}
@@ -93,7 +91,10 @@ function ProcessorForm({ processorType }: ProcessorFormProps): JSX.Element {
 	return (
 		<div className="processor-form-container">
 			{processorFields[processorType]?.map((fieldData: ProcessorFormField) => (
-				<ProcessorFieldInput key={fieldData.id} fieldData={fieldData} />
+				<ProcessorFieldInput
+					key={fieldData.name + String(fieldData.initialValue)}
+					fieldData={fieldData}
+				/>
 			))}
 		</div>
 	);

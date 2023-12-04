@@ -32,8 +32,7 @@ export type ProcessorFieldOption = {
 	value: string;
 };
 
-// TODO(Raj): Refactor Processor Form code after putting
-// e2e UI tests in place.
+// TODO(Raj): Refactor Processor Form code after putting e2e UI tests in place.
 export type ProcessorFormField = {
 	id: number;
 	fieldName: string;
