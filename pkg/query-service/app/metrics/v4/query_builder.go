@@ -15,12 +15,29 @@ import (
 // step is in seconds
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, error) {
 
+	var shiftBy time.Duration
+	var err error
+
+	for _, fn := range mq.Functions {
+		if fn.Name == "timeShift" {
+			by, ok := fn.Args[0].(string)
+			if !ok {
+				return "", fmt.Errorf("timeShift requires one argument")
+			}
+			shiftBy, err = time.ParseDuration(by)
+			if err != nil {
+				return "", fmt.Errorf("invalid shift by argument for time shift %s", by)
+			}
+		}
+	}
+	start -= shiftBy.Milliseconds()
+	end -= shiftBy.Milliseconds()
+
 	// adjust the start and end time to be aligned with the step interval
 	start = start - (start % (mq.StepInterval * 1000))
 	end = end - (end % (mq.StepInterval * 1000))
 
 	var query string
-	var err error
 	if mq.Temporality == v3.Delta {
 		if panelType == v3.PanelTypeTable {
 			query, err = buildMetricQueryForDeltaTable(start, end, mq.StepInterval, mq)

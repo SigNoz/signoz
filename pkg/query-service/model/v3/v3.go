@@ -473,6 +473,12 @@ const (
 	Cumulative  Temporality = "Cumulative"
 )
 
+type Function struct {
+	Type string        `json:"type"`
+	Name string        `json:"name"`
+	Args []interface{} `json:"args,omitempty"`
+}
+
 type BuilderQuery struct {
 	QueryName           string              `json:"queryName"`
 	StepInterval        int64               `json:"stepInterval"`
@@ -494,6 +500,7 @@ type BuilderQuery struct {
 	OrderBy             []OrderBy           `json:"orderBy,omitempty"`
 	ReduceTo            ReduceToOperator    `json:"reduceTo,omitempty"`
 	SelectColumns       []AttributeKey      `json:"selectColumns,omitempty"`
+	Functions           []Function          `json:"functions,omitempty"`
 }
 
 func (b *BuilderQuery) Validate() error {
