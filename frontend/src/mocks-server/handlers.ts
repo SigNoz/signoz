@@ -1,5 +1,6 @@
 import { rest } from 'msw';
 
+import { alertsSuccessResponse } from './__mockdata__/alerts';
 import { billingSuccessResponse } from './__mockdata__/billing';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
@@ -85,5 +86,9 @@ export const handlers = [
 
 	rest.get('http://localhost/api/v1/rules', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(rulesSuccessResponse)),
+	),
+
+	rest.get('http://localhost/api/v1/alerts', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(alertsSuccessResponse)),
 	),
 ];
