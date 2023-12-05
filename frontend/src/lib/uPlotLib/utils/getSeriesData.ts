@@ -46,7 +46,8 @@ const getSeries = (
 			legend || '',
 		);
 
-		const pointSize = seriesList[i].values.length > 1 ? 2 : 10;
+		const pointSize = seriesList[i].values.length > 1 ? 5 : 10;
+		const showPoints = !(seriesList[i].values.length > 1);
 
 		const seriesObj: any = {
 			paths,
@@ -59,9 +60,8 @@ const getSeries = (
 			spanGaps: true,
 			points: {
 				size: pointSize,
-				show: true,
+				show: showPoints,
 				stroke: color,
-				fill: color,
 			},
 		};
 

@@ -73,49 +73,11 @@ export const getUPlotChartOptions = ({
 				bias: 1,
 			},
 			points: {
-				size: (u, seriesIdx): number => u.series[seriesIdx].points.size * 2.5,
+				size: (u, seriesIdx): number => u.series[seriesIdx].points.size * 3,
 				width: (u, seriesIdx, size): number => size / 4,
 				stroke: (u, seriesIdx): string =>
 					`${u.series[seriesIdx].points.stroke(u, seriesIdx)}90`,
 				fill: (): string => '#fff',
-			},
-			dataIdx: (self, seriesIdx, hoveredIdx, cursorXVal): number => {
-				const seriesData = self.data[seriesIdx];
-
-				if (seriesData[hoveredIdx] == null) {
-					let nonNullLft = null;
-					let nonNullRgt = null;
-					let i;
-
-					i = hoveredIdx;
-					while (nonNullLft == null && i-- > 0) {
-						if (seriesData[i] != null) nonNullLft = i;
-					}
-
-					i = hoveredIdx;
-					while (nonNullRgt == null && i++ < seriesData.length) {
-						if (seriesData[i] != null) nonNullRgt = i;
-					}
-
-					const xVals = self.data[0];
-
-					const curPos = self.valToPos(cursorXVal, 'x');
-					const rgtPos =
-						nonNullRgt == null ? Infinity : self.valToPos(xVals[nonNullRgt], 'x');
-					const lftPos =
-						nonNullLft == null ? -Infinity : self.valToPos(xVals[nonNullLft], 'x');
-
-					const lftDelta = curPos - lftPos;
-					const rgtDelta = rgtPos - curPos;
-
-					if (lftDelta <= rgtDelta && lftDelta <= hoverProximityPx) {
-						hoveredIdx = nonNullLft;
-					} else if (rgtDelta <= hoverProximityPx) {
-						hoveredIdx = nonNullRgt;
-					}
-				}
-
-				return hoveredIdx;
 			},
 		},
 		padding: [16, 16, 8, 8],
