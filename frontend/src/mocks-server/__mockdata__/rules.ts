@@ -149,7 +149,7 @@ export const rulesSuccessResponse = {
 					summary:
 						'The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}',
 				},
-				disabled: true,
+				disabled: false,
 				source:
 					'http://localhost:3301/alerts/edit?ruleId=6\u0026compositeQuery=%7B%22builder%22%3A%7B%22queryData%22%3A%5B%7B%22dataSource%22%3A%22metrics%22%2C%22queryName%22%3A%22A%22%2C%22aggregateOperator%22%3A%22sum_rate%22%2C%22aggregateAttribute%22%3A%7B%22key%22%3A%22signoz_calls_total%22%2C%22dataType%22%3A%22float64%22%2C%22type%22%3A%22%22%2C%22isColumn%22%3Atrue%7D%2C%22filters%22%3A%7B%22op%22%3A%22AND%22%2C%22items%22%3A%5B%5D%7D%2C%22expression%22%3A%22A%22%2C%22disabled%22%3Afalse%2C%22having%22%3A%5B%5D%2C%22stepInterval%22%3A60%2C%22limit%22%3A0%2C%22orderBy%22%3A%5B%5D%2C%22groupBy%22%3A%5B%7B%22key%22%3A%22service_name%22%2C%22dataType%22%3A%22string%22%2C%22type%22%3A%22tag%22%2C%22isColumn%22%3Afalse%7D%5D%2C%22legend%22%3A%22%22%2C%22reduceTo%22%3A%22sum%22%2C%22offset%22%3A0%2C%22pageSize%22%3A0%7D%5D%2C%22queryFormulas%22%3A%5B%5D%7D%2C%22promql%22%3A%5B%7B%22query%22%3A%22%22%2C%22disabled%22%3Afalse%2C%22name%22%3A%22A%22%7D%5D%2C%22clickhouse_sql%22%3A%5B%7B%22query%22%3A%22%22%2C%22disabled%22%3Afalse%2C%22name%22%3A%22A%22%7D%5D%2C%22queryType%22%3A%22builder%22%2C%22id%22%3A%22c6486149-69b9-4e75-92ab-dde3282e558f%22%7D',
 				preferredChannels: ['Slack-Discord-Compatible', 'Discord-webhook'],
