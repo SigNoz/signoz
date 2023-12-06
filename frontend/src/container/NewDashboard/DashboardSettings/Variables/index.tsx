@@ -4,6 +4,7 @@ import { Button, Modal, Row, Space, Tag } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
+import { PencilIcon, TrashIcon } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -134,7 +135,7 @@ function VariablesSetting(): JSX.Element {
 			key: 'name',
 		},
 		{
-			title: 'Definition',
+			title: 'Description',
 			dataIndex: 'description',
 			width: 100,
 			key: 'description',
@@ -147,19 +148,19 @@ function VariablesSetting(): JSX.Element {
 				<Space>
 					<Button
 						type="text"
-						style={{ padding: 0, cursor: 'pointer', color: blue[5] }}
+						style={{ padding: 8, cursor: 'pointer', color: blue[5] }}
 						onClick={(): void => onVariableViewModeEnter('EDIT', _)}
 					>
-						Edit
+						<PencilIcon size={14} />
 					</Button>
 					<Button
 						type="text"
-						style={{ padding: 0, color: red[6], cursor: 'pointer' }}
+						style={{ padding: 8, color: red[6], cursor: 'pointer' }}
 						onClick={(): void => {
 							if (_.name) onVariableDeleteHandler(_.name);
 						}}
 					>
-						Delete
+						<TrashIcon size={14} />
 					</Button>
 				</Space>
 			),
@@ -187,9 +188,10 @@ function VariablesSetting(): JSX.Element {
 								onVariableViewModeEnter('ADD', {} as IDashboardVariable)
 							}
 						>
-							<PlusOutlined /> New Variables
+							<PlusOutlined /> Add Variable
 						</Button>
 					</Row>
+
 					<ResizeTable columns={columns} dataSource={variablesTableData} />
 				</>
 			)}
