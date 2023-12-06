@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/destructuring-assignment */
@@ -37,6 +38,8 @@ function TableRow(props: RowProps): JSX.Element {
 		transition,
 		isDragging,
 	} = useSortable({
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
 		id: props['data-row-key'],
 	});
 
@@ -99,14 +102,10 @@ function VariablesSetting(): JSX.Element {
 	const updateMutation = useUpdateDashboard();
 
 	useEffect(() => {
-		console.log('variables', variables);
-
 		const tableRowData = [];
 		const variableOrderArr = [];
 
 		for (const [key, value] of Object.entries(variables)) {
-			console.log(`${key}: ${value}`);
-
 			const { order, id } = value;
 
 			tableRowData.push({
@@ -123,9 +122,6 @@ function VariablesSetting(): JSX.Element {
 
 		tableRowData.sort((a, b) => a.order - b.order);
 		variableOrderArr.sort((a, b) => a - b);
-
-		console.log('tableRowData', tableRowData);
-		console.log('variableOrderArr', variableOrderArr);
 
 		setVariablesTableData(tableRowData);
 		setVariablesOrderArr(variableOrderArr);
@@ -177,6 +173,9 @@ function VariablesSetting(): JSX.Element {
 	): Dashboard['data']['variables'] =>
 		variblesArr.reduce((result, obj: IDashboardVariable) => {
 			const { id } = obj;
+
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
 			result[id] = obj;
 			return result;
 		}, {});
@@ -185,8 +184,6 @@ function VariablesSetting(): JSX.Element {
 		mode: TVariableMode,
 		variableData: IDashboardVariable,
 	): void => {
-		console.log('variable Data', variableData, mode);
-
 		const updatedVariableData = {
 			...variableData,
 			order:
@@ -195,7 +192,7 @@ function VariablesSetting(): JSX.Element {
 					: getVariableOrder(),
 		};
 
-		console.log('updatedVariableData', updatedVariableData);
+		// console.log('variablesTableData', variablesTableData);
 
 		const newVariablesArr = variablesTableData.map(
 			(variable: IDashboardVariable) => {
@@ -211,17 +208,11 @@ function VariablesSetting(): JSX.Element {
 			newVariablesArr.push(updatedVariableData);
 		}
 
-		console.log('newVariablesArr', newVariablesArr);
-
 		const variables = convertVariablesToDbFormat(newVariablesArr);
 
-		// if (newVariables[name]) {
-		// 	newVariables[name] = updatedVariableData;
-		// }
-
-		// console.log('final update', newVariables);
-
 		console.log('variables', variables);
+
+		// console.log('variables', variables);
 
 		updateVariables(variables);
 		onDoneVariableViewMode();
@@ -233,9 +224,13 @@ function VariablesSetting(): JSX.Element {
 	};
 
 	const handleDeleteConfirm = (): void => {
-		const newVariables = { ...variables };
-		if (variableToDelete?.current) delete newVariables[variableToDelete?.current];
-		updateVariables(newVariables);
+		const newVariablesArr = variablesTableData.filter(
+			(variable: IDashboardVariable) => variable.id !== variableToDelete?.current,
+		);
+
+		const updatedVariables = convertVariablesToDbFormat(newVariablesArr);
+
+		updateVariables(updatedVariables);
 		variableToDelete.current = null;
 		setDeleteVariableModal(false);
 	};
@@ -263,12 +258,12 @@ function VariablesSetting(): JSX.Element {
 			title: 'Actions',
 			width: 50,
 			key: 'action',
-			render: (_: IDashboardVariable): JSX.Element => (
+			render: (variable: IDashboardVariable): JSX.Element => (
 				<Space>
 					<Button
 						type="text"
 						style={{ padding: 8, cursor: 'pointer', color: blue[5] }}
-						onClick={(): void => onVariableViewModeEnter('EDIT', _)}
+						onClick={(): void => onVariableViewModeEnter('EDIT', variable)}
 					>
 						<PencilIcon size={14} />
 					</Button>
@@ -276,7 +271,9 @@ function VariablesSetting(): JSX.Element {
 						type="text"
 						style={{ padding: 8, color: red[6], cursor: 'pointer' }}
 						onClick={(): void => {
-							if (_.name) onVariableDeleteHandler(_.name);
+							if (variable) {
+								onVariableDeleteHandler(variable.id);
+							}
 						}}
 					>
 						<TrashIcon size={14} />
@@ -316,6 +313,8 @@ function VariablesSetting(): JSX.Element {
 				const variableName = updatedVariables[index].name;
 
 				if (variableName) {
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-ignore
 					reArrangedVariables[variableName] = {
 						...updatedVariables[index],
 						order: index,
@@ -328,8 +327,6 @@ function VariablesSetting(): JSX.Element {
 			setVariablesTableData(updatedVariables);
 		}
 	};
-
-	console.log('variableViewMode', variableViewMode);
 
 	return (
 		<>
@@ -369,7 +366,7 @@ function VariablesSetting(): JSX.Element {
 					>
 						<SortableContext
 							// rowKey array
-							items={variablesTableData.map((variable) => variable.key)}
+							items={variablesTableData.map((variable: { key: any }) => variable.key)}
 						>
 							<Table
 								components={{

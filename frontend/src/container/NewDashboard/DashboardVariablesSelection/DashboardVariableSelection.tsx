@@ -1,7 +1,7 @@
 import { Row } from 'antd';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
-import { map, sortBy } from 'lodash-es';
+import { map } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -64,17 +64,23 @@ function DashboardVariableSelection(): JSX.Element | null {
 
 	const onValueUpdate = (
 		name: string,
+		id: string,
 		value: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
 	): void => {
 		const updatedVariablesData = { ...variables };
 
-		console.log('updatedVariablesData', updatedVariablesData, value, allSelected);
+		// console.log(
+		// 	'updatedVariablesData',
+		// 	name,
+		// 	id,
+		// 	value,
+		// 	allSelected,
+		// 	// newVariables,
+		// );
 
-		// updatedVariablesData[name]?.selectedValue = value;
-		// updatedVariablesData[name]?.allSelected = allSelected;
-
-		return false;
+		updatedVariablesData[id].selectedValue = value;
+		updatedVariablesData[id].allSelected = allSelected;
 
 		if (role !== 'VIEWER' && selectedDashboard) {
 			updateVariables(name, updatedVariablesData);

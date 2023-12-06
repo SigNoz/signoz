@@ -97,8 +97,7 @@ function VariableItem({
 	]);
 
 	const handleSave = (): void => {
-		console.log('handle Save', variableData);
-
+		// console.log('handleSave', variableData);
 		const variable: IDashboardVariable = {
 			name: variableName,
 			description: variableDescription,
