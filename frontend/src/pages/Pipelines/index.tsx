@@ -5,7 +5,9 @@ import Spinner from 'components/Spinner';
 import ChangeHistory from 'container/PipelinePage/Layouts/ChangeHistory';
 import PipelinePage from 'container/PipelinePage/Layouts/Pipeline';
 import { useNotifications } from 'hooks/useNotifications';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useEffect, useMemo } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { SuccessResponse } from 'types/api';
@@ -77,7 +79,11 @@ function Pipelines(): JSX.Element {
 		return <Spinner height="75vh" tip="Loading Pipelines..." />;
 	}
 
-	return <Tabs defaultActiveKey="pipelines" items={tabItems} />;
+	return (
+		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+			<Tabs defaultActiveKey="pipelines" items={tabItems} />;
+		</ErrorBoundary>
+	);
 }
 
 export default Pipelines;
