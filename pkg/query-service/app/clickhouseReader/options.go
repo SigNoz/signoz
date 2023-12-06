@@ -110,13 +110,27 @@ func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 		}
 		options.Auth = auth
 	}
-	secure, err := strconv.ParseBool(dsnURL.Query().Get("secure"))
-	if err == nil && secure {
-		skipVerify, err := strconv.ParseBool(dsnURL.Query().Get("skip_verify"))
-		if err == nil {
-			options.TLS = &tls.Config{
-				InsecureSkipVerify: skipVerify,
+	if dsnURL.Query().Has("secure") {
+		var secure bool
+		if dsnURL.Query().Get("secure") == "" {
+			secure = true
+		} else {
+			secure, err = strconv.ParseBool(dsnURL.Query().Get("secure"))
+			return nil, err
+		}
+		if secure {
+			tlsConfig := &tls.Config{}
+			if dsnURL.Query().Has("skip_verify") {
+				var skipVerify bool
+				if dsnURL.Query().Get("skip_verify") == "" {
+					skipVerify = true
+				} else {
+					skipVerify, err = strconv.ParseBool(dsnURL.Query().Get("skip_verify"))
+					return nil, err
+				}
+				tlsConfig.InsecureSkipVerify = skipVerify
 			}
+			options.TLS = tlsConfig
 		}
 	}
 	zap.S().Infof("Connecting to Clickhouse at %s, MaxIdleConns: %d, MaxOpenConns: %d, DialTimeout: %s", dsnURL.Host, options.MaxIdleConns, options.MaxOpenConns, options.DialTimeout)
