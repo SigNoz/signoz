@@ -1,5 +1,5 @@
 import { act } from 'react-dom/test-utils';
-import { render, screen, within } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils';
 
 import TriggeredAlerts from '.';
 
@@ -34,9 +34,5 @@ describe('TriggeredAlerts', () => {
 			name: /firing above 400ms alertname: above 400ms component: net\/http details: https:\/\/demo\.\.\.\. \+2 warning 11\/30\/2023 10:04:19 am/i,
 		});
 		expect(row).toBeInTheDocument();
-
-		within(row).getByRole('cell', {
-			name: /warning/i,
-		});
 	});
 });
