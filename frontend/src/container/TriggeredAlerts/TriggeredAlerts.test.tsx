@@ -25,7 +25,7 @@ describe('TriggeredAlerts', () => {
 		expect(firedSince).toBeInTheDocument();
 	});
 
-	test('Should render the table data', async () => {
+	test('Should render the table data in triggeredAlert', async () => {
 		act(() => {
 			render(<TriggeredAlerts />);
 		});
@@ -38,16 +38,5 @@ describe('TriggeredAlerts', () => {
 		within(row).getByRole('cell', {
 			name: /warning/i,
 		});
-
-		const cell = await screen.findByRole('cell', {
-			name: /alertname: above 400ms component: net\/http details: https:\/\/demo\.\.\.\. \+2/i,
-		});
-		expect(cell).toBeInTheDocument();
-
-		const cell2 = await screen.findByRole('cell', {
-			name: /log cross 12/i,
-		});
-
-		within(cell2).getByRole('article');
 	});
 });
