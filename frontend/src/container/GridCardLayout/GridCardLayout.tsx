@@ -155,6 +155,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					onLayoutChange={setLayouts}
 					draggableHandle=".drag-handle"
 					layout={layouts}
+					style={{ backgroundColor: isDarkMode ? '' : '#f5f5f5' }}
 				>
 					{layouts.map((layout) => {
 						const { i: id } = layout;
