@@ -3,6 +3,7 @@ import './GridCardLayout.styles.scss';
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { themeColors } from 'constants/theme';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -155,7 +156,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					onLayoutChange={setLayouts}
 					draggableHandle=".drag-handle"
 					layout={layouts}
-					style={{ backgroundColor: isDarkMode ? '' : '#f5f5f5' }}
+					style={{ backgroundColor: isDarkMode ? '' : themeColors.snowWhite }}
 				>
 					{layouts.map((layout) => {
 						const { i: id } = layout;
