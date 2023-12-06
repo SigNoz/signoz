@@ -23,6 +23,10 @@ export const stepsMap = {
 	configureHostmetricsJson: 'configureHostmetricsJson',
 	configureMetricsReceiver: 'configureMetricsReceiver',
 	addHttpDrain: 'addHttpDrain',
+	setupLogDrains: `setupLogDrains`,
+	createHttpPayload: `createHttpPayload`,
+	configureAws: `configureAws`,
+	sendLogsCloudwatch: `sendLogsCloudwatch`,
 };
 
 export const DataSourceStep: SelectedModuleStepProps = {
@@ -124,5 +128,28 @@ export const ConfigureMetricsReceiver: SelectedModuleStepProps = {
 export const AddHttpDrain: SelectedModuleStepProps = {
 	id: stepsMap.addHttpDrain,
 	title: 'Add HTTP Drain',
+	component: <MarkdownStep />,
+};
+
+export const SetupLogDrains: SelectedModuleStepProps = {
+	id: stepsMap.setupLogDrains,
+	title: 'Setup Log Drains',
+	component: <MarkdownStep />,
+};
+
+export const CreateHttpPayload: SelectedModuleStepProps = {
+	id: stepsMap.createHttpPayload,
+	title: 'Create Json Payload',
+	component: <MarkdownStep />,
+};
+
+export const ConfigureAws: SelectedModuleStepProps = {
+	id: stepsMap.configureAws,
+	title: 'Configure AWS',
+	component: <MarkdownStep />,
+};
+export const SendLogsCloudwatch: SelectedModuleStepProps = {
+	id: stepsMap.sendLogsCloudwatch,
+	title: 'Send Logs',
 	component: <MarkdownStep />,
 };

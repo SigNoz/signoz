@@ -2,9 +2,11 @@ import {
 	AddHttpDrain,
 	CheckServiceStatus,
 	CloneRepo,
+	ConfigureAws,
 	ConfigureHostmetricsJSON,
 	ConfigureMetricsReceiver,
 	ConfigureReceiver,
+	CreateHttpPayload,
 	DataSourceStep,
 	EnvDetailsStep,
 	InstallOpenTelemetryStep,
@@ -13,6 +15,8 @@ import {
 	RestartOtelCollector,
 	RunApplicationStep,
 	SelectMethodStep,
+	SendLogsCloudwatch,
+	SetupLogDrains,
 	SetupOtelCollectorStep,
 	StartContainer,
 	TestConnectionStep,
@@ -77,6 +81,19 @@ export const getSteps = ({
 			];
 		case 'heroku':
 			return [DataSourceStep, AddHttpDrain];
+		case 'vercel':
+			return [DataSourceStep, SetupLogDrains];
+		case 'http':
+			return [DataSourceStep, CreateHttpPayload];
+		case 'cloudwatch':
+			return [
+				DataSourceStep,
+				EnvDetailsStep,
+				SetupOtelCollectorStep,
+				ConfigureAws,
+				ConfigureReceiver,
+				SendLogsCloudwatch,
+			];
 
 		case 'kubernetesInfraMetrics':
 			return [DataSourceStep, SetupOtelCollectorStep, PlotMetrics];
