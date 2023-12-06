@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"net/url"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -110,9 +110,13 @@ func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 		}
 		options.Auth = auth
 	}
-	if strings.ToLower(dsnURL.Query().Get("secure")) == "true" {
-		options.TLS = &tls.Config{
-			InsecureSkipVerify: strings.ToLower(dsnURL.Query().Get("skip_verify")) == "true",
+	secure, err := strconv.ParseBool(dsnURL.Query().Get("secure"))
+	if err == nil && secure {
+		skipVerify, err := strconv.ParseBool(dsnURL.Query().Get("skip_verify"))
+		if err == nil {
+			options.TLS = &tls.Config{
+				InsecureSkipVerify: skipVerify,
+			}
 		}
 	}
 	zap.S().Infof("Connecting to Clickhouse at %s, MaxIdleConns: %d, MaxOpenConns: %d, DialTimeout: %s", dsnURL.Host, options.MaxIdleConns, options.MaxOpenConns, options.DialTimeout)
