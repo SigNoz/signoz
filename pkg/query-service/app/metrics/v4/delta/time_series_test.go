@@ -113,7 +113,7 @@ func TestPrepareTimeAggregationSubQuery(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			query, err := prepareTimeAggregationSubQueryTimeSeries(
+			query, err := prepareTimeAggregationSubQuery(
 				testCase.start,
 				testCase.end,
 				testCase.builderQuery.StepInterval,
