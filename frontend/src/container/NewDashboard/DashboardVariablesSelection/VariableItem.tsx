@@ -151,12 +151,16 @@ function VariableItem({
 				console.error(e);
 			}
 		} else if (variableData.type === 'CUSTOM') {
-			setOptionsData(
-				sortValues(
-					commaValuesParser(variableData.customValue || ''),
-					variableData.sort,
-				) as never,
-			);
+			// console.log('custom', variableData);
+
+			const optionsData = sortValues(
+				commaValuesParser(variableData.customValue || ''),
+				variableData.sort,
+			) as never;
+
+			// console.log('optionsData', optionsData);
+
+			setOptionsData(optionsData);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	};
@@ -228,12 +232,13 @@ function VariableItem({
 	}, [debouncedVariableValue]);
 
 	useEffect(() => {
+		console.log('variable Type', variableData.type);
 		// Fetch options for CUSTOM Type
 		if (variableData.type === 'CUSTOM') {
 			getOptions(null);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [variableData.type, variableData.customValue]);
 
 	return (
 		<VariableContainer>

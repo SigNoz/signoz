@@ -4,7 +4,7 @@
 /* eslint-disable react/destructuring-assignment */
 /* eslint-disable import/no-extraneous-dependencies */
 import { blue, red } from '@ant-design/colors';
-import { PlusOutlined } from '@ant-design/icons';
+import { MenuOutlined, PlusOutlined } from '@ant-design/icons';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
 	DndContext,
@@ -21,7 +21,7 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { PencilIcon, TrashIcon } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 import { v4 as generateUUID } from 'uuid';
@@ -29,17 +29,16 @@ import { v4 as generateUUID } from 'uuid';
 import { TVariableMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
 
-function TableRow(props: RowProps): JSX.Element {
+function TableRow({ children, ...props }: RowProps): JSX.Element {
 	const {
 		attributes,
 		listeners,
 		setNodeRef,
+		setActivatorNodeRef,
 		transform,
 		transition,
 		isDragging,
 	} = useSortable({
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
 		id: props['data-row-key'],
 	});
 
@@ -47,18 +46,26 @@ function TableRow(props: RowProps): JSX.Element {
 		...props.style,
 		transform: CSS.Transform.toString(transform && { ...transform, scaleY: 1 }),
 		transition,
-		cursor: 'move',
 		...(isDragging ? { position: 'relative', zIndex: 9999 } : {}),
 	};
 
 	return (
-		<tr
-			{...props}
-			ref={setNodeRef}
-			style={style}
-			{...attributes}
-			{...listeners}
-		/>
+		<tr {...props} ref={setNodeRef} style={style} {...attributes}>
+			{React.Children.map(children, (child) => {
+				if ((child as React.ReactElement).key === 'sort') {
+					return React.cloneElement(child as React.ReactElement, {
+						children: (
+							<MenuOutlined
+								ref={setActivatorNodeRef}
+								style={{ touchAction: 'none', cursor: 'move' }}
+								{...listeners}
+							/>
+						),
+					});
+				}
+				return child;
+			})}
+		</tr>
 	);
 }
 
@@ -243,20 +250,24 @@ function VariablesSetting(): JSX.Element {
 
 	const columns = [
 		{
+			key: 'sort',
+			width: '10%',
+		},
+		{
 			title: 'Variable',
 			dataIndex: 'name',
-			width: 100,
+			width: '40%',
 			key: 'name',
 		},
 		{
 			title: 'Description',
 			dataIndex: 'description',
-			width: 100,
+			width: '35%',
 			key: 'description',
 		},
 		{
 			title: 'Actions',
-			width: 50,
+			width: '15%',
 			key: 'action',
 			render: (variable: IDashboardVariable): JSX.Element => (
 				<Space>
@@ -375,7 +386,6 @@ function VariablesSetting(): JSX.Element {
 									},
 								}}
 								rowKey="key"
-								// size={100}
 								columns={columns}
 								pagination={false}
 								dataSource={variablesTableData}
