@@ -17,6 +17,7 @@ import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Modal, Row, Space, Table, Tag } from 'antd';
 import { RowProps } from 'antd/lib';
+import { convertVariablesToDbFormat } from 'container/NewDashboard/DashboardVariablesSelection/util';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { PencilIcon, TrashIcon } from 'lucide-react';
@@ -174,18 +175,6 @@ function VariablesSetting(): JSX.Element {
 
 		return 0;
 	};
-
-	const convertVariablesToDbFormat = (
-		variblesArr: IDashboardVariable[],
-	): Dashboard['data']['variables'] =>
-		variblesArr.reduce((result, obj: IDashboardVariable) => {
-			const { id } = obj;
-
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			result[id] = obj;
-			return result;
-		}, {});
 
 	const onVariableSaveHandler = (
 		mode: TVariableMode,
