@@ -141,7 +141,14 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 				)}
 			</ButtonContainer>
 
-			<FullScreen handle={handle} className="fullscreen-grid-container">
+			<FullScreen
+				handle={handle}
+				className={
+					isDarkMode
+						? 'fullscreen-grid-container'
+						: 'fullscreen-grid-container--light'
+				}
+			>
 				<ReactGridLayout
 					cols={12}
 					rowHeight={100}

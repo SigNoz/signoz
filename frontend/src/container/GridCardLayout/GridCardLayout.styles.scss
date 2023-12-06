@@ -1,7 +1,12 @@
 .fullscreen-grid-container {
 	overflow: auto;
-
+	
 	.react-grid-layout {
 		border: none !important;
 	}
+}
+
+.fullscreen-grid-container--light {
+	@extend .fullscreen-grid-container;
+	background-color: #f5f5f5;
 }
