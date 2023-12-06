@@ -210,7 +210,7 @@ function VariablesSetting(): JSX.Element {
 
 		const variables = convertVariablesToDbFormat(newVariablesArr);
 
-		console.log('variables', variables);
+		// console.log('variables', variables);
 
 		// console.log('variables', variables);
 
