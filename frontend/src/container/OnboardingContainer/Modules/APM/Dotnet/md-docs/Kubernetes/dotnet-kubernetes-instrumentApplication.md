@@ -1,123 +1,65 @@
-After setting up the Otel collector agent, follow the steps below to instrument your Go Application
+After setting up the Otel collector agent, follow the steps below to instrument your .NET Application
 &nbsp;
 &nbsp;
 
 ### Step 1: Install OpenTelemetry Dependencies
-Dependencies related to OpenTelemetry exporter and SDK have to be installed first.
-
-Run the below commands after navigating to the application source folder:
-```bash
-go get go.opentelemetry.io/otel \
-  go.opentelemetry.io/otel/trace \
-  go.opentelemetry.io/otel/sdk \
-  go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin \
-  go.opentelemetry.io/otel/exporters/otlp/otlptrace \
-  go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
-```
-
-**Note:** We are assuming you are using gin request router. If you are using other request routers, check out the [corresponding package](https://signoz.io/docs/instrumentation/golang/#request-routers).
-&nbsp;
-&nbsp;
-
-### Step 2: Declare environment variables for configuring OpenTelemetry
-Declare the following global variables in **`main.go`** which we will use to configure OpenTelemetry:
-```bash
- var (
-     serviceName  = os.Getenv("SERVICE_NAME")
-     collectorURL = os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
-     insecure     = os.Getenv("INSECURE_MODE")
- )
-```
-&nbsp;
-
-### Step 3: Instrument your Go application 
-To configure your application to send data we will need a function to initialize OpenTelemetry. Add the following snippet of code in your **`main.go`** file.
+Install the following dependencies in your application.
 
 ```bash
-     
- import (
-     .....
-
-     "github.com/gin-gonic/gin"
-     "go.opentelemetry.io/otel"
-     "go.opentelemetry.io/otel/attribute"
-     "go.opentelemetry.io/otel/exporters/otlp/otlptrace"
-     "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-
-     "go.opentelemetry.io/otel/sdk/resource"
-     sdktrace "go.opentelemetry.io/otel/sdk/trace"
- )
-
- func initTracer() func(context.Context) error {
-
-     var secureOption otlptracegrpc.Option
-
-     if strings.ToLower(insecure) == "false" || insecure == "0" || strings.ToLower(insecure) == "f" {
-         secureOption = otlptracegrpc.WithTLSCredentials(credentials.NewClientTLSFromCert(nil, ""))
-     } else {
-         secureOption = otlptracegrpc.WithInsecure()
-     }
-
-     exporter, err := otlptrace.New(
-         context.Background(),
-         otlptracegrpc.NewClient(
-             secureOption,
-             otlptracegrpc.WithEndpoint(collectorURL),
-         ),
-     )
-
-     if err != nil {
-         log.Fatalf("Failed to create exporter: %v", err)
-     }
-     resources, err := resource.New(
-         context.Background(),
-         resource.WithAttributes(
-             attribute.String("service.name", serviceName),
-             attribute.String("library.language", "go"),
-         ),
-     )
-     if err != nil {
-         log.Fatalf("Could not set resources: %v", err)
-     }
-
-     otel.SetTracerProvider(
-         sdktrace.NewTracerProvider(
-             sdktrace.WithSampler(sdktrace.AlwaysSample()),
-             sdktrace.WithBatcher(exporter),
-             sdktrace.WithResource(resources),
-         ),
-     )
-     return exporter.Shutdown
- }
+dotnet add package OpenTelemetry
+dotnet add package OpenTelemetry.Exporter.OpenTelemetryProtocol 
+dotnet add package OpenTelemetry.Extensions.Hosting
+dotnet add package OpenTelemetry.Instrumentation.Runtime
+dotnet add package OpenTelemetry.Instrumentation.AspNetCore 
+dotnet add package OpenTelemetry.AutoInstrumentation
 ```
+
 &nbsp;
 
-### Step 4: Initialise the tracer in **`main.go`**
-Modify the main function to initialise the tracer in **`main.go`**. Initiate the tracer at the very beginning of our main function.
-```bash
-func main() {
-    cleanup := initTracer()
-    defer cleanup(context.Background())
+### Step 2:  Adding OpenTelemetry as a service and configuring exporter options
 
-    ......
-}
-```
+In your `Program.cs` file, add OpenTelemetry as a service. Here, we are configuring these variables:
+
+`serviceName` - It is the name of your service.
+
+`otlpOptions.Endpoint` - It is the endpoint for your OTel Collector agent.
+
 &nbsp;
 
-### Step 5: Add the OpenTelemetry Gin middleware
-Configure Gin to use the middleware by adding the following lines in **`main.go`**
-```bash
-import (
-    ....
-  "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-)
+Here’s a sample `Program.cs` file with the configured variables:
 
-func main() {
-    ......
-    r := gin.Default()
-    r.Use(otelgin.Middleware(serviceName))
-    ......
-}
+```bash
+using System.Diagnostics;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Configure OpenTelemetry with tracing and auto-start.
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => 
+        resource.AddService(serviceName: "{{MYAPP}}"))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddOtlpExporter(otlpOptions =>
+        {
+            otlpOptions.Endpoint = new Uri("http://localhost:4317");
+
+            otlpOptions.Protocol = OtlpExportProtocol.Grpc;
+        }));
+
+var app = builder.Build();
+
+//The index route ("/") is set up to write out the OpenTelemetry trace information on the response:
+app.MapGet("/", () => $"Hello World! OpenTelemetry Trace: {Activity.Current?.Id}");
+
+app.Run();
 ```
+
+The OpenTelemetry.Exporter.Options get or set the target to which the exporter is going to send traces. Here, we’re configuring it to send traces to the OTel Collector agent. The target must be a valid Uri with the scheme (http or https) and host and may contain a port and a path.
+
+This is done by configuring an OpenTelemetry [TracerProvider](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/trace/customizing-the-sdk#readme) using extension methods and setting it to auto-start when the host is started.
+
 
 

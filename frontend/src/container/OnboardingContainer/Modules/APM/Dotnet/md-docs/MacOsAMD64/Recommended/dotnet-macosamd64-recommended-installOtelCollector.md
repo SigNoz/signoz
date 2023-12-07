@@ -11,6 +11,7 @@ wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases
 ```bash
 mkdir otelcol-contrib && tar xvzf otelcol-contrib_0.79.0_darwin_amd64.tar.gz -C otelcol-contrib
 ```
+
 &nbsp;
 
 ### Step 3: Create `config.yaml` in folder `otelcol-contrib` with the below content in it

@@ -5,12 +5,14 @@
 ```bash
 wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v0.79.0/otelcol-contrib_0.79.0_linux_amd64.tar.gz
 ```
+
 &nbsp;
 
 ### Step 2: Extract otel-collector tar.gz to the `otelcol-contrib` folder
 ```bash
 mkdir otelcol-contrib && tar xvzf otelcol-contrib_0.79.0_linux_amd64.tar.gz -C otelcol-contrib
 ```
+
 &nbsp;
 
 ### Step 3: Create `config.yaml` in `otelcol-contrib` folder with the below content in it
