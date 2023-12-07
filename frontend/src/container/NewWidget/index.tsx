@@ -1,5 +1,6 @@
-import { LockFilled } from '@ant-design/icons';
-import { Button, Modal, Tooltip, Typography } from 'antd';
+/* eslint-disable sonarjs/cognitive-complexity */
+import { LockFilled, WarningOutlined } from '@ant-design/icons';
+import { Button, Modal, Space, Tooltip, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -39,6 +40,7 @@ import {
 	RightContainerWrapper,
 } from './styles';
 import { NewWidgetProps } from './types';
+import { getIsQueryModified } from './utils';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const {
@@ -47,7 +49,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		setToScrollWidgetId,
 	} = useDashboard();
 
-	const { currentQuery } = useQueryBuilder();
+	const { currentQuery, stagedQuery } = useQueryBuilder();
+
+	const isQueryModified = useMemo(
+		() => getIsQueryModified(currentQuery, stagedQuery),
+		[currentQuery, stagedQuery],
+	);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -92,6 +99,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedWidget?.fillSpans || false,
 	);
 	const [saveModal, setSaveModal] = useState(false);
+	const [discardModal, setDiscardModal] = useState(false);
 
 	const [graphType, setGraphType] = useState(selectedGraph);
 
@@ -206,6 +214,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	]);
 
 	const onClickDiscardHandler = useCallback(() => {
+		if (isQueryModified) {
+			setDiscardModal(true);
+			return;
+		}
+		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+	}, [dashboardId, isQueryModified]);
+
+	const discardChanges = useCallback(() => {
 		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 	}, [dashboardId]);
 
@@ -321,7 +337,16 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				</RightContainerWrapper>
 			</PanelContainer>
 			<Modal
-				title="Save Changes"
+				title={
+					isQueryModified ? (
+						<Space>
+							<WarningOutlined style={{ fontSize: '16px', color: '#fdd600' }} />
+							Unsaved Changes
+						</Space>
+					) : (
+						'Save Widget'
+					)
+				}
 				focusTriggerAfterClose
 				forceRender
 				destroyOnClose
@@ -332,9 +357,38 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				open={saveModal}
 				width={600}
 			>
+				{!isQueryModified ? (
+					<Typography>
+						Your graph built with <QueryTypeTag queryType={currentQuery.queryType} />{' '}
+						query will be saved. Press OK to confirm.
+					</Typography>
+				) : (
+					<Typography>
+						There are unsaved changes in the Query builder, please stage and run the
+						query or the changes will be lost. Press OK to discard.
+					</Typography>
+				)}
+			</Modal>
+			<Modal
+				title={
+					<Space>
+						<WarningOutlined style={{ fontSize: '16px', color: '#fdd600' }} />
+						Unsaved Changes
+					</Space>
+				}
+				focusTriggerAfterClose
+				forceRender
+				destroyOnClose
+				closable
+				onCancel={(): void => setDiscardModal(false)}
+				onOk={discardChanges}
+				centered
+				open={discardModal}
+				width={600}
+			>
 				<Typography>
-					Your graph built with <QueryTypeTag queryType={currentQuery.queryType} />{' '}
-					query will be saved. Press OK to confirm.
+					There are unsaved changes in the Query builder, please stage and run the
+					query or the changes will be lost. Press OK to discard.
 				</Typography>
 			</Modal>
 		</Container>
