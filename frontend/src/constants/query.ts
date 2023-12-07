@@ -27,4 +27,5 @@ export enum QueryParams {
 	viewName = 'viewName',
 	viewKey = 'viewKey',
 	expandedWidgetId = 'expandedWidgetId',
+	pagination = 'pagination',
 }

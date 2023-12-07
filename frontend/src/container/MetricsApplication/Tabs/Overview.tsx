@@ -26,7 +26,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
 
-import { GraphTitle } from '../constant';
+import { GraphTitle, SERVICE_CHART_ID } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import {
 	errorPercentage,
@@ -131,6 +131,7 @@ function Application(): JSX.Element {
 				title: GraphTitle.RATE_PER_OPS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'ops',
+				id: SERVICE_CHART_ID.rps,
 			}),
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
@@ -152,6 +153,7 @@ function Application(): JSX.Element {
 				title: GraphTitle.ERROR_PERCENTAGE,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: '%',
+				id: SERVICE_CHART_ID.errorPercentage,
 			}),
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);

@@ -11,6 +11,7 @@ import ROUTES from 'constants/routes';
 import { stepsMap } from 'container/OnboardingContainer/constants/stepsConfig';
 import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { useState } from 'react';
@@ -71,6 +72,7 @@ export default function ModuleStepsContainer({
 
 	const [current, setCurrent] = useState(0);
 	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
+	const { trackEvent } = useAnalytics();
 	const lastStepIndex = selectedModuleSteps.length - 1;
 
 	const isValidForm = (): boolean => {
@@ -126,6 +128,10 @@ export default function ModuleStepsContainer({
 	};
 
 	const redirectToModules = (): void => {
+		trackEvent('Onboarding Complete', {
+			module: selectedModule.id,
+		});
+
 		if (selectedModule.id === ModulesMap.APM) {
 			history.push(ROUTES.APPLICATION);
 		} else if (selectedModule.id === ModulesMap.LogsManagement) {

@@ -107,48 +107,8 @@ function RightContainer({
 				}
 			/>
 
-			{/* <TextContainer>
-				<Typography>Stacked Graphs :</Typography>
-				<Switch
-					checked={stacked}
-					onChange={(): void => {
-						setStacked((value) => !value);
-					}}
-				/>
-			</TextContainer> */}
-
-			{/* <Title light={'true'}>Fill Opacity: </Title> */}
-
-			{/* <Slider
-				value={parseInt(opacity, 10)}
-				marks={{
-					0: '0',
-					33: '33',
-					66: '66',
-					100: '100',
-				}}
-				onChange={(number): void => onChangeHandler(setOpacity, number.toString())}
-				step={1}
-			/> */}
-
-			{/* <Title light={'true'}>Null/Zero values: </Title>
-
-			<NullButtonContainer>
-				{nullValueButtons.map((button) => (
-					<Button
-						type={button.check === selectedNullZeroValue ? 'primary' : 'default'}
-						key={button.name}
-						onClick={(): void =>
-							onChangeHandler(setSelectedNullZeroValue, button.check)
-						}
-					>
-						{button.name}
-					</Button>
-				))}
-			</NullButtonContainer> */}
-
 			<Space style={{ marginTop: 10 }} direction="vertical">
-				<Typography>Fill span gaps</Typography>
+				<Typography>Fill gaps</Typography>
 
 				<Switch
 					checked={isFillSpans}
