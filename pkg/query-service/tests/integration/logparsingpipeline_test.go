@@ -367,17 +367,68 @@ func TestLogPipelinesValidation(t *testing.T) {
 	}
 }
 
+func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
+	require := require.New(t)
+	testbed := NewTestbedWithoutOpamp(t)
+
+	getPipelinesResp := testbed.GetPipelinesFromQS()
+	require.Equal(0, len(getPipelinesResp.History))
+
+	postablePipelines := logparsingpipeline.PostablePipelines{
+		Pipelines: []logparsingpipeline.PostablePipeline{
+			{
+				OrderId: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "method",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: "=",
+							Value:    "GET",
+						},
+					},
+				},
+				Config: []logparsingpipeline.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "add",
+						Type:    "add",
+						Field:   "attributes.test",
+						Value:   "val",
+						Enabled: true,
+						Name:    "test add",
+					},
+				},
+			},
+		},
+	}
+
+	testbed.PostPipelinesToQS(postablePipelines)
+	getPipelinesResp = testbed.GetPipelinesFromQS()
+	require.Equal(1, len(getPipelinesResp.History))
+
+}
+
 // LogPipelinesTestBed coordinates and mocks components involved in
 // configuring log pipelines and provides test helpers.
 type LogPipelinesTestBed struct {
 	t               *testing.T
+	testDBFilePath  string
 	testUser        *model.User
 	apiHandler      *app.APIHandler
+	agentConfMgr    *agentConf.Manager
 	opampServer     *opamp.Server
 	opampClientConn *opamp.MockOpAmpConnection
 }
 
-func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
+func NewTestbedWithoutOpamp(t *testing.T) *LogPipelinesTestBed {
 	// Create a tmp file based sqlite db for testing.
 	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
 	if err != nil {
@@ -408,20 +459,59 @@ func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
-	opampServer, clientConn := mockOpampAgent(t, testDBFilePath, controller)
-
 	user, apiErr := createTestUser()
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
 
+	// Mock an available opamp agent
+	testDB, err = opampModel.InitDB(testDBFilePath)
+	require.Nil(t, err, "failed to init opamp model")
+
+	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
+		DB:       testDB,
+		DBEngine: "sqlite",
+		AgentFeatures: []agentConf.AgentFeature{
+			apiHandler.LogsParsingPipelineController,
+		}})
+	require.Nil(t, err, "failed to init agentConf")
+
 	return &LogPipelinesTestBed{
-		t:               t,
-		testUser:        user,
-		apiHandler:      apiHandler,
-		opampServer:     opampServer,
-		opampClientConn: clientConn,
+		t:              t,
+		testDBFilePath: testDBFilePath,
+		testUser:       user,
+		apiHandler:     apiHandler,
+		agentConfMgr:   agentConfMgr,
 	}
+}
+
+func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
+	testbed := NewTestbedWithoutOpamp(t)
+
+	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
+	err := opampServer.Start(opamp.GetAvailableLocalAddress())
+	require.Nil(t, err, "failed to start opamp server")
+
+	t.Cleanup(func() {
+		opampServer.Stop()
+	})
+
+	opampClientConnection := &opamp.MockOpAmpConnection{}
+	opampServer.OnMessage(
+		opampClientConnection,
+		&protobufs.AgentToServer{
+			InstanceUid: "test",
+			EffectiveConfig: &protobufs.EffectiveConfig{
+				ConfigMap: newInitialAgentConfigMap(),
+			},
+		},
+	)
+
+	testbed.opampServer = opampServer
+	testbed.opampClientConn = opampClientConnection
+
+	return testbed
+
 }
 
 func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
@@ -666,43 +756,6 @@ func assertPipelinesResponseMatchesPostedPipelines(
 		assert.Equal(t, postable.Enabled, pipeline.Enabled, "pipeline.Enabled mismatch")
 		assert.Equal(t, postable.Config, pipeline.Config, "pipeline.Config mismatch")
 	}
-}
-
-func mockOpampAgent(
-	t *testing.T,
-	testDBFilePath string,
-	pipelinesController *logparsingpipeline.LogParsingPipelineController,
-) (*opamp.Server, *opamp.MockOpAmpConnection) {
-	// Mock an available opamp agent
-	testDB, err := opampModel.InitDB(testDBFilePath)
-	require.Nil(t, err, "failed to init opamp model")
-
-	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
-		DB:            testDB,
-		DBEngine:      "sqlite",
-		AgentFeatures: []agentConf.AgentFeature{pipelinesController},
-	})
-	require.Nil(t, err, "failed to init agentConf")
-
-	opampServer := opamp.InitializeServer(nil, agentConfMgr)
-	err = opampServer.Start(opamp.GetAvailableLocalAddress())
-	require.Nil(t, err, "failed to start opamp server")
-
-	t.Cleanup(func() {
-		opampServer.Stop()
-	})
-
-	opampClientConnection := &opamp.MockOpAmpConnection{}
-	opampServer.OnMessage(
-		opampClientConnection,
-		&protobufs.AgentToServer{
-			InstanceUid: "test",
-			EffectiveConfig: &protobufs.EffectiveConfig{
-				ConfigMap: newInitialAgentConfigMap(),
-			},
-		},
-	)
-	return opampServer, opampClientConnection
 }
 
 func newInitialAgentConfigMap() *protobufs.AgentConfigMap {
