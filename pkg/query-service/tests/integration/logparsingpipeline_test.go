@@ -372,6 +372,7 @@ func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 	testbed := NewTestbedWithoutOpamp(t)
 
 	getPipelinesResp := testbed.GetPipelinesFromQS()
+	require.Equal(0, len(getPipelinesResp.Pipelines))
 	require.Equal(0, len(getPipelinesResp.History))
 
 	postablePipelines := logparsingpipeline.PostablePipelines{
@@ -412,6 +413,7 @@ func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 
 	testbed.PostPipelinesToQS(postablePipelines)
 	getPipelinesResp = testbed.GetPipelinesFromQS()
+	require.Equal(1, len(getPipelinesResp.Pipelines))
 	require.Equal(1, len(getPipelinesResp.History))
 
 }
