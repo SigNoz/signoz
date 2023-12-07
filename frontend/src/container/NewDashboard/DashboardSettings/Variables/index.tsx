@@ -84,6 +84,9 @@ function VariablesSetting(): JSX.Element {
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 	const [variblesOrderArr, setVariablesOrderArr] = useState<number[]>([]);
+	const [existingVariableNamesMap, setExistingVariableNamesMap] = useState<
+		Record<string, string>
+	>({});
 
 	const [variableViewMode, setVariableViewMode] = useState<null | TVariableMode>(
 		null,
@@ -112,9 +115,10 @@ function VariablesSetting(): JSX.Element {
 	useEffect(() => {
 		const tableRowData = [];
 		const variableOrderArr = [];
+		const variableNamesMap = {};
 
 		for (const [key, value] of Object.entries(variables)) {
-			const { order, id } = value;
+			const { order, id, name } = value;
 
 			tableRowData.push({
 				key,
@@ -123,16 +127,25 @@ function VariablesSetting(): JSX.Element {
 				id: id || generateUUID(),
 			});
 
+			if (name) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				variableNamesMap[name] = name;
+			}
+
 			if (order) {
 				variableOrderArr.push(order);
 			}
 		}
+
+		// console.log('variables');
 
 		tableRowData.sort((a, b) => a.order - b.order);
 		variableOrderArr.sort((a, b) => a - b);
 
 		setVariablesTableData(tableRowData);
 		setVariablesOrderArr(variableOrderArr);
+		setExistingVariableNamesMap(variableNamesMap);
 	}, [variables]);
 
 	const updateVariables = (
@@ -141,6 +154,8 @@ function VariablesSetting(): JSX.Element {
 		if (!selectedDashboard) {
 			return;
 		}
+
+		// console.log('updatedVariablesData', updatedVariablesData);
 
 		updateMutation.mutateAsync(
 			{
@@ -182,17 +197,15 @@ function VariablesSetting(): JSX.Element {
 	): void => {
 		const updatedVariableData = {
 			...variableData,
-			order:
-				variableData.order && variableData.order >= 0
-					? variableData.order
-					: getVariableOrder(),
+			order: variableData?.order >= 0 ? variableData.order : getVariableOrder(),
 		};
 
-		// console.log('variablesTableData', variablesTableData);
+		// console.log('onVariableSaveHandler', variablesTableData);
 
 		const newVariablesArr = variablesTableData.map(
 			(variable: IDashboardVariable) => {
 				if (variable.id === updatedVariableData.id) {
+					// console.log('updatedVariableData', updatedVariableData);
 					return updatedVariableData;
 				}
 
@@ -200,9 +213,13 @@ function VariablesSetting(): JSX.Element {
 			},
 		);
 
+		// console.log('newVariablesArr', newVariablesArr);
+
 		if (mode === 'ADD') {
 			newVariablesArr.push(updatedVariableData);
 		}
+
+		// console.log('newVariablesArr', newVariablesArr);
 
 		const variables = convertVariablesToDbFormat(newVariablesArr);
 
@@ -210,6 +227,7 @@ function VariablesSetting(): JSX.Element {
 
 		// console.log('variables', variables);
 
+		setVariablesTableData(newVariablesArr);
 		updateVariables(variables);
 		onDoneVariableViewMode();
 	};
@@ -235,7 +253,8 @@ function VariablesSetting(): JSX.Element {
 		setDeleteVariableModal(false);
 	};
 
-	const validateVariableName = (name: string): boolean => !variables[name];
+	const validateVariableName = (name: string): boolean =>
+		!existingVariableNamesMap[name];
 
 	const columns = [
 		{
@@ -327,6 +346,8 @@ function VariablesSetting(): JSX.Element {
 			setVariablesTableData(updatedVariables);
 		}
 	};
+
+	// console.log('variablesTableData', variablesTableData);
 
 	return (
 		<>
