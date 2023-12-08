@@ -1,35 +1,30 @@
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { ErrorResponse } from 'types/api';
 import { ErrorStatusCode } from 'types/common';
 
 export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
-	const { response, request } = error;
+	const { response, request } = error as AxiosError;
 	if (response) {
 		// client received an error response (5xx, 4xx)
 		// making the error status code as standard Error Status Code
 		const statusCode = response.status as ErrorStatusCode;
 
 		if (statusCode >= 400 && statusCode < 500) {
-			const { data } = response;
+			const { data } = response as AxiosResponse;
 
 			if (statusCode === 404) {
 				return {
 					statusCode,
 					payload: null,
-					error: data.errorType,
+					error: data.statusText,
 					message: null,
 				};
 			}
 
-			const { errors, error } = data;
-
-			const errorMessage =
-				Array.isArray(errors) && errors.length >= 1 ? errors[0].msg : error;
-
 			return {
 				statusCode,
 				payload: null,
-				error: errorMessage,
+				error: error.message,
 				message: null,
 			};
 		}

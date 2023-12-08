@@ -4,7 +4,7 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import loginApi from 'api/user/login';
 import afterLogin from 'AppRoutes/utils';
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { ENVIRONMENT } from 'constants/env';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import store from 'store';
@@ -17,14 +17,17 @@ const interceptorsResponse = (
 ): Promise<AxiosResponse<any>> => Promise.resolve(value);
 
 const interceptorsRequestResponse = (
-	value: AxiosRequestConfig,
-): AxiosRequestConfig => {
+	value: InternalAxiosRequestConfig,
+): InternalAxiosRequestConfig => {
+	console.log('interceptorsRequestResponse', interceptorsRequestResponse);
 	const token =
 		store.getState().app.user?.accessJwt ||
 		getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) ||
 		'';
 
-	value.headers.Authorization = token ? `Bearer ${token}` : '';
+	if (value && value.headers) {
+		value.headers.Authorization = token ? `Bearer ${token}` : '';
+	}
 
 	return value;
 };

@@ -12,7 +12,7 @@ function DashboardPage(): JSX.Element {
 	const { isFetching, isError, isLoading } = dashboardResponse;
 
 	const errorMessage = isError
-		? (dashboardResponse?.error as AxiosError)?.response?.data.errorType
+		? (dashboardResponse?.error as AxiosError)?.message
 		: 'Something went wrong';
 
 	if (isError && !isFetching && errorMessage === ErrorType.NotFound) {
