@@ -223,8 +223,6 @@ function DateTimeSelection({
 		}
 	};
 
-	console.log(location.pathname);
-
 	// this is triggred when we change the routes and based on that we are changing the default options
 	useEffect(() => {
 		const metricsTimeDuration = getLocalStorageKey(
@@ -240,8 +238,6 @@ function DateTimeSelection({
 
 		const currentRoute = location.pathname;
 		const time = getDefaultTime(currentRoute);
-
-		console.log(time);
 
 		const currentOptions = getOptions(currentRoute);
 		setOptions(currentOptions);
