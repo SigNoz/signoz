@@ -1,6 +1,6 @@
 ## Payload Structure
 
-To send logs to SigNoz over HTTP, we have a payload structure which is an array of JSON logs which adheres to the [OTEL Logs Data Model](https://opentelemetry.io/docs/specs/otel/logs/data-model/):
+To send logs to SigNoz over HTTP, we have a payload structure which is an array of JSON logs which adheres to the [OTEL Logs Data Model](https://opentelemetry.io/docs/specs/otel/logs/data-model/).
 
 &nbsp;
 
@@ -65,7 +65,6 @@ curl --location 'https://ingest.{{REGION}}.signoz.cloud:443/logs/json/' \
 --header 'signoz-access-token: {{SIGNOZ_INGESTION_KEY}}' \
 --data '[
     {
-        "timestamp": 1698310066000000000,
         "trace_id": "000000000000000018c51935df0b93b9",
         "span_id": "18c51935df0b93b9",
         "trace_flags": 0,
@@ -83,6 +82,14 @@ curl --location 'https://ingest.{{REGION}}.signoz.cloud:443/logs/json/' \
     }
 ]'
 ```
+&nbsp;
+
+This curl request will have the timestamp of when you send the above log.
+
+&nbsp;
+
+To specify a particular timestamp in your log, ensure you include the `timestamp` field in your cURL request. Place the timestamp field before the `trace_id` field. For example, `timestamp`: 1698310066000000000
+
 &nbsp;
 
 **Note:**  You can customize the cURL request as needed for your specific use case.
