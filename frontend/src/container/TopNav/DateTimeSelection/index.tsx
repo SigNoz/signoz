@@ -3,11 +3,14 @@ import { Button, Select as DefaultSelect } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
+import history from 'lib/history';
 import { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -34,9 +37,9 @@ function DateTimeSelection({
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
-	const params = new URLSearchParams(location.search);
-	const searchStartTime = params.get('startTime');
-	const searchEndTime = params.get('endTime');
+	const urlQuery = useUrlQuery();
+	const searchStartTime = urlQuery.get('startTime');
+	const searchEndTime = urlQuery.get('endTime');
 
 	const localstorageStartTime = getLocalStorageKey('startTime');
 	const localstorageEndTime = getLocalStorageKey('endTime');
@@ -187,6 +190,11 @@ function DateTimeSelection({
 
 		const { maxTime, minTime } = GetMinMax(value, getTime());
 
+		urlQuery.set(QueryParams.startTime, minTime.toString());
+		urlQuery.set(QueryParams.endTime, maxTime.toString());
+		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+		history.replace(generatedUrl);
+
 		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime));
 	};
 
@@ -207,9 +215,15 @@ function DateTimeSelection({
 				setLocalStorageKey('startTime', startTimeMoment.toString());
 				setLocalStorageKey('endTime', endTimeMoment.toString());
 				updateLocalStorageForRoutes('custom');
+				urlQuery.set(QueryParams.startTime, startTimeMoment.toString());
+				urlQuery.set(QueryParams.endTime, endTimeMoment.toString());
+				const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+				history.replace(generatedUrl);
 			}
 		}
 	};
+
+	console.log(location.pathname);
 
 	// this is triggred when we change the routes and based on that we are changing the default options
 	useEffect(() => {
@@ -227,6 +241,8 @@ function DateTimeSelection({
 		const currentRoute = location.pathname;
 		const time = getDefaultTime(currentRoute);
 
+		console.log(time);
+
 		const currentOptions = getOptions(currentRoute);
 		setOptions(currentOptions);
 
@@ -234,7 +250,6 @@ function DateTimeSelection({
 			if (searchEndTime !== null && searchStartTime !== null) {
 				return 'custom';
 			}
-
 			if (
 				(localstorageEndTime === null || localstorageStartTime === null) &&
 				time === 'custom'
@@ -252,16 +267,8 @@ function DateTimeSelection({
 		setRefreshButtonHidden(updatedTime === 'custom');
 
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
-	}, [
-		location.pathname,
-		getTime,
-		localstorageEndTime,
-		localstorageStartTime,
-		searchEndTime,
-		searchStartTime,
-		updateTimeInterval,
-		globalTimeLoading,
-	]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
 
 	return (
 		<>
