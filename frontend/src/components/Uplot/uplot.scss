@@ -3,13 +3,15 @@
 	justify-content: center;
 	align-items: center;
 	z-index: 0;
-	height: 85%;
+	height: 100%;
 	position: absolute;
-	left: 50%;
-	transform: translate(-50%, 0);
-}
+	left: 0;
+	right: 0;
+	margin: auto;
+  }
 
-.uplot-graph-container {
+  .uplot-graph-container {
+	position: relative;
 	height: 100%;
 	width: 100%;
-}
+  }
