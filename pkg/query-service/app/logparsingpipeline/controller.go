@@ -73,12 +73,6 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 
 	}
 
-	if !agentConf.Ready() {
-		return nil, model.UnavailableError(fmt.Errorf(
-			"agent updater unavailable at the moment. Please try in sometime",
-		))
-	}
-
 	// prepare config elements
 	elements := make([]string, len(pipelines))
 	for i, p := range pipelines {
