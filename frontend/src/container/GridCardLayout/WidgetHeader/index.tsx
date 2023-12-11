@@ -11,20 +11,25 @@ import {
 	WarningOutlined,
 } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps, Tooltip, Typography } from 'antd';
+import { getQueryRangeFormat } from 'api/dashboard/queryRangeFormat';
 import Spinner from 'components/Spinner';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useNotifications } from 'hooks/useNotifications';
+import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload';
 import history from 'lib/history';
 import { ReactNode, useCallback, useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
+import { useMutation, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { errorTooltipPosition, WARNING_MESSAGE } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
@@ -71,13 +76,44 @@ function WidgetHeader({
 		);
 	}, [widget.id, widget.panelTypes, widget.query]);
 
+	const queryRangeMutation = useMutation(getQueryRangeFormat);
+
+	const { selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
+	const { notifications } = useNotifications();
+
 	const onCreateAlertsHandler = useCallback(() => {
-		history.push(
-			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-				JSON.stringify(widget.query),
-			)}`,
-		);
-	}, [widget]);
+		const { queryPayload } = prepareQueryRangePayload({
+			query: widget.query,
+			globalSelectedInterval,
+			graphType: widget.panelTypes,
+			selectedTime: widget.timePreferance,
+		});
+		queryRangeMutation.mutate(queryPayload, {
+			onSuccess: (data) => {
+				history.push(
+					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+						JSON.stringify(data.compositeQuery),
+					)}`,
+				);
+			},
+			onError: () => {
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				});
+			},
+		});
+	}, [
+		globalSelectedInterval,
+		notifications,
+		queryRangeMutation,
+		widget.panelTypes,
+		widget.query,
+		widget.timePreferance,
+	]);
 
 	const keyMethodMapping = useMemo(
 		() => ({
@@ -145,10 +181,16 @@ function WidgetHeader({
 				icon: <AlertOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
 				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
-				disabled: false,
+				disabled: queryRangeMutation.isLoading,
 			},
 		],
-		[headerMenuList, queryResponse.isFetching, editWidget, deleteWidget],
+		[
+			headerMenuList,
+			queryResponse.isFetching,
+			editWidget,
+			deleteWidget,
+			queryRangeMutation.isLoading,
+		],
 	);
 
 	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
