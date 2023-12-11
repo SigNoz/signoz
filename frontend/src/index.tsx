@@ -16,6 +16,18 @@ const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
 			refetchOnWindowFocus: false,
+			retry(failureCount, error): boolean {
+				// only handling query range api retry
+				// @TODO remove this when all api is transformed into proper error handling
+				if (
+					error instanceof Error &&
+					error.message.includes('API responded with 400')
+				) {
+					return false;
+				}
+
+				return failureCount < 2;
+			},
 		},
 	},
 });
