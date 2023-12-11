@@ -913,6 +913,20 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 
 func validateQueryRangeParamsV3(qp *v3.QueryRangeParamsV3) error {
 	err := qp.CompositeQuery.Validate()
+
+	// Step , Start and End are required
+	if qp.Step == 0 {
+		return errors.New("step param missing in query")
+	}
+
+	if qp.Start == 0 {
+		return errors.New("start param missing in query")
+	}
+
+	if qp.End == 0 {
+		return errors.New("end param missing in query")
+	}
+	
 	if err != nil {
 		return err
 	}
