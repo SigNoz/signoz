@@ -1,27 +1,10 @@
+import { getTopOperationList } from './__mocks__/getTopOperation';
 import { TopOperationList } from './TopOperationsTable';
 import {
 	convertedTracesToDownloadData,
 	getErrorRate,
 	getNearestHighestBucketValue,
 } from './utils';
-
-interface TopOperation {
-	numCalls: number;
-	errorCount: number;
-}
-
-const getTopOperationList = ({
-	errorCount,
-	numCalls,
-}: TopOperation): TopOperationList =>
-	({
-		p50: 0,
-		errorCount,
-		name: 'test',
-		numCalls,
-		p95: 0,
-		p99: 0,
-	} as TopOperationList);
 
 describe('Error Rate', () => {
 	test('should return correct error rate', () => {
