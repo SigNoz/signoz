@@ -19,7 +19,6 @@ const interceptorsResponse = (
 const interceptorsRequestResponse = (
 	value: InternalAxiosRequestConfig,
 ): InternalAxiosRequestConfig => {
-	console.log('interceptorsRequestResponse', interceptorsRequestResponse);
 	const token =
 		store.getState().app.user?.accessJwt ||
 		getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) ||

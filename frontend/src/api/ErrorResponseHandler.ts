@@ -3,7 +3,7 @@ import { ErrorResponse } from 'types/api';
 import { ErrorStatusCode } from 'types/common';
 
 export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
-	const { response, request } = error as AxiosError;
+	const { response, request } = error;
 	if (response) {
 		// client received an error response (5xx, 4xx)
 		// making the error status code as standard Error Status Code
