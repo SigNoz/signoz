@@ -32,6 +32,7 @@ export interface ChartPreviewProps {
 	alertDef?: AlertDef;
 	userQueryKey?: string;
 	allowSelectedIntervalForStepGen?: boolean;
+	yAxisUnit: string;
 }
 
 function ChartPreview({
@@ -44,6 +45,7 @@ function ChartPreview({
 	userQueryKey,
 	allowSelectedIntervalForStepGen = false,
 	alertDef,
+	yAxisUnit,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const threshold = alertDef?.condition.target || 0;
@@ -112,7 +114,7 @@ function ChartPreview({
 		() =>
 			getUPlotChartOptions({
 				id: 'alert_legend_widget',
-				yAxisUnit: query?.unit,
+				yAxisUnit,
 				apiResponse: queryResponse?.data?.payload,
 				dimensions: containerDimensions,
 				isDarkMode,
@@ -129,14 +131,14 @@ function ChartPreview({
 							optionName,
 							threshold,
 							alertDef?.condition.targetUnit,
-							query?.unit,
+							yAxisUnit,
 						)})`,
 						thresholdUnit: alertDef?.condition.targetUnit,
 					},
 				],
 			}),
 		[
-			query?.unit,
+			yAxisUnit,
 			queryResponse?.data?.payload,
 			containerDimensions,
 			isDarkMode,
@@ -168,7 +170,7 @@ function ChartPreview({
 						name={name || 'Chart Preview'}
 						panelData={queryResponse.data?.payload.data.newResult.data.result || []}
 						query={query || initialQueriesMap.metrics}
-						yAxisUnit={query?.unit}
+						yAxisUnit={yAxisUnit}
 					/>
 				</div>
 			)}
