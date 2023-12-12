@@ -140,7 +140,7 @@ function VariableItem({
 			enabled: false,
 			queryFn: () =>
 				dashboardVariablesQuery({
-					query: variableData.queryValue || '',
+					query: variableQueryValue || '',
 					variables: variablePropsToPayloadVariables(existingVariables),
 				}),
 			refetchOnWindowFocus: false,
