@@ -145,6 +145,7 @@ function VariableItem({
 				}),
 			refetchOnWindowFocus: false,
 			onSuccess: (response) => {
+				setErrorPreview(null);
 				handleQueryResult(response);
 			},
 			onError: (error: {
