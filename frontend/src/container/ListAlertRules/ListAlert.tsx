@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
+import { Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import DropDown from 'components/DropDown/DropDown';
@@ -16,6 +16,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import useSortableTable from 'hooks/ResizeTable/useSortableTable';
 import useComponentPermission from 'hooks/useComponentPermission';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useInterval from 'hooks/useInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -31,9 +32,16 @@ import { GettableAlert } from 'types/api/alerts/get';
 import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
-import { Button, ButtonContainer, ColumnButton } from './styles';
+import {
+	Button,
+	ButtonContainer,
+	ColumnButton,
+	SearchContainer,
+} from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
+
+const { Search } = Input;
 
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<GettableAlert[]>(allAlertRules || []);
@@ -144,6 +152,31 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			});
 		}
 	};
+
+	const handleSearch = useDebouncedFn((e: unknown) => {
+		const value = (e as React.BaseSyntheticEvent).target.value.toLowerCase();
+		const filteredData = allAlertRules.filter((alert) => {
+			const alertName = alert.alert.toLowerCase();
+			const severity = alert.labels?.severity.toLowerCase();
+			const labels = Object.keys(alert.labels || {})
+				.filter((e) => e !== 'severity')
+				.join(' ')
+				.toLowerCase();
+
+			const labelValue = Object.values(alert.labels || {});
+
+			console.log(labels);
+
+			return (
+				alertName.includes(value) ||
+				severity?.includes(value) ||
+				labels.includes(value) ||
+				labelValue.includes(value)
+			);
+		});
+
+		setData(filteredData);
+	});
 
 	const dynamicColumns: ColumnsType<GettableAlert> = [
 		{
@@ -299,20 +332,26 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 	return (
 		<>
-			<ButtonContainer>
-				<TextToolTip
-					{...{
-						text: `More details on how to create alerts`,
-						url: 'https://signoz.io/docs/userguide/alerts-management/',
-					}}
+			<SearchContainer>
+				<Search
+					placeholder="Search with Alert Name, Severity and Labels"
+					onChange={handleSearch}
 				/>
+				<ButtonContainer>
+					<TextToolTip
+						{...{
+							text: `More details on how to create alerts`,
+							url: 'https://signoz.io/docs/userguide/alerts-management/',
+						}}
+					/>
 
-				{addNewAlert && (
-					<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
-						New Alert
-					</Button>
-				)}
-			</ButtonContainer>
+					{addNewAlert && (
+						<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
+							New Alert
+						</Button>
+					)}
+				</ButtonContainer>
+			</SearchContainer>
 			<DynamicColumnTable
 				tablesource={TableDataSource.Alert}
 				columns={columns}
