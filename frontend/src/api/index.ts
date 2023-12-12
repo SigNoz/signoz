@@ -95,8 +95,8 @@ const instance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
 });
 
-instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
 instance.interceptors.request.use(interceptorsRequestResponse);
+instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
 
 export const AxiosAlertManagerInstance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiAlertManager}`,
