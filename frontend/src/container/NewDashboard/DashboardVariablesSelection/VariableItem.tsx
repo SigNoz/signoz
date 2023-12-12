@@ -232,7 +232,6 @@ function VariableItem({
 	}, [debouncedVariableValue]);
 
 	useEffect(() => {
-		console.log('variable Type', variableData.type);
 		// Fetch options for CUSTOM Type
 		if (variableData.type === 'CUSTOM') {
 			getOptions(null);
