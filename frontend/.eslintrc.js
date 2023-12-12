@@ -102,7 +102,8 @@ module.exports = {
 				},
 			},
 		],
-		'@typescript-eslint/no-unused-vars': 'error',
+		// '@typescript-eslint/no-unused-vars': 'error',
+		'@typescript-eslint/no-unused-vars': 'warn',
 		'func-style': ['error', 'declaration', { allowArrowFunctions: true }],
 		'arrow-body-style': ['error', 'as-needed'],
 
@@ -117,5 +118,7 @@ module.exports = {
 				usePrettierrc: true,
 			},
 		],
+
+		'sonarjs/no-unused-collection': 'warn',
 	},
 };

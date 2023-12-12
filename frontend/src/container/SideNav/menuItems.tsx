@@ -22,16 +22,16 @@ const menuItems: SidebarMenu[] = [
 		label: 'Get Started',
 		icon: <RocketOutlined rotate={45} />,
 	},
-	{
-		key: ROUTES.APPLICATION,
-		label: 'Services',
-		icon: <BarChartOutlined />,
-	},
-	{
-		key: ROUTES.TRACE,
-		label: 'Traces',
-		icon: <MenuOutlined />,
-	},
+	// {
+	// 	key: ROUTES.APPLICATION,
+	// 	label: 'Services',
+	// 	icon: <BarChartOutlined />,
+	// },
+	// {
+	// 	key: ROUTES.TRACE,
+	// 	label: 'Traces',
+	// 	icon: <MenuOutlined />,
+	// },
 	{
 		key: ROUTES.LOGS_EXPLORER,
 		label: 'Logs',

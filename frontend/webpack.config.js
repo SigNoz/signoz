@@ -16,6 +16,8 @@ const cssLoader = 'css-loader';
 const sassLoader = 'sass-loader';
 const styleLoader = 'style-loader';
 
+// console.log('wocaooooo', process.env)
+
 const plugins = [
 	new HtmlWebpackPlugin({
 		template: 'src/index.html.ejs',
