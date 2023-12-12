@@ -165,8 +165,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 			const labelValue = Object.values(alert.labels || {});
 
-			console.log(labels);
-
 			return (
 				alertName.includes(value) ||
 				severity?.includes(value) ||
