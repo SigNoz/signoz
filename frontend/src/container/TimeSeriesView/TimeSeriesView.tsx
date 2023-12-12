@@ -48,7 +48,7 @@ function TimeSeriesView({
 
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
-	}, [maxTime, minTime, globalSelectedInterval]);
+	}, [maxTime, minTime, globalSelectedInterval, data]);
 
 	const chartOptions = getUPlotChartOptions({
 		yAxisUnit: yAxisUnit || '',

@@ -75,13 +75,6 @@ function GridCardGraph({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	useEffect((): void => {
-		const { startTime, endTime } = getTimeRange();
-
-		setMinTimeScale(startTime);
-		setMaxTimeScale(endTime);
-	}, [maxTime, minTime, globalSelectedInterval]);
-
 	const queryResponse = useGetQueryRange(
 		{
 			selectedTime: widget?.timePreferance,
@@ -112,6 +105,13 @@ function GridCardGraph({
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 
 	const containerDimensions = useResizeObserver(graphRef);
+
+	useEffect((): void => {
+		const { startTime, endTime } = getTimeRange(queryResponse);
+
+		setMinTimeScale(startTime);
+		setMaxTimeScale(endTime);
+	}, [maxTime, minTime, globalSelectedInterval, queryResponse]);
 
 	const chartData = getUPlotChartData(queryResponse?.data?.payload, fillSpans);
 

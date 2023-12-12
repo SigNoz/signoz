@@ -58,13 +58,6 @@ function ChartPreview({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	useEffect((): void => {
-		const { startTime, endTime } = getTimeRange();
-
-		setMinTimeScale(startTime);
-		setMaxTimeScale(endTime);
-	}, [maxTime, minTime, globalSelectedInterval]);
-
 	const canQuery = useMemo((): boolean => {
 		if (!query || query == null) {
 			return false;
@@ -112,6 +105,13 @@ function ChartPreview({
 	);
 
 	const graphRef = useRef<HTMLDivElement>(null);
+
+	useEffect((): void => {
+		const { startTime, endTime } = getTimeRange(queryResponse);
+
+		setMinTimeScale(startTime);
+		setMaxTimeScale(endTime);
+	}, [maxTime, minTime, globalSelectedInterval, queryResponse]);
 
 	const chartData = getUPlotChartData(queryResponse?.data?.payload);
 

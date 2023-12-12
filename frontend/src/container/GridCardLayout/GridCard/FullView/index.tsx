@@ -102,11 +102,11 @@ function FullView({
 	>((state) => state.globalTime);
 
 	useEffect((): void => {
-		const { startTime, endTime } = getTimeRange();
+		const { startTime, endTime } = getTimeRange(response);
 
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
-	}, [maxTime, minTime, globalSelectedInterval]);
+	}, [maxTime, minTime, globalSelectedInterval, response]);
 
 	useEffect(() => {
 		if (!response.isFetching && fullViewRef.current) {

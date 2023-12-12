@@ -35,11 +35,11 @@ function WidgetGraph({
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 
 	useEffect((): void => {
-		const { startTime, endTime } = getTimeRange();
+		const { startTime, endTime } = getTimeRange(getWidgetQueryRange);
 
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
-	}, [maxTime, minTime, globalSelectedInterval]);
+	}, [getWidgetQueryRange, maxTime, minTime, globalSelectedInterval]);
 
 	const graphRef = useRef<HTMLDivElement>(null);
 
