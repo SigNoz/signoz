@@ -172,21 +172,6 @@ func (m *Manager) ReportConfigDeploymentStatus(
 	}
 }
 
-// Ready indicates if Manager can accept new config update requests
-func (mgr *Manager) Ready() bool {
-	if atomic.LoadUint32(&mgr.lock) != 0 {
-		return false
-	}
-	return opamp.Ready()
-}
-
-// Static methods for working with default manager instance in this module.
-
-// Ready indicates if Manager can accept new config update requests
-func Ready() bool {
-	return m.Ready()
-}
-
 func GetLatestVersion(
 	ctx context.Context, elementType ElementTypeDef,
 ) (*ConfigVersion, *model.ApiError) {
@@ -209,11 +194,6 @@ func GetConfigHistory(
 func StartNewVersion(
 	ctx context.Context, userId string, eleType ElementTypeDef, elementIds []string,
 ) (*ConfigVersion, *model.ApiError) {
-
-	if !m.Ready() {
-		// agent is already being updated, ask caller to wait and re-try after sometime
-		return nil, model.UnavailableError(fmt.Errorf("agent updater is busy"))
-	}
 
 	// create a new version
 	cfg := NewConfigversion(eleType)
