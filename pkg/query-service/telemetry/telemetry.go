@@ -54,6 +54,7 @@ var SAAS_EVENTS_LIST = map[string]struct{}{
 	TELEMETRY_EVENT_ENVIRONMENT:              {},
 	TELEMETRY_EVENT_USER_INVITATION_SENT:     {},
 	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED: {},
+	TELEMETRY_EVENT_DASHBOARDS_ALERTS:        {},
 }
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -62,9 +63,9 @@ const ph_api_key = "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w"
 const IP_NOT_FOUND_PLACEHOLDER = "NA"
 const DEFAULT_NUMBER_OF_SERVICES = 6
 
-const HEART_BEAT_DURATION = 12 * time.Hour
+const HEART_BEAT_DURATION = 12 * time.Second
 
-const ACTIVE_USER_DURATION = 6 * time.Hour
+const ACTIVE_USER_DURATION = 6 * time.Second
 
 // const HEART_BEAT_DURATION = 30 * time.Second
 // const ACTIVE_USER_DURATION = 30 * time.Second
