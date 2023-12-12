@@ -246,14 +246,14 @@ func createTelemetry() {
 				dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
 
 				dashboardsAlertsData := map[string]interface{}{
-					"totalDashboards":    dashboardsInfo.TotalDashboards,
-					"logsBasedPanels":    dashboardsInfo.LogsBasedPanels,
-					"metricsBasedPanels": dashboardsInfo.MetricsBasedPanels,
-					"tracesBasedPanels":  dashboardsInfo.TracesBasedPanels,
-					"totalAlerts":        alertsInfo.TotalAlerts,
-					"logsBasedAlerts":    alertsInfo.LogsBasedAlerts,
-					"metricsBasedAlerts": alertsInfo.MetricsBasedAlerts,
-					"tracesBasedAlerts":  alertsInfo.TracesBasedAlerts,
+					"totalDashboards":   dashboardsInfo.TotalDashboards,
+					"logsBasedPanels":   dashboardsInfo.LogsBasedPanels,
+					"metricBasedPanels": dashboardsInfo.MetricBasedPanels,
+					"tracesBasedPanels": dashboardsInfo.TracesBasedPanels,
+					"totalAlerts":       alertsInfo.TotalAlerts,
+					"logsBasedAlerts":   alertsInfo.LogsBasedAlerts,
+					"metricBasedAlerts": alertsInfo.MetricBasedAlerts,
+					"tracesBasedAlerts": alertsInfo.TracesBasedAlerts,
 				}
 				if err == nil {
 					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")

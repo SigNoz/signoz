@@ -616,17 +616,17 @@ type TagsInfo struct {
 }
 
 type AlertsInfo struct {
-	TotalAlerts        int `json:"totalAlerts"`
-	LogsBasedAlerts    int `json:"logsBasedAlerts"`
-	MetricsBasedAlerts int `json:"metricsBasedAlerts"`
-	TracesBasedAlerts  int `json:"tracesBasedAlerts"`
+	TotalAlerts       int `json:"totalAlerts"`
+	LogsBasedAlerts   int `json:"logsBasedAlerts"`
+	MetricBasedAlerts int `json:"metricBasedAlerts"`
+	TracesBasedAlerts int `json:"tracesBasedAlerts"`
 }
 
 type DashboardsInfo struct {
-	TotalDashboards    int `json:"totalDashboards"`
-	LogsBasedPanels    int `json:"logsBasedPanels"`
-	MetricsBasedPanels int `json:"metricsBasedPanels"`
-	TracesBasedPanels  int `json:"tracesBasedPanels"`
+	TotalDashboards   int `json:"totalDashboards"`
+	LogsBasedPanels   int `json:"logsBasedPanels"`
+	MetricBasedPanels int `json:"metricBasedPanels"`
+	TracesBasedPanels int `json:"tracesBasedPanels"`
 }
 
 type TagTelemetryData struct {

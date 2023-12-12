@@ -3481,9 +3481,9 @@ func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
 		}
 	}
 	return model.DashboardsInfo{
-		LogsBasedPanels:    logsPanelCount,
-		TracesBasedPanels:  tracesPanelCount,
-		MetricsBasedPanels: metricsPanelCount,
+		LogsBasedPanels:   logsPanelCount,
+		TracesBasedPanels: tracesPanelCount,
+		MetricBasedPanels: metricsPanelCount,
 	}
 }
 
@@ -3507,7 +3507,7 @@ func (r *ClickHouseReader) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo
 		if rule.AlertType == "LOGS_BASED_ALERT" {
 			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
 		} else if rule.AlertType == "METRIC_BASED_ALERT" {
-			alertsInfo.MetricsBasedAlerts = alertsInfo.MetricsBasedAlerts + 1
+			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
 		} else if rule.AlertType == "TRACES_BASED_ALERT" {
 			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
 		}
