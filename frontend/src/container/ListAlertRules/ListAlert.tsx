@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import DropDown from 'components/DropDown/DropDown';
 import {
@@ -14,9 +14,11 @@ import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import useSortableTable from 'hooks/ResizeTable/useSortableTable';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useInterval from 'hooks/useInterval';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useCallback, useState } from 'react';
@@ -42,6 +44,21 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const [addNewAlert, action] = useComponentPermission(
 		['add_new_alert', 'action'],
 		role,
+	);
+
+	const params = useUrlQuery();
+
+	const orderColumnParam = params.get('columnKey');
+	const orderQueryParam = params.get('order');
+	const sortingOrder: 'ascend' | 'descend' | null =
+		orderQueryParam === 'ascend' || orderQueryParam === 'descend'
+			? orderQueryParam
+			: null;
+	const paginationParam = params.get('page');
+
+	const { sortedInfo, handleChange } = useSortableTable<GettableAlert>(
+		sortingOrder,
+		orderColumnParam || '',
 	);
 
 	const { notifications: notificationsApi } = useNotifications();
@@ -142,6 +159,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				return prev - next;
 			},
 			render: DateComponent,
+			sortOrder:
+				sortedInfo.columnKey === DynamicColumnsKey.CreatedAt
+					? sortedInfo.order
+					: null,
 		},
 		{
 			title: 'Created By',
@@ -163,6 +184,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				return prev - next;
 			},
 			render: DateComponent,
+			sortOrder:
+				sortedInfo.columnKey === DynamicColumnsKey.UpdatedAt
+					? sortedInfo.order
+					: null,
 		},
 		{
 			title: 'Updated By',
@@ -183,6 +208,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				(b.state ? b.state.charCodeAt(0) : 1000) -
 				(a.state ? a.state.charCodeAt(0) : 1000),
 			render: (value): JSX.Element => <Status status={value} />,
+			sortOrder: sortedInfo.columnKey === 'state' ? sortedInfo.order : null,
 		},
 		{
 			title: 'Alert Name',
@@ -198,6 +224,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			render: (value, record): JSX.Element => (
 				<Typography.Link onClick={onEditHandler(record)}>{value}</Typography.Link>
 			),
+			sortOrder: sortedInfo.columnKey === 'name' ? sortedInfo.order : null,
 		},
 		{
 			title: 'Severity',
@@ -214,6 +241,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 				return <Typography>{severityValue}</Typography>;
 			},
+			sortOrder: sortedInfo.columnKey === 'severity' ? sortedInfo.order : null,
 		},
 		{
 			title: 'Labels',
@@ -291,6 +319,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				rowKey="id"
 				dataSource={data}
 				dynamicColumns={dynamicColumns}
+				onChange={handleChange}
+				pagination={{
+					defaultCurrent: Number(paginationParam) || 1,
+				}}
 			/>
 		</>
 	);
