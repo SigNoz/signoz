@@ -1,11 +1,12 @@
 import { ResizeTable } from 'components/ResizeTable';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Pagination, URL_PAGINATION } from 'hooks/queryPagination';
+import { Pagination } from 'hooks/queryPagination';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
@@ -44,7 +45,7 @@ function ListView(): JSX.Element {
 	);
 
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
-		URL_PAGINATION,
+		QueryParams.pagination,
 	);
 
 	const { data, isFetching, isError } = useGetQueryRange(

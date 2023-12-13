@@ -15,6 +15,7 @@ import onClickPlugin, { OnClickPluginOpts } from './plugins/onClickPlugin';
 import tooltipPlugin from './plugins/tooltipPlugin';
 import getAxes from './utils/getAxes';
 import getSeries from './utils/getSeriesData';
+import { getYAxisScale } from './utils/getYAxisScale';
 
 interface GetUPlotChartOptions {
 	id?: string;
@@ -54,6 +55,7 @@ export const getUPlotChartOptions = ({
 		legend: {
 			show: true,
 			live: false,
+			isolate: true,
 		},
 		focus: {
 			alpha: 0.3,
@@ -79,7 +81,11 @@ export const getUPlotChartOptions = ({
 				auto: true, // Automatically adjust scale range
 			},
 			y: {
-				auto: true,
+				...getYAxisScale(
+					thresholds,
+					apiResponse?.data.newResult.data.result,
+					yAxisUnit,
+				),
 			},
 		},
 		plugins: [
@@ -153,16 +159,24 @@ export const getUPlotChartOptions = ({
 				(self): void => {
 					const legend = self.root.querySelector('.u-legend');
 					if (legend) {
-						const seriesEls = legend.querySelectorAll('.u-label');
+						const seriesEls = legend.querySelectorAll('.u-series');
 						const seriesArray = Array.from(seriesEls);
 						seriesArray.forEach((seriesEl, index) => {
 							seriesEl.addEventListener('click', () => {
 								if (graphsVisibilityStates) {
 									setGraphsVisibilityStates?.((prev) => {
 										const newGraphVisibilityStates = [...prev];
-										newGraphVisibilityStates[index + 1] = !newGraphVisibilityStates[
-											index + 1
-										];
+										if (
+											newGraphVisibilityStates[index + 1] &&
+											newGraphVisibilityStates.every((value, i) =>
+												i === index + 1 ? value : !value,
+											)
+										) {
+											newGraphVisibilityStates.fill(true);
+										} else {
+											newGraphVisibilityStates.fill(false);
+											newGraphVisibilityStates[index + 1] = true;
+										}
 										return newGraphVisibilityStates;
 									});
 								}
