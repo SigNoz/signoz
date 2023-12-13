@@ -275,6 +275,91 @@ var operatorTest = []struct {
 			},
 		},
 		IsValid: false,
+	}, {
+		Name: "Timestamp Parser - valid",
+		Operator: PipelineOperator{
+			ID:         "time",
+			Type:       "time_parser",
+			ParseFrom:  "attributes.test_timestamp",
+			LayoutType: "epoch",
+			Layout:     "s",
+		},
+		IsValid: true,
+	}, {
+		Name: "Timestamp Parser - invalid - bad parsefrom attribute",
+		Operator: PipelineOperator{
+			ID:         "time",
+			Type:       "time_parser",
+			ParseFrom:  "timestamp",
+			LayoutType: "epoch",
+			Layout:     "s",
+		},
+		IsValid: false,
+	}, {
+		Name: "Timestamp Parser - unsupported layout_type",
+		Operator: PipelineOperator{
+			ID:        "time",
+			Type:      "time_parser",
+			ParseFrom: "attributes.test_timestamp",
+			// TODO(Raj): Maybe add support for gotime format
+			LayoutType: "gotime",
+			Layout:     "Mon Jan 2 15:04:05 -0700 MST 2006",
+		},
+		IsValid: false,
+	}, {
+		Name: "Timestamp Parser - invalid epoch layout",
+		Operator: PipelineOperator{
+			ID:         "time",
+			Type:       "time_parser",
+			ParseFrom:  "attributes.test_timestamp",
+			LayoutType: "epoch",
+			Layout:     "%Y-%m-%d",
+		},
+		IsValid: false,
+	}, {
+		Name: "Timestamp Parser - invalid strptime layout",
+		Operator: PipelineOperator{
+			ID:         "time",
+			Type:       "time_parser",
+			ParseFrom:  "attributes.test_timestamp",
+			LayoutType: "strptime",
+			Layout:     "%U",
+		},
+		IsValid: false,
+	}, {
+		Name: "Severity Parser - valid",
+		Operator: PipelineOperator{
+			ID:        "severity",
+			Type:      "severity_parser",
+			ParseFrom: "attributes.test_severity",
+			SeverityMapping: map[string][]string{
+				"trace": {"test_trace"},
+				"fatal": {"test_fatal"},
+			},
+			OverwriteSeverityText: true,
+		},
+		IsValid: true,
+	}, {
+		Name: "Severity Parser - Parse from is required",
+		Operator: PipelineOperator{
+			ID:                    "severity",
+			Type:                  "severity_parser",
+			SeverityMapping:       map[string][]string{},
+			OverwriteSeverityText: true,
+		},
+		IsValid: false,
+	}, {
+		Name: "Severity Parser - mapping level must be valid",
+		Operator: PipelineOperator{
+			ID:        "severity",
+			Type:      "severity_parser",
+			ParseFrom: "attributes.test",
+			SeverityMapping: map[string][]string{
+				"not-a-level": {"bad-level"},
+			},
+			OverwriteSeverityText: true,
+		},
+		IsValid: false,
 	},
 }
 

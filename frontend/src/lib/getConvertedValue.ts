@@ -232,6 +232,11 @@ const unitsMapping = [
 			{
 				label: 'Percent (0.0-1.0)',
 				value: 'percentunit',
+				factor: 100,
+			},
+			{
+				label: 'Percent (0 - 100)',
+				value: 'percent',
 				factor: 1,
 			},
 		],
@@ -265,10 +270,15 @@ function findUnitObject(
 
 export function convertValue(
 	value: number,
-	currentUnit: string,
-	targetUnit: string,
+	currentUnit?: string,
+	targetUnit?: string,
 ): number | null {
-	if (targetUnit === 'none') {
+	if (
+		targetUnit === 'none' ||
+		!currentUnit ||
+		!targetUnit ||
+		currentUnit === targetUnit
+	) {
 		return value;
 	}
 	const currentUnitObj = findUnitObject(currentUnit);
