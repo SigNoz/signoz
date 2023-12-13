@@ -259,7 +259,7 @@ func (agent *Agent) processStatusUpdate(
 	// send the new remote config to the Agent.
 	if configChanged ||
 		(agent.Status.RemoteConfigStatus != nil &&
-			bytes.Compare(agent.Status.RemoteConfigStatus.LastRemoteConfigHash, agent.remoteConfig.ConfigHash) != 0) {
+			!bytes.Equal(agent.Status.RemoteConfigStatus.LastRemoteConfigHash, agent.remoteConfig.ConfigHash)) {
 		// The new status resulted in a change in the config of the Agent or the Agent
 		// does not have this config (hash is different). Send the new config the Agent.
 		response.RemoteConfig = agent.remoteConfig
@@ -352,7 +352,7 @@ func isEqualConfigFile(f1, f2 *protobufs.AgentConfigFile) bool {
 	if f1 == nil || f2 == nil {
 		return false
 	}
-	return bytes.Compare(f1.Body, f2.Body) == 0 && f1.ContentType == f2.ContentType
+	return bytes.Equal(f1.Body, f2.Body) && f1.ContentType == f2.ContentType
 }
 
 func (agent *Agent) SendToAgent(msg *protobufs.ServerToAgent) {

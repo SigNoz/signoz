@@ -14,7 +14,7 @@ import (
 func TestThresholdRuleCombinations(t *testing.T) {
 	postableRule := PostableRule{
 		Alert:      "Tricky Condition Tests",
-		AlertType:  "METRICS_BASED_ALERT",
+		AlertType:  "METRIC_BASED_ALERT",
 		RuleType:   RuleTypeThreshold,
 		EvalWindow: Duration(5 * time.Minute),
 		Frequency:  Duration(1 * time.Minute),
