@@ -63,9 +63,9 @@ const ph_api_key = "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w"
 const IP_NOT_FOUND_PLACEHOLDER = "NA"
 const DEFAULT_NUMBER_OF_SERVICES = 6
 
-const HEART_BEAT_DURATION = 12 * time.Second
+const HEART_BEAT_DURATION = 12 * time.Hour
 
-const ACTIVE_USER_DURATION = 6 * time.Second
+const ACTIVE_USER_DURATION = 6 * time.Hour
 
 // const HEART_BEAT_DURATION = 30 * time.Second
 // const ACTIVE_USER_DURATION = 30 * time.Second
@@ -246,17 +246,17 @@ func createTelemetry() {
 				alertsInfo, err := telemetry.reader.GetAlertsInfo(context.Background())
 				dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
 
-				dashboardsAlertsData := map[string]interface{}{
-					"totalDashboards":   dashboardsInfo.TotalDashboards,
-					"logsBasedPanels":   dashboardsInfo.LogsBasedPanels,
-					"metricBasedPanels": dashboardsInfo.MetricBasedPanels,
-					"tracesBasedPanels": dashboardsInfo.TracesBasedPanels,
-					"totalAlerts":       alertsInfo.TotalAlerts,
-					"logsBasedAlerts":   alertsInfo.LogsBasedAlerts,
-					"metricBasedAlerts": alertsInfo.MetricBasedAlerts,
-					"tracesBasedAlerts": alertsInfo.TracesBasedAlerts,
-				}
 				if err == nil {
+					dashboardsAlertsData := map[string]interface{}{
+						"totalDashboards":   dashboardsInfo.TotalDashboards,
+						"logsBasedPanels":   dashboardsInfo.LogsBasedPanels,
+						"metricBasedPanels": dashboardsInfo.MetricBasedPanels,
+						"tracesBasedPanels": dashboardsInfo.TracesBasedPanels,
+						"totalAlerts":       alertsInfo.TotalAlerts,
+						"logsBasedAlerts":   alertsInfo.LogsBasedAlerts,
+						"metricBasedAlerts": alertsInfo.MetricBasedAlerts,
+						"tracesBasedAlerts": alertsInfo.TracesBasedAlerts,
+					}
 					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
 				} else {
 					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
