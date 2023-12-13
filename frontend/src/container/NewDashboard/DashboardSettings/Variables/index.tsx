@@ -39,6 +39,8 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 		transition,
 		isDragging,
 	} = useSortable({
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
 		id: props['data-row-key'],
 	});
 
