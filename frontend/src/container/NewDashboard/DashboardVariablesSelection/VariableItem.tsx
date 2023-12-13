@@ -224,6 +224,14 @@ function VariableItem({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [debouncedVariableValue]);
 
+	useEffect(() => {
+		// Fetch options for CUSTOM Type
+		if (variableData.type === 'CUSTOM') {
+			getOptions(null);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	return (
 		<VariableContainer>
 			<Typography.Text className="variable-name" ellipsis>
