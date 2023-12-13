@@ -11,28 +11,20 @@ import {
 	WarningOutlined,
 } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps, Tooltip, Typography } from 'antd';
-import { getQueryRangeFormat } from 'api/dashboard/queryRangeFormat';
 import Spinner from 'components/Spinner';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
+import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { useNotifications } from 'hooks/useNotifications';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload';
 import history from 'lib/history';
-import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { ReactNode, useCallback, useMemo } from 'react';
-import { useMutation, UseQueryResult } from 'react-query';
+import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { errorTooltipPosition, WARNING_MESSAGE } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
@@ -79,50 +71,7 @@ function WidgetHeader({
 		);
 	}, [widget.id, widget.panelTypes, widget.query]);
 
-	const queryRangeMutation = useMutation(getQueryRangeFormat);
-
-	const { selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
-
-	const { notifications } = useNotifications();
-
-	const { selectedDashboard } = useDashboard();
-
-	const onCreateAlertsHandler = useCallback(() => {
-		const { queryPayload } = prepareQueryRangePayload({
-			query: widget.query,
-			globalSelectedInterval,
-			graphType: widget.panelTypes,
-			selectedTime: widget.timePreferance,
-			variables: getDashboardVariables(selectedDashboard?.data.variables),
-		});
-		queryRangeMutation.mutate(queryPayload, {
-			onSuccess: (data) => {
-				const updatedQuery = mapQueryDataFromApi(data.compositeQuery);
-
-				history.push(
-					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-						JSON.stringify(updatedQuery),
-					)}`,
-				);
-			},
-			onError: () => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
-			},
-		});
-	}, [
-		globalSelectedInterval,
-		notifications,
-		queryRangeMutation,
-		selectedDashboard?.data.variables,
-		widget.panelTypes,
-		widget.query,
-		widget.timePreferance,
-	]);
+	const onCreateAlertsHandler = useCreateAlerts(widget);
 
 	const keyMethodMapping = useMemo(
 		() => ({
@@ -190,16 +139,10 @@ function WidgetHeader({
 				icon: <AlertOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
 				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
-				disabled: queryRangeMutation.isLoading,
+				disabled: false,
 			},
 		],
-		[
-			headerMenuList,
-			queryResponse.isFetching,
-			editWidget,
-			deleteWidget,
-			queryRangeMutation.isLoading,
-		],
+		[headerMenuList, queryResponse.isFetching, editWidget, deleteWidget],
 	);
 
 	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
