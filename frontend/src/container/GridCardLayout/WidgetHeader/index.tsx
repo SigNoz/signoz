@@ -19,8 +19,11 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
+import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { prepareQueryRangePayload } from 'lib/dashboard/prepareQueryRangePayload';
 import history from 'lib/history';
+import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { ReactNode, useCallback, useMemo } from 'react';
 import { useMutation, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -85,18 +88,23 @@ function WidgetHeader({
 
 	const { notifications } = useNotifications();
 
+	const { selectedDashboard } = useDashboard();
+
 	const onCreateAlertsHandler = useCallback(() => {
 		const { queryPayload } = prepareQueryRangePayload({
 			query: widget.query,
 			globalSelectedInterval,
 			graphType: widget.panelTypes,
 			selectedTime: widget.timePreferance,
+			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		});
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
+				const updatedQuery = mapQueryDataFromApi(data.compositeQuery);
+
 				history.push(
 					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-						JSON.stringify(data.compositeQuery),
+						JSON.stringify(updatedQuery),
 					)}`,
 				);
 			},
@@ -110,6 +118,7 @@ function WidgetHeader({
 		globalSelectedInterval,
 		notifications,
 		queryRangeMutation,
+		selectedDashboard?.data.variables,
 		widget.panelTypes,
 		widget.query,
 		widget.timePreferance,
