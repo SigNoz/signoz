@@ -66,6 +66,10 @@ type PipelineOperator struct {
 	// time_parser fields.
 	Layout     string `json:"layout,omitempty" yaml:"layout,omitempty"`
 	LayoutType string `json:"layout_type,omitempty" yaml:"layout_type,omitempty"`
+
+	// severity parser fields
+	SeverityMapping       map[string][]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	OverwriteSeverityText bool                `json:"overwrite_text,omitempty" yaml:"overwrite_text,omitempty"`
 }
 
 type TimestampParser struct {

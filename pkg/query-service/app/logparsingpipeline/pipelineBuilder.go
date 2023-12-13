@@ -138,6 +138,16 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 
 				}
 				// TODO(Raj): Maybe add support for gotime too eventually
+
+			} else if operator.Type == "severity_parser" {
+				parseFromParts := strings.Split(operator.ParseFrom, ".")
+				parseFromPath := strings.Join(parseFromParts, "?.")
+
+				operator.If = fmt.Sprintf(
+					`%s != nil && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
+					parseFromPath, parseFromPath, parseFromPath, parseFromPath, parseFromPath,
+				)
+
 			}
 
 			filteredOp = append(filteredOp, operator)
