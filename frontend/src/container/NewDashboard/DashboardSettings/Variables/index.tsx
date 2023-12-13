@@ -25,7 +25,6 @@ import { useDashboard } from 'providers/Dashboard/Dashboard';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
-import { v4 as generateUUID } from 'uuid';
 
 import { TVariableMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
@@ -124,7 +123,7 @@ function VariablesSetting(): JSX.Element {
 				key,
 				name: key,
 				...variables[key],
-				id: id || generateUUID(),
+				id,
 			});
 
 			if (name) {

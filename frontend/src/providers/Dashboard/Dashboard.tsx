@@ -30,9 +30,10 @@ import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { v4 as generateUUID } from 'uuid';
 
 import { IDashboardContext } from './types';
 
@@ -102,6 +103,44 @@ export function DashboardProvider({
 	const { t } = useTranslation(['dashboard']);
 	const dashboardRef = useRef<Dashboard>();
 
+	// As we do not have order and ID's in the variables object, we have to process variables to add order and ID if they do not exist in the variables object
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const transformDashboardVariables = (data: Dashboard): Dashboard => {
+		if (data && data.data && data.data.variables) {
+			const clonedDashboardData = JSON.parse(JSON.stringify(data));
+			const { variables } = clonedDashboardData.data;
+			const existingOrders: Set<number> = new Set();
+
+			// eslint-disable-next-line no-restricted-syntax
+			for (const key in variables) {
+				// eslint-disable-next-line no-prototype-builtins
+				if (variables.hasOwnProperty(key)) {
+					const variable: IDashboardVariable = variables[key];
+
+					// Check if 'order' property doesn't exist or is undefined
+					if (variable.order === undefined) {
+						// Find a unique order starting from 0
+						let order = 0;
+						while (existingOrders.has(order)) {
+							order += 1;
+						}
+
+						variable.order = order;
+						existingOrders.add(order);
+					}
+
+					if (variable.id === undefined) {
+						variable.id = generateUUID();
+					}
+				}
+			}
+
+			return clonedDashboardData;
+		}
+
+		return data;
+	};
+
 	const dashboardResponse = useQuery(
 		[REACT_QUERY_KEY.DASHBOARD_BY_ID, isDashboardPage?.params],
 		{
@@ -112,26 +151,27 @@ export function DashboardProvider({
 				}),
 			refetchOnWindowFocus: false,
 			onSuccess: (data) => {
-				const updatedDate = dayjs(data.updated_at);
+				const updatedDashboardData = transformDashboardVariables(data);
+				const updatedDate = dayjs(updatedDashboardData.updated_at);
 
-				setIsDashboardLocked(data?.isLocked || false);
+				setIsDashboardLocked(updatedDashboardData?.isLocked || false);
 
 				// on first render
 				if (updatedTimeRef.current === null) {
-					setSelectedDashboard(data);
+					setSelectedDashboard(updatedDashboardData);
 
 					updatedTimeRef.current = updatedDate;
 
-					dashboardRef.current = data;
+					dashboardRef.current = updatedDashboardData;
 
-					setLayouts(getUpdatedLayout(data.data.layout));
+					setLayouts(getUpdatedLayout(updatedDashboardData.data.layout));
 				}
 
 				if (
 					updatedTimeRef.current !== null &&
 					updatedDate.isAfter(updatedTimeRef.current) &&
 					isVisible &&
-					dashboardRef.current?.id === data.id
+					dashboardRef.current?.id === updatedDashboardData.id
 				) {
 					// show modal when state is out of sync
 					const modal = onModal.confirm({
@@ -139,7 +179,7 @@ export function DashboardProvider({
 						title: t('dashboard_has_been_updated'),
 						content: t('do_you_want_to_refresh_the_dashboard'),
 						onOk() {
-							setSelectedDashboard(data);
+							setSelectedDashboard(updatedDashboardData);
 
 							const { maxTime, minTime } = getMinMax(
 								globalTime.selectedTime,
@@ -156,32 +196,32 @@ export function DashboardProvider({
 								},
 							});
 
-							dashboardRef.current = data;
+							dashboardRef.current = updatedDashboardData;
 
-							updatedTimeRef.current = dayjs(data.updated_at);
+							updatedTimeRef.current = dayjs(updatedDashboardData.updated_at);
 
-							setLayouts(getUpdatedLayout(data.data.layout));
+							setLayouts(getUpdatedLayout(updatedDashboardData.data.layout));
 						},
 					});
 
 					modalRef.current = modal;
 				} else {
 					// normal flow
-					updatedTimeRef.current = dayjs(data.updated_at);
+					updatedTimeRef.current = dayjs(updatedDashboardData.updated_at);
 
-					dashboardRef.current = data;
+					dashboardRef.current = updatedDashboardData;
 
-					if (!isEqual(selectedDashboard, data)) {
-						setSelectedDashboard(data);
+					if (!isEqual(selectedDashboard, updatedDashboardData)) {
+						setSelectedDashboard(updatedDashboardData);
 					}
 
 					if (
 						!isEqual(
 							[omitBy(layouts, (value): boolean => isUndefined(value))[0]],
-							data.data.layout,
+							updatedDashboardData.data.layout,
 						)
 					) {
-						setLayouts(getUpdatedLayout(data.data.layout));
+						setLayouts(getUpdatedLayout(updatedDashboardData.data.layout));
 					}
 				}
 			},
