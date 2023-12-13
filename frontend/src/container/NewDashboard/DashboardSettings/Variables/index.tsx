@@ -137,8 +137,6 @@ function VariablesSetting(): JSX.Element {
 			}
 		}
 
-		// console.log('variables');
-
 		tableRowData.sort((a, b) => a.order - b.order);
 		variableOrderArr.sort((a, b) => a - b);
 
@@ -153,8 +151,6 @@ function VariablesSetting(): JSX.Element {
 		if (!selectedDashboard) {
 			return;
 		}
-
-		// console.log('updatedVariablesData', updatedVariablesData);
 
 		updateMutation.mutateAsync(
 			{
@@ -199,12 +195,9 @@ function VariablesSetting(): JSX.Element {
 			order: variableData?.order >= 0 ? variableData.order : getVariableOrder(),
 		};
 
-		// console.log('onVariableSaveHandler', variablesTableData);
-
 		const newVariablesArr = variablesTableData.map(
 			(variable: IDashboardVariable) => {
 				if (variable.id === updatedVariableData.id) {
-					// console.log('updatedVariableData', updatedVariableData);
 					return updatedVariableData;
 				}
 
@@ -212,19 +205,11 @@ function VariablesSetting(): JSX.Element {
 			},
 		);
 
-		// console.log('newVariablesArr', newVariablesArr);
-
 		if (mode === 'ADD') {
 			newVariablesArr.push(updatedVariableData);
 		}
 
-		// console.log('newVariablesArr', newVariablesArr);
-
 		const variables = convertVariablesToDbFormat(newVariablesArr);
-
-		// console.log('variables', variables);
-
-		// console.log('variables', variables);
 
 		setVariablesTableData(newVariablesArr);
 		updateVariables(variables);
@@ -345,8 +330,6 @@ function VariablesSetting(): JSX.Element {
 			setVariablesTableData(updatedVariables);
 		}
 	};
-
-	// console.log('variablesTableData', variablesTableData);
 
 	return (
 		<>

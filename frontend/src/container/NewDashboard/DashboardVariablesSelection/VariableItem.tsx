@@ -153,18 +153,13 @@ function VariableItem({
 				console.error(e);
 			}
 		} else if (variableData.type === 'CUSTOM') {
-			// console.log('custom', variableData);
-
 			const optionsData = sortValues(
 				commaValuesParser(variableData.customValue || ''),
 				variableData.sort,
 			) as never;
 
-			// console.log('optionsData', optionsData);
-
 			setOptionsData(optionsData);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	};
 
 	const { isLoading } = useQuery(getQueryKey(variableData), {
@@ -197,7 +192,6 @@ function VariableItem({
 	});
 
 	const handleChange = (value: string | string[]): void => {
-		console.log('handle change', variableData);
 		if (variableData.name)
 			if (
 				value === ALL_SELECT_VALUE ||

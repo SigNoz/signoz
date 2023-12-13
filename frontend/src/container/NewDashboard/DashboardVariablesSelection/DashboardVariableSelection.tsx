@@ -67,8 +67,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const updateMutation = useUpdateDashboard();
 	const { notifications } = useNotifications();
 
-	// console.log('arrayOfKeyValuePairs', variablesKeys);
-
 	const updateVariables = (
 		name: string,
 		updatedVariablesData: Dashboard['data']['variables'],
