@@ -3495,7 +3495,7 @@ func (r *ClickHouseReader) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo
 	err := r.localDB.Select(&alertsData, query)
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, err
+		return &alertsInfo, err
 	}
 	for _, alert := range alertsData {
 		var rule rules.GettableRule
