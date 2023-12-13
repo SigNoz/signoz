@@ -159,15 +159,24 @@ export const getUPlotChartOptions = ({
 				(self): void => {
 					const legend = self.root.querySelector('.u-legend');
 					if (legend) {
-						const seriesEls = legend.querySelectorAll('.u-label');
+						const seriesEls = legend.querySelectorAll('.u-series');
 						const seriesArray = Array.from(seriesEls);
 						seriesArray.forEach((seriesEl, index) => {
 							seriesEl.addEventListener('click', () => {
 								if (graphsVisibilityStates) {
 									setGraphsVisibilityStates?.((prev) => {
 										const newGraphVisibilityStates = [...prev];
-										newGraphVisibilityStates.fill(false);
-										newGraphVisibilityStates[index + 1] = true;
+										if (
+											newGraphVisibilityStates[index + 1] &&
+											newGraphVisibilityStates.every((value, i) =>
+												i === index + 1 ? value : !value,
+											)
+										) {
+											newGraphVisibilityStates.fill(true);
+										} else {
+											newGraphVisibilityStates.fill(false);
+											newGraphVisibilityStates[index + 1] = true;
+										}
 										return newGraphVisibilityStates;
 									});
 								}
