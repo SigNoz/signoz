@@ -55,6 +55,7 @@ export const getUPlotChartOptions = ({
 		legend: {
 			show: true,
 			live: false,
+			isolate: true,
 		},
 		focus: {
 			alpha: 0.3,
@@ -165,9 +166,8 @@ export const getUPlotChartOptions = ({
 								if (graphsVisibilityStates) {
 									setGraphsVisibilityStates?.((prev) => {
 										const newGraphVisibilityStates = [...prev];
-										newGraphVisibilityStates[index + 1] = !newGraphVisibilityStates[
-											index + 1
-										];
+										newGraphVisibilityStates.fill(false);
+										newGraphVisibilityStates[index + 1] = true;
 										return newGraphVisibilityStates;
 									});
 								}
