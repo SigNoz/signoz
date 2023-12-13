@@ -1,6 +1,6 @@
-### Step 1: Add fluentforward receiver
+### Step 1: Add logstash receiver
 
-Add the logstash receiver in the receivers section of `config.yaml` file of the **`otecol-contrib`** directory that you created in the previous step
+Add the logstash receiver in the receivers section of `config.yaml` file of the **`otecol-contrib`** directory that you created in the previous step.
 
 ```bash
 receivers:
@@ -15,6 +15,8 @@ receivers:
 
 Here we have used port 2255 for listening in TCP protocol, but you can change it to a port you want. You can read more about tcplog reciver [here](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/tcplogreceiver).
 
+&nbsp;
+
 Modify your config.yaml and add the above receiver
 ```bash
 service:
@@ -24,6 +26,7 @@ service:
         processors: [batch]
         exporters: [otlp]
 ```
+&nbsp;
 
 ### Step 2: Update the logstash config file
 Add the following to your **logstash config** to forward the logs to otel collector.
@@ -36,8 +39,7 @@ output {
   }
 }
 ```
- Replace <directive> with your directive name. 
- Also we are assuming that you are running the fluentD binary on the host. If not, the value of host might change depending on your environment.
+We are assuming that you are running the logstash binary on the host. If not, the value of host might change depending on your environment.
 
 - For MacOS - host is `host.docker.internal`
 - For other systems - host is IP address of your system

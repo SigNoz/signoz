@@ -15,8 +15,8 @@ import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartData';
-import { getUPlotChartData } from 'lib/uPlotLib/utils/getChartData';
+import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
+import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -52,7 +52,7 @@ function FullView({
 
 	const [chartOptions, setChartOptions] = useState<uPlot.Options>();
 
-	const { selectedDashboard } = useDashboard();
+	const { selectedDashboard, isDashboardLocked } = useDashboard();
 
 	const getSelectedTime = useCallback(
 		() =>
@@ -155,7 +155,12 @@ function FullView({
 				)}
 			</div>
 
-			<div className="graph-container" ref={fullViewRef}>
+			<div
+				className={
+					isDashboardLocked ? 'graph-container disabled' : 'graph-container'
+				}
+				ref={fullViewRef}
+			>
 				{chartOptions && (
 					<GraphContainer
 						style={{ height: '90%' }}
@@ -178,7 +183,7 @@ function FullView({
 				)}
 			</div>
 
-			{canModifyChart && chartOptions && (
+			{canModifyChart && chartOptions && !isDashboardLocked && (
 				<GraphManager
 					data={chartData}
 					name={name}

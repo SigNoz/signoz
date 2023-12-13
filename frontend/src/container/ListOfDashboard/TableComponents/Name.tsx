@@ -2,7 +2,7 @@ import { LockFilled } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 
-import { Data } from '..';
+import { Data } from '../DashboardsList';
 import { TableLinkText } from './styles';
 
 function Name(name: Data['name'], data: Data): JSX.Element {

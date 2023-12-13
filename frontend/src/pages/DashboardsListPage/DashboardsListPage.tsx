@@ -3,7 +3,7 @@ import ReleaseNote from 'components/ReleaseNote';
 import ListOfAllDashboard from 'container/ListOfDashboard';
 import { useLocation } from 'react-router-dom';
 
-function Dashboard(): JSX.Element {
+function DashboardsListPage(): JSX.Element {
 	const location = useLocation();
 
 	return (
@@ -14,4 +14,4 @@ function Dashboard(): JSX.Element {
 	);
 }
 
-export default Dashboard;
+export default DashboardsListPage;

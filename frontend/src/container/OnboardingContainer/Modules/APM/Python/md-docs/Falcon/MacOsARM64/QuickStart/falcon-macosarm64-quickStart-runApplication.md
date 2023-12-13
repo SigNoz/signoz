@@ -10,5 +10,12 @@ opentelemetry-instrument <your_run_command>
 
 `<your_run_command>` can be `python3 app.py` or `gunicorn src.app -b 0.0.0.0:8001`
 
+&nbsp;
+
 **Note**
 - Don’t run app in reloader/hot-reload mode as it breaks instrumentation. For example, you can disable the auto reload with --noreload.
+
+
+&nbsp;
+
+If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/falcon/#troubleshooting-your-installation) for assistance.

@@ -14,6 +14,10 @@
 
 .tooltip-data-point {
 	font-size: 11px;
+
+	flex: 1;
+	overflow: hidden;
+	word-wrap: break-word;
 }
 
 .tooltip-content {
@@ -24,6 +28,12 @@
 
 	.pointSquare,
 	.tooltip-data-point {
-		font-size: 13px !important;
+		font-size: 12px !important;
+		opacity: 0.9;
+
+		&.focus {
+			opacity: 1;
+			font-weight: 700;
+		}
 	}
 }

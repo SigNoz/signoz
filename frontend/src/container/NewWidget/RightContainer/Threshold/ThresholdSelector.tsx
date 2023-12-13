@@ -1,9 +1,13 @@
 import './ThresholdSelector.styles.scss';
 
 import { Button, Typography } from 'antd';
-import { useCallback } from 'react';
+import { ColumnsType } from 'antd/es/table';
+import { Events } from 'constants/events';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { useCallback, useEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { eventEmitter } from 'utils/getEventEmitter';
 import { v4 as uuid } from 'uuid';
 
 import Threshold from './Threshold';
@@ -15,6 +19,22 @@ function ThresholdSelector({
 	yAxisUnit,
 	selectedGraph,
 }: ThresholdSelectorProps): JSX.Element {
+	const [tableOptions, setTableOptions] = useState<
+		Array<{ value: string; label: string }>
+	>([]);
+	useEffect(() => {
+		eventEmitter.on(
+			Events.TABLE_COLUMNS_DATA,
+			(data: { columns: ColumnsType<RowData>; dataSource: RowData[] }) => {
+				const newTableOptions = data.columns.map((e) => ({
+					value: e.title as string,
+					label: e.title as string,
+				}));
+				setTableOptions([...newTableOptions]);
+			},
+		);
+	}, []);
+
 	const moveThreshold = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
 			setThresholds((prevCards) => {
@@ -44,6 +64,7 @@ function ThresholdSelector({
 				moveThreshold,
 				keyIndex: thresholds.length,
 				selectedGraph,
+				thresholdTableOptions: tableOptions[0]?.value || '',
 			},
 		]);
 	};
@@ -75,6 +96,8 @@ function ThresholdSelector({
 						moveThreshold={moveThreshold}
 						selectedGraph={selectedGraph}
 						thresholdLabel={threshold.thresholdLabel}
+						tableOptions={tableOptions}
+						thresholdTableOptions={threshold.thresholdTableOptions}
 					/>
 				))}
 				<Button className="threshold-selector-button" onClick={addThresholdHandler}>

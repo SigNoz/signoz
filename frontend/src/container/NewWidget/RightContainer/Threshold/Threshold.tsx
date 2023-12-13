@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './Threshold.styles.scss';
 
 import { CheckOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
@@ -40,6 +41,8 @@ function Threshold({
 	moveThreshold,
 	selectedGraph,
 	thresholdLabel = '',
+	tableOptions,
+	thresholdTableOptions = '',
 }: ThresholdProps): JSX.Element {
 	const [isEditMode, setIsEditMode] = useState<boolean>(isEditEnabled);
 	const [operator, setOperator] = useState<string | number>(
@@ -52,6 +55,9 @@ function Threshold({
 		thresholdFormat,
 	);
 	const [label, setLabel] = useState<string>(thresholdLabel);
+	const [tableSelectedOption, setTableSelectedOption] = useState<string>(
+		thresholdTableOptions,
+	);
 
 	const isDarkMode = useIsDarkMode();
 
@@ -72,6 +78,7 @@ function Threshold({
 						thresholdUnit: unit,
 						thresholdValue: value,
 						thresholdLabel: label,
+						thresholdTableOptions: tableSelectedOption,
 					};
 				}
 				return threshold;
@@ -102,6 +109,10 @@ function Threshold({
 		value: ThresholdProps['thresholdFormat'],
 	): void => {
 		setFormat(value);
+	};
+
+	const handleTableOptionsChange = (value: string): void => {
+		setTableSelectedOption(value);
 	};
 
 	const deleteHandler = (): void => {
@@ -203,7 +214,11 @@ function Threshold({
 						/>
 					</div>
 					<div>
-						<Space>
+						<Space
+							direction={
+								selectedGraph === PANEL_TYPES.TABLE ? 'vertical' : 'horizontal'
+							}
+						>
 							{selectedGraph === PANEL_TYPES.TIME_SERIES && (
 								<>
 									<Typography.Text>Label</Typography.Text>
@@ -219,19 +234,49 @@ function Threshold({
 									)}
 								</>
 							)}
-							{selectedGraph === PANEL_TYPES.VALUE && (
+							{(selectedGraph === PANEL_TYPES.VALUE ||
+								selectedGraph === PANEL_TYPES.TABLE) && (
 								<>
-									<Typography.Text>If value is</Typography.Text>
+									<Typography.Text>
+										If value {selectedGraph === PANEL_TYPES.TABLE ? 'in' : 'is'}
+									</Typography.Text>
 									{isEditMode ? (
-										<Select
-											style={{ minWidth: '73px', backgroundColor }}
-											defaultValue={operator}
-											options={operatorOptions}
-											onChange={handleOperatorChange}
-											bordered={!isDarkMode}
-										/>
+										<>
+											{selectedGraph === PANEL_TYPES.TABLE && (
+												<Space>
+													<Select
+														style={{
+															minWidth: '150px',
+															backgroundColor,
+															borderRadius: '5px',
+														}}
+														defaultValue={tableSelectedOption}
+														options={tableOptions}
+														bordered={!isDarkMode}
+														showSearch
+														onChange={handleTableOptionsChange}
+													/>
+													<Typography.Text>is</Typography.Text>
+												</Space>
+											)}
+											<Select
+												style={{ minWidth: '73px', backgroundColor }}
+												defaultValue={operator}
+												options={operatorOptions}
+												onChange={handleOperatorChange}
+												bordered={!isDarkMode}
+											/>
+										</>
 									) : (
-										<ShowCaseValue width="49px" value={operator} />
+										<>
+											{selectedGraph === PANEL_TYPES.TABLE && (
+												<Space>
+													<ShowCaseValue width="150px" value={tableSelectedOption} />
+													<Typography.Text>is</Typography.Text>
+												</Space>
+											)}
+											<ShowCaseValue width="49px" value={operator} />
+										</>
 									)}
 								</>
 							)}
@@ -280,7 +325,7 @@ function Threshold({
 									</>
 								) : (
 									<>
-										<ShowCaseValue width="100px" value={<CustomColor color={color} />} />
+										<ShowCaseValue width="120px" value={<CustomColor color={color} />} />
 										<ShowCaseValue width="100px" value={format} />
 									</>
 								)}

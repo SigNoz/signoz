@@ -1,5 +1,5 @@
 import Modal from 'antd/es/modal';
-import get from 'api/dashboard/get';
+import getDashboard from 'api/dashboard/get';
 import lockDashboardApi from 'api/dashboard/lockDashboard';
 import unlockDashboardApi from 'api/dashboard/unlockDashboard';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -48,6 +48,8 @@ const DashboardContext = createContext<IDashboardContext>({
 	setLayouts: () => {},
 	setSelectedDashboard: () => {},
 	updatedTimeRef: {} as React.MutableRefObject<Dayjs | null>,
+	toScrollWidgetId: '',
+	setToScrollWidgetId: () => {},
 });
 
 interface Props {
@@ -58,6 +60,8 @@ export function DashboardProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
+
+	const [toScrollWidgetId, setToScrollWidgetId] = useState<string>('');
 
 	const [isDashboardLocked, setIsDashboardLocked] = useState<boolean>(false);
 
@@ -103,7 +107,7 @@ export function DashboardProvider({
 		{
 			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
 			queryFn: () =>
-				get({
+				getDashboard({
 					uuid: dashboardId,
 				}),
 			refetchOnWindowFocus: false,
@@ -185,7 +189,12 @@ export function DashboardProvider({
 	);
 
 	useEffect(() => {
-		if (isVisible && updatedTimeRef.current) {
+		// make the call on tab visibility only if the user is on dashboard / widget page
+		if (
+			isVisible &&
+			updatedTimeRef.current &&
+			(!!isDashboardPage || !!isDashboardWidgetPage)
+		) {
 			dashboardResponse.refetch();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -230,6 +239,7 @@ export function DashboardProvider({
 
 	const value: IDashboardContext = useMemo(
 		() => ({
+			toScrollWidgetId,
 			isDashboardSliderOpen,
 			isDashboardLocked,
 			handleToggleDashboardSlider,
@@ -241,6 +251,7 @@ export function DashboardProvider({
 			setLayouts,
 			setSelectedDashboard,
 			updatedTimeRef,
+			setToScrollWidgetId,
 		}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
@@ -250,6 +261,7 @@ export function DashboardProvider({
 			selectedDashboard,
 			dashboardId,
 			layouts,
+			toScrollWidgetId,
 		],
 	);
 

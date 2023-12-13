@@ -18,6 +18,10 @@
 		border-radius: 3px;
 	}
 
+	.disabled {
+		height: calc(100% - 65px);
+	}
+
 	.graph-manager-container {
 		height: calc(40% - 40px);
 

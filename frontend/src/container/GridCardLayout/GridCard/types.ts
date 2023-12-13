@@ -39,6 +39,7 @@ export interface GridCardGraphProps {
 	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
 	isQueryEnabled: boolean;
 	variables?: Dashboard['data']['variables'];
+	fillSpans?: boolean;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

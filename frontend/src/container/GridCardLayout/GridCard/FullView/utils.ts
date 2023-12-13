@@ -25,19 +25,26 @@ export const getDefaultTableDataSet = (
 	data: uPlot.AlignedData,
 ): ExtendedChartDataset[] =>
 	options.series.map(
-		(item: uPlot.Series, index: number): ExtendedChartDataset => ({
-			...item,
-			index,
-			show: true,
-			sum: convertToTwoDecimalsOrZero(
-				(data[index] as number[]).reduce((a, b) => a + b, 0),
-			),
-			avg: convertToTwoDecimalsOrZero(
-				(data[index] as number[]).reduce((a, b) => a + b, 0) / data[index].length,
-			),
-			max: convertToTwoDecimalsOrZero(Math.max(...(data[index] as number[]))),
-			min: convertToTwoDecimalsOrZero(Math.min(...(data[index] as number[]))),
-		}),
+		(item: uPlot.Series, index: number): ExtendedChartDataset => {
+			let arr: number[];
+			if (data[index]) {
+				arr = data[index] as number[];
+			} else {
+				arr = [];
+			}
+
+			return {
+				...item,
+				index,
+				show: true,
+				sum: convertToTwoDecimalsOrZero(arr.reduce((a, b) => a + b, 0) || 0),
+				avg: convertToTwoDecimalsOrZero(
+					(arr.reduce((a, b) => a + b, 0) || 0) / (arr.length || 1),
+				),
+				max: convertToTwoDecimalsOrZero(Math.max(...arr)),
+				min: convertToTwoDecimalsOrZero(Math.min(...arr)),
+			};
+		},
 	);
 
 export const getAbbreviatedLabel = (label: string): string => {

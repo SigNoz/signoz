@@ -447,6 +447,38 @@ const (
 	Cumulative  Temporality = "Cumulative"
 )
 
+type TimeAggregation string
+
+const (
+	TimeAggregationUnspecified   TimeAggregation = ""
+	TimeAggregationAnyLast       TimeAggregation = "latest"
+	TimeAggregationSum           TimeAggregation = "sum"
+	TimeAggregationAvg           TimeAggregation = "avg"
+	TimeAggregationMin           TimeAggregation = "min"
+	TimeAggregationMax           TimeAggregation = "max"
+	TimeAggregationCount         TimeAggregation = "count"
+	TimeAggregationCountDistinct TimeAggregation = "count_distinct"
+	TimeAggregationRate          TimeAggregation = "rate"
+	TimeAggregationIncrease      TimeAggregation = "increase"
+)
+
+type SpaceAggregation string
+
+const (
+	SpaceAggregationUnspecified SpaceAggregation = ""
+	SpaceAggregationSum         SpaceAggregation = "sum"
+	SpaceAggregationAvg         SpaceAggregation = "avg"
+	SpaceAggregationMin         SpaceAggregation = "min"
+	SpaceAggregationMax         SpaceAggregation = "max"
+	SpaceAggregationCount       SpaceAggregation = "count"
+)
+
+type Function struct {
+	Category string        `json:"category"`
+	Name     string        `json:"name"`
+	Args     []interface{} `json:"args,omitempty"`
+}
+
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
 	StepInterval       int64             `json:"stepInterval"`
@@ -466,6 +498,9 @@ type BuilderQuery struct {
 	OrderBy            []OrderBy         `json:"orderBy,omitempty"`
 	ReduceTo           ReduceToOperator  `json:"reduceTo,omitempty"`
 	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
+	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
+	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
+	Functions          []Function        `json:"functions,omitempty"`
 }
 
 func (b *BuilderQuery) Validate() error {
@@ -613,8 +648,10 @@ func (h *Having) CacheKey() string {
 }
 
 type QueryRangeResponse struct {
-	ResultType string    `json:"resultType"`
-	Result     []*Result `json:"result"`
+	ContextTimeout        bool      `json:"contextTimeout,omitempty"`
+	ContextTimeoutMessage string    `json:"contextTimeoutMessage,omitempty"`
+	ResultType            string    `json:"resultType"`
+	Result                []*Result `json:"result"`
 }
 
 type Result struct {

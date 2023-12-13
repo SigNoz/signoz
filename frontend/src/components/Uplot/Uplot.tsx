@@ -57,6 +57,13 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 				chart.destroy();
 				chartRef.current = null;
 			}
+
+			// remove chart tooltip on cleanup
+			const overlay = document.getElementById('overlay');
+
+			if (overlay) {
+				overlay.style.display = 'none';
+			}
 		}, []);
 
 		const create = useCallback(() => {

@@ -4,10 +4,8 @@
 * @ankitnayan
 
 /frontend/ @palashgdev @YounixM
+/frontend/src/container/MetricsApplication @srikanthccv
+/frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
 /deploy/ @prashant-shahi
 /sample-apps/ @prashant-shahi
-**/query-service/ @srikanthccv
-Makefile @srikanthccv
-go.* @srikanthccv
-.git* @srikanthccv
 .github @prashant-shahi
