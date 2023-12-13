@@ -153,7 +153,7 @@ export const deleteViewHandler = ({
 			if (viewId === viewKey) {
 				redirectWithQueryBuilderData(
 					updateAllQueriesOperators(
-						initialQueriesMap.traces,
+						initialQueriesMap[sourcePage],
 						panelType || PANEL_TYPES.LIST,
 						sourcePage,
 					),
@@ -173,4 +173,11 @@ export const deleteViewHandler = ({
 			showErrorNotification(notifications, err);
 		},
 	});
+};
+
+export const trimViewName = (viewName: string): string => {
+	if (viewName.length > 20) {
+		return `${viewName.substring(0, 20)}...`;
+	}
+	return viewName;
 };

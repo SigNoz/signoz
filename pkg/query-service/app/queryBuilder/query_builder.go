@@ -87,7 +87,12 @@ func unique(slice []string) []string {
 }
 
 // expressionToQuery constructs the query for the expression
-func expressionToQuery(qp *v3.QueryRangeParamsV3, varToQuery map[string]string, expression *govaluate.EvaluableExpression) (string, error) {
+func expressionToQuery(
+	qp *v3.QueryRangeParamsV3,
+	varToQuery map[string]string,
+	expression *govaluate.EvaluableExpression,
+	queryName string,
+) (string, error) {
 	var formulaQuery string
 	variables := unique(expression.Vars())
 
@@ -134,6 +139,14 @@ func expressionToQuery(qp *v3.QueryRangeParamsV3, varToQuery map[string]string, 
 		prevVar = variable
 	}
 	formulaQuery = fmt.Sprintf("SELECT %s, %s as value FROM ", joinUsing, formula.ExpressionString()) + formulaSubQuery
+	if len(qp.CompositeQuery.BuilderQueries[queryName].Having) > 0 {
+		conditions := []string{}
+		for _, having := range qp.CompositeQuery.BuilderQueries[queryName].Having {
+			conditions = append(conditions, fmt.Sprintf("%s %s %v", "value", having.Operator, having.Value))
+		}
+		havingClause := " HAVING " + strings.Join(conditions, " AND ")
+		formulaQuery += havingClause
+	}
 	return formulaQuery, nil
 }
 
@@ -234,9 +247,13 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 		// Build queries for each expression
 		for _, query := range compositeQuery.BuilderQueries {
 			if query.Expression != query.QueryName {
-				expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
+				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
 
-				queryString, err := expressionToQuery(params, queries, expression)
+				if err != nil {
+					return nil, err
+				}
+
+				queryString, err := expressionToQuery(params, queries, expression, query.QueryName)
 				if err != nil {
 					return nil, err
 				}

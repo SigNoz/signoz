@@ -10,8 +10,11 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { HIGHLIGHTED_DELAY } from './configs';
 import { LogTimeRange, UseCopyLogLink } from './types';
@@ -21,6 +24,9 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	const { pathname } = useLocation();
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const {
 		queryData: timeRange,
@@ -52,6 +58,8 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 			urlQuery.delete(QueryParams.timeRange);
 			urlQuery.set(QueryParams.activeLogId, `"${logId}"`);
 			urlQuery.set(QueryParams.timeRange, range);
+			urlQuery.set(QueryParams.startTime, minTime.toString());
+			urlQuery.set(QueryParams.endTime, maxTime.toString());
 
 			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
 
@@ -60,7 +68,16 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 				message: 'Copied to clipboard',
 			});
 		},
-		[logId, notifications, timeRange, urlQuery, pathname, setCopy],
+		[
+			logId,
+			timeRange,
+			urlQuery,
+			minTime,
+			maxTime,
+			pathname,
+			setCopy,
+			notifications,
+		],
 	);
 
 	useEffect(() => {

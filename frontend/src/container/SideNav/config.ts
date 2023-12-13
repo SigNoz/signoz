@@ -45,5 +45,6 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.USAGE_EXPLORER]: [QueryParams.resourceAttributes],
 	[ROUTES.VERSION]: [QueryParams.resourceAttributes],
 	[ROUTES.TRACE_EXPLORER]: [QueryParams.resourceAttributes],
-	[ROUTES.PIPELINES]: [QueryParams.resourceAttributes],
+	[ROUTES.LOGS_PIPELINES]: [QueryParams.resourceAttributes],
+	[ROUTES.WORKSPACE_LOCKED]: [QueryParams.resourceAttributes],
 };

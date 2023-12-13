@@ -1,0 +1,49 @@
+.full-view-container {
+	height: 80vh;
+	overflow-x: auto;
+	overflow-y: hidden;
+
+	.full-view-header-container {
+		height: 40px;
+	}
+
+	.graph-container {
+		height: calc(60% - 40px);
+		min-height: 300px;
+		border: 1px solid #333;
+		width: 100%;
+		padding: 12px;
+		box-sizing: border-box;
+		margin: 16px 0;
+		border-radius: 3px;
+	}
+
+	.disabled {
+		height: calc(100% - 65px);
+	}
+
+	.graph-manager-container {
+		height: calc(40% - 40px);
+
+		.graph-manager-header {
+			display: flex;
+			margin-bottom: 16px;
+		}
+
+		.legends-list-container {
+			width: 100%;
+			overflow: hidden;
+			overflow-y: auto;
+		}
+
+		.save-cancel-container {
+			flex-basis: 20%;
+			display: flex;
+			justify-content: flex-end;
+		}
+
+		.save-cancel-button {
+			margin: 0 0.313rem;
+		}
+	}
+}

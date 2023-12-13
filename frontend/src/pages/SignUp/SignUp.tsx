@@ -7,6 +7,7 @@ import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -17,6 +18,7 @@ import { useLocation } from 'react-router-dom';
 import { SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
+import { isCloudUser } from 'utils/app';
 
 import {
 	ButtonContainer,
@@ -55,6 +57,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		false,
 	);
 	const { search } = useLocation();
+	const { trackEvent } = useAnalytics();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
@@ -84,7 +87,15 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			form.setFieldValue('email', responseDetails.email);
 			form.setFieldValue('organizationName', responseDetails.organization);
 			setIsDetailsDisable(true);
+
+			trackEvent('Account Creation Page Visited', {
+				email: responseDetails.email,
+				name: responseDetails.name,
+				company_name: responseDetails.organization,
+				source: 'SigNoz Cloud',
+			});
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		getInviteDetailsResponse.data?.payload,
 		form,
@@ -230,6 +241,10 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				setLoading(true);
 
 				if (!isPasswordValid(values.password)) {
+					trackEvent('Account Creation Page - Invalid Password', {
+						email: values.email,
+						name: values.firstName,
+					});
 					setIsPasswordPolicyError(true);
 					setLoading(false);
 					return;
@@ -238,10 +253,15 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				if (isPreferenceVisible) {
 					await commonHandler(values, onAdminAfterLogin);
 				} else {
+					trackEvent('Account Created Successfully', {
+						email: values.email,
+						name: values.firstName,
+					});
+
 					await commonHandler(
 						values,
 						async (): Promise<void> => {
-							if (isOnboardingEnabled) {
+							if (isOnboardingEnabled && isCloudUser()) {
 								history.push(ROUTES.GET_STARTED);
 							} else {
 								history.push(ROUTES.APPLICATION);

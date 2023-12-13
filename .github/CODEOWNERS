@@ -3,7 +3,9 @@
 # that they own.
 * @ankitnayan
 
-/frontend/ @palashgdev
+/frontend/ @palashgdev @YounixM
+/frontend/src/container/MetricsApplication @srikanthccv
+/frontend/src/container/NewWidget/RightContainer/types.ts @srikanthccv
 /deploy/ @prashant-shahi
 /sample-apps/ @prashant-shahi
 .github @prashant-shahi

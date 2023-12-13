@@ -31,7 +31,7 @@ var (
 func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteResponse, error) {
 	zap.S().Debugf("Got an invite request for email: %s\n", req.Email)
 
-	token, err := randomHex(opaqueTokenSize)
+	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate invite token")
 	}
@@ -49,8 +49,8 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.Wrap(err, "invalid invite request")
 	}
 
-	jwtAdmin, err := ExtractJwtFromContext(ctx)
-	if err != nil {
+	jwtAdmin, ok := ExtractJwtFromContext(ctx)
+	if !ok {
 		return nil, errors.Wrap(err, "failed to extract admin jwt token")
 	}
 
@@ -75,6 +75,10 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 	if err := dao.DB().CreateInviteEntry(ctx, inv); err != nil {
 		return nil, errors.Wrap(err.Err, "failed to write to DB")
 	}
+
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_SENT, map[string]interface{}{
+		"invited user email": req.Email,
+	}, au.Email)
 
 	return &model.InviteResponse{Email: inv.Email, InviteToken: inv.Token}, nil
 }
@@ -140,7 +144,7 @@ func ValidateInvite(ctx context.Context, req *RegisterRequest) (*model.Invitatio
 }
 
 func CreateResetPasswordToken(ctx context.Context, userId string) (*model.ResetPasswordEntry, error) {
-	token, err := randomHex(opaqueTokenSize)
+	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate reset password token")
 	}
@@ -351,6 +355,9 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 		return nil, apiErr
 	}
 
+	telemetry.GetInstance().IdentifyUser(user)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_ACCEPTED, nil, req.Email)
+
 	return user, nil
 }
 
@@ -387,7 +394,10 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 		return nil, err
 	}
 
-	telemetry.GetInstance().IdentifyUser(&user.User)
+	// ignoring identity for unnamed users as a patch for #3863
+	if user.Name != "" {
+		telemetry.GetInstance().IdentifyUser(&user.User)
+	}
 
 	return &model.LoginResponse{
 		UserJwtObject: userjwt,

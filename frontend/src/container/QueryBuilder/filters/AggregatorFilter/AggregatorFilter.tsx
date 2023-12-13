@@ -22,6 +22,7 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 import { ExtendedSelectOption } from 'types/common/select';
+import { popupContainer } from 'utils/selectPopupContainer';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -172,6 +173,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 
 	return (
 		<AutoComplete
+			getPopupContainer={popupContainer}
 			placeholder={placeholder}
 			style={selectStyle}
 			showArrow={false}

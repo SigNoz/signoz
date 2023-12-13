@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -131,6 +133,24 @@ func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
 		default:
 			return true
 		}
+	default:
+		return false
+	}
+}
+
+func (a AggregateOperator) IsRateOperator() bool {
+	switch a {
+	case AggregateOperatorRate,
+		AggregateOperatorSumRate,
+		AggregateOperatorAvgRate,
+		AggregateOperatorMinRate,
+		AggregateOperatorMaxRate,
+		AggregateOperatorRateSum,
+		AggregateOperatorRateAvg,
+		AggregateOperatorRateMin,
+		AggregateOperatorRateMax:
+		return true
+
 	default:
 		return false
 	}
@@ -390,27 +410,21 @@ func (c *CompositeQuery) Validate() error {
 		return fmt.Errorf("composite query must contain at least one query")
 	}
 
-	if c.BuilderQueries != nil {
-		for name, query := range c.BuilderQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("builder query %s is invalid: %w", name, err)
-			}
+	for name, query := range c.BuilderQueries {
+		if err := query.Validate(); err != nil {
+			return fmt.Errorf("builder query %s is invalid: %w", name, err)
 		}
 	}
 
-	if c.ClickHouseQueries != nil {
-		for name, query := range c.ClickHouseQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
-			}
+	for name, query := range c.ClickHouseQueries {
+		if err := query.Validate(); err != nil {
+			return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
 		}
 	}
 
-	if c.PromQueries != nil {
-		for name, query := range c.PromQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("prom query %s is invalid: %w", name, err)
-			}
+	for name, query := range c.PromQueries {
+		if err := query.Validate(); err != nil {
+			return fmt.Errorf("prom query %s is invalid: %w", name, err)
 		}
 	}
 
@@ -433,6 +447,38 @@ const (
 	Cumulative  Temporality = "Cumulative"
 )
 
+type TimeAggregation string
+
+const (
+	TimeAggregationUnspecified   TimeAggregation = ""
+	TimeAggregationAnyLast       TimeAggregation = "latest"
+	TimeAggregationSum           TimeAggregation = "sum"
+	TimeAggregationAvg           TimeAggregation = "avg"
+	TimeAggregationMin           TimeAggregation = "min"
+	TimeAggregationMax           TimeAggregation = "max"
+	TimeAggregationCount         TimeAggregation = "count"
+	TimeAggregationCountDistinct TimeAggregation = "count_distinct"
+	TimeAggregationRate          TimeAggregation = "rate"
+	TimeAggregationIncrease      TimeAggregation = "increase"
+)
+
+type SpaceAggregation string
+
+const (
+	SpaceAggregationUnspecified SpaceAggregation = ""
+	SpaceAggregationSum         SpaceAggregation = "sum"
+	SpaceAggregationAvg         SpaceAggregation = "avg"
+	SpaceAggregationMin         SpaceAggregation = "min"
+	SpaceAggregationMax         SpaceAggregation = "max"
+	SpaceAggregationCount       SpaceAggregation = "count"
+)
+
+type Function struct {
+	Category string        `json:"category"`
+	Name     string        `json:"name"`
+	Args     []interface{} `json:"args,omitempty"`
+}
+
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
 	StepInterval       int64             `json:"stepInterval"`
@@ -452,6 +498,9 @@ type BuilderQuery struct {
 	OrderBy            []OrderBy         `json:"orderBy,omitempty"`
 	ReduceTo           ReduceToOperator  `json:"reduceTo,omitempty"`
 	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
+	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
+	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
+	Functions          []Function        `json:"functions,omitempty"`
 }
 
 func (b *BuilderQuery) Validate() error {
@@ -495,11 +544,9 @@ func (b *BuilderQuery) Validate() error {
 		}
 	}
 
-	if b.SelectColumns != nil {
-		for _, selectColumn := range b.SelectColumns {
-			if err := selectColumn.Validate(); err != nil {
-				return fmt.Errorf("select column is invalid %w", err)
-			}
+	for _, selectColumn := range b.SelectColumns {
+		if err := selectColumn.Validate(); err != nil {
+			return fmt.Errorf("select column is invalid %w", err)
 		}
 	}
 
@@ -527,6 +574,22 @@ func (f *FilterSet) Validate() error {
 		}
 	}
 	return nil
+}
+
+// For serializing to and from db
+func (f *FilterSet) Scan(src interface{}) error {
+	if data, ok := src.([]byte); ok {
+		return json.Unmarshal(data, &f)
+	}
+	return nil
+}
+
+func (f *FilterSet) Value() (driver.Value, error) {
+	filterSetJson, err := json.Marshal(f)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not serialize FilterSet to JSON")
+	}
+	return filterSetJson, nil
 }
 
 type FilterOperator string
@@ -585,8 +648,10 @@ func (h *Having) CacheKey() string {
 }
 
 type QueryRangeResponse struct {
-	ResultType string    `json:"resultType"`
-	Result     []*Result `json:"result"`
+	ContextTimeout        bool      `json:"contextTimeout,omitempty"`
+	ContextTimeoutMessage string    `json:"contextTimeoutMessage,omitempty"`
+	ResultType            string    `json:"resultType"`
+	Result                []*Result `json:"result"`
 }
 
 type Result struct {
@@ -597,7 +662,7 @@ type Result struct {
 
 type LogsLiveTailClient struct {
 	Name  string
-	Logs  chan *model.GetLogsResponse
+	Logs  chan *model.SignozLog
 	Done  chan *bool
 	Error chan error
 }

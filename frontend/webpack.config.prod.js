@@ -21,7 +21,12 @@ const sassLoader = 'sass-loader';
 const styleLoader = 'style-loader';
 
 const plugins = [
-	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new HtmlWebpackPlugin({
+		template: 'src/index.html.ejs',
+		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+		SEGMENT_ID: process.env.SEGMENT_ID,
+		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+	}),
 	new CompressionPlugin({
 		exclude: /.map$/,
 	}),
@@ -35,6 +40,8 @@ const plugins = [
 		'process.env': JSON.stringify({
 			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
 			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+			SEGMENT_ID: process.env.SEGMENT_ID,
+			CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
 		}),
 	}),
 	new MiniCssExtractPlugin(),
@@ -84,18 +91,8 @@ const config = {
 				exclude: /node_modules/,
 			},
 			{
-				test: /\.mdx?$/,
-				use: [
-					// `babel-loader` is optional:
-					{ loader: 'babel-loader', options: {} },
-					{
-						loader: '@mdx-js/loader',
-						/** @type {import('@mdx-js/loader').Options} */
-						options: {
-							/* jsxImportSource: …, otherOptions… */
-						},
-					},
-				],
+				test: /\.md$/,
+				use: 'raw-loader',
 			},
 			{
 				test: /\.css$/,

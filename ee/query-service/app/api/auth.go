@@ -5,22 +5,23 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
+
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	"go.uber.org/zap"
 )
 
 func parseRequest(r *http.Request, req interface{}) error {
 	defer r.Body.Close()
-	requestBody, err := ioutil.ReadAll(r.Body)
+	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		return err
 	}
@@ -71,7 +72,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	var req *baseauth.RegisterRequest
 
 	defer r.Body.Close()
-	requestBody, err := ioutil.ReadAll(r.Body)
+	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.S().Errorf("received no input in api\n", err)
 		RespondError(w, model.BadRequest(err), nil)

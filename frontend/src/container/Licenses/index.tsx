@@ -7,19 +7,19 @@ import ApplyLicenseForm from './ApplyLicenseForm';
 import ListLicenses from './ListLicenses';
 
 function Licenses(): JSX.Element {
-	const { t } = useTranslation(['licenses']);
+	const { t, ready: translationsReady } = useTranslation(['licenses']);
 	const { data, isError, isLoading, refetch } = useLicense();
 
 	if (isError || data?.error) {
 		return <Typography>{data?.error}</Typography>;
 	}
 
-	if (isLoading || data?.payload === undefined) {
+	if (isLoading || data?.payload === undefined || !translationsReady) {
 		return <Spinner tip={t('loading_licenses')} height="90vh" />;
 	}
 
 	const allValidLicense =
-		data?.payload?.filter((license) => license.isCurrent) || [];
+		data?.payload?.licenses?.filter((license) => license.isCurrent) || [];
 
 	const tabs = [
 		{

@@ -52,11 +52,25 @@ var jsonLogOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorIn:              "IN",
 	v3.FilterOperatorNotIn:           "NOT IN",
+	v3.FilterOperatorExists:          "JSON_EXISTS(%s, '$.%s')",
+	v3.FilterOperatorNotExists:       "NOT JSON_EXISTS(%s, '$.%s')",
 	v3.FilterOperatorHas:             "has(%s, %s)",
 	v3.FilterOperatorNotHas:          "NOT has(%s, %s)",
 }
 
-func getJSONFilterKey(key v3.AttributeKey, isArray bool) (string, error) {
+func getPath(keyArr []string) string {
+	path := []string{}
+	for i := 0; i < len(keyArr); i++ {
+		if strings.HasSuffix(keyArr[i], "[*]") {
+			path = append(path, "\""+strings.TrimSuffix(keyArr[i], "[*]")+"\""+"[*]")
+		} else {
+			path = append(path, "\""+keyArr[i]+"\"")
+		}
+	}
+	return strings.Join(path, ".")
+}
+
+func getJSONFilterKey(key v3.AttributeKey, op v3.FilterOperator, isArray bool) (string, error) {
 	keyArr := strings.Split(key.Key, ".")
 	if len(keyArr) < 2 {
 		return "", fmt.Errorf("incorrect key, should contain at least 2 parts")
@@ -67,18 +81,24 @@ func getJSONFilterKey(key v3.AttributeKey, isArray bool) (string, error) {
 		return "", fmt.Errorf("only body can be the root key")
 	}
 
+	if op == v3.FilterOperatorExists || op == v3.FilterOperatorNotExists {
+		return keyArr[0], nil
+	}
+
 	var dataType string
 	var ok bool
 	if dataType, ok = dataTypeMapping[string(key.DataType)]; !ok {
 		return "", fmt.Errorf("unsupported dataType for JSON: %s", key.DataType)
 	}
 
+	path := getPath(keyArr[1:])
+
 	if isArray {
-		return fmt.Sprintf("JSONExtract(JSON_QUERY(%s, '$.%s'), '%s')", keyArr[0], strings.Join(keyArr[1:], "."), dataType), nil
+		return fmt.Sprintf("JSONExtract(JSON_QUERY(%s, '$.%s'), '%s')", keyArr[0], path, dataType), nil
 	}
 
 	// for non array
-	keyname := fmt.Sprintf("JSON_VALUE(%s, '$.%s')", keyArr[0], strings.Join(keyArr[1:], "."))
+	keyname := fmt.Sprintf("JSON_VALUE(%s, '$.%s')", keyArr[0], path)
 	if dataType != STRING {
 		keyname = fmt.Sprintf("JSONExtract(%s, '%s')", keyname, dataType)
 	}
@@ -99,29 +119,45 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 		dataType = v3.AttributeKeyDataType(val)
 	}
 
-	key, err := getJSONFilterKey(item.Key, isArray)
+	key, err := getJSONFilterKey(item.Key, item.Operator, isArray)
 	if err != nil {
 		return "", err
 	}
 
 	// non array
-	value, err := utils.ValidateAndCastValue(item.Value, dataType)
-	if err != nil {
-		return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
-	}
-
 	op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
-	if logsOp, ok := jsonLogOperators[op]; ok {
-		switch op {
-		case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex, v3.FilterOperatorHas, v3.FilterOperatorNotHas:
-			fmtVal := utils.ClickHouseFormattedValue(value)
-			return fmt.Sprintf(logsOp, key, fmtVal), nil
-		case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
-			return fmt.Sprintf("%s %s '%%%s%%'", key, logsOp, item.Value), nil
-		default:
-			fmtVal := utils.ClickHouseFormattedValue(value)
-			return fmt.Sprintf("%s %s %s", key, logsOp, fmtVal), nil
+
+	var value interface{}
+	if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
+		value, err = utils.ValidateAndCastValue(item.Value, dataType)
+		if err != nil {
+			return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
 		}
 	}
-	return "", fmt.Errorf("unsupported operator: %s", op)
+
+	var filter string
+	if logsOp, ok := jsonLogOperators[op]; ok {
+		switch op {
+		case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
+			filter = fmt.Sprintf(logsOp, key, getPath(strings.Split(item.Key.Key, ".")[1:]))
+		case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex, v3.FilterOperatorHas, v3.FilterOperatorNotHas:
+			fmtVal := utils.ClickHouseFormattedValue(value)
+			filter = fmt.Sprintf(logsOp, key, fmtVal)
+		case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
+			filter = fmt.Sprintf("%s %s '%%%s%%'", key, logsOp, item.Value)
+		default:
+			fmtVal := utils.ClickHouseFormattedValue(value)
+			filter = fmt.Sprintf("%s %s %s", key, logsOp, fmtVal)
+		}
+	} else {
+		return "", fmt.Errorf("unsupported operator: %s", op)
+	}
+
+	// add exists check for non array items as default values of int/float/bool will corrupt the results
+	if !isArray && !(item.Operator == v3.FilterOperatorExists || item.Operator == v3.FilterOperatorNotExists) {
+		existsFilter := fmt.Sprintf("JSON_EXISTS(body, '$.%s')", getPath(strings.Split(item.Key.Key, ".")[1:]))
+		filter = fmt.Sprintf("%s AND %s", existsFilter, filter)
+	}
+
+	return filter, nil
 }

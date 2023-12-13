@@ -1,3 +1,4 @@
+import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown } from 'antd';
 import TimeItems, {
 	timePreferance,
@@ -33,7 +34,9 @@ function TimePreference({
 	return (
 		<TextContainer noButtonMargin>
 			<Dropdown menu={menu}>
-				<Button>{selectedTime.name}</Button>
+				<Button>
+					{selectedTime.name} <DownOutlined />
+				</Button>
 			</Dropdown>
 		</TextContainer>
 	);

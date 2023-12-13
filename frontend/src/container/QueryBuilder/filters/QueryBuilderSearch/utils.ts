@@ -117,9 +117,15 @@ export function replaceStringWithMaxLength(
 	array: string[],
 	replacementString: string,
 ): string {
-	const lastSearchValue = array.pop() ?? ''; // Remove the last search value from the array
-	if (lastSearchValue === '') return `${mainString}${replacementString},`; // if user select direclty from options
-	return mainString.replace(lastSearchValue, `${replacementString},`);
+	const lastSearchValue = array.pop() ?? '';
+	if (lastSearchValue === '') {
+		return `${mainString}${replacementString},`;
+	}
+	const updatedString = mainString.replace(
+		new RegExp(`${lastSearchValue}(?=[^${lastSearchValue}]*$)`),
+		replacementString,
+	);
+	return `${updatedString},`;
 }
 
 export function checkCommaInValue(str: string): string {

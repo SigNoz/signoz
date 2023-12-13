@@ -362,3 +362,13 @@ export type Category = {
 };
 
 export type DataTypeCategories = Category[];
+
+export interface HelperFormat {
+	name: string;
+	id: string;
+}
+
+export interface HelperCategory {
+	name: string;
+	formats: Format[];
+}

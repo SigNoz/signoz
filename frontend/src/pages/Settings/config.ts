@@ -2,6 +2,7 @@ import { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
 import GeneralSettings from 'container/GeneralSettings';
+import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
 import OrganizationSettings from 'container/OrganizationSettings';
 import { TFunction } from 'i18next';
 
@@ -17,6 +18,15 @@ export const commonRoutes = (t: TFunction): RouteTabProps['routes'] => [
 		name: t('routes:alert_channels').toString(),
 		route: ROUTES.ALL_CHANNELS,
 		key: ROUTES.ALL_CHANNELS,
+	},
+];
+
+export const ingestionSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: IngestionSettings,
+		name: t('routes:ingestion_settings').toString(),
+		route: ROUTES.INGESTION_SETTINGS,
+		key: ROUTES.INGESTION_SETTINGS,
 	},
 ];
 

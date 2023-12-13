@@ -1,5 +1,6 @@
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { TableLocale } from 'antd/es/table/interface';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
@@ -14,11 +15,11 @@ import {
 
 import { tableComponents } from '../config';
 import { ModalFooterTitle } from '../styles';
-import { AlertMessage } from '.';
 import { processorColumns } from './config';
+import { AlertMessage } from './PipelineListsView';
 import { FooterButton, StyledTable } from './styles';
 import DragAction from './TableComponents/DragAction';
-import PipelineActions from './TableComponents/PipelineActions';
+import ProcessorActions from './TableComponents/ProcessorActions';
 import {
 	getEditedDataSource,
 	getProcessorUpdatedRow,
@@ -38,6 +39,7 @@ function PipelineExpandView({
 }: PipelineExpandViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
+	const { trackEvent } = useAnalytics();
 	const isEditingActionMode = isActionMode === ActionMode.Editing;
 
 	const deleteProcessorHandler = useCallback(
@@ -112,8 +114,7 @@ function PipelineExpandView({
 					dataIndex: 'action',
 					key: 'action',
 					render: (_value, record): JSX.Element => (
-						<PipelineActions
-							isPipelineAction={false}
+						<ProcessorActions
 							editAction={processorEditAction(record)}
 							deleteAction={processorDeleteAction(record)}
 						/>
@@ -190,6 +191,11 @@ function PipelineExpandView({
 
 	const addNewProcessorHandler = useCallback((): void => {
 		setActionType(ActionType.AddProcessor);
+
+		trackEvent('Logs: Pipelines: Clicked Add New Processor', {
+			source: 'signoz-ui',
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
@@ -240,7 +246,7 @@ function PipelineExpandView({
 				isDarkMode={isDarkMode}
 				showHeader={false}
 				columns={columns}
-				rowKey="name"
+				rowKey="id"
 				size="small"
 				components={tableComponents}
 				dataSource={processorData}

@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
@@ -24,6 +24,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -57,6 +58,7 @@ type ServerOptions struct {
 	DialTimeout       time.Duration
 	CacheConfigPath   string
 	FluxInterval      string
+	Cluster           string
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -75,6 +77,8 @@ type Server struct {
 	// private http
 	privateConn net.Listener
 	privateHTTP *http.Server
+
+	opampServer *opamp.Server
 
 	unavailableChannel chan healthcheck.Status
 }
@@ -116,6 +120,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			serverOptions.MaxIdleConns,
 			serverOptions.MaxOpenConns,
 			serverOptions.DialTimeout,
+			serverOptions.Cluster,
 		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
@@ -147,6 +152,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
+	if err != nil {
+		return nil, err
+	}
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
 	if err != nil {
@@ -201,9 +209,21 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	if err := agentConf.Initiate(localDB, "sqlite"); err != nil {
+	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
+		DB:       localDB,
+		DBEngine: "sqlite",
+		AgentFeatures: []agentConf.AgentFeature{
+			logParsingPipelineController,
+		},
+	})
+	if err != nil {
 		return nil, err
 	}
+
+	s.opampServer = opamp.InitializeServer(
+		&opAmpModel.AllAgents, agentConfMgr,
+	)
+
 	return s, nil
 }
 
@@ -306,20 +326,21 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
 }
-func extractDashboardMetaData(path string, r *http.Request) (map[string]interface{}, bool) {
-	pathToExtractBodyFrom := "/api/v2/metrics/query_range"
+
+func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface{}, bool) {
+	pathToExtractBodyFrom := "/api/v3/query_range"
 
 	data := map[string]interface{}{}
-	var postData *model.QueryRangeParamsV2
+	var postData *v3.QueryRangeParamsV3
 
 	if path == pathToExtractBodyFrom && (r.Method == "POST") {
 		if r.Body != nil {
-			bodyBytes, err := ioutil.ReadAll(r.Body)
+			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
 				return nil, false
 			}
 			r.Body.Close() //  must close
-			r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+			r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 			json.Unmarshal(bodyBytes, &postData)
 
 		} else {
@@ -330,24 +351,34 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 		return nil, false
 	}
 
-	signozMetricNotFound := false
-
+	signozMetricsUsed := false
+	signozLogsUsed := false
+	dataSources := []string{}
 	if postData != nil {
-		signozMetricNotFound = telemetry.GetInstance().CheckSigNozMetricsV2(postData.CompositeMetricQuery)
 
-		if postData.CompositeMetricQuery != nil {
-			data["queryType"] = postData.CompositeMetricQuery.QueryType
-			data["panelType"] = postData.CompositeMetricQuery.PanelType
+		if postData.CompositeQuery != nil {
+			data["queryType"] = postData.CompositeQuery.QueryType
+			data["panelType"] = postData.CompositeQuery.PanelType
+
+			signozLogsUsed, signozMetricsUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
 		}
-
-		data["datasource"] = postData.DataSource
 	}
 
-	if signozMetricNotFound {
-		telemetry.GetInstance().AddActiveMetricsUser()
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, true)
+	if signozMetricsUsed || signozLogsUsed {
+		if signozMetricsUsed {
+			dataSources = append(dataSources, "metrics")
+			telemetry.GetInstance().AddActiveMetricsUser()
+		}
+		if signozLogsUsed {
+			dataSources = append(dataSources, "logs")
+			telemetry.GetInstance().AddActiveLogsUser()
+		}
+		data["dataSources"] = dataSources
+		userEmail, err := auth.GetEmailFromJwt(r.Context())
+		if err == nil {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_V3, data, userEmail, true)
+		}
 	}
-
 	return data, true
 }
 
@@ -367,10 +398,12 @@ func getActiveLogs(path string, r *http.Request) {
 
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := auth.AttachJwtToContext(r.Context(), r)
+		r = r.WithContext(ctx)
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
-		dashboardMetadata, metadataExists := extractDashboardMetaData(path, r)
+		queryRangeV3data, metadataExists := extractQueryRangeV3Data(path, r)
 		getActiveLogs(path, r)
 
 		lrw := NewLoggingResponseWriter(w)
@@ -378,18 +411,37 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
 		if metadataExists {
-			for key, value := range dashboardMetadata {
+			for key, value := range queryRangeV3data {
 				data[key] = value
 			}
 		}
 
 		// if telemetry.GetInstance().IsSampled() {
 		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+			userEmail, err := auth.GetEmailFromJwt(r.Context())
+			if err == nil {
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail)
+			}
 		}
 		// }
 
 	})
+}
+
+func getRouteContextTimeout(overrideTimeout string) time.Duration {
+	var timeout time.Duration
+	var err error
+	if overrideTimeout != "" {
+		timeout, err = time.ParseDuration(overrideTimeout + "s")
+		if err != nil {
+			timeout = constants.ContextTimeout
+		}
+		if timeout > constants.ContextTimeoutMaxAllowed {
+			timeout = constants.ContextTimeoutMaxAllowed
+		}
+		return timeout
+	}
+	return constants.ContextTimeout
 }
 
 func setTimeoutMiddleware(next http.Handler) http.Handler {
@@ -399,7 +451,7 @@ func setTimeoutMiddleware(next http.Handler) http.Handler {
 		// check if route is not excluded
 		url := r.URL.Path
 		if _, ok := constants.TimeoutExcludedRoutes[url]; !ok {
-			ctx, cancel = context.WithTimeout(r.Context(), constants.ContextTimeout)
+			ctx, cancel = context.WithTimeout(r.Context(), getRouteContextTimeout(r.Header.Get("timeout")))
 			defer cancel()
 		}
 
@@ -503,7 +555,7 @@ func (s *Server) Start() error {
 
 	go func() {
 		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
-		err := opamp.InitializeAndStartServer(constants.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		err := s.opampServer.Start(constants.OpAmpWsEndpoint)
 		if err != nil {
 			zap.S().Info("opamp ws server failed to start", err)
 			s.unavailableChannel <- healthcheck.Unavailable
@@ -526,7 +578,7 @@ func (s *Server) Stop() error {
 		}
 	}
 
-	opamp.StopServer()
+	s.opampServer.Stop()
 
 	if s.ruleManager != nil {
 		s.ruleManager.Stop()

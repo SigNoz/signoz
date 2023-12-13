@@ -1,0 +1,18 @@
+.custom-color-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+
+    .custom-color-typography-dark {
+        color: #fff !important;
+    }
+
+    .custom-color-typography-light {
+        color: #000 !important;
+    }
+
+    .custom-color-tag {
+        width: 20px;
+        height: 20px;
+    }
+}
