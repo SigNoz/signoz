@@ -4,6 +4,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -12,7 +13,7 @@ import createQueryParams from 'lib/createQueryParams';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -173,6 +174,11 @@ function DateTimeSelection({
 		return `Last refresh - ${secondsDiff} sec ago`;
 	}, [maxTime, minTime, selectedTime]);
 
+	const isLogsExplorerPage = useMemo(
+		() => location.pathname === ROUTES.LOGS_EXPLORER,
+		[location.pathname],
+	);
+
 	const onSelectHandler = (value: Time): void => {
 		if (value !== 'custom') {
 			updateTimeInterval(value);
@@ -185,20 +191,21 @@ function DateTimeSelection({
 			setCustomDTPickerVisible(true);
 		}
 
+		const { maxTime, minTime } = GetMinMax(value, getTime());
+
+		if (!isLogsExplorerPage) {
+			urlQuery.set(QueryParams.startTime, minTime.toString());
+			urlQuery.set(QueryParams.endTime, maxTime.toString());
+			const generatedUrl = `${location.pathname}?${createQueryParams({
+				startTime: minTime.toString(),
+				endTime: maxTime.toString(),
+			})}`;
+			history.replace(generatedUrl);
+		}
+
 		if (!stagedQuery) {
 			return;
 		}
-
-		const { maxTime, minTime } = GetMinMax(value, getTime());
-
-		urlQuery.set(QueryParams.startTime, minTime.toString());
-		urlQuery.set(QueryParams.endTime, maxTime.toString());
-		const generatedUrl = `${location.pathname}?${createQueryParams({
-			startTime: minTime.toString(),
-			endTime: maxTime.toString(),
-		})}`;
-		history.replace(generatedUrl);
-
 		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime));
 	};
 
@@ -219,11 +226,13 @@ function DateTimeSelection({
 				setLocalStorageKey('startTime', startTimeMoment.toString());
 				setLocalStorageKey('endTime', endTimeMoment.toString());
 				updateLocalStorageForRoutes('custom');
-				const generatedUrl = `${location.pathname}?${createQueryParams({
-					startTime: startTimeMoment.toString(),
-					endTime: endTimeMoment.toString(),
-				})}`;
-				history.replace(generatedUrl);
+				if (!isLogsExplorerPage) {
+					const generatedUrl = `${location.pathname}?${createQueryParams({
+						startTime: startTimeMoment.toString(),
+						endTime: endTimeMoment.toString(),
+					})}`;
+					history.replace(generatedUrl);
+				}
 			}
 		}
 	};
