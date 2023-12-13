@@ -1,4 +1,4 @@
-import Modal from 'antd/es/modal';
+import { Modal } from 'antd';
 import getDashboard from 'api/dashboard/get';
 import lockDashboardApi from 'api/dashboard/lockDashboard';
 import unlockDashboardApi from 'api/dashboard/unlockDashboard';
