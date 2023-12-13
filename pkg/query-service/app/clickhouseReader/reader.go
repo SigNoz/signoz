@@ -3432,7 +3432,7 @@ func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.Dashbo
 	err := r.localDB.Select(&dashboardsData, query)
 	if err != nil {
 		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, err
+		return &dashboardsInfo, err
 	}
 	for _, dashboard := range dashboardsData {
 		dashboardsInfo = countPanelsInDashboard(dashboard.Data)
