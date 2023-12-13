@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
 
-import { Data } from '..';
+import { Data } from '../DashboardsList';
 
 function Created(createdBy: Data['createdBy']): JSX.Element {
 	const time = new Date(createdBy);

@@ -14,7 +14,7 @@ import (
 // Data store to capture user alert rule settings
 type RuleDB interface {
 	// CreateRuleTx stores rule in the db and returns tx and group name (on success)
-	CreateRuleTx(ctx context.Context, rule string) (string, Tx, error)
+	CreateRuleTx(ctx context.Context, rule string) (int64, Tx, error)
 
 	// EditRuleTx updates the given rule in the db and returns tx and group name (on success)
 	EditRuleTx(ctx context.Context, rule string, id string) (string, Tx, error)
@@ -57,9 +57,7 @@ func newRuleDB(db *sqlx.DB) RuleDB {
 
 // CreateRuleTx stores a given rule in db and returns task name,
 // sql tx and error (if any)
-func (r *ruleDB) CreateRuleTx(ctx context.Context, rule string) (string, Tx, error) {
-
-	var groupName string
+func (r *ruleDB) CreateRuleTx(ctx context.Context, rule string) (int64, Tx, error) {
 	var lastInsertId int64
 
 	var userEmail string
@@ -70,14 +68,14 @@ func (r *ruleDB) CreateRuleTx(ctx context.Context, rule string) (string, Tx, err
 	updatedAt := time.Now()
 	tx, err := r.Begin()
 	if err != nil {
-		return groupName, nil, err
+		return lastInsertId, nil, err
 	}
 
 	stmt, err := tx.Prepare(`INSERT into rules (created_at, created_by, updated_at, updated_by, data) VALUES($1,$2,$3,$4,$5);`)
 	if err != nil {
 		zap.S().Errorf("Error in preparing statement for INSERT to rules\n", err)
 		tx.Rollback()
-		return groupName, nil, err
+		return lastInsertId, nil, err
 	}
 
 	defer stmt.Close()
@@ -86,15 +84,17 @@ func (r *ruleDB) CreateRuleTx(ctx context.Context, rule string) (string, Tx, err
 	if err != nil {
 		zap.S().Errorf("Error in Executing prepared statement for INSERT to rules\n", err)
 		tx.Rollback() // return an error too, we may want to wrap them
-		return groupName, nil, err
+		return lastInsertId, nil, err
 	}
 
-	lastInsertId, _ = result.LastInsertId()
+	lastInsertId, err = result.LastInsertId()
+	if err != nil {
+		zap.S().Errorf("Error in getting last insert id for INSERT to rules\n", err)
+		tx.Rollback() // return an error too, we may want to wrap them
+		return lastInsertId, nil, err
+	}
 
-	groupName = prepareTaskName(lastInsertId)
-
-	return groupName, tx, nil
-
+	return lastInsertId, tx, nil
 }
 
 // EditRuleTx stores a given rule string in database and returns

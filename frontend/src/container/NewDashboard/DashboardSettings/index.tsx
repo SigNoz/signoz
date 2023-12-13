@@ -13,7 +13,7 @@ function DashboardSettingsContent(): JSX.Element {
 		{ label: 'Variables', key: 'variables', children: <VariablesSetting /> },
 	];
 
-	return <Tabs items={items} />;
+	return <Tabs items={items} animated />;
 }
 
 export default DashboardSettingsContent;

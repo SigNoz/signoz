@@ -32,7 +32,7 @@
 	"processor_name_placeholder": "Name",
 	"processor_regex_placeholder": "Regex",
 	"processor_parsefrom_placeholder": "Parse From",
-	"processor_parseto_placeholder": "Parse From",
+	"processor_parseto_placeholder": "Parse To",
 	"processor_onerror_placeholder": "on Error",
 	"processor_pattern_placeholder": "Pattern",
 	"processor_field_placeholder": "Field",

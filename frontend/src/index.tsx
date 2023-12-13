@@ -37,7 +37,6 @@ if (container) {
 					</QueryClientProvider>
 				</ThemeProvider>
 			</HelmetProvider>
-			,
 		</ErrorBoundary>,
 	);
 }

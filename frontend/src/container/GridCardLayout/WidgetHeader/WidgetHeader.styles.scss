@@ -1,0 +1,30 @@
+.widget-header-container {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	height: 30px;
+	width: 100%;
+	padding: 0.5rem;
+}
+
+.widget-header-title {
+	max-width: 80%;
+}
+
+.widget-header-actions {
+	display: flex;
+	align-items: center;
+}
+.widget-header-more-options {
+	visibility: hidden;
+	border: none;
+	box-shadow: none;
+}
+
+.widget-header-hover {
+	visibility: visible;
+}
+
+.widget-api-actions {
+	padding-right: 0.25rem;
+}

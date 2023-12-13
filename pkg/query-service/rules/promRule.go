@@ -3,7 +3,6 @@ package rules
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 
@@ -367,7 +366,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.F, r.Unit()), strconv.FormatFloat(r.targetVal(), 'f', 2, 64)+converter.UnitToName(r.ruleCondition.TargetUnit))
+		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
+		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
+
+		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.F, r.Unit()), threshold)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
