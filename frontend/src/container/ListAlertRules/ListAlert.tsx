@@ -40,11 +40,13 @@ import {
 } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
+import { filterAlerts } from './utils';
 
 const { Search } = Input;
 
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<GettableAlert[]>(allAlertRules || []);
+	const [searchString, setSearchString] = useState<string>('');
 	const { t } = useTranslation('common');
 	const { role, featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -55,14 +57,15 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	);
 
 	const params = useUrlQuery();
-
 	const orderColumnParam = params.get('columnKey');
 	const orderQueryParam = params.get('order');
+	const paginationParam = params.get('page');
+
+	// Type asuring
 	const sortingOrder: 'ascend' | 'descend' | null =
 		orderQueryParam === 'ascend' || orderQueryParam === 'descend'
 			? orderQueryParam
 			: null;
-	const paginationParam = params.get('page');
 
 	const { sortedInfo, handleChange } = useSortableTable<GettableAlert>(
 		sortingOrder,
@@ -75,7 +78,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		(async (): Promise<void> => {
 			const { data: refetchData, status } = await refetch();
 			if (status === 'success') {
-				setData(refetchData?.payload || []);
+				const value = searchString.toLowerCase();
+				const filteredData = filterAlerts(refetchData.payload || [], value);
+				setData(filteredData || []);
 			}
 			if (status === 'error') {
 				notificationsApi.error({
@@ -154,25 +159,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	};
 
 	const handleSearch = useDebouncedFn((e: unknown) => {
+		setSearchString((e as React.BaseSyntheticEvent).target.value);
 		const value = (e as React.BaseSyntheticEvent).target.value.toLowerCase();
-		const filteredData = allAlertRules.filter((alert) => {
-			const alertName = alert.alert.toLowerCase();
-			const severity = alert.labels?.severity.toLowerCase();
-			const labels = Object.keys(alert.labels || {})
-				.filter((e) => e !== 'severity')
-				.join(' ')
-				.toLowerCase();
-
-			const labelValue = Object.values(alert.labels || {});
-
-			return (
-				alertName.includes(value) ||
-				severity?.includes(value) ||
-				labels.includes(value) ||
-				labelValue.includes(value)
-			);
-		});
-
+		const filteredData = filterAlerts(allAlertRules, value);
 		setData(filteredData);
 	});
 
