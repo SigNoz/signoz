@@ -9,7 +9,6 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
-import createQueryParams from 'lib/createQueryParams';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
@@ -196,10 +195,7 @@ function DateTimeSelection({
 		if (!isLogsExplorerPage) {
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
-			const generatedUrl = `${location.pathname}?${createQueryParams({
-				startTime: minTime.toString(),
-				endTime: maxTime.toString(),
-			})}`;
+			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			history.replace(generatedUrl);
 		}
 
@@ -227,10 +223,9 @@ function DateTimeSelection({
 				setLocalStorageKey('endTime', endTimeMoment.toString());
 				updateLocalStorageForRoutes('custom');
 				if (!isLogsExplorerPage) {
-					const generatedUrl = `${location.pathname}?${createQueryParams({
-						startTime: startTimeMoment.toString(),
-						endTime: endTimeMoment.toString(),
-					})}`;
+					urlQuery.set(QueryParams.startTime, minTime.toString());
+					urlQuery.set(QueryParams.endTime, maxTime.toString());
+					const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 					history.replace(generatedUrl);
 				}
 			}
