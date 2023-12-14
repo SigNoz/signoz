@@ -11,7 +11,8 @@ import (
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap"
-	"go.opentelemetry.io/collector/confmap/provider/yamlprovider"
+	"go.opentelemetry.io/collector/confmap/converter/expandconverter"
+	"go.opentelemetry.io/collector/confmap/provider/fileprovider"
 	"go.opentelemetry.io/collector/connector"
 	"go.opentelemetry.io/collector/exporter"
 	"go.opentelemetry.io/collector/extension"
@@ -95,17 +96,41 @@ func NewCollectorSimulator(
 		return nil, cleanupFn, model.BadRequest(errors.Wrap(err, "could not generate collector config"))
 	}
 
-	// Parse and validate collector config
-	yamlP := yamlprovider.New()
+	// Read collector config using the same file provider we use in the actual collector.
+	// This ensures env variable substitution if any is taken into account.
+	simulationConfigFile, err := os.CreateTemp("", "collector-simulator-config-*")
+	if err != nil {
+		return nil, nil, model.InternalError(errors.Wrap(
+			err, "could not create tmp file for capturing collector logs",
+		))
+	}
+	simulationConfigPath := simulationConfigFile.Name()
+	cleanupFn = func() {
+		os.Remove(collectorLogsOutputFilePath)
+		os.Remove(simulationConfigPath)
+	}
+
+	_, err = simulationConfigFile.Write(collectorConfYaml)
+	if err != nil {
+		return nil, cleanupFn, model.InternalError(errors.Wrap(err, "could not write simulation config to tmp file"))
+	}
+	err = simulationConfigFile.Close()
+	if err != nil {
+		return nil, cleanupFn, model.InternalError(errors.Wrap(err, "could not close tmp simulation config file"))
+	}
+
+	fp := fileprovider.New()
 	confProvider, err := otelcol.NewConfigProvider(otelcol.ConfigProviderSettings{
 		ResolverSettings: confmap.ResolverSettings{
-			URIs:      []string{"yaml:" + string(collectorConfYaml)},
-			Providers: map[string]confmap.Provider{yamlP.Scheme(): yamlP},
+			URIs:       []string{simulationConfigPath},
+			Providers:  map[string]confmap.Provider{fp.Scheme(): fp},
+			Converters: []confmap.Converter{expandconverter.New()},
 		},
 	})
 	if err != nil {
 		return nil, cleanupFn, model.BadRequest(errors.Wrap(err, "could not create config provider."))
 	}
+
 	collectorCfg, err := confProvider.Get(ctx, factories)
 	if err != nil {
 		return nil, cleanupFn, model.BadRequest(errors.Wrap(err, "failed to parse collector config"))
