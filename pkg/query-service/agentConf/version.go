@@ -53,6 +53,8 @@ func NewConfigversion(typeDef ElementTypeDef) *ConfigVersion {
 		IsValid:      false,
 		Disabled:     false,
 		DeployStatus: PendingDeploy,
+		LastHash:     "",
+		LastConf:     "{}",
 		// todo: get user id from context?
 		// CreatedBy
 	}

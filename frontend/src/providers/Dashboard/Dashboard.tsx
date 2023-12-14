@@ -1,5 +1,5 @@
 import Modal from 'antd/es/modal';
-import get from 'api/dashboard/get';
+import getDashboard from 'api/dashboard/get';
 import lockDashboardApi from 'api/dashboard/lockDashboard';
 import unlockDashboardApi from 'api/dashboard/unlockDashboard';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -107,7 +107,7 @@ export function DashboardProvider({
 		{
 			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
 			queryFn: () =>
-				get({
+				getDashboard({
 					uuid: dashboardId,
 				}),
 			refetchOnWindowFocus: false,
