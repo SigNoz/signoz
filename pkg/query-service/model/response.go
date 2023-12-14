@@ -615,6 +615,20 @@ type TagsInfo struct {
 	Env       string                 `json:"env"`
 }
 
+type AlertsInfo struct {
+	TotalAlerts       int `json:"totalAlerts"`
+	LogsBasedAlerts   int `json:"logsBasedAlerts"`
+	MetricBasedAlerts int `json:"metricBasedAlerts"`
+	TracesBasedAlerts int `json:"tracesBasedAlerts"`
+}
+
+type DashboardsInfo struct {
+	TotalDashboards   int `json:"totalDashboards"`
+	LogsBasedPanels   int `json:"logsBasedPanels"`
+	MetricBasedPanels int `json:"metricBasedPanels"`
+	TracesBasedPanels int `json:"tracesBasedPanels"`
+}
+
 type TagTelemetryData struct {
 	ServiceName string `json:"serviceName" ch:"serviceName"`
 	Env         string `json:"env" ch:"env"`

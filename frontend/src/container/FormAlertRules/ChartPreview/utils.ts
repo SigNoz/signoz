@@ -61,7 +61,19 @@ export const getThresholdLabel = (
 		unit === MiscellaneousFormats.PercentUnit ||
 		yAxisUnit === MiscellaneousFormats.PercentUnit
 	) {
+		if (unit === MiscellaneousFormats.Percent) {
+			return `${value}%`;
+		}
 		return `${value * 100}%`;
+	}
+	if (
+		unit === MiscellaneousFormats.Percent ||
+		yAxisUnit === MiscellaneousFormats.Percent
+	) {
+		if (unit === MiscellaneousFormats.PercentUnit) {
+			return `${value * 100}%`;
+		}
+		return `${value}%`;
 	}
 	return `${value} ${optionName}`;
 };
