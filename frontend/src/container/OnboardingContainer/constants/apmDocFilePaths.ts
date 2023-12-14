@@ -273,7 +273,10 @@ import APM_javascript_nodejs_macOsARM64_recommendedSteps_setupOtelCollector from
 import APM_javascript_nodejs_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/NodeJS/MacOsARM64/Recommended/nodejs-macosarm64-recommended-instrumentApplication.md';
 import APM_javascript_nodejs_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/NodeJS/MacOsARM64/Recommended/nodejs-macosarm64-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
-/// ////// Java Done
+import APM_javascript_reactjs_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/ReactJS/Kubernetes/reactjs-kubernetes-installOtelCollector.md';
+import APM_javascript_reactjs_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/Kubernetes/reactjs-kubernetes-instrumentApplication.md';
+import APM_javascript_reactjs_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/Kubernetes/reactjs-kubernetes-runApplication.md';
+/// ////// Javascript Done
 /// ///// Python Start
 // Django
 // Django-Kubernetes
@@ -1027,6 +1030,11 @@ export const ApmDocFilePaths = {
 	// NodeJS-MacOsARM64-quickstart
 	APM_javascript_nodejs_macOsARM64_quickStart_instrumentApplication,
 	APM_javascript_nodejs_macOsARM64_quickStart_runApplication,
+
+	// ReeactJS-Kubernetes
+	APM_javascript_reactjs_kubernetes_recommendedSteps_setupOtelCollector,
+	APM_javascript_reactjs_kubernetes_recommendedSteps_instrumentApplication,
+	APM_javascript_reactjs_kubernetes_recommendedSteps_runApplication,
 
 	// ------------------------------------------------------------------------------------------------
 
