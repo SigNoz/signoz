@@ -43,6 +43,7 @@ import (
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
 
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -51,6 +52,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
@@ -3419,6 +3421,100 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 	}
 
 	return &tagsInfo, nil
+}
+
+// GetDashboardsInfo returns analytics data for dashboards
+func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
+	dashboardsInfo := model.DashboardsInfo{}
+	// fetch dashboards from dashboard db
+	query := "SELECT data FROM dashboards"
+	var dashboardsData []dashboards.Dashboard
+	err := r.localDB.Select(&dashboardsData, query)
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return &dashboardsInfo, err
+	}
+	for _, dashboard := range dashboardsData {
+		dashboardsInfo = countPanelsInDashboard(dashboard.Data)
+	}
+	dashboardsInfo.TotalDashboards = len(dashboardsData)
+
+	return &dashboardsInfo, nil
+}
+
+func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
+	var logsPanelCount, tracesPanelCount, metricsPanelCount int
+	// totalPanels := 0
+	if data != nil && data["widgets"] != nil {
+		widgets, ok := data["widgets"].(interface{})
+		if ok {
+			data, ok := widgets.([]interface{})
+			if ok {
+				for _, widget := range data {
+					sData, ok := widget.(map[string]interface{})
+					if ok && sData["query"] != nil {
+						// totalPanels++
+						query, ok := sData["query"].(interface{}).(map[string]interface{})
+						if ok && query["queryType"] == "builder" && query["builder"] != nil {
+							builderData, ok := query["builder"].(interface{}).(map[string]interface{})
+							if ok && builderData["queryData"] != nil {
+								builderQueryData, ok := builderData["queryData"].([]interface{})
+								if ok {
+									for _, queryData := range builderQueryData {
+										data, ok := queryData.(map[string]interface{})
+										if ok {
+											if data["dataSource"] == "traces" {
+												tracesPanelCount++
+											} else if data["dataSource"] == "metrics" {
+												metricsPanelCount++
+											} else if data["dataSource"] == "logs" {
+												logsPanelCount++
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return model.DashboardsInfo{
+		LogsBasedPanels:   logsPanelCount,
+		TracesBasedPanels: tracesPanelCount,
+		MetricBasedPanels: metricsPanelCount,
+	}
+}
+
+func (r *ClickHouseReader) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
+	alertsInfo := model.AlertsInfo{}
+	// fetch alerts from rules db
+	query := "SELECT data FROM rules"
+	var alertsData []string
+	err := r.localDB.Select(&alertsData, query)
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return &alertsInfo, err
+	}
+	for _, alert := range alertsData {
+		var rule rules.GettableRule
+		err = json.Unmarshal([]byte(alert), &rule)
+		if err != nil {
+			zap.S().Errorf("msg:", "invalid rule data", "\t err:", err)
+			continue
+		}
+		if rule.AlertType == "LOGS_BASED_ALERT" {
+			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
+		} else if rule.AlertType == "METRIC_BASED_ALERT" {
+			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
+		} else if rule.AlertType == "TRACES_BASED_ALERT" {
+			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
+		}
+		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1
+	}
+
+	return &alertsInfo, nil
 }
 
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {

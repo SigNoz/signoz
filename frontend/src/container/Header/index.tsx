@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/anchor-is-valid */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Header.styles.scss';
 
 import {
@@ -135,16 +138,17 @@ function HeaderContainer(): JSX.Element {
 		<>
 			{showTrialExpiryBanner && (
 				<div className="trial-expiry-banner">
-					You are in free trial period. Your free trial will end on
+					You are in free trial period. Your free trial will end on{' '}
 					<span>
 						{getFormattedDate(licenseData?.payload?.trialEnd || Date.now())}.
 					</span>
 					{role === 'ADMIN' ? (
 						<span>
-							Please
-							<Button className="upgrade-link" type="link" onClick={handleUpgrade}>
+							{' '}
+							Please{' '}
+							<a className="upgrade-link" onClick={handleUpgrade}>
 								upgrade
-							</Button>
+							</a>
 							to continue using SigNoz features.
 						</span>
 					) : (

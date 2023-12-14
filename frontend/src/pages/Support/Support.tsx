@@ -1,6 +1,7 @@
 import './Support.styles.scss';
 
 import { Button, Card, Typography } from 'antd';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import {
 	Book,
 	Cable,
@@ -82,6 +83,8 @@ const supportChannels = [
 ];
 
 export default function Support(): JSX.Element {
+	const { trackEvent } = useAnalytics();
+
 	const handleChannelWithRedirects = (url: string): void => {
 		window.open(url, '_blank');
 	};
@@ -111,6 +114,8 @@ export default function Support(): JSX.Element {
 	};
 
 	const handleChannelClick = (channel: Channel): void => {
+		trackEvent(`Support : ${channel.name}`);
+
 		switch (channel.key) {
 			case channelsMap.documentation:
 			case channelsMap.github:
