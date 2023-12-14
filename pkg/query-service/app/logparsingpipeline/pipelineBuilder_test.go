@@ -585,7 +585,7 @@ func TestAttributePathsContainingDollarDoNotBreakCollector(t *testing.T) {
 				Type:    "move",
 				Enabled: true,
 				Name:    "move",
-				From:    "attributes.json_body.t.$date",
+				From:    "attributes.$test",
 				To:      "attributes.test",
 			},
 		},
