@@ -54,7 +54,12 @@ function getRange(
 	const [minSeriesValue, maxSeriesValue] = findMinMaxValues(series);
 
 	const min = Math.min(minThresholdValue, minSeriesValue);
-	const max = Math.max(maxThresholdValue, maxSeriesValue);
+	let max = Math.max(maxThresholdValue, maxSeriesValue);
+
+	// this is a temp change, we need to figure out a generic way to better handle ranges based on yAxisUnit
+	if (yAxisUnit === 'percentunit' && max < 1) {
+		max = 1;
+	}
 
 	return [min, max];
 }

@@ -2,7 +2,7 @@ import { Button as ButtonComponent, Card as CardComponent, Space } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { StyledCSS } from 'container/GantChart/Trace/styles';
 import RGL, { WidthProvider } from 'react-grid-layout';
-import styled, { css, FlattenSimpleInterpolation } from 'styled-components';
+import styled, { css } from 'styled-components';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);
 
@@ -17,14 +17,8 @@ export const Card = styled(CardComponent)<CardProps>`
 	}
 
 	.ant-card-body {
-		height: 90%;
+		height: calc(100% - 40px);
 		padding: 0;
-		${({ $panelType }): FlattenSimpleInterpolation =>
-			$panelType === PANEL_TYPES.TABLE
-				? css`
-						padding-top: 1.8rem;
-				  `
-				: css``}
 	}
 `;
 
