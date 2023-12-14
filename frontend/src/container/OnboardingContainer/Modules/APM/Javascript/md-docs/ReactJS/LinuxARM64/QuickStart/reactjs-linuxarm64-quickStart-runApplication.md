@@ -1,9 +1,18 @@
-Once you are done intrumenting your JavaScript application, you can run it using the below command
+Once you are done intrumenting your JavaScript application, you can run it as you normally would.
 
+For example:
+
+If you're using `npm`
 ```bash
-OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token={{SIGNOZ_INGESTION_KEY}}" node -r ./tracing.js app.js
+npm start
 ```
+&nbsp;
+
+If you're using `yarn`
+```bash
+yarn start
+``` 
 
 &nbsp;
 
-If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/javascript/#troubleshooting-your-installation) for assistance.
+To view more detailed documentation, checkout this [link](https://signoz.io/docs/instrumentation/javascript/)

@@ -23,10 +23,21 @@ kill "$(< otel-pid)"
 &nbsp;
 
 ### Step 2: Run your application
+Run your JavaScript application as you normally would.
+
+For example:
+
+If you're using `npm`
 ```bash
-node -r ./tracing.js app.js
+npm start
 ```
+&nbsp;
+
+If you're using `yarn`
+```bash
+yarn start
+``` 
 
 &nbsp;
 
-If you encounter any difficulties, please consult the [troubleshooting section](https://signoz.io/docs/instrumentation/javascript/#troubleshooting-your-installation) for assistance.
+To view more detailed documentation, checkout this [link](https://signoz.io/docs/instrumentation/javascript/)
