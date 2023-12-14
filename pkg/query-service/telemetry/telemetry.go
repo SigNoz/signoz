@@ -244,22 +244,25 @@ func createTelemetry() {
 				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
 
 				alertsInfo, err := telemetry.reader.GetAlertsInfo(context.Background())
-				dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
-
-				if err == nil {
-					dashboardsAlertsData := map[string]interface{}{
-						"totalDashboards":   dashboardsInfo.TotalDashboards,
-						"logsBasedPanels":   dashboardsInfo.LogsBasedPanels,
-						"metricBasedPanels": dashboardsInfo.MetricBasedPanels,
-						"tracesBasedPanels": dashboardsInfo.TracesBasedPanels,
-						"totalAlerts":       alertsInfo.TotalAlerts,
-						"logsBasedAlerts":   alertsInfo.LogsBasedAlerts,
-						"metricBasedAlerts": alertsInfo.MetricBasedAlerts,
-						"tracesBasedAlerts": alertsInfo.TracesBasedAlerts,
-					}
-					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
-				} else {
+				if err != nil {
 					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
+				} else {
+					dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
+					if err == nil {
+						dashboardsAlertsData := map[string]interface{}{
+							"totalDashboards":   dashboardsInfo.TotalDashboards,
+							"logsBasedPanels":   dashboardsInfo.LogsBasedPanels,
+							"metricBasedPanels": dashboardsInfo.MetricBasedPanels,
+							"tracesBasedPanels": dashboardsInfo.TracesBasedPanels,
+							"totalAlerts":       alertsInfo.TotalAlerts,
+							"logsBasedAlerts":   alertsInfo.LogsBasedAlerts,
+							"metricBasedAlerts": alertsInfo.MetricBasedAlerts,
+							"tracesBasedAlerts": alertsInfo.TracesBasedAlerts,
+						}
+						telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
+					} else {
+						telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
+					}
 				}
 
 				getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(context.Background())
