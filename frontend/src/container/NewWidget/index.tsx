@@ -19,6 +19,7 @@ import {
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -48,6 +49,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		setSelectedDashboard,
 		setToScrollWidgetId,
 	} = useDashboard();
+
+	const { t } = useTranslation(['dashboard']);
 
 	const { currentQuery, stagedQuery } = useQueryBuilder();
 
@@ -100,6 +103,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	);
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
+
+	const closeModal = (): void => {
+		setSaveModal(false);
+		setDiscardModal(false);
+	};
 
 	const [graphType, setGraphType] = useState(selectedGraph);
 
@@ -351,7 +359,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				forceRender
 				destroyOnClose
 				closable
-				onCancel={(): void => setSaveModal(false)}
+				onCancel={closeModal}
 				onOk={onClickSaveHandler}
 				centered
 				open={saveModal}
@@ -359,14 +367,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			>
 				{!isQueryModified ? (
 					<Typography>
-						Your graph built with <QueryTypeTag queryType={currentQuery.queryType} />{' '}
-						query will be saved. Press OK to confirm.
+						{t('your_graph_build_with')}{' '}
+						<QueryTypeTag queryType={currentQuery.queryType} />
+						{t('dashboar_ok_confirm')}
 					</Typography>
 				) : (
-					<Typography>
-						There are unsaved changes in the Query builder, please stage and run the
-						query or the changes will be lost. Press OK to discard.
-					</Typography>
+					<Typography>{t('dashboard_unsave_changes')} </Typography>
 				)}
 			</Modal>
 			<Modal
@@ -380,16 +386,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				forceRender
 				destroyOnClose
 				closable
-				onCancel={(): void => setDiscardModal(false)}
+				onCancel={closeModal}
 				onOk={discardChanges}
 				centered
 				open={discardModal}
 				width={600}
 			>
-				<Typography>
-					There are unsaved changes in the Query builder, please stage and run the
-					query or the changes will be lost. Press OK to discard.
-				</Typography>
+				<Typography>{t('dashboard_unsave_changes')}</Typography>
 			</Modal>
 		</Container>
 	);
