@@ -6,8 +6,10 @@ export function variablePropsToPayloadVariables(
 ): PayloadVariables {
 	const payloadVariables: PayloadVariables = {};
 
-	Object.entries(variables).forEach(([key, value]) => {
-		payloadVariables[key] = value?.selectedValue;
+	Object.entries(variables).forEach(([, value]) => {
+		if (value?.name) {
+			payloadVariables[value.name] = value?.selectedValue;
+		}
 	});
 
 	return payloadVariables;
