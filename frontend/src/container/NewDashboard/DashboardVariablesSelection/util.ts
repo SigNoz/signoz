@@ -1,3 +1,5 @@
+import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
+
 export function areArraysEqual(
 	a: (string | number | boolean)[],
 	b: (string | number | boolean)[],
@@ -14,3 +16,16 @@ export function areArraysEqual(
 
 	return true;
 }
+
+export const convertVariablesToDbFormat = (
+	variblesArr: IDashboardVariable[],
+): Dashboard['data']['variables'] =>
+	variblesArr.reduce((result, obj: IDashboardVariable) => {
+		const { id } = obj;
+
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		// eslint-disable-next-line no-param-reassign
+		result[id] = obj;
+		return result;
+	}, {});
