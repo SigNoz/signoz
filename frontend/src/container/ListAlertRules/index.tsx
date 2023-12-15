@@ -13,9 +13,10 @@ import ListAlert from './ListAlert';
 function ListAlertRules(): JSX.Element {
 	const { t } = useTranslation('common');
 	const location = useLocation();
-	const { data, isError, isLoading, refetch, status } = useQuery('allAlerts', {
+	const { data, isError, isLoading, status } = useQuery('allAlerts', {
 		queryFn: getAll,
 		cacheTime: 0,
+		refetchInterval: 30000,
 	});
 
 	const { notifications } = useNotifications();
@@ -35,14 +36,7 @@ function ListAlertRules(): JSX.Element {
 
 	// api is successful but error is present
 	if (status === 'success' && data.statusCode >= 400) {
-		return (
-			<ListAlert
-				{...{
-					allAlertRules: [],
-					refetch,
-				}}
-			/>
-		);
+		return <ListAlert allAlertRules={[]} />;
 	}
 
 	// in case of loading
@@ -53,12 +47,7 @@ function ListAlertRules(): JSX.Element {
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
 			<ReleaseNote path={location.pathname} />
-			<ListAlert
-				{...{
-					allAlertRules: data.payload,
-					refetch,
-				}}
-			/>
+			<ListAlert allAlertRules={data.payload} />
 		</Space>
 	);
 }
