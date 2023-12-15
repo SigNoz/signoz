@@ -36,5 +36,18 @@ export const getXAxisScale = (
 		maxTime = fallbackMax;
 	}
 
+	// As API response is adjusted to return values for  T - 1 min (end timestamp) due to which graph would not the required data as per the browser timestamp, we see the gaps. To accommodate this, we will be plotting the graph from (startTime  ->  endTime - 1 min).
+
+	const oneMinuteAgoTimestamp = (maxTime - 60) * 1000;
+	const currentDate = new Date(oneMinuteAgoTimestamp);
+
+	// Set seconds and milliseconds to zero
+	currentDate.setSeconds(0);
+	currentDate.setMilliseconds(0);
+
+	// Get the Unix timestamp in seconds
+	const unixTimestampSeconds = Math.floor(currentDate.getTime() / 1000);
+	maxTime = unixTimestampSeconds;
+
 	return { time: true, auto: false, range: [minTime, maxTime] };
 };
