@@ -1,9 +1,3 @@
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable import/no-extraneous-dependencies */
-
 import { Row } from 'antd';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
@@ -34,11 +28,10 @@ function DashboardVariableSelection(): JSX.Element | null {
 	useEffect(() => {
 		if (variables) {
 			const tableRowData = [];
-			// eslint-disable-next-line sonarjs/no-unused-collection
-			const variableOrderArr = [];
 
+			// eslint-disable-next-line no-restricted-syntax
 			for (const [key, value] of Object.entries(variables)) {
-				const { order, id } = value;
+				const { id } = value;
 
 				tableRowData.push({
 					key,
@@ -46,14 +39,9 @@ function DashboardVariableSelection(): JSX.Element | null {
 					...variables[key],
 					id,
 				});
-
-				if (order) {
-					variableOrderArr.push(order);
-				}
 			}
 
 			tableRowData.sort((a, b) => a.order - b.order);
-			variableOrderArr.sort((a, b) => a - b);
 
 			setVariablesTableData(tableRowData);
 		}
@@ -107,12 +95,14 @@ function DashboardVariableSelection(): JSX.Element | null {
 		if (id) {
 			const newVariablesArr = variablesTableData.map(
 				(variable: IDashboardVariable) => {
-					if (variable.id === id) {
-						variable.selectedValue = value;
-						variable.allSelected = allSelected;
+					const variableCopy = { ...variable };
+
+					if (variableCopy.id === id) {
+						variableCopy.selectedValue = value;
+						variableCopy.allSelected = allSelected;
 					}
 
-					return variable;
+					return variableCopy;
 				},
 			);
 

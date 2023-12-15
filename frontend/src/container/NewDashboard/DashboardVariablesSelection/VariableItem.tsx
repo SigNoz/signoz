@@ -293,7 +293,7 @@ function VariableItem({
 							</Select>
 						)
 					)}
-					{errorMessage && (
+					{variableData.type !== 'TEXTBOX' && errorMessage && (
 						<span style={{ margin: '0 0.5rem' }}>
 							<Popover
 								placement="top"

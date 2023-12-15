@@ -1,8 +1,5 @@
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/destructuring-assignment */
-/* eslint-disable import/no-extraneous-dependencies */
+import '../DashboardSettings.styles.scss';
+
 import { blue, red } from '@ant-design/colors';
 import { MenuOutlined, PlusOutlined } from '@ant-design/icons';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
@@ -14,8 +11,9 @@ import {
 } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Modal, Row, Space, Table, Tag } from 'antd';
+import { Button, Modal, Row, Space, Table, Typography } from 'antd';
 import { RowProps } from 'antd/lib';
 import { convertVariablesToDbFormat } from 'container/NewDashboard/DashboardVariablesSelection/util';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
@@ -52,6 +50,7 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 	};
 
 	return (
+		// eslint-disable-next-line react/jsx-props-no-spreading
 		<tr {...props} ref={setNodeRef} style={style} {...attributes}>
 			{React.Children.map(children, (child) => {
 				if ((child as React.ReactElement).key === 'sort') {
@@ -60,6 +59,7 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 							<MenuOutlined
 								ref={setActivatorNodeRef}
 								style={{ touchAction: 'none', cursor: 'move' }}
+								// eslint-disable-next-line react/jsx-props-no-spreading
 								{...listeners}
 							/>
 						),
@@ -72,7 +72,7 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 }
 
 function VariablesSetting(): JSX.Element {
-	const variableToDelete = useRef<string | null>(null);
+	const variableToDelete = useRef<IDashboardVariable | null>(null);
 	const [deleteVariableModal, setDeleteVariableModal] = useState(false);
 
 	const { t } = useTranslation(['dashboard']);
@@ -118,6 +118,7 @@ function VariablesSetting(): JSX.Element {
 		const variableOrderArr = [];
 		const variableNamesMap = {};
 
+		// eslint-disable-next-line no-restricted-syntax
 		for (const [key, value] of Object.entries(variables)) {
 			const { order, id, name } = value;
 
@@ -218,14 +219,15 @@ function VariablesSetting(): JSX.Element {
 		onDoneVariableViewMode();
 	};
 
-	const onVariableDeleteHandler = (variableName: string): void => {
-		variableToDelete.current = variableName;
+	const onVariableDeleteHandler = (variable: IDashboardVariable): void => {
+		variableToDelete.current = variable;
 		setDeleteVariableModal(true);
 	};
 
 	const handleDeleteConfirm = (): void => {
 		const newVariablesArr = variablesTableData.filter(
-			(variable: IDashboardVariable) => variable.id !== variableToDelete?.current,
+			(variable: IDashboardVariable) =>
+				variable.id !== variableToDelete?.current?.id,
 		);
 
 		const updatedVariables = convertVariablesToDbFormat(newVariablesArr);
@@ -277,7 +279,7 @@ function VariablesSetting(): JSX.Element {
 						style={{ padding: 8, color: red[6], cursor: 'pointer' }}
 						onClick={(): void => {
 							if (variable) {
-								onVariableDeleteHandler(variable.id);
+								onVariableDeleteHandler(variable);
 							}
 						}}
 					>
@@ -395,8 +397,13 @@ function VariablesSetting(): JSX.Element {
 				onOk={handleDeleteConfirm}
 				onCancel={handleDeleteCancel}
 			>
-				Are you sure you want to delete variable{' '}
-				<Tag>{variableToDelete.current}</Tag>?
+				<Typography.Text>
+					Are you sure you want to delete variable{' '}
+					<span className="delete-variable-name">
+						{variableToDelete?.current?.name}
+					</span>
+					?
+				</Typography.Text>
 			</Modal>
 		</>
 	);
