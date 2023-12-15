@@ -3,8 +3,8 @@ import { convertValue } from 'lib/getConvertedValue';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 function findMinMaxValues(data: QueryDataV3[]): [number, number] {
-	let min = 0;
-	let max = 0;
+	let min = Number.MAX_SAFE_INTEGER;
+	let max = Number.MIN_SAFE_INTEGER;
 	data?.forEach((entry) => {
 		entry.series?.forEach((series) => {
 			series.values.forEach((valueObj) => {
@@ -23,20 +23,18 @@ function findMinMaxThresholdValues(
 	thresholds: ThresholdProps[],
 	yAxisUnit?: string,
 ): [number, number] {
-	let minThresholdValue = 0;
-	let maxThresholdValue = 0;
+	let minThresholdValue =
+		thresholds[0].thresholdValue || Number.MAX_SAFE_INTEGER;
+	let maxThresholdValue =
+		thresholds[0].thresholdValue || Number.MIN_SAFE_INTEGER;
 
 	thresholds.forEach((entry) => {
 		const { thresholdValue, thresholdUnit } = entry;
 		if (thresholdValue === undefined) return;
-		minThresholdValue = Math.min(
-			minThresholdValue,
-			convertValue(thresholdValue, thresholdUnit, yAxisUnit) || 0,
-		);
-		maxThresholdValue = Math.max(
-			maxThresholdValue,
-			convertValue(thresholdValue, thresholdUnit, yAxisUnit) || 0,
-		);
+		const compareValue = convertValue(thresholdValue, thresholdUnit, yAxisUnit);
+		if (compareValue === null) return;
+		minThresholdValue = Math.min(minThresholdValue, compareValue);
+		maxThresholdValue = Math.max(maxThresholdValue, compareValue);
 	});
 
 	return [minThresholdValue, maxThresholdValue];
@@ -79,7 +77,7 @@ export const getYAxisScale = (
 	auto: boolean;
 	range?: [number, number];
 } => {
-	if (!thresholds || !series) return { auto: true };
+	if (!thresholds || !series || thresholds.length === 0) return { auto: true };
 
 	if (areAllSeriesEmpty(series)) return { auto: true };
 
