@@ -586,7 +586,7 @@ func TestAttributePathsContainingDollarDoNotBreakCollector(t *testing.T) {
 				Enabled: true,
 				Name:    "move",
 				From:    "attributes.$test",
-				To:      "attributes.test",
+				To:      "attributes.$test1",
 			},
 		},
 	}
@@ -605,7 +605,7 @@ func TestAttributePathsContainingDollarDoNotBreakCollector(t *testing.T) {
 	require.Nil(err)
 	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
 	require.Equal(1, len(result))
-	require.Equal("test", result[0].Attributes_string["test"])
+	require.Equal("test", result[0].Attributes_string["$test1"])
 }
 
 func TestTemporaryWorkaroundForSupportingAttribsContainingDots(t *testing.T) {

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap"
@@ -45,11 +44,12 @@ type CollectorSimulator struct {
 	inMemoryExporterId string
 }
 
+type ConfigGenerator func(baseConfYaml []byte) ([]byte, error)
+
 func NewCollectorSimulator(
 	ctx context.Context,
-	signalType component.DataType,
 	processorFactories map[component.Type]processor.Factory,
-	processorConfigs []ProcessorConfig,
+	configGenerator ConfigGenerator,
 ) (simulator *CollectorSimulator, cleanupFn func(), apiErr *model.ApiError) {
 	// Put together collector component factories for use in the simulation
 	receiverFactories, err := receiver.MakeFactoryMap(inmemoryreceiver.NewFactory())
@@ -86,9 +86,8 @@ func NewCollectorSimulator(
 	}
 
 	collectorConfYaml, err := generateSimulationConfig(
-		signalType,
 		inMemoryReceiverId,
-		processorConfigs,
+		configGenerator,
 		inMemoryExporterId,
 		collectorLogsOutputFilePath,
 	)
@@ -111,6 +110,7 @@ func NewCollectorSimulator(
 	}
 
 	_, err = simulationConfigFile.Write(collectorConfYaml)
+
 	if err != nil {
 		return nil, cleanupFn, model.InternalError(errors.Wrap(err, "could not write simulation config to tmp file"))
 	}
@@ -226,9 +226,8 @@ func (l *CollectorSimulator) Shutdown(ctx context.Context) (
 }
 
 func generateSimulationConfig(
-	signalType component.DataType,
 	receiverId string,
-	processorConfigs []ProcessorConfig,
+	configGenerator ConfigGenerator,
 	exporterId string,
 	collectorLogsOutputPath string,
 ) ([]byte, error) {
@@ -240,6 +239,12 @@ func generateSimulationConfig(
       memory:
         id: %s
     service:
+      pipelines:
+        logs:
+          receivers:
+            - memory
+          exporters:
+            - memory
       telemetry:
         metrics:
           level: none
@@ -248,32 +253,5 @@ func generateSimulationConfig(
           output_paths: ["%s"]
     `, receiverId, exporterId, collectorLogsOutputPath)
 
-	simulationConf, err := yaml.Parser().Unmarshal([]byte(baseConf))
-	if err != nil {
-		return nil, err
-	}
-
-	processors := map[string]interface{}{}
-	procNamesInOrder := []string{}
-	for _, processorConf := range processorConfigs {
-		processors[processorConf.Name] = processorConf.Config
-		procNamesInOrder = append(procNamesInOrder, processorConf.Name)
-	}
-	simulationConf["processors"] = processors
-
-	svc := simulationConf["service"].(map[string]interface{})
-	svc["pipelines"] = map[string]interface{}{
-		string(signalType): map[string]interface{}{
-			"receivers":  []string{"memory"},
-			"processors": procNamesInOrder,
-			"exporters":  []string{"memory"},
-		},
-	}
-
-	simulationConfYaml, err := yaml.Parser().Marshal(simulationConf)
-	if err != nil {
-		return nil, err
-	}
-
-	return simulationConfYaml, nil
+	return configGenerator([]byte(baseConf))
 }

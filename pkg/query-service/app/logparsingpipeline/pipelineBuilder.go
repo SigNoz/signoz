@@ -46,7 +46,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 				Routes: &[]Route{
 					{
 						Output: v.Config[0].ID,
-						Expr:   escapeDollarSign(filterExpr),
+						Expr:   filterExpr,
 					},
 				},
 				Default: NOOP,
@@ -81,7 +81,8 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 			}
 
 			if operator.Type == "regex_parser" {
-				parseFromPath := cleanFieldPath(operator.ParseFrom)
+				parseFromParts := strings.Split(operator.ParseFrom, ".")
+				parseFromPath := strings.Join(parseFromParts, "?.")
 				operator.If = fmt.Sprintf(
 					`%s != nil && %s matches "%s"`,
 					parseFromPath,
@@ -93,29 +94,30 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				)
 
 			} else if operator.Type == "json_parser" {
-				parseFromPath := cleanFieldPath(operator.ParseFrom)
+				parseFromParts := strings.Split(operator.ParseFrom, ".")
+				parseFromPath := strings.Join(parseFromParts, "?.")
 				operator.If = fmt.Sprintf(`%s != nil && %s matches "^\\s*{.*}\\s*$"`, parseFromPath, parseFromPath)
 
 			} else if operator.Type == "move" || operator.Type == "copy" {
-				fromPath := cleanFieldPath(operator.From)
+				fromParts := strings.Split(operator.From, ".")
+				fromPath := strings.Join(fromParts, "?.")
 				operator.If = fmt.Sprintf(`%s != nil`, fromPath)
 
-				operator.From = escapeDollarSign(operator.From)
-
 			} else if operator.Type == "remove" {
-				fieldPath := cleanFieldPath(operator.Field)
+				fieldParts := strings.Split(operator.Field, ".")
+				fieldPath := strings.Join(fieldParts, "?.")
 				operator.If = fmt.Sprintf(`%s != nil`, fieldPath)
 
 			} else if operator.Type == "trace_parser" {
 				cleanTraceParser(&operator)
 
 			} else if operator.Type == "time_parser" {
-				parseFromPath := cleanFieldPath(operator.ParseFrom)
+				parseFromParts := strings.Split(operator.ParseFrom, ".")
+				parseFromPath := strings.Join(parseFromParts, "?.")
 
 				operator.If = fmt.Sprintf(`%s != nil`, parseFromPath)
 
 				if operator.LayoutType == "strptime" {
-					// escape $ in regex too?
 					regex, err := RegexForStrptimeLayout(operator.Layout)
 					if err != nil {
 						return nil, fmt.Errorf("could not generate time_parser processor: %w", err)
@@ -138,7 +140,8 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				// TODO(Raj): Maybe add support for gotime too eventually
 
 			} else if operator.Type == "severity_parser" {
-				parseFromPath := cleanFieldPath(operator.ParseFrom)
+				parseFromParts := strings.Split(operator.ParseFrom, ".")
+				parseFromPath := strings.Join(parseFromParts, "?.")
 
 				operator.If = fmt.Sprintf(
 					`%s != nil && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
@@ -165,16 +168,4 @@ func cleanTraceParser(operator *PipelineOperator) {
 	if operator.TraceFlags != nil && len(operator.TraceFlags.ParseFrom) < 1 {
 		operator.TraceFlags = nil
 	}
-}
-
-func cleanFieldPath(fieldPath string) string {
-	pathParts := strings.Split(fieldPath, ".")
-	pathWithOptionalParts := strings.Join(pathParts, "?.")
-	return escapeDollarSign(pathWithOptionalParts)
-}
-
-func escapeDollarSign(str string) string {
-	// SigNoz otel collector expands/interpolates environment variables.
-	// Escape `$` in user specified values so they do not get treated as environment variables.
-	return strings.ReplaceAll(str, "$", "$$")
 }
