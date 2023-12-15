@@ -328,7 +328,11 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 // `ts` is always added to the group by clause
 func groupingSets(tags ...string) string {
 	withTs := append(tags, "ts")
-	return fmt.Sprintf(`GROUPING SETS ( (%s), (%s) )`, strings.Join(withTs, ", "), strings.Join(tags, ", "))
+	if len(withTs) > 1 {
+		return fmt.Sprintf(`GROUPING SETS ( (%s), (%s) )`, strings.Join(withTs, ", "), strings.Join(tags, ", "))
+	} else {
+		return fmt.Sprintf(`GROUP BY %s`, strings.Join(withTs, ", "))
+	}
 }
 
 // groupBy returns a string of comma separated tags for group by clause
