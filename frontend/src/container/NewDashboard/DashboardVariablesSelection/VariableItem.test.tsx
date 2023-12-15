@@ -14,6 +14,7 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import VariableItem from './VariableItem';
 
 const mockVariableData: IDashboardVariable = {
+	id: 'test_variable',
 	description: 'Test Variable',
 	type: 'TEXTBOX',
 	textboxValue: 'defaultValue',
@@ -95,6 +96,7 @@ describe('VariableItem', () => {
 			// expect(mockOnValueUpdate).toHaveBeenCalledTimes(1);
 			expect(mockOnValueUpdate).toHaveBeenCalledWith(
 				'testVariable',
+				'test_variable',
 				'newValue',
 				false,
 			);
