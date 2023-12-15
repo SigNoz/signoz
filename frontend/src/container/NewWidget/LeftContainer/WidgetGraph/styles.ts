@@ -12,8 +12,7 @@ export const Container = styled(Card)<Props>`
 	}
 
 	.ant-card-body {
-		padding: ${({ $panelType }): string =>
-			$panelType === PANEL_TYPES.TABLE ? '0 0' : '1.5rem 0'};
+		padding: 8px;
 		height: 57vh;
 		overflow: auto;
 		display: flex;

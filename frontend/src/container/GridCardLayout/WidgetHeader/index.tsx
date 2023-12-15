@@ -10,7 +10,7 @@ import {
 	MoreOutlined,
 	WarningOutlined,
 } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps, Tooltip, Typography } from 'antd';
+import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -199,9 +199,7 @@ function WidgetHeader({
 					</Tooltip>
 				)}
 				<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
-					<Button
-						type="default"
-						icon={<MoreOutlined />}
+					<MoreOutlined
 						className={`widget-header-more-options ${
 							parentHover ? 'widget-header-hover' : ''
 						}`}
