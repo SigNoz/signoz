@@ -1,17 +1,24 @@
 import { TableProps } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
 const useSortableTable = <T>(
 	initialOrder: 'ascend' | 'descend' | null,
 	initialColumnKey: string,
+	searchString: string,
 ): {
 	sortedInfo: SorterResult<T>;
 	handleChange: TableProps<T>['onChange'];
 } => {
 	const history = useHistory();
 	const { search } = useLocation();
+
+	useEffect(() => {
+		const searchParams = new URLSearchParams(search);
+		searchParams.set('search', searchString);
+		history.replace({ search: searchParams.toString() });
+	}, [history, search, searchString]);
 
 	const [sortedInfo, setSortedInfo] = useState<SorterResult<T>>({
 		order: initialOrder,

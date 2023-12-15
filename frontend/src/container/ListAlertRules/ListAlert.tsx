@@ -45,8 +45,6 @@ import { filterAlerts } from './utils';
 const { Search } = Input;
 
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
-	const [data, setData] = useState<GettableAlert[]>(allAlertRules || []);
-	const [searchString, setSearchString] = useState<string>('');
 	const { t } = useTranslation('common');
 	const { role, featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -60,6 +58,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const orderColumnParam = params.get('columnKey');
 	const orderQueryParam = params.get('order');
 	const paginationParam = params.get('page');
+	const searchParams = params.get('search');
+	const [searchString, setSearchString] = useState<string>(searchParams || '');
+	const [data, setData] = useState<GettableAlert[]>(() => {
+		const value = searchString.toLowerCase();
+		const filteredData = filterAlerts(allAlertRules, value);
+		return filteredData || [];
+	});
 
 	// Type asuring
 	const sortingOrder: 'ascend' | 'descend' | null =
@@ -70,6 +75,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const { sortedInfo, handleChange } = useSortableTable<GettableAlert>(
 		sortingOrder,
 		orderColumnParam || '',
+		searchString,
 	);
 
 	const { notifications: notificationsApi } = useNotifications();
@@ -159,8 +165,8 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	};
 
 	const handleSearch = useDebouncedFn((e: unknown) => {
-		setSearchString((e as React.BaseSyntheticEvent).target.value);
 		const value = (e as React.BaseSyntheticEvent).target.value.toLowerCase();
+		setSearchString(value);
 		const filteredData = filterAlerts(allAlertRules, value);
 		setData(filteredData);
 	});
@@ -321,8 +327,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		<>
 			<SearchContainer>
 				<Search
-					placeholder="Search with Alert Name, Severity and Labels"
+					placeholder="Search by Alert Name, Severity and Labels"
 					onChange={handleSearch}
+					defaultValue={searchString}
 				/>
 				<ButtonContainer>
 					<TextToolTip
