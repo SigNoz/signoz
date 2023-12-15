@@ -292,6 +292,9 @@ function DateTimeSelection({
 							selectedTime,
 						)}
 						data-testid="dropDown"
+						style={{
+							minWidth: 120,
+						}}
 					>
 						{options.map(({ value, label }) => (
 							<Option key={value + label} value={value}>
