@@ -167,6 +167,31 @@ func GenerateCollectorConfigWithPipelines(
 		))
 	}
 
+	// Escape any `$`s as `$$` in config generated for pipelines, to ensure any occurrences
+	// like $data do not end up being treated as env vars when loading collector config.
+	for _, procName := range procNames {
+		procConf := processors[procName]
+		serializedProcConf, err := yaml.Marshal(procConf)
+		if err != nil {
+			return nil, coreModel.InternalError(fmt.Errorf(
+				"could not marshal processor config for %s: %w", procName, err,
+			))
+		}
+		escapedSerializedConf := strings.ReplaceAll(
+			string(serializedProcConf), "$", "$$",
+		)
+
+		var escapedConf map[string]interface{}
+		err = yaml.Unmarshal([]byte(escapedSerializedConf), &escapedConf)
+		if err != nil {
+			return nil, coreModel.InternalError(fmt.Errorf(
+				"could not unmarshal dollar escaped processor config for %s: %w", procName, err,
+			))
+		}
+
+		processors[procName] = escapedConf
+	}
+
 	// Add processors to unmarshaled collector config `c`
 	buildLogParsingProcessors(c, processors)
 
