@@ -449,7 +449,7 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
 
 	// adjust the start and end time to be aligned with the step interval
-	start = start - (start % (mq.StepInterval * 1000)) - mq.StepInterval*1000
+	start = start - (start % (mq.StepInterval * 1000))
 	end = end - (end % (mq.StepInterval * 1000))
 
 	var query string
