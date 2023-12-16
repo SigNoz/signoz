@@ -35,6 +35,8 @@ import {
 	IIntervalUnit,
 	INTERVAL_UNITS,
 } from './utils';
+import Sider from 'antd/es/layout/Sider';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 
 function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	const spanServiceColors = useMemo(
@@ -126,6 +128,9 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	);
 
 	const isGlobalTimeVisible = tree && traceMetaData.globalStart;
+	const [collapsed, setCollapsed] = useState(false);
+
+	const isDarkMode = useIsDarkMode();
 
 	return (
 		<StyledRow styledclass={[Flex({ flex: 1 })]}>
@@ -234,22 +239,37 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 					</GanttChartWrapper>
 				</StyledDiv>
 			</StyledCol>
+
 			<Col>
 				<StyledDivider styledclass={[styles.verticalSeparator]} type="vertical" />
 			</Col>
-			<StyledCol md={5} sm={5} styledclass={[styles.selectedSpanDetailContainer]}>
-				<SelectedSpanDetails
-					firstSpanStartTime={firstSpanStartTime}
-					tree={[
-						...(getSelectedNode.spanTree ? getSelectedNode.spanTree : []),
-						...(getSelectedNode.missingSpanTree
-							? getSelectedNode.missingSpanTree
-							: []),
-					]
-						.filter(Boolean)
-						.find((tree) => tree)}
-				/>
-			</StyledCol>
+
+			<Sider
+				style={{ background: isDarkMode ? '#000' : '#fff' }}
+				theme={isDarkMode ? 'dark' : 'light'}
+				collapsible
+				collapsed={collapsed}
+				reverseArrow
+				width={300}
+				collapsedWidth={40}
+				onCollapse={(value) => setCollapsed(value)}
+			>
+				{!collapsed && (
+					<StyledCol styledclass={[styles.selectedSpanDetailContainer]}>
+						<SelectedSpanDetails
+							firstSpanStartTime={firstSpanStartTime}
+							tree={[
+								...(getSelectedNode.spanTree ? getSelectedNode.spanTree : []),
+								...(getSelectedNode.missingSpanTree
+									? getSelectedNode.missingSpanTree
+									: []),
+							]
+								.filter(Boolean)
+								.find((tree) => tree)}
+						/>
+					</StyledCol>
+				)}
+			</Sider>
 		</StyledRow>
 	);
 }
