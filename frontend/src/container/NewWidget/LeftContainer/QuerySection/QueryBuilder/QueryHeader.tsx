@@ -34,7 +34,6 @@ function QueryHeader({
 				<Row>
 					<Button
 						type="default"
-						ghost
 						icon={disabled ? <EyeInvisibleFilled /> : <EyeFilled />}
 						onClick={onDisable}
 					>
@@ -42,7 +41,6 @@ function QueryHeader({
 					</Button>
 					<Button
 						type="default"
-						ghost
 						icon={collapse ? <RightOutlined /> : <DownOutlined />}
 						onClick={(): void => setCollapse(!collapse)}
 					/>
