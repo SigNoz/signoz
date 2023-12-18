@@ -80,9 +80,15 @@ export const useOptions = (
 
 	const getKeyOperatorOptions = useCallback(
 		(key: string) => {
-			const operatorsOptions = operators?.map((operator) => ({
-				value: `${key} ${operator} `,
-				label: `${key} ${operator} `,
+			const partialOperator = key.split(' ')[1];
+			const partialKey = key.split(' ')[0];
+			console.log(partialOperator);
+			const filteredOperators = operators?.filter((operator) =>
+				operator.startsWith(partialOperator?.toUpperCase()),
+			);
+			const operatorsOptions = filteredOperators?.map((operator) => ({
+				value: `${partialKey} ${operator} `,
+				label: `${partialKey} ${operator} `,
 			}));
 			if (whereClauseConfig) {
 				return [
