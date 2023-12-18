@@ -12,7 +12,7 @@ import { useQueryClient } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
+import { SET_ACTIVE_LOG_DATA, SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 import {
 	BaseAutocompleteData,
@@ -49,6 +49,30 @@ export const useActiveLog = (): UseActiveLog => {
 		},
 		[dispatch],
 	);
+
+	const onSetActiveLogData = useCallback(
+		(logData: ILog) => {
+			dispatch({
+				type: SET_ACTIVE_LOG_DATA,
+				payload: logData,
+			});
+		},
+		[dispatch],
+	);
+
+	const onViewLogDetails = useCallback(
+		(nextActiveLog: ILog): void => {
+			onSetActiveLogData(nextActiveLog);
+		},
+		[onSetActiveLogData],
+	);
+
+	const onClearLogDetails = useCallback((): void => {
+		dispatch({
+			type: SET_ACTIVE_LOG_DATA,
+			payload: null,
+		});
+	}, [dispatch]);
 
 	const onSetActiveLog = useCallback(
 		(nextActiveLog: ILog): void => {
@@ -144,6 +168,8 @@ export const useActiveLog = (): UseActiveLog => {
 		activeLog,
 		onSetActiveLog,
 		onClearActiveLog,
+		onViewLogDetails,
+		onClearLogDetails,
 		onAddToQuery: isLogsPage ? onAddToQueryLogs : onAddToQueryExplorer,
 	};
 };

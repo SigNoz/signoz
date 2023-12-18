@@ -24,6 +24,7 @@ export interface ILogsReducer {
 	logsAggregate: ILogsAggregate[];
 	selectedLogId: string | null;
 	detailedLog: null | ILog;
+	activeLog: null | ILog;
 	liveTail: TLogsLiveTailState;
 	liveTailStartRange: number; // time in minutes
 	order: OrderPreferenceItems;

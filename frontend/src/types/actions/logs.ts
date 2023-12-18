@@ -26,6 +26,7 @@ export const SET_LOADING = 'LOGS_SET_LOADING';
 export const SET_LOADING_AGGREGATE = 'LOGS_SET_LOADING_AGGREGATE';
 export const SET_LOGS_AGGREGATE_SERIES = 'LOGS_SET_LOGS_AGGREGATE_SERIES';
 export const SET_DETAILED_LOG_DATA = 'LOGS_SET_DETAILED_LOG_DATA';
+export const SET_ACTIVE_LOG_DATA = 'LOGS_SET_ACTIVE_LOG_DATA';
 export const TOGGLE_LIVE_TAIL = 'LOGS_TOGGLE_LIVE_TAIL';
 export const PUSH_LIVE_TAIL_EVENT = 'LOGS_PUSH_LIVE_TAIL_EVENT';
 export const STOP_LIVE_TAIL = 'LOGS_STOP_LIVE_TAIL';
@@ -105,6 +106,11 @@ export interface SetDetailedLogData {
 	payload: ILog | null;
 }
 
+export interface SetActiveLogData {
+	type: typeof SET_ACTIVE_LOG_DATA;
+	payload: ILog | null;
+}
+
 export interface ToggleLiveTail {
 	type: typeof TOGGLE_LIVE_TAIL;
 	payload: TLogsLiveTailState;
@@ -164,6 +170,7 @@ export type LogsActions =
 	| SetLoadingAggregate
 	| SetLogsAggregateSeries
 	| SetDetailedLogData
+	| SetActiveLogData
 	| ToggleLiveTail
 	| PushLiveTailEvent
 	| StopLiveTail

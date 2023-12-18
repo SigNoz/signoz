@@ -1,4 +1,5 @@
 import { Card, Typography } from 'antd';
+import LogDetail from 'components/LogDetail';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
@@ -9,6 +10,7 @@ import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import { useDetailedLogView } from 'hooks/logs/useDetailedLogView';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
@@ -48,6 +50,8 @@ function LogsExplorerList({
 		() => logs.findIndex(({ id }) => id === activeLogId),
 		[logs, activeLogId],
 	);
+
+	const { activeLog, onClearLogDetails, onAddToQuery } = useDetailedLogView();
 
 	useFontFaceObserver(
 		[
@@ -149,6 +153,13 @@ function LogsExplorerList({
 			)}
 
 			<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
+
+			<LogDetail
+				log={activeLog}
+				onClose={onClearLogDetails}
+				onAddToQuery={onAddToQuery}
+				onClickActionItem={onAddToQuery}
+			/>
 		</>
 	);
 }

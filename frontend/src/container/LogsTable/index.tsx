@@ -1,6 +1,7 @@
 import './logsTable.styles.scss';
 
 import { Card, Typography } from 'antd';
+import LogDetail from 'components/LogDetail';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
@@ -8,6 +9,7 @@ import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useDetailedLogView } from 'hooks/logs/useDetailedLogView';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -30,6 +32,8 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 	const { viewMode, linesPerRow } = props;
 
 	const { onSetActiveLog } = useActiveLog();
+
+	const { activeLog, onClearLogDetails, onAddToQuery } = useDetailedLogView();
 
 	useFontFaceObserver(
 		[
@@ -110,6 +114,13 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 			{isNoLogs && <Typography>No logs lines found</Typography>}
 
 			{renderContent}
+
+			<LogDetail
+				log={activeLog}
+				onClose={onClearLogDetails}
+				onAddToQuery={onAddToQuery}
+				onClickActionItem={onAddToQuery}
+			/>
 		</Container>
 	);
 }
