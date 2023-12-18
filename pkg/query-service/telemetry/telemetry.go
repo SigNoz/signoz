@@ -38,6 +38,7 @@ const (
 	TELEMETRY_EVENT_LOGS_FILTERS             = "Logs Filters"
 	TELEMETRY_EVENT_DISTRIBUTED              = "Distributed"
 	TELEMETRY_EVENT_QUERY_RANGE_V3           = "Query Range V3 Metadata"
+	TELEMETRY_EVENT_DASHBOARDS_ALERTS        = "Dashboards/Alerts Info"
 	TELEMETRY_EVENT_ACTIVE_USER              = "Active User"
 	TELEMETRY_EVENT_ACTIVE_USER_PH           = "Active User V2"
 	TELEMETRY_EVENT_USER_INVITATION_SENT     = "User Invitation Sent"
@@ -53,6 +54,7 @@ var SAAS_EVENTS_LIST = map[string]struct{}{
 	TELEMETRY_EVENT_ENVIRONMENT:              {},
 	TELEMETRY_EVENT_USER_INVITATION_SENT:     {},
 	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED: {},
+	TELEMETRY_EVENT_DASHBOARDS_ALERTS:        {},
 }
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -61,9 +63,9 @@ const ph_api_key = "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w"
 const IP_NOT_FOUND_PLACEHOLDER = "NA"
 const DEFAULT_NUMBER_OF_SERVICES = 6
 
-const HEART_BEAT_DURATION = 6 * time.Hour
+const HEART_BEAT_DURATION = 12 * time.Hour
 
-const ACTIVE_USER_DURATION = 30 * time.Minute
+const ACTIVE_USER_DURATION = 6 * time.Hour
 
 // const HEART_BEAT_DURATION = 30 * time.Second
 // const ACTIVE_USER_DURATION = 30 * time.Second
@@ -241,9 +243,30 @@ func createTelemetry() {
 				}
 				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
 
+				alertsInfo, err := telemetry.reader.GetAlertsInfo(context.Background())
+				if err != nil {
+					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
+				} else {
+					dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
+					if err == nil {
+						dashboardsAlertsData := map[string]interface{}{
+							"totalDashboards":   dashboardsInfo.TotalDashboards,
+							"logsBasedPanels":   dashboardsInfo.LogsBasedPanels,
+							"metricBasedPanels": dashboardsInfo.MetricBasedPanels,
+							"tracesBasedPanels": dashboardsInfo.TracesBasedPanels,
+							"totalAlerts":       alertsInfo.TotalAlerts,
+							"logsBasedAlerts":   alertsInfo.LogsBasedAlerts,
+							"metricBasedAlerts": alertsInfo.MetricBasedAlerts,
+							"tracesBasedAlerts": alertsInfo.TracesBasedAlerts,
+						}
+						telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
+					} else {
+						telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
+					}
+				}
+
 				getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(context.Background())
 				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval, "")
-
 			}
 		}
 	}()

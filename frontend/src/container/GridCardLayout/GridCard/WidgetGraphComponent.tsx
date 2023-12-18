@@ -1,4 +1,5 @@
 import { Skeleton, Typography } from 'antd';
+import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -298,7 +299,10 @@ function WidgetGraphComponent({
 			</div>
 			{queryResponse.isLoading && <Skeleton />}
 			{queryResponse.isSuccess && (
-				<div style={{ height: '90%' }} ref={graphRef}>
+				<div
+					className={cx('widget-graph-container', widget.panelTypes)}
+					ref={graphRef}
+				>
 					<GridPanelSwitch
 						panelType={widget.panelTypes}
 						data={data}
