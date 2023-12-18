@@ -1,5 +1,9 @@
+import './TraceDetails.styles.scss';
+
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Col, Typography } from 'antd';
+import Sider from 'antd/es/layout/Sider';
+import cx from 'classnames';
 import {
 	StyledCol,
 	StyledDiv,
@@ -14,6 +18,7 @@ import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import dayjs from 'dayjs';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import history from 'lib/history';
@@ -35,8 +40,6 @@ import {
 	IIntervalUnit,
 	INTERVAL_UNITS,
 } from './utils';
-import Sider from 'antd/es/layout/Sider';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 
 function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	const spanServiceColors = useMemo(
@@ -101,11 +104,6 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		() => getNodeById(activeSelectedId, treesData),
 		[activeSelectedId, treesData],
 	);
-
-	// const onSearchHandler = (value: string) => {
-	// 	setSearchSpanString(value);
-	// 	setTreeData(spanToTreeUtil(response[0].events));
-	// };
 
 	const onFocusSelectedSpanHandler = (): void => {
 		const treeNode = getNodeById(activeSelectedId, tree);
@@ -245,6 +243,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 			</Col>
 
 			<Sider
+				className={cx('span-details-sider', isDarkMode ? 'dark' : 'light')}
 				style={{ background: isDarkMode ? '#000' : '#fff' }}
 				theme={isDarkMode ? 'dark' : 'light'}
 				collapsible
@@ -252,7 +251,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 				reverseArrow
 				width={300}
 				collapsedWidth={40}
-				onCollapse={(value) => setCollapsed(value)}
+				onCollapse={(value): void => setCollapsed(value)}
 			>
 				{!collapsed && (
 					<StyledCol styledclass={[styles.selectedSpanDetailContainer]}>
