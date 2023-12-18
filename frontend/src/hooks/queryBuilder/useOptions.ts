@@ -82,7 +82,6 @@ export const useOptions = (
 		(key: string) => {
 			const partialOperator = key.split(' ')[1];
 			const partialKey = key.split(' ')[0];
-			console.log(partialOperator);
 			const filteredOperators = operators?.filter((operator) =>
 				operator.startsWith(partialOperator?.toUpperCase()),
 			);
