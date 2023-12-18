@@ -80,8 +80,9 @@ export const useOptions = (
 
 	const getKeyOperatorOptions = useCallback(
 		(key: string) => {
-			const partialOperator = key.split(' ')[1];
-			const partialKey = key.split(' ')[0];
+			const keyOperator = key.split(' ');
+			const partialOperator = keyOperator?.[1];
+			const partialKey = keyOperator?.[0];
 			const filteredOperators = operators?.filter((operator) =>
 				operator.startsWith(partialOperator?.toUpperCase()),
 			);
