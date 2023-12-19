@@ -3641,6 +3641,11 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		}
 
 		// create the index
+		if strings.ToLower(field.DataType) == "bool" {
+			// there is no point in creating index for bool attributes as the cardinality is just 2
+			return nil
+		}
+
 		if field.IndexType == "" {
 			field.IndexType = constants.DefaultLogSkipIndexType
 		}
