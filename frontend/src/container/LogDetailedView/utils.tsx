@@ -136,6 +136,9 @@ export const removeObjectFromString = (str: string): string =>
 // For example, will return `['a', 'b.c']` when splitting `'a.b.c'` at dots
 const splitOnce = (str: string, delimiter: string): string[] => {
 	const parts = str.split(delimiter);
+	if (parts.length < 2) {
+		return parts;
+	}
 	return [parts[0], parts.slice(1).join(delimiter)];
 };
 
