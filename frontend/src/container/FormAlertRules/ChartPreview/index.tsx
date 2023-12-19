@@ -2,6 +2,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import Spinner from 'components/Spinner';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
+import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -9,7 +10,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -17,9 +18,10 @@ import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getTimeRange } from 'utils/getTimeRange';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
-import { covertIntoDataFormats } from './utils';
+import { getThresholdLabel } from './utils';
 
 export interface ChartPreviewProps {
 	name: string;
@@ -31,6 +33,7 @@ export interface ChartPreviewProps {
 	alertDef?: AlertDef;
 	userQueryKey?: string;
 	allowSelectedIntervalForStepGen?: boolean;
+	yAxisUnit: string;
 }
 
 function ChartPreview({
@@ -43,18 +46,17 @@ function ChartPreview({
 	userQueryKey,
 	allowSelectedIntervalForStepGen = false,
 	alertDef,
+	yAxisUnit,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const threshold = alertDef?.condition.target || 0;
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const [minTimeScale, setMinTimeScale] = useState<number>();
+	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 
-	const thresholdValue = covertIntoDataFormats({
-		value: threshold,
-		sourceUnit: alertDef?.condition.targetUnit,
-		targetUnit: query?.unit,
-	});
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const canQuery = useMemo((): boolean => {
 		if (!query || query == null) {
@@ -104,19 +106,31 @@ function ChartPreview({
 
 	const graphRef = useRef<HTMLDivElement>(null);
 
+	useEffect((): void => {
+		const { startTime, endTime } = getTimeRange(queryResponse);
+
+		setMinTimeScale(startTime);
+		setMaxTimeScale(endTime);
+	}, [maxTime, minTime, globalSelectedInterval, queryResponse]);
+
 	const chartData = getUPlotChartData(queryResponse?.data?.payload);
 
 	const containerDimensions = useResizeObserver(graphRef);
 
 	const isDarkMode = useIsDarkMode();
 
+	const optionName =
+		getFormatNameByOptionId(alertDef?.condition.targetUnit || '') || '';
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
 				id: 'alert_legend_widget',
-				yAxisUnit: query?.unit,
+				yAxisUnit,
 				apiResponse: queryResponse?.data?.payload,
 				dimensions: containerDimensions,
+				minTimeScale,
+				maxTimeScale,
 				isDarkMode,
 				thresholds: [
 					{
@@ -124,20 +138,30 @@ function ChartPreview({
 						keyIndex: 0,
 						moveThreshold: (): void => {},
 						selectedGraph: PANEL_TYPES.TIME_SERIES, // no impact
-						thresholdValue,
+						thresholdValue: threshold,
 						thresholdLabel: `${t(
 							'preview_chart_threshold_label',
-						)} (y=${thresholdValue} ${query?.unit || ''})`,
+						)} (y=${getThresholdLabel(
+							optionName,
+							threshold,
+							alertDef?.condition.targetUnit,
+							yAxisUnit,
+						)})`,
+						thresholdUnit: alertDef?.condition.targetUnit,
 					},
 				],
 			}),
 		[
-			query?.unit,
+			yAxisUnit,
 			queryResponse?.data?.payload,
 			containerDimensions,
+			minTimeScale,
+			maxTimeScale,
 			isDarkMode,
+			threshold,
 			t,
-			thresholdValue,
+			optionName,
+			alertDef?.condition.targetUnit,
 		],
 	);
 
@@ -162,7 +186,7 @@ function ChartPreview({
 						name={name || 'Chart Preview'}
 						panelData={queryResponse.data?.payload.data.newResult.data.result || []}
 						query={query || initialQueriesMap.metrics}
-						yAxisUnit={query?.unit}
+						yAxisUnit={yAxisUnit}
 					/>
 				</div>
 			)}

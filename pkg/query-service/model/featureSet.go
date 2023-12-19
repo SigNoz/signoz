@@ -55,14 +55,14 @@ var BasicPlan = FeatureSet{
 		Name:       QueryBuilderPanels,
 		Active:     true,
 		Usage:      0,
-		UsageLimit: 5,
+		UsageLimit: 20,
 		Route:      "",
 	},
 	Feature{
 		Name:       QueryBuilderAlerts,
 		Active:     true,
 		Usage:      0,
-		UsageLimit: 5,
+		UsageLimit: 10,
 		Route:      "",
 	},
 	Feature{

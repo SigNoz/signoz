@@ -10,11 +10,9 @@ import {
 } from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
-import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
 import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
-import history from 'lib/history';
+import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 
@@ -55,15 +53,7 @@ function RightContainer({
 	const selectedGraphType =
 		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
 
-	const onCreateAlertsHandler = useCallback(() => {
-		if (!selectedWidget) return;
-
-		history.push(
-			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-				JSON.stringify(selectedWidget?.query),
-			)}`,
-		);
-	}, [selectedWidget]);
+	const onCreateAlertsHandler = useCreateAlerts(selectedWidget);
 
 	const allowThreshold = panelTypeVsThreshold[selectedGraph];
 
@@ -107,48 +97,8 @@ function RightContainer({
 				}
 			/>
 
-			{/* <TextContainer>
-				<Typography>Stacked Graphs :</Typography>
-				<Switch
-					checked={stacked}
-					onChange={(): void => {
-						setStacked((value) => !value);
-					}}
-				/>
-			</TextContainer> */}
-
-			{/* <Title light={'true'}>Fill Opacity: </Title> */}
-
-			{/* <Slider
-				value={parseInt(opacity, 10)}
-				marks={{
-					0: '0',
-					33: '33',
-					66: '66',
-					100: '100',
-				}}
-				onChange={(number): void => onChangeHandler(setOpacity, number.toString())}
-				step={1}
-			/> */}
-
-			{/* <Title light={'true'}>Null/Zero values: </Title>
-
-			<NullButtonContainer>
-				{nullValueButtons.map((button) => (
-					<Button
-						type={button.check === selectedNullZeroValue ? 'primary' : 'default'}
-						key={button.name}
-						onClick={(): void =>
-							onChangeHandler(setSelectedNullZeroValue, button.check)
-						}
-					>
-						{button.name}
-					</Button>
-				))}
-			</NullButtonContainer> */}
-
 			<Space style={{ marginTop: 10 }} direction="vertical">
-				<Typography>Fill span gaps</Typography>
+				<Typography>Fill gaps</Typography>
 
 				<Switch
 					checked={isFillSpans}

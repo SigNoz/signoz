@@ -5,8 +5,12 @@ import history from 'lib/history';
 import { TopOperationList } from './TopOperationsTable';
 import { NavigateToTraceProps } from './types';
 
-export const getErrorRate = (list: TopOperationList): number =>
-	(list.errorCount / list.numCalls) * 100;
+export const getErrorRate = (list: TopOperationList): number => {
+	if (list.errorCount === 0 && list.numCalls === 0) {
+		return 0;
+	}
+	return (list.errorCount / list.numCalls) * 100;
+};
 
 export const navigateToTrace = ({
 	servicename,
