@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -14,6 +15,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	smtpservice "go.signoz.io/signoz/pkg/query-service/utils/smtpService"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -79,6 +81,38 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_SENT, map[string]interface{}{
 		"invited user email": req.Email,
 	}, au.Email)
+
+	if os.Getenv("SMTP_ENABLED") == "true" {
+		smtp := smtpservice.GetInstance()
+		inviteTemplate := `
+		<html>
+		<body>
+			<p>Hi %s,</p>
+			<p>You have been invited to join SigNoz project by %s with email %s.</p>
+			<p>Please click on the following link to accept the invitation:</p>
+			<p><a href="%s/signup?token=%s">Accept Invitation</a></p>
+			<br/>
+			<p>Thanks,</p>
+			<p>SigNoz Team</p>
+		</body>
+		</html>
+		`
+		err := smtp.Send(
+			os.Getenv("SMTP_FROM"),
+			req.Email, "SigNoz Invitation",
+			fmt.Sprintf(
+				inviteTemplate,
+				req.Name,
+				au.Name,
+				au.Email,
+				req.FrontendBaseUrl,
+				token,
+			),
+		)
+		if err != nil {
+			zap.S().Errorf("failed to send email", err)
+		}
+	}
 
 	return &model.InviteResponse{Email: inv.Email, InviteToken: inv.Token}, nil
 }
