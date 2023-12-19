@@ -1,0 +1,13 @@
+.span-details-sider {
+	&.dark {
+		.ant-layout-sider-trigger {
+			background-color: black !important;
+		}
+	}
+
+	&.light {
+		.ant-layout-sider-trigger {
+			background-color: white !important;
+		}
+	}
+}
