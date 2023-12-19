@@ -608,6 +608,16 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 func (r *ThresholdRule) prepareBuilderQueries(ts time.Time) (map[string]string, error) {
 	params := r.prepareQueryRange(ts)
+	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(params) {
+			// Note: Sending empty fields key because enrichment is only needed for json
+			// TODO: Add support for attribute enrichment later
+			logsv3.Enrich(params, map[string]v3.AttributeKey{})
+		}
+
+	}
+
 	runQueries, err := r.queryBuilder.PrepareQueries(params)
 
 	return runQueries, err
