@@ -23,6 +23,7 @@ import ActionItem, { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
 import {
 	flattenObject,
+	getFieldAttributes,
 	jsonToDataNodes,
 	recursiveParseJSON,
 	removeEscapeCharacters,
@@ -98,11 +99,17 @@ function TableView({
 			title: 'Action',
 			width: 11,
 			render: (fieldData: Record<string, string>): JSX.Element | null => {
-				const fieldKey = fieldData.field.split('.').slice(-1);
-				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
+				// Extract field key to be used. Must work for all 3 types of cases below
+				// timestamp -> timestamp
+				// attributes_string.log.file -> log.file
+				// resources_string.k8s.pod.name -> k8s.pod.name
+				const fieldKey =
+					getFieldAttributes(fieldData.field)?.newField || fieldData.field;
+
+				if (!RESTRICTED_FIELDS.includes(fieldKey)) {
 					return (
 						<ActionItem
-							fieldKey={fieldKey[0]}
+							fieldKey={fieldKey}
 							fieldValue={fieldData.value}
 							onClickActionItem={onClickActionItem}
 						/>
