@@ -97,17 +97,19 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		</body>
 		</html>
 		`
+		inviteBody := fmt.Sprintf(
+			inviteTemplate,
+			req.Name,
+			au.Name,
+			au.Email,
+			req.FrontendBaseUrl,
+			token,
+		)
+
 		err := smtp.Send(
-			os.Getenv("SMTP_FROM"),
-			req.Email, "SigNoz Invitation",
-			fmt.Sprintf(
-				inviteTemplate,
-				req.Name,
-				au.Name,
-				au.Email,
-				req.FrontendBaseUrl,
-				token,
-			),
+			req.Email,
+			"SigNoz Invitation by "+au.Name,
+			inviteBody,
 		)
 		if err != nil {
 			zap.S().Errorf("failed to send email", err)
