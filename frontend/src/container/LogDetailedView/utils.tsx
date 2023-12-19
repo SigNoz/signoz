@@ -132,6 +132,13 @@ export const generateFieldKeyForArray = (
 export const removeObjectFromString = (str: string): string =>
 	str.replace(/\[object Object\]./g, '');
 
+// Split `str` on the first occurrence of `delimiter`
+// For example, will return `['a', 'b.c']` when splitting `'a.b.c'` at dots
+const splitOnce = (str: string, delimiter: string): string[] => {
+	const parts = str.split(delimiter);
+	return [parts[0], parts.slice(1).join(delimiter)];
+};
+
 export const getFieldAttributes = (field: string): IFieldAttributes => {
 	let dataType;
 	let newField;
@@ -140,12 +147,12 @@ export const getFieldAttributes = (field: string): IFieldAttributes => {
 	if (field.startsWith('attributes_')) {
 		logType = MetricsType.Tag;
 		const stringWithoutPrefix = field.slice('attributes_'.length);
-		const parts = stringWithoutPrefix.split('.');
+		const parts = splitOnce(stringWithoutPrefix, '.');
 		[dataType, newField] = parts;
 	} else if (field.startsWith('resources_')) {
 		logType = MetricsType.Resource;
 		const stringWithoutPrefix = field.slice('resources_'.length);
-		const parts = stringWithoutPrefix.split('.');
+		const parts = splitOnce(stringWithoutPrefix, '.');
 		[dataType, newField] = parts;
 	}
 
