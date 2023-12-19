@@ -483,8 +483,11 @@ func isOrderByTs(orderBy []v3.OrderBy) bool {
 func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
 
 	// adjust the start and end time to the step interval
-	start = start - (start % (mq.StepInterval * 1000))
-	end = end - (end % (mq.StepInterval * 1000))
+	// NOTE: Disabling this as it's creating confusion between charts and actual data
+	// if panelType != v3.PanelTypeList {
+	// 	start = start - (start % (mq.StepInterval * 1000))
+	// 	end = end - (end % (mq.StepInterval * 1000))
+	// }
 
 	if options.IsLivetailQuery {
 		query, err := buildLogsLiveTailQuery(mq)

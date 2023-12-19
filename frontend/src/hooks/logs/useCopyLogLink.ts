@@ -3,6 +3,7 @@ import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import history from 'lib/history';
 import {
 	MouseEventHandler,
 	useCallback,
@@ -28,14 +29,25 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 		(state) => state.globalTime,
 	);
 
-	const {
-		queryData: timeRange,
-		redirectWithQuery: onTimeRangeChange,
-	} = useUrlQueryData<LogTimeRange | null>(QueryParams.timeRange, null);
+	const { queryData: timeRange } = useUrlQueryData<LogTimeRange | null>(
+		QueryParams.timeRange,
+		null,
+	);
 
 	const { queryData: activeLogId } = useUrlQueryData<string | null>(
 		QueryParams.activeLogId,
 		null,
+	);
+
+	const onTimeRangeChange = useCallback(
+		(newTimeRange: LogTimeRange | null): void => {
+			urlQuery.set(QueryParams.timeRange, JSON.stringify(newTimeRange));
+			urlQuery.set(QueryParams.startTime, newTimeRange?.start.toString() || '');
+			urlQuery.set(QueryParams.endTime, newTimeRange?.end.toString() || '');
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			history.replace(generatedUrl);
+		},
+		[pathname, urlQuery],
 	);
 
 	const isActiveLog = useMemo(() => activeLogId === logId, [activeLogId, logId]);
