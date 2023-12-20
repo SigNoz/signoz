@@ -118,7 +118,7 @@ func getSelectKeys(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attribu
 		return ""
 	} else {
 		for _, tag := range groupBy {
-			selectLabels = append(selectLabels, tag.Key)
+			selectLabels = append(selectLabels, "`"+tag.Key+"`")
 		}
 	}
 	return strings.Join(selectLabels, ",")
