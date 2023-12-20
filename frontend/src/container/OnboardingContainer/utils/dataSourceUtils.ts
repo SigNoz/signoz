@@ -234,9 +234,6 @@ export const hasFrameworks = ({
 	const { id: moduleID } = module;
 	const { name: dataSourceName } = dataSource;
 
-	console.log(moduleID);
-	console.log(dataSourceName);
-
 	// eslint-disable-next-line sonarjs/prefer-single-boolean-return
 	if (
 		moduleID === ModulesMap.LogsManagement ||
