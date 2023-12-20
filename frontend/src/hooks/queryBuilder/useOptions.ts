@@ -4,6 +4,7 @@ import {
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
+import { isEmpty } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
@@ -84,9 +85,11 @@ export const useOptions = (
 			const keyOperator = key.split(' ');
 			const partialOperator = keyOperator?.[1];
 			const partialKey = keyOperator?.[0];
-			const filteredOperators = operators?.filter((operator) =>
-				operator.startsWith(partialOperator?.toUpperCase()),
-			);
+			const filteredOperators = !isEmpty(partialOperator)
+				? operators?.filter((operator) =>
+						operator.startsWith(partialOperator?.toUpperCase()),
+				  )
+				: operators;
 			const operatorsOptions = filteredOperators?.map((operator) => ({
 				value: `${partialKey} ${operator} `,
 				label: `${partialKey} ${operator} `,
