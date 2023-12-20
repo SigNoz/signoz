@@ -9,7 +9,7 @@ function findMinMaxValues(data: QueryDataV3[]): [number, number] {
 		entry.series?.forEach((series) => {
 			series.values.forEach((valueObj) => {
 				const value = parseFloat(valueObj.value);
-				if (!value) return;
+				if (Number.isNaN(value)) return;
 				min = Math.min(min, value);
 				max = Math.max(max, value);
 			});
@@ -82,5 +82,10 @@ export const getYAxisScale = (
 	if (areAllSeriesEmpty(series)) return { auto: true };
 
 	const [min, max] = getRange(thresholds, series, yAxisUnit);
+
+	// Min and Max value can be same if the value is same for all the series
+	if (min === max) {
+		return { auto: true };
+	}
 	return { auto: false, range: [min, max] };
 };
