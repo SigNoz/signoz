@@ -25,6 +25,13 @@ To test out the receiver, create a pipeline in the pipeline section of the `conf
 
 &nbsp;
 
+### Run OTel Collector
+ Run this command inside the `otelcol-contrib` directory :
+
+```bash
+./otelcol-contrib --config ./config.yaml 
+```
+
 You should be able to see your Cloudwatch logs in the logs tabs of SigNoz Cloud UI.
 
 

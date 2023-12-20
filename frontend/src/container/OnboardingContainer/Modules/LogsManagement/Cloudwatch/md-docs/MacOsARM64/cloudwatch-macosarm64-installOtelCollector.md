@@ -88,11 +88,6 @@ service:
       processors: [batch]
       exporters: [otlp]
 ```
-### Step 4: Run OTel Collector
- Run this command inside the `otelcol-contrib` directory
 
-```bash
-./otelcol-contrib --config ./config.yaml 
-```
 
 
