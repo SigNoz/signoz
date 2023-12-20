@@ -22,8 +22,8 @@ import { ILog } from 'types/api/logs/log';
 import ActionItem, { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
 import {
+	filterKeyForField,
 	flattenObject,
-	getFieldAttributes,
 	jsonToDataNodes,
 	recursiveParseJSON,
 	removeEscapeCharacters,
@@ -99,17 +99,12 @@ function TableView({
 			title: 'Action',
 			width: 11,
 			render: (fieldData: Record<string, string>): JSX.Element | null => {
-				// Extract field key to be used. Must work for all 3 types of cases below
-				// timestamp -> timestamp
-				// attributes_string.log.file -> log.file
-				// resources_string.k8s.pod.name -> k8s.pod.name
-				const fieldKey =
-					getFieldAttributes(fieldData.field)?.newField || fieldData.field;
+				const fieldFilterKey = filterKeyForField(fieldData.field);
 
-				if (!RESTRICTED_FIELDS.includes(fieldKey)) {
+				if (!RESTRICTED_FIELDS.includes(fieldFilterKey)) {
 					return (
 						<ActionItem
-							fieldKey={fieldKey}
+							fieldKey={fieldFilterKey}
 							fieldValue={fieldData.value}
 							onClickActionItem={onClickActionItem}
 						/>
@@ -126,7 +121,6 @@ function TableView({
 			align: 'left',
 			ellipsis: true,
 			render: (field: string, record): JSX.Element => {
-				const fieldKey = field.split('.').slice(-1);
 				const renderedField = <FieldRenderer field={field} />;
 
 				if (record.field === 'trace_id') {
@@ -155,10 +149,11 @@ function TableView({
 					);
 				}
 
-				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
+				const fieldFilterKey = filterKeyForField(field);
+				if (!RESTRICTED_FIELDS.includes(fieldFilterKey)) {
 					return (
 						<AddToQueryHOC
-							fieldKey={fieldKey[0]}
+							fieldKey={fieldFilterKey}
 							fieldValue={flattenLogData[field]}
 							onAddToQuery={onAddToQuery}
 						>

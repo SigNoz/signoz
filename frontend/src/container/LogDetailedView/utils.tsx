@@ -162,6 +162,18 @@ export const getFieldAttributes = (field: string): IFieldAttributes => {
 	return { dataType, newField, logType };
 };
 
+// Returns key to be used when filtering for `field` via
+// the query builder. This is useful for powering filtering
+// by field values from log details view.
+export const filterKeyForField = (field: string): string => {
+	// Must work for all 3 of the following types of cases
+	// timestamp -> timestamp
+	// attributes_string.log.file -> log.file
+	// resources_string.k8s.pod.name -> k8s.pod.name
+	const fieldAttribs = getFieldAttributes(field);
+	return fieldAttribs?.newField || field;
+};
+
 export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 	const outputJson: ILogAggregateAttributesResources = {
 		body: logData.body,
