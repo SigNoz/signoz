@@ -43,6 +43,7 @@ export const useOptions = (
 			items?.map((item) => ({
 				label: `${getLabel(item)}`,
 				value: item.key,
+				dataType: item.dataType,
 			})),
 		[getLabel],
 	);
