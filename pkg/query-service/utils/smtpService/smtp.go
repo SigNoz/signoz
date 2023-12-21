@@ -12,6 +12,7 @@ type SMTP struct {
 	Port     string
 	Username string
 	Password string
+	From     string
 }
 
 var smtpInstance *SMTP
@@ -23,6 +24,7 @@ func New() *SMTP {
 		Port:     os.Getenv("SMTP_PORT"),
 		Username: os.Getenv("SMTP_USERNAME"),
 		Password: os.Getenv("SMTP_PASSWORD"),
+		From:     os.Getenv("SMTP_FROM"),
 	}
 }
 
@@ -33,13 +35,23 @@ func GetInstance() *SMTP {
 	return smtpInstance
 }
 
-func (s *SMTP) Send(to, subject, body string) error {
-	auth := smtp.PlainAuth("", s.Username, s.Password, s.Host)
+func (s *SMTP) SendEmail(to, subject, body string) error {
 
-	msg := []byte("To: " + to + "\r\n" +
+	msgString := "From: " + s.From + "\r\n" +
+		"To: " + to + "\r\n" +
 		"Subject: " + subject + "\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: text/html; charset=UTF-8\r\n" +
 		"\r\n" +
-		body + "\r\n")
+		body
+
+	msg := []byte(msgString)
+
 	addr := s.Host + ":" + s.Port
-	return smtp.SendMail(addr, auth, s.Username, strings.Split(to, ","), msg)
+	if s.Password == "" || s.Username == "" {
+		return smtp.SendMail(addr, nil, s.From, strings.Split(to, ","), msg)
+	} else {
+		auth := smtp.PlainAuth("", s.Username, s.Password, s.Host)
+		return smtp.SendMail(addr, auth, s.From, strings.Split(to, ","), msg)
+	}
 }

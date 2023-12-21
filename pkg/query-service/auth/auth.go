@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
+	"text/template"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -28,6 +30,13 @@ const (
 var (
 	ErrorInvalidCreds = fmt.Errorf("Invalid credentials")
 )
+
+type InviteEmailData struct {
+	CustomerName string
+	InviterName  string
+	InviterEmail string
+	Link         string
+}
 
 // The root user should be able to invite people to create account on SigNoz cluster.
 func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteResponse, error) {
@@ -82,41 +91,45 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		"invited user email": req.Email,
 	}, au.Email)
 
+	// send email if SMTP is enabled
 	if os.Getenv("SMTP_ENABLED") == "true" {
-		smtp := smtpservice.GetInstance()
-		inviteTemplate := `
-		<html>
-		<body>
-			<p>Hi %s,</p>
-			<p>You have been invited to join SigNoz project by %s with email %s.</p>
-			<p>Please click on the following link to accept the invitation:</p>
-			<p><a href="%s/signup?token=%s">Accept Invitation</a></p>
-			<br/>
-			<p>Thanks,</p>
-			<p>SigNoz Team</p>
-		</body>
-		</html>
-		`
-		inviteBody := fmt.Sprintf(
-			inviteTemplate,
-			req.Name,
-			au.Name,
-			au.Email,
-			req.FrontendBaseUrl,
-			token,
-		)
-
-		err := smtp.Send(
-			req.Email,
-			"SigNoz Invitation by "+au.Name,
-			inviteBody,
-		)
-		if err != nil {
-			zap.S().Errorf("failed to send email", err)
-		}
+		inviteEmail(req, au, token)
 	}
 
 	return &model.InviteResponse{Email: inv.Email, InviteToken: inv.Token}, nil
+}
+
+func inviteEmail(req *model.InviteRequest, au *model.UserPayload, token string) {
+	smtp := smtpservice.GetInstance()
+	data := InviteEmailData{
+		CustomerName: req.Name,
+		InviterName:  au.Name,
+		InviterEmail: au.Email,
+		Link:         fmt.Sprintf("%s/signup?token=%s", req.FrontendBaseUrl, token),
+	}
+
+	tmpl, err := template.ParseFiles("../../pkg/query-service/templates/invitation_email_template.html")
+	if err != nil {
+		zap.S().Errorf("failed to send email", err)
+		return
+	}
+
+	var body bytes.Buffer
+	if err := tmpl.Execute(&body, data); err != nil {
+		zap.S().Errorf("failed to send email", err)
+		return
+	}
+
+	err = smtp.SendEmail(
+		req.Email,
+		"SigNoz Invitation by "+au.Name,
+		body.String(),
+	)
+	if err != nil {
+		zap.S().Errorf("failed to send email", err)
+		return
+	}
+	return
 }
 
 // RevokeInvite is used to revoke the invitation for the given email.
