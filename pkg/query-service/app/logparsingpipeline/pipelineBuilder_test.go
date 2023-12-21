@@ -386,8 +386,19 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			makeTestLog("mismatching log", map[string]string{
 				"test_timestamp": "not-an-epoch",
 			}),
+		}, {
+			"grok parser should ignore logs with missing parse from field",
+			PipelineOperator{
+				ID:        "grok",
+				Type:      "grok_parser",
+				Enabled:   true,
+				Name:      "grok parser",
+				ParseFrom: "attributes.test",
+				Pattern:   "%{GREEDYDATA}",
+				ParseTo:   "attributes.test_parsed",
+			},
+			makeTestLog("test log with missing parse from field", map[string]string{}),
 		},
-		// TODO(Raj): see if there is an error scenario for grok parser.
 		// TODO(Raj): see if there is an error scenario for trace parser.
 		// TODO(Raj): see if there is an error scenario for Add operator.
 	}
