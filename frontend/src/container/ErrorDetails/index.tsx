@@ -113,9 +113,9 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			value: errorDetail[key as keyof GetByErrorTypeAndServicePayload],
 		}));
 
-	const onClickTraceHandler = (): void => {
-		history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
-	};
+	// const onClickTraceHandler = (): void => {
+	// 	history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
+	// };
 
 	const clickCheckSourceDetail = async (): Promise<void> => {
 		const errorReport = JSON.parse(errorDetail.exceptionStacktrace || '{}');
@@ -123,8 +123,8 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		axios
 			.post('http://localhost:9331/sourcemap/searchErrDetail', {
 				fileName: errorReport.fileName,
-				line: errorReport.line,
-				column: errorReport.column,
+				line: errorReport.lineNumber || errorReport.line,
+				column: errorReport.columnNumber || errorReport.column,
 				projectId: errorReport.projectId,
 				env: errorReport.env,
 			})
@@ -191,12 +191,12 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				</div>
 			</EventContainer>
 
-			<DashedContainer>
+			{/* <DashedContainer>
 				<Typography>{t('see_trace_graph')}</Typography>
 				<Button onClick={onClickTraceHandler} type="primary">
 					{t('see_error_in_trace_graph')}
 				</Button>
-			</DashedContainer>
+			</DashedContainer> */}
 
 			<div
 				style={{
@@ -206,7 +206,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				}}
 			>
 				<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
-				{errorDetail.exceptionType === 'JS ERROR' ? (
+				{errorDetail.exceptionType === 'JS_ERROR' ? (
 					<Button
 						onClick={clickCheckSourceDetail}
 						type="primary"
