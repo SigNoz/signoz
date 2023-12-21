@@ -1,0 +1,60 @@
+@import '@signozhq/design-tokens';
+
+.sideNav {
+	flex: 0 0 240px;
+	max-width: 240px;
+	min-width: 240px;
+	width: 240px;
+
+	background: #0b0c0e;
+	border-right: 1px solid $bg-slate-400;
+	padding: 4px;
+	padding-bottom: 48px;
+	transition: all 0.2s, background 0s;
+	position: relative;
+
+	.brand {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		padding: $padding-4;
+
+		.brand-logo {
+			display: flex;
+			align-items: center;
+
+			img {
+				height: $font-size-xl;
+			}
+		}
+
+		.license {
+			&.tag {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+				color: rgba(255, 255, 255, 0.85);
+				font-size: 8px;
+				font-weight: $font-weight-medium;
+				letter-spacing: 0.6px;
+				padding: 4px 8px;
+				text-transform: uppercase;
+				white-space: nowrap;
+				background: $bg-slate-400;
+				border: 1px solid $bg-slate-400;
+				border-radius: 20px;
+				opacity: 1;
+				transition: all 0.2s;
+			}
+		}
+	}
+
+	.secondary-nav-items {
+		max-width: 100%;
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		width: 240px;
+	}
+}

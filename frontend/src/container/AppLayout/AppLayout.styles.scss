@@ -1,0 +1,11 @@
+@import '@signozhq/design-tokens';
+
+.app-layout {
+	height: 100%;
+
+	.app-content {
+		width: 100%;
+		overflow: auto;
+		background: #0b0c0e;
+	}
+}

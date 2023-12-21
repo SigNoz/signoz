@@ -1,0 +1,45 @@
+.nav-item {
+	display: flex;
+	margin: 4px;
+	padding: 8px 12px;
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+	align-self: stretch;
+	color: #c0c1c3;
+
+	font-family: Inter;
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 18px;
+
+	background: transparent;
+	border-left: 2px solid transparent;
+	border-radius: 2px;
+
+	transition: 0.2s all linear;
+
+	&:hover {
+		cursor: pointer;
+		color: white;
+		background: #121317;
+	}
+
+	&.active {
+		color: white;
+		background: #121317;
+		border-left: 2px solid #4e74f8;
+	}
+
+	.nav-item-icon {
+		height: 16px;
+	}
+
+	.nav-item-label {
+		// width: 220px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+}

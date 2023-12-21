@@ -1,3 +1,6 @@
+import './AppLayout.styles.scss';
+
+import { Flex } from 'antd';
 import getDynamicConfigs from 'api/dynamicConfigs/getDynamicConfigs';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
@@ -201,20 +204,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			<Helmet>
 				<title>{pageTitle}</title>
 			</Helmet>
-
-			{isToDisplayLayout && <Header />}
-			<Layout>
+			<Flex className="app-layout">
 				{isToDisplayLayout && !renderFullScreen && <SideNav />}
-
-				<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-					<LayoutContent>
-						<ChildrenContainer>
-							{isToDisplayLayout && !renderFullScreen && <TopNav />}
-							{children}
-						</ChildrenContainer>
-					</LayoutContent>
-				</ErrorBoundary>
-			</Layout>
+				<div className="app-content">
+					<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+						<LayoutContent>
+							<ChildrenContainer>
+								{isToDisplayLayout && !renderFullScreen && <TopNav />}
+								{children}
+							</ChildrenContainer>
+						</LayoutContent>
+					</ErrorBoundary>
+				</div>
+			</Flex>
 		</Layout>
 	);
 }

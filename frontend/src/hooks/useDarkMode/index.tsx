@@ -76,6 +76,10 @@ export const useThemeConfig = (): ThemeConfig => {
 			borderRadiusXS: 2,
 			fontFamily: 'Inter',
 			fontSize: 13,
+			colorPrimary: '#4E74F8',
+			colorBgContainer: '#121317',
+			colorLink: '#4E74F8',
+			colorPrimaryText: '#3F5ECC',
 		},
 	};
 };

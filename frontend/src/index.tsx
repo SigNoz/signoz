@@ -33,7 +33,7 @@ if (container) {
 						<Provider store={store}>
 							<AppRoutes />
 						</Provider>
-						{process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
+						{/* {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />} */}
 					</QueryClientProvider>
 				</ThemeProvider>
 			</HelmetProvider>

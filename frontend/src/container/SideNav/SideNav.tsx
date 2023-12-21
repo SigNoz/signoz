@@ -1,3 +1,5 @@
+import './SideNav.styles.scss';
+
 import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
 import { MenuProps } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -6,7 +8,7 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import history from 'lib/history';
-import { LifeBuoy } from 'lucide-react';
+import { LifeBuoy, MessageSquare, UserCircle, UserPlus } from 'lucide-react';
 import {
 	useCallback,
 	useEffect,
@@ -23,20 +25,14 @@ import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState, isCloudUser, isEECloudUser } from 'utils/app';
 
-import { routeConfig, styles } from './config';
+import { routeConfig } from './config';
 import { getQueryString } from './helper';
 import defaultMenuItems from './menuItems';
+import NavItem from './NavItem/NavItem';
 import { MenuItem, SecondaryMenuItemKey } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 import Slack from './Slack';
-import {
-	MenuLabelContainer,
-	RedDot,
-	Sider,
-	StyledPrimaryMenu,
-	StyledSecondaryMenu,
-	StyledText,
-} from './styles';
+import { MenuLabelContainer, RedDot, StyledText } from './styles';
 
 function SideNav(): JSX.Element {
 	const dispatch = useDispatch();
@@ -44,17 +40,66 @@ function SideNav(): JSX.Element {
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
-	const {
-		role,
-		currentVersion,
-		latestVersion,
-		isCurrentVersionError,
-		featureResponse,
-	} = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const { user, role, featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 
 	const { data, isFetching } = useLicense();
 
+	const { name, email } = user;
+
 	let secondaryMenuItems: MenuItem[] = [];
+
+	let userManagementMenuItems: MenuItem[] = [
+		{
+			key: ROUTES.ORG_SETTINGS,
+			label: 'Invite Team Member',
+			icon: <UserPlus size={16} />,
+		},
+		{
+			key: ROUTES.SUPPORT,
+			label: 'Help & Support',
+			icon: <MessageSquare size={16} />,
+		},
+		{
+			key: ROUTES.MY_SETTINGS,
+			label: name || 'User',
+			icon: <UserCircle size={16} />,
+		},
+	];
+
+	// const menu: MenuProps = useMemo(
+	// 	() => ({
+	// 		items: [
+	// 			{
+	// 				key: 'main-menu',
+	// 				label: (
+	// 					<div>
+	// 						<SignedIn onToggle={onToggleHandler(setIsUserDropDownOpen)} />
+	// 						<Divider />
+	// 						<CurrentOrganization onToggle={onToggleHandler(setIsUserDropDownOpen)} />
+	// 						<Divider />
+	// 						<ManageLicense onToggle={onToggleHandler(setIsUserDropDownOpen)} />
+	// 						<Divider />
+	// 						<LogoutContainer>
+	// 							<LogoutOutlined />
+	// 							<div
+	// 								tabIndex={0}
+	// 								onKeyDown={onLogoutKeyDown}
+	// 								role="button"
+	// 								onClick={Logout}
+	// 							>
+	// 								<Typography.Link>Logout</Typography.Link>
+	// 							</div>
+	// 						</LogoutContainer>
+	// 					</div>
+	// 				),
+	// 			},
+	// 		],
+	// 	}),
+	// 	[onToggleHandler, onLogoutKeyDown],
+	// );
 
 	useEffect((): void => {
 		const isOnboardingEnabled =
@@ -130,53 +175,94 @@ function SideNav(): JSX.Element {
 		history.push(ROUTES.VERSION);
 	};
 
-	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
+	// const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
-	if (isCloudUser() || isEECloudUser()) {
-		secondaryMenuItems = [
-			{
-				key: SecondaryMenuItemKey.Support,
-				label: 'Support',
-				icon: <LifeBuoy />,
-				onClick: onClickMenuHandler,
-			},
-		];
-	} else {
-		secondaryMenuItems = [
-			{
-				key: SecondaryMenuItemKey.Version,
-				icon: !isLatestVersion ? (
-					<WarningOutlined style={{ color: '#E87040' }} />
-				) : (
-					<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
-				),
-				label: (
-					<MenuLabelContainer>
-						<StyledText ellipsis>
-							{!isCurrentVersionError ? currentVersion : t('n_a')}
-						</StyledText>
-						{!isLatestVersion && <RedDot />}
-					</MenuLabelContainer>
-				),
-				onClick: onClickVersionHandler,
-			},
-			{
-				key: SecondaryMenuItemKey.Slack,
-				icon: <Slack />,
-				label: <StyledText>Support</StyledText>,
-				onClick: onClickSlackHandler,
-			},
-		];
-	}
+	// if (isCloudUser() || isEECloudUser()) {
+	// 	secondaryMenuItems = [
+	// 		{
+	// 			key: SecondaryMenuItemKey.Support,
+	// 			label: 'Support',
+	// 			icon: <LifeBuoy />,
+	// 			onClick: onClickMenuHandler,
+	// 		},
+	// 	];
+	// } else {
+	// 	secondaryMenuItems = [
+	// 		{
+	// 			key: SecondaryMenuItemKey.Version,
+	// 			icon: !isLatestVersion ? (
+	// 				<WarningOutlined style={{ color: '#E87040' }} />
+	// 			) : (
+	// 				<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
+	// 			),
+	// 			label: (
+	// 				<MenuLabelContainer>
+	// 					<StyledText ellipsis>
+	// 						{!isCurrentVersionError ? currentVersion : t('n_a')}
+	// 					</StyledText>
+	// 					{!isLatestVersion && <RedDot />}
+	// 				</MenuLabelContainer>
+	// 			),
+	// 			onClick: onClickVersionHandler,
+	// 		},
+	// 		{
+	// 			key: SecondaryMenuItemKey.Slack,
+	// 			icon: <Slack />,
+	// 			label: <StyledText>Support</StyledText>,
+	// 			onClick: onClickSlackHandler,
+	// 		},
+	// 	];
+	// }
 
 	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
 		pathname,
 	]);
 
+	console.log('activeMenu', menuItems);
+
 	return (
-		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
-			<StyledPrimaryMenu
-				theme="dark"
+		// <Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
+		<div className="sideNav">
+			<div className="brand">
+				<div className="brand-logo">
+					<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
+				</div>
+
+				<div className="license tag">Enterprise</div>
+			</div>
+
+			<div className="primary-nav-items">
+				{menuItems.map((item, index) => (
+					<NavItem
+						key={item.key || index}
+						item={item}
+						isActive={activeMenuKey === item.key}
+						onClickHandler={(): void => {
+							console.log('item', item);
+							onClickHandler(item.key);
+						}}
+					/>
+				))}
+			</div>
+
+			<div className="secondary-nav-items">
+				{userManagementMenuItems.map(
+					(item, index): JSX.Element => (
+						<NavItem
+							key={item.key || index}
+							item={item}
+							isActive={activeMenuKey === item.key}
+							onClickHandler={(): void => {
+								console.log('item', item);
+								onClickHandler(item.key);
+							}}
+						/>
+					),
+				)}
+			</div>
+
+			{/* <StyledPrimaryMenu
+				// theme="dark"
 				defaultSelectedKeys={[ROUTES.APPLICATION]}
 				selectedKeys={activeMenuKey ? [activeMenuKey] : []}
 				mode="vertical"
@@ -190,8 +276,19 @@ function SideNav(): JSX.Element {
 				mode="vertical"
 				style={styles}
 				items={secondaryMenuItems}
-			/>
-		</Sider>
+			/> */}
+
+			{/* <br />
+			<ToggleButton
+				checked={isDarkMode}
+				onChange={toggleTheme}
+				defaultChecked={isDarkMode}
+				checkedChildren="🌜"
+				unCheckedChildren="🌞"
+			/> */}
+		</div>
+
+		// </Sider>
 	);
 }
 

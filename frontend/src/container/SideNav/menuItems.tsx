@@ -1,18 +1,21 @@
 import {
-	AlertOutlined,
-	AlignLeftOutlined,
-	BarChartOutlined,
-	BugOutlined,
-	DashboardFilled,
 	DeploymentUnitOutlined,
-	FileDoneOutlined,
-	LineChartOutlined,
-	MenuOutlined,
 	RocketOutlined,
 	SearchOutlined,
-	SettingOutlined,
 } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
+import {
+	AreaChart,
+	BarChart2,
+	BellDot,
+	BugIcon,
+	DraftingCompass,
+	LayoutGrid,
+	Receipt,
+	Route,
+	ScrollText,
+	Settings,
+} from 'lucide-react';
 
 import { SidebarMenu } from './sideNav.types';
 
@@ -25,17 +28,17 @@ const menuItems: SidebarMenu[] = [
 	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',
-		icon: <BarChartOutlined />,
+		icon: <BarChart2 size={16} />,
 	},
 	{
 		key: ROUTES.TRACE,
 		label: 'Traces',
-		icon: <MenuOutlined />,
+		icon: <DraftingCompass size={16} />,
 	},
 	{
 		key: ROUTES.LOGS_EXPLORER,
 		label: 'Logs',
-		icon: <AlignLeftOutlined />,
+		icon: <ScrollText size={16} />,
 		children: [
 			{
 				key: ROUTES.LOGS_EXPLORER,
@@ -52,37 +55,37 @@ const menuItems: SidebarMenu[] = [
 	{
 		key: ROUTES.ALL_DASHBOARD,
 		label: 'Dashboards',
-		icon: <DashboardFilled />,
+		icon: <LayoutGrid size={16} />,
 	},
 	{
 		key: ROUTES.LIST_ALL_ALERT,
 		label: 'Alerts',
-		icon: <AlertOutlined />,
+		icon: <BellDot size={16} />,
 	},
 	{
 		key: ROUTES.ALL_ERROR,
 		label: 'Exceptions',
-		icon: <BugOutlined />,
+		icon: <BugIcon size={16} />,
 	},
 	{
 		key: ROUTES.SERVICE_MAP,
 		label: 'Service Map',
-		icon: <DeploymentUnitOutlined />,
+		icon: <Route size={16} />,
 	},
 	{
 		key: ROUTES.USAGE_EXPLORER,
 		label: 'Usage Explorer',
-		icon: <LineChartOutlined />,
+		icon: <AreaChart size={16} />,
 	},
 	{
 		key: ROUTES.BILLING,
 		label: 'Billing',
-		icon: <FileDoneOutlined />,
+		icon: <Receipt size={16} />,
 	},
 	{
 		key: ROUTES.SETTINGS,
 		label: 'Settings',
-		icon: <SettingOutlined />,
+		icon: <Settings size={16} />,
 	},
 ];
 
