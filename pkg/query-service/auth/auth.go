@@ -108,7 +108,7 @@ func inviteEmail(req *model.InviteRequest, au *model.UserPayload, token string) 
 		Link:         fmt.Sprintf("%s/signup?token=%s", req.FrontendBaseUrl, token),
 	}
 
-	tmpl, err := template.ParseFiles("../../pkg/query-service/templates/invitation_email_template.html")
+	tmpl, err := template.ParseFiles(constants.InviteEmailTemplate)
 	if err != nil {
 		zap.S().Errorf("failed to send email", err)
 		return
