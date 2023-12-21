@@ -140,7 +140,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				}
 				messageApi.open({
 					type: 'warning',
-					content: 'This is a warning message',
+					content: data.msg,
 				});
 			})
 			.catch((error) => {
