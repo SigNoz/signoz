@@ -17,7 +17,7 @@ export const useSetCurrentKeyAndOperator = (
 		let result: string[] = [];
 		const { tagKey, tagOperator, tagValue } = getTagToken(value);
 		const isSuggestKey = keys?.some(
-			(el) => el?.key.toLowerCase() === getRemovePrefixFromKey(tagKey),
+			(el) => el?.key === getRemovePrefixFromKey(tagKey),
 		);
 		if (isSuggestKey || keys.length === 0) {
 			key = tagKey || '';
