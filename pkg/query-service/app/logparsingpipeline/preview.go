@@ -14,7 +14,6 @@ import (
 	"go.opentelemetry.io/collector/processor"
 	"go.signoz.io/signoz/pkg/query-service/collectorsimulator"
 	"go.signoz.io/signoz/pkg/query-service/model"
-	"gopkg.in/yaml.v3"
 )
 
 func SimulatePipelinesProcessing(
@@ -42,14 +41,6 @@ func SimulatePipelinesProcessing(
 	}
 	simulatorInputPLogs := SignozLogsToPLogs(logs)
 
-	// Simulate processing of logs through an otel collector
-	processorConfigs, err := collectorProcessorsForPipelines(pipelines)
-	if err != nil {
-		return nil, nil, model.BadRequest(errors.Wrap(
-			err, "could not prepare otel processors for pipelines",
-		))
-	}
-
 	processorFactories, err := processor.MakeFactoryMap(
 		logstransformprocessor.NewFactory(),
 	)
@@ -65,12 +56,20 @@ func SimulatePipelinesProcessing(
 	// the number of logtransformprocessors involved.
 	// See defaultFlushInterval at https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/adapter/emitter.go
 	// TODO(Raj): Remove this after flushInterval is exposed in logtransformprocessor config
-	timeout := time.Millisecond * time.Duration(len(processorConfigs)*100+100)
+	timeout := time.Millisecond * time.Duration(len(pipelines)*100+100)
+
+	configGenerator := func(baseConf []byte) ([]byte, error) {
+		updatedConf, apiErr := GenerateCollectorConfigWithPipelines(baseConf, pipelines)
+		if apiErr != nil {
+			return nil, apiErr.ToError()
+		}
+		return updatedConf, nil
+	}
 
 	outputPLogs, collectorErrs, apiErr := collectorsimulator.SimulateLogsProcessing(
 		ctx,
 		processorFactories,
-		processorConfigs,
+		configGenerator,
 		simulatorInputPLogs,
 		timeout,
 	)
@@ -93,36 +92,6 @@ func SimulatePipelinesProcessing(
 	}
 
 	return outputSignozLogs, collectorErrs, nil
-}
-
-func collectorProcessorsForPipelines(pipelines []Pipeline) (
-	[]collectorsimulator.ProcessorConfig, error,
-) {
-	processors, procNames, err := PreparePipelineProcessor(pipelines)
-	if err != nil {
-		return nil, err
-	}
-
-	processorConfigs := []collectorsimulator.ProcessorConfig{}
-	for _, procName := range procNames {
-		// convert `Processor` structs to map[string]interface{}
-		procYaml, err := yaml.Marshal(processors[procName])
-		if err != nil {
-			return nil, errors.Wrap(err, "could not marshal Processor struct")
-		}
-		var procConfRaw map[string]interface{}
-		err = yaml.Unmarshal(procYaml, &procConfRaw)
-		if err != nil {
-			return nil, errors.Wrap(err, "could not unmarshal proc yaml")
-		}
-
-		processorConfigs = append(processorConfigs, collectorsimulator.ProcessorConfig{
-			Name:   procName,
-			Config: procConfRaw,
-		})
-	}
-
-	return processorConfigs, nil
 }
 
 // plog doesn't contain an ID field.
