@@ -3381,9 +3381,9 @@ func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Contex
 
 	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))*1000000000;", r.logsDB, r.logsTable, 30)
 
-	r.db.QueryRow(ctx, queryStr).Scan(&totalLogLines)
+	err := r.db.QueryRow(ctx, queryStr).Scan(&totalLogLines)
 
-	return totalLogLines, nil
+	return totalLogLines, err
 }
 
 func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context) (*model.TagsInfo, error) {
