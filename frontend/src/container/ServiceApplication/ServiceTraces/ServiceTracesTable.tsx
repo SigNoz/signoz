@@ -2,9 +2,12 @@ import { WarningFilled } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
 import { MAX_RPS_LIMIT } from 'constants/global';
+import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
+import useLicense from 'hooks/useLicense';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
+import { isCloudUser } from 'utils/app';
 import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
@@ -18,26 +21,32 @@ function ServiceTraceTable({
 	const [RPS, setRPS] = useState(0);
 	const { t: getText } = useTranslation(['services']);
 
+	const { data: licenseData, isFetching } = useLicense();
+	const isCloudUserVal = isCloudUser();
 	const tableColumns = useMemo(() => getColumns(search, false), [search]);
 
 	useEffect(() => {
-		if (services.length > 0) {
-			const rps = getTotalRPS(services);
-			setRPS(rps);
-		} else {
-			setRPS(0);
+		if (!isFetching && licenseData?.payload?.onTrial && isCloudUserVal) {
+			if (services.length > 0) {
+				const rps = getTotalRPS(services);
+				setRPS(rps);
+			} else {
+				setRPS(0);
+			}
 		}
-	}, [services]);
+	}, [services, licenseData, isFetching, isCloudUserVal]);
 
 	return (
 		<>
 			{RPS > MAX_RPS_LIMIT && (
-				<Flex justify="center">
-					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
+				<Flex justify="flex-end">
+					<Typography.Text type="warning" style={{ marginTop: 0 }}>
 						<WarningFilled /> {getText('rps_over_100')}
-					</Typography.Title>
+					</Typography.Text>
 				</Flex>
 			)}
+
+			<ResourceAttributesFilter />
 
 			<ResizeTable
 				columns={tableColumns}

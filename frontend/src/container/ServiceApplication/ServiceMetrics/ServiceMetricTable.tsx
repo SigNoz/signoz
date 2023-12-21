@@ -2,7 +2,9 @@ import { WarningFilled } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
 import { MAX_RPS_LIMIT } from 'constants/global';
+import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
+import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +13,7 @@ import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isCloudUser } from 'utils/app';
 import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
@@ -28,6 +31,9 @@ function ServiceMetricTable({
 
 	const { notifications } = useNotifications();
 	const { t: getText } = useTranslation(['services']);
+
+	const { data: licenseData, isFetching } = useLicense();
+	const isCloudUserVal = isCloudUser();
 
 	const queries = useGetQueriesRange(queryRangeRequestData, {
 		queryKey: [
@@ -62,13 +68,15 @@ function ServiceMetricTable({
 	const [RPS, setRPS] = useState(0);
 
 	useEffect(() => {
-		if (services.length > 0) {
-			const rps = getTotalRPS(services);
-			setRPS(rps);
-		} else {
-			setRPS(0);
+		if (!isFetching && licenseData?.payload?.onTrial && isCloudUserVal) {
+			if (services.length > 0) {
+				const rps = getTotalRPS(services);
+				setRPS(rps);
+			} else {
+				setRPS(0);
+			}
 		}
-	}, [services]);
+	}, [services, licenseData, isFetching, isCloudUserVal]);
 
 	return (
 		<>
@@ -79,6 +87,9 @@ function ServiceMetricTable({
 					</Typography.Title>
 				</Flex>
 			)}
+
+			<ResourceAttributesFilter />
+
 			<ResizeTable
 				columns={tableColumns}
 				loading={isLoading}
