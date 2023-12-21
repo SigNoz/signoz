@@ -7,6 +7,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -764,6 +765,10 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	return nil, fmt.Errorf("this is unexpected, invalid query label")
 }
 
+func (r *ThresholdRule) normalizeLabelName(name string) string {
+	return strings.ReplaceAll(name, ".", "_")
+}
+
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
 	valueFormatter := formatter.FromUnit(r.Unit())
@@ -785,7 +790,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 	for _, smpl := range res {
 		l := make(map[string]string, len(smpl.Metric))
 		for _, lbl := range smpl.Metric {
-			l[lbl.Name] = lbl.Value
+			l[r.normalizeLabelName(lbl.Name)] = lbl.Value
 		}
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
@@ -820,7 +825,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		lb := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel)
 
 		for _, l := range r.labels {
-			lb.Set(l.Name, expand(l.Value))
+			lb.Set(r.normalizeLabelName(l.Name), expand(l.Value))
 		}
 
 		lb.Set(labels.AlertNameLabel, r.Name())
@@ -829,7 +834,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
-			annotations = append(annotations, labels.Label{Name: a.Name, Value: expand(a.Value)})
+			annotations = append(annotations, labels.Label{Name: r.normalizeLabelName(a.Name), Value: expand(a.Value)})
 		}
 
 		lbs := lb.Labels()
