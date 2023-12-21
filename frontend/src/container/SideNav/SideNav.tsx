@@ -158,8 +158,6 @@ function SideNav(): JSX.Element {
 		pathname,
 	]);
 
-	console.log('activeMenu', menuItems);
-
 	return (
 		// <Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
 		<div className="sideNav">
