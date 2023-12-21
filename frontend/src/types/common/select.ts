@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 export type SelectOption<Value, Label extends unknown = string> = {
 	value: Value;
 	label: Label;
@@ -6,7 +8,7 @@ export type SelectOption<Value, Label extends unknown = string> = {
 export type ExtendedSelectOption = {
 	disabled?: boolean;
 	key: string;
-	label: string;
+	label: ReactNode;
 	title?: string;
 	value: string;
 };
