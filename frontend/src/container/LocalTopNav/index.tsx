@@ -1,7 +1,6 @@
 import { Col, Row, Space } from 'antd';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 
-import ShowBreadcrumbs from '../TopNav/Breadcrumbs';
 import DateTimeSelector from '../TopNav/DateTimeSelection';
 import { Container } from './styles';
 import { LocalTopNavProps } from './types';
@@ -12,11 +11,7 @@ function LocalTopNav({
 }: LocalTopNavProps): JSX.Element | null {
 	return (
 		<Container>
-			<Col span={16}>
-				<ShowBreadcrumbs />
-			</Col>
-
-			<Col span={8}>
+			<Col span={24}>
 				<Row justify="end">
 					<Space align="start" size={30} direction="horizontal">
 						<NewExplorerCTA />

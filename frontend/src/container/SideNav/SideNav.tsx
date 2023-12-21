@@ -1,45 +1,33 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './SideNav.styles.scss';
 
-import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
-import { MenuProps } from 'antd';
-import getLocalStorageKey from 'api/browser/localstorage/get';
-import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import history from 'lib/history';
-import { LifeBuoy, MessageSquare, UserCircle, UserPlus } from 'lucide-react';
-import {
-	useCallback,
-	useEffect,
-	useLayoutEffect,
-	useMemo,
-	useState,
-} from 'react';
-import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
+import { FileKey2, MessageSquare, UserCircle, UserPlus } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { sideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import { checkVersionState, isCloudUser, isEECloudUser } from 'utils/app';
+import { isCloudUser } from 'utils/app';
 
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
 import defaultMenuItems from './menuItems';
 import NavItem from './NavItem/NavItem';
-import { MenuItem, SecondaryMenuItemKey } from './sideNav.types';
+import { SidebarItem } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
-import Slack from './Slack';
-import { MenuLabelContainer, RedDot, StyledText } from './styles';
 
 function SideNav(): JSX.Element {
-	const dispatch = useDispatch();
+	// const dispatch = useDispatch();
 	const [menuItems, setMenuItems] = useState(defaultMenuItems);
-	const [collapsed, setCollapsed] = useState<boolean>(
-		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
-	);
+	// const [collapsed, setCollapsed] = useState<boolean>(
+	// 	getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
+	// );
 
 	const { user, role, featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -47,11 +35,9 @@ function SideNav(): JSX.Element {
 
 	const { data, isFetching } = useLicense();
 
-	const { name, email } = user;
+	// const secondaryMenuItems: MenuItem[] = [];
 
-	let secondaryMenuItems: MenuItem[] = [];
-
-	let userManagementMenuItems: MenuItem[] = [
+	const userManagementMenuItems: SidebarItem[] = [
 		{
 			key: ROUTES.ORG_SETTINGS,
 			label: 'Invite Team Member',
@@ -63,8 +49,13 @@ function SideNav(): JSX.Element {
 			icon: <MessageSquare size={16} />,
 		},
 		{
+			key: ROUTES.LIST_LICENSES,
+			label: 'Manage Licenses',
+			icon: <FileKey2 size={16} />,
+		},
+		{
 			key: ROUTES.MY_SETTINGS,
-			label: name || 'User',
+			label: user?.name || 'User',
 			icon: <UserCircle size={16} />,
 		},
 	];
@@ -139,15 +130,15 @@ function SideNav(): JSX.Element {
 
 	const { pathname, search } = useLocation();
 
-	const { t } = useTranslation('');
+	// const { t } = useTranslation('');
 
-	const onCollapse = useCallback(() => {
-		setCollapsed((collapsed) => !collapsed);
-	}, []);
+	// const onCollapse = useCallback(() => {
+	// 	setCollapsed((collapsed) => !collapsed);
+	// }, []);
 
-	useLayoutEffect(() => {
-		dispatch(sideBarCollapse(collapsed));
-	}, [collapsed, dispatch]);
+	// useLayoutEffect(() => {
+	// 	dispatch(sideBarCollapse(collapsed));
+	// }, [collapsed, dispatch]);
 
 	const onClickHandler = useCallback(
 		(key: string) => {
@@ -163,57 +154,6 @@ function SideNav(): JSX.Element {
 		[pathname, search],
 	);
 
-	const onClickMenuHandler: MenuProps['onClick'] = (e) => {
-		onClickHandler(e.key);
-	};
-
-	const onClickSlackHandler = (): void => {
-		window.open('https://signoz.io/slack', '_blank');
-	};
-
-	const onClickVersionHandler = (): void => {
-		history.push(ROUTES.VERSION);
-	};
-
-	// const isLatestVersion = checkVersionState(currentVersion, latestVersion);
-
-	// if (isCloudUser() || isEECloudUser()) {
-	// 	secondaryMenuItems = [
-	// 		{
-	// 			key: SecondaryMenuItemKey.Support,
-	// 			label: 'Support',
-	// 			icon: <LifeBuoy />,
-	// 			onClick: onClickMenuHandler,
-	// 		},
-	// 	];
-	// } else {
-	// 	secondaryMenuItems = [
-	// 		{
-	// 			key: SecondaryMenuItemKey.Version,
-	// 			icon: !isLatestVersion ? (
-	// 				<WarningOutlined style={{ color: '#E87040' }} />
-	// 			) : (
-	// 				<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
-	// 			),
-	// 			label: (
-	// 				<MenuLabelContainer>
-	// 					<StyledText ellipsis>
-	// 						{!isCurrentVersionError ? currentVersion : t('n_a')}
-	// 					</StyledText>
-	// 					{!isLatestVersion && <RedDot />}
-	// 				</MenuLabelContainer>
-	// 			),
-	// 			onClick: onClickVersionHandler,
-	// 		},
-	// 		{
-	// 			key: SecondaryMenuItemKey.Slack,
-	// 			icon: <Slack />,
-	// 			label: <StyledText>Support</StyledText>,
-	// 			onClick: onClickSlackHandler,
-	// 		},
-	// 	];
-	// }
-
 	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
 		pathname,
 	]);
@@ -224,7 +164,13 @@ function SideNav(): JSX.Element {
 		// <Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
 		<div className="sideNav">
 			<div className="brand">
-				<div className="brand-logo">
+				<div
+					className="brand-logo"
+					// eslint-disable-next-line react/no-unknown-property
+					onClick={(): void => {
+						onClickHandler('/');
+					}}
+				>
 					<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
 				</div>
 
@@ -237,9 +183,10 @@ function SideNav(): JSX.Element {
 						key={item.key || index}
 						item={item}
 						isActive={activeMenuKey === item.key}
-						onClickHandler={(): void => {
-							console.log('item', item);
-							onClickHandler(item.key);
+						onClick={(): void => {
+							if (item) {
+								onClickHandler(item?.key as string);
+							}
 						}}
 					/>
 				))}
@@ -249,43 +196,16 @@ function SideNav(): JSX.Element {
 				{userManagementMenuItems.map(
 					(item, index): JSX.Element => (
 						<NavItem
-							key={item.key || index}
+							key={item?.key || index}
 							item={item}
-							isActive={activeMenuKey === item.key}
-							onClickHandler={(): void => {
-								console.log('item', item);
-								onClickHandler(item.key);
+							isActive={activeMenuKey === item?.key}
+							onClick={(): void => {
+								onClickHandler(item?.key as string);
 							}}
 						/>
 					),
 				)}
 			</div>
-
-			{/* <StyledPrimaryMenu
-				// theme="dark"
-				defaultSelectedKeys={[ROUTES.APPLICATION]}
-				selectedKeys={activeMenuKey ? [activeMenuKey] : []}
-				mode="vertical"
-				style={styles}
-				items={menuItems}
-				onClick={onClickMenuHandler}
-			/>
-			<StyledSecondaryMenu
-				theme="dark"
-				selectedKeys={activeMenuKey ? [activeMenuKey] : []}
-				mode="vertical"
-				style={styles}
-				items={secondaryMenuItems}
-			/> */}
-
-			{/* <br />
-			<ToggleButton
-				checked={isDarkMode}
-				onChange={toggleTheme}
-				defaultChecked={isDarkMode}
-				checkedChildren="🌜"
-				unCheckedChildren="🌞"
-			/> */}
 		</div>
 
 		// </Sider>

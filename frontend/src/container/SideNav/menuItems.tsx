@@ -1,8 +1,4 @@
-import {
-	DeploymentUnitOutlined,
-	RocketOutlined,
-	SearchOutlined,
-} from '@ant-design/icons';
+import { RocketOutlined } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
 import {
 	AreaChart,
@@ -17,9 +13,9 @@ import {
 	Settings,
 } from 'lucide-react';
 
-import { SidebarMenu } from './sideNav.types';
+import { SidebarItem } from './sideNav.types';
 
-const menuItems: SidebarMenu[] = [
+const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.GET_STARTED,
 		label: 'Get Started',
@@ -39,18 +35,6 @@ const menuItems: SidebarMenu[] = [
 		key: ROUTES.LOGS_EXPLORER,
 		label: 'Logs',
 		icon: <ScrollText size={16} />,
-		children: [
-			{
-				key: ROUTES.LOGS_EXPLORER,
-				icon: <SearchOutlined />,
-				label: 'Logs Explorer',
-			},
-			{
-				key: ROUTES.LOGS_PIPELINES,
-				icon: <DeploymentUnitOutlined />,
-				label: 'Logs Pipelines',
-			},
-		],
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,

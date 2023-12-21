@@ -7,20 +7,17 @@ import { SidebarItem } from '../sideNav.types';
 export default function NavItem({
 	item,
 	isActive,
-	onClickHandler,
+	onClick,
 }: {
 	item: SidebarItem;
 	isActive: boolean;
-	onClickHandler: () => void;
+	onClick: () => void;
 }): JSX.Element {
 	const { label, icon } = item;
 
 	return (
 		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-		<div
-			className={cx('nav-item', isActive ? 'active' : '')}
-			onClick={onClickHandler}
-		>
+		<div className={cx('nav-item', isActive ? 'active' : '')} onClick={onClick}>
 			<div className="nav-item-icon">{icon}</div>
 
 			<div className="nav-item-label">{label}</div>
