@@ -54,7 +54,7 @@ function OnboardingContextProvider({
 	const [selectedFramework, setSelectedFramework] = useState<string>('');
 
 	const [selectedMethod, setSelectedMethod] = useState(
-		OnboardingMethods.RECOMMENDED_STEPS,
+		OnboardingMethods.QUICK_START,
 	);
 
 	const [
