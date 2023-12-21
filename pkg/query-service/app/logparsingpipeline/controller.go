@@ -171,13 +171,8 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", model.InternalError(multierr.Combine(errs...))
 	}
 
-	processors, procNames, err := PreparePipelineProcessor(pipelines)
-	if err != nil {
-		return nil, "", model.BadRequest(errors.Wrap(err, "could not prepare otel collector processors for log pipelines"))
-	}
-
 	updatedConf, apiErr := GenerateCollectorConfigWithPipelines(
-		currentConfYaml, processors, procNames,
+		currentConfYaml, pipelines,
 	)
 	if apiErr != nil {
 		return nil, "", model.WrapApiError(apiErr, "could not marshal yaml for updated conf")

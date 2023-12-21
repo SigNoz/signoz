@@ -147,13 +147,13 @@ function LogsExplorerViews(): JSX.Element {
 		[currentQuery, updateAllQueriesOperators],
 	);
 
-	const listChartData = useGetExplorerQueryRange(
-		listChartQuery,
-		PANEL_TYPES.TIME_SERIES,
-		{
-			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
-		},
-	);
+	const {
+		data: listChartData,
+		isFetching: isFetchingListChartData,
+		isLoading: isLoadingListChartData,
+	} = useGetExplorerQueryRange(listChartQuery, PANEL_TYPES.TIME_SERIES, {
+		enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
+	});
 
 	const { data, isFetching, isError } = useGetExplorerQueryRange(
 		requestData,
@@ -445,12 +445,8 @@ function LogsExplorerViews(): JSX.Element {
 		if (!stagedQuery) return [];
 
 		if (panelType === PANEL_TYPES.LIST) {
-			if (
-				listChartData &&
-				listChartData.data &&
-				listChartData.data.payload.data.result.length > 0
-			) {
-				return listChartData.data.payload.data.result;
+			if (listChartData && listChartData.payload.data.result.length > 0) {
+				return listChartData.payload.data.result;
 			}
 			return [];
 		}
@@ -472,7 +468,10 @@ function LogsExplorerViews(): JSX.Element {
 
 	return (
 		<>
-			<LogsExplorerChart isLoading={isFetching} data={chartData} />
+			<LogsExplorerChart
+				isLoading={isFetchingListChartData || isLoadingListChartData}
+				data={chartData}
+			/>
 			{stagedQuery && (
 				<ActionsWrapper>
 					<ExportPanel

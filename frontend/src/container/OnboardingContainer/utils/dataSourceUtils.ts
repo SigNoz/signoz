@@ -94,6 +94,11 @@ const supportedLanguages = [
 		id: 'rails',
 		imgURL: `Logos/rails.png`,
 	},
+	{
+		name: '.NET',
+		id: 'dotnet',
+		imgURL: `Logos/dotnet.png`,
+	},
 ];
 
 export const defaultLogsType = {
@@ -137,6 +142,26 @@ const supportedLogsTypes = [
 		name: 'LogStash',
 		id: 'logStash',
 		imgURL: `Logos/logstash.svg`,
+	},
+	{
+		name: 'Heroku',
+		id: 'heroku',
+		imgURL: `Logos/heroku.png`,
+	},
+	{
+		name: 'Vercel',
+		id: 'vercel',
+		imgURL: `Logos/vercel.png`,
+	},
+	{
+		name: 'HTTP',
+		id: 'http',
+		imgURL: `Logos/http.png`,
+	},
+	{
+		name: 'Cloudwatch',
+		id: 'cloudwatch',
+		imgURL: `Logos/cloudwatch.png`,
 	},
 ];
 
@@ -188,7 +213,8 @@ export const getSupportedFrameworks = ({
 
 	if (
 		(moduleID === ModulesMap.APM && dataSourceName === 'go') ||
-		(moduleID === ModulesMap.APM && dataSourceName === 'rails')
+		(moduleID === ModulesMap.APM && dataSourceName === 'rails') ||
+		(moduleID === ModulesMap.APM && dataSourceName === '.NET')
 	) {
 		return [];
 	}
@@ -213,7 +239,8 @@ export const hasFrameworks = ({
 		moduleID === ModulesMap.LogsManagement ||
 		moduleID === ModulesMap.InfrastructureMonitoring ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'go') ||
-		(moduleID === ModulesMap.APM && dataSourceName === 'rails')
+		(moduleID === ModulesMap.APM && dataSourceName === 'rails') ||
+		(moduleID === ModulesMap.APM && dataSourceName === '.NET')
 	) {
 		return false;
 	}

@@ -3423,6 +3423,26 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 	return &tagsInfo, nil
 }
 
+// remove this after sometime
+func removeUnderscoreDuplicateFields(fields []model.LogField) []model.LogField {
+	lookup := map[string]model.LogField{}
+	for _, v := range fields {
+		lookup[v.Name+v.DataType] = v
+	}
+
+	for k := range lookup {
+		if strings.Contains(k, ".") {
+			delete(lookup, strings.ReplaceAll(k, ".", "_"))
+		}
+	}
+
+	updatedFields := []model.LogField{}
+	for _, v := range lookup {
+		updatedFields = append(updatedFields, v)
+	}
+	return updatedFields
+}
+
 // GetDashboardsInfo returns analytics data for dashboards
 func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
 	dashboardsInfo := model.DashboardsInfo{}
@@ -3540,6 +3560,10 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
 
+	//remove this code after sometime
+	attributes = removeUnderscoreDuplicateFields(attributes)
+	resources = removeUnderscoreDuplicateFields(resources)
+
 	statements := []model.ShowCreateTableStatement{}
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTable)
 	err = r.db.Select(ctx, &statements, query)
@@ -3587,66 +3611,48 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		valueColName := fmt.Sprintf("%s_%s_value", field.Type, strings.ToLower(field.DataType))
 
 		// create materialized column
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s[indexOf(%s, '%s')] CODEC(ZSTD(1))",
-			r.logsDB, r.logsLocalTable,
-			r.cluster,
-			colname, field.DataType,
-			valueColName,
-			keyColName,
-			field.Name,
-		)
-		err := r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-		}
 
-		defaultValueDistributed := "-1"
-		if strings.ToLower(field.DataType) == "bool" {
-			defaultValueDistributed = "false"
-			field.IndexType = "set(2)"
-		}
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s",
-			r.logsDB, r.logsTable,
-			r.cluster,
-			colname, field.DataType,
-			defaultValueDistributed,
-		)
-		err = r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-		}
+		for _, table := range []string{r.logsLocalTable, r.logsTable} {
+			q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s DEFAULT %s[indexOf(%s, '%s')] CODEC(ZSTD(1))"
+			query := fmt.Sprintf(q,
+				r.logsDB, table,
+				r.cluster,
+				colname, field.DataType,
+				valueColName,
+				keyColName,
+				field.Name,
+			)
+			err := r.db.Exec(ctx, query)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
 
-		// create exists column
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
-			r.logsDB, r.logsLocalTable,
-			r.cluster,
-			colname,
-			keyColName,
-			field.Name,
-		)
-		err = r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-		}
-
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED false",
-			r.logsDB, r.logsTable,
-			r.cluster,
-			colname,
-		)
-		err = r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool DEFAULT if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
+				r.logsDB, table,
+				r.cluster,
+				colname,
+				keyColName,
+				field.Name,
+			)
+			err = r.db.Exec(ctx, query)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
 		}
 
 		// create the index
+		if strings.ToLower(field.DataType) == "bool" {
+			// there is no point in creating index for bool attributes as the cardinality is just 2
+			return nil
+		}
+
 		if field.IndexType == "" {
 			field.IndexType = constants.DefaultLogSkipIndexType
 		}
 		if field.IndexGranularity == 0 {
 			field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
 		}
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d",
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d",
 			r.logsDB, r.logsLocalTable,
 			r.cluster,
 			colname,
@@ -3654,7 +3660,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			field.IndexType,
 			field.IndexGranularity,
 		)
-		err = r.db.Exec(ctx, query)
+		err := r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
@@ -4571,11 +4577,63 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 				row[columnNames[idx]] = v
 			}
 		}
+
+		// remove duplicate _ attributes for logs.
+		// remove this function after a month
+		removeDuplicateUnderscoreAttributes(row)
+
 		rowList = append(rowList, &v3.Row{Timestamp: t, Data: row})
 	}
 
 	return rowList, nil
 
+}
+
+func removeDuplicateUnderscoreAttributes(row map[string]interface{}) {
+	if val, ok := row["attributes_int64"]; ok {
+		attributes := val.(*map[string]int64)
+		for key := range *attributes {
+			if strings.Contains(key, ".") {
+				uKey := strings.ReplaceAll(key, ".", "_")
+				delete(*attributes, uKey)
+			}
+		}
+
+	}
+
+	if val, ok := row["attributes_float64"]; ok {
+		attributes := val.(*map[string]float64)
+		for key := range *attributes {
+			if strings.Contains(key, ".") {
+				uKey := strings.ReplaceAll(key, ".", "_")
+				delete(*attributes, uKey)
+			}
+		}
+
+	}
+
+	if val, ok := row["attributes_bool"]; ok {
+		attributes := val.(*map[string]bool)
+		for key := range *attributes {
+			if strings.Contains(key, ".") {
+				uKey := strings.ReplaceAll(key, ".", "_")
+				delete(*attributes, uKey)
+			}
+		}
+
+	}
+	for _, k := range []string{"attributes_string", "resources_string"} {
+		if val, ok := row[k]; ok {
+			attributes := val.(*map[string]string)
+			for key := range *attributes {
+				if strings.Contains(key, ".") {
+					uKey := strings.ReplaceAll(key, ".", "_")
+					delete(*attributes, uKey)
+				}
+			}
+
+		}
+	}
 }
 func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	rows, err := r.db.Query(ctx, "SELECT 1")
