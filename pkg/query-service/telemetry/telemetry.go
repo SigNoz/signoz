@@ -265,7 +265,10 @@ func createTelemetry() {
 							"metricBasedAlerts": alertsInfo.MetricBasedAlerts,
 							"tracesBasedAlerts": alertsInfo.TracesBasedAlerts,
 						}
-						telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
+						// send event only if there are dashboards or alerts
+ 						if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 {
+							telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
+						}
 					} else {
 						telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
 					}
