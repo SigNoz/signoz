@@ -199,6 +199,12 @@ func createTelemetry() {
 		for {
 			select {
 			case <-activeUserTicker.C:
+				if telemetry.activeUser["logs"] != 0 {
+					getLogsInfoInLastHeartBeatInterval, err := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(context.Background())
+					if err != nil && getLogsInfoInLastHeartBeatInterval == 0 {
+						telemetry.activeUser["logs"] = 0
+					}
+				}
 				if (telemetry.activeUser["traces"] != 0) || (telemetry.activeUser["metrics"] != 0) || (telemetry.activeUser["logs"] != 0) {
 					telemetry.activeUser["any"] = 1
 				}

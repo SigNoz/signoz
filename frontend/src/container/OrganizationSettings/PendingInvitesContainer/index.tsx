@@ -201,6 +201,7 @@ function PendingInvitesContainer(): JSX.Element {
 							email: member.email,
 							name: member.name,
 							role: member.role,
+							frontendBaseUrl: window.location.origin,
 						});
 
 						if (statusCode !== 200) {
