@@ -92,7 +92,7 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 	}, au.Email)
 
 	// send email if SMTP is enabled
-	if os.Getenv("SMTP_ENABLED") == "true" {
+	if os.Getenv("SMTP_ENABLED") == "true" && req.FrontendBaseUrl != "" {
 		inviteEmail(req, au, token)
 	}
 
@@ -122,7 +122,7 @@ func inviteEmail(req *model.InviteRequest, au *model.UserPayload, token string) 
 
 	err = smtp.SendEmail(
 		req.Email,
-		"SigNoz Invitation by "+au.Name,
+		au.Name+" has invited you to their team in SigNoz",
 		body.String(),
 	)
 	if err != nil {
