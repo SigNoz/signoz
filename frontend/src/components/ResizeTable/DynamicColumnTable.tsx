@@ -1,10 +1,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './DynamicColumnTable.syles.scss';
 
-import { SettingOutlined } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps, Switch } from 'antd';
+import { InfoCircleFilled, SettingOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Flex, MenuProps, Switch, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import { memo, useEffect, useState } from 'react';
+import ROUTES from 'constants/routes';
+import { memo, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-use';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import ResizeTable from './ResizeTable';
@@ -14,6 +16,9 @@ import {
 	getVisibleColumns,
 	setVisibleColumns,
 } from './utils';
+
+const upgradeURL =
+	'https://signoz.io/docs/operate/migration/upgrade-0.36/#updating-query-payload-dashboards-and-alerts';
 
 function DynamicColumnTable({
 	tablesource,
@@ -81,20 +86,44 @@ function DynamicColumnTable({
 			type: 'checkbox',
 		})) || [];
 
+	const location = useLocation();
+
+	const isDashboardOrAlertsPage = useMemo(
+		() =>
+			location.pathname === ROUTES.LIST_ALL_ALERT ||
+			location.pathname === ROUTES.ALL_DASHBOARD,
+		[location.pathname],
+	);
+
 	return (
 		<div className="DynamicColumnTable">
 			{dynamicColumns && (
-				<Dropdown
-					getPopupContainer={popupContainer}
-					menu={{ items }}
-					trigger={['click']}
-				>
-					<Button
-						className="dynamicColumnTable-button"
-						size="middle"
-						icon={<SettingOutlined />}
-					/>
-				</Dropdown>
+				<Flex justify="flex-end" align="center" gap={16}>
+					{isDashboardOrAlertsPage && (
+						<Typography.Text>
+							<InfoCircleFilled /> We have made some changes in the naming convention
+							of attributes. If you have built a log-based dashboard and alert before
+							21 Dec, please follow this
+							<a href={upgradeURL} target="_blank" type="link" rel="noreferrer">
+								{' '}
+								guide{' '}
+							</a>
+							or reach out to us for support.
+						</Typography.Text>
+					)}
+
+					<Dropdown
+						getPopupContainer={popupContainer}
+						menu={{ items }}
+						trigger={['click']}
+					>
+						<Button
+							className="dynamicColumnTable-button"
+							size="middle"
+							icon={<SettingOutlined />}
+						/>
+					</Dropdown>
+				</Flex>
 			)}
 
 			<ResizeTable
