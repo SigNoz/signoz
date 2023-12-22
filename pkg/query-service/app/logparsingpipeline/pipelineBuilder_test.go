@@ -686,8 +686,11 @@ func TestMembershipOpForKeysWithDotsWorks(t *testing.T) {
 	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
 	require.Equal(1, len(result))
 	require.Equal("GET", result[0].Attributes_string["test.http.method"])
-	require.Nil(result[0].Attributes_string["http.method"])
-	require.Nil(result[0].Attributes_string["order.pids.pid0"])
+
+	_, methodAttrExists := result[0].Attributes_string["http.method"]
+	require.False(methodAttrExists)
+
+	require.Equal("pid0", result[0].Attributes_string["order.pids.pid0"])
 }
 
 func TestTemporaryWorkaroundForSupportingAttribsContainingDots(t *testing.T) {

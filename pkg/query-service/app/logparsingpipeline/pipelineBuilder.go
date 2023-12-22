@@ -2,8 +2,10 @@ package logparsingpipeline
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
+	"github.com/antonmedv/expr"
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
@@ -98,6 +100,27 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 					operator.ParseFrom,
 				)
 
+			} else if operator.Type == "add" {
+				if strings.HasPrefix(operator.Value, "EXPR(") && strings.HasSuffix(operator.Value, ")") {
+					// TODO(Raj): Make this more comprehensive
+					expression := strings.TrimSuffix(strings.TrimPrefix(operator.Value, "EXPR("), ")")
+					expressionParts := strings.Split(expression, " ")
+					ifExpr := ""
+					for _, ep := range expressionParts {
+						if strings.HasPrefix(ep, "attributes") || strings.HasPrefix(ep, "resources") {
+							checkExpr := exprCheckingFieldIsNotNil(ep)
+							if ifExpr == "" {
+								ifExpr = checkExpr
+							} else {
+								ifExpr = fmt.Sprintf("%s && %s", ifExpr, checkExpr)
+							}
+						}
+					}
+					if ifExpr != "" {
+						operator.If = ifExpr
+					}
+				}
+
 			} else if operator.Type == "move" || operator.Type == "copy" {
 				operator.If = exprCheckingFieldIsNotNil(operator.From)
 
@@ -165,7 +188,66 @@ func cleanTraceParser(operator *PipelineOperator) {
 // Generates an expression that can be used to validate
 // that a log record contains `fieldPath`
 func exprCheckingFieldIsNotNil(fieldPath string) string {
-	pathParts := strings.Split(fieldPath, ".")
-	path := strings.Join(pathParts, "?.")
-	return fmt.Sprintf("%s != nil", path)
+	check, err := fieldNotNilCheck(fieldPath)
+	if err != nil {
+		panic(err)
+	}
+	return check
+}
+
+func fieldNotNilCheck(fieldPath string) (string, error) {
+	_, err := expr.Compile(fieldPath)
+	if err != nil {
+		return "", err
+	}
+
+	parts := rSplitAfterN(fieldPath, "[", 2)
+	if len(parts) < 2 {
+		pathParts := strings.Split(fieldPath, ".")
+		path := strings.Join(pathParts, "?.")
+		return fmt.Sprintf("%s != nil", path), nil
+	}
+
+	suffixParts := strings.SplitAfter(parts[1], "]")
+	suffixPath := suffixParts[0]
+	if len(suffixParts) > 1 {
+		suffixPath = fmt.Sprintf(
+			"%s%s", suffixParts[0], strings.ReplaceAll(suffixParts[1], ".", "?."),
+		)
+	}
+	suffixCheck := fmt.Sprintf("%s%s != nil", parts[0], suffixPath)
+	if !(strings.Contains(suffixParts[0], "'") || strings.Contains(suffixParts[0], `"`)) {
+		// This is a slice indexing op
+		suffixCheck = fmt.Sprintf(
+			"len(%s) > %s && %s",
+			parts[0], suffixParts[0][1:len(suffixParts[0])-1], suffixCheck,
+		)
+	}
+
+	prefixCheck, err := fieldNotNilCheck(parts[0])
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s && %s", prefixCheck, suffixCheck), nil
+}
+
+// Split `str` after `sep` `N` times from the right.
+// rSplitAfterN("a.b.c.d", ".", 2) -> ["a.b", "c", "d"]
+func rSplitAfterN(str string, sep string, n int) []string {
+	reversedStr := reverse(str)
+	parts := strings.SplitAfterN(reversedStr, sep, n)
+	slices.Reverse(parts)
+	result := []string{}
+	for _, p := range parts {
+		result = append(result, reverse(p))
+	}
+	return result
+}
+
+func reverse(s string) (result string) {
+	for _, v := range s {
+		result = string(v) + result
+	}
+	return
 }
