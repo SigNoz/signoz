@@ -121,7 +121,8 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		const errorReport = JSON.parse(errorDetail.exceptionStacktrace || '{}');
 		setSourceCodeLoading(true);
 		axios
-			.post('http://localhost:9331/sourcemap/searchErrDetail', {
+			// .post('http://localhost:9331/sourcemap/searchErrDetail', {
+			.post('https://pulse.tb1.sayweee.net/sourcemap/searchErrDetail', {
 				fileName: errorReport.fileName,
 				line: errorReport.lineNumber || errorReport.line,
 				column: errorReport.columnNumber || errorReport.column,
@@ -206,7 +207,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				}}
 			>
 				<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
-				{errorDetail.exceptionType === 'JS_ERROR' ? (
+				{['Unhandled_Rejection', 'JS_ERROR'].includes(errorDetail.exceptionType) ? (
 					<Button
 						onClick={clickCheckSourceDetail}
 						type="primary"
