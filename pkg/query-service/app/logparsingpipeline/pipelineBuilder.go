@@ -81,12 +81,10 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 			}
 
 			if operator.Type == "regex_parser" {
-				parseFromParts := strings.Split(operator.ParseFrom, ".")
-				parseFromPath := strings.Join(parseFromParts, "?.")
 				operator.If = fmt.Sprintf(
-					`%s != nil && %s matches "%s"`,
-					parseFromPath,
-					parseFromPath,
+					`%s && %s matches "%s"`,
+					exprCheckingFieldIsNotNil(operator.ParseFrom),
+					operator.ParseFrom,
 					strings.ReplaceAll(
 						strings.ReplaceAll(operator.Regex, `\`, `\\`),
 						`"`, `\"`,
@@ -94,28 +92,23 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				)
 
 			} else if operator.Type == "json_parser" {
-				parseFromParts := strings.Split(operator.ParseFrom, ".")
-				parseFromPath := strings.Join(parseFromParts, "?.")
-				operator.If = fmt.Sprintf(`%s != nil && %s matches "^\\s*{.*}\\s*$"`, parseFromPath, parseFromPath)
+				operator.If = fmt.Sprintf(
+					`%s && %s matches "^\\s*{.*}\\s*$"`,
+					exprCheckingFieldIsNotNil(operator.ParseFrom),
+					operator.ParseFrom,
+				)
 
 			} else if operator.Type == "move" || operator.Type == "copy" {
-				fromParts := strings.Split(operator.From, ".")
-				fromPath := strings.Join(fromParts, "?.")
-				operator.If = fmt.Sprintf(`%s != nil`, fromPath)
+				operator.If = exprCheckingFieldIsNotNil(operator.From)
 
 			} else if operator.Type == "remove" {
-				fieldParts := strings.Split(operator.Field, ".")
-				fieldPath := strings.Join(fieldParts, "?.")
-				operator.If = fmt.Sprintf(`%s != nil`, fieldPath)
+				operator.If = exprCheckingFieldIsNotNil(operator.Field)
 
 			} else if operator.Type == "trace_parser" {
 				cleanTraceParser(&operator)
 
 			} else if operator.Type == "time_parser" {
-				parseFromParts := strings.Split(operator.ParseFrom, ".")
-				parseFromPath := strings.Join(parseFromParts, "?.")
-
-				operator.If = fmt.Sprintf(`%s != nil`, parseFromPath)
+				operator.If = exprCheckingFieldIsNotNil(operator.ParseFrom)
 
 				if operator.LayoutType == "strptime" {
 					regex, err := RegexForStrptimeLayout(operator.Layout)
@@ -124,7 +117,7 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 					}
 
 					operator.If = fmt.Sprintf(
-						`%s && %s matches "%s"`, operator.If, parseFromPath, regex,
+						`%s && %s matches "%s"`, operator.If, operator.ParseFrom, regex,
 					)
 				} else if operator.LayoutType == "epoch" {
 					valueRegex := `^\\s*[0-9]+\\s*$`
@@ -133,19 +126,18 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 					}
 
 					operator.If = fmt.Sprintf(
-						`%s && string(%s) matches "%s"`, operator.If, parseFromPath, valueRegex,
+						`%s && string(%s) matches "%s"`, operator.If, operator.ParseFrom, valueRegex,
 					)
 
 				}
 				// TODO(Raj): Maybe add support for gotime too eventually
 
 			} else if operator.Type == "severity_parser" {
-				parseFromParts := strings.Split(operator.ParseFrom, ".")
-				parseFromPath := strings.Join(parseFromParts, "?.")
-
 				operator.If = fmt.Sprintf(
-					`%s != nil && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
-					parseFromPath, parseFromPath, parseFromPath, parseFromPath, parseFromPath,
+					`%s && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
+					exprCheckingFieldIsNotNil(operator.ParseFrom),
+					operator.ParseFrom, operator.ParseFrom,
+					operator.ParseFrom, operator.ParseFrom,
 				)
 
 			}
@@ -168,4 +160,12 @@ func cleanTraceParser(operator *PipelineOperator) {
 	if operator.TraceFlags != nil && len(operator.TraceFlags.ParseFrom) < 1 {
 		operator.TraceFlags = nil
 	}
+}
+
+// Generates an expression that can be used to validate
+// that a log record contains `fieldPath`
+func exprCheckingFieldIsNotNil(fieldPath string) string {
+	pathParts := strings.Split(fieldPath, ".")
+	path := strings.Join(pathParts, "?.")
+	return fmt.Sprintf("%s != nil", path)
 }
