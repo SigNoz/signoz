@@ -608,6 +608,88 @@ func TestAttributePathsContainingDollarDoNotBreakCollector(t *testing.T) {
 	require.Equal("test", result[0].Attributes_string["$test1"])
 }
 
+func TestMembershipOpForKeysWithDotsWorks(t *testing.T) {
+	require := require.New(t)
+
+	testPipeline := Pipeline{
+		OrderId: 1,
+		Name:    "pipeline1",
+		Alias:   "pipeline1",
+		Enabled: true,
+		Filter: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "http.method",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: "=",
+					Value:    "GET",
+				},
+			},
+		},
+		Config: []PipelineOperator{
+			{
+				ID:      "move",
+				Type:    "move",
+				Enabled: true,
+				Name:    "move",
+				From:    `attributes["http.method"]`,
+				To:      `attributes["test.http.method"]`,
+			}, {
+				ID:        "json",
+				Type:      "json_parser",
+				Enabled:   true,
+				Name:      "json",
+				ParseFrom: `attributes["order.products"]`,
+				ParseTo:   `attributes["order.products"]`,
+			}, {
+				ID:      "move1",
+				Type:    "move",
+				Enabled: true,
+				Name:    "move1",
+				From:    `attributes["order.products"].ids`,
+				To:      `attributes["order.product_ids"]`,
+			}, {
+				ID:      "add",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add",
+				Field:   `attributes["order.pids"].missing_field`,
+				Value:   `EXPR(attributes["order.product_ids"][4].missing_field)`,
+			}, {
+				ID:      "add2",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add2",
+				Field:   `attributes["order.pids.pid0"]`,
+				Value:   `EXPR(attributes["order.product_ids"][0])`,
+			},
+		},
+	}
+
+	testLogs := []model.SignozLog{
+		makeTestSignozLog("test log", map[string]interface{}{
+			"http.method":    "GET",
+			"order.products": `{"ids": ["pid0", "pid1"]}`,
+		}),
+	}
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(),
+		[]Pipeline{testPipeline},
+		testLogs,
+	)
+	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+	require.Equal(1, len(result))
+	require.Equal("GET", result[0].Attributes_string["test.http.method"])
+	require.Nil(result[0].Attributes_string["http.method"])
+	require.Nil(result[0].Attributes_string["order.pids.pid0"])
+}
+
 func TestTemporaryWorkaroundForSupportingAttribsContainingDots(t *testing.T) {
 	// TODO(Raj): Remove this after dots are supported
 
