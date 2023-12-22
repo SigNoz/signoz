@@ -13,7 +13,7 @@ function Services(): JSX.Element {
 
 	return (
 		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-			<Container>
+			<Container style={{ marginTop: 0 }}>
 				{isSpanMetricEnabled ? <ServiceMetrics /> : <ServiceTraces />}
 			</Container>
 		</ErrorBoundary>
