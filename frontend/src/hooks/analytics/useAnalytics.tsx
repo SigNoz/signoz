@@ -6,9 +6,12 @@ import { extractDomain } from 'utils/app';
 const useAnalytics = (): any => {
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 
+	// Segment Page View - analytics.page([category], [name], [properties], [options], [callback]);
 	const trackPageView = (pageName: string): void => {
 		if (user && user.email) {
-			window.analytics.page(pageName);
+			window.analytics.page(null, pageName, {
+				userId: user.email,
+			});
 		}
 	};
 
@@ -22,6 +25,9 @@ const useAnalytics = (): any => {
 					groupId: extractDomain(user?.email),
 				},
 			};
+
+			const updatedPropertes = { ...properties };
+			updatedPropertes.userId = user.email;
 			window.analytics.track(eventName, properties, context);
 		}
 	};

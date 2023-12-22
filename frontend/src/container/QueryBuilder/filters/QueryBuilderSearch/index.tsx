@@ -28,6 +28,7 @@ import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
 import { PLACEHOLDER } from './constant';
+import OptionRenderer from './OptionRenderer';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	getOperatorValue,
@@ -226,7 +227,11 @@ function QueryBuilderSearch({
 		>
 			{finalOptions.map((option) => (
 				<Select.Option key={option.label} value={option.value}>
-					{option.label}
+					<OptionRenderer
+						label={option.label}
+						value={option.value}
+						dataType={option.dataType || ''}
+					/>
 					{option.selected && <StyledCheckOutlined />}
 				</Select.Option>
 			))}
