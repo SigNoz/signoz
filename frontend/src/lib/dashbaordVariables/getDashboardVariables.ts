@@ -20,9 +20,13 @@ export const getDashboardVariables = (
 			SIGNOZ_START_TIME: parseInt(start, 10) * 1e3,
 			SIGNOZ_END_TIME: parseInt(end, 10) * 1e3,
 		};
-		Object.keys(variables).forEach((key) => {
-			variablesTuple[key] = variables[key].selectedValue;
+
+		Object.entries(variables).forEach(([, value]) => {
+			if (value?.name) {
+				variablesTuple[value.name] = value?.selectedValue;
+			}
 		});
+
 		return variablesTuple;
 	} catch (e) {
 		console.error(e);

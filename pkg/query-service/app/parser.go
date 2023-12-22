@@ -1021,13 +1021,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 		queryRangeParams.Start = queryRangeParams.End
 	}
 
-	// round up the end to neaerest multiple
-	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		end := (queryRangeParams.End) / 1000
-		step := queryRangeParams.Step
-		queryRangeParams.End = (end / step * step) * 1000
-	}
-
 	// replace go template variables in clickhouse query
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
 		for _, chQuery := range queryRangeParams.CompositeQuery.ClickHouseQueries {
