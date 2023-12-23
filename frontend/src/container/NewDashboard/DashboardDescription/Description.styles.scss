@@ -1,0 +1,7 @@
+.dashboard-description {
+	display: -webkit-box;
+	-webkit-line-clamp: 2; /* Show up to 2 lines */
+	-webkit-box-orient: vertical;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}

@@ -58,6 +58,18 @@ var jsonLogOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotHas:          "NOT has(%s, %s)",
 }
 
+func getPath(keyArr []string) string {
+	path := []string{}
+	for i := 0; i < len(keyArr); i++ {
+		if strings.HasSuffix(keyArr[i], "[*]") {
+			path = append(path, "\""+strings.TrimSuffix(keyArr[i], "[*]")+"\""+"[*]")
+		} else {
+			path = append(path, "\""+keyArr[i]+"\"")
+		}
+	}
+	return strings.Join(path, ".")
+}
+
 func getJSONFilterKey(key v3.AttributeKey, op v3.FilterOperator, isArray bool) (string, error) {
 	keyArr := strings.Split(key.Key, ".")
 	if len(keyArr) < 2 {
@@ -79,12 +91,14 @@ func getJSONFilterKey(key v3.AttributeKey, op v3.FilterOperator, isArray bool) (
 		return "", fmt.Errorf("unsupported dataType for JSON: %s", key.DataType)
 	}
 
+	path := getPath(keyArr[1:])
+
 	if isArray {
-		return fmt.Sprintf("JSONExtract(JSON_QUERY(%s, '$.%s'), '%s')", keyArr[0], strings.Join(keyArr[1:], "."), dataType), nil
+		return fmt.Sprintf("JSONExtract(JSON_QUERY(%s, '$.%s'), '%s')", keyArr[0], path, dataType), nil
 	}
 
 	// for non array
-	keyname := fmt.Sprintf("JSON_VALUE(%s, '$.%s')", keyArr[0], strings.Join(keyArr[1:], "."))
+	keyname := fmt.Sprintf("JSON_VALUE(%s, '$.%s')", keyArr[0], path)
 	if dataType != STRING {
 		keyname = fmt.Sprintf("JSONExtract(%s, '%s')", keyname, dataType)
 	}
@@ -125,7 +139,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 	if logsOp, ok := jsonLogOperators[op]; ok {
 		switch op {
 		case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
-			filter = fmt.Sprintf(logsOp, key, strings.Join(strings.Split(item.Key.Key, ".")[1:], "."))
+			filter = fmt.Sprintf(logsOp, key, getPath(strings.Split(item.Key.Key, ".")[1:]))
 		case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex, v3.FilterOperatorHas, v3.FilterOperatorNotHas:
 			fmtVal := utils.ClickHouseFormattedValue(value)
 			filter = fmt.Sprintf(logsOp, key, fmtVal)
@@ -141,7 +155,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 
 	// add exists check for non array items as default values of int/float/bool will corrupt the results
 	if !isArray && !(item.Operator == v3.FilterOperatorExists || item.Operator == v3.FilterOperatorNotExists) {
-		existsFilter := fmt.Sprintf("JSON_EXISTS(body, '$.%s')", strings.Join(strings.Split(item.Key.Key, ".")[1:], "."))
+		existsFilter := fmt.Sprintf("JSON_EXISTS(body, '$.%s')", getPath(strings.Split(item.Key.Key, ".")[1:]))
 		filter = fmt.Sprintf("%s AND %s", existsFilter, filter)
 	}
 

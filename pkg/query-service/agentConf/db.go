@@ -12,6 +12,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf/sqlite"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
 )
 
 func init() {
@@ -49,8 +50,8 @@ func (r *Repo) GetConfigHistory(
 		disabled, 
 		deploy_status, 
 		deploy_result,
-		last_hash,
-		last_config 
+		coalesce(last_hash, '') as last_hash,
+		coalesce(last_config, '{}') as last_config
 		FROM agent_config_versions AS v
 		WHERE element_type = $1
 		ORDER BY created_at desc, version desc
@@ -59,6 +60,13 @@ func (r *Repo) GetConfigHistory(
 
 	if err != nil {
 		return nil, model.InternalError(err)
+	}
+
+	incompleteStatuses := []DeployStatus{DeployInitiated, Deploying}
+	for idx := 1; idx < len(c); idx++ {
+		if slices.Contains(incompleteStatuses, c[idx].DeployStatus) {
+			c[idx].DeployStatus = DeployStatusUnknown
+		}
 	}
 
 	return c, nil
@@ -81,8 +89,8 @@ func (r *Repo) GetConfigVersion(
 		disabled, 
 		deploy_status, 
 		deploy_result,
-		last_hash,
-		last_config
+		coalesce(last_hash, '') as last_hash,
+		coalesce(last_config, '{}') as last_config
 		FROM agent_config_versions v 
 		WHERE element_type = $1 
 		AND version = $2`, typ, v)

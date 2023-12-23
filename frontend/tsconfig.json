@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		"sourceMap": true,
 		"outDir": "./dist/",
 		"noImplicitAny": true,
 		"module": "esnext",
@@ -20,11 +21,12 @@
 		"baseUrl": "./src",
 		"downlevelIteration": true,
 		"plugins": [{ "name": "typescript-plugin-css-modules" }],
-		"types": ["node", "jest"]
+		"types": ["node", "jest"],
 	},
 	"exclude": ["node_modules"],
 	"include": [
 		"./src",
+		"./src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts",
 		"./babel.config.js",
 		"./jest.config.ts",
 		"./.eslintrc.js",

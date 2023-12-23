@@ -9,6 +9,7 @@ import getUsage from 'api/billing/getUsage';
 import manageCreditCardApi from 'api/billing/manage';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import useAxiosError from 'hooks/useAxiosError';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
@@ -20,7 +21,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
-import { getFormattedDate } from 'utils/timeUtils';
+import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 interface DataType {
 	key: string;
@@ -98,19 +99,6 @@ const dummyColumns: ColumnsType<DataType> = [
 	},
 ];
 
-export const getRemainingDays = (billingEndDate: number): number => {
-	// Convert Epoch timestamps to Date objects
-	const startDate = new Date(); // Convert seconds to milliseconds
-	const endDate = new Date(billingEndDate * 1000); // Convert seconds to milliseconds
-
-	// Calculate the time difference in milliseconds
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	const timeDifference = endDate - startDate;
-
-	return Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-};
-
 export default function BillingContainer(): JSX.Element {
 	const daysRemainingStr = 'days remaining in your billing period.';
 	const [headerText, setHeaderText] = useState('');
@@ -122,9 +110,11 @@ export default function BillingContainer(): JSX.Element {
 	const [data, setData] = useState<any[]>([]);
 	const billCurrency = '$';
 
+	const { trackEvent } = useAnalytics();
+
 	const { isFetching, data: licensesData, error: licenseError } = useLicense();
 
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user, org } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { notifications } = useNotifications();
 
 	const handleError = useAxiosError();
@@ -314,18 +304,29 @@ export default function BillingContainer(): JSX.Element {
 
 	const handleBilling = useCallback(async () => {
 		if (isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription) {
+			trackEvent('Billing : Upgrade Plan', {
+				user,
+				org,
+			});
+
 			updateCreditCard({
 				licenseKey: activeLicense?.key || '',
 				successURL: window.location.href,
 				cancelURL: window.location.href,
 			});
 		} else {
+			trackEvent('Billing : Manage Billing', {
+				user,
+				org,
+			});
+
 			manageCreditCard({
 				licenseKey: activeLicense?.key || '',
 				successURL: window.location.href,
 				cancelURL: window.location.href,
 			});
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		activeLicense?.key,
 		isFreeTrial,
@@ -445,7 +446,12 @@ export default function BillingContainer(): JSX.Element {
 							</Typography.Text>
 						</Col>
 						<Col span={4} style={{ display: 'flex', justifyContent: 'flex-end' }}>
-							<Button type="primary" size="middle">
+							<Button
+								type="primary"
+								size="middle"
+								loading={isLoadingBilling || isLoadingManageBilling}
+								onClick={handleBilling}
+							>
 								Upgrade Plan
 							</Button>
 						</Col>

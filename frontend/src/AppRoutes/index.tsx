@@ -7,12 +7,14 @@ import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
 import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
+import { identity, pickBy } from 'lodash-es';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense, useEffect, useState } from 'react';
@@ -24,7 +26,6 @@ import AppActions from 'types/actions';
 import { UPDATE_FEATURE_FLAG_RESPONSE } from 'types/actions/app';
 import AppReducer, { User } from 'types/reducer/app';
 import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
-import { trackPageView } from 'utils/segmentAnalytics';
 
 import PrivateRoute from './Private';
 import defaultRoutes, { AppRoutes, SUPPORT_ROUTE } from './routes';
@@ -39,6 +40,8 @@ function App(): JSX.Element {
 	>((state) => state.app);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+
+	const { trackPageView } = useAnalytics();
 
 	const { hostname, pathname } = window.location;
 
@@ -90,13 +93,19 @@ function App(): JSX.Element {
 		const orgName =
 			org && Array.isArray(org) && org.length > 0 ? org[0].name : '';
 
+		const { name, email } = user;
+
 		const identifyPayload = {
-			email: user?.email,
-			name: user?.name,
+			email,
+			name,
 			company_name: orgName,
 			role,
+			source: 'signoz-ui',
 		};
-		const domain = extractDomain(user?.email);
+
+		const sanitizedIdentifyPayload = pickBy(identifyPayload, identity);
+
+		const domain = extractDomain(email);
 
 		const hostNameParts = hostname.split('.');
 
@@ -106,13 +115,14 @@ function App(): JSX.Element {
 			data_region: hostNameParts[1],
 			tenant_url: hostname,
 			company_domain: domain,
+			source: 'signoz-ui',
 		};
 
-		window.analytics.identify(user?.email, identifyPayload);
+		window.analytics.identify(email, sanitizedIdentifyPayload);
 
 		window.analytics.group(domain, groupTraits);
 
-		window.clarity('identify', user.email, user.name);
+		window.clarity('identify', email, name);
 	};
 
 	useEffect(() => {
@@ -148,6 +158,7 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		trackPageView(pathname);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [pathname]);
 
 	return (

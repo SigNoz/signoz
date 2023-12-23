@@ -7,7 +7,6 @@ import (
 	"math"
 	"reflect"
 	"sort"
-	"strconv"
 	"sync"
 	"text/template"
 	"time"
@@ -135,13 +134,6 @@ func (r *ThresholdRule) PreferredChannels() []string {
 	return r.preferredChannels
 }
 
-func (r *ThresholdRule) target() *float64 {
-	if r.ruleCondition == nil {
-		return nil
-	}
-	return r.ruleCondition.Target
-}
-
 func (r *ThresholdRule) targetVal() float64 {
 	if r.ruleCondition == nil || r.ruleCondition.Target == nil {
 		return 0
@@ -215,26 +207,6 @@ func (r *ThresholdRule) Labels() labels.BaseLabels {
 // Annotations returns the annotations of the alerting rule.
 func (r *ThresholdRule) Annotations() labels.BaseLabels {
 	return r.annotations
-}
-
-func (r *ThresholdRule) sample(alert *Alert, ts time.Time) Sample {
-	lb := labels.NewBuilder(r.labels)
-	alertLabels := alert.Labels.(labels.Labels)
-	for _, l := range alertLabels {
-		lb.Set(l.Name, l.Value)
-	}
-
-	lb.Set(labels.MetricNameLabel, alertMetricName)
-	lb.Set(labels.AlertNameLabel, r.name)
-	lb.Set(labels.AlertRuleIdLabel, r.ID())
-	lb.Set(labels.AlertStateLabel, alert.State.String())
-
-	s := Sample{
-		Metric: lb.Labels(),
-		Point:  Point{T: timestamp.FromTime(ts), V: 1},
-	}
-
-	return s
 }
 
 // GetEvaluationDuration returns the time in seconds it took to evaluate the alerting rule.
@@ -636,6 +608,16 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 func (r *ThresholdRule) prepareBuilderQueries(ts time.Time) (map[string]string, error) {
 	params := r.prepareQueryRange(ts)
+	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(params) {
+			// Note: Sending empty fields key because enrichment is only needed for json
+			// TODO: Add support for attribute enrichment later
+			logsv3.Enrich(params, map[string]v3.AttributeKey{})
+		}
+
+	}
+
 	runQueries, err := r.queryBuilder.PrepareQueries(params)
 
 	return runQueries, err
@@ -682,6 +664,54 @@ func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]strin
 	return queries, nil
 }
 
+func (r *ThresholdRule) GetSelectedQuery() string {
+
+	// The acutal query string is not relevant here
+	// we just need to know the selected query
+
+	var queries map[string]string
+	var err error
+
+	if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
+		queries, err = r.prepareBuilderQueries(time.Now())
+		if err != nil {
+			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare metric queries", zap.Error(err))
+			return ""
+		}
+	} else if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
+		queries, err = r.prepareClickhouseQueries(time.Now())
+		if err != nil {
+			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare clickhouse queries", zap.Error(err))
+			return ""
+		}
+	}
+
+	if r.ruleCondition != nil {
+		if r.ruleCondition.SelectedQuery != "" {
+			return r.ruleCondition.SelectedQuery
+		}
+
+		// The following logic exists for backward compatibility
+		// If there is no selected query, then
+		// - check if F1 is present, if yes, return F1
+		// - else return the query with max ascii value
+		// this logic is not really correct. we should be considering
+		// whether the query is enabled or not. but this is a temporary
+		// fix to support backward compatibility
+		if _, ok := queries["F1"]; ok {
+			return "F1"
+		}
+		keys := make([]string, 0, len(queries))
+		for k := range queries {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		return keys[len(keys)-1]
+	}
+	// This should never happen
+	return ""
+}
+
 // query looks if alert condition is being
 // satisfied and returns the signals
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch clickhouse.Conn) (Vector, error) {
@@ -691,7 +721,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	}
 
 	// var to hold target query to be executed
-	queries := make(map[string]string)
+	var queries map[string]string
 	var err error
 
 	// fetch the target query based on query type
@@ -723,22 +753,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 
 	zap.S().Debugf("ruleid:", r.ID(), "\t runQueries:", queries)
 
-	// find target query label
-	if query, ok := queries["F1"]; ok {
-		// found a formula query, run with it
-		return r.runChQuery(ctx, ch, query)
-	}
-
-	// no formula in rule condition, now look for
-	// query label with max ascii val
-	keys := make([]string, 0, len(queries))
-	for k := range queries {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	queryLabel := keys[len(keys)-1]
-
+	queryLabel := r.GetSelectedQuery()
 	zap.S().Debugf("ruleId: ", r.ID(), "\t result query label:", queryLabel)
 
 	if queryString, ok := queries[queryLabel]; ok {
@@ -774,7 +789,8 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
-		threshold := strconv.FormatFloat(r.targetVal(), 'f', 2, 64) + converter.UnitToName(r.ruleCondition.TargetUnit)
+		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
+		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
 		zap.S().Debugf("Alert template data for rule %s: Formatter=%s, Value=%s, Threshold=%s", r.Name(), valueFormatter.Name(), value, threshold)
 
 		tmplData := AlertTemplateData(l, value, threshold)

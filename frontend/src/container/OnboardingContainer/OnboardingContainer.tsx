@@ -2,215 +2,216 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Onboarding.styles.scss';
 
-import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Card, StepProps, Steps, Typography } from 'antd';
+import { ArrowRightOutlined } from '@ant-design/icons';
+import { Button, Card, Typography } from 'antd';
+import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
-import ROUTES from 'constants/routes';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import history from 'lib/history';
 import { useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
-import { trackEvent } from 'utils/segmentAnalytics';
 
-import APM from './APM/APM';
-import InfrastructureMonitoring from './InfrastructureMonitoring/InfrastructureMonitoring';
-import LogsManagement from './LogsManagement/LogsManagement';
+import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
+import { stepsMap } from './constants/stepsConfig';
+import {
+	OnboardingMethods,
+	useOnboardingContext,
+} from './context/OnboardingContext';
+import { DataSourceType } from './Steps/DataSource/DataSource';
+import {
+	defaultInfraMetricsType,
+	defaultLogsType,
+} from './utils/dataSourceUtils';
+import {
+	APM_STEPS,
+	getSteps,
+	INFRASTRUCTURE_MONITORING_STEPS,
+	LOGS_MANAGEMENT_STEPS,
+} from './utils/getSteps';
 
-enum ModulesMap {
+export enum ModulesMap {
 	APM = 'APM',
 	LogsManagement = 'LogsManagement',
 	InfrastructureMonitoring = 'InfrastructureMonitoring',
 }
 
-const defaultStepDesc = 'Configure data source';
-const getStarted = 'Get Started';
-const selectUseCase = 'Select the use-case';
-const instrumentApp = 'Instrument Application';
-const testConnection = 'Test Connection';
-const verifyConnectionDesc = 'Verify that you’ve instrumented your application';
-
-const verifyableLogsType = ['kubernetes', 'docker'];
-
-interface ModuleProps {
+export interface ModuleProps {
 	id: string;
 	title: string;
 	desc: string;
-	stepDesc: string;
 }
 
-const useCases = {
+export interface SelectedModuleStepProps {
+	id: string;
+	title: string;
+	component: any;
+}
+
+export const useCases = {
 	APM: {
 		id: ModulesMap.APM,
 		title: 'Application Monitoring',
 		desc:
 			'Monitor application metrics like p99 latency, error rates, external API calls, and db calls.',
-		stepDesc: defaultStepDesc,
 	},
 	LogsManagement: {
 		id: ModulesMap.LogsManagement,
 		title: 'Logs Management',
 		desc:
 			'Easily filter and query logs, build dashboards and alerts based on attributes in logs',
-		stepDesc: 'Choose the logs that you want to receive on SigNoz',
 	},
 	InfrastructureMonitoring: {
 		id: ModulesMap.InfrastructureMonitoring,
 		title: 'Infrastructure Monitoring',
 		desc:
 			'Monitor Kubernetes infrastructure metrics, hostmetrics, or metrics of any third-party integration',
-		stepDesc: defaultStepDesc,
 	},
 };
-
-const defaultSteps: StepProps[] = [
-	{
-		title: getStarted,
-		description: selectUseCase,
-	},
-	{
-		title: instrumentApp,
-		description: defaultStepDesc,
-	},
-	{
-		title: testConnection,
-		description: verifyConnectionDesc,
-	},
-];
 
 export default function Onboarding(): JSX.Element {
 	const [selectedModule, setSelectedModule] = useState<ModuleProps>(
 		useCases.APM,
 	);
-	const [steps, setsteps] = useState(defaultSteps);
+
+	const [selectedModuleSteps, setSelectedModuleSteps] = useState(APM_STEPS);
 	const [activeStep, setActiveStep] = useState(1);
 	const [current, setCurrent] = useState(0);
-	const [selectedLogsType, setSelectedLogsType] = useState<string | null>(
-		'kubernetes',
-	);
 	const isDarkMode = useIsDarkMode();
+	const { trackEvent } = useAnalytics();
 
-	const baseSteps = [
-		{
-			title: getStarted,
-			description: selectUseCase,
-		},
-		{
-			title: instrumentApp,
-			description: selectedModule.stepDesc,
-		},
-	];
+	const {
+		selectedDataSource,
+		selectedEnvironment,
+		selectedMethod,
+		updateSelectedModule,
+		updateSelectedDataSource,
+		resetProgress,
+		updateActiveStep,
+		updateIngestionData,
+	} = useOnboardingContext();
 
 	useEffectOnce(() => {
 		trackEvent('Onboarding Started');
 	});
 
+	const { status, data: ingestionData } = useQuery({
+		queryFn: () => getIngestionData(),
+	});
+
+	useEffect(() => {
+		if (
+			status === 'success' &&
+			ingestionData &&
+			ingestionData &&
+			Array.isArray(ingestionData.payload)
+		) {
+			const payload = ingestionData.payload[0] || {
+				ingestionKey: '',
+				dataRegion: '',
+			};
+
+			updateIngestionData({
+				SIGNOZ_INGESTION_KEY: payload?.ingestionKey,
+				REGION: payload?.dataRegion,
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [status, ingestionData?.payload]);
+
+	const setModuleStepsBasedOnSelectedDataSource = (
+		selectedDataSource: DataSourceType | null,
+	): void => {
+		if (selectedDataSource) {
+			let steps: SelectedModuleStepProps[] = [];
+
+			steps = getSteps({
+				selectedDataSource,
+			});
+
+			setSelectedModuleSteps(steps);
+		}
+	};
+
+	const removeStep = (
+		stepToRemove: string,
+		steps: SelectedModuleStepProps[],
+	): SelectedModuleStepProps[] =>
+		steps.filter((step) => step.id !== stepToRemove);
+
+	const handleAPMSteps = (): void => {
+		if (selectedEnvironment === 'kubernetes') {
+			const updatedSteps = removeStep(stepsMap.selectMethod, APM_STEPS);
+			setSelectedModuleSteps(updatedSteps);
+
+			return;
+		}
+
+		if (selectedMethod === OnboardingMethods.QUICK_START) {
+			const updatedSteps = removeStep(stepsMap.setupOtelCollector, APM_STEPS);
+			setSelectedModuleSteps(updatedSteps);
+
+			return;
+		}
+
+		setSelectedModuleSteps(APM_STEPS);
+	};
+
 	useEffect(() => {
 		if (selectedModule?.id === ModulesMap.InfrastructureMonitoring) {
-			setsteps([...baseSteps]);
-		} else if (selectedModule?.id === ModulesMap.LogsManagement) {
-			if (selectedLogsType && verifyableLogsType?.indexOf(selectedLogsType) > -1) {
-				setsteps([
-					...baseSteps,
-					{
-						title: testConnection,
-						description: verifyConnectionDesc,
-						disabled: true,
-					},
-				]);
+			if (selectedDataSource) {
+				setModuleStepsBasedOnSelectedDataSource(selectedDataSource);
 			} else {
-				setsteps([...baseSteps]);
+				setSelectedModuleSteps(INFRASTRUCTURE_MONITORING_STEPS);
+				updateSelectedDataSource(defaultInfraMetricsType);
 			}
-		} else {
-			setsteps([
-				...baseSteps,
-				{
-					title: testConnection,
-					description: verifyConnectionDesc,
-				},
-			]);
+		} else if (selectedModule?.id === ModulesMap.LogsManagement) {
+			if (selectedDataSource) {
+				setModuleStepsBasedOnSelectedDataSource(selectedDataSource);
+			} else {
+				setSelectedModuleSteps(LOGS_MANAGEMENT_STEPS);
+				updateSelectedDataSource(defaultLogsType);
+			}
+		} else if (selectedModule?.id === ModulesMap.APM) {
+			handleAPMSteps();
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedModule, selectedLogsType]);
+	}, [selectedModule, selectedDataSource, selectedEnvironment, selectedMethod]);
 
 	useEffect(() => {
 		// on select
 		trackEvent('Onboarding: Module Selected', {
 			selectedModule: selectedModule.id,
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedModule]);
 
 	const handleNext = (): void => {
-		// Need to add logic to validate service name and then allow next step transition in APM module
-		const isFormValid = true;
-
-		if (isFormValid && activeStep <= 3) {
+		if (activeStep <= 3) {
 			const nextStep = activeStep + 1;
 
 			// on next
-			trackEvent('Onboarding: Next', {
+			trackEvent('Onboarding: Get Started', {
 				selectedModule: selectedModule.id,
 				nextStepId: nextStep,
 			});
 
 			setActiveStep(nextStep);
 			setCurrent(current + 1);
-		}
-	};
 
-	const handlePrev = (): void => {
-		if (activeStep >= 1) {
-			const prevStep = activeStep - 1;
-
-			// on prev
-			trackEvent('Onboarding: Back', {
-				module: selectedModule.id,
-				prevStepId: prevStep,
+			// set the active step info
+			updateActiveStep({
+				module: selectedModule,
+				step: selectedModuleSteps[current],
 			});
-
-			setCurrent(current - 1);
-			setActiveStep(prevStep);
 		}
-	};
-
-	const handleOnboardingComplete = (): void => {
-		trackEvent('Onboarding Complete', {
-			module: selectedModule.id,
-		});
-
-		switch (selectedModule.id) {
-			case ModulesMap.APM:
-				history.push(ROUTES.APPLICATION);
-				break;
-			case ModulesMap.LogsManagement:
-				history.push(ROUTES.LOGS);
-				break;
-			case ModulesMap.InfrastructureMonitoring:
-				history.push(ROUTES.APPLICATION);
-				break;
-			default:
-				break;
-		}
-	};
-
-	const handleStepChange = (value: number): void => {
-		const stepId = value + 1;
-
-		trackEvent('Onboarding: Step Change', {
-			module: selectedModule.id,
-			step: stepId,
-		});
-
-		setCurrent(value);
-		setActiveStep(stepId);
 	};
 
 	const handleModuleSelect = (module: ModuleProps): void => {
 		setSelectedModule(module);
-	};
-
-	const handleLogTypeSelect = (logType: string): void => {
-		setSelectedLogsType(logType);
+		updateSelectedModule(module);
+		updateSelectedDataSource(null);
 	};
 
 	return (
@@ -263,7 +264,7 @@ export default function Onboarding(): JSX.Element {
 
 					<div className="continue-to-next-step">
 						<Button type="primary" icon={<ArrowRightOutlined />} onClick={handleNext}>
-							Continue to next step
+							Get Started
 						</Button>
 					</div>
 				</>
@@ -271,48 +272,16 @@ export default function Onboarding(): JSX.Element {
 
 			{activeStep > 1 && (
 				<div className="stepsContainer">
-					<Steps
-						current={current}
-						onChange={handleStepChange}
-						items={steps}
-						size="small"
+					<ModuleStepsContainer
+						onReselectModule={(): void => {
+							setCurrent(current - 1);
+							setActiveStep(activeStep - 1);
+							setSelectedModule(useCases.APM);
+							resetProgress();
+						}}
+						selectedModule={selectedModule}
+						selectedModuleSteps={selectedModuleSteps}
 					/>
-					<div className="step-content">
-						{selectedModule.id === ModulesMap.APM && <APM activeStep={activeStep} />}
-						{selectedModule.id === ModulesMap.LogsManagement && (
-							<LogsManagement
-								activeStep={activeStep}
-								handleLogTypeSelect={handleLogTypeSelect}
-							/>
-						)}
-						{selectedModule.id === ModulesMap.InfrastructureMonitoring && (
-							<InfrastructureMonitoring activeStep={activeStep} />
-						)}
-					</div>
-
-					<div className="actionButtonsContainer">
-						{activeStep > 0 && (
-							<Button icon={<ArrowLeftOutlined />} onClick={handlePrev}>
-								Back
-							</Button>
-						)}
-
-						{activeStep < steps.length && (
-							<Button
-								type="primary"
-								icon={<ArrowRightOutlined />}
-								onClick={handleNext}
-							>
-								Continue to next step
-							</Button>
-						)}
-
-						{activeStep === steps.length && (
-							<Button type="primary" onClick={handleOnboardingComplete}>
-								Done
-							</Button>
-						)}
-					</div>
 				</div>
 			)}
 		</div>

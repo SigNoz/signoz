@@ -144,6 +144,7 @@ type RuleCondition struct {
 	Target         *float64           `yaml:"target,omitempty" json:"target,omitempty"`
 	MatchType      `json:"matchType,omitempty"`
 	TargetUnit     string `json:"targetUnit,omitempty"`
+	SelectedQuery  string `json:"selectedQueryName,omitempty"`
 }
 
 func (rc *RuleCondition) IsValid() bool {

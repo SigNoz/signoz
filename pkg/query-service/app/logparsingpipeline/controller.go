@@ -73,12 +73,6 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 
 	}
 
-	if !agentConf.Ready() {
-		return nil, model.UnavailableError(fmt.Errorf(
-			"agent updater unavailable at the moment. Please try in sometime",
-		))
-	}
-
 	// prepare config elements
 	elements := make([]string, len(pipelines))
 	for i, p := range pipelines {
@@ -133,14 +127,15 @@ type PipelinesPreviewRequest struct {
 }
 
 type PipelinesPreviewResponse struct {
-	OutputLogs []model.SignozLog `json:"logs"`
+	OutputLogs    []model.SignozLog `json:"logs"`
+	CollectorLogs []string          `json:"collectorLogs"`
 }
 
 func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 	ctx context.Context,
 	request *PipelinesPreviewRequest,
 ) (*PipelinesPreviewResponse, *model.ApiError) {
-	result, err := SimulatePipelinesProcessing(
+	result, collectorLogs, err := SimulatePipelinesProcessing(
 		ctx, request.Pipelines, request.Logs,
 	)
 
@@ -149,7 +144,8 @@ func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 	}
 
 	return &PipelinesPreviewResponse{
-		OutputLogs: result,
+		OutputLogs:    result,
+		CollectorLogs: collectorLogs,
 	}, nil
 }
 
@@ -175,13 +171,8 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", model.InternalError(multierr.Combine(errs...))
 	}
 
-	processors, procNames, err := PreparePipelineProcessor(pipelines)
-	if err != nil {
-		return nil, "", model.BadRequest(errors.Wrap(err, "could not prepare otel collector processors for log pipelines"))
-	}
-
 	updatedConf, apiErr := GenerateCollectorConfigWithPipelines(
-		currentConfYaml, processors, procNames,
+		currentConfYaml, pipelines,
 	)
 	if apiErr != nil {
 		return nil, "", model.WrapApiError(apiErr, "could not marshal yaml for updated conf")

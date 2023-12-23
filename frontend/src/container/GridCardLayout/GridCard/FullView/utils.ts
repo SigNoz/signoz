@@ -1,5 +1,5 @@
-import { ChartData, ChartDataset } from 'chart.js';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import uPlot from 'uplot';
 
 import {
 	ExtendedChartDataset,
@@ -21,31 +21,28 @@ function convertToTwoDecimalsOrZero(value: number): number {
 }
 
 export const getDefaultTableDataSet = (
-	data: ChartData,
+	options: uPlot.Options,
+	data: uPlot.AlignedData,
 ): ExtendedChartDataset[] =>
-	data.datasets.map(
-		(item: ChartDataset): ExtendedChartDataset => {
-			if (item.data.length === 0) {
-				return {
-					...item,
-					show: true,
-					sum: 0,
-					avg: 0,
-					max: 0,
-					min: 0,
-				};
+	options.series.map(
+		(item: uPlot.Series, index: number): ExtendedChartDataset => {
+			let arr: number[];
+			if (data[index]) {
+				arr = data[index] as number[];
+			} else {
+				arr = [];
 			}
+
 			return {
 				...item,
+				index,
 				show: true,
-				sum: convertToTwoDecimalsOrZero(
-					(item.data as number[]).reduce((a, b) => a + b, 0),
-				),
+				sum: convertToTwoDecimalsOrZero(arr.reduce((a, b) => a + b, 0) || 0),
 				avg: convertToTwoDecimalsOrZero(
-					(item.data as number[]).reduce((a, b) => a + b, 0) / item.data.length,
+					(arr.reduce((a, b) => a + b, 0) || 0) / (arr.length || 1),
 				),
-				max: convertToTwoDecimalsOrZero(Math.max(...(item.data as number[]))),
-				min: convertToTwoDecimalsOrZero(Math.min(...(item.data as number[]))),
+				max: convertToTwoDecimalsOrZero(Math.max(...arr)),
+				min: convertToTwoDecimalsOrZero(Math.min(...arr)),
 			};
 		},
 	);
@@ -58,22 +55,24 @@ export const getAbbreviatedLabel = (label: string): string => {
 	return newLabel;
 };
 
-export const showAllDataSet = (data: ChartData): LegendEntryProps[] =>
-	data.datasets.map(
-		(item): LegendEntryProps => ({
-			label: item.label || '',
-			show: true,
-		}),
-	);
+export const showAllDataSet = (options: uPlot.Options): LegendEntryProps[] =>
+	options.series
+		.map(
+			(item): LegendEntryProps => ({
+				label: item.label || '',
+				show: true,
+			}),
+		)
+		.filter((_, index) => index !== 0);
 
 export const saveLegendEntriesToLocalStorage = ({
-	data,
+	options,
 	graphVisibilityState,
 	name,
 }: SaveLegendEntriesToLocalStoreProps): void => {
 	const newLegendEntry = {
 		name,
-		dataIndex: data.datasets.map(
+		dataIndex: options.series.map(
 			(item, index): LegendEntryProps => ({
 				label: item.label || '',
 				show: graphVisibilityState[index],

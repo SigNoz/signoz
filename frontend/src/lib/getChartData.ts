@@ -63,10 +63,6 @@ const getChartData = ({
 			}),
 	);
 
-	const allLabels = response
-		.map((e) => e.map((e) => e.label))
-		.reduce((a, b) => [...a, ...b], []);
-
 	const modifiedData = response
 		.flat()
 		.sort((a, b) => {
@@ -88,6 +84,8 @@ const getChartData = ({
 	const updatedSortedData = isWarningLimit
 		? modifiedData.slice(0, limit)
 		: modifiedData;
+
+	const allLabels = modifiedData.map((e) => e.label);
 
 	const updatedDataSet = updatedSortedData.map((e, index) => {
 		const datasetBaseConfig = {

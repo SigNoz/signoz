@@ -7,12 +7,13 @@ import {
 	PipelineData,
 	ProcessorData,
 } from 'types/api/pipeline/def';
+import { v4 } from 'uuid';
 
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
-import { DEFAULT_PROCESSOR_TYPE } from './config';
+import { DEFAULT_PROCESSOR_TYPE, processorFields } from './config';
 import TypeSelect from './FormFields/TypeSelect';
-import { renderProcessorForm } from './utils';
+import ProcessorForm from './ProcessorForm';
 
 function AddNewProcessor({
 	isActionType,
@@ -59,7 +60,7 @@ function AddNewProcessor({
 		const totalDataLength = expandedPipelineData?.config?.length || 0;
 
 		const newProcessorData = {
-			id: values.name.replace(/\s/g, ''),
+			id: v4(),
 			orderId: Number(totalDataLength || 0) + 1,
 			type: processorType,
 			enabled: true,
@@ -73,12 +74,14 @@ function AddNewProcessor({
 				'id',
 			);
 
+			const processorData = expandedPipelineData?.config?.[findRecordIndex];
+
 			const updatedProcessorData = {
-				id: values.name.replace(/\s/g, ''),
-				orderId: expandedPipelineData?.config?.[findRecordIndex].orderId,
+				id: processorData?.id || v4(),
+				orderId: processorData?.orderId,
 				type: processorType,
-				enabled: expandedPipelineData?.config?.[findRecordIndex].enabled,
-				output: expandedPipelineData?.config?.[findRecordIndex].output,
+				enabled: processorData?.enabled,
+				output: processorData?.output,
 				...values,
 			};
 
@@ -138,6 +141,17 @@ function AddNewProcessor({
 
 	const isOpen = useMemo(() => isEdit || isAdd, [isAdd, isEdit]);
 
+	const onFormValuesChanged = useCallback(
+		(changedValues: ProcessorData): void => {
+			processorFields[processorType].forEach((field) => {
+				if (field.onFormValuesChanged) {
+					field.onFormValuesChanged(changedValues, form);
+				}
+			});
+		},
+		[form, processorType],
+	);
+
 	return (
 		<Modal
 			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
@@ -154,9 +168,10 @@ function AddNewProcessor({
 				onFinish={onFinish}
 				autoComplete="off"
 				form={form}
+				onValuesChange={onFormValuesChanged}
 			>
 				<TypeSelect value={processorType} onChange={handleProcessorType} />
-				{renderProcessorForm(processorType)}
+				<ProcessorForm processorType={processorType} />
 				<Divider plain />
 				<Form.Item>
 					<ModalButtonWrapper>

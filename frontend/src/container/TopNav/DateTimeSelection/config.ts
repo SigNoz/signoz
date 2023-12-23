@@ -68,6 +68,8 @@ export const getOptions = (routes: string): Option[] => {
 	return Options;
 };
 
+export const routesToHideBreadCrumbs = [ROUTES.SUPPORT, ROUTES.ALL_DASHBOARD];
+
 export const routesToSkip = [
 	ROUTES.SETTINGS,
 	ROUTES.LIST_ALL_ALERT,
@@ -80,10 +82,7 @@ export const routesToSkip = [
 	ROUTES.ORG_SETTINGS,
 	ROUTES.INGESTION_SETTINGS,
 	ROUTES.ERROR_DETAIL,
-	ROUTES.ALERTS_NEW,
-	ROUTES.EDIT_ALERTS,
-	ROUTES.LIST_ALL_ALERT,
-	ROUTES.PIPELINES,
+	ROUTES.LOGS_PIPELINES,
 	ROUTES.BILLING,
 	ROUTES.SUPPORT,
 	ROUTES.WORKSPACE_LOCKED,

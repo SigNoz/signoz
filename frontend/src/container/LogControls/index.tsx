@@ -1,15 +1,14 @@
-import { CloudDownloadOutlined, FastBackwardOutlined } from '@ant-design/icons';
-import { Button, Divider, Dropdown, MenuProps } from 'antd';
-import { Excel } from 'antd-table-saveas-excel';
+import { FastBackwardOutlined } from '@ant-design/icons';
+import { Button, Divider } from 'antd';
 import Controls from 'container/Controls';
+import Download from 'container/Download/Download';
 import { getGlobalTime } from 'container/LogsSearchFilter/utils';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs from 'dayjs';
 import { Pagination } from 'hooks/queryPagination';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { OrderPreferenceItems } from 'pages/Logs/config';
-import { unparse } from 'papaparse';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -23,7 +22,7 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
-import { Container, DownloadLogButton } from './styles';
+import { Container } from './styles';
 
 function LogControls(): JSX.Element | null {
 	const {
@@ -97,58 +96,6 @@ function LogControls(): JSX.Element | null {
 		[logs],
 	);
 
-	const downloadExcelFile = useCallback((): void => {
-		const headers = Object.keys(Object.assign({}, ...flattenLogData)).map(
-			(item) => {
-				const updatedTitle = item
-					.split('_')
-					.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-					.join(' ');
-				return {
-					title: updatedTitle,
-					dataIndex: item,
-				};
-			},
-		);
-		const excel = new Excel();
-		excel
-			.addSheet('log_data')
-			.addColumns(headers)
-			.addDataSource(flattenLogData, {
-				str2Percent: true,
-			})
-			.saveAs('log_data.xlsx');
-	}, [flattenLogData]);
-
-	const downloadCsvFile = useCallback((): void => {
-		const csv = unparse(flattenLogData);
-		const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-		const csvUrl = URL.createObjectURL(csvBlob);
-		const downloadLink = document.createElement('a');
-		downloadLink.href = csvUrl;
-		downloadLink.download = 'log_data.csv';
-		downloadLink.click();
-		downloadLink.remove();
-	}, [flattenLogData]);
-
-	const menu: MenuProps = useMemo(
-		() => ({
-			items: [
-				{
-					key: 'download-as-excel',
-					label: 'Excel',
-					onClick: downloadExcelFile,
-				},
-				{
-					key: 'download-as-csv',
-					label: 'CSV',
-					onClick: downloadCsvFile,
-				},
-			],
-		}),
-		[downloadCsvFile, downloadExcelFile],
-	);
-
 	const isLoading = isLogsLoading || isLoadingAggregate;
 
 	if (liveTail !== 'STOPPED') {
@@ -157,12 +104,7 @@ function LogControls(): JSX.Element | null {
 
 	return (
 		<Container>
-			<Dropdown menu={menu} trigger={['click']}>
-				<DownloadLogButton loading={isLoading} size="small" type="link">
-					<CloudDownloadOutlined />
-					Download
-				</DownloadLogButton>
-			</Dropdown>
+			<Download data={flattenLogData} isLoading={isLoading} fileName="log_data" />
 			<Button
 				loading={isLoading}
 				size="small"

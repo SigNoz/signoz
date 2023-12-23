@@ -8,5 +8,18 @@
 .upgrade-link {
 	padding: 0px;
 	padding-right: 4px;
+	display: inline !important;
 	color: white;
+	text-decoration: underline;
+	text-decoration-color: white;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 2px;
+
+	&:hover {
+		color: white;
+		text-decoration: underline;
+		text-decoration-color: white;
+		text-decoration-thickness: 2px;
+		text-underline-offset: 2px;
+	}
 }

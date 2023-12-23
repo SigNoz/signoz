@@ -1,0 +1,13 @@
+.logs-pipelines-empty-state-centered-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.logs-pipelines-empty-state-video-iframe {
+  width: min(90vw, 640px);
+  height: min(68vw, 480px);
+  margin-bottom: 1em;
+}

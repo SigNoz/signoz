@@ -7,6 +7,7 @@ import {
 	Space,
 	Typography,
 } from 'antd';
+import { DefaultOptionType } from 'antd/es/select';
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
@@ -20,6 +21,7 @@ import {
 	defaultMatchType,
 } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { FormContainer, InlineSelect, StepHeading } from './styles';
 
@@ -27,6 +29,7 @@ function RuleOptions({
 	alertDef,
 	setAlertDef,
 	queryCategory,
+	queryOptions,
 }: RuleOptionsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -43,8 +46,21 @@ function RuleOptions({
 		});
 	};
 
+	const onChangeSelectedQueryName = (value: string | unknown): void => {
+		if (typeof value !== 'string') return;
+
+		setAlertDef({
+			...alertDef,
+			condition: {
+				...alertDef.condition,
+				selectedQueryName: value,
+			},
+		});
+	};
+
 	const renderCompareOps = (): JSX.Element => (
 		<InlineSelect
+			getPopupContainer={popupContainer}
 			defaultValue={defaultCompareOp}
 			value={alertDef.condition?.op}
 			style={{ minWidth: '120px' }}
@@ -69,6 +85,7 @@ function RuleOptions({
 
 	const renderThresholdMatchOpts = (): JSX.Element => (
 		<InlineSelect
+			getPopupContainer={popupContainer}
 			defaultValue={defaultMatchType}
 			style={{ minWidth: '130px' }}
 			value={alertDef.condition?.matchType}
@@ -83,6 +100,7 @@ function RuleOptions({
 
 	const renderPromMatchOpts = (): JSX.Element => (
 		<InlineSelect
+			getPopupContainer={popupContainer}
 			defaultValue={defaultMatchType}
 			style={{ minWidth: '130px' }}
 			value={alertDef.condition?.matchType}
@@ -94,6 +112,7 @@ function RuleOptions({
 
 	const renderEvalWindows = (): JSX.Element => (
 		<InlineSelect
+			getPopupContainer={popupContainer}
 			defaultValue={defaultEvalWindow}
 			style={{ minWidth: '120px' }}
 			value={alertDef.evalWindow}
@@ -117,16 +136,38 @@ function RuleOptions({
 	const renderThresholdRuleOpts = (): JSX.Element => (
 		<Form.Item>
 			<Typography.Text>
-				{t('text_condition1')} {renderCompareOps()} {t('text_condition2')}{' '}
-				{renderThresholdMatchOpts()} {t('text_condition3')} {renderEvalWindows()}
+				{t('text_condition1')}
+				<InlineSelect
+					getPopupContainer={popupContainer}
+					allowClear
+					showSearch
+					options={queryOptions}
+					placeholder={t('selected_query_placeholder')}
+					value={alertDef.condition.selectedQueryName}
+					onChange={onChangeSelectedQueryName}
+				/>
+				<Typography.Text>is</Typography.Text>
+				{renderCompareOps()} {t('text_condition2')} {renderThresholdMatchOpts()}{' '}
+				{t('text_condition3')} {renderEvalWindows()}
 			</Typography.Text>
 		</Form.Item>
 	);
+
 	const renderPromRuleOptions = (): JSX.Element => (
 		<Form.Item>
 			<Typography.Text>
-				{t('text_condition1')} {renderCompareOps()} {t('text_condition2')}{' '}
-				{renderPromMatchOpts()}
+				{t('text_condition1')}
+				<InlineSelect
+					getPopupContainer={popupContainer}
+					allowClear
+					showSearch
+					options={queryOptions}
+					placeholder={t('selected_query_placeholder')}
+					value={alertDef.condition.selectedQueryName}
+					onChange={onChangeSelectedQueryName}
+				/>
+				<Typography.Text>is</Typography.Text>
+				{renderCompareOps()} {t('text_condition2')} {renderPromMatchOpts()}
 			</Typography.Text>
 		</Form.Item>
 	);
@@ -167,7 +208,7 @@ function RuleOptions({
 					? renderPromRuleOptions()
 					: renderThresholdRuleOpts()}
 
-				<Space align="start">
+				<Space direction="horizontal" align="center">
 					<Form.Item noStyle name={['condition', 'target']}>
 						<InputNumber
 							addonBefore={t('field_threshold')}
@@ -178,8 +219,9 @@ function RuleOptions({
 						/>
 					</Form.Item>
 
-					<Form.Item>
+					<Form.Item noStyle>
 						<Select
+							getPopupContainer={popupContainer}
 							allowClear
 							showSearch
 							options={categorySelectOptions}
@@ -198,5 +240,6 @@ interface RuleOptionsProps {
 	alertDef: AlertDef;
 	setAlertDef: (a: AlertDef) => void;
 	queryCategory: EQueryType;
+	queryOptions: DefaultOptionType[];
 }
 export default RuleOptions;

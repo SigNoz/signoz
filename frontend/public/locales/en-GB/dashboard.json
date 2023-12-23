@@ -20,5 +20,10 @@
 	"variable_updated_successfully": "Variable updated successfully",
 	"error_while_updating_variable": "Error while updating variable",
 	"dashboard_has_been_updated": "Dashboard has been updated",
-	"do_you_want_to_refresh_the_dashboard": "Do you want to refresh the dashboard?"
+	"do_you_want_to_refresh_the_dashboard": "Do you want to refresh the dashboard?",
+	"delete_dashboard_success": "{{name}} dashboard deleted successfully",
+	"dashboard_unsave_changes": "There are unsaved changes in the Query builder, please stage and run the query or the changes will be lost. Press OK to discard.",
+	"dashboard_save_changes": "Your graph built with {{queryTag}} query will be saved. Press OK to confirm.",
+	"your_graph_build_with": "Your graph built with",
+	"dashboar_ok_confirm": "query will be saved. Press OK to confirm."
 }

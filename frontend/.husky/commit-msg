@@ -2,3 +2,19 @@
 . "$(dirname "$0")/_/husky.sh"
 
 cd frontend && yarn run commitlint --edit $1
+
+branch="$(git rev-parse --abbrev-ref HEAD)"
+
+color_red="$(tput setaf 1)"
+bold="$(tput bold)"
+reset="$(tput sgr0)"
+
+if [ "$branch" = "main" ]; then
+  echo "${color_red}${bold}You can't commit directly to the main branch${reset}"
+  exit 1
+fi
+
+if [ "$branch" = "develop" ]; then
+  echo "${color_red}${bold}You can't commit directly to the develop branch${reset}"
+  exit 1
+fi
