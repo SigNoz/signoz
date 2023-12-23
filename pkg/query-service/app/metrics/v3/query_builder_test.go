@@ -476,8 +476,10 @@ func TestBuildQueryAdjustedTimes(t *testing.T) {
 					},
 				},
 			},
-			// 20:06:00 - 20:41:00
-			expected: "timestamp_ms >= 1686081960000 AND timestamp_ms < 1686084060000",
+			// 20:05:00 - 20:41:00
+			// 20:10:00 is the nearest 5 minute interval, but we round down to 20:05:00
+			// as this is a rate query and we want to include the previous value for the first interval
+			expected: "timestamp_ms >= 1686081900000 AND timestamp_ms < 1686084060000",
 		},
 		{
 			name: "TestBuildQueryAdjustedTimes start close to 42 seconds with step 180 seconds and end close to 30 seconds",
@@ -501,8 +503,10 @@ func TestBuildQueryAdjustedTimes(t *testing.T) {
 					},
 				},
 			},
-			// 20:08:00 - 20:39:00
-			expected: "timestamp_ms >= 1686082080000 AND timestamp_ms < 1686084060000",
+			// 20:06:00 - 20:39:00
+			// 20:09:00 is the nearest 3 minute interval, but we round down to 20:06:00
+			// as this is a rate query and we want to include the previous value for the first interval
+			expected: "timestamp_ms >= 1686081960000 AND timestamp_ms < 1686084060000",
 		},
 	}
 

@@ -448,15 +448,13 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 // start and end are in milliseconds
 // step is in seconds
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
-
-	adjustStep := int64(math.Min(float64(mq.StepInterval), 60))
-	// adjust the start and end time to the nearest minute
-	start = start - (start % (adjustStep * 1000))
-	// if the query is a rate query, we adjust the start time so that we can calculate the rate
-	// for the first data point
+	start = start - (start % (mq.StepInterval * 1000))
+	// if the query is a rate query, we adjust the start time by one more step
+	// so that we can calculate the rate for the first data point
 	if mq.AggregateOperator.IsRateOperator() && mq.Temporality != v3.Delta {
 		start -= mq.StepInterval * 1000
 	}
+	adjustStep := int64(math.Min(float64(mq.StepInterval), 60))
 	end = end - (end % (adjustStep * 1000))
 
 	var query string
