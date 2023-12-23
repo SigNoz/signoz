@@ -18,10 +18,6 @@ receivers:
         expr: 'attributes.container_name matches "^signoz-(logspout|frontend|alertmanager|query-service|otel-collector|otel-collector-metrics|clickhouse|zookeeper)"'
   opencensus:
     endpoint: 0.0.0.0:55678
-  otlp/spanmetrics:
-    protocols:
-      grpc:
-        endpoint: localhost:12345
   otlp:
     protocols:
       grpc:
@@ -134,8 +130,6 @@ exporters:
       enabled: true
   clickhousemetricswrite/prometheus:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
-  prometheus:
-    endpoint: 0.0.0.0:8889
   # logging: {}
 
   clickhouselogsexporter:
@@ -175,9 +169,6 @@ service:
       receivers: [prometheus]
       processors: [batch]
       exporters: [clickhousemetricswrite/prometheus]
-    metrics/spanmetrics:
-      receivers: [otlp/spanmetrics]
-      exporters: [prometheus]
     logs:
       receivers: [otlp, tcplog/docker]
       processors: [batch]

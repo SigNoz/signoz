@@ -18,10 +18,6 @@ receivers:
         expr: 'attributes.container_name matches "^signoz_(logspout|frontend|alertmanager|query-service|otel-collector|otel-collector-metrics|clickhouse|zookeeper)"'
   opencensus:
     endpoint: 0.0.0.0:55678
-  otlp/spanmetrics:
-    protocols:
-      grpc:
-        endpoint: localhost:12345
   otlp:
     protocols:
       grpc:
@@ -98,7 +94,7 @@ processors:
   #   queue_size: 100
   #   retry_on_failure: true
   signozspanmetrics/delta:
-    metrics_exporter: prometheus
+    metrics_exporter: clickhousemetricswrite
     latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
     dimensions_cache_size: 100000
     aggregation_temporality: AGGREGATION_TEMPORALITY_DELTA
@@ -123,8 +119,6 @@ exporters:
       enabled: true
   clickhousemetricswrite/prometheus:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
-  prometheus:
-    endpoint: 0.0.0.0:8889
   # logging: {}
   clickhouselogsexporter:
     dsn: tcp://clickhouse:9000/
@@ -168,9 +162,6 @@ service:
       receivers: [prometheus]
       processors: [batch]
       exporters: [clickhousemetricswrite/prometheus]
-    metrics/spanmetrics:
-      receivers: [otlp/spanmetrics]
-      exporters: [prometheus]
     logs:
       receivers: [otlp, tcplog/docker]
       processors: [batch]

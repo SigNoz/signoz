@@ -25,7 +25,7 @@ processors:
     send_batch_size: 1000
     timeout: 10s
   signozspanmetrics/cumulative:
-    metrics_exporter: prometheus
+    metrics_exporter: clickhousemetricswrite
     latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
     dimensions_cache_size: 10000
     dimensions:
