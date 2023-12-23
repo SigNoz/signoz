@@ -249,25 +249,6 @@ services:
         # - clickhouse-2
         # - clickhouse-3
 
-  otel-collector-metrics:
-    image: signoz/signoz-otel-collector:0.88.4
-    command:
-      [
-        "--config=/etc/otel-collector-metrics-config.yaml",
-        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
-      ]
-    volumes:
-      - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
-    # ports:
-    #   - "1777:1777"     # pprof extension
-    #   - "8888:8888"     # OtelCollector internal metrics
-    #   - "13133:13133"   # Health check extension
-    #   - "55679:55679"   # zPages extension
-    deploy:
-      restart_policy:
-        condition: on-failure
-    <<: *db-depend
-
   logspout:
     image: "gliderlabs/logspout:v3.2.14"
     volumes:
