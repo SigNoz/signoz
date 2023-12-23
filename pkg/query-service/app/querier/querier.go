@@ -160,11 +160,14 @@ func findMissingTimeRanges(start, end int64, seriesList []*v3.Series, fluxInterv
 		}
 	}
 
+	endMillis := time.Now().UnixMilli()
+	roundedMillis := endMillis - (endMillis % (60 * 1000))
+
 	// Exclude the flux interval from the cached end time
 	cachedEnd = int64(
 		math.Min(
 			float64(cachedEnd),
-			float64(time.Now().UnixMilli()-fluxInterval.Milliseconds()),
+			float64(roundedMillis-fluxInterval.Milliseconds()),
 		),
 	)
 
@@ -258,6 +261,7 @@ func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 	for idx := range seriesesByLabels {
 		series := seriesesByLabels[idx]
 		series.SortPoints()
+		series.RemoveDuplicatePoints()
 		mergedSeries = append(mergedSeries, series)
 	}
 	return mergedSeries
@@ -326,7 +330,7 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 			// Ensure NoCache is not set and cache is not nil
 			if !params.NoCache && q.cache != nil {
 				data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
-				zap.S().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
+				zap.S().Infof("cache retrieve status: %s", retrieveStatus.String())
 				if err == nil {
 					cachedData = data
 				}
