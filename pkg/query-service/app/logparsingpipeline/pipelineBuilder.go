@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/antonmedv/expr"
+	"github.com/antonmedv/expr/ast"
+	"github.com/antonmedv/expr/parser"
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
@@ -104,17 +106,12 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				if strings.HasPrefix(operator.Value, "EXPR(") && strings.HasSuffix(operator.Value, ")") {
 					// TODO(Raj): Make this more comprehensive
 					expression := strings.TrimSuffix(strings.TrimPrefix(operator.Value, "EXPR("), ")")
-					expressionParts := strings.Split(expression, " ")
-					ifExpr := ""
-					for _, ep := range expressionParts {
-						if strings.HasPrefix(ep, "attributes") || strings.HasPrefix(ep, "resources") {
-							checkExpr := exprCheckingFieldIsNotNil(ep)
-							if ifExpr == "" {
-								ifExpr = checkExpr
-							} else {
-								ifExpr = fmt.Sprintf("%s && %s", ifExpr, checkExpr)
-							}
-						}
+					ifExpr, err := exprCheckingReferencedLogFieldsAreNotNil(expression)
+					if err != nil {
+						return nil, fmt.Errorf(
+							"could not generate nil check for operator %s (add) value: %w",
+							operator.Name, err,
+						)
 					}
 					if ifExpr != "" {
 						operator.If = ifExpr
@@ -201,18 +198,26 @@ func fieldNotNilCheck(fieldPath string) (string, error) {
 		return "", err
 	}
 
+	// a.b?.c.d -> a?.b?.c?.d
+	optionalChainedPath := func(path string) string {
+		return strings.ReplaceAll(
+			strings.ReplaceAll(path, "?.", "."), ".", "?.",
+		)
+	}
+
 	parts := rSplitAfterN(fieldPath, "[", 2)
 	if len(parts) < 2 {
-		pathParts := strings.Split(fieldPath, ".")
-		path := strings.Join(pathParts, "?.")
-		return fmt.Sprintf("%s != nil", path), nil
+		// there is no [] access in fieldPath
+		return fmt.Sprintf(
+			"%s != nil", optionalChainedPath(fieldPath),
+		), nil
 	}
 
 	suffixParts := strings.SplitAfter(parts[1], "]")
 	suffixPath := suffixParts[0]
 	if len(suffixParts) > 1 {
 		suffixPath = fmt.Sprintf(
-			"%s%s", suffixParts[0], strings.ReplaceAll(suffixParts[1], ".", "?."),
+			"%s%s", suffixParts[0], optionalChainedPath(suffixParts[1]),
 		)
 	}
 	suffixCheck := fmt.Sprintf("%s%s != nil", parts[0], suffixPath)
@@ -222,6 +227,10 @@ func fieldNotNilCheck(fieldPath string) (string, error) {
 			"len(%s) > %s && %s",
 			parts[0], suffixParts[0][1:len(suffixParts[0])-1], suffixCheck,
 		)
+	}
+
+	if slices.Contains([]string{"attributes", "resource"}, parts[0]) {
+		return suffixCheck, nil
 	}
 
 	prefixCheck, err := fieldNotNilCheck(parts[0])
@@ -250,4 +259,46 @@ func reverse(s string) (result string) {
 		result = string(v) + result
 	}
 	return
+}
+
+type visitor struct {
+	members []string
+}
+
+func (v *visitor) Visit(node *ast.Node) {
+	if n, ok := (*node).(*ast.MemberNode); ok {
+		v.members = append(v.members, n.String())
+	}
+}
+
+func exprCheckingReferencedLogFieldsAreNotNil(expr string) (string, error) {
+	exprAst, err := parser.Parse(expr)
+	if err != nil {
+		return "", err
+	}
+
+	v := &visitor{}
+	ast.Walk(&exprAst.Node, v)
+
+	longestDepthFields := []string{}
+	for _, field := range v.members {
+		if !slices.ContainsFunc(v.members, func(e string) bool {
+			return len(e) > len(field) && strings.HasPrefix(e, field)
+		}) {
+			if strings.HasPrefix(field, "attributes") || strings.HasPrefix(field, "resource") {
+				longestDepthFields = append(longestDepthFields, field)
+			}
+		}
+	}
+
+	fieldExprChecks := []string{}
+	for _, field := range longestDepthFields {
+		checkExpr, err := fieldNotNilCheck(field)
+		if err != nil {
+			return "", fmt.Errorf("could not create nil check for %s: %w", field, err)
+		}
+		fieldExprChecks = append(fieldExprChecks, fmt.Sprintf("(%s)", checkExpr))
+	}
+
+	return strings.Join(fieldExprChecks, " && "), nil
 }

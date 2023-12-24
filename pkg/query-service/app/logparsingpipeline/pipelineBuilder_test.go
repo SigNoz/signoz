@@ -653,12 +653,19 @@ func TestMembershipOpForKeysWithDotsWorks(t *testing.T) {
 				From:    `attributes["order.products"].ids`,
 				To:      `attributes["order.product_ids"]`,
 			}, {
+				ID:      "move2",
+				Type:    "move",
+				Enabled: true,
+				Name:    "move2",
+				From:    `attributes.test?.doesnt_exist`,
+				To:      `attributes["test.doesnt_exist"]`,
+			}, {
 				ID:      "add",
 				Type:    "add",
 				Enabled: true,
 				Name:    "add",
 				Field:   `attributes["order.pids"].missing_field`,
-				Value:   `EXPR(attributes["order.product_ids"][4].missing_field)`,
+				Value:   `EXPR(attributes["order.product_ids"][4].missing_field + resource.another_missing_field)`,
 			}, {
 				ID:      "add2",
 				Type:    "add",
@@ -666,6 +673,13 @@ func TestMembershipOpForKeysWithDotsWorks(t *testing.T) {
 				Name:    "add2",
 				Field:   `attributes["order.pids.pid0"]`,
 				Value:   `EXPR(attributes["order.product_ids"][0])`,
+			}, {
+				ID:      "add3",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add3",
+				Field:   `attributes["attrs.test.value"]`,
+				Value:   `EXPR(attributes.test?.value)`,
 			},
 		},
 	}
