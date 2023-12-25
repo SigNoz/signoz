@@ -608,8 +608,15 @@ func TestAttributePathsContainingDollarDoNotBreakCollector(t *testing.T) {
 	require.Equal("test", result[0].Attributes_string["$test1"])
 }
 
-func TestMembershipOpForKeysWithDotsWorks(t *testing.T) {
+func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 	require := require.New(t)
+
+	testLogs := []model.SignozLog{
+		makeTestSignozLog("test log", map[string]interface{}{
+			"http.method":    "GET",
+			"order.products": `{"ids": ["pid0", "pid1"]}`,
+		}),
+	}
 
 	testPipeline := Pipeline{
 		OrderId: 1,
@@ -684,13 +691,6 @@ func TestMembershipOpForKeysWithDotsWorks(t *testing.T) {
 		},
 	}
 
-	testLogs := []model.SignozLog{
-		makeTestSignozLog("test log", map[string]interface{}{
-			"http.method":    "GET",
-			"order.products": `{"ids": ["pid0", "pid1"]}`,
-		}),
-	}
-
 	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 		context.Background(),
 		[]Pipeline{testPipeline},
@@ -699,11 +699,10 @@ func TestMembershipOpForKeysWithDotsWorks(t *testing.T) {
 	require.Nil(err)
 	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
 	require.Equal(1, len(result))
-	require.Equal("GET", result[0].Attributes_string["test.http.method"])
 
 	_, methodAttrExists := result[0].Attributes_string["http.method"]
 	require.False(methodAttrExists)
-
+	require.Equal("GET", result[0].Attributes_string["test.http.method"])
 	require.Equal("pid0", result[0].Attributes_string["order.pids.pid0"])
 }
 

@@ -85,9 +85,15 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 			}
 
 			if operator.Type == "regex_parser" {
+				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"couldn't generate for %s.parseFrom: %w", operator.Name, err,
+					)
+				}
 				operator.If = fmt.Sprintf(
 					`%s && %s matches "%s"`,
-					exprCheckingFieldIsNotNil(operator.ParseFrom),
+					parseFromNotNilCheck,
 					operator.ParseFrom,
 					strings.ReplaceAll(
 						strings.ReplaceAll(operator.Regex, `\`, `\\`),
@@ -96,15 +102,18 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				)
 
 			} else if operator.Type == "json_parser" {
+				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"couldn't generate for %s.parseFrom: %w", operator.Name, err,
+					)
+				}
 				operator.If = fmt.Sprintf(
-					`%s && %s matches "^\\s*{.*}\\s*$"`,
-					exprCheckingFieldIsNotNil(operator.ParseFrom),
-					operator.ParseFrom,
+					`%s && %s matches "^\\s*{.*}\\s*$"`, parseFromNotNilCheck, operator.ParseFrom,
 				)
 
 			} else if operator.Type == "add" {
 				if strings.HasPrefix(operator.Value, "EXPR(") && strings.HasSuffix(operator.Value, ")") {
-					// TODO(Raj): Make this more comprehensive
 					expression := strings.TrimSuffix(strings.TrimPrefix(operator.Value, "EXPR("), ")")
 					ifExpr, err := exprCheckingReferencedLogFieldsAreNotNil(expression)
 					if err != nil {
@@ -119,16 +128,34 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				}
 
 			} else if operator.Type == "move" || operator.Type == "copy" {
-				operator.If = exprCheckingFieldIsNotNil(operator.From)
+				fromNotNilCheck, err := fieldNotNilCheck(operator.From)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"couldn't generate for %s.From: %w", operator.Name, err,
+					)
+				}
+				operator.If = fromNotNilCheck
 
 			} else if operator.Type == "remove" {
-				operator.If = exprCheckingFieldIsNotNil(operator.Field)
+				fieldNotNilCheck, err := fieldNotNilCheck(operator.Field)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"couldn't generate for %s.Field: %w", operator.Name, err,
+					)
+				}
+				operator.If = fieldNotNilCheck
 
 			} else if operator.Type == "trace_parser" {
 				cleanTraceParser(&operator)
 
 			} else if operator.Type == "time_parser" {
-				operator.If = exprCheckingFieldIsNotNil(operator.ParseFrom)
+				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"couldn't generate for %s.parseFrom: %w", operator.Name, err,
+					)
+				}
+				operator.If = parseFromNotNilCheck
 
 				if operator.LayoutType == "strptime" {
 					regex, err := RegexForStrptimeLayout(operator.Layout)
@@ -153,9 +180,15 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				// TODO(Raj): Maybe add support for gotime too eventually
 
 			} else if operator.Type == "severity_parser" {
+				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"couldn't generate for %s.parseFrom: %w", operator.Name, err,
+					)
+				}
 				operator.If = fmt.Sprintf(
 					`%s && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
-					exprCheckingFieldIsNotNil(operator.ParseFrom),
+					parseFromNotNilCheck,
 					operator.ParseFrom, operator.ParseFrom,
 					operator.ParseFrom, operator.ParseFrom,
 				)
@@ -184,14 +217,6 @@ func cleanTraceParser(operator *PipelineOperator) {
 
 // Generates an expression that can be used to validate
 // that a log record contains `fieldPath`
-func exprCheckingFieldIsNotNil(fieldPath string) string {
-	check, err := fieldNotNilCheck(fieldPath)
-	if err != nil {
-		panic(err)
-	}
-	return check
-}
-
 func fieldNotNilCheck(fieldPath string) (string, error) {
 	_, err := expr.Compile(fieldPath)
 	if err != nil {
