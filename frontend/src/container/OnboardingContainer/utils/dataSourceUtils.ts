@@ -40,7 +40,7 @@ export const frameworksMap = {
 			},
 			{
 				value: 'others',
-				label: 'Others',
+				label: 'Other Web Instrumentation',
 			},
 		],
 		python: [
