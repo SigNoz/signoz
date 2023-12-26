@@ -39,14 +39,7 @@ docker image prune -f -a
 
 ### 三，首次机器迁移需要操作
 
-#### 1，服务器装依赖
-
-```
-全局安装pm2
-npm install pm2@latest -g
-```
-
-#### 2, 迁移数据
+#### 迁移数据
 
 迁移系列目录下数据内容迁移到新机器上；
 
@@ -65,8 +58,10 @@ docker image prune -f -a
 2, /home/ubuntu/ec-web-signoz/deploy/docker/clickhouse-setup/data/clickhouse
 ```
 
-- 重启服务，执行
+- 在新机器上启服务，执行下列内容
 
 ```
-docker-compose -f /home/ubuntu/ec-web-signoz/deploy/docker/clickhouse-setup/docker-compose.yaml up -d
+1，cat /dev/null > "/home/ubuntu/templogs/access.log"
+2，cat /dev/null > "/home/ubuntu/templogs/customlog.log"
+3，docker-compose -f /home/ubuntu/ec-web-signoz/deploy/docker/clickhouse-setup/docker-compose.yaml up -d
 ```
