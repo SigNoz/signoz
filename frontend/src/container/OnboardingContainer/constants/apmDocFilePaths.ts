@@ -7,6 +7,40 @@
 /// ////// JavaScript Done
 /// ///// Go Start
 // Go-Kubernetes
+/// /// ROR Done
+/// /// .NET Start
+// dotnet-Kubernetes
+import APM_dotnet_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Dotnet/md-docs/Kubernetes/dotnet-kubernetes-installOtelCollector.md';
+import APM_dotnet_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Dotnet/md-docs/Kubernetes/dotnet-kubernetes-instrumentApplication.md';
+import APM_dotnet_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Dotnet/md-docs/Kubernetes/dotnet-kubernetes-runApplication.md';
+// dotnet-LinuxAMD64-quickstart
+import APM_dotnet_linuxAMD64_quickStart_instrumentApplication from '../Modules/APM/Dotnet/md-docs/LinuxAMD64/QuickStart/dotnet-linuxamd64-quickStart-instrumentApplication.md';
+import APM_dotnet_linuxAMD64_quickStart_runApplication from '../Modules/APM/Dotnet/md-docs/LinuxAMD64/QuickStart/dotnet-linuxamd64-quickStart-runApplication.md';
+// dotnet-LinuxAMD64-recommended
+import APM_dotnet_linuxAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Dotnet/md-docs/LinuxAMD64/Recommended/dotnet-linuxamd64-recommended-installOtelCollector.md';
+import APM_dotnet_linuxAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Dotnet/md-docs/LinuxAMD64/Recommended/dotnet-linuxamd64-recommended-instrumentApplication.md';
+import APM_dotnet_linuxAMD64_recommendedSteps_runApplication from '../Modules/APM/Dotnet/md-docs/LinuxAMD64/Recommended/dotnet-linuxamd64-recommended-runApplication.md';
+// dotnet-LinuxARM64-quickstart
+import APM_dotnet_linuxARM64_quickStart_instrumentApplication from '../Modules/APM/Dotnet/md-docs/LinuxARM64/QuickStart/dotnet-linuxarm64-quickStart-instrumentApplication.md';
+import APM_dotnet_linuxARM64_quickStart_runApplication from '../Modules/APM/Dotnet/md-docs/LinuxARM64/QuickStart/dotnet-linuxarm64-quickStart-runApplication.md';
+// dotnet-LinuxARM64-recommended
+import APM_dotnet_linuxARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Dotnet/md-docs/LinuxARM64/Recommended/dotnet-linuxarm64-recommended-installOtelCollector.md';
+import APM_dotnet_linuxARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Dotnet/md-docs/LinuxARM64/Recommended/dotnet-linuxarm64-recommended-instrumentApplication.md';
+import APM_dotnet_linuxARM64_recommendedSteps_runApplication from '../Modules/APM/Dotnet/md-docs/LinuxARM64/Recommended/dotnet-linuxarm64-recommended-runApplication.md';
+// dotnet-MacOsAMD64-quickstart
+import APM_dotnet_macOsAMD64_quickStart_instrumentApplication from '../Modules/APM/Dotnet/md-docs/MacOsAMD64/QuickStart/dotnet-macosamd64-quickStart-instrumentApplication.md';
+import APM_dotnet_macOsAMD64_quickStart_runApplication from '../Modules/APM/Dotnet/md-docs/MacOsAMD64/QuickStart/dotnet-macosamd64-quickStart-runApplication.md';
+// dotnet-MacOsAMD64-recommended
+import APM_dotnet_macOsAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Dotnet/md-docs/MacOsAMD64/Recommended/dotnet-macosamd64-recommended-installOtelCollector.md';
+import APM_dotnet_macOsAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Dotnet/md-docs/MacOsAMD64/Recommended/dotnet-macosamd64-recommended-instrumentApplication.md';
+import APM_dotnet_macOsAMD64_recommendedSteps_runApplication from '../Modules/APM/Dotnet/md-docs/MacOsAMD64/Recommended/dotnet-macosamd64-recommended-runApplication.md';
+// dotnet-MacOsARM64-quickstart
+import APM_dotnet_macOsARM64_quickStart_instrumentApplication from '../Modules/APM/Dotnet/md-docs/MacOsARM64/QuickStart/dotnet-macosarm64-quickStart-instrumentApplication.md';
+import APM_dotnet_macOsARM64_quickStart_runApplication from '../Modules/APM/Dotnet/md-docs/MacOsARM64/QuickStart/dotnet-macosarm64-quickStart-runApplication.md';
+// dotnet-MacOsARM64-recommended
+import APM_dotnet_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Dotnet/md-docs/MacOsARM64/Recommended/dotnet-macosarm64-recommended-installOtelCollector.md';
+import APM_dotnet_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Dotnet/md-docs/MacOsARM64/Recommended/dotnet-macosarm64-recommended-instrumentApplication.md';
+import APM_dotnet_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Dotnet/md-docs/MacOsARM64/Recommended/dotnet-macosarm64-recommended-runApplication.md';
 import APM_go_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/GoLang/md-docs/Kubernetes/golang-kubernetes-installOtelCollector.md';
 import APM_go_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/GoLang/md-docs/Kubernetes/golang-kubernetes-instrumentApplication.md';
 import APM_go_kubernetes_recommendedSteps_runApplication from '../Modules/APM/GoLang/md-docs/Kubernetes/golang-kubernetes-runApplication.md';
@@ -1249,7 +1283,7 @@ export const ApmDocFilePaths = {
 	APM_rails_linuxARM64_recommendedSteps_instrumentApplication,
 	APM_rails_linuxARM64_recommendedSteps_runApplication,
 
-	// ROR-LinuxARM64-quinestjs
+	// ROR-LinuxARM64-quickstart
 	APM_rails_linuxARM64_quickStart_instrumentApplication,
 	APM_rails_linuxARM64_quickStart_runApplication,
 
@@ -1270,4 +1304,51 @@ export const ApmDocFilePaths = {
 	// ROR-MacOsARM64-quickstart
 	APM_rails_macOsARM64_quickStart_instrumentApplication,
 	APM_rails_macOsARM64_quickStart_runApplication,
+
+	// ------------------------------------------------------------------------------------------------
+
+	/// //// ROR Done
+
+	/// //// .NET Start
+
+	// ROR-Kubernetes
+	APM_dotnet_kubernetes_recommendedSteps_setupOtelCollector,
+	APM_dotnet_kubernetes_recommendedSteps_instrumentApplication,
+	APM_dotnet_kubernetes_recommendedSteps_runApplication,
+
+	// ROR-LinuxAMD64-quickstart
+	APM_dotnet_linuxAMD64_quickStart_instrumentApplication,
+	APM_dotnet_linuxAMD64_quickStart_runApplication,
+
+	// ROR-LinuxAMD64-recommended
+	APM_dotnet_linuxAMD64_recommendedSteps_setupOtelCollector,
+	APM_dotnet_linuxAMD64_recommendedSteps_instrumentApplication,
+	APM_dotnet_linuxAMD64_recommendedSteps_runApplication,
+
+	// ROR-LinuxARM64-quickstart
+	APM_dotnet_linuxARM64_quickStart_instrumentApplication,
+	APM_dotnet_linuxARM64_quickStart_runApplication,
+
+	// ROR-LinuxARM64-recommended
+	APM_dotnet_linuxARM64_recommendedSteps_setupOtelCollector,
+	APM_dotnet_linuxARM64_recommendedSteps_instrumentApplication,
+	APM_dotnet_linuxARM64_recommendedSteps_runApplication,
+
+	// ROR-MacOsAMD64-quickstart
+	APM_dotnet_macOsAMD64_quickStart_instrumentApplication,
+	APM_dotnet_macOsAMD64_quickStart_runApplication,
+
+	// ROR-MacOsAMD64-recommended
+	APM_dotnet_macOsAMD64_recommendedSteps_setupOtelCollector,
+	APM_dotnet_macOsAMD64_recommendedSteps_instrumentApplication,
+	APM_dotnet_macOsAMD64_recommendedSteps_runApplication,
+
+	// ROR-MacOsARM64-quickstart
+	APM_dotnet_macOsARM64_quickStart_instrumentApplication,
+	APM_dotnet_macOsARM64_quickStart_runApplication,
+
+	// ROR-MacOsARM64-recommended
+	APM_dotnet_macOsARM64_recommendedSteps_setupOtelCollector,
+	APM_dotnet_macOsARM64_recommendedSteps_instrumentApplication,
+	APM_dotnet_macOsARM64_recommendedSteps_runApplication,
 };

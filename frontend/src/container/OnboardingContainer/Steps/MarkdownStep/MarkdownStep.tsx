@@ -67,7 +67,6 @@ export default function MarkdownStep(): JSX.Element {
 		} else if (selectedModule?.id === ModulesMap.InfrastructureMonitoring) {
 			docFilePaths = InfraMonitoringDocFilePaths;
 		}
-
 		// @ts-ignore
 		if (docFilePaths && docFilePaths[path]) {
 			// @ts-ignore
