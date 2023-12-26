@@ -278,8 +278,8 @@ func fieldNotNilCheck(fieldPath string) (string, error) {
 	return fmt.Sprintf("%s && %s", prefixCheck, suffixCheck), nil
 }
 
-// Split `str` after `sep` `N` times from the right.
-// rSplitAfterN("a.b.c.d", ".", 2) -> ["a.b", "c", "d"]
+// Split `str` after `sep` from the right to create up to `n` parts.
+// rSplitAfterN("a.b.c.d", ".", 3) -> ["a.b", ".c", ".d"]
 func rSplitAfterN(str string, sep string, n int) []string {
 	reversedStr := reverseString(str)
 	parts := strings.SplitAfterN(reversedStr, sep, n)
@@ -291,16 +291,18 @@ func rSplitAfterN(str string, sep string, n int) []string {
 	return result
 }
 
-func reverseString(s string) (result string) {
-	result = ""
-	for _, v := range s {
-		result = string(v) + result
+func reverseString(s string) string {
+	r := []rune(s)
+	for i := 0; i < len(r)/2; i++ {
+		j := len(s) - 1 - i
+		r[i], r[j] = r[j], r[i]
 	}
-	return
+	return string(r)
 }
 
 // Generate expression for checking that all fields referenced in `expr`
 // have a non nil value in log record.
+// Eg: `attributes.x + len(resources.y)` will return the expression `attributes.x != nil && resources.y != nil`
 func fieldsReferencedInExprNotNilCheck(expr string) (string, error) {
 	// parse ast for expr
 	exprAst, err := parser.Parse(expr)
@@ -312,21 +314,21 @@ func fieldsReferencedInExprNotNilCheck(expr string) (string, error) {
 	v := &exprFieldVisitor{}
 	ast.Walk(&exprAst.Node, v)
 
-	// Generating nil check for longest depth fields takes care of their prefixes too.
+	// Generating nil check for deepest fields takes care of their prefixes too.
 	// Eg: `attributes.test.value + len(attributes.test)` needs a nil check only for `attributes.test.value`
-	longestDepthFields := []string{}
+	deepestFieldRefs := []string{}
 	for _, field := range v.members {
 		if !slices.ContainsFunc(v.members, func(e string) bool {
 			return len(e) > len(field) && strings.HasPrefix(e, field)
 		}) {
 			if strings.HasPrefix(field, "attributes") || strings.HasPrefix(field, "resource") {
-				longestDepthFields = append(longestDepthFields, field)
+				deepestFieldRefs = append(deepestFieldRefs, field)
 			}
 		}
 	}
 
 	fieldExprChecks := []string{}
-	for _, field := range longestDepthFields {
+	for _, field := range deepestFieldRefs {
 		checkExpr, err := fieldNotNilCheck(field)
 		if err != nil {
 			return "", fmt.Errorf("could not create nil check for %s: %w", field, err)
