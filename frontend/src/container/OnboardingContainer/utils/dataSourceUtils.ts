@@ -34,6 +34,14 @@ export const frameworksMap = {
 				value: 'nodejs',
 				label: 'Nodejs',
 			},
+			{
+				value: 'reactjs',
+				label: 'React JS',
+			},
+			{
+				value: 'others',
+				label: 'Other Web Instrumentation',
+			},
 		],
 		python: [
 			{
