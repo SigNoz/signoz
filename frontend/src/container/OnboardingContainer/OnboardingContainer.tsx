@@ -221,8 +221,7 @@ export default function Onboarding(): JSX.Element {
 				<>
 					<FullViewHeader />
 					<div className="onboardingHeader">
-						<h1>Get Started with SigNoz</h1>
-						<div> Select a use-case to get started </div>
+						<h1> Select a use-case to get started</h1>
 					</div>
 					<div className="modulesContainer">
 						<div className="moduleContainerRowStyles">

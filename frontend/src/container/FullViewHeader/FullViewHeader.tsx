@@ -4,9 +4,13 @@ import './FullViewHeader.styles.scss';
 
 import history from 'lib/history';
 
-export default function FullViewHeader(): React.ReactElement {
+export default function FullViewHeader({
+	overrideRoute,
+}: {
+	overrideRoute?: string;
+}): React.ReactElement {
 	const handleLogoClick = (): void => {
-		history.push('/');
+		history.push(overrideRoute || '/');
 	};
 	return (
 		<div className="full-view-header-container">
@@ -18,3 +22,7 @@ export default function FullViewHeader(): React.ReactElement {
 		</div>
 	);
 }
+
+FullViewHeader.defaultProps = {
+	overrideRoute: '/',
+};

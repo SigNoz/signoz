@@ -65,8 +65,6 @@ function SideNav({
 
 	const [inviteMembers] = useComponentPermission(['invite_members'], role);
 
-	console.log('licenseData', licenseData);
-
 	// const secondaryMenuItems: MenuItem[] = [];
 
 	useEffect(() => {

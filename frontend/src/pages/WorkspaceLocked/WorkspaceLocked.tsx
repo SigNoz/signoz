@@ -77,7 +77,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 
 	return (
 		<>
-			<FullViewHeader />
+			<FullViewHeader overrideRoute={ROUTES.WORKSPACE_LOCKED} />
 
 			<Card className="workspace-locked-container">
 				{isLoadingLicenseData || !licensesData?.payload?.workSpaceBlock ? (
