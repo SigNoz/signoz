@@ -34,7 +34,6 @@ const ROUTES = {
 	LOGS_EXPLORER: '/logs/logs-explorer',
 	LIVE_LOGS: '/logs/logs-explorer/live',
 	LOGS_PIPELINES: '/logs/pipelines',
-	LOGS_SETTINGS: '/logs/settings',
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
