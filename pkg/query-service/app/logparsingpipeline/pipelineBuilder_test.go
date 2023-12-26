@@ -672,7 +672,7 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 				Enabled: true,
 				Name:    "add",
 				Field:   `attributes["order.pids"].missing_field`,
-				Value:   `EXPR(attributes["order.product_ids"][4].missing_field + resource.another_missing_field)`,
+				Value:   `EXPR(attributes.a["b.c"].d[4].e + resource.f)`,
 			}, {
 				ID:      "add2",
 				Type:    "add",

@@ -88,7 +88,7 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
 				if err != nil {
 					return nil, fmt.Errorf(
-						"couldn't generate nil check for %s.parseFrom: %w", operator.Name, err,
+						"couldn't generate nil check for parseFrom of regex op %s: %w", operator.Name, err,
 					)
 				}
 				operator.If = fmt.Sprintf(
@@ -105,7 +105,7 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
 				if err != nil {
 					return nil, fmt.Errorf(
-						"couldn't generate nil check for %s.parseFrom: %w", operator.Name, err,
+						"couldn't generate nil check for parseFrom of json parser op %s: %w", operator.Name, err,
 					)
 				}
 				operator.If = fmt.Sprintf(
@@ -115,15 +115,15 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 			} else if operator.Type == "add" {
 				if strings.HasPrefix(operator.Value, "EXPR(") && strings.HasSuffix(operator.Value, ")") {
 					expression := strings.TrimSuffix(strings.TrimPrefix(operator.Value, "EXPR("), ")")
-					referencedFieldsNotNilCheck, err := fieldsReferencedInExprNotNilCheck(expression)
+					fieldsNotNilCheck, err := fieldsReferencedInExprNotNilCheck(expression)
 					if err != nil {
 						return nil, fmt.Errorf(
-							"could not generate nil check for operator %s (add) value: %w",
+							"could'nt generate nil check for fields referenced in value expr of add operator %s: %w",
 							operator.Name, err,
 						)
 					}
-					if referencedFieldsNotNilCheck != "" {
-						operator.If = referencedFieldsNotNilCheck
+					if fieldsNotNilCheck != "" {
+						operator.If = fieldsNotNilCheck
 					}
 				}
 
@@ -131,7 +131,7 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				fromNotNilCheck, err := fieldNotNilCheck(operator.From)
 				if err != nil {
 					return nil, fmt.Errorf(
-						"couldn't generate nil check for %s.From: %w", operator.Name, err,
+						"couldn't generate nil check for From field of %s op %s: %w", operator.Type, operator.Name, err,
 					)
 				}
 				operator.If = fromNotNilCheck
@@ -140,7 +140,7 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				fieldNotNilCheck, err := fieldNotNilCheck(operator.Field)
 				if err != nil {
 					return nil, fmt.Errorf(
-						"couldn't generate nil check for %s.Field: %w", operator.Name, err,
+						"couldn't generate nil check for field to be removed by op %s: %w", operator.Name, err,
 					)
 				}
 				operator.If = fieldNotNilCheck
@@ -152,7 +152,7 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
 				if err != nil {
 					return nil, fmt.Errorf(
-						"couldn't generate nil check for %s.parseFrom: %w", operator.Name, err,
+						"couldn't generate nil check for parseFrom of time parser op %s: %w", operator.Name, err,
 					)
 				}
 				operator.If = parseFromNotNilCheck
@@ -160,7 +160,9 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				if operator.LayoutType == "strptime" {
 					regex, err := RegexForStrptimeLayout(operator.Layout)
 					if err != nil {
-						return nil, fmt.Errorf("could not generate time_parser processor: %w", err)
+						return nil, fmt.Errorf(
+							"couldn't generate layout regex for time_parser %s: %w", operator.Name, err,
+						)
 					}
 
 					operator.If = fmt.Sprintf(
@@ -183,7 +185,7 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
 				if err != nil {
 					return nil, fmt.Errorf(
-						"couldn't generate nil check for %s.parseFrom: %w", operator.Name, err,
+						"couldn't generate nil check for parseFrom of severity parser %s: %w", operator.Name, err,
 					)
 				}
 				operator.If = fmt.Sprintf(
@@ -228,54 +230,52 @@ func fieldNotNilCheck(fieldPath string) (string, error) {
 		)
 	}
 
-	// Optional chaining before membership ops (attributes.test?.['member.field'].value) is not valid syntax.
-	// Work around that by checking that the target of membership op is not nil first.
-	// Eg: attributes?.test != nil && attributes.test['member.field']?.value != nil
+	// Optional chaining before membership ops is not supported by expr.
+	// Eg: The field `attributes.test["a.b"].value["c.d"].e` can't be checked using
+	// the nil check `attributes.test?.["a.b"]?.value?.["c.d"]?.e != nil`
+	// This needs to be worked around by checking that the target of membership op is not nil first.
+	// Eg: attributes.test != nil && attributes.test["a.b"]?.value != nil && attributes.test["a.b"].value["c.d"]?.e != nil
 
-	// Split once from the right before a membership op.
-	// The example above would result in ["attributes.test", "['member.field'].value"]
+	// Split once from the right to include the rightmost membership op and everything after it.
+	// Eg: `attributes.test["a.b"].value["c.d"].e` would result in `attributes.test["a.b"].value` and `["c.d"].e`
 	parts := rSplitAfterN(fieldPath, "[", 2)
 	if len(parts) < 2 {
 		// there is no [] access in fieldPath
-		return fmt.Sprintf(
-			"%s != nil", optionalChainedPath(fieldPath),
-		), nil
+		return fmt.Sprintf("%s != nil", optionalChainedPath(fieldPath)), nil
 	}
 
-	// recursively generate nil check for the prefix (attributes.test)
-	prefixCheck, err := fieldNotNilCheck(parts[0])
+	// recursively generate nil check for target of the rightmost membership op (attributes.test["a.b"].value)
+	// should come out to be (attributes.test != nil && attributes.test["a.b"]?.value != nil)
+	collectionNotNilCheck, err := fieldNotNilCheck(parts[0])
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("couldn't generate nil check for %s: %w", parts[0], err)
 	}
 
-	// generate nil check for suffix (attributes.test['member.field']?.value != nil)
-	suffixParts := strings.SplitAfter(parts[1], "]") // "['member.field]", ".value"
-	suffixPath := suffixParts[0]
+	// generate nil check for entire path.
+	suffixParts := strings.SplitAfter(parts[1], "]") // ["c.d"], ".e"
+	fullPath := parts[0] + suffixParts[0]
 	if len(suffixParts) > 1 {
-		// "['member.field']?.value"
-		suffixPath = fmt.Sprintf(
-			"%s%s", suffixParts[0], optionalChainedPath(suffixParts[1]),
-		)
+		// attributes.test["a.b"].value["c.d"]?.e
+		fullPath += optionalChainedPath(suffixParts[1])
 	}
-	// attributes.test['member.field']?.value != nil
-	suffixCheck := fmt.Sprintf("%s%s != nil", parts[0], suffixPath)
+	fullPathCheck := fmt.Sprintf("%s != nil", fullPath)
 
 	// If the membership op is for array/slice indexing, add check ensuring array is long enough
 	// attributes.test[3] -> len(attributes.test) > 3 && attributes.test[3] != nil
 	if !(strings.Contains(suffixParts[0], "'") || strings.Contains(suffixParts[0], `"`)) {
-		suffixCheck = fmt.Sprintf(
+		fullPathCheck = fmt.Sprintf(
 			"len(%s) > %s && %s",
-			parts[0], suffixParts[0][1:len(suffixParts[0])-1], suffixCheck,
+			parts[0], suffixParts[0][1:len(suffixParts[0])-1], fullPathCheck,
 		)
 	}
 
 	// If prefix is `attributes` or `resource` there is no need to add a nil check for
 	// the prefix since all log records have non nil `attributes` and `resource` fields.
 	if slices.Contains([]string{"attributes", "resource"}, parts[0]) {
-		return suffixCheck, nil
+		return fullPathCheck, nil
 	}
 
-	return fmt.Sprintf("%s && %s", prefixCheck, suffixCheck), nil
+	return fmt.Sprintf("%s && %s", collectionNotNilCheck, fullPathCheck), nil
 }
 
 // Split `str` after `sep` from the right to create up to `n` parts.
@@ -300,30 +300,25 @@ func reverseString(s string) string {
 	return string(r)
 }
 
-// Generate expression for checking that all fields referenced in `expr`
-// have a non nil value in log record.
-// Eg: `attributes.x + len(resources.y)` will return the expression `attributes.x != nil && resources.y != nil`
+// Generate expression for checking that all fields referenced in `expr` have a non nil value in log record.
+// Eg: `attributes.x + len(resource.y)` will return the expression `attributes.x != nil && resource.y != nil`
 func fieldsReferencedInExprNotNilCheck(expr string) (string, error) {
-	// parse ast for expr
-	exprAst, err := parser.Parse(expr)
+	referencedFields, err := logFieldsReferencedInExpr(expr)
 	if err != nil {
-		return "", fmt.Errorf("could not parse expr: %w", err)
+		return "", fmt.Errorf("couldn't extract log fields referenced in expr %s: %w", expr, err)
 	}
-
-	// walk ast for expr to collect all member references.
-	v := &exprFieldVisitor{}
-	ast.Walk(&exprAst.Node, v)
 
 	// Generating nil check for deepest fields takes care of their prefixes too.
 	// Eg: `attributes.test.value + len(attributes.test)` needs a nil check only for `attributes.test.value`
 	deepestFieldRefs := []string{}
-	for _, field := range v.members {
-		if !slices.ContainsFunc(v.members, func(e string) bool {
-			return len(e) > len(field) && strings.HasPrefix(e, field)
-		}) {
-			if strings.HasPrefix(field, "attributes") || strings.HasPrefix(field, "resource") {
-				deepestFieldRefs = append(deepestFieldRefs, field)
-			}
+	for _, field := range referencedFields {
+		isPrefixOfAnotherReferencedField := slices.ContainsFunc(
+			referencedFields, func(e string) bool {
+				return len(e) > len(field) && strings.HasPrefix(e, field)
+			},
+		)
+		if !isPrefixOfAnotherReferencedField {
+			deepestFieldRefs = append(deepestFieldRefs, field)
 		}
 	}
 
@@ -339,12 +334,31 @@ func fieldsReferencedInExprNotNilCheck(expr string) (string, error) {
 	return strings.Join(fieldExprChecks, " && "), nil
 }
 
-type exprFieldVisitor struct {
-	members []string
+// Expr AST visitor for extracting referenced log fields
+// See more at https://github.com/expr-lang/expr/blob/master/ast/visitor.go
+type logFieldsInExprExtractor struct {
+	referencedFields []string
 }
 
-func (v *exprFieldVisitor) Visit(node *ast.Node) {
+func (v *logFieldsInExprExtractor) Visit(node *ast.Node) {
 	if n, ok := (*node).(*ast.MemberNode); ok {
-		v.members = append(v.members, n.String())
+		memberRef := n.String()
+		if strings.HasPrefix(memberRef, "attributes") || strings.HasPrefix(memberRef, "resource") {
+			v.referencedFields = append(v.referencedFields, memberRef)
+		}
 	}
+}
+
+func logFieldsReferencedInExpr(expr string) ([]string, error) {
+	// parse abstract syntax tree for expr
+	exprAst, err := parser.Parse(expr)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse expr: %w", err)
+	}
+
+	// walk ast for expr to collect all member references.
+	v := &logFieldsInExprExtractor{}
+	ast.Walk(&exprAst.Node, v)
+
+	return v.referencedFields, nil
 }
