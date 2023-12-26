@@ -1,5 +1,13 @@
 #!/bin/bash
 
+if (( $EUID != 0 )); then
+    echo "🟡 Running installer with non-sudo permissions."
+    echo "   In case of any failure or prompt, please consider running the script with sudo privileges."
+    echo ""
+else
+    sudo_cmd="sudo"
+fi
+
 # 服务器步骤
 FRONTEND_DIR="/home/ubuntu/ec-web-signoz/frontend" # 前端目录
 # 进入前端目录
