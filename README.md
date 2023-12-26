@@ -29,9 +29,44 @@ docker image prune -f -a
 
 #### 1，服务器部分
 
-- 给予脚本权限：chmod +x deploy.sh
+<!-- - 给予脚本权限：chmod +x deploy.sh -->
+
 - 执行脚本
 
 ```
   ./deploy.sh
+```
+
+### 三，首次机器迁移需要操作
+
+#### 1，服务器装依赖
+
+```
+全局安装pm2
+npm install pm2@latest -g
+```
+
+#### 2, 迁移数据
+
+迁移系列目录下数据内容迁移到新机器上；
+
+- 关闭现阶段正在运行服务, 由于服务器上 docker 服务只有 signoz 相关服务，可以全关闭
+
+```
+docker stop $(docker ps -aq)
+docker container prune -f
+docker image prune -f -a
+```
+
+- 复制下列目录下数据到新服务器上
+
+```
+1, /home/ubuntu/ec-web-signoz/deploy/docker/clickhouse-setup/data/signoz
+2, /home/ubuntu/ec-web-signoz/deploy/docker/clickhouse-setup/data/clickhouse
+```
+
+- 重启服务，执行
+
+```
+docker-compose -f /home/ubuntu/ec-web-signoz/deploy/docker/clickhouse-setup/docker-compose.yaml up -d
 ```
