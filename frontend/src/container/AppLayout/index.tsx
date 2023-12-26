@@ -1,16 +1,22 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/anchor-is-valid */
 import './AppLayout.styles.scss';
 
 import { Flex } from 'antd';
 import getDynamicConfigs from 'api/dynamicConfigs/getDynamicConfigs';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
+import cx from 'classnames';
 import ROUTES from 'constants/routes';
-import Header from 'container/Header';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
+import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { ReactNode, useEffect, useMemo, useRef } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
@@ -28,14 +34,19 @@ import {
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
+import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
 import { getRouteKey } from './utils';
 
 function AppLayout(props: AppLayoutProps): JSX.Element {
-	const { isLoggedIn, user } = useSelector<AppState, AppReducer>(
+	const { isLoggedIn, user, role } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
+
+	const isDarkMode = useIsDarkMode();
+
+	const { data: licenseData, isFetching } = useLicense();
 
 	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
@@ -199,13 +210,57 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const renderFullScreen =
 		pathname === ROUTES.GET_STARTED || pathname === ROUTES.WORKSPACE_LOCKED;
 
+	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
+
+	useEffect(() => {
+		if (
+			!isFetching &&
+			licenseData?.payload?.onTrial &&
+			!licenseData?.payload?.trialConvertedToSubscription &&
+			!licenseData?.payload?.workSpaceBlock &&
+			getRemainingDays(licenseData?.payload.trialEnd) < 7
+		) {
+			setShowTrialExpiryBanner(true);
+		}
+	}, [licenseData, isFetching]);
+
+	const handleUpgrade = (): void => {
+		if (role === 'ADMIN') {
+			history.push(ROUTES.BILLING);
+		}
+	};
+
 	return (
-		<Layout>
+		<Layout className={isDarkMode ? 'darkMode' : 'lightMode'}>
 			<Helmet>
 				<title>{pageTitle}</title>
 			</Helmet>
-			<Flex className="app-layout">
-				{isToDisplayLayout && !renderFullScreen && <SideNav />}
+
+			{showTrialExpiryBanner && (
+				<div className="trial-expiry-banner">
+					You are in free trial period. Your free trial will end on{' '}
+					<span>
+						{getFormattedDate(licenseData?.payload?.trialEnd || Date.now())}.
+					</span>
+					{role === 'ADMIN' ? (
+						<span>
+							{' '}
+							Please{' '}
+							<a className="upgrade-link" onClick={handleUpgrade}>
+								upgrade
+							</a>
+							to continue using SigNoz features.
+						</span>
+					) : (
+						'Please contact your administrator for upgrading to a paid plan.'
+					)}
+				</div>
+			)}
+
+			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
+				{isToDisplayLayout && !renderFullScreen && (
+					<SideNav licenseData={licenseData} isFetching={isFetching} />
+				)}
 				<div className="app-content">
 					<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
 						<LayoutContent>

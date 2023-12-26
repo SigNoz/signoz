@@ -7,14 +7,14 @@ import { useLocation } from 'react-use';
 
 export const logsExplorer = {
 	Component: LogsExplorer,
-	name: 'Logs Explorer',
+	name: 'Explorer',
 	route: ROUTES.LOGS,
 	key: ROUTES.LOGS,
 };
 
 export const logsPipelines = {
 	Component: Pipelines,
-	name: 'Logs Pipelines',
+	name: 'Pipelines',
 	route: ROUTES.LOGS_PIPELINES,
 	key: ROUTES.LOGS_PIPELINES,
 };

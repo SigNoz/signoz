@@ -5,22 +5,56 @@ import {
 	BarChart2,
 	BellDot,
 	BugIcon,
+	Cloudy,
 	DraftingCompass,
+	FileKey2,
 	LayoutGrid,
 	Receipt,
 	Route,
 	ScrollText,
 	Settings,
+	UserPlus,
 } from 'lucide-react';
 
 import { SidebarItem } from './sideNav.types';
 
+export const getStartedMenuItem = {
+	key: ROUTES.GET_STARTED,
+	label: 'Get Started',
+	icon: <RocketOutlined rotate={45} />,
+};
+
+export const inviteMemberMenuItem = {
+	key: ROUTES.ORG_SETTINGS,
+	label: 'Invite Team Member',
+	icon: <UserPlus size={16} />,
+};
+
+export const manageLicenseMenuItem = {
+	key: ROUTES.LIST_LICENSES,
+	label: 'Manage Licenses',
+	icon: <FileKey2 size={16} />,
+};
+
+// const helpSupportMenuItem = {
+// 	key: ROUTES.SUPPORT,
+// 	label: 'Help & Support',
+// 	icon: <MessageSquare size={16} />,
+// };
+
+// const slackSupportMenuItem = {
+// 	key: 'slack_support',
+// 	label: 'Slack Support',
+// 	icon: <MessageSquare size={16} />,
+// };
+
+export const trySignozCloudMenuItem: SidebarItem = {
+	key: 'trySignozCloud',
+	label: 'Try Signoz Cloud',
+	icon: <Cloudy size={16} />,
+};
+
 const menuItems: SidebarItem[] = [
-	{
-		key: ROUTES.GET_STARTED,
-		label: 'Get Started',
-		icon: <RocketOutlined rotate={45} />,
-	},
 	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',

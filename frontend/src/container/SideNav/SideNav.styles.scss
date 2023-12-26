@@ -5,10 +5,7 @@
 	max-width: 240px;
 	min-width: 240px;
 	width: 240px;
-
-	background: #0b0c0e;
 	border-right: 1px solid $bg-slate-400;
-	padding: 4px;
 	padding-bottom: 48px;
 	transition: all 0.2s, background 0s;
 	position: relative;
@@ -16,16 +13,26 @@
 	.brand {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		gap: 8px;
+		gap: 12px;
 		padding: $padding-4;
 
 		.brand-logo {
 			display: flex;
 			align-items: center;
+			gap: 8px;
 
 			img {
 				height: $font-size-xl;
+			}
+
+			.brand-logo-name {
+				font-family: 'Work Sans', sans-serif;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 18px;
+
+				color: #fff;
 			}
 		}
 
@@ -50,11 +57,52 @@
 		}
 	}
 
+	.get-started-nav-items {
+		display: flex;
+		margin: 8px 8px 16px 8px;
+
+		.get-started-btn {
+			display: flex;
+			align-items: center;
+			padding: 8px;
+			margin-left: 2px;
+			gap: 8px;
+
+			width: 100%;
+			border: 1px solid $bg-slate-400;
+
+			border: none;
+			border-radius: 2px;
+			box-shadow: none !important;
+		}
+	}
+
 	.secondary-nav-items {
+		border-top: 1px solid $bg-slate-400;
+		padding: 8px 0;
 		max-width: 100%;
 		position: fixed;
 		bottom: 0;
 		left: 0;
 		width: 240px;
+	}
+}
+
+.lightMode {
+	.sideNav {
+		background: $bg-vanilla-300;
+		border-right: 1px solid $bg-vanilla-100;
+
+		.brand {
+			.brand-logo {
+				.brand-logo-name {
+					color: $bg-slate-400;
+				}
+			}
+		}
+
+		.secondary-nav-items {
+			border-top: 1px solid $bg-vanilla-100;
+		}
 	}
 }
