@@ -557,6 +557,57 @@ func TestPipelineFilterWithStringOpsShouldNotSpamWarningsIfAttributeIsMissing(t 
 	}
 }
 
+func TestAttributePathsContainingDollarDoNotBreakCollector(t *testing.T) {
+	require := require.New(t)
+
+	testPipeline := Pipeline{
+		OrderId: 1,
+		Name:    "pipeline1",
+		Alias:   "pipeline1",
+		Enabled: true,
+		Filter: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "$test",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: "=",
+					Value:    "test",
+				},
+			},
+		},
+		Config: []PipelineOperator{
+			{
+				ID:      "move",
+				Type:    "move",
+				Enabled: true,
+				Name:    "move",
+				From:    "attributes.$test",
+				To:      "attributes.$test1",
+			},
+		},
+	}
+
+	testLogs := []model.SignozLog{
+		makeTestSignozLog("test log", map[string]interface{}{
+			"$test": "test",
+		}),
+	}
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(),
+		[]Pipeline{testPipeline},
+		testLogs,
+	)
+	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+	require.Equal(1, len(result))
+	require.Equal("test", result[0].Attributes_string["$test1"])
+}
+
 func TestTemporaryWorkaroundForSupportingAttribsContainingDots(t *testing.T) {
 	// TODO(Raj): Remove this after dots are supported
 

@@ -158,7 +158,7 @@ function Trace(props: TraceProps): JSX.Element {
 									isDarkMode={isDarkMode}
 									onClick={onClickTreeExpansion}
 								>
-									<Typography>{totalSpans}</Typography>
+									<Typography style={{ wordBreak: 'normal' }}>{totalSpans}</Typography>
 									<CaretContainer>{icon}</CaretContainer>
 								</CardComponent>
 							)}
