@@ -71,8 +71,8 @@ export default function ModuleStepsContainer({
 	} = useOnboardingContext();
 
 	const [current, setCurrent] = useState(0);
-	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
 	const { trackEvent } = useAnalytics();
+	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
 	const lastStepIndex = selectedModuleSteps.length - 1;
 
 	const isValidForm = (): boolean => {
