@@ -57,7 +57,7 @@ export const getUPlotChartOptions = ({
 	return {
 		id,
 		width: dimensions.width,
-		height: dimensions.height - 30,
+		height: dimensions.height - 60,
 		legend: {
 			show: true,
 			live: false,
