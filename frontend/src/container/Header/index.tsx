@@ -79,7 +79,7 @@ function HeaderContainer(): JSX.Element {
 							<Divider />
 							<CurrentOrganization onToggle={onToggleHandler(setIsUserDropDownOpen)} />
 							<Divider />
-							<ManageLicense onToggle={onToggleHandler(setIsUserDropDownOpen)} />
+							{/* <ManageLicense onToggle={onToggleHandler(setIsUserDropDownOpen)} /> */}
 							<Divider />
 							<LogoutContainer>
 								<LogoutOutlined />

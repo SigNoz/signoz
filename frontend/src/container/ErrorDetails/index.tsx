@@ -122,7 +122,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		setSourceCodeLoading(true);
 		axios
 			// .post('http://localhost:9331/sourcemap/searchErrDetail', {
-			.post('https://pulse.tb1.sayweee.net/sourcemap/searchErrDetail', {
+			.post(`${process.env.SERVER_API_HOST}/sourcemap/searchErrDetail`, {
 				fileName: errorReport.fileName,
 				line: errorReport.lineNumber || errorReport.line,
 				column: errorReport.columnNumber || errorReport.column,

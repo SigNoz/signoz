@@ -17,15 +17,15 @@ function WelcomeLeftContainer({
 			<LeftContainer direction="vertical">
 				<Space align="center">
 					<Logo src="signoz-signup.svg" alt="logo" />
-					<Title style={{ fontSize: '46px', margin: 0 }}>SigNoz</Title>
+					<Title style={{ fontSize: '46px', margin: 0 }}>Weee Raptor</Title>
 				</Space>
-				<Typography>{t('monitor_signup')}</Typography>
-				<Card
+				{/* <Typography>{t('monitor_signup')}</Typography> */}
+				{/* <Card
 					style={{ width: 'max-content' }}
 					bodyStyle={{ padding: '1px 8px', width: '100%' }}
 				>
 					SigNoz {version}
-				</Card>
+				</Card> */}
 			</LeftContainer>
 			{children}
 		</Container>
