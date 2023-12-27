@@ -255,7 +255,8 @@ function SideNav({
 					className="brand-logo"
 					// eslint-disable-next-line react/no-unknown-property
 					onClick={(): void => {
-						onClickHandler('/');
+						// Current home page
+						onClickHandler(ROUTES.APPLICATION);
 					}}
 				>
 					<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
