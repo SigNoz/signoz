@@ -13,8 +13,26 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const Critters = require('critters-webpack-plugin');
+const fs = require('fs');
 
-dotenv.config();
+// dotenv.config();
+const envFile = `.env.${process.env.NODE_ENV}`;
+
+// 确保文件存在，否则回退到默认的 .env 文件
+const finalPath = fs.existsSync(envFile) ? envFile : '.env';
+const env = dotenv.config({
+	path: finalPath,
+}).parsed;
+
+// 转换加载的环境变量为 DefinePlugin 需要的格式
+const envKeys = env
+	? {
+			'process.env': Object.keys(env).reduce((acc, key) => {
+				acc[key] = JSON.stringify(env[key]);
+				return acc;
+			}, {}),
+	  }
+	: {};
 
 const cssLoader = 'css-loader';
 const sassLoader = 'sass-loader';
@@ -36,14 +54,17 @@ const plugins = [
 	new webpack.ProvidePlugin({
 		process: 'process/browser',
 	}),
-	new webpack.DefinePlugin({
-		'process.env': JSON.stringify({
-			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
-			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
-			SEGMENT_ID: process.env.SEGMENT_ID,
-			CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
-		}),
-	}),
+	new webpack.DefinePlugin(
+		// {
+		// 	'process.env': JSON.stringify({
+		// 		FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
+		// 		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+		// 		SEGMENT_ID: process.env.SEGMENT_ID,
+		// 		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+		// 	}),
+		// }
+		envKeys,
+	),
 	new MiniCssExtractPlugin(),
 	new Critters({
 		preload: 'swap',

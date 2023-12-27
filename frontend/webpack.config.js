@@ -7,16 +7,34 @@ const dotenv = require('dotenv');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+const fs = require('fs');
 
-dotenv.config();
+// dotenv.config();
+const envFile = `.env.${process.env.NODE_ENV}`;
 
+// 确保文件存在，否则回退到默认的 .env 文件
+const finalPath = fs.existsSync(envFile) ? envFile : '.env';
+const env = dotenv.config({
+	path: finalPath,
+}).parsed;
+
+// 转换加载的环境变量为 DefinePlugin 需要的格式
+const envKeys = env
+	? {
+			'process.env': Object.keys(env).reduce((acc, key) => {
+				acc[key] = JSON.stringify(env[key]);
+				return acc;
+			}, {}),
+	  }
+	: {};
 console.log(resolve(__dirname, './src/'));
 
 const cssLoader = 'css-loader';
 const sassLoader = 'sass-loader';
 const styleLoader = 'style-loader';
 
-// console.log('wocaooooo', process.env)
+console.log('wocaooooo', envFile, finalPath);
+console.log('sss2', env, envKeys);
 
 const plugins = [
 	new HtmlWebpackPlugin({
@@ -28,15 +46,18 @@ const plugins = [
 	new webpack.ProvidePlugin({
 		process: 'process/browser',
 	}),
-	new webpack.DefinePlugin({
-		'process.env': JSON.stringify({
-			NODE_ENV: process.env.NODE_ENV,
-			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
-			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
-			SEGMENT_ID: process.env.SEGMENT_ID,
-			CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
-		}),
-	}),
+	new webpack.DefinePlugin(
+		// {
+		// 	'process.env': JSON.stringify({
+		// 		NODE_ENV: process.env.NODE_ENV,
+		// 		FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
+		// 		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+		// 		SEGMENT_ID: process.env.SEGMENT_ID,
+		// 		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+		// 	}),
+		// }
+		envKeys,
+	),
 ];
 
 if (process.env.BUNDLE_ANALYSER === 'true') {
