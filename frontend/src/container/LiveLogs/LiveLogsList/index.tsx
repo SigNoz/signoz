@@ -1,4 +1,5 @@
 import { Card, Typography } from 'antd';
+import LogDetail from 'components/LogDetail';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
@@ -11,6 +12,7 @@ import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import { useDetailedLogView } from 'hooks/logs/useDetailedLogView';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { useEventSource } from 'providers/EventSource';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
@@ -36,6 +38,8 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 		dataSource: DataSource.LOGS,
 		aggregateOperator: StringOperators.NOOP,
 	});
+
+	const { activeLog, onClearLogDetails, onAddToQuery } = useDetailedLogView();
 
 	const activeLogIndex = useMemo(
 		() => logs.findIndex(({ id }) => id === activeLogId),
@@ -113,12 +117,20 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
-							<Virtuoso
-								ref={ref}
-								data={logs}
-								totalCount={logs.length}
-								itemContent={getItemContent}
-							/>
+							<>
+								<Virtuoso
+									ref={ref}
+									data={logs}
+									totalCount={logs.length}
+									itemContent={getItemContent}
+								/>
+								<LogDetail
+									log={activeLog}
+									onClose={onClearLogDetails}
+									onAddToQuery={onAddToQuery}
+									onClickActionItem={onAddToQuery}
+								/>
+							</>
 						</Card>
 					)}
 				</InfinityWrapperStyled>

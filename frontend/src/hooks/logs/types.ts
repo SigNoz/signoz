@@ -20,7 +20,21 @@ export type UseCopyLogLink = {
 export type UseActiveLog = {
 	activeLog: ILog | null;
 	onSetActiveLog: (log: ILog) => void;
+	onViewLogDetails: (log: ILog) => void;
 	onClearActiveLog: () => void;
+	onClearLogDetails: () => void;
+	onAddToQuery: (
+		fieldKey: string,
+		fieldValue: string,
+		operator: string,
+		isJSON?: boolean,
+		dataType?: DataTypes,
+	) => void;
+};
+
+export type UseDetailedLogView = {
+	activeLog: ILog | null;
+	onClearLogDetails: () => void;
 	onAddToQuery: (
 		fieldKey: string,
 		fieldValue: string,

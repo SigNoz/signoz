@@ -9,6 +9,7 @@ import {
 	LogsActions,
 	PUSH_LIVE_TAIL_EVENT,
 	RESET_ID_START_AND_END,
+	SET_ACTIVE_LOG_DATA,
 	SET_DETAILED_LOG_DATA,
 	SET_FIELDS,
 	SET_LINES_PER_ROW,
@@ -51,6 +52,7 @@ const initialState: ILogsReducer = {
 	liveTailStartRange: 15,
 	selectedLogId: null,
 	detailedLog: null,
+	activeLog: null,
 	order:
 		(new URLSearchParams(window.location.search).get(
 			'order',
@@ -191,6 +193,13 @@ export const LogsReducer = (
 			return {
 				...state,
 				detailedLog: action.payload,
+			};
+		}
+
+		case SET_ACTIVE_LOG_DATA: {
+			return {
+				...state,
+				activeLog: action.payload,
 			};
 		}
 

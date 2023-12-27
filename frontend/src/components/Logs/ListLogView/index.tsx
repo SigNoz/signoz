@@ -7,7 +7,6 @@ import {
 } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
-import LogDetail from 'components/LogDetail';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
@@ -113,16 +112,12 @@ function ListLogView({
 		onSetActiveLog: handleSetActiveContextLog,
 		onClearActiveLog: handleClearActiveContextLog,
 	} = useActiveLog();
-	const {
-		activeLog,
-		onSetActiveLog,
-		onClearActiveLog,
-		onAddToQuery,
-	} = useActiveLog();
+
+	const { onViewLogDetails, onAddToQuery } = useActiveLog();
 
 	const handleDetailedView = useCallback(() => {
-		onSetActiveLog(logData);
-	}, [logData, onSetActiveLog]);
+		onViewLogDetails(logData);
+	}, [logData, onViewLogDetails]);
 
 	const handleShowContext = useCallback(() => {
 		handleSetActiveContextLog(logData);
@@ -223,12 +218,6 @@ function ListLogView({
 						onClose={handleClearActiveContextLog}
 					/>
 				)}
-				<LogDetail
-					log={activeLog}
-					onClose={onClearActiveLog}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
-				/>
 			</Row>
 		</Container>
 	);
