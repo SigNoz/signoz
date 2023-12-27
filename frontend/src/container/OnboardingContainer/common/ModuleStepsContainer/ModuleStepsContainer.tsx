@@ -138,7 +138,7 @@ export default function ModuleStepsContainer({
 		if (selectedModule.id === ModulesMap.APM) {
 			history.push(ROUTES.APPLICATION);
 		} else if (selectedModule.id === ModulesMap.LogsManagement) {
-			history.push(ROUTES.LOGS);
+			history.push(ROUTES.LOGS_EXPLORER);
 		} else if (selectedModule.id === ModulesMap.InfrastructureMonitoring) {
 			history.push(ROUTES.APPLICATION);
 		}
