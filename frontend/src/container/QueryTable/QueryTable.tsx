@@ -61,7 +61,7 @@ export function QueryTable({
 			<ResizeTable
 				columns={tableColumns}
 				tableLayout="fixed"
-				dataSource={dataSource}
+				dataSource={newDataSource}
 				scroll={{ x: true }}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}

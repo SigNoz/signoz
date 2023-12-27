@@ -9,34 +9,102 @@ import { placement } from '../placement';
 
 dayjs.extend(customParseFormat);
 
-const createDivsFromArray = (
+interface UplotTooltipDataProps {
+	show: boolean;
+	color: string;
+	label: string;
+	focus: boolean;
+	value: number;
+	tooltipValue: string;
+	textContent: string;
+}
+
+const generateTooltipContent = (
 	seriesList: any[],
 	data: any[],
 	idx: number,
 	yAxisUnit?: string,
 	series?: uPlot.Options['series'],
-	fillSpans?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
 	container.classList.add('tooltip-container');
+	const overlay = document.getElementById('overlay');
+	let tooltipCount = 0;
+
+	let tooltipTitle = '';
+	const formattedData: Record<string, UplotTooltipDataProps> = {};
+
+	function sortTooltipContentBasedOnValue(
+		tooltipDataObj: Record<string, UplotTooltipDataProps>,
+	): Record<string, UplotTooltipDataProps> {
+		const entries = Object.entries(tooltipDataObj);
+		entries.sort((a, b) => b[1].value - a[1].value);
+		return Object.fromEntries(entries);
+	}
 
 	if (Array.isArray(series) && series.length > 0) {
 		series.forEach((item, index) => {
-			const div = document.createElement('div');
-			div.classList.add('tooltip-content-row');
-
 			if (index === 0) {
-				const formattedDate = dayjs(data[0][idx] * 1000).format(
-					'MMM DD YYYY HH:mm:ss',
-				);
+				tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY HH:mm:ss');
+			} else if (item.show) {
+				const { metric = {}, queryName = '', legend = '' } =
+					seriesList[index - 1] || {};
 
-				div.textContent = formattedDate;
-				div.classList.add('tooltip-content-header');
-			} else if (fillSpans ? item.show : item.show && data[index][idx]) {
+				const value = data[index][idx];
+				const label = getLabelName(metric, queryName || '', legend || '');
+
+				if (Number.isFinite(value)) {
+					const tooltipValue = getToolTipValue(value, yAxisUnit);
+
+					const dataObj = {
+						show: item.show || false,
+						color: colors[(index - 1) % colors.length],
+						label,
+						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+						// @ts-ignore
+						focus: item?._focus || false,
+						value,
+						tooltipValue,
+						textContent: `${label} : ${tooltipValue}`,
+					};
+
+					tooltipCount += 1;
+					formattedData[label] = dataObj;
+				}
+			}
+		});
+	}
+
+	// Show tooltip only if atleast only series has a value at the hovered timestamp
+	if (tooltipCount <= 0) {
+		if (overlay && overlay.style.display === 'block') {
+			overlay.style.display = 'none';
+		}
+
+		return container;
+	}
+
+	const sortedData: Record<
+		string,
+		UplotTooltipDataProps
+	> = sortTooltipContentBasedOnValue(formattedData);
+
+	const div = document.createElement('div');
+	div.classList.add('tooltip-content-row');
+	div.textContent = tooltipTitle;
+	div.classList.add('tooltip-content-header');
+	container.appendChild(div);
+
+	const sortedKeys = Object.keys(sortedData);
+
+	if (Array.isArray(sortedKeys) && sortedKeys.length > 0) {
+		sortedKeys.forEach((key) => {
+			if (sortedData[key]) {
+				const { textContent, color, focus } = sortedData[key];
+				const div = document.createElement('div');
+				div.classList.add('tooltip-content-row');
 				div.classList.add('tooltip-content');
-				const color = colors[(index - 1) % colors.length];
-
 				const squareBox = document.createElement('div');
 				squareBox.classList.add('pointSquare');
 
@@ -45,28 +113,25 @@ const createDivsFromArray = (
 				const text = document.createElement('div');
 				text.classList.add('tooltip-data-point');
 
-				const { metric = {}, queryName = '', legend = '' } =
-					seriesList[index - 1] || {};
-
-				const label = getLabelName(
-					metric,
-					queryName || '', // query
-					legend || '',
-				);
-
-				const value = data[index][idx] || 0;
-
-				const tooltipValue = getToolTipValue(value, yAxisUnit);
-
-				text.textContent = `${label} : ${tooltipValue || 0}`;
+				text.textContent = textContent;
 				text.style.color = color;
+
+				if (focus) {
+					text.classList.add('focus');
+				} else {
+					text.classList.remove('focus');
+				}
 
 				div.appendChild(squareBox);
 				div.appendChild(text);
-			}
 
-			container.appendChild(div);
+				container.appendChild(div);
+			}
 		});
+	}
+
+	if (overlay && overlay.style.display === 'none') {
+		overlay.style.display = 'block';
 	}
 
 	return container;
@@ -75,7 +140,6 @@ const createDivsFromArray = (
 const tooltipPlugin = (
 	apiResponse: MetricRangePayloadProps | undefined,
 	yAxisUnit?: string,
-	fillSpans?: boolean,
 ): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
@@ -128,15 +192,14 @@ const tooltipPlugin = (
 					overlay.textContent = '';
 					const { left, top, idx } = u.cursor;
 
-					if (idx) {
+					if (Number.isInteger(idx)) {
 						const anchor = { left: left + bLeft, top: top + bTop };
-						const content = createDivsFromArray(
+						const content = generateTooltipContent(
 							apiResult,
 							u.data,
 							idx,
 							yAxisUnit,
 							u.series,
-							fillSpans,
 						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });

@@ -3,6 +3,7 @@ import './GridCardLayout.styles.scss';
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { themeColors } from 'constants/theme';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -109,39 +110,37 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 
 	return (
 		<>
-			{!isDashboardLocked && (
-				<ButtonContainer>
+			<ButtonContainer>
+				<Button
+					loading={updateDashboardMutation.isLoading}
+					onClick={handle.enter}
+					icon={<FullscreenIcon size={16} />}
+					disabled={updateDashboardMutation.isLoading}
+				>
+					{t('dashboard:full_view')}
+				</Button>
+
+				{!isDashboardLocked && saveLayoutPermission && (
 					<Button
 						loading={updateDashboardMutation.isLoading}
-						onClick={handle.enter}
-						icon={<FullscreenIcon size={16} />}
+						onClick={onSaveHandler}
+						icon={<SaveFilled />}
 						disabled={updateDashboardMutation.isLoading}
 					>
-						{t('dashboard:full_view')}
+						{t('dashboard:save_layout')}
 					</Button>
+				)}
 
-					{saveLayoutPermission && (
-						<Button
-							loading={updateDashboardMutation.isLoading}
-							onClick={onSaveHandler}
-							icon={<SaveFilled />}
-							disabled={updateDashboardMutation.isLoading}
-						>
-							{t('dashboard:save_layout')}
-						</Button>
-					)}
-
-					{addPanelPermission && (
-						<Button
-							onClick={onAddPanelHandler}
-							icon={<PlusOutlined />}
-							data-testid="add-panel"
-						>
-							{t('dashboard:add_panel')}
-						</Button>
-					)}
-				</ButtonContainer>
-			)}
+				{!isDashboardLocked && addPanelPermission && (
+					<Button
+						onClick={onAddPanelHandler}
+						icon={<PlusOutlined />}
+						data-testid="add-panel"
+					>
+						{t('dashboard:add_panel')}
+					</Button>
+				)}
+			</ButtonContainer>
 
 			<FullScreen handle={handle} className="fullscreen-grid-container">
 				<ReactGridLayout
@@ -157,6 +156,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					onLayoutChange={setLayouts}
 					draggableHandle=".drag-handle"
 					layout={layouts}
+					style={{ backgroundColor: isDarkMode ? '' : themeColors.snowWhite }}
 				>
 					{layouts.map((layout) => {
 						const { i: id } = layout;
@@ -167,7 +167,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 								className={isDashboardLocked ? '' : 'enable-resize'}
 								isDarkMode={isDarkMode}
 								key={id}
-								data-grid={layout}
+								data-grid={JSON.stringify(currentWidget)}
 							>
 								<Card
 									className="grid-item"

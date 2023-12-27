@@ -27,6 +27,7 @@ function DynamicColumnTable({
 	);
 
 	useEffect(() => {
+		setColumnsData(columns);
 		const visibleColumns = getVisibleColumns({
 			tablesource,
 			columnsData: columns,
@@ -42,7 +43,7 @@ function DynamicColumnTable({
 				: undefined,
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [columns]);
 
 	const onToggleHandler = (index: number) => (
 		checked: boolean,

@@ -1,8 +1,9 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './uplot.scss';
+import './Uplot.styles.scss';
 
 import { Typography } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
+import { LineChart } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import {
 	forwardRef,
@@ -56,6 +57,13 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 				onDeleteRef.current?.(chart);
 				chart.destroy();
 				chartRef.current = null;
+			}
+
+			// remove chart tooltip on cleanup
+			const overlay = document.getElementById('overlay');
+
+			if (overlay) {
+				overlay.style.display = 'none';
 			}
 		}, []);
 
@@ -119,6 +127,16 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 				propDataRef.current = data;
 			}
 		}, [data, resetScales, create]);
+
+		if (data && data[0] && data[0]?.length === 0) {
+			return (
+				<div className="uplot-no-data not-found">
+					<LineChart size={48} strokeWidth={0.5} />
+
+					<Typography>No Data</Typography>
+				</div>
+			);
+		}
 
 		return (
 			<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>

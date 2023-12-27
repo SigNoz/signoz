@@ -23,6 +23,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
+import { getTimeRange } from 'utils/getTimeRange';
 
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
@@ -52,7 +53,7 @@ function FullView({
 
 	const [chartOptions, setChartOptions] = useState<uPlot.Options>();
 
-	const { selectedDashboard } = useDashboard();
+	const { selectedDashboard, isDashboardLocked } = useDashboard();
 
 	const getSelectedTime = useCallback(
 		() =>
@@ -92,6 +93,21 @@ function FullView({
 
 	const isDarkMode = useIsDarkMode();
 
+	const [minTimeScale, setMinTimeScale] = useState<number>();
+	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
+	useEffect((): void => {
+		const { startTime, endTime } = getTimeRange(response);
+
+		setMinTimeScale(startTime);
+		setMaxTimeScale(endTime);
+	}, [maxTime, minTime, globalSelectedInterval, response]);
+
 	useEffect(() => {
 		if (!response.isFetching && fullViewRef.current) {
 			const width = fullViewRef.current?.clientWidth
@@ -114,6 +130,8 @@ function FullView({
 				graphsVisibilityStates,
 				setGraphsVisibilityStates,
 				thresholds: widget.thresholds,
+				minTimeScale,
+				maxTimeScale,
 			});
 
 			setChartOptions(newChartOptions);
@@ -155,7 +173,12 @@ function FullView({
 				)}
 			</div>
 
-			<div className="graph-container" ref={fullViewRef}>
+			<div
+				className={
+					isDashboardLocked ? 'graph-container disabled' : 'graph-container'
+				}
+				ref={fullViewRef}
+			>
 				{chartOptions && (
 					<GraphContainer
 						style={{ height: '90%' }}
@@ -178,7 +201,7 @@ function FullView({
 				)}
 			</div>
 
-			{canModifyChart && chartOptions && (
+			{canModifyChart && chartOptions && !isDashboardLocked && (
 				<GraphManager
 					data={chartData}
 					name={name}

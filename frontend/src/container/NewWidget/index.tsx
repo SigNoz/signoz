@@ -1,5 +1,6 @@
-import { LockFilled } from '@ant-design/icons';
-import { Button, Modal, Tooltip, Typography } from 'antd';
+/* eslint-disable sonarjs/cognitive-complexity */
+import { LockFilled, WarningOutlined } from '@ant-design/icons';
+import { Button, Modal, Space, Tooltip, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -18,10 +19,11 @@ import {
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
@@ -39,11 +41,23 @@ import {
 	RightContainerWrapper,
 } from './styles';
 import { NewWidgetProps } from './types';
+import { getIsQueryModified } from './utils';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
-	const { selectedDashboard } = useDashboard();
+	const {
+		selectedDashboard,
+		setSelectedDashboard,
+		setToScrollWidgetId,
+	} = useDashboard();
 
-	const { currentQuery } = useQueryBuilder();
+	const { t } = useTranslation(['dashboard']);
+
+	const { currentQuery, stagedQuery } = useQueryBuilder();
+
+	const isQueryModified = useMemo(
+		() => getIsQueryModified(currentQuery, stagedQuery),
+		[currentQuery, stagedQuery],
+	);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -88,6 +102,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedWidget?.fillSpans || false,
 	);
 	const [saveModal, setSaveModal] = useState(false);
+	const [discardModal, setDiscardModal] = useState(false);
+
+	const closeModal = (): void => {
+		setSaveModal(false);
+		setDiscardModal(false);
+	};
 
 	const [graphType, setGraphType] = useState(selectedGraph);
 
@@ -103,8 +123,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		name: getSelectedTime()?.name || '',
 		enum: selectedWidget?.timePreferance || 'GLOBAL_TIME',
 	});
-
-	const { notifications } = useNotifications();
 
 	const updateDashboardMutation = useUpdateDashboard();
 
@@ -135,49 +153,54 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		return { selectedWidget, preWidgets, afterWidgets };
 	}, [selectedDashboard, query]);
 
+	const { notifications } = useNotifications();
+
 	const onClickSaveHandler = useCallback(() => {
 		if (!selectedDashboard) {
 			return;
 		}
 
-		updateDashboardMutation.mutateAsync(
-			{
-				uuid: selectedDashboard.uuid,
-				data: {
-					...selectedDashboard.data,
-					widgets: [
-						...preWidgets,
-						{
-							...(selectedWidget || ({} as Widgets)),
-							description,
-							timePreferance: selectedTime.enum,
-							isStacked: stacked,
-							opacity,
-							nullZeroValues: selectedNullZeroValue,
-							title,
-							yAxisUnit,
-							panelTypes: graphType,
-							thresholds,
-						},
-						...afterWidgets,
-					],
-				},
+		const dashboard: Dashboard = {
+			...selectedDashboard,
+			uuid: selectedDashboard.uuid,
+			data: {
+				...selectedDashboard.data,
+				widgets: [
+					...preWidgets,
+					{
+						...(selectedWidget || ({} as Widgets)),
+						description,
+						timePreferance: selectedTime.enum,
+						isStacked: stacked,
+						opacity,
+						nullZeroValues: selectedNullZeroValue,
+						title,
+						yAxisUnit,
+						panelTypes: graphType,
+						thresholds,
+					},
+					...afterWidgets,
+				],
 			},
-			{
-				onSuccess: () => {
-					featureResponse.refetch();
-					history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-				},
-				onError: () => {
-					notifications.error({
-						message: SOMETHING_WENT_WRONG,
-					});
-				},
+		};
+
+		updateDashboardMutation.mutateAsync(dashboard, {
+			onSuccess: () => {
+				setSelectedDashboard(dashboard);
+				setToScrollWidgetId(selectedWidget?.id || '');
+				featureResponse.refetch();
+				history.push({
+					pathname: generatePath(ROUTES.DASHBOARD, { dashboardId }),
+				});
 			},
-		);
+			onError: () => {
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				});
+			},
+		});
 	}, [
 		selectedDashboard,
-		updateDashboardMutation,
 		preWidgets,
 		selectedWidget,
 		description,
@@ -190,12 +213,23 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		graphType,
 		thresholds,
 		afterWidgets,
+		updateDashboardMutation,
+		setSelectedDashboard,
+		setToScrollWidgetId,
 		featureResponse,
 		dashboardId,
 		notifications,
 	]);
 
 	const onClickDiscardHandler = useCallback(() => {
+		if (isQueryModified) {
+			setDiscardModal(true);
+			return;
+		}
+		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
+	}, [dashboardId, isQueryModified]);
+
+	const discardChanges = useCallback(() => {
 		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 	}, [dashboardId]);
 
@@ -311,21 +345,54 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				</RightContainerWrapper>
 			</PanelContainer>
 			<Modal
-				title="Save Changes"
+				title={
+					isQueryModified ? (
+						<Space>
+							<WarningOutlined style={{ fontSize: '16px', color: '#fdd600' }} />
+							Unsaved Changes
+						</Space>
+					) : (
+						'Save Widget'
+					)
+				}
 				focusTriggerAfterClose
 				forceRender
 				destroyOnClose
 				closable
-				onCancel={(): void => setSaveModal(false)}
+				onCancel={closeModal}
 				onOk={onClickSaveHandler}
 				centered
 				open={saveModal}
 				width={600}
 			>
-				<Typography>
-					Your graph built with <QueryTypeTag queryType={currentQuery.queryType} />{' '}
-					query will be saved. Press OK to confirm.
-				</Typography>
+				{!isQueryModified ? (
+					<Typography>
+						{t('your_graph_build_with')}{' '}
+						<QueryTypeTag queryType={currentQuery.queryType} />
+						{t('dashboar_ok_confirm')}
+					</Typography>
+				) : (
+					<Typography>{t('dashboard_unsave_changes')} </Typography>
+				)}
+			</Modal>
+			<Modal
+				title={
+					<Space>
+						<WarningOutlined style={{ fontSize: '16px', color: '#fdd600' }} />
+						Unsaved Changes
+					</Space>
+				}
+				focusTriggerAfterClose
+				forceRender
+				destroyOnClose
+				closable
+				onCancel={closeModal}
+				onOk={discardChanges}
+				centered
+				open={discardModal}
+				width={600}
+			>
+				<Typography>{t('dashboard_unsave_changes')}</Typography>
 			</Modal>
 		</Container>
 	);
