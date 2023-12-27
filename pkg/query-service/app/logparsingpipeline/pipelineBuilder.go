@@ -101,6 +101,15 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 					),
 				)
 
+			} else if operator.Type == "grok_parser" {
+				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"couldn't generate nil check for parseFrom of grok op %s: %w", operator.Name, err,
+					)
+				}
+				operator.If = parseFromNotNilCheck
+
 			} else if operator.Type == "json_parser" {
 				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
 				if err != nil {
