@@ -199,6 +199,12 @@ func createTelemetry() {
 		for {
 			select {
 			case <-activeUserTicker.C:
+				if telemetry.activeUser["logs"] != 0 {
+					getLogsInfoInLastHeartBeatInterval, err := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(context.Background())
+					if err != nil && getLogsInfoInLastHeartBeatInterval == 0 {
+						telemetry.activeUser["logs"] = 0
+					}
+				}
 				if (telemetry.activeUser["traces"] != 0) || (telemetry.activeUser["metrics"] != 0) || (telemetry.activeUser["logs"] != 0) {
 					telemetry.activeUser["any"] = 1
 				}
@@ -259,7 +265,10 @@ func createTelemetry() {
 							"metricBasedAlerts": alertsInfo.MetricBasedAlerts,
 							"tracesBasedAlerts": alertsInfo.TracesBasedAlerts,
 						}
-						telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
+						// send event only if there are dashboards or alerts
+ 						if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 {
+							telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
+						}
 					} else {
 						telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
 					}
