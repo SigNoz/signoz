@@ -3,5 +3,6 @@ services:
  web:
   build: .
   image: signoz/frontend:latest
+  # image: signoz/frontend:PEP-1074
   ports:
    - "3301:3301"

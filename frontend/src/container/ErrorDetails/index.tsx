@@ -1,7 +1,8 @@
 import './styles.scss';
 
-import { Button, Divider, Space, Typography } from 'antd';
+import { Button, Divider, message, Modal, Space, Typography } from 'antd';
 import getNextPrevId from 'api/errors/getNextPrevId';
+import axios from 'axios';
 import Editor from 'components/Editor';
 import { ResizeTable } from 'components/ResizeTable';
 import { getNanoSeconds } from 'container/AllError/utils';
@@ -20,6 +21,8 @@ import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
 
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
+	const [sourceCodeLoading, setSourceCodeLoading] = useState<boolean>(false);
+	const [messageApi, contextHolder] = message.useMessage();
 	const { idPayload } = props;
 	const { t } = useTranslation(['errorDetails', 'common']);
 	const { search, pathname } = useLocation();
@@ -110,12 +113,46 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			value: errorDetail[key as keyof GetByErrorTypeAndServicePayload],
 		}));
 
-	const onClickTraceHandler = (): void => {
-		history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
+	// const onClickTraceHandler = (): void => {
+	// 	history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
+	// };
+
+	const clickCheckSourceDetail = async (): Promise<void> => {
+		const errorReport = JSON.parse(errorDetail.exceptionStacktrace || '{}');
+		setSourceCodeLoading(true);
+		axios
+			// .post('http://localhost:9331/sourcemap/searchErrDetail', {
+			.post(`${process.env.SERVER_API_HOST}/sourcemap/searchErrDetail`, {
+				fileName: errorReport.fileName,
+				line: errorReport.lineNumber || errorReport.line,
+				column: errorReport.columnNumber || errorReport.column,
+				projectId: errorReport.projectId,
+				env: errorReport.env,
+			})
+			.then(({ data }) => {
+				setSourceCodeLoading(false);
+				if (data.result) {
+					Modal.info({
+						width: 600,
+						title: 'Code Detail',
+						content: <p dangerouslySetInnerHTML={{ __html: data.msg }} />,
+					});
+					return;
+				}
+				messageApi.open({
+					type: 'warning',
+					content: data.msg,
+				});
+			})
+			.catch((error) => {
+				setSourceCodeLoading(false);
+				console.warn('clickCheckSourceDetailError', error);
+			});
 	};
 
 	return (
 		<>
+			{contextHolder}
 			<Typography>{errorDetail.exceptionType}</Typography>
 			<Typography>{errorDetail.exceptionMessage}</Typography>
 			<Divider />
@@ -155,14 +192,32 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				</div>
 			</EventContainer>
 
-			<DashedContainer>
+			{/* <DashedContainer>
 				<Typography>{t('see_trace_graph')}</Typography>
 				<Button onClick={onClickTraceHandler} type="primary">
 					{t('see_error_in_trace_graph')}
 				</Button>
-			</DashedContainer>
+			</DashedContainer> */}
 
-			<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
+			<div
+				style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'center',
+				}}
+			>
+				<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
+				{['Unhandled_Rejection', 'JS_ERROR'].includes(errorDetail.exceptionType) ? (
+					<Button
+						onClick={clickCheckSourceDetail}
+						type="primary"
+						loading={sourceCodeLoading}
+					>
+						check source code
+					</Button>
+				) : null}
+			</div>
+
 			<div className="error-container">
 				<Editor value={stackTraceValue} readOnly />
 			</div>

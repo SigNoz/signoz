@@ -184,13 +184,13 @@ function SideNav(): JSX.Element {
 				items={menuItems}
 				onClick={onClickMenuHandler}
 			/>
-			<StyledSecondaryMenu
+			{/* <StyledSecondaryMenu
 				theme="dark"
 				selectedKeys={activeMenuKey ? [activeMenuKey] : []}
 				mode="vertical"
 				style={styles}
 				items={secondaryMenuItems}
-			/>
+			/> */}
 		</Sider>
 	);
 }

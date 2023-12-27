@@ -8,10 +8,10 @@ import {
 	CaretUpFilled,
 	LogoutOutlined,
 } from '@ant-design/icons';
-import { Button, Divider, MenuProps, Space, Typography } from 'antd';
+import { Divider, MenuProps, Space, Typography } from 'antd';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
-import Config from 'container/ConfigDropdown';
+// import Config from 'container/ConfigDropdown';
 import { useIsDarkMode, useThemeMode } from 'hooks/useDarkMode';
 import useLicense, { LICENSE_PLAN_STATUS } from 'hooks/useLicense';
 import history from 'lib/history';
@@ -79,7 +79,7 @@ function HeaderContainer(): JSX.Element {
 							<Divider />
 							<CurrentOrganization onToggle={onToggleHandler(setIsUserDropDownOpen)} />
 							<Divider />
-							<ManageLicense onToggle={onToggleHandler(setIsUserDropDownOpen)} />
+							{/* <ManageLicense onToggle={onToggleHandler(setIsUserDropDownOpen)} /> */}
 							<Divider />
 							<LogoutContainer>
 								<LogoutOutlined />
@@ -100,18 +100,18 @@ function HeaderContainer(): JSX.Element {
 		[onToggleHandler, onLogoutKeyDown],
 	);
 
-	const onClickSignozCloud = (): void => {
-		window.open(
-			'https://signoz.io/oss-to-cloud/?utm_source=product_navbar&utm_medium=frontend&utm_campaign=oss_users',
-			'_blank',
-		);
-	};
+	// const onClickSignozCloud = (): void => {
+	// 	window.open(
+	// 		'https://signoz.io/oss-to-cloud/?utm_source=product_navbar&utm_medium=frontend&utm_campaign=oss_users',
+	// 		'_blank',
+	// 	);
+	// };
 
 	const { data: licenseData, isFetching, status: licenseStatus } = useLicense();
 
-	const isLicenseActive =
-		licenseData?.payload?.licenses?.find((e) => e.isCurrent)?.status ===
-		LICENSE_PLAN_STATUS.VALID;
+	// const isLicenseActive =
+	// 	licenseData?.payload?.licenses?.find((e) => e.isCurrent)?.status ===
+	// 	LICENSE_PLAN_STATUS.VALID;
 
 	useEffect(() => {
 		if (
@@ -166,18 +166,18 @@ function HeaderContainer(): JSX.Element {
 								style={{ margin: 0, color: 'rgb(219, 219, 219)' }}
 								level={4}
 							>
-								SigNoz
+								Weee Raptor
 							</Typography.Title>
 						</NavLinkWrapper>
 					</NavLink>
 
 					<Space size="middle" align="center">
-						{licenseStatus === 'success' && !isLicenseActive && (
+						{/* {licenseStatus === 'success' && !isLicenseActive && (
 							<Button onClick={onClickSignozCloud} type="primary">
 								Try Signoz Cloud
 							</Button>
-						)}
-						<Config frontendId="tooltip" />
+						)} */}
+						{/* <Config frontendId="tooltip" /> */}
 
 						<ToggleButton
 							checked={isDarkMode}

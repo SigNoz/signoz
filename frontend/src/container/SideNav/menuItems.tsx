@@ -22,15 +22,20 @@ const menuItems: SidebarMenu[] = [
 		label: 'Get Started',
 		icon: <RocketOutlined rotate={45} />,
 	},
+	// {
+	// 	key: ROUTES.APPLICATION,
+	// 	label: 'Services',
+	// 	icon: <BarChartOutlined />,
+	// },
+	// {
+	// 	key: ROUTES.TRACE,
+	// 	label: 'Traces',
+	// 	icon: <MenuOutlined />,
+	// },
 	{
-		key: ROUTES.APPLICATION,
-		label: 'Services',
-		icon: <BarChartOutlined />,
-	},
-	{
-		key: ROUTES.TRACE,
-		label: 'Traces',
-		icon: <MenuOutlined />,
+		key: ROUTES.ALL_DASHBOARD,
+		label: 'Dashboards',
+		icon: <DashboardFilled />,
 	},
 	{
 		key: ROUTES.LOGS_EXPLORER,
@@ -50,11 +55,6 @@ const menuItems: SidebarMenu[] = [
 		],
 	},
 	{
-		key: ROUTES.ALL_DASHBOARD,
-		label: 'Dashboards',
-		icon: <DashboardFilled />,
-	},
-	{
 		key: ROUTES.LIST_ALL_ALERT,
 		label: 'Alerts',
 		icon: <AlertOutlined />,
@@ -64,11 +64,11 @@ const menuItems: SidebarMenu[] = [
 		label: 'Exceptions',
 		icon: <BugOutlined />,
 	},
-	{
-		key: ROUTES.SERVICE_MAP,
-		label: 'Service Map',
-		icon: <DeploymentUnitOutlined />,
-	},
+	// {
+	// 	key: ROUTES.SERVICE_MAP,
+	// 	label: 'Service Map',
+	// 	icon: <DeploymentUnitOutlined />,
+	// },
 	{
 		key: ROUTES.USAGE_EXPLORER,
 		label: 'Usage Explorer',

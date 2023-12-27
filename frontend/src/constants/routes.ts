@@ -10,6 +10,7 @@ const ROUTES = {
 	GET_STARTED: '/get-started',
 	USAGE_EXPLORER: '/usage-explorer',
 	APPLICATION: '/services',
+	// APPLICATION: '/dashboard',
 	ALL_DASHBOARD: '/dashboard',
 	DASHBOARD: '/dashboard/:dashboardId',
 	DASHBOARD_WIDGET: '/dashboard/:dashboardId/:widgetId',

@@ -164,7 +164,8 @@ function Login({
 					response.payload.refreshJwt,
 				);
 
-				history.push(ROUTES.APPLICATION);
+				// history.push(ROUTES.APPLICATION);
+				history.push(ROUTES.ALL_DASHBOARD);
 			} else {
 				notifications.error({
 					message: response.error || t('unexpected_error'),
