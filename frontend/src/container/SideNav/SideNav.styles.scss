@@ -7,7 +7,7 @@
 	width: 240px;
 	border-right: 1px solid $bg-slate-400;
 	padding-bottom: 48px;
-	transition: all 0.2s, background 0s;
+	transition: all 0.3s, background 0s, border 0s;
 	position: relative;
 
 	.brand {
@@ -85,6 +85,42 @@
 		bottom: 0;
 		left: 0;
 		width: 240px;
+
+		transition: all 0.3s, background 0s, border 0s;
+
+		// position: relative;
+
+		.collapse-expand-handlers {
+			position: absolute;
+
+			position: absolute;
+			top: -9px;
+			right: -9px;
+			cursor: pointer;
+
+			color: $bg-robin-300;
+		}
+	}
+
+	&.collapsed {
+		flex: 0 0 64px;
+		max-width: 64px;
+		min-width: 64px;
+		width: 64px;
+
+		.secondary-nav-items {
+			width: 64px;
+		}
+
+		.brand {
+			justify-content: center;
+		}
+
+		.get-started-nav-items {
+			.get-started-btn {
+				justify-content: center;
+			}
+		}
 	}
 }
 
@@ -103,6 +139,10 @@
 
 		.secondary-nav-items {
 			border-top: 1px solid $bg-vanilla-100;
+
+			.collapse-expand-handlers {
+				color: $bg-robin-400;
+			}
 		}
 	}
 }

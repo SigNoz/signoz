@@ -40,6 +40,8 @@
 	.nav-item-data {
 		flex-grow: 1;
 
+		max-width: calc(100% - 24px);
+
 		display: flex;
 		margin: 1px 8px;
 		padding: 4px 12px;

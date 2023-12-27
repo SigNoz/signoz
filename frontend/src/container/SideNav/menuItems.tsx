@@ -9,14 +9,16 @@ import {
 	DraftingCompass,
 	FileKey2,
 	LayoutGrid,
+	MessageSquare,
 	Receipt,
 	Route,
 	ScrollText,
 	Settings,
+	Slack,
 	UserPlus,
 } from 'lucide-react';
 
-import { SidebarItem } from './sideNav.types';
+import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
 
 export const getStartedMenuItem = {
 	key: ROUTES.GET_STARTED,
@@ -36,17 +38,17 @@ export const manageLicenseMenuItem = {
 	icon: <FileKey2 size={16} />,
 };
 
-// const helpSupportMenuItem = {
-// 	key: ROUTES.SUPPORT,
-// 	label: 'Help & Support',
-// 	icon: <MessageSquare size={16} />,
-// };
+export const helpSupportMenuItem = {
+	key: ROUTES.SUPPORT,
+	label: 'Help & Support',
+	icon: <MessageSquare size={16} />,
+};
 
-// const slackSupportMenuItem = {
-// 	key: 'slack_support',
-// 	label: 'Slack Support',
-// 	icon: <MessageSquare size={16} />,
-// };
+export const slackSupportMenuItem = {
+	key: SecondaryMenuItemKey.Slack,
+	label: 'Slack Support',
+	icon: <Slack size={16} />,
+};
 
 export const trySignozCloudMenuItem: SidebarItem = {
 	key: 'trySignozCloud',

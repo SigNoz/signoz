@@ -5,10 +5,12 @@ import cx from 'classnames';
 import { SidebarItem } from '../sideNav.types';
 
 export default function NavItem({
+	isCollapsed,
 	item,
 	isActive,
 	onClick,
 }: {
+	isCollapsed: boolean;
 	item: SidebarItem;
 	isActive: boolean;
 	onClick: () => void;
@@ -22,7 +24,7 @@ export default function NavItem({
 			<div className="nav-item-data">
 				<div className="nav-item-icon">{icon}</div>
 
-				<div className="nav-item-label">{label}</div>
+				{!isCollapsed && <div className="nav-item-label">{label}</div>}
 			</div>
 		</div>
 	);

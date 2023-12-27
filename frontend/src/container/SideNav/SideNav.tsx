@@ -3,6 +3,9 @@
 import './SideNav.styles.scss';
 
 import { Button } from 'antd';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import cx from 'classnames';
+import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { ToggleButton } from 'container/Header/styles';
@@ -10,26 +13,42 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
 import history from 'lib/history';
-import { RocketIcon, UserCircle } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
+import {
+	AlertTriangle,
+	CheckSquare,
+	PanelLeftOpen,
+	PanelRightOpen,
+	RocketIcon,
+	UserCircle,
+} from 'lucide-react';
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useState,
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { sideBarCollapse } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import { isCloudUser } from 'utils/app';
+import { checkVersionState, isCloudUser, isEECloudUser } from 'utils/app';
 
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
 import defaultMenuItems, {
-	// getStartedMenuItem,
+	helpSupportMenuItem,
 	inviteMemberMenuItem,
 	manageLicenseMenuItem,
+	slackSupportMenuItem,
 	trySignozCloudMenuItem,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
-import { SidebarItem } from './sideNav.types';
+import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 
 function SideNav({
@@ -39,13 +58,21 @@ function SideNav({
 	licenseData: any;
 	isFetching: boolean;
 }): JSX.Element {
-	// const dispatch = useDispatch();
+	const dispatch = useDispatch();
 	const [menuItems, setMenuItems] = useState(defaultMenuItems);
+	const [collapsed, setCollapsed] = useState<boolean>(
+		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
+	);
 
 	const { pathname, search } = useLocation();
-	const { user, role, featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const {
+		user,
+		role,
+		featureResponse,
+		currentVersion,
+		latestVersion,
+		isCurrentVersionError,
+	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const defaultUserManagementMenuItems: SidebarItem[] = useMemo(
 		() => [
@@ -63,9 +90,17 @@ function SideNav({
 		defaultUserManagementMenuItems,
 	);
 
-	const [inviteMembers] = useComponentPermission(['invite_members'], role);
+	const onClickSlackHandler = (): void => {
+		window.open('https://signoz.io/slack', '_blank');
+	};
 
-	// const secondaryMenuItems: MenuItem[] = [];
+	const onClickVersionHandler = (): void => {
+		history.push(ROUTES.VERSION);
+	};
+
+	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
+
+	const [inviteMembers] = useComponentPermission(['invite_members'], role);
 
 	useEffect(() => {
 		if (inviteMembers) {
@@ -115,15 +150,15 @@ function SideNav({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [licenseData?.payload?.licenses, isFetching, role]);
 
-	// const { t } = useTranslation('');
+	const { t } = useTranslation('');
 
-	// const onCollapse = useCallback(() => {
-	// 	setCollapsed((collapsed) => !collapsed);
-	// }, []);
+	const onCollapse = useCallback(() => {
+		setCollapsed((collapsed) => !collapsed);
+	}, []);
 
-	// useLayoutEffect(() => {
-	// 	dispatch(sideBarCollapse(collapsed));
-	// }, [collapsed, dispatch]);
+	useLayoutEffect(() => {
+		dispatch(sideBarCollapse(collapsed));
+	}, [collapsed, dispatch]);
 
 	const isLicenseActive =
 		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ===
@@ -168,8 +203,53 @@ function SideNav({
 
 	const isCloudUserVal = isCloudUser();
 
+	useEffect(() => {
+		if (isCloudUser() || isEECloudUser()) {
+			const updatedUserManagementMenuItems = [
+				helpSupportMenuItem,
+				...defaultUserManagementMenuItems,
+			];
+
+			setUserManagementMenuItems(updatedUserManagementMenuItems);
+		} else if (currentVersion && latestVersion) {
+			const versionMenuItem = {
+				key: SecondaryMenuItemKey.Version,
+				label: !isCurrentVersionError ? currentVersion : t('n_a'),
+				icon: !isLatestVersion ? (
+					<AlertTriangle color="#E87040" size={16} />
+				) : (
+					<CheckSquare color="#D5F2BB" size={16} />
+				),
+				onClick: onClickVersionHandler,
+			};
+
+			const updatedUserManagementMenuItems = [
+				versionMenuItem,
+				slackSupportMenuItem,
+				...defaultUserManagementMenuItems,
+			];
+
+			setUserManagementMenuItems(updatedUserManagementMenuItems);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [currentVersion, latestVersion]);
+
+	const handleUserManagentMenuItemClick = (key: string): void => {
+		switch (key) {
+			case SecondaryMenuItemKey.Slack:
+				onClickSlackHandler();
+				break;
+			case SecondaryMenuItemKey.Version:
+				onClickVersionHandler();
+				break;
+			default:
+				onClickHandler(key);
+				break;
+		}
+	};
+
 	return (
-		<div className="sideNav">
+		<div className={cx('sideNav', collapsed ? 'collapsed' : '')}>
 			<div className="brand">
 				<div
 					className="brand-logo"
@@ -180,24 +260,30 @@ function SideNav({
 				>
 					<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
 
-					<span className="brand-logo-name"> SigNoz </span>
+					{!collapsed && <span className="brand-logo-name"> SigNoz </span>}
 				</div>
 
-				<div className="license tag">{!isEnterprise ? 'Free' : 'Enterprise'}</div>
+				{!collapsed && (
+					<>
+						<div className="license tag">{!isEnterprise ? 'Free' : 'Enterprise'}</div>
 
-				<ToggleButton
-					checked={isDarkMode}
-					onChange={toggleTheme}
-					defaultChecked={isDarkMode}
-					checkedChildren="🌜"
-					unCheckedChildren="🌞"
-				/>
+						<ToggleButton
+							checked={isDarkMode}
+							onChange={toggleTheme}
+							defaultChecked={isDarkMode}
+							checkedChildren="🌜"
+							unCheckedChildren="🌞"
+						/>
+					</>
+				)}
 			</div>
 
 			{isCloudUserVal && (
 				<div className="get-started-nav-items">
 					<Button className="get-started-btn" onClick={onClickGetStarted}>
-						<RocketIcon size={16} /> Get Started
+						<RocketIcon size={16} />
+
+						{!collapsed && <> Get Started </>}
 					</Button>
 				</div>
 			)}
@@ -205,6 +291,7 @@ function SideNav({
 			<div className="primary-nav-items">
 				{menuItems.map((item, index) => (
 					<NavItem
+						isCollapsed={collapsed}
 						key={item.key || index}
 						item={item}
 						isActive={activeMenuKey === item.key}
@@ -218,8 +305,9 @@ function SideNav({
 			</div>
 
 			<div className="secondary-nav-items">
-				{!isLicenseActive && (
+				{licenseData && !isLicenseActive && (
 					<NavItem
+						isCollapsed={collapsed}
 						key="trySignozCloud"
 						item={trySignozCloudMenuItem}
 						isActive={false}
@@ -230,15 +318,20 @@ function SideNav({
 				{userManagementMenuItems.map(
 					(item, index): JSX.Element => (
 						<NavItem
+							isCollapsed={collapsed}
 							key={item?.key || index}
 							item={item}
 							isActive={activeMenuKey === item?.key}
 							onClick={(): void => {
-								onClickHandler(item?.key as string);
+								handleUserManagentMenuItemClick(item?.key as string);
 							}}
 						/>
 					),
 				)}
+
+				<div className="collapse-expand-handlers" onClick={onCollapse}>
+					{collapsed ? <PanelLeftOpen size={18} /> : <PanelRightOpen size={18} />}
+				</div>
 			</div>
 		</div>
 	);
