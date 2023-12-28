@@ -7,10 +7,12 @@ receivers:
   ...
   filelog/app:
     include: [ /tmp/app.log ]
-    start_at: beginning
+    start_at: end
 ...
 ```
 Replace `/tmp/app.log` with the path to your log file.
+
+**Note:** The `start_at: end` configuration ensures that only newly added logs are transmitted. If you wish to include historical logs from the file, remember to modify `start_at` to `beginning`.
 
 For more configurations that are available for filelog receiver please check [here](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver).
 
