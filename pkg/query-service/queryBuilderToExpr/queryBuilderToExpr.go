@@ -78,13 +78,10 @@ func Parse(filters *v3.FilterSet) (string, error) {
 				filter = fmt.Sprintf("%s %s %s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
 
 				if v.Operator == v3.FilterOperatorContains || v.Operator == v3.FilterOperatorNotContains {
-					// contains and ncontains get translated to ILIKE when querying clickhouse.
-					// This maintains parity of translation to expr.
+					// `contains` and `ncontains` should be case insensitive to match how they work when querying logs.
 					filter = fmt.Sprintf(
 						"lower(%s) %s lower(%s)",
-						name,
-						logOperatorsToExpr[v.Operator],
-						exprFormattedValue(v.Value),
+						name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value),
 					)
 				}
 

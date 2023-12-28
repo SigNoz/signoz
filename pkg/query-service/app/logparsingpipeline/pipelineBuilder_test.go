@@ -718,8 +718,8 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 }
 
 func TestContainsFilterIsCaseInsensitive(t *testing.T) {
-	// The contains and ncontains query builder filters translate
-	// to ILIKE in clickhouse queries - doing a case insensitive comparison
+	// The contains and ncontains query builder filters are case insensitive when querying logs.
+	// Pipeline filter should also behave in the same way.
 	require := require.New(t)
 
 	testLogs := []model.SignozLog{
