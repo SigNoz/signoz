@@ -98,17 +98,69 @@ export const getYAxisScale = ({
 	softMax,
 }: // eslint-disable-next-line sonarjs/cognitive-complexity
 GetYAxisScale): { auto?: boolean; range?: uPlot.Scale.Range } => {
-	if (!thresholds || thresholds.length === 0) {
-		if (
-			!series ||
-			areAllSeriesEmpty(series) ||
-			(softMin === null && softMax === null)
-		) {
-			// Situation: no thresholds, no series data, no softMin, and no softMax
-			return { auto: true };
+	// Situation: thresholds and series data is absent
+	if (
+		(!thresholds || thresholds.length === 0) &&
+		(!series || areAllSeriesEmpty(series))
+	) {
+		// Situation: softMin is not null or softMax is null
+		if (softMin !== null && softMax === null) {
+			return configSoftMinMax(softMin, softMin + 100);
 		}
 
-		return configSoftMinMax(softMin, softMax);
+		// Situation: softMin is null softMax is not null
+		if (softMin === null && softMax !== null) {
+			return configSoftMinMax(softMax - 100, softMax);
+		}
+
+		// Situation: softMin is not null and softMax is not null
+		if (softMin !== null && softMax !== null) {
+			return configSoftMinMax(softMin, softMax);
+		}
+
+		// Situation: softMin and softMax are null and no threshold and no series data
+		return { auto: true };
+	}
+
+	// Situation: thresholds are absent
+	if (!thresholds || thresholds.length === 0) {
+		// Situation: No thresholds data but series data is present
+		if (series && !areAllSeriesEmpty(series)) {
+			// Situation: softMin and softMax are null
+			if (softMin === null && softMax === null) {
+				return { auto: true };
+			}
+
+			// Situation: either softMin or softMax is not null
+			let [min, max] = findMinMaxValues(series);
+
+			if (softMin !== null) {
+				// Compare with softMin if it is not null
+				min = Math.min(min, softMin);
+			}
+
+			if (softMax !== null) {
+				// Compare with softMax if it is not null
+				max = Math.max(max, softMax);
+			}
+
+			return { auto: false, range: [min, max] };
+		}
+
+		// Situation: No thresholds data and series data is absent but either soft min and soft max is present
+		if (softMin !== null && softMax === null) {
+			return configSoftMinMax(softMin, softMin + 100);
+		}
+
+		if (softMin === null && softMax !== null) {
+			return configSoftMinMax(softMax - 100, softMax);
+		}
+
+		if (softMin !== null && softMax !== null) {
+			return configSoftMinMax(softMin, softMax);
+		}
+
+		return { auto: true };
 	}
 
 	if (!series || areAllSeriesEmpty(series)) {
@@ -149,25 +201,6 @@ GetYAxisScale): { auto?: boolean; range?: uPlot.Scale.Range } => {
 		}
 
 		return { auto: true };
-	}
-
-	if (
-		!thresholds ||
-		thresholds.length === 0 ||
-		!series ||
-		areAllSeriesEmpty(series)
-	) {
-		if (softMin !== null && softMax === null) {
-			return configSoftMinMax(softMin, softMin + 100);
-		}
-
-		if (softMin === null && softMax !== null) {
-			return configSoftMinMax(softMax - 100, softMax);
-		}
-
-		if (softMin !== null && softMax !== null) {
-			return configSoftMinMax(softMin, softMax);
-		}
 	}
 
 	// Situation: thresholds and series data are present
