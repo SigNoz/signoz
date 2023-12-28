@@ -717,6 +717,86 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 	require.Equal("pid0", result[0].Attributes_string["order.pids.pid0"])
 }
 
+func TestContainsFilterIsCaseInsensitive(t *testing.T) {
+	// The contains and ncontains query builder filters translate
+	// to ILIKE in clickhouse queries - doing a case insensitive comparison
+	require := require.New(t)
+
+	testLogs := []model.SignozLog{
+		makeTestSignozLog("test Ecom Log", map[string]interface{}{}),
+	}
+
+	testPipelines := []Pipeline{{
+		OrderId: 1,
+		Name:    "pipeline1",
+		Alias:   "pipeline1",
+		Enabled: true,
+		Filter: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{{
+				Key: v3.AttributeKey{
+					Key:      "body",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeUnspecified,
+					IsColumn: true,
+				},
+				Operator: "contains",
+				Value:    "log",
+			}},
+		},
+		Config: []PipelineOperator{
+			{
+				ID:      "add",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add",
+				Field:   "attributes.test1",
+				Value:   "value1",
+			},
+		},
+	}, {
+		OrderId: 2,
+		Name:    "pipeline2",
+		Alias:   "pipeline2",
+		Enabled: true,
+		Filter: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{{
+				Key: v3.AttributeKey{
+					Key:      "body",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeUnspecified,
+					IsColumn: true,
+				},
+				Operator: "ncontains",
+				Value:    "ecom",
+			}},
+		},
+		Config: []PipelineOperator{
+			{
+				ID:      "add",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add",
+				Field:   "attributes.test2",
+				Value:   "value2",
+			},
+		},
+	}}
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(), testPipelines, testLogs,
+	)
+	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+	require.Equal(1, len(result))
+
+	require.Equal(result[0].Attributes_string["test1"], "value1")
+
+	_, test2Exists := result[0].Attributes_string["test2"]
+	require.False(test2Exists)
+}
+
 func TestTemporaryWorkaroundForSupportingAttribsContainingDots(t *testing.T) {
 	// TODO(Raj): Remove this after dots are supported
 
