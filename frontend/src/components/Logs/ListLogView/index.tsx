@@ -7,7 +7,6 @@ import {
 } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
-import LogDetail from 'components/LogDetail';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
@@ -95,11 +94,15 @@ function LogSelectedField({
 type ListLogViewProps = {
 	logData: ILog;
 	selectedFields: IField[];
+	onSetActiveLog: (log: ILog) => void;
+	onAddToQuery: AddToQueryHOCProps['onAddToQuery'];
 };
 
 function ListLogView({
 	logData,
 	selectedFields,
+	onSetActiveLog,
+	onAddToQuery,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
@@ -112,12 +115,6 @@ function ListLogView({
 		activeLog: activeContextLog,
 		onSetActiveLog: handleSetActiveContextLog,
 		onClearActiveLog: handleClearActiveContextLog,
-	} = useActiveLog();
-	const {
-		activeLog,
-		onSetActiveLog,
-		onClearActiveLog,
-		onAddToQuery,
 	} = useActiveLog();
 
 	const handleDetailedView = useCallback(() => {
@@ -223,12 +220,6 @@ function ListLogView({
 						onClose={handleClearActiveContextLog}
 					/>
 				)}
-				<LogDetail
-					log={activeLog}
-					onClose={onClearActiveLog}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
-				/>
 			</Row>
 		</Container>
 	);
