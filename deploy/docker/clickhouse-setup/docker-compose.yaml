@@ -55,7 +55,7 @@ services:
       - "2888:2888"
       - "3888:3888"
     volumes:
-      - ./data/zookeeper-1:/bitnami/zookeeper
+      - /home/ubuntu/signoz-data/data/zookeeper-1:/bitnami/zookeeper
     environment:
       - ZOO_SERVER_ID=1
       # - ZOO_SERVERS=0.0.0.0:2888:3888,zookeeper-2:2888:3888,zookeeper-3:2888:3888
@@ -110,7 +110,7 @@ services:
       - ./custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
       # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
-      - ./data/clickhouse/:/var/lib/clickhouse/
+      - /home/ubuntu/signoz-data/data/clickhouse/:/var/lib/clickhouse/
       - ./user_scripts:/var/lib/clickhouse/user_scripts/
 
   # clickhouse-2:
@@ -152,7 +152,7 @@ services:
     image: signoz/alertmanager:${ALERTMANAGER_TAG:-0.23.4}
     container_name: signoz-alertmanager
     volumes:
-      - ./data/alertmanager:/data
+      - /home/ubuntu/signoz-data/data/alertmanager:/data
     depends_on:
       query-service:
         condition: service_healthy
@@ -176,8 +176,8 @@ services:
     #   - "8080:8080"     # query-service port
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
-      - ../dashboards:/root/config/dashboards
-      - ./data/signoz/:/var/lib/signoz/
+      - /home/ubuntu/signoz-data/dashboards:/root/config/dashboards
+      - /home/ubuntu/signoz-data/data/signoz/:/var/lib/signoz/
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
       - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
