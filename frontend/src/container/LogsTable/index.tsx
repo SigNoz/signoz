@@ -1,6 +1,7 @@
 import './logsTable.styles.scss';
 
 import { Card, Typography } from 'antd';
+import LogDetail from 'components/LogDetail';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
@@ -29,7 +30,12 @@ type LogsTableProps = {
 function LogsTable(props: LogsTableProps): JSX.Element {
 	const { viewMode, linesPerRow } = props;
 
-	const { onSetActiveLog } = useActiveLog();
+	const {
+		activeLog,
+		onClearActiveLog,
+		onAddToQuery,
+		onSetActiveLog,
+	} = useActiveLog();
 
 	useFontFaceObserver(
 		[
@@ -69,9 +75,17 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 				return <RawLogView key={log.id} data={log} linesPerRow={linesPerRow} />;
 			}
 
-			return <ListLogView key={log.id} logData={log} selectedFields={selected} />;
+			return (
+				<ListLogView
+					key={log.id}
+					logData={log}
+					selectedFields={selected}
+					onAddToQuery={onAddToQuery}
+					onSetActiveLog={onSetActiveLog}
+				/>
+			);
 		},
-		[logs, viewMode, selected, linesPerRow],
+		[logs, viewMode, selected, onAddToQuery, onSetActiveLog, linesPerRow],
 	);
 
 	const renderContent = useMemo(() => {
@@ -110,6 +124,12 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 			{isNoLogs && <Typography>No logs lines found</Typography>}
 
 			{renderContent}
+			<LogDetail
+				log={activeLog}
+				onClose={onClearActiveLog}
+				onAddToQuery={onAddToQuery}
+				onClickActionItem={onAddToQuery}
+			/>
 		</Container>
 	);
 }
