@@ -112,6 +112,29 @@ GetYAxisScale): { auto?: boolean; range?: uPlot.Scale.Range } => {
 	}
 
 	if (!series || areAllSeriesEmpty(series)) {
+		// series data is absent but threshold is present
+		if (thresholds.length > 0) {
+			// Situation: thresholds are present and series data is absent
+			let [min, max] = findMinMaxThresholdValues(thresholds, yAxisUnit);
+
+			if (softMin !== null) {
+				// Compare with softMin if it is not null
+				min = Math.min(min, softMin);
+			}
+
+			if (softMax !== null) {
+				// Compare with softMax if it is not null
+				max = Math.max(max, softMax);
+			}
+
+			if (min === max) {
+				// Min and Max value can be same if the value is same for all the series
+				return { auto: true };
+			}
+
+			return { auto: false, range: [min, max] };
+		}
+
 		// Situation: softMin or softMax is not null
 		if (softMin !== null && softMax === null) {
 			return configSoftMinMax(softMin, softMin + 100);
@@ -126,6 +149,25 @@ GetYAxisScale): { auto?: boolean; range?: uPlot.Scale.Range } => {
 		}
 
 		return { auto: true };
+	}
+
+	if (
+		!thresholds ||
+		thresholds.length === 0 ||
+		!series ||
+		areAllSeriesEmpty(series)
+	) {
+		if (softMin !== null && softMax === null) {
+			return configSoftMinMax(softMin, softMin + 100);
+		}
+
+		if (softMin === null && softMax !== null) {
+			return configSoftMinMax(softMax - 100, softMax);
+		}
+
+		if (softMin !== null && softMax !== null) {
+			return configSoftMinMax(softMin, softMax);
+		}
 	}
 
 	// Situation: thresholds and series data are present
@@ -149,7 +191,7 @@ GetYAxisScale): { auto?: boolean; range?: uPlot.Scale.Range } => {
 	return { auto: false, range: [min, max] };
 };
 
-type GetYAxisScale = {
+export type GetYAxisScale = {
 	thresholds?: ThresholdProps[];
 	series?: QueryDataV3[];
 	yAxisUnit?: string;
