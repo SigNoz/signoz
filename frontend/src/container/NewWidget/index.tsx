@@ -178,6 +178,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						yAxisUnit,
 						panelTypes: graphType,
 						thresholds,
+						fillSpans: isFillSpans,
 					},
 					...afterWidgets,
 				],
