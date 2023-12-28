@@ -73,8 +73,20 @@ func Parse(filters *v3.FilterSet) (string, error) {
 
 			case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
 				filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], getTypeName(v.Key.Type))
+
 			default:
 				filter = fmt.Sprintf("%s %s %s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
+
+				if v.Operator == v3.FilterOperatorContains || v.Operator == v3.FilterOperatorNotContains {
+					// contains and ncontains get translated to ILIKE when querying clickhouse.
+					// This maintains parity of translation to expr.
+					filter = fmt.Sprintf(
+						"lower(%s) %s lower(%s)",
+						name,
+						logOperatorsToExpr[v.Operator],
+						exprFormattedValue(v.Value),
+					)
+				}
 
 				// Avoid running operators on nil values
 				if v.Operator != v3.FilterOperatorEqual && v.Operator != v3.FilterOperatorNotEqual {
