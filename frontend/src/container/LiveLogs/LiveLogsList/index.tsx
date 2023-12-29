@@ -1,4 +1,5 @@
 import { Card, Typography } from 'antd';
+import LogDetail from 'components/LogDetail';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
@@ -10,6 +11,7 @@ import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { useEventSource } from 'providers/EventSource';
@@ -30,6 +32,13 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 	const { isConnectionLoading } = useEventSource();
 
 	const { activeLogId } = useCopyLogLink();
+
+	const {
+		activeLog,
+		onClearActiveLog,
+		onAddToQuery,
+		onSetActiveLog,
+	} = useActiveLog();
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -66,10 +75,22 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 			}
 
 			return (
-				<ListLogView key={log.id} logData={log} selectedFields={selectedFields} />
+				<ListLogView
+					key={log.id}
+					logData={log}
+					selectedFields={selectedFields}
+					onAddToQuery={onAddToQuery}
+					onSetActiveLog={onSetActiveLog}
+				/>
 			);
 		},
-		[options.format, options.maxLines, selectedFields],
+		[
+			onAddToQuery,
+			onSetActiveLog,
+			options.format,
+			options.maxLines,
+			selectedFields,
+		],
 	);
 
 	useEffect(() => {
@@ -123,6 +144,12 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 					)}
 				</InfinityWrapperStyled>
 			)}
+			<LogDetail
+				log={activeLog}
+				onClose={onClearActiveLog}
+				onAddToQuery={onAddToQuery}
+				onClickActionItem={onAddToQuery}
+			/>
 		</>
 	);
 }

@@ -19,5 +19,13 @@ export const WrapperStyled = styled.div`
 	& .ant-table {
 		flex: 1;
 		overflow: auto;
+
+		> .ant-table-container {
+			> .ant-table-content {
+				> table {
+					min-width: 99% !important;
+				}
+			}
+		}
 	}
 `;
