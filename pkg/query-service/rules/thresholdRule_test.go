@@ -295,3 +295,43 @@ func TestThresholdRuleCombinations(t *testing.T) {
 		}
 	}
 }
+
+func TestNormalizeLabelName(t *testing.T) {
+	cases := []struct {
+		labelName string
+		expected  string
+	}{
+		{
+			labelName: "label",
+			expected:  "label",
+		},
+		{
+			labelName: "label.with.dots",
+			expected:  "label_with_dots",
+		},
+		{
+			labelName: "label-with-dashes",
+			expected:  "label_with_dashes",
+		},
+		{
+			labelName: "labelwithnospaces",
+			expected:  "labelwithnospaces",
+		},
+		{
+			labelName: "label with spaces",
+			expected:  "label_with_spaces",
+		},
+		{
+			labelName: "label with spaces and .dots",
+			expected:  "label_with_spaces_and__dots",
+		},
+		{
+			labelName: "label with spaces and -dashes",
+			expected:  "label_with_spaces_and__dashes",
+		},
+	}
+
+	for _, c := range cases {
+		assert.Equal(t, c.expected, normalizeLabelName(c.labelName))
+	}
+}
