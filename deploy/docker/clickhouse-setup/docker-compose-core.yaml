@@ -66,7 +66,7 @@ services:
       - --storage.path=/data
 
   otel-collector-migrator:
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.88.4}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.88.6}
     container_name: otel-migrator
     command:
       - "--dsn=tcp://clickhouse:9000"
@@ -81,7 +81,7 @@ services:
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
   otel-collector:
     container_name: signoz-otel-collector
-    image: signoz/signoz-otel-collector:0.88.4
+    image: signoz/signoz-otel-collector:0.88.6
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
@@ -118,7 +118,7 @@ services:
 
   otel-collector-metrics:
     container_name: signoz-otel-collector-metrics
-    image: signoz/signoz-otel-collector:0.88.4
+    image: signoz/signoz-otel-collector:0.88.6
     command:
       [
         "--config=/etc/otel-collector-metrics-config.yaml",
