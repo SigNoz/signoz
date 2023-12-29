@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.15.0
 	github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb
-	github.com/SigNoz/signoz-otel-collector v0.88.4
+	github.com/SigNoz/signoz-otel-collector v0.88.6
 	github.com/SigNoz/zap_otlp/zap_otlp_encoder v0.0.0-20230822164844-1b861a431974
 	github.com/SigNoz/zap_otlp/zap_otlp_sync v0.0.0-20230822164844-1b861a431974
 	github.com/antonmedv/expr v1.15.3
