@@ -8,6 +8,7 @@ export const Container = styled.div`
 export const Name = styled(Typography)`
 	&&& {
 		font-weight: 600;
+		color: #4e74f8;
 		cursor: pointer;
 	}
 `;
