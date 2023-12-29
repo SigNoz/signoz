@@ -54,7 +54,7 @@ const generateTooltipContent = (
 				const value = data[index][idx];
 				const label = getLabelName(metric, queryName || '', legend || '');
 
-				if (value) {
+				if (Number.isFinite(value)) {
 					const tooltipValue = getToolTipValue(value, yAxisUnit);
 
 					const dataObj = {
@@ -191,7 +191,8 @@ const tooltipPlugin = (
 				if (overlay) {
 					overlay.textContent = '';
 					const { left, top, idx } = u.cursor;
-					if (idx) {
+
+					if (Number.isInteger(idx)) {
 						const anchor = { left: left + bLeft, top: top + bTop };
 						const content = generateTooltipContent(
 							apiResult,

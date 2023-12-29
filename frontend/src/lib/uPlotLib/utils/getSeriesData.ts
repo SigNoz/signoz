@@ -46,17 +46,22 @@ const getSeries = (
 			legend || '',
 		);
 
+		const pointSize = seriesList[i].values.length > 1 ? 5 : 10;
+		const showPoints = !(seriesList[i].values.length > 1);
+
 		const seriesObj: any = {
-			width: 1.4,
 			paths,
 			drawStyle: drawStyles.line,
 			lineInterpolation: lineInterpolations.spline,
 			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
 			label,
 			stroke: color,
+			width: 2,
 			spanGaps: true,
 			points: {
-				show: false,
+				size: pointSize,
+				show: showPoints,
+				stroke: color,
 			},
 		};
 

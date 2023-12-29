@@ -41,7 +41,11 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 				onClick={handleCollapse}
 				title={isExpandAll ? 'Collapse All' : 'Expand All'}
 			>
-				{isExpandAll ? <MinusSquareOutlined /> : <PlusSquareOutlined />}
+				{isExpandAll ? (
+					<MinusSquareOutlined style={{ fontSize: '16px', color: '#08c' }} />
+				) : (
+					<PlusSquareOutlined style={{ fontSize: '16px', color: '#08c' }} />
+				)}
 			</CollapseButton>
 			<CardWrapper>
 				<Trace
