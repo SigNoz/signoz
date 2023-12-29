@@ -144,6 +144,11 @@ GetYAxisScale): { auto?: boolean; range?: uPlot.Scale.Range } => {
 				max = Math.max(max, softMax);
 			}
 
+			if (min === max) {
+				// Min and Max value can be same if the value is same for all the series
+				return { auto: true };
+			}
+
 			return { auto: false, range: [min, max] };
 		}
 
