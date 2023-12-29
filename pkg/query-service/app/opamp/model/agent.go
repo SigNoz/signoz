@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"fmt"
 	"sync"
 	"time"
 
@@ -276,8 +277,8 @@ func (agent *Agent) processStatusUpdate(
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
 	recommendedConfig, confId, err := configProvider.RecommendAgentConfig([]byte(agent.EffectiveConfig))
 	if err != nil {
-		zap.S().Errorf("could not generate config recommendation for agent %d: %w", agent.ID, err)
-		return false
+		// The server must always recommend a config.
+		panic(fmt.Errorf("could not generate config recommendation for agent %s: %w", agent.ID, err))
 	}
 
 	cfg := protobufs.AgentRemoteConfig{
