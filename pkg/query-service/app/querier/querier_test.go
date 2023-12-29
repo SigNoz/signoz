@@ -558,8 +558,8 @@ func TestQueryRange(t *testing.T) {
 	}
 	q := NewQuerier(opts)
 	expectedTimeRangeInQueryString := []string{
-		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115580000, 1675115580000+120*60*1000),
-		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115580000+120*60*1000, 1675115580000+180*60*1000),
+		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms < %d", 1675115520000, 1675115580000+120*60*1000),
+		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms < %d", 1675115520000+120*60*1000, 1675115580000+180*60*1000),
 		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", 1675115580000*1000000, (1675115580000+120*60*1000)*int64(1000000)),
 		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675115580000+60*60*1000)*int64(1000000), (1675115580000+180*60*1000)*int64(1000000)),
 	}
@@ -669,7 +669,7 @@ func TestQueryRangeValueType(t *testing.T) {
 	q := NewQuerier(opts)
 	// No caching
 	expectedTimeRangeInQueryString := []string{
-		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115580000, 1675115580000+120*60*1000),
+		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms < %d", 1675115520000, 1675115580000+120*60*1000),
 		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675115580000+60*60*1000)*int64(1000000), (1675115580000+180*60*1000)*int64(1000000)),
 	}
 

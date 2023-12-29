@@ -3,7 +3,10 @@ import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { ApmDocFilePaths } from 'container/OnboardingContainer/constants/apmDocFilePaths';
 import { InfraMonitoringDocFilePaths } from 'container/OnboardingContainer/constants/infraMonitoringDocFilePaths';
 import { LogsManagementDocFilePaths } from 'container/OnboardingContainer/constants/logsManagementDocFilePaths';
-import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
+import {
+	OnboardingMethods,
+	useOnboardingContext,
+} from 'container/OnboardingContainer/context/OnboardingContext';
 import { ModulesMap } from 'container/OnboardingContainer/OnboardingContainer';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useEffect, useState } from 'react';
@@ -42,12 +45,12 @@ export default function MarkdownStep(): JSX.Element {
 			path += `_${selectedEnvironment}`;
 		}
 
-		if (
-			selectedModule?.id === ModulesMap.APM &&
-			selectedDataSource?.id !== 'kubernetes' &&
-			selectedMethod
-		) {
-			path += `_${selectedMethod}`;
+		if (selectedModule?.id === ModulesMap.APM) {
+			if (selectedEnvironment === 'kubernetes') {
+				path += `_${OnboardingMethods.RECOMMENDED_STEPS}`;
+			} else if (selectedEnvironment !== 'kubernetes' && selectedMethod) {
+				path += `_${selectedMethod}`;
+			}
 		}
 
 		path += `_${step?.id}`;

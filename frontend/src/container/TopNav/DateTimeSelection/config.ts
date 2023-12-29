@@ -9,6 +9,7 @@ type SixHour = '6hr';
 type OneHour = '1hr';
 type FourHour = '4hr';
 type OneDay = '1day';
+type ThreeDay = '3days';
 type OneWeek = '1week';
 type Custom = 'custom';
 
@@ -23,7 +24,8 @@ export type Time =
 	| OneHour
 	| Custom
 	| OneWeek
-	| OneDay;
+	| OneDay
+	| ThreeDay;
 
 export const Options: Option[] = [
 	{ value: '5min', label: 'Last 5 min' },
@@ -32,6 +34,7 @@ export const Options: Option[] = [
 	{ value: '1hr', label: 'Last 1 hour' },
 	{ value: '6hr', label: 'Last 6 hour' },
 	{ value: '1day', label: 'Last 1 day' },
+	{ value: '3days', label: 'Last 3 days' },
 	{ value: '1week', label: 'Last 1 week' },
 	{ value: 'custom', label: 'Custom' },
 ];
@@ -48,6 +51,7 @@ export const RelativeDurationOptions: Option[] = [
 	{ value: '1hr', label: 'Last 1 hour' },
 	{ value: '6hr', label: 'Last 6 hour' },
 	{ value: '1day', label: 'Last 1 day' },
+	{ value: '3days', label: 'Last 3 days' },
 	{ value: '1week', label: 'Last 1 week' },
 ];
 
