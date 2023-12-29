@@ -704,8 +704,7 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 				Enabled: true,
 				Name:    "add4",
 				Field:   `attributes["attrs.test.value"]`,
-				// Value:   `EXPR((attributes.temp?.request_context?.scraper ?? [nil])[0])`,
-				Value: `EXPR((attributes.temp?.request_context?.scraper[:] ?? attributes.teststs)[0] | lower())`,
+				Value:   `EXPR((attributes.temp?.request_context?.scraper ?? [nil])[0])`,
 			},
 		},
 	}
