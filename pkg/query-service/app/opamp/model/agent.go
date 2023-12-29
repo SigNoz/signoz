@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"fmt"
 	"sync"
 	"time"
 
@@ -259,7 +258,7 @@ func (agent *Agent) processStatusUpdate(
 	// If remote config is changed and different from what the Agent has then
 	// send the new remote config to the Agent.
 	if configChanged ||
-		(agent.Status.RemoteConfigStatus != nil &&
+		(agent.Status.RemoteConfigStatus != nil && agent.remoteConfig != nil &&
 			!bytes.Equal(agent.Status.RemoteConfigStatus.LastRemoteConfigHash, agent.remoteConfig.ConfigHash)) {
 		// The new status resulted in a change in the config of the Agent or the Agent
 		// does not have this config (hash is different). Send the new config the Agent.
@@ -277,8 +276,8 @@ func (agent *Agent) processStatusUpdate(
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
 	recommendedConfig, confId, err := configProvider.RecommendAgentConfig([]byte(agent.EffectiveConfig))
 	if err != nil {
-		// The server must always recommend a config.
-		panic(fmt.Errorf("could not generate config recommendation for agent %s: %w", agent.ID, err))
+		zap.S().Error("could not generate config recommendation for agent:", agent.ID, err)
+		return false
 	}
 
 	cfg := protobufs.AgentRemoteConfig{
