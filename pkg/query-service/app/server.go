@@ -53,9 +53,6 @@ type ServerOptions struct {
 	RuleRepoURL       string
 	PreferDelta       bool
 	PreferSpanMetrics bool
-	MaxIdleConns      int
-	MaxOpenConns      int
-	DialTimeout       time.Duration
 	CacheConfigPath   string
 	FluxInterval      string
 	Cluster           string
@@ -117,9 +114,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			localDB,
 			serverOptions.PromConfigPath,
 			fm,
-			serverOptions.MaxIdleConns,
-			serverOptions.MaxOpenConns,
-			serverOptions.DialTimeout,
 			serverOptions.Cluster,
 		)
 		go clickhouseReader.Start(readerReady)
@@ -167,9 +161,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		SkipConfig:                    skipConfig,
 		PerferDelta:                   serverOptions.PreferDelta,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
-		MaxIdleConns:                  serverOptions.MaxIdleConns,
-		MaxOpenConns:                  serverOptions.MaxOpenConns,
-		DialTimeout:                   serverOptions.DialTimeout,
 		AppDao:                        dao.DB(),
 		RuleManager:                   rm,
 		FeatureFlags:                  fm,

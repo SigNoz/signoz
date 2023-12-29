@@ -2,9 +2,6 @@ package clickhouseReader
 
 import (
 	"context"
-	"crypto/tls"
-	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -61,9 +58,6 @@ type namespaceConfig struct {
 	namespace               string
 	Enabled                 bool
 	Datasource              string
-	MaxIdleConns            int
-	MaxOpenConns            int
-	DialTimeout             time.Duration
 	TraceDB                 string
 	OperationsTable         string
 	IndexTable              string
@@ -93,47 +87,11 @@ type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
 
 func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 	ctx := context.Background()
-	dsnURL, err := url.Parse(cfg.Datasource)
+	options, err := clickhouse.ParseDSN(cfg.Datasource)
 	if err != nil {
 		return nil, err
 	}
-	options := &clickhouse.Options{
-		Addr:         []string{dsnURL.Host},
-		MaxOpenConns: cfg.MaxOpenConns,
-		MaxIdleConns: cfg.MaxIdleConns,
-		DialTimeout:  cfg.DialTimeout,
-	}
-	if dsnURL.Query().Get("username") != "" {
-		auth := clickhouse.Auth{
-			Username: dsnURL.Query().Get("username"),
-			Password: dsnURL.Query().Get("password"),
-		}
-		options.Auth = auth
-	}
-	if dsnURL.Query().Has("secure") {
-		var secure bool
-		if dsnURL.Query().Get("secure") == "" {
-			secure = true
-		} else {
-			secure, err = strconv.ParseBool(dsnURL.Query().Get("secure"))
-			return nil, err
-		}
-		if secure {
-			tlsConfig := &tls.Config{}
-			if dsnURL.Query().Has("skip_verify") {
-				var skipVerify bool
-				if dsnURL.Query().Get("skip_verify") == "" {
-					skipVerify = true
-				} else {
-					skipVerify, err = strconv.ParseBool(dsnURL.Query().Get("skip_verify"))
-					return nil, err
-				}
-				tlsConfig.InsecureSkipVerify = skipVerify
-			}
-			options.TLS = tlsConfig
-		}
-	}
-	zap.S().Infof("Connecting to Clickhouse at %s, MaxIdleConns: %d, MaxOpenConns: %d, DialTimeout: %s", dsnURL.Host, options.MaxIdleConns, options.MaxOpenConns, options.DialTimeout)
+	zap.S().Infof("Connecting to Clickhouse at %s, Secure: %t, MaxIdleConns: %d, MaxOpenConns: %d, DialTimeout: %s", options.Addr, options.TLS != nil, options.MaxIdleConns, options.MaxOpenConns, options.DialTimeout)
 	db, err := clickhouse.Open(options)
 	if err != nil {
 		return nil, err
@@ -156,9 +114,6 @@ type Options struct {
 // NewOptions creates a new Options struct.
 func NewOptions(
 	datasource string,
-	maxIdleConns int,
-	maxOpenConns int,
-	dialTimeout time.Duration,
 	primaryNamespace string,
 	otherNamespaces ...string,
 ) *Options {
@@ -172,9 +127,6 @@ func NewOptions(
 			namespace:               primaryNamespace,
 			Enabled:                 true,
 			Datasource:              datasource,
-			MaxIdleConns:            maxIdleConns,
-			MaxOpenConns:            maxOpenConns,
-			DialTimeout:             dialTimeout,
 			TraceDB:                 defaultTraceDB,
 			OperationsTable:         defaultOperationsTable,
 			IndexTable:              defaultIndexTable,

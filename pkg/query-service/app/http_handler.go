@@ -82,10 +82,6 @@ type APIHandler struct {
 	preferDelta       bool
 	preferSpanMetrics bool
 
-	maxIdleConns int
-	maxOpenConns int
-	dialTimeout  time.Duration
-
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
@@ -103,10 +99,6 @@ type APIHandlerOpts struct {
 
 	PerferDelta       bool
 	PreferSpanMetrics bool
-
-	MaxIdleConns int
-	MaxOpenConns int
-	DialTimeout  time.Duration
 
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
@@ -150,9 +142,6 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		skipConfig:                    opts.SkipConfig,
 		preferDelta:                   opts.PerferDelta,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
-		maxIdleConns:                  opts.MaxIdleConns,
-		maxOpenConns:                  opts.MaxOpenConns,
-		dialTimeout:                   opts.DialTimeout,
 		alertManager:                  alertManager,
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,

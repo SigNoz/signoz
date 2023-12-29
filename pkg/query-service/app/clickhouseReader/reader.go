@@ -124,14 +124,11 @@ func NewReader(
 	localDB *sqlx.DB,
 	configFile string,
 	featureFlag interfaces.FeatureLookup,
-	maxIdleConns int,
-	maxOpenConns int,
-	dialTimeout time.Duration,
 	cluster string,
 ) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
-	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
+	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
 	db, err := initialize(options)
 
 	if err != nil {
