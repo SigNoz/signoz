@@ -111,7 +111,7 @@ services:
       - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
       # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
       - /home/ubuntu/signoz-data/data/clickhouse/:/var/lib/clickhouse/
-      - ./user_scripts:/var/lib/clickhouse/user_scripts/
+      - /home/ubuntu/signoz-data/user_scripts:/var/lib/clickhouse/user_scripts/
 
   # clickhouse-2:
   #   <<: *clickhouse-defaults
