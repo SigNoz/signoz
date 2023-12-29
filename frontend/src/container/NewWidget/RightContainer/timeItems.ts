@@ -29,6 +29,10 @@ export const timeItems: timePreferance[] = [
 		enum: 'LAST_1_DAY',
 	},
 	{
+		name: 'Last 3 days',
+		enum: 'LAST_3_DAYS',
+	},
+	{
 		name: 'Last 1 week',
 		enum: 'LAST_1_WEEK',
 	},
@@ -47,6 +51,7 @@ export type timePreferenceType =
 	| LAST_1_HR
 	| LAST_6_HR
 	| LAST_1_DAY
+	| LAST_3_DAYS
 	| LAST_1_WEEK;
 
 type GLOBAL_TIME = 'GLOBAL_TIME';
@@ -56,6 +61,7 @@ type LAST_30_MIN = 'LAST_30_MIN';
 type LAST_1_HR = 'LAST_1_HR';
 type LAST_6_HR = 'LAST_6_HR';
 type LAST_1_DAY = 'LAST_1_DAY';
+type LAST_3_DAYS = 'LAST_3_DAYS';
 type LAST_1_WEEK = 'LAST_1_WEEK';
 
 export default timeItems;
