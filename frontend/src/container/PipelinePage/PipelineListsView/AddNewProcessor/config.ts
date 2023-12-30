@@ -17,6 +17,7 @@ export const processorTypes: Array<ProcessorType> = [
 	{ key: 'json_parser', value: 'json_parser', label: 'Json Parser' },
 	{ key: 'trace_parser', value: 'trace_parser', label: 'Trace Parser' },
 	{ key: 'time_parser', value: 'time_parser', label: 'Timestamp Parser' },
+	{ key: 'severity_parser', value: 'severity_parser', label: 'Severity Parser' },
 	{ key: 'add', value: 'add', label: 'Add' },
 	{ key: 'remove', value: 'remove', label: 'Remove' },
 	// { key: 'retain', value: 'retain', label: 'Retain' }, @Chintan - Commented as per Nitya's suggestion
@@ -31,13 +32,15 @@ export type ProcessorFieldOption = {
 	value: string;
 };
 
+// TODO(Raj): Refactor Processor Form code after putting e2e UI tests in place.
 export type ProcessorFormField = {
 	id: number;
 	fieldName: string;
 	placeholder: string;
 	name: string | NamePath;
 	rules?: Array<Rule>;
-	initialValue?: string;
+	hidden?: boolean;
+	initialValue?: boolean | string | Array<string>;
 	dependencies?: Array<string | NamePath>;
 	options?: Array<ProcessorFieldOption>;
 	shouldRender?: (form: FormInstance) => boolean;
@@ -45,6 +48,10 @@ export type ProcessorFormField = {
 		changedValues: ProcessorData,
 		form: FormInstance,
 	) => void;
+
+	// Should this field have its own row or should it
+	// be packed with other compact fields.
+	compact?: boolean;
 };
 
 const traceParserFieldValidator: RuleRender = (form) => ({
@@ -315,6 +322,85 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 				return layoutType === 'strptime';
 			},
 			initialValue: '%Y-%m-%dT%H:%M:%S.%f%z',
+		},
+	],
+	severity_parser: [
+		{
+			id: 1,
+			fieldName: 'Name of Severity Parsing Processor',
+			placeholder: 'processor_name_placeholder',
+			name: 'name',
+		},
+		{
+			id: 2,
+			fieldName: 'Parse Severity Value From',
+			placeholder: 'processor_parsefrom_placeholder',
+			name: 'parse_from',
+			initialValue: 'attributes.logLevel',
+		},
+		{
+			id: 3,
+			fieldName: 'Values for level TRACE',
+			placeholder: 'Specify comma separated values. Eg: trace, 0',
+			name: ['mapping', 'trace'],
+			rules: [],
+			initialValue: ['trace'],
+			compact: true,
+		},
+		{
+			id: 4,
+			fieldName: 'Values for level DEBUG',
+			placeholder: 'Specify comma separated values. Eg: debug, 2xx',
+			name: ['mapping', 'debug'],
+			rules: [],
+			initialValue: ['debug'],
+			compact: true,
+		},
+		{
+			id: 5,
+			fieldName: 'Values for level INFO',
+			placeholder: 'Specify comma separated values. Eg: info, 3xx',
+			name: ['mapping', 'info'],
+			rules: [],
+			initialValue: ['info'],
+			compact: true,
+		},
+		{
+			id: 6,
+			fieldName: 'Values for level WARN',
+			placeholder: 'Specify comma separated values. Eg: warning, 4xx',
+			name: ['mapping', 'warn'],
+			rules: [],
+			initialValue: ['warn'],
+			compact: true,
+		},
+		{
+			id: 7,
+			fieldName: 'Values for level ERROR',
+			placeholder: 'Specify comma separated values. Eg: error, 5xx',
+			name: ['mapping', 'error'],
+			rules: [],
+			initialValue: ['error'],
+			compact: true,
+		},
+		{
+			id: 8,
+			fieldName: 'Values for level FATAL',
+			placeholder: 'Specify comma separated values. Eg: fatal, panic',
+			name: ['mapping', 'fatal'],
+			rules: [],
+			initialValue: ['fatal'],
+			compact: true,
+		},
+		{
+			id: 9,
+			fieldName: 'Override Severity Text',
+			placeholder:
+				'Should the parsed severity set both severity and severityText?',
+			name: ['overwrite_text'],
+			rules: [],
+			initialValue: true,
+			hidden: true,
 		},
 	],
 	retain: [

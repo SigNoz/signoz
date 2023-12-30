@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
@@ -47,8 +48,18 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	req.CreatedAt = time.Now().Unix()
 	req.Token = generatePATToken()
 
+	// default expiry is 30 days
+	if req.ExpiresAt == 0 {
+		req.ExpiresAt = time.Now().AddDate(0, 0, 30).Unix()
+	}
+	// max expiry is 1 year
+	if req.ExpiresAt > time.Now().AddDate(1, 0, 0).Unix() {
+		req.ExpiresAt = time.Now().AddDate(1, 0, 0).Unix()
+	}
+
 	zap.S().Debugf("Got PAT request: %+v", req)
-	if apierr := ah.AppDao().CreatePAT(ctx, &req); apierr != nil {
+	var apierr basemodel.BaseApiError
+	if req, apierr = ah.AppDao().CreatePAT(ctx, req); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}
