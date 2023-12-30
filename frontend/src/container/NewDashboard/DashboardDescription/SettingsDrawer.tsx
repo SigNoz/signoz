@@ -29,7 +29,7 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 			<DrawerContainer
 				title={drawerTitle}
 				placement="right"
-				width="50%"
+				width="60%"
 				onClose={onClose}
 				open={visible}
 			>
