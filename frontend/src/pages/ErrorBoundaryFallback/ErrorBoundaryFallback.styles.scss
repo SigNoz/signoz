@@ -1,0 +1,16 @@
+.error-boundary-fallback-container {
+	width: 100%;
+
+	.actionBtn {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.title,
+	.actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+}

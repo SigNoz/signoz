@@ -49,7 +49,6 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotIn:           "NOT IN",
 	v3.FilterOperatorExists:          "has(%s_%s_key, '%s')",
 	v3.FilterOperatorNotExists:       "not has(%s_%s_key, '%s')",
-	// (todo) check contains/not contains/
 }
 
 func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
@@ -66,7 +65,9 @@ func getClickhouseLogsColumnDataType(columnDataType v3.AttributeKeyDataType) str
 	if columnDataType == v3.AttributeKeyDataTypeInt64 {
 		return "int64"
 	}
-	// for bool also we are returning string as we store bool data as string.
+	if columnDataType == v3.AttributeKeyDataTypeBool {
+		return "bool"
+	}
 	return "string"
 }
 
@@ -105,7 +106,7 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 	} else {
 		for _, tag := range groupBy {
 			columnName := getClickhouseColumnName(tag)
-			selectLabels += fmt.Sprintf(" %s as %s,", columnName, tag.Key)
+			selectLabels += fmt.Sprintf(" %s as `%s`,", columnName, tag.Key)
 		}
 	}
 	return selectLabels
@@ -117,7 +118,7 @@ func getSelectKeys(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attribu
 		return ""
 	} else {
 		for _, tag := range groupBy {
-			selectLabels = append(selectLabels, tag.Key)
+			selectLabels = append(selectLabels, "`"+tag.Key+"`")
 		}
 	}
 	return strings.Join(selectLabels, ",")
@@ -161,6 +162,15 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
+			if item.Key.IsJSON {
+				filter, err := GetJSONFilter(item)
+				if err != nil {
+					return "", err
+				}
+				conditions = append(conditions, filter)
+				continue
+			}
+
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
 
 			var value interface{}
@@ -199,7 +209,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 		if !attr.IsColumn {
 			columnType := getClickhouseLogsColumnType(attr.Type)
 			columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
-			conditions = append(conditions, fmt.Sprintf("indexOf(%s_%s_key, '%s') > 0", columnType, columnDataType, attr.Key))
+			conditions = append(conditions, fmt.Sprintf("has(%s_%s_key, '%s')", columnType, columnDataType, attr.Key))
 		} else if attr.Type != v3.AttributeKeyTypeUnspecified {
 			// for materialzied columns
 			conditions = append(conditions, fmt.Sprintf("%s_exists=true", getClickhouseColumnName(attr)))
@@ -272,7 +282,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	if graphLimitQtype == constants.SecondQueryGraphLimit {
-		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
+		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "#LIMIT_PLACEHOLDER)"
 	}
 
 	aggregationKey := ""
@@ -368,7 +378,7 @@ func groupBy(panelType v3.PanelType, graphLimitQtype string, tags ...string) str
 func groupByAttributeKeyTags(panelType v3.PanelType, graphLimitQtype string, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
-		groupTags = append(groupTags, tag.Key)
+		groupTags = append(groupTags, "`"+tag.Key+"`")
 	}
 	return groupBy(panelType, graphLimitQtype, groupTags...)
 }
@@ -383,11 +393,11 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 		if item.ColumnName == constants.SigNozOrderByValue {
 			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
 		} else if _, ok := tagLookup[item.ColumnName]; ok {
-			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
+			orderBy = append(orderBy, fmt.Sprintf("`%s` %s", item.ColumnName, item.Order))
 		} else if panelType == v3.PanelTypeList {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name := getClickhouseColumnName(attr)
-			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
+			orderBy = append(orderBy, fmt.Sprintf("`%s` %s", name, item.Order))
 		}
 	}
 	return orderBy
@@ -428,15 +438,15 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	// chart with just the query value.
 	switch reduceTo {
 	case v3.ReduceToOperatorLast:
-		query = fmt.Sprintf("SELECT anyLast(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT anyLast(value) as value, now() as ts FROM (%s)", query)
 	case v3.ReduceToOperatorSum:
-		query = fmt.Sprintf("SELECT sum(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT sum(value) as value, now() as ts FROM (%s)", query)
 	case v3.ReduceToOperatorAvg:
-		query = fmt.Sprintf("SELECT avg(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT avg(value) as value, now() as ts FROM (%s)", query)
 	case v3.ReduceToOperatorMax:
-		query = fmt.Sprintf("SELECT max(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT max(value) as value, now() as ts FROM (%s)", query)
 	case v3.ReduceToOperatorMin:
-		query = fmt.Sprintf("SELECT min(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT min(value) as value, now() as ts FROM (%s)", query)
 	default:
 		return "", fmt.Errorf("unsupported reduce operator")
 	}
@@ -473,8 +483,11 @@ func isOrderByTs(orderBy []v3.OrderBy) bool {
 func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
 
 	// adjust the start and end time to the step interval
-	start = start - (start % (mq.StepInterval * 1000))
-	end = end - (end % (mq.StepInterval * 1000))
+	// NOTE: Disabling this as it's creating confusion between charts and actual data
+	// if panelType != v3.PanelTypeList {
+	// 	start = start - (start % (mq.StepInterval * 1000))
+	// 	end = end - (end % (mq.StepInterval * 1000))
+	// }
 
 	if options.IsLivetailQuery {
 		query, err := buildLogsLiveTailQuery(mq)

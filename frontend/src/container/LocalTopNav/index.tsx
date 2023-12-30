@@ -1,4 +1,5 @@
 import { Col, Row, Space } from 'antd';
+import NewExplorerCTA from 'container/NewExplorerCTA';
 
 import ShowBreadcrumbs from '../TopNav/Breadcrumbs';
 import DateTimeSelector from '../TopNav/DateTimeSelection';
@@ -18,6 +19,7 @@ function LocalTopNav({
 			<Col span={8}>
 				<Row justify="end">
 					<Space align="start" size={30} direction="horizontal">
+						<NewExplorerCTA />
 						{actions}
 						{renderPermissions?.isDateTimeEnabled && (
 							<div>

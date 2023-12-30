@@ -1,13 +1,11 @@
 import { NotificationInstance } from 'antd/es/notification/interface';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { initialQueriesMap } from 'constants/queryBuilder';
-import {
-	queryParamNamesMap,
-	querySearchParams,
-} from 'constants/queryBuilderQueryNames';
+import { QueryParams } from 'constants/query';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import isEqual from 'lodash-es/isEqual';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
 	DeleteViewHandlerProps,
@@ -38,6 +36,45 @@ export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
 	return undefined;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const omitIdFromQuery = (query: Query | null): any => ({
+	...query,
+	builder: {
+		...query?.builder,
+		queryData: query?.builder.queryData.map((queryData) => {
+			const { id, ...rest } = queryData.aggregateAttribute;
+			const newAggregateAttribute = rest;
+			const newGroupByAttributes = queryData.groupBy.map((groupByAttribute) => {
+				const { id, ...rest } = groupByAttribute;
+				return rest;
+			});
+			const newItems = queryData.filters.items.map((item) => {
+				const { id, ...newItem } = item;
+				if (item.key) {
+					const { id, ...rest } = item.key;
+					return {
+						...newItem,
+						key: rest,
+					};
+				}
+				return newItem;
+			});
+			return {
+				...queryData,
+				aggregateAttribute: newAggregateAttribute,
+				groupBy: newGroupByAttributes,
+				filters: {
+					...queryData.filters,
+					items: newItems,
+				},
+				limit: queryData.limit ? queryData.limit : 0,
+				offset: queryData.offset ? queryData.offset : 0,
+				pageSize: queryData.pageSize ? queryData.pageSize : 0,
+			};
+		}),
+	},
+});
+
 export const isQueryUpdatedInView = ({
 	viewKey,
 	data,
@@ -51,43 +88,7 @@ export const isQueryUpdatedInView = ({
 	const { query, panelType } = currentViewDetails;
 
 	// Omitting id from aggregateAttribute and groupBy
-	const updatedCurrentQuery = {
-		...stagedQuery,
-		builder: {
-			...stagedQuery?.builder,
-			queryData: stagedQuery?.builder.queryData.map((queryData) => {
-				const { id, ...rest } = queryData.aggregateAttribute;
-				const newAggregateAttribute = rest;
-				const newGroupByAttributes = queryData.groupBy.map((groupByAttribute) => {
-					const { id, ...rest } = groupByAttribute;
-					return rest;
-				});
-				const newItems = queryData.filters.items.map((item) => {
-					const { id, ...newItem } = item;
-					if (item.key) {
-						const { id, ...rest } = item.key;
-						return {
-							...newItem,
-							key: rest,
-						};
-					}
-					return newItem;
-				});
-				return {
-					...queryData,
-					aggregateAttribute: newAggregateAttribute,
-					groupBy: newGroupByAttributes,
-					filters: {
-						...queryData.filters,
-						items: newItems,
-					},
-					limit: queryData.limit ? queryData.limit : 0,
-					offset: queryData.offset ? queryData.offset : 0,
-					pageSize: queryData.pageSize ? queryData.pageSize : 0,
-				};
-			}),
-		},
-	};
+	const updatedCurrentQuery = omitIdFromQuery(stagedQuery);
 
 	return (
 		panelType !== currentPanelType ||
@@ -108,7 +109,7 @@ export const saveViewHandler = ({
 	extraData,
 	redirectWithQueryBuilderData,
 	panelType,
-	setName,
+	form,
 }: SaveViewHandlerProps): void => {
 	saveViewAsync(
 		{
@@ -121,9 +122,9 @@ export const saveViewHandler = ({
 			onSuccess: (data) => {
 				refetchAllView();
 				redirectWithQueryBuilderData(mapQueryDataFromApi(compositeQuery), {
-					[queryParamNamesMap.panelTypes]: panelType,
-					[querySearchParams.viewName]: viewName,
-					[querySearchParams.viewKey]: data.data.data,
+					[QueryParams.panelTypes]: panelType,
+					[QueryParams.viewName]: viewName,
+					[QueryParams.viewKey]: data.data.data,
 				});
 				notifications.success({
 					message: 'View Saved Successfully',
@@ -134,7 +135,7 @@ export const saveViewHandler = ({
 			},
 			onSettled: () => {
 				handlePopOverClose();
-				setName('');
+				form.resetFields();
 			},
 		},
 	);
@@ -148,15 +149,24 @@ export const deleteViewHandler = ({
 	panelType,
 	viewKey,
 	viewId,
+	updateAllQueriesOperators,
+	sourcePage,
 }: DeleteViewHandlerProps): void => {
 	deleteViewAsync(viewKey, {
 		onSuccess: () => {
 			if (viewId === viewKey) {
-				redirectWithQueryBuilderData(initialQueriesMap.traces, {
-					[querySearchParams.viewName]: 'Query Builder',
-					[queryParamNamesMap.panelTypes]: panelType,
-					[querySearchParams.viewKey]: '',
-				});
+				redirectWithQueryBuilderData(
+					updateAllQueriesOperators(
+						initialQueriesMap[sourcePage],
+						panelType || PANEL_TYPES.LIST,
+						sourcePage,
+					),
+					{
+						[QueryParams.viewName]: '',
+						[QueryParams.panelTypes]: panelType,
+						[QueryParams.viewKey]: '',
+					},
+				);
 			}
 			notifications.success({
 				message: 'View Deleted Successfully',
@@ -167,4 +177,11 @@ export const deleteViewHandler = ({
 			showErrorNotification(notifications, err);
 		},
 	});
+};
+
+export const trimViewName = (viewName: string): string => {
+	if (viewName.length > 20) {
+		return `${viewName.substring(0, 20)}...`;
+	}
+	return viewName;
 };

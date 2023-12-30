@@ -1,13 +1,15 @@
 import {
 	AlertOutlined,
 	AlignLeftOutlined,
-	ApiOutlined,
 	BarChartOutlined,
 	BugOutlined,
 	DashboardFilled,
 	DeploymentUnitOutlined,
+	FileDoneOutlined,
 	LineChartOutlined,
 	MenuOutlined,
+	RocketOutlined,
+	SearchOutlined,
 	SettingOutlined,
 } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
@@ -15,6 +17,11 @@ import ROUTES from 'constants/routes';
 import { SidebarMenu } from './sideNav.types';
 
 const menuItems: SidebarMenu[] = [
+	{
+		key: ROUTES.GET_STARTED,
+		label: 'Get Started',
+		icon: <RocketOutlined rotate={45} />,
+	},
 	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',
@@ -24,38 +31,23 @@ const menuItems: SidebarMenu[] = [
 		key: ROUTES.TRACE,
 		label: 'Traces',
 		icon: <MenuOutlined />,
-		// children: [
-		// {
-		// 	key: ROUTES.TRACE,
-		// 	label: 'Traces',
-		// },
-		// TODO: uncomment when will be ready explorer
-		// {
-		// 	key: ROUTES.TRACES_EXPLORER,
-		// 	label: "Explorer",
-		// },
-		// ],
 	},
 	{
-		key: ROUTES.LOGS,
+		key: ROUTES.LOGS_EXPLORER,
 		label: 'Logs',
 		icon: <AlignLeftOutlined />,
-		// children: [
-		// {
-		// 	key: ROUTES.LOGS,
-		// 	label: 'Search',
-		// },
-		// TODO: uncomment when will be ready explorer
-		// {
-		// 	key: ROUTES.LOGS_EXPLORER,
-		// 	label: 'Views',
-		// },
-		// ],
-		// {
-		// 	key: ROUTES.PIPELINES,
-		// 	label: 'Pipelines',
-		// },
-		// ],
+		children: [
+			{
+				key: ROUTES.LOGS_EXPLORER,
+				icon: <SearchOutlined />,
+				label: 'Logs Explorer',
+			},
+			{
+				key: ROUTES.LOGS_PIPELINES,
+				icon: <DeploymentUnitOutlined />,
+				label: 'Logs Pipelines',
+			},
+		],
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,
@@ -83,14 +75,14 @@ const menuItems: SidebarMenu[] = [
 		icon: <LineChartOutlined />,
 	},
 	{
+		key: ROUTES.BILLING,
+		label: 'Billing',
+		icon: <FileDoneOutlined />,
+	},
+	{
 		key: ROUTES.SETTINGS,
 		label: 'Settings',
 		icon: <SettingOutlined />,
-	},
-	{
-		key: ROUTES.INSTRUMENTATION,
-		label: 'Get Started',
-		icon: <ApiOutlined />,
 	},
 ];
 
@@ -98,7 +90,7 @@ const menuItems: SidebarMenu[] = [
 export const NEW_ROUTES_MENU_ITEM_KEY_MAP = {
 	[ROUTES.TRACES_EXPLORER]: ROUTES.TRACE,
 	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACE,
-	[ROUTES.LOGS_EXPLORER]: ROUTES.LOGS,
+	[ROUTES.LOGS_EXPLORER]: ROUTES.LOGS_EXPLORER,
 };
 
 export default menuItems;

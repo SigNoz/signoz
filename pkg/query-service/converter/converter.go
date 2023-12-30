@@ -43,9 +43,9 @@ var (
 // FromUnit returns a converter for the given unit
 func FromUnit(u Unit) Converter {
 	switch u {
-	case "ns", "us", "ms", "s", "m", "h", "d":
+	case "ns", "us", "µs", "ms", "s", "m", "h", "d":
 		return DurationConverter
-	case "bytes", "decbytes", "bits", "decbits", "kbytes", "decKbytes", "mbytes", "decMbytes", "gbytes", "decGbytes", "tbytes", "decTbytes", "pbytes", "decPbytes":
+	case "bytes", "decbytes", "bits", "decbits", "kbytes", "decKbytes", "deckbytes", "mbytes", "decMbytes", "decmbytes", "gbytes", "decGbytes", "decgbytes", "tbytes", "decTbytes", "dectbytes", "pbytes", "decPbytes", "decpbytes":
 		return DataConverter
 	case "binBps", "Bps", "binbps", "bps", "KiBs", "Kibits", "KBs", "Kbits", "MiBs", "Mibits", "MBs", "Mbits", "GiBs", "Gibits", "GBs", "Gbits", "TiBs", "Tibits", "TBs", "Tbits", "PiBs", "Pibits", "PBs", "Pbits":
 		return DataRateConverter
@@ -64,7 +64,7 @@ func UnitToName(u string) string {
 	switch u {
 	case "ns":
 		return " ns"
-	case "us":
+	case "us", "µs":
 		return " us"
 	case "ms":
 		return " ms"
@@ -86,23 +86,23 @@ func UnitToName(u string) string {
 		return " bits"
 	case "kbytes":
 		return " KiB"
-	case "decKbytes":
+	case "decKbytes", "deckbytes":
 		return " kB"
 	case "mbytes":
 		return " MiB"
-	case "decMbytes":
+	case "decMbytes", "decmbytes":
 		return " MB"
 	case "gbytes":
 		return " GiB"
-	case "decGbytes":
+	case "decGbytes", "decgbytes":
 		return " GB"
 	case "tbytes":
 		return " TiB"
-	case "decTbytes":
+	case "decTbytes", "decybytes":
 		return " TB"
 	case "pbytes":
 		return " PiB"
-	case "decPbytes":
+	case "decPbytes", "decpbytes":
 		return " PB"
 	case "binBps":
 		return " bytes/sec(IEC)"

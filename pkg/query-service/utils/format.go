@@ -240,6 +240,9 @@ func GetClickhouseColumnName(typeName string, dataType, field string) string {
 		typeName = typeName[:len(typeName)-1]
 	}
 
+	// if name contains . replace it with `$$`
+	field = strings.ReplaceAll(field, ".", "$$")
+
 	colName := fmt.Sprintf("%s_%s_%s", strings.ToLower(typeName), strings.ToLower(dataType), field)
 	return colName
 }

@@ -7,9 +7,10 @@ var (
 )
 
 type InviteRequest struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Role  string `json:"role"`
+	Name            string `json:"name"`
+	Email           string `json:"email"`
+	Role            string `json:"role"`
+	FrontendBaseUrl string `json:"frontendBaseUrl"`
 }
 
 type InviteResponse struct {
@@ -30,6 +31,15 @@ type LoginRequest struct {
 	Email        string `json:"email"`
 	Password     string `json:"password"`
 	RefreshToken string `json:"refreshToken"`
+}
+
+// PrecheckResponse contains login precheck response
+type PrecheckResponse struct {
+	SSO             bool   `json:"sso"`
+	SsoUrl          string `json:"ssoUrl"`
+	CanSelfRegister bool   `json:"canSelfRegister"`
+	IsUser          bool   `json:"isUser"`
+	SsoError        string `json:"ssoError"`
 }
 
 type UserJwtObject struct {

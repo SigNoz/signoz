@@ -17,13 +17,22 @@ const sassLoader = 'sass-loader';
 const styleLoader = 'style-loader';
 
 const plugins = [
-	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new HtmlWebpackPlugin({
+		template: 'src/index.html.ejs',
+		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+		SEGMENT_ID: process.env.SEGMENT_ID,
+		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+	}),
 	new webpack.ProvidePlugin({
 		process: 'process/browser',
 	}),
 	new webpack.DefinePlugin({
 		'process.env': JSON.stringify({
+			NODE_ENV: process.env.NODE_ENV,
 			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
+			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+			SEGMENT_ID: process.env.SEGMENT_ID,
+			CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
 		}),
 	}),
 ];
@@ -37,7 +46,7 @@ if (process.env.BUNDLE_ANALYSER === 'true') {
  */
 const config = {
 	mode: 'development',
-	devtool: 'source-map',
+	devtool: 'eval-source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	devServer: {
 		historyApiFallback: true,
@@ -68,6 +77,11 @@ const config = {
 				test: [/\.jsx?$/, /\.tsx?$/],
 				use: ['babel-loader'],
 				exclude: /node_modules/,
+			},
+			// Add a rule for Markdown files using raw-loader
+			{
+				test: /\.md$/,
+				use: 'raw-loader',
 			},
 			{
 				test: /\.css$/,
@@ -130,6 +144,9 @@ const config = {
 	plugins,
 	performance: {
 		hints: false,
+	},
+	optimization: {
+		minimize: false,
 	},
 };
 

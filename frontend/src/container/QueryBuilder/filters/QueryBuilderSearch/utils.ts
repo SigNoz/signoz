@@ -1,9 +1,11 @@
 import { OPERATORS } from 'constants/queryBuilder';
+import { MetricsType } from 'container/MetricsApplication/constant';
 import { parse } from 'papaparse';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
-export const tagRegexp = /([a-zA-Z0-9_.:@$()\-/\\]+)\s*(!=|=|<=|<|>=|>|IN|NOT_IN|LIKE|NOT_LIKE|REGEX|NOT_REGEX|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS|-->|--!>)\s*([\s\S]*)/g;
+// eslint-disable-next-line no-useless-escape
+export const tagRegexp = /^\s*(.*?)\s*(IN|NOT_IN|LIKE|NOT_LIKE|REGEX|NOT_REGEX|=|!=|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS|>=|>|<=|<|HAS|NHAS)\s*(.*)$/g;
 
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
@@ -57,6 +59,10 @@ export function getOperatorValue(op: string): string {
 			return 'nin';
 		case OPERATORS.REGEX:
 			return 'regex';
+		case OPERATORS.HAS:
+			return 'has';
+		case OPERATORS.NHAS:
+			return 'nhas';
 		case OPERATORS.NREGEX:
 			return 'nregex';
 		case 'LIKE':
@@ -98,6 +104,10 @@ export function getOperatorFromValue(op: string): string {
 			return 'CONTAINS';
 		case 'ncontains':
 			return 'NOT_CONTAINS';
+		case 'has':
+			return OPERATORS.HAS;
+		case 'nhas':
+			return OPERATORS.NHAS;
 		default:
 			return op;
 	}
@@ -108,9 +118,15 @@ export function replaceStringWithMaxLength(
 	array: string[],
 	replacementString: string,
 ): string {
-	const lastSearchValue = array.pop() ?? ''; // Remove the last search value from the array
-	if (lastSearchValue === '') return `${mainString}${replacementString},`; // if user select direclty from options
-	return mainString.replace(lastSearchValue, `${replacementString},`);
+	const lastSearchValue = array.pop() ?? '';
+	if (lastSearchValue === '') {
+		return `${mainString}${replacementString},`;
+	}
+	const updatedString = mainString.replace(
+		new RegExp(`${lastSearchValue}(?=[^${lastSearchValue}]*$)`),
+		replacementString,
+	);
+	return `${updatedString},`;
 }
 
 export function checkCommaInValue(str: string): string {
@@ -124,4 +140,16 @@ export function getRemoveOrderFromValue(tag: string): string {
 		return key;
 	}
 	return tag;
+}
+
+export function getOptionType(label: string): MetricsType | undefined {
+	let optionType;
+
+	if (label.startsWith('tag_')) {
+		optionType = MetricsType.Tag;
+	} else if (label.startsWith('resource_')) {
+		optionType = MetricsType.Resource;
+	}
+
+	return optionType;
 }

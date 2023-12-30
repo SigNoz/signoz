@@ -6,7 +6,11 @@ import { matchPath, useHistory } from 'react-router-dom';
 import NewExplorerCTA from '../NewExplorerCTA';
 import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
-import { routesToDisable, routesToSkip } from './DateTimeSelection/config';
+import {
+	routesToDisable,
+	routesToHideBreadCrumbs,
+	routesToSkip,
+} from './DateTimeSelection/config';
 import { Container } from './styles';
 
 function TopNav(): JSX.Element | null {
@@ -15,6 +19,14 @@ function TopNav(): JSX.Element | null {
 	const isRouteToSkip = useMemo(
 		() =>
 			routesToSkip.some((route) =>
+				matchPath(location.pathname, { path: route, exact: true }),
+			),
+		[location.pathname],
+	);
+
+	const isRouteToHideBreadCrumbs = useMemo(
+		() =>
+			routesToHideBreadCrumbs.some((route) =>
 				matchPath(location.pathname, { path: route, exact: true }),
 			),
 		[location.pathname],
@@ -39,12 +51,14 @@ function TopNav(): JSX.Element | null {
 
 	return (
 		<Container>
-			<Col span={16}>
-				<ShowBreadcrumbs />
-			</Col>
+			{!isRouteToHideBreadCrumbs && (
+				<Col span={16}>
+					<ShowBreadcrumbs />
+				</Col>
+			)}
 
 			{!isRouteToSkip && (
-				<Col span={8}>
+				<Col span={isRouteToHideBreadCrumbs ? 24 : 8}>
 					<Row justify="end">
 						<Space align="start" size={60} direction="horizontal">
 							<NewExplorerCTA />

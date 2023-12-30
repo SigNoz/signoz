@@ -21,7 +21,6 @@ type ModelDao interface {
 	DB() *sqlx.DB
 
 	// auth methods
-	PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, basemodel.BaseApiError)
 	CanUsePassword(ctx context.Context, email string) (bool, basemodel.BaseApiError)
 	PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr basemodel.BaseApiError)
 	GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*model.OrgDomain, error)
@@ -34,7 +33,7 @@ type ModelDao interface {
 	DeleteDomain(ctx context.Context, id uuid.UUID) basemodel.BaseApiError
 	GetDomainByEmail(ctx context.Context, email string) (*model.OrgDomain, basemodel.BaseApiError)
 
-	CreatePAT(ctx context.Context, p *model.PAT) basemodel.BaseApiError
+	CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basemodel.BaseApiError)
 	GetPAT(ctx context.Context, pat string) (*model.PAT, basemodel.BaseApiError)
 	GetPATByID(ctx context.Context, id string) (*model.PAT, basemodel.BaseApiError)
 	GetUserByPAT(ctx context.Context, token string) (*basemodel.UserPayload, basemodel.BaseApiError)

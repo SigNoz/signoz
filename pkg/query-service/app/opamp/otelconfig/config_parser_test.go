@@ -2,7 +2,7 @@ package otelconfig
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/knadh/koanf/parsers/yaml"
@@ -11,7 +11,7 @@ import (
 )
 
 func TestServiceConfig(t *testing.T) {
-	yamlFile, err := ioutil.ReadFile("./testdata/service.yaml")
+	yamlFile, err := os.ReadFile("./testdata/service.yaml")
 	if err != nil {
 		fmt.Printf("yamlFile.Get err   #%v ", err)
 		t.Fail()

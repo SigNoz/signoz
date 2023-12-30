@@ -3,12 +3,16 @@ import { Button, Select as DefaultSelect } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
-import { useCallback, useEffect, useState } from 'react';
+import history from 'lib/history';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -17,6 +21,7 @@ import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
@@ -33,9 +38,9 @@ function DateTimeSelection({
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
-	const params = new URLSearchParams(location.search);
-	const searchStartTime = params.get('startTime');
-	const searchEndTime = params.get('endTime');
+	const urlQuery = useUrlQuery();
+	const searchStartTime = urlQuery.get('startTime');
+	const searchEndTime = urlQuery.get('endTime');
 
 	const localstorageStartTime = getLocalStorageKey('startTime');
 	const localstorageEndTime = getLocalStorageKey('endTime');
@@ -168,6 +173,11 @@ function DateTimeSelection({
 		return `Last refresh - ${secondsDiff} sec ago`;
 	}, [maxTime, minTime, selectedTime]);
 
+	const isLogsExplorerPage = useMemo(
+		() => location.pathname === ROUTES.LOGS_EXPLORER,
+		[location.pathname],
+	);
+
 	const onSelectHandler = (value: Time): void => {
 		if (value !== 'custom') {
 			updateTimeInterval(value);
@@ -180,12 +190,18 @@ function DateTimeSelection({
 			setCustomDTPickerVisible(true);
 		}
 
+		const { maxTime, minTime } = GetMinMax(value, getTime());
+
+		if (!isLogsExplorerPage) {
+			urlQuery.set(QueryParams.startTime, minTime.toString());
+			urlQuery.set(QueryParams.endTime, maxTime.toString());
+			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			history.replace(generatedUrl);
+		}
+
 		if (!stagedQuery) {
 			return;
 		}
-
-		const { maxTime, minTime } = GetMinMax(value, getTime());
-
 		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime));
 	};
 
@@ -206,6 +222,12 @@ function DateTimeSelection({
 				setLocalStorageKey('startTime', startTimeMoment.toString());
 				setLocalStorageKey('endTime', endTimeMoment.toString());
 				updateLocalStorageForRoutes('custom');
+				if (!isLogsExplorerPage) {
+					urlQuery.set(QueryParams.startTime, startTimeMoment.toString());
+					urlQuery.set(QueryParams.endTime, endTimeMoment.toString());
+					const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+					history.replace(generatedUrl);
+				}
 			}
 		}
 	};
@@ -233,7 +255,6 @@ function DateTimeSelection({
 			if (searchEndTime !== null && searchStartTime !== null) {
 				return 'custom';
 			}
-
 			if (
 				(localstorageEndTime === null || localstorageStartTime === null) &&
 				time === 'custom'
@@ -251,16 +272,8 @@ function DateTimeSelection({
 		setRefreshButtonHidden(updatedTime === 'custom');
 
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
-	}, [
-		location.pathname,
-		getTime,
-		localstorageEndTime,
-		localstorageStartTime,
-		searchEndTime,
-		searchStartTime,
-		updateTimeInterval,
-		globalTimeLoading,
-	]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
 
 	return (
 		<>
@@ -271,6 +284,7 @@ function DateTimeSelection({
 			>
 				<FormContainer>
 					<DefaultSelect
+						getPopupContainer={popupContainer}
 						onSelect={(value: unknown): void => onSelectHandler(value as Time)}
 						value={getInputLabel(
 							dayjs(minTime / 1000000),
@@ -278,6 +292,9 @@ function DateTimeSelection({
 							selectedTime,
 						)}
 						data-testid="dropDown"
+						style={{
+							minWidth: 120,
+						}}
 					>
 						{options.map(({ value, label }) => (
 							<Option key={value + label} value={value}>

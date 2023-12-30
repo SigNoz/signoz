@@ -16,6 +16,28 @@ export const generatorResizeTableColumns = <T>({
 		};
 	});
 
+export const getLabelRenderingValue = (
+	label: string,
+	value?: string,
+): string => {
+	const maxLength = 20;
+
+	if (label.length > maxLength) {
+		return `${label.slice(0, maxLength)}...`;
+	}
+
+	if (value) {
+		const remainingSpace = maxLength - label.length;
+		let newValue = value;
+		if (value.length > remainingSpace) {
+			newValue = `${value.slice(0, remainingSpace)}...`;
+		}
+		return `${label}: ${newValue}`;
+	}
+
+	return label;
+};
+
 interface GeneratorResizeTableColumnsProp<T> {
 	baseColumnOptions: ColumnsType<T>;
 	dynamicColumnOption: { key: string; columnOption: ColumnType<T> }[];

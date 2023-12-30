@@ -2,8 +2,11 @@ import {
 	initialQueriesMap,
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
-import { FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
@@ -11,7 +14,7 @@ export const defaultLiveQueryDataConfig: Partial<IBuilderQuery> = {
 	aggregateOperator: LogsAggregatorOperator.NOOP,
 	disabled: true,
 	pageSize: 10,
-	orderBy: [{ columnName: 'timestamp', order: FILTERS.DESC }],
+	orderBy: [{ columnName: 'timestamp', order: ORDERBY_FILTERS.DESC }],
 };
 
 type GetDefaultCompositeQueryParams = {
@@ -45,6 +48,6 @@ export const liveLogsCompositeQuery = constructCompositeQuery({
 export const idObject: BaseAutocompleteData = {
 	key: 'id',
 	type: '',
-	dataType: 'string',
+	dataType: DataTypes.String,
 	isColumn: true,
 };

@@ -7,7 +7,7 @@ const config: Config.InitialOptions = {
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
-		'\\.(css|less)$': '<rootDir>/__mocks__/cssMock.ts',
+		'\\.(css|less|scss)$': '<rootDir>/__mocks__/cssMock.ts',
 	},
 	globals: {
 		extensionsToTreatAsEsm: ['.ts'],
@@ -22,7 +22,7 @@ const config: Config.InitialOptions = {
 		'^.+\\.(js|jsx)$': 'babel-jest',
 	},
 	transformIgnorePatterns: [
-		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend)/)',
+		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios)/)',
 	],
 	setupFilesAfterEnv: ['<rootDir>jest.setup.ts'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],

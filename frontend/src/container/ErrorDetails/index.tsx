@@ -1,3 +1,5 @@
+import './styles.scss';
+
 import { Button, Divider, Space, Typography } from 'antd';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
@@ -14,12 +16,13 @@ import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
 
+import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
 
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { idPayload } = props;
 	const { t } = useTranslation(['errorDetails', 'common']);
-	const { search } = useLocation();
+	const { search, pathname } = useLocation();
 
 	const params = useMemo(() => new URLSearchParams(search), [search]);
 
@@ -70,18 +73,6 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		[],
 	);
 
-	const keyToExclude = useMemo(
-		() => [
-			'exceptionStacktrace',
-			'exceptionType',
-			'errorId',
-			'timestamp',
-			'exceptionMessage',
-			'exceptionEscaped',
-		],
-		[],
-	);
-
 	const { notifications } = useNotifications();
 
 	const onClickErrorIdHandler = async (
@@ -102,9 +93,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				errorId: id,
 			};
 
-			history.replace(
-				`${history.location.pathname}?${createQueryParams(queryParams)}`,
-			);
+			history.replace(`${pathname}?${createQueryParams(queryParams)}`);
 		} catch (error) {
 			notifications.error({
 				message: t('something_went_wrong'),
@@ -174,7 +163,9 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			</DashedContainer>
 
 			<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
-			<Editor onChange={(): void => {}} value={stackTraceValue} readOnly />
+			<div className="error-container">
+				<Editor value={stackTraceValue} readOnly />
+			</div>
 
 			<EditorContainer>
 				<Space direction="vertical">

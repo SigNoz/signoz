@@ -44,10 +44,10 @@ function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 		onError: handleError,
 	});
 
-	const options = useMemo(() => getSelectOptions(data?.payload || []), [data]);
+	const options = useMemo(() => getSelectOptions(data || []), [data]);
 
 	const handleExportClick = useCallback((): void => {
-		const currentSelectedDashboard = data?.payload?.find(
+		const currentSelectedDashboard = data?.find(
 			({ uuid }) => uuid === selectedDashboardId,
 		);
 

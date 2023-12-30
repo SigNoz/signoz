@@ -146,6 +146,7 @@ type RuleCondition struct {
 	For            time.Duration      `yaml:"for,omitempty" json:"for,omitempty"`
 	MatchType      `json:"matchType,omitempty"`
 	TargetUnit     string `json:"targetUnit,omitempty"`
+	SelectedQuery  string `json:"selectedQueryName,omitempty"`
 }
 
 func (rc *RuleCondition) IsValid() bool {

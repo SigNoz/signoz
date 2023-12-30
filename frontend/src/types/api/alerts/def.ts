@@ -25,12 +25,13 @@ export interface AlertDef {
 
 export interface RuleCondition {
 	compositeQuery: ICompositeMetricQuery;
-	op?: string | undefined;
-	target?: number | undefined;
-	matchType?: string | undefined;
+	op?: string;
+	target?: number;
+	matchType?: string;
+	targetUnit?: string;
+	selectedQueryName?: string;
 	alertOnAbsent?: boolean | undefined;
 	for?: number | undefined;
-	targetUnit?: string | undefined;
 }
 
 export interface Labels {

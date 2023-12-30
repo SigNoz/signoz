@@ -16,11 +16,7 @@ function DescriptionTextArea({
 			label={<FormLabelStyle>{fieldData.fieldName}</FormLabelStyle>}
 			key={fieldData.id}
 		>
-			<Input.TextArea
-				rows={3}
-				name={fieldData.name}
-				placeholder={t(fieldData.placeholder)}
-			/>
+			<Input.TextArea rows={3} placeholder={t(fieldData.placeholder)} />
 		</Form.Item>
 	);
 }

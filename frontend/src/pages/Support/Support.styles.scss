@@ -1,0 +1,53 @@
+.support-page-container {
+	color: white;
+	padding-left: 48px;
+	padding-right: 48px;
+
+	max-width: 1400px;
+	margin: 0 auto;
+}
+
+.support-channels {
+	margin: 48px 0;
+
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.support-channel {
+	flex: 0 0 calc(33.333% - 32px);
+	min-height: 200px;
+	position: relative;
+
+	.support-channel-title {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-top: 0px;
+	}
+
+	.support-channel-action {
+		position: absolute;
+		bottom: 24px;
+		left: 24px;
+		width: calc(100% - 48px);
+
+		button {
+			max-width: 100%;
+		}
+	}
+}
+
+@media screen and (max-width: 1440px) {
+	.support-channel {
+		min-height: 240px;
+	}
+}
+
+@media screen and (min-width: 1440px) {
+	.support-page-container {
+		width: 80%;
+	}
+}

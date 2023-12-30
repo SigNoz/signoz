@@ -7,9 +7,11 @@ export const getWidgetQueryBuilder = ({
 	query,
 	title = '',
 	panelTypes,
+	yAxisUnit = '',
+	id,
 }: GetWidgetQueryBuilderProps): Widgets => ({
 	description: '',
-	id: v4(),
+	id: id || v4(),
 	isStacked: false,
 	nullZeroValues: '',
 	opacity: '0',
@@ -17,4 +19,5 @@ export const getWidgetQueryBuilder = ({
 	query,
 	timePreferance: 'GLOBAL_TIME',
 	title,
+	yAxisUnit,
 });

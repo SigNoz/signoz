@@ -13,7 +13,7 @@ https://github.com/SigNoz/signoz/blob/main/CONTRIBUTING.md#to-run-clickhouse-set
 - Change the alertmanager section in `signoz/deploy/docker/clickhouse-setup/docker-compose.yaml` as follows:
 ```console
 alertmanager:
-    image: signoz/alertmanager:0.23.3
+    image: signoz/alertmanager:0.23.4
     volumes:
       - ./data/alertmanager:/data
     expose:
@@ -55,7 +55,7 @@ If you are on arm64 processors (Apple M1 Macs) run sudo make run-arm
 ```console
 cd pkg/query-service
 go build -o build/query-service main.go
-ClickHouseUrl=tcp://localhost:9001 STORAGE=clickhouse build/query-service
+ClickHouseUrl=tcp://localhost:9001 STORAGE=clickhouse build/query-service --prefer-delta=true 
 ```
 
 # Frontend Configuration for local query-service.

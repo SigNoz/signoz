@@ -44,8 +44,13 @@ export const GettingStarted = Loadable(
 	() => import(/* webpackChunkName: "GettingStarted" */ 'pages/GettingStarted'),
 );
 
+export const Onboarding = Loadable(
+	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPage'),
+);
+
 export const DashboardPage = Loadable(
-	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/Dashboard'),
+	() =>
+		import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardsListPage'),
 );
 
 export const NewDashboardPage = Loadable(
@@ -98,6 +103,10 @@ export const OrganizationSettings = Loadable(
 	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
 );
 
+export const IngestionSettings = Loadable(
+	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
+);
+
 export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
 );
@@ -144,4 +153,17 @@ export const LogsIndexToFields = Loadable(
 
 export const PipelinePage = Loadable(
 	() => import(/* webpackChunkName: "Pipelines" */ 'pages/Pipelines'),
+);
+
+export const BillingPage = Loadable(
+	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Billing'),
+);
+
+export const SupportPage = Loadable(
+	() => import(/* webpackChunkName: "SupportPage" */ 'pages/Support'),
+);
+
+export const WorkspaceBlocked = Loadable(
+	() =>
+		import(/* webpackChunkName: "WorkspaceLocked" */ 'pages/WorkspaceLocked'),
 );

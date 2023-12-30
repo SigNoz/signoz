@@ -5,12 +5,16 @@ function PromqlSection(): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 
 	return (
-		<PromQLQueryBuilder
-			key="A"
-			queryIndex={0}
-			queryData={currentQuery.promql[0]}
-			deletable={false}
-		/>
+		<>
+			{currentQuery.promql.map((query, index) => (
+				<PromQLQueryBuilder
+					key={query.name}
+					queryIndex={index}
+					queryData={query}
+					deletable={false}
+				/>
+			))}
+		</>
 	);
 }
 

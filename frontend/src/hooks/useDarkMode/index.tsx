@@ -74,6 +74,8 @@ export const useThemeConfig = (): ThemeConfig => {
 			borderRadiusLG: 2,
 			borderRadiusSM: 2,
 			borderRadiusXS: 2,
+			fontFamily: 'Inter',
+			fontSize: 13,
 		},
 	};
 };

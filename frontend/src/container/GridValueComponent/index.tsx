@@ -12,17 +12,18 @@ function GridValueComponent({
 	data,
 	title,
 	yAxisUnit,
+	thresholds,
 }: GridValueComponentProps): JSX.Element {
-	const value = (((data.datasets[0] || []).data || [])[0] || 0) as number;
+	const value = ((data[1] || [])[0] || 0) as number;
 
 	const location = useLocation();
 	const gridTitle = useMemo(() => generateGridTitle(title), [title]);
 
 	const isDashboardPage = location.pathname.split('/').length === 3;
 
-	if (data.datasets.length === 0) {
+	if (data.length === 0) {
 		return (
-			<ValueContainer isDashboardPage={isDashboardPage}>
+			<ValueContainer>
 				<Typography>No Data</Typography>
 			</ValueContainer>
 		);
@@ -33,8 +34,10 @@ function GridValueComponent({
 			<TitleContainer isDashboardPage={isDashboardPage}>
 				<Typography>{gridTitle}</Typography>
 			</TitleContainer>
-			<ValueContainer isDashboardPage={isDashboardPage}>
+			<ValueContainer>
 				<ValueGraph
+					thresholds={thresholds || []}
+					rawValue={value}
 					value={
 						yAxisUnit
 							? getYAxisFormattedValue(String(value), yAxisUnit)

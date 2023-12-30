@@ -5,6 +5,7 @@ const { resolve } = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
+const dotenv = require('dotenv');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
@@ -13,12 +14,19 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const Critters = require('critters-webpack-plugin');
 
+dotenv.config();
+
 const cssLoader = 'css-loader';
 const sassLoader = 'sass-loader';
 const styleLoader = 'style-loader';
 
 const plugins = [
-	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new HtmlWebpackPlugin({
+		template: 'src/index.html.ejs',
+		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+		SEGMENT_ID: process.env.SEGMENT_ID,
+		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+	}),
 	new CompressionPlugin({
 		exclude: /.map$/,
 	}),
@@ -31,6 +39,9 @@ const plugins = [
 	new webpack.DefinePlugin({
 		'process.env': JSON.stringify({
 			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
+			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+			SEGMENT_ID: process.env.SEGMENT_ID,
+			CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
 		}),
 	}),
 	new MiniCssExtractPlugin(),
@@ -80,6 +91,10 @@ const config = {
 				exclude: /node_modules/,
 			},
 			{
+				test: /\.md$/,
+				use: 'raw-loader',
+			},
+			{
 				test: /\.css$/,
 				use: [
 					MiniCssExtractPlugin.loader,
@@ -89,6 +104,17 @@ const config = {
 							modules: true,
 						},
 					},
+				],
+			},
+			{
+				test: /\.s[ac]ss$/i,
+				use: [
+					// Creates `style` nodes from JS strings
+					styleLoader,
+					// Translates CSS into CommonJS
+					cssLoader,
+					// Compiles Sass to CSS
+					sassLoader,
 				],
 			},
 			{
@@ -122,17 +148,6 @@ const config = {
 							},
 						},
 					},
-				],
-			},
-			{
-				test: /\.s[ac]ss$/i,
-				use: [
-					// Creates `style` nodes from JS strings
-					styleLoader,
-					// Translates CSS into CommonJS
-					cssLoader,
-					// Compiles Sass to CSS
-					sassLoader,
 				],
 			},
 		],

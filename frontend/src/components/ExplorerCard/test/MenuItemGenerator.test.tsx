@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import ROUTES from 'constants/routes';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { viewMockData } from '../__mock__/viewData';
 import MenuItemGenerator from '../MenuItemGenerator';
@@ -9,6 +10,12 @@ jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string } => ({
 		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.APPLICATION}/`,
+	}),
+}));
+
+jest.mock('antd/es/form/Form', () => ({
+	useForm: jest.fn().mockReturnValue({
+		onFinish: jest.fn(),
 	}),
 }));
 
@@ -23,6 +30,7 @@ describe('MenuItemGenerator', () => {
 					uuid={viewMockData[0].uuid}
 					refetchAllView={jest.fn()}
 					viewData={viewMockData}
+					sourcePage={DataSource.TRACES}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -40,6 +48,7 @@ describe('MenuItemGenerator', () => {
 					uuid={viewMockData[0].uuid}
 					refetchAllView={jest.fn()}
 					viewData={viewMockData}
+					sourcePage={DataSource.TRACES}
 				/>
 			</MockQueryClientProvider>,
 		);

@@ -1,3 +1,6 @@
+import { DownloadOptions } from 'container/Download/Download.types';
+import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
+
 export const legend = {
 	address: '{{address}}',
 };
@@ -11,6 +14,8 @@ export const LATENCY_AGGREGATEOPERATOR_SPAN_METRICS = [
 ];
 export const OPERATION_LEGENDS = ['Operations'];
 
+export const MENU_ITEMS = [MenuItemKeys.View, MenuItemKeys.CreateAlerts];
+
 export enum FORMULA {
 	ERROR_PERCENTAGE = 'A*100/B',
 	DATABASE_CALLS_AVG_DURATION = 'A/B',
@@ -18,6 +23,8 @@ export enum FORMULA {
 	APDEX_DELTA_SPAN_METRICS = '(B + C/2)/A',
 	APDEX_CUMULATIVE_SPAN_METRICS = '((B + C)/2)/A',
 }
+
+export const TOP_LEVEL_OPERATIONS = ['{{.top_level_operations}}'];
 
 export enum GraphTitle {
 	APDEX = 'Apdex',
@@ -39,13 +46,6 @@ export enum KeyOperationTableHeader {
 	NUM_OF_CALLS = 'Number of Calls',
 	ERROR_RATE = 'Error Rate',
 	OPERATION_PR_SECOND = 'Op/s',
-}
-
-export enum DataType {
-	STRING = 'string',
-	FLOAT64 = 'float64',
-	INT64 = 'int64',
-	BOOL = 'bool',
 }
 
 export enum MetricsType {
@@ -74,3 +74,22 @@ export enum WidgetKeys {
 	SignozExternalCallLatencySum = 'signoz_external_call_latency_sum',
 	Signoz_latency_bucket = 'signoz_latency_bucket',
 }
+
+export const topOperationMetricsDownloadOptions: DownloadOptions = {
+	isDownloadEnabled: true,
+	fileName: 'top-operation',
+} as const;
+
+export const SERVICE_CHART_ID = {
+	latency: 'SERVICE_OVERVIEW_LATENCY',
+	error: 'SERVICE_OVERVIEW_ERROR',
+	rps: 'SERVICE_OVERVIEW_RPS',
+	apdex: 'SERVICE_OVERVIEW_APDEX',
+	errorPercentage: 'SERVICE_OVERVIEW_ERROR_PERCENTAGE',
+	dbCallsRPS: 'SERVICE_DATABASE_CALLS_RPS',
+	dbCallsAvgDuration: 'SERVICE_DATABASE_CALLS_AVG_DURATION',
+	externalCallDurationByAddress: 'SERVICE_EXTERNAL_CALLS_DURATION_BY_ADDRESS',
+	externalCallErrorPercentage: 'SERVICE_EXTERNAL_CALLS_ERROR_PERCENTAGE',
+	externalCallDuration: 'SERVICE_EXTERNAL_CALLS_DURATION',
+	externalCallRPSByAddress: 'SERVICE_EXTERNAL_CALLS_RPS_BY_ADDRESS',
+};

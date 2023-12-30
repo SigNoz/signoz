@@ -2,6 +2,7 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Select } from 'antd';
 import { DEFAULT_PER_PAGE_OPTIONS, Pagination } from 'hooks/queryPagination';
 import { memo, useMemo } from 'react';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { defaultSelectStyle } from './config';
 import { Container } from './styles';
@@ -51,6 +52,7 @@ function Controls({
 				loading={isLoading}
 				value={countPerPage}
 				onChange={handleCountItemsPerPageChange}
+				getPopupContainer={popupContainer}
 			>
 				{perPageOptions.map((count) => (
 					<Select.Option
