@@ -61,7 +61,7 @@
 
 	.get-started-nav-items {
 		display: flex;
-		margin: 8px 8px 16px 8px;
+		margin: 4px 13px 4px 10px;
 
 		.get-started-btn {
 			display: flex;
@@ -71,9 +71,10 @@
 			gap: 8px;
 
 			width: 100%;
+			height: 36px;
+
 			border: 1px solid $bg-slate-400;
 
-			border: none;
 			border-radius: 2px;
 			box-shadow: none !important;
 		}
@@ -129,7 +130,13 @@
 .lightMode {
 	.sideNav {
 		background: $bg-vanilla-300;
-		border-right: 1px solid $bg-vanilla-100;
+		border-right: 1px solid $bg-vanilla-400;
+
+		.get-started-nav-items {
+			.get-started-btn {
+				border: 1px solid $bg-vanilla-400;
+			}
+		}
 
 		.brand {
 			.brand-logo {
@@ -140,7 +147,7 @@
 		}
 
 		.secondary-nav-items {
-			border-top: 1px solid $bg-vanilla-100;
+			border-top: 1px solid $bg-vanilla-400;
 
 			.collapse-expand-handlers {
 				color: $bg-robin-400;

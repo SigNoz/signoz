@@ -5,6 +5,9 @@
 	flex-direction: row;
 	align-items: center;
 
+	height: 36px;
+	margin-bottom: 4px;
+
 	&.active {
 		.nav-item-active-marker {
 			background: #3f5ecc;
@@ -43,7 +46,7 @@
 		max-width: calc(100% - 24px);
 
 		display: flex;
-		margin: 1px 8px;
+		margin: 0px 8px;
 		padding: 4px 12px;
 		flex-direction: row;
 		align-items: center;
