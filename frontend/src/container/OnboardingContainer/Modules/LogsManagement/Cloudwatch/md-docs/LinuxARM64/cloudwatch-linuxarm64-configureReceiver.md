@@ -10,7 +10,9 @@ You can configure your receiver to collect logs with different conditions.
 
 Here are two sample configurations: 
 
-- This configuration below will do autodiscovery and collect 100 log groups starting with prefix application.
+&nbsp;
+
+This configuration below will do autodiscovery and collect 100 log groups starting with prefix application.
 
 ```bash
 
@@ -28,7 +30,9 @@ receivers:
 
 ```
 
-- This configuration below will not do autodiscovery and specifies the names of the log groups to collect.
+&nbsp;
+
+This configuration below will not do autodiscovery and specifies the names of the log groups to collect.
 ```bash
 receivers:
 ...

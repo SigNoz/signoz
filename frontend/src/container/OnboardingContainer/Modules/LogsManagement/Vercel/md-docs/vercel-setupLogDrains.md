@@ -23,16 +23,15 @@ You can stream logs from Vercel to SigNoz using [log drains](https://vercel.com/
 
 &nbsp;
 
-
 ### Step 2: Add Log Drain
 
-* Enter the endpoint URL as follows:
+Enter the endpoint URL as follows:
 ```bash
 https://ingest.{{REGION}}.signoz.cloud:443/logs/json
 ```
 &nbsp;
 
-* Enable **Custom Headers** and add the headers `signoz-access-token` and `x-vercel-verify`
+Enable **Custom Headers** and add the headers `signoz-access-token` and `x-vercel-verify`
 ```bash
 signoz-access-token: {{SIGNOZ_INGESTION_KEY}}
 ```
@@ -43,8 +42,9 @@ x-vercel-verify: <YOUR_VERCEL_VERIFY_TOKEN>
 
 &nbsp;
 
-* Click on **Verify** button and then **Add Log Drain** button in Vercel.
+Click on **Verify** button and then **Add Log Drain** button in Vercel.
 
 &nbsp;
 
 Click on the **Done** button below and you should be able to see your logs in SigNoz.
+
