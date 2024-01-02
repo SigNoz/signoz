@@ -43,13 +43,16 @@ import (
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
 
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
@@ -2455,11 +2458,18 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTr
 func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName string) (model.TTLStatusItem, *model.ApiError) {
 	statusItem := []model.TTLStatusItem{}
 
-	query := fmt.Sprintf("SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = '%s' ORDER BY created_at DESC", tableName)
+	query := `SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = ? ORDER BY created_at DESC`
 
-	err := r.localDB.Select(&statusItem, query)
+	zap.S().Info(query, tableName)
 
-	zap.S().Info(query)
+	stmt, err := r.localDB.Preparex(query)
+
+	if err != nil {
+		zap.S().Debug("Error preparing query for checkTTLStatusItem: ", err)
+		return model.TTLStatusItem{}, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	err = stmt.Select(&statusItem, tableName)
 
 	if len(statusItem) == 0 {
 		return model.TTLStatusItem{}, nil
@@ -3371,14 +3381,17 @@ func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Contex
 
 	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))*1000000000;", r.logsDB, r.logsTable, 30)
 
-	r.db.QueryRow(ctx, queryStr).Scan(&totalLogLines)
+	err := r.db.QueryRow(ctx, queryStr).Scan(&totalLogLines)
 
-	return totalLogLines, nil
+	return totalLogLines, err
 }
 
 func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context) (*model.TagsInfo, error) {
 
-	queryStr := fmt.Sprintf("select tagMap['service.name'] as serviceName, tagMap['deployment.environment'] as env, tagMap['telemetry.sdk.language'] as language from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", r.TraceDB, r.indexTable, 1)
+	queryStr := fmt.Sprintf(`select serviceName, stringTagMap['deployment.environment'] as env, 
+	stringTagMap['telemetry.sdk.language'] as language from %s.%s 
+	where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))
+	group by serviceName, env, language;`, r.TraceDB, r.indexTable, 1)
 
 	tagTelemetryDataList := []model.TagTelemetryData{}
 	err := r.db.Select(ctx, &tagTelemetryDataList, queryStr)
@@ -3410,6 +3423,120 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 	return &tagsInfo, nil
 }
 
+// remove this after sometime
+func removeUnderscoreDuplicateFields(fields []model.LogField) []model.LogField {
+	lookup := map[string]model.LogField{}
+	for _, v := range fields {
+		lookup[v.Name+v.DataType] = v
+	}
+
+	for k := range lookup {
+		if strings.Contains(k, ".") {
+			delete(lookup, strings.ReplaceAll(k, ".", "_"))
+		}
+	}
+
+	updatedFields := []model.LogField{}
+	for _, v := range lookup {
+		updatedFields = append(updatedFields, v)
+	}
+	return updatedFields
+}
+
+// GetDashboardsInfo returns analytics data for dashboards
+func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
+	dashboardsInfo := model.DashboardsInfo{}
+	// fetch dashboards from dashboard db
+	query := "SELECT data FROM dashboards"
+	var dashboardsData []dashboards.Dashboard
+	err := r.localDB.Select(&dashboardsData, query)
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return &dashboardsInfo, err
+	}
+	for _, dashboard := range dashboardsData {
+		dashboardsInfo = countPanelsInDashboard(dashboard.Data)
+	}
+	dashboardsInfo.TotalDashboards = len(dashboardsData)
+
+	return &dashboardsInfo, nil
+}
+
+func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
+	var logsPanelCount, tracesPanelCount, metricsPanelCount int
+	// totalPanels := 0
+	if data != nil && data["widgets"] != nil {
+		widgets, ok := data["widgets"].(interface{})
+		if ok {
+			data, ok := widgets.([]interface{})
+			if ok {
+				for _, widget := range data {
+					sData, ok := widget.(map[string]interface{})
+					if ok && sData["query"] != nil {
+						// totalPanels++
+						query, ok := sData["query"].(interface{}).(map[string]interface{})
+						if ok && query["queryType"] == "builder" && query["builder"] != nil {
+							builderData, ok := query["builder"].(interface{}).(map[string]interface{})
+							if ok && builderData["queryData"] != nil {
+								builderQueryData, ok := builderData["queryData"].([]interface{})
+								if ok {
+									for _, queryData := range builderQueryData {
+										data, ok := queryData.(map[string]interface{})
+										if ok {
+											if data["dataSource"] == "traces" {
+												tracesPanelCount++
+											} else if data["dataSource"] == "metrics" {
+												metricsPanelCount++
+											} else if data["dataSource"] == "logs" {
+												logsPanelCount++
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return model.DashboardsInfo{
+		LogsBasedPanels:   logsPanelCount,
+		TracesBasedPanels: tracesPanelCount,
+		MetricBasedPanels: metricsPanelCount,
+	}
+}
+
+func (r *ClickHouseReader) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
+	alertsInfo := model.AlertsInfo{}
+	// fetch alerts from rules db
+	query := "SELECT data FROM rules"
+	var alertsData []string
+	err := r.localDB.Select(&alertsData, query)
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return &alertsInfo, err
+	}
+	for _, alert := range alertsData {
+		var rule rules.GettableRule
+		err = json.Unmarshal([]byte(alert), &rule)
+		if err != nil {
+			zap.S().Errorf("msg:", "invalid rule data", "\t err:", err)
+			continue
+		}
+		if rule.AlertType == "LOGS_BASED_ALERT" {
+			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
+		} else if rule.AlertType == "METRIC_BASED_ALERT" {
+			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
+		} else if rule.AlertType == "TRACES_BASED_ALERT" {
+			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
+		}
+		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1
+	}
+
+	return &alertsInfo, nil
+}
+
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
 	// response will contain top level fields from the otel log model
 	response := model.GetFieldsResponse{
@@ -3432,6 +3559,10 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
+
+	//remove this code after sometime
+	attributes = removeUnderscoreDuplicateFields(attributes)
+	resources = removeUnderscoreDuplicateFields(resources)
 
 	statements := []model.ShowCreateTableStatement{}
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTable)
@@ -3480,66 +3611,48 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		valueColName := fmt.Sprintf("%s_%s_value", field.Type, strings.ToLower(field.DataType))
 
 		// create materialized column
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s[indexOf(%s, '%s')] CODEC(ZSTD(1))",
-			r.logsDB, r.logsLocalTable,
-			r.cluster,
-			colname, field.DataType,
-			valueColName,
-			keyColName,
-			field.Name,
-		)
-		err := r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-		}
 
-		defaultValueDistributed := "-1"
-		if strings.ToLower(field.DataType) == "bool" {
-			defaultValueDistributed = "false"
-			field.IndexType = "set(2)"
-		}
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s",
-			r.logsDB, r.logsTable,
-			r.cluster,
-			colname, field.DataType,
-			defaultValueDistributed,
-		)
-		err = r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-		}
+		for _, table := range []string{r.logsLocalTable, r.logsTable} {
+			q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s DEFAULT %s[indexOf(%s, '%s')] CODEC(ZSTD(1))"
+			query := fmt.Sprintf(q,
+				r.logsDB, table,
+				r.cluster,
+				colname, field.DataType,
+				valueColName,
+				keyColName,
+				field.Name,
+			)
+			err := r.db.Exec(ctx, query)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
 
-		// create exists column
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
-			r.logsDB, r.logsLocalTable,
-			r.cluster,
-			colname,
-			keyColName,
-			field.Name,
-		)
-		err = r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-		}
-
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED false",
-			r.logsDB, r.logsTable,
-			r.cluster,
-			colname,
-		)
-		err = r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool DEFAULT if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
+				r.logsDB, table,
+				r.cluster,
+				colname,
+				keyColName,
+				field.Name,
+			)
+			err = r.db.Exec(ctx, query)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
 		}
 
 		// create the index
+		if strings.ToLower(field.DataType) == "bool" {
+			// there is no point in creating index for bool attributes as the cardinality is just 2
+			return nil
+		}
+
 		if field.IndexType == "" {
 			field.IndexType = constants.DefaultLogSkipIndexType
 		}
 		if field.IndexGranularity == 0 {
 			field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
 		}
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d",
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d",
 			r.logsDB, r.logsLocalTable,
 			r.cluster,
 			colname,
@@ -3547,7 +3660,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			field.IndexType,
 			field.IndexGranularity,
 		)
-		err = r.db.Exec(ctx, query)
+		err := r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
@@ -3606,7 +3719,10 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail)
+		}
 	}
 
 	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
@@ -3646,7 +3762,10 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail)
+		}
 	}
 
 	if err != nil {
@@ -3736,7 +3855,10 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail)
+		}
 	}
 
 	query := ""
@@ -4463,11 +4585,63 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 				row[columnNames[idx]] = v
 			}
 		}
+
+		// remove duplicate _ attributes for logs.
+		// remove this function after a month
+		removeDuplicateUnderscoreAttributes(row)
+
 		rowList = append(rowList, &v3.Row{Timestamp: t, Data: row})
 	}
 
 	return rowList, nil
 
+}
+
+func removeDuplicateUnderscoreAttributes(row map[string]interface{}) {
+	if val, ok := row["attributes_int64"]; ok {
+		attributes := val.(*map[string]int64)
+		for key := range *attributes {
+			if strings.Contains(key, ".") {
+				uKey := strings.ReplaceAll(key, ".", "_")
+				delete(*attributes, uKey)
+			}
+		}
+
+	}
+
+	if val, ok := row["attributes_float64"]; ok {
+		attributes := val.(*map[string]float64)
+		for key := range *attributes {
+			if strings.Contains(key, ".") {
+				uKey := strings.ReplaceAll(key, ".", "_")
+				delete(*attributes, uKey)
+			}
+		}
+
+	}
+
+	if val, ok := row["attributes_bool"]; ok {
+		attributes := val.(*map[string]bool)
+		for key := range *attributes {
+			if strings.Contains(key, ".") {
+				uKey := strings.ReplaceAll(key, ".", "_")
+				delete(*attributes, uKey)
+			}
+		}
+
+	}
+	for _, k := range []string{"attributes_string", "resources_string"} {
+		if val, ok := row[k]; ok {
+			attributes := val.(*map[string]string)
+			for key := range *attributes {
+				if strings.Contains(key, ".") {
+					uKey := strings.ReplaceAll(key, ".", "_")
+					delete(*attributes, uKey)
+				}
+			}
+
+		}
+	}
 }
 func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	rows, err := r.db.Query(ctx, "SELECT 1")

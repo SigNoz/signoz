@@ -95,7 +95,26 @@ func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.
 	if q.testingMode && q.reader == nil {
 		return q.returnedSeries, q.returnedErr
 	}
-	return q.reader.GetTimeSeriesResultV3(ctx, query)
+	result, err := q.reader.GetTimeSeriesResultV3(ctx, query)
+	var pointsWithNegativeTimestamps int
+	// Filter out the points with negative or zero timestamps
+	for idx := range result {
+		series := result[idx]
+		points := make([]v3.Point, 0)
+		for pointIdx := range series.Points {
+			point := series.Points[pointIdx]
+			if point.Timestamp > 0 {
+				points = append(points, point)
+			} else {
+				pointsWithNegativeTimestamps++
+			}
+		}
+		series.Points = points
+	}
+	if pointsWithNegativeTimestamps > 0 {
+		zap.S().Errorf("found points with negative timestamps for query %s", query)
+	}
+	return result, err
 }
 
 func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangeParams) ([]*v3.Series, error) {

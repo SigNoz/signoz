@@ -1,7 +1,8 @@
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal, Tooltip } from 'antd';
+import { Modal, Tooltip, Typography } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
+import { useNotifications } from 'hooks/useNotifications';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
@@ -10,15 +11,29 @@ import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 
-import { Data } from '../index';
+import { Data } from '../DashboardsList';
 import { TableLinkText } from './styles';
 
-function DeleteButton({ id, createdBy, isLocked }: Data): JSX.Element {
+interface DeleteButtonProps {
+	createdBy: string;
+	name: string;
+	id: string;
+	isLocked: boolean;
+}
+
+function DeleteButton({
+	createdBy,
+	name,
+	id,
+	isLocked,
+}: DeleteButtonProps): JSX.Element {
 	const [modal, contextHolder] = Modal.useModal();
 	const { role, user } = useSelector<AppState, AppReducer>((state) => state.app);
 	const isAuthor = user?.email === createdBy;
 
 	const queryClient = useQueryClient();
+
+	const { notifications } = useNotifications();
 
 	const { t } = useTranslation(['dashboard']);
 
@@ -26,11 +41,22 @@ function DeleteButton({ id, createdBy, isLocked }: Data): JSX.Element {
 
 	const openConfirmationDialog = useCallback((): void => {
 		modal.confirm({
-			title: 'Do you really want to delete this dashboard?',
+			title: (
+				<Typography.Title level={5}>
+					Are you sure you want to delete the
+					<span style={{ color: '#e42b35', fontWeight: 500 }}> {name} </span>
+					dashboard?
+				</Typography.Title>
+			),
 			icon: <ExclamationCircleOutlined style={{ color: '#e42b35' }} />,
 			onOk() {
 				deleteDashboardMutation.mutateAsync(undefined, {
 					onSuccess: () => {
+						notifications.success({
+							message: t('dashboard:delete_dashboard_success', {
+								name,
+							}),
+						});
 						queryClient.invalidateQueries([REACT_QUERY_KEY.GET_ALL_DASHBOARDS]);
 					},
 				});
@@ -39,7 +65,7 @@ function DeleteButton({ id, createdBy, isLocked }: Data): JSX.Element {
 			okButtonProps: { danger: true },
 			centered: true,
 		});
-	}, [modal, deleteDashboardMutation, queryClient]);
+	}, [modal, name, deleteDashboardMutation, notifications, t, queryClient]);
 
 	const getDeleteTooltipContent = (): string => {
 		if (isLocked) {

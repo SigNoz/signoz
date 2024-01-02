@@ -51,6 +51,33 @@ export function covertIntoDataFormats({
 	return Number.isNaN(result) ? 0 : result;
 }
 
+export const getThresholdLabel = (
+	optionName: string,
+	value: number,
+	unit?: string,
+	yAxisUnit?: string,
+): string => {
+	if (
+		unit === MiscellaneousFormats.PercentUnit ||
+		yAxisUnit === MiscellaneousFormats.PercentUnit
+	) {
+		if (unit === MiscellaneousFormats.Percent) {
+			return `${value}%`;
+		}
+		return `${value * 100}%`;
+	}
+	if (
+		unit === MiscellaneousFormats.Percent ||
+		yAxisUnit === MiscellaneousFormats.Percent
+	) {
+		if (unit === MiscellaneousFormats.PercentUnit) {
+			return `${value * 100}%`;
+		}
+		return `${value}%`;
+	}
+	return `${value} ${optionName}`;
+};
+
 interface IUnit {
 	value: number;
 	sourceUnit?: string;

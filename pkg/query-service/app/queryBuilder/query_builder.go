@@ -122,7 +122,7 @@ func expressionToQuery(
 		groupTags = append(groupTags, "ts")
 		if joinUsing == "" {
 			for _, tag := range groupTags {
-				joinUsing += fmt.Sprintf("%s.%s as %s, ", variable, tag, tag)
+				joinUsing += fmt.Sprintf("%s.`%s` as `%s`, ", variable, tag, tag)
 			}
 			joinUsing = strings.TrimSuffix(joinUsing, ", ")
 		}
@@ -130,7 +130,7 @@ func expressionToQuery(
 		if idx > 0 {
 			formulaSubQuery += " ON "
 			for _, tag := range groupTags {
-				formulaSubQuery += fmt.Sprintf("%s.%s = %s.%s AND ", prevVar, tag, variable, tag)
+				formulaSubQuery += fmt.Sprintf("%s.`%s` = %s.`%s` AND ", prevVar, tag, variable, tag)
 			}
 			formulaSubQuery = strings.TrimSuffix(formulaSubQuery, " AND ")
 		}

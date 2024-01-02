@@ -28,22 +28,9 @@ export const GetSpans = (
 				return;
 			}
 
-			const { selectedTime } = globalTime;
-
 			if (traces.filterLoading) {
 				return;
 			}
-
-			// @TODO refactor this logic when share url functionlity is updated
-			const isCustomSelected = selectedTime === 'custom';
-
-			const end = isCustomSelected
-				? globalTime.maxTime + 15 * 60 * 1000000000
-				: props.end;
-
-			const start = isCustomSelected
-				? globalTime.minTime - 15 * 60 * 1000000000
-				: props.start;
 
 			if (!spansGraph.loading) {
 				dispatch({
@@ -55,12 +42,12 @@ export const GetSpans = (
 			}
 
 			const response = await getSpans({
-				end,
+				end: props.end,
 				function: props.function,
 				groupBy: props.groupBy,
 				selectedFilter: props.selectedFilter,
 				selectedTags: props.selectedTags,
-				start,
+				start: props.start,
 				step: props.step,
 				isFilterExclude: props.isFilterExclude,
 				spanKind: props.spanKind,

@@ -16,7 +16,7 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { GraphTitle, MENU_ITEMS } from '../constant';
+import { GraphTitle, MENU_ITEMS, SERVICE_CHART_ID } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
@@ -66,6 +66,7 @@ function DBCall(): JSX.Element {
 				title: GraphTitle.DATABASE_CALLS_RPS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'reqps',
+				id: SERVICE_CHART_ID.dbCallsRPS,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -85,6 +86,7 @@ function DBCall(): JSX.Element {
 				title: GraphTitle.DATABASE_CALLS_AVG_DURATION,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'ms',
+				id: SERVICE_CHART_ID.dbCallsAvgDuration,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -104,18 +106,18 @@ function DBCall(): JSX.Element {
 				>
 					View Traces
 				</Button>
-				<Card>
+				<Card data-testid="database_call_rps">
 					<GraphContainer>
 						<Graph
+							fillSpans={false}
 							name="database_call_rps"
 							widget={databaseCallsRPSWidget}
-							headerMenuList={MENU_ITEMS}
-							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
-									ChartEvent,
-									activeElements,
-									chart,
-									data,
+									xValue,
+									yValue,
+									mouseX,
+									mouseY,
 									'database_call_rps',
 								);
 							}}
@@ -138,18 +140,19 @@ function DBCall(): JSX.Element {
 					View Traces
 				</Button>
 
-				<Card>
+				<Card data-testid="database_call_avg_duration">
 					<GraphContainer>
 						<Graph
+							fillSpans
 							name="database_call_avg_duration"
 							widget={databaseCallsAverageDurationWidget}
 							headerMenuList={MENU_ITEMS}
-							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
-									ChartEvent,
-									activeElements,
-									chart,
-									data,
+									xValue,
+									yValue,
+									mouseX,
+									mouseY,
 									'database_call_avg_duration',
 								);
 							}}

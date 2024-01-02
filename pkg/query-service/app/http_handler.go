@@ -317,6 +317,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/autocomplete/attribute_values", am.ViewAccess(
 		withCacheControl(AutoCompleteCacheControlAge, aH.autoCompleteAttributeValues))).Methods(http.MethodGet)
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/query_range/format", am.ViewAccess(aH.QueryRangeV3Format)).Methods(http.MethodPost)
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
@@ -1252,13 +1253,13 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = aH.ruleManager.CreateRule(r.Context(), string(body))
+	rule, err := aH.ruleManager.CreateRule(r.Context(), string(body))
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	aH.Respond(w, "rule successfully added")
+	aH.Respond(w, rule)
 
 }
 
@@ -1400,8 +1401,10 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 		"email":   email,
 		"message": message,
 	}
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data)
-
+	userEmail, err := auth.GetEmailFromJwt(r.Context())
+	if err == nil {
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail)
+	}
 }
 
 func (aH *APIHandler) getTopOperations(w http.ResponseWriter, r *http.Request) {
@@ -1479,8 +1482,11 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"number": len(*result),
 	}
+	userEmail, err := auth.GetEmailFromJwt(r.Context())
+	if err == nil {
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail)
+	}
 
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data)
 	if (data["number"] != 0) && (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
 		telemetry.GetInstance().AddActiveTracesUser()
 	}
@@ -1799,8 +1805,7 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := auth.AttachJwtToContext(context.Background(), r)
-	resp, err := auth.Invite(ctx, req)
+	resp, err := auth.Invite(r.Context(), req)
 	if err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
 		return
@@ -1825,8 +1830,7 @@ func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
 	email := mux.Vars(r)["email"]
 
-	ctx := auth.AttachJwtToContext(context.Background(), r)
-	if err := auth.RevokeInvite(ctx, email); err != nil {
+	if err := auth.RevokeInvite(r.Context(), email); err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
 		return
 	}
@@ -2204,8 +2208,8 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		"isAnonymous":      req.IsAnonymous,
 		"organizationName": req.Name,
 	}
-
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data)
+	userEmail, err := auth.GetEmailFromJwt(r.Context())
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail)
 
 	aH.WriteJSON(w, r, map[string]string{"data": "org updated successfully"})
 }
@@ -2368,7 +2372,6 @@ func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErr, "Incorrect params")
 		return
 	}
-
 	res, apiErr := aH.reader.GetLogs(r.Context(), params)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch logs from the DB")
@@ -2429,7 +2432,6 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apiErr, "Incorrect params")
 		return
 	}
-
 	res, apiErr := aH.reader.AggregateLogs(r.Context(), params)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch logs aggregate from the DB")
@@ -2562,8 +2564,6 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ctx := auth.AttachJwtToContext(context.Background(), r)
-
 	createPipeline := func(
 		ctx context.Context,
 		postable []logparsingpipeline.PostablePipeline,
@@ -2581,7 +2581,7 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		return ah.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
 	}
 
-	res, err := createPipeline(ctx, req.Pipelines)
+	res, err := createPipeline(r.Context(), req.Pipelines)
 	if err != nil {
 		RespondError(w, err, nil)
 		return
@@ -2616,8 +2616,7 @@ func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-	ctx := auth.AttachJwtToContext(context.Background(), r)
-	uuid, err := explorer.CreateView(ctx, view)
+	uuid, err := explorer.CreateView(r.Context(), view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -2651,8 +2650,7 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := auth.AttachJwtToContext(context.Background(), r)
-	err = explorer.UpdateView(ctx, viewID, view)
+	err = explorer.UpdateView(r.Context(), viewID, view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -3007,6 +3005,18 @@ func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.Qu
 	return data, nil
 }
 
+func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request) {
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+
+	if apiErrorObj != nil {
+		zap.S().Errorf(apiErrorObj.Err.Error())
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	aH.Respond(w, queryRangeParams)
+}
+
 func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
 
 	var result []*v3.Result
@@ -3048,6 +3058,17 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
+
+	// This checks if the time for context to complete has exceeded.
+	// it adds flag to notify the user of incomplete respone
+	select {
+	case <-ctx.Done():
+		resp.ContextTimeout = true
+		resp.ContextTimeoutMessage = "result might contain incomplete data due to context timeout, for custom timeout set the timeout header eg:- timeout:120"
+	default:
+		break
+	}
+
 	aH.Respond(w, resp)
 }
 

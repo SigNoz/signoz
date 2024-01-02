@@ -11,9 +11,9 @@ import { v4 } from 'uuid';
 
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
-import { DEFAULT_PROCESSOR_TYPE } from './config';
+import { DEFAULT_PROCESSOR_TYPE, processorFields } from './config';
 import TypeSelect from './FormFields/TypeSelect';
-import { renderProcessorForm } from './utils';
+import ProcessorForm from './ProcessorForm';
 
 function AddNewProcessor({
 	isActionType,
@@ -141,6 +141,17 @@ function AddNewProcessor({
 
 	const isOpen = useMemo(() => isEdit || isAdd, [isAdd, isEdit]);
 
+	const onFormValuesChanged = useCallback(
+		(changedValues: ProcessorData): void => {
+			processorFields[processorType].forEach((field) => {
+				if (field.onFormValuesChanged) {
+					field.onFormValuesChanged(changedValues, form);
+				}
+			});
+		},
+		[form, processorType],
+	);
+
 	return (
 		<Modal
 			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
@@ -157,9 +168,10 @@ function AddNewProcessor({
 				onFinish={onFinish}
 				autoComplete="off"
 				form={form}
+				onValuesChange={onFormValuesChanged}
 			>
 				<TypeSelect value={processorType} onChange={handleProcessorType} />
-				{renderProcessorForm(processorType)}
+				<ProcessorForm processorType={processorType} />
 				<Divider plain />
 				<Form.Item>
 					<ModalButtonWrapper>

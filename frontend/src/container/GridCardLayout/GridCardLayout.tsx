@@ -1,11 +1,16 @@
+import './GridCardLayout.styles.scss';
+
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { themeColors } from 'constants/theme';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import { FullscreenIcon } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -25,10 +30,7 @@ import {
 } from './styles';
 import { GraphLayoutProps } from './types';
 
-function GraphLayout({
-	onAddPanelHandler,
-	widgets,
-}: GraphLayoutProps): JSX.Element {
+function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	const {
 		selectedDashboard,
 		layouts,
@@ -36,6 +38,11 @@ function GraphLayout({
 		setSelectedDashboard,
 		isDashboardLocked,
 	} = useDashboard();
+	const { data } = selectedDashboard || {};
+	const handle = useFullScreenHandle();
+
+	const { widgets, variables } = data || {};
+
 	const { t } = useTranslation(['dashboard']);
 
 	const { featureResponse, role, user } = useSelector<AppState, AppReducer>(
@@ -103,65 +110,81 @@ function GraphLayout({
 
 	return (
 		<>
-			{!isDashboardLocked && (
-				<ButtonContainer>
-					{saveLayoutPermission && (
-						<Button
-							loading={updateDashboardMutation.isLoading}
-							onClick={onSaveHandler}
-							icon={<SaveFilled />}
-							disabled={updateDashboardMutation.isLoading}
-						>
-							{t('dashboard:save_layout')}
-						</Button>
-					)}
+			<ButtonContainer>
+				<Button
+					loading={updateDashboardMutation.isLoading}
+					onClick={handle.enter}
+					icon={<FullscreenIcon size={16} />}
+					disabled={updateDashboardMutation.isLoading}
+				>
+					{t('dashboard:full_view')}
+				</Button>
 
-					{addPanelPermission && (
-						<Button onClick={onAddPanelHandler} icon={<PlusOutlined />}>
-							{t('dashboard:add_panel')}
-						</Button>
-					)}
-				</ButtonContainer>
-			)}
+				{!isDashboardLocked && saveLayoutPermission && (
+					<Button
+						loading={updateDashboardMutation.isLoading}
+						onClick={onSaveHandler}
+						icon={<SaveFilled />}
+						disabled={updateDashboardMutation.isLoading}
+					>
+						{t('dashboard:save_layout')}
+					</Button>
+				)}
 
-			<ReactGridLayout
-				cols={12}
-				rowHeight={100}
-				autoSize
-				width={100}
-				isDraggable={!isDashboardLocked && addPanelPermission}
-				isDroppable={!isDashboardLocked && addPanelPermission}
-				isResizable={!isDashboardLocked && addPanelPermission}
-				allowOverlap={false}
-				onLayoutChange={setLayouts}
-				draggableHandle=".drag-handle"
-				layout={layouts}
-			>
-				{layouts.map((layout) => {
-					const { i: id } = layout;
-					const currentWidget = (widgets || [])?.find((e) => e.id === id);
+				{!isDashboardLocked && addPanelPermission && (
+					<Button
+						onClick={onAddPanelHandler}
+						icon={<PlusOutlined />}
+						data-testid="add-panel"
+					>
+						{t('dashboard:add_panel')}
+					</Button>
+				)}
+			</ButtonContainer>
 
-					return (
-						<CardContainer
-							className={isDashboardLocked ? '' : 'enable-resize'}
-							isDarkMode={isDarkMode}
-							key={id}
-							data-grid={layout}
-						>
-							<Card
-								className="grid-item"
-								$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
+			<FullScreen handle={handle} className="fullscreen-grid-container">
+				<ReactGridLayout
+					cols={12}
+					rowHeight={100}
+					autoSize
+					width={100}
+					useCSSTransforms
+					isDraggable={!isDashboardLocked && addPanelPermission}
+					isDroppable={!isDashboardLocked && addPanelPermission}
+					isResizable={!isDashboardLocked && addPanelPermission}
+					allowOverlap={false}
+					onLayoutChange={setLayouts}
+					draggableHandle=".drag-handle"
+					layout={layouts}
+					style={{ backgroundColor: isDarkMode ? '' : themeColors.snowWhite }}
+				>
+					{layouts.map((layout) => {
+						const { i: id } = layout;
+						const currentWidget = (widgets || [])?.find((e) => e.id === id);
+
+						return (
+							<CardContainer
+								className={isDashboardLocked ? '' : 'enable-resize'}
+								isDarkMode={isDarkMode}
+								key={id}
+								data-grid={JSON.stringify(currentWidget)}
 							>
-								<GridCard
-									widget={currentWidget || ({ id, query: {} } as Widgets)}
-									name={currentWidget?.id || ''}
-									headerMenuList={widgetActions}
-								/>
-							</Card>
-						</CardContainer>
-					);
-				})}
-			</ReactGridLayout>
+								<Card
+									className="grid-item"
+									$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
+								>
+									<GridCard
+										widget={currentWidget || ({ id, query: {} } as Widgets)}
+										name={currentWidget?.id || ''}
+										headerMenuList={widgetActions}
+										variables={variables}
+									/>
+								</Card>
+							</CardContainer>
+						);
+					})}
+				</ReactGridLayout>
+			</FullScreen>
 		</>
 	);
 }

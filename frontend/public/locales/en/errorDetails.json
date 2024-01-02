@@ -3,5 +3,7 @@
 	"see_error_in_trace_graph": "See the error in trace graph",
 	"stack_trace": "Stacktrace",
 	"older": "Older",
-	"newer": "Newer"
+	"newer": "Newer",
+	"something_went_wrong": "Oops !!! Something went wrong",
+	"contact_if_issue_exists": "Don't worry, our team is here to help. Please contact support if the issue persists."
 }
