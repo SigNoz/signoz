@@ -96,12 +96,18 @@
 		.collapse-expand-handlers {
 			position: absolute;
 
-			position: absolute;
 			top: -9px;
 			right: -9px;
 			cursor: pointer;
 
-			color: $bg-robin-300;
+			display: none;
+
+			transition: display 0.3s;
+
+			svg {
+				fill: $bg-vanilla-300;
+				color: $bg-slate-300;
+			}
 		}
 	}
 
@@ -123,6 +129,12 @@
 			.get-started-btn {
 				justify-content: center;
 			}
+		}
+	}
+
+	&:hover {
+		.collapse-expand-handlers {
+			display: block;
 		}
 	}
 }
@@ -150,7 +162,10 @@
 			border-top: 1px solid $bg-vanilla-400;
 
 			.collapse-expand-handlers {
-				color: $bg-robin-400;
+				svg {
+					color: $bg-slate-300;
+					fill: $bg-vanilla-300;
+				}
 			}
 		}
 	}

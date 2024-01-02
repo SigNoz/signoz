@@ -16,8 +16,8 @@ import history from 'lib/history';
 import {
 	AlertTriangle,
 	CheckSquare,
-	PanelLeftOpen,
-	PanelRightOpen,
+	ChevronLeftCircle,
+	ChevronRightCircle,
 	RocketIcon,
 	UserCircle,
 } from 'lucide-react';
@@ -331,7 +331,11 @@ function SideNav({
 				)}
 
 				<div className="collapse-expand-handlers" onClick={onCollapse}>
-					{collapsed ? <PanelLeftOpen size={18} /> : <PanelRightOpen size={18} />}
+					{collapsed ? (
+						<ChevronRightCircle size={18} />
+					) : (
+						<ChevronLeftCircle size={18} />
+					)}
 				</div>
 			</div>
 		</div>
