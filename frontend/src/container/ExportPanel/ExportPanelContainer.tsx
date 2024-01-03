@@ -16,7 +16,10 @@ import {
 } from './styles';
 import { filterOptions, getSelectOptions } from './utils';
 
-function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
+function ExportPanelContainer({
+	isLoading,
+	onExport,
+}: ExportPanelProps): JSX.Element {
 	const { t } = useTranslation(['dashboard']);
 
 	const [selectedDashboardId, setSelectedDashboardId] = useState<string | null>(
@@ -118,4 +121,4 @@ function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 	);
 }
 
-export default ExportPanel;
+export default ExportPanelContainer;

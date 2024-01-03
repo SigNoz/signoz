@@ -37,19 +37,6 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		onSetActiveLog,
 	} = useActiveLog();
 
-	useFontFaceObserver(
-		[
-			{
-				family: 'Fira Code',
-				weight: '300',
-			},
-		],
-		viewMode === 'raw',
-		{
-			timeout: 5000,
-		},
-	);
-
 	const {
 		logs,
 		fields: { selected },
