@@ -11,7 +11,6 @@
         <img alt="tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"> </a>
 </p>
 
-
 <h3 align="center">
   <a href="https://signoz.io/docs"><b>Dokumentation</b></a> &bull;
   <a href="https://github.com/SigNoz/signoz/blob/develop/README.md"><b>Readme auf Englisch </b></a> &bull;
@@ -40,12 +39,13 @@ SigNoz hilft Entwicklern, Anwendungen zu überwachen und Probleme in ihren berei
 👉 Einfache Einrichtung von Benachrichtigungen mit dem selbst erstellbaren Abfrage-Builder.
 
 ##
+
 ### Anwendung Metriken
 
 ![application_metrics](https://user-images.githubusercontent.com/83692067/226637410-900dbc5e-6705-4b11-a10c-bd0faeb2a92f.png)
 
-
 ### Verteiltes Tracing
+
 <img width="2068" alt="distributed_tracing_2 2" src="https://user-images.githubusercontent.com/83692067/226536447-bae58321-6a22-4ed3-af80-e3e964cb3489.png">
 
 <img width="2068" alt="distributed_tracing_1" src="https://user-images.githubusercontent.com/83692067/226536462-939745b6-4f9d-45a6-8016-814837e7f7b4.png">
@@ -62,21 +62,17 @@ SigNoz hilft Entwicklern, Anwendungen zu überwachen und Probleme in ihren berei
 
 ![exceptions_light](https://user-images.githubusercontent.com/83692067/226637967-4188d024-3ac9-4799-be95-f5ea9c45436f.png)
 
-
 ### Alarme
 
 <img width="2068" alt="alerts_management" src="https://user-images.githubusercontent.com/83692067/226536548-2c81e2e8-c12d-47e8-bad7-c6be79055def.png">
 
-
 <br /><br />
-
 
 ## Werde Teil unserer Slack Community
 
 Sag Hi zu uns auf [Slack](https://signoz.io/slack) 👋
 
 <br /><br />
-
 
 ## Funktionen:
 
@@ -92,7 +88,6 @@ Sag Hi zu uns auf [Slack](https://signoz.io/slack) 👋
 - Einfache Einrichtung von Benachrichtigungen mit dem selbst erstellbaren Abfrage-Builder.
 
 <br /><br />
-
 
 ## Wieso SigNoz?
 
@@ -116,11 +111,9 @@ Wir unterstützen [OpenTelemetry](https://opentelemetry.io) als Bibliothek, mit 
 - Elixir
 - Rust
 
-
 Hier findest du die vollständige Liste von unterstützten Programmiersprachen - https://opentelemetry.io/docs/
 
 <br /><br />
-
 
 ## Erste Schritte mit SigNoz
 
@@ -137,7 +130,6 @@ Die [Anleitungen zur Fehlerbehebung](https://signoz.io/docs/install/troubleshoot
 Bitte folge den [hier](https://signoz.io/docs/deployment/helm_chart) aufgelisteten Schritten, um deine Anwendung mit Helm Charts bereitzustellen.
 
 <br /><br />
-
 
 ## Vergleiche mit bekannten Tools
 
@@ -179,7 +171,6 @@ Wir haben Benchmarks veröffentlicht, die Loki mit SigNoz vergleichen. Schauen S
 
 <br /><br />
 
-
 ## Zum Projekt beitragen
 
 Wir ❤️ Beiträge zum Projekt, egal ob große oder kleine. Bitte lies dir zuerst die [CONTRIBUTING.md](CONTRIBUTING.md), durch, bevor du anfängst, Beiträge zu SigNoz zu machen.
@@ -197,6 +188,8 @@ Du bist dir nicht sicher, wie du anfangen sollst? Schreib uns einfach auf dem #c
 #### Frontend
 
 - [Palash Gupta](https://github.com/palashgdev)
+- [Yunus M](https://github.com/YounixM)
+- [Rajat Dabade](https://github.com/Rajat-Dabade)
 
 #### DevOps
 
@@ -204,15 +197,11 @@ Du bist dir nicht sicher, wie du anfangen sollst? Schreib uns einfach auf dem #c
 
 <br /><br />
 
-
 ## Dokumentation
 
 Du findest unsere Dokumentation unter https://signoz.io/docs/. Falls etwas unverständlich ist oder fehlt, öffne gerne ein Github Issue mit dem Label `documentation` oder schreib uns über den Community Slack Channel.
 
-
-
 <br /><br />
-
 
 ## Gemeinschaft
 

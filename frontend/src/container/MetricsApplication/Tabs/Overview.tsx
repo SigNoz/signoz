@@ -32,19 +32,13 @@ import {
 	errorPercentage,
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
-import {
-	Card,
-	Col,
-	ColApDexContainer,
-	ColErrorContainer,
-	Row,
-} from '../styles';
+import { Col, ColApDexContainer, ColErrorContainer, Row } from '../styles';
 import ApDex from './Overview/ApDex';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
 import TopOperationMetrics from './Overview/TopOperationMetrics';
-import { Button } from './styles';
+import { Button, Card } from './styles';
 import { IServiceName } from './types';
 import {
 	handleNonInQueryRange,
@@ -276,7 +270,7 @@ function Application(): JSX.Element {
 
 				<Col span={12}>
 					<Card>
-						{isSpanMetricEnabled ? <TopOperationMetrics /> : <TopOperation />}
+						{isSpanMetricEnabled ? <TopOperationMetrics /> : <TopOperation />}{' '}
 					</Card>
 				</Col>
 			</Row>
