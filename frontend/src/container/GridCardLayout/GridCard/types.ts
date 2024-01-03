@@ -28,6 +28,7 @@ export interface WidgetGraphComponentProps extends UplotProps {
 	threshold?: ReactNode;
 	headerMenuList: MenuItemKeys[];
 	isWarning: boolean;
+	graphVisibility?: boolean[];
 }
 
 export interface GridCardGraphProps {

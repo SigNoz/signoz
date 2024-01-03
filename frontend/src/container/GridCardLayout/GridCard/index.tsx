@@ -163,6 +163,17 @@ function GridCardGraph({
 			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
 			: headerMenuList;
 
+	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
+		Array(queryResponse.data?.payload?.data.result.length || 0).fill(true),
+	);
+
+	useEffect(() => {
+		setGraphVisibility([
+			true,
+			...Array(queryResponse.data?.payload?.data.result.length).fill(true),
+		]);
+	}, [queryResponse.data?.payload?.data.result.length]);
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
@@ -178,6 +189,8 @@ function GridCardGraph({
 				maxTimeScale,
 				softMax: widget.softMax === undefined ? null : widget.softMax,
 				softMin: widget.softMin === undefined ? null : widget.softMin,
+				graphsVisibilityStates: graphVisibility,
+				setGraphsVisibilityStates: setGraphVisibility,
 			}),
 		[
 			widget?.id,
@@ -192,6 +205,7 @@ function GridCardGraph({
 			onClickHandler,
 			minTimeScale,
 			maxTimeScale,
+			graphVisibility,
 		],
 	);
 
@@ -212,6 +226,7 @@ function GridCardGraph({
 					threshold={threshold}
 					headerMenuList={menuList}
 					onClickHandler={onClickHandler}
+					graphVisibility={graphVisibility}
 				/>
 			)}
 		</div>
