@@ -1,8 +1,6 @@
-import {
-	ExpandAltOutlined,
-	LinkOutlined,
-	MonitorOutlined,
-} from '@ant-design/icons';
+import './RawLogView.styles.scss';
+
+import { LinkOutlined, MonitorOutlined } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, DrawerProps, Tooltip } from 'antd';
 import LogDetail from 'components/LogDetail';
@@ -24,10 +22,12 @@ import {
 	useState,
 } from 'react';
 
+import LogStateIndicator, {
+	LogType,
+} from '../LogStateIndicator/LogStateIndicator';
 // styles
 import {
 	ActionButtonsWrapper,
-	ExpandIconWrapper,
 	RawLogContent,
 	RawLogViewContainer,
 } from './styles';
@@ -81,6 +81,7 @@ function RawLogView({
 	if (attributesText.length > 0) {
 		attributesText += ' | ';
 	}
+	const logType = data?.attributes_string?.log_level || LogType.INFO;
 
 	const text = useMemo(
 		() =>
@@ -151,11 +152,13 @@ function RawLogView({
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 		>
-			{!isReadOnly && (
+			{/* {!isReadOnly && (
 				<ExpandIconWrapper flex="30px">
 					<ExpandAltOutlined />
 				</ExpandIconWrapper>
-			)}
+			)} */}
+
+			<LogStateIndicator type={logType} />
 
 			<RawLogContent
 				$isReadOnly={isReadOnly}
