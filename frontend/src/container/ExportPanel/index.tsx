@@ -7,7 +7,7 @@ import { useCallback, useState } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import ExportPanelContainer from './ExportPanel';
+import ExportPanelContainer from './ExportPanelContainer';
 
 function ExportPanel({
 	isLoading,

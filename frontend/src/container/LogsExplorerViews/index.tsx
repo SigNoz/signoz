@@ -1,5 +1,8 @@
-import { Tabs, TabsProps } from 'antd';
-import TabLabel from 'components/TabLabel';
+import './LogsExplorerViews.styles.scss';
+
+import { Button, Dropdown, Radio } from 'antd';
+import { RadioChangeEvent } from 'antd/lib';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
 import {
@@ -9,11 +12,14 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
+import ExplorerControlPanel from 'container/ExplorerControlPanel';
+import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
 import ExportPanel from 'container/ExportPanel';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
+import { useOptionsMenu } from 'container/OptionsMenu';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
@@ -26,6 +32,7 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
+import { FileDown, Sliders } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
@@ -38,18 +45,34 @@ import {
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	LogsAggregatorOperator,
+	StringOperators,
+} from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
 import { ActionsWrapper } from './LogsExplorerViews.styled';
 
-function LogsExplorerViews(): JSX.Element {
+function LogsExplorerViews({
+	showHistogram,
+}: {
+	showHistogram: boolean;
+}): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
 
 	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
+	const [selectedPanelType, setSelectedPanelType] = useState<PANEL_TYPES>(
+		PANEL_TYPES.LIST,
+	);
+
+	const handleModeChange = (e: RadioChangeEvent): void => {
+		setSelectedPanelType(e.target.value);
+	};
+
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
@@ -63,6 +86,7 @@ function LogsExplorerViews(): JSX.Element {
 
 	// Context
 	const {
+		initialDataSource,
 		currentQuery,
 		stagedQuery,
 		panelType,
@@ -390,56 +414,11 @@ function LogsExplorerViews(): JSX.Element {
 		panelType,
 	]);
 
-	const tabsItems: TabsProps['items'] = useMemo(
-		() => [
-			{
-				label: (
-					<TabLabel
-						label="List View"
-						tooltipText="Please remove attributes from Group By filter to switch to List View tab"
-						isDisabled={isMultipleQueries || isGroupByExist}
-					/>
-				),
-				key: PANEL_TYPES.LIST,
-				disabled: isMultipleQueries || isGroupByExist,
-				children: (
-					<LogsExplorerList
-						isLoading={isFetching}
-						currentStagedQueryData={listQuery}
-						logs={logs}
-						onEndReached={handleEndReached}
-					/>
-				),
-			},
-			{
-				label: <TabLabel label="Time Series" isDisabled={false} />,
-				key: PANEL_TYPES.TIME_SERIES,
-				children: (
-					<TimeSeriesView isLoading={isFetching} data={data} isError={isError} />
-				),
-			},
-			{
-				label: 'Table',
-				key: PANEL_TYPES.TABLE,
-				children: (
-					<LogsExplorerTable
-						data={data?.payload.data.newResult.data.result || []}
-						isLoading={isFetching}
-					/>
-				),
-			},
-		],
-		[
-			isMultipleQueries,
-			isGroupByExist,
-			isFetching,
-			listQuery,
-			logs,
-			handleEndReached,
-			data,
-			isError,
-		],
-	);
+	const { options, config } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: initialDataSource || DataSource.METRICS,
+		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
+	});
 
 	const chartData = useMemo(() => {
 		if (!stagedQuery) return [];
@@ -467,11 +446,15 @@ function LogsExplorerViews(): JSX.Element {
 	}, [stagedQuery, panelType, data, listChartData, listQuery]);
 
 	return (
-		<>
-			<LogsExplorerChart
-				isLoading={isFetchingListChartData || isLoadingListChartData}
-				data={chartData}
-			/>
+		<div className="logs-explorer-views-container">
+			{showHistogram && (
+				<LogsExplorerChart
+					isLoading={isFetchingListChartData || isLoadingListChartData}
+					data={chartData}
+				/>
+			)}
+
+			{/* 
 			{stagedQuery && (
 				<ActionsWrapper>
 					<ExportPanel
@@ -480,17 +463,75 @@ function LogsExplorerViews(): JSX.Element {
 						onExport={handleExport}
 					/>
 				</ActionsWrapper>
-			)}
-			<Tabs
-				items={tabsItems}
-				defaultActiveKey={panelType || PANEL_TYPES.LIST}
-				activeKey={panelType || PANEL_TYPES.LIST}
-				onChange={handleExplorerTabChange}
-				destroyInactiveTabPane
-			/>
+			)} */}
+
+			<div className="logs-explorer-views-types">
+				<div className="views-tabs-container">
+					<Radio.Group
+						className="views-tabs"
+						onChange={handleModeChange}
+						value={selectedPanelType}
+					>
+						<Radio.Button value={PANEL_TYPES.LIST}> List view</Radio.Button>
+						<Radio.Button value={PANEL_TYPES.TIME_SERIES}> Time series </Radio.Button>
+						<Radio.Button value={PANEL_TYPES.TABLE}> Table </Radio.Button>
+					</Radio.Group>
+
+					{selectedPanelType === PANEL_TYPES.LIST && (
+						<div className="tab-options">
+							{/* <Dropdown menu={{ items }} placement="bottomLeft"> */}
+							<Button>
+								<FileDown size={16} />
+							</Button>
+							{/* </Dropdown> */}
+
+							{/* <Dropdown menu={{ items }} placement="bottomLeft"> */}
+							<Button>
+								<Sliders size={16} />
+							</Button>
+							{/* </Dropdown> */}
+							{/* 
+							<ExplorerControlPanel
+								selectedOptionFormat={options.format}
+								isLoading={isFetching}
+								isShowPageSize={false}
+								optionsMenuConfig={config}
+							/> */}
+						</div>
+					)}
+				</div>
+
+				<div className="logs-explorer-views-type-content">
+					{selectedPanelType === PANEL_TYPES.LIST && (
+						<LogsExplorerList
+							isLoading={isFetching}
+							currentStagedQueryData={listQuery}
+							logs={logs}
+							onEndReached={handleEndReached}
+						/>
+					)}
+
+					{selectedPanelType === PANEL_TYPES.TIME_SERIES && (
+						<TimeSeriesView isLoading={isFetching} data={data} isError={isError} />
+					)}
+
+					{selectedPanelType === PANEL_TYPES.TABLE && (
+						<LogsExplorerTable
+							data={data?.payload.data.newResult.data.result || []}
+							isLoading={isFetching}
+						/>
+					)}
+				</div>
+			</div>
 
 			<GoToTop />
-		</>
+
+			<ExplorerOptions
+				query={exportDefaultQuery}
+				isLoading={isUpdateDashboardLoading}
+				onExport={handleExport}
+			/>
+		</div>
 	);
 }
 

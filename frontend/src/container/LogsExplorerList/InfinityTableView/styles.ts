@@ -22,7 +22,7 @@ export const TableCellStyled = styled.td<TableHeaderCellStyledProps>`
 	border-inline-end: 1px solid rgba(253, 253, 253, 0.12);
 	border-top: 1px solid rgba(253, 253, 253, 0.12);
 	background-color: ${(props): string =>
-		props.$isDarkMode ? themeColors.black : themeColors.whiteCream};
+		props.$isDarkMode ? 'inherit' : themeColors.whiteCream};
 
 	color: ${(props): string =>
 		props.$isDarkMode ? themeColors.white : themeColors.bckgGrey};

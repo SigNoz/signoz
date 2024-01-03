@@ -1,4 +1,6 @@
-import { Card, Typography } from 'antd';
+import './LogsExplorerList.style.scss';
+
+import { Card } from 'antd';
 import LogDetail from 'components/LogDetail';
 // components
 import ListLogView from 'components/Logs/ListLogView';
@@ -6,19 +8,17 @@ import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import ExplorerControlPanel from 'container/ExplorerControlPanel';
-import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
+import NoLogs from '../NoLogs/NoLogs';
 import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
@@ -46,7 +46,7 @@ function LogsExplorerList({
 		onSetActiveLog,
 	} = useActiveLog();
 
-	const { options, config } = useOptionsMenu({
+	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: initialDataSource || DataSource.METRICS,
 		aggregateOperator:
@@ -56,19 +56,6 @@ function LogsExplorerList({
 	const activeLogIndex = useMemo(
 		() => logs.findIndex(({ id }) => id === activeLogId),
 		[logs, activeLogId],
-	);
-
-	useFontFaceObserver(
-		[
-			{
-				family: 'Fira Code',
-				weight: '300',
-			},
-		],
-		options.format === 'raw',
-		{
-			timeout: 5000,
-		},
 	);
 
 	const selectedFields = useMemo(
@@ -156,33 +143,22 @@ function LogsExplorerList({
 	}, [isLoading, options, logs, onEndReached, getItemContent, selectedFields]);
 
 	return (
-		<>
-			<ExplorerControlPanel
-				selectedOptionFormat={options.format}
-				isLoading={isLoading}
-				isShowPageSize={false}
-				optionsMenuConfig={config}
-			/>
+		<div className="logs-list-view-container">
+			{!isLoading && logs.length === 0 && <NoLogs />}
 
-			{options.format !== 'table' && (
-				<Heading>
-					<Typography.Text>Event</Typography.Text>
-				</Heading>
+			{!isLoading && logs.length > 0 && (
+				<>
+					<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
+
+					<LogDetail
+						log={activeLog}
+						onClose={onClearActiveLog}
+						onAddToQuery={onAddToQuery}
+						onClickActionItem={onAddToQuery}
+					/>
+				</>
 			)}
-
-			{!isLoading && logs.length === 0 && (
-				<Typography>No logs lines found</Typography>
-			)}
-
-			<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
-
-			<LogDetail
-				log={activeLog}
-				onClose={onClearActiveLog}
-				onAddToQuery={onAddToQuery}
-				onClickActionItem={onAddToQuery}
-			/>
-		</>
+		</div>
 	);
 }
 
