@@ -1,0 +1,23 @@
+.logs-module-container {
+	// margin: 0 -1rem; // as we have added a margin of 0 1rem components container, have to adjust the margin with negative to style the logs explorer as we want
+
+	// .ant-tabs-content-holder {
+	// 	margin: 0 -1rem;
+	// }
+
+	.ant-tabs-nav {
+		padding: 0 16px;
+		margin-bottom: 0px;
+
+		&::before {
+			border-bottom: none !important;
+		}
+	}
+
+	.tab-item {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 8px;
+	}
+}

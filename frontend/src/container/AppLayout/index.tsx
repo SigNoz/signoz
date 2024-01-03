@@ -230,6 +230,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	};
 
+	const isLogsView = (): boolean =>
+		routeKey === 'LOGS' ||
+		routeKey === 'LOGS_EXPLORER' ||
+		routeKey === 'LOGS_PIPELINES';
+
+	console.log('routeKey: ', routeKey, isLogsView());
+
 	return (
 		<Layout className={isDarkMode ? 'darkMode' : 'lightMode'}>
 			<Helmet>
@@ -264,7 +271,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				<div className="app-content">
 					<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
 						<LayoutContent>
-							<ChildrenContainer>
+							<ChildrenContainer
+								style={{
+									margin: isLogsView() ? 0 : ' 0 1rem',
+								}}
+							>
 								{isToDisplayLayout && !renderFullScreen && <TopNav />}
 								{children}
 							</ChildrenContainer>
