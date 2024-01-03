@@ -13,8 +13,7 @@ import (
 )
 
 type Options struct {
-	PreferRPM      bool
-	TimeSeriesLimt int
+	PreferRPM bool
 }
 
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
@@ -512,8 +511,8 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	// See https://clickhouse.com/docs/en/operations/settings/query-complexity#max-rows-in-distinct
 	//
 	// This can be disabled by setting the limit to 0.
-	if options.TimeSeriesLimt != 0 {
-		query = query + " SETTINGS max_rows_in_distinct= " + fmt.Sprintf("%d", options.TimeSeriesLimt)
+	if mq.QueryLimits.MaxTimeSeries != 0 {
+		query = query + " SETTINGS max_rows_in_distinct = " + fmt.Sprintf("%d", mq.QueryLimits.MaxTimeSeries)
 	}
 	return query, err
 }

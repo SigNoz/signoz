@@ -59,7 +59,6 @@ type ServerOptions struct {
 	CacheConfigPath   string
 	FluxInterval      string
 	Cluster           string
-	TimeSeriesLimit   int
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -177,7 +176,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
-		TimeSeriesLimit:               serverOptions.TimeSeriesLimit,
 	})
 	if err != nil {
 		return nil, err

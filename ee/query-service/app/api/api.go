@@ -34,8 +34,7 @@ type APIHandlerOptions struct {
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	Cache                         cache.Cache
 	// Querier Influx Interval
-	FluxInterval    time.Duration
-	TimeSeriesLimit int
+	FluxInterval time.Duration
 }
 
 type APIHandler struct {
@@ -60,7 +59,6 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		Cache:                         opts.Cache,
 		FluxInterval:                  opts.FluxInterval,
-		TimeSeriesLimit:               opts.TimeSeriesLimit,
 	})
 
 	if err != nil {
@@ -152,6 +150,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v1/login", am.OpenAccess(ah.loginUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(ah.searchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/metrics/query_range", am.ViewAccess(ah.queryRangeMetricsV2)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v3/query_range", am.ViewAccess(ah.QueryRangeV3)).Methods(http.MethodPost)
 
 	// PAT APIs
 	router.HandleFunc("/api/v1/pat", am.OpenAccess(ah.createPAT)).Methods(http.MethodPost)
@@ -164,6 +163,10 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 
 	router.HandleFunc("/api/v1/dashboards/{uuid}/lock", am.EditAccess(ah.lockDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}/unlock", am.EditAccess(ah.unlockDashboard)).Methods(http.MethodPut)
+
+	router.HandleFunc("/api/v1/limits", am.AdminAccess(ah.getQueryLimits)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/limits", am.AdminAccess(ah.addQueryLimits)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/limits", am.AdminAccess(ah.updateQueryLimits)).Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v2/licenses",
 		am.ViewAccess(ah.listLicensesV2)).

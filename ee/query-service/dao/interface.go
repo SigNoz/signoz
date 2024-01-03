@@ -39,4 +39,8 @@ type ModelDao interface {
 	GetUserByPAT(ctx context.Context, token string) (*basemodel.UserPayload, basemodel.BaseApiError)
 	ListPATs(ctx context.Context, userID string) ([]model.PAT, basemodel.BaseApiError)
 	DeletePAT(ctx context.Context, id string) basemodel.BaseApiError
+
+	GetQueryLimits(ctx context.Context) ([]*model.QueryLimit, error)
+	AddQueryLimits(ctx context.Context, queryLimits []*model.QueryLimit) error
+	UpdateQueryLimits(ctx context.Context, queryLimits []*model.QueryLimit) error
 }

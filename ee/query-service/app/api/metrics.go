@@ -4,14 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
 
+	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 	"go.uber.org/zap"
 )
@@ -233,4 +236,53 @@ func (ah *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 	resp := ResponseFormat{ResultType: "matrix", Result: seriesList, TableName: tableName}
 	ah.Respond(w, resp)
+}
+
+func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
+	queryRangeParams, apiErrorObj := app.ParseQueryRangeParams(r)
+
+	if apiErrorObj != nil {
+		zap.S().Errorf(apiErrorObj.Err.Error())
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	limits, err := aH.AppDao().GetQueryLimits(r.Context())
+	if err != nil {
+		zap.S().Errorf("Error while getting query limits: %v", err)
+		// We don't want to fail the request if we can't get the limits
+		// iterate over the nil slice will not execute the loop
+		// and the query will be executed without any limits
+		// this shouldn't happen ideally but we don't want to fail the request
+	}
+
+	var timeSeriesLimt int
+	for _, limit := range limits {
+		if limit.Name == "time_series_limit" {
+			timeSeriesLimt = limit.UsageLimit
+		}
+	}
+
+	if len(queryRangeParams.CompositeQuery.BuilderQueries) > 0 {
+		for idx := range queryRangeParams.CompositeQuery.BuilderQueries {
+			queryRangeParams.CompositeQuery.BuilderQueries[idx].QueryLimits = v3.QueryLimits{
+				MaxTimeSeries: timeSeriesLimt,
+			}
+			// TODO(srikanthccv): should apply to explore page also
+			if !strings.Contains(queryRangeParams.SourcePage, "dashboard") {
+				queryRangeParams.CompositeQuery.BuilderQueries[idx].QueryLimits.MaxTimeSeries = 0
+			}
+		}
+	}
+
+	// add temporality for each metric
+
+	temporalityErr := aH.APIHandler.AddTemporality(r.Context(), queryRangeParams)
+	if temporalityErr != nil {
+		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
+		RespondError(w, &basemodel.ApiError{Typ: basemodel.ErrorInternal, Err: temporalityErr}, nil)
+		return
+	}
+
+	aH.APIHandler.ExecQueryRangeV3(r.Context(), queryRangeParams, w, r)
 }

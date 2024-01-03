@@ -42,7 +42,6 @@ func main() {
 	var maxIdleConns int
 	var maxOpenConns int
 	var dialTimeout time.Duration
-	var timeSeriesLimit int
 
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
@@ -56,7 +55,6 @@ func main() {
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
-	flag.IntVar(&timeSeriesLimit, "time-series-limit", 4_000_000, "(limits the number of unique time series a single query can find and process)")
 	flag.Parse()
 
 	loggerMgr := initZapLog()
@@ -81,7 +79,6 @@ func main() {
 		CacheConfigPath:   cacheConfigPath,
 		FluxInterval:      fluxInterval,
 		Cluster:           cluster,
-		TimeSeriesLimit:   timeSeriesLimit,
 	}
 
 	// Read the jwt secret key

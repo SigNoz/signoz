@@ -4494,7 +4494,7 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 	if rows.Err() != nil {
 		zap.S().Errorf("error while reading time series result %v", rows.Err())
 		if strings.Contains(rows.Err().Error(), "code: 191") {
-			return nil, fmt.Errorf("exceeded max number of series")
+			return nil, fmt.Errorf(`Exceeded max number of series per query. Please reduce the number of series by applying filters.`)
 		}
 		return nil, rows.Err()
 	}

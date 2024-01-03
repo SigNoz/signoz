@@ -520,3 +520,34 @@ func TestBuildQueryAdjustedTimes(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildQueryLimits(t *testing.T) {
+	t.Run("TestBuildQueryLimits", func(t *testing.T) {
+		q := &v3.QueryRangeParamsV3{
+			Start: 1650991982000,
+			End:   1651078382000,
+			CompositeQuery: &v3.CompositeQuery{
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						StepInterval:       60,
+						AggregateAttribute: v3.AttributeKey{Key: "name"},
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "a"}, Value: "b", Operator: v3.FilterOperatorNotEqual},
+							{Key: v3.AttributeKey{Key: "code"}, Value: "ERROR_*", Operator: v3.FilterOperatorNotRegex},
+						}},
+						AggregateOperator: v3.AggregateOperatorRateMax,
+						Expression:        "A",
+						QueryLimits: v3.QueryLimits{
+							MaxTimeSeries: 100,
+						},
+					},
+				},
+			},
+		}
+		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"], Options{PreferRPM: false})
+		require.NoError(t, err)
+
+		require.Contains(t, query, "SETTINGS max_rows_in_distinct = 100")
+	})
+}

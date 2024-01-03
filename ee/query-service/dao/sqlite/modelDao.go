@@ -38,7 +38,7 @@ func InitDB(dataSourceName string) (*modelDao, error) {
 	basedao.SetDB(dao)
 	m := &modelDao{ModelDaoSqlite: dao}
 
-	table_schema := `
+	tableSchema := `
 	PRAGMA foreign_keys = ON;
 	CREATE TABLE IF NOT EXISTS org_domains(
 		id TEXT PRIMARY KEY,
@@ -60,9 +60,21 @@ func InitDB(dataSourceName string) (*modelDao, error) {
 	);
 	`
 
-	_, err = m.DB().Exec(table_schema)
+	_, err = m.DB().Exec(tableSchema)
 	if err != nil {
 		return nil, fmt.Errorf("error in creating tables: %v", err.Error())
+	}
+
+	// create resource_usage_limits table
+	tableSchema = `CREATE TABLE IF NOT EXISTS resource_usage_limits (
+		name TEXT PRIMARY KEY,
+		title TEXT,
+		usage_limit INTEGER DEFAULT 0
+	);`
+
+	_, err = m.DB().Exec(tableSchema)
+	if err != nil {
+		return nil, fmt.Errorf("Error in creating resource_usage_limits table: %s", err.Error())
 	}
 
 	return m, nil

@@ -151,7 +151,7 @@ func (q *querier) runBuilderQuery(
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
-			metricsV3.Options{PreferRPM: preferRPM, TimeSeriesLimt: q.timeSeriesLimit},
+			metricsV3.Options{PreferRPM: preferRPM},
 		)
 		if err != nil {
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
@@ -182,7 +182,7 @@ func (q *querier) runBuilderQuery(
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
-			metricsV3.Options{TimeSeriesLimt: q.timeSeriesLimit, PreferRPM: preferRPM},
+			metricsV3.Options{PreferRPM: preferRPM},
 		)
 		if err != nil {
 			ch <- channelResult{

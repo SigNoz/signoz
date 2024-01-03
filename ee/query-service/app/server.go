@@ -68,7 +68,6 @@ type ServerOptions struct {
 	CacheConfigPath   string
 	FluxInterval      string
 	Cluster           string
-	TimeSeriesLimit   int
 }
 
 // Server runs HTTP api service
@@ -236,7 +235,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
-		TimeSeriesLimit:               serverOptions.TimeSeriesLimit,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
