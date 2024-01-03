@@ -1,0 +1,60 @@
+.explorer-options {
+	display: flex;
+	gap: 16px;
+	padding: 8px 16px;
+	border-radius: 50px;
+	border: 1px solid var(--Slate-400, #1d212d);
+	background: rgba(22, 24, 29, 0.6);
+	box-shadow: 4px 4px 16px 4px rgba(0, 0, 0, 0.25);
+	backdrop-filter: blur(20px);
+	position: fixed;
+	bottom: 16px;
+	left: calc(50% + 240px);
+	transform: translate(calc(-50% - 120px), 0);
+
+	hr {
+		border-color: #1d212d;
+	}
+
+	.view-options,
+	.actions {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 8px;
+
+		button {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: 8px;
+
+			border: 1px solid #1d2023;
+			color: #c0c1c3;
+			background-color: #161922;
+
+			box-shadow: none !important;
+
+			&.ant-btn-round {
+				padding-inline-start: 10px;
+				padding-inline-end: 8px;
+
+				font-weight: 500;
+			}
+		}
+
+		.ant-select-focused {
+			border-color: transparent !important;
+
+			.ant-select-selector {
+				border-color: transparent !important;
+				box-shadow: none !important;
+			}
+		}
+
+		.ant-select-selector {
+			border: transparent !important;
+			background-color: transparent !important;
+		}
+	}
+}

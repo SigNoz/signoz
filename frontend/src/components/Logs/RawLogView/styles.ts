@@ -12,9 +12,9 @@ export const RawLogViewContainer = styled(Row)<{
 }>`
 	position: relative;
 	width: 100%;
-	font-weight: 700;
-	font-size: 0.625rem;
-	line-height: 1.25rem;
+
+	display: flex;
+	alignitems: center;
 
 	transition: background-color 0.2s ease-in;
 
@@ -30,13 +30,16 @@ export const ExpandIconWrapper = styled(Col)`
 	color: ${blue[6]};
 	padding: 0.25rem 0.375rem;
 	cursor: pointer;
-	font-size: 12px;
 `;
 
 export const RawLogContent = styled.div<RawLogContentProps>`
 	margin-bottom: 0;
-	font-family: Fira Code, monospace;
-	font-weight: 300;
+	font-family: 'SF Mono', monospace;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 18px;
+	text-align: left;
+	color: #c0c1c3;
 
 	${({ $isTextOverflowEllipsisDisabled, linesPerRow }): string =>
 		$isTextOverflowEllipsisDisabled
@@ -48,7 +51,6 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 		line-clamp: ${linesPerRow}; 
 		-webkit-box-orient: vertical;`};
 
-	font-size: 12px;
 	line-height: 24px;
 	padding: 4px;
 
