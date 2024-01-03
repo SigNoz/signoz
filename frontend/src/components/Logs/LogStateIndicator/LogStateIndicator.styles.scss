@@ -1,0 +1,22 @@
+.log-state-indicator {
+	.line {
+		margin: 0 8px;
+		min-height: 24px;
+		height: 100%;
+		width: 3px;
+		border-radius: 50px;
+		background-color: transparent;
+
+		&.INFO {
+			background-color: #1d212d;
+		}
+
+		&.WARNING {
+			background-color: #ffcd56;
+		}
+
+		&.ERROR {
+			background-color: #e5484d;
+		}
+	}
+}
