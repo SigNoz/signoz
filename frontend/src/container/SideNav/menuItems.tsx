@@ -27,7 +27,7 @@ export const getStartedMenuItem = {
 };
 
 export const inviteMemberMenuItem = {
-	key: ROUTES.ORG_SETTINGS,
+	key: `${ROUTES.ORG_SETTINGS}#invite-team-members`,
 	label: 'Invite Team Member',
 	icon: <UserPlus size={16} />,
 };

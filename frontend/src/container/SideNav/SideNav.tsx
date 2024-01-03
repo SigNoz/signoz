@@ -331,7 +331,7 @@ function SideNav({
 						item={inviteMemberMenuItem}
 						isActive={activeMenuKey === inviteMemberMenuItem?.key}
 						onClick={(): void => {
-							handleUserManagentMenuItemClick(inviteMemberMenuItem?.key as string);
+							history.push(`${inviteMemberMenuItem.key}`);
 						}}
 					/>
 				)}
