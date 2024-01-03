@@ -48,7 +48,7 @@ import defaultMenuItems, {
 	trySignozCloudMenuItem,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
-import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
+import { SecondaryMenuItemKey } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 
 function SideNav({
@@ -74,21 +74,15 @@ function SideNav({
 		isCurrentVersionError,
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const defaultUserManagementMenuItems: SidebarItem[] = useMemo(
-		() => [
-			manageLicenseMenuItem,
-			{
-				key: ROUTES.MY_SETTINGS,
-				label: user?.name || 'User',
-				icon: <UserCircle size={16} />,
-			},
-		],
-		[user],
-	);
+	const userSettingsMenuItem = {
+		key: ROUTES.MY_SETTINGS,
+		label: user?.name || 'User',
+		icon: <UserCircle size={16} />,
+	};
 
-	const [userManagementMenuItems, setUserManagementMenuItems] = useState(
-		defaultUserManagementMenuItems,
-	);
+	const [userManagementMenuItems, setUserManagementMenuItems] = useState([
+		manageLicenseMenuItem,
+	]);
 
 	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
@@ -106,7 +100,7 @@ function SideNav({
 		if (inviteMembers) {
 			const updatedUserManagementMenuItems = [
 				inviteMemberMenuItem,
-				...defaultUserManagementMenuItems,
+				manageLicenseMenuItem,
 			];
 
 			setUserManagementMenuItems(updatedUserManagementMenuItems);
@@ -207,7 +201,7 @@ function SideNav({
 		if (isCloudUser() || isEECloudUser()) {
 			const updatedUserManagementMenuItems = [
 				helpSupportMenuItem,
-				...defaultUserManagementMenuItems,
+				manageLicenseMenuItem,
 			];
 
 			setUserManagementMenuItems(updatedUserManagementMenuItems);
@@ -226,7 +220,7 @@ function SideNav({
 			const updatedUserManagementMenuItems = [
 				versionMenuItem,
 				slackSupportMenuItem,
-				...defaultUserManagementMenuItems,
+				manageLicenseMenuItem,
 			];
 
 			setUserManagementMenuItems(updatedUserManagementMenuItems);
@@ -328,6 +322,18 @@ function SideNav({
 							}}
 						/>
 					),
+				)}
+
+				{user && (
+					<NavItem
+						isCollapsed={collapsed}
+						key={ROUTES.MY_SETTINGS}
+						item={userSettingsMenuItem}
+						isActive={activeMenuKey === userSettingsMenuItem?.key}
+						onClick={(): void => {
+							handleUserManagentMenuItemClick(userSettingsMenuItem?.key as string);
+						}}
+					/>
 				)}
 
 				<div className="collapse-expand-handlers" onClick={onCollapse}>
