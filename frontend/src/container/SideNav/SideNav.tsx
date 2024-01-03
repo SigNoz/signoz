@@ -324,6 +324,18 @@ function SideNav({
 					),
 				)}
 
+				{inviteMembers && (
+					<NavItem
+						isCollapsed={collapsed}
+						key={inviteMemberMenuItem.key}
+						item={inviteMemberMenuItem}
+						isActive={activeMenuKey === inviteMemberMenuItem?.key}
+						onClick={(): void => {
+							handleUserManagentMenuItemClick(inviteMemberMenuItem?.key as string);
+						}}
+					/>
+				)}
+
 				{user && (
 					<NavItem
 						isCollapsed={collapsed}
