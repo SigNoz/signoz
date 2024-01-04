@@ -502,6 +502,16 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 			err = fmt.Errorf("invalid query type")
 		}
 	}
+
+	// return error if the number of series is more than one for value type panel
+	if params.CompositeQuery.PanelType == v3.PanelTypeValue {
+		if len(results) > 1 {
+			err = fmt.Errorf("there can be only one active query for value type panel")
+		} else if len(results) == 1 && len(results[0].Series) > 1 {
+			err = fmt.Errorf("there can be only one result series for value type panel but got %d", len(results[0].Series))
+		}
+	}
+
 	return results, err, errQueriesByName
 }
 
