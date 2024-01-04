@@ -6,6 +6,7 @@ import getMinAgo from './getStartAndEndTime/getMinAgo';
 const GetMinMax = (
 	interval: Time,
 	dateTimeRange?: [number, number],
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): GetMinMaxPayload => {
 	let maxTime = new Date().getTime();
 	let minTime = 0;
@@ -31,6 +32,10 @@ const GetMinMax = (
 	} else if (interval === '1day') {
 		// one day = 24*60(min)
 		const minTimeAgo = getMinAgo({ minutes: 24 * 60 }).getTime();
+		minTime = minTimeAgo;
+	} else if (interval === '3days') {
+		// three day = one day * 3
+		const minTimeAgo = getMinAgo({ minutes: 24 * 60 * 3 }).getTime();
 		minTime = minTimeAgo;
 	} else if (interval === '1week') {
 		// one week = one day * 7

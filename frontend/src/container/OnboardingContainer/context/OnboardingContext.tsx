@@ -104,7 +104,7 @@ function OnboardingContextProvider({
 		setSelectedDataSource(defaultApplicationDataSource);
 		setSelectedEnvironment('');
 		setSelectedFramework('');
-		setSelectedMethod(OnboardingMethods.RECOMMENDED_STEPS);
+		setSelectedMethod(OnboardingMethods.QUICK_START);
 		updateActiveStep(null);
 	};
 
