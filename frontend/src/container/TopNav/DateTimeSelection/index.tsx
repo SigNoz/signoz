@@ -295,6 +295,7 @@ function DateTimeSelection({
 						style={{
 							minWidth: 120,
 						}}
+						listHeight={400}
 					>
 						{options.map(({ value, label }) => (
 							<Option key={value + label} value={value}>
