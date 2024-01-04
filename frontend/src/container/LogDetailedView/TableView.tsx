@@ -11,7 +11,7 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { isEmpty } from 'lodash-es';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { Dispatch } from 'redux';
@@ -24,6 +24,7 @@ import FieldRenderer from './FieldRenderer';
 import {
 	filterKeyForField,
 	flattenObject,
+	getRearrangedDataSource,
 	jsonToDataNodes,
 	recursiveParseJSON,
 	removeEscapeCharacters,
@@ -53,19 +54,34 @@ function TableView({
 		() => (logData ? flattenObject(logData) : null),
 		[logData],
 	);
-	if (logData === null) {
+
+	const [dataSource, setDataSource] = useState(
+		flattenLogData !== null &&
+			Object.keys(flattenLogData)
+				.filter((field) => fieldSearchFilter(field, fieldSearchInput))
+				.map((key) => ({
+					key,
+					field: key,
+					value: JSON.stringify(flattenLogData[key]),
+				})),
+	);
+
+	useEffect(() => {
+		if (dataSource) {
+			try {
+				const newDataSource = getRearrangedDataSource(dataSource);
+				setDataSource(newDataSource);
+			} catch (e) {
+				console.log('Error');
+				console.error(e);
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	if (logData === null || flattenLogData === null) {
 		return null;
 	}
-
-	const dataSource =
-		flattenLogData !== null &&
-		Object.keys(flattenLogData)
-			.filter((field) => fieldSearchFilter(field, fieldSearchInput))
-			.map((key) => ({
-				key,
-				field: key,
-				value: JSON.stringify(flattenLogData[key]),
-			}));
 
 	const onTraceHandler = (record: DataType) => (): void => {
 		if (flattenLogData === null) return;
@@ -104,9 +120,12 @@ function TableView({
 				if (!RESTRICTED_FIELDS.includes(fieldFilterKey)) {
 					return (
 						<ActionItem
+							dataSource={dataSource}
+							unparsedKey={fieldData.field}
 							fieldKey={fieldFilterKey}
 							fieldValue={fieldData.value}
 							onClickActionItem={onClickActionItem}
+							setDataSource={setDataSource}
 						/>
 					);
 				}
