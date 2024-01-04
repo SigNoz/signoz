@@ -6,7 +6,17 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
+import {
+	initialQueryBuilderFormValuesMap,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
+import {
+	constructCompositeQuery,
+	defaultLiveQueryDataConfig,
+} from 'container/LiveLogs/constants';
+import { QueryHistoryState } from 'container/LiveLogs/types';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -15,6 +25,7 @@ import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -22,6 +33,8 @@ import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../AutoRefresh';
@@ -40,6 +53,7 @@ function DateTimeSelection({
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
+	const queryClient = useQueryClient();
 
 	const localstorageStartTime = getLocalStorageKey('startTime');
 	const localstorageEndTime = getLocalStorageKey('endTime');
@@ -73,7 +87,48 @@ function DateTimeSelection({
 		false,
 	);
 
-	const { stagedQuery, initQueryBuilderData } = useQueryBuilder();
+	const { stagedQuery, initQueryBuilderData, panelType } = useQueryBuilder();
+
+	const handleGoLive = useCallback(() => {
+		if (!stagedQuery) return;
+
+		let queryHistoryState: QueryHistoryState | null = null;
+
+		const compositeQuery = constructCompositeQuery({
+			query: stagedQuery,
+			initialQueryData: initialQueryBuilderFormValuesMap.logs,
+			customQueryData: defaultLiveQueryDataConfig,
+		});
+
+		const isListView =
+			panelType === PANEL_TYPES.LIST && stagedQuery.builder.queryData[0];
+
+		if (isListView) {
+			const [graphQuery, listQuery] = queryClient.getQueriesData<
+				SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+			>({
+				queryKey: REACT_QUERY_KEY.GET_QUERY_RANGE,
+				active: true,
+			});
+
+			queryHistoryState = {
+				graphQueryPayload:
+					graphQuery && graphQuery[1]
+						? graphQuery[1].payload?.data.result || []
+						: [],
+				listQueryPayload:
+					listQuery && listQuery[1]
+						? listQuery[1].payload?.data.newResult.data.result || []
+						: [],
+			};
+		}
+
+		const JSONCompositeQuery = encodeURIComponent(JSON.stringify(compositeQuery));
+
+		const path = `${ROUTES.LIVE_LOGS}?${QueryParams.compositeQuery}=${JSONCompositeQuery}`;
+
+		history.push(path, queryHistoryState);
+	}, [panelType, queryClient, stagedQuery]);
 
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
@@ -293,7 +348,7 @@ function DateTimeSelection({
 						content={
 							<div className="date-time-popover">
 								<div className="date-time-options">
-									<Button className="data-time-live" type="text">
+									<Button className="data-time-live" type="text" onClick={handleGoLive}>
 										Live
 									</Button>
 									{options.map((option) => (
