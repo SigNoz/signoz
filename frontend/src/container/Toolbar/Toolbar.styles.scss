@@ -1,80 +1,9 @@
 .toolbar {
+	display: grid;
+	grid-template-columns: 3fr 1fr auto;
 	padding: 8px 16px;
-	display: flex;
-	gap: 8px;
-	justify-content: space-between;
-	align-items: center;
-	border: 1px solid #1d212d;
-	border-left: none;
-	border-right: none;
 
-	.left-options {
+	.timeRange {
 		display: flex;
-		gap: 12px;
-		flex-direction: row;
-		align-items: center;
-
-		.query-builder-view-options {
-			display: flex;
-
-			.views-tabs {
-				display: flex;
-
-				border-radius: 2px;
-				border: 1px solid var(--Slate-400, #1d212d);
-				background: var(--Ink-400, #121317);
-				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-
-				.ant-btn {
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					border-radius: 0px;
-					padding: 8px 12px;
-
-					border: 1px solid var(--Slate-400, #1d212d);
-					background: var(--Ink-400, #121317);
-
-					&.active-tab {
-						background-color: #1d212d;
-					}
-				}
-			}
-		}
-
-		.histogram-view-controller {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-		}
-	}
-
-	.right-options {
-		display: flex;
-		gap: 12px;
-		flex-direction: row;
-		align-items: center;
-
-		.date-picker-container {
-			display: flex;
-			align-items: center;
-			gap: 8px;
-		}
-
-		.stage-run-query-container {
-			button {
-				display: flex;
-				align-items: center;
-				padding: 8px;
-
-				color: var(--Vanilla-100, #fff);
-				text-align: center;
-				font-family: Inter;
-				font-size: 12px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 18px;
-			}
-		}
 	}
 }
