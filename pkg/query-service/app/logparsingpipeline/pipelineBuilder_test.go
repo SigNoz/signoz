@@ -386,8 +386,19 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			makeTestLog("mismatching log", map[string]string{
 				"test_timestamp": "not-an-epoch",
 			}),
+		}, {
+			"grok parser should ignore logs with missing parse from field",
+			PipelineOperator{
+				ID:        "grok",
+				Type:      "grok_parser",
+				Enabled:   true,
+				Name:      "grok parser",
+				ParseFrom: "attributes.test",
+				Pattern:   "%{GREEDYDATA}",
+				ParseTo:   "attributes.test_parsed",
+			},
+			makeTestLog("test log with missing parse from field", map[string]string{}),
 		},
-		// TODO(Raj): see if there is an error scenario for grok parser.
 		// TODO(Raj): see if there is an error scenario for trace parser.
 		// TODO(Raj): see if there is an error scenario for Add operator.
 	}
@@ -606,6 +617,191 @@ func TestAttributePathsContainingDollarDoNotBreakCollector(t *testing.T) {
 	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
 	require.Equal(1, len(result))
 	require.Equal("test", result[0].Attributes_string["$test1"])
+}
+
+func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
+	require := require.New(t)
+
+	testLogs := []model.SignozLog{
+		makeTestSignozLog("test log", map[string]interface{}{
+			"http.method":    "GET",
+			"order.products": `{"ids": ["pid0", "pid1"]}`,
+		}),
+	}
+
+	testPipeline := Pipeline{
+		OrderId: 1,
+		Name:    "pipeline1",
+		Alias:   "pipeline1",
+		Enabled: true,
+		Filter: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{
+				{
+					Key: v3.AttributeKey{
+						Key:      "http.method",
+						DataType: v3.AttributeKeyDataTypeString,
+						Type:     v3.AttributeKeyTypeTag,
+					},
+					Operator: "=",
+					Value:    "GET",
+				},
+			},
+		},
+		Config: []PipelineOperator{
+			{
+				ID:      "move",
+				Type:    "move",
+				Enabled: true,
+				Name:    "move",
+				From:    `attributes["http.method"]`,
+				To:      `attributes["test.http.method"]`,
+			}, {
+				ID:        "json",
+				Type:      "json_parser",
+				Enabled:   true,
+				Name:      "json",
+				ParseFrom: `attributes["order.products"]`,
+				ParseTo:   `attributes["order.products"]`,
+			}, {
+				ID:      "move1",
+				Type:    "move",
+				Enabled: true,
+				Name:    "move1",
+				From:    `attributes["order.products"].ids`,
+				To:      `attributes["order.product_ids"]`,
+			}, {
+				ID:      "move2",
+				Type:    "move",
+				Enabled: true,
+				Name:    "move2",
+				From:    `attributes.test?.doesnt_exist`,
+				To:      `attributes["test.doesnt_exist"]`,
+			}, {
+				ID:      "add",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add",
+				Field:   `attributes["order.pids"].missing_field`,
+				Value:   `EXPR(attributes.a["b.c"].d[4].e + resource.f)`,
+			}, {
+				ID:      "add2",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add2",
+				Field:   `attributes["order.pids.pid0"]`,
+				Value:   `EXPR(attributes["order.product_ids"][0])`,
+			}, {
+				ID:      "add3",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add3",
+				Field:   `attributes["attrs.test.value"]`,
+				Value:   `EXPR(attributes.test?.value)`,
+			}, {
+				ID:      "add4",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add4",
+				Field:   `attributes["attrs.test.value"]`,
+				Value:   `EXPR((attributes.temp?.request_context?.scraper ?? [nil])[0])`,
+			},
+		},
+	}
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(),
+		[]Pipeline{testPipeline},
+		testLogs,
+	)
+	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+	require.Equal(1, len(result))
+
+	_, methodAttrExists := result[0].Attributes_string["http.method"]
+	require.False(methodAttrExists)
+	require.Equal("GET", result[0].Attributes_string["test.http.method"])
+	require.Equal("pid0", result[0].Attributes_string["order.pids.pid0"])
+}
+
+func TestContainsFilterIsCaseInsensitive(t *testing.T) {
+	// The contains and ncontains query builder filters are case insensitive when querying logs.
+	// Pipeline filter should also behave in the same way.
+	require := require.New(t)
+
+	testLogs := []model.SignozLog{
+		makeTestSignozLog("test Ecom Log", map[string]interface{}{}),
+	}
+
+	testPipelines := []Pipeline{{
+		OrderId: 1,
+		Name:    "pipeline1",
+		Alias:   "pipeline1",
+		Enabled: true,
+		Filter: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{{
+				Key: v3.AttributeKey{
+					Key:      "body",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeUnspecified,
+					IsColumn: true,
+				},
+				Operator: "contains",
+				Value:    "log",
+			}},
+		},
+		Config: []PipelineOperator{
+			{
+				ID:      "add",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add",
+				Field:   "attributes.test1",
+				Value:   "value1",
+			},
+		},
+	}, {
+		OrderId: 2,
+		Name:    "pipeline2",
+		Alias:   "pipeline2",
+		Enabled: true,
+		Filter: &v3.FilterSet{
+			Operator: "AND",
+			Items: []v3.FilterItem{{
+				Key: v3.AttributeKey{
+					Key:      "body",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeUnspecified,
+					IsColumn: true,
+				},
+				Operator: "ncontains",
+				Value:    "ecom",
+			}},
+		},
+		Config: []PipelineOperator{
+			{
+				ID:      "add",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add",
+				Field:   "attributes.test2",
+				Value:   "value2",
+			},
+		},
+	}}
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(), testPipelines, testLogs,
+	)
+	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+	require.Equal(1, len(result))
+
+	require.Equal(result[0].Attributes_string["test1"], "value1")
+
+	_, test2Exists := result[0].Attributes_string["test2"]
+	require.False(test2Exists)
 }
 
 func TestTemporaryWorkaroundForSupportingAttribsContainingDots(t *testing.T) {

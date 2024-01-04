@@ -2,6 +2,7 @@ package v3
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -172,7 +173,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms < %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -427,15 +428,15 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	// chart with just the query value. For the quer
 	switch reduceTo {
 	case v3.ReduceToOperatorLast:
-		query = fmt.Sprintf("SELECT *, timestamp AS ts FROM (SELECT anyLastIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s)", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT *, now() AS ts FROM (SELECT anyLastIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s)", selectLabels, query, groupBy)
 	case v3.ReduceToOperatorSum:
-		query = fmt.Sprintf("SELECT *, timestamp AS ts FROM (SELECT sumIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s)", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT *, now() AS ts FROM (SELECT sumIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s)", selectLabels, query, groupBy)
 	case v3.ReduceToOperatorAvg:
-		query = fmt.Sprintf("SELECT *, timestamp AS ts FROM (SELECT avgIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s)", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT *, now() AS ts FROM (SELECT avgIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s)", selectLabels, query, groupBy)
 	case v3.ReduceToOperatorMax:
-		query = fmt.Sprintf("SELECT *, timestamp AS ts FROM (SELECT maxIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s)", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT *, now() AS ts FROM (SELECT maxIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s)", selectLabels, query, groupBy)
 	case v3.ReduceToOperatorMin:
-		query = fmt.Sprintf("SELECT *, timestamp AS ts FROM (SELECT minIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s)", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT *, now() AS ts FROM (SELECT minIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s)", selectLabels, query, groupBy)
 	default:
 		return "", fmt.Errorf("unsupported reduce operator")
 	}
@@ -447,10 +448,14 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 // start and end are in milliseconds
 // step is in seconds
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
-
-	// adjust the start and end time to be aligned with the step interval
 	start = start - (start % (mq.StepInterval * 1000))
-	end = end - (end % (mq.StepInterval * 1000))
+	// if the query is a rate query, we adjust the start time by one more step
+	// so that we can calculate the rate for the first data point
+	if mq.AggregateOperator.IsRateOperator() && mq.Temporality != v3.Delta {
+		start -= mq.StepInterval * 1000
+	}
+	adjustStep := int64(math.Min(float64(mq.StepInterval), 60))
+	end = end - (end % (adjustStep * 1000))
 
 	var query string
 	var err error

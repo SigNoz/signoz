@@ -199,10 +199,13 @@ Not sure how to get started? Just ping us on `#contributing` in our [slack commu
 #### Frontend
 
 - [Palash Gupta](https://github.com/palashgdev)
+- [Yunus M](https://github.com/YounixM)
+- [Rajat Dabade](https://github.com/Rajat-Dabade)
 
 #### DevOps
 
 - [Prashant Shahi](https://github.com/prashant-shahi)
+- [Dhawal Sanghvi](https://github.com/dhawal1248)
 
 <br /><br />
 
