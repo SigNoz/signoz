@@ -72,7 +72,6 @@ function TableView({
 				const newDataSource = getRearrangedDataSource(dataSource);
 				setDataSource(newDataSource);
 			} catch (e) {
-				console.log('Error');
 				console.error(e);
 			}
 		}
