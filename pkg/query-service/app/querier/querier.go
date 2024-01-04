@@ -145,7 +145,7 @@ func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangePar
 //
 // The [End - fluxInterval, End] is always added to the list of misses, because
 // the data might still be in flux and not yet available in the database.
-func findMissingTimeRanges(start, end int64, seriesList []*v3.Series, fluxInterval time.Duration) (misses []missInterval) {
+func findMissingTimeRanges(start, end, step int64, seriesList []*v3.Series, fluxInterval time.Duration) (misses []missInterval) {
 	var cachedStart, cachedEnd int64
 	for idx := range seriesList {
 		series := seriesList[idx]
@@ -161,7 +161,8 @@ func findMissingTimeRanges(start, end int64, seriesList []*v3.Series, fluxInterv
 	}
 
 	endMillis := time.Now().UnixMilli()
-	roundedMillis := endMillis - (endMillis % (60 * 1000))
+	adjustStep := int64(math.Min(float64(step), 60))
+	roundedMillis := endMillis - (endMillis % (adjustStep * 1000))
 
 	// Exclude the flux interval from the cached end time
 	cachedEnd = int64(
@@ -218,7 +219,7 @@ func (q *querier) findMissingTimeRanges(start, end, step int64, cachedData []byt
 		// In case of error, we return the entire range as a miss
 		return []missInterval{{start: start, end: end}}
 	}
-	return findMissingTimeRanges(start, end, cachedSeriesList, q.fluxInterval)
+	return findMissingTimeRanges(start, end, step, cachedSeriesList, q.fluxInterval)
 }
 
 func labelsToString(labels map[string]string) string {
