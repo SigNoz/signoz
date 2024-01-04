@@ -1,0 +1,39 @@
+.date-time-popover {
+	display: flex;
+	width: 400px;
+
+	.date-time-options {
+		display: flex;
+		width: 40%;
+		flex-direction: column;
+		border-right: 1px solid rgb(66 66 66);
+
+		.data-time-live {
+			border-bottom: 1px solid rgb(66 66 66);
+			padding-left: 1px !important;
+			text-align: start;
+		}
+
+		.date-time-options-btn {
+			text-align: start;
+			padding-left: 1px !important;
+		}
+	}
+
+	.relative-date-time {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		padding-left: 10px;
+	}
+}
+
+.date-time-input-element {
+	min-width: 150px;
+	text-align: start;
+	padding-right: 8px;
+}
+
+.refresh-btn {
+	padding-left: 8px;
+}

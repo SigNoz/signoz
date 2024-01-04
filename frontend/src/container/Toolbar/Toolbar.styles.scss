@@ -1,9 +1,11 @@
 .toolbar {
 	display: grid;
-	grid-template-columns: 3fr 1fr auto;
+	grid-template-columns: 3fr auto auto;
 	padding: 8px 16px;
 
 	.timeRange {
 		display: flex;
+		padding-right: 8px;
+		align-items: center;
 	}
 }

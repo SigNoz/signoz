@@ -1,5 +1,7 @@
 import './Toolbar.styles.scss';
 
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+
 interface ToolbarProps {
 	leftActions?: JSX.Element;
 	rightActions?: JSX.Element;
@@ -14,8 +16,7 @@ export default function Toolbar({
 		<div className="toolbar">
 			<div className="leftActions">{leftActions}</div>
 			<div className="timeRange">
-				<div>Refreshed 10 minutes ago</div>
-				<div>Date time picker</div>
+				<DateTimeSelectionV2 />
 			</div>
 			<div className="rightActions">{rightActions}</div>
 		</div>
