@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"regexp"
 	"sort"
 	"sync"
 	"text/template"
 	"time"
+	"unicode"
 
 	"go.uber.org/zap"
 
@@ -435,7 +437,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 		for i, v := range vars {
 
-			colName := columnNames[i]
+			colName := normalizeLabelName(columnNames[i])
 
 			switch v := v.(type) {
 			case *string:
@@ -764,6 +766,23 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	return nil, fmt.Errorf("this is unexpected, invalid query label")
 }
 
+func normalizeLabelName(name string) string {
+	// See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+
+	// Regular expression to match non-alphanumeric characters except underscores
+	reg := regexp.MustCompile(`[^a-zA-Z0-9_]`)
+
+	// Replace all non-alphanumeric characters except underscores with underscores
+	normalized := reg.ReplaceAllString(name, "_")
+
+	// If the first character is not a letter or an underscore, prepend an underscore
+	if len(normalized) > 0 && !unicode.IsLetter(rune(normalized[0])) && normalized[0] != '_' {
+		normalized = "_" + normalized
+	}
+
+	return normalized
+}
+
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
 	valueFormatter := formatter.FromUnit(r.Unit())
@@ -829,7 +848,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
-			annotations = append(annotations, labels.Label{Name: a.Name, Value: expand(a.Value)})
+			annotations = append(annotations, labels.Label{Name: normalizeLabelName(a.Name), Value: expand(a.Value)})
 		}
 
 		lbs := lb.Labels()
