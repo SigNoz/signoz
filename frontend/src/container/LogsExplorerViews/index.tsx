@@ -1,6 +1,7 @@
 import './LogsExplorerViews.styles.scss';
 
-import { Button, Dropdown, Radio } from 'antd';
+import { SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Menu, MenuProps, Radio, Select } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
@@ -32,7 +33,7 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { FileDown, Sliders } from 'lucide-react';
+import { FileDigit, FileDown, Sheet, Sliders } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
@@ -57,8 +58,10 @@ import { v4 } from 'uuid';
 import { ActionsWrapper } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews({
+	selectedView,
 	showHistogram,
 }: {
+	selectedView: string;
 	showHistogram: boolean;
 }): JSX.Element {
 	const { notifications } = useNotifications();
@@ -445,6 +448,25 @@ function LogsExplorerViews({
 		return isGroupByExist ? data.payload.data.result : firstPayloadQueryArray;
 	}, [stagedQuery, panelType, data, listChartData, listQuery]);
 
+	const items: MenuProps['items'] = [
+		{
+			type: 'group',
+			label: 'EXPORT AS',
+			children: [
+				{
+					key: 'excel',
+					label: 'Excel (.xslx)',
+					icon: <Sheet size={14} />,
+				},
+				{
+					key: 'csv',
+					label: 'CSV',
+					icon: <FileDigit size={14} />,
+				},
+			],
+		},
+	];
+
 	return (
 		<div className="logs-explorer-views-container">
 			{showHistogram && (
@@ -479,11 +501,11 @@ function LogsExplorerViews({
 
 					{selectedPanelType === PANEL_TYPES.LIST && (
 						<div className="tab-options">
-							{/* <Dropdown menu={{ items }} placement="bottomLeft"> */}
-							<Button>
-								<FileDown size={16} />
-							</Button>
-							{/* </Dropdown> */}
+							<Dropdown menu={{ items }} placement="bottomRight">
+								<Button>
+									<FileDown size={16} />
+								</Button>
+							</Dropdown>
 
 							{/* <Dropdown menu={{ items }} placement="bottomLeft"> */}
 							<Button>
