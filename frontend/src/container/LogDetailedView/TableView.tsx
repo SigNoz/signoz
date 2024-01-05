@@ -68,12 +68,8 @@ function TableView({
 
 	useEffect(() => {
 		if (dataSource) {
-			try {
-				const newDataSource = getRearrangedDataSource(dataSource);
-				setDataSource(newDataSource);
-			} catch (e) {
-				console.error(e);
-			}
+			const newDataSource = getRearrangedDataSource(dataSource);
+			setDataSource(newDataSource);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
