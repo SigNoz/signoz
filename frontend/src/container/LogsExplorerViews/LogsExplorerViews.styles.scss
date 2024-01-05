@@ -3,11 +3,10 @@
 
 	.logs-explorer-views-types {
 		.views-tabs-container {
-			// margin: 8px 0;
 			padding: 8px 16px;
-			border: 1px solid #1d212d;
+			border: 1px solid var(--text-slate-400);
 			border-left: none;
-			border-left: none;
+			border-right: none;
 
 			display: flex;
 			align-items: center;
@@ -15,25 +14,13 @@
 
 			.views-tabs {
 				.ant-radio-button-wrapper {
-					// border: 1px solid #1d212d;
-					// background: #121317;
-					// box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 					min-width: 120px;
 					text-align: center;
 
 					font-style: normal;
 					font-weight: 400;
 					font-size: 12px;
-
-					// &:not(:first-child)::before {
-					// 	content: none !important;
-					// }
 				}
-
-				// .ant-radio-button-wrapper-checked {
-				// 	background: #1d212d;
-				// 	color: #fff;
-				// }
 			}
 
 			.tab-options {
@@ -46,7 +33,7 @@
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					// border: 1px solid #1d212d;
+					// border: 1px solid var(--text-slate-400);
 					border: none;
 					// background: #16181d;
 					// box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
@@ -62,6 +49,14 @@
 	}
 
 	.ant-card-body {
-		background-color: #0b0c0e;
+		background-color: var(--bg-ink-500);
+	}
+}
+
+.lightMode {
+	.logs-explorer-views-container {
+		.ant-card-body {
+			background-color: var(--bg-vanilla-100);
+		}
 	}
 }
