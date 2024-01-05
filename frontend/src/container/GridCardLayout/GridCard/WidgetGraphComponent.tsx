@@ -1,3 +1,5 @@
+import '../GridCardLayout.styles.scss';
+
 import { Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';

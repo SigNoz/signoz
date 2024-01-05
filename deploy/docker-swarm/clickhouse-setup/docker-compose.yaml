@@ -146,7 +146,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.36.0
+    image: signoz/query-service:0.36.2
     command:
       [
         "-config=/root/config/prometheus.yml",
@@ -186,7 +186,7 @@ services:
     <<: *db-depend
 
   frontend:
-    image: signoz/frontend:0.36.0
+    image: signoz/frontend:0.36.2
     deploy:
       restart_policy:
         condition: on-failure
@@ -199,7 +199,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.88.4
+    image: signoz/signoz-otel-collector:0.88.6
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
@@ -237,7 +237,7 @@ services:
       - query-service
 
   otel-collector-migrator:
-      image: signoz/signoz-schema-migrator:0.88.4
+      image: signoz/signoz-schema-migrator:0.88.6
       deploy:
         restart_policy:
           condition: on-failure
@@ -250,7 +250,7 @@ services:
         # - clickhouse-3
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:0.88.4
+    image: signoz/signoz-otel-collector:0.88.6
     command:
       [
         "--config=/etc/otel-collector-metrics-config.yaml",

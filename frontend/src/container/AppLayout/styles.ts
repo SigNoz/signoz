@@ -13,6 +13,7 @@ export const Layout = styled(LayoutComponent)`
 
 export const LayoutContent = styled(LayoutComponent.Content)`
 	overflow-y: auto;
+	height: 100%;
 `;
 
 export const ChildrenContainer = styled.div`

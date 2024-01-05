@@ -352,6 +352,13 @@ type logFieldsInExprExtractor struct {
 func (v *logFieldsInExprExtractor) Visit(node *ast.Node) {
 	if n, ok := (*node).(*ast.MemberNode); ok {
 		memberRef := n.String()
+
+		// coalesce ops end up as MemberNode right now for some reason.
+		// ignore such member nodes.
+		if strings.Contains(memberRef, "??") {
+			return
+		}
+
 		if strings.HasPrefix(memberRef, "attributes") || strings.HasPrefix(memberRef, "resource") {
 			v.referencedFields = append(v.referencedFields, memberRef)
 		}

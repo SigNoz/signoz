@@ -4,14 +4,8 @@ import { useMemo } from 'react';
 import { matchPath, useHistory } from 'react-router-dom';
 
 import NewExplorerCTA from '../NewExplorerCTA';
-import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
-import {
-	routesToDisable,
-	routesToHideBreadCrumbs,
-	routesToSkip,
-} from './DateTimeSelection/config';
-import { Container } from './styles';
+import { routesToDisable, routesToSkip } from './DateTimeSelection/config';
 
 function TopNav(): JSX.Element | null {
 	const { location } = useHistory();
@@ -19,14 +13,6 @@ function TopNav(): JSX.Element | null {
 	const isRouteToSkip = useMemo(
 		() =>
 			routesToSkip.some((route) =>
-				matchPath(location.pathname, { path: route, exact: true }),
-			),
-		[location.pathname],
-	);
-
-	const isRouteToHideBreadCrumbs = useMemo(
-		() =>
-			routesToHideBreadCrumbs.some((route) =>
 				matchPath(location.pathname, { path: route, exact: true }),
 			),
 		[location.pathname],
@@ -50,15 +36,9 @@ function TopNav(): JSX.Element | null {
 	}
 
 	return (
-		<Container>
-			{!isRouteToHideBreadCrumbs && (
-				<Col span={16}>
-					<ShowBreadcrumbs />
-				</Col>
-			)}
-
+		<Row>
 			{!isRouteToSkip && (
-				<Col span={isRouteToHideBreadCrumbs ? 24 : 8}>
+				<Col span={24} style={{ marginTop: '1rem' }}>
 					<Row justify="end">
 						<Space align="start" size={60} direction="horizontal">
 							<NewExplorerCTA />
@@ -69,7 +49,7 @@ function TopNav(): JSX.Element | null {
 					</Row>
 				</Col>
 			)}
-		</Container>
+		</Row>
 	);
 }
 
