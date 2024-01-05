@@ -10,13 +10,13 @@
 
 		.data-time-live {
 			border-bottom: 1px solid rgb(66 66 66);
-			padding-left: 1px !important;
+			padding-left: 5px !important;
 			text-align: start;
 		}
 
 		.date-time-options-btn {
 			text-align: start;
-			padding-left: 1px !important;
+			padding-left: 5px !important;
 		}
 	}
 
@@ -31,9 +31,29 @@
 .date-time-input-element {
 	min-width: 150px;
 	text-align: start;
-	padding-right: 8px;
+	margin-right: 8px;
 }
 
-.refresh-btn {
-	padding-left: 8px;
+.refresh-actions {
+	display: flex;
+	border-radius: 2px;
+	border: 1px solid var(--Slate-400, #1d212d);
+	background: var(--Ink-400, #121317);
+	box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+	flex-direction: row;
+
+	.ant-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 0px;
+		padding: 8px 12px;
+
+		border: 1px solid var(--Slate-400, #1d212d);
+		background: var(--Ink-400, #121317);
+
+		&.active-tab {
+			background-color: #1d212d;
+		}
+	}
 }

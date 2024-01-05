@@ -385,16 +385,18 @@ function DateTimeSelection({
 							)}
 						</Button>
 					</Popover>
-					<FormItem hidden={refreshButtonHidden} className="refresh-btn">
-						<Button icon={<SyncOutlined />} onClick={onRefreshHandler} />
-					</FormItem>
+					<div className="refresh-actions">
+						<FormItem hidden={refreshButtonHidden}>
+							<Button icon={<SyncOutlined />} onClick={onRefreshHandler} />
+						</FormItem>
 
-					<FormItem>
-						<AutoRefresh
-							disabled={refreshButtonHidden}
-							showAutoRefreshBtnPrimary={false}
-						/>
-					</FormItem>
+						<FormItem>
+							<AutoRefresh
+								disabled={refreshButtonHidden}
+								showAutoRefreshBtnPrimary={false}
+							/>
+						</FormItem>
+					</div>
 				</FormContainer>
 			</Form>
 
