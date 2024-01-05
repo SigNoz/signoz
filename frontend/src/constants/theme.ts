@@ -1,5 +1,6 @@
 const themeColors = {
 	chartcolors: {
+		robin: '#3F5ECC',
 		dodgerBlue: '#2F80ED',
 		mediumOrchid: '#BB6BD9',
 		seaBuckthorn: '#F2994A',

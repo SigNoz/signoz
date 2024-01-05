@@ -8,10 +8,9 @@ export type SidebarMenu = MenuItem & {
 };
 
 export interface SidebarItem {
-	onClick: VoidFunction;
 	icon?: ReactNode;
 	text?: ReactNode;
-	key: string;
+	key: string | number;
 	label?: ReactNode;
 }
 

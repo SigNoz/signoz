@@ -112,15 +112,23 @@ export const MySettings = Loadable(
 );
 
 export const Logs = Loadable(
-	() => import(/* webpackChunkName: "Logs" */ 'pages/Logs'),
+	() => import(/* webpackChunkName: "Logs" */ 'pages/LogsModulePage'),
 );
 
 export const LogsExplorer = Loadable(
-	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsExplorer'),
+	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsModulePage'),
+);
+
+export const OldLogsExplorer = Loadable(
+	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/Logs'),
 );
 
 export const LiveLogs = Loadable(
 	() => import(/* webpackChunkName: "Live Logs" */ 'pages/LiveLogs'),
+);
+
+export const PipelinePage = Loadable(
+	() => import(/* webpackChunkName: "Pipelines" */ 'pages/LogsModulePage'),
 );
 
 export const Login = Loadable(
@@ -149,10 +157,6 @@ export const LicensePage = Loadable(
 export const LogsIndexToFields = Loadable(
 	() =>
 		import(/* webpackChunkName: "LogsIndexToFields Page" */ 'pages/LogsSettings'),
-);
-
-export const PipelinePage = Loadable(
-	() => import(/* webpackChunkName: "Pipelines" */ 'pages/Pipelines'),
 );
 
 export const BillingPage = Loadable(
