@@ -81,7 +81,7 @@ function Pipelines(): JSX.Element {
 
 	return (
 		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-			<Tabs defaultActiveKey="pipelines" items={tabItems} />;
+			<Tabs defaultActiveKey="pipelines" items={tabItems} />
 		</ErrorBoundary>
 	);
 }
