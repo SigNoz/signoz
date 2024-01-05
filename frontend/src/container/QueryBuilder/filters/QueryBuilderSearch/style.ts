@@ -18,17 +18,18 @@ export const StyledCheckOutlined = styled(CheckOutlined)`
 
 export const SelectOptionContainer = styled.div`
 	display: flex;
+	gap: 8px;
 	justify-content: space-between;
 	align-items: center;
+	overflow-x: auto;
 `;
 
 export const TagContainer = styled(Tag)`
 	&&& {
-		border-radius: 0.25rem;
-		padding: 0.063rem 0.5rem;
-		font-weight: 600;
-		font-size: 0.75rem;
-		line-height: 1.25rem;
+		border-radius: 3px;
+		padding: 0.3rem 0.3rem;
+		font-weight: 400;
+		font-size: 0.6rem;
 	}
 `;
 

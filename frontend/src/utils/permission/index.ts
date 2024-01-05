@@ -86,4 +86,6 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	BILLING: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SUPPORT: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SOMETHING_WENT_WRONG: ['ADMIN', 'EDITOR', 'VIEWER'],
+	LOGS_BASE: [],
+	OLD_LOGS_EXPLORER: [],
 };

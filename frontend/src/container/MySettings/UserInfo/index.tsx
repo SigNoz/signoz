@@ -1,6 +1,10 @@
-import { Button, Space, Typography } from 'antd';
+import '../MySettings.styles.scss';
+import './UserInfo.styles.scss';
+
+import { Button, Card, Flex, Input, Space, Typography } from 'antd';
 import editUser from 'api/user/editUser';
 import { useNotifications } from 'hooks/useNotifications';
+import { PencilIcon, UserSquare } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,7 +16,7 @@ import AppReducer from 'types/reducer/app';
 
 import { NameInput } from '../styles';
 
-function UpdateName(): JSX.Element {
+function UserInfo(): JSX.Element {
 	const { user, role, org, userFlags } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
@@ -72,28 +76,51 @@ function UpdateName(): JSX.Element {
 	};
 
 	return (
-		<div>
+		<Card>
 			<Space direction="vertical" size="middle">
-				<Typography>Name</Typography>
-				<NameInput
-					placeholder="Your Name"
-					onChange={(event): void => {
-						setChangedName(event.target.value);
-					}}
-					value={changedName}
-					disabled={loading}
-				/>
-				<Button
-					loading={loading}
-					disabled={loading}
-					onClick={onClickUpdateHandler}
-					type="primary"
-				>
-					Update Name
-				</Button>
+				<Flex gap={8}>
+					<UserSquare />{' '}
+					<Typography.Title level={4} style={{ marginTop: 0 }}>
+						User Details
+					</Typography.Title>
+				</Flex>
+
+				<Flex gap={16}>
+					<Space>
+						<Typography className="userInfo-label">Name</Typography>
+						<NameInput
+							placeholder="Your Name"
+							onChange={(event): void => {
+								setChangedName(event.target.value);
+							}}
+							value={changedName}
+							disabled={loading}
+						/>
+					</Space>
+
+					<Button
+						className="flexBtn"
+						loading={loading}
+						disabled={loading}
+						onClick={onClickUpdateHandler}
+						type="primary"
+					>
+						<PencilIcon size={12} /> Update
+					</Button>
+				</Flex>
+
+				<Space>
+					<Typography className="userInfo-label"> Email </Typography>
+					<Input className="userInfo-value" value={user.email} disabled />
+				</Space>
+
+				<Space>
+					<Typography className="userInfo-label"> Role </Typography>
+					<Input className="userInfo-value" value={role || ''} disabled />
+				</Space>
 			</Space>
-		</div>
+		</Card>
 	);
 }
 
-export default UpdateName;
+export default UserInfo;

@@ -14,16 +14,16 @@ function NewExplorerCTA(): JSX.Element | null {
 		() =>
 			location.pathname === ROUTES.LOGS_EXPLORER ||
 			location.pathname === ROUTES.TRACE ||
-			location.pathname === ROUTES.LOGS,
+			location.pathname === ROUTES.OLD_LOGS_EXPLORER,
 		[location.pathname],
 	);
 
 	const onClickHandler = useCallback((): void => {
 		if (location.pathname === ROUTES.LOGS_EXPLORER) {
-			history.push(ROUTES.LOGS);
+			history.push(ROUTES.OLD_LOGS_EXPLORER);
 		} else if (location.pathname === ROUTES.TRACE) {
 			history.push(ROUTES.TRACES_EXPLORER);
-		} else if (location.pathname === ROUTES.LOGS) {
+		} else if (location.pathname === ROUTES.OLD_LOGS_EXPLORER) {
 			history.push(ROUTES.LOGS_EXPLORER);
 		}
 	}, [location.pathname]);
@@ -36,6 +36,7 @@ function NewExplorerCTA(): JSX.Element | null {
 				danger
 				data-testid="newExplorerCTA"
 				type="primary"
+				size="small"
 			>
 				{buttonText[location.pathname]}
 			</Button>

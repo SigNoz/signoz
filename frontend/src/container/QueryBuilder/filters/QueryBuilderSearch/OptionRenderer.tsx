@@ -14,11 +14,11 @@ function OptionRenderer({
 	const optionType = getOptionType(label);
 
 	return (
-		<span>
+		<span className="option">
 			{optionType ? (
 				<SelectOptionContainer>
-					<div>{value}</div>
-					<div>
+					<div className="option-value">{value}</div>
+					<div className="option-meta-data-container">
 						<TagContainer>
 							<TagLabel>Type: </TagLabel>
 							<TagValue>{optionType}</TagValue>
