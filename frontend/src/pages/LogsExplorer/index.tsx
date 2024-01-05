@@ -13,6 +13,7 @@ import { WrapperStyled } from './styles';
 
 function LogsExplorer(): JSX.Element {
 	const [showHistogram, setShowHistogram] = useState(true);
+	const [selectedView, setSelectedView] = useState('query-builder');
 
 	const handleToggleShowHistogram = (): void => {
 		setShowHistogram(!showHistogram);
@@ -25,8 +26,8 @@ function LogsExplorer(): JSX.Element {
 			{/* <LogsTopNav /> */}
 
 			<Toolbar
-				showHistogram
-				selectedView="query-builder"
+				showHistogram={showHistogram}
+				selectedView={selectedView}
 				onToggleHistrogramVisibility={handleToggleShowHistogram}
 			/>
 
@@ -38,7 +39,10 @@ function LogsExplorer(): JSX.Element {
 						</ExplorerCard>
 					</Col>
 					<Col xs={24}>
-						<LogsExplorerViews showHistogram={showHistogram} />
+						<LogsExplorerViews
+							selectedView={selectedView}
+							showHistogram={showHistogram}
+						/>
 					</Col>
 				</Row>
 			</WrapperStyled>

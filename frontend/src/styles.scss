@@ -1,4 +1,4 @@
-@import '@signozhq/design-tokens';
+@import '@signozhq/design-tokens/dist/style.css';
 
 #root,
 html,
@@ -135,4 +135,11 @@ body {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+// =================================================================
+// AntD style overrides
+
+.ant-dropdown-menu-item-group-title {
+	font-size: 11px;
 }
