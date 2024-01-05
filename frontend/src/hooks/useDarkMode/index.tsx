@@ -82,6 +82,27 @@ export const useThemeConfig = (): ThemeConfig => {
 			colorLink: '#4E74F8',
 			colorPrimaryText: '#3F5ECC',
 		},
+		components: {
+			Dropdown: {
+				colorBgElevated: isDarkMode ? '#121317' : '#fff',
+				controlItemBgHover: isDarkMode ? '#1D212D' : '#fff',
+				colorText: isDarkMode ? '#C0C1C3' : '#121317',
+				fontSize: 12,
+			},
+			Select: {
+				colorBgElevated: isDarkMode ? '#121317' : '#fff',
+				controlItemBgHover: isDarkMode ? '#1D212D' : '#fff',
+				boxShadowSecondary: isDarkMode
+					? '4px 10px 16px 2px rgba(0, 0, 0, 0.30)'
+					: '#fff',
+				colorText: isDarkMode ? '#C0C1C3' : '#121317',
+				fontSize: 12,
+			},
+			Button: {
+				paddingInline: 12,
+				fontSize: 12,
+			},
+		},
 	};
 };
 
