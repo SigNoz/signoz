@@ -3,11 +3,8 @@ package v4
 import (
 	"fmt"
 	"strings"
-	"time"
 
-	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
@@ -86,23 +83,4 @@ func PrepareTimeseriesFilterQuery(mq *v3.BuilderQuery) (string, error) {
 	)
 
 	return filterSubQuery, nil
-}
-
-// PrepareMetricQuery prepares the query to be used for fetching metrics
-// from the database
-// start and end are in milliseconds
-// step is in seconds
-func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, error) {
-
-	// TODO(srikanthcc): implement
-	return "", nil
-}
-
-func BuildPromQuery(promQuery *v3.PromQuery, step, start, end int64) *model.QueryRangeParams {
-	return &model.QueryRangeParams{
-		Query: promQuery.Query,
-		Start: time.UnixMilli(start),
-		End:   time.UnixMilli(end),
-		Step:  time.Duration(step * int64(time.Second)),
-	}
 }

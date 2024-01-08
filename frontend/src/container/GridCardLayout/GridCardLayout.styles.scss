@@ -5,3 +5,11 @@
 		border: none !important;
 	}
 }
+
+.widget-graph-container {
+	height: 100%;
+
+	&.graph {
+		height: calc(100% - 30px);
+	}
+}

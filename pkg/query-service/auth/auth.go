@@ -1,8 +1,11 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"text/template"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -14,6 +17,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	smtpservice "go.signoz.io/signoz/pkg/query-service/utils/smtpService"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -26,6 +30,13 @@ const (
 var (
 	ErrorInvalidCreds = fmt.Errorf("Invalid credentials")
 )
+
+type InviteEmailData struct {
+	CustomerName string
+	InviterName  string
+	InviterEmail string
+	Link         string
+}
 
 // The root user should be able to invite people to create account on SigNoz cluster.
 func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteResponse, error) {
@@ -80,7 +91,45 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		"invited user email": req.Email,
 	}, au.Email)
 
+	// send email if SMTP is enabled
+	if os.Getenv("SMTP_ENABLED") == "true" && req.FrontendBaseUrl != "" {
+		inviteEmail(req, au, token)
+	}
+
 	return &model.InviteResponse{Email: inv.Email, InviteToken: inv.Token}, nil
+}
+
+func inviteEmail(req *model.InviteRequest, au *model.UserPayload, token string) {
+	smtp := smtpservice.GetInstance()
+	data := InviteEmailData{
+		CustomerName: req.Name,
+		InviterName:  au.Name,
+		InviterEmail: au.Email,
+		Link:         fmt.Sprintf("%s/signup?token=%s", req.FrontendBaseUrl, token),
+	}
+
+	tmpl, err := template.ParseFiles(constants.InviteEmailTemplate)
+	if err != nil {
+		zap.S().Errorf("failed to send email", err)
+		return
+	}
+
+	var body bytes.Buffer
+	if err := tmpl.Execute(&body, data); err != nil {
+		zap.S().Errorf("failed to send email", err)
+		return
+	}
+
+	err = smtp.SendEmail(
+		req.Email,
+		au.Name+" has invited you to their team in SigNoz",
+		body.String(),
+	)
+	if err != nil {
+		zap.S().Errorf("failed to send email", err)
+		return
+	}
+	return
 }
 
 // RevokeInvite is used to revoke the invitation for the given email.

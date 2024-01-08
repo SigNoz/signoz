@@ -8,9 +8,7 @@ import (
 
 // prepareMetricQueryDeltaTable builds the query to be used for fetching metrics
 func prepareMetricQueryDeltaTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
-
 	var query string
-	points := ((end - start + 1) / 1000) / step
 
 	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(start, end, step, mq)
 	if err != nil {
@@ -22,7 +20,7 @@ func prepareMetricQueryDeltaTable(start, end, step int64, mq *v3.BuilderQuery) (
 	selectLabels := groupByAttributeKeyTags(mq.GroupBy...)
 
 	queryTmpl :=
-		"SELECT %s, toStartOfHour(now()) as ts," +
+		"SELECT %s," +
 			" %s as value" +
 			" FROM (%s)" +
 			" WHERE isNaN(per_series_value) = 0" +
@@ -32,15 +30,9 @@ func prepareMetricQueryDeltaTable(start, end, step int64, mq *v3.BuilderQuery) (
 	switch mq.SpaceAggregation {
 	case v3.SpaceAggregationAvg:
 		op := "avg(per_series_value)"
-		if mq.TimeAggregation == v3.TimeAggregationRate {
-			op = "avg(per_series_value)/" + fmt.Sprintf("%d", points)
-		}
 		query = fmt.Sprintf(queryTmpl, selectLabels, op, temporalAggSubQuery, groupBy, orderBy)
 	case v3.SpaceAggregationSum:
 		op := "sum(per_series_value)"
-		if mq.TimeAggregation == v3.TimeAggregationRate {
-			op = "sum(per_series_value)/" + fmt.Sprintf("%d", points)
-		}
 		query = fmt.Sprintf(queryTmpl, selectLabels, op, temporalAggSubQuery, groupBy, orderBy)
 	case v3.SpaceAggregationMin:
 		op := "min(per_series_value)"

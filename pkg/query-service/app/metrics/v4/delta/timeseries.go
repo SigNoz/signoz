@@ -9,7 +9,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-// prepareTimeAggregationSubQuery builds the sub-query to be used for temporal aggregation
+// prepareTimeAggregationSubQueryTimeSeries builds the sub-query to be used for temporal aggregation
 func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	var subQuery string
