@@ -10,7 +10,7 @@ import (
 )
 
 // prepareTimeAggregationSubQueryTimeSeries builds the sub-query to be used for temporal aggregation
-func prepareTimeAggregationSubQueryTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	var subQuery string
 
@@ -81,7 +81,7 @@ func prepareMetricQueryDeltaTimeSeries(start, end, step int64, mq *v3.BuilderQue
 
 	var query string
 
-	temporalAggSubQuery, err := prepareTimeAggregationSubQueryTimeSeries(start, end, step, mq)
+	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(start, end, step, mq)
 	if err != nil {
 		return "", err
 	}
