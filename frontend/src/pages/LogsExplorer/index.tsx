@@ -2,7 +2,9 @@ import { Col, Row } from 'antd';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
-import LogsTopNav from 'container/LogsTopNav';
+// import LogsTopNav from 'container/LogsTopNav';
+import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
+import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useState } from 'react';
@@ -13,7 +15,7 @@ import { WrapperStyled } from './styles';
 
 function LogsExplorer(): JSX.Element {
 	const [showHistogram, setShowHistogram] = useState(true);
-	const [selectedView, setSelectedView] = useState('query-builder');
+	const [selectedView] = useState('query-builder');
 
 	const handleToggleShowHistogram = (): void => {
 		setShowHistogram(!showHistogram);
@@ -26,9 +28,14 @@ function LogsExplorer(): JSX.Element {
 			{/* <LogsTopNav /> */}
 
 			<Toolbar
-				showHistogram={showHistogram}
-				selectedView={selectedView}
-				onToggleHistrogramVisibility={handleToggleShowHistogram}
+				leftActions={
+					<LeftToolbarActions
+						selectedView={selectedView}
+						onToggleHistrogramVisibility={handleToggleShowHistogram}
+						showHistogram={showHistogram}
+					/>
+				}
+				rightActions={<RightToolbarActions />}
 			/>
 
 			<WrapperStyled>
