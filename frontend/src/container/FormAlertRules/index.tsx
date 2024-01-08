@@ -82,6 +82,7 @@ function FormAlertRules({
 
 	// alertDef holds the form values to be posted
 	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
+	const [yAxisUnit, setYAxisUnit] = useState<string>(currentQuery.unit || '');
 
 	// initQuery contains initial query when component was mounted
 	const initQuery = useMemo(() => initialValue.condition.compositeQuery, [
@@ -400,6 +401,7 @@ function FormAlertRules({
 			query={stagedQuery}
 			selectedInterval={globalSelectedInterval}
 			alertDef={alertDef}
+			yAxisUnit={yAxisUnit || ''}
 		/>
 	);
 
@@ -415,6 +417,7 @@ function FormAlertRules({
 			query={stagedQuery}
 			alertDef={alertDef}
 			selectedInterval={globalSelectedInterval}
+			yAxisUnit={yAxisUnit || ''}
 		/>
 	);
 
@@ -427,7 +430,8 @@ function FormAlertRules({
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 		alertType !== AlertTypes.METRICS_BASED_ALERT;
 
-	const onUnitChangeHandler = (): void => {
+	const onUnitChangeHandler = (value: string): void => {
+		setYAxisUnit(value);
 		// reset target unit
 		setAlertDef((def) => ({
 			...def,
@@ -457,7 +461,10 @@ function FormAlertRules({
 							renderPromAndChQueryChartPreview()}
 
 						<StepContainer>
-							<BuilderUnitsFilter onChange={onUnitChangeHandler} />
+							<BuilderUnitsFilter
+								onChange={onUnitChangeHandler}
+								yAxisUnit={yAxisUnit}
+							/>
 						</StepContainer>
 
 						<QuerySection

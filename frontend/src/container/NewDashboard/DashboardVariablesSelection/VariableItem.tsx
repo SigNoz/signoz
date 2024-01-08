@@ -2,13 +2,14 @@ import './DashboardVariableSelection.styles.scss';
 
 import { orange } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
-import { Input, Popover, Select, Typography } from 'antd';
+import { Input, Popover, Select, Tooltip, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useDebounce from 'hooks/useDebounce';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import map from 'lodash-es/map';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -27,6 +28,7 @@ interface VariableItemProps {
 	existingVariables: Record<string, IDashboardVariable>;
 	onValueUpdate: (
 		name: string,
+		id: string,
 		arg1: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
 	) => void;
@@ -48,6 +50,7 @@ function VariableItem({
 	onValueUpdate,
 	lastUpdatedVar,
 }: VariableItemProps): JSX.Element {
+	const { isDashboardLocked } = useDashboard();
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
 		[],
 	);
@@ -137,8 +140,9 @@ function VariableItem({
 							} else {
 								[value] = newOptionsData;
 							}
-							if (variableData.name) {
-								onValueUpdate(variableData.name, value, allSelected);
+
+							if (variableData && variableData?.name && variableData?.id) {
+								onValueUpdate(variableData.name, variableData.id, value, allSelected);
 							}
 						}
 
@@ -149,14 +153,13 @@ function VariableItem({
 				console.error(e);
 			}
 		} else if (variableData.type === 'CUSTOM') {
-			setOptionsData(
-				sortValues(
-					commaValuesParser(variableData.customValue || ''),
-					variableData.sort,
-				) as never,
-			);
+			const optionsData = sortValues(
+				commaValuesParser(variableData.customValue || ''),
+				variableData.sort,
+			) as never;
+
+			setOptionsData(optionsData);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	};
 
 	const { isLoading } = useQuery(getQueryKey(variableData), {
@@ -195,9 +198,9 @@ function VariableItem({
 				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE)) ||
 				(Array.isArray(value) && value.length === 0)
 			) {
-				onValueUpdate(variableData.name, optionsData, true);
+				onValueUpdate(variableData.name, variableData.id, optionsData, true);
 			} else {
-				onValueUpdate(variableData.name, value, false);
+				onValueUpdate(variableData.name, variableData.id, value, false);
 			}
 	};
 
@@ -224,70 +227,85 @@ function VariableItem({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [debouncedVariableValue]);
 
+	useEffect(() => {
+		// Fetch options for CUSTOM Type
+		if (variableData.type === 'CUSTOM') {
+			getOptions(null);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [variableData.type, variableData.customValue]);
+
 	return (
-		<VariableContainer>
-			<Typography.Text className="variable-name" ellipsis>
-				${variableData.name}
-			</Typography.Text>
-			<VariableValue>
-				{variableData.type === 'TEXTBOX' ? (
-					<Input
-						placeholder="Enter value"
-						bordered={false}
-						value={variableValue}
-						onChange={(e): void => {
-							setVaribleValue(e.target.value || '');
-						}}
-						style={{
-							width:
-								50 + ((variableData.selectedValue?.toString()?.length || 0) * 7 || 50),
-						}}
-					/>
-				) : (
-					!errorMessage &&
-					optionsData && (
-						<Select
-							value={selectValue}
-							onChange={handleChange}
+		<Tooltip
+			placement="top"
+			title={isDashboardLocked ? 'Dashboard is locked' : ''}
+		>
+			<VariableContainer>
+				<Typography.Text className="variable-name" ellipsis>
+					${variableData.name}
+				</Typography.Text>
+				<VariableValue>
+					{variableData.type === 'TEXTBOX' ? (
+						<Input
+							placeholder="Enter value"
+							disabled={isDashboardLocked}
 							bordered={false}
-							placeholder="Select value"
-							mode={mode}
-							dropdownMatchSelectWidth={false}
-							style={SelectItemStyle}
-							loading={isLoading}
-							showArrow
-							showSearch
-							data-testid="variable-select"
-						>
-							{enableSelectAll && (
-								<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
-									ALL
-								</Select.Option>
-							)}
-							{map(optionsData, (option) => (
-								<Select.Option
-									data-testid={`option-${option}`}
-									key={option.toString()}
-									value={option}
-								>
-									{option.toString()}
-								</Select.Option>
-							))}
-						</Select>
-					)
-				)}
-				{errorMessage && (
-					<span style={{ margin: '0 0.5rem' }}>
-						<Popover
-							placement="top"
-							content={<Typography>{errorMessage}</Typography>}
-						>
-							<WarningOutlined style={{ color: orange[5] }} />
-						</Popover>
-					</span>
-				)}
-			</VariableValue>
-		</VariableContainer>
+							value={variableValue}
+							onChange={(e): void => {
+								setVaribleValue(e.target.value || '');
+							}}
+							style={{
+								width:
+									50 + ((variableData.selectedValue?.toString()?.length || 0) * 7 || 50),
+							}}
+						/>
+					) : (
+						!errorMessage &&
+						optionsData && (
+							<Select
+								value={selectValue}
+								onChange={handleChange}
+								bordered={false}
+								placeholder="Select value"
+								mode={mode}
+								dropdownMatchSelectWidth={false}
+								style={SelectItemStyle}
+								loading={isLoading}
+								showArrow
+								showSearch
+								data-testid="variable-select"
+								disabled={isDashboardLocked}
+							>
+								{enableSelectAll && (
+									<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
+										ALL
+									</Select.Option>
+								)}
+								{map(optionsData, (option) => (
+									<Select.Option
+										data-testid={`option-${option}`}
+										key={option.toString()}
+										value={option}
+									>
+										{option.toString()}
+									</Select.Option>
+								))}
+							</Select>
+						)
+					)}
+					{variableData.type !== 'TEXTBOX' && errorMessage && (
+						<span style={{ margin: '0 0.5rem' }}>
+							<Popover
+								placement="top"
+								content={<Typography>{errorMessage}</Typography>}
+							>
+								<WarningOutlined style={{ color: orange[5] }} />
+							</Popover>
+						</span>
+					)}
+				</VariableValue>
+			</VariableContainer>
+		</Tooltip>
 	);
 }
 

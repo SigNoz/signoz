@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable react/jsx-no-comment-textnodes */
 /* eslint-disable sonarjs/prefer-single-boolean-return */
 import './ModuleStepsContainer.styles.scss';
 
@@ -71,8 +74,8 @@ export default function ModuleStepsContainer({
 	} = useOnboardingContext();
 
 	const [current, setCurrent] = useState(0);
-	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
 	const { trackEvent } = useAnalytics();
+	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
 	const lastStepIndex = selectedModuleSteps.length - 1;
 
 	const isValidForm = (): boolean => {
@@ -135,7 +138,7 @@ export default function ModuleStepsContainer({
 		if (selectedModule.id === ModulesMap.APM) {
 			history.push(ROUTES.APPLICATION);
 		} else if (selectedModule.id === ModulesMap.LogsManagement) {
-			history.push(ROUTES.LOGS);
+			history.push(ROUTES.LOGS_EXPLORER);
 		} else if (selectedModule.id === ModulesMap.InfrastructureMonitoring) {
 			history.push(ROUTES.APPLICATION);
 		}
@@ -197,9 +200,21 @@ export default function ModuleStepsContainer({
 		}
 	};
 
+	const handleLogoClick = (): void => {
+		history.push('/');
+	};
+
 	return (
 		<div className="onboarding-module-steps">
 			<div className="steps-container">
+				<div className="steps-container-header">
+					<div className="brand-logo" onClick={handleLogoClick}>
+						<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
+
+						<div className="brand-logo-name">SigNoz</div>
+					</div>
+				</div>
+
 				<Space style={{ marginBottom: '24px' }}>
 					<Button
 						style={{ display: 'flex', alignItems: 'center' }}
