@@ -161,7 +161,7 @@ func (q *querier) runBuilderQuery(
 	if !params.NoCache && q.cache != nil {
 		var retrieveStatus status.RetrieveStatus
 		data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
-		zap.S().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
+		zap.S().Infof("cache retrieve status: %s", retrieveStatus.String())
 		if err == nil {
 			cachedData = data
 		}
@@ -255,7 +255,7 @@ func (q *querier) runBuilderExpression(
 	if !params.NoCache && q.cache != nil {
 		var retrieveStatus status.RetrieveStatus
 		data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
-		zap.S().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
+		zap.S().Infof("cache retrieve status: %s", retrieveStatus.String())
 		if err == nil {
 			cachedData = data
 		}
