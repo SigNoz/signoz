@@ -1,3 +1,5 @@
+import './ListLogView.styles.scss';
+
 import { blue, grey, orange } from '@ant-design/colors';
 import {
 	CopyFilled,
@@ -24,6 +26,9 @@ import { ILog } from 'types/api/logs/log';
 // components
 import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
+import LogStateIndicator, {
+	LogType,
+} from '../LogStateIndicator/LogStateIndicator';
 // styles
 import {
 	Container,
@@ -55,11 +60,11 @@ function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 
 	return (
 		<TextContainer>
-			<Text ellipsis type="secondary">
-				{`${fieldKey}: `}
+			<Text ellipsis type="secondary" className="log-field-key">
+				{`${fieldKey} : `}
 			</Text>
 			<CopyClipboardHOC textToCopy={fieldValue}>
-				<LogText dangerouslySetInnerHTML={html} />
+				<LogText dangerouslySetInnerHTML={html} className="log-value" />
 			</CopyClipboardHOC>
 		</TextContainer>
 	);
@@ -71,23 +76,25 @@ function LogSelectedField({
 	onAddToQuery,
 }: LogSelectedFieldProps): JSX.Element {
 	return (
-		<SelectedLog>
+		<div className="log-selected-fields">
 			<AddToQueryHOC
 				fieldKey={fieldKey}
 				fieldValue={fieldValue}
 				onAddToQuery={onAddToQuery}
 			>
 				<Typography.Text>
-					<span style={{ color: blue[4] }}>{fieldKey}</span>
+					<span style={{ color: blue[4] }} className="selected-log-field-key">
+						{fieldKey}
+					</span>
 				</Typography.Text>
 			</AddToQueryHOC>
 			<CopyClipboardHOC textToCopy={fieldValue}>
 				<Typography.Text ellipsis>
-					<span>{': '}</span>
-					<span style={{ color: orange[6] }}>{fieldValue || "''"}</span>
+					<span className="selected-log-field-key">{': '}</span>
+					<span className="selected-log-value">{fieldValue || "''"}</span>
 				</Typography.Text>
 			</CopyClipboardHOC>
-		</SelectedLog>
+		</div>
 	);
 }
 
@@ -145,32 +152,35 @@ function ListLogView({
 		[flattenLogData.timestamp],
 	);
 
+	const logType = logData?.attributes_string?.log_level || LogType.INFO;
+
 	return (
 		<Container $isActiveLog={isHighlighted}>
-			<div>
-				<LogContainer>
-					<>
-						<LogGeneralField fieldKey="log" fieldValue={flattenLogData.body} />
-						{flattenLogData.stream && (
-							<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
-						)}
-						<LogGeneralField fieldKey="timestamp" fieldValue={timestampValue} />
-					</>
-				</LogContainer>
+			<div className="log-line">
+				<LogStateIndicator type={logType} />
 				<div>
-					{updatedSelecedFields.map((field) =>
-						isValidLogField(flattenLogData[field.name] as never) ? (
-							<LogSelectedField
-								key={field.name}
-								fieldKey={field.name}
-								fieldValue={flattenLogData[field.name] as never}
-								onAddToQuery={onAddToQuery}
-							/>
-						) : null,
-					)}
+					<LogContainer>
+						<>
+							<LogGeneralField fieldKey="Log" fieldValue={flattenLogData.body} />
+							{flattenLogData.stream && (
+								<LogGeneralField fieldKey="Stream" fieldValue={flattenLogData.stream} />
+							)}
+							<LogGeneralField fieldKey="Timestamp" fieldValue={timestampValue} />
+						</>
+						{updatedSelecedFields.map((field) =>
+							isValidLogField(flattenLogData[field.name] as never) ? (
+								<LogSelectedField
+									key={field.name}
+									fieldKey={field.name}
+									fieldValue={flattenLogData[field.name] as never}
+									onAddToQuery={onAddToQuery}
+								/>
+							) : null,
+						)}
+					</LogContainer>
 				</div>
 			</div>
-			<Divider style={{ padding: 0, margin: '0.4rem 0', opacity: 0.5 }} />
+			{/* <Divider style={{ padding: 0, margin: '0.4rem 0', opacity: 0.5 }} />
 			<Row>
 				<Button
 					size="small"
@@ -220,7 +230,7 @@ function ListLogView({
 						onClose={handleClearActiveContextLog}
 					/>
 				)}
-			</Row>
+			</Row> */}
 		</Container>
 	);
 }

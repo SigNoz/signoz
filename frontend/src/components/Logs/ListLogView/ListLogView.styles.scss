@@ -1,0 +1,53 @@
+.log-field-key {
+	padding-right: 5px;
+	color: var(--Vanilla-400, #c0c1c3);
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 18px; /* 128.571% */
+	letter-spacing: -0.07px;
+}
+.log-value {
+	color: var(--Vanilla-400, #c0c1c3);
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 18px; /* 128.571% */
+	letter-spacing: -0.07px;
+}
+.log-line {
+	display: flex;
+	overflow: hidden;
+	.log-state-indicator {
+		padding-left: 0;
+	}
+}
+
+.log-selected-fields {
+	display: flex;
+	width: 100%;
+	overflow: hidden;
+	align-items: center;
+
+	.selected-log-field-key {
+		color: #7190f9;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px; /* 128.571% */
+		letter-spacing: -0.07px;
+	}
+
+	.selected-log-value {
+		color: #ad7f58;
+		border-radius: 2px;
+		background: rgba(173, 127, 88, 0.08);
+		padding: 0px 2px;
+		margin-left: 7px;
+		margin-top: 1.3px;
+		font-weight: 400;
+		line-height: 18px;
+		letter-spacing: -0.07px;
+		font-size: 14px;
+	}
+}

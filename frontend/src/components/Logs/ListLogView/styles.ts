@@ -33,7 +33,6 @@ export const LogContainer = styled.div`
 
 export const LogText = styled.div`
 	display: inline-block;
-
 	text-overflow: ellipsis;
 	overflow: hidden;
 	white-space: nowrap;
