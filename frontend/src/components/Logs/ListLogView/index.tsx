@@ -198,9 +198,9 @@ function ListLogView({
 				<div className="log-action-buttons">
 					<Tooltip title="Show Context">
 						<Button
-							size="small"
 							onClick={handleShowContext}
 							style={{ color: grey[1] }}
+							className="context-btn"
 							icon={<MonitorOutlined />}
 						/>
 					</Tooltip>
@@ -208,17 +208,18 @@ function ListLogView({
 						<Button
 							size="small"
 							onClick={onLogCopy}
+							className="copy-link-btn"
 							style={{ color: grey[1] }}
 							icon={<LinkOutlined />}
 						/>
 					</Tooltip>
-					{activeContextLog && (
-						<LogsExplorerContext
-							log={activeContextLog}
-							onClose={handleClearActiveContextLog}
-						/>
-					)}
 				</div>
+			)}
+			{activeContextLog && (
+				<LogsExplorerContext
+					log={activeContextLog}
+					onClose={handleClearActiveContextLog}
+				/>
 			)}
 			{/* <Divider style={{ padding: 0, margin: '0.4rem 0', opacity: 0.5 }} />
 			<Row>
