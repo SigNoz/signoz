@@ -476,15 +476,15 @@ func reduceToQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator
 	var groupBy string
 	switch reduceTo {
 	case v3.ReduceToOperatorLast:
-		query = fmt.Sprintf("SELECT anyLast(value) as value, any(ts) as ts FROM (%s) %s", query, groupBy)
+		query = fmt.Sprintf("SELECT anyLast(value) as value, now() as ts FROM (%s) %s", query, groupBy)
 	case v3.ReduceToOperatorSum:
-		query = fmt.Sprintf("SELECT sum(value) as value, any(ts) as ts FROM (%s) %s", query, groupBy)
+		query = fmt.Sprintf("SELECT sum(value) as value, now() as ts FROM (%s) %s", query, groupBy)
 	case v3.ReduceToOperatorAvg:
-		query = fmt.Sprintf("SELECT avg(value) as value, any(ts) as ts FROM (%s) %s", query, groupBy)
+		query = fmt.Sprintf("SELECT avg(value) as value, now() as ts FROM (%s) %s", query, groupBy)
 	case v3.ReduceToOperatorMax:
-		query = fmt.Sprintf("SELECT max(value) as value, any(ts) as ts FROM (%s) %s", query, groupBy)
+		query = fmt.Sprintf("SELECT max(value) as value, now() as ts FROM (%s) %s", query, groupBy)
 	case v3.ReduceToOperatorMin:
-		query = fmt.Sprintf("SELECT min(value) as value, any(ts) as ts FROM (%s) %s", query, groupBy)
+		query = fmt.Sprintf("SELECT min(value) as value, now() as ts FROM (%s) %s", query, groupBy)
 	default:
 		return "", fmt.Errorf("unsupported reduce operator")
 	}
