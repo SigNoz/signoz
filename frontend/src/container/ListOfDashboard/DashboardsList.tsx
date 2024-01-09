@@ -332,7 +332,7 @@ function DashboardsList(): JSX.Element {
 	);
 
 	return (
-		<Card>
+		<Card style={{ margin: '16px 0' }}>
 			{GetHeader}
 
 			<TableContainer>
