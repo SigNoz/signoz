@@ -30,6 +30,15 @@ export const panelTypeVsThreshold: { [key in PANEL_TYPES]: boolean } = {
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
 
+export const panelTypeVsSoftMinMax: { [key in PANEL_TYPES]: boolean } = {
+	[PANEL_TYPES.TIME_SERIES]: true,
+	[PANEL_TYPES.VALUE]: false,
+	[PANEL_TYPES.TABLE]: false,
+	[PANEL_TYPES.LIST]: false,
+	[PANEL_TYPES.TRACE]: false,
+	[PANEL_TYPES.EMPTY_WIDGET]: false,
+} as const;
+
 export const panelTypeVsDragAndDrop: { [key in PANEL_TYPES]: boolean } = {
 	[PANEL_TYPES.TIME_SERIES]: false,
 	[PANEL_TYPES.VALUE]: true,

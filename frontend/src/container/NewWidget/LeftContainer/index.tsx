@@ -11,6 +11,8 @@ function LeftContainer({
 	selectedTime,
 	thresholds,
 	fillSpans,
+	softMax,
+	softMin,
 }: WidgetGraphProps): JSX.Element {
 	return (
 		<>
@@ -20,6 +22,8 @@ function LeftContainer({
 				selectedGraph={selectedGraph}
 				yAxisUnit={yAxisUnit}
 				fillSpans={fillSpans}
+				softMax={softMax}
+				softMin={softMin}
 			/>
 			<QueryContainer>
 				<QuerySection selectedTime={selectedTime} selectedGraph={selectedGraph} />
