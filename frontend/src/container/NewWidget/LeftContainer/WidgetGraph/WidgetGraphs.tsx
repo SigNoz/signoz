@@ -23,6 +23,8 @@ function WidgetGraph({
 	yAxisUnit,
 	thresholds,
 	fillSpans,
+	softMax,
+	softMin,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 
@@ -83,6 +85,8 @@ function WidgetGraph({
 				fillSpans,
 				minTimeScale,
 				maxTimeScale,
+				softMax,
+				softMin,
 			}),
 		[
 			widgetId,
@@ -95,6 +99,8 @@ function WidgetGraph({
 			fillSpans,
 			minTimeScale,
 			maxTimeScale,
+			softMax,
+			softMin,
 		],
 	);
 
@@ -125,6 +131,8 @@ interface WidgetGraphProps {
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
+	softMax: number | null;
+	softMin: number | null;
 }
 
 export default WidgetGraph;

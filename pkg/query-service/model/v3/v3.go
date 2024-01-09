@@ -680,6 +680,35 @@ func (s *Series) SortPoints() {
 	})
 }
 
+func (s *Series) RemoveDuplicatePoints() {
+	if len(s.Points) == 0 {
+		return
+	}
+
+	// priortize the last point
+	// this is to handle the case where the same point is sent twice
+	// the last point is the most recent point adjusted for the flux interval
+
+	newPoints := make([]Point, 0)
+	for i := len(s.Points) - 1; i >= 0; i-- {
+		if len(newPoints) == 0 {
+			newPoints = append(newPoints, s.Points[i])
+			continue
+		}
+		if newPoints[len(newPoints)-1].Timestamp != s.Points[i].Timestamp {
+			newPoints = append(newPoints, s.Points[i])
+		}
+	}
+
+	// reverse the points
+	for i := len(newPoints)/2 - 1; i >= 0; i-- {
+		opp := len(newPoints) - 1 - i
+		newPoints[i], newPoints[opp] = newPoints[opp], newPoints[i]
+	}
+
+	s.Points = newPoints
+}
+
 type Row struct {
 	Timestamp time.Time              `json:"timestamp"`
 	Data      map[string]interface{} `json:"data"`
