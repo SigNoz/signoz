@@ -38,7 +38,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import AutoRefresh from '../AutoRefresh';
+import AutoRefresh from '../AutoRefreshV2';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import {
 	FixedDurationSuggestionOptions,

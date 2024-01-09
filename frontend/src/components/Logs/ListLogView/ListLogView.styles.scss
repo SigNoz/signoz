@@ -21,6 +21,7 @@
 	.log-state-indicator {
 		padding-left: 0;
 	}
+	transition: background-color 0.2s ease-in;
 	&:hover {
 		background-color: rgba(171, 189, 255, 0.04) !important;
 	}

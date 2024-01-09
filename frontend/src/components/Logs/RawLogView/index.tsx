@@ -26,7 +26,7 @@ import LogStateIndicator, {
 // styles
 import {
 	ActionButtonsWrapper,
-	ExpandIconWrapper,
+	// ExpandIconWrapper,
 	RawLogContent,
 	RawLogViewContainer,
 } from './styles';

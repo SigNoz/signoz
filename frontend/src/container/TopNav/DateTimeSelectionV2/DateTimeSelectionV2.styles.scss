@@ -125,18 +125,14 @@
 	border: 1px solid var(--Slate-400, #1d212d);
 	background: var(--Ink-300, #16181d);
 
-	.ant-btn {
-		box-shadow: none;
-	}
-
 	.refresh-btn {
 		border-right: 1px solid var(--Slate-400, #1d212d);
 	}
 	.ant-btn {
 		display: flex;
 		padding: 4px 8px;
-		justify-content: center;
 		align-items: center;
+		box-shadow: none;
 		border: none;
 
 		&.active-tab {
