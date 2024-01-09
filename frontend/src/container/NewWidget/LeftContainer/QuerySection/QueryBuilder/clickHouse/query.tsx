@@ -4,6 +4,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ChangeEvent, useCallback } from 'react';
 import { IClickHouseQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { getFormatedLegend } from 'utils/getFormatedLegend';
 
 import QueryHeader from '../QueryHeader';
 
@@ -57,7 +58,11 @@ function ClickHouseQueryBuilder({
 
 	const handleUpdateInput = useCallback(
 		(e: ChangeEvent<HTMLInputElement>) => {
-			const { name, value } = e.target;
+			const { name } = e.target;
+			let { value } = e.target;
+			if (name === 'legend') {
+				value = getFormatedLegend(value);
+			}
 			handleUpdateQuery(name as keyof IClickHouseQuery, value);
 		},
 		[handleUpdateQuery],
