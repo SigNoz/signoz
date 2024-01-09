@@ -8,7 +8,7 @@ import {
 	MonitorOutlined,
 } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
-import { Button, Divider, Row, Typography } from 'antd';
+import { Button, Divider, Row, Tooltip, Typography } from 'antd';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
@@ -17,7 +17,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 // interfaces
 import { IField } from 'types/api/logs/fields';
@@ -89,7 +89,7 @@ function LogSelectedField({
 				</Typography.Text>
 			</AddToQueryHOC>
 			<CopyClipboardHOC textToCopy={fieldValue}>
-				<Typography.Text ellipsis>
+				<Typography.Text ellipsis className="selected-log-kv">
 					<span className="selected-log-field-key">{': '}</span>
 					<span className="selected-log-value">{fieldValue || "''"}</span>
 				</Typography.Text>
@@ -115,6 +115,7 @@ function ListLogView({
 
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
+	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		logData.id,
 	);
@@ -154,8 +155,20 @@ function ListLogView({
 
 	const logType = logData?.attributes_string?.log_level || LogType.INFO;
 
+	const handleMouseEnter = (): void => {
+		setHasActionButtons(true);
+	};
+
+	const handleMouseLeave = (): void => {
+		setHasActionButtons(false);
+	};
+
 	return (
-		<Container $isActiveLog={isHighlighted}>
+		<Container
+			$isActiveLog={isHighlighted}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
+		>
 			<div className="log-line">
 				<LogStateIndicator type={logType} />
 				<div>
@@ -180,6 +193,33 @@ function ListLogView({
 					</LogContainer>
 				</div>
 			</div>
+
+			{hasActionButtons && (
+				<div className="log-action-buttons">
+					<Tooltip title="Show Context">
+						<Button
+							size="small"
+							onClick={handleShowContext}
+							style={{ color: grey[1] }}
+							icon={<MonitorOutlined />}
+						/>
+					</Tooltip>
+					<Tooltip title="Copy Link">
+						<Button
+							size="small"
+							onClick={onLogCopy}
+							style={{ color: grey[1] }}
+							icon={<LinkOutlined />}
+						/>
+					</Tooltip>
+					{activeContextLog && (
+						<LogsExplorerContext
+							log={activeContextLog}
+							onClose={handleClearActiveContextLog}
+						/>
+					)}
+				</div>
+			)}
 			{/* <Divider style={{ padding: 0, margin: '0.4rem 0', opacity: 0.5 }} />
 			<Row>
 				<Button

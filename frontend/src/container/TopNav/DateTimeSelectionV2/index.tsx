@@ -373,6 +373,7 @@ function DateTimeSelection({
 				<FormContainer>
 					<Popover
 						placement="bottomRight"
+						showArrow={false}
 						onOpenChange={setIsOpen}
 						rootClassName="date-time-root"
 						content={
