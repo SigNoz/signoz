@@ -159,7 +159,6 @@ function RightContainer({
 						type="number"
 						value={softMin}
 						style={{ display: 'block', width: '100%' }}
-						placeholder="See: Standard options > Min"
 						onChange={softMinHandler}
 					/>
 					<Typography.Text style={{ display: 'block', margin: '5px 0' }}>
@@ -169,7 +168,6 @@ function RightContainer({
 						value={softMax}
 						type="number"
 						style={{ display: 'block', width: '100%' }}
-						placeholder="See: Standard options > Max"
 						onChange={softMaxHandler}
 					/>
 				</>
