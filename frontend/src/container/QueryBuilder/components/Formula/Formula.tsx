@@ -13,6 +13,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { ChangeEvent, useCallback, useMemo } from 'react';
 import { IBuilderFormula } from 'types/api/queryBuilder/queryBuilderData';
+import { getFormatedLegend } from 'utils/getFormatedLegend';
 
 import { AdditionalFiltersToggler } from '../AdditionalFiltersToggler';
 // ** Types
@@ -58,7 +59,7 @@ export function Formula({
 			const { name, value } = e.target;
 			const newFormula: IBuilderFormula = {
 				...formula,
-				[name]: value,
+				[name]: name === 'legend' ? getFormatedLegend(value) : value,
 			};
 
 			handleSetFormulaData(index, newFormula);
