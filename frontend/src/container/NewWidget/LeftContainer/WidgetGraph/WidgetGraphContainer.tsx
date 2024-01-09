@@ -14,6 +14,8 @@ function WidgetGraphContainer({
 	selectedTime,
 	thresholds,
 	fillSpans = false,
+	softMax,
+	softMin,
 }: WidgetGraphProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 
@@ -59,6 +61,8 @@ function WidgetGraphContainer({
 			selectedWidget={selectedWidget}
 			thresholds={thresholds}
 			fillSpans={fillSpans}
+			softMax={softMax}
+			softMin={softMin}
 		/>
 	);
 }

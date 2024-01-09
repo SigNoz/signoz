@@ -1,4 +1,4 @@
-package querier
+package v2
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/cache/status"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -145,7 +146,7 @@ func (q *querier) runBuilderQuery(
 	// We are only caching the graph panel queries. A non-existant cache key means that the query is not cached.
 	// If the query is not cached, we execute the query and return the result without caching it.
 	if _, ok := cacheKeys[queryName]; !ok {
-		query, err := metricsV3.PrepareMetricQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{PreferRPM: preferRPM})
+		query, err := metricsV4.PrepareMetricQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{PreferRPM: preferRPM})
 		if err != nil {
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 			return
@@ -169,7 +170,7 @@ func (q *querier) runBuilderQuery(
 	missedSeries := make([]*v3.Series, 0)
 	cachedSeries := make([]*v3.Series, 0)
 	for _, miss := range misses {
-		query, err := metricsV3.PrepareMetricQuery(
+		query, err := metricsV4.PrepareMetricQuery(
 			miss.start,
 			miss.end,
 			params.CompositeQuery.QueryType,

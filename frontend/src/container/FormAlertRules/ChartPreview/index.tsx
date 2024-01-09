@@ -150,6 +150,8 @@ function ChartPreview({
 						thresholdUnit: alertDef?.condition.targetUnit,
 					},
 				],
+				softMax: null,
+				softMin: null,
 			}),
 		[
 			yAxisUnit,
