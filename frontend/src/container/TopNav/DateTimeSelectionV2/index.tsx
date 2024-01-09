@@ -101,6 +101,7 @@ function DateTimeSelection({
 	const handleGoLive = useCallback(() => {
 		if (!stagedQuery) return;
 
+		setIsOpen(false);
 		let queryHistoryState: QueryHistoryState | null = null;
 
 		const compositeQuery = constructCompositeQuery({
@@ -242,6 +243,7 @@ function DateTimeSelection({
 	);
 
 	const onSelectHandler = (value: Time): void => {
+		setIsOpen(false);
 		if (value !== 'custom') {
 			updateTimeInterval(value);
 			updateLocalStorageForRoutes(value);
@@ -373,6 +375,7 @@ function DateTimeSelection({
 				<FormContainer>
 					<Popover
 						placement="bottomRight"
+						open={isOpen}
 						showArrow={false}
 						onOpenChange={setIsOpen}
 						rootClassName="date-time-root"
