@@ -102,6 +102,9 @@ export const useThemeConfig = (): ThemeConfig => {
 				paddingInline: 12,
 				fontSize: 12,
 			},
+			Input: {
+				colorBorder: isDarkMode ? '#1D212D' : '#E9E9E9',
+			},
 		},
 	};
 };

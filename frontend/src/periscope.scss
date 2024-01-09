@@ -1,0 +1,27 @@
+.periscope-btn-group {
+	display: inline-flex;
+
+	.ant-btn {
+		border-radius: 0;
+	}
+}
+
+.periscope-btn {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	padding: 6px;
+
+	border: 1px solid var(--Slate-400, #1d212d);
+	background: var(--Ink-400, #121317);
+	box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+	color: #c0c1c3;
+
+	&.ghost {
+		box-shadow: none;
+		border: none;
+	}
+
+	cursor: pointer;
+}

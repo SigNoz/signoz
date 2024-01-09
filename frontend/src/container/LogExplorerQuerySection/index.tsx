@@ -65,13 +65,13 @@ function LogExplorerQuerySection(): JSX.Element {
 			config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}
 			filterConfigs={filterConfigs}
 			queryComponents={queryComponents}
-			actions={
-				<ButtonWrapperStyled>
-					<Button type="primary" onClick={handleRunQuery}>
-						Run Query
-					</Button>
-				</ButtonWrapperStyled>
-			}
+			// actions={
+			// 	<ButtonWrapperStyled>
+			// 		<Button type="primary" onClick={handleRunQuery}>
+			// 			Run Query
+			// 		</Button>
+			// 	</ButtonWrapperStyled>
+			// }
 		/>
 	);
 }

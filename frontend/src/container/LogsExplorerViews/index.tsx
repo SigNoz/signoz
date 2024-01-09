@@ -1,8 +1,17 @@
 import './LogsExplorerViews.styles.scss';
 
 import { SettingOutlined, UserOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, MenuProps, Radio, Select } from 'antd';
+import {
+	Button,
+	Dropdown,
+	InputNumber,
+	Menu,
+	MenuProps,
+	Radio,
+	Select,
+} from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
+import NestedMenu from 'components/NestedMenu/NestedMenu';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
@@ -102,6 +111,7 @@ function LogsExplorerViews({
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
+	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
 
 	const handleAxisError = useAxiosError();
 
@@ -448,7 +458,7 @@ function LogsExplorerViews({
 		return isGroupByExist ? data.payload.data.result : firstPayloadQueryArray;
 	}, [stagedQuery, panelType, data, listChartData, listQuery]);
 
-	const items: MenuProps['items'] = [
+	const exportItems: MenuProps['items'] = [
 		{
 			type: 'group',
 			label: 'EXPORT AS',
@@ -466,6 +476,45 @@ function LogsExplorerViews({
 			],
 		},
 	];
+
+	const maxLinesPerRow = (): JSX.Element => (
+		<>
+			<Button> - </Button>
+			<InputNumber
+				min={1}
+				max={10}
+				// value={linesPerRow}
+				// onChange={handleLinesPerRowChange}
+			/>
+			<Button> + </Button>
+		</>
+	);
+
+	const formatItems = [
+		{
+			key: 'raw',
+			label: 'Raw',
+			data: {
+				title: 'max lines per row',
+			},
+		},
+		{
+			key: 'list',
+			label: 'Default',
+		},
+		{
+			key: 'table',
+			label: 'Column',
+			data: {
+				title: 'columns',
+			},
+		},
+	];
+
+	const handleToggleShowFormatOptions = (): void =>
+		setShowFormatMenuItems(!showFormatMenuItems);
+
+	console.log('config', config);
 
 	return (
 		<div className="logs-explorer-views-container">
@@ -501,17 +550,30 @@ function LogsExplorerViews({
 
 					{selectedPanelType === PANEL_TYPES.LIST && (
 						<div className="tab-options">
-							<Dropdown menu={{ items }} placement="bottomRight">
+							<Dropdown
+								menu={{ items: exportItems }}
+								className="dropdown"
+								placement="bottomRight"
+							>
 								<Button>
 									<FileDown size={16} />
 								</Button>
 							</Dropdown>
 
-							{/* <Dropdown menu={{ items }} placement="bottomLeft"> */}
-							<Button>
-								<Sliders size={16} />
-							</Button>
-							{/* </Dropdown> */}
+							<div className="format-options-container">
+								<Button>
+									<Sliders size={16} onClick={handleToggleShowFormatOptions} />
+								</Button>
+
+								{showFormatMenuItems && (
+									<NestedMenu
+										title="FORMAT"
+										items={formatItems}
+										selectedOptionFormat={options.format}
+										config={config}
+									/>
+								)}
+							</div>
 
 							<ExplorerControlPanel
 								selectedOptionFormat={options.format}

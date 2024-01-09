@@ -53,13 +53,13 @@ function QuerySection(): JSX.Element {
 				}}
 				filterConfigs={filterConfigs}
 				queryComponents={queryComponents}
-				actions={
-					<ButtonWrapper>
-						<Button onClick={handleRunQuery} type="primary">
-							Run Query
-						</Button>
-					</ButtonWrapper>
-				}
+				// actions={
+				// 	<ButtonWrapper>
+				// 		<Button onClick={handleRunQuery} type="primary">
+				// 			Run Query
+				// 		</Button>
+				// 	</ButtonWrapper>
+				// }
 			/>
 		</Container>
 	);

@@ -12,8 +12,4 @@ export const StyledLabel = styled.div<Props>`
 	white-space: nowrap;
 	align-items: center;
 	border-radius: 0.125rem;
-	border: ${({ isDarkMode }): string =>
-		`1px solid ${
-			isDarkMode ? themeColors.borderDarkGrey : themeColors.borderLightGrey
-		}`};
 `;
