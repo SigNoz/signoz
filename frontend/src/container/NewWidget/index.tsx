@@ -104,6 +104,18 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
 
+	const [softMin, setSoftMin] = useState<number | null>(
+		selectedWidget?.softMin === null || selectedWidget?.softMin === undefined
+			? null
+			: selectedWidget?.softMin || 0,
+	);
+
+	const [softMax, setSoftMax] = useState<number | null>(
+		selectedWidget?.softMax === null || selectedWidget?.softMax === undefined
+			? null
+			: selectedWidget?.softMax || 0,
+	);
+
 	const closeModal = (): void => {
 		setSaveModal(false);
 		setDiscardModal(false);
@@ -178,6 +190,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						yAxisUnit,
 						panelTypes: graphType,
 						thresholds,
+						softMin,
+						softMax,
 						fillSpans: isFillSpans,
 					},
 					...afterWidgets,
@@ -213,6 +227,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		yAxisUnit,
 		graphType,
 		thresholds,
+		softMin,
+		softMax,
 		isFillSpans,
 		afterWidgets,
 		updateDashboardMutation,
@@ -317,6 +333,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						yAxisUnit={yAxisUnit}
 						thresholds={thresholds}
 						fillSpans={isFillSpans}
+						softMax={softMax}
+						softMin={softMin}
 					/>
 				</LeftContainerWrapper>
 
@@ -343,6 +361,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						selectedWidget={selectedWidget}
 						isFillSpans={isFillSpans}
 						setIsFillSpans={setIsFillSpans}
+						softMin={softMin}
+						setSoftMin={setSoftMin}
+						softMax={softMax}
+						setSoftMax={setSoftMax}
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>

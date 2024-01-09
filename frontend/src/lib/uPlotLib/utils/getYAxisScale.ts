@@ -2,6 +2,7 @@ import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/typ
 import { convertValue } from 'lib/getConvertedValue';
 import { isFinite } from 'lodash-es';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import uPlot from 'uplot';
 
 function findMinMaxValues(data: QueryDataV3[]): [number, number] {
 	let min = Number.MAX_SAFE_INTEGER;
@@ -71,23 +72,167 @@ function areAllSeriesEmpty(series: QueryDataV3[]): boolean {
 	});
 }
 
-export const getYAxisScale = (
-	thresholds?: ThresholdProps[],
-	series?: QueryDataV3[],
-	yAxisUnit?: string,
-): {
-	auto: boolean;
-	range?: [number, number];
-} => {
-	if (!thresholds || !series || thresholds.length === 0) return { auto: true };
+function configSoftMinMax(
+	softMin: number | null,
+	softMax: number | null,
+): { range: uPlot.Scale.Range } {
+	return {
+		range: {
+			min: {
+				soft: softMin !== null ? softMin : undefined,
+				mode: 2,
+			},
+			max: {
+				soft: softMax !== null ? softMax : undefined,
+				mode: 2,
+			},
+		},
+	};
+}
 
-	if (areAllSeriesEmpty(series)) return { auto: true };
+export const getYAxisScale = ({
+	thresholds,
+	series,
+	yAxisUnit,
+	softMin,
+	softMax,
+}: // eslint-disable-next-line sonarjs/cognitive-complexity
+GetYAxisScale): { auto?: boolean; range?: uPlot.Scale.Range } => {
+	// Situation: thresholds and series data is absent
+	if (
+		(!thresholds || thresholds.length === 0) &&
+		(!series || areAllSeriesEmpty(series))
+	) {
+		// Situation: softMin is not null or softMax is null
+		if (softMin !== null && softMax === null) {
+			return configSoftMinMax(softMin, softMin + 100);
+		}
 
-	const [min, max] = getRange(thresholds, series, yAxisUnit);
+		// Situation: softMin is null softMax is not null
+		if (softMin === null && softMax !== null) {
+			return configSoftMinMax(softMax - 100, softMax);
+		}
 
-	// Min and Max value can be same if the value is same for all the series
-	if (min === max) {
+		// Situation: softMin is not null and softMax is not null
+		if (softMin !== null && softMax !== null) {
+			return configSoftMinMax(softMin, softMax);
+		}
+
+		// Situation: softMin and softMax are null and no threshold and no series data
 		return { auto: true };
 	}
+
+	// Situation: thresholds are absent
+	if (!thresholds || thresholds.length === 0) {
+		// Situation: No thresholds data but series data is present
+		if (series && !areAllSeriesEmpty(series)) {
+			// Situation: softMin and softMax are null
+			if (softMin === null && softMax === null) {
+				return { auto: true };
+			}
+
+			// Situation: either softMin or softMax is not null
+			let [min, max] = findMinMaxValues(series);
+
+			if (softMin !== null) {
+				// Compare with softMin if it is not null
+				min = Math.min(min, softMin);
+			}
+
+			if (softMax !== null) {
+				// Compare with softMax if it is not null
+				max = Math.max(max, softMax);
+			}
+
+			if (min === max) {
+				// Min and Max value can be same if the value is same for all the series
+				return { auto: true };
+			}
+
+			return { auto: false, range: [min, max] };
+		}
+
+		// Situation: No thresholds data and series data is absent but either soft min and soft max is present
+		if (softMin !== null && softMax === null) {
+			return configSoftMinMax(softMin, softMin + 100);
+		}
+
+		if (softMin === null && softMax !== null) {
+			return configSoftMinMax(softMax - 100, softMax);
+		}
+
+		if (softMin !== null && softMax !== null) {
+			return configSoftMinMax(softMin, softMax);
+		}
+
+		return { auto: true };
+	}
+
+	if (!series || areAllSeriesEmpty(series)) {
+		// series data is absent but threshold is present
+		if (thresholds.length > 0) {
+			// Situation: thresholds are present and series data is absent
+			let [min, max] = findMinMaxThresholdValues(thresholds, yAxisUnit);
+
+			if (softMin !== null) {
+				// Compare with softMin if it is not null
+				min = Math.min(min, softMin);
+			}
+
+			if (softMax !== null) {
+				// Compare with softMax if it is not null
+				max = Math.max(max, softMax);
+			}
+
+			if (min === max) {
+				// Min and Max value can be same if the value is same for all the series
+				return { auto: true };
+			}
+
+			return { auto: false, range: [min, max] };
+		}
+
+		// Situation: softMin or softMax is not null
+		if (softMin !== null && softMax === null) {
+			return configSoftMinMax(softMin, softMin + 100);
+		}
+
+		if (softMin === null && softMax !== null) {
+			return configSoftMinMax(softMax - 100, softMax);
+		}
+
+		if (softMin !== null && softMax !== null) {
+			return configSoftMinMax(softMin, softMax);
+		}
+
+		return { auto: true };
+	}
+
+	// Situation: thresholds and series data are present
+	let [min, max] = getRange(thresholds, series, yAxisUnit);
+
+	if (softMin !== null) {
+		// Compare with softMin if it is not null
+		min = Math.min(min, softMin);
+	}
+
+	if (softMax !== null) {
+		// Compare with softMax if it is not null
+		max = Math.max(max, softMax);
+	}
+
+	if (min === max) {
+		// Min and Max value can be same if the value is same for all the series
+		return { auto: true };
+	}
+
 	return { auto: false, range: [min, max] };
+};
+
+export type GetYAxisScale = {
+	thresholds?: ThresholdProps[];
+	series?: QueryDataV3[];
+	yAxisUnit?: string;
+	softMin: number | null;
+	softMax: number | null;
 };

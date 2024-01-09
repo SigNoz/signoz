@@ -73,6 +73,8 @@ export interface IBaseWidget {
 	stepSize?: number;
 	yAxisUnit?: string;
 	thresholds?: ThresholdProps[];
+	softMin: number | null;
+	softMax: number | null;
 	fillSpans?: boolean;
 }
 export interface Widgets extends IBaseWidget {
