@@ -25,6 +25,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
+import { Time as TimeV2 } from '../DateTimeSelectionV2/config';
 import { getDefaultOption, getOptions, Time } from './config';
 import RefreshText from './Refresh';
 import { Form, FormContainer, FormItem } from './styles';
@@ -84,7 +85,7 @@ function DateTimeSelection({
 	const getInputLabel = (
 		startTime?: Dayjs,
 		endTime?: Dayjs,
-		timeInterval: Time = '15min',
+		timeInterval: Time | TimeV2 = '15min',
 	): string | Time => {
 		if (startTime && endTime && timeInterval === 'custom') {
 			const format = 'YYYY/MM/DD HH:mm';
@@ -123,7 +124,7 @@ function DateTimeSelection({
 		return defaultSelectedOption;
 	};
 
-	const updateLocalStorageForRoutes = (value: Time): void => {
+	const updateLocalStorageForRoutes = (value: Time | TimeV2): void => {
 		const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
 		if (preRoutes !== null) {
 			const preRoutesObject = JSON.parse(preRoutes);
@@ -178,7 +179,7 @@ function DateTimeSelection({
 		[location.pathname],
 	);
 
-	const onSelectHandler = (value: Time): void => {
+	const onSelectHandler = (value: Time | TimeV2): void => {
 		if (value !== 'custom') {
 			updateTimeInterval(value);
 			updateLocalStorageForRoutes(value);
@@ -337,7 +338,7 @@ function DateTimeSelection({
 
 interface DispatchProps {
 	updateTimeInterval: (
-		interval: Time,
+		interval: Time | TimeV2,
 		dateTimeRange?: [number, number],
 	) => (dispatch: Dispatch<AppActions>) => void;
 	globalTimeLoading: () => void;
