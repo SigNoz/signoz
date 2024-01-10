@@ -5,7 +5,7 @@ import { getActiveLogBackground } from 'utils/logs';
 interface TableHeaderCellStyledProps {
 	$isDragColumn: boolean;
 	$isDarkMode: boolean;
-	$isTimestamp: boolean;
+	$isTimestamp?: boolean;
 }
 
 export const TableStyled = styled.table`
