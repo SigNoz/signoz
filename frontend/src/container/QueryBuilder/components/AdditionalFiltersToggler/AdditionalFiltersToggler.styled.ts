@@ -19,6 +19,7 @@ export const StyledInner = styled(Col)`
 	width: fit-content;
 	display: flex;
 	align-items: center;
+	gap: 8px;
 	margin-bottom: 0.875rem;
 	min-height: 1.375rem;
 	cursor: pointer;
