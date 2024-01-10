@@ -48,6 +48,15 @@ import {
 	urlKey,
 } from './utils';
 
+type QueryParams = {
+	order: string;
+	offset: number;
+	orderParam: string;
+	pageSize: number;
+	exceptionType?: string;
+	serviceName?: string;
+};
+
 function AllErrors(): JSX.Element {
 	const { maxTime, minTime, loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -163,7 +172,7 @@ function AllErrors(): JSX.Element {
 				filterValue || '',
 			);
 
-			const queryParams = {
+			const queryParams: QueryParams = {
 				order: updatedOrder,
 				offset: getUpdatedOffset,
 				orderParam: getUpdatedParams,
@@ -171,14 +180,10 @@ function AllErrors(): JSX.Element {
 			};
 
 			if (exceptionFilterValue && exceptionFilterValue !== 'undefined') {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
 				queryParams.exceptionType = exceptionFilterValue;
 			}
 
 			if (serviceFilterValue && serviceFilterValue !== 'undefined') {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
 				queryParams.serviceName = serviceFilterValue;
 			}
 
