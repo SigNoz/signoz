@@ -1,0 +1,48 @@
+.log-detail-drawer {
+    .log-detail-drawer__radio-button {
+        border: 1px solid var(--bg-ink-300);
+		background: var(--bg-slate-300);
+		color: var(--bg-vanilla-400);
+    }
+
+    .log-detail-drawer__log {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        .ant-typography {
+            font-family: SF Mono;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 18px;
+            letter-spacing: 0.10em;
+            white-space: nowrap;
+            overflow: hidden;
+            background: linear-gradient(to left,#121317 10.4%, rgba(18, 19, 23, 0) 20%);
+            max-width: 100%; 
+            color: var(--bg-vanilla-400);
+        }
+    }
+
+    .ant-radio-button-checked {
+    }
+    
+    .views-tabs {
+        color: var(--bg-vanilla-400);
+        margin-top: 30px;
+        
+        .selected_view {
+            background: var(--bg-slate-300);
+            border: 1px solid #454c58;
+            color: #ffffff;
+        }
+    }
+}
+
+.lightMode {
+    .log-detail-drawer__radio-button {
+        border: 1px solid var(--bg-ink-300);
+        background: "transparent";
+        color: var(--bg-vanilla-400);
+    }
+}
