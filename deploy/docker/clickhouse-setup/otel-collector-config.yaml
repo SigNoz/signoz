@@ -65,6 +65,8 @@ receivers:
         method: GET
       - endpoint: https://soutoujewelry.com/
         method: GET
+      - endpoint: https://guyshahine.com/
+        method: GET
     collection_interval: 60s
 
 processors:
