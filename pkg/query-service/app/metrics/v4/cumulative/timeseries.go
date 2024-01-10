@@ -127,15 +127,8 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 			" GROUP BY fingerprint, ts" +
 			" ORDER BY fingerprint, ts"
 
-	var selectLabelsAny string
-	for _, tag := range mq.GroupBy {
-		selectLabelsAny += fmt.Sprintf("any(%s) as %s,", tag.Key, tag.Key)
-	}
-
-	var selectLabels string
-	for _, tag := range mq.GroupBy {
-		selectLabels += tag.Key + ","
-	}
+	selectLabelsAny := helpers.SelectLabelsAny(mq.GroupBy)
+	selectLabels := helpers.SelectLabels(mq.GroupBy)
 
 	switch mq.TimeAggregation {
 	case v3.TimeAggregationAvg:

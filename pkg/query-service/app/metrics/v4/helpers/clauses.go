@@ -59,3 +59,19 @@ func OrderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string 
 
 	return strings.Join(orderBy, ", ")
 }
+
+func SelectLabelsAny(tags []v3.AttributeKey) string {
+	var selectLabelsAny []string
+	for _, tag := range tags {
+		selectLabelsAny = append(selectLabelsAny, fmt.Sprintf("any(%s) as %s,", tag.Key, tag.Key))
+	}
+	return strings.Join(selectLabelsAny, " ")
+}
+
+func SelectLabels(tags []v3.AttributeKey) string {
+	var selectLabels []string
+	for _, tag := range tags {
+		selectLabels = append(selectLabels, fmt.Sprintf("%s,", tag.Key))
+	}
+	return strings.Join(selectLabels, " ")
+}

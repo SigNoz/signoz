@@ -17,7 +17,7 @@ import (
 // from the database
 // start and end are in milliseconds
 // step is in seconds
-func PrepareMetricQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, error) {
+func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, error) {
 
 	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, mq.TimeAggregation)
 
@@ -57,9 +57,7 @@ func PrepareMetricQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 		return "", err
 	}
 
-	// We have the query now
 	if mq.Quantile != 0 {
-		// Add histogram quantile UDF to the query
 		query = fmt.Sprintf(`SELECT %s, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s`, groupBy, mq.Quantile, query, groupBy, orderBy)
 	}
 

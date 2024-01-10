@@ -34,15 +34,7 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 			" GROUP BY fingerprint, ts" +
 			" ORDER BY fingerprint, ts"
 
-	var selectLabelsAny string
-	for _, tag := range mq.GroupBy {
-		selectLabelsAny += fmt.Sprintf("any(%s) as %s,", tag.Key, tag.Key)
-	}
-
-	var selectLabels string
-	for _, tag := range mq.GroupBy {
-		selectLabels += tag.Key + ","
-	}
+	selectLabelsAny := helpers.SelectLabelsAny(mq.GroupBy)
 
 	switch mq.TimeAggregation {
 	case v3.TimeAggregationAvg:
@@ -76,8 +68,58 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 	return subQuery, nil
 }
 
+// See `canShortCircuit` below for details
+func prepareQueryOptimized(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+
+	groupBy := helpers.GroupingSetsByAttributeKeyTags(mq.GroupBy...)
+	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
+	selectLabels := helpers.SelectLabels(mq.GroupBy)
+
+	var query string
+
+	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(mq)
+	if err != nil {
+		return "", err
+	}
+
+	samplesTableFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+
+	// Select the aggregate value for interval
+	queryTmpl :=
+		"SELECT %s" +
+			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
+			" %s as value" +
+			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
+			" INNER JOIN" +
+			" (%s) as filtered_time_series" +
+			" USING fingerprint" +
+			" WHERE " + samplesTableFilter +
+			" GROUP BY %s" +
+			" ORDER BY %s"
+
+	switch mq.SpaceAggregation {
+	case v3.SpaceAggregationSum:
+		op := "sum(value)"
+		if mq.TimeAggregation == v3.TimeAggregationRate {
+			op = "sum(value)/" + fmt.Sprintf("%d", step)
+		}
+		query = fmt.Sprintf(queryTmpl, selectLabels, step, op, timeSeriesSubQuery, groupBy, orderBy)
+	case v3.SpaceAggregationMin:
+		op := "min(value)"
+		query = fmt.Sprintf(queryTmpl, selectLabels, step, op, timeSeriesSubQuery, groupBy, orderBy)
+	case v3.SpaceAggregationMax:
+		op := "max(value)"
+		query = fmt.Sprintf(queryTmpl, selectLabels, step, op, timeSeriesSubQuery, groupBy, orderBy)
+	}
+	return query, nil
+}
+
 // PrepareMetricQueryDeltaTimeSeries builds the query to be used for fetching metrics
 func PrepareMetricQueryDeltaTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+
+	if canShortCircuit(mq) {
+		return prepareQueryOptimized(start, end, step, mq)
+	}
 
 	var query string
 
@@ -117,4 +159,38 @@ func PrepareMetricQueryDeltaTimeSeries(start, end, step int64, mq *v3.BuilderQue
 	}
 
 	return query, nil
+}
+
+// canShortCircuit returns true if we can use the optimized query
+// for the given query
+// This is used to avoid the group by fingerprint thus improving the performance
+// for certain queries
+// cases where we can short circuit:
+// 1. time aggregation = (rate|increase) and space aggregation = sum
+//   - rate = sum(value)/step, increase = sum(value) - sum of sums is same as sum of all values
+//
+// 2. time aggregation = sum and space aggregation = sum
+//   - sum of sums is same as sum of all values
+//
+// 3. time aggregation = min and space aggregation = min
+//   - min of mins is same as min of all values
+//
+// 4. time aggregation = max and space aggregation = max
+//   - max of maxs is same as max of all values
+//
+// all of this is true only for delta metrics
+func canShortCircuit(mq *v3.BuilderQuery) bool {
+	if (mq.TimeAggregation == v3.TimeAggregationRate || mq.TimeAggregation == v3.TimeAggregationIncrease) && mq.SpaceAggregation == v3.SpaceAggregationSum {
+		return true
+	}
+	if mq.TimeAggregation == v3.TimeAggregationSum && mq.SpaceAggregation == v3.SpaceAggregationSum {
+		return true
+	}
+	if mq.TimeAggregation == v3.TimeAggregationMin && mq.SpaceAggregation == v3.SpaceAggregationMin {
+		return true
+	}
+	if mq.TimeAggregation == v3.TimeAggregationMax && mq.SpaceAggregation == v3.SpaceAggregationMax {
+		return true
+	}
+	return false
 }
