@@ -1,4 +1,3 @@
-import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 interface Props {
