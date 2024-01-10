@@ -30,6 +30,9 @@ export const TableRowStyled = styled.tr<{
 		${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
 	}
 
+	cursor: pointer;
+	position: relative;
+
 	&:hover {
 		${TableCellStyled} {
 			${({ $isActiveLog, $isDarkMode }): string =>

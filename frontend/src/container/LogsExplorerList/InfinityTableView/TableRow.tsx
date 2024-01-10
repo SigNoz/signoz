@@ -12,7 +12,6 @@ import {
 	ReactNode,
 	useCallback,
 	useMemo,
-	useState,
 } from 'react';
 import { ILog } from 'types/api/logs/log';
 
@@ -24,7 +23,7 @@ interface TableRowProps {
 	log: Record<string, unknown>;
 	handleSetActiveContextLog: (log: ILog) => void;
 	logs: ILog[];
-	onSetActiveLog: (log: ILog) => void;
+	hasActions: boolean;
 }
 
 export default function TableRow({
@@ -33,21 +32,14 @@ export default function TableRow({
 	log,
 	handleSetActiveContextLog,
 	logs,
-	onSetActiveLog,
+	hasActions,
 }: TableRowProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const [hasActions, setHasActions] = useState<boolean>(false);
 
 	const currentLog = useMemo(() => logs.find(({ id }) => id === log.id), [
 		logs,
 		log.id,
 	]);
-
-	const handleClickExpand = (): void => {
-		if (!onSetActiveLog) return;
-
-		onSetActiveLog(logs[index]);
-	};
 
 	const { onLogCopy, isLogsExplorerPage } = useCopyLogLink(currentLog?.id);
 
@@ -62,21 +54,8 @@ export default function TableRow({
 		[currentLog, handleSetActiveContextLog],
 	);
 
-	const handleShowActions = (): void => {
-		setHasActions(true);
-	};
-
-	const handleHideActions = (): void => {
-		setHasActions(false);
-	};
-
 	return (
-		<div
-			onClick={handleClickExpand}
-			className="logs-table-row"
-			onMouseEnter={handleShowActions}
-			onMouseLeave={handleHideActions}
-		>
+		<>
 			{tableColumns.map((column) => {
 				if (!column.render) return <td>Empty</td>;
 
@@ -111,6 +90,6 @@ export default function TableRow({
 					customClassName="table-view-log-actions"
 				/>
 			)}
-		</div>
+		</>
 	);
 }

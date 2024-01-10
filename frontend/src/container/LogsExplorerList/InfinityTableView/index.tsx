@@ -82,15 +82,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			[tableColumns, onDragColumns],
 		);
 
-		// const handleClickExpand = useCallback(
-		// 	(log: ILog): void => {
-		// 		if (!onSetActiveLog) return;
-
-		// 		onSetActiveLog(log);
-		// 	},
-		// 	[onSetActiveLog],
-		// );
-
 		const itemContent = useCallback(
 			(index: number, log: Record<string, unknown>): JSX.Element => (
 				<TableRow
@@ -99,15 +90,10 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					log={log}
 					handleSetActiveContextLog={handleSetActiveContextLog}
 					logs={tableViewProps.logs}
-					onSetActiveLog={onSetActiveLog}
+					hasActions
 				/>
 			),
-			[
-				handleSetActiveContextLog,
-				tableColumns,
-				tableViewProps.logs,
-				onSetActiveLog,
-			],
+			[handleSetActiveContextLog, tableColumns, tableViewProps.logs],
 		);
 
 		const tableHeader = useCallback(
@@ -134,6 +120,12 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			[tableColumns, isDarkMode],
 		);
 
+		const handleClickExpand = (index: number): void => {
+			if (!onSetActiveLog) return;
+
+			onSetActiveLog(tableViewProps.logs[index]);
+		};
+
 		return (
 			<>
 				<TableVirtuoso
@@ -155,6 +147,9 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					{...(infitiyTableProps?.onEndReached
 						? { endReached: infitiyTableProps.onEndReached }
 						: {})}
+					onClick={(event: any): void => {
+						handleClickExpand(event.target.parentElement.parentElement.dataset.index);
+					}}
 				/>
 
 				{activeContextLog && (
