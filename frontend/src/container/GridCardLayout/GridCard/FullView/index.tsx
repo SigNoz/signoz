@@ -132,6 +132,8 @@ function FullView({
 				thresholds: widget.thresholds,
 				minTimeScale,
 				maxTimeScale,
+				softMax: widget.softMax,
+				softMin: widget.softMin,
 			});
 
 			setChartOptions(newChartOptions);

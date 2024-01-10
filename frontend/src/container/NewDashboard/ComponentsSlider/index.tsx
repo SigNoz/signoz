@@ -63,6 +63,8 @@ function DashboardGraphSlider(): JSX.Element {
 							panelTypes: name,
 							query: initialQueriesMap.metrics,
 							timePreferance: 'GLOBAL_TIME',
+							softMax: null,
+							softMin: null,
 						},
 					],
 				},

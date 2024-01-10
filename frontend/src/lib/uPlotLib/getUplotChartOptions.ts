@@ -35,6 +35,8 @@ interface GetUPlotChartOptions {
 	fillSpans?: boolean;
 	minTimeScale?: number;
 	maxTimeScale?: number;
+	softMin: number | null;
+	softMax: number | null;
 }
 
 export const getUPlotChartOptions = ({
@@ -51,6 +53,8 @@ export const getUPlotChartOptions = ({
 	setGraphsVisibilityStates,
 	thresholds,
 	fillSpans,
+	softMax,
+	softMin,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -87,11 +91,13 @@ export const getUPlotChartOptions = ({
 				...timeScaleProps,
 			},
 			y: {
-				...getYAxisScale(
+				...getYAxisScale({
 					thresholds,
-					apiResponse?.data.newResult.data.result,
+					series: apiResponse?.data.newResult.data.result,
 					yAxisUnit,
-				),
+					softMax,
+					softMin,
+				}),
 			},
 		},
 		plugins: [

@@ -43,7 +43,7 @@ function DynamicColumnTable({
 				: undefined,
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [columns]);
+	}, [columns, dynamicColumns]);
 
 	const onToggleHandler = (index: number) => (
 		checked: boolean,
