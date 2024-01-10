@@ -59,6 +59,8 @@ export default function NestedMenu({
 	};
 
 	const handleSearchValueChange = useDebouncedFn((event): void => {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
 		const value = event?.target?.value || '';
 
 		if (addColumn && addColumn?.onSearch) {

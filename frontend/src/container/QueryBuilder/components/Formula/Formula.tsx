@@ -2,11 +2,7 @@ import './Formula.styles.scss';
 
 import { Col, Input, Row } from 'antd';
 // ** Components
-import {
-	FilterLabel,
-	ListItemWrapper,
-	ListMarker,
-} from 'container/QueryBuilder/components';
+import { FilterLabel } from 'container/QueryBuilder/components';
 import HavingFilter from 'container/QueryBuilder/filters/Formula/Having/HavingFilter';
 import LimitFilter from 'container/QueryBuilder/filters/Formula/Limit/Limit';
 import OrderByFilter from 'container/QueryBuilder/filters/Formula/OrderBy/OrderByFilter';
@@ -146,15 +142,6 @@ export function Formula({
 
 	return (
 		<Row gutter={[0, 15]}>
-			{/* <Col span={24}>
-				<ListMarker
-					isDisabled={formula.disabled}
-					onDisable={handleToggleDisableFormula}
-					labelName={formula.queryName}
-					index={index}
-				/>
-			</Col> */}
-
 			<QBEntityOptions
 				isCollapsed={isCollapse}
 				entityType="formula"

@@ -5,12 +5,7 @@ import { Fragment, memo, ReactNode, useState } from 'react';
 // ** Types
 import { AdditionalFiltersProps } from './AdditionalFiltersToggler.interfaces';
 // ** Styles
-import {
-	StyledIconClose,
-	StyledIconOpen,
-	StyledInner,
-	StyledLink,
-} from './AdditionalFiltersToggler.styled';
+import { StyledInner, StyledLink } from './AdditionalFiltersToggler.styled';
 
 export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	children,

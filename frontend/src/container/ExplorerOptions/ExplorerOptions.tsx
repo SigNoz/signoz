@@ -46,12 +46,6 @@ function ExplorerOptions({
 						showSearch
 						placeholder="Select a view"
 						optionFilterProp="children"
-						filterOption={(input, option) => (option?.label ?? '').includes(input)}
-						filterSort={(optionA, optionB) =>
-							(optionA?.label ?? '')
-								.toLowerCase()
-								.localeCompare((optionB?.label ?? '').toLowerCase())
-						}
 						options={[
 							{
 								value: '1',

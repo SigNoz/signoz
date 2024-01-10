@@ -17,7 +17,6 @@ import { QueryBuilderProps } from './QueryBuilder.interfaces';
 export const QueryBuilder = memo(function QueryBuilder({
 	config,
 	panelType: newPanelType,
-	actions,
 	filterConfigs = {},
 	queryComponents,
 }: QueryBuilderProps): JSX.Element {
@@ -189,32 +188,6 @@ export const QueryBuilder = memo(function QueryBuilder({
 					</Button>
 				))}
 			</Col>
-
-			{/* <Col span={24}>
-				<Row gutter={[20, 0]}>
-					<Col>
-						<Button
-							disabled={isDisabledQueryButton}
-							type="primary"
-							icon={<PlusOutlined />}
-							onClick={addNewBuilderQuery}
-						>
-							Query
-						</Button>
-					</Col>
-					<Col>
-						<Button
-							disabled={isDisabledFormulaButton}
-							onClick={addNewFormula}
-							type="primary"
-							icon={<PlusOutlined />}
-						>
-							Formula
-						</Button>
-					</Col>
-					{actions}
-				</Row>
-			</Col> */}
 		</Row>
 	);
 });

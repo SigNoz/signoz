@@ -1,15 +1,12 @@
 import './Query.styles.scss';
 
-import { Button, Col, Dropdown, Input, MenuProps, Row, Space } from 'antd';
+import { Col, Input, Row } from 'antd';
 // ** Constants
 import { PANEL_TYPES } from 'constants/queryBuilder';
 // ** Components
 import {
 	AdditionalFiltersToggler,
-	DataSourceDropdown,
 	FilterLabel,
-	ListItemWrapper,
-	ListMarker,
 } from 'container/QueryBuilder/components';
 import {
 	AggregatorFilter,
@@ -24,11 +21,9 @@ import LimitFilter from 'container/QueryBuilder/filters/LimitFilter/LimitFilter'
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { ChevronDown, Eye, EyeOff, MoreHorizontal, Trash2 } from 'lucide-react';
 // ** Hooks
 import { ChangeEvent, memo, ReactNode, useCallback, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
 // ** Types
@@ -36,8 +31,6 @@ import { QueryProps } from './Query.interfaces';
 
 export const Query = memo(function Query({
 	index,
-	isAvailableToDisable,
-	queryVariant,
 	query,
 	filterConfigs,
 	queryComponents,
@@ -52,7 +45,6 @@ export const Query = memo(function Query({
 		isTracePanelType,
 		listOfAdditionalFilters,
 		handleChangeAggregatorAttribute,
-		handleChangeDataSource,
 		handleChangeQueryData,
 		handleChangeOperator,
 		handleDeleteQuery,
