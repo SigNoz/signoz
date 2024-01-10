@@ -37,7 +37,6 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 	font-family: 'SF Mono', monospace;
 	font-size: 14px;
 	font-weight: 400;
-	line-height: 18px;
 	text-align: left;
 	color: #c0c1c3;
 
@@ -52,6 +51,7 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 		-webkit-box-orient: vertical;`};
 
 	line-height: 24px;
+	letter-spacing: -0.07px;
 	padding: 4px;
 
 	cursor: ${({ $isActiveLog, $isReadOnly }): string =>

@@ -9,7 +9,6 @@ import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
-import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';

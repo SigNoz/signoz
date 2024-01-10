@@ -1,18 +1,13 @@
 import { orange } from '@ant-design/colors';
-import { themeColors } from 'constants/theme';
-import getAlphaColor from 'utils/getAlphaColor';
 
 export const getDefaultLogBackground = (
 	isReadOnly?: boolean,
 	isDarkMode?: boolean,
 ): string => {
 	if (isReadOnly) return '';
+	// TODO handle the light mode here
 	return `&:hover {
-    background-color: ${
-					isDarkMode
-						? getAlphaColor(themeColors.white)[10]
-						: getAlphaColor(themeColors.black)[10]
-				};
+    background-color: rgba(171, 189, 255, 0.04);
     }`;
 };
 

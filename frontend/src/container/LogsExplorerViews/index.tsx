@@ -512,13 +512,13 @@ function LogsExplorerViews({
 								<Sliders size={16} />
 							</Button>
 							{/* </Dropdown> */}
-							{/* 
+
 							<ExplorerControlPanel
 								selectedOptionFormat={options.format}
 								isLoading={isFetching}
 								isShowPageSize={false}
 								optionsMenuConfig={config}
-							/> */}
+							/>
 						</div>
 					)}
 				</div>
