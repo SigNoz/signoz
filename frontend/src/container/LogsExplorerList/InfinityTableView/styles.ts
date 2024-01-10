@@ -39,7 +39,7 @@ export const TableRowStyled = styled.tr<{
 
 	&:hover {
 		${TableCellStyled} {
-			${({ $isActiveLog, $isDarkMode }): string =>
+			${({ $isActiveLog }): string =>
 				$isActiveLog
 					? getActiveLogBackground()
 					: `background-color: rgba(171, 189, 255, 0.04);`}
