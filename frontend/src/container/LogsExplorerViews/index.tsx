@@ -1,15 +1,6 @@
 import './LogsExplorerViews.styles.scss';
 
-import { SettingOutlined, UserOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Dropdown,
-	InputNumber,
-	Menu,
-	MenuProps,
-	Radio,
-	Select,
-} from 'antd';
+import { Button, Dropdown, MenuProps, Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import NestedMenu from 'components/NestedMenu/NestedMenu';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -22,9 +13,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
-import ExportPanel from 'container/ExportPanel';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';

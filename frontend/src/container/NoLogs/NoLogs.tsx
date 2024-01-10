@@ -10,7 +10,9 @@ export default function NoLogs(): JSX.Element {
 				<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
 				<Typography className="no-logs-text">
 					No logs yet.{' '}
-					<span className="sub-text">When we receive logs, they'd show up here</span>
+					<span className="sub-text">
+						When we receive logs, they would show up here
+					</span>
 				</Typography>
 
 				<Typography.Link className="send-logs-link">
