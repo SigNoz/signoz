@@ -1,8 +1,6 @@
-import {
-	ExpandAltOutlined,
-	LinkOutlined,
-	MonitorOutlined,
-} from '@ant-design/icons';
+import './useTableView.styles.scss';
+
+import { LinkOutlined, MonitorOutlined } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
@@ -12,7 +10,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useCallback, useMemo } from 'react';
 
-import { ExpandIconWrapper } from '../RawLogView/styles';
+import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
 import { defaultCellStyle, defaultTableStyle } from './config';
 import { TableBodyContent } from './styles';
 import {
@@ -61,22 +59,12 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		linesPerRow,
 		appendTo = 'center',
 		onOpenLogsContext,
-		onClickExpand,
 	} = props;
 	const { isLogsExplorerPage } = useCopyLogLink();
 
 	const flattenLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
 		logs,
 	]);
-
-	const handleClickExpand = useCallback(
-		(index: number): void => {
-			if (!onClickExpand) return;
-
-			onClickExpand(logs[index]);
-		},
-		[logs, onClickExpand],
-	);
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
@@ -99,37 +87,24 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 
 		return [
 			{
-				title: '',
-				dataIndex: 'id',
-				key: 'expand',
-				// https://github.com/ant-design/ant-design/discussions/36886
-				render: (_, item, index): ColumnTypeRender<Record<string, unknown>> => ({
-					props: {
-						style: defaultCellStyle,
-					},
-					children: (
-						<ExpandIconWrapper
-							onClick={(): void => {
-								handleClickExpand(index);
-							}}
-						>
-							<ExpandAltOutlined />
-						</ExpandIconWrapper>
-					),
-				}),
-			},
-			{
 				title: 'timestamp',
 				dataIndex: 'timestamp',
 				key: 'timestamp',
 				// https://github.com/ant-design/ant-design/discussions/36886
-				render: (field): ColumnTypeRender<Record<string, unknown>> => {
+				render: (field, item): ColumnTypeRender<Record<string, unknown>> => {
 					const date =
 						typeof field === 'string'
 							? dayjs(field).format()
 							: dayjs(field / 1e6).format();
 					return {
-						children: <Typography.Paragraph ellipsis>{date}</Typography.Paragraph>,
+						children: (
+							<div className="table-timestamp">
+								<LogStateIndicator type={item.log_level as string} />
+								<Typography.Paragraph ellipsis className="text">
+									{date}
+								</Typography.Paragraph>
+							</div>
+						),
 					};
 				},
 			},
@@ -178,7 +153,6 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		appendTo,
 		linesPerRow,
 		isLogsExplorerPage,
-		handleClickExpand,
 		onOpenLogsContext,
 	]);
 

@@ -94,6 +94,15 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			[tableColumns, onDragColumns],
 		);
 
+		const handleClickExpand = useCallback(
+			(log: ILog): void => {
+				if (!onSetActiveLog) return;
+
+				onSetActiveLog(log);
+			},
+			[onSetActiveLog],
+		);
+
 		const itemContent = useCallback(
 			(index: number, log: Record<string, unknown>): JSX.Element => (
 				<>
@@ -137,13 +146,14 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 
 						return (
 							<TableHeaderCellStyled
+								$isTimestamp={column.key === 'timestamp'}
 								$isDarkMode={isDarkMode}
 								$isDragColumn={isDragColumn}
 								key={column.key}
 								// eslint-disable-next-line react/jsx-props-no-spreading
 								{...(isDragColumn && { className: 'dragHandler' })}
 							>
-								{column.title as string}
+								{(column.title as string).replace(/^\w/, (c) => c.toUpperCase())}
 							</TableHeaderCellStyled>
 						);
 					})}
