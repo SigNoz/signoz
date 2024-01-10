@@ -1,9 +1,6 @@
 import { orange } from '@ant-design/colors';
 
-export const getDefaultLogBackground = (
-	isReadOnly?: boolean,
-	isDarkMode?: boolean,
-): string => {
+export const getDefaultLogBackground = (isReadOnly?: boolean): string => {
 	if (isReadOnly) return '';
 	// TODO handle the light mode here
 	return `&:hover {
