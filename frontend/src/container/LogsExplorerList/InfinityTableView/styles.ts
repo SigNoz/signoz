@@ -50,6 +50,7 @@ export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 	font-weight: 400;
 	line-height: 18px;
 	letter-spacing: -0.07px;
+	background: #0b0c0d;
 	${({ $isTimestamp }): string => ($isTimestamp ? 'padding-left: 24px;' : '')}
 	${({ $isDragColumn }): string => ($isDragColumn ? 'cursor: col-resize;' : '')}
 
