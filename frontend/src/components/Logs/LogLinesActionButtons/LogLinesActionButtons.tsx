@@ -1,7 +1,8 @@
 import './LogLinesActionButtons.styles.scss';
 
-import { LinkOutlined, MonitorOutlined } from '@ant-design/icons';
+import { LinkOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
+import { TextSelect } from 'lucide-react';
 import { MouseEventHandler } from 'react';
 
 export interface LogLinesActionButtonsProps {
@@ -19,7 +20,7 @@ export default function LogLinesActionButtons({
 			<Tooltip title="Show Context">
 				<Button
 					size="small"
-					icon={<MonitorOutlined size={14} />}
+					icon={<TextSelect size={14} />}
 					className="show-context-btn"
 					onClick={handleShowContext}
 				/>
