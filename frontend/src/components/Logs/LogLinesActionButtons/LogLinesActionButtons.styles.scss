@@ -18,7 +18,7 @@
 		display: flex;
 
 		&.active-tab {
-			background-color: #1d212d;
+			background-color: var(--bg-slate-400);
 		}
 	}
 

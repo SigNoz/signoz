@@ -34,7 +34,7 @@
 	align-items: center;
 
 	.selected-log-field-key {
-		color: #7190f9 !important;
+		color: var(--bg-robin-400) !important;
 		font-size: 14px;
 		font-style: normal;
 		font-weight: 400;
@@ -43,7 +43,7 @@
 	}
 
 	.selected-log-value {
-		color: #ad7f58;
+		color: var(--bg-sienna-500);
 		border-radius: 2px;
 		background: rgba(173, 127, 88, 0.08);
 		padding: 0px 2px;
