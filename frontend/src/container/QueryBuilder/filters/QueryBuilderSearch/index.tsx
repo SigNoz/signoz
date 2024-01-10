@@ -183,38 +183,44 @@ function QueryBuilderSearch({
 	}, [sourceKeys]);
 
 	return (
-		<Select
-			getPopupContainer={popupContainer}
-			virtual
-			showSearch
-			tagRender={onTagRender}
-			filterOption={false}
-			autoClearSearchValue={false}
-			mode="multiple"
-			placeholder={placeholder}
-			value={queryTags}
-			searchValue={searchValue}
-			className={className}
-			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-			style={selectStyle}
-			onSearch={handleSearch}
-			onChange={onChangeHandler}
-			onSelect={handleSelect}
-			onDeselect={handleDeselect}
-			onInputKeyDown={onInputKeyDownHandler}
-			notFoundContent={isFetching ? <Spin size="small" /> : null}
+		<div
+			style={{
+				position: 'relative',
+			}}
 		>
-			{options.map((option) => (
-				<Select.Option key={option.label} value={option.value}>
-					<OptionRenderer
-						label={option.label}
-						value={option.value}
-						dataType={option.dataType || ''}
-					/>
-					{option.selected && <StyledCheckOutlined />}
-				</Select.Option>
-			))}
-		</Select>
+			<Select
+				getPopupContainer={popupContainer}
+				virtual
+				showSearch
+				tagRender={onTagRender}
+				filterOption={false}
+				autoClearSearchValue={false}
+				mode="multiple"
+				placeholder={placeholder}
+				value={queryTags}
+				searchValue={searchValue}
+				className={className}
+				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				style={selectStyle}
+				onSearch={handleSearch}
+				onChange={onChangeHandler}
+				onSelect={handleSelect}
+				onDeselect={handleDeselect}
+				onInputKeyDown={onInputKeyDownHandler}
+				notFoundContent={isFetching ? <Spin size="small" /> : null}
+			>
+				{options.map((option) => (
+					<Select.Option key={option.label} value={option.value}>
+						<OptionRenderer
+							label={option.label}
+							value={option.value}
+							dataType={option.dataType || ''}
+						/>
+						{option.selected && <StyledCheckOutlined />}
+					</Select.Option>
+				))}
+			</Select>
+		</div>
 	);
 }
 

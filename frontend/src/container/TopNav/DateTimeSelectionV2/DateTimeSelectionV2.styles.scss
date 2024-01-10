@@ -3,7 +3,7 @@
 		width: 532px;
 		min-height: 326px;
 		border-radius: 4px !important;
-		border: 1px solid var(--Slate-400, #1d212d);
+		border: 1px solid var(--bg-slate-400, #1d212d);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2) !important;
 		padding: 0px !important;
 		border-radius: 4px;
@@ -33,20 +33,20 @@
 			text-align: start;
 			padding: 13.5px 14px;
 			height: 44px;
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--bg-vanilla-400, #c0c1c3);
 			font-size: 14px;
 			font-style: normal;
 			font-weight: 400;
 			line-height: normal;
 			letter-spacing: 0.14px;
-			border-bottom: 1px solid var(--Slate-400, #1d212d);
+			border-bottom: 1px solid var(--bg-slate-400, #1d212d);
 		}
 
 		.date-time-options-btn {
 			text-align: start;
 			padding: 8px 13px;
 			height: 33px;
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--bg-vanilla-400, #c0c1c3);
 			font-size: 14px;
 			font-style: normal;
 			font-weight: 400;
@@ -69,7 +69,7 @@
 		}
 		.time-heading {
 			text-align: left;
-			color: var(--Slate-200, #52575c);
+			color: var(--bg-slate-200, #52575c);
 			font-size: 11px;
 			font-style: normal;
 			font-weight: 500;
@@ -93,9 +93,9 @@
 	display: flex;
 	align-items: center;
 	border-radius: 2px;
-	border: 1px solid var(--Slate-400, #1d212d);
+	border: 1px solid var(--bg-slate-400, #1d212d);
 	box-shadow: none !important;
-	background: var(--Ink-300, #16181d);
+	background: var(--bg-ink-300, #16181d);
 	display: flex;
 	min-width: 192px;
 	height: 34px;
@@ -122,11 +122,11 @@
 	display: flex;
 	flex-direction: row;
 	border-radius: 2px;
-	border: 1px solid var(--Slate-400, #1d212d);
-	background: var(--Ink-300, #16181d);
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	background: var(--bg-ink-300, #16181d);
 
 	.refresh-btn {
-		border-right: 1px solid var(--Slate-400, #1d212d);
+		border-right: 1px solid var(--bg-slate-400, #1d212d);
 	}
 	.ant-btn {
 		display: flex;

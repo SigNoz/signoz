@@ -1,13 +1,12 @@
+import './Query.styles.scss';
+
 import { Col, Input, Row } from 'antd';
 // ** Constants
 import { PANEL_TYPES } from 'constants/queryBuilder';
 // ** Components
 import {
 	AdditionalFiltersToggler,
-	DataSourceDropdown,
 	FilterLabel,
-	ListItemWrapper,
-	ListMarker,
 } from 'container/QueryBuilder/components';
 import {
 	AggregatorFilter,
@@ -23,29 +22,29 @@ import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearc
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 // ** Hooks
-import { ChangeEvent, memo, ReactNode, useCallback } from 'react';
+import { ChangeEvent, memo, ReactNode, useCallback, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { transformToUpperCase } from 'utils/transformToUpperCase';
 
+import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
 // ** Types
 import { QueryProps } from './Query.interfaces';
 
 export const Query = memo(function Query({
 	index,
-	isAvailableToDisable,
-	queryVariant,
 	query,
 	filterConfigs,
 	queryComponents,
 }: QueryProps): JSX.Element {
 	const { panelType } = useQueryBuilder();
+
+	const [isCollapse, setIsCollapsed] = useState(false);
+
 	const {
 		operators,
 		isMetricsDataSource,
 		isTracePanelType,
 		listOfAdditionalFilters,
 		handleChangeAggregatorAttribute,
-		handleChangeDataSource,
 		handleChangeQueryData,
 		handleChangeOperator,
 		handleDeleteQuery,
@@ -110,6 +109,10 @@ export const Query = memo(function Query({
 		},
 		[handleChangeQueryData],
 	);
+
+	const handleToggleCollapsQuery = (): void => {
+		setIsCollapsed(!isCollapse);
+	};
 
 	const renderOrderByFilter = useCallback((): ReactNode => {
 		if (queryComponents?.renderOrderBy) {
@@ -257,31 +260,59 @@ export const Query = memo(function Query({
 	]);
 
 	return (
-		<ListItemWrapper onDelete={handleDeleteQuery}>
-			<Col span={24}>
-				<Row align="middle" gutter={[5, 11]}>
-					<Col>
-						<ListMarker
-							isDisabled={query.disabled}
-							onDisable={handleToggleDisableQuery}
-							labelName={query.queryName}
-							index={index}
-							isAvailableToDisable={isAvailableToDisable}
-						/>
+		<Row gutter={[0, 12]}>
+			<QBEntityOptions
+				isCollapsed={isCollapse}
+				entityType="query"
+				entityData={query}
+				onToggleVisibility={handleToggleDisableQuery}
+				onDelete={handleDeleteQuery}
+				onCollapseEntity={handleToggleCollapsQuery}
+			/>
+
+			{!isCollapse && (
+				<Row gutter={[0, 12]} className="qb-container">
+					<Col span={24}>
+						<Row align="middle" gutter={[5, 11]}>
+							{isMetricsDataSource && (
+								<Col span={12}>
+									<Row gutter={[11, 5]}>
+										<Col flex="5.93rem">
+											<OperatorsSelect
+												value={query.aggregateOperator}
+												onChange={handleChangeOperator}
+												operators={operators}
+											/>
+										</Col>
+										<Col flex="1 1 12.5rem">
+											<AggregatorFilter
+												onChange={handleChangeAggregatorAttribute}
+												query={query}
+											/>
+										</Col>
+									</Row>
+								</Col>
+							)}
+							<Col flex="1 1 20rem">
+								<Row gutter={[11, 5]}>
+									{isMetricsDataSource && (
+										<Col>
+											<FilterLabel label="WHERE" />
+										</Col>
+									)}
+									<Col flex="1" className="qb-search-container">
+										<QueryBuilderSearch
+											query={query}
+											onChange={handleChangeTagFilters}
+											whereClauseConfig={filterConfigs?.filters}
+										/>
+									</Col>
+								</Row>
+							</Col>
+						</Row>
 					</Col>
-					<Col>
-						{queryVariant === 'dropdown' ? (
-							<DataSourceDropdown
-								onChange={handleChangeDataSource}
-								value={query.dataSource}
-								style={{ minWidth: '5.625rem' }}
-							/>
-						) : (
-							<FilterLabel label={transformToUpperCase(query.dataSource)} />
-						)}
-					</Col>
-					{isMetricsDataSource && (
-						<Col span={12}>
+					{!isMetricsDataSource && (
+						<Col span={11}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
 									<OperatorsSelect
@@ -292,92 +323,59 @@ export const Query = memo(function Query({
 								</Col>
 								<Col flex="1 1 12.5rem">
 									<AggregatorFilter
-										onChange={handleChangeAggregatorAttribute}
 										query={query}
+										onChange={handleChangeAggregatorAttribute}
+										disabled={
+											panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE
+										}
 									/>
 								</Col>
 							</Row>
 						</Col>
 					)}
-					<Col flex="1 1 20rem">
+					<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
 						<Row gutter={[11, 5]}>
-							{isMetricsDataSource && (
-								<Col>
-									<FilterLabel label="WHERE" />
-								</Col>
-							)}
-							<Col flex="1">
-								<QueryBuilderSearch
-									query={query}
-									onChange={handleChangeTagFilters}
-									whereClauseConfig={filterConfigs?.filters}
+							<Col flex="5.93rem">
+								<FilterLabel
+									label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
 								/>
+							</Col>
+							<Col flex="1 1 12.5rem">
+								{panelType === PANEL_TYPES.VALUE ? (
+									<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+								) : (
+									<GroupByFilter
+										disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+										query={query}
+										onChange={handleChangeGroupByKeys}
+									/>
+								)}
 							</Col>
 						</Row>
 					</Col>
-				</Row>
-			</Col>
-			{!isMetricsDataSource && (
-				<Col span={11}>
-					<Row gutter={[11, 5]}>
-						<Col flex="5.93rem">
-							<OperatorsSelect
-								value={query.aggregateOperator}
-								onChange={handleChangeOperator}
-								operators={operators}
-							/>
+					{!isTracePanelType && (
+						<Col span={24}>
+							<AdditionalFiltersToggler
+								listOfAdditionalFilter={listOfAdditionalFilters}
+							>
+								<Row gutter={[0, 11]} justify="space-between">
+									{renderAdditionalFilters()}
+								</Row>
+							</AdditionalFiltersToggler>
 						</Col>
-						<Col flex="1 1 12.5rem">
-							<AggregatorFilter
-								query={query}
-								onChange={handleChangeAggregatorAttribute}
-								disabled={
-									panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE
-								}
+					)}
+					{panelType !== PANEL_TYPES.LIST && panelType !== PANEL_TYPES.TRACE && (
+						<Row style={{ width: '100%' }}>
+							<Input
+								onChange={handleChangeQueryLegend}
+								size="middle"
+								value={query.legend}
+								addonBefore="Legend Format"
 							/>
-						</Col>
-					</Row>
-				</Col>
-			)}
-			<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
-				<Row gutter={[11, 5]}>
-					<Col flex="5.93rem">
-						<FilterLabel
-							label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
-						/>
-					</Col>
-					<Col flex="1 1 12.5rem">
-						{panelType === PANEL_TYPES.VALUE ? (
-							<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
-						) : (
-							<GroupByFilter
-								disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-								query={query}
-								onChange={handleChangeGroupByKeys}
-							/>
-						)}
-					</Col>
-				</Row>
-			</Col>
-			{!isTracePanelType && (
-				<Col span={24}>
-					<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
-						<Row gutter={[0, 11]} justify="space-between">
-							{renderAdditionalFilters()}
 						</Row>
-					</AdditionalFiltersToggler>
-				</Col>
-			)}
-			{panelType !== PANEL_TYPES.LIST && panelType !== PANEL_TYPES.TRACE && (
-				<Row style={{ width: '100%' }}>
-					<Input
-						onChange={handleChangeQueryLegend}
-						size="middle"
-						value={query.legend}
-						addonBefore="Legend Format"
-					/>
+					)}
 				</Row>
 			)}
-		</ListItemWrapper>
+		</Row>
 	);
 });
