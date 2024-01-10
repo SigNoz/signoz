@@ -26,6 +26,7 @@ import { ILog } from 'types/api/logs/log';
 // components
 import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
+import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
 import LogStateIndicator, {
 	LogType,
 } from '../LogStateIndicator/LogStateIndicator';
@@ -195,25 +196,10 @@ function ListLogView({
 			</div>
 
 			{hasActionButtons && (
-				<div className="log-action-buttons">
-					<Tooltip title="Show Context">
-						<Button
-							onClick={handleShowContext}
-							style={{ color: grey[1] }}
-							className="context-btn"
-							icon={<MonitorOutlined />}
-						/>
-					</Tooltip>
-					<Tooltip title="Copy Link">
-						<Button
-							size="small"
-							onClick={onLogCopy}
-							className="copy-link-btn"
-							style={{ color: grey[1] }}
-							icon={<LinkOutlined />}
-						/>
-					</Tooltip>
-				</div>
+				<LogLinesActionButtons
+					handleShowContext={handleShowContext}
+					onLogCopy={onLogCopy}
+				/>
 			)}
 			{activeContextLog && (
 				<LogsExplorerContext
