@@ -120,7 +120,6 @@ function ListLogView({
 	);
 
 	const handleDetailedView = useCallback(() => {
-		console.log('here');
 		onSetActiveLog(logData);
 	}, [logData, onSetActiveLog]);
 
