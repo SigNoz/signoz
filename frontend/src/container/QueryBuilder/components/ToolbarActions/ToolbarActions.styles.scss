@@ -5,8 +5,8 @@
 	.left-toolbar-query-actions {
 		display: flex;
 		border-radius: 2px;
-		border: 1px solid var(--Slate-400, #1d212d);
-		background: var(--Ink-300, #16181d);
+		border: 1px solid var(--bg-slate-400, #1d212d);
+		background: var(--bg-ink-300, #16181d);
 		flex-direction: row;
 
 		.ant-btn {
@@ -27,7 +27,7 @@
 			}
 		}
 		.action-btn + .action-btn {
-			border-left: 1px solid var(--Slate-400, #1d212d);
+			border-left: 1px solid var(--bg-slate-400, #1d212d);
 		}
 	}
 
