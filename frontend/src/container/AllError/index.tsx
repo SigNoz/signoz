@@ -162,16 +162,27 @@ function AllErrors(): JSX.Element {
 				filterKey,
 				filterValue || '',
 			);
-			history.replace(
-				`${pathname}?${createQueryParams({
-					order: updatedOrder,
-					offset: getUpdatedOffset,
-					orderParam: getUpdatedParams,
-					pageSize: getUpdatedPageSize,
-					exceptionType: exceptionFilterValue,
-					serviceName: serviceFilterValue,
-				})}`,
-			);
+
+			const queryParams = {
+				order: updatedOrder,
+				offset: getUpdatedOffset,
+				orderParam: getUpdatedParams,
+				pageSize: getUpdatedPageSize,
+			};
+
+			if (exceptionFilterValue && exceptionFilterValue !== 'undefined') {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				queryParams.exceptionType = exceptionFilterValue;
+			}
+
+			if (serviceFilterValue && serviceFilterValue !== 'undefined') {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				queryParams.serviceName = serviceFilterValue;
+			}
+
+			history.replace(`${pathname}?${createQueryParams(queryParams)}`);
 			confirm();
 		},
 		[
@@ -198,8 +209,10 @@ function AllErrors(): JSX.Element {
 					<Input
 						placeholder={placeholder}
 						value={selectedKeys[0]}
-						onChange={(e): void =>
-							setSelectedKeys(e.target.value ? [e.target.value] : [])
+						onChange={
+							(e): void => setSelectedKeys(e.target.value ? [e.target.value] : [])
+
+							// Need to fix this logic, when the value in empty, it's setting undefined string as value
 						}
 						allowClear
 						defaultValue={getDefaultFilterValue(
