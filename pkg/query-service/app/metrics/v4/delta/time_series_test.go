@@ -216,7 +216,7 @@ func TestPrepareTimeseriesQuery(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			query, err := prepareMetricQueryDeltaTimeSeries(
+			query, err := PrepareMetricQueryDeltaTimeSeries(
 				testCase.start,
 				testCase.end,
 				testCase.builderQuery.StepInterval,

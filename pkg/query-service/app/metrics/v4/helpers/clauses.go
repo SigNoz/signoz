@@ -1,4 +1,4 @@
-package cumulative
+package helpers
 
 import (
 	"fmt"
@@ -18,8 +18,8 @@ func groupingSets(tags ...string) string {
 	}
 }
 
-// groupingSetsByAttributeKeyTags returns a string of comma separated tags for group by clause
-func groupingSetsByAttributeKeyTags(tags ...v3.AttributeKey) string {
+// GroupingSetsByAttributeKeyTags returns a string of comma separated tags for group by clause
+func GroupingSetsByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
@@ -27,8 +27,8 @@ func groupingSetsByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	return groupingSets(groupTags...)
 }
 
-// groupBy returns a string of comma separated tags for group by clause
-func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
+// GroupByAttributeKeyTags returns a string of comma separated tags for group by clause
+func GroupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
@@ -37,9 +37,9 @@ func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	return strings.Join(groupTags, ", ")
 }
 
-// orderBy returns a string of comma separated tags for order by clause
+// OrderByAttributeKeyTags returns a string of comma separated tags for order by clause
 // if the order is not specified, it defaults to ASC
-func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string {
+func OrderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string {
 	var orderBy []string
 	for _, tag := range tags {
 		found := false

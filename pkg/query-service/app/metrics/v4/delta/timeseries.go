@@ -3,18 +3,18 @@ package delta
 import (
 	"fmt"
 
-	v4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
+	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-// prepareTimeAggregationSubQueryTimeSeries builds the sub-query to be used for temporal aggregation
+// prepareTimeAggregationSubQuery builds the sub-query to be used for temporal aggregation
 func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	var subQuery string
 
-	timeSeriesSubQuery, err := v4.PrepareTimeseriesFilterQuery(mq)
+	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(mq)
 	if err != nil {
 		return "", err
 	}
@@ -76,8 +76,8 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 	return subQuery, nil
 }
 
-// prepareMetricQueryDeltaTimeSeries builds the query to be used for fetching metrics
-func prepareMetricQueryDeltaTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+// PrepareMetricQueryDeltaTimeSeries builds the query to be used for fetching metrics
+func PrepareMetricQueryDeltaTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	var query string
 
@@ -86,9 +86,9 @@ func prepareMetricQueryDeltaTimeSeries(start, end, step int64, mq *v3.BuilderQue
 		return "", err
 	}
 
-	groupBy := groupingSetsByAttributeKeyTags(mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
-	selectLabels := groupByAttributeKeyTags(mq.GroupBy...)
+	groupBy := helpers.GroupingSetsByAttributeKeyTags(mq.GroupBy...)
+	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
+	selectLabels := helpers.GroupByAttributeKeyTags(mq.GroupBy...)
 
 	queryTmpl :=
 		"SELECT %s," +

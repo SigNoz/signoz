@@ -101,7 +101,7 @@ func TestPrepareTableQuery(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			query, err := prepareMetricQueryDeltaTable(
+			query, err := PrepareMetricQueryDeltaTable(
 				testCase.start,
 				testCase.end,
 				testCase.builderQuery.StepInterval,

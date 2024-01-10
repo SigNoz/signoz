@@ -3,11 +3,12 @@ package delta
 import (
 	"fmt"
 
+	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-// prepareMetricQueryDeltaTable builds the query to be used for fetching metrics
-func prepareMetricQueryDeltaTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+// PrepareMetricQueryDeltaTable builds the query to be used for fetching metrics
+func PrepareMetricQueryDeltaTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 	var query string
 
 	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(start, end, step, mq)
@@ -15,9 +16,9 @@ func prepareMetricQueryDeltaTable(start, end, step int64, mq *v3.BuilderQuery) (
 		return "", err
 	}
 
-	groupBy := groupingSetsByAttributeKeyTags(mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
-	selectLabels := groupByAttributeKeyTags(mq.GroupBy...)
+	groupBy := helpers.GroupingSetsByAttributeKeyTags(mq.GroupBy...)
+	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
+	selectLabels := helpers.GroupByAttributeKeyTags(mq.GroupBy...)
 
 	queryTmpl :=
 		"SELECT %s," +

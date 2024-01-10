@@ -462,6 +462,15 @@ const (
 	TimeAggregationIncrease      TimeAggregation = "increase"
 )
 
+func (t TimeAggregation) IsRateOperator() bool {
+	switch t {
+	case TimeAggregationRate, TimeAggregationIncrease:
+		return true
+	default:
+		return false
+	}
+}
+
 type SpaceAggregation string
 
 const (
@@ -500,6 +509,7 @@ type BuilderQuery struct {
 	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
 	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
 	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
+	Quantile           float64           `json:"quantile,omitempty"`
 	Functions          []Function        `json:"functions,omitempty"`
 }
 
