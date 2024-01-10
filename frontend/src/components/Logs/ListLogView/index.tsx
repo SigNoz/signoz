@@ -1,35 +1,31 @@
-import { blue, grey, orange } from '@ant-design/colors';
-import {
-	CopyFilled,
-	ExpandAltOutlined,
-	LinkOutlined,
-	MonitorOutlined,
-} from '@ant-design/icons';
+import './ListLogView.styles.scss';
+
+import { blue } from '@ant-design/colors';
 import Convert from 'ansi-to-html';
-import { Button, Divider, Row, Typography } from 'antd';
+import { Typography } from 'antd';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
-import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { useCallback, useMemo } from 'react';
-import { useCopyToClipboard } from 'react-use';
+import { MouseEventHandler, useCallback, useMemo, useState } from 'react';
 // interfaces
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
 // components
 import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
-import CopyClipboardHOC from '../CopyClipboardHOC';
+import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
+import LogStateIndicator, {
+	LogType,
+} from '../LogStateIndicator/LogStateIndicator';
 // styles
 import {
 	Container,
 	LogContainer,
 	LogText,
-	SelectedLog,
 	Text,
 	TextContainer,
 } from './styles';
@@ -55,12 +51,10 @@ function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 
 	return (
 		<TextContainer>
-			<Text ellipsis type="secondary">
-				{`${fieldKey}: `}
+			<Text ellipsis type="secondary" className="log-field-key">
+				{`${fieldKey} : `}
 			</Text>
-			<CopyClipboardHOC textToCopy={fieldValue}>
-				<LogText dangerouslySetInnerHTML={html} />
-			</CopyClipboardHOC>
+			<LogText dangerouslySetInnerHTML={html} className="log-value" />
 		</TextContainer>
 	);
 }
@@ -71,23 +65,23 @@ function LogSelectedField({
 	onAddToQuery,
 }: LogSelectedFieldProps): JSX.Element {
 	return (
-		<SelectedLog>
+		<div className="log-selected-fields">
 			<AddToQueryHOC
 				fieldKey={fieldKey}
 				fieldValue={fieldValue}
 				onAddToQuery={onAddToQuery}
 			>
 				<Typography.Text>
-					<span style={{ color: blue[4] }}>{fieldKey}</span>
+					<span style={{ color: blue[4] }} className="selected-log-field-key">
+						{fieldKey}
+					</span>
 				</Typography.Text>
 			</AddToQueryHOC>
-			<CopyClipboardHOC textToCopy={fieldValue}>
-				<Typography.Text ellipsis>
-					<span>{': '}</span>
-					<span style={{ color: orange[6] }}>{fieldValue || "''"}</span>
-				</Typography.Text>
-			</CopyClipboardHOC>
-		</SelectedLog>
+			<Typography.Text ellipsis className="selected-log-kv">
+				<span className="selected-log-field-key">{': '}</span>
+				<span className="selected-log-value">{fieldValue || "''"}</span>
+			</Typography.Text>
+		</div>
 	);
 }
 
@@ -106,8 +100,7 @@ function ListLogView({
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
-	const [, setCopy] = useCopyToClipboard();
-	const { notifications } = useNotifications();
+	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		logData.id,
 	);
@@ -117,20 +110,28 @@ function ListLogView({
 		onClearActiveLog: handleClearActiveContextLog,
 	} = useActiveLog();
 
+	const handlerClearActiveContextLog: MouseEventHandler<HTMLElement> = useCallback(
+		(event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			handleClearActiveContextLog();
+		},
+		[handleClearActiveContextLog],
+	);
+
 	const handleDetailedView = useCallback(() => {
+		console.log('here');
 		onSetActiveLog(logData);
 	}, [logData, onSetActiveLog]);
 
-	const handleShowContext = useCallback(() => {
-		handleSetActiveContextLog(logData);
-	}, [logData, handleSetActiveContextLog]);
-
-	const handleCopyJSON = (): void => {
-		setCopy(JSON.stringify(logData, null, 2));
-		notifications.success({
-			message: 'Copied to clipboard',
-		});
-	};
+	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
+		(event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			handleSetActiveContextLog(logData);
+		},
+		[logData, handleSetActiveContextLog],
+	);
 
 	const updatedSelecedFields = useMemo(
 		() => selectedFields.filter((e) => e.name !== 'id'),
@@ -145,82 +146,59 @@ function ListLogView({
 		[flattenLogData.timestamp],
 	);
 
+	const logType = logData?.attributes_string?.log_level || LogType.INFO;
+
+	const handleMouseEnter = (): void => {
+		setHasActionButtons(true);
+	};
+
+	const handleMouseLeave = (): void => {
+		setHasActionButtons(false);
+	};
+
 	return (
-		<Container $isActiveLog={isHighlighted}>
-			<div>
-				<LogContainer>
-					<>
-						<LogGeneralField fieldKey="log" fieldValue={flattenLogData.body} />
-						{flattenLogData.stream && (
-							<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
-						)}
-						<LogGeneralField fieldKey="timestamp" fieldValue={timestampValue} />
-					</>
-				</LogContainer>
+		<Container
+			$isActiveLog={isHighlighted}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
+			onClick={handleDetailedView}
+		>
+			<div className="log-line">
+				<LogStateIndicator type={logType} />
 				<div>
-					{updatedSelecedFields.map((field) =>
-						isValidLogField(flattenLogData[field.name] as never) ? (
-							<LogSelectedField
-								key={field.name}
-								fieldKey={field.name}
-								fieldValue={flattenLogData[field.name] as never}
-								onAddToQuery={onAddToQuery}
-							/>
-						) : null,
-					)}
+					<LogContainer>
+						<LogGeneralField fieldKey="Log" fieldValue={flattenLogData.body} />
+						{flattenLogData.stream && (
+							<LogGeneralField fieldKey="Stream" fieldValue={flattenLogData.stream} />
+						)}
+						<LogGeneralField fieldKey="Timestamp" fieldValue={timestampValue} />
+
+						{updatedSelecedFields.map((field) =>
+							isValidLogField(flattenLogData[field.name] as never) ? (
+								<LogSelectedField
+									key={field.name}
+									fieldKey={field.name}
+									fieldValue={flattenLogData[field.name] as never}
+									onAddToQuery={onAddToQuery}
+								/>
+							) : null,
+						)}
+					</LogContainer>
 				</div>
 			</div>
-			<Divider style={{ padding: 0, margin: '0.4rem 0', opacity: 0.5 }} />
-			<Row>
-				<Button
-					size="small"
-					type="text"
-					onClick={handleDetailedView}
-					style={{ color: blue[5] }}
-					icon={<ExpandAltOutlined />}
-				>
-					View Details
-				</Button>
-				<Button
-					size="small"
-					type="text"
-					onClick={handleCopyJSON}
-					style={{ color: grey[1] }}
-					icon={<CopyFilled />}
-				>
-					Copy JSON
-				</Button>
 
-				{isLogsExplorerPage && (
-					<>
-						<Button
-							size="small"
-							type="text"
-							onClick={handleShowContext}
-							style={{ color: grey[1] }}
-							icon={<MonitorOutlined />}
-						>
-							Show in Context
-						</Button>
-						<Button
-							size="small"
-							type="text"
-							onClick={onLogCopy}
-							style={{ color: grey[1] }}
-							icon={<LinkOutlined />}
-						>
-							Copy Link
-						</Button>
-					</>
-				)}
-
-				{activeContextLog && (
-					<LogsExplorerContext
-						log={activeContextLog}
-						onClose={handleClearActiveContextLog}
-					/>
-				)}
-			</Row>
+			{hasActionButtons && isLogsExplorerPage && (
+				<LogLinesActionButtons
+					handleShowContext={handleShowContext}
+					onLogCopy={onLogCopy}
+				/>
+			)}
+			{activeContextLog && (
+				<LogsExplorerContext
+					log={activeContextLog}
+					onClose={handlerClearActiveContextLog}
+				/>
+			)}
 		</Container>
 	);
 }
