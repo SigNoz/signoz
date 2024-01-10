@@ -1,49 +1,71 @@
 import './ToolbarActions.styles.scss';
 
 import { Button, Switch, Typography } from 'antd';
+import cx from 'classnames';
 import { Atom, MousePointerSquare, Terminal } from 'lucide-react';
 
 interface LeftToolbarActionsProps {
+	items: any;
 	selectedView: string;
 	onToggleHistrogramVisibility: () => void;
+	onChangeSelectedView: (view: string) => void;
 	showHistogram: boolean;
 }
 
+const activeTab = 'active-tab';
+const actionBtn = 'action-btn';
+const queryBuilder = 'query-builder';
+
 export default function LeftToolbarActions({
+	items,
 	selectedView,
 	onToggleHistrogramVisibility,
+	onChangeSelectedView,
 	showHistogram,
 }: LeftToolbarActionsProps): JSX.Element {
+	const { clickhouse, search, queryBuilder: QB } = items;
+
 	return (
 		<div className="left-toolbar">
 			<div className="left-toolbar-query-actions">
 				<Button
-					value="search"
-					// eslint-disable-next-line sonarjs/no-duplicate-string
-					className={
-						// eslint-disable-next-line sonarjs/no-duplicate-string
-						selectedView === 'search' ? 'active-tab action-btn' : 'action-btn'
-					}
+					disabled={search.disabled}
+					className={cx(
+						'search',
+						actionBtn,
+						selectedView === 'search' ? activeTab : '',
+					)}
+					onClick={(): void => onChangeSelectedView('search')}
 				>
 					<MousePointerSquare size={14} />
 				</Button>
 				<Button
-					value="query-builder"
-					className={
-						selectedView === 'query-builder' ? 'active-tab action-btn' : 'action-btn'
-					}
+					disabled={QB.disabled}
+					className={cx(
+						queryBuilder,
+						actionBtn,
+						selectedView === queryBuilder ? activeTab : '',
+					)}
+					onClick={(): void => onChangeSelectedView(queryBuilder)}
 				>
 					<Atom size={14} />
 				</Button>
-				<Button
-					value="clickhouse"
-					className={
-						selectedView === 'clickhouse' ? 'active-tab action-btn' : 'action-btn'
-					}
-				>
-					<Terminal size={14} />
-				</Button>
+
+				{clickhouse?.show && (
+					<Button
+						disabled={clickhouse.disabled}
+						className={cx(
+							'clickhouse',
+							actionBtn,
+							selectedView === 'clickhouse' ? activeTab : '',
+						)}
+						onClick={(): void => onChangeSelectedView('clickhouse')}
+					>
+						<Terminal size={14} />
+					</Button>
+				)}
 			</div>
+
 			<div className="histogram-view-controller">
 				<Typography>Histogram</Typography>
 				<Switch

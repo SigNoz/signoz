@@ -1,15 +1,11 @@
 import { Col, Row, Typography } from 'antd';
+import { MinusSquare, PlusSquare } from 'lucide-react';
 import { Fragment, memo, ReactNode, useState } from 'react';
 
 // ** Types
 import { AdditionalFiltersProps } from './AdditionalFiltersToggler.interfaces';
 // ** Styles
-import {
-	StyledIconClose,
-	StyledIconOpen,
-	StyledInner,
-	StyledLink,
-} from './AdditionalFiltersToggler.styled';
+import { StyledInner, StyledLink } from './AdditionalFiltersToggler.styled';
 
 export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	children,
@@ -44,8 +40,13 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	return (
 		<Row>
 			<Col span={24}>
-				<StyledInner onClick={handleToggleOpenFilters}>
-					{isOpenedFilters ? <StyledIconClose /> : <StyledIconOpen />}
+				<StyledInner onClick={handleToggleOpenFilters} style={{ marginBottom: 0 }}>
+					{isOpenedFilters ? (
+						<MinusSquare size={14} fill="#4E74F8" />
+					) : (
+						<PlusSquare size={14} fill="#4E74F8" />
+					)}
+
 					{!isOpenedFilters && (
 						<Typography>Add conditions for {filtersTexts}</Typography>
 					)}
