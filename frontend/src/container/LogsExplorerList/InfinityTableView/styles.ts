@@ -33,12 +33,19 @@ export const TableRowStyled = styled.tr<{
 	cursor: pointer;
 	position: relative;
 
+	.log-line-action-buttons {
+		display: none;
+	}
+
 	&:hover {
 		${TableCellStyled} {
 			${({ $isActiveLog, $isDarkMode }): string =>
 				$isActiveLog
 					? getActiveLogBackground()
 					: `background-color: rgba(171, 189, 255, 0.04);`}
+		}
+		.log-line-action-buttons {
+			display: flex;
 		}
 	}
 `;
