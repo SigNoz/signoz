@@ -20,10 +20,10 @@ export const RawLogViewContainer = styled(Row)<{
 
 	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
 
-	${({ $isReadOnly, $isDarkMode, $isActiveLog }): string =>
+	${({ $isReadOnly, $isActiveLog }): string =>
 		$isActiveLog
 			? getActiveLogBackground()
-			: getDefaultLogBackground($isReadOnly, $isDarkMode)}
+			: getDefaultLogBackground($isReadOnly)}
 `;
 
 export const ExpandIconWrapper = styled(Col)`
