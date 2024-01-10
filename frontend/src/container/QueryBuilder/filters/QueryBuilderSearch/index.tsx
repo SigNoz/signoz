@@ -150,6 +150,10 @@ function QueryBuilderSearch({
 			(item) => item.key as BaseAutocompleteData,
 		);
 
+		if ((tags?.length || 0) < 1) {
+			return;
+		}
+
 		initialTagFilters.items = tags.map((tag, index) => {
 			const isJsonTrue = query.filters?.items[index]?.key?.isJSON;
 
