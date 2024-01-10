@@ -7,10 +7,12 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	cloneElement,
+	MouseEventHandler,
 	ReactElement,
 	ReactNode,
 	useCallback,
 	useMemo,
+	useState,
 } from 'react';
 import { ILog } from 'types/api/logs/log';
 
@@ -34,31 +36,47 @@ export default function TableRow({
 	onSetActiveLog,
 }: TableRowProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
+	const [hasActions, setHasActions] = useState<boolean>(false);
 
 	const currentLog = useMemo(() => logs.find(({ id }) => id === log.id), [
 		logs,
 		log.id,
 	]);
 
-	// const handleClickExpand = useCallback(
-	// 	(log: ILog): void => {
-	// 		if (!onSetActiveLog) return;
+	const handleClickExpand = (): void => {
+		if (!onSetActiveLog) return;
 
-	// 		onSetActiveLog(log);
-	// 	},
-	// 	[onSetActiveLog],
-	// );
+		onSetActiveLog(logs[index]);
+	};
 
 	const { onLogCopy, isLogsExplorerPage } = useCopyLogLink(currentLog?.id);
 
-	const handleShowContext = useCallback(() => {
-		if (!handleSetActiveContextLog || !currentLog) return;
+	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
+		(event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			if (!handleSetActiveContextLog || !currentLog) return;
 
-		handleSetActiveContextLog(currentLog);
-	}, [currentLog, handleSetActiveContextLog]);
+			handleSetActiveContextLog(currentLog);
+		},
+		[currentLog, handleSetActiveContextLog],
+	);
+
+	const handleShowActions = (): void => {
+		setHasActions(true);
+	};
+
+	const handleHideActions = (): void => {
+		setHasActions(false);
+	};
 
 	return (
-		<>
+		<tr
+			onClick={handleClickExpand}
+			className="logs-table-row"
+			onMouseEnter={handleShowActions}
+			onMouseLeave={handleHideActions}
+		>
 			{tableColumns.map((column) => {
 				if (!column.render) return <td>Empty</td>;
 
@@ -86,15 +104,17 @@ export default function TableRow({
 					</TableCellStyled>
 				);
 			})}
-			<td>
-				{isLogsExplorerPage && (
-					<LogLinesActionButtons
-						handleShowContext={handleShowContext}
-						onLogCopy={onLogCopy}
-						customClassName="table-view-log-actions"
-					/>
-				)}
-			</td>
-		</>
+			{hasActions && (
+				<td>
+					{isLogsExplorerPage && (
+						<LogLinesActionButtons
+							handleShowContext={handleShowContext}
+							onLogCopy={onLogCopy}
+							customClassName="table-view-log-actions"
+						/>
+					)}
+				</td>
+			)}
+		</tr>
 	);
 }
