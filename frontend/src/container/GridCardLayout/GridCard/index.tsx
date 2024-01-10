@@ -135,8 +135,8 @@ function GridCardGraph({
 				thresholds: widget.thresholds,
 				minTimeScale,
 				maxTimeScale,
-				softMax: widget.softMax,
-				softMin: widget.softMin,
+				softMax: widget.softMax === undefined ? null : widget.softMax,
+				softMin: widget.softMin === undefined ? null : widget.softMin,
 			}),
 		[
 			widget?.id,
