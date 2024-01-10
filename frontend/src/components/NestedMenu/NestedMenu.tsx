@@ -3,11 +3,12 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './NestedMenu.styles.scss';
 
-import { Button, Input, InputNumber } from 'antd';
+import { Input, InputNumber, Tooltip } from 'antd';
 import cx from 'classnames';
+import { LogViewMode } from 'container/LogsTable';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { Check, Cross, Minus, Plus, X } from 'lucide-react';
+import { Check, Minus, Plus, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 interface NestedMenuProps {
@@ -25,21 +26,13 @@ export default function NestedMenu({
 }: NestedMenuProps): JSX.Element {
 	const { maxLines, format, addColumn } = config;
 	const [selectedItem, setSelectedItem] = useState(selectedOptionFormat);
-
 	const maxLinesNumber = (maxLines?.value as number) || 1;
-
 	const [maxLinesPerRow, setMaxLinesPerRow] = useState<number>(maxLinesNumber);
 
 	const [addNewColumn, setAddNewColumn] = useState(false);
 
-	console.log({
-		title,
-		items,
-		selectedOptionFormat,
-	});
-
 	const onChange = useCallback(
-		(key) => {
+		(key: LogViewMode) => {
 			if (!format) return;
 
 			format.onChange(key);
@@ -47,9 +40,10 @@ export default function NestedMenu({
 		[format],
 	);
 
-	const handleMenuItemClick = (key): void => {
+	const handleMenuItemClick = (key: LogViewMode): void => {
 		setSelectedItem(key);
 		onChange(key);
+		setAddNewColumn(false);
 	};
 
 	const incrementMaxLinesPerRow = (): void => {
@@ -65,23 +59,27 @@ export default function NestedMenu({
 	};
 
 	const handleSearchValueChange = useDebouncedFn((event): void => {
-		console.log('vaklue', event?.target?.value);
-
 		const value = event?.target?.value || '';
 
-		if (addColumn) {
+		if (addColumn && addColumn?.onSearch) {
 			addColumn?.onSearch(value);
 		}
 	}, 300);
 
-	const handleAddNewColumn = (): void => {
+	const handleToggleAddNewColumn = (): void => {
 		setAddNewColumn(!addNewColumn);
 	};
 
-	console.log('optionsMenuConfig', config);
+	// console.log('optionsMenuConfig', config);
 
-	const handleLinesPerRowChange = (maxLinesPerRow: number): void => {
-		setMaxLinesPerRow(maxLinesPerRow);
+	const handleLinesPerRowChange = (maxLinesPerRow: number | null): void => {
+		if (
+			maxLinesPerRow &&
+			Number.isInteger(maxLinesNumber) &&
+			maxLinesPerRow > 1
+		) {
+			setMaxLinesPerRow(maxLinesPerRow);
+		}
 	};
 
 	useEffect(() => {
@@ -124,13 +122,23 @@ export default function NestedMenu({
 					{!addNewColumn && <div className="horizontal-line" />}
 
 					{addNewColumn && selectedItem !== 'raw' && (
-						<Input
-							tabIndex={0}
-							type="text"
-							onFocus={addColumn?.onFocus}
-							onChange={handleSearchValueChange}
-							placeholder="Search..."
-						/>
+						<div className="add-new-column-header">
+							<div className="title">
+								{' '}
+								columns
+								<X size={14} onClick={handleToggleAddNewColumn} />{' '}
+							</div>
+
+							<Input
+								tabIndex={0}
+								type="text"
+								autoFocus
+								onFocus={addColumn?.onFocus}
+								// onBlur={addColumn?.onBlur}
+								onChange={handleSearchValueChange}
+								placeholder="Search..."
+							/>
+						</div>
 					)}
 
 					<div className="item-content">
@@ -170,16 +178,24 @@ export default function NestedMenu({
 								{!addNewColumn && (
 									<div className="title">
 										{' '}
-										columns <Plus size={14} onClick={handleAddNewColumn} />{' '}
+										columns
+										<Plus size={14} onClick={handleToggleAddNewColumn} />{' '}
 									</div>
 								)}
 
 								<div className="column-format">
 									{addColumn?.value?.map(({ key, id }) => (
 										<div className="column-name" key={id}>
-											{key}
-
-											{/* <X size={14} onClick={handleAddNewColumn} /> */}
+											<div className="name">
+												<Tooltip placement="left" title={key}>
+													{key}
+												</Tooltip>
+											</div>
+											<X
+												className="delete-btn"
+												size={14}
+												onClick={(): void => addColumn.onRemove(id as string)}
+											/>
 										</div>
 									))}
 								</div>
@@ -188,13 +204,27 @@ export default function NestedMenu({
 									<div className="loading-container"> Loading ... </div>
 								)}
 
-								{!addColumn?.isFetching && addColumn && (
+								{addNewColumn && (
 									<div className="column-format-new-options">
 										{addColumn?.options?.map(({ label, value }) => (
-											<div className="column-name" key={value}>
-												{label}
+											<div
+												className="column-name"
+												key={value}
+												onClick={(eve): void => {
+													console.log('coluimn name', label, value);
 
-												{/* <X size={14} onClick={handleAddNewColumn} /> */}
+													eve.stopPropagation();
+
+													if (addColumn && addColumn?.onSelect) {
+														addColumn?.onSelect(value, { label, disabled: false });
+													}
+												}}
+											>
+												<div className="name">
+													<Tooltip placement="left" title={label}>
+														{label}
+													</Tooltip>
+												</div>
 											</div>
 										))}
 									</div>

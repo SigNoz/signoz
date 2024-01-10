@@ -37,14 +37,14 @@
 			font-weight: 400;
 			// line-height: 18px;
 
-			color: var(--bg-sakura-400);
+			color: var(--bg-sakura-400) !important;
 
-			border: 1px solid rgba(242, 71, 105, 0.2);
-			background: rgba(242, 71, 105, 0.1);
+			border: 1px solid rgba(242, 71, 105, 0.2) !important;
+			background: rgba(242, 71, 105, 0.1) !important;
 
 			&:hover {
-				border: 1px solid rgba(242, 71, 105, 0.4);
-				color: var(--bg-sakura-400);
+				border: 1px solid rgba(242, 71, 105, 0.4) !important;
+				color: var(--bg-sakura-400) !important;
 			}
 		}
 
@@ -54,14 +54,28 @@
 			font-weight: 400;
 			// line-height: 18px;
 
-			color: var(--bg-sienna-400);
+			color: var(--bg-sienna-400) !important;
 
-			border: 1px solid rgba(189, 153, 121, 0.2);
+			border: 1px solid rgba(189, 153, 121, 0.2) !important;
 			background: rgba(189, 153, 121, 0.1);
 
 			&:hover {
-				border: 1px solid rgba(189, 153, 121, 0.4);
-				color: var(--bg-sienna-400);
+				border: 1px solid rgba(189, 153, 121, 0.4) !important;
+				color: var(--bg-sienna-400) !important;
+			}
+		}
+	}
+}
+
+.lightMode {
+	.qb-entity-options {
+		.options {
+			border-color: var(--bg-vanilla-300);
+
+			.periscope-btn {
+				border-color: var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+				color: var(--bg-ink-200);
 			}
 		}
 	}

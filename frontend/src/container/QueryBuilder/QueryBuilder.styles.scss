@@ -181,6 +181,16 @@
 			}
 		}
 
+		.new-query-formula-buttons-container {
+			border-color: var(--bg-vanilla-200);
+			background: var(--bg-vanilla-200);
+
+			.ant-btn {
+				border-color: var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+			}
+		}
+
 		.query-builder-mini-map {
 			border-left-color: var(--bg-vanilla-300);
 		}
@@ -194,6 +204,7 @@
 
 			.ant-select-selector {
 				border-color: var(--bg-vanilla-300);
+				background: var(--bg-vanilla-300);
 			}
 
 			.ant-input-number {

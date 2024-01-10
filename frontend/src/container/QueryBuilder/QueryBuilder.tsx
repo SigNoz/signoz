@@ -68,7 +68,10 @@ export const QueryBuilder = memo(function QueryBuilder({
 		[currentQuery],
 	);
 
-	const handleScrollIntoView = (entityType, entityName): void => {
+	const handleScrollIntoView = (
+		entityType: string,
+		entityName: string,
+	): void => {
 		const selectedEntity = document.getElementById(
 			`qb-${entityType}-${entityName}`,
 		);

@@ -47,9 +47,9 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 			<Col span={24}>
 				<StyledInner onClick={handleToggleOpenFilters} style={{ marginBottom: 0 }}>
 					{isOpenedFilters ? (
-						<MinusSquare size={14} fill="#4E74F8" color="#121212" />
+						<MinusSquare size={14} fill="#4E74F8" />
 					) : (
-						<PlusSquare size={14} fill="#4E74F8" color="#121212" />
+						<PlusSquare size={14} fill="#4E74F8" />
 					)}
 
 					{!isOpenedFilters && (

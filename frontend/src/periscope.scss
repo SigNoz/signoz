@@ -25,3 +25,11 @@
 
 	cursor: pointer;
 }
+
+.lightMode {
+	.periscope-btn {
+		border-color: var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
+		color: var(--bg-ink-200);
+	}
+}

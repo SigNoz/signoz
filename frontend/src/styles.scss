@@ -173,3 +173,11 @@ body {
 		}
 	}
 }
+
+.ant-tooltip {
+	--antd-arrow-background-color: var(--bg-slate-400, #1d212d);
+
+	.ant-tooltip-inner {
+		background-color: var(--bg-slate-400, #1d212d);
+	}
+}

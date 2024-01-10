@@ -267,41 +267,6 @@ export const Query = memo(function Query({
 		renderAggregateEveryFilter,
 	]);
 
-	// const items: MenuProps['items'] = [
-	// 	{
-	// 		key: '1',
-	// 		label: (
-	// 			<a
-	// 				target="_blank"
-	// 				rel="noopener noreferrer"
-	// 				href="https://www.antgroup.com"
-	// 			>
-	// 				1st menu item
-	// 			</a>
-	// 		),
-	// 	},
-	// 	{
-	// 		key: '2',
-	// 		label: (
-	// 			<a target="_blank" rel="noopener noreferrer" href="https://www.aliyun.com">
-	// 				2nd menu item
-	// 			</a>
-	// 		),
-	// 	},
-	// 	{
-	// 		key: '3',
-	// 		label: (
-	// 			<a
-	// 				target="_blank"
-	// 				rel="noopener noreferrer"
-	// 				href="https://www.luohanacademy.com"
-	// 			>
-	// 				3rd menu item
-	// 			</a>
-	// 		),
-	// 	},
-	// ];
-
 	return (
 		<Row gutter={[0, 12]}>
 			<QBEntityOptions
@@ -317,27 +282,6 @@ export const Query = memo(function Query({
 				<Row gutter={[0, 12]} className="qb-container">
 					<Col span={24}>
 						<Row align="middle" gutter={[5, 11]}>
-							{/* <Col>
-			<ListMarker
-				isDisabled={query.disabled}
-				onDisable={handleToggleDisableQuery}
-				labelName={query.queryName}
-				index={index}
-				isAvailableToDisable={isAvailableToDisable}
-			/>
-		</Col>
-		<Col>
-			{queryVariant === 'dropdown' ? (
-				<DataSourceDropdown
-					onChange={handleChangeDataSource}
-					value={query.dataSource}
-					style={{ minWidth: '5.625rem' }}
-				/>
-			) : (
-				<FilterLabel label={transformToUpperCase(query.dataSource)} />
-			)}
-		</Col> */}
-
 							{isMetricsDataSource && (
 								<Col span={12}>
 									<Row gutter={[11, 5]}>

@@ -11,6 +11,7 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 function ExplorerOptions({
+	disabled,
 	isLoading,
 	onExport,
 	query,
@@ -87,11 +88,11 @@ function ExplorerOptions({
 				<hr />
 
 				<div className="actions">
-					<Button shape="circle" onClick={onCreateAlertsHandler}>
+					<Button disabled={disabled} shape="circle" onClick={onCreateAlertsHandler}>
 						<ConciergeBell size={16} />
 					</Button>
 
-					<Button shape="circle" onClick={onAddToDashboard}>
+					<Button disabled={disabled} shape="circle" onClick={onAddToDashboard}>
 						<Plus size={16} />
 					</Button>
 				</div>
@@ -119,6 +120,7 @@ export interface ExplorerOptionsProps {
 	isLoading?: boolean;
 	onExport: (dashboard: Dashboard | null) => void;
 	query: Query | null;
+	disabled: boolean;
 }
 
 ExplorerOptions.defaultProps = { isLoading: false };

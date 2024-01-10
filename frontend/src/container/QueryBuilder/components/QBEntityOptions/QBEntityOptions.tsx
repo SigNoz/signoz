@@ -4,6 +4,15 @@ import { Button, Col } from 'antd';
 import cx from 'classnames';
 import { ChevronDown, ChevronRight, Eye, EyeOff, Trash2 } from 'lucide-react';
 
+interface QBEntityOptionsProps {
+	isCollapsed: boolean;
+	entityType: string;
+	entityData: any;
+	onDelete: () => void;
+	onToggleVisibility: () => void;
+	onCollapseEntity: () => void;
+}
+
 export default function QBEntityOptions({
 	isCollapsed,
 	entityType,
@@ -11,7 +20,7 @@ export default function QBEntityOptions({
 	onDelete,
 	onToggleVisibility,
 	onCollapseEntity,
-}): JSX.Element {
+}: QBEntityOptionsProps): JSX.Element {
 	return (
 		<Col span={24}>
 			<div className="qb-entity-options">
@@ -27,7 +36,6 @@ export default function QBEntityOptions({
 						<Button
 							value="query-builder"
 							className="periscope-btn visibility-toggle"
-							// disabled={query.disabled}
 							onClick={onToggleVisibility}
 						>
 							{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
