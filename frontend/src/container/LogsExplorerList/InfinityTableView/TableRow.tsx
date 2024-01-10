@@ -71,7 +71,7 @@ export default function TableRow({
 	};
 
 	return (
-		<tr
+		<div
 			onClick={handleClickExpand}
 			className="logs-table-row"
 			onMouseEnter={handleShowActions}
@@ -104,17 +104,13 @@ export default function TableRow({
 					</TableCellStyled>
 				);
 			})}
-			{hasActions && (
-				<td>
-					{isLogsExplorerPage && (
-						<LogLinesActionButtons
-							handleShowContext={handleShowContext}
-							onLogCopy={onLogCopy}
-							customClassName="table-view-log-actions"
-						/>
-					)}
-				</td>
+			{hasActions && isLogsExplorerPage && (
+				<LogLinesActionButtons
+					handleShowContext={handleShowContext}
+					onLogCopy={onLogCopy}
+					customClassName="table-view-log-actions"
+				/>
 			)}
-		</tr>
+		</div>
 	);
 }
