@@ -59,6 +59,7 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 				width: MIN_WIDTH,
 				color,
 				nodeVal: MIN_WIDTH,
+				name: node,
 			};
 		}
 		if (service.errorRate > 0) {
@@ -72,6 +73,7 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 			width,
 			color,
 			nodeVal: width,
+			name: node,
 		};
 	});
 	return {
@@ -123,9 +125,9 @@ export const getTooltip = (link: {
 							</div>`;
 };
 
-export const transformLabel = (label: string) => {
-	const MAX_LENGTH = 13;
-	const MAX_SHOW = 10;
+export const transformLabel = (label: string, zoomLevel: number) => {
+	const MAX_LENGTH = 13 * (zoomLevel / 0.9);
+	const MAX_SHOW = MAX_LENGTH - 3;
 	if (label.length > MAX_LENGTH) {
 		return `${label.slice(0, MAX_SHOW)}...`;
 	}
