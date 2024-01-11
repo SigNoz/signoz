@@ -1,13 +1,29 @@
 .attribute-table-container {
     .ant-table {
         background: var(--bg-ink-400);
+
+        .ant-table-cell {
+            border: 1px solid var(--bg-slate-500);
+        }
+        .value-field {
+            background: rgba(22, 25, 34, 0.40);
+        }
     }
 }
+
 
 .lightMode {
     .attribute-table-container {
         .ant-table {
             background: var(--bg-vanilla-100);
+        }
+
+        .ant-table-cell {
+            border: 1px solid var(--bg-vanilla-200);
+        }
+
+        .value-field {
+            background: var(--bg-vanilla-300);
         }
     }
 }
