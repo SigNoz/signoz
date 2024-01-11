@@ -235,7 +235,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'LOGS_EXPLORER' ||
 		routeKey === 'LOGS_PIPELINES';
 
-	console.log('routeKey: ', routeKey, isLogsView());
+	useEffect(() => {
+		if (isDarkMode) {
+			document.body.classList.remove('lightMode');
+			document.body.classList.add('darkMode');
+		} else {
+			document.body.classList.add('lightMode');
+			document.body.classList.remove('darkMode');
+		}
+	}, [isDarkMode]);
 
 	return (
 		<Layout className={isDarkMode ? 'darkMode' : 'lightMode'}>

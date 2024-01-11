@@ -1,6 +1,8 @@
-import { orange } from '@ant-design/colors';
+import './TableView.styles.scss';
+
 import { LinkOutlined } from '@ant-design/icons';
-import { Input, Space, Tooltip, Tree } from 'antd';
+import { Color } from '@signozhq/design-tokens';
+import { Space, Tooltip, Tree } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import AddToQueryHOC, {
 	AddToQueryHOCProps,
@@ -11,7 +13,7 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { isEmpty } from 'lodash-es';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { Dispatch } from 'redux';
@@ -19,7 +21,6 @@ import AppActions from 'types/actions';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 
-import ActionItem, { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
 import {
 	filterKeyForField,
@@ -34,19 +35,16 @@ const RESTRICTED_FIELDS = ['timestamp'];
 
 interface TableViewProps {
 	logData: ILog;
+	fieldSearchInput: string;
 }
 
-type Props = TableViewProps &
-	Pick<AddToQueryHOCProps, 'onAddToQuery'> &
-	Pick<ActionItemProps, 'onClickActionItem'>;
+type Props = TableViewProps & Pick<AddToQueryHOCProps, 'onAddToQuery'>;
 
 function TableView({
 	logData,
 	onAddToQuery,
-	onClickActionItem,
+	fieldSearchInput,
 }: Props): JSX.Element | null {
-	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
-
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const flattenLogData: Record<string, string> | null = useMemo(
@@ -95,24 +93,6 @@ function TableView({
 	}
 
 	const columns: ColumnsType<DataType> = [
-		{
-			title: 'Action',
-			width: 11,
-			render: (fieldData: Record<string, string>): JSX.Element | null => {
-				const fieldFilterKey = filterKeyForField(fieldData.field);
-
-				if (!RESTRICTED_FIELDS.includes(fieldFilterKey)) {
-					return (
-						<ActionItem
-							fieldKey={fieldFilterKey}
-							fieldValue={fieldData.value}
-							onClickActionItem={onClickActionItem}
-						/>
-					);
-				}
-				return null;
-			},
-		},
 		{
 			title: 'Field',
 			dataIndex: 'field',
@@ -184,7 +164,9 @@ function TableView({
 
 				return (
 					<CopyClipboardHOC textToCopy={textToCopy}>
-						<span style={{ color: orange[6] }}>{removeEscapeCharacters(field)}</span>
+						<span style={{ color: Color.BG_SIENNA_400 }}>
+							{removeEscapeCharacters(field)}
+						</span>
 					</CopyClipboardHOC>
 				);
 			},
@@ -193,17 +175,19 @@ function TableView({
 
 	return (
 		<>
-			<Input
+			{/* <Input
 				placeholder="Search field names"
 				size="large"
 				value={fieldSearchInput}
 				onChange={(e): void => setFieldSearchInput(e.target.value)}
-			/>
+			/> */}
 			<ResizeTable
 				columns={columns}
 				tableLayout="fixed"
 				dataSource={dataSource}
 				pagination={false}
+				showHeader={false}
+				className="attribute-table-container"
 			/>
 		</>
 	);

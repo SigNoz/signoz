@@ -1,4 +1,6 @@
-import { blue } from '@ant-design/colors';
+import './FieldRenderer.styles.scss';
+
+import { Divider } from 'antd';
 
 import { TagContainer, TagLabel, TagValue } from './FieldRenderer.styles';
 import { FieldRendererProps } from './LogDetailedView.types';
@@ -8,21 +10,26 @@ function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 	const { dataType, newField, logType } = getFieldAttributes(field);
 
 	return (
-		<span>
+		<span className="field-renderer-container">
 			{dataType && newField && logType ? (
 				<>
-					<span style={{ color: blue[4] }}>{newField} </span>
+					<div className="label">{newField} </div>
 					<TagContainer>
-						<TagLabel>Type: </TagLabel>
+						<TagLabel>
+							type
+							<Divider type="vertical" />{' '}
+						</TagLabel>
 						<TagValue>{logType}</TagValue>
 					</TagContainer>
 					<TagContainer>
-						<TagLabel>Data type: </TagLabel>
+						<TagLabel>
+							data type <Divider type="vertical" />{' '}
+						</TagLabel>
 						<TagValue>{dataType}</TagValue>
 					</TagContainer>
 				</>
 			) : (
-				<span style={{ color: blue[4] }}>{field}</span>
+				<span className="label">{field}</span>
 			)}
 		</span>
 	);
