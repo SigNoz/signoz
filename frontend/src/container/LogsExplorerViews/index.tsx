@@ -27,6 +27,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useAxiosError from 'hooks/useAxiosError';
+import useClickOutside from 'hooks/useClickOutside';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
@@ -497,6 +498,18 @@ function LogsExplorerViews({
 	const handleToggleShowFormatOptions = (): void =>
 		setShowFormatMenuItems(!showFormatMenuItems);
 
+	const menuRef = useRef<HTMLDivElement>(null);
+
+	useClickOutside({
+		ref: menuRef,
+		onClickOutside: () => {
+			console.log('clicked outside;');
+			if (showFormatMenuItems) {
+				setShowFormatMenuItems(false);
+			}
+		},
+	});
+
 	return (
 		<div className="logs-explorer-views-container">
 			{showHistogram && (
@@ -538,7 +551,7 @@ function LogsExplorerViews({
 								</Button>
 							</Dropdown>
 
-							<div className="format-options-container">
+							<div className="format-options-container" ref={menuRef}>
 								<Button onClick={handleToggleShowFormatOptions}>
 									<Sliders size={16} />
 								</Button>
