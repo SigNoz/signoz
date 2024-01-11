@@ -1,5 +1,4 @@
 import LogDetail from 'components/LogDetail';
-import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { useTableView } from 'components/Logs/TableView/useTableView';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import LogsExplorerContext from 'container/LogsExplorerContext';
@@ -8,15 +7,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
-import {
-	cloneElement,
-	forwardRef,
-	memo,
-	ReactElement,
-	ReactNode,
-	useCallback,
-	useMemo,
-} from 'react';
+import { forwardRef, memo, useCallback, useMemo } from 'react';
 import {
 	TableComponents,
 	TableVirtuoso,
@@ -26,11 +17,8 @@ import { ILog } from 'types/api/logs/log';
 
 import { infinityDefaultStyles } from './config';
 import { LogsCustomTable } from './LogsCustomTable';
-import {
-	TableCellStyled,
-	TableHeaderCellStyled,
-	TableRowStyled,
-} from './styles';
+import { TableHeaderCellStyled, TableRowStyled } from './styles';
+import TableRow from './TableRow';
 import { InfinityTableProps } from './types';
 
 // eslint-disable-next-line react/function-component-definition
@@ -96,37 +84,16 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 
 		const itemContent = useCallback(
 			(index: number, log: Record<string, unknown>): JSX.Element => (
-				<>
-					{tableColumns.map((column) => {
-						if (!column.render) return <td>Empty</td>;
-
-						const element: ColumnTypeRender<Record<string, unknown>> = column.render(
-							log[column.key as keyof Record<string, unknown>],
-							log,
-							index,
-						);
-
-						const elementWithChildren = element as Exclude<
-							ColumnTypeRender<Record<string, unknown>>,
-							ReactNode
-						>;
-
-						const children = elementWithChildren.children as ReactElement;
-						const props = elementWithChildren.props as Record<string, unknown>;
-
-						return (
-							<TableCellStyled
-								$isDragColumn={false}
-								$isDarkMode={isDarkMode}
-								key={column.key}
-							>
-								{cloneElement(children, props)}
-							</TableCellStyled>
-						);
-					})}
-				</>
+				<TableRow
+					tableColumns={tableColumns}
+					index={index}
+					log={log}
+					handleSetActiveContextLog={handleSetActiveContextLog}
+					logs={tableViewProps.logs}
+					hasActions
+				/>
 			),
-			[tableColumns, isDarkMode],
+			[handleSetActiveContextLog, tableColumns, tableViewProps.logs],
 		);
 
 		const tableHeader = useCallback(
@@ -137,13 +104,14 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 
 						return (
 							<TableHeaderCellStyled
+								$isTimestamp={column.key === 'timestamp'}
 								$isDarkMode={isDarkMode}
 								$isDragColumn={isDragColumn}
 								key={column.key}
 								// eslint-disable-next-line react/jsx-props-no-spreading
 								{...(isDragColumn && { className: 'dragHandler' })}
 							>
-								{column.title as string}
+								{(column.title as string).replace(/^\w/, (c) => c.toUpperCase())}
 							</TableHeaderCellStyled>
 						);
 					})}
@@ -151,6 +119,12 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			),
 			[tableColumns, isDarkMode],
 		);
+
+		const handleClickExpand = (index: number): void => {
+			if (!onSetActiveLog) return;
+
+			onSetActiveLog(tableViewProps.logs[index]);
+		};
 
 		return (
 			<>
@@ -173,6 +147,9 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					{...(infitiyTableProps?.onEndReached
 						? { endReached: infitiyTableProps.onEndReached }
 						: {})}
+					onClick={(event: any): void => {
+						handleClickExpand(event.target.parentElement.parentElement.dataset.index);
+					}}
 				/>
 
 				{activeContextLog && (

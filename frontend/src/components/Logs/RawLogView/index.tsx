@@ -1,8 +1,7 @@
 import './RawLogView.styles.scss';
 
-import { LinkOutlined, MonitorOutlined } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
-import { Button, DrawerProps, Tooltip } from 'antd';
+import { DrawerProps } from 'antd';
 import LogDetail from 'components/LogDetail';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
@@ -20,16 +19,12 @@ import {
 	useState,
 } from 'react';
 
+import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
 import LogStateIndicator, {
 	LogType,
 } from '../LogStateIndicator/LogStateIndicator';
 // styles
-import {
-	ActionButtonsWrapper,
-	ExpandIconWrapper,
-	RawLogContent,
-	RawLogViewContainer,
-} from './styles';
+import { RawLogContent, RawLogViewContainer } from './styles';
 import { RawLogViewProps } from './types';
 
 const convert = new Convert();
@@ -130,12 +125,6 @@ function RawLogView({
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 		>
-			{/* {!isReadOnly && (
-				<ExpandIconWrapper flex="30px">
-					<ExpandAltOutlined />
-				</ExpandIconWrapper>
-			)} */}
-
 			<LogStateIndicator type={logType} />
 
 			<RawLogContent
@@ -147,18 +136,10 @@ function RawLogView({
 			/>
 
 			{hasActionButtons && (
-				<ActionButtonsWrapper>
-					<Tooltip title="Show Context">
-						<Button
-							size="small"
-							icon={<MonitorOutlined />}
-							onClick={handleShowContext}
-						/>
-					</Tooltip>
-					<Tooltip title="Copy Link">
-						<Button size="small" icon={<LinkOutlined />} onClick={onLogCopy} />
-					</Tooltip>
-				</ActionButtonsWrapper>
+				<LogLinesActionButtons
+					handleShowContext={handleShowContext}
+					onLogCopy={onLogCopy}
+				/>
 			)}
 
 			{activeContextLog && (

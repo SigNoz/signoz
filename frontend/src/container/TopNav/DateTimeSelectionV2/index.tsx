@@ -38,7 +38,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import AutoRefresh from '../AutoRefresh';
+import AutoRefresh from '../AutoRefreshV2';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import {
 	FixedDurationSuggestionOptions,
@@ -52,6 +52,7 @@ import RefreshText from './Refresh';
 import { Form, FormContainer, FormItem } from './styles';
 
 function DateTimeSelection({
+	showAutoRefresh,
 	location,
 	updateTimeInterval,
 	globalTimeLoading,
@@ -101,6 +102,7 @@ function DateTimeSelection({
 	const handleGoLive = useCallback(() => {
 		if (!stagedQuery) return;
 
+		setIsOpen(false);
 		let queryHistoryState: QueryHistoryState | null = null;
 
 		const compositeQuery = constructCompositeQuery({
@@ -242,6 +244,7 @@ function DateTimeSelection({
 	);
 
 	const onSelectHandler = (value: Time): void => {
+		setIsOpen(false);
 		if (value !== 'custom') {
 			updateTimeInterval(value);
 			updateLocalStorageForRoutes(value);
@@ -373,6 +376,8 @@ function DateTimeSelection({
 				<FormContainer>
 					<Popover
 						placement="bottomRight"
+						open={isOpen}
+						showArrow={false}
 						onOpenChange={setIsOpen}
 						rootClassName="date-time-root"
 						content={
@@ -428,18 +433,20 @@ function DateTimeSelection({
 						</Button>
 					</Popover>
 
-					<div className="refresh-actions">
-						<FormItem hidden={refreshButtonHidden} className="refresh-btn">
-							<Button icon={<SyncOutlined />} onClick={onRefreshHandler} />
-						</FormItem>
+					{showAutoRefresh && (
+						<div className="refresh-actions">
+							<FormItem hidden={refreshButtonHidden} className="refresh-btn">
+								<Button icon={<SyncOutlined />} onClick={onRefreshHandler} />
+							</FormItem>
 
-						<FormItem>
-							<AutoRefresh
-								disabled={refreshButtonHidden}
-								showAutoRefreshBtnPrimary={false}
-							/>
-						</FormItem>
-					</div>
+							<FormItem>
+								<AutoRefresh
+									disabled={refreshButtonHidden}
+									showAutoRefreshBtnPrimary={false}
+								/>
+							</FormItem>
+						</div>
+					)}
 				</FormContainer>
 			</Form>
 
@@ -454,6 +461,9 @@ function DateTimeSelection({
 	);
 }
 
+interface DateTimeSelectionV2Props {
+	showAutoRefresh: boolean;
+}
 interface DispatchProps {
 	updateTimeInterval: (
 		interval: Time,
@@ -469,6 +479,6 @@ const mapDispatchToProps = (
 	globalTimeLoading: bindActionCreators(GlobalTimeLoading, dispatch),
 });
 
-type Props = DispatchProps & RouteComponentProps;
+type Props = DateTimeSelectionV2Props & DispatchProps & RouteComponentProps;
 
 export default connect(null, mapDispatchToProps)(withRouter(DateTimeSelection));
