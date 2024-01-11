@@ -11,6 +11,8 @@ const GetMinMax = (
 	let maxTime = new Date().getTime();
 	let minTime = 0;
 
+	console.log('interval', interval);
+
 	if (interval === '1min') {
 		const minTimeAgo = getMinAgo({ minutes: 1 }).getTime();
 		minTime = minTimeAgo;
