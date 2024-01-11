@@ -87,3 +87,17 @@
 		box-shadow: none;
 	}
 }
+
+.lightMode {
+	.log-field-key {
+		color: var(--text-slate-400);
+	}
+	.log-value {
+		color: var(--text-slate-400);
+	}
+	.log-line {
+		&:hover {
+			background-color: var(--text-vanilla-200) !important;
+		}
+	}
+}
