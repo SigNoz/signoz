@@ -160,4 +160,37 @@
 			border-right: 1px solid var(--bg-vanilla-300, #1d212d);
 		}
 	}
+
+	.date-time-root {
+		.ant-popover-inner {
+			border: 1px solid var(--bg-vanilla-400, #1d212d);
+			background: var(--bg-vanilla-100) !important;
+		}
+	}
+
+	.date-time-popover {
+		.date-time-options {
+			border-right: 1px solid var(--bg-vanilla-400);
+
+			.data-time-live {
+				border-bottom: 1px solid var(--bg-vanilla-400);
+				color: var(--bg-slate-400, #c0c1c3);
+				border-bottom: 1px solid var(--bg-vanilla-400);
+			}
+
+			.date-time-options-btn {
+				color: var(--bg-slate-400, #c0c1c3);
+			}
+		}
+
+		.relative-date-time {
+			.time-heading {
+				color: var(--bg-vanilla-400, #52575c);
+			}
+
+			.time-btns {
+				background-color: var(--bg-vanilla-300);
+			}
+		}
+	}
 }

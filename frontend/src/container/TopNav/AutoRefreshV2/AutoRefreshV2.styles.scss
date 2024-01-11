@@ -55,3 +55,25 @@
 	letter-spacing: -0.07px;
 	justify-content: space-between;
 }
+
+.lightMode {
+	.auto-refresh-root {
+		.ant-popover-inner {
+			border: 1px solid var(--bg-vanilla-400, #1d212d);
+			background: var(--bg-vanilla-100);
+		}
+	}
+
+	.auto-refresh-checkbox {
+		border-bottom: 1px solid var(--bg-vanilla-400);
+		color: var(--bg-slate-400);
+	}
+
+	.refresh-interval-text {
+		color: var(--bg-vanilla-400);
+	}
+
+	.refresh-interval-btns {
+		color: var(--text-slate-400, #c0c1c3);
+	}
+}
