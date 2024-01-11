@@ -1,3 +1,60 @@
+.date-time-selector {
+	display: flex;
+	align-items: center;
+
+	.date-time-input-element {
+		display: flex;
+		align-items: center;
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-400);
+		box-shadow: none !important;
+		background: var(--bg-ink-300);
+		display: flex;
+		min-width: 192px;
+		height: 34px;
+		padding: 6px 6px 6px 8px;
+		flex-shrink: 0;
+		text-align: start;
+		margin-right: 8px;
+		justify-content: space-between;
+		align-items: center;
+
+		.date-time-input-content {
+			display: flex;
+			align-items: center;
+		}
+		.time-btn {
+			margin-right: 8px;
+		}
+		.down-arrow {
+			margin-left: 6px;
+		}
+	}
+
+	.refresh-actions {
+		display: flex;
+		flex-direction: row;
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+
+		.refresh-btn {
+			border-right: 1px solid var(--bg-slate-400);
+		}
+		.ant-btn {
+			display: flex;
+			padding: 4px 8px;
+			align-items: center;
+			box-shadow: none;
+			border: none;
+
+			&.active-tab {
+				background-color: #1d212d;
+			}
+		}
+	}
+}
+
 .date-time-root {
 	.ant-popover-inner {
 		width: 532px;
@@ -89,54 +146,51 @@
 	}
 }
 
-.date-time-input-element {
-	display: flex;
-	align-items: center;
-	border-radius: 2px;
-	border: 1px solid var(--bg-slate-400, #1d212d);
-	box-shadow: none !important;
-	background: var(--bg-ink-300, #16181d);
-	display: flex;
-	min-width: 192px;
-	height: 34px;
-	padding: 6px 6px 6px 8px;
-	flex-shrink: 0;
-	text-align: start;
-	margin-right: 8px;
-	justify-content: space-between;
-	align-items: center;
-
-	.date-time-input-content {
-		display: flex;
-		align-items: center;
+.lightMode {
+	.date-time-input-element {
+		border: 1px solid var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
 	}
-	.time-btn {
-		margin-right: 8px;
-	}
-	.down-arrow {
-		margin-left: 6px;
-	}
-}
 
-.refresh-actions {
-	display: flex;
-	flex-direction: row;
-	border-radius: 2px;
-	border: 1px solid var(--bg-slate-400, #1d212d);
-	background: var(--bg-ink-300, #16181d);
+	.refresh-actions {
+		border: 1px solid var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
 
-	.refresh-btn {
-		border-right: 1px solid var(--bg-slate-400, #1d212d);
+		.refresh-btn {
+			border-right: 1px solid var(--bg-vanilla-300);
+		}
 	}
-	.ant-btn {
-		display: flex;
-		padding: 4px 8px;
-		align-items: center;
-		box-shadow: none;
-		border: none;
 
-		&.active-tab {
-			background-color: #1d212d;
+	.date-time-root {
+		.ant-popover-inner {
+			border: 1px solid var(--bg-vanilla-400);
+			background: var(--bg-vanilla-100) !important;
+		}
+	}
+
+	.date-time-popover {
+		.date-time-options {
+			border-right: 1px solid var(--bg-vanilla-400);
+
+			.data-time-live {
+				border-bottom: 1px solid var(--bg-vanilla-400);
+				color: var(--bg-slate-400);
+				border-bottom: 1px solid var(--bg-vanilla-400);
+			}
+
+			.date-time-options-btn {
+				color: var(--bg-slate-400);
+			}
+		}
+
+		.relative-date-time {
+			.time-heading {
+				color: var(--bg-vanilla-400);
+			}
+
+			.time-btns {
+				background-color: var(--bg-vanilla-300);
+			}
 		}
 	}
 }
