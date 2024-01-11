@@ -1,8 +1,8 @@
 import './LogsExplorerViews.styles.scss';
 
-import { SettingOutlined, UserOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, MenuProps, Radio, Select } from 'antd';
+import { Button, Dropdown, MenuProps, Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
+import NestedMenu from 'components/NestedMenu/NestedMenu';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
@@ -13,9 +13,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
-import ExportPanel from 'container/ExportPanel';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
@@ -55,8 +53,6 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
-import { ActionsWrapper } from './LogsExplorerViews.styled';
-
 function LogsExplorerViews({
 	selectedView,
 	showHistogram,
@@ -71,10 +67,6 @@ function LogsExplorerViews({
 	const [selectedPanelType, setSelectedPanelType] = useState<PANEL_TYPES>(
 		PANEL_TYPES.LIST,
 	);
-
-	const handleModeChange = (e: RadioChangeEvent): void => {
-		setSelectedPanelType(e.target.value);
-	};
 
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
@@ -102,6 +94,7 @@ function LogsExplorerViews({
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
+	const [showFormatMenuItems, setShowFormatMenuItems] = useState(false);
 
 	const handleAxisError = useAxiosError();
 
@@ -173,6 +166,11 @@ function LogsExplorerViews({
 			),
 		[currentQuery, updateAllQueriesOperators],
 	);
+
+	const handleModeChange = (e: RadioChangeEvent): void => {
+		setSelectedPanelType(e.target.value);
+		setShowFormatMenuItems(false);
+	};
 
 	const {
 		data: listChartData,
@@ -354,12 +352,20 @@ function LogsExplorerViews({
 	);
 
 	useEffect(() => {
-		const shouldChangeView = isMultipleQueries || isGroupByExist;
+		const shouldChangeView =
+			(isMultipleQueries || isGroupByExist) && selectedView !== 'search';
 
-		if (panelType === PANEL_TYPES.LIST && shouldChangeView) {
+		if (selectedPanelType === PANEL_TYPES.LIST && shouldChangeView) {
 			handleExplorerTabChange(PANEL_TYPES.TIME_SERIES);
+			setSelectedPanelType(PANEL_TYPES.TIME_SERIES);
 		}
-	}, [panelType, isMultipleQueries, isGroupByExist, handleExplorerTabChange]);
+	}, [
+		isMultipleQueries,
+		isGroupByExist,
+		selectedPanelType,
+		selectedView,
+		handleExplorerTabChange,
+	]);
 
 	useEffect(() => {
 		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
@@ -448,7 +454,7 @@ function LogsExplorerViews({
 		return isGroupByExist ? data.payload.data.result : firstPayloadQueryArray;
 	}, [stagedQuery, panelType, data, listChartData, listQuery]);
 
-	const items: MenuProps['items'] = [
+	const exportItems: MenuProps['items'] = [
 		{
 			type: 'group',
 			label: 'EXPORT AS',
@@ -467,6 +473,30 @@ function LogsExplorerViews({
 		},
 	];
 
+	const formatItems = [
+		{
+			key: 'raw',
+			label: 'Raw',
+			data: {
+				title: 'max lines per row',
+			},
+		},
+		{
+			key: 'list',
+			label: 'Default',
+		},
+		{
+			key: 'table',
+			label: 'Column',
+			data: {
+				title: 'columns',
+			},
+		},
+	];
+
+	const handleToggleShowFormatOptions = (): void =>
+		setShowFormatMenuItems(!showFormatMenuItems);
+
 	return (
 		<div className="logs-explorer-views-container">
 			{showHistogram && (
@@ -476,17 +506,6 @@ function LogsExplorerViews({
 				/>
 			)}
 
-			{/* 
-			{stagedQuery && (
-				<ActionsWrapper>
-					<ExportPanel
-						query={exportDefaultQuery}
-						isLoading={isUpdateDashboardLoading}
-						onExport={handleExport}
-					/>
-				</ActionsWrapper>
-			)} */}
-
 			<div className="logs-explorer-views-types">
 				<div className="views-tabs-container">
 					<Radio.Group
@@ -494,31 +513,45 @@ function LogsExplorerViews({
 						onChange={handleModeChange}
 						value={selectedPanelType}
 					>
-						<Radio.Button value={PANEL_TYPES.LIST}> List view</Radio.Button>
+						<Radio.Button
+							value={PANEL_TYPES.LIST}
+							disabled={
+								(isMultipleQueries || isGroupByExist) && selectedView !== 'search'
+							}
+						>
+							List view
+						</Radio.Button>
 						<Radio.Button value={PANEL_TYPES.TIME_SERIES}> Time series </Radio.Button>
 						<Radio.Button value={PANEL_TYPES.TABLE}> Table </Radio.Button>
 					</Radio.Group>
 
 					{selectedPanelType === PANEL_TYPES.LIST && (
 						<div className="tab-options">
-							<Dropdown menu={{ items }} placement="bottomRight">
+							<Dropdown
+								menu={{ items: exportItems }}
+								className="dropdown"
+								placement="bottomRight"
+								trigger={['click']}
+							>
 								<Button>
 									<FileDown size={16} />
 								</Button>
 							</Dropdown>
 
-							{/* <Dropdown menu={{ items }} placement="bottomLeft"> */}
-							<Button>
-								<Sliders size={16} />
-							</Button>
-							{/* </Dropdown> */}
-							{/* 
-							<ExplorerControlPanel
-								selectedOptionFormat={options.format}
-								isLoading={isFetching}
-								isShowPageSize={false}
-								optionsMenuConfig={config}
-							/> */}
+							<div className="format-options-container">
+								<Button onClick={handleToggleShowFormatOptions}>
+									<Sliders size={16} />
+								</Button>
+
+								{showFormatMenuItems && (
+									<NestedMenu
+										title="FORMAT"
+										items={formatItems}
+										selectedOptionFormat={options.format}
+										config={config}
+									/>
+								)}
+							</div>
 						</div>
 					)}
 				</div>
@@ -549,6 +582,7 @@ function LogsExplorerViews({
 			<GoToTop />
 
 			<ExplorerOptions
+				disabled={!stagedQuery}
 				query={exportDefaultQuery}
 				isLoading={isUpdateDashboardLoading}
 				onExport={handleExport}

@@ -6,7 +6,6 @@ import {
 } from '@ant-design/icons';
 import {
 	Button,
-	Card,
 	Col,
 	Dropdown,
 	MenuProps,
@@ -245,15 +244,7 @@ function ExplorerCard({
 				</ExplorerCardHeadContainer>
 			)}
 
-			<Card
-				style={{
-					border: 'none',
-					borderRadius: 0,
-					borderBottom: '1px solid #1D212D',
-				}}
-			>
-				{children}
-			</Card>
+			{children}
 		</>
 	);
 }

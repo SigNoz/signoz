@@ -6,8 +6,9 @@ import LogsExplorerViews from 'container/LogsExplorerViews';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -15,34 +16,72 @@ import { WrapperStyled } from './styles';
 
 function LogsExplorer(): JSX.Element {
 	const [showHistogram, setShowHistogram] = useState(true);
-	const [selectedView] = useState('query-builder');
+	const [selectedView, setSelectedView] = useState('query-builder');
+
+	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
 	const handleToggleShowHistogram = (): void => {
 		setShowHistogram(!showHistogram);
 	};
 
-	console.log('showHistogram', showHistogram);
+	const handleChangeSelectedView = (view: string): void => {
+		setSelectedView(view);
+	};
+
+	console.log('currentQuery', currentQuery);
+
+	const isMultipleQueries = useMemo(
+		() =>
+			currentQuery.builder.queryData.length > 1 ||
+			currentQuery.builder.queryFormulas.length > 0,
+		[currentQuery],
+	);
+
+	const toolbarViews = useMemo(
+		() => ({
+			search: {
+				name: 'search',
+				label: 'Search',
+				disabled: isMultipleQueries,
+				show: true,
+			},
+			queryBuilder: {
+				name: 'query-builder',
+				label: 'Query Builder',
+				disabled: false,
+				show: true,
+			},
+			clickhouse: {
+				name: 'clickhouse',
+				label: 'Clickhouse',
+				disabled: false,
+				show: false,
+			},
+		}),
+		[isMultipleQueries],
+	);
 
 	return (
 		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-			{/* <LogsTopNav /> */}
-
 			<Toolbar
+				showAutoRefresh={false}
 				leftActions={
 					<LeftToolbarActions
+						items={toolbarViews}
 						selectedView={selectedView}
+						onChangeSelectedView={handleChangeSelectedView}
 						onToggleHistrogramVisibility={handleToggleShowHistogram}
 						showHistogram={showHistogram}
 					/>
 				}
-				rightActions={<RightToolbarActions />}
+				rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
 			/>
 
 			<WrapperStyled>
 				<Row gutter={[0, 0]}>
 					<Col xs={24}>
 						<ExplorerCard sourcepage={DataSource.LOGS}>
-							<LogExplorerQuerySection />
+							<LogExplorerQuerySection selectedView={selectedView} />
 						</ExplorerCard>
 					</Col>
 					<Col xs={24}>

@@ -124,7 +124,10 @@ function LogsExplorerList({
 		}
 
 		return (
-			<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
+			<Card
+				style={{ width: '100%', marginTop: '20px' }}
+				bodyStyle={CARD_BODY_STYLE}
+			>
 				<Virtuoso
 					ref={ref}
 					data={logs}
