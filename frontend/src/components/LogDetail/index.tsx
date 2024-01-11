@@ -51,7 +51,8 @@ function LogDetail({
 	};
 
 	if (!log) {
-		return <>No log data</>;
+		// eslint-disable-next-line react/jsx-no-useless-fragment
+		return <></>;
 	}
 
 	return (
@@ -74,7 +75,7 @@ function LogDetail({
 			open={log !== null}
 			style={{
 				overscrollBehavior: 'contain',
-				background: isDarkMode ? Color.BG_SLATE_500 : Color.BG_VANILLA_100,
+				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
 			}}
 			className="log-detail-drawer"
 			destroyOnClose
