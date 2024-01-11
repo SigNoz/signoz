@@ -2,7 +2,7 @@ import './Overview.styles.scss';
 
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Collapse, Switch, Tag, Typography } from 'antd';
+import { Button, Collapse, Divider, Switch, Tag, Typography } from 'antd';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -47,6 +47,10 @@ function Overview({
 		lineHeight: '18px',
 		colorDecorators: true,
 		scrollBeyondLastLine: false,
+		scrollbar: {
+			vertical: 'hidden',
+			horizontal: 'hidden',
+		},
 	};
 
 	const handleWrapWord = (checked: boolean): void => {
@@ -64,13 +68,17 @@ function Overview({
 			colors: {
 				'editor.background': Color.BG_INK_400,
 			},
+			fontFamily: 'SF Mono',
+			fontSize: 12,
+			fontWeight: 'normal',
+			lineHeight: 18,
+			letterSpacing: -0.06,
 		});
 	}
 
 	return (
 		<div className="overview-container">
 			<Collapse
-				bordered={false}
 				defaultActiveKey={['1']}
 				items={[
 					{
@@ -94,17 +102,30 @@ function Overview({
 									// eslint-disable-next-line react/jsx-no-bind
 									beforeMount={setEditorTheme}
 								/>
+								<Divider
+									style={{
+										margin: 0,
+										border: isDarkMode
+											? `1px solid ${Color.BG_SLATE_500}`
+											: `1px solid ${Color.BG_VANILLA_200}`,
+									}}
+								/>
 								<div className="log-switch">
 									<div className="wrap-word-switch">
 										<Typography.Text>Wrap text</Typography.Text>
 										<Switch checked={isWrapWord} onChange={handleWrapWord} />
 									</div>
 									<div>
-										<Button className="log-switch-btn" icon={<ChevronLeft size={16} />} />
-										<Button
-											className="log-switch-btn"
-											icon={<ChevronRight size={16} />}
-										/>
+										<Button.Group>
+											<Button
+												className="log-switch-btn"
+												icon={<ChevronLeft size={16} />}
+											/>
+											<Button
+												className="log-switch-btn"
+												icon={<ChevronRight size={16} />}
+											/>
+										</Button.Group>
 									</div>
 								</div>
 							</>
@@ -125,7 +146,7 @@ function Overview({
 						label: (
 							<Tag bordered={false}>
 								<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
-									Attribute
+									Attributes
 								</Typography.Text>
 							</Tag>
 						),
@@ -136,7 +157,7 @@ function Overview({
 								fieldSearchInput={fieldSearchInput}
 							/>
 						),
-						className: 'collapse-content',
+						className: 'collapse-content attribute-collapse',
 					},
 				]}
 			/>
