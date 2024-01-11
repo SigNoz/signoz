@@ -1,6 +1,6 @@
 import './Overview.styles.scss';
 
-import MEditor, { EditorProps } from '@monaco-editor/react';
+import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Collapse, Switch, Tag, Typography } from 'antd';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
@@ -53,6 +53,20 @@ function Overview({
 		setIsWrapWord(checked);
 	};
 
+	function setEditorTheme(monaco: Monaco): void {
+		monaco.editor.defineTheme('my-theme', {
+			base: 'vs-dark',
+			inherit: true,
+			rules: [
+				{ token: 'string.key.json', foreground: Color.BG_VANILLA_400 },
+				{ token: 'string.value.json', foreground: Color.BG_ROBIN_400 },
+			],
+			colors: {
+				'editor.background': Color.BG_INK_400,
+			},
+		});
+	}
+
 	return (
 		<div className="overview-container">
 			<Collapse
@@ -76,7 +90,9 @@ function Overview({
 									options={options}
 									onChange={(): void => {}}
 									height="40vh"
-									theme={isDarkMode ? 'vs-dark' : 'vs-light'}
+									theme={isDarkMode ? 'my-theme' : 'light'}
+									// eslint-disable-next-line react/jsx-no-bind
+									beforeMount={setEditorTheme}
 								/>
 								<div className="log-switch">
 									<div className="wrap-word-switch">
