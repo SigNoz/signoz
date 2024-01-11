@@ -64,6 +64,10 @@
             border: 1px solid #454c58;
             color: var(--text-vanilla-100);
         }
+
+        .selected_view::before {
+            background: var(--bg-slate-300);
+        }
     }
 
     .search-input {
@@ -98,6 +102,11 @@
                 background: var(--bg-vanilla-100);
                 border: 1px solid var(--bg-robin-300);
                 color: var(--text-robin-400);
+            }
+
+            .selected_view::before {
+                background: var(--bg-vanilla-100);
+                border-left: 1px solid var(--bg-robin-300);
             }
         }
 
