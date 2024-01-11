@@ -363,13 +363,22 @@ function DateTimeSelection({
 		);
 	}
 
-	const onModalOkHandler = (date_time: any): void => {
-		onCustomDateHandler(date_time);
-	};
-
 	const disabledDate = (current: Dayjs): boolean => {
 		const currentDay = dayjs(current);
 		return currentDay.isAfter(dayjs());
+	};
+
+	const onPopoverClose = (visible: boolean): void => {
+		if (!visible) {
+			setCustomDTPickerVisible(false);
+		}
+		setIsOpen(visible);
+	};
+	const onModalOkHandler = (date_time: any): void => {
+		if (date_time?.[1]) {
+			onPopoverClose(false);
+		}
+		onCustomDateHandler(date_time);
 	};
 
 	return (
@@ -390,7 +399,7 @@ function DateTimeSelection({
 						placement="bottomRight"
 						open={isOpen}
 						showArrow={false}
-						onOpenChange={setIsOpen}
+						onOpenChange={onPopoverClose}
 						rootClassName={isDarkMode ? 'date-time-root' : 'date-time-root lightMode'}
 						content={
 							<div className="date-time-popover">
