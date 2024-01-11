@@ -19,3 +19,9 @@
 		padding: 0px;
 	}
 }
+
+.lightMode {
+	.text {
+		color: var(--bg-slate-400, #c0c1c3);
+	}
+}

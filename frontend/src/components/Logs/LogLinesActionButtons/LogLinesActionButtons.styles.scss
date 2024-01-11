@@ -22,11 +22,23 @@
 		}
 	}
 
-	.show-context-btn {
-	}
-
 	.copy-log-btn {
 		border-left: 1px solid var(--bg-slate-400);
 		border-color: var(--bg-slate-400) !important;
+	}
+}
+
+.lightMode {
+	.log-line-action-buttons {
+		border: 1px solid var(--bg-vanilla-400, #1d212d);
+		background: var(--bg-vanilla-400, #121317);
+
+		.ant-btn-default {
+		}
+
+		.copy-log-btn {
+			border-left: 1px solid var(--bg-vanilla-400);
+			border-color: var(--bg-vanilla-400) !important;
+		}
 	}
 }
