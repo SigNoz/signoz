@@ -150,6 +150,7 @@ function TableView({
 			key: 'value',
 			width: 70,
 			ellipsis: false,
+			className: 'value-field',
 			render: (field, record): JSX.Element => {
 				const textToCopy = field.slice(1, -1);
 
@@ -174,22 +175,14 @@ function TableView({
 	];
 
 	return (
-		<>
-			{/* <Input
-				placeholder="Search field names"
-				size="large"
-				value={fieldSearchInput}
-				onChange={(e): void => setFieldSearchInput(e.target.value)}
-			/> */}
-			<ResizeTable
-				columns={columns}
-				tableLayout="fixed"
-				dataSource={dataSource}
-				pagination={false}
-				showHeader={false}
-				className="attribute-table-container"
-			/>
-		</>
+		<ResizeTable
+			columns={columns}
+			tableLayout="fixed"
+			dataSource={dataSource}
+			pagination={false}
+			showHeader={false}
+			className="attribute-table-container"
+		/>
 	);
 }
 

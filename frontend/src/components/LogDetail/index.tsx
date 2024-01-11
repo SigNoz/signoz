@@ -1,21 +1,35 @@
 import './LogDetails.styles.scss';
 
-import { Color } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Input, Radio, Typography } from 'antd';
+import { Color, Spacing } from '@signozhq/design-tokens';
+import {
+	Button,
+	Divider,
+	Drawer,
+	Input,
+	Radio,
+	Tooltip,
+	Typography,
+} from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
+import { aggregateAttributesResourcesToString } from 'container/LogDetailedView/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useNotifications } from 'hooks/useNotifications';
 import {
 	Braces,
 	ChevronDown,
 	ChevronUp,
+	Compass,
+	Copy,
+	Filter,
 	Search,
 	Table,
 	TextSelect,
 	X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 
 import { VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailProps } from './LogDetail.interfaces';
@@ -27,10 +41,15 @@ function LogDetail({
 	onClickActionItem,
 }: LogDetailProps): JSX.Element {
 	console.log({ onClickActionItem }); // TODO: remove, ketp for linter error
+	const [, copyToClipboard] = useCopyToClipboard();
 	const [selectedView, setSelectedView] = useState<VIEWS>(VIEW_TYPES.OVERVIEW);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 	const isDarkMode = useIsDarkMode();
+
+	const { notifications } = useNotifications();
+
+	const LogJsonData = log ? aggregateAttributesResourcesToString(log) : '';
 
 	const handleModeChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
@@ -50,6 +69,13 @@ function LogDetail({
 		}
 	};
 
+	const handleJSONCopy = (): void => {
+		copyToClipboard(LogJsonData);
+		notifications.success({
+			message: 'Copied to clipboard',
+		});
+	};
+
 	if (!log) {
 		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
@@ -63,7 +89,9 @@ function LogDetail({
 					<Divider
 						type="vertical"
 						style={{
-							border: isDarkMode ? undefined : `1px solid ${Color.BG_VANILLA_400}`,
+							border: isDarkMode
+								? `1px solid ${Color.BG_SLATE_500}`
+								: `1px solid ${Color.BG_VANILLA_400}`,
 						}}
 					/>
 					<Typography.Text className="title">Log details</Typography.Text>
@@ -79,16 +107,12 @@ function LogDetail({
 			}}
 			className="log-detail-drawer"
 			destroyOnClose
-			closeIcon={<X />}
+			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 			extra={
-				<>
-					<Radio.Button className="radio-button">
-						<ChevronUp size={16} />
-					</Radio.Button>
-					<Radio.Button className="radio-button">
-						<ChevronDown size={16} />
-					</Radio.Button>
-				</>
+				<Button.Group>
+					<Button className="radio-button" icon={<ChevronUp size={16} />} />
+					<Button className="radio-button" icon={<ChevronDown size={16} />} />
+				</Button.Group>
 			}
 		>
 			<div className="log-detail-drawer__log">
@@ -96,10 +120,14 @@ function LogDetail({
 					type="vertical"
 					style={{
 						fontSize: '20px',
-						border: isDarkMode ? undefined : `1px solid ${Color.BG_VANILLA_400}`,
+						border: isDarkMode
+							? `2px solid ${Color.BG_SLATE_400}`
+							: `2px solid ${Color.BG_VANILLA_400}`,
 					}}
 				/>
-				<Typography.Text className="log-body">{log?.body}</Typography.Text>
+				<Tooltip title={log?.body}>
+					<Typography.Text className="log-body">{log?.body}</Typography.Text>
+				</Tooltip>
 			</div>
 
 			<div className="tabs-and-search">
@@ -140,11 +168,28 @@ function LogDetail({
 					</Radio.Button>
 				</Radio.Group>
 
-				<Button
-					className="btn-search"
-					icon={<Search size={14} />}
-					onClick={handleSearchVisible}
-				/>
+				{selectedView === 'OVERVIEW' && (
+					<Button
+						className="action-btn"
+						icon={<Search size={14} />}
+						onClick={handleSearchVisible}
+					/>
+				)}
+
+				{selectedView === 'JSON' && (
+					<div className="json-action-btn">
+						<Button className="action-btn" icon={<Compass size={16} />} />
+						<Button
+							className="btn-search"
+							icon={<Copy size={16} />}
+							onClick={handleJSONCopy}
+						/>
+					</div>
+				)}
+
+				{selectedView === 'CONTENT' && (
+					<Button className="action-btn" icon={<Filter size={16} />} />
+				)}
 			</div>
 
 			{isSearchVisible && (
