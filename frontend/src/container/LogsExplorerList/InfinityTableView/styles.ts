@@ -39,10 +39,12 @@ export const TableRowStyled = styled.tr<{
 
 	&:hover {
 		${TableCellStyled} {
-			${({ $isActiveLog }): string =>
+			${({ $isActiveLog, $isDarkMode }): string =>
 				$isActiveLog
 					? getActiveLogBackground()
-					: `background-color: rgba(171, 189, 255, 0.04);`}
+					: `background-color: ${
+							!$isDarkMode ? 'var(--bg-vanilla-200)' : 'rgba(171, 189, 255, 0.04)'
+					  }`}
 		}
 		.log-line-action-buttons {
 			display: flex;
@@ -57,7 +59,7 @@ export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 	font-weight: 400;
 	line-height: 18px;
 	letter-spacing: -0.07px;
-	background: #0b0c0d;
+	background: ${(props): string => (props.$isDarkMode ? '#0b0c0d' : '#fdfdfd')};
 	${({ $isTimestamp }): string => ($isTimestamp ? 'padding-left: 24px;' : '')}
 	${({ $isDragColumn }): string => ($isDragColumn ? 'cursor: col-resize;' : '')}
 
