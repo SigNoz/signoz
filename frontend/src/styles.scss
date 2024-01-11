@@ -174,6 +174,33 @@ body {
 	}
 }
 
+// https://github.com/ant-design/ant-design/issues/41307
+.ant-picker-panels > *:first-child button.ant-picker-header-next-btn {
+	visibility: visible !important;
+}
+
+.ant-picker-panels > *:first-child button.ant-picker-header-super-next-btn {
+	visibility: visible !important;
+}
+
+.ant-picker-panels > *:last-child:not(:only-child) {
+	display: none !important;
+}
+
+.ant-picker-panel-container,
+.ant-picker-footer-extra > div {
+	flex-wrap: wrap !important;
+}
+
+.ant-picker-range-arrow {
+	display: none !important;
+}
+
+.ant-picker-panel-container {
+	background: none !important;
+	box-shadow: none !important;
+}
+
 .ant-tooltip {
 	--antd-arrow-background-color: var(--bg-slate-400, #1d212d);
 
