@@ -5,11 +5,12 @@ import { Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useMemo } from 'react';
 
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
-import { defaultCellStyle, defaultTableStyle } from './config';
+import { defaultTableStyle, getDefaultCellStyle } from './config';
 import { TableBodyContent } from './styles';
 import {
 	ColumnTypeRender,
@@ -21,6 +22,8 @@ const convert = new Convert();
 
 export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	const { logs, fields, linesPerRow, appendTo = 'center' } = props;
+
+	const isDarkMode = useIsDarkMode();
 
 	const flattenLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
 		logs,
@@ -35,7 +38,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				key: name,
 				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
-						style: defaultCellStyle,
+						style: getDefaultCellStyle(isDarkMode),
 					},
 					children: (
 						<Typography.Paragraph ellipsis={{ rows: linesPerRow }}>
@@ -83,13 +86,14 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								__html: convert.toHtml(dompurify.sanitize(field)),
 							}}
 							linesPerRow={linesPerRow}
+							isDarkMode={isDarkMode}
 						/>
 					),
 				}),
 			},
 			...(appendTo === 'end' ? fieldColumns : []),
 		];
-	}, [fields, appendTo, linesPerRow]);
+	}, [fields, appendTo, isDarkMode, linesPerRow]);
 
 	return { columns, dataSource: flattenLogData };
 };
