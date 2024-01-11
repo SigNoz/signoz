@@ -43,7 +43,7 @@ export const TableRowStyled = styled.tr<{
 				$isActiveLog
 					? getActiveLogBackground()
 					: `background-color: ${
-							!$isDarkMode ? '#F5F5F5' : 'rgba(171, 189, 255, 0.04)'
+							!$isDarkMode ? 'var(--bg-vanilla-200)' : 'rgba(171, 189, 255, 0.04)'
 					  }`}
 		}
 		.log-line-action-buttons {

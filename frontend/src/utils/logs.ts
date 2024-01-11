@@ -7,7 +7,9 @@ export const getDefaultLogBackground = (
 	if (isReadOnly) return '';
 	// TODO handle the light mode here
 	return `&:hover {
-    background-color: ${isDarkMode ? 'rgba(171, 189, 255, 0.04)' : '#F5F5F5'};
+    background-color: ${
+					isDarkMode ? 'rgba(171, 189, 255, 0.04)' : 'var(--bg-vanilla-200)'
+				};
     }`;
 };
 

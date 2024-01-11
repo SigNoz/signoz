@@ -6,9 +6,9 @@
 		display: flex;
 		align-items: center;
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-400, #1d212d);
+		border: 1px solid var(--bg-slate-400);
 		box-shadow: none !important;
-		background: var(--bg-ink-300, #16181d);
+		background: var(--bg-ink-300);
 		display: flex;
 		min-width: 192px;
 		height: 34px;
@@ -35,11 +35,11 @@
 		display: flex;
 		flex-direction: row;
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-400, #1d212d);
-		background: var(--bg-ink-300, #16181d);
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
 
 		.refresh-btn {
-			border-right: 1px solid var(--bg-slate-400, #1d212d);
+			border-right: 1px solid var(--bg-slate-400);
 		}
 		.ant-btn {
 			display: flex;
@@ -148,22 +148,22 @@
 
 .lightMode {
 	.date-time-input-element {
-		border: 1px solid var(--bg-vanilla-300, #1d212d);
+		border: 1px solid var(--bg-vanilla-300);
 		background: var(--bg-vanilla-100);
 	}
 
 	.refresh-actions {
-		border: 1px solid var(--bg-vanilla-300, #1d212d);
+		border: 1px solid var(--bg-vanilla-300);
 		background: var(--bg-vanilla-100);
 
 		.refresh-btn {
-			border-right: 1px solid var(--bg-vanilla-300, #1d212d);
+			border-right: 1px solid var(--bg-vanilla-300);
 		}
 	}
 
 	.date-time-root {
 		.ant-popover-inner {
-			border: 1px solid var(--bg-vanilla-400, #1d212d);
+			border: 1px solid var(--bg-vanilla-400);
 			background: var(--bg-vanilla-100) !important;
 		}
 	}
@@ -174,18 +174,18 @@
 
 			.data-time-live {
 				border-bottom: 1px solid var(--bg-vanilla-400);
-				color: var(--bg-slate-400, #c0c1c3);
+				color: var(--bg-slate-400);
 				border-bottom: 1px solid var(--bg-vanilla-400);
 			}
 
 			.date-time-options-btn {
-				color: var(--bg-slate-400, #c0c1c3);
+				color: var(--bg-slate-400);
 			}
 		}
 
 		.relative-date-time {
 			.time-heading {
-				color: var(--bg-vanilla-400, #52575c);
+				color: var(--bg-vanilla-400);
 			}
 
 			.time-btns {
