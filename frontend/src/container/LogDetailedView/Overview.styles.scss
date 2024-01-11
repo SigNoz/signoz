@@ -37,14 +37,21 @@
     }
 
     .collapse-content {
-        background: var(--bg-slate-400);
+        .ant-collapse-header {
+            background: rgba(171, 189, 255, 0.04);
+        }
+        .ant-collapse-content {
+            background: var(--bg-ink-400);
+        }
     }
 }
 
 .lightMode {
     .overview-container {
         .collapse-content {
-            background: var(--bg-vanilla-200);
+            .ant-collapse-content {
+                background: var(--bg-vanilla-100);
+            }
         }
     
         .log-switch {
