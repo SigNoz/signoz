@@ -150,6 +150,16 @@ function QueryBuilderSearch({
 			(item) => item.key as BaseAutocompleteData,
 		);
 
+		// Avoid updating query with onChange at the bottom of this useEffect
+		// if there are no `tags` that need to be normalized after receiving
+		// the latest `sourceKeys`.
+		//
+		// Executing the following logic for empty tags leads to emptying
+		// out of `query` via `onChange`.
+		// `tags` can contain stale empty value while being updated by `useTag`
+		// which maintains it as a state and updates it via useEffect when props change.
+		// This was observed when pipeline filters were becoming empty after
+		// returning from logs explorer.
 		if ((tags?.length || 0) < 1) {
 			return;
 		}
