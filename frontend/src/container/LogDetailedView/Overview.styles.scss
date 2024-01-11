@@ -4,21 +4,21 @@
         border: 1px solid #AD7F5833;
         background: linear-gradient(0deg, rgba(173, 127, 88, 0.2), rgba(173, 127, 88, 0.2));
         border-radius: 20px;
-        padding: 2px, 8px;
+        padding: var(--padding-1), var(--padding-2);
         font-family: 'Inter';
-        font-size: '12px';
-        font-weight: 500;
-        line-height: '16px';
-        letter-spacing: '-0.005em';
-        text-align: 'center';
-        color: var(--bg-sienna-400);
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-medium);
+        line-height: 16px;
+        letter-spacing: -0.005em;
+        text-align: center;
+        color: var(--text-sienna-400);
     }
 
     .log-switch {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: 10px;
+        margin-top: var(--margin-3);
 
         .wrap-word-switch {
             display: flex;

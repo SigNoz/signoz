@@ -17,7 +17,7 @@ export const TagLabel = styled.span`
 `;
 
 export const TagValue = styled.span`
-	color: var(--bg-sakura-400);
+	color: var(--text-sakura-400);
 	/* background-color: var(--bg-slate-400); */
 	text-transform: capitalize;
 	font-size: var(--font-size-xs);

@@ -1,9 +1,9 @@
 .field-renderer-container {
     .label {
-        color: var(--bg-robin-400);
+        color: var(--text-robin-400);
         font-family: SF Mono;
         font-size: 16px;
-        font-weight: 400;
+        font-weight: var(--font-weight-normal);
         line-height: 18px;
         letter-spacing: -0.005em;
         text-align: left;
