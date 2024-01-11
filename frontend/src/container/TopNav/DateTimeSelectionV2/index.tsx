@@ -1,7 +1,7 @@
 import './DateTimeSelectionV2.styles.scss';
 
 import { SyncOutlined } from '@ant-design/icons';
-import { Button, Popover } from 'antd';
+import { Button, DatePicker, Popover } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -40,7 +40,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../AutoRefreshV2';
-import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
+import { DateTimeRangeType } from '../CustomDateTimeModal';
 import {
 	FixedDurationSuggestionOptions,
 	getDefaultOption,
@@ -98,6 +98,7 @@ function DateTimeSelection({
 	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
 		false,
 	);
+	const { RangePicker } = DatePicker;
 
 	const { stagedQuery, initQueryBuilderData, panelType } = useQueryBuilder();
 
@@ -246,8 +247,8 @@ function DateTimeSelection({
 	);
 
 	const onSelectHandler = (value: Time): void => {
-		setIsOpen(false);
 		if (value !== 'custom') {
+			setIsOpen(false);
 			updateTimeInterval(value);
 			updateLocalStorageForRoutes(value);
 			if (refreshButtonHidden) {
@@ -362,6 +363,15 @@ function DateTimeSelection({
 		);
 	}
 
+	const onModalOkHandler = (date_time: any): void => {
+		onCustomDateHandler(date_time);
+	};
+
+	const disabledDate = (current: Dayjs): boolean => {
+		const currentDay = dayjs(current);
+		return currentDay.isAfter(dayjs());
+	};
+
 	return (
 		<div className="date-time-selector">
 			<RefreshText
@@ -402,14 +412,24 @@ function DateTimeSelection({
 									))}
 								</div>
 								<div className="relative-date-time">
-									<div>
-										<div className="time-heading">RELATIVE TIMES</div>
-										<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
-									</div>
-									<div>
-										<div className="time-heading">FIXED TIMES</div>
-										<div>{getTimeChips(FixedDurationSuggestionOptions)}</div>
-									</div>
+									{customDateTimeVisible ? (
+										<RangePicker
+											disabledDate={disabledDate}
+											allowClear
+											onCalendarChange={onModalOkHandler}
+										/>
+									) : (
+										<>
+											<div>
+												<div className="time-heading">RELATIVE TIMES</div>
+												<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
+											</div>
+											<div>
+												<div className="time-heading">FIXED TIMES</div>
+												<div>{getTimeChips(FixedDurationSuggestionOptions)}</div>
+											</div>
+										</>
+									)}
 								</div>
 							</div>
 						}
@@ -451,14 +471,6 @@ function DateTimeSelection({
 					)}
 				</FormContainer>
 			</Form>
-
-			<CustomDateTimeModal
-				visible={customDateTimeVisible}
-				onCreate={onCustomDateHandler}
-				onCancel={(): void => {
-					setCustomDTPickerVisible(false);
-				}}
-			/>
 		</div>
 	);
 }
