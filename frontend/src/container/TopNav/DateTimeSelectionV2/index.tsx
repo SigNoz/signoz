@@ -20,6 +20,7 @@ import { QueryHistoryState } from 'container/LiveLogs/types';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
@@ -59,6 +60,7 @@ function DateTimeSelection({
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
+	const isDarkMode = useIsDarkMode();
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
@@ -361,7 +363,7 @@ function DateTimeSelection({
 	}
 
 	return (
-		<>
+		<div className="date-time-selector">
 			<RefreshText
 				{...{
 					onLastRefreshHandler,
@@ -379,7 +381,7 @@ function DateTimeSelection({
 						open={isOpen}
 						showArrow={false}
 						onOpenChange={setIsOpen}
-						rootClassName="date-time-root"
+						rootClassName={isDarkMode ? 'date-time-root' : 'date-time-root lightMode'}
 						content={
 							<div className="date-time-popover">
 								<div className="date-time-options">
@@ -457,7 +459,7 @@ function DateTimeSelection({
 					setCustomDTPickerVisible(false);
 				}}
 			/>
-		</>
+		</div>
 	);
 }
 

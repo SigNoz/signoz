@@ -20,10 +20,10 @@ export const RawLogViewContainer = styled(Row)<{
 
 	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
 
-	${({ $isReadOnly, $isActiveLog }): string =>
+	${({ $isReadOnly, $isActiveLog, $isDarkMode }): string =>
 		$isActiveLog
 			? getActiveLogBackground()
-			: getDefaultLogBackground($isReadOnly)}
+			: getDefaultLogBackground($isReadOnly, $isDarkMode)}
 `;
 
 export const ExpandIconWrapper = styled(Col)`
@@ -38,7 +38,8 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 	font-size: 14px;
 	font-weight: 400;
 	text-align: left;
-	color: #c0c1c3;
+
+	color: ${({ $isDarkMode }): string => ($isDarkMode ? '#c0c1c3' : '1D212D')};
 
 	${({ $isTextOverflowEllipsisDisabled, linesPerRow }): string =>
 		$isTextOverflowEllipsisDisabled
