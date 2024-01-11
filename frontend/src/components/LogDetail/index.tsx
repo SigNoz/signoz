@@ -110,7 +110,7 @@ function LogDetail({
 					<Radio.Button
 						className={
 							// eslint-disable-next-line sonarjs/no-duplicate-string
-							selectedView === 'OVERVIEW' ? 'selected_view' : undefined
+							selectedView === 'OVERVIEW' ? 'selected_view tabs' : 'tab'
 						}
 						value={VIEW_TYPES.OVERVIEW}
 					>
@@ -120,7 +120,7 @@ function LogDetail({
 						</div>
 					</Radio.Button>
 					<Radio.Button
-						className={selectedView === 'JSON' ? 'selected_view' : undefined}
+						className={selectedView === 'JSON' ? 'selected_view tabs' : 'tab'}
 						value={VIEW_TYPES.JSON}
 					>
 						<div className="view-title">
@@ -129,7 +129,7 @@ function LogDetail({
 						</div>
 					</Radio.Button>
 					<Radio.Button
-						className={selectedView === 'CONTENT' ? 'selected_view' : undefined}
+						className={selectedView === 'CONTENT' ? 'selected_view tab' : 'tab'}
 						value={VIEW_TYPES.CONTENT}
 					>
 						<div className="view-title">
