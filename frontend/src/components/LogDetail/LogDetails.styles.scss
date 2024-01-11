@@ -1,11 +1,11 @@
 .log-detail-drawer {
 
     .title {
-        color: var(--text-vanilla-400, #C0C1C3);
+        color: var(--text-vanilla-400);
         font-family: Inter;
-        font-size: 14px;
+        font-size: var(--font-size-sm);
         font-style: normal;
-        font-weight: 400;
+        font-weight: var(--font-weight-normal);
         line-height: 20px; /* 142.857% */
         letter-spacing: -0.07px;
     }
@@ -24,8 +24,8 @@
         gap: 4px;
         .ant-typography {
             font-family: SF Mono;
-            font-size: 14px;
-            font-weight: 400;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-normal);
             line-height: 18px;
             letter-spacing: 0.10em;
             white-space: nowrap;
@@ -40,7 +40,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: 30px;
+        margin-top: var(--marin-7);
 
         .btn-search {
             border-radius: 2px;
