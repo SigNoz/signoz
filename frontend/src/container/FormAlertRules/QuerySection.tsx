@@ -1,7 +1,10 @@
+import './QuerySection.styles.scss';
+
 import { Button, Tabs } from 'antd';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
+import { Play } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -73,40 +76,52 @@ function QuerySection({
 			case AlertTypes.LOGS_BASED_ALERT:
 			case AlertTypes.EXCEPTIONS_BASED_ALERT:
 				return (
-					<Tabs
-						type="card"
-						style={{ width: '100%' }}
-						defaultActiveKey={EQueryType.QUERY_BUILDER}
-						activeKey={queryCategory}
-						onChange={handleQueryCategoryChange}
-						tabBarExtraContent={
-							<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-								<Button type="primary" onClick={runQuery}>
-									Run Query
-								</Button>
-							</span>
-						}
-						items={tabs}
-					/>
+					<div className="alert-tabs">
+						<Tabs
+							type="card"
+							style={{ width: '100%' }}
+							defaultActiveKey={EQueryType.QUERY_BUILDER}
+							activeKey={queryCategory}
+							onChange={handleQueryCategoryChange}
+							tabBarExtraContent={
+								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+									<Button
+										type="primary"
+										onClick={runQuery}
+										icon={<Play size={14} className="stage-run-query" />}
+									>
+										Stage & Run Query
+									</Button>
+								</span>
+							}
+							items={tabs}
+						/>
+					</div>
 				);
 			case AlertTypes.METRICS_BASED_ALERT:
 			default:
 				return (
-					<Tabs
-						type="card"
-						style={{ width: '100%' }}
-						defaultActiveKey={EQueryType.QUERY_BUILDER}
-						activeKey={queryCategory}
-						onChange={handleQueryCategoryChange}
-						tabBarExtraContent={
-							<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-								<Button type="primary" onClick={runQuery}>
-									Run Query
-								</Button>
-							</span>
-						}
-						items={items}
-					/>
+					<div className="alert-tabs">
+						<Tabs
+							type="card"
+							style={{ width: '100%' }}
+							defaultActiveKey={EQueryType.QUERY_BUILDER}
+							activeKey={queryCategory}
+							onChange={handleQueryCategoryChange}
+							tabBarExtraContent={
+								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+									<Button
+										type="primary"
+										onClick={runQuery}
+										icon={<Play size={14} className="stage-run-query" />}
+									>
+										Stage & Run Query
+									</Button>
+								</span>
+							}
+							items={items}
+						/>
+					</div>
 				);
 		}
 	};
@@ -126,7 +141,7 @@ function QuerySection({
 		<>
 			<StepHeading> {t('alert_form_step1')}</StepHeading>
 			<FormContainer>
-				<div style={{ display: 'flex' }}>{renderTabs(alertType)}</div>
+				<div>{renderTabs(alertType)}</div>
 				{renderQuerySection(queryCategory)}
 			</FormContainer>
 		</>
