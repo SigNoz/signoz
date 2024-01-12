@@ -12,6 +12,7 @@ import {
 } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import JSONView from 'container/LogDetailedView/JsonView';
+import LogContext from 'container/LogDetailedView/LogContext';
 import Overview from 'container/LogDetailedView/Overview';
 import { aggregateAttributesResourcesToString } from 'container/LogDetailedView/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -39,10 +40,11 @@ function LogDetail({
 	onClose,
 	onAddToQuery,
 	onClickActionItem,
+	selectedTab,
 }: LogDetailProps): JSX.Element {
 	console.log({ onClickActionItem }); // TODO: remove, ketp for linter error
 	const [, copyToClipboard] = useCopyToClipboard();
-	const [selectedView, setSelectedView] = useState<VIEWS>(VIEW_TYPES.OVERVIEW);
+	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 	const isDarkMode = useIsDarkMode();
@@ -158,12 +160,12 @@ function LogDetail({
 						</div>
 					</Radio.Button>
 					<Radio.Button
-						className={selectedView === 'CONTENT' ? 'selected_view tab' : 'tab'}
-						value={VIEW_TYPES.CONTENT}
+						className={selectedView === 'CONTEXT' ? 'selected_view tab' : 'tab'}
+						value={VIEW_TYPES.CONTEXT}
 					>
 						<div className="view-title">
 							<TextSelect size={14} />
-							Content
+							Context
 						</div>
 					</Radio.Button>
 				</Radio.Group>
@@ -187,7 +189,7 @@ function LogDetail({
 					</div>
 				)}
 
-				{selectedView === 'CONTENT' && (
+				{selectedView === 'CONTEXT' && (
 					<Button className="action-btn" icon={<Filter size={16} />} />
 				)}
 			</div>
@@ -209,6 +211,8 @@ function LogDetail({
 				/>
 			)}
 			{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}
+
+			{selectedView === VIEW_TYPES.CONTEXT && <LogContext />}
 		</Drawer>
 	);
 }
