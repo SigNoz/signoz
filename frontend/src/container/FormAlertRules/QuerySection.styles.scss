@@ -1,8 +1,3 @@
-.stage-run-query {
-	display: flex;
-	align-items: center;
-}
-
 .alert-tabs {
 	.ant-tabs-tab {
 		border: none !important;
@@ -20,6 +15,11 @@
 	}
 	.ant-tabs-tab + .ant-tabs-tab {
 		border-left: 1px solid var(--bg-slate-200) !important;
+	}
+
+	.stage-run-query {
+		display: flex;
+		align-items: center;
 	}
 }
 
