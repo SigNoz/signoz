@@ -88,7 +88,8 @@ function QuerySection({
 									<Button
 										type="primary"
 										onClick={runQuery}
-										icon={<Play size={14} className="stage-run-query" />}
+										className="stage-run-query"
+										icon={<Play size={14} />}
 									>
 										Stage & Run Query
 									</Button>
@@ -113,7 +114,8 @@ function QuerySection({
 									<Button
 										type="primary"
 										onClick={runQuery}
-										icon={<Play size={14} className="stage-run-query" />}
+										className="stage-run-query"
+										icon={<Play size={14} />}
 									>
 										Stage & Run Query
 									</Button>
