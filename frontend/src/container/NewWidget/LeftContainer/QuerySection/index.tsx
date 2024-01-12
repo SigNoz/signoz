@@ -1,3 +1,5 @@
+import './QuerySection.styles.scss';
+
 import { Button, Tabs, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -9,6 +11,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { Play } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
@@ -153,26 +156,30 @@ function QuerySection({
 	];
 
 	return (
-		<Tabs
-			type="card"
-			style={{ width: '100%' }}
-			defaultActiveKey={currentQuery.queryType}
-			activeKey={currentQuery.queryType}
-			onChange={handleQueryCategoryChange}
-			tabBarExtraContent={
-				<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-					<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
-					<Button
-						loading={getWidgetQueryRange.isFetching}
-						type="primary"
-						onClick={handleRunQuery}
-					>
-						Stage & Run Query
-					</Button>
-				</span>
-			}
-			items={items}
-		/>
+		<div className="dashboard-navigation">
+			<Tabs
+				type="card"
+				style={{ width: '100%' }}
+				defaultActiveKey={currentQuery.queryType}
+				activeKey={currentQuery.queryType}
+				onChange={handleQueryCategoryChange}
+				tabBarExtraContent={
+					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+						<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
+						<Button
+							loading={getWidgetQueryRange.isFetching}
+							type="primary"
+							onClick={handleRunQuery}
+							className="stage-run-query"
+							icon={<Play size={14} />}
+						>
+							Stage & Run Query
+						</Button>
+					</span>
+				}
+				items={items}
+			/>
+		</div>
 	);
 }
 
