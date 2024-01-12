@@ -3,6 +3,7 @@ import './RawLogView.styles.scss';
 import Convert from 'ansi-to-html';
 import { DrawerProps } from 'antd';
 import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES, VIEWS } from 'components/LogDetail/constants';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
@@ -41,7 +42,6 @@ function RawLogView({
 	);
 	const {
 		activeLog: activeContextLog,
-		onSetActiveLog: handleSetActiveContextLog,
 		onClearActiveLog: handleClearActiveContextLog,
 	} = useActiveLog();
 	const {
@@ -52,6 +52,7 @@ function RawLogView({
 	} = useActiveLog();
 
 	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
+	const [selectedTab, setSelectedTab] = useState<VIEWS | undefined>();
 
 	const isDarkMode = useIsDarkMode();
 	const isReadOnlyLog = !isLogsExplorerPage || isReadOnly;
@@ -72,6 +73,7 @@ function RawLogView({
 		if (activeContextLog || isReadOnly) return;
 
 		onSetActiveLog(data);
+		setSelectedTab(VIEW_TYPES.OVERVIEW);
 	}, [activeContextLog, isReadOnly, data, onSetActiveLog]);
 
 	const handleCloseLogDetail: DrawerProps['onClose'] = useCallback(
@@ -102,9 +104,11 @@ function RawLogView({
 		(event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			handleSetActiveContextLog(data);
+			// handleSetActiveContextLog(data);
+			setSelectedTab(VIEW_TYPES.CONTEXT);
+			onSetActiveLog(data);
 		},
-		[data, handleSetActiveContextLog],
+		[data, onSetActiveLog],
 	);
 
 	const html = useMemo(
@@ -148,12 +152,15 @@ function RawLogView({
 					onClose={handleClearActiveContextLog}
 				/>
 			)}
-			<LogDetail
-				log={activeLog}
-				onClose={handleCloseLogDetail}
-				onAddToQuery={onAddToQuery}
-				onClickActionItem={onAddToQuery}
-			/>
+			{selectedTab && (
+				<LogDetail
+					selectedTab={selectedTab}
+					log={activeLog}
+					onClose={handleCloseLogDetail}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onAddToQuery}
+				/>
+			)}
 		</RawLogViewContainer>
 	);
 }
