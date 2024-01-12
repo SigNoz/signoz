@@ -4,8 +4,8 @@ import { useMemo } from 'react';
 import { matchPath, useHistory } from 'react-router-dom';
 
 import NewExplorerCTA from '../NewExplorerCTA';
-import DateTimeSelector from './DateTimeSelection';
-import { routesToDisable, routesToSkip } from './DateTimeSelection/config';
+import DateTimeSelector from './DateTimeSelectionV2';
+import { routesToDisable, routesToSkip } from './DateTimeSelectionV2/config';
 
 function TopNav(): JSX.Element | null {
 	const { location } = useHistory();
@@ -43,7 +43,7 @@ function TopNav(): JSX.Element | null {
 						<Space align="start" size={60} direction="horizontal">
 							<NewExplorerCTA />
 							<div>
-								<DateTimeSelector />
+								<DateTimeSelector showAutoRefresh />
 							</div>
 						</Space>
 					</Row>

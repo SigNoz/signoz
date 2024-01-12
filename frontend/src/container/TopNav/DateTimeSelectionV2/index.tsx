@@ -464,7 +464,7 @@ function DateTimeSelection({
 						</Button>
 					</Popover>
 
-					{showAutoRefresh && (
+					{showAutoRefresh && selectedTime !== 'custom' && (
 						<div className="refresh-actions">
 							<FormItem hidden={refreshButtonHidden} className="refresh-btn">
 								<Button icon={<SyncOutlined />} onClick={onRefreshHandler} />
