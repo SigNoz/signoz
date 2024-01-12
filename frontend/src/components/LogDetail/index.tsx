@@ -212,7 +212,7 @@ function LogDetail({
 			)}
 			{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}
 
-			{selectedView === VIEW_TYPES.CONTEXT && <LogContext />}
+			{selectedView === VIEW_TYPES.CONTEXT && <LogContext log={log} />}
 		</Drawer>
 	);
 }
