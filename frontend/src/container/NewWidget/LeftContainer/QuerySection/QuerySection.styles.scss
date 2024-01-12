@@ -1,0 +1,24 @@
+.stage-run-query {
+	display: flex;
+	align-items: center;
+}
+
+.dashboard-navigation {
+	.ant-tabs-tab {
+		border: none !important;
+		margin-left: 0px !important;
+	}
+	.ant-tabs-nav {
+		margin: 0px;
+		margin-bottom: 0.5rem;
+	}
+	.ant-tabs-nav::before {
+		border-bottom: none !important;
+	}
+	.ant-tabs-nav-list {
+		border: 1px solid var(--bg-slate-200);
+	}
+	.ant-tabs-tab + .ant-tabs-tab {
+		border-left: 1px solid var(--bg-slate-200) !important;
+	}
+}
