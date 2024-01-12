@@ -244,7 +244,7 @@ function ExplorerCard({
 				</ExplorerCardHeadContainer>
 			)}
 
-			{children}
+			<div style={{ marginTop: '1rem' }}>{children}</div>
 		</>
 	);
 }
