@@ -84,6 +84,7 @@ function RawLogView({
 			event.stopPropagation();
 
 			onClearActiveLog();
+			setSelectedTab(undefined);
 		},
 		[onClearActiveLog],
 	);
