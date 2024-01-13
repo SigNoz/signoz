@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import './CustomSelect.styles.scss';
+import './CustomTimePicker.styles.scss';
 
 import { Input, Popover, Space, Tooltip } from 'antd';
 import cx from 'classnames';
@@ -8,17 +8,24 @@ import { Options } from 'container/TopNav/DateTimeSelection/config';
 import dayjs from 'dayjs';
 import debounce from 'lodash-es/debounce';
 import { CheckCircle, ChevronDown, Clock } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-function CustomSelect({
+interface CustomTimePickerProps {
+	onSelect: (value: string) => void;
+	items: any[];
+	selectedValue: string;
+	selectedTime: string;
+	onValidCustomDateChange: ([t1, t2]: any[]) => void;
+}
+
+function CustomTimePicker({
 	onSelect,
 	items,
 	selectedValue,
 	selectedTime,
-	onRelativeTime,
 	onValidCustomDateChange,
-}): JSX.Element {
+}: CustomTimePickerProps): JSX.Element {
 	const [open, setOpen] = useState(false);
 	const [
 		selectedTimePlaceholderValue,
@@ -28,8 +35,6 @@ function CustomSelect({
 	const [inputValue, setInputValue] = useState('');
 	const [inputStatus, setInputStatus] = useState<'' | 'error' | 'success'>('');
 	const [isInputFocused, setIsInputFocused] = useState(false);
-
-	const [timeValue, setTimeValue] = useState('');
 
 	const getSelectedTimeRangeLabel = (
 		selectedTime: string,
@@ -54,14 +59,6 @@ function CustomSelect({
 		setSelectedTimePlaceholderValue(value);
 	}, [selectedTime, selectedValue]);
 
-	const handleTimeValueChange = (event: unknown): void => {
-		const value = (event as React.BaseSyntheticEvent)?.target?.value || '';
-
-		setSelectedTimePlaceholderValue(value);
-		setInputValue(value);
-		onRelativeTime(value);
-	};
-
 	const hide = (): void => {
 		setOpen(false);
 	};
@@ -70,40 +67,9 @@ function CustomSelect({
 		setOpen(newOpen);
 	};
 
-	const handleKeyDown = (e): void => {
-		const allowedKeys = [
-			'0',
-			'1',
-			'2',
-			'3',
-			'4',
-			'5',
-			'6',
-			'7',
-			'8',
-			'9',
-			'm',
-			'h',
-			'd',
-			'w',
-			'Backspace',
-		];
-
-		if (!allowedKeys.includes(e.key)) {
-			e.preventDefault();
-		}
-	};
-
-	// const handleInputChange = (event): void => {
-
-	const debouncedHandleInputChange = debounce((inputValue) => {
-		// Validate input format using a regular expression
+	const debouncedHandleInputChange = debounce((inputValue): void => {
 		const isValidFormat = /^(\d+)([mhdw])$/.test(inputValue);
-
-		console.log('isValidFormat', inputValue, isValidFormat);
-
 		if (isValidFormat) {
-			setTimeValue(inputValue);
 			setInputStatus('success');
 
 			const match = inputValue.match(/^(\d+)([mhdw])$/);
@@ -112,7 +78,7 @@ function CustomSelect({
 			const unit = match[2];
 
 			const currentTime = dayjs();
-			let minTime;
+			let minTime = null;
 
 			switch (unit) {
 				case 'm':
@@ -129,25 +95,16 @@ function CustomSelect({
 					minTime = currentTime.subtract(value, 'week');
 					break;
 				default:
-					return 0;
+					break;
 			}
 
-			console.log('currentTime', currentTime);
-			console.log('minTime', minTime);
-
 			onValidCustomDateChange([minTime, currentTime]);
-
-			// Pass the raw input value to the parent component
-			// onTimeChange(inputValue);
 		} else {
-			// Discard the value if it's not in the correct format
-			setTimeValue('');
 			setInputStatus('error');
-			// onTimeChange(''); // You can choose another default value if needed
 		}
 	}, 300);
 
-	const handleInputChange = (event): void => {
+	const handleInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
 		const inputValue = event.target.value;
 
 		if (inputValue.length > 0) {
@@ -175,7 +132,9 @@ function CustomSelect({
 					<div
 						onClick={(): void => {
 							onSelect(value);
+							setSelectedTimePlaceholderValue('');
 							setInputStatus('');
+							setInputValue('');
 							hide();
 						}}
 						key={value}
@@ -212,11 +171,13 @@ function CustomSelect({
 				padding: 0,
 			}}
 		>
-			<Space.Compact style={{ width: '100%' }}>
+			<Space.Compact
+				style={{ width: '100%', minWidth: '240px', maxWidth: '240px' }}
+			>
 				<Input
 					className="timeSelection-input"
 					type="text"
-					status={inputStatus === 'error' ? 'error' : ''}
+					status={inputValue && inputStatus === 'error' ? 'error' : ''}
 					allowClear={!isInputFocused && selectedTime === 'custom'}
 					placeholder={
 						isInputFocused
@@ -256,4 +217,4 @@ function CustomSelect({
 	);
 }
 
-export default CustomSelect;
+export default CustomTimePicker;

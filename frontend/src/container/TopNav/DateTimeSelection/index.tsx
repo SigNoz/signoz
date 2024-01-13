@@ -1,8 +1,8 @@
 import { SyncOutlined } from '@ant-design/icons';
-import { Button, Select as DefaultSelect } from 'antd';
+import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
-import CustomSelect from 'components/CustomSelect/CustomSelect';
+import CustomTimePicker from 'components/CustomTimePicker/CustomTimePicker';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -288,17 +288,14 @@ function DateTimeSelection({
 				initialValues={{ interval: selectedTime }}
 			>
 				<FormContainer>
-					<CustomSelect
+					<CustomTimePicker
 						onSelect={(value: unknown): void => {
 							onSelectHandler(value as Time);
 						}}
-						onRelativeTime={(value: unknown): void => {
-							// onSelectHandler(value as Time);
-
-							console.log('Relative Value', value);
-						}}
 						selectedTime={selectedTime}
-						onValidCustomDateChange={onCustomDateHandler}
+						onValidCustomDateChange={(dateTime): void =>
+							onCustomDateHandler(dateTime as DateTimeRangeType)
+						}
 						selectedValue={getInputLabel(
 							dayjs(minTime / 1000000),
 							dayjs(maxTime / 1000000),
