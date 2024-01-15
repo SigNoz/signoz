@@ -223,8 +223,14 @@ function DateTimeSelection({
 				setLocalStorageKey('endTime', endTimeMoment.toString());
 				updateLocalStorageForRoutes('custom');
 				if (!isLogsExplorerPage) {
-					urlQuery.set(QueryParams.startTime, startTimeMoment.toString());
-					urlQuery.set(QueryParams.endTime, endTimeMoment.toString());
+					urlQuery.set(
+						QueryParams.startTime,
+						startTimeMoment?.toDate().getTime().toString(),
+					);
+					urlQuery.set(
+						QueryParams.endTime,
+						endTimeMoment?.toDate().getTime().toString(),
+					);
 					const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 					history.replace(generatedUrl);
 				}
