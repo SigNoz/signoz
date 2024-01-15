@@ -13,4 +13,5 @@ export interface RawLogContentProps {
 	$isReadOnly?: boolean;
 	$isActiveLog?: boolean;
 	$isTextOverflowEllipsisDisabled?: boolean;
+	$isDarkMode: boolean;
 }
