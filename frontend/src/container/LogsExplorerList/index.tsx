@@ -149,6 +149,7 @@ function LogsExplorerList({
 					<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
 
 					<LogDetail
+						selectedTab="OVERVIEW"
 						log={activeLog}
 						onClose={onClearActiveLog}
 						onAddToQuery={onAddToQuery}

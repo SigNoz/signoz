@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './LogDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
@@ -24,6 +25,7 @@ import {
 	Compass,
 	Copy,
 	Filter,
+	HardHat,
 	Search,
 	Table,
 	TextSelect,
@@ -31,9 +33,11 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
+import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailProps } from './LogDetail.interfaces';
+import QueryBuilderSearchWrapper from './QueryBuilderSearchWrapper';
 
 function LogDetail({
 	log,
@@ -47,6 +51,12 @@ function LogDetail({
 	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
+	const [isFilterVisibile, setIsFilterVisible] = useState<boolean>(false);
+
+	const [contextQuery, setContextQuery] = useState<Query | undefined>();
+	const [filters, setFilters] = useState<TagFilter | null>(null);
+	const [isEdit, setIsEdit] = useState<boolean>(false);
+
 	const isDarkMode = useIsDarkMode();
 
 	const { notifications } = useNotifications();
@@ -55,10 +65,17 @@ function LogDetail({
 
 	const handleModeChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
+		setIsEdit(false);
+		setIsFilterVisible(false);
 	};
 
 	const handleSearchVisible = (): void => {
 		setIsSearchVisible(!isSearchVisible);
+	};
+
+	const handleFilterVisible = (): void => {
+		setIsFilterVisible(!isFilterVisibile);
+		setIsEdit(!isEdit);
 	};
 
 	const drawerCloseHandler = (
@@ -190,7 +207,11 @@ function LogDetail({
 				)}
 
 				{selectedView === 'CONTEXT' && (
-					<Button className="action-btn" icon={<Filter size={16} />} />
+					<Button
+						className="action-btn"
+						icon={<Filter size={16} />}
+						onClick={handleFilterVisible}
+					/>
 				)}
 			</div>
 
@@ -203,6 +224,18 @@ function LogDetail({
 				/>
 			)}
 
+			<QueryBuilderSearchWrapper
+				isEdit={isEdit}
+				log={log}
+				filters={filters}
+				setContextQuery={setContextQuery}
+				setFilters={setFilters}
+				contextQuery={contextQuery}
+				suffixIcon={
+					<HardHat size={12} style={{ paddingRight: Spacing.PADDING_2 }} />
+				}
+			/>
+
 			{selectedView === VIEW_TYPES.OVERVIEW && (
 				<Overview
 					logData={log}
@@ -212,7 +245,14 @@ function LogDetail({
 			)}
 			{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}
 
-			{selectedView === VIEW_TYPES.CONTEXT && <LogContext log={log} />}
+			{selectedView === VIEW_TYPES.CONTEXT && (
+				<LogContext
+					log={log}
+					filters={filters}
+					contextQuery={contextQuery}
+					isEdit={isEdit}
+				/>
+			)}
 		</Drawer>
 	);
 }

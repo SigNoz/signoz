@@ -1,7 +1,12 @@
 import { blue } from '@ant-design/colors';
+import { Color } from '@signozhq/design-tokens';
 import { Col, Row, Space } from 'antd';
 import styled from 'styled-components';
-import { getActiveLogBackground, getDefaultLogBackground } from 'utils/logs';
+import {
+	getActiveLogBackground,
+	getDefaultLogBackground,
+	getHightLightedLogBackground,
+} from 'utils/logs';
 
 import { RawLogContentProps } from './types';
 
@@ -9,6 +14,7 @@ export const RawLogViewContainer = styled(Row)<{
 	$isDarkMode: boolean;
 	$isReadOnly?: boolean;
 	$isActiveLog?: boolean;
+	$isHightlightedLog: boolean;
 }>`
 	position: relative;
 	width: 100%;
@@ -19,6 +25,8 @@ export const RawLogViewContainer = styled(Row)<{
 	transition: background-color 0.2s ease-in;
 
 	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
+	${({ $isHightlightedLog }): string =>
+		getHightLightedLogBackground($isHightlightedLog)}
 
 	${({ $isReadOnly, $isActiveLog, $isDarkMode }): string =>
 		$isActiveLog
@@ -59,7 +67,7 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 		$isActiveLog || $isReadOnly ? 'initial' : 'pointer'};
 
 	${({ $isActiveLog, $isReadOnly }): string =>
-		$isReadOnly && $isActiveLog ? 'padding: 0 1.5rem;' : ''}
+		$isReadOnly && $isActiveLog ? `background-color: ${Color.BG_SLATE_200}` : ''}
 `;
 
 export const ActionButtonsWrapper = styled(Space)`

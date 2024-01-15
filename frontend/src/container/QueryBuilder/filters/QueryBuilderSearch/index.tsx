@@ -44,6 +44,7 @@ function QueryBuilderSearch({
 	whereClauseConfig,
 	className,
 	placeholder,
+	suffixIcon,
 }: QueryBuilderSearchProps): JSX.Element {
 	const {
 		updateTag,
@@ -208,6 +209,7 @@ function QueryBuilderSearch({
 				onDeselect={handleDeselect}
 				onInputKeyDown={onInputKeyDownHandler}
 				notFoundContent={isFetching ? <Spin size="small" /> : null}
+				suffixIcon={suffixIcon}
 			>
 				{options.map((option) => (
 					<Select.Option key={option.label} value={option.value}>
@@ -230,12 +232,14 @@ interface QueryBuilderSearchProps {
 	whereClauseConfig?: WhereClauseConfig;
 	className?: string;
 	placeholder?: string;
+	suffixIcon?: React.ReactNode;
 }
 
 QueryBuilderSearch.defaultProps = {
 	whereClauseConfig: undefined,
 	className: '',
 	placeholder: PLACEHOLDER,
+	suffixIcon: undefined,
 };
 
 export interface CustomTagProps {
