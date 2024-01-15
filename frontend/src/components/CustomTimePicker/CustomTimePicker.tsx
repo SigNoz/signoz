@@ -132,7 +132,7 @@ function CustomTimePicker({
 					<div
 						onClick={(): void => {
 							onSelect(value);
-							setSelectedTimePlaceholderValue('');
+							setSelectedTimePlaceholderValue(label);
 							setInputStatus('');
 							setInputValue('');
 							hide();
@@ -188,15 +188,11 @@ function CustomTimePicker({
 					onFocus={handleFocus}
 					onBlur={handleBlur}
 					onChange={handleInputChange}
-					// onKeyDown={handleKeyDown}
 					prefix={
 						inputValue && inputStatus === 'success' ? (
 							<CheckCircle size={14} color="#51E7A8" />
 						) : (
-							<Tooltip
-								title="Enter time in format (e.g., 1m, 2h, 2d, 4w)"
-								// placement="left"
-							>
+							<Tooltip title="Enter time in format (e.g., 1m, 2h, 2d, 4w)">
 								<Clock size={14} />
 							</Tooltip>
 						)
@@ -211,8 +207,6 @@ function CustomTimePicker({
 					}
 				/>
 			</Space.Compact>
-			{/* 
-			<div className="valid-format-error"> Enter time (e.g., 1m, 2h, 2d, 4w) </div> */}
 		</Popover>
 	);
 }
