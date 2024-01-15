@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './CustomTimePicker.styles.scss';
 
-import { Input, Popover, Space, Tooltip } from 'antd';
+import { Input, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Options } from 'container/TopNav/DateTimeSelection/config';
 import dayjs from 'dayjs';
@@ -30,7 +30,7 @@ function CustomTimePicker({
 	const [
 		selectedTimePlaceholderValue,
 		setSelectedTimePlaceholderValue,
-	] = useState('');
+	] = useState('Select / Enter Time Range');
 
 	const [inputValue, setInputValue] = useState('');
 	const [inputStatus, setInputStatus] = useState<'' | 'error' | 'success'>('');
@@ -120,13 +120,7 @@ function CustomTimePicker({
 	};
 
 	const content = (
-		<div
-			className="time-selection-dropdown-content"
-			style={{
-				minWidth: '172px',
-				width: '100%',
-			}}
-		>
+		<div className="time-selection-dropdown-content">
 			<div className="time-options-container">
 				{items.map(({ value, label }) => (
 					<div
@@ -171,42 +165,42 @@ function CustomTimePicker({
 				padding: 0,
 			}}
 		>
-			<Space.Compact
-				style={{ width: '100%', minWidth: '240px', maxWidth: '240px' }}
-			>
-				<Input
-					className="timeSelection-input"
-					type="text"
-					status={inputValue && inputStatus === 'error' ? 'error' : ''}
-					allowClear={!isInputFocused && selectedTime === 'custom'}
-					placeholder={
-						isInputFocused
-							? 'Time Format (1m or 2h or 3d or 4w)'
-							: selectedTimePlaceholderValue || 'Select / Enter Time Range'
-					}
-					value={inputValue}
-					onFocus={handleFocus}
-					onBlur={handleBlur}
-					onChange={handleInputChange}
-					prefix={
-						inputValue && inputStatus === 'success' ? (
-							<CheckCircle size={14} color="#51E7A8" />
-						) : (
-							<Tooltip title="Enter time in format (e.g., 1m, 2h, 2d, 4w)">
-								<Clock size={14} />
-							</Tooltip>
-						)
-					}
-					suffix={
-						<ChevronDown
-							size={14}
-							onClick={(): void => {
-								setOpen(!open);
-							}}
-						/>
-					}
-				/>
-			</Space.Compact>
+			<Input
+				className="timeSelection-input"
+				type="text"
+				style={{
+					minWidth: '120px',
+					width: '100%',
+				}}
+				status={inputValue && inputStatus === 'error' ? 'error' : ''}
+				allowClear={!isInputFocused && selectedTime === 'custom'}
+				placeholder={
+					isInputFocused
+						? 'Time Format (1m or 2h or 3d or 4w)'
+						: selectedTimePlaceholderValue
+				}
+				value={inputValue}
+				onFocus={handleFocus}
+				onBlur={handleBlur}
+				onChange={handleInputChange}
+				prefix={
+					inputValue && inputStatus === 'success' ? (
+						<CheckCircle size={14} color="#51E7A8" />
+					) : (
+						<Tooltip title="Enter time in format (e.g., 1m, 2h, 2d, 4w)">
+							<Clock size={14} />
+						</Tooltip>
+					)
+				}
+				suffix={
+					<ChevronDown
+						size={14}
+						onClick={(): void => {
+							setOpen(!open);
+						}}
+					/>
+				}
+			/>
 		</Popover>
 	);
 }
