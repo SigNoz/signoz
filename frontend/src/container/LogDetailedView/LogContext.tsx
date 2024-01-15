@@ -1,22 +1,29 @@
+import './LogContext.styles.scss';
+
 import RawLogView from 'components/Logs/RawLogView';
 import LogsContextList from 'container/LogsContextList';
-import useInitialQuery from 'container/LogsExplorerContext/useInitialQuery';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
-import { useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-function LogContext({ log }: { log: ILog }): JSX.Element {
-	const initialContextQuery = useInitialQuery(log);
+interface LogContextProps {
+	log: ILog;
+	contextQuery: Query | undefined;
+	filters: TagFilter | null;
+	isEdit: boolean;
+}
 
-	const [contextQuery, setContextQuery] = useState<Query>(initialContextQuery);
-	const [filters, setFilters] = useState<TagFilter | null>(null);
-	const [isEdit, setIsEdit] = useState<boolean>(false);
-
-	console.log({ setContextQuery, setFilters, setIsEdit });
+function LogContext({
+	log,
+	filters,
+	contextQuery,
+	isEdit,
+}: LogContextProps): JSX.Element {
+	// eslint-disable-next-line react/jsx-no-useless-fragment
+	if (!contextQuery) return <></>;
 
 	return (
-		<div>
+		<div className="log-context-container">
 			<LogsContextList
 				order={ORDERBY_FILTERS.ASC}
 				filters={filters}
@@ -24,15 +31,13 @@ function LogContext({ log }: { log: ILog }): JSX.Element {
 				log={log}
 				query={contextQuery}
 			/>
-			<div>
-				<RawLogView
-					isActiveLog
-					isReadOnly
-					isTextOverflowEllipsisDisabled
-					data={log}
-					linesPerRow={1}
-				/>
-			</div>
+			<RawLogView
+				isActiveLog
+				isReadOnly
+				isTextOverflowEllipsisDisabled={false}
+				data={log}
+				linesPerRow={1}
+			/>
 			<LogsContextList
 				order={ORDERBY_FILTERS.DESC}
 				filters={filters}

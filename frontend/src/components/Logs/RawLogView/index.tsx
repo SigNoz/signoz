@@ -126,7 +126,8 @@ function RawLogView({
 			align="middle"
 			$isDarkMode={isDarkMode}
 			$isReadOnly={isReadOnly}
-			$isActiveLog={isHighlighted}
+			$isHightlightedLog={isHighlighted}
+			$isActiveLog={isActiveLog}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 		>
