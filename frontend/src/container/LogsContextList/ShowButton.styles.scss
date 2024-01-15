@@ -8,3 +8,10 @@
     border: none;
     margin: 0;
 }
+
+.lightMode {
+    .show-more-button {
+        background-color: var(--bg-vanilla-300);
+        color: var(--bg-slate-400);
+    }
+}
