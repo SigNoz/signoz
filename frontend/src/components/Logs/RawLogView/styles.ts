@@ -30,8 +30,8 @@ export const RawLogViewContainer = styled(Row)<{
 
 	${({ $isReadOnly, $isActiveLog, $isDarkMode }): string =>
 		$isActiveLog
-			? getActiveLogBackground()
-			: getDefaultLogBackground($isReadOnly, $isDarkMode)}
+			? getActiveLogBackground($isActiveLog, $isDarkMode)
+			: getDefaultLogBackground($isReadOnly)}
 `;
 
 export const ExpandIconWrapper = styled(Col)`
@@ -46,8 +46,8 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 	font-size: 14px;
 	font-weight: 400;
 	text-align: left;
-
-	color: ${({ $isDarkMode }): string => ($isDarkMode ? '#c0c1c3' : '1D212D')};
+	color: ${({ $isDarkMode }): string =>
+		$isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400};
 
 	${({ $isTextOverflowEllipsisDisabled, linesPerRow }): string =>
 		$isTextOverflowEllipsisDisabled
@@ -65,9 +65,6 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 
 	cursor: ${({ $isActiveLog, $isReadOnly }): string =>
 		$isActiveLog || $isReadOnly ? 'initial' : 'pointer'};
-
-	${({ $isActiveLog, $isReadOnly }): string =>
-		$isReadOnly && $isActiveLog ? `background-color: ${Color.BG_SLATE_200}` : ''}
 `;
 
 export const ActionButtonsWrapper = styled(Space)`
