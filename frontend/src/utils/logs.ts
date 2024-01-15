@@ -1,4 +1,5 @@
 import { orange } from '@ant-design/colors';
+import { Color } from '@signozhq/design-tokens';
 
 export const getDefaultLogBackground = (
 	isReadOnly?: boolean,
@@ -15,5 +16,12 @@ export const getDefaultLogBackground = (
 
 export const getActiveLogBackground = (isActiveLog = true): string => {
 	if (!isActiveLog) return '';
+	return `background-color: ${Color.BG_SLATE_200};`;
+};
+
+export const getHightLightedLogBackground = (
+	isHighlightedLog = true,
+): string => {
+	if (!isHighlightedLog) return '';
 	return `background-color: ${orange[3]};`;
 };

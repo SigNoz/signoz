@@ -1,7 +1,8 @@
-import { Button, Typography } from 'antd';
-import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import './ShowButton.styles.scss';
 
-import { ShowButtonWrapper } from './styles';
+import { Button } from 'antd';
+import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 
 interface ShowButtonProps {
 	isLoading: boolean;
@@ -17,19 +18,21 @@ function ShowButton({
 	onClick,
 }: ShowButtonProps): JSX.Element {
 	return (
-		<ShowButtonWrapper>
-			<Typography>
-				Showing 10 lines {order === ORDERBY_FILTERS.ASC ? 'after' : 'before'} match
-			</Typography>
-			<Button
-				size="small"
-				disabled={isLoading || isDisabled}
-				loading={isLoading}
-				onClick={onClick}
-			>
-				Show 10 more lines
-			</Button>
-		</ShowButtonWrapper>
+		<Button
+			disabled={isLoading || isDisabled}
+			loading={isLoading}
+			onClick={onClick}
+			icon={
+				order === ORDERBY_FILTERS.ASC ? (
+					<ArrowUp size={14} />
+				) : (
+					<ArrowDown size={14} />
+				)
+			}
+			className="show-more-button"
+		>
+			Load more
+		</Button>
 	);
 }
 

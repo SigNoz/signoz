@@ -166,7 +166,7 @@ function LogsContextList({
 	);
 
 	return (
-		<>
+		<div>
 			{order === ORDERBY_FILTERS.ASC && (
 				<ShowButton
 					isLoading={isFetching}
@@ -187,6 +187,7 @@ function LogsContextList({
 					data={logs}
 					itemContent={getItemContent}
 					followOutput={order === ORDERBY_FILTERS.DESC}
+					style={{ overflowX: 'hidden' }}
 				/>
 			</ListContainer>
 
@@ -198,7 +199,7 @@ function LogsContextList({
 					onClick={handleShowNextLines}
 				/>
 			)}
-		</>
+		</div>
 	);
 }
 
