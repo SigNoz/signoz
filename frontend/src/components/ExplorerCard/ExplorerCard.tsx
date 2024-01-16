@@ -244,7 +244,7 @@ function ExplorerCard({
 				</ExplorerCardHeadContainer>
 			)}
 
-			{children}
+			<div>{children}</div>
 		</>
 	);
 }

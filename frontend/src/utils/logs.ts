@@ -1,11 +1,16 @@
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
 
-export const getDefaultLogBackground = (isReadOnly?: boolean): string => {
+export const getDefaultLogBackground = (
+	isReadOnly?: boolean,
+	isDarkMode?: boolean,
+): string => {
 	if (isReadOnly) return '';
 	// TODO handle the light mode here
 	return `&:hover {
-    background-color: rgba(171, 189, 255, 0.04);
+    background-color: ${
+					isDarkMode ? 'rgba(171, 189, 255, 0.04)' : 'var(--bg-vanilla-200)'
+				};
     }`;
 };
 

@@ -41,7 +41,6 @@ function CustomDateTimeModal({
 				disabledDate={disabledDate}
 				allowClear
 				onOk={onModalOkHandler}
-				showTime
 				onCalendarChange={onModalOkHandler}
 			/>
 		</Modal>

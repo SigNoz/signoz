@@ -1,5 +1,5 @@
 .text {
-	color: var(--bg-vanilla-400, #c0c1c3);
+	color: var(--bg-vanilla-400);
 	font-size: 14px;
 	font-style: normal;
 	font-weight: 400;
@@ -17,5 +17,11 @@
 
 	.log-state-indicator {
 		padding: 0px;
+	}
+}
+
+.lightMode {
+	.text {
+		color: var(--bg-slate-400);
 	}
 }
