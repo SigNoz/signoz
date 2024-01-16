@@ -475,13 +475,48 @@ func (t TimeAggregation) IsRateOperator() bool {
 type SpaceAggregation string
 
 const (
-	SpaceAggregationUnspecified SpaceAggregation = ""
-	SpaceAggregationSum         SpaceAggregation = "sum"
-	SpaceAggregationAvg         SpaceAggregation = "avg"
-	SpaceAggregationMin         SpaceAggregation = "min"
-	SpaceAggregationMax         SpaceAggregation = "max"
-	SpaceAggregationCount       SpaceAggregation = "count"
+	SpaceAggregationUnspecified  SpaceAggregation = ""
+	SpaceAggregationSum          SpaceAggregation = "sum"
+	SpaceAggregationAvg          SpaceAggregation = "avg"
+	SpaceAggregationMin          SpaceAggregation = "min"
+	SpaceAggregationMax          SpaceAggregation = "max"
+	SpaceAggregationCount        SpaceAggregation = "count"
+	SpaceAggregationPercentile50 SpaceAggregation = "percentile_50"
+	SpaceAggregationPercentile75 SpaceAggregation = "percentile_75"
+	SpaceAggregationPercentile90 SpaceAggregation = "percentile_90"
+	SpaceAggregationPercentile95 SpaceAggregation = "percentile_95"
+	SpaceAggregationPercentile99 SpaceAggregation = "percentile_99"
 )
+
+func IsPercentileOperator(operator SpaceAggregation) bool {
+	switch operator {
+	case SpaceAggregationPercentile50,
+		SpaceAggregationPercentile75,
+		SpaceAggregationPercentile90,
+		SpaceAggregationPercentile95,
+		SpaceAggregationPercentile99:
+		return true
+	default:
+		return false
+	}
+}
+
+func GetPercentileFromOperator(operator SpaceAggregation) float64 {
+	switch operator {
+	case SpaceAggregationPercentile50:
+		return 0.5
+	case SpaceAggregationPercentile75:
+		return 0.75
+	case SpaceAggregationPercentile90:
+		return 0.9
+	case SpaceAggregationPercentile95:
+		return 0.95
+	case SpaceAggregationPercentile99:
+		return 0.99
+	default:
+		return 0
+	}
+}
 
 type Function struct {
 	Category string        `json:"category"`
@@ -510,7 +545,6 @@ type BuilderQuery struct {
 	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
 	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
 	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
-	Quantile           float64           `json:"quantile,omitempty"`
 	Functions          []Function        `json:"functions,omitempty"`
 }
 
@@ -529,7 +563,7 @@ func (b *BuilderQuery) Validate() error {
 			return fmt.Errorf("data source is invalid: %w", err)
 		}
 		if b.DataSource == DataSourceMetrics {
-			if b.TimeAggregation == TimeAggregationUnspecified && b.Quantile == 0 {
+			if b.TimeAggregation == TimeAggregationUnspecified {
 				if err := b.AggregateOperator.Validate(); err != nil {
 					return fmt.Errorf("aggregate operator is invalid: %w", err)
 				}
