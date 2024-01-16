@@ -67,6 +67,7 @@ function LogDetail({
 		setSelectedView(e.target.value);
 		setIsEdit(false);
 		setIsFilterVisible(false);
+		setIsSearchVisible(false);
 	};
 
 	const handleSearchVisible = (): void => {
