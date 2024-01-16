@@ -48,8 +48,9 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 		line-clamp: ${linesPerRow}; 
 		-webkit-box-orient: vertical;`};
 
-	font-size: 1rem;
-	line-height: 2rem;
+	font-size: 12px;
+	line-height: 24px;
+	padding: 4px;
 
 	cursor: ${({ $isActiveLog, $isReadOnly }): string =>
 		$isActiveLog || $isReadOnly ? 'initial' : 'pointer'};
