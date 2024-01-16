@@ -140,7 +140,6 @@ function RawLogView({
 				$isTextOverflowEllipsisDisabled={isTextOverflowEllipsisDisabled}
 				linesPerRow={linesPerRow}
 				dangerouslySetInnerHTML={html}
-				$isDarkMode={isDarkMode}
 			/>
 
 			{hasActionButtons && (
