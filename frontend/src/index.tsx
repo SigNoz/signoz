@@ -16,6 +16,15 @@ const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
 			refetchOnWindowFocus: false,
+			retry(failureCount, error): boolean {
+				if (
+					error instanceof Error &&
+					error.message.includes('API responded with 400')
+				) {
+					return false;
+				}
+				return failureCount < 2;
+			},
 		},
 	},
 });
