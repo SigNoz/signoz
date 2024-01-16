@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -562,6 +563,14 @@ func (b *BuilderQuery) Validate() error {
 		}
 	}
 
+	if b.Having != nil {
+		for _, having := range b.Having {
+			if err := having.Operator.Validate(); err != nil {
+				return fmt.Errorf("having operator is invalid: %w", err)
+			}
+		}
+	}
+
 	for _, selectColumn := range b.SelectColumns {
 		if err := selectColumn.Validate(); err != nil {
 			return fmt.Errorf("select column is invalid %w", err)
@@ -655,10 +664,43 @@ type OrderBy struct {
 	IsColumn   bool                 `json:"-"`
 }
 
+// See HAVING_OPERATORS in queryBuilder.ts
+
+type HavingOperator string
+
+const (
+	HavingOperatorEqual           HavingOperator = "="
+	HavingOperatorNotEqual        HavingOperator = "!="
+	HavingOperatorGreaterThan     HavingOperator = ">"
+	HavingOperatorGreaterThanOrEq HavingOperator = ">="
+	HavingOperatorLessThan        HavingOperator = "<"
+	HavingOperatorLessThanOrEq    HavingOperator = "<="
+	HavingOperatorIn              HavingOperator = "IN"
+	HavingOperatorNotIn           HavingOperator = "NOT_IN"
+)
+
+func (h HavingOperator) Validate() error {
+	switch h {
+	case HavingOperatorEqual,
+		HavingOperatorNotEqual,
+		HavingOperatorGreaterThan,
+		HavingOperatorGreaterThanOrEq,
+		HavingOperatorLessThan,
+		HavingOperatorLessThanOrEq,
+		HavingOperatorIn,
+		HavingOperatorNotIn,
+		HavingOperator(strings.ToLower(string(HavingOperatorIn))),
+		HavingOperator(strings.ToLower(string(HavingOperatorNotIn))):
+		return nil
+	default:
+		return fmt.Errorf("invalid having operator: %s", h)
+	}
+}
+
 type Having struct {
-	ColumnName string      `json:"columnName"`
-	Operator   string      `json:"op"`
-	Value      interface{} `json:"value"`
+	ColumnName string         `json:"columnName"`
+	Operator   HavingOperator `json:"op"`
+	Value      interface{}    `json:"value"`
 }
 
 func (h *Having) CacheKey() string {
