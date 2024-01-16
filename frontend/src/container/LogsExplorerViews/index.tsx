@@ -180,7 +180,7 @@ function LogsExplorerViews({
 		enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
 	});
 
-	const { data, isFetching, isError } = useGetExplorerQueryRange(
+	const { data, isLoading, isError } = useGetExplorerQueryRange(
 		requestData,
 		panelType,
 		{
@@ -559,7 +559,7 @@ function LogsExplorerViews({
 				<div className="logs-explorer-views-type-content">
 					{selectedPanelType === PANEL_TYPES.LIST && (
 						<LogsExplorerList
-							isLoading={isFetching}
+							isLoading={isLoading}
 							currentStagedQueryData={listQuery}
 							logs={logs}
 							onEndReached={handleEndReached}
@@ -567,13 +567,13 @@ function LogsExplorerViews({
 					)}
 
 					{selectedPanelType === PANEL_TYPES.TIME_SERIES && (
-						<TimeSeriesView isLoading={isFetching} data={data} isError={isError} />
+						<TimeSeriesView isLoading={isLoading} data={data} isError={isError} />
 					)}
 
 					{selectedPanelType === PANEL_TYPES.TABLE && (
 						<LogsExplorerTable
 							data={data?.payload.data.newResult.data.result || []}
-							isLoading={isFetching}
+							isLoading={isLoading}
 						/>
 					)}
 				</div>
