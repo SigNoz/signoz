@@ -2,18 +2,21 @@ import './TableView.styles.scss';
 
 import { LinkOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Space, Tooltip, Tree } from 'antd';
+import { Button, Space, Spin, Tooltip, Tree } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import AddToQueryHOC, {
 	AddToQueryHOCProps,
 } from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
+import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
+import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
 import { isEmpty } from 'lodash-es';
-import { useMemo } from 'react';
+import { ArrowDownToDot, ArrowUpFromDot } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { Dispatch } from 'redux';
@@ -21,6 +24,7 @@ import AppActions from 'types/actions';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 
+import { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
 import {
 	filterKeyForField,
@@ -38,19 +42,49 @@ interface TableViewProps {
 	fieldSearchInput: string;
 }
 
-type Props = TableViewProps & Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+type Props = TableViewProps &
+	Pick<ActionItemProps, 'onClickActionItem'> &
+	Pick<AddToQueryHOCProps, 'onAddToQuery'>;
 
 function TableView({
 	logData,
-	onAddToQuery,
 	fieldSearchInput,
+	onAddToQuery,
+	onClickActionItem,
 }: Props): JSX.Element | null {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
+	const [isfilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
 
 	const flattenLogData: Record<string, string> | null = useMemo(
 		() => (logData ? flattenObject(logData) : null),
 		[logData],
 	);
+
+	const handleClick = (
+		operator: string,
+		fieldKey: string,
+		fieldValue: string,
+	): void => {
+		const validatedFieldValue = removeJSONStringifyQuotes(fieldValue);
+
+		onClickActionItem(fieldKey, validatedFieldValue, operator);
+	};
+
+	const onClickHandler = (
+		operator: string,
+		fieldKey: string,
+		fieldValue: string,
+	) => (): void => {
+		handleClick(operator, fieldKey, fieldValue);
+		if (operator === OPERATORS.IN) {
+			setIsFilterInLoading(true);
+		}
+		if (operator === OPERATORS.NIN) {
+			setIsFilterOutLoading(true);
+		}
+	};
+
 	if (logData === null) {
 		return null;
 	}
@@ -146,16 +180,16 @@ function TableView({
 		},
 		{
 			title: 'Value',
-			dataIndex: 'value',
+			// dataIndex: 'value',
 			key: 'value',
 			width: 70,
 			ellipsis: false,
-			className: 'value-field',
-			render: (field, record): JSX.Element => {
-				const textToCopy = field.slice(1, -1);
+			className: 'value-field-container',
+			render: (fieldData: Record<string, string>, record): JSX.Element => {
+				const textToCopy = fieldData.value.slice(1, -1);
 
 				if (record.field === 'body') {
-					const parsedBody = recursiveParseJSON(field);
+					const parsedBody = recursiveParseJSON(fieldData.value);
 					if (!isEmpty(parsedBody)) {
 						return (
 							<Tree defaultExpandAll showLine treeData={jsonToDataNodes(parsedBody)} />
@@ -163,12 +197,44 @@ function TableView({
 					}
 				}
 
+				const fieldFilterKey = filterKeyForField(fieldData.field);
+
 				return (
-					<CopyClipboardHOC textToCopy={textToCopy}>
-						<span style={{ color: Color.BG_SIENNA_400 }}>
-							{removeEscapeCharacters(field)}
+					<div className="value-field">
+						<CopyClipboardHOC textToCopy={textToCopy}>
+							<span style={{ color: Color.BG_SIENNA_400 }}>
+								{removeEscapeCharacters(fieldData.value)}
+							</span>
+						</CopyClipboardHOC>
+						<span className="action-btn">
+							<Button
+								className="filter-btn"
+								icon={
+									isfilterInLoading ? (
+										<Spin size="small" />
+									) : (
+										<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
+									)
+								}
+								onClick={onClickHandler(OPERATORS.IN, fieldFilterKey, fieldData.value)}
+							>
+								Filter for value
+							</Button>
+							<Button
+								className="filter-btn"
+								icon={
+									isfilterOutLoading ? (
+										<Spin size="small" />
+									) : (
+										<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
+									)
+								}
+								onClick={onClickHandler(OPERATORS.NIN, fieldFilterKey, fieldData.value)}
+							>
+								Filter out value
+							</Button>
 						</span>
-					</CopyClipboardHOC>
+					</div>
 				);
 			},
 		},

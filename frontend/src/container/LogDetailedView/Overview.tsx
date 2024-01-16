@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 
+import { ActionItemProps } from './ActionItem';
 import TableView from './TableView';
 import { aggregateAttributesResourcesToString } from './utils';
 
@@ -17,12 +18,15 @@ interface OverviewProps {
 	fieldSearchInput: string;
 }
 
-type Props = OverviewProps & Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+type Props = OverviewProps &
+	Pick<ActionItemProps, 'onClickActionItem'> &
+	Pick<AddToQueryHOCProps, 'onAddToQuery'>;
 
 function Overview({
 	logData,
 	onAddToQuery,
 	fieldSearchInput,
+	onClickActionItem,
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 
@@ -155,6 +159,7 @@ function Overview({
 								logData={logData}
 								onAddToQuery={onAddToQuery}
 								fieldSearchInput={fieldSearchInput}
+								onClickActionItem={onClickActionItem}
 							/>
 						),
 						className: 'collapse-content attribute-collapse',
