@@ -46,7 +46,6 @@ function LogDetail({
 	onClickActionItem,
 	selectedTab,
 }: LogDetailProps): JSX.Element {
-	console.log({ onClickActionItem }); // TODO: remove, ketp for linter error
 	const [, copyToClipboard] = useCopyToClipboard();
 	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
@@ -242,6 +241,7 @@ function LogDetail({
 					logData={log}
 					onAddToQuery={onAddToQuery}
 					fieldSearchInput={fieldSearchInput}
+					onClickActionItem={onClickActionItem}
 				/>
 			)}
 			{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}

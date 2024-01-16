@@ -2,11 +2,41 @@
     .ant-table {
         background: var(--bg-ink-400);
 
+        .ant-table-row:hover {
+            .ant-table-cell {
+                .value-field {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    .action-btn {
+                        display: flex;
+                        gap: 4px;
+                    }
+                }
+            }
+        }
+
         .ant-table-cell {
             border: 1px solid var(--bg-slate-500);
         }
-        .value-field {
+
+        .value-field-container {
             background: rgba(22, 25, 34, 0.40);
+
+            .action-btn {
+                display: none;
+                width: max-content;
+
+                .filter-btn {
+                    display: flex;
+                    align-items: center;
+                    border: none;
+                    box-shadow: none;
+                    border-radius: 2px;
+                    background: var(--bg-slate-400, #1D212D);
+                }
+            }
+           
         }
     }
 }
