@@ -13,6 +13,7 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { useCallback, useMemo, useState } from 'react';
@@ -52,8 +53,10 @@ function Application(): JSX.Element {
 	);
 	const { servicename } = useParams<IServiceName>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
-	const { search } = useLocation();
+	const { search, pathname } = useLocation();
 	const { queries } = useResourceAttribute();
+	const urlQuery = useUrlQuery();
+
 	const selectedTags = useMemo(
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
 		[queries],
@@ -157,11 +160,16 @@ function Application(): JSX.Element {
 			const startTimestamp = Math.trunc(start);
 			const endTimestamp = Math.trunc(end);
 
+			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			history.replace(generatedUrl);
+
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch],
+		[dispatch, pathname, urlQuery],
 	);
 
 	const onErrorTrackHandler = (timestamp: number): (() => void) => (): void => {

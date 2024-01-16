@@ -1,14 +1,17 @@
+import { QueryParams } from 'constants/query';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
+import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
@@ -35,6 +38,7 @@ function WidgetGraph({
 
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+	const location = useLocation();
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(getWidgetQueryRange);
@@ -65,11 +69,16 @@ function WidgetGraph({
 			const startTimestamp = Math.trunc(start);
 			const endTimestamp = Math.trunc(end);
 
+			params.set(QueryParams.startTime, startTimestamp.toString());
+			params.set(QueryParams.endTime, endTimestamp.toString());
+			const generatedUrl = `${location.pathname}?${params.toString()}`;
+			history.replace(generatedUrl);
+
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch],
+		[dispatch, location.pathname, params],
 	);
 
 	const options = useMemo(
