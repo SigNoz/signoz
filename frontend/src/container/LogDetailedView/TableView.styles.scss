@@ -52,8 +52,14 @@
             border: 1px solid var(--bg-vanilla-200);
         }
 
-        .value-field {
+        .value-field-container {
             background: var(--bg-vanilla-300);
+
+            .action-btn {
+                .filter-btn {
+                    background: var(--bg-vanilla-300);
+                }
+            }
         }
     }
 }
