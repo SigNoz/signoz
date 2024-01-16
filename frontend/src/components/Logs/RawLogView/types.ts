@@ -12,6 +12,7 @@ export interface RawLogContentProps {
 	linesPerRow: number;
 	$isReadOnly?: boolean;
 	$isActiveLog?: boolean;
+	$isDarkMode?: boolean;
 	$isTextOverflowEllipsisDisabled?: boolean;
 	$isDarkMode: boolean;
 }
