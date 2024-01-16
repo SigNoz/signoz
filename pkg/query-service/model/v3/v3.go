@@ -447,6 +447,47 @@ const (
 	Cumulative  Temporality = "Cumulative"
 )
 
+type TimeAggregation string
+
+const (
+	TimeAggregationUnspecified   TimeAggregation = ""
+	TimeAggregationAnyLast       TimeAggregation = "latest"
+	TimeAggregationSum           TimeAggregation = "sum"
+	TimeAggregationAvg           TimeAggregation = "avg"
+	TimeAggregationMin           TimeAggregation = "min"
+	TimeAggregationMax           TimeAggregation = "max"
+	TimeAggregationCount         TimeAggregation = "count"
+	TimeAggregationCountDistinct TimeAggregation = "count_distinct"
+	TimeAggregationRate          TimeAggregation = "rate"
+	TimeAggregationIncrease      TimeAggregation = "increase"
+)
+
+func (t TimeAggregation) IsRateOperator() bool {
+	switch t {
+	case TimeAggregationRate, TimeAggregationIncrease:
+		return true
+	default:
+		return false
+	}
+}
+
+type SpaceAggregation string
+
+const (
+	SpaceAggregationUnspecified SpaceAggregation = ""
+	SpaceAggregationSum         SpaceAggregation = "sum"
+	SpaceAggregationAvg         SpaceAggregation = "avg"
+	SpaceAggregationMin         SpaceAggregation = "min"
+	SpaceAggregationMax         SpaceAggregation = "max"
+	SpaceAggregationCount       SpaceAggregation = "count"
+)
+
+type Function struct {
+	Category string        `json:"category"`
+	Name     string        `json:"name"`
+	Args     []interface{} `json:"args,omitempty"`
+}
+
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
 	StepInterval       int64             `json:"stepInterval"`
@@ -466,6 +507,10 @@ type BuilderQuery struct {
 	OrderBy            []OrderBy         `json:"orderBy,omitempty"`
 	ReduceTo           ReduceToOperator  `json:"reduceTo,omitempty"`
 	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
+	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
+	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
+	Quantile           float64           `json:"quantile,omitempty"`
+	Functions          []Function        `json:"functions,omitempty"`
 }
 
 func (b *BuilderQuery) Validate() error {
@@ -482,8 +527,16 @@ func (b *BuilderQuery) Validate() error {
 		if err := b.DataSource.Validate(); err != nil {
 			return fmt.Errorf("data source is invalid: %w", err)
 		}
-		if err := b.AggregateOperator.Validate(); err != nil {
-			return fmt.Errorf("aggregate operator is invalid: %w", err)
+		if b.DataSource == DataSourceMetrics {
+			if b.TimeAggregation == TimeAggregationUnspecified && b.Quantile == 0 {
+				if err := b.AggregateOperator.Validate(); err != nil {
+					return fmt.Errorf("aggregate operator is invalid: %w", err)
+				}
+			}
+		} else {
+			if err := b.AggregateOperator.Validate(); err != nil {
+				return fmt.Errorf("aggregate operator is invalid: %w", err)
+			}
 		}
 		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute(b.DataSource) {
 			return fmt.Errorf("aggregate attribute is required")
@@ -602,10 +655,23 @@ type OrderBy struct {
 	IsColumn   bool                 `json:"-"`
 }
 
+type HavingOperator string
+
+const (
+	HavingOperatorEqual           HavingOperator = "="
+	HavingOperatorNotEqual        HavingOperator = "!="
+	HavingOperatorGreaterThan     HavingOperator = ">"
+	HavingOperatorGreaterThanOrEq HavingOperator = ">="
+	HavingOperatorLessThan        HavingOperator = "<"
+	HavingOperatorLessThanOrEq    HavingOperator = "<="
+	HavingOperatorIn              HavingOperator = "in"
+	HavingOperatorNotIn           HavingOperator = "nin"
+)
+
 type Having struct {
-	ColumnName string      `json:"columnName"`
-	Operator   string      `json:"op"`
-	Value      interface{} `json:"value"`
+	ColumnName string         `json:"columnName"`
+	Operator   HavingOperator `json:"op"`
+	Value      interface{}    `json:"value"`
 }
 
 func (h *Having) CacheKey() string {
@@ -643,6 +709,35 @@ func (s *Series) SortPoints() {
 	sort.Slice(s.Points, func(i, j int) bool {
 		return s.Points[i].Timestamp < s.Points[j].Timestamp
 	})
+}
+
+func (s *Series) RemoveDuplicatePoints() {
+	if len(s.Points) == 0 {
+		return
+	}
+
+	// priortize the last point
+	// this is to handle the case where the same point is sent twice
+	// the last point is the most recent point adjusted for the flux interval
+
+	newPoints := make([]Point, 0)
+	for i := len(s.Points) - 1; i >= 0; i-- {
+		if len(newPoints) == 0 {
+			newPoints = append(newPoints, s.Points[i])
+			continue
+		}
+		if newPoints[len(newPoints)-1].Timestamp != s.Points[i].Timestamp {
+			newPoints = append(newPoints, s.Points[i])
+		}
+	}
+
+	// reverse the points
+	for i := len(newPoints)/2 - 1; i >= 0; i-- {
+		opp := len(newPoints) - 1 - i
+		newPoints[i], newPoints[opp] = newPoints[opp], newPoints[i]
+	}
+
+	s.Points = newPoints
 }
 
 type Row struct {

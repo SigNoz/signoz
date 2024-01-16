@@ -14,6 +14,8 @@ export const VariableSortTypeArr = ['DISABLED', 'ASC', 'DESC'] as const;
 export type TSortVariableValuesType = typeof VariableSortTypeArr[number];
 
 export interface IDashboardVariable {
+	id: string;
+	order?: any;
 	name?: string; // key will be the source of truth
 	description: string;
 	type: TVariableQueryType;
@@ -71,6 +73,8 @@ export interface IBaseWidget {
 	stepSize?: number;
 	yAxisUnit?: string;
 	thresholds?: ThresholdProps[];
+	softMin: number | null;
+	softMax: number | null;
 	fillSpans?: boolean;
 }
 export interface Widgets extends IBaseWidget {

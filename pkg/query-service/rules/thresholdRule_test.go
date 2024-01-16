@@ -14,7 +14,7 @@ import (
 func TestThresholdRuleCombinations(t *testing.T) {
 	postableRule := PostableRule{
 		Alert:      "Tricky Condition Tests",
-		AlertType:  "METRICS_BASED_ALERT",
+		AlertType:  "METRIC_BASED_ALERT",
 		RuleType:   RuleTypeThreshold,
 		EvalWindow: Duration(5 * time.Minute),
 		Frequency:  Duration(1 * time.Minute),
@@ -293,5 +293,45 @@ func TestThresholdRuleCombinations(t *testing.T) {
 		} else {
 			assert.Equal(t, 0, len(result), "case %d", idx)
 		}
+	}
+}
+
+func TestNormalizeLabelName(t *testing.T) {
+	cases := []struct {
+		labelName string
+		expected  string
+	}{
+		{
+			labelName: "label",
+			expected:  "label",
+		},
+		{
+			labelName: "label.with.dots",
+			expected:  "label_with_dots",
+		},
+		{
+			labelName: "label-with-dashes",
+			expected:  "label_with_dashes",
+		},
+		{
+			labelName: "labelwithnospaces",
+			expected:  "labelwithnospaces",
+		},
+		{
+			labelName: "label with spaces",
+			expected:  "label_with_spaces",
+		},
+		{
+			labelName: "label with spaces and .dots",
+			expected:  "label_with_spaces_and__dots",
+		},
+		{
+			labelName: "label with spaces and -dashes",
+			expected:  "label_with_spaces_and__dashes",
+		},
+	}
+
+	for _, c := range cases {
+		assert.Equal(t, c.expected, normalizeLabelName(c.labelName))
 	}
 }

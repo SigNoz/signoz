@@ -267,6 +267,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	api.RegisterMetricsRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
+	api.RegisterQueryRangeV4Routes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -417,7 +418,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		}
 
 		// if telemetry.GetInstance().IsSampled() {
-		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
+		if _, ok := telemetry.EnabledPaths()[path]; ok {
 			userEmail, err := auth.GetEmailFromJwt(r.Context())
 			if err == nil {
 				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail)

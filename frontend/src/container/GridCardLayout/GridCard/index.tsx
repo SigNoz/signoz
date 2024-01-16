@@ -15,6 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getTimeRange } from 'utils/getTimeRange';
 
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
@@ -34,6 +35,8 @@ function GridCardGraph({
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
+	const [minTimeScale, setMinTimeScale] = useState<number>();
+	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
@@ -62,15 +65,15 @@ function GridCardGraph({
 		}
 	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
-
 	const updatedQuery = useStepInterval(widget?.query);
 
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
+
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const queryResponse = useGetQueryRange(
 		{
@@ -103,6 +106,13 @@ function GridCardGraph({
 
 	const containerDimensions = useResizeObserver(graphRef);
 
+	useEffect((): void => {
+		const { startTime, endTime } = getTimeRange(queryResponse);
+
+		setMinTimeScale(startTime);
+		setMaxTimeScale(endTime);
+	}, [maxTime, minTime, globalSelectedInterval, queryResponse]);
+
 	const chartData = getUPlotChartData(queryResponse?.data?.payload, fillSpans);
 
 	const isDarkMode = useIsDarkMode();
@@ -123,16 +133,24 @@ function GridCardGraph({
 				yAxisUnit: widget?.yAxisUnit,
 				onClickHandler,
 				thresholds: widget.thresholds,
+				minTimeScale,
+				maxTimeScale,
+				softMax: widget.softMax === undefined ? null : widget.softMax,
+				softMin: widget.softMin === undefined ? null : widget.softMin,
 			}),
 		[
 			widget?.id,
 			widget?.yAxisUnit,
 			widget.thresholds,
+			widget.softMax,
+			widget.softMin,
 			queryResponse.data?.payload,
 			containerDimensions,
 			isDarkMode,
 			onDragSelect,
 			onClickHandler,
+			minTimeScale,
+			maxTimeScale,
 		],
 	);
 

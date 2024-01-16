@@ -6,13 +6,16 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
+import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { getTimeRange } from 'utils/getTimeRange';
 
 function WidgetGraph({
 	getWidgetQueryRange,
@@ -20,8 +23,25 @@ function WidgetGraph({
 	yAxisUnit,
 	thresholds,
 	fillSpans,
+	softMax,
+	softMin,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
+
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
+	const [minTimeScale, setMinTimeScale] = useState<number>();
+	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+
+	useEffect((): void => {
+		const { startTime, endTime } = getTimeRange(getWidgetQueryRange);
+
+		setMinTimeScale(startTime);
+		setMaxTimeScale(endTime);
+	}, [getWidgetQueryRange, maxTime, minTime, globalSelectedInterval]);
 
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -63,6 +83,10 @@ function WidgetGraph({
 				onDragSelect,
 				thresholds,
 				fillSpans,
+				minTimeScale,
+				maxTimeScale,
+				softMax,
+				softMin,
 			}),
 		[
 			widgetId,
@@ -73,6 +97,10 @@ function WidgetGraph({
 			onDragSelect,
 			thresholds,
 			fillSpans,
+			minTimeScale,
+			maxTimeScale,
+			softMax,
+			softMin,
 		],
 	);
 
@@ -103,6 +131,8 @@ interface WidgetGraphProps {
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
+	softMax: number | null;
+	softMin: number | null;
 }
 
 export default WidgetGraph;
