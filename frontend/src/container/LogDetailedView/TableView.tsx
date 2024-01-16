@@ -180,7 +180,6 @@ function TableView({
 		},
 		{
 			title: 'Value',
-			// dataIndex: 'value',
 			key: 'value',
 			width: 70,
 			ellipsis: false,
