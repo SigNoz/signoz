@@ -3,11 +3,12 @@ package cumulative
 import (
 	"fmt"
 
+	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-// prepareMetricQueryTable prepares the query to be used for fetching metrics
-func prepareMetricQueryTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+// PrepareMetricQueryCumulativeTable prepares the query to be used for fetching metrics
+func PrepareMetricQueryCumulativeTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 	var query string
 
 	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(start, end, step, mq)
@@ -15,9 +16,9 @@ func prepareMetricQueryTable(start, end, step int64, mq *v3.BuilderQuery) (strin
 		return "", err
 	}
 
-	groupBy := groupingSetsByAttributeKeyTags(mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
-	selectLabels := groupByAttributeKeyTags(mq.GroupBy...)
+	groupBy := helpers.GroupingSetsByAttributeKeyTags(mq.GroupBy...)
+	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
+	selectLabels := helpers.GroupByAttributeKeyTags(mq.GroupBy...)
 
 	queryTmpl :=
 		"SELECT %s," +

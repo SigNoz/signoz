@@ -462,6 +462,15 @@ const (
 	TimeAggregationIncrease      TimeAggregation = "increase"
 )
 
+func (t TimeAggregation) IsRateOperator() bool {
+	switch t {
+	case TimeAggregationRate, TimeAggregationIncrease:
+		return true
+	default:
+		return false
+	}
+}
+
 type SpaceAggregation string
 
 const (
@@ -500,6 +509,7 @@ type BuilderQuery struct {
 	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
 	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
 	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
+	Quantile           float64           `json:"quantile,omitempty"`
 	Functions          []Function        `json:"functions,omitempty"`
 }
 
@@ -517,8 +527,16 @@ func (b *BuilderQuery) Validate() error {
 		if err := b.DataSource.Validate(); err != nil {
 			return fmt.Errorf("data source is invalid: %w", err)
 		}
-		if err := b.AggregateOperator.Validate(); err != nil {
-			return fmt.Errorf("aggregate operator is invalid: %w", err)
+		if b.DataSource == DataSourceMetrics {
+			if b.TimeAggregation == TimeAggregationUnspecified && b.Quantile == 0 {
+				if err := b.AggregateOperator.Validate(); err != nil {
+					return fmt.Errorf("aggregate operator is invalid: %w", err)
+				}
+			}
+		} else {
+			if err := b.AggregateOperator.Validate(); err != nil {
+				return fmt.Errorf("aggregate operator is invalid: %w", err)
+			}
 		}
 		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute(b.DataSource) {
 			return fmt.Errorf("aggregate attribute is required")
