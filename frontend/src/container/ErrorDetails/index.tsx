@@ -150,6 +150,18 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			});
 	};
 
+	const showCheckBtn = useMemo(() => {
+		const errorReport = JSON.parse(errorDetail.exceptionStacktrace || '{}');
+		return (
+			errorReport.projectId &&
+			(errorReport.columnNumber || errorReport.column) &&
+			(errorReport.lineNumber || errorReport.line) &&
+			errorReport.fileName &&
+			['Unhandled_Rejection', 'JS_ERROR'].includes(errorDetail.exceptionType) &&
+			/weeecdn|sayweee/.test(errorReport.fileName)
+		);
+	}, [errorDetail.exceptionStacktrace, errorDetail.exceptionType]);
+
 	return (
 		<>
 			{contextHolder}
@@ -207,7 +219,8 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				}}
 			>
 				<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
-				{['Unhandled_Rejection', 'JS_ERROR'].includes(errorDetail.exceptionType) ? (
+				{/* {['Unhandled_Rejection', 'JS_ERROR'].includes(errorDetail.exceptionType) ? ( */}
+				{showCheckBtn ? (
 					<Button
 						onClick={clickCheckSourceDetail}
 						type="primary"
@@ -219,7 +232,19 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			</div>
 
 			<div className="error-container">
-				<Editor value={stackTraceValue} readOnly />
+				<Editor
+					value={stackTraceValue}
+					readOnly
+					language="json"
+					options={{
+						// wordBasedSuggestions: 'allDocuments',
+						// wordSeparators: '~!@#$%^&*()-=+[{]}|;:\'",.<>/?',
+						wordWrap: 'on',
+						// wordWrapBreakAfterCharacters: '\t})]?|&,;',
+						// wordWrapBreakBeforeCharacters: '{([+',
+						wrappingIndent: 'same',
+					}}
+				/>
 			</div>
 
 			<EditorContainer>
