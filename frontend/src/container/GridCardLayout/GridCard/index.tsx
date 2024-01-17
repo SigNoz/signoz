@@ -1,6 +1,5 @@
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import dayjs from 'dayjs';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -79,14 +78,10 @@ function GridCardGraph({
 		const endTime = searchParams.get(QueryParams.endTime);
 
 		if (startTime && endTime && startTime !== endTime) {
-			console.log(startTime, endTime);
-			const startDate = dayjs(new Date(parseInt(getTimeString(startTime), 10)));
-			const endDate = dayjs(new Date(parseInt(getTimeString(endTime), 10)));
-
 			dispatch(
 				UpdateTimeInterval('custom', [
-					startDate.toDate().getTime() || 0,
-					endDate.toDate().getTime() || 0,
+					parseInt(getTimeString(startTime), 10),
+					parseInt(getTimeString(endTime), 10),
 				]),
 			);
 		}

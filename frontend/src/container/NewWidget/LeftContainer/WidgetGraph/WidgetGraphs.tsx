@@ -1,7 +1,6 @@
 import { QueryParams } from 'constants/query';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
-import dayjs from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -94,14 +93,10 @@ function WidgetGraph({
 		const endTime = searchParams.get(QueryParams.endTime);
 
 		if (startTime && endTime && startTime !== endTime) {
-			console.log(startTime, endTime);
-			const startDate = dayjs(new Date(parseInt(getTimeString(startTime), 10)));
-			const endDate = dayjs(new Date(parseInt(getTimeString(endTime), 10)));
-
 			dispatch(
 				UpdateTimeInterval('custom', [
-					startDate.toDate().getTime() || 0,
-					endDate.toDate().getTime() || 0,
+					parseInt(getTimeString(startTime), 10),
+					parseInt(getTimeString(endTime), 10),
 				]),
 			);
 		}
