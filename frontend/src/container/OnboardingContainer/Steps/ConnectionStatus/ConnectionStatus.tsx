@@ -30,6 +30,9 @@ export default function ConnectionStatus(): JSX.Element {
 	const {
 		serviceName,
 		selectedDataSource,
+		selectedEnvironment,
+		activeStep,
+		selectedMethod,
 		selectedFramework,
 	} = useOnboardingContext();
 	const { queries } = useResourceAttribute();
@@ -40,7 +43,7 @@ export default function ConnectionStatus(): JSX.Element {
 
 	const { trackEvent } = useAnalytics();
 
-	const [retryCount, setRetryCount] = useState(20); // Retry for 5 mins
+	const [retryCount, setRetryCount] = useState(10); // Retry for 5 mins
 	const [loading, setLoading] = useState(true);
 	const [isReceivingData, setIsReceivingData] = useState(false);
 	const dispatch = useDispatch();
@@ -122,7 +125,12 @@ export default function ConnectionStatus(): JSX.Element {
 		if (data || isError) {
 			setRetryCount(retryCount - 1);
 			if (retryCount < 0) {
-				trackEvent('❌ Onboarding: APM: Connection Status', {
+				trackEvent('Onboarding V2: Connection Status', {
+					dataSource: selectedDataSource?.id,
+					framework: selectedFramework,
+					environment: selectedEnvironment,
+					selectedMethod,
+					module: activeStep?.module?.id,
 					serviceName,
 					status: 'Failed',
 				});
@@ -136,7 +144,12 @@ export default function ConnectionStatus(): JSX.Element {
 					setLoading(false);
 					setIsReceivingData(true);
 
-					trackEvent('✅ Onboarding: APM: Connection Status', {
+					trackEvent('Onboarding V2: Connection Status', {
+						dataSource: selectedDataSource?.id,
+						framework: selectedFramework,
+						environment: selectedEnvironment,
+						selectedMethod,
+						module: activeStep?.module?.id,
 						serviceName,
 						status: 'Successful',
 					});
