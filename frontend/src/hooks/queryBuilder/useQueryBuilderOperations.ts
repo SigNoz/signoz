@@ -1,3 +1,4 @@
+import { LEGEND } from 'constants/global';
 import {
 	initialAutocompleteData,
 	initialQueryBuilderFormValuesMap,
@@ -22,8 +23,6 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
-
-const LEGEND = 'legend';
 
 export const useQueryOperations: UseQueryOperations = ({
 	query,

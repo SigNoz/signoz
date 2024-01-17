@@ -1,4 +1,5 @@
 import { Col, Input, Row } from 'antd';
+import { LEGEND } from 'constants/global';
 // ** Components
 import {
 	FilterLabel,
@@ -59,7 +60,7 @@ export function Formula({
 			const { name, value } = e.target;
 			const newFormula: IBuilderFormula = {
 				...formula,
-				[name]: name === 'legend' ? getFormatedLegend(value) : value,
+				[name]: name === LEGEND ? getFormatedLegend(value) : value,
 			};
 
 			handleSetFormulaData(index, newFormula);

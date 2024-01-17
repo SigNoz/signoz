@@ -1,5 +1,6 @@
 import { Input } from 'antd';
 import MonacoEditor from 'components/Editor';
+import { LEGEND } from 'constants/global';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ChangeEvent, useCallback } from 'react';
 import { IClickHouseQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -60,7 +61,7 @@ function ClickHouseQueryBuilder({
 		(e: ChangeEvent<HTMLInputElement>) => {
 			const { name } = e.target;
 			let { value } = e.target;
-			if (name === 'legend') {
+			if (name === LEGEND) {
 				value = getFormatedLegend(value);
 			}
 			handleUpdateQuery(name as keyof IClickHouseQuery, value);
