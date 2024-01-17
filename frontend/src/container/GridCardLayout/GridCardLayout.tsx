@@ -11,7 +11,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import isEqual from 'lodash-es/isEqual';
 import { FullscreenIcon } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +32,7 @@ import {
 	ReactGridLayout,
 } from './styles';
 import { GraphLayoutProps } from './types';
+import { removeUndefinedValuesFromLayout } from './utils';
 
 function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	const {
@@ -54,7 +55,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 
-	const [dashboardLayout, setDashboardLayout] = useState(layouts);
+	const [dashboardLayout, setDashboardLayout] = useState([...layouts]);
 
 	const updateDashboardMutation = useUpdateDashboard();
 
@@ -111,25 +112,22 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 		: [...ViewMenuAction];
 
 	const handleLayoutChange = (layout: Layout[]): void => {
-		if (!isEqual(layout, dashboardLayout)) {
+		const filterDashboard = removeUndefinedValuesFromLayout(dashboardLayout);
+		const filterLayout = removeUndefinedValuesFromLayout(layout);
+		if (!isEqual(filterDashboard, filterLayout)) {
 			setDashboardLayout(layout);
+			if (
+				dashboardLayout &&
+				Array.isArray(dashboardLayout) &&
+				dashboardLayout.length > 0 &&
+				!isDashboardLocked &&
+				saveLayoutPermission &&
+				!updateDashboardMutation.isLoading
+			) {
+				onSaveHandler();
+			}
 		}
 	};
-
-	useEffect(() => {
-		if (
-			dashboardLayout &&
-			Array.isArray(dashboardLayout) &&
-			dashboardLayout.length > 0 &&
-			!isDashboardLocked &&
-			saveLayoutPermission &&
-			!updateDashboardMutation.isLoading
-		) {
-			onSaveHandler();
-		}
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dashboardLayout]);
 
 	return (
 		<>
