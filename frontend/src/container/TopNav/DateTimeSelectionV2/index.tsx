@@ -1,9 +1,10 @@
 import './DateTimeSelectionV2.styles.scss';
 
 import { SyncOutlined } from '@ant-design/icons';
-import { Button, DatePicker, Popover } from 'antd';
+import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
+import CustomTimePicker from 'components/CustomTimePicker/CustomTimePicker';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import {
@@ -20,12 +21,10 @@ import { QueryHistoryState } from 'container/LiveLogs/types';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
-import { ChevronDown, ChevronUp, Clock4 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { connect, useSelector } from 'react-redux';
@@ -41,14 +40,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../AutoRefreshV2';
 import { DateTimeRangeType } from '../CustomDateTimeModal';
-import {
-	FixedDurationSuggestionOptions,
-	getDefaultOption,
-	getOptions,
-	Option,
-	RelativeDurationSuggestionOptions,
-	Time,
-} from './config';
+import { getDefaultOption, getOptions, Time } from './config';
 import RefreshText from './Refresh';
 import { Form, FormContainer, FormItem } from './styles';
 
@@ -60,8 +52,9 @@ function DateTimeSelection({
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
-	const isDarkMode = useIsDarkMode();
+	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
+
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
@@ -98,7 +91,6 @@ function DateTimeSelection({
 	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
 		false,
 	);
-	const { RangePicker } = DatePicker;
 
 	const { stagedQuery, initQueryBuilderData, panelType } = useQueryBuilder();
 
@@ -344,125 +336,48 @@ function DateTimeSelection({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
 
-	function getTimeChips(options: Option[]): JSX.Element {
-		return (
-			<div className="relative-date-time-section">
-				{options.map((option) => (
-					<Button
-						type="text"
-						className="time-btns"
-						key={option.label + option.value}
-						onClick={(): void => {
-							onSelectHandler(option.value);
-						}}
-					>
-						{option.label}
-					</Button>
-				))}
-			</div>
-		);
-	}
-
-	const disabledDate = (current: Dayjs): boolean => {
-		const currentDay = dayjs(current);
-		return currentDay.isAfter(dayjs());
-	};
-
-	const onPopoverClose = (visible: boolean): void => {
-		if (!visible) {
-			setCustomDTPickerVisible(false);
-		}
-		setIsOpen(visible);
-	};
-	const onModalOkHandler = (date_time: any): void => {
-		if (date_time?.[1]) {
-			onPopoverClose(false);
-		}
-		onCustomDateHandler(date_time);
-	};
-
 	return (
 		<div className="date-time-selector">
-			<RefreshText
-				{...{
-					onLastRefreshHandler,
-				}}
-				refreshButtonHidden={refreshButtonHidden}
-			/>
+			{!hasSelectedTimeError && (
+				<RefreshText
+					{...{
+						onLastRefreshHandler,
+					}}
+					refreshButtonHidden={refreshButtonHidden}
+				/>
+			)}
 			<Form
 				form={formSelector}
 				layout="inline"
 				initialValues={{ interval: selectedTime }}
 			>
 				<FormContainer>
-					<Popover
-						placement="bottomRight"
+					<CustomTimePicker
 						open={isOpen}
-						showArrow={false}
-						onOpenChange={onPopoverClose}
-						rootClassName={isDarkMode ? 'date-time-root' : 'date-time-root lightMode'}
-						content={
-							<div className="date-time-popover">
-								<div className="date-time-options">
-									<Button className="data-time-live" type="text" onClick={handleGoLive}>
-										Live
-									</Button>
-									{options.map((option) => (
-										<Button
-											type="text"
-											key={option.label + option.value}
-											onClick={(): void => {
-												onSelectHandler(option.value);
-											}}
-											className="date-time-options-btn"
-										>
-											{option.label}
-										</Button>
-									))}
-								</div>
-								<div className="relative-date-time">
-									{customDateTimeVisible ? (
-										<RangePicker
-											disabledDate={disabledDate}
-											allowClear
-											onCalendarChange={onModalOkHandler}
-										/>
-									) : (
-										<>
-											<div>
-												<div className="time-heading">RELATIVE TIMES</div>
-												<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
-											</div>
-											<div>
-												<div className="time-heading">FIXED TIMES</div>
-												<div>{getTimeChips(FixedDurationSuggestionOptions)}</div>
-											</div>
-										</>
-									)}
-								</div>
-							</div>
-						}
-						data-testid="dropDown"
-						style={{
-							minWidth: 120,
+						setOpen={setIsOpen}
+						onSelect={(value: unknown): void => {
+							onSelectHandler(value as Time);
 						}}
-					>
-						<Button className="date-time-input-element">
-							<div className="date-time-input-content">
-								<Clock4 size={14} className="time-btn" />
-								{getInputLabel(
-									dayjs(minTime / 1000000),
-									dayjs(maxTime / 1000000),
-									selectedTime,
-								)}
-							</div>
-							{isOpen ? (
-								<ChevronUp size={14} className="down-arrow" />
-							) : (
-								<ChevronDown size={14} className="down-arrow" />
-							)}
-						</Button>
-					</Popover>
+						onError={(hasError: boolean): void => {
+							setHasSelectedTimeError(hasError);
+						}}
+						selectedTime={selectedTime}
+						onValidCustomDateChange={(dateTime): void =>
+							onCustomDateHandler(dateTime as DateTimeRangeType)
+						}
+						selectedValue={getInputLabel(
+							dayjs(minTime / 1000000),
+							dayjs(maxTime / 1000000),
+							selectedTime,
+						)}
+						data-testid="dropDown"
+						items={options}
+						newPopover
+						handleGoLive={handleGoLive}
+						onCustomDateHandler={onCustomDateHandler}
+						customDateTimeVisible={customDateTimeVisible}
+						setCustomDTPickerVisible={setCustomDTPickerVisible}
+					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (
 						<div className="refresh-actions">

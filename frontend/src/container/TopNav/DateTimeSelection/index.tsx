@@ -40,6 +40,7 @@ function DateTimeSelection({
 	const [formSelector] = Form.useForm();
 
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
+	const [isOpen, setIsOpen] = useState<boolean>(false);
 
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
@@ -214,6 +215,7 @@ function DateTimeSelection({
 	};
 
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
+		console.log('dateTimeRange', dateTimeRange);
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
@@ -304,6 +306,8 @@ function DateTimeSelection({
 			>
 				<FormContainer>
 					<CustomTimePicker
+						open={isOpen}
+						setOpen={setIsOpen}
 						onSelect={(value: unknown): void => {
 							onSelectHandler(value as Time);
 						}}
