@@ -111,8 +111,6 @@ function CustomTimePicker({
 					break;
 			}
 
-			console.log(minTime, currentTime.diff(minTime, 'month'));
-
 			if (minTime && minTime < maxAllowedMinTime) {
 				setInputStatus('error');
 				onError(true);
