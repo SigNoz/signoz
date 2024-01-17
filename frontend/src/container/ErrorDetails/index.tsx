@@ -152,18 +152,6 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	const showCheckBtn = useMemo(() => {
 		const errorReport = JSON.parse(errorDetail.exceptionStacktrace || '{}');
-		// if (
-		// 	errorReport.projectId &&
-		// 	(errorReport.columnNumber || errorReport.column) &&
-		// 	(errorReport.lineNumber || errorReport.line) &&
-		// 	errorReport.fileName &&
-		// 	['Unhandled_Rejection', 'JS_ERROR'].includes(errorDetail.exceptionType) &&
-		// 	/weeecdn|sayweee/.test(errorReport.fileName)
-		// ) {
-		// 	return true;
-		// } else {
-		// 	return false;
-		// }
 		return (
 			errorReport.projectId &&
 			(errorReport.columnNumber || errorReport.column) &&
