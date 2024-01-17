@@ -19,7 +19,7 @@ interface OverviewProps {
 }
 
 type Props = OverviewProps &
-	Pick<ActionItemProps, 'onClickActionItem'> &
+	Partial<Pick<ActionItemProps, 'onClickActionItem'>> &
 	Pick<AddToQueryHOCProps, 'onAddToQuery'>;
 
 function Overview({
