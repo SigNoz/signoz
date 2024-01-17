@@ -43,7 +43,7 @@ interface TableViewProps {
 }
 
 type Props = TableViewProps &
-	Pick<ActionItemProps, 'onClickActionItem'> &
+	Partial<Pick<ActionItemProps, 'onClickActionItem'>> &
 	Pick<AddToQueryHOCProps, 'onAddToQuery'>;
 
 function TableView({
@@ -67,8 +67,9 @@ function TableView({
 		fieldValue: string,
 	): void => {
 		const validatedFieldValue = removeJSONStringifyQuotes(fieldValue);
-
-		onClickActionItem(fieldKey, validatedFieldValue, operator);
+		if (onClickActionItem) {
+			onClickActionItem(fieldKey, validatedFieldValue, operator);
+		}
 	};
 
 	const onClickHandler = (

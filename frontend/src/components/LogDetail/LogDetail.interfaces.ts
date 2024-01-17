@@ -9,5 +9,5 @@ export type LogDetailProps = {
 	log: ILog | null;
 	selectedTab: VIEWS;
 } & Pick<AddToQueryHOCProps, 'onAddToQuery'> &
-	Pick<ActionItemProps, 'onClickActionItem'> &
+	Partial<Pick<ActionItemProps, 'onClickActionItem'>> &
 	Pick<DrawerProps, 'onClose'>;
