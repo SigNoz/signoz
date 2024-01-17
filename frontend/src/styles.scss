@@ -213,4 +213,9 @@ body {
 	.ant-tooltip-inner {
 		background-color: var(--bg-slate-400, #1d212d);
 	}
+	.flexBtn {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
 }
