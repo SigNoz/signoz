@@ -3,14 +3,15 @@ import './ListLogView.styles.scss';
 import { blue } from '@ant-design/colors';
 import Convert from 'ansi-to-html';
 import { Typography } from 'antd';
-import LogsExplorerContext from 'container/LogsExplorerContext';
+import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { MouseEventHandler, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 // interfaces
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
@@ -106,12 +107,15 @@ function ListLogView({
 	);
 	const {
 		activeLog: activeContextLog,
+		onAddToQuery: handleAddToQuery,
 		onSetActiveLog: handleSetActiveContextLog,
 		onClearActiveLog: handleClearActiveContextLog,
 	} = useActiveLog();
 
-	const handlerClearActiveContextLog: MouseEventHandler<HTMLElement> = useCallback(
-		(event) => {
+	console.log({ activeContextLog });
+
+	const handlerClearActiveContextLog = useCallback(
+		(event: React.MouseEvent | React.KeyboardEvent) => {
 			event.preventDefault();
 			event.stopPropagation();
 			handleClearActiveContextLog();
@@ -123,8 +127,8 @@ function ListLogView({
 		onSetActiveLog(logData);
 	}, [logData, onSetActiveLog]);
 
-	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
-		(event) => {
+	const handleShowContext = useCallback(
+		(event: React.MouseEvent) => {
 			event.preventDefault();
 			event.stopPropagation();
 			handleSetActiveContextLog(logData);
@@ -193,8 +197,10 @@ function ListLogView({
 				/>
 			)}
 			{activeContextLog && (
-				<LogsExplorerContext
+				<LogDetail
 					log={activeContextLog}
+					onAddToQuery={handleAddToQuery}
+					selectedTab={VIEW_TYPES.CONTEXT}
 					onClose={handlerClearActiveContextLog}
 				/>
 			)}
