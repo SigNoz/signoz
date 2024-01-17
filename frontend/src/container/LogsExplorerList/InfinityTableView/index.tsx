@@ -1,4 +1,5 @@
 import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { useTableView } from 'components/Logs/TableView/useTableView';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import LogsExplorerContext from 'container/LogsExplorerContext';
@@ -159,6 +160,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					/>
 				)}
 				<LogDetail
+					selectedTab={VIEW_TYPES.OVERVIEW}
 					log={activeLog}
 					onClose={onClearActiveLog}
 					onAddToQuery={onAddToQuery}
