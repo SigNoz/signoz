@@ -1,9 +1,10 @@
 import './DateTimeSelectionV2.styles.scss';
 
 import { SyncOutlined } from '@ant-design/icons';
-import { Button, DatePicker, Popover } from 'antd';
+import { Button, DatePicker } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
+import CustomTimePicker from 'components/CustomTimePicker/CustomTimePicker';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import {
@@ -20,12 +21,10 @@ import { QueryHistoryState } from 'container/LiveLogs/types';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
-import { ChevronDown, ChevronUp, Clock4 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { connect, useSelector } from 'react-redux';
@@ -60,8 +59,9 @@ function DateTimeSelection({
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
-	const isDarkMode = useIsDarkMode();
+	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
+
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
@@ -383,25 +383,40 @@ function DateTimeSelection({
 
 	return (
 		<div className="date-time-selector">
-			<RefreshText
-				{...{
-					onLastRefreshHandler,
-				}}
-				refreshButtonHidden={refreshButtonHidden}
-			/>
+			{!hasSelectedTimeError && (
+				<RefreshText
+					{...{
+						onLastRefreshHandler,
+					}}
+					refreshButtonHidden={refreshButtonHidden}
+				/>
+			)}
 			<Form
 				form={formSelector}
 				layout="inline"
 				initialValues={{ interval: selectedTime }}
 			>
 				<FormContainer>
-					<Popover
-						placement="bottomRight"
+					<CustomTimePicker
 						open={isOpen}
-						showArrow={false}
-						onOpenChange={onPopoverClose}
-						rootClassName={isDarkMode ? 'date-time-root' : 'date-time-root lightMode'}
-						content={
+						setOpen={setIsOpen}
+						onSelect={(value: unknown): void => {
+							onSelectHandler(value as Time);
+						}}
+						onError={(hasError: boolean): void => {
+							setHasSelectedTimeError(hasError);
+						}}
+						selectedTime={selectedTime}
+						onValidCustomDateChange={(dateTime): void =>
+							onCustomDateHandler(dateTime as DateTimeRangeType)
+						}
+						selectedValue={getInputLabel(
+							dayjs(minTime / 1000000),
+							dayjs(maxTime / 1000000),
+							selectedTime,
+						)}
+						data-testid="dropDown"
+						popoverContent={
 							<div className="date-time-popover">
 								<div className="date-time-options">
 									<Button className="data-time-live" type="text" onClick={handleGoLive}>
@@ -442,27 +457,7 @@ function DateTimeSelection({
 								</div>
 							</div>
 						}
-						data-testid="dropDown"
-						style={{
-							minWidth: 120,
-						}}
-					>
-						<Button className="date-time-input-element">
-							<div className="date-time-input-content">
-								<Clock4 size={14} className="time-btn" />
-								{getInputLabel(
-									dayjs(minTime / 1000000),
-									dayjs(maxTime / 1000000),
-									selectedTime,
-								)}
-							</div>
-							{isOpen ? (
-								<ChevronUp size={14} className="down-arrow" />
-							) : (
-								<ChevronDown size={14} className="down-arrow" />
-							)}
-						</Button>
-					</Popover>
+					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (
 						<div className="refresh-actions">

@@ -38,6 +38,7 @@ function DateTimeSelection({
 	const [formSelector] = Form.useForm();
 
 	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
+	const [isOpen, setIsOpen] = useState<boolean>(false);
 
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
@@ -286,6 +287,8 @@ function DateTimeSelection({
 			>
 				<FormContainer>
 					<CustomTimePicker
+						open={isOpen}
+						setOpen={setIsOpen}
 						onSelect={(value: unknown): void => {
 							onSelectHandler(value as Time);
 						}}

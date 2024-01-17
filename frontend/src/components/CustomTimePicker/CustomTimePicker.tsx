@@ -6,9 +6,16 @@ import { Input, Popover, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { Options } from 'container/TopNav/DateTimeSelection/config';
 import dayjs from 'dayjs';
+import { defaultTo } from 'lodash-es';
 import debounce from 'lodash-es/debounce';
 import { CheckCircle, ChevronDown, Clock } from 'lucide-react';
-import { ChangeEvent, useEffect, useState } from 'react';
+import {
+	ChangeEvent,
+	Dispatch,
+	SetStateAction,
+	useEffect,
+	useState,
+} from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 const maxAllowedMinTimeInMonths = 6;
@@ -16,10 +23,13 @@ const maxAllowedMinTimeInMonths = 6;
 interface CustomTimePickerProps {
 	onSelect: (value: string) => void;
 	onError: (value: boolean) => void;
-	items: any[];
 	selectedValue: string;
 	selectedTime: string;
 	onValidCustomDateChange: ([t1, t2]: any[]) => void;
+	open: boolean;
+	setOpen: Dispatch<SetStateAction<boolean>>;
+	items?: any[];
+	popoverContent?: JSX.Element;
 }
 
 function CustomTimePicker({
@@ -28,9 +38,11 @@ function CustomTimePicker({
 	items,
 	selectedValue,
 	selectedTime,
+	open,
+	setOpen,
 	onValidCustomDateChange,
+	popoverContent,
 }: CustomTimePickerProps): JSX.Element {
-	const [open, setOpen] = useState(false);
 	const [
 		selectedTimePlaceholderValue,
 		setSelectedTimePlaceholderValue,
@@ -143,7 +155,7 @@ function CustomTimePicker({
 	const content = (
 		<div className="time-selection-dropdown-content">
 			<div className="time-options-container">
-				{items.map(({ value, label }) => (
+				{items?.map(({ value, label }) => (
 					<div
 						onClick={(): void => {
 							onSelect(value);
@@ -181,11 +193,12 @@ function CustomTimePicker({
 				className="timeSelection-input-container"
 				placement="bottomRight"
 				getPopupContainer={popupContainer}
-				content={content}
+				rootClassName="date-time-root"
+				content={defaultTo(popoverContent, content)}
 				arrow={false}
+				trigger="hover"
 				open={open}
 				onOpenChange={handleOpenChange}
-				trigger={['click']}
 				style={{
 					padding: 0,
 				}}
@@ -238,3 +251,8 @@ function CustomTimePicker({
 }
 
 export default CustomTimePicker;
+
+CustomTimePicker.defaultProps = {
+	popoverContent: null,
+	items: [],
+};
