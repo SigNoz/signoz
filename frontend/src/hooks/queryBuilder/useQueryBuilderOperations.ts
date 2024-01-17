@@ -23,6 +23,8 @@ import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
 
+const LEGEND = 'legend';
+
 export const useQueryOperations: UseQueryOperations = ({
 	query,
 	index,
@@ -159,7 +161,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			const newQuery: IBuilderQuery = {
 				...query,
 				[key]:
-					key === 'legend' && typeof value === 'string'
+					key === LEGEND && typeof value === 'string'
 						? getFormatedLegend(value)
 						: value,
 			};
