@@ -333,7 +333,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 
 func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v4").Subrouter()
-	subRouter.HandleFunc("/query_range", am.OpenAccess(aH.QueryRangeV4)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV4)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
