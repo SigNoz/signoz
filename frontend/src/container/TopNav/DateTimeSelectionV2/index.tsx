@@ -1,7 +1,7 @@
 import './DateTimeSelectionV2.styles.scss';
 
 import { SyncOutlined } from '@ant-design/icons';
-import { Button, DatePicker } from 'antd';
+import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import CustomTimePicker from 'components/CustomTimePicker/CustomTimePicker';
@@ -40,14 +40,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../AutoRefreshV2';
 import { DateTimeRangeType } from '../CustomDateTimeModal';
-import {
-	FixedDurationSuggestionOptions,
-	getDefaultOption,
-	getOptions,
-	Option,
-	RelativeDurationSuggestionOptions,
-	Time,
-} from './config';
+import { getDefaultOption, getOptions, Time } from './config';
 import RefreshText from './Refresh';
 import { Form, FormContainer, FormItem } from './styles';
 
@@ -98,7 +91,6 @@ function DateTimeSelection({
 	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
 		false,
 	);
-	const { RangePicker } = DatePicker;
 
 	const { stagedQuery, initQueryBuilderData, panelType } = useQueryBuilder();
 
@@ -344,43 +336,6 @@ function DateTimeSelection({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
 
-	function getTimeChips(options: Option[]): JSX.Element {
-		return (
-			<div className="relative-date-time-section">
-				{options.map((option) => (
-					<Button
-						type="text"
-						className="time-btns"
-						key={option.label + option.value}
-						onClick={(): void => {
-							onSelectHandler(option.value);
-						}}
-					>
-						{option.label}
-					</Button>
-				))}
-			</div>
-		);
-	}
-
-	const disabledDate = (current: Dayjs): boolean => {
-		const currentDay = dayjs(current);
-		return currentDay.isAfter(dayjs());
-	};
-
-	const onPopoverClose = (visible: boolean): void => {
-		if (!visible) {
-			setCustomDTPickerVisible(false);
-		}
-		setIsOpen(visible);
-	};
-	const onModalOkHandler = (date_time: any): void => {
-		if (date_time?.[1]) {
-			onPopoverClose(false);
-		}
-		onCustomDateHandler(date_time);
-	};
-
 	return (
 		<div className="date-time-selector">
 			{!hasSelectedTimeError && (
@@ -416,47 +371,12 @@ function DateTimeSelection({
 							selectedTime,
 						)}
 						data-testid="dropDown"
-						popoverContent={
-							<div className="date-time-popover">
-								<div className="date-time-options">
-									<Button className="data-time-live" type="text" onClick={handleGoLive}>
-										Live
-									</Button>
-									{options.map((option) => (
-										<Button
-											type="text"
-											key={option.label + option.value}
-											onClick={(): void => {
-												onSelectHandler(option.value);
-											}}
-											className="date-time-options-btn"
-										>
-											{option.label}
-										</Button>
-									))}
-								</div>
-								<div className="relative-date-time">
-									{customDateTimeVisible ? (
-										<RangePicker
-											disabledDate={disabledDate}
-											allowClear
-											onCalendarChange={onModalOkHandler}
-										/>
-									) : (
-										<>
-											<div>
-												<div className="time-heading">RELATIVE TIMES</div>
-												<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
-											</div>
-											<div>
-												<div className="time-heading">FIXED TIMES</div>
-												<div>{getTimeChips(FixedDurationSuggestionOptions)}</div>
-											</div>
-										</>
-									)}
-								</div>
-							</div>
-						}
+						items={options}
+						newPopover
+						handleGoLive={handleGoLive}
+						onCustomDateHandler={onCustomDateHandler}
+						customDateTimeVisible={customDateTimeVisible}
+						setCustomDTPickerVisible={setCustomDTPickerVisible}
 					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (

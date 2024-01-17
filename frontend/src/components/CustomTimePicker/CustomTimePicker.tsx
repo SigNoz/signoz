@@ -4,9 +4,10 @@ import './CustomTimePicker.styles.scss';
 
 import { Input, Popover, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
+import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import { Options } from 'container/TopNav/DateTimeSelection/config';
 import dayjs from 'dayjs';
-import { defaultTo } from 'lodash-es';
+import { defaultTo, noop } from 'lodash-es';
 import debounce from 'lodash-es/debounce';
 import { CheckCircle, ChevronDown, Clock } from 'lucide-react';
 import {
@@ -18,6 +19,8 @@ import {
 } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
+
 const maxAllowedMinTimeInMonths = 6;
 
 interface CustomTimePickerProps {
@@ -28,8 +31,12 @@ interface CustomTimePickerProps {
 	onValidCustomDateChange: ([t1, t2]: any[]) => void;
 	open: boolean;
 	setOpen: Dispatch<SetStateAction<boolean>>;
-	items?: any[];
-	popoverContent?: JSX.Element;
+	items: any[];
+	newPopover?: boolean;
+	customDateTimeVisible?: boolean;
+	setCustomDTPickerVisible?: Dispatch<SetStateAction<boolean>>;
+	onCustomDateHandler?: (dateTimeRange: DateTimeRangeType) => void;
+	handleGoLive?: () => void;
 }
 
 function CustomTimePicker({
@@ -41,7 +48,11 @@ function CustomTimePicker({
 	open,
 	setOpen,
 	onValidCustomDateChange,
-	popoverContent,
+	newPopover,
+	customDateTimeVisible,
+	setCustomDTPickerVisible,
+	onCustomDateHandler,
+	handleGoLive,
 }: CustomTimePickerProps): JSX.Element {
 	const [
 		selectedTimePlaceholderValue,
@@ -152,19 +163,25 @@ function CustomTimePicker({
 		debouncedHandleInputChange(inputValue);
 	};
 
+	const handleSelect = (label: string, value: string): void => {
+		onSelect(value);
+		setSelectedTimePlaceholderValue(label);
+		setInputStatus('');
+		onError(false);
+		setInputErrorMessage(null);
+		setInputValue('');
+		if (value !== 'custom') {
+			hide();
+		}
+	};
+
 	const content = (
 		<div className="time-selection-dropdown-content">
 			<div className="time-options-container">
 				{items?.map(({ value, label }) => (
 					<div
 						onClick={(): void => {
-							onSelect(value);
-							setSelectedTimePlaceholderValue(label);
-							setInputStatus('');
-							onError(false);
-							setInputErrorMessage(null);
-							setInputValue('');
-							hide();
+							handleSelect(label, value);
 						}}
 						key={value}
 						className={cx(
@@ -194,7 +211,21 @@ function CustomTimePicker({
 				placement="bottomRight"
 				getPopupContainer={popupContainer}
 				rootClassName="date-time-root"
-				content={defaultTo(popoverContent, content)}
+				content={
+					newPopover ? (
+						<CustomTimePickerPopoverContent
+							setIsOpen={setOpen}
+							customDateTimeVisible={defaultTo(customDateTimeVisible, false)}
+							setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
+							onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
+							onSelectHandler={handleSelect}
+							handleGoLive={defaultTo(handleGoLive, noop)}
+							options={items}
+						/>
+					) : (
+						content
+					)
+				}
 				arrow={false}
 				trigger="hover"
 				open={open}
@@ -253,6 +284,9 @@ function CustomTimePicker({
 export default CustomTimePicker;
 
 CustomTimePicker.defaultProps = {
-	popoverContent: null,
-	items: [],
+	newPopover: false,
+	customDateTimeVisible: false,
+	setCustomDTPickerVisible: noop,
+	onCustomDateHandler: noop,
+	handleGoLive: noop,
 };
