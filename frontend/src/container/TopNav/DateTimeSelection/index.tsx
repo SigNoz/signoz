@@ -37,6 +37,8 @@ function DateTimeSelection({
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
+	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
+
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
@@ -287,6 +289,9 @@ function DateTimeSelection({
 						onSelect={(value: unknown): void => {
 							onSelectHandler(value as Time);
 						}}
+						onError={(hasError: boolean): void => {
+							setHasSelectedTimeError(hasError);
+						}}
 						selectedTime={selectedTime}
 						onValidCustomDateChange={(dateTime): void =>
 							onCustomDateHandler(dateTime as DateTimeRangeType)
@@ -314,12 +319,14 @@ function DateTimeSelection({
 				</FormContainer>
 			</Form>
 
-			<RefreshText
-				{...{
-					onLastRefreshHandler,
-				}}
-				refreshButtonHidden={refreshButtonHidden}
-			/>
+			{!hasSelectedTimeError && (
+				<RefreshText
+					{...{
+						onLastRefreshHandler,
+					}}
+					refreshButtonHidden={refreshButtonHidden}
+				/>
+			)}
 
 			<CustomDateTimeModal
 				visible={customDateTimeVisible}
