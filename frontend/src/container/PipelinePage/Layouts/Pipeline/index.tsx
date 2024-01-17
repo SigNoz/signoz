@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pipeline } from 'types/api/pipeline/def';
 
 import PipelineListsView from '../../PipelineListsView';
-import CreatePipelineButton from './CreatePipelineButton';
+import PipelinesActions from './PipelinesActions';
 
 function PipelinePageLayout({
 	refetchPipelineLists,
@@ -13,7 +13,7 @@ function PipelinePageLayout({
 
 	return (
 		<>
-			<CreatePipelineButton
+			<PipelinesActions
 				setActionType={setActionType}
 				setActionMode={setActionMode}
 				isActionMode={isActionMode}
