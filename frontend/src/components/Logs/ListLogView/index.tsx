@@ -160,42 +160,44 @@ function ListLogView({
 	};
 
 	return (
-		<Container
-			$isActiveLog={isHighlighted}
-			onMouseEnter={handleMouseEnter}
-			onMouseLeave={handleMouseLeave}
-			onClick={handleDetailedView}
-		>
-			<div className="log-line">
-				<LogStateIndicator type={logType} />
-				<div>
-					<LogContainer>
-						<LogGeneralField fieldKey="Log" fieldValue={flattenLogData.body} />
-						{flattenLogData.stream && (
-							<LogGeneralField fieldKey="Stream" fieldValue={flattenLogData.stream} />
-						)}
-						<LogGeneralField fieldKey="Timestamp" fieldValue={timestampValue} />
+		<>
+			<Container
+				$isActiveLog={isHighlighted}
+				onMouseEnter={handleMouseEnter}
+				onMouseLeave={handleMouseLeave}
+				onClick={handleDetailedView}
+			>
+				<div className="log-line">
+					<LogStateIndicator type={logType} />
+					<div>
+						<LogContainer>
+							<LogGeneralField fieldKey="Log" fieldValue={flattenLogData.body} />
+							{flattenLogData.stream && (
+								<LogGeneralField fieldKey="Stream" fieldValue={flattenLogData.stream} />
+							)}
+							<LogGeneralField fieldKey="Timestamp" fieldValue={timestampValue} />
 
-						{updatedSelecedFields.map((field) =>
-							isValidLogField(flattenLogData[field.name] as never) ? (
-								<LogSelectedField
-									key={field.name}
-									fieldKey={field.name}
-									fieldValue={flattenLogData[field.name] as never}
-									onAddToQuery={onAddToQuery}
-								/>
-							) : null,
-						)}
-					</LogContainer>
+							{updatedSelecedFields.map((field) =>
+								isValidLogField(flattenLogData[field.name] as never) ? (
+									<LogSelectedField
+										key={field.name}
+										fieldKey={field.name}
+										fieldValue={flattenLogData[field.name] as never}
+										onAddToQuery={onAddToQuery}
+									/>
+								) : null,
+							)}
+						</LogContainer>
+					</div>
 				</div>
-			</div>
 
-			{hasActionButtons && isLogsExplorerPage && (
-				<LogLinesActionButtons
-					handleShowContext={handleShowContext}
-					onLogCopy={onLogCopy}
-				/>
-			)}
+				{hasActionButtons && isLogsExplorerPage && (
+					<LogLinesActionButtons
+						handleShowContext={handleShowContext}
+						onLogCopy={onLogCopy}
+					/>
+				)}
+			</Container>
 			{activeContextLog && (
 				<LogDetail
 					log={activeContextLog}
@@ -204,7 +206,7 @@ function ListLogView({
 					onClose={handlerClearActiveContextLog}
 				/>
 			)}
-		</Container>
+		</>
 	);
 }
 
