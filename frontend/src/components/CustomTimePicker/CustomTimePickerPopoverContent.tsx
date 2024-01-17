@@ -1,0 +1,112 @@
+import { Button, DatePicker } from 'antd';
+import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
+import {
+	FixedDurationSuggestionOptions,
+	Option,
+	RelativeDurationSuggestionOptions,
+} from 'container/TopNav/DateTimeSelectionV2/config';
+import dayjs, { Dayjs } from 'dayjs';
+import { Dispatch, SetStateAction } from 'react';
+
+interface CustomTimePickerPopoverContentProps {
+	options: any[];
+	setIsOpen: Dispatch<SetStateAction<boolean>>;
+	customDateTimeVisible: boolean;
+	setCustomDTPickerVisible: Dispatch<SetStateAction<boolean>>;
+	onCustomDateHandler: (dateTimeRange: DateTimeRangeType) => void;
+	onSelectHandler: (label: string, value: string) => void;
+	handleGoLive: () => void;
+}
+
+function CustomTimePickerPopoverContent({
+	options,
+	setIsOpen,
+	customDateTimeVisible,
+	setCustomDTPickerVisible,
+	onCustomDateHandler,
+	onSelectHandler,
+	handleGoLive,
+}: CustomTimePickerPopoverContentProps): JSX.Element {
+	const { RangePicker } = DatePicker;
+
+	const disabledDate = (current: Dayjs): boolean => {
+		const currentDay = dayjs(current);
+		return currentDay.isAfter(dayjs());
+	};
+
+	const onPopoverClose = (visible: boolean): void => {
+		if (!visible) {
+			setCustomDTPickerVisible(false);
+		}
+		setIsOpen(visible);
+	};
+
+	const onModalOkHandler = (date_time: any): void => {
+		if (date_time?.[1]) {
+			onPopoverClose(false);
+		}
+		onCustomDateHandler(date_time);
+	};
+	function getTimeChips(options: Option[]): JSX.Element {
+		return (
+			<div className="relative-date-time-section">
+				{options.map((option) => (
+					<Button
+						type="text"
+						className="time-btns"
+						key={option.label + option.value}
+						onClick={(): void => {
+							onSelectHandler(option.label, option.value);
+						}}
+					>
+						{option.label}
+					</Button>
+				))}
+			</div>
+		);
+	}
+
+	return (
+		<div className="date-time-popover">
+			<div className="date-time-options">
+				<Button className="data-time-live" type="text" onClick={handleGoLive}>
+					Live
+				</Button>
+				{options.map((option) => (
+					<Button
+						type="text"
+						key={option.label + option.value}
+						onClick={(): void => {
+							onSelectHandler(option.label, option.value);
+						}}
+						className="date-time-options-btn"
+					>
+						{option.label}
+					</Button>
+				))}
+			</div>
+			<div className="relative-date-time">
+				{customDateTimeVisible ? (
+					<RangePicker
+						disabledDate={disabledDate}
+						allowClear
+						onCalendarChange={onModalOkHandler}
+					/>
+				) : (
+					<>
+						<div>
+							<div className="time-heading">RELATIVE TIMES</div>
+							<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
+						</div>
+						<div>
+							<div className="time-heading">FIXED TIMES</div>
+							<div>{getTimeChips(FixedDurationSuggestionOptions)}</div>
+						</div>
+					</>
+				)}
+			</div>
+		</div>
+	);
+}
+
+export default CustomTimePickerPopoverContent;
