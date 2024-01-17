@@ -6,6 +6,10 @@ import { Input, Popover, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import { Options } from 'container/TopNav/DateTimeSelection/config';
+import {
+	FixedDurationSuggestionOptions,
+	RelativeDurationSuggestionOptions,
+} from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
 import { defaultTo, noop } from 'lodash-es';
 import debounce from 'lodash-es/debounce';
@@ -77,6 +81,20 @@ function CustomTimePicker({
 		for (let index = 0; index < Options.length; index++) {
 			if (Options[index].value === selectedTime) {
 				return Options[index].label;
+			}
+		}
+		for (
+			let index = 0;
+			index < RelativeDurationSuggestionOptions.length;
+			index++
+		) {
+			if (RelativeDurationSuggestionOptions[index].value === selectedTime) {
+				return RelativeDurationSuggestionOptions[index].label;
+			}
+		}
+		for (let index = 0; index < FixedDurationSuggestionOptions.length; index++) {
+			if (FixedDurationSuggestionOptions[index].value === selectedTime) {
+				return FixedDurationSuggestionOptions[index].label;
 			}
 		}
 
