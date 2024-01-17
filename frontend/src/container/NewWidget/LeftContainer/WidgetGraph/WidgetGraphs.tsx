@@ -1,10 +1,13 @@
 import { QueryParams } from 'constants/query';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import dayjs from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
+import GetMinMax from 'lib/getMinMax';
+import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
@@ -68,18 +71,50 @@ function WidgetGraph({
 		(start: number, end: number): void => {
 			const startTimestamp = Math.trunc(start);
 			const endTimestamp = Math.trunc(end);
-
-			params.set(QueryParams.startTime, startTimestamp.toString());
-			params.set(QueryParams.endTime, endTimestamp.toString());
-			const generatedUrl = `${location.pathname}?${params.toString()}`;
-			history.replace(generatedUrl);
-
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
+
+			const { maxTime, minTime } = GetMinMax('custom', [
+				startTimestamp,
+				endTimestamp,
+			]);
+
+			params.set(QueryParams.startTime, minTime.toString());
+			params.set(QueryParams.endTime, maxTime.toString());
+			const generatedUrl = `${location.pathname}?${params.toString()}`;
+			history.push(generatedUrl);
 		},
 		[dispatch, location.pathname, params],
 	);
+
+	const handleBackNavigation = (): void => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const startTime = searchParams.get(QueryParams.startTime);
+		const endTime = searchParams.get(QueryParams.endTime);
+
+		if (startTime && endTime && startTime !== endTime) {
+			console.log(startTime, endTime);
+			const startDate = dayjs(new Date(parseInt(getTimeString(startTime), 10)));
+			const endDate = dayjs(new Date(parseInt(getTimeString(endTime), 10)));
+
+			dispatch(
+				UpdateTimeInterval('custom', [
+					startDate.toDate().getTime() || 0,
+					endDate.toDate().getTime() || 0,
+				]),
+			);
+		}
+	};
+
+	useEffect(() => {
+		window.addEventListener('popstate', handleBackNavigation);
+
+		return (): void => {
+			window.removeEventListener('popstate', handleBackNavigation);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const options = useMemo(
 		() =>

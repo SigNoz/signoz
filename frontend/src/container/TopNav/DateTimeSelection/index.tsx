@@ -194,7 +194,7 @@ function DateTimeSelection({
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
+			history.push(generatedUrl);
 		}
 
 		if (!stagedQuery) {
@@ -231,7 +231,7 @@ function DateTimeSelection({
 						endTimeMoment?.toDate().getTime().toString(),
 					);
 					const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-					history.replace(generatedUrl);
+					history.push(generatedUrl);
 				}
 			}
 		}
