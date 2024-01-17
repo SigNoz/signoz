@@ -1,4 +1,4 @@
-package delta
+package cumulative
 
 import (
 	"fmt"
@@ -7,13 +7,8 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-// PrepareMetricQueryDeltaTable builds the query to be used for fetching metrics
-func PrepareMetricQueryDeltaTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
-
-	if canShortCircuit(mq) {
-		return prepareQueryOptimized(start, end, step, mq)
-	}
-
+// PrepareMetricQueryCumulativeTable prepares the query to be used for fetching metrics
+func PrepareMetricQueryCumulativeTable(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 	var query string
 
 	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(start, end, step, mq)

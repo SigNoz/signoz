@@ -23,6 +23,7 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 		name           string
 		requestedStart int64 // in milliseconds
 		requestedEnd   int64 // in milliseconds
+		requestedStep  int64 // in seconds
 		cachedSeries   []*v3.Series
 		expectedMiss   []missInterval
 	}{
@@ -30,6 +31,7 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 			name:           "cached time range is a subset of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
+			requestedStep:  60,
 			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
@@ -62,6 +64,7 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 			name:           "cached time range is a superset of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
+			requestedStep:  60,
 			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
@@ -93,6 +96,7 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 			name:           "cached time range is a left overlap of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
+			requestedStep:  60,
 			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
@@ -125,6 +129,7 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 			name:           "cached time range is a right overlap of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
+			requestedStep:  60,
 			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
@@ -157,6 +162,7 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 			name:           "cached time range is a disjoint of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
+			requestedStep:  60,
 			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
@@ -189,7 +195,7 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			misses := findMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.cachedSeries, 0*time.Minute)
+			misses := findMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, tc.cachedSeries, 0*time.Minute)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
@@ -211,6 +217,7 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 		name           string
 		requestedStart int64
 		requestedEnd   int64
+		requestedStep  int64
 		cachedSeries   []*v3.Series
 		fluxInterval   time.Duration
 		expectedMiss   []missInterval
@@ -219,6 +226,7 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 			name:           "cached time range is a subset of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
+			requestedStep:  60,
 			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
@@ -252,6 +260,7 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 			name:           "cached time range is a superset of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
+			requestedStep:  60,
 			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
@@ -284,6 +293,7 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 			name:           "cache time range is a left overlap of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
+			requestedStep:  60,
 			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
@@ -317,6 +327,7 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 			name:           "cache time range is a right overlap of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
+			requestedStep:  60,
 			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
@@ -350,6 +361,7 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 			name:           "cache time range is a disjoint of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
+			requestedStep:  60,
 			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
@@ -383,7 +395,7 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			misses := findMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.cachedSeries, tc.fluxInterval)
+			misses := findMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.requestedStep, tc.cachedSeries, tc.fluxInterval)
 			if len(misses) != len(tc.expectedMiss) {
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
@@ -404,6 +416,7 @@ func TestQueryRange(t *testing.T) {
 		{
 			Start: 1675115596722,
 			End:   1675115596722 + 120*60*1000,
+			Step:  60,
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeGraph,
@@ -436,6 +449,7 @@ func TestQueryRange(t *testing.T) {
 		{
 			Start: 1675115596722 + 60*60*1000,
 			End:   1675115596722 + 180*60*1000,
+			Step:  60,
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeGraph,

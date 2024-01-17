@@ -1,4 +1,4 @@
-package querier
+package v2
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"time"
 
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 
@@ -76,7 +76,7 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 		builder: queryBuilder.NewQueryBuilder(queryBuilder.QueryBuilderOptions{
 			BuildTraceQuery:  tracesV3.PrepareTracesQuery,
 			BuildLogQuery:    logsV3.PrepareLogsQuery,
-			BuildMetricQuery: metricsV3.PrepareMetricQuery,
+			BuildMetricQuery: metricsV4.PrepareMetricQuery,
 		}, opts.FeatureLookup),
 		featureLookUp: opts.FeatureLookup,
 
@@ -340,7 +340,7 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 			missedSeries := make([]*v3.Series, 0)
 			cachedSeries := make([]*v3.Series, 0)
 			for _, miss := range misses {
-				query := metricsV3.BuildPromQuery(promQuery, params.Step, miss.start, miss.end)
+				query := metricsV4.BuildPromQuery(promQuery, params.Step, miss.start, miss.end)
 				series, err := q.execPromQuery(ctx, query)
 				if err != nil {
 					channelResults <- channelResult{Err: err, Name: queryName, Query: query.Query, Series: nil}

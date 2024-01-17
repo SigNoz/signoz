@@ -1,4 +1,4 @@
-package delta
+package cumulative
 
 import (
 	"testing"
@@ -8,8 +8,6 @@ import (
 )
 
 func TestPrepareTableQuery(t *testing.T) {
-	// The table query is almost the same as the time series query, except that
-	// each row will be reduced to a single value using the `ReduceTo` aggregation
 	testCases := []struct {
 		name                  string
 		builderQuery          *v3.BuilderQuery
@@ -56,7 +54,7 @@ func TestPrepareTableQuery(t *testing.T) {
 			expectedQueryContains: "SELECT ts, sum(per_series_value) as value FROM (SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, avg(value) as per_series_value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT DISTINCT fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'system_memory_usage' AND temporality = 'Unspecified' AND JSONExtractString(labels, 'state') != 'idle') as filtered_time_series USING fingerprint WHERE metric_name = 'system_memory_usage' AND timestamp_ms >= 1701794980000 AND timestamp_ms <= 1701796780000 GROUP BY fingerprint, ts ORDER BY fingerprint, ts) WHERE isNaN(per_series_value) = 0 GROUP BY ts ORDER BY ts ASC",
 		},
 		{
-			name: "test time aggregation = rate, space aggregation = sum, temporality = delta",
+			name: "test time aggregation = rate, space aggregation = sum, temporality = cumulative",
 			builderQuery: &v3.BuilderQuery{
 				QueryName:    "A",
 				StepInterval: 60,
@@ -68,7 +66,7 @@ func TestPrepareTableQuery(t *testing.T) {
 					IsColumn: true,
 					IsJSON:   false,
 				},
-				Temporality: v3.Delta,
+				Temporality: v3.Cumulative,
 				Filters: &v3.FilterSet{
 					Operator: "AND",
 					Items: []v3.FilterItem{
@@ -95,13 +93,13 @@ func TestPrepareTableQuery(t *testing.T) {
 			},
 			start:                 1701794980000,
 			end:                   1701796780000,
-			expectedQueryContains: "SELECT service_name, toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'service_name') as service_name, fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'http_requests' AND temporality = 'Delta' AND like(JSONExtractString(labels, 'service_name'), '%payment_service%')) as filtered_time_series USING fingerprint WHERE metric_name = 'http_requests' AND timestamp_ms >= 1701794980000 AND timestamp_ms <= 1701796780000 GROUP BY GROUPING SETS ( (service_name, ts), (service_name) ) ORDER BY service_name ASC, ts ASC",
+			expectedQueryContains: "SELECT service_name, ts, sum(per_series_value) as value FROM (SELECT service_name, ts, If((per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (per_series_value - lagInFrame(per_series_value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window))) as per_series_value FROM (SELECT fingerprint, any(service_name) as service_name, toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, max(value) as per_series_value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT DISTINCT JSONExtractString(labels, 'service_name') as service_name, fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'http_requests' AND temporality = 'Cumulative' AND like(JSONExtractString(labels, 'service_name'), '%payment_service%')) as filtered_time_series USING fingerprint WHERE metric_name = 'http_requests' AND timestamp_ms >= 1701794980000 AND timestamp_ms <= 1701796780000 GROUP BY fingerprint, ts ORDER BY fingerprint, ts) WINDOW rate_window as (PARTITION BY fingerprint ORDER BY fingerprint, ts)) WHERE isNaN(per_series_value) = 0 GROUP BY GROUPING SETS ( (service_name, ts), (service_name) ) ORDER BY service_name ASC, ts ASC",
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			query, err := PrepareMetricQueryDeltaTable(
+			query, err := PrepareMetricQueryCumulativeTable(
 				testCase.start,
 				testCase.end,
 				testCase.builderQuery.StepInterval,

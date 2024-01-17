@@ -60,6 +60,8 @@ function TimeSeriesView({
 		isDarkMode,
 		minTimeScale,
 		maxTimeScale,
+		softMax: null,
+		softMin: null,
 	});
 
 	return (
