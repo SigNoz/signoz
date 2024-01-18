@@ -13,4 +13,6 @@ export interface NewWidgetProps {
 export interface WidgetGraphProps extends NewWidgetProps {
 	selectedTime: timePreferance;
 	thresholds: ThresholdProps[];
+	softMin: number | null;
+	softMax: number | null;
 }
