@@ -1,3 +1,5 @@
+import './LogsExplorerTable.styles.scss';
+
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { QueryTable } from 'container/QueryTable';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -16,6 +18,7 @@ function LogsExplorerTable({
 			query={stagedQuery || initialQueriesMap.metrics}
 			queryTableData={data}
 			loading={isLoading}
+			rootClassName="logs-table"
 		/>
 	);
 }
