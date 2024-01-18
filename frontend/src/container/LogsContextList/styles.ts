@@ -6,7 +6,6 @@ export const ListContainer = styled.div<{ $isDarkMode: boolean }>`
 	position: relative;
 	height: 21rem;
 	overflow: hidden;
-	margin: 12px 0;
 
 	background-color: ${({ $isDarkMode }): string =>
 		$isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100};

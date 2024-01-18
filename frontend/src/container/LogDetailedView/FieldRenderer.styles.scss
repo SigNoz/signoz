@@ -1,12 +1,22 @@
 .field-renderer-container {
-    .label {
-        color: var(--text-robin-400);
-        font-family: SF Mono;
-        font-size: 16px;
-        font-weight: var(--font-weight-normal);
-        line-height: 18px;
-        letter-spacing: -0.005em;
-        text-align: left;
-        margin-bottom: var(--margin-2);
-    }
+	display: flex !important;
+	gap: 8px;
+	align-items: center;
+	justify-content: space-between;
+
+	.label {
+		color: var(--text-robin-400);
+		font-family: SF Mono;
+		font-family: 'Space Mono', monospace;
+		font-size: 13px;
+		font-weight: var(--font-weight-normal);
+		line-height: 18px;
+		letter-spacing: -0.005em;
+		text-align: left;
+	}
+
+	.tags {
+		display: flex;
+		gap: 8;
+	}
 }
