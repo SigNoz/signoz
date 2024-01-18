@@ -598,6 +598,7 @@ function LogsExplorerViews({
 				query={exportDefaultQuery}
 				isLoading={isUpdateDashboardLoading}
 				onExport={handleExport}
+				sourcepage={DataSource.LOGS}
 			/>
 		</div>
 	);
