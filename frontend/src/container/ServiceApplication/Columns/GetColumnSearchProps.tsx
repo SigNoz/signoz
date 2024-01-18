@@ -26,7 +26,11 @@ export const getColumnSearchProps = (
 		const queryString = getQueryString(avialableParams, urlParams);
 
 		return (
-			<Link to={`${ROUTES.APPLICATION}/${metrics}?${queryString.join('')}`}>
+			<Link
+				to={`${ROUTES.APPLICATION}/${encodeURIComponent(
+					metrics,
+				)}?${queryString.join('')}`}
+			>
 				<Name>{metrics}</Name>
 			</Link>
 		);
