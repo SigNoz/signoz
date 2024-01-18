@@ -30,7 +30,6 @@ import {
 
 function DBCall(): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
-
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
 

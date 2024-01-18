@@ -32,7 +32,6 @@ function External(): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 
 	const { servicename } = useParams<IServiceName>();
-
 	const { queries } = useResourceAttribute();
 
 	const tagFilterItems = useMemo(
