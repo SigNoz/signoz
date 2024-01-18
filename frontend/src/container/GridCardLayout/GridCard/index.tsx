@@ -206,6 +206,7 @@ function GridCardGraph({
 			minTimeScale,
 			maxTimeScale,
 			graphVisibility,
+			setGraphVisibility,
 		],
 	);
 
