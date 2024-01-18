@@ -31,8 +31,7 @@ import {
 function External(): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const { servicename } = useParams<IServiceName>();
 
 	const { queries } = useResourceAttribute();
 
