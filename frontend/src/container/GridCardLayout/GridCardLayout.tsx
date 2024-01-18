@@ -123,10 +123,10 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 
 	useEffect(() => {
 		if (
-			!isEqual(layouts, dashboardLayout) &&
 			dashboardLayout &&
 			Array.isArray(dashboardLayout) &&
 			dashboardLayout.length > 0 &&
+			!isEqual(layouts, dashboardLayout) &&
 			!isDashboardLocked &&
 			saveLayoutPermission &&
 			!updateDashboardMutation.isLoading
