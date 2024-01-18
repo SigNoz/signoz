@@ -75,6 +75,8 @@ function FormAlertRules({
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
+	const [isLoading, setIsLoading] = useState(false);
+
 	// use query client
 	const ruleCache = useQueryClient();
 
@@ -402,6 +404,7 @@ function FormAlertRules({
 			selectedInterval={globalSelectedInterval}
 			alertDef={alertDef}
 			yAxisUnit={yAxisUnit || ''}
+			isLoading={isLoading}
 		/>
 	);
 
@@ -418,6 +421,7 @@ function FormAlertRules({
 			alertDef={alertDef}
 			selectedInterval={globalSelectedInterval}
 			yAxisUnit={yAxisUnit || ''}
+			isLoading={isLoading}
 		/>
 	);
 
@@ -472,6 +476,7 @@ function FormAlertRules({
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
 							runQuery={handleRunQuery}
+							setLoading={setIsLoading}
 						/>
 
 						<RuleOptions

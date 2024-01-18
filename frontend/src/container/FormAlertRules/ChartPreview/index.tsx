@@ -35,6 +35,7 @@ export interface ChartPreviewProps {
 	userQueryKey?: string;
 	allowSelectedIntervalForStepGen?: boolean;
 	yAxisUnit: string;
+	isLoading: boolean;
 }
 
 function ChartPreview({
@@ -48,6 +49,7 @@ function ChartPreview({
 	allowSelectedIntervalForStepGen = false,
 	alertDef,
 	yAxisUnit,
+	isLoading,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const threshold = alertDef?.condition.target || 0;
@@ -123,6 +125,9 @@ function ChartPreview({
 	const optionName =
 		getFormatNameByOptionId(alertDef?.condition.targetUnit || '') || '';
 
+	const showSpinner = !queryResponse.isLoading && !isLoading;
+	console.log({ load: queryResponse.isLoading, isLoading });
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
@@ -175,9 +180,7 @@ function ChartPreview({
 					{queryResponse.error.message || t('preview_chart_unexpected_error')}
 				</FailedMessageContainer>
 			)}
-			{queryResponse.isLoading && (
-				<Spinner size="large" tip="Loading..." height="70vh" />
-			)}
+			{!showSpinner && <Spinner size="large" tip="Loading..." height="70vh" />}
 			{chartData && !queryResponse.isError && (
 				<div ref={graphRef} style={{ height: '100%' }}>
 					<GridPanelSwitch
