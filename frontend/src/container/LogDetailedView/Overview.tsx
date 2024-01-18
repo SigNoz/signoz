@@ -28,7 +28,7 @@ function Overview({
 	fieldSearchInput,
 	onClickActionItem,
 }: Props): JSX.Element {
-	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
+	const [isWrapWord, setIsWrapWord] = useState<boolean>(false);
 
 	const logJsonData = useMemo(
 		() => aggregateAttributesResourcesToString(logData),
@@ -46,8 +46,9 @@ function Overview({
 			enabled: false,
 		},
 		fontWeight: 400,
-		fontFamily: 'SF Mono',
-		fontSize: 14,
+		// fontFamily: 'SF Mono',
+		fontFamily: 'Space Mono',
+		fontSize: 13,
 		lineHeight: '18px',
 		colorDecorators: true,
 		scrollBeyondLastLine: false,
@@ -72,7 +73,8 @@ function Overview({
 			colors: {
 				'editor.background': Color.BG_INK_400,
 			},
-			fontFamily: 'SF Mono',
+			// fontFamily: 'SF Mono',
+			fontFamily: 'Space Mono',
 			fontSize: 12,
 			fontWeight: 'normal',
 			lineHeight: 18,
@@ -95,7 +97,7 @@ function Overview({
 							</Tag>
 						),
 						children: (
-							<>
+							<div className="logs-body-content">
 								<MEditor
 									value={isWrapWord ? JSON.stringify(logData) : logJsonData}
 									language={isWrapWord ? 'placetext' : 'json'}
@@ -117,22 +119,23 @@ function Overview({
 								<div className="log-switch">
 									<div className="wrap-word-switch">
 										<Typography.Text>Wrap text</Typography.Text>
-										<Switch checked={isWrapWord} onChange={handleWrapWord} />
+										<Switch checked={isWrapWord} onChange={handleWrapWord} size="small" />
 									</div>
+
 									<div>
 										<Button.Group>
 											<Button
 												className="log-switch-btn"
-												icon={<ChevronLeft size={16} />}
+												icon={<ChevronLeft size={14} />}
 											/>
 											<Button
 												className="log-switch-btn"
-												icon={<ChevronRight size={16} />}
+												icon={<ChevronRight size={14} />}
 											/>
 										</Button.Group>
 									</div>
 								</div>
-							</>
+							</div>
 						),
 						extra: <Tag className="tag">{isWrapWord ? 'Raw' : 'JSON'}</Tag>,
 						className: 'collapse-content',

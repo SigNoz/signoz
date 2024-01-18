@@ -12,8 +12,10 @@ import {
 	Typography,
 } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
+import cx from 'classnames';
+import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
+import ContextView from 'container/LogDetailedView/ContextView/ContextView';
 import JSONView from 'container/LogDetailedView/JsonView';
-import LogContext from 'container/LogDetailedView/LogContext';
 import Overview from 'container/LogDetailedView/Overview';
 import { aggregateAttributesResourcesToString } from 'container/LogDetailedView/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -22,7 +24,6 @@ import {
 	Braces,
 	ChevronDown,
 	ChevronUp,
-	Compass,
 	Copy,
 	Filter,
 	HardHat,
@@ -100,6 +101,10 @@ function LogDetail({
 		return <></>;
 	}
 
+	console.log('log', log);
+
+	const logType = log?.attributes_string?.log_level || LogType.INFO;
+
 	return (
 		<Drawer
 			width="60%"
@@ -108,6 +113,7 @@ function LogDetail({
 					<Divider
 						type="vertical"
 						style={{
+							height: '100%',
 							border: isDarkMode
 								? `1px solid ${Color.BG_SLATE_500}`
 								: `1px solid ${Color.BG_VANILLA_400}`,
@@ -117,7 +123,7 @@ function LogDetail({
 				</>
 			}
 			placement="right"
-			closable
+			// closable
 			onClose={drawerCloseHandler}
 			open={log !== null}
 			style={{
@@ -129,24 +135,18 @@ function LogDetail({
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
 			extra={
 				<Button.Group>
-					<Button className="radio-button" icon={<ChevronUp size={16} />} />
-					<Button className="radio-button" icon={<ChevronDown size={16} />} />
+					<Button className="radio-button" icon={<ChevronUp size={14} />} />
+					<Button className="radio-button" icon={<ChevronDown size={14} />} />
 				</Button.Group>
 			}
 		>
 			<div className="log-detail-drawer__log">
-				<Divider
-					type="vertical"
-					style={{
-						fontSize: '20px',
-						border: isDarkMode
-							? `2px solid ${Color.BG_SLATE_400}`
-							: `2px solid ${Color.BG_VANILLA_400}`,
-					}}
-				/>
-				<Tooltip title={log?.body}>
+				<Divider type="vertical" className={cx('log-type-indicator', logType)} />
+				<Tooltip title={log?.body} placement="left">
 					<Typography.Text className="log-body">{log?.body}</Typography.Text>
 				</Tooltip>
+
+				<div className="log-overflow-shadow">&nbsp;</div>
 			</div>
 
 			<div className="tabs-and-search">
@@ -187,7 +187,7 @@ function LogDetail({
 					</Radio.Button>
 				</Radio.Group>
 
-				{selectedView === 'OVERVIEW' && (
+				{selectedView === VIEW_TYPES.OVERVIEW && (
 					<Button
 						className="action-btn"
 						icon={<Search size={14} />}
@@ -195,18 +195,18 @@ function LogDetail({
 					/>
 				)}
 
-				{selectedView === 'JSON' && (
+				{selectedView === VIEW_TYPES.JSON && (
 					<div className="json-action-btn">
-						<Button className="action-btn" icon={<Compass size={16} />} />
+						{/* <Button className="action-btn" icon={<Compass size={16} />} /> */}
 						<Button
-							className="btn-search"
+							className="action-btn"
 							icon={<Copy size={16} />}
 							onClick={handleJSONCopy}
 						/>
 					</div>
 				)}
 
-				{selectedView === 'CONTEXT' && (
+				{selectedView === VIEW_TYPES.CONTEXT && (
 					<Button
 						className="action-btn"
 						icon={<Filter size={16} />}
@@ -247,7 +247,7 @@ function LogDetail({
 			{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}
 
 			{selectedView === VIEW_TYPES.CONTEXT && (
-				<LogContext
+				<ContextView
 					log={log}
 					filters={filters}
 					contextQuery={contextQuery}

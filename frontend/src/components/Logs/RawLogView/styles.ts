@@ -43,7 +43,8 @@ export const ExpandIconWrapper = styled(Col)`
 export const RawLogContent = styled.div<RawLogContentProps>`
 	margin-bottom: 0;
 	font-family: 'SF Mono', monospace;
-	font-size: 14px;
+	font-family: 'Space Mono', monospace;
+	font-size: 13px;
 	font-weight: 400;
 	text-align: left;
 	color: ${({ $isDarkMode }): string =>

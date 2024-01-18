@@ -1,7 +1,8 @@
 import { SyncOutlined } from '@ant-design/icons';
-import { Button, Select as DefaultSelect } from 'antd';
+import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
+import CustomTimePicker from 'components/CustomTimePicker/CustomTimePicker';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -21,7 +22,6 @@ import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
@@ -30,14 +30,15 @@ import { getDefaultOption, getOptions, Time } from './config';
 import RefreshText from './Refresh';
 import { Form, FormContainer, FormItem } from './styles';
 
-const { Option } = DefaultSelect;
-
 function DateTimeSelection({
 	location,
 	updateTimeInterval,
 	globalTimeLoading,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
+
+	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
+	const [isOpen, setIsOpen] = useState<boolean>(false);
 
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
@@ -212,6 +213,7 @@ function DateTimeSelection({
 	};
 
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
+		console.log('dateTimeRange', dateTimeRange);
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
@@ -284,25 +286,27 @@ function DateTimeSelection({
 				initialValues={{ interval: selectedTime }}
 			>
 				<FormContainer>
-					<DefaultSelect
-						getPopupContainer={popupContainer}
-						onSelect={(value: unknown): void => onSelectHandler(value as Time)}
-						value={getInputLabel(
+					<CustomTimePicker
+						open={isOpen}
+						setOpen={setIsOpen}
+						onSelect={(value: unknown): void => {
+							onSelectHandler(value as Time);
+						}}
+						onError={(hasError: boolean): void => {
+							setHasSelectedTimeError(hasError);
+						}}
+						selectedTime={selectedTime}
+						onValidCustomDateChange={(dateTime): void =>
+							onCustomDateHandler(dateTime as DateTimeRangeType)
+						}
+						selectedValue={getInputLabel(
 							dayjs(minTime / 1000000),
 							dayjs(maxTime / 1000000),
 							selectedTime,
 						)}
 						data-testid="dropDown"
-						style={{
-							minWidth: 120,
-						}}
-					>
-						{options.map(({ value, label }) => (
-							<Option key={value + label} value={value}>
-								{label}
-							</Option>
-						))}
-					</DefaultSelect>
+						items={options}
+					/>
 
 					<FormItem hidden={refreshButtonHidden}>
 						<Button
@@ -318,12 +322,14 @@ function DateTimeSelection({
 				</FormContainer>
 			</Form>
 
-			<RefreshText
-				{...{
-					onLastRefreshHandler,
-				}}
-				refreshButtonHidden={refreshButtonHidden}
-			/>
+			{!hasSelectedTimeError && (
+				<RefreshText
+					{...{
+						onLastRefreshHandler,
+					}}
+					refreshButtonHidden={refreshButtonHidden}
+				/>
+			)}
 
 			<CustomDateTimeModal
 				visible={customDateTimeVisible}

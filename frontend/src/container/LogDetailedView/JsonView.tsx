@@ -1,12 +1,17 @@
+import './JsonView.styles.scss';
+
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
+import { Switch, Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { JSONViewProps } from './LogDetailedView.types';
 import { aggregateAttributesResourcesToString } from './utils';
 
 function JSONView({ logData }: JSONViewProps): JSX.Element {
+	const [isWrapWord, setIsWrapWord] = useState<boolean>(false);
+
 	const LogJsonData = useMemo(
 		() => aggregateAttributesResourcesToString(logData),
 		[logData],
@@ -22,15 +27,22 @@ function JSONView({ logData }: JSONViewProps): JSX.Element {
 			enabled: false,
 		},
 		fontWeight: 400,
-		fontFamily: 'SF Mono',
-		fontSize: 14,
+		// fontFamily: 'SF Mono',
+		fontFamily: 'Space Mono',
+		fontSize: 13,
 		lineHeight: '18px',
 		colorDecorators: true,
 		scrollBeyondLastLine: false,
+		decorationsOverviewRuler: false,
 		scrollbar: {
 			vertical: 'hidden',
 			horizontal: 'hidden',
 		},
+		folding: false,
+	};
+
+	const handleWrapWord = (checked: boolean): void => {
+		setIsWrapWord(checked);
 	};
 
 	function setEditorTheme(monaco: Monaco): void {
@@ -44,7 +56,8 @@ function JSONView({ logData }: JSONViewProps): JSX.Element {
 			colors: {
 				'editor.background': Color.BG_INK_400,
 			},
-			fontFamily: 'SF Mono',
+			// fontFamily: 'SF Mono',
+			fontFamily: 'Space Mono',
 			fontSize: 12,
 			fontWeight: 'normal',
 			lineHeight: 18,
@@ -53,17 +66,26 @@ function JSONView({ logData }: JSONViewProps): JSX.Element {
 	}
 
 	return (
-		<div style={{ marginTop: '0.5rem' }}>
+		<div className="json-view-container">
 			<MEditor
-				value={LogJsonData}
+				value={isWrapWord ? JSON.stringify(LogJsonData) : LogJsonData}
 				language="json"
 				options={options}
 				onChange={(): void => {}}
-				height="40vh"
+				height="68vh"
 				theme={isDarkMode ? 'my-theme' : 'light'}
 				// eslint-disable-next-line react/jsx-no-bind
 				beforeMount={setEditorTheme}
 			/>
+
+			<div className="json-view-footer">
+				<div className="log-switch">
+					<div className="wrap-word-switch">
+						<Typography.Text>Wrap text</Typography.Text>
+						<Switch checked={isWrapWord} onChange={handleWrapWord} size="small" />
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 }

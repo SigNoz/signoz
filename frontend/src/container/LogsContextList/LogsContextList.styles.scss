@@ -1,0 +1,36 @@
+.context-logs-list {
+	position: relative;
+
+	.show-more-button {
+		position: absolute;
+		z-index: 1;
+		opacity: 1;
+
+		&.up {
+			top: 0;
+		}
+
+		&.down {
+			bottom: 0;
+		}
+	}
+
+	.virtuoso-list {
+		&::-webkit-scrollbar {
+			width: 0.1rem;
+			height: 0.1rem;
+		}
+	}
+
+	&.logs-context-list-asc {
+		.virtuoso-list {
+			padding-top: 16px;
+		}
+	}
+
+	&.logs-context-list-desc {
+		.virtuoso-list {
+			padding-bottom: 16px;
+		}
+	}
+}

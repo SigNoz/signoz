@@ -1,65 +1,73 @@
 .attribute-table-container {
-    .ant-table {
-        background: var(--bg-ink-400);
-        
-        .ant-table-row:hover {
-            .ant-table-cell {
-                .value-field {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    .action-btn {
-                        display: flex;
-                        gap: 4px;
-                    }
-                }
-            }
-        }
+	.ant-table {
+		background: var(--bg-ink-400);
 
-        .ant-table-cell {
-            border: 1px solid var(--bg-slate-500);
-        }
+		.ant-table-row:hover {
+			.ant-table-cell {
+				.value-field {
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					.action-btn {
+						display: flex;
+						gap: 4px;
+					}
+				}
+			}
+		}
 
-        .value-field-container {
-            background: rgba(22, 25, 34, 0.40);
+		.ant-table-cell {
+			border: 1px solid var(--bg-slate-500);
+		}
 
-            .action-btn {
-                display: none;
-                width: max-content;
+		.attribute-name {
+			.ant-btn {
+				&:hover {
+					background-color: none !important;
+				}
+			}
+		}
 
-                .filter-btn {
-                    display: flex;
-                    align-items: center;
-                    border: none;
-                    box-shadow: none;
-                    border-radius: 2px;
-                    background: var(--bg-slate-400, #1D212D);
-                }
-            }
-           
-        }
-    }
+		.value-field-container {
+			background: rgba(22, 25, 34, 0.4);
+
+			.action-btn {
+				display: none;
+				width: max-content;
+
+				.filter-btn {
+					display: flex;
+					align-items: center;
+					border: none;
+					box-shadow: none;
+					border-radius: 2px;
+					background: var(--bg-slate-400);
+
+					height: 24px;
+				}
+			}
+		}
+	}
 }
 
-
 .lightMode {
-    .attribute-table-container {
-        .ant-table {
-            background: var(--bg-vanilla-100);
-        }
+	.attribute-table-container {
+		.ant-table {
+			background: var(--bg-vanilla-100);
+		}
 
-        .ant-table-cell {
-            border: 1px solid var(--bg-vanilla-200);
-        }
+		.ant-table-cell {
+			border: 1px solid var(--bg-vanilla-200);
+		}
 
-        .value-field-container {
-            background: var(--bg-vanilla-300);
+		.value-field-container {
+			background: var(--bg-vanilla-300);
 
-            .action-btn {
-                .filter-btn {
-                    background: var(--bg-vanilla-300);
-                }
-            }
-        }
-    }
+			.action-btn {
+				.filter-btn {
+					background: var(--bg-vanilla-300);
+				}
+			}
+		}
+	}
 }
