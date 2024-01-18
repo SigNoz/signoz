@@ -10,6 +10,7 @@ function OptionRenderer({
 	label,
 	value,
 	dataType,
+	isColumn,
 }: OptionRendererProps): JSX.Element {
 	const optionType = getOptionType(label);
 
@@ -27,6 +28,10 @@ function OptionRenderer({
 							<TagLabel>Data type: </TagLabel>
 							<TagValue>{dataType}</TagValue>
 						</TagContainer>
+						<TagContainer>
+							<TagLabel>isColumn: </TagLabel>
+							<TagValue>{isColumn ? 'True' : 'False'}</TagValue>
+						</TagContainer>
 					</div>
 				</SelectOptionContainer>
 			) : (
@@ -40,6 +45,7 @@ interface OptionRendererProps {
 	label: string;
 	value: string;
 	dataType: string;
+	isColumn: boolean;
 }
 
 export default OptionRenderer;

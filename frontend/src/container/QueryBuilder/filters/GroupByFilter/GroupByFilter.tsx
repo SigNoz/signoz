@@ -81,6 +81,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 									}),
 								)}
 								dataType={item.dataType || ''}
+								isColumn={item.isColumn}
 							/>
 						),
 						value: `${transformStringWithPrefix({
