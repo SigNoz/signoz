@@ -169,7 +169,7 @@ services:
     command:
       [
         "-config=/root/config/prometheus.yml",
-        "--prefer-delta=true"
+        # "--prefer-delta=true"
       ]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -267,24 +267,6 @@ services:
         condition: service_completed_successfully
       query-service:
         condition: service_healthy
-
-  otel-collector-metrics:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.88.6}
-    container_name: signoz-otel-collector-metrics
-    command:
-      [
-        "--config=/etc/otel-collector-metrics-config.yaml",
-        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
-      ]
-    volumes:
-      - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
-    # ports:
-    #   - "1777:1777"     # pprof extension
-    #   - "8888:8888"     # OtelCollector internal metrics
-    #   - "13133:13133"   # Health check extension
-    #   - "55679:55679"   # zPages extension
-    restart: on-failure
-    <<: *db-depend
 
   logspout:
     image: "gliderlabs/logspout:v3.2.14"
