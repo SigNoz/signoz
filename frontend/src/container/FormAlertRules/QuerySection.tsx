@@ -4,7 +4,7 @@ import { Button, Tabs } from 'antd';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
-import { Play } from 'lucide-react';
+import { Atom, LucideAccessibility, Play, Terminal } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -52,22 +52,51 @@ function QuerySection({
 
 	const tabs = [
 		{
-			label: t('tab_qb'),
+			label: (
+				<Button className="nav-btns">
+					<Atom size={14} />
+				</Button>
+			),
 			key: EQueryType.QUERY_BUILDER,
 		},
 		{
-			label: t('tab_chquery'),
+			label: (
+				<Button className="nav-btns">
+					<Terminal size={14} />
+				</Button>
+			),
 			key: EQueryType.CLICKHOUSE,
 		},
 	];
 
 	const items = useMemo(
 		() => [
-			{ label: t('tab_qb'), key: EQueryType.QUERY_BUILDER },
-			{ label: t('tab_chquery'), key: EQueryType.CLICKHOUSE },
-			{ label: t('tab_promql'), key: EQueryType.PROM },
+			{
+				label: (
+					<Button className="nav-btns">
+						<Atom size={14} />
+					</Button>
+				),
+				key: EQueryType.QUERY_BUILDER,
+			},
+			{
+				label: (
+					<Button className="nav-btns">
+						<Terminal size={14} />
+					</Button>
+				),
+				key: EQueryType.CLICKHOUSE,
+			},
+			{
+				label: (
+					<Button className="nav-btns">
+						<LucideAccessibility size={14} />
+					</Button>
+				),
+				key: EQueryType.PROM,
+			},
 		],
-		[t],
+		[],
 	);
 
 	const renderTabs = (typ: AlertTypes): JSX.Element | null => {

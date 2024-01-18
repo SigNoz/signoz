@@ -76,6 +76,10 @@ export const FormContainer = styled(Card)`
 	display: flex;
 	flex-direction: column;
 	border-radius: 4px;
+
+	.ant-card-body {
+		padding: 12px;
+	}
 `;
 
 export const TextareaMedium = styled(TextArea)`
