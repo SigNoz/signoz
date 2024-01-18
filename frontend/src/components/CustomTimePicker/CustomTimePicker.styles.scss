@@ -1,3 +1,8 @@
+.custom-time-picker {
+	display: flex;
+	flex-direction: column;
+}
+
 .time-options-container {
 	.time-options-item {
 		margin: 2px 0;
@@ -43,7 +48,9 @@
 
 .valid-format-error {
 	margin-top: 4px;
-	color: var(--bg-cherry-400, #ea6d71);
+	color: var(--bg-cherry-400) !important;
+	font-size: 13px !important;
+	font-weight: 400 !important;
 }
 
 .lightMode {
@@ -79,10 +86,5 @@
 		input:focus::placeholder {
 			color: rgba($color: #000000, $alpha: 0.4);
 		}
-	}
-
-	.valid-format-error {
-		margin-top: 4px;
-		color: var(--bg-cherry-400, #ea6d71);
 	}
 }

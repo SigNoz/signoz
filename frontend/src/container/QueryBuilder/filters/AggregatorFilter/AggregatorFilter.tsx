@@ -81,6 +81,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 									}),
 								)}
 								dataType={item.dataType}
+								isColumn={item.isColumn}
 							/>
 						),
 						value: `${item.key}${selectValueDivider}${createIdFromObjectFields(
