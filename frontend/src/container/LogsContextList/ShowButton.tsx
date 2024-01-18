@@ -1,6 +1,7 @@
 import './ShowButton.styles.scss';
 
 import { Button } from 'antd';
+import cx from 'classnames';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 
@@ -29,7 +30,10 @@ function ShowButton({
 					<ArrowDown size={14} />
 				)
 			}
-			className="show-more-button"
+			className={cx(
+				'show-more-button',
+				order === ORDERBY_FILTERS.ASC ? 'up' : 'down',
+			)}
 		>
 			Load more
 		</Button>

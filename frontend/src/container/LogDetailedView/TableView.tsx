@@ -135,6 +135,7 @@ function TableView({
 			width: 50,
 			align: 'left',
 			ellipsis: true,
+			className: 'attribute-name',
 			render: (field: string, record): JSX.Element => {
 				const renderedField = <FieldRenderer field={field} />;
 
@@ -142,7 +143,7 @@ function TableView({
 					const traceId = flattenLogData[record.field];
 
 					return (
-						<Space size="middle">
+						<Space size="middle" className="log-attribute">
 							{renderedField}
 
 							{traceId && (
@@ -184,7 +185,7 @@ function TableView({
 			key: 'value',
 			width: 70,
 			ellipsis: false,
-			className: 'value-field-container',
+			className: 'value-field-container attribute-value',
 			render: (fieldData: Record<string, string>, record): JSX.Element => {
 				const textToCopy = fieldData.value.slice(1, -1);
 

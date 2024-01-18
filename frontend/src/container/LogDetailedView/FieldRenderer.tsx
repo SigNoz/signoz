@@ -14,19 +14,22 @@ function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 			{dataType && newField && logType ? (
 				<>
 					<div className="label">{newField} </div>
-					<TagContainer>
-						<TagLabel>
-							type
-							<Divider type="vertical" />{' '}
-						</TagLabel>
-						<TagValue>{logType}</TagValue>
-					</TagContainer>
-					<TagContainer>
-						<TagLabel>
-							data type <Divider type="vertical" />{' '}
-						</TagLabel>
-						<TagValue>{dataType}</TagValue>
-					</TagContainer>
+
+					<div className="tags">
+						<TagContainer>
+							<TagLabel>
+								type
+								<Divider type="vertical" />{' '}
+							</TagLabel>
+							<TagValue>{logType}</TagValue>
+						</TagContainer>
+						<TagContainer>
+							<TagLabel>
+								data type <Divider type="vertical" />{' '}
+							</TagLabel>
+							<TagValue>{dataType}</TagValue>
+						</TagContainer>
+					</div>
 				</>
 			) : (
 				<span className="label">{field}</span>
