@@ -44,6 +44,7 @@ export const useOptions = (
 				label: `${getLabel(item)}`,
 				value: item.key,
 				dataType: item.dataType,
+				isColumn: item.isColumn,
 			})),
 		[getLabel],
 	);
