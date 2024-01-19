@@ -27,7 +27,11 @@ function ShowButton({
 				<ArrowUp size={14} />
 			);
 		}
-		return isDisabled ? <Ban size={14} /> : <ArrowDown size={14} />;
+		return isDisabled ? (
+			<Ban size={14} style={{ color: Color.BG_VANILLA_400 }} />
+		) : (
+			<ArrowDown size={14} />
+		);
 	};
 
 	return (
