@@ -2,7 +2,7 @@ import './LogsExplorerViews.styles.scss';
 
 import { Button, Dropdown, MenuProps, Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
-import NestedMenu from 'components/NestedMenu/NestedMenu';
+import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
@@ -27,6 +27,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useAxiosError from 'hooks/useAxiosError';
+import useClickOutside from 'hooks/useClickOutside';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
@@ -497,6 +498,17 @@ function LogsExplorerViews({
 	const handleToggleShowFormatOptions = (): void =>
 		setShowFormatMenuItems(!showFormatMenuItems);
 
+	const menuRef = useRef<HTMLDivElement>(null);
+
+	useClickOutside({
+		ref: menuRef,
+		onClickOutside: () => {
+			if (showFormatMenuItems) {
+				setShowFormatMenuItems(false);
+			}
+		},
+	});
+
 	return (
 		<div className="logs-explorer-views-container">
 			{showHistogram && (
@@ -538,13 +550,13 @@ function LogsExplorerViews({
 								</Button>
 							</Dropdown>
 
-							<div className="format-options-container">
+							<div className="format-options-container" ref={menuRef}>
 								<Button onClick={handleToggleShowFormatOptions}>
 									<Sliders size={16} />
 								</Button>
 
 								{showFormatMenuItems && (
-									<NestedMenu
+									<LogsFormatOptionsMenu
 										title="FORMAT"
 										items={formatItems}
 										selectedOptionFormat={options.format}

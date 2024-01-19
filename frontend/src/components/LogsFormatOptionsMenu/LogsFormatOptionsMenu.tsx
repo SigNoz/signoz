@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './NestedMenu.styles.scss';
+import './LogsFormatOptionsMenu.styles.scss';
 
 import { Input, InputNumber, Tooltip } from 'antd';
 import cx from 'classnames';
@@ -11,19 +11,19 @@ import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Check, Minus, Plus, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-interface NestedMenuProps {
+interface LogsFormatOptionsMenuProps {
 	title: string;
 	items: any;
 	selectedOptionFormat: any;
 	config: OptionsMenuConfig;
 }
 
-export default function NestedMenu({
+export default function LogsFormatOptionsMenu({
 	title,
 	items,
 	selectedOptionFormat,
 	config,
-}: NestedMenuProps): JSX.Element {
+}: LogsFormatOptionsMenuProps): JSX.Element {
 	const { maxLines, format, addColumn } = config;
 	const [selectedItem, setSelectedItem] = useState(selectedOptionFormat);
 	const maxLinesNumber = (maxLines?.value as number) || 1;
@@ -96,6 +96,10 @@ export default function NestedMenu({
 				'nested-menu-container',
 				addNewColumn && selectedItem !== 'raw' ? 'active' : '',
 			)}
+			onClick={(event): void => {
+				// this is to restrict click events to propogate to parent
+				event.stopPropagation();
+			}}
 		>
 			<div className="menu-container">
 				<div className="title"> {title} </div>

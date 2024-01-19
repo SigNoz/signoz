@@ -45,6 +45,7 @@
 
 	.query-builder-mini-map {
 		border-left: 1px solid var(--bg-slate-400);
+		border-right: 1px solid var(--bg-slate-400);
 
 		display: flex;
 		flex-direction: column;
@@ -193,6 +194,7 @@
 
 		.query-builder-mini-map {
 			border-left-color: var(--bg-vanilla-300);
+			border-right-color: var(--bg-vanilla-300);
 		}
 
 		.query-builder {
