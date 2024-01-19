@@ -43,7 +43,7 @@ export default function ConnectionStatus(): JSX.Element {
 
 	const { trackEvent } = useAnalytics();
 
-	const [retryCount, setRetryCount] = useState(10); // Retry for 5 mins
+	const [retryCount, setRetryCount] = useState(20); // Retry for 3 mins 20s
 	const [loading, setLoading] = useState(true);
 	const [isReceivingData, setIsReceivingData] = useState(false);
 	const dispatch = useDispatch();
