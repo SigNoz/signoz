@@ -2,7 +2,7 @@ import './LogsExplorerViews.styles.scss';
 
 import { Button, Dropdown, MenuProps, Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
-import NestedMenu from 'components/NestedMenu/NestedMenu';
+import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
@@ -557,7 +557,7 @@ function LogsExplorerViews({
 								</Button>
 
 								{showFormatMenuItems && (
-									<NestedMenu
+									<LogsFormatOptionsMenu
 										title="FORMAT"
 										items={formatItems}
 										selectedOptionFormat={options.format}
