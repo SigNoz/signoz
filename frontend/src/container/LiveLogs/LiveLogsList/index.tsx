@@ -1,5 +1,6 @@
 import { Card, Typography } from 'antd';
 import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
@@ -136,6 +137,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 				</InfinityWrapperStyled>
 			)}
 			<LogDetail
+				selectedTab={VIEW_TYPES.OVERVIEW}
 				log={activeLog}
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}

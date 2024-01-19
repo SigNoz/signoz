@@ -1,7 +1,12 @@
 import { blue } from '@ant-design/colors';
+import { Color } from '@signozhq/design-tokens';
 import { Col, Row, Space } from 'antd';
 import styled from 'styled-components';
-import { getActiveLogBackground, getDefaultLogBackground } from 'utils/logs';
+import {
+	getActiveLogBackground,
+	getDefaultLogBackground,
+	getHightLightedLogBackground,
+} from 'utils/logs';
 
 import { RawLogContentProps } from './types';
 
@@ -9,6 +14,7 @@ export const RawLogViewContainer = styled(Row)<{
 	$isDarkMode: boolean;
 	$isReadOnly?: boolean;
 	$isActiveLog?: boolean;
+	$isHightlightedLog: boolean;
 }>`
 	position: relative;
 	width: 100%;
@@ -19,10 +25,12 @@ export const RawLogViewContainer = styled(Row)<{
 	transition: background-color 0.2s ease-in;
 
 	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
+	${({ $isHightlightedLog }): string =>
+		getHightLightedLogBackground($isHightlightedLog)}
 
 	${({ $isReadOnly, $isActiveLog, $isDarkMode }): string =>
 		$isActiveLog
-			? getActiveLogBackground()
+			? getActiveLogBackground($isActiveLog, $isDarkMode)
 			: getDefaultLogBackground($isReadOnly, $isDarkMode)}
 `;
 
@@ -35,11 +43,12 @@ export const ExpandIconWrapper = styled(Col)`
 export const RawLogContent = styled.div<RawLogContentProps>`
 	margin-bottom: 0;
 	font-family: 'SF Mono', monospace;
-	font-size: 14px;
+	font-family: 'Space Mono', monospace;
+	font-size: 13px;
 	font-weight: 400;
 	text-align: left;
-
-	color: ${({ $isDarkMode }): string => ($isDarkMode ? '#c0c1c3' : '1D212D')};
+	color: ${({ $isDarkMode }): string =>
+		$isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400};
 
 	${({ $isTextOverflowEllipsisDisabled, linesPerRow }): string =>
 		$isTextOverflowEllipsisDisabled
@@ -57,9 +66,6 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 
 	cursor: ${({ $isActiveLog, $isReadOnly }): string =>
 		$isActiveLog || $isReadOnly ? 'initial' : 'pointer'};
-
-	${({ $isActiveLog, $isReadOnly }): string =>
-		$isReadOnly && $isActiveLog ? 'padding: 0 1.5rem;' : ''}
 `;
 
 export const ActionButtonsWrapper = styled(Space)`
