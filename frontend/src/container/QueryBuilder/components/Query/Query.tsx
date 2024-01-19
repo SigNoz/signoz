@@ -3,9 +3,11 @@ import './Query.styles.scss';
 import { Col, Input, Row } from 'antd';
 // ** Constants
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 // ** Components
 import {
 	AdditionalFiltersToggler,
+	DataSourceDropdown,
 	FilterLabel,
 } from 'container/QueryBuilder/components';
 import {
@@ -22,8 +24,17 @@ import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearc
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 // ** Hooks
-import { ChangeEvent, memo, ReactNode, useCallback, useState } from 'react';
+import {
+	ChangeEvent,
+	memo,
+	ReactNode,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
+import { useLocation } from 'react-use';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
 // ** Types
@@ -31,11 +42,13 @@ import { QueryProps } from './Query.interfaces';
 
 export const Query = memo(function Query({
 	index,
+	queryVariant,
 	query,
 	filterConfigs,
 	queryComponents,
 }: QueryProps): JSX.Element {
 	const { panelType } = useQueryBuilder();
+	const { pathname } = useLocation();
 
 	const [isCollapse, setIsCollapsed] = useState(false);
 
@@ -46,6 +59,7 @@ export const Query = memo(function Query({
 		listOfAdditionalFilters,
 		handleChangeAggregatorAttribute,
 		handleChangeQueryData,
+		handleChangeDataSource,
 		handleChangeOperator,
 		handleDeleteQuery,
 	} = useQueryOperations({ index, query, filterConfigs });
@@ -147,6 +161,12 @@ export const Query = memo(function Query({
 			query,
 			handleChangeAggregateEvery,
 		],
+	);
+
+	const isExplorerPage = useMemo(
+		() =>
+			pathname === ROUTES.LOGS_EXPLORER || pathname === ROUTES.TRACES_EXPLORER,
+		[pathname],
 	);
 
 	const renderAdditionalFilters = useCallback((): ReactNode => {
@@ -274,6 +294,20 @@ export const Query = memo(function Query({
 				<Row gutter={[0, 12]} className="qb-container">
 					<Col span={24}>
 						<Row align="middle" gutter={[5, 11]}>
+							{!isExplorerPage && (
+								<Col>
+									{queryVariant === 'dropdown' ? (
+										<DataSourceDropdown
+											onChange={handleChangeDataSource}
+											value={query.dataSource}
+											style={{ minWidth: '5.625rem' }}
+										/>
+									) : (
+										<FilterLabel label={transformToUpperCase(query.dataSource)} />
+									)}
+								</Col>
+							)}
+
 							{isMetricsDataSource && (
 								<Col span={12}>
 									<Row gutter={[11, 5]}>
