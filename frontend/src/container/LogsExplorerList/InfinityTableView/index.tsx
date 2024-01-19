@@ -1,7 +1,7 @@
 import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { useTableView } from 'components/Logs/TableView/useTableView';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import LogsExplorerContext from 'container/LogsExplorerContext';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -52,6 +52,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			activeLog: activeContextLog,
 			onSetActiveLog: handleSetActiveContextLog,
 			onClearActiveLog: handleClearActiveContextLog,
+			onAddToQuery: handleAddToQuery,
 		} = useActiveLog();
 		const {
 			activeLog,
@@ -153,12 +154,15 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				/>
 
 				{activeContextLog && (
-					<LogsExplorerContext
+					<LogDetail
 						log={activeContextLog}
 						onClose={handleClearActiveContextLog}
+						onAddToQuery={handleAddToQuery}
+						selectedTab={VIEW_TYPES.CONTEXT}
 					/>
 				)}
 				<LogDetail
+					selectedTab={VIEW_TYPES.OVERVIEW}
 					log={activeLog}
 					onClose={onClearActiveLog}
 					onAddToQuery={onAddToQuery}
