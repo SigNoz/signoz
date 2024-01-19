@@ -279,6 +279,18 @@ function DateTimeSelection({
 		setRefreshButtonHidden(updatedTime === 'custom');
 
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
+
+		if (updatedTime !== 'custom') {
+			const { minTime, maxTime } = GetMinMax(updatedTime);
+			urlQuery.set(QueryParams.startTime, minTime.toString());
+			urlQuery.set(QueryParams.endTime, maxTime.toString());
+		} else {
+			urlQuery.set(QueryParams.startTime, preStartTime.toString());
+			urlQuery.set(QueryParams.endTime, preEndTime.toString());
+		}
+		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+		history.push(generatedUrl);
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
 
