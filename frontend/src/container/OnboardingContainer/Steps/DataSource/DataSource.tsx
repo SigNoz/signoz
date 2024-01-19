@@ -125,8 +125,9 @@ export default function DataSource(): JSX.Element {
 						)}
 						key={dataSource.name}
 						onClick={(): void => {
-							updateSelectedFramework('');
+							updateSelectedFramework(null);
 							updateSelectedDataSource(dataSource);
+							form.setFieldsValue({ selectFramework: null });
 						}}
 					>
 						<div>
@@ -152,6 +153,7 @@ export default function DataSource(): JSX.Element {
 						<Form
 							initialValues={{
 								serviceName,
+								selectFramework: selectedFramework,
 							}}
 							form={form}
 							onValuesChange={(): void => {
@@ -165,7 +167,6 @@ export default function DataSource(): JSX.Element {
 							validateTrigger="onBlur"
 						>
 							<Form.Item
-								hasFeedback
 								name="serviceName"
 								label="Service Name"
 								rules={[{ required: true, message: 'Please enter service name' }]}
@@ -178,13 +179,11 @@ export default function DataSource(): JSX.Element {
 								<div className="framework-selector">
 									<Form.Item
 										label="Select Framework"
-										name="select-framework"
-										hasFeedback
+										name="selectFramework"
 										rules={[{ required: true, message: 'Please select framework' }]}
-										validateTrigger=""
 									>
 										<Select
-											defaultValue={selectedFramework}
+											value={selectedFramework}
 											getPopupContainer={popupContainer}
 											style={{ minWidth: 120 }}
 											placeholder="Select Framework"
