@@ -9,10 +9,8 @@ import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
-import { ToggleButton } from 'container/Header/styles';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
-import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
 import history from 'lib/history';
 import {
@@ -207,9 +205,6 @@ function SideNav({
 		pathname,
 	]);
 
-	const isDarkMode = useIsDarkMode();
-	const { toggleTheme } = useThemeMode();
-
 	const isCloudUserVal = isCloudUser();
 
 	useEffect(() => {
@@ -291,19 +286,7 @@ function SideNav({
 					{!collapsed && <span className="brand-logo-name"> SigNoz </span>}
 				</div>
 
-				{!collapsed && (
-					<>
-						{!isFetching && <div className="license tag">{licenseTag}</div>}
-
-						<ToggleButton
-							checked={isDarkMode}
-							onChange={toggleTheme}
-							defaultChecked={isDarkMode}
-							checkedChildren="🌜"
-							unCheckedChildren="🌞"
-						/>
-					</>
-				)}
+				{!collapsed && <div className="license tag">{licenseTag}</div>}
 			</div>
 
 			{isCloudUserVal && (
