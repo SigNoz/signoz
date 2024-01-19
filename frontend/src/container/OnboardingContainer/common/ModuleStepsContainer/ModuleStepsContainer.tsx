@@ -142,6 +142,7 @@ export default function ModuleStepsContainer({
 			framework: selectedFramework,
 			environment: selectedEnvironment,
 			selectedMethod,
+			serviceName,
 		});
 
 		if (selectedModule.id === ModulesMap.APM) {
