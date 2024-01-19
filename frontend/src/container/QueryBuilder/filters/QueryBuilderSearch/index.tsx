@@ -210,7 +210,6 @@ function QueryBuilderSearch({
 						label={option.label}
 						value={option.value}
 						dataType={option.dataType || ''}
-						isColumn={option.isColumn || false}
 					/>
 					{option.selected && <StyledCheckOutlined />}
 				</Select.Option>
