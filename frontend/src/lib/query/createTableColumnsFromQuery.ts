@@ -7,6 +7,7 @@ import {
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
+import { isObject } from 'lodash-es';
 import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
@@ -385,7 +386,11 @@ const fillDataFromList = (
 		Object.keys(listItem.data).forEach((label) => {
 			if (column.dataIndex === label) {
 				if (listItem.data[label as ListItemKey] !== '') {
-					column.data.push(listItem.data[label as ListItemKey].toString());
+					if (isObject(listItem.data[label as ListItemKey])) {
+						column.data.push(JSON.stringify(listItem.data[label as ListItemKey]));
+					} else {
+						column.data.push(listItem.data[label as ListItemKey].toString());
+					}
 				} else {
 					column.data.push('N/A');
 				}
