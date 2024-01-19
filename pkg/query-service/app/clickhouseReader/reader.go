@@ -4057,8 +4057,8 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	return &attributeValues, nil
 }
 
-func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricName string, preferDelta bool) (*v3.LatencyMetricMetadataResponse, error) {
-	query := fmt.Sprintf("SELECT DISTINCT(temporality) from %s.%s WHERE metric_name='%s'", signozMetricDBName, signozTSTableName, metricName)
+func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricName, serviceName string, preferDelta bool) (*v3.LatencyMetricMetadataResponse, error) {
+	query := fmt.Sprintf("SELECT DISTINCT(temporality) from %s.%s WHERE metric_name='%s' AND JSONExtractString(labels, 'service_name') = '%s'", signozMetricDBName, signozTSTableName, metricName, serviceName)
 	rows, err := r.db.Query(ctx, query, metricName)
 	if err != nil {
 		zap.S().Error(err)
@@ -4077,7 +4077,7 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 		}
 	}
 
-	query = fmt.Sprintf("SELECT DISTINCT(toFloat64(JSONExtractString(labels, 'le'))) as le from %s.%s WHERE metric_name='%s' ORDER BY le", signozMetricDBName, signozTSTableName, metricName)
+	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, 'le')) as le from %s.%s WHERE metric_name='%s' AND JSONExtractString(labels, 'service_name') = '%s' ORDER BY le", signozMetricDBName, signozTSTableName, metricName, serviceName)
 	rows, err = r.db.Query(ctx, query, metricName)
 	if err != nil {
 		zap.S().Error(err)
@@ -4087,9 +4087,17 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 
 	var leFloat64 []float64
 	for rows.Next() {
-		var le float64
-		if err := rows.Scan(&le); err != nil {
+		var leStr string
+		if err := rows.Scan(&leStr); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		le, err := strconv.ParseFloat(leStr, 64)
+		// ignore the error and continue if the value is not a float
+		// ideally this should not happen but we have seen ClickHouse
+		// returning empty string for some values
+		if err != nil {
+			zap.S().Error("error while parsing le value: ", err)
+			continue
 		}
 		if math.IsInf(le, 0) {
 			continue

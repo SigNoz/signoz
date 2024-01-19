@@ -36,7 +36,8 @@ func (aH *APIHandler) getApdexSettings(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getLatencyMetricMetadata(w http.ResponseWriter, r *http.Request) {
 	metricName := r.URL.Query().Get("metricName")
-	metricMetadata, err := aH.reader.GetLatencyMetricMetadata(r.Context(), metricName, aH.preferDelta)
+	serviceName := r.URL.Query().Get("serviceName")
+	metricMetadata, err := aH.reader.GetLatencyMetricMetadata(r.Context(), metricName, serviceName, aH.preferDelta)
 	if err != nil {
 		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
 		return
