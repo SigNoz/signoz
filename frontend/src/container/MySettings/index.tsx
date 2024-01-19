@@ -30,7 +30,6 @@ function MySettings(): JSX.Element {
 			),
 			value: 'light',
 		},
-		// { label: 'System', value: 'system' },
 	];
 
 	const [theme, setTheme] = useState(isDarkMode ? 'dark' : 'light');

@@ -10,8 +10,6 @@ const useClickOutside = ({
 	onClickOutside,
 }: UseClickOutsideProps): void => {
 	const handleClickOutside = (event: MouseEvent): void => {
-		console.log('event', event);
-
 		if (ref.current && !ref.current.contains(event.target as Node)) {
 			onClickOutside();
 		}
