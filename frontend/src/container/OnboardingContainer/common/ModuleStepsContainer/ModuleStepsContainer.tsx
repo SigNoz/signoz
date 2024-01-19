@@ -138,6 +138,10 @@ export default function ModuleStepsContainer({
 	const redirectToModules = (): void => {
 		trackEvent('Onboarding V2 Complete', {
 			module: selectedModule.id,
+			dataSource: selectedDataSource?.id,
+			framework: selectedFramework,
+			environment: selectedEnvironment,
+			selectedMethod,
 		});
 
 		if (selectedModule.id === ModulesMap.APM) {
@@ -182,7 +186,6 @@ export default function ModuleStepsContainer({
 							framework: selectedFramework,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
-							step: activeStep?.step?.id,
 						});
 						break;
 					case stepsMap.selectMethod:
@@ -192,7 +195,6 @@ export default function ModuleStepsContainer({
 							environment: selectedEnvironment,
 							selectedMethod,
 							module: activeStep?.module?.id,
-							step: activeStep?.step?.id,
 						});
 						break;
 
@@ -203,7 +205,6 @@ export default function ModuleStepsContainer({
 							environment: selectedEnvironment,
 							selectedMethod,
 							module: activeStep?.module?.id,
-							step: activeStep?.step?.id,
 						});
 						break;
 					case stepsMap.instrumentApplication:
@@ -213,14 +214,12 @@ export default function ModuleStepsContainer({
 							environment: selectedEnvironment,
 							selectedMethod,
 							module: activeStep?.module?.id,
-							step: activeStep?.step?.id,
 						});
 						break;
 					case stepsMap.cloneRepository:
 						trackEvent('Onboarding V2: Clone Repository', {
 							dataSource: selectedDataSource?.id,
 							module: activeStep?.module?.id,
-							step: activeStep?.step?.id,
 						});
 						break;
 					case stepsMap.runApplication:
@@ -230,28 +229,24 @@ export default function ModuleStepsContainer({
 							environment: selectedEnvironment,
 							selectedMethod,
 							module: activeStep?.module?.id,
-							step: activeStep?.step?.id,
 						});
 						break;
 					case stepsMap.addHttpDrain:
 						trackEvent('Onboarding V2: Add HTTP Drain', {
 							dataSource: selectedDataSource?.id,
 							module: activeStep?.module?.id,
-							step: activeStep?.step?.id,
 						});
 						break;
 					case stepsMap.startContainer:
 						trackEvent('Onboarding V2: Start Container', {
 							dataSource: selectedDataSource?.id,
 							module: activeStep?.module?.id,
-							step: activeStep?.step?.id,
 						});
 						break;
 					case stepsMap.setupLogDrains:
 						trackEvent('Onboarding V2: Setup Log Drains', {
 							dataSource: selectedDataSource?.id,
 							module: activeStep?.module?.id,
-							step: activeStep?.step?.id,
 						});
 						break;
 					case stepsMap.configureReceiver:
@@ -259,7 +254,6 @@ export default function ModuleStepsContainer({
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
-							step: activeStep?.step?.id,
 						});
 						break;
 					case stepsMap.configureAws:
@@ -267,7 +261,6 @@ export default function ModuleStepsContainer({
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,
-							step: activeStep?.step?.id,
 						});
 						break;
 					default:
