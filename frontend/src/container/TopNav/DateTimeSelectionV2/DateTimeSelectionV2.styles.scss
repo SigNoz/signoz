@@ -37,6 +37,7 @@
 		border-radius: 2px;
 		border: 1px solid var(--bg-slate-400);
 		background: var(--bg-ink-300);
+		margin-left: 8px;
 
 		.refresh-btn {
 			border-right: 1px solid var(--bg-slate-400);
@@ -58,7 +59,7 @@
 .date-time-root {
 	.ant-popover-inner {
 		width: 532px;
-		min-height: 380px;
+		min-height: 334px;
 		border-radius: 4px !important;
 		border: 1px solid var(--bg-slate-400);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2) !important;
@@ -126,7 +127,7 @@
 		}
 		.time-heading {
 			text-align: left;
-			color: var(--bg-slate-200, #52575c);
+			color: var(--bg-slate-200);
 			font-size: 11px;
 			font-style: normal;
 			font-weight: 500;
@@ -136,12 +137,14 @@
 		}
 
 		.time-btns {
+			color: var(--bg-vanilla-400);
 			background-color: #23262e;
 			font-size: 14px;
 			line-height: 17px;
 			letter-spacing: 0.04em;
 			text-align: left;
 			border-radius: 2px;
+			padding: 4px 8px;
 		}
 	}
 }
@@ -190,6 +193,7 @@
 
 			.time-btns {
 				background-color: var(--bg-vanilla-300);
+				color: var(--bg-slate-400);
 			}
 		}
 	}
