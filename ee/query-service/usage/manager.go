@@ -144,11 +144,12 @@ func (lm *Manager) UploadUsage() {
 	orgNames, err := lm.modelDao.GetOrgs(ctx)
 	if err != nil {
 		zap.S().Errorf("failed to get org data: %v", zap.Error(err))
-	}
-	if len(orgNames) != 1 {
-		zap.S().Errorf("expected one org but got %d orgs", len(orgNames))
 	} else {
-		orgName = orgNames[0].Name
+		if len(orgNames) != 1 {
+			zap.S().Errorf("expected one org but got %d orgs", len(orgNames))
+		} else {
+			orgName = orgNames[0].Name
+		}
 	}
 
 	usagesPayload := []model.Usage{}
