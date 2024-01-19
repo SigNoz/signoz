@@ -11,7 +11,6 @@ import {
 	getSupportedFrameworks,
 	hasFrameworks,
 } from 'container/OnboardingContainer/utils/dataSourceUtils';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useEffect, useState } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -25,10 +24,7 @@ export interface DataSourceType {
 export default function DataSource(): JSX.Element {
 	const [form] = Form.useForm();
 
-	const { trackEvent } = useAnalytics();
-
 	const {
-		activeStep,
 		serviceName,
 		selectedModule,
 		selectedDataSource,
@@ -55,39 +51,6 @@ export default function DataSource(): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
-
-	useEffect(() => {
-		// on language select
-		trackEvent('Onboarding: Data Source Selected', {
-			dataSource: selectedDataSource,
-			module: {
-				name: activeStep?.module?.title,
-				id: activeStep?.module?.id,
-			},
-			step: {
-				name: activeStep?.step?.title,
-				id: activeStep?.step?.id,
-			},
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedDataSource]);
-
-	useEffect(() => {
-		// on framework select
-		trackEvent('Onboarding: Framework Selected', {
-			dataSource: selectedDataSource,
-			framework: selectedFramework,
-			module: {
-				name: activeStep?.module?.title,
-				id: activeStep?.module?.id,
-			},
-			step: {
-				name: activeStep?.step?.title,
-				id: activeStep?.step?.id,
-			},
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedFramework]);
 
 	useEffect(() => {
 		if (selectedModule && selectedDataSource) {
@@ -125,8 +88,9 @@ export default function DataSource(): JSX.Element {
 						)}
 						key={dataSource.name}
 						onClick={(): void => {
-							updateSelectedFramework('');
+							updateSelectedFramework(null);
 							updateSelectedDataSource(dataSource);
+							form.setFieldsValue({ selectFramework: null });
 						}}
 					>
 						<div>
@@ -152,6 +116,7 @@ export default function DataSource(): JSX.Element {
 						<Form
 							initialValues={{
 								serviceName,
+								selectFramework: selectedFramework,
 							}}
 							form={form}
 							onValuesChange={(): void => {
@@ -165,7 +130,6 @@ export default function DataSource(): JSX.Element {
 							validateTrigger="onBlur"
 						>
 							<Form.Item
-								hasFeedback
 								name="serviceName"
 								label="Service Name"
 								rules={[{ required: true, message: 'Please enter service name' }]}
@@ -178,13 +142,11 @@ export default function DataSource(): JSX.Element {
 								<div className="framework-selector">
 									<Form.Item
 										label="Select Framework"
-										name="select-framework"
-										hasFeedback
+										name="selectFramework"
 										rules={[{ required: true, message: 'Please select framework' }]}
-										validateTrigger=""
 									>
 										<Select
-											defaultValue={selectedFramework}
+											value={selectedFramework}
 											getPopupContainer={popupContainer}
 											style={{ minWidth: 120 }}
 											placeholder="Select Framework"

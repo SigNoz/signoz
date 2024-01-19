@@ -3,6 +3,7 @@ import {
 	Button,
 	Divider,
 	Input,
+	InputNumber,
 	Select,
 	Space,
 	Switch,
@@ -16,7 +17,7 @@ import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 
-import { panelTypeVsThreshold } from './constants';
+import { panelTypeVsSoftMinMax, panelTypeVsThreshold } from './constants';
 import { Container, Title } from './styles';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
@@ -42,6 +43,10 @@ function RightContainer({
 	selectedWidget,
 	isFillSpans,
 	setIsFillSpans,
+	softMax,
+	softMin,
+	setSoftMax,
+	setSoftMin,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
 		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
@@ -56,6 +61,21 @@ function RightContainer({
 	const onCreateAlertsHandler = useCreateAlerts(selectedWidget);
 
 	const allowThreshold = panelTypeVsThreshold[selectedGraph];
+	const allowSoftMinMax = panelTypeVsSoftMinMax[selectedGraph];
+
+	const softMinHandler = useCallback(
+		(value: number | null) => {
+			setSoftMin(value);
+		},
+		[setSoftMin],
+	);
+
+	const softMaxHandler = useCallback(
+		(value: number | null) => {
+			setSoftMax(value);
+		},
+		[setSoftMax],
+	);
 
 	return (
 		<Container>
@@ -129,6 +149,30 @@ function RightContainer({
 				)}
 			</Space>
 
+			{allowSoftMinMax && (
+				<>
+					<Divider />
+					<Typography.Text style={{ display: 'block', margin: '5px 0' }}>
+						Soft Min
+					</Typography.Text>
+					<InputNumber
+						type="number"
+						value={softMin}
+						style={{ display: 'block', width: '100%' }}
+						onChange={softMinHandler}
+					/>
+					<Typography.Text style={{ display: 'block', margin: '5px 0' }}>
+						Soft Max
+					</Typography.Text>
+					<InputNumber
+						value={softMax}
+						type="number"
+						style={{ display: 'block', width: '100%' }}
+						onChange={softMaxHandler}
+					/>
+				</>
+			)}
+
 			{allowThreshold && (
 				<>
 					<Divider />
@@ -166,6 +210,10 @@ interface RightContainerProps {
 	selectedWidget?: Widgets;
 	isFillSpans: boolean;
 	setIsFillSpans: Dispatch<SetStateAction<boolean>>;
+	softMin: number | null;
+	softMax: number | null;
+	setSoftMin: Dispatch<SetStateAction<number | null>>;
+	setSoftMax: Dispatch<SetStateAction<number | null>>;
 }
 
 RightContainer.defaultProps = {

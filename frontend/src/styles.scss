@@ -1,3 +1,5 @@
+@import '@signozhq/design-tokens';
+
 #root,
 html,
 body {
@@ -127,4 +129,10 @@ body {
 ::-webkit-scrollbar-thumb:hover {
 	--tw-bg-opacity: 1;
 	background-color: rgba(236, 236, 241, var(--tw-bg-opacity));
+}
+
+.flexBtn {
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }

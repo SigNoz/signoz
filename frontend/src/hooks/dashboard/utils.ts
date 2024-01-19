@@ -33,6 +33,8 @@ export const addEmptyWidgetInDashboardJSONWithQuery = (
 				title: '',
 				timePreferance: 'GLOBAL_TIME',
 				panelTypes: panelTypes || PANEL_TYPES.TIME_SERIES,
+				softMax: null,
+				softMin: null,
 			},
 		],
 	},

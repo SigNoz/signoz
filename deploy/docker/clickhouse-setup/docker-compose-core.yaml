@@ -66,7 +66,7 @@ services:
       - --storage.path=/data
 
   otel-collector-migrator:
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.88.6}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.88.8}
     container_name: otel-migrator
     command:
       - "--dsn=tcp://clickhouse:9000"
@@ -81,7 +81,7 @@ services:
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
   otel-collector:
     container_name: signoz-otel-collector
-    image: signoz/signoz-otel-collector:0.88.6
+    image: signoz/signoz-otel-collector:0.88.8
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
@@ -115,28 +115,6 @@ services:
         condition: service_completed_successfully
       query-service:
         condition: service_healthy
-
-  otel-collector-metrics:
-    container_name: signoz-otel-collector-metrics
-    image: signoz/signoz-otel-collector:0.88.6
-    command:
-      [
-        "--config=/etc/otel-collector-metrics-config.yaml",
-        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
-      ]
-    volumes:
-      - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
-    # ports:
-    #   - "1777:1777"     # pprof extension
-    #   - "8888:8888"     # OtelCollector internal metrics
-    #   - "13133:13133"   # Health check extension
-    #   - "55679:55679"   # zPages extension
-    restart: on-failure
-    depends_on:
-      clickhouse:
-        condition: service_healthy
-      otel-collector-migrator:
-        condition: service_completed_successfully
 
   logspout:
     image: "gliderlabs/logspout:v3.2.14"
