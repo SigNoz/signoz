@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -11,10 +13,10 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 
 	"go.uber.org/zap"
 
+	"go.signoz.io/signoz/ee/query-service/dao"
 	licenseserver "go.signoz.io/signoz/ee/query-service/integrations/signozio"
 	"go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/model"
@@ -38,15 +40,29 @@ type Manager struct {
 	licenseRepo *license.Repo
 
 	scheduler *gocron.Scheduler
+
+	modelDao dao.ModelDao
+
+	tenantID string
 }
 
-func New(dbType string, db *sqlx.DB, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn) (*Manager, error) {
+func New(dbType string, modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn) (*Manager, error) {
+	hostNameRegex := regexp.MustCompile(`tcp://(?P<hostname>.*):9000`)
+	hostNameRegexMatches := hostNameRegex.FindStringSubmatch(os.Getenv("ClickHouseUrl"))
+
+	tenantID := ""
+	if len(hostNameRegexMatches) == 2 {
+		tenantID = hostNameRegexMatches[1]
+		tenantID = strings.TrimRight(tenantID, "-clickhouse")
+	}
 
 	m := &Manager{
 		// repository:     repo,
 		clickhouseConn: clickhouseConn,
 		licenseRepo:    licenseRepo,
 		scheduler:      gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
+		modelDao:       modelDao,
+		tenantID:       tenantID,
 	}
 	return m, nil
 }
@@ -123,6 +139,18 @@ func (lm *Manager) UploadUsage() {
 
 	zap.S().Info("uploading usage data")
 
+	// Try to get the org name
+	orgName := ""
+	orgNames, err := lm.modelDao.GetOrgs(ctx)
+	if err != nil {
+		zap.S().Errorf("failed to get org data: %v", zap.Error(err))
+	}
+	if len(orgNames) != 1 {
+		zap.S().Errorf("expected one org but got %d orgs", len(orgNames))
+	} else {
+		orgName = orgNames[0].Name
+	}
+
 	usagesPayload := []model.Usage{}
 	for _, usage := range usages {
 		usageDataBytes, err := encryption.Decrypt([]byte(usage.ExporterID[:32]), []byte(usage.Data))
@@ -142,6 +170,8 @@ func (lm *Manager) UploadUsage() {
 		usageData.ExporterID = usage.ExporterID
 		usageData.Type = usage.Type
 		usageData.Tenant = usage.Tenant
+		usageData.OrgName = orgName
+		usageData.TenantId = lm.tenantID
 		usagesPayload = append(usagesPayload, usageData)
 	}
 
