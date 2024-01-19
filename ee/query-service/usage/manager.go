@@ -47,7 +47,7 @@ type Manager struct {
 }
 
 func New(dbType string, modelDao dao.ModelDao, licenseRepo *license.Repo, clickhouseConn clickhouse.Conn) (*Manager, error) {
-	hostNameRegex := regexp.MustCompile(`tcp://(?P<hostname>.*):9000`)
+	hostNameRegex := regexp.MustCompile(`tcp://(?P<hostname>.*):`)
 	hostNameRegexMatches := hostNameRegex.FindStringSubmatch(os.Getenv("ClickHouseUrl"))
 
 	tenantID := ""
