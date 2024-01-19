@@ -4,7 +4,7 @@ import './UserInfo.styles.scss';
 import { Button, Card, Flex, Input, Space, Typography } from 'antd';
 import editUser from 'api/user/editUser';
 import { useNotifications } from 'hooks/useNotifications';
-import { PencilIcon, UserSquare } from 'lucide-react';
+import { PencilIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
