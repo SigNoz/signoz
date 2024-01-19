@@ -112,8 +112,6 @@ function ListLogView({
 		onClearActiveLog: handleClearActiveContextLog,
 	} = useActiveLog();
 
-	console.log({ activeContextLog });
-
 	const handlerClearActiveContextLog = useCallback(
 		(event: React.MouseEvent | React.KeyboardEvent) => {
 			event.preventDefault();

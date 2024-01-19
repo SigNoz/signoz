@@ -101,8 +101,6 @@ function LogDetail({
 		return <></>;
 	}
 
-	console.log('log', log);
-
 	const logType = log?.attributes_string?.log_level || LogType.INFO;
 
 	return (

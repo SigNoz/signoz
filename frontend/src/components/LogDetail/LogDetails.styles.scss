@@ -142,12 +142,27 @@
 }
 
 .lightMode {
+
+	.ant-drawer-header {
+		border-bottom: 1px solid var(--bg-vanilla-400);
+		background: var(--bg-vanilla-100);
+	}
+
 	.log-detail-drawer {
 		.title {
 			color: var(--text-ink-300);
 		}
 
 		.log-detail-drawer__log {
+
+			.log-overflow-shadow {
+				background: linear-gradient(270deg, var(--bg-vanilla-100) 10.4%, rgba(255, 255, 255, 0) 100%);
+			}
+
+			.log-type-indicator {
+				border: 2px solid var(--bg-vanilla-400);
+			}
+
 			.ant-typography {
 				color: var(--text-ink-300);
 				background: transparent;

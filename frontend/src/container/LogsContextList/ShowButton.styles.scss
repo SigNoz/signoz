@@ -9,9 +9,23 @@
     margin: 0;
 }
 
+.show-more-button {
+    &.disabled {
+        background-color: var(--bg-slate-200);
+        color: var(--bg-vanilla-400);
+    }
+}
+
 .lightMode {
     .show-more-button {
         background-color: var(--bg-vanilla-300);
         color: var(--bg-slate-400);
+    }
+
+    .show-more-button {
+        &.disabled {
+            background-color: var(--bg-vanilla-300);
+            color: var(--bg-vanilla-400);
+        }
     }
 }
