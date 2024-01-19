@@ -503,7 +503,6 @@ function LogsExplorerViews({
 	useClickOutside({
 		ref: menuRef,
 		onClickOutside: () => {
-			console.log('clicked outside;');
 			if (showFormatMenuItems) {
 				setShowFormatMenuItems(false);
 			}
