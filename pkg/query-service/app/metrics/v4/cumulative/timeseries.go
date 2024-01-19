@@ -3,7 +3,7 @@ package cumulative
 import (
 	"fmt"
 
-	v4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
+	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
@@ -107,7 +107,7 @@ const (
 func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 	var subQuery string
 
-	timeSeriesSubQuery, err := v4.PrepareTimeseriesFilterQuery(mq)
+	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(mq)
 	if err != nil {
 		return "", err
 	}
@@ -127,15 +127,8 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 			" GROUP BY fingerprint, ts" +
 			" ORDER BY fingerprint, ts"
 
-	var selectLabelsAny string
-	for _, tag := range mq.GroupBy {
-		selectLabelsAny += fmt.Sprintf("any(%s) as %s,", tag.Key, tag.Key)
-	}
-
-	var selectLabels string
-	for _, tag := range mq.GroupBy {
-		selectLabels += tag.Key + ","
-	}
+	selectLabelsAny := helpers.SelectLabelsAny(mq.GroupBy)
+	selectLabels := helpers.SelectLabels(mq.GroupBy)
 
 	switch mq.TimeAggregation {
 	case v3.TimeAggregationAvg:
@@ -177,8 +170,8 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 	return subQuery, nil
 }
 
-// prepareMetricQueryCumulativeTimeSeries prepares the query to be used for fetching metrics
-func prepareMetricQueryCumulativeTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+// PrepareMetricQueryCumulativeTimeSeries prepares the query to be used for fetching metrics
+func PrepareMetricQueryCumulativeTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 	var query string
 
 	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(start, end, step, mq)
@@ -186,9 +179,9 @@ func prepareMetricQueryCumulativeTimeSeries(start, end, step int64, mq *v3.Build
 		return "", err
 	}
 
-	groupBy := groupingSetsByAttributeKeyTags(mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
-	selectLabels := groupByAttributeKeyTags(mq.GroupBy...)
+	groupBy := helpers.GroupingSetsByAttributeKeyTags(mq.GroupBy...)
+	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
+	selectLabels := helpers.GroupByAttributeKeyTags(mq.GroupBy...)
 
 	queryTmpl :=
 		"SELECT %s," +

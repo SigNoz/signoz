@@ -9,11 +9,19 @@
 	margin: 0 auto;
 }
 
-.update-credit-card-btn {
-	margin: 24px 0;
-	border-radius: 5px;
-}
-
 .contact-us {
 	margin-top: 48px;
+}
+
+.cta {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	justify-content: center;
+
+	.update-credit-card-btn,
+	.extend-trial-btn {
+		margin: 24px 0;
+		border-radius: 5px;
+	}
 }

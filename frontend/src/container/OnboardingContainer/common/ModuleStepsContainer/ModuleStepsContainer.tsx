@@ -79,6 +79,7 @@ export default function ModuleStepsContainer({
 	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
 	const lastStepIndex = selectedModuleSteps.length - 1;
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const isValidForm = (): boolean => {
 		const { id: selectedModuleID } = selectedModule;
 		const dataSourceStep = stepsMap.dataSource;
@@ -107,7 +108,10 @@ export default function ModuleStepsContainer({
 					dataSource: selectedDataSource,
 				});
 
-				if (doesHaveFrameworks && selectedFramework === '') {
+				if (
+					doesHaveFrameworks &&
+					(selectedFramework === null || selectedFramework === '')
+				) {
 					return false;
 				}
 
@@ -284,7 +288,7 @@ export default function ModuleStepsContainer({
 					},
 					{
 						name: 'Framework',
-						value: selectedFramework,
+						value: selectedFramework || '',
 					},
 					{
 						name: 'Environment',
