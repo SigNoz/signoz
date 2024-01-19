@@ -35,6 +35,8 @@ interface GetUPlotChartOptions {
 	fillSpans?: boolean;
 	minTimeScale?: number;
 	maxTimeScale?: number;
+	softMin: number | null;
+	softMax: number | null;
 }
 
 export const getUPlotChartOptions = ({
@@ -51,6 +53,8 @@ export const getUPlotChartOptions = ({
 	setGraphsVisibilityStates,
 	thresholds,
 	fillSpans,
+	softMax,
+	softMin,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -87,11 +91,13 @@ export const getUPlotChartOptions = ({
 				...timeScaleProps,
 			},
 			y: {
-				...getYAxisScale(
+				...getYAxisScale({
 					thresholds,
-					apiResponse?.data.newResult.data.result,
+					series: apiResponse?.data.newResult.data.result,
 					yAxisUnit,
-				),
+					softMax,
+					softMin,
+				}),
 			},
 		},
 		plugins: [
@@ -136,7 +142,18 @@ export const getUPlotChartOptions = ({
 							if (threshold.thresholdLabel) {
 								const text = threshold.thresholdLabel;
 								const textX = plotRight - ctx.measureText(text).width - 20;
-								const textY = yPos - 15;
+
+								const canvasHeight = ctx.canvas.height;
+								const yposHeight = canvasHeight - yPos;
+								const isHeightGreaterThan90Percent = canvasHeight * 0.9 < yposHeight;
+
+								// Adjust textY based on the condition
+								let textY;
+								if (isHeightGreaterThan90Percent) {
+									textY = yPos + 15; // Below the threshold line
+								} else {
+									textY = yPos - 15; // Above the threshold line
+								}
 								ctx.fillStyle = threshold.thresholdColor || 'red';
 								ctx.fillText(text, textX, textY);
 							}

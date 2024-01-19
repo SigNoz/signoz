@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable react/jsx-no-comment-textnodes */
 /* eslint-disable sonarjs/prefer-single-boolean-return */
 import './ModuleStepsContainer.styles.scss';
 
@@ -65,6 +68,7 @@ export default function ModuleStepsContainer({
 		selectedDataSource,
 		selectedEnvironment,
 		selectedFramework,
+		selectedMethod,
 		updateActiveStep,
 		updateErrorDetails,
 		resetProgress,
@@ -75,6 +79,7 @@ export default function ModuleStepsContainer({
 	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
 	const lastStepIndex = selectedModuleSteps.length - 1;
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const isValidForm = (): boolean => {
 		const { id: selectedModuleID } = selectedModule;
 		const dataSourceStep = stepsMap.dataSource;
@@ -103,7 +108,10 @@ export default function ModuleStepsContainer({
 					dataSource: selectedDataSource,
 				});
 
-				if (doesHaveFrameworks && selectedFramework === '') {
+				if (
+					doesHaveFrameworks &&
+					(selectedFramework === null || selectedFramework === '')
+				) {
 					return false;
 				}
 
@@ -128,14 +136,19 @@ export default function ModuleStepsContainer({
 	};
 
 	const redirectToModules = (): void => {
-		trackEvent('Onboarding Complete', {
+		trackEvent('Onboarding V2 Complete', {
 			module: selectedModule.id,
+			dataSource: selectedDataSource?.id,
+			framework: selectedFramework,
+			environment: selectedEnvironment,
+			selectedMethod,
+			serviceName,
 		});
 
 		if (selectedModule.id === ModulesMap.APM) {
 			history.push(ROUTES.APPLICATION);
 		} else if (selectedModule.id === ModulesMap.LogsManagement) {
-			history.push(ROUTES.LOGS);
+			history.push(ROUTES.LOGS_EXPLORER);
 		} else if (selectedModule.id === ModulesMap.InfrastructureMonitoring) {
 			history.push(ROUTES.APPLICATION);
 		}
@@ -159,6 +172,101 @@ export default function ModuleStepsContainer({
 					module: selectedModule,
 					step: selectedModuleSteps[current + 1],
 				});
+				// on next step click track events
+				switch (selectedModuleSteps[current].id) {
+					case stepsMap.dataSource:
+						trackEvent('Onboarding V2: Data Source Selected', {
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.environmentDetails:
+						trackEvent('Onboarding V2: Environment Selected', {
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.selectMethod:
+						trackEvent('Onboarding V2: Method Selected', {
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							environment: selectedEnvironment,
+							selectedMethod,
+							module: activeStep?.module?.id,
+						});
+						break;
+
+					case stepsMap.setupOtelCollector:
+						trackEvent('Onboarding V2: Setup Otel Collector', {
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							environment: selectedEnvironment,
+							selectedMethod,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.instrumentApplication:
+						trackEvent('Onboarding V2: Instrument Application', {
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							environment: selectedEnvironment,
+							selectedMethod,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.cloneRepository:
+						trackEvent('Onboarding V2: Clone Repository', {
+							dataSource: selectedDataSource?.id,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.runApplication:
+						trackEvent('Onboarding V2: Run Application', {
+							dataSource: selectedDataSource?.id,
+							framework: selectedFramework,
+							environment: selectedEnvironment,
+							selectedMethod,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.addHttpDrain:
+						trackEvent('Onboarding V2: Add HTTP Drain', {
+							dataSource: selectedDataSource?.id,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.startContainer:
+						trackEvent('Onboarding V2: Start Container', {
+							dataSource: selectedDataSource?.id,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.setupLogDrains:
+						trackEvent('Onboarding V2: Setup Log Drains', {
+							dataSource: selectedDataSource?.id,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.configureReceiver:
+						trackEvent('Onboarding V2: Configure Receiver', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.configureAws:
+						trackEvent('Onboarding V2: Configure AWS', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					default:
+						break;
+				}
 			}
 
 			// set meta data
@@ -174,7 +282,7 @@ export default function ModuleStepsContainer({
 					},
 					{
 						name: 'Framework',
-						value: selectedFramework,
+						value: selectedFramework || '',
 					},
 					{
 						name: 'Environment',
@@ -197,9 +305,21 @@ export default function ModuleStepsContainer({
 		}
 	};
 
+	const handleLogoClick = (): void => {
+		history.push('/');
+	};
+
 	return (
 		<div className="onboarding-module-steps">
 			<div className="steps-container">
+				<div className="steps-container-header">
+					<div className="brand-logo" onClick={handleLogoClick}>
+						<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
+
+						<div className="brand-logo-name">SigNoz</div>
+					</div>
+				</div>
+
 				<Space style={{ marginBottom: '24px' }}>
 					<Button
 						style={{ display: 'flex', alignItems: 'center' }}

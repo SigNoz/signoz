@@ -6,6 +6,7 @@ import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
+import FullViewHeader from 'container/FullViewHeader/FullViewHeader';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEffect, useState } from 'react';
@@ -92,7 +93,7 @@ export default function Onboarding(): JSX.Element {
 	} = useOnboardingContext();
 
 	useEffectOnce(() => {
-		trackEvent('Onboarding Started');
+		trackEvent('Onboarding V2 Started');
 	});
 
 	const { status, data: ingestionData } = useQuery({
@@ -179,20 +180,12 @@ export default function Onboarding(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedModule, selectedDataSource, selectedEnvironment, selectedMethod]);
 
-	useEffect(() => {
-		// on select
-		trackEvent('Onboarding: Module Selected', {
-			selectedModule: selectedModule.id,
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedModule]);
-
 	const handleNext = (): void => {
 		if (activeStep <= 3) {
 			const nextStep = activeStep + 1;
 
 			// on next
-			trackEvent('Onboarding: Get Started', {
+			trackEvent('Onboarding V2: Get Started', {
 				selectedModule: selectedModule.id,
 				nextStepId: nextStep,
 			});
@@ -218,11 +211,10 @@ export default function Onboarding(): JSX.Element {
 		<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
 			{activeStep === 1 && (
 				<>
+					<FullViewHeader />
 					<div className="onboardingHeader">
-						<h1>Get Started with SigNoz</h1>
-						<div> Select a use-case to get started </div>
+						<h1> Select a use-case to get started</h1>
 					</div>
-
 					<div className="modulesContainer">
 						<div className="moduleContainerRowStyles">
 							{Object.keys(ModulesMap).map((module) => {
@@ -261,7 +253,6 @@ export default function Onboarding(): JSX.Element {
 							})}
 						</div>
 					</div>
-
 					<div className="continue-to-next-step">
 						<Button type="primary" icon={<ArrowRightOutlined />} onClick={handleNext}>
 							Get Started

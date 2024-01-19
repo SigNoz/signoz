@@ -1,3 +1,5 @@
+import '../GridCardLayout.styles.scss';
+
 import { Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
@@ -44,6 +46,7 @@ function WidgetGraphComponent({
 	data,
 	options,
 	onDragSelect,
+	graphVisibility,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -80,6 +83,10 @@ function WidgetGraphComponent({
 		});
 		setGraphsVisibilityStates(localStoredVisibilityStates);
 	}, [localStoredVisibilityStates]);
+
+	graphVisibility?.forEach((state, index) => {
+		lineChartRef.current?.toggleGraph(index, state);
+	});
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 

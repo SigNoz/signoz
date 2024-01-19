@@ -2,85 +2,73 @@ package v4
 
 import (
 	"fmt"
-	"strings"
+	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
+	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/cumulative"
+	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/delta"
+	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-// PrepareTimeseriesFilterQuery builds the sub-query to be used for filtering timeseries based on the search criteria
-func PrepareTimeseriesFilterQuery(mq *v3.BuilderQuery) (string, error) {
-	var conditions []string
-	var fs *v3.FilterSet = mq.Filters
-	var groupTags []v3.AttributeKey = mq.GroupBy
+// PrepareMetricQuery prepares the query to be used for fetching metrics
+// from the database
+// start and end are in milliseconds
+// step is in seconds
+func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, error) {
 
-	conditions = append(conditions, fmt.Sprintf("metric_name = %s", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key)))
-	conditions = append(conditions, fmt.Sprintf("temporality = '%s'", mq.Temporality))
+	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, mq.TimeAggregation)
 
-	if fs != nil && len(fs.Items) != 0 {
-		for _, item := range fs.Items {
-			toFormat := item.Value
-			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
-			if op == v3.FilterOperatorContains || op == v3.FilterOperatorNotContains {
-				toFormat = fmt.Sprintf("%%%s%%", toFormat)
-			}
-			fmtVal := utils.ClickHouseFormattedValue(toFormat)
-			switch op {
-			case v3.FilterOperatorEqual:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorNotEqual:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorIn:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorNotIn:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorLike:
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case v3.FilterOperatorNotLike:
-				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case v3.FilterOperatorRegex:
-				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case v3.FilterOperatorNotRegex:
-				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case v3.FilterOperatorGreaterThan:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') > %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorGreaterThanOrEq:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') >= %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorLessThan:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') < %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorLessThanOrEq:
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') <= %s", item.Key.Key, fmtVal))
-			case v3.FilterOperatorContains:
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case v3.FilterOperatorNotContains:
-				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case v3.FilterOperatorExists:
-				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", item.Key.Key))
-			case v3.FilterOperatorNotExists:
-				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", item.Key.Key))
-			default:
-				return "", fmt.Errorf("unsupported filter operator")
-			}
+	groupBy := helpers.GroupByAttributeKeyTags(mq.GroupBy...)
+	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
+
+	if mq.Quantile != 0 {
+		// If quantile is set, we need to group by le
+		// and set the space aggregation to sum
+		// and time aggregation to rate
+		mq.TimeAggregation = v3.TimeAggregationRate
+		mq.SpaceAggregation = v3.SpaceAggregationSum
+		mq.GroupBy = append(mq.GroupBy, v3.AttributeKey{
+			Key:      "le",
+			Type:     v3.AttributeKeyTypeTag,
+			DataType: v3.AttributeKeyDataTypeString,
+		})
+	}
+
+	var query string
+	var err error
+	if mq.Temporality == v3.Delta {
+		if panelType == v3.PanelTypeTable {
+			query, err = delta.PrepareMetricQueryDeltaTable(start, end, mq.StepInterval, mq)
+		} else {
+			query, err = delta.PrepareMetricQueryDeltaTimeSeries(start, end, mq.StepInterval, mq)
+		}
+	} else {
+		if panelType == v3.PanelTypeTable {
+			query, err = cumulative.PrepareMetricQueryCumulativeTable(start, end, mq.StepInterval, mq)
+		} else {
+			query, err = cumulative.PrepareMetricQueryCumulativeTimeSeries(start, end, mq.StepInterval, mq)
 		}
 	}
-	whereClause := strings.Join(conditions, " AND ")
 
-	var selectLabels string
-	for _, tag := range groupTags {
-		selectLabels += fmt.Sprintf("JSONExtractString(labels, '%s') as %s, ", tag.Key, tag.Key)
+	if err != nil {
+		return "", err
 	}
 
-	// The table JOIN key always exists
-	selectLabels += "fingerprint"
+	if mq.Quantile != 0 {
+		query = fmt.Sprintf(`SELECT %s, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s`, groupBy, mq.Quantile, query, groupBy, orderBy)
+	}
 
-	filterSubQuery := fmt.Sprintf(
-		"SELECT DISTINCT %s FROM %s.%s WHERE %s",
-		selectLabels,
-		constants.SIGNOZ_METRIC_DBNAME,
-		constants.SIGNOZ_TIMESERIES_LOCAL_TABLENAME,
-		whereClause,
-	)
+	return query, nil
+}
 
-	return filterSubQuery, nil
+func BuildPromQuery(promQuery *v3.PromQuery, step, start, end int64) *model.QueryRangeParams {
+	return &model.QueryRangeParams{
+		Query: promQuery.Query,
+		Start: time.UnixMilli(start),
+		End:   time.UnixMilli(end),
+		Step:  time.Duration(step * int64(time.Second)),
+	}
 }
