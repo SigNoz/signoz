@@ -2,7 +2,23 @@
 	.ant-tabs-tab {
 		border: none !important;
 		margin-left: 0px !important;
+		padding: 0px !important;
+
+		.nav-btns {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.ant-btn-default {
+			border-color: transparent;
+		}
 	}
+	.ant-tabs-tab-active {
+		.nav-btns {
+			background: var(--bg-slate-400) !important;
+		}
+	}
+
 	.ant-tabs-nav {
 		margin: 0px;
 		margin-bottom: 0.5rem;
@@ -26,10 +42,15 @@
 .lightMode {
 	.alert-tabs {
 		.ant-tabs-nav-list {
-			border: 1px solid var(--bg-vanilla-200);
+			border: 1px solid var(--bg-vanilla-300);
 		}
 		.ant-tabs-tab + .ant-tabs-tab {
 			border-left: 1px solid var(--bg-vanilla-200) !important;
+		}
+		.ant-tabs-tab-active {
+			.nav-btns {
+				background: var(--bg-vanilla-300) !important;
+			}
 		}
 	}
 }

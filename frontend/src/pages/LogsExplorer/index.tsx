@@ -28,8 +28,6 @@ function LogsExplorer(): JSX.Element {
 		setSelectedView(view);
 	};
 
-	console.log('currentQuery', currentQuery);
-
 	const isMultipleQueries = useMemo(
 		() =>
 			currentQuery.builder.queryData.length > 1 ||
