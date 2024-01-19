@@ -79,7 +79,6 @@ function UserInfo(): JSX.Element {
 		<Card>
 			<Space direction="vertical" size="middle">
 				<Flex gap={8}>
-					<UserSquare />{' '}
 					<Typography.Title level={4} style={{ marginTop: 0 }}>
 						User Details
 					</Typography.Title>
