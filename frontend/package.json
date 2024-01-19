@@ -38,7 +38,7 @@
 		"@monaco-editor/react": "^4.3.1",
 		"@radix-ui/react-tabs": "1.0.4",
 		"@radix-ui/react-tooltip": "1.0.7",
-		"@signozhq/design-tokens": "0.0.7",
+		"@signozhq/design-tokens": "0.0.8",
 		"@uiw/react-md-editor": "3.23.5",
 		"@xstate/react": "^3.0.0",
 		"ansi-to-html": "0.7.2",
