@@ -11,7 +11,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Play } from 'lucide-react';
+import { Atom, LucideAccessibility, Play, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
@@ -135,7 +135,11 @@ function QuerySection({
 	const items = [
 		{
 			key: EQueryType.QUERY_BUILDER,
-			label: 'Query Builder',
+			label: (
+				<Button className="nav-btns">
+					<Atom size={14} />
+				</Button>
+			),
 			tab: <Typography>Query Builder</Typography>,
 			children: (
 				<QueryBuilder panelType={selectedGraph} filterConfigs={filterConfigs} />
@@ -143,13 +147,21 @@ function QuerySection({
 		},
 		{
 			key: EQueryType.CLICKHOUSE,
-			label: 'ClickHouse Query',
+			label: (
+				<Button className="nav-btns">
+					<Terminal size={14} />
+				</Button>
+			),
 			tab: <Typography>ClickHouse Query</Typography>,
 			children: <ClickHouseQueryContainer />,
 		},
 		{
 			key: EQueryType.PROM,
-			label: 'PromQL',
+			label: (
+				<Button className="nav-btns">
+					<LucideAccessibility size={14} />
+				</Button>
+			),
 			tab: <Typography>PromQL</Typography>,
 			children: <PromQLQueryContainer />,
 		},

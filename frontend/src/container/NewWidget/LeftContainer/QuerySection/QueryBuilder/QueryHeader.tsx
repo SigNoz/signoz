@@ -30,11 +30,10 @@ function QueryHeader({
 	const [collapse, setCollapse] = useState(false);
 	return (
 		<QueryWrapper>
-			<Row style={{ justifyContent: 'space-between' }}>
+			<Row style={{ justifyContent: 'space-between', marginBottom: '1rem' }}>
 				<Row>
 					<Button
 						type="default"
-						ghost
 						icon={disabled ? <EyeInvisibleFilled /> : <EyeFilled />}
 						onClick={onDisable}
 					>
@@ -42,7 +41,6 @@ function QueryHeader({
 					</Button>
 					<Button
 						type="default"
-						ghost
 						icon={collapse ? <RightOutlined /> : <DownOutlined />}
 						onClick={(): void => setCollapse(!collapse)}
 					/>
@@ -51,7 +49,6 @@ function QueryHeader({
 				{deletable && (
 					<Button
 						type="default"
-						ghost
 						danger
 						icon={<DeleteOutlined />}
 						onClick={onDelete}
