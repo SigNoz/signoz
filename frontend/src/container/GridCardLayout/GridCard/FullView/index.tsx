@@ -18,13 +18,14 @@ import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariab
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
+import { getGraphVisibilityStateOnDataChange } from '../utils';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
 // import GraphManager from './GraphManager';
@@ -36,13 +37,14 @@ function FullView({
 	fullViewOptions = true,
 	onClickHandler,
 	name,
+	originalName,
 	yAxisUnit,
+	options,
 	onDragSelect,
 	isDependedDataLoaded = false,
-	graphsVisibilityStates,
 	onToggleModelHandler,
 	parentChartRef,
-	setGraphsVisibilityStates,
+	parentGraphVisibilityState,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -54,6 +56,20 @@ function FullView({
 	const [chartOptions, setChartOptions] = useState<uPlot.Options>();
 
 	const { selectedDashboard, isDashboardLocked } = useDashboard();
+
+	const { graphVisibilityStates: localStoredVisibilityStates } = useMemo(
+		() =>
+			getGraphVisibilityStateOnDataChange({
+				options,
+				isExpandedName: false,
+				name: originalName,
+			}),
+		[options, originalName],
+	);
+
+	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState(
+		localStoredVisibilityStates,
+	);
 
 	const getSelectedTime = useCallback(
 		() =>
@@ -144,9 +160,10 @@ function FullView({
 	useEffect(() => {
 		graphsVisibilityStates?.forEach((e, i) => {
 			fullViewChartRef?.current?.toggleGraph(i, e);
-			parentChartRef?.current?.toggleGraph(i, e);
+			// parentChartRef?.current?.toggleGraph(i, e);
 		});
-	}, [graphsVisibilityStates, parentChartRef]);
+		parentGraphVisibilityState(graphsVisibilityStates);
+	}, [graphsVisibilityStates, parentGraphVisibilityState]);
 
 	if (response.isFetching) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
@@ -206,7 +223,7 @@ function FullView({
 			{canModifyChart && chartOptions && !isDashboardLocked && (
 				<GraphManager
 					data={chartData}
-					name={name}
+					name={originalName}
 					options={chartOptions}
 					yAxisUnit={yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
