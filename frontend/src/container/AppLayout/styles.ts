@@ -8,7 +8,7 @@ export const Layout = styled(LayoutComponent)`
 		min-height: calc(100vh - 8rem);
 		overflow: hidden;
 		height: 100%;
-		flex-direction: column;
+		flex-direction: column !important;
 	}
 `;
 
