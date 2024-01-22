@@ -14,6 +14,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
@@ -3223,7 +3224,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		postProcessResult(result, queryRangeParams)
+		result = postProcessResult(result, queryRangeParams)
 	}
 
 	resp := v3.QueryRangeResponse{
@@ -3260,7 +3261,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 // Much of this work can be done in the ClickHouse query, but we decided to do it here because:
 // 1. Effective use of caching
 // 2. Easier to add new functions
-func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) []*v3.Result {
 	// Having clause is not part of the clickhouse query, so we need to apply it here
 	// It's not included in the query because it doesn't work nicely with caching
 	// With this change, if you have a query with a having clause, and then you change the having clause
@@ -3281,6 +3282,23 @@ func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	applyReduceTo(result, queryRangeParams)
 	// We apply the functions here it's easier to add new functions
 	applyFunctions(result, queryRangeParams)
+
+	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+		if query.Expression != query.QueryName {
+			expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
+			if err != nil {
+				zap.S().Errorf("error in expression: %s", err.Error())
+				continue
+			}
+			formulaResult, err := processResults(result, expression)
+			if err != nil {
+				zap.S().Errorf("error in expression: %s", err.Error())
+				continue
+			}
+			result = append(result, formulaResult)
+		}
+	}
+	return result
 }
 
 // applyFunctions applies functions for each query in the composite query
