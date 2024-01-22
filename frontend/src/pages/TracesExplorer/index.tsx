@@ -5,6 +5,7 @@ import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
 import ExportPanel from 'container/ExportPanel';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import QuerySection from 'container/TracesExplorer/QuerySection';
@@ -35,6 +36,7 @@ function TracesExplorer(): JSX.Element {
 		panelType,
 		updateAllQueriesOperators,
 		handleRunQuery,
+		stagedQuery,
 	} = useQueryBuilder();
 
 	const currentPanelType = useGetPanelTypesQueryParam();
@@ -204,6 +206,13 @@ function TracesExplorer(): JSX.Element {
 						onChange={handleExplorerTabChange}
 					/>
 				</Container>
+				<ExplorerOptions
+					disabled={!stagedQuery}
+					query={exportDefaultQuery}
+					isLoading={isLoading}
+					onExport={handleExport}
+					sourcepage={DataSource.TRACES}
+				/>
 			</>
 		</ErrorBoundary>
 	);
