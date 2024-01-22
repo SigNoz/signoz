@@ -30,6 +30,7 @@ export default function DataSource(): JSX.Element {
 		selectedDataSource,
 		selectedFramework,
 		updateSelectedDataSource,
+		updateSelectedEnvironment,
 		updateServiceName,
 		updateSelectedFramework,
 	} = useOnboardingContext();
@@ -89,6 +90,7 @@ export default function DataSource(): JSX.Element {
 						key={dataSource.name}
 						onClick={(): void => {
 							updateSelectedFramework(null);
+							updateSelectedEnvironment(null);
 							updateSelectedDataSource(dataSource);
 							form.setFieldsValue({ selectFramework: null });
 						}}
