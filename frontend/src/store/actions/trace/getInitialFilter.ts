@@ -25,6 +25,7 @@ import {
 	parseQueryIntoPageSize,
 	parseQueryIntoSelectedTags,
 	parseSelectedFilter,
+	stripTimestampsFromQuery,
 } from './util';
 
 export const GetInitialTraceFilter = (
@@ -113,9 +114,11 @@ export const GetInitialTraceFilter = (
 		);
 
 		if (response.payload && !isSelectionSkipped.currentValue) {
+			/**  this is required as now we have timestamps updated in date time selection component
+			 * 	 so for initial filters we need to strip timestamps and check for initial load
+			 */
 			const diff =
-				query.replace(/(\?|&)startTime=\d+/, '').replace(/&endTime=\d+/, '')
-					.length === 0
+				stripTimestampsFromQuery(query).length === 0
 					? traces.filterToFetchData
 					: xor(traces.filterToFetchData, getFilterToFetchData.currentValue);
 
