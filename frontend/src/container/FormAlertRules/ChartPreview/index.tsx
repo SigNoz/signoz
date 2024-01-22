@@ -35,7 +35,6 @@ export interface ChartPreviewProps {
 	userQueryKey?: string;
 	allowSelectedIntervalForStepGen?: boolean;
 	yAxisUnit: string;
-	isLoading: boolean;
 }
 
 function ChartPreview({
@@ -49,7 +48,6 @@ function ChartPreview({
 	allowSelectedIntervalForStepGen = false,
 	alertDef,
 	yAxisUnit,
-	isLoading,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const threshold = alertDef?.condition.target || 0;
@@ -125,8 +123,7 @@ function ChartPreview({
 	const optionName =
 		getFormatNameByOptionId(alertDef?.condition.targetUnit || '') || '';
 
-	const showSpinner = !queryResponse.isLoading && !isLoading;
-	console.log({ load: queryResponse.isLoading, isLoading });
+	const showSpinner = !queryResponse.isLoading;
 
 	const options = useMemo(
 		() =>

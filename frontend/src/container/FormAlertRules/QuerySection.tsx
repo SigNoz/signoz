@@ -5,7 +5,7 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { Play } from 'lucide-react';
-import { Dispatch, SetStateAction, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -22,7 +22,6 @@ function QuerySection({
 	setQueryCategory,
 	alertType,
 	runQuery,
-	setLoading,
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -33,10 +32,8 @@ function QuerySection({
 	);
 
 	const handleQueryCategoryChange = (queryType: string): void => {
-		setLoading(true);
 		featureResponse.refetch().then(() => {
 			setQueryCategory(queryType as EQueryType);
-			setLoading(false);
 		});
 		setCurrentTab(queryType as EQueryType);
 	};
@@ -160,7 +157,6 @@ interface QuerySectionProps {
 	setQueryCategory: (n: EQueryType) => void;
 	alertType: AlertTypes;
 	runQuery: VoidFunction;
-	setLoading: Dispatch<SetStateAction<boolean>>;
 }
 
 export default QuerySection;
