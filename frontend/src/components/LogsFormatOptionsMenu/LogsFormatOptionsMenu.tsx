@@ -3,7 +3,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './LogsFormatOptionsMenu.styles.scss';
 
-import { Input, InputNumber, Tooltip } from 'antd';
+import { Divider, Input, InputNumber, Tooltip } from 'antd';
 import cx from 'classnames';
 import { LogViewMode } from 'container/LogsTable';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
@@ -183,7 +183,6 @@ export default function LogsFormatOptionsMenu({
 							<>
 								{!addNewColumn && (
 									<div className="title">
-										{' '}
 										columns
 										<Plus size={14} onClick={handleToggleAddNewColumn} />{' '}
 									</div>
@@ -209,6 +208,14 @@ export default function LogsFormatOptionsMenu({
 								{addColumn?.isFetching && (
 									<div className="loading-container"> Loading ... </div>
 								)}
+
+								{addNewColumn &&
+									addColumn &&
+									addColumn.value.length > 0 &&
+									addColumn.options &&
+									addColumn?.options?.length > 0 && (
+										<Divider className="column-divider" />
+									)}
 
 								{addNewColumn && (
 									<div className="column-format-new-options">

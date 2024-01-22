@@ -66,7 +66,20 @@
 		.log-type-indicator {
 			height: 24px;
 			border: 2px solid var(--bg-slate-400);
+			border-radius: 5px;
 			margin-left: 0;
+
+			&.INFO {
+				border-color: #1d212d;
+			}
+
+			&.WARNING {
+				border-color: #ffcd56;
+			}
+
+			&.ERROR {
+				border-color: #e5484d;
+			}
 		}
 
 		.log-overflow-shadow {
@@ -142,7 +155,6 @@
 }
 
 .lightMode {
-
 	.ant-drawer-header {
 		border-bottom: 1px solid var(--bg-vanilla-400);
 		background: var(--bg-vanilla-100);
@@ -154,9 +166,12 @@
 		}
 
 		.log-detail-drawer__log {
-
 			.log-overflow-shadow {
-				background: linear-gradient(270deg, var(--bg-vanilla-100) 10.4%, rgba(255, 255, 255, 0) 100%);
+				background: linear-gradient(
+					270deg,
+					var(--bg-vanilla-100) 10.4%,
+					rgba(255, 255, 255, 0) 100%
+				);
 			}
 
 			.log-type-indicator {
