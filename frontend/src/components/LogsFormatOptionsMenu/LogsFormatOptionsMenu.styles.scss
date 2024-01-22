@@ -204,15 +204,20 @@
 			}
 
 			.column-format {
-				max-height: 300px;
+				max-height: 150px;
 				overflow: auto;
 				overflow-x: hidden;
 			}
 
 			.column-format-new-options {
-				max-height: 140px;
+				max-height: 150px;
 				overflow-y: auto;
 				overflow-x: hidden;
+			}
+
+			.column-divider {
+				margin: 12px 0;
+				border-top: 2px solid #1d212d;
 			}
 		}
 	}

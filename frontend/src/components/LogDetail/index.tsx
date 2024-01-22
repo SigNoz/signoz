@@ -123,7 +123,7 @@ function LogDetail({
 					<Radio.Button
 						className={
 							// eslint-disable-next-line sonarjs/no-duplicate-string
-							selectedView === 'OVERVIEW' ? 'selected_view tab' : 'tab'
+							selectedView === VIEW_TYPES.OVERVIEW ? 'selected_view tab' : 'tab'
 						}
 						value={VIEW_TYPES.OVERVIEW}
 					>
@@ -133,7 +133,7 @@ function LogDetail({
 						</div>
 					</Radio.Button>
 					<Radio.Button
-						className={selectedView === 'JSON' ? 'selected_view tab' : 'tab'}
+						className={selectedView === VIEW_TYPES.JSON ? 'selected_view tab' : 'tab'}
 						value={VIEW_TYPES.JSON}
 					>
 						<div className="view-title">
@@ -142,7 +142,9 @@ function LogDetail({
 						</div>
 					</Radio.Button>
 					<Radio.Button
-						className={selectedView === 'CONTEXT' ? 'selected_view tab' : 'tab'}
+						className={
+							selectedView === VIEW_TYPES.CONTEXT ? 'selected_view tab' : 'tab'
+						}
 						value={VIEW_TYPES.CONTEXT}
 					>
 						<div className="view-title">
@@ -154,7 +156,6 @@ function LogDetail({
 
 				{selectedView === VIEW_TYPES.JSON && (
 					<div className="json-action-btn">
-						{/* <Button className="action-btn" icon={<Compass size={16} />} /> */}
 						<Button
 							className="action-btn"
 							icon={<Copy size={16} />}
