@@ -1,4 +1,5 @@
 import { Button, DatePicker } from 'antd';
+import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
 	FixedDurationSuggestionOptions,
@@ -6,7 +7,8 @@ import {
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs, { Dayjs } from 'dayjs';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, SetStateAction, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 
 interface CustomTimePickerPopoverContentProps {
 	options: any[];
@@ -28,6 +30,11 @@ function CustomTimePickerPopoverContent({
 	handleGoLive,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { RangePicker } = DatePicker;
+	const { pathname } = useLocation();
+
+	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
+		pathname,
+	]);
 
 	const disabledDate = (current: Dayjs): boolean => {
 		const currentDay = dayjs(current);
@@ -69,9 +76,11 @@ function CustomTimePickerPopoverContent({
 	return (
 		<div className="date-time-popover">
 			<div className="date-time-options">
-				<Button className="data-time-live" type="text" onClick={handleGoLive}>
-					Live
-				</Button>
+				{isLogsExplorerPage && (
+					<Button className="data-time-live" type="text" onClick={handleGoLive}>
+						Live
+					</Button>
+				)}
 				{options.map((option) => (
 					<Button
 						type="text"

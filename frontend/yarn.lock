@@ -3431,10 +3431,10 @@
   resolved "https://registry.npmjs.org/@sideway/pinpoint/-/pinpoint-2.0.0.tgz"
   integrity sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==
 
-"@signozhq/design-tokens@0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-0.0.7.tgz#9bc0af9926ca8f26902540b34d26690d1302425e"
-  integrity sha512-V44jr2MiqbQfsSAkvhv9AKnA1xJpI/fhv22Ep6zY4XE4WTfF2vbYp45fGKy+82Pe3fOKooz2Qagx1wvaV/HghQ==
+"@signozhq/design-tokens@0.0.8":
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-0.0.8.tgz#368dc92cfe01d0cd893df140445c5d9dfd944a88"
+  integrity sha512-YUxQw6w7iyUMTBxj82nFZQNRsg7Boej3YM6K5bYfDMQg0MqvWQCWsP7EkyLHu/TiyOZwZWb++vzXG6m+YJX9bw==
   dependencies:
     style-dictionary "3.8.0"
     vite-plugin-dts "^3.6.4"

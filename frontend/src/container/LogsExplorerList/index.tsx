@@ -2,6 +2,7 @@ import './LogsExplorerList.style.scss';
 
 import { Card } from 'antd';
 import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
@@ -149,6 +150,7 @@ function LogsExplorerList({
 					<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
 
 					<LogDetail
+						selectedTab={VIEW_TYPES.OVERVIEW}
 						log={activeLog}
 						onClose={onClearActiveLog}
 						onAddToQuery={onAddToQuery}

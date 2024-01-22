@@ -8,9 +8,7 @@ import cx from 'classnames';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
-import { ToggleButton } from 'container/Header/styles';
 import useComponentPermission from 'hooks/useComponentPermission';
-import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
 import history from 'lib/history';
 import {
@@ -192,9 +190,6 @@ function SideNav({
 		pathname,
 	]);
 
-	const isDarkMode = useIsDarkMode();
-	const { toggleTheme } = useThemeMode();
-
 	const isCloudUserVal = isCloudUser();
 
 	useEffect(() => {
@@ -259,17 +254,7 @@ function SideNav({
 				</div>
 
 				{!collapsed && (
-					<>
-						<div className="license tag">{!isEnterprise ? 'Free' : 'Enterprise'}</div>
-
-						<ToggleButton
-							checked={isDarkMode}
-							onChange={toggleTheme}
-							defaultChecked={isDarkMode}
-							checkedChildren="🌜"
-							unCheckedChildren="🌞"
-						/>
-					</>
+					<div className="license tag">{!isEnterprise ? 'Free' : 'Enterprise'}</div>
 				)}
 			</div>
 
