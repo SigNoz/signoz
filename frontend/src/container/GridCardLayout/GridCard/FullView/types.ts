@@ -55,8 +55,6 @@ export interface FullViewProps {
 	yAxisUnit?: string;
 	onDragSelect: (start: number, end: number) => void;
 	isDependedDataLoaded?: boolean;
-	// graphsVisibilityStates?: boolean[];
-	// setGraphsVisibilityStates: Dispatch<SetStateAction<boolean[]>>;
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
 	parentChartRef: GraphManagerProps['lineChartRef'];
 	parentGraphVisibilityState: Dispatch<SetStateAction<boolean[]>>;
