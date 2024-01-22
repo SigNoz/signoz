@@ -160,7 +160,6 @@ function FullView({
 	useEffect(() => {
 		graphsVisibilityStates?.forEach((e, i) => {
 			fullViewChartRef?.current?.toggleGraph(i, e);
-			// parentChartRef?.current?.toggleGraph(i, e);
 		});
 		parentGraphVisibilityState(graphsVisibilityStates);
 	}, [graphsVisibilityStates, parentGraphVisibilityState]);
