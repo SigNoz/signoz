@@ -14,13 +14,16 @@ import { useUpdateView } from 'hooks/saveViews/useUpdateView';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { ConciergeBell, Disc3, Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { popupContainer } from 'utils/selectPopupContainer';
+
+import { DATASOURCE_VS_ROUTES } from './constants';
 
 function ExplorerOptions({
 	disabled,
@@ -31,6 +34,7 @@ function ExplorerOptions({
 }: ExplorerOptionsProps): JSX.Element {
 	const [isExport, setIsExport] = useState<boolean>(false);
 	const { notifications } = useNotifications();
+	const history = useHistory();
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
@@ -42,7 +46,7 @@ function ExplorerOptions({
 				JSON.stringify(query),
 			)}`,
 		);
-	}, [query]);
+	}, [history, query]);
 
 	const onCancel = (value: boolean) => (): void => {
 		onModalToggle(value);
@@ -129,6 +133,10 @@ function ExplorerOptions({
 		[viewsData, handleExplorerTabChange],
 	);
 
+	const onClearHandler = (): void => {
+		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
+	};
+
 	const handleSelect = (
 		value: string,
 		option: { key: string; value: string },
@@ -147,19 +155,25 @@ function ExplorerOptions({
 					<>
 						<div className="view-options">
 							<Select<string, { key: string; value: string }>
+								getPopupContainer={popupContainer}
 								showSearch
 								placeholder="Select a view"
 								optionFilterProp="children"
 								loading={viewsIsLoading || isRefetching}
+								optionLabelProp="value"
 								value={viewName || undefined}
 								onSelect={handleSelect}
 								style={{
-									minWidth: 100,
+									width: 150,
 								}}
+								allowClear
+								onClear={onClearHandler}
 							>
 								{viewsData?.data.data.map((view) => (
 									<Select.Option key={view.uuid} value={view.name}>
-										<Tooltip title={view.name}>{view.name}</Tooltip>
+										<Tooltip title={view.name} placement="right">
+											{view.name}
+										</Tooltip>
 									</Select.Option>
 								))}
 							</Select>
