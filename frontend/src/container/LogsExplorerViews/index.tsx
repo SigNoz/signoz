@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './LogsExplorerViews.styles.scss';
 
 import { Button, Dropdown, MenuProps, Radio } from 'antd';
@@ -65,9 +66,6 @@ function LogsExplorerViews({
 	const history = useHistory();
 
 	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
-	const [selectedPanelType, setSelectedPanelType] = useState<PANEL_TYPES>(
-		PANEL_TYPES.LIST,
-	);
 
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
@@ -88,6 +86,10 @@ function LogsExplorerViews({
 		panelType,
 		updateAllQueriesOperators,
 	} = useQueryBuilder();
+
+	const [selectedPanelType, setSelectedPanelType] = useState<PANEL_TYPES>(
+		panelType || PANEL_TYPES.LIST,
+	);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
@@ -171,6 +173,7 @@ function LogsExplorerViews({
 	const handleModeChange = (e: RadioChangeEvent): void => {
 		setSelectedPanelType(e.target.value);
 		setShowFormatMenuItems(false);
+		handleExplorerTabChange(e.target.value);
 	};
 
 	const {
@@ -360,12 +363,17 @@ function LogsExplorerViews({
 			handleExplorerTabChange(PANEL_TYPES.TIME_SERIES);
 			setSelectedPanelType(PANEL_TYPES.TIME_SERIES);
 		}
+
+		if (panelType) {
+			setSelectedPanelType(panelType);
+		}
 	}, [
 		isMultipleQueries,
 		isGroupByExist,
 		selectedPanelType,
 		selectedView,
 		handleExplorerTabChange,
+		panelType,
 	]);
 
 	useEffect(() => {
@@ -598,6 +606,7 @@ function LogsExplorerViews({
 				query={exportDefaultQuery}
 				isLoading={isUpdateDashboardLoading}
 				onExport={handleExport}
+				sourcepage={DataSource.LOGS}
 			/>
 		</div>
 	);
