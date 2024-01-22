@@ -289,7 +289,6 @@ function DateTimeSelection({
 			urlQuery.set(QueryParams.endTime, preEndTime.toString());
 		}
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-		console.log(generatedUrl);
 		history.replace(generatedUrl);
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
