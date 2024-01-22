@@ -2,15 +2,7 @@
 import './LogDetails.styles.scss';
 
 import { Color, Spacing } from '@signozhq/design-tokens';
-import {
-	Button,
-	Divider,
-	Drawer,
-	Input,
-	Radio,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
@@ -22,12 +14,9 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import {
 	Braces,
-	ChevronDown,
-	ChevronUp,
 	Copy,
 	Filter,
 	HardHat,
-	Search,
 	Table,
 	TextSelect,
 	X,
@@ -49,8 +38,7 @@ function LogDetail({
 }: LogDetailProps): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
-	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
-	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
+
 	const [isFilterVisibile, setIsFilterVisible] = useState<boolean>(false);
 
 	const [contextQuery, setContextQuery] = useState<Query | undefined>();
@@ -67,11 +55,6 @@ function LogDetail({
 		setSelectedView(e.target.value);
 		setIsEdit(false);
 		setIsFilterVisible(false);
-		setIsSearchVisible(false);
-	};
-
-	const handleSearchVisible = (): void => {
-		setIsSearchVisible(!isSearchVisible);
 	};
 
 	const handleFilterVisible = (): void => {
@@ -82,8 +65,6 @@ function LogDetail({
 	const drawerCloseHandler = (
 		e: React.MouseEvent | React.KeyboardEvent,
 	): void => {
-		setFieldSearchInput('');
-		setIsSearchVisible(false);
 		if (onClose) {
 			onClose(e);
 		}
@@ -108,15 +89,7 @@ function LogDetail({
 			width="60%"
 			title={
 				<>
-					<Divider
-						type="vertical"
-						style={{
-							height: '100%',
-							border: isDarkMode
-								? `1px solid ${Color.BG_SLATE_500}`
-								: `1px solid ${Color.BG_VANILLA_400}`,
-						}}
-					/>
+					<Divider type="vertical" className={cx('log-type-indicator', LogType)} />
 					<Typography.Text className="title">Log details</Typography.Text>
 				</>
 			}
@@ -131,12 +104,6 @@ function LogDetail({
 			className="log-detail-drawer"
 			destroyOnClose
 			closeIcon={<X size={16} style={{ marginTop: Spacing.MARGIN_1 }} />}
-			extra={
-				<Button.Group>
-					<Button className="radio-button" icon={<ChevronUp size={14} />} />
-					<Button className="radio-button" icon={<ChevronDown size={14} />} />
-				</Button.Group>
-			}
 		>
 			<div className="log-detail-drawer__log">
 				<Divider type="vertical" className={cx('log-type-indicator', logType)} />
@@ -185,14 +152,6 @@ function LogDetail({
 					</Radio.Button>
 				</Radio.Group>
 
-				{selectedView === VIEW_TYPES.OVERVIEW && (
-					<Button
-						className="action-btn"
-						icon={<Search size={14} />}
-						onClick={handleSearchVisible}
-					/>
-				)}
-
 				{selectedView === VIEW_TYPES.JSON && (
 					<div className="json-action-btn">
 						{/* <Button className="action-btn" icon={<Compass size={16} />} /> */}
@@ -213,15 +172,6 @@ function LogDetail({
 				)}
 			</div>
 
-			{isSearchVisible && (
-				<Input
-					placeholder="Search..."
-					className="search-input"
-					value={fieldSearchInput}
-					onChange={(e): void => setFieldSearchInput(e.target.value)}
-				/>
-			)}
-
 			<QueryBuilderSearchWrapper
 				isEdit={isEdit}
 				log={log}
@@ -238,7 +188,6 @@ function LogDetail({
 				<Overview
 					logData={log}
 					onAddToQuery={onAddToQuery}
-					fieldSearchInput={fieldSearchInput}
 					onClickActionItem={onClickActionItem}
 				/>
 			)}
