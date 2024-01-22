@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './LogsExplorerViews.styles.scss';
 
-import { Button, Dropdown, MenuProps, Radio } from 'antd';
+import { Button, Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -33,7 +33,7 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { FileDigit, FileDown, Sheet, Sliders } from 'lucide-react';
+import { Sliders } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
@@ -463,25 +463,6 @@ function LogsExplorerViews({
 		return isGroupByExist ? data.payload.data.result : firstPayloadQueryArray;
 	}, [stagedQuery, panelType, data, listChartData, listQuery]);
 
-	const exportItems: MenuProps['items'] = [
-		{
-			type: 'group',
-			label: 'EXPORT AS',
-			children: [
-				{
-					key: 'excel',
-					label: 'Excel (.xslx)',
-					icon: <Sheet size={14} />,
-				},
-				{
-					key: 'csv',
-					label: 'CSV',
-					icon: <FileDigit size={14} />,
-				},
-			],
-		},
-	];
-
 	const formatItems = [
 		{
 			key: 'raw',
@@ -547,17 +528,6 @@ function LogsExplorerViews({
 
 					{selectedPanelType === PANEL_TYPES.LIST && (
 						<div className="tab-options">
-							<Dropdown
-								menu={{ items: exportItems }}
-								className="dropdown"
-								placement="bottomRight"
-								trigger={['click']}
-							>
-								<Button>
-									<FileDown size={16} />
-								</Button>
-							</Dropdown>
-
 							<div className="format-options-container" ref={menuRef}>
 								<Button onClick={handleToggleShowFormatOptions}>
 									<Sliders size={16} />
