@@ -123,8 +123,6 @@ function ChartPreview({
 	const optionName =
 		getFormatNameByOptionId(alertDef?.condition.targetUnit || '') || '';
 
-	const showSpinner = !queryResponse.isLoading;
-
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
@@ -177,7 +175,9 @@ function ChartPreview({
 					{queryResponse.error.message || t('preview_chart_unexpected_error')}
 				</FailedMessageContainer>
 			)}
-			{!showSpinner && <Spinner size="large" tip="Loading..." height="70vh" />}
+			{queryResponse.isLoading && (
+				<Spinner size="large" tip="Loading..." height="70vh" />
+			)}
 			{chartData && !queryResponse.isError && (
 				<div ref={graphRef} style={{ height: '100%' }}>
 					<GridPanelSwitch

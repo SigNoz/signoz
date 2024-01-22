@@ -130,6 +130,10 @@ function FormAlertRules({
 	// onQueryCategoryChange handles changes to query category
 	// in state as well as sets additional defaults
 	const onQueryCategoryChange = (val: EQueryType): void => {
+		const element = document.getElementById('top');
+		if (element) {
+			element.scrollIntoView({ behavior: 'smooth' });
+		}
 		if (val === EQueryType.PROM) {
 			setAlertDef({
 				...alertDef,
@@ -446,7 +450,7 @@ function FormAlertRules({
 		<>
 			{Element}
 
-			<PanelContainer>
+			<PanelContainer id="top">
 				<StyledLeftContainer flex="5 1 600px" md={18}>
 					<MainFormContainer
 						initialValues={initialValue}
