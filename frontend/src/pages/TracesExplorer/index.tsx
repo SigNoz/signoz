@@ -6,7 +6,6 @@ import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
-import ExportPanel from 'container/ExportPanel';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import QuerySection from 'container/TracesExplorer/QuerySection';
@@ -26,7 +25,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
-import { ActionsWrapper, Container } from './styles';
+import { Container } from './styles';
 import { getTabsItems } from './utils';
 
 function TracesExplorer(): JSX.Element {
@@ -193,14 +192,6 @@ function TracesExplorer(): JSX.Element {
 				</ExplorerCard>
 
 				<Container>
-					<ActionsWrapper>
-						<ExportPanel
-							query={exportDefaultQuery}
-							isLoading={isLoading}
-							onExport={handleExport}
-						/>
-					</ActionsWrapper>
-
 					<Tabs
 						defaultActiveKey={currentTab}
 						activeKey={currentTab}
