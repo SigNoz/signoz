@@ -2,11 +2,7 @@ import { blue } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
 import { Col, Row, Space } from 'antd';
 import styled from 'styled-components';
-import {
-	getActiveLogBackground,
-	getDefaultLogBackground,
-	getHightLightedLogBackground,
-} from 'utils/logs';
+import { getActiveLogBackground, getDefaultLogBackground } from 'utils/logs';
 
 import { RawLogContentProps } from './types';
 
@@ -25,8 +21,6 @@ export const RawLogViewContainer = styled(Row)<{
 	transition: background-color 0.2s ease-in;
 
 	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
-	${({ $isHightlightedLog }): string =>
-		getHightLightedLogBackground($isHightlightedLog)}
 
 	${({ $isReadOnly, $isActiveLog, $isDarkMode }): string =>
 		$isActiveLog
