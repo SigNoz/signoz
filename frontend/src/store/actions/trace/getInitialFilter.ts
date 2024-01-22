@@ -114,7 +114,8 @@ export const GetInitialTraceFilter = (
 
 		if (response.payload && !isSelectionSkipped.currentValue) {
 			const diff =
-				query.length === 0
+				query.replace(/(\?|&)startTime=\d+/, '').replace(/&endTime=\d+/, '')
+					.length === 0
 					? traces.filterToFetchData
 					: xor(traces.filterToFetchData, getFilterToFetchData.currentValue);
 
