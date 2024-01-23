@@ -1,8 +1,10 @@
 import { Input } from 'antd';
+import { LEGEND } from 'constants/global';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ChangeEvent, useCallback } from 'react';
 import { IPromQLQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { getFormatedLegend } from 'utils/getFormatedLegend';
 
 import QueryHeader from '../QueryHeader';
 
@@ -28,7 +30,11 @@ function PromQLQueryBuilder({
 
 	const handleUpdateQuery = useCallback(
 		(e: ChangeEvent<HTMLInputElement>) => {
-			const { name, value } = e.target;
+			const { name } = e.target;
+			let { value } = e.target;
+			if (name === LEGEND) {
+				value = getFormatedLegend(value);
+			}
 			const newQuery: IPromQLQuery = { ...queryData, [name]: value };
 
 			handleSetQueryItemData(queryIndex, EQueryType.PROM, newQuery);

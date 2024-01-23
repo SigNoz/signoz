@@ -4,5 +4,6 @@ import { MetricMetaProps } from 'types/api/metrics/getApDex';
 
 export const getMetricMeta = (
 	metricName: string,
+	servicename: string,
 ): Promise<AxiosResponse<MetricMetaProps>> =>
-	axios.get(`/metric_meta?metricName=${metricName}`);
+	axios.get(`/metric_meta?metricName=${metricName}&serviceName=${servicename}`);

@@ -93,7 +93,7 @@ export default function Onboarding(): JSX.Element {
 	} = useOnboardingContext();
 
 	useEffectOnce(() => {
-		trackEvent('Onboarding Started');
+		trackEvent('Onboarding V2 Started');
 	});
 
 	const { status, data: ingestionData } = useQuery({
@@ -180,20 +180,12 @@ export default function Onboarding(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedModule, selectedDataSource, selectedEnvironment, selectedMethod]);
 
-	useEffect(() => {
-		// on select
-		trackEvent('Onboarding: Module Selected', {
-			selectedModule: selectedModule.id,
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedModule]);
-
 	const handleNext = (): void => {
 		if (activeStep <= 3) {
 			const nextStep = activeStep + 1;
 
 			// on next
-			trackEvent('Onboarding: Get Started', {
+			trackEvent('Onboarding V2: Get Started', {
 				selectedModule: selectedModule.id,
 				nextStepId: nextStep,
 			});
