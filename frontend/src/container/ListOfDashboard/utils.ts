@@ -11,7 +11,7 @@ export const filterDashboard = (
 		// Convert each property value to lowercase for case-insensitive search
 		const itemValues = Object.values(item?.data).map((value) => {
 			if (value === null || value === undefined) return '';
-			return value?.toString().toLowerCase();
+			return value.toString().toLowerCase();
 		});
 
 		// Check if any property value contains the searchValue
