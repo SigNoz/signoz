@@ -5,8 +5,9 @@ import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import ExportPanel from 'container/ExportPanel';
+import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
@@ -24,7 +25,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
-import { ActionsWrapper, Container } from './styles';
+import { Container } from './styles';
 import { getTabsItems } from './utils';
 
 function TracesExplorer(): JSX.Element {
@@ -35,6 +36,7 @@ function TracesExplorer(): JSX.Element {
 		panelType,
 		updateAllQueriesOperators,
 		handleRunQuery,
+		stagedQuery,
 	} = useQueryBuilder();
 
 	const currentPanelType = useGetPanelTypesQueryParam();
@@ -183,20 +185,13 @@ function TracesExplorer(): JSX.Element {
 			<>
 				<div className="trace-explorer-run-query">
 					<RightToolbarActions onStageRunQuery={handleRunQuery} />
+					<DateTimeSelectionV2 showAutoRefresh={false} />
 				</div>
 				<ExplorerCard sourcepage={DataSource.TRACES}>
 					<QuerySection />
 				</ExplorerCard>
 
 				<Container>
-					<ActionsWrapper>
-						<ExportPanel
-							query={exportDefaultQuery}
-							isLoading={isLoading}
-							onExport={handleExport}
-						/>
-					</ActionsWrapper>
-
 					<Tabs
 						defaultActiveKey={currentTab}
 						activeKey={currentTab}
@@ -204,6 +199,13 @@ function TracesExplorer(): JSX.Element {
 						onChange={handleExplorerTabChange}
 					/>
 				</Container>
+				<ExplorerOptions
+					disabled={!stagedQuery}
+					query={exportDefaultQuery}
+					isLoading={isLoading}
+					onExport={handleExport}
+					sourcepage={DataSource.TRACES}
+				/>
 			</>
 		</ErrorBoundary>
 	);

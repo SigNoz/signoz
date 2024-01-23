@@ -121,6 +121,7 @@ export const routesToSkip = [
 	ROUTES.LOGS,
 	ROUTES.MY_SETTINGS,
 	ROUTES.LIST_LICENSES,
+	ROUTES.TRACES_EXPLORER,
 ];
 
 export const routesToDisable = [ROUTES.LOGS_EXPLORER, ROUTES.LIVE_LOGS];
