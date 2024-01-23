@@ -74,16 +74,9 @@ function RawLogView({
 
 	const attributesValues = updatedSelecedFields
 		.map((field) => flattenLogData[field.name])
-		.filter(
-			(attribute) =>
-				!isUndefined(attribute) &&
-				!isEmpty(attribute) &&
-				((attribute as unknown) as number) !== 0,
-		);
+		.filter((attribute) => !isUndefined(attribute) && !isEmpty(attribute));
 
 	let attributesText = attributesValues.join(' | ');
-
-	console.log(selectedFields, updatedSelecedFields, attributesValues);
 
 	if (attributesText.length > 0) {
 		attributesText += ' | ';
