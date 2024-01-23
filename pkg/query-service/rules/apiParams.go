@@ -46,7 +46,10 @@ type PostableRule struct {
 	Disabled bool `json:"disabled"`
 
 	// Source captures the source url where rule has been created
-	Source string `json:"source,omitempty"`
+	Source         string            `json:"source,omitempty"`
+	RelatedLogs    map[string]string `json:"relatedLogs,omitempty"`
+	RelatedTraces  map[string]string `json:"relatedTraces,omitempty"`
+	RelatedMetrics map[string]string `json:"relatedMetrics,omitempty"`
 
 	PreferredChannels []string `json:"preferredChannels,omitempty"`
 

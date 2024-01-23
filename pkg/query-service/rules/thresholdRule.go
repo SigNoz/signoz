@@ -3,8 +3,10 @@ package rules
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
+	"net/url"
 	"reflect"
 	"regexp"
 	"sort"
@@ -59,7 +61,11 @@ type ThresholdRule struct {
 
 	queryBuilder *queryBuilder.QueryBuilder
 
-	opts ThresholdRuleOpts
+	opts           ThresholdRuleOpts
+	typ            string
+	RelatedLogs    map[string]string
+	RelatedTraces  map[string]string
+	RelatedMetrics map[string]string
 }
 
 type ThresholdRuleOpts struct {
@@ -98,6 +104,10 @@ func NewThresholdRule(
 		health:            HealthUnknown,
 		active:            map[uint64]*Alert{},
 		opts:              opts,
+		typ:               p.AlertType,
+		RelatedLogs:       p.RelatedLogs,
+		RelatedTraces:     p.RelatedTraces,
+		RelatedMetrics:    p.RelatedMetrics,
 	}
 
 	if int64(t.evalWindow) == 0 {
@@ -625,6 +635,57 @@ func (r *ThresholdRule) prepareBuilderQueries(ts time.Time) (map[string]string, 
 	return runQueries, err
 }
 
+func (r *ThresholdRule) prepareLinksToLogs(ts time.Time) map[string]string {
+
+	links := make(map[string]string)
+
+	type timeRange struct {
+		Start    int64 `json:"start"`
+		End      int64 `json:"end"`
+		PageSize int64 `json:"pageSize"`
+	}
+
+	period := timeRange{
+		Start:    ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
+		End:      ts.UnixMilli(),
+		PageSize: 100,
+	}
+
+	for queryName, l := range r.RelatedLogs {
+		timeRange, _ := json.Marshal(period)
+		urlEncodedTimeRange := url.QueryEscape(string(timeRange))
+
+		links[queryName] = fmt.Sprintf("%s?timeRange=%s&startTime=%d&endTime=%d", l, urlEncodedTimeRange, period.Start, period.End)
+	}
+
+	return links
+}
+
+func (r *ThresholdRule) prepareLinksToTraces(ts time.Time) map[string]string {
+	links := make(map[string]string)
+
+	type timeRange struct {
+		Start    int64 `json:"start"`
+		End      int64 `json:"end"`
+		PageSize int64 `json:"pageSize"`
+	}
+
+	period := timeRange{
+		Start:    ts.Add(-time.Duration(r.evalWindow)).UnixNano(),
+		End:      ts.UnixNano(),
+		PageSize: 100,
+	}
+
+	for queryName, l := range r.RelatedTraces {
+		timeRange, _ := json.Marshal(period)
+		urlEncodedTimeRange := url.QueryEscape(string(timeRange))
+
+		links[queryName] = fmt.Sprintf("%s?timeRange=%s&startTime=%d&endTime=%d", l, urlEncodedTimeRange, period.Start, period.End)
+	}
+
+	return links
+}
+
 func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]string, error) {
 	queries := make(map[string]string)
 
@@ -845,6 +906,18 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		lb.Set(labels.AlertNameLabel, r.Name())
 		lb.Set(labels.AlertRuleIdLabel, r.ID())
 		lb.Set(labels.RuleSourceLabel, r.GeneratorURL())
+
+		if r.typ == "TRACES_BASED_ALERT" {
+			for k, v := range r.prepareLinksToTraces(ts) {
+				lb.Set(fmt.Sprintf("See related traces for: %s", k), v)
+			}
+		} else if r.typ == "LOG_BASED_ALERT" {
+			for k, v := range r.prepareLinksToLogs(ts) {
+				lb.Set(fmt.Sprintf("See related logs for: %s", k), v)
+			}
+		} else {
+			// TODO: Add support for metrics based alerts to explorer
+		}
 
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
