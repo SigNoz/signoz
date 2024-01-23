@@ -68,7 +68,12 @@ function LogsExplorerList({
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
 				return (
-					<RawLogView key={log.id} data={log} linesPerRow={options.maxLines} />
+					<RawLogView
+						key={log.id}
+						data={log}
+						linesPerRow={options.maxLines}
+						selectedFields={selectedFields}
+					/>
 				);
 			}
 
