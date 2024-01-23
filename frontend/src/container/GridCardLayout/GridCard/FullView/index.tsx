@@ -150,6 +150,7 @@ function FullView({
 				maxTimeScale,
 				softMax: widget.softMax === undefined ? null : widget.softMax,
 				softMin: widget.softMin === undefined ? null : widget.softMin,
+				fillSpans: widget.fillSpans,
 			});
 
 			setChartOptions(newChartOptions);
