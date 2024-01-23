@@ -14,7 +14,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { isUndefined } from 'lodash-es';
+import { isEmpty, isUndefined } from 'lodash-es';
 import {
 	KeyboardEvent,
 	MouseEvent,
@@ -74,9 +74,16 @@ function RawLogView({
 
 	const attributesValues = updatedSelecedFields
 		.map((field) => flattenLogData[field.name])
-		.filter((attribute) => !isUndefined(attribute));
+		.filter(
+			(attribute) =>
+				!isUndefined(attribute) &&
+				!isEmpty(attribute) &&
+				((attribute as unknown) as number) !== 0,
+		);
 
 	let attributesText = attributesValues.join(' | ');
+
+	console.log(selectedFields, updatedSelecedFields, attributesValues);
 
 	if (attributesText.length > 0) {
 		attributesText += ' | ';
