@@ -12,7 +12,7 @@ export const ButtonContainer = styled.div`
 
 export const CustomButton = styled(Button)`
 	&&& {
-		margin-left: 1rem;
+		margin-left: 0.5rem;
 	}
 `;
 
