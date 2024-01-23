@@ -2,6 +2,7 @@ package queryBuilder
 
 import (
 	"math"
+	"sort"
 
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
@@ -96,7 +97,9 @@ func funcCumSum(result *v3.Result) *v3.Result {
 	for _, series := range result.Series {
 		var sum float64
 		for idx, point := range series.Points {
-			sum += point.Value
+			if !math.IsNaN(point.Value) {
+				sum += point.Value
+			}
 			point.Value = sum
 			series.Points[idx] = point
 		}
@@ -104,56 +107,28 @@ func funcCumSum(result *v3.Result) *v3.Result {
 	return result
 }
 
-// funcEWMA3 returns the exponential weighted moving average for each point in a series
-func funcEWMA3(result *v3.Result, alpha float64) *v3.Result {
+func funcEWMA(result *v3.Result, alpha float64) *v3.Result {
 	for _, series := range result.Series {
-		var prev float64
-		for _, point := range series.Points {
-			if math.IsNaN(prev) {
-				point.Value = point.Value
-			} else {
-				point.Value = alpha*point.Value + (1-alpha)*prev
-			}
-			prev = point.Value
-		}
-	}
-	return result
-}
+		var ewma float64
+		var initialized bool
 
-// funcEWMA5 returns the exponential weighted moving average for each point in a series
-func funcEWMA5(result *v3.Result, alpha float64) *v3.Result {
-	for _, series := range result.Series {
-		var prev float64
-		var prevprev float64
-		for _, point := range series.Points {
-			if math.IsNaN(prev) {
-				point.Value = point.Value
-			} else {
-				point.Value = alpha*point.Value + (1-alpha)*prev + (1-alpha)*(1-alpha)*prevprev
+		for i, point := range series.Points {
+			if !initialized {
+				if !math.IsNaN(point.Value) {
+					// Initialize EWMA with the first non-NaN value
+					ewma = point.Value
+					initialized = true
+				}
+				// Continue until the EWMA is initialized
+				continue
 			}
-			prevprev = prev
-			prev = point.Value
-		}
-	}
-	return result
-}
 
-// funcEWMA7 returns the exponential weighted moving average for each point in a series
-func funcEWMA7(result *v3.Result, alpha float64) *v3.Result {
-
-	for _, series := range result.Series {
-		var prev float64
-		var prevprev float64
-		var prevprevprev float64
-		for _, point := range series.Points {
-			if math.IsNaN(prev) {
-				point.Value = point.Value
-			} else {
-				point.Value = alpha*point.Value + (1-alpha)*prev + (1-alpha)*(1-alpha)*prevprev + (1-alpha)*(1-alpha)*(1-alpha)*prevprevprev
+			if !math.IsNaN(point.Value) {
+				// Update EWMA with the current value
+				ewma = alpha*point.Value + (1-alpha)*ewma
 			}
-			prevprevprev = prevprev
-			prevprev = prev
-			prev = point.Value
+			// Set the EWMA value for the current point
+			series.Points[i].Value = ewma
 		}
 	}
 	return result
@@ -162,9 +137,29 @@ func funcEWMA7(result *v3.Result, alpha float64) *v3.Result {
 // funcMedian3 returns the median of 3 points for each point in a series
 func funcMedian3(result *v3.Result) *v3.Result {
 	for _, series := range result.Series {
+		median3 := make([]float64, 0)
 		for i := 1; i < len(series.Points)-1; i++ {
-			point := series.Points[i]
-			point.Value = (series.Points[i-1].Value + series.Points[i].Value + series.Points[i+1].Value) / 3
+			values := make([]float64, 0, 3)
+
+			// Add non-NaN values to the slice
+			for j := -1; j <= 1; j++ {
+				if !math.IsNaN(series.Points[i+j].Value) {
+					values = append(values, series.Points[i+j].Value)
+				}
+			}
+
+			// Handle the case where there are not enough values to calculate a median
+			if len(values) == 0 {
+				median3 = append(median3, math.NaN())
+				continue
+			}
+
+			median3 = append(median3, median(values))
+		}
+
+		// Set the median3 values for the series
+		for i := 1; i < len(series.Points)-1; i++ {
+			series.Points[i].Value = median3[i-1]
 		}
 	}
 	return result
@@ -173,9 +168,29 @@ func funcMedian3(result *v3.Result) *v3.Result {
 // funcMedian5 returns the median of 5 points for each point in a series
 func funcMedian5(result *v3.Result) *v3.Result {
 	for _, series := range result.Series {
+		median5 := make([]float64, 0)
 		for i := 2; i < len(series.Points)-2; i++ {
-			point := series.Points[i]
-			point.Value = (series.Points[i-2].Value + series.Points[i-1].Value + series.Points[i].Value + series.Points[i+1].Value + series.Points[i+2].Value) / 5
+			values := make([]float64, 0, 5)
+
+			// Add non-NaN values to the slice
+			for j := -2; j <= 2; j++ {
+				if !math.IsNaN(series.Points[i+j].Value) {
+					values = append(values, series.Points[i+j].Value)
+				}
+			}
+
+			// Handle the case where there are not enough values to calculate a median
+			if len(values) == 0 {
+				median5 = append(median5, math.NaN())
+				continue
+			}
+
+			median5 = append(median5, median(values))
+		}
+
+		// Set the median5 values for the series
+		for i := 2; i < len(series.Points)-2; i++ {
+			series.Points[i].Value = median5[i-2]
 		}
 	}
 	return result
@@ -184,58 +199,87 @@ func funcMedian5(result *v3.Result) *v3.Result {
 // funcMedian7 returns the median of 7 points for each point in a series
 func funcMedian7(result *v3.Result) *v3.Result {
 	for _, series := range result.Series {
+		median7 := make([]float64, 0)
 		for i := 3; i < len(series.Points)-3; i++ {
-			point := series.Points[i]
-			point.Value = (series.Points[i-3].Value + series.Points[i-2].Value + series.Points[i-1].Value + series.Points[i].Value + series.Points[i+1].Value + series.Points[i+2].Value + series.Points[i+3].Value) / 7
+			values := make([]float64, 0, 7)
+
+			// Add non-NaN values to the slice
+			for j := -3; j <= 3; j++ {
+				if !math.IsNaN(series.Points[i+j].Value) {
+					values = append(values, series.Points[i+j].Value)
+				}
+			}
+
+			// Handle the case where there are not enough values to calculate a median
+			if len(values) == 0 {
+				median7 = append(median7, math.NaN())
+				continue
+			}
+
+			median7 = append(median7, median(values))
+		}
+
+		// Set the median7 values for the series
+		for i := 3; i < len(series.Points)-3; i++ {
+			series.Points[i].Value = median7[i-3]
 		}
 	}
 	return result
 }
 
+func median(values []float64) float64 {
+	sort.Float64s(values)
+	medianIndex := len(values) / 2
+	if len(values)%2 == 0 {
+		return (values[medianIndex-1] + values[medianIndex]) / 2
+	}
+	return values[medianIndex]
+}
+
 func ApplyFunction(fn v3.Function, result *v3.Result) *v3.Result {
 
 	switch fn.Name {
-	case "cutOffMin", "cutOffMax", "clampMin", "clampMax":
+	case v3.FunctionNameCutOffMin, v3.FunctionNameCutOffMax, v3.FunctionNameClampMin, v3.FunctionNameClampMax:
 		threshold, ok := fn.Args[0].(float64)
 		if !ok {
 			return result
 		}
 		switch fn.Name {
-		case "cutOffMin":
+		case v3.FunctionNameCutOffMin:
 			return funcCutOffMin(result, threshold)
-		case "cutOffMax":
+		case v3.FunctionNameCutOffMax:
 			return funcCutOffMax(result, threshold)
-		case "clampMin":
+		case v3.FunctionNameClampMin:
 			return funcClampMin(result, threshold)
-		case "clampMax":
+		case v3.FunctionNameClampMax:
 			return funcClampMax(result, threshold)
 		}
-	case "absolute":
+	case v3.FunctionNameAbsolute:
 		return funcAbsolute(result)
-	case "log2":
+	case v3.FunctionNameLog2:
 		return funcLog2(result)
-	case "log10":
+	case v3.FunctionNameLog10:
 		return funcLog10(result)
-	case "cumSum":
+	case v3.FunctionNameCumSum:
 		return funcCumSum(result)
-	case "ewma3", "ewma5", "ewma7":
+	case v3.FunctionNameEWMA3, v3.FunctionNameEWMA5, v3.FunctionNameEWMA7:
 		alpha, ok := fn.Args[0].(float64)
 		if !ok {
-			alpha = 0.25
+			// alpha = 2 / (n + 1) where n is the window size
+			if fn.Name == v3.FunctionNameEWMA3 {
+				alpha = 0.5
+			} else if fn.Name == v3.FunctionNameEWMA5 {
+				alpha = 0.34
+			} else if fn.Name == v3.FunctionNameEWMA7 {
+				alpha = 0.25
+			}
 		}
-		switch fn.Name {
-		case "ewma3":
-			return funcEWMA3(result, alpha)
-		case "ewma5":
-			return funcEWMA5(result, alpha)
-		case "ewma7":
-			return funcEWMA7(result, alpha)
-		}
-	case "median3":
+		return funcEWMA(result, alpha)
+	case v3.FunctionNameMedian3:
 		return funcMedian3(result)
-	case "median5":
+	case v3.FunctionNameMedian5:
 		return funcMedian5(result)
-	case "median7":
+	case v3.FunctionNameMedian7:
 		return funcMedian7(result)
 	}
 	return result
