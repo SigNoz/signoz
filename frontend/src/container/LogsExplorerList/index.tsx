@@ -79,10 +79,12 @@ function LogsExplorerList({
 					selectedFields={selectedFields}
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
+					activeLog={activeLog as ILog}
 				/>
 			);
 		},
 		[
+			activeLog,
 			onAddToQuery,
 			onSetActiveLog,
 			options.format,

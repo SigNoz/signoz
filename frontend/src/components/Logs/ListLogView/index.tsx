@@ -91,6 +91,7 @@ type ListLogViewProps = {
 	selectedFields: IField[];
 	onSetActiveLog: (log: ILog) => void;
 	onAddToQuery: AddToQueryHOCProps['onAddToQuery'];
+	activeLog?: ILog;
 };
 
 function ListLogView({
@@ -98,6 +99,7 @@ function ListLogView({
 	selectedFields,
 	onSetActiveLog,
 	onAddToQuery,
+	activeLog,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
@@ -166,7 +168,12 @@ function ListLogView({
 				onClick={handleDetailedView}
 			>
 				<div className="log-line">
-					<LogStateIndicator type={logType} />
+					<LogStateIndicator
+						type={logType}
+						isActive={
+							activeLog?.id === logData.id || activeContextLog?.id === logData.id
+						}
+					/>
 					<div>
 						<LogContainer>
 							<LogGeneralField fieldKey="Log" fieldValue={flattenLogData.body} />
@@ -207,5 +214,9 @@ function ListLogView({
 		</>
 	);
 }
+
+ListLogView.defaultProps = {
+	activeLog: null,
+};
 
 export default ListLogView;

@@ -23,10 +23,6 @@
 	}
 
 	&.isActive {
-		.dot {
-			color: var(--bg-robin-400, #7190f9);
-		}
-
 		.line {
 			background-color: var(--bg-robin-400, #7190f9);
 		}

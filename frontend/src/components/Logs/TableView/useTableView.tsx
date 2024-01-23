@@ -21,7 +21,14 @@ import {
 const convert = new Convert();
 
 export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
-	const { logs, fields, linesPerRow, appendTo = 'center' } = props;
+	const {
+		logs,
+		fields,
+		linesPerRow,
+		appendTo = 'center',
+		activeContextLog,
+		activeLog,
+	} = props;
 
 	const isDarkMode = useIsDarkMode();
 
@@ -62,7 +69,12 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					return {
 						children: (
 							<div className="table-timestamp">
-								<LogStateIndicator type={item.log_level as string} />
+								<LogStateIndicator
+									type={item.log_level as string}
+									isActive={
+										activeLog?.id === item.id || activeContextLog?.id === item.id
+									}
+								/>
 								<Typography.Paragraph ellipsis className="text">
 									{date}
 								</Typography.Paragraph>
@@ -93,7 +105,14 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 			},
 			...(appendTo === 'end' ? fieldColumns : []),
 		];
-	}, [fields, appendTo, isDarkMode, linesPerRow]);
+	}, [
+		fields,
+		appendTo,
+		isDarkMode,
+		linesPerRow,
+		activeLog?.id,
+		activeContextLog?.id,
+	]);
 
 	return { columns, dataSource: flattenLogData };
 };
