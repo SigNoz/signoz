@@ -41,7 +41,7 @@ function RawLogView({
 	data,
 	linesPerRow,
 	isTextOverflowEllipsisDisabled,
-	selectedFields,
+	selectedFields = [],
 }: RawLogViewProps): JSX.Element {
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
