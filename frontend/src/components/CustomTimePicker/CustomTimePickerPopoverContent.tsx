@@ -1,12 +1,14 @@
+import './CustomTimePicker.styles.scss';
+
 import { Button, DatePicker } from 'antd';
 import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
-	FixedDurationSuggestionOptions,
 	Option,
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs, { Dayjs } from 'dayjs';
+import { Info } from 'lucide-react';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -108,8 +110,9 @@ function CustomTimePickerPopoverContent({
 							<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
 						</div>
 						<div>
-							<div className="time-heading">FIXED TIMES</div>
-							<div>{getTimeChips(FixedDurationSuggestionOptions)}</div>
+							<Button type="text" icon={<Info />} className="info-text">
+								Enter time in format (e.g., 1m, 2h, 3d, 4w)
+							</Button>
 						</div>
 					</>
 				)}
