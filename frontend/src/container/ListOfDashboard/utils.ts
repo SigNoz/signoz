@@ -6,7 +6,6 @@ export const filterDashboard = (
 ): Dashboard[] => {
 	// Convert the searchValue to lowercase for case-insensitive search
 	const searchValueLowerCase = searchValue.toLowerCase();
-
 	// Use the filter method to find matching objects
 	return dashboardList.filter((item: Dashboard) => {
 		// Convert each property value to lowercase for case-insensitive search
