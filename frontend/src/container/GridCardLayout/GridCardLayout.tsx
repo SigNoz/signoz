@@ -196,6 +196,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 										name={currentWidget?.id || ''}
 										headerMenuList={widgetActions}
 										variables={variables}
+										fillSpans={currentWidget?.fillSpans}
 									/>
 								</Card>
 							</CardContainer>
