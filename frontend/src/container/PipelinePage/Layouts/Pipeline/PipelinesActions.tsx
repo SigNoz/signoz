@@ -1,5 +1,4 @@
 import { EditFilled, PlusOutlined, ShareAltOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useMemo, useState } from 'react';
@@ -50,14 +49,12 @@ function PipelinesActions({
 					text={t('learn_more')}
 					url="https://signoz.io/docs/logs-pipelines/introduction/"
 				/>
-				<Button
-					style={{ width: '100%' }}
-					type="dashed"
+				<CustomButton
 					onClick={(): void => setIsExportModalVisible(true)}
 					icon={<ShareAltOutlined />}
 				>
 					{t('share')}
-				</Button>
+				</CustomButton>
 				{isAddNewPipelineVisible && (
 					<CustomButton
 						icon={<EditFilled />}
@@ -80,6 +77,7 @@ function PipelinesActions({
 			<PipelinesExportModal
 				open={isExportModalVisible}
 				onCancel={(): void => setIsExportModalVisible(false)}
+				pipelines={pipelineData.pipelines}
 			/>
 		</>
 	);
