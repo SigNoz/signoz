@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
 
 import { ButtonContainer, CustomButton } from '../../styles';
-import { checkDataLength } from '../utils';
 import PipelinesExportModal from './PipelinesExportModal';
 
 function PipelinesActions({
@@ -20,11 +19,10 @@ function PipelinesActions({
 
 	const [isExportModalVisible, setIsExportModalVisible] = useState(false);
 
-	const isAddNewPipelineVisible = useMemo(
-		() => checkDataLength(pipelineData?.pipelines),
-		[pipelineData?.pipelines],
-	);
-	const isDisabled = isActionMode === ActionMode.Editing;
+	const pipelinesExist = useMemo(() => pipelineData?.pipelines?.length > 0, [
+		pipelineData?.pipelines,
+	]);
+	const inEditMode = isActionMode === ActionMode.Editing;
 
 	const onEnterEditMode = (): void => {
 		setActionMode(ActionMode.Editing);
@@ -49,22 +47,24 @@ function PipelinesActions({
 					text={t('learn_more')}
 					url="https://signoz.io/docs/logs-pipelines/introduction/"
 				/>
-				<CustomButton
-					onClick={(): void => setIsExportModalVisible(true)}
-					icon={<ShareAltOutlined />}
-				>
-					{t('share')}
-				</CustomButton>
-				{isAddNewPipelineVisible && (
+				{pipelinesExist && !inEditMode && (
+					<CustomButton
+						onClick={(): void => setIsExportModalVisible(true)}
+						icon={<ShareAltOutlined />}
+					>
+						{t('share')}
+					</CustomButton>
+				)}
+				{pipelinesExist && (
 					<CustomButton
 						icon={<EditFilled />}
 						onClick={onEnterEditMode}
-						disabled={isDisabled}
+						disabled={inEditMode}
 					>
 						{t('enter_edit_mode')}
 					</CustomButton>
 				)}
-				{!isAddNewPipelineVisible && (
+				{!pipelinesExist && (
 					<CustomButton
 						icon={<PlusOutlined />}
 						onClick={onAddNewPipeline}
