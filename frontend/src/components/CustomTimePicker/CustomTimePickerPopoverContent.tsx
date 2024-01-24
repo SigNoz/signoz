@@ -8,7 +8,6 @@ import {
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs, { Dayjs } from 'dayjs';
-import { Info } from 'lucide-react';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -104,17 +103,10 @@ function CustomTimePickerPopoverContent({
 						onCalendarChange={onModalOkHandler}
 					/>
 				) : (
-					<>
-						<div>
-							<div className="time-heading">RELATIVE TIMES</div>
-							<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
-						</div>
-						<div>
-							<Button type="text" icon={<Info />} className="info-text">
-								Enter time in format (e.g., 1m, 2h, 3d, 4w)
-							</Button>
-						</div>
-					</>
+					<div>
+						<div className="time-heading">RELATIVE TIMES</div>
+						<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
+					</div>
 				)}
 			</div>
 		</div>
