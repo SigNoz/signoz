@@ -155,7 +155,10 @@ function RawLogView({
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 		>
-			<LogStateIndicator type={logType} />
+			<LogStateIndicator
+				type={logType}
+				isActive={activeLog?.id === data.id || activeContextLog?.id === data.id}
+			/>
 
 			<RawLogContent
 				$isReadOnly={isReadOnly}
