@@ -6,7 +6,7 @@ import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
-import FullViewHeader from 'container/FullViewHeader/FullViewHeader';
+import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEffect, useState } from 'react';
@@ -211,7 +211,7 @@ export default function Onboarding(): JSX.Element {
 		<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
 			{activeStep === 1 && (
 				<>
-					<FullViewHeader />
+					<FullScreenHeader />
 					<div className="onboardingHeader">
 						<h1> Select a use-case to get started</h1>
 					</div>

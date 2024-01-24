@@ -28,7 +28,11 @@ import AppReducer, { User } from 'types/reducer/app';
 import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
 
 import PrivateRoute from './Private';
-import defaultRoutes, { AppRoutes, SUPPORT_ROUTE } from './routes';
+import defaultRoutes, {
+	AppRoutes,
+	LIST_LICENSES,
+	SUPPORT_ROUTE,
+} from './routes';
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
@@ -149,6 +153,10 @@ function App(): JSX.Element {
 
 		if (isCloudUserVal || isEECloudUser()) {
 			const newRoutes = [...routes, SUPPORT_ROUTE];
+
+			setRoutes(newRoutes);
+		} else {
+			const newRoutes = [...routes, LIST_LICENSES];
 
 			setRoutes(newRoutes);
 		}

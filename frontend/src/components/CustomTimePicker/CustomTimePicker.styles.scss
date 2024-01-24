@@ -37,6 +37,12 @@
 	padding: 4px 8px;
 	padding-left: 0px !important;
 
+	&.custom-time {
+		input:not(:focus) {
+			min-width: 240px;
+		}
+	}
+
 	input::placeholder {
 		color: white;
 	}
