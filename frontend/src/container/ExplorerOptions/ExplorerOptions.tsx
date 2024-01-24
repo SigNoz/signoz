@@ -1,29 +1,43 @@
 import './ExplorerOptions.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Divider, Modal, Select } from 'antd';
+import {
+	Button,
+	ColorPicker,
+	Divider,
+	Input,
+	Modal,
+	Select,
+	Typography,
+} from 'antd';
 import axios from 'axios';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
+import { useSaveView } from 'hooks/saveViews/useSaveView';
 import { useUpdateView } from 'hooks/saveViews/useUpdateView';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { ConciergeBell, Disc3, Plus, X } from 'lucide-react';
+import { Check, ConciergeBell, Disc3, Plus, X } from 'lucide-react';
 import { CSSProperties, useCallback, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { getRandomColor } from './utils';
+import {
+	DATASOURCE_VS_ROUTES,
+	getRandomColor,
+	saveNewViewHandler,
+} from './utils';
 
 const dropdownStyle: CSSProperties = {
 	borderRadius: '4px',
@@ -44,11 +58,23 @@ function ExplorerOptions({
 	sourcepage,
 }: ExplorerOptionsProps): JSX.Element {
 	const [isExport, setIsExport] = useState<boolean>(false);
+	const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+	const [newViewName, setNewViewName] = useState<string>('');
+	const [color, setColor] = useState(Color.BG_SIENNA_500);
 	const { notifications } = useNotifications();
+	const history = useHistory();
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
 	}, []);
+
+	const handleSaveViewModalToggle = (): void => {
+		setIsSaveModalOpen(!isSaveModalOpen);
+	};
+
+	const hideSaveViewModal = (): void => {
+		setIsSaveModalOpen(false);
+	};
 
 	const onCreateAlertsHandler = useCallback(() => {
 		history.push(
@@ -56,7 +82,7 @@ function ExplorerOptions({
 				JSON.stringify(query),
 			)}`,
 		);
-	}, [query]);
+	}, [history, query]);
 
 	const onCancel = (value: boolean) => (): void => {
 		onModalToggle(value);
@@ -74,15 +100,25 @@ function ExplorerOptions({
 		refetch: refetchAllView,
 	} = useGetAllViews(sourcepage);
 
-	const { currentQuery, panelType, isStagedQueryUpdated } = useQueryBuilder();
+	const {
+		currentQuery,
+		panelType,
+		isStagedQueryUpdated,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
+
+	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 
 	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
 
-	const { mutateAsync: updateViewAsync } = useUpdateView({
-		compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
+	const {
+		mutateAsync: updateViewAsync,
+		isLoading: isViewUpdating,
+	} = useUpdateView({
+		compositeQuery,
 		viewKey,
-		extraData: '',
+		extraData: JSON.stringify({ color }),
 		sourcePage: sourcepage,
 		viewName,
 	});
@@ -98,7 +134,7 @@ function ExplorerOptions({
 			{
 				compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
 				viewKey,
-				extraData: '',
+				extraData: JSON.stringify({ color }),
 				sourcePage: sourcepage,
 				viewName,
 			},
@@ -152,19 +188,59 @@ function ExplorerOptions({
 		});
 	};
 
+	const handleClearSelect = (): void => {
+		history.replace(DATASOURCE_VS_ROUTES[sourcepage]);
+	};
+
 	const isQueryUpdated = isStagedQueryUpdated(viewsData?.data?.data, viewKey);
+
+	const {
+		isLoading: isSaveViewLoading,
+		mutateAsync: saveViewAsync,
+	} = useSaveView({
+		viewName: newViewName || '',
+		compositeQuery,
+		sourcePage: sourcepage,
+		extraData: JSON.stringify({ color }),
+	});
+
+	const onSaveHandler = (): void => {
+		saveNewViewHandler({
+			compositeQuery,
+			handlePopOverClose: hideSaveViewModal,
+			extraData: JSON.stringify({ color }),
+			notifications,
+			panelType: panelType || PANEL_TYPES.LIST,
+			redirectWithQueryBuilderData,
+			refetchAllView,
+			saveViewAsync,
+			sourcePage: sourcepage,
+			viewName: newViewName,
+			setNewViewName,
+		});
+	};
 
 	return (
 		<>
-			<div className="explorer-update">
-				<div className="action-icon">
-					<X size={14} />
+			{isQueryUpdated && (
+				<div className="explorer-update">
+					<Button
+						className="action-icon"
+						onClick={handleClearSelect}
+						icon={<X size={14} />}
+					/>
+					<Divider
+						type="vertical"
+						style={{ height: '28px', border: `1px solid ${Color.BG_SLATE_400}` }}
+					/>
+					<Button
+						className="action-icon"
+						disabled={isViewUpdating}
+						onClick={onUpdateQueryHandler}
+						icon={<Disc3 size={14} />}
+					/>
 				</div>
-				<Divider type="vertical" />
-				<div className="action-icon">
-					<Disc3 size={14} />
-				</div>
-			</div>
+			)}
 			<div className="explorer-options">
 				{viewsData?.data.data && viewsData?.data.data.length && (
 					<>
@@ -180,9 +256,16 @@ function ExplorerOptions({
 								}}
 								dropdownStyle={dropdownStyle}
 								className="views-dropdown"
+								allowClear
+								onClear={handleClearSelect}
 							>
 								{viewsData?.data.data.map((view) => {
-									const bgColor = getRandomColor();
+									const extraData =
+										view.extraData !== '' ? JSON.parse(view.extraData) : '';
+									let bgColor = getRandomColor();
+									if (extraData !== '') {
+										bgColor = extraData.color;
+									}
 									return (
 										<Select.Option key={view.uuid} value={view.name}>
 											<div className="render-options">
@@ -200,11 +283,7 @@ function ExplorerOptions({
 								})}
 							</Select>
 
-							<Button
-								shape="round"
-								onClick={onUpdateQueryHandler}
-								disabled={!isQueryUpdated}
-							>
+							<Button shape="round" onClick={handleSaveViewModalToggle}>
 								<Disc3 size={16} /> Save this view
 							</Button>
 						</div>
@@ -223,6 +302,38 @@ function ExplorerOptions({
 					</Button>
 				</div>
 			</div>
+
+			<Modal
+				className="save-view-modal"
+				title={<span className="title">Save this view</span>}
+				open={isSaveModalOpen}
+				closable
+				onCancel={hideSaveViewModal}
+				footer={[
+					<Button
+						key="submit"
+						type="primary"
+						icon={<Check size={16} />}
+						onClick={onSaveHandler}
+						disabled={isSaveViewLoading}
+					>
+						Save this view
+					</Button>,
+				]}
+			>
+				<Typography.Text>Label</Typography.Text>
+				<div className="save-view-input">
+					<ColorPicker
+						value={color}
+						onChange={(value, hex): void => setColor(hex)}
+					/>
+					<Input
+						placeholder="e.g. Crash landing view"
+						value={newViewName}
+						onChange={(e): void => setNewViewName(e.target.value)}
+					/>
+				</div>
+			</Modal>
 
 			<Modal
 				footer={null}

@@ -1,15 +1,27 @@
 .explorer-update {
 	position: fixed;
 	bottom: 16px;
-	left: calc(25% + 240px);
+	left: calc(50% - 250px);
 	display: flex;
-	gap: 16px;
+	align-items: center;
+	gap: 12px;
 	padding: 8px 16px;
 	border-radius: 50px;
 	border: 1px solid var(--bg-slate-400, #1d212d);
 	background: rgba(22, 24, 29, 0.6);
 	box-shadow: 4px 4px 16px 4px rgba(0, 0, 0, 0.25);
 	backdrop-filter: blur(20px);
+
+	.action-icon {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		padding: 8px;
+		border-radius: 50px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-slate-500);
+		cursor: pointer;
+	}
 }
 
 .explorer-options {
@@ -94,6 +106,88 @@
 		min-height: 6px;
 		min-width: 6px;
 		border-radius: 50%;
+	}
+}
+
+.save-view-modal {
+	width: 384px !important;
+	.ant-modal-content {
+		padding: 0;
+		border-radius: 4px;
+		border: 1px solid var(--bg-slate-500);
+		background: var(--bg-ink-400);
+		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.20);
+
+		.ant-modal-header {
+			padding: 16px;
+			background: var(--bg-ink-400);
+			border-bottom: 1px solid var(--bg-slate-500);;
+		}
+
+		.ant-modal-body {
+			padding: 12px 16px 0px 16px;
+
+			.ant-typography {
+				color: var(--bg-vanilla-100);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 20px; /* 142.857% */
+			}
+
+			.save-view-input {
+				margin-top: 8px;
+				display: flex;
+				gap: 8px;
+			}
+
+			.ant-color-picker-trigger {
+				padding: 6px;
+				border-radius: 2px;
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-300);
+				width: 32px;
+				height: 32px;
+
+				.ant-color-picker-color-block {
+					border-radius: 50px;
+					width: 16px;
+					height: 16px;
+					flex-shrink: 0;
+
+					.ant-color-picker-color-block-inner {
+						display: flex;
+						justify-content: center;
+						align-items: center;
+					}
+				}
+			}
+
+		}
+
+		.ant-modal-footer {
+			display: flex;
+			justify-content: flex-end;
+			padding: 16px 16px;
+			margin: 0;
+
+			> button {
+				display: flex;
+				align-items: center;
+				border-radius: 2px;
+				opacity: 0.6;
+				background: var(--bg-robin-500);
+			}
+		}
+	}
+	.title {
+		color: var(--bg-vanilla-100);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px;
 	}
 }
 
