@@ -7,7 +7,7 @@ export interface RawLogViewProps {
 	isTextOverflowEllipsisDisabled?: boolean;
 	data: ILog;
 	linesPerRow: number;
-	selectedFields: IField[];
+	selectedFields?: IField[];
 }
 
 export interface RawLogContentProps {

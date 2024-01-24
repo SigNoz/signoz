@@ -12,7 +12,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { isUndefined } from 'lodash-es';
+import { isEmpty, isUndefined } from 'lodash-es';
 import {
 	KeyboardEvent,
 	MouseEvent,
@@ -38,7 +38,7 @@ function RawLogView({
 	data,
 	linesPerRow,
 	isTextOverflowEllipsisDisabled,
-	selectedFields,
+	selectedFields = [],
 }: RawLogViewProps): JSX.Element {
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
@@ -73,7 +73,7 @@ function RawLogView({
 
 	const attributesValues = updatedSelecedFields
 		.map((field) => flattenLogData[field.name])
-		.filter((attribute) => !isUndefined(attribute));
+		.filter((attribute) => !isUndefined(attribute) && !isEmpty(attribute));
 
 	let attributesText = attributesValues.join(' | ');
 
