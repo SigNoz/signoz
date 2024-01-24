@@ -488,6 +488,37 @@ const (
 	SpaceAggregationPercentile99 SpaceAggregation = "percentile_99"
 )
 
+func IsPercentileOperator(operator SpaceAggregation) bool {
+	switch operator {
+	case SpaceAggregationPercentile50,
+		SpaceAggregationPercentile75,
+		SpaceAggregationPercentile90,
+		SpaceAggregationPercentile95,
+		SpaceAggregationPercentile99:
+		return true
+	default:
+		return false
+	}
+}
+
+func GetPercentileFromOperator(operator SpaceAggregation) float64 {
+	// This could be done with a map, but it's just easier to read this way
+	switch operator {
+	case SpaceAggregationPercentile50:
+		return 0.5
+	case SpaceAggregationPercentile75:
+		return 0.75
+	case SpaceAggregationPercentile90:
+		return 0.9
+	case SpaceAggregationPercentile95:
+		return 0.95
+	case SpaceAggregationPercentile99:
+		return 0.99
+	default:
+		return 0
+	}
+}
+
 type FunctionName string
 
 const (
