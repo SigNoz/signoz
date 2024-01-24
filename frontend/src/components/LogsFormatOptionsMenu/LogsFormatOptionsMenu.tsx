@@ -92,10 +92,7 @@ export default function LogsFormatOptionsMenu({
 
 	return (
 		<div
-			className={cx(
-				'nested-menu-container',
-				addNewColumn && selectedItem !== 'raw' ? 'active' : '',
-			)}
+			className={cx('nested-menu-container', addNewColumn ? 'active' : '')}
 			onClick={(event): void => {
 				// this is to restrict click events to propogate to parent
 				event.stopPropagation();
@@ -124,34 +121,12 @@ export default function LogsFormatOptionsMenu({
 			</div>
 
 			{selectedItem && (
-				<div className="selected-item-content-container active">
-					{!addNewColumn && <div className="horizontal-line" />}
-
-					{addNewColumn && selectedItem !== 'raw' && (
-						<div className="add-new-column-header">
-							<div className="title">
-								{' '}
-								columns
-								<X size={14} onClick={handleToggleAddNewColumn} />{' '}
-							</div>
-
-							<Input
-								tabIndex={0}
-								type="text"
-								autoFocus
-								onFocus={addColumn?.onFocus}
-								// onBlur={addColumn?.onBlur}
-								onChange={handleSearchValueChange}
-								placeholder="Search..."
-							/>
-						</div>
-					)}
-
-					<div className="item-content">
-						{selectedItem === 'raw' && (
-							<>
+				<>
+					{selectedItem === 'raw' && (
+						<>
+							<div className="horizontal-line" />
+							<div className="max-lines-per-row">
 								<div className="title"> max lines per row </div>
-
 								<div className="raw-format max-lines-per-row-input">
 									<button
 										type="button"
@@ -176,76 +151,97 @@ export default function LogsFormatOptionsMenu({
 										<Plus size={12} />{' '}
 									</button>
 								</div>
-							</>
+							</div>
+						</>
+					)}
+
+					<div className="selected-item-content-container active">
+						{!addNewColumn && <div className="horizontal-line" />}
+
+						{addNewColumn && (
+							<div className="add-new-column-header">
+								<div className="title">
+									{' '}
+									columns
+									<X size={14} onClick={handleToggleAddNewColumn} />{' '}
+								</div>
+
+								<Input
+									tabIndex={0}
+									type="text"
+									autoFocus
+									onFocus={addColumn?.onFocus}
+									onChange={handleSearchValueChange}
+									placeholder="Search..."
+								/>
+							</div>
 						)}
 
-						{(selectedItem === 'table' || selectedItem === 'list') && (
-							<>
-								{!addNewColumn && (
-									<div className="title">
-										columns
-										<Plus size={14} onClick={handleToggleAddNewColumn} />{' '}
+						<div className="item-content">
+							{!addNewColumn && (
+								<div className="title">
+									columns
+									<Plus size={14} onClick={handleToggleAddNewColumn} />{' '}
+								</div>
+							)}
+
+							<div className="column-format">
+								{addColumn?.value?.map(({ key, id }) => (
+									<div className="column-name" key={id}>
+										<div className="name">
+											<Tooltip placement="left" title={key}>
+												{key}
+											</Tooltip>
+										</div>
+										<X
+											className="delete-btn"
+											size={14}
+											onClick={(): void => addColumn.onRemove(id as string)}
+										/>
 									</div>
+								))}
+							</div>
+
+							{addColumn?.isFetching && (
+								<div className="loading-container"> Loading ... </div>
+							)}
+
+							{addNewColumn &&
+								addColumn &&
+								addColumn.value.length > 0 &&
+								addColumn.options &&
+								addColumn?.options?.length > 0 && (
+									<Divider className="column-divider" />
 								)}
 
-								<div className="column-format">
-									{addColumn?.value?.map(({ key, id }) => (
-										<div className="column-name" key={id}>
+							{addNewColumn && (
+								<div className="column-format-new-options">
+									{addColumn?.options?.map(({ label, value }) => (
+										<div
+											className="column-name"
+											key={value}
+											onClick={(eve): void => {
+												console.log('coluimn name', label, value);
+
+												eve.stopPropagation();
+
+												if (addColumn && addColumn?.onSelect) {
+													addColumn?.onSelect(value, { label, disabled: false });
+												}
+											}}
+										>
 											<div className="name">
-												<Tooltip placement="left" title={key}>
-													{key}
+												<Tooltip placement="left" title={label}>
+													{label}
 												</Tooltip>
 											</div>
-											<X
-												className="delete-btn"
-												size={14}
-												onClick={(): void => addColumn.onRemove(id as string)}
-											/>
 										</div>
 									))}
 								</div>
-
-								{addColumn?.isFetching && (
-									<div className="loading-container"> Loading ... </div>
-								)}
-
-								{addNewColumn &&
-									addColumn &&
-									addColumn.value.length > 0 &&
-									addColumn.options &&
-									addColumn?.options?.length > 0 && (
-										<Divider className="column-divider" />
-									)}
-
-								{addNewColumn && (
-									<div className="column-format-new-options">
-										{addColumn?.options?.map(({ label, value }) => (
-											<div
-												className="column-name"
-												key={value}
-												onClick={(eve): void => {
-													console.log('coluimn name', label, value);
-
-													eve.stopPropagation();
-
-													if (addColumn && addColumn?.onSelect) {
-														addColumn?.onSelect(value, { label, disabled: false });
-													}
-												}}
-											>
-												<div className="name">
-													<Tooltip placement="left" title={label}>
-														{label}
-													</Tooltip>
-												</div>
-											</div>
-										))}
-									</div>
-								)}
-							</>
-						)}
+							)}
+						</div>
 					</div>
-				</div>
+				</>
 			)}
 		</div>
 	);
