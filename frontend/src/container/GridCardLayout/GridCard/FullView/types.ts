@@ -50,13 +50,14 @@ export interface FullViewProps {
 	fullViewOptions?: boolean;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	name: string;
+	originalName: string;
+	options: uPlot.Options;
 	yAxisUnit?: string;
 	onDragSelect: (start: number, end: number) => void;
 	isDependedDataLoaded?: boolean;
-	graphsVisibilityStates?: boolean[];
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
-	setGraphsVisibilityStates: Dispatch<SetStateAction<boolean[]>>;
 	parentChartRef: GraphManagerProps['lineChartRef'];
+	parentGraphVisibilityState: Dispatch<SetStateAction<boolean[]>>;
 }
 
 export interface GraphManagerProps extends UplotProps {
@@ -64,8 +65,8 @@ export interface GraphManagerProps extends UplotProps {
 	yAxisUnit?: string;
 	onToggleModelHandler?: () => void;
 	options: uPlot.Options;
-	setGraphsVisibilityStates: FullViewProps['setGraphsVisibilityStates'];
-	graphsVisibilityStates: FullViewProps['graphsVisibilityStates'];
+	graphsVisibilityStates?: boolean[];
+	setGraphsVisibilityStates: Dispatch<SetStateAction<boolean[]>>;
 	lineChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
 	parentChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
 }

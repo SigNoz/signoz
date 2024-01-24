@@ -122,8 +122,17 @@ export function replaceStringWithMaxLength(
 	if (lastSearchValue === '') {
 		return `${mainString}${replacementString},`;
 	}
+	/**
+	 * We need to escape the special characters in the lastSearchValue else the
+	 * new RegExp fails with error range out of order in char class
+	 */
+	const escapedLastSearchValue = lastSearchValue.replace(
+		/[-/\\^$*+?.()|[\]{}]/g,
+		'\\$&',
+	);
+
 	const updatedString = mainString.replace(
-		new RegExp(`${lastSearchValue}(?=[^${lastSearchValue}]*$)`),
+		new RegExp(`${escapedLastSearchValue}(?=[^${escapedLastSearchValue}]*$)`),
 		replacementString,
 	);
 	return `${updatedString},`;
