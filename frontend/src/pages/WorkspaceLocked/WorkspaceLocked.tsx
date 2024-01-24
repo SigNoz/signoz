@@ -10,7 +10,7 @@ import { Button, Card, Skeleton, Typography } from 'antd';
 import updateCreditCardApi from 'api/billing/checkout';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
-import FullViewHeader from 'container/FullViewHeader/FullViewHeader';
+import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
@@ -106,7 +106,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 
 	return (
 		<>
-			<FullViewHeader overrideRoute={ROUTES.WORKSPACE_LOCKED} />
+			<FullScreenHeader overrideRoute={ROUTES.WORKSPACE_LOCKED} />
 
 			<Card className="workspace-locked-container">
 				{isLoadingLicenseData || !licensesData?.payload?.workSpaceBlock ? (

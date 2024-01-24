@@ -192,13 +192,6 @@ const routes: AppRoutes[] = [
 		key: 'ALL_ERROR',
 	},
 	{
-		path: ROUTES.LIST_LICENSES,
-		exact: true,
-		component: LicensePage,
-		isPrivate: true,
-		key: 'LIST_LICENSES',
-	},
-	{
 		path: ROUTES.ERROR_DETAIL,
 		exact: true,
 		component: ErrorDetails,
@@ -318,6 +311,14 @@ export const SUPPORT_ROUTE: AppRoutes = {
 	component: SupportPage,
 	key: 'SUPPORT',
 	isPrivate: true,
+};
+
+export const LIST_LICENSES: AppRoutes = {
+	path: ROUTES.LIST_LICENSES,
+	exact: true,
+	component: LicensePage,
+	isPrivate: true,
+	key: 'LIST_LICENSES',
 };
 
 export interface AppRoutes {
