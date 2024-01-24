@@ -36,11 +36,11 @@ function TopNav(): JSX.Element | null {
 	}
 
 	return (
-		<Row>
+		<Row style={{ marginBottom: '1rem' }}>
 			{!isRouteToSkip && (
 				<Col span={24} style={{ marginTop: '1rem' }}>
 					<Row justify="end">
-						<Space align="start" size={60} direction="horizontal">
+						<Space align="center" size={16} direction="horizontal">
 							<NewExplorerCTA />
 							<div>
 								<DateTimeSelector showAutoRefresh />

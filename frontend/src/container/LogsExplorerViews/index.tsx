@@ -516,14 +516,36 @@ function LogsExplorerViews({
 					>
 						<Radio.Button
 							value={PANEL_TYPES.LIST}
+							className={
+								// eslint-disable-next-line sonarjs/no-duplicate-string
+								selectedPanelType === PANEL_TYPES.LIST ? 'selected_view tab' : 'tab'
+							}
 							disabled={
 								(isMultipleQueries || isGroupByExist) && selectedView !== 'search'
 							}
 						>
 							List view
 						</Radio.Button>
-						<Radio.Button value={PANEL_TYPES.TIME_SERIES}> Time series </Radio.Button>
-						<Radio.Button value={PANEL_TYPES.TABLE}> Table </Radio.Button>
+						<Radio.Button
+							value={PANEL_TYPES.TIME_SERIES}
+							className={
+								// eslint-disable-next-line sonarjs/no-duplicate-string
+								selectedPanelType === PANEL_TYPES.TIME_SERIES
+									? 'selected_view tab'
+									: 'tab'
+							}
+						>
+							Time series
+						</Radio.Button>
+						<Radio.Button
+							value={PANEL_TYPES.TABLE}
+							className={
+								// eslint-disable-next-line sonarjs/no-duplicate-string
+								selectedPanelType === PANEL_TYPES.TABLE ? 'selected_view tab' : 'tab'
+							}
+						>
+							Table
+						</Radio.Button>
 					</Radio.Group>
 
 					{selectedPanelType === PANEL_TYPES.LIST && (

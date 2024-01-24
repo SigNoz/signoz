@@ -73,6 +73,7 @@ function LogsExplorer(): JSX.Element {
 					/>
 				}
 				rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
+				showOldCTA
 			/>
 
 			<WrapperStyled>

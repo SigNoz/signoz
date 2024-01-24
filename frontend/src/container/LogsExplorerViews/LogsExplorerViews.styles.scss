@@ -13,6 +13,37 @@
 			justify-content: space-between;
 
 			.views-tabs {
+				color: var(--text-vanilla-400);
+
+				.view-title {
+					display: flex;
+					gap: var(--margin-2);
+					align-items: center;
+					justify-content: center;
+					font-size: var(--font-size-xs);
+					font-style: normal;
+					font-weight: var(--font-weight-normal);
+				}
+
+				.tab {
+					border: 1px solid var(--bg-slate-400);
+					width: 114px;
+				}
+
+				.tab::before {
+					background: var(--bg-slate-400);
+				}
+
+				.selected_view {
+					background: var(--bg-slate-300);
+					color: var(--text-vanilla-100);
+					border: 1px solid var(--bg-slate-400);
+				}
+
+				.selected_view::before {
+					background: var(--bg-slate-400);
+				}
+
 				.ant-radio-button-wrapper {
 					min-width: 120px;
 					text-align: center;

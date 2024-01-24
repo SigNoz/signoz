@@ -7,15 +7,18 @@ type FifteenMin = '15min';
 type ThirtyMin = '30min';
 type FortyFiveMin = '45min';
 type OneMin = '1min';
+type ThreeHour = '3hr';
 type SixHour = '6hr';
 type OneHour = '1hr';
 type FourHour = '4hr';
 type TwelveHour = '12hr';
 type OneDay = '1day';
 type ThreeDay = '3days';
+type FourDay = '4days';
 type TenDay = '10days';
 type OneWeek = '1week';
 type TwoWeek = '2weeks';
+type SixWeek = '6weeks';
 type TwoMonths = '2months';
 type Custom = 'custom';
 
@@ -25,12 +28,15 @@ export type Time =
 	| FifteenMin
 	| ThirtyMin
 	| OneMin
+	| ThreeHour
 	| FourHour
 	| SixHour
 	| OneHour
 	| Custom
 	| OneWeek
+	| SixWeek
 	| OneDay
+	| FourDay
 	| ThreeDay
 	| FortyFiveMin
 	| TwelveHour
@@ -67,7 +73,9 @@ export const RelativeDurationOptions: Option[] = [
 ];
 
 export const RelativeDurationSuggestionOptions: Option[] = [
-	{ value: '45min', label: '45m' },
+	{ value: '3hr', label: '3h' },
+	{ value: '4days', label: '4d' },
+	{ value: '6weeks', label: '6w' },
 	{ value: '12hr', label: '12 hours' },
 	{ value: '10days', label: '10d' },
 	{ value: '2weeks', label: '2 weeks' },
