@@ -80,6 +80,21 @@ function RawLogView({
 	}
 	const logType = data?.attributes_string?.log_level || LogType.INFO;
 
+	const updatedSelecedFields = useMemo(
+		() => selectedFields.filter((e) => e.name !== 'id'),
+		[selectedFields],
+	);
+
+	const attributesValues = updatedSelecedFields
+		.map((field) => flattenLogData[field.name])
+		.filter((attribute) => !isUndefined(attribute) && !isEmpty(attribute));
+
+	let attributesText = attributesValues.join(' | ');
+
+	if (attributesText.length > 0) {
+		attributesText += ' | ';
+	}
+
 	const text = useMemo(
 		() =>
 			typeof data.timestamp === 'string'
