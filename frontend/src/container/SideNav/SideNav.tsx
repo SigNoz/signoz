@@ -199,10 +199,7 @@ function SideNav({
 
 	useEffect(() => {
 		if (isCloudUser() || isEECloudUser()) {
-			const updatedUserManagementMenuItems = [
-				helpSupportMenuItem,
-				manageLicenseMenuItem,
-			];
+			const updatedUserManagementMenuItems = [helpSupportMenuItem];
 
 			setUserManagementMenuItems(updatedUserManagementMenuItems);
 		} else if (currentVersion && latestVersion) {

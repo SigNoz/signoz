@@ -4,17 +4,24 @@ export const filterDashboard = (
 	searchValue: string,
 	dashboardList: Dashboard[],
 ): Dashboard[] => {
-	// Convert the searchValue to lowercase for case-insensitive search
-	const searchValueLowerCase = searchValue.toLowerCase();
-	// Use the filter method to find matching objects
+	const searchValueLowerCase = searchValue?.toLowerCase();
+
+	// Filter by title, description, tags
 	return dashboardList.filter((item: Dashboard) => {
-		// Convert each property value to lowercase for case-insensitive search
-		const itemValues = Object.values(item?.data).map((value) => {
-			if (value === null || value === undefined) return '';
-			return value.toString().toLowerCase();
-		});
+		const { title, description, tags } = item.data;
+		const itemValuesNew = [title, description];
+
+		if (tags && tags.length > 0) {
+			itemValuesNew.push(...tags);
+		}
 
 		// Check if any property value contains the searchValue
-		return itemValues.some((value) => value.includes(searchValueLowerCase));
+		return itemValuesNew.some((value) => {
+			if (value) {
+				return value.toLowerCase().includes(searchValueLowerCase);
+			}
+
+			return false;
+		});
 	});
 };
