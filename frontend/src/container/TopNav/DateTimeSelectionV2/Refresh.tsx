@@ -21,11 +21,6 @@ function RefreshText({
 		};
 	}, [onLastRefreshHandler, refreshText]);
 
-	if (refreshButtonHidden) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
-		return <></>;
-	}
-
 	return (
 		<RefreshTextContainer refreshButtonHidden={refreshButtonHidden}>
 			<Typography>{refreshText}</Typography>
