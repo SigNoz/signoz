@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -3107,78 +3106,6 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
 }
 
-func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
-	// apply limit if any for metrics
-	// use the grouping set points to apply the limit
-
-	for _, result := range results {
-		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
-
-		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics ||
-			result.QueryName != builderQueries[result.QueryName].Expression) {
-			limit := builderQueries[result.QueryName].Limit
-
-			orderByList := builderQueries[result.QueryName].OrderBy
-			if limit >= 0 {
-				if len(orderByList) == 0 {
-					// If no orderBy is specified, sort by value in descending order
-					orderByList = []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "desc"}}
-				}
-				sort.SliceStable(result.Series, func(i, j int) bool {
-					for _, orderBy := range orderByList {
-						if orderBy.ColumnName == constants.SigNozOrderByValue {
-
-							// For table type queries (we rely on the fact that one value for row), sort
-							// based on final aggregation value
-							if len(result.Series[i].Points) == 1 && len(result.Series[j].Points) == 1 {
-								if orderBy.Order == "asc" {
-									return result.Series[i].Points[0].Value < result.Series[j].Points[0].Value
-								} else if orderBy.Order == "desc" {
-									return result.Series[i].Points[0].Value > result.Series[j].Points[0].Value
-								}
-							}
-
-							// For graph type queries, sort based on GroupingSetsPoint
-							if result.Series[i].GroupingSetsPoint == nil || result.Series[j].GroupingSetsPoint == nil {
-								// Handle nil GroupingSetsPoint, if needed
-								// Here, we assume non-nil values are always less than nil values
-								return result.Series[i].GroupingSetsPoint != nil
-							}
-							if orderBy.Order == "asc" {
-								return result.Series[i].GroupingSetsPoint.Value < result.Series[j].GroupingSetsPoint.Value
-							} else if orderBy.Order == "desc" {
-								return result.Series[i].GroupingSetsPoint.Value > result.Series[j].GroupingSetsPoint.Value
-							}
-						} else {
-							// Sort based on Labels map
-							labelI, existsI := result.Series[i].Labels[orderBy.ColumnName]
-							labelJ, existsJ := result.Series[j].Labels[orderBy.ColumnName]
-
-							if !existsI || !existsJ {
-								// Handle missing labels, if needed
-								// Here, we assume non-existent labels are always less than existing ones
-								return existsI
-							}
-
-							if orderBy.Order == "asc" {
-								return strings.Compare(labelI, labelJ) < 0
-							} else if orderBy.Order == "desc" {
-								return strings.Compare(labelI, labelJ) > 0
-							}
-						}
-					}
-					// Preserve original order if no matching orderBy is found
-					return i < j
-				})
-
-				if limit > 0 && len(result.Series) > int(limit) {
-					result.Series = result.Series[:limit]
-				}
-			}
-		}
-	}
-}
-
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 
 	// get the param from url and add it to body
@@ -3295,6 +3222,10 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		return
 	}
 
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		postProcessResult(result, queryRangeParams)
+	}
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
@@ -3321,4 +3252,49 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV4(r.Context(), queryRangeParams, w, r)
+}
+
+// postProcessResult applies having clause, metric limit, reduce function to the result
+// This function is effective for metrics data source for now, but it can be extended to other data sources
+// if needed
+// Much of this work can be done in the ClickHouse query, but we decided to do it here because:
+// 1. Effective use of caching
+// 2. Easier to add new functions
+func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	// Having clause is not part of the clickhouse query, so we need to apply it here
+	// It's not included in the query because it doesn't work nicely with caching
+	// With this change, if you have a query with a having clause, and then you change the having clause
+	// to something else, the query will still be cached.
+	applyHavingClause(result, queryRangeParams)
+	// We apply the metric limit here because it's not part of the clickhouse query
+	// The limit in the context of the time series query is the number of time series
+	// So for the limit to work, we need to know what series to keep and what to discard
+	// For us to know that, we need to execute the query first, and then apply the limit
+	// which we found expensive, because we are executing the query twice on the same data
+	// So we decided to apply the limit here, after the query is executed
+	// The function is named applyMetricLimit because it only applies to metrics data source
+	// In traces and logs, the limit is achieved using subqueries
+	applyMetricLimit(result, queryRangeParams)
+	// Each series in the result produces N number of points, where N is (end - start) / step
+	// For the panel type table, we need to show one point for each series in the row
+	// We do that by applying a reduce function to each series
+	applyReduceTo(result, queryRangeParams)
+	// We apply the functions here it's easier to add new functions
+	applyFunctions(result, queryRangeParams)
+}
+
+// applyFunctions applies functions for each query in the composite query
+// The functions can be more than one, and they are applied in the order they are defined
+func applyFunctions(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	for idx, result := range results {
+		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
+
+		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics) {
+			functions := builderQueries[result.QueryName].Functions
+
+			for _, function := range functions {
+				results[idx] = queryBuilder.ApplyFunction(function, result)
+			}
+		}
+	}
 }

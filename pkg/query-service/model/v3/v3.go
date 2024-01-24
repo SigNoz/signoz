@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -482,10 +483,50 @@ const (
 	SpaceAggregationCount       SpaceAggregation = "count"
 )
 
+type FunctionName string
+
+const (
+	FunctionNameCutOffMin FunctionName = "cutOffMin"
+	FunctionNameCutOffMax FunctionName = "cutOffMax"
+	FunctionNameClampMin  FunctionName = "clampMin"
+	FunctionNameClampMax  FunctionName = "clampMax"
+	FunctionNameAbsolute  FunctionName = "absolute"
+	FunctionNameLog2      FunctionName = "log2"
+	FunctionNameLog10     FunctionName = "log10"
+	FunctionNameCumSum    FunctionName = "cumSum"
+	FunctionNameEWMA3     FunctionName = "ewma3"
+	FunctionNameEWMA5     FunctionName = "ewma5"
+	FunctionNameEWMA7     FunctionName = "ewma7"
+	FunctionNameMedian3   FunctionName = "median3"
+	FunctionNameMedian5   FunctionName = "median5"
+	FunctionNameMedian7   FunctionName = "median7"
+)
+
+func (f FunctionName) Validate() error {
+	switch f {
+	case FunctionNameCutOffMin,
+		FunctionNameCutOffMax,
+		FunctionNameClampMin,
+		FunctionNameClampMax,
+		FunctionNameAbsolute,
+		FunctionNameLog2,
+		FunctionNameLog10,
+		FunctionNameCumSum,
+		FunctionNameEWMA3,
+		FunctionNameEWMA5,
+		FunctionNameEWMA7,
+		FunctionNameMedian3,
+		FunctionNameMedian5,
+		FunctionNameMedian7:
+		return nil
+	default:
+		return fmt.Errorf("invalid function name: %s", f)
+	}
+}
+
 type Function struct {
-	Category string        `json:"category"`
-	Name     string        `json:"name"`
-	Args     []interface{} `json:"args,omitempty"`
+	Name FunctionName  `json:"name"`
+	Args []interface{} `json:"args,omitempty"`
 }
 
 type BuilderQuery struct {
@@ -562,6 +603,14 @@ func (b *BuilderQuery) Validate() error {
 		}
 	}
 
+	if b.Having != nil {
+		for _, having := range b.Having {
+			if err := having.Operator.Validate(); err != nil {
+				return fmt.Errorf("having operator is invalid: %w", err)
+			}
+		}
+	}
+
 	for _, selectColumn := range b.SelectColumns {
 		if err := selectColumn.Validate(); err != nil {
 			return fmt.Errorf("select column is invalid %w", err)
@@ -571,6 +620,15 @@ func (b *BuilderQuery) Validate() error {
 	if b.Expression == "" {
 		return fmt.Errorf("expression is required")
 	}
+
+	if len(b.Functions) > 0 {
+		for _, function := range b.Functions {
+			if err := function.Name.Validate(); err != nil {
+				return fmt.Errorf("function name is invalid: %w", err)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -655,10 +713,43 @@ type OrderBy struct {
 	IsColumn   bool                 `json:"-"`
 }
 
+// See HAVING_OPERATORS in queryBuilder.ts
+
+type HavingOperator string
+
+const (
+	HavingOperatorEqual           HavingOperator = "="
+	HavingOperatorNotEqual        HavingOperator = "!="
+	HavingOperatorGreaterThan     HavingOperator = ">"
+	HavingOperatorGreaterThanOrEq HavingOperator = ">="
+	HavingOperatorLessThan        HavingOperator = "<"
+	HavingOperatorLessThanOrEq    HavingOperator = "<="
+	HavingOperatorIn              HavingOperator = "IN"
+	HavingOperatorNotIn           HavingOperator = "NOT_IN"
+)
+
+func (h HavingOperator) Validate() error {
+	switch h {
+	case HavingOperatorEqual,
+		HavingOperatorNotEqual,
+		HavingOperatorGreaterThan,
+		HavingOperatorGreaterThanOrEq,
+		HavingOperatorLessThan,
+		HavingOperatorLessThanOrEq,
+		HavingOperatorIn,
+		HavingOperatorNotIn,
+		HavingOperator(strings.ToLower(string(HavingOperatorIn))),
+		HavingOperator(strings.ToLower(string(HavingOperatorNotIn))):
+		return nil
+	default:
+		return fmt.Errorf("invalid having operator: %s", h)
+	}
+}
+
 type Having struct {
-	ColumnName string      `json:"columnName"`
-	Operator   string      `json:"op"`
-	Value      interface{} `json:"value"`
+	ColumnName string         `json:"columnName"`
+	Operator   HavingOperator `json:"op"`
+	Value      interface{}    `json:"value"`
 }
 
 func (h *Having) CacheKey() string {
