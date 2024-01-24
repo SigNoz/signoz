@@ -91,7 +91,7 @@ type ListLogViewProps = {
 	selectedFields: IField[];
 	onSetActiveLog: (log: ILog) => void;
 	onAddToQuery: AddToQueryHOCProps['onAddToQuery'];
-	activeLog?: ILog;
+	activeLog?: ILog | null;
 };
 
 function ListLogView({

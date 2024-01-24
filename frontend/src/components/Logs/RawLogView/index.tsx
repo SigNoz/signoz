@@ -51,8 +51,6 @@ function RawLogView({
 		onAddToQuery,
 	} = useActiveLog();
 
-	console.log(activeLog, data.id);
-
 	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
 	const [selectedTab, setSelectedTab] = useState<VIEWS | undefined>();
 
