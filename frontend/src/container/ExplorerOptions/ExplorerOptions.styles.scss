@@ -1,3 +1,17 @@
+.explorer-update {
+	position: fixed;
+	bottom: 16px;
+	left: calc(25% + 240px);
+	display: flex;
+	gap: 16px;
+	padding: 8px 16px;
+	border-radius: 50px;
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	background: rgba(22, 24, 29, 0.6);
+	box-shadow: 4px 4px 16px 4px rgba(0, 0, 0, 0.25);
+	backdrop-filter: blur(20px);
+}
+
 .explorer-options {
 	display: flex;
 	gap: 16px;
@@ -38,7 +52,6 @@
 			&.ant-btn-round {
 				padding-inline-start: 10px;
 				padding-inline-end: 8px;
-
 				font-weight: 500;
 			}
 
@@ -63,6 +76,28 @@
 		}
 	}
 }
+
+.render-options {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 0 2px;
+	color: var(--bg-vanilla-400);
+	font-family: Inter;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 20px; /* 142.857% */
+	letter-spacing: -0.07px;
+
+	.dot {
+		min-height: 6px;
+		min-width: 6px;
+		border-radius: 50%;
+	}
+}
+
+
 
 .lightMode {
 	.explorer-options {

@@ -1,6 +1,7 @@
 import './ExplorerOptions.styles.scss';
 
-import { Button, Modal, Select, Tooltip } from 'antd';
+import { Color } from '@signozhq/design-tokens';
+import { Button, Divider, Modal, Select } from 'antd';
 import axios from 'axios';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -16,11 +17,24 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { ConciergeBell, Disc3, Plus } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { ConciergeBell, Disc3, Plus, X } from 'lucide-react';
+import { CSSProperties, useCallback, useState } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+
+import { getRandomColor } from './utils';
+
+const dropdownStyle: CSSProperties = {
+	borderRadius: '4px',
+	border: `1px solid ${Color.BG_SLATE_400}`,
+	background:
+		'linear-gradient(139deg, rgba(18, 19, 23, 0.80) 0%, rgba(18, 19, 23, 0.90) 98.68%)',
+	boxShadow: '4px 10px 16px 2px rgba(0, 0, 0, 0.20)',
+	backdropFilter: 'blur(20px)',
+	bottom: '74px',
+	width: '191px',
+};
 
 function ExplorerOptions({
 	disabled,
@@ -142,6 +156,15 @@ function ExplorerOptions({
 
 	return (
 		<>
+			<div className="explorer-update">
+				<div className="action-icon">
+					<X size={14} />
+				</div>
+				<Divider type="vertical" />
+				<div className="action-icon">
+					<Disc3 size={14} />
+				</div>
+			</div>
 			<div className="explorer-options">
 				{viewsData?.data.data && viewsData?.data.data.length && (
 					<>
@@ -149,19 +172,32 @@ function ExplorerOptions({
 							<Select<string, { key: string; value: string }>
 								showSearch
 								placeholder="Select a view"
-								optionFilterProp="children"
 								loading={viewsIsLoading || isRefetching}
 								value={viewName || undefined}
 								onSelect={handleSelect}
 								style={{
-									minWidth: 100,
+									minWidth: 170,
 								}}
+								dropdownStyle={dropdownStyle}
+								className="views-dropdown"
 							>
-								{viewsData?.data.data.map((view) => (
-									<Select.Option key={view.uuid} value={view.name}>
-										<Tooltip title={view.name}>{view.name}</Tooltip>
-									</Select.Option>
-								))}
+								{viewsData?.data.data.map((view) => {
+									const bgColor = getRandomColor();
+									return (
+										<Select.Option key={view.uuid} value={view.name}>
+											<div className="render-options">
+												<span
+													className="dot"
+													style={{
+														background: bgColor,
+														boxShadow: `0px 0px 6px 0px ${bgColor}`,
+													}}
+												/>{' '}
+												{view.name}
+											</div>
+										</Select.Option>
+									);
+								})}
 							</Select>
 
 							<Button
