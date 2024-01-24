@@ -41,6 +41,10 @@ const GetMinMax = (
 		// three day = one day * 3
 		const minTimeAgo = getMinAgo({ minutes: 24 * 60 * 3 }).getTime();
 		minTime = minTimeAgo;
+	} else if (interval === '4days') {
+		// four day = one day * 4
+		const minTimeAgo = getMinAgo({ minutes: 24 * 60 * 4 }).getTime();
+		minTime = minTimeAgo;
 	} else if (interval === '10days') {
 		// ten day = one day * 10
 		const minTimeAgo = getMinAgo({ minutes: 24 * 60 * 10 }).getTime();
@@ -53,11 +57,15 @@ const GetMinMax = (
 		// two week = one day * 14
 		const minTimeAgo = getMinAgo({ minutes: 24 * 60 * 14 }).getTime();
 		minTime = minTimeAgo;
+	} else if (interval === '6weeks') {
+		// six week = one day * 42
+		const minTimeAgo = getMinAgo({ minutes: 24 * 60 * 42 }).getTime();
+		minTime = minTimeAgo;
 	} else if (interval === '2months') {
 		// two months = one day * 60
 		const minTimeAgo = getMinAgo({ minutes: 24 * 60 * 60 }).getTime();
 		minTime = minTimeAgo;
-	} else if (['4hr', '6hr', '12hr'].includes(interval)) {
+	} else if (['3hr', '4hr', '6hr', '12hr'].includes(interval)) {
 		const h = parseInt(interval.replace('hr', ''), 10);
 		const minTimeAgo = getMinAgo({ minutes: h * 60 }).getTime();
 		minTime = minTimeAgo;
