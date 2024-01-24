@@ -1,8 +1,9 @@
+import './CustomTimePicker.styles.scss';
+
 import { Button, DatePicker } from 'antd';
 import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
-	FixedDurationSuggestionOptions,
 	Option,
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
@@ -102,16 +103,10 @@ function CustomTimePickerPopoverContent({
 						onCalendarChange={onModalOkHandler}
 					/>
 				) : (
-					<>
-						<div>
-							<div className="time-heading">RELATIVE TIMES</div>
-							<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
-						</div>
-						<div>
-							<div className="time-heading">FIXED TIMES</div>
-							<div>{getTimeChips(FixedDurationSuggestionOptions)}</div>
-						</div>
-					</>
+					<div>
+						<div className="time-heading">RELATIVE TIMES</div>
+						<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
+					</div>
 				)}
 			</div>
 		</div>
