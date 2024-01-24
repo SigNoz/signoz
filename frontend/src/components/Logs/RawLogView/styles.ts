@@ -16,9 +16,13 @@ export const RawLogViewContainer = styled(Row)<{
 	width: 100%;
 
 	display: flex;
-	alignitems: center;
+	align-items: stretch;
 
 	transition: background-color 0.2s ease-in;
+
+	.log-state-indicator {
+		margin: 4px 0;
+	}
 
 	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
 
