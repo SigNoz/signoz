@@ -338,7 +338,7 @@ function DateTimeSelection({
 
 	return (
 		<div className="date-time-selector">
-			{!hasSelectedTimeError && (
+			{!hasSelectedTimeError && !refreshButtonHidden && (
 				<RefreshText
 					{...{
 						onLastRefreshHandler,

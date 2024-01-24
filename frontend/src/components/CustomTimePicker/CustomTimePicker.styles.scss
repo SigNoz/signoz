@@ -60,6 +60,26 @@
 	font-weight: 400 !important;
 }
 
+.info-text {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px;
+	cursor: default;
+	color: var(--bg-vanilla-400, #c0c1c3) !important;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: normal;
+	letter-spacing: 0.14px;
+}
+
+.info-text:hover {
+	&.ant-btn-text {
+		background-color: unset !important;
+	}
+}
+
 .lightMode {
 	.time-options-container {
 		.time-options-item {
@@ -93,5 +113,9 @@
 		input:focus::placeholder {
 			color: rgba($color: #000000, $alpha: 0.4);
 		}
+	}
+
+	.info-text {
+		color: var(--bg-slate-400) !important;
 	}
 }
