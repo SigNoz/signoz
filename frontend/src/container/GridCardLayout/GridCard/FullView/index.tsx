@@ -105,7 +105,7 @@ function FullView({
 		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
 
-	const chartData = getUPlotChartData(response?.data?.payload);
+	const chartData = getUPlotChartData(response?.data?.payload, widget.fillSpans);
 
 	const isDarkMode = useIsDarkMode();
 
