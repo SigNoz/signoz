@@ -267,11 +267,11 @@ func ApplyFunction(fn v3.Function, result *v3.Result) *v3.Result {
 		if !ok {
 			// alpha = 2 / (n + 1) where n is the window size
 			if fn.Name == v3.FunctionNameEWMA3 {
-				alpha = 0.5
+				alpha = 0.5 // 2 / (3 + 1)
 			} else if fn.Name == v3.FunctionNameEWMA5 {
-				alpha = 0.34
+				alpha = 1 / float64(3) // 2 / (5 + 1)
 			} else if fn.Name == v3.FunctionNameEWMA7 {
-				alpha = 0.25
+				alpha = 0.25 // 2 / (7 + 1)
 			}
 		}
 		return funcEWMA(result, alpha)
