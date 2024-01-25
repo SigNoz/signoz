@@ -76,7 +76,12 @@ function VariableItem({
 		const variableName = variableData.name || '';
 
 		dependentVariables?.forEach((element) => {
-			dependentVariablesStr += `${element}${existingVariables[element]?.selectedValue}`;
+			const [, variable] =
+				Object.entries(existingVariables).find(
+					([, value]) => value.name === element,
+				) || [];
+
+			dependentVariablesStr += `${element}${variable?.selectedValue}`;
 		});
 
 		const variableKey = dependentVariablesStr.replace(/\s/g, '');
@@ -219,7 +224,7 @@ function VariableItem({
 			placement="top"
 			title={isDashboardLocked ? 'Dashboard is locked' : ''}
 		>
-			<VariableContainer>
+			<VariableContainer className="variable-item">
 				<Typography.Text className="variable-name" ellipsis>
 					${variableData.name}
 				</Typography.Text>
@@ -246,12 +251,14 @@ function VariableItem({
 								onChange={handleChange}
 								bordered={false}
 								placeholder="Select value"
+								placement="bottomRight"
 								mode={mode}
 								dropdownMatchSelectWidth={false}
 								style={SelectItemStyle}
 								loading={isLoading}
 								showSearch
 								data-testid="variable-select"
+								className="variable-select"
 								disabled={isDashboardLocked}
 							>
 								{enableSelectAll && (
