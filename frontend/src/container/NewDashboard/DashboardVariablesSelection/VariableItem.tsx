@@ -14,6 +14,7 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle, VariableContainer, VariableValue } from './styles';
@@ -260,6 +261,7 @@ function VariableItem({
 								data-testid="variable-select"
 								className="variable-select"
 								disabled={isDashboardLocked}
+								getPopupContainer={popupContainer}
 							>
 								{enableSelectAll && (
 									<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
