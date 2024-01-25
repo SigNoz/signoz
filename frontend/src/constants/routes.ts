@@ -43,6 +43,6 @@ const ROUTES = {
 	SUPPORT: '/support',
 	SAVE_VIEWS: '/save-views',
 	WORKSPACE_LOCKED: '/workspace-locked',
-};
+} as const;
 
 export default ROUTES;

@@ -10,12 +10,17 @@ import {
 	TableProps,
 	Typography,
 } from 'antd';
-import { showErrorNotification } from 'components/ExplorerCard/utils';
+import {
+	getViewDetailsUsingViewKey,
+	showErrorNotification,
+} from 'components/ExplorerCard/utils';
+import ROUTES from 'constants/routes';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useUpdateView } from 'hooks/saveViews/useUpdateView';
 import useErrorNotification from 'hooks/useErrorNotification';
+import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import {
@@ -157,6 +162,27 @@ function SaveView(): JSX.Element {
 		);
 	};
 
+	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+
+	const handleRedirectQuery = (view: ViewProps): void => {
+		const currentViewDetails = getViewDetailsUsingViewKey(
+			view.uuid,
+			viewsData?.data.data,
+		);
+		if (!currentViewDetails) return;
+		const { query, name, uuid, panelType: currentPanelType } = currentViewDetails;
+
+		handleExplorerTabChange(
+			currentPanelType,
+			{
+				query,
+				name,
+				uuid,
+			},
+			ROUTES.LOGS_EXPLORER,
+		);
+	};
+
 	const columns: TableProps<ViewProps>['columns'] = [
 		{
 			title: 'Save View',
@@ -211,7 +237,7 @@ function SaveView(): JSX.Element {
 									size={14}
 									onClick={(): void => handleEditModelOpen(view, bgColor)}
 								/>
-								<Compass size={14} />
+								<Compass size={14} onClick={(): void => handleRedirectQuery(view)} />
 								<Trash2
 									size={14}
 									color={Color.BG_CHERRY_500}
