@@ -232,4 +232,64 @@
 			}
 		}
 	}
+
+	.render-options {
+		color: var(--bg-ink-200);
+	}
+
+	.explorer-update {
+		border: 1px solid var(--bg-vanilla-300);
+		background: transparent;
+		box-shadow: 4px 4px 16px 4px rgba(255, 255, 255, 0.55);
+		backdrop-filter: blur(20px);
+
+		.action-icon {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-300);
+		}
+	}
+
+	.ant-tooltip-arrow {
+		border-top-color: var(--bg-vanilla-300) !important;
+	}
+
+	.ant-tooltip-inner {
+		background-color: var(--bg-vanilla-300);
+		color: var(--bg-ink-200);
+	}
+
+	.save-view-modal {
+		.ant-modal-content {
+			background: var(--bg-vanilla-200);
+			border-color: var(--bg-vanilla-300);
+
+			.ant-modal-header {
+				background: var(--bg-vanilla-200);
+				border-bottom: 1px solid var(--bg-vanilla-300);
+			}
+
+			.ant-modal-body {
+				.ant-typography {
+					color: var(--bg-ink-200);
+				}
+
+				.ant-color-picker-trigger {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-100);
+
+					.ant-color-picker-color-block {
+						.ant-color-picker-color-block-inner {
+							svg {
+								fill: var(--bg-ink-200);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		.title {
+			color: var(--bg-ink-200);
+		}
+	}
 }
