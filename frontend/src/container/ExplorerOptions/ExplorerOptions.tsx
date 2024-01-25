@@ -36,6 +36,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	DATASOURCE_VS_ROUTES,
+	generateRGBAFromHex,
 	getRandomColor,
 	saveNewViewHandler,
 } from './utils';
@@ -115,6 +116,12 @@ function ExplorerOptions({
 
 	const extraData = viewsData?.data.data.find((view) => view.uuid === viewKey)
 		?.extraData;
+
+	const extraDataColor = extraData ? JSON.parse(extraData).color : '';
+	const rgbaColor = generateRGBAFromHex(
+		extraDataColor || Color.BG_SIENNA_500,
+		0.08,
+	);
 
 	const {
 		mutateAsync: updateViewAsync,
@@ -251,7 +258,15 @@ function ExplorerOptions({
 					</Tooltip>
 				</div>
 			)}
-			<div className="explorer-options">
+			<div
+				className="explorer-options"
+				style={{
+					background: extraData
+						? `linear-gradient(90deg, rgba(0,0,0,0) -5%, ${rgbaColor} 9%, rgba(0,0,0,0) 30%)`
+						: 'transparent',
+					backdropFilter: 'blur(20px)',
+				}}
+			>
 				{viewsData?.data.data && viewsData?.data.data.length && (
 					<>
 						<div className="view-options">
