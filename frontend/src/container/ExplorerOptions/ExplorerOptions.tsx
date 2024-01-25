@@ -24,6 +24,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useSaveView } from 'hooks/saveViews/useSaveView';
 import { useUpdateView } from 'hooks/saveViews/useUpdateView';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
@@ -42,17 +43,6 @@ import {
 	saveNewViewHandler,
 } from './utils';
 
-const dropdownStyle: CSSProperties = {
-	borderRadius: '4px',
-	border: `1px solid ${Color.BG_SLATE_400}`,
-	background:
-		'linear-gradient(139deg, rgba(18, 19, 23, 0.80) 0%, rgba(18, 19, 23, 0.90) 98.68%)',
-	boxShadow: '4px 10px 16px 2px rgba(0, 0, 0, 0.20)',
-	backdropFilter: 'blur(20px)',
-	bottom: '74px',
-	width: '191px',
-};
-
 function ExplorerOptions({
 	disabled,
 	isLoading,
@@ -67,6 +57,7 @@ function ExplorerOptions({
 	const { notifications } = useNotifications();
 	const history = useHistory();
 	const ref = useRef<RefSelectProps>(null);
+	const isDarkMode = useIsDarkMode();
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
@@ -238,6 +229,20 @@ function ExplorerOptions({
 		});
 	};
 
+	const dropdownStyle: CSSProperties = {
+		borderRadius: '4px',
+		border: isDarkMode
+			? `1px solid ${Color.BG_SLATE_400}`
+			: `1px solid ${Color.BG_VANILLA_300}`,
+		background: isDarkMode
+			? 'linear-gradient(139deg, rgba(18, 19, 23, 0.80) 0%, rgba(18, 19, 23, 0.90) 98.68%)'
+			: 'linear-gradient(139deg, rgba(241, 241, 241, 0.8) 0%, rgba(241, 241, 241, 0.9) 98.68%)',
+		boxShadow: '4px 10px 16px 2px rgba(0, 0, 0, 0.20)',
+		backdropFilter: 'blur(20px)',
+		bottom: '74px',
+		width: '191px',
+	};
+
 	return (
 		<>
 			{isQueryUpdated && (
@@ -251,7 +256,12 @@ function ExplorerOptions({
 					</Tooltip>
 					<Divider
 						type="vertical"
-						style={{ height: '28px', border: `1px solid ${Color.BG_SLATE_400}` }}
+						style={{
+							height: '28px',
+							border: isDarkMode
+								? `1px solid ${Color.BG_SLATE_400}`
+								: `1px solid ${Color.BG_VANILLA_300}`,
+						}}
 					/>
 					<Tooltip title="Update this view" placement="top">
 						<Button
