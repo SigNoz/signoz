@@ -8,6 +8,7 @@ import {
 	Input,
 	Modal,
 	Select,
+	Tooltip,
 	Typography,
 } from 'antd';
 import axios from 'axios';
@@ -112,13 +113,16 @@ function ExplorerOptions({
 	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
 
+	const extraData = viewsData?.data.data.find((view) => view.uuid === viewKey)
+		?.extraData;
+
 	const {
 		mutateAsync: updateViewAsync,
 		isLoading: isViewUpdating,
 	} = useUpdateView({
 		compositeQuery,
 		viewKey,
-		extraData: JSON.stringify({ color }),
+		extraData: extraData || JSON.stringify({ color: Color.BG_SIENNA_500 }),
 		sourcePage: sourcepage,
 		viewName,
 	});
@@ -130,11 +134,13 @@ function ExplorerOptions({
 	};
 
 	const onUpdateQueryHandler = (): void => {
+		const extraData = viewsData?.data.data.find((view) => view.uuid === viewKey)
+			?.extraData;
 		updateViewAsync(
 			{
 				compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
 				viewKey,
-				extraData: JSON.stringify({ color }),
+				extraData: extraData || JSON.stringify({ color: Color.BG_SIENNA_500 }),
 				sourcePage: sourcepage,
 				viewName,
 			},
@@ -224,21 +230,25 @@ function ExplorerOptions({
 		<>
 			{isQueryUpdated && (
 				<div className="explorer-update">
-					<Button
-						className="action-icon"
-						onClick={handleClearSelect}
-						icon={<X size={14} />}
-					/>
+					<Tooltip title="Clear this view" placement="top">
+						<Button
+							className="action-icon"
+							onClick={handleClearSelect}
+							icon={<X size={14} />}
+						/>
+					</Tooltip>
 					<Divider
 						type="vertical"
 						style={{ height: '28px', border: `1px solid ${Color.BG_SLATE_400}` }}
 					/>
-					<Button
-						className="action-icon"
-						disabled={isViewUpdating}
-						onClick={onUpdateQueryHandler}
-						icon={<Disc3 size={14} />}
-					/>
+					<Tooltip title="Update this view" placement="top">
+						<Button
+							className="action-icon"
+							disabled={isViewUpdating}
+							onClick={onUpdateQueryHandler}
+							icon={<Disc3 size={14} />}
+						/>
+					</Tooltip>
 				</div>
 			)}
 			<div className="explorer-options">
