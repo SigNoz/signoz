@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './CustomTimePicker.styles.scss';
 
-import { Input, Popover, Tooltip } from 'antd';
+import { Input, Popover, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { Options } from 'container/TopNav/DateTimeSelection/config';
 import dayjs from 'dayjs';
@@ -11,8 +11,11 @@ import { CheckCircle, ChevronDown, Clock } from 'lucide-react';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+const maxAllowedMinTimeInMonths = 6;
+
 interface CustomTimePickerProps {
 	onSelect: (value: string) => void;
+	onError: (value: boolean) => void;
 	items: any[];
 	selectedValue: string;
 	selectedTime: string;
@@ -21,6 +24,7 @@ interface CustomTimePickerProps {
 
 function CustomTimePicker({
 	onSelect,
+	onError,
 	items,
 	selectedValue,
 	selectedTime,
@@ -34,6 +38,9 @@ function CustomTimePicker({
 
 	const [inputValue, setInputValue] = useState('');
 	const [inputStatus, setInputStatus] = useState<'' | 'error' | 'success'>('');
+	const [inputErrorMessage, setInputErrorMessage] = useState<string | null>(
+		null,
+	);
 	const [isInputFocused, setIsInputFocused] = useState(false);
 
 	const getSelectedTimeRangeLabel = (
@@ -71,6 +78,8 @@ function CustomTimePicker({
 		const isValidFormat = /^(\d+)([mhdw])$/.test(inputValue);
 		if (isValidFormat) {
 			setInputStatus('success');
+			onError(false);
+			setInputErrorMessage(null);
 
 			const match = inputValue.match(/^(\d+)([mhdw])$/);
 
@@ -78,6 +87,10 @@ function CustomTimePicker({
 			const unit = match[2];
 
 			const currentTime = dayjs();
+			const maxAllowedMinTime = currentTime.subtract(
+				maxAllowedMinTimeInMonths,
+				'month',
+			);
 			let minTime = null;
 
 			switch (unit) {
@@ -98,9 +111,17 @@ function CustomTimePicker({
 					break;
 			}
 
-			onValidCustomDateChange([minTime, currentTime]);
+			if (minTime && minTime < maxAllowedMinTime) {
+				setInputStatus('error');
+				onError(true);
+				setInputErrorMessage('Please enter time less than 6 months');
+			} else {
+				onValidCustomDateChange([minTime, currentTime]);
+			}
 		} else {
 			setInputStatus('error');
+			onError(true);
+			setInputErrorMessage(null);
 		}
 	}, 300);
 
@@ -128,6 +149,8 @@ function CustomTimePicker({
 							onSelect(value);
 							setSelectedTimePlaceholderValue(label);
 							setInputStatus('');
+							onError(false);
+							setInputErrorMessage(null);
 							setInputValue('');
 							hide();
 						}}
@@ -153,55 +176,62 @@ function CustomTimePicker({
 	};
 
 	return (
-		<Popover
-			placement="bottomRight"
-			getPopupContainer={popupContainer}
-			content={content}
-			arrow={false}
-			open={open}
-			onOpenChange={handleOpenChange}
-			trigger={['click']}
-			style={{
-				padding: 0,
-			}}
-		>
-			<Input
-				className="timeSelection-input"
-				type="text"
+		<div className="custom-time-picker">
+			<Popover
+				className={cx(
+					'timeSelection-input-container',
+					selectedTime === 'custom' && inputValue === '' ? 'custom-time' : '',
+				)}
+				placement="bottomRight"
+				getPopupContainer={popupContainer}
+				content={content}
+				arrow={false}
+				open={open}
+				onOpenChange={handleOpenChange}
+				trigger={['click']}
 				style={{
-					minWidth: '120px',
-					width: '100%',
+					padding: 0,
 				}}
-				status={inputValue && inputStatus === 'error' ? 'error' : ''}
-				allowClear={!isInputFocused && selectedTime === 'custom'}
-				placeholder={
-					isInputFocused
-						? 'Time Format (1m or 2h or 3d or 4w)'
-						: selectedTimePlaceholderValue
-				}
-				value={inputValue}
-				onFocus={handleFocus}
-				onBlur={handleBlur}
-				onChange={handleInputChange}
-				prefix={
-					inputValue && inputStatus === 'success' ? (
-						<CheckCircle size={14} color="#51E7A8" />
-					) : (
-						<Tooltip title="Enter time in format (e.g., 1m, 2h, 2d, 4w)">
-							<Clock size={14} />
-						</Tooltip>
-					)
-				}
-				suffix={
-					<ChevronDown
-						size={14}
-						onClick={(): void => {
-							setOpen(!open);
-						}}
-					/>
-				}
-			/>
-		</Popover>
+			>
+				<Input
+					className="timeSelection-input"
+					type="text"
+					status={inputValue && inputStatus === 'error' ? 'error' : ''}
+					placeholder={
+						isInputFocused
+							? 'Time Format (1m or 2h or 3d or 4w)'
+							: selectedTimePlaceholderValue
+					}
+					value={inputValue}
+					onFocus={handleFocus}
+					onBlur={handleBlur}
+					onChange={handleInputChange}
+					prefix={
+						inputValue && inputStatus === 'success' ? (
+							<CheckCircle size={14} color="#51E7A8" />
+						) : (
+							<Tooltip title="Enter time in format (e.g., 1m, 2h, 3d, 4w)">
+								<Clock size={14} />
+							</Tooltip>
+						)
+					}
+					suffix={
+						<ChevronDown
+							size={14}
+							onClick={(): void => {
+								setOpen(!open);
+							}}
+						/>
+					}
+				/>
+			</Popover>
+
+			{inputStatus === 'error' && inputErrorMessage && (
+				<Typography.Title level={5} className="valid-format-error">
+					{inputErrorMessage}
+				</Typography.Title>
+			)}
+		</div>
 	);
 }
 

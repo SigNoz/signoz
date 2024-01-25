@@ -502,6 +502,7 @@ func IsPercentileOperator(operator SpaceAggregation) bool {
 }
 
 func GetPercentileFromOperator(operator SpaceAggregation) float64 {
+	// This could be done with a map, but it's just easier to read this way
 	switch operator {
 	case SpaceAggregationPercentile50:
 		return 0.5
@@ -518,10 +519,50 @@ func GetPercentileFromOperator(operator SpaceAggregation) float64 {
 	}
 }
 
+type FunctionName string
+
+const (
+	FunctionNameCutOffMin FunctionName = "cutOffMin"
+	FunctionNameCutOffMax FunctionName = "cutOffMax"
+	FunctionNameClampMin  FunctionName = "clampMin"
+	FunctionNameClampMax  FunctionName = "clampMax"
+	FunctionNameAbsolute  FunctionName = "absolute"
+	FunctionNameLog2      FunctionName = "log2"
+	FunctionNameLog10     FunctionName = "log10"
+	FunctionNameCumSum    FunctionName = "cumSum"
+	FunctionNameEWMA3     FunctionName = "ewma3"
+	FunctionNameEWMA5     FunctionName = "ewma5"
+	FunctionNameEWMA7     FunctionName = "ewma7"
+	FunctionNameMedian3   FunctionName = "median3"
+	FunctionNameMedian5   FunctionName = "median5"
+	FunctionNameMedian7   FunctionName = "median7"
+)
+
+func (f FunctionName) Validate() error {
+	switch f {
+	case FunctionNameCutOffMin,
+		FunctionNameCutOffMax,
+		FunctionNameClampMin,
+		FunctionNameClampMax,
+		FunctionNameAbsolute,
+		FunctionNameLog2,
+		FunctionNameLog10,
+		FunctionNameCumSum,
+		FunctionNameEWMA3,
+		FunctionNameEWMA5,
+		FunctionNameEWMA7,
+		FunctionNameMedian3,
+		FunctionNameMedian5,
+		FunctionNameMedian7:
+		return nil
+	default:
+		return fmt.Errorf("invalid function name: %s", f)
+	}
+}
+
 type Function struct {
-	Category string        `json:"category"`
-	Name     string        `json:"name"`
-	Args     []interface{} `json:"args,omitempty"`
+	Name FunctionName  `json:"name"`
+	Args []interface{} `json:"args,omitempty"`
 }
 
 type BuilderQuery struct {
@@ -614,6 +655,15 @@ func (b *BuilderQuery) Validate() error {
 	if b.Expression == "" {
 		return fmt.Errorf("expression is required")
 	}
+
+	if len(b.Functions) > 0 {
+		for _, function := range b.Functions {
+			if err := function.Name.Validate(); err != nil {
+				return fmt.Errorf("function name is invalid: %w", err)
+			}
+		}
+	}
+
 	return nil
 }
 

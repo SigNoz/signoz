@@ -1,3 +1,5 @@
+import './DateTimeSelection.styles.scss';
+
 import { SyncOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -35,6 +37,8 @@ function DateTimeSelection({
 	globalTimeLoading,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
+
+	const [hasSelectedTimeError, setHasSelectedTimeError] = useState(false);
 
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
@@ -194,7 +198,7 @@ function DateTimeSelection({
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
+			history.push(generatedUrl);
 		}
 
 		if (!stagedQuery) {
@@ -209,7 +213,6 @@ function DateTimeSelection({
 	};
 
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
-		console.log('dateTimeRange', dateTimeRange);
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
@@ -231,7 +234,7 @@ function DateTimeSelection({
 						endTimeMoment?.toDate().getTime().toString(),
 					);
 					const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-					history.replace(generatedUrl);
+					history.push(generatedUrl);
 				}
 			}
 		}
@@ -277,11 +280,23 @@ function DateTimeSelection({
 		setRefreshButtonHidden(updatedTime === 'custom');
 
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
+
+		if (updatedTime !== 'custom') {
+			const { minTime, maxTime } = GetMinMax(updatedTime);
+			urlQuery.set(QueryParams.startTime, minTime.toString());
+			urlQuery.set(QueryParams.endTime, maxTime.toString());
+		} else {
+			urlQuery.set(QueryParams.startTime, preStartTime.toString());
+			urlQuery.set(QueryParams.endTime, preEndTime.toString());
+		}
+		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+		history.replace(generatedUrl);
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
 
 	return (
-		<>
+		<div className="date-time-selection-container">
 			<Form
 				form={formSelector}
 				layout="inline"
@@ -291,6 +306,9 @@ function DateTimeSelection({
 					<CustomTimePicker
 						onSelect={(value: unknown): void => {
 							onSelectHandler(value as Time);
+						}}
+						onError={(hasError: boolean): void => {
+							setHasSelectedTimeError(hasError);
 						}}
 						selectedTime={selectedTime}
 						onValidCustomDateChange={(dateTime): void =>
@@ -319,12 +337,14 @@ function DateTimeSelection({
 				</FormContainer>
 			</Form>
 
-			<RefreshText
-				{...{
-					onLastRefreshHandler,
-				}}
-				refreshButtonHidden={refreshButtonHidden}
-			/>
+			{!hasSelectedTimeError && selectedTime !== 'custom' && (
+				<RefreshText
+					{...{
+						onLastRefreshHandler,
+					}}
+					refreshButtonHidden={refreshButtonHidden}
+				/>
+			)}
 
 			<CustomDateTimeModal
 				visible={customDateTimeVisible}
@@ -333,7 +353,7 @@ function DateTimeSelection({
 					setCustomDTPickerVisible(false);
 				}}
 			/>
-		</>
+		</div>
 	);
 }
 

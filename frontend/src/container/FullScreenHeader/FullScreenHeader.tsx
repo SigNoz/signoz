@@ -1,10 +1,10 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './FullViewHeader.styles.scss';
+import './FullScreenHeader.styles.scss';
 
 import history from 'lib/history';
 
-export default function FullViewHeader({
+export default function FullScreenHeader({
 	overrideRoute,
 }: {
 	overrideRoute?: string;
@@ -13,7 +13,7 @@ export default function FullViewHeader({
 		history.push(overrideRoute || '/');
 	};
 	return (
-		<div className="full-view-header-container">
+		<div className="full-screen-header-container">
 			<div className="brand-logo" onClick={handleLogoClick}>
 				<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
 
@@ -23,6 +23,6 @@ export default function FullViewHeader({
 	);
 }
 
-FullViewHeader.defaultProps = {
+FullScreenHeader.defaultProps = {
 	overrideRoute: '/',
 };
