@@ -7,6 +7,7 @@ import {
 	Divider,
 	Input,
 	Modal,
+	RefSelectProps,
 	Select,
 	Tooltip,
 	Typography,
@@ -28,7 +29,7 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { Check, ConciergeBell, Disc3, Plus, X } from 'lucide-react';
-import { CSSProperties, useCallback, useState } from 'react';
+import { CSSProperties, useCallback, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -65,6 +66,7 @@ function ExplorerOptions({
 	const [color, setColor] = useState(Color.BG_SIENNA_500);
 	const { notifications } = useNotifications();
 	const history = useHistory();
+	const ref = useRef<RefSelectProps>(null);
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
@@ -199,6 +201,9 @@ function ExplorerOptions({
 		onMenuItemSelectHandler({
 			key: option.key,
 		});
+		if (ref.current) {
+			ref.current.blur();
+		}
 	};
 
 	const handleClearSelect = (): void => {
@@ -283,6 +288,7 @@ function ExplorerOptions({
 								className="views-dropdown"
 								allowClear
 								onClear={handleClearSelect}
+								ref={ref}
 							>
 								{viewsData?.data.data.map((view) => {
 									const extraData =
