@@ -15,6 +15,10 @@ export const ServiceMapPage = Loadable(
 	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
 );
 
+export const SaveViews = Loadable(
+	() => import(/* webpackChunkName: "SaveViews" */ 'pages/LogsModulePage'),
+);
+
 export const TracesExplorer = Loadable(
 	() =>
 		import(/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesExplorer'),
