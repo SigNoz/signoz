@@ -45,6 +45,7 @@ const getSelectValue = (
 	return selectedValue?.toString() || '';
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function VariableItem({
 	variableData,
 	existingVariables,
@@ -235,6 +236,7 @@ function VariableItem({
 							placeholder="Enter value"
 							disabled={isDashboardLocked}
 							bordered={false}
+							key={variableData.selectedValue?.toString()}
 							defaultValue={variableData.selectedValue?.toString()}
 							onChange={(e): void => {
 								debouncedHandleChange(e.target.value || '');
@@ -248,6 +250,11 @@ function VariableItem({
 						!errorMessage &&
 						optionsData && (
 							<Select
+								key={
+									selectValue && Array.isArray(selectValue)
+										? selectValue.join(' ')
+										: selectValue || variableData.id
+								}
 								defaultValue={selectValue}
 								onChange={handleChange}
 								bordered={false}
