@@ -25,7 +25,10 @@ func isSubset(super, sub map[string]string) bool {
 func findUniqueLabelSets(results []*v3.Result) []map[string]string {
 	uniqueSets := make([]map[string]string, 0)
 
+	// The size of the `results` small, It is the number of queries in the request
 	for _, result := range results {
+		// The size of the `result.Series` slice is usually small, It is the number of series in the query result.
+		// We will limit the number of series in the query result to order of 100-1000.
 		for _, series := range result.Series {
 			isUnique := true
 			for _, uSet := range uniqueSets {
@@ -46,16 +49,20 @@ func findUniqueLabelSets(results []*v3.Result) []map[string]string {
 func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, expression *govaluate.EvaluableExpression) (*v3.Series, error) {
 
 	uniqueTimestamps := make(map[int64]struct{})
-	// map[queryNmae]map[timestamp]value
+	// map[queryName]map[timestamp]value
 	seriesMap := make(map[string]map[int64]float64)
 	for _, result := range results {
 		var matchingSeries *v3.Series
+		// We try to find a series that matches the label set from the current query result
 		for _, series := range result.Series {
 			if isSubset(series.Labels, uniqueLabelSet) {
 				matchingSeries = series
 				break
 			}
 		}
+
+		// Prepare the seriesMap for quick lookup during evaluation
+		// seriesMap[queryName][timestamp]value contains the value of the series with the given queryName at the given timestamp
 		if matchingSeries != nil {
 			for _, point := range matchingSeries.Points {
 				if _, ok := seriesMap[result.QueryName]; !ok {
@@ -75,6 +82,8 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 			break
 		}
 	}
+
+	// There is no series that matches the label set from all queries
 	if doesNotHaveAllVars {
 		return nil, nil
 	}
@@ -109,6 +118,11 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 }
 
 // Main function to process the Results
+// A series can be "join"ed with other series if they have the same label set or one is a subset of the other.
+// 1. Find all unique label sets
+// 2. For each unique label set, find a series that matches the label set from each query result
+// 3. Join the series on timestamp and calculate the new values
+// 4. Return the new series
 func processResults(results []*v3.Result, expression *govaluate.EvaluableExpression) (*v3.Result, error) {
 	uniqueLabelSets := findUniqueLabelSets(results)
 	newSeries := make([]*v3.Series, 0)
