@@ -5,9 +5,9 @@ import { WarningOutlined } from '@ant-design/icons';
 import { Input, Popover, Select, Tooltip, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import useDebounce from 'hooks/useDebounce';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
+import { debounce } from 'lodash-es';
 import map from 'lodash-es/map';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useMemo, useState } from 'react';
@@ -55,23 +55,7 @@ function VariableItem({
 		[],
 	);
 
-	const [variableValue, setVaribleValue] = useState(
-		variableData?.selectedValue?.toString() || '',
-	);
-
-	const debouncedVariableValue = useDebounce(variableValue, 500);
-
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
-
-	useEffect(() => {
-		const { selectedValue } = variableData;
-
-		if (selectedValue) {
-			setVaribleValue(selectedValue?.toString());
-		}
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [variableData]);
 
 	const getDependentVariables = (queryValue: string): string[] => {
 		const matches = queryValue.match(variableRegexPattern);
@@ -204,6 +188,9 @@ function VariableItem({
 			}
 	};
 
+	// do not debounce the above function as we do not need debounce in select variables
+	const debouncedHandleChange = debounce(handleChange, 500);
+
 	const { selectedValue } = variableData;
 	const selectedValueStringified = useMemo(() => getSelectValue(selectedValue), [
 		selectedValue,
@@ -218,14 +205,6 @@ function VariableItem({
 			? 'multiple'
 			: undefined;
 	const enableSelectAll = variableData.multiSelect && variableData.showALLOption;
-
-	useEffect(() => {
-		if (debouncedVariableValue !== variableData?.selectedValue?.toString()) {
-			handleChange(debouncedVariableValue);
-		}
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [debouncedVariableValue]);
 
 	useEffect(() => {
 		// Fetch options for CUSTOM Type
@@ -250,9 +229,9 @@ function VariableItem({
 							placeholder="Enter value"
 							disabled={isDashboardLocked}
 							bordered={false}
-							value={variableValue}
+							defaultValue={variableData.selectedValue?.toString()}
 							onChange={(e): void => {
-								setVaribleValue(e.target.value || '');
+								debouncedHandleChange(e.target.value || '');
 							}}
 							style={{
 								width:
@@ -263,7 +242,7 @@ function VariableItem({
 						!errorMessage &&
 						optionsData && (
 							<Select
-								value={selectValue}
+								defaultValue={selectValue}
 								onChange={handleChange}
 								bordered={false}
 								placeholder="Select value"
@@ -271,7 +250,6 @@ function VariableItem({
 								dropdownMatchSelectWidth={false}
 								style={SelectItemStyle}
 								loading={isLoading}
-								showArrow
 								showSearch
 								data-testid="variable-select"
 								disabled={isDashboardLocked}

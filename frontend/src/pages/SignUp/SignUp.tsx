@@ -344,7 +344,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 									placeholder={t('placeholder_firstname')}
 									required
 									id="signupFirstName"
-									disabled={isDetailsDisable}
+									disabled={isDetailsDisable && form.getFieldValue('firstName')}
 								/>
 							</FormContainer.Item>
 						</div>
