@@ -29,7 +29,6 @@ function BasicInfo({
 	alertDef,
 	setAlertDef,
 }: BasicInfoProps): JSX.Element {
-	// init namespace for translations
 	const { t } = useTranslation('alerts');
 
 	const [
@@ -47,7 +46,6 @@ function BasicInfo({
 	}, []);
 
 	const handleBroadcastToAllChannels = (shouldBroadcast: boolean): void => {
-		console.log('evshouldBroadcastent', shouldBroadcast);
 		setShouldBroadCastToAllChannels(shouldBroadcast);
 
 		setAlertDef({
@@ -55,8 +53,6 @@ function BasicInfo({
 			broadcastToAll: shouldBroadcast,
 		});
 	};
-
-	console.log('shouldBroadCastToAllChannels', shouldBroadCastToAllChannels);
 
 	return (
 		<>
