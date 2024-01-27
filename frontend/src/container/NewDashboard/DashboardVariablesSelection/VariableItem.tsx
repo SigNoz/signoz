@@ -14,6 +14,7 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle, VariableContainer, VariableValue } from './styles';
@@ -44,6 +45,7 @@ const getSelectValue = (
 	return selectedValue?.toString() || '';
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function VariableItem({
 	variableData,
 	existingVariables,
@@ -76,7 +78,12 @@ function VariableItem({
 		const variableName = variableData.name || '';
 
 		dependentVariables?.forEach((element) => {
-			dependentVariablesStr += `${element}${existingVariables[element]?.selectedValue}`;
+			const [, variable] =
+				Object.entries(existingVariables).find(
+					([, value]) => value.name === element,
+				) || [];
+
+			dependentVariablesStr += `${element}${variable?.selectedValue}`;
 		});
 
 		const variableKey = dependentVariablesStr.replace(/\s/g, '');
@@ -219,7 +226,7 @@ function VariableItem({
 			placement="top"
 			title={isDashboardLocked ? 'Dashboard is locked' : ''}
 		>
-			<VariableContainer>
+			<VariableContainer className="variable-item">
 				<Typography.Text className="variable-name" ellipsis>
 					${variableData.name}
 				</Typography.Text>
@@ -229,6 +236,7 @@ function VariableItem({
 							placeholder="Enter value"
 							disabled={isDashboardLocked}
 							bordered={false}
+							key={variableData.selectedValue?.toString()}
 							defaultValue={variableData.selectedValue?.toString()}
 							onChange={(e): void => {
 								debouncedHandleChange(e.target.value || '');
@@ -242,17 +250,25 @@ function VariableItem({
 						!errorMessage &&
 						optionsData && (
 							<Select
+								key={
+									selectValue && Array.isArray(selectValue)
+										? selectValue.join(' ')
+										: selectValue || variableData.id
+								}
 								defaultValue={selectValue}
 								onChange={handleChange}
 								bordered={false}
 								placeholder="Select value"
+								placement="bottomRight"
 								mode={mode}
 								dropdownMatchSelectWidth={false}
 								style={SelectItemStyle}
 								loading={isLoading}
 								showSearch
 								data-testid="variable-select"
+								className="variable-select"
 								disabled={isDashboardLocked}
+								getPopupContainer={popupContainer}
 							>
 								{enableSelectAll && (
 									<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
