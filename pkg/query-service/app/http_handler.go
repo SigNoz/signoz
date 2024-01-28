@@ -335,6 +335,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v4").Subrouter()
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV4)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
@@ -537,7 +538,7 @@ func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParam
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
 		for _, query := range qp.CompositeQuery.BuilderQueries {
-			if query.DataSource == v3.DataSourceMetrics {
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
 				metricNames = append(metricNames, query.AggregateAttribute.Key)
 				if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
 					metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
@@ -3179,12 +3180,24 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			zap.S().Debug("done!")
 			return
 		case err := <-client.Error:
-			zap.S().Error("error occured!", err)
+			zap.S().Error("error occurred!", err)
 			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
 			flusher.Flush()
 			return
 		}
 	}
+}
+
+func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
+	metricName := r.URL.Query().Get("metricName")
+	serviceName := r.URL.Query().Get("serviceName")
+	metricMetadata, err := aH.reader.GetMetricMetadata(r.Context(), metricName, serviceName)
+	if err != nil {
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		return
+	}
+
+	aH.WriteJSON(w, r, metricMetadata)
 }
 
 func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
@@ -3244,7 +3257,6 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add temporality for each metric
-
 	temporalityErr := aH.addTemporality(r.Context(), queryRangeParams)
 	if temporalityErr != nil {
 		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)

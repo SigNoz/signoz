@@ -969,7 +969,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
-	// prepare the variables for the corrspnding query type
+	// prepare the variables for the corresponding query type
 	formattedVars := make(map[string]interface{})
 	for name, value := range queryRangeParams.Variables {
 		if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
