@@ -46,10 +46,7 @@ type PostableRule struct {
 	Disabled bool `json:"disabled"`
 
 	// Source captures the source url where rule has been created
-	Source         string            `json:"source,omitempty"`
-	RelatedLogs    map[string]string `json:"relatedLogs,omitempty"`
-	RelatedTraces  map[string]string `json:"relatedTraces,omitempty"`
-	RelatedMetrics map[string]string `json:"relatedMetrics,omitempty"`
+	Source string `json:"source,omitempty"`
 
 	PreferredChannels []string `json:"preferredChannels,omitempty"`
 
@@ -248,4 +245,25 @@ type GettableRule struct {
 	CreatedBy *string    `json:"createBy"`
 	UpdatedAt *time.Time `json:"updateAt"`
 	UpdatedBy *string    `json:"updateBy"`
+}
+
+type timeRange struct {
+	Start    int64 `json:"start"`
+	End      int64 `json:"end"`
+	PageSize int64 `json:"pageSize"`
+}
+
+type builderQuery struct {
+	QueryData []v3.BuilderQuery `json:"queryData"`
+}
+
+type urlShareableCompositeQuery struct {
+	QueryType string       `json:"queryType"`
+	Builder   builderQuery `json:"builder"`
+}
+
+type Options struct {
+	MaxLines      int               `json:"maxLines"`
+	Format        string            `json:"format"`
+	SelectColumns []v3.AttributeKey `json:"selectColumns"`
 }

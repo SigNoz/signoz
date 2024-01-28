@@ -7,9 +7,9 @@ import (
 
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
 func TestThresholdRuleCombinations(t *testing.T) {
@@ -340,7 +340,7 @@ func TestNormalizeLabelName(t *testing.T) {
 func TestPrepareLinksToLogs(t *testing.T) {
 	postableRule := PostableRule{
 		Alert:      "Tricky Condition Tests",
-		AlertType:  "METRIC_BASED_ALERT",
+		AlertType:  "LOGS_BASED_ALERT",
 		RuleType:   RuleTypeThreshold,
 		EvalWindow: Duration(5 * time.Minute),
 		Frequency:  Duration(1 * time.Minute),
@@ -352,36 +352,18 @@ func TestPrepareLinksToLogs(t *testing.T) {
 						QueryName:    "A",
 						StepInterval: 60,
 						AggregateAttribute: v3.AttributeKey{
-							Key: "probe_success",
+							Key: "",
 						},
 						AggregateOperator: v3.AggregateOperatorNoOp,
-						DataSource:        v3.DataSourceMetrics,
+						DataSource:        v3.DataSourceLogs,
 						Expression:        "A",
-					},
-					"B": {
-						QueryName:    "B",
-						StepInterval: 60,
-						AggregateAttribute: v3.AttributeKey{
-							Key: "probe_success",
-						},
-						AggregateOperator: v3.AggregateOperatorNoOp,
-						DataSource:        v3.DataSourceMetrics,
-						Expression:        "B",
-					},
-					"F1": {
-						QueryName:  "F1",
-						Expression: "A/B",
 					},
 				},
 			},
-			CompareOp: "4", // Not Equals
-			MatchType: "1", // Once
-			Target:    &[]float64{0.0}[0],
-		},
-		// The time range is the main thing tested here so we don't care about the log query
-		RelatedLogs: map[string]string{
-			"A": "",
-			"B": "",
+			CompareOp:     "4", // Not Equals
+			MatchType:     "1", // Once
+			Target:        &[]float64{0.0}[0],
+			SelectedQuery: "A",
 		},
 	}
 	fm := featureManager.StartManager()
@@ -393,15 +375,14 @@ func TestPrepareLinksToLogs(t *testing.T) {
 
 	ts := time.UnixMilli(1705469040000)
 
-	links := rule.prepareLinksToLogs(ts)
-	require.Equal(t, 2, len(links))
-	assert.Equal(t, links["A"], "?timeRange=%7B%22start%22%3A1705468740000%2C%22end%22%3A1705469040000%2C%22pageSize%22%3A100%7D&startTime=1705468740000&endTime=1705469040000")
+	link := rule.prepareLinksToLogs(ts, labels.Labels{})
+	assert.Contains(t, link, "?timeRange=%7B%22start%22%3A1705468740000%2C%22end%22%3A1705469040000%2C%22pageSize%22%3A100%7D&startTime=1705468740000&endTime=1705469040000")
 }
 
 func TestPrepareLinksToTraces(t *testing.T) {
 	postableRule := PostableRule{
 		Alert:      "Links to traces test",
-		AlertType:  "TRACE_BASED_ALERT",
+		AlertType:  "TRACES_BASED_ALERT",
 		RuleType:   RuleTypeThreshold,
 		EvalWindow: Duration(5 * time.Minute),
 		Frequency:  Duration(1 * time.Minute),
@@ -419,30 +400,12 @@ func TestPrepareLinksToTraces(t *testing.T) {
 						DataSource:        v3.DataSourceTraces,
 						Expression:        "A",
 					},
-					"B": {
-						QueryName:    "B",
-						StepInterval: 60,
-						AggregateAttribute: v3.AttributeKey{
-							Key: "durationNano",
-						},
-						AggregateOperator: v3.AggregateOperatorAvg,
-						DataSource:        v3.DataSourceTraces,
-						Expression:        "B",
-					},
-					"F1": {
-						QueryName:  "F1",
-						Expression: "A/B",
-					},
 				},
 			},
-			CompareOp: "4", // Not Equals
-			MatchType: "1", // Once
-			Target:    &[]float64{0.0}[0],
-		},
-		// The time range is the main thing tested here so we don't care about the log query
-		RelatedTraces: map[string]string{
-			"A": "",
-			"B": "",
+			CompareOp:     "4", // Not Equals
+			MatchType:     "1", // Once
+			Target:        &[]float64{0.0}[0],
+			SelectedQuery: "A",
 		},
 	}
 	fm := featureManager.StartManager()
@@ -454,7 +417,6 @@ func TestPrepareLinksToTraces(t *testing.T) {
 
 	ts := time.UnixMilli(1705469040000)
 
-	links := rule.prepareLinksToTraces(ts)
-	require.Equal(t, 2, len(links))
-	assert.Equal(t, links["A"], "?timeRange=%7B%22start%22%3A1705468740000000000%2C%22end%22%3A1705469040000000000%2C%22pageSize%22%3A100%7D&startTime=1705468740000000000&endTime=1705469040000000000")
+	link := rule.prepareLinksToTraces(ts, labels.Labels{})
+	assert.Contains(t, link, "?timeRange=%7B%22start%22%3A1705468740000000000%2C%22end%22%3A1705469040000000000%2C%22pageSize%22%3A100%7D&startTime=1705468740000000000&endTime=1705469040000000000")
 }
