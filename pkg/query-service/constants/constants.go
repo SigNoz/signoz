@@ -352,3 +352,5 @@ const TIMESTAMP = "timestamp"
 
 const FirstQueryGraphLimit = "first_query_graph_limit"
 const SecondQueryGraphLimit = "second_query_graph_limit"
+
+const MaxSeriesForGraphPanel = 64
