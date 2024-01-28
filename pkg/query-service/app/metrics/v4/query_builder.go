@@ -21,6 +21,11 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 
 	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, mq.TimeAggregation)
 
+	if mq.ShiftBy != 0 {
+		start = start - mq.ShiftBy*1000
+		end = end - mq.ShiftBy*1000
+	}
+
 	groupBy := helpers.GroupByAttributeKeyTags(mq.GroupBy...)
 	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
 

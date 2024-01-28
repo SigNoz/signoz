@@ -536,6 +536,7 @@ const (
 	FunctionNameMedian3   FunctionName = "median3"
 	FunctionNameMedian5   FunctionName = "median5"
 	FunctionNameMedian7   FunctionName = "median7"
+	FunctionNameTimeShift FunctionName = "timeShift"
 )
 
 func (f FunctionName) Validate() error {
@@ -587,6 +588,7 @@ type BuilderQuery struct {
 	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
 	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
 	Functions          []Function        `json:"functions,omitempty"`
+	ShiftBy            int64
 }
 
 func (b *BuilderQuery) Validate() error {

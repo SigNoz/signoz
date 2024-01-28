@@ -1011,6 +1011,24 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 					}
 				}
 			}
+
+			var timeShiftBy int64
+			if len(query.Functions) > 0 {
+				for idx := range query.Functions {
+					function := &query.Functions[idx]
+					if function.Name == v3.FunctionNameTimeShift {
+						// move the function to the beginning of the list
+						var fns []v3.Function
+						fns = append(fns, *function)
+						fns = append(fns, query.Functions[:idx]...)
+						fns = append(fns, query.Functions[idx+1:]...)
+						query.Functions = fns
+						timeShiftBy = int64(function.Args[0].(float64))
+						break
+					}
+				}
+			}
+			query.ShiftBy = timeShiftBy
 		}
 	}
 	queryRangeParams.Variables = formattedVars
