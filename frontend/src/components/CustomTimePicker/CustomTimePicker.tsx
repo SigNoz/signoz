@@ -239,6 +239,7 @@ function CustomTimePicker({
 							onSelectHandler={handleSelect}
 							handleGoLive={defaultTo(handleGoLive, noop)}
 							options={items}
+							selectedTime={selectedTime}
 						/>
 					) : (
 						content
