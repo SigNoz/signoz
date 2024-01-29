@@ -126,7 +126,7 @@ func TestGrokProcessor(t *testing.T) {
 	require.Nil(err)
 	testPipelines[0].Config = append(testPipelines[0].Config, parserOp)
 
-	testStatusCode := 404
+	testStatusCode := int64(404)
 	testLog := makeTestSignozLog(
 		fmt.Sprintf("some http log with status: %d and some more text", testStatusCode),
 		map[string]interface{}{
