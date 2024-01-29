@@ -18,7 +18,7 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -35,6 +35,7 @@ function QuerySection({
 	selectedTime,
 }: QueryProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const [currentTab, setCurrentTab] = useState(currentQuery.queryType);
 	const urlQuery = useUrlQuery();
 
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -114,6 +115,7 @@ function QuerySection({
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
 		const currentQueryType = qCategory as EQueryType;
+		setCurrentTab(qCategory as EQueryType);
 
 		featureResponse.refetch().then(() => {
 			handleStageQuery({ ...currentQuery, queryType: currentQueryType });
@@ -172,8 +174,8 @@ function QuerySection({
 			<Tabs
 				type="card"
 				style={{ width: '100%' }}
-				defaultActiveKey={currentQuery.queryType}
-				activeKey={currentQuery.queryType}
+				defaultActiveKey={currentTab}
+				activeKey={currentTab}
 				onChange={handleQueryCategoryChange}
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
