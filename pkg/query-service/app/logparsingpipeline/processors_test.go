@@ -144,3 +144,67 @@ func TestGrokProcessor(t *testing.T) {
 	processed := result[0]
 	require.Equal(testStatusCode, processed.Attributes_int64["http_status_code"])
 }
+
+func TestJSONProcessor(t *testing.T) {
+	require := require.New(t)
+
+	testPipelines := []Pipeline{
+		{
+			OrderId: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+			Filter: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "method",
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeTag,
+						},
+						Operator: "=",
+						Value:    "GET",
+					},
+				},
+			},
+			Config: []PipelineOperator{},
+		},
+	}
+
+	var parserOp PipelineOperator
+	err := json.Unmarshal([]byte(`
+		{
+			"orderId": 1,
+			"enabled": true,
+			"type": "json_parser",
+			"name": "Test json parser",
+			"id": "test-json-parser",
+			"parse_from": "body",
+			"parse_to": "attributes"
+		}
+	`), &parserOp)
+	require.Nil(err)
+	testPipelines[0].Config = append(testPipelines[0].Config, parserOp)
+
+	testLog := makeTestSignozLog(
+		`{"test_str": "value", "test_float": 1.1}`,
+		map[string]interface{}{
+			"method": "GET",
+		},
+	)
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(),
+		testPipelines,
+		[]model.SignozLog{
+			testLog,
+		},
+	)
+	require.Nil(err)
+	require.Equal(1, len(result))
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+	processed := result[0]
+	require.Equal("value", processed.Attributes_string["test_str"])
+	require.Equal(1.1, processed.Attributes_float64["test_float"])
+}
