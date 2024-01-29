@@ -33,6 +33,7 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
+import { isEmpty } from 'lodash-es';
 import { Sliders } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -581,6 +582,8 @@ function LogsExplorerViews({
 							currentStagedQueryData={listQuery}
 							logs={logs}
 							onEndReached={handleEndReached}
+							isError={isError}
+							isFilterApplied={!isEmpty(listQuery?.filters.items)}
 						/>
 					)}
 
@@ -589,6 +592,7 @@ function LogsExplorerViews({
 							isLoading={isLoading || isFetching}
 							data={data}
 							isError={isError}
+							isFilterApplied={!isEmpty(listQuery?.filters.items)}
 						/>
 					)}
 
@@ -596,6 +600,7 @@ function LogsExplorerViews({
 						<LogsExplorerTable
 							data={data?.payload.data.newResult.data.result || []}
 							isLoading={isLoading || isFetching}
+							isError={isError}
 						/>
 					)}
 				</div>
