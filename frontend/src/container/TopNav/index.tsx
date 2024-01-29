@@ -31,7 +31,7 @@ function TopNav(): JSX.Element | null {
 		[location.pathname],
 	);
 
-	if (isSignUpPage || isDisabled) {
+	if (isSignUpPage || isDisabled || isRouteToSkip) {
 		return null;
 	}
 
