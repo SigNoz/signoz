@@ -147,7 +147,7 @@ function DateTimeSelection({
 		timeInterval: Time = '15min',
 	): string | Time => {
 		if (startTime && endTime && timeInterval === 'custom') {
-			const format = 'YYYY/MM/DD HH:mm';
+			const format = 'DD/MM/YYYY HH:mm';
 
 			const startString = startTime.format(format);
 			const endString = endTime.format(format);
@@ -161,8 +161,10 @@ function DateTimeSelection({
 	useEffect(() => {
 		if (selectedTime === 'custom') {
 			setRefreshButtonHidden(true);
+			setCustomDTPickerVisible(true);
 		} else {
 			setRefreshButtonHidden(false);
+			setCustomDTPickerVisible(false);
 		}
 	}, [selectedTime]);
 
@@ -276,9 +278,10 @@ function DateTimeSelection({
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
 				setCustomDTPickerVisible(false);
+				startTimeMoment.startOf('day').toString();
 				updateTimeInterval('custom', [
-					startTimeMoment?.toDate().getTime() || 0,
-					endTimeMoment?.toDate().getTime() || 0,
+					startTimeMoment.startOf('day').toDate().getTime(),
+					endTimeMoment.endOf('day').toDate().getTime(),
 				]);
 				setLocalStorageKey('startTime', startTimeMoment.toString());
 				setLocalStorageKey('endTime', endTimeMoment.toString());
