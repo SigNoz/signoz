@@ -14,7 +14,7 @@ import {
 	SaveViewHandlerProps,
 } from './types';
 
-const showErrorNotification = (
+export const showErrorNotification = (
 	notifications: NotificationInstance,
 	err: Error,
 ): void => {
