@@ -14,7 +14,6 @@ import {
 	getViewDetailsUsingViewKey,
 	showErrorNotification,
 } from 'components/ExplorerCard/utils';
-import ROUTES from 'constants/routes';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
@@ -39,6 +38,7 @@ import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { SOURCEPAGE_VS_ROUTES } from './constants';
 import { deleteViewHandler } from './utils';
 
 function SaveView(): JSX.Element {
@@ -175,15 +175,17 @@ function SaveView(): JSX.Element {
 		if (!currentViewDetails) return;
 		const { query, name, uuid, panelType: currentPanelType } = currentViewDetails;
 
-		handleExplorerTabChange(
-			currentPanelType,
-			{
-				query,
-				name,
-				uuid,
-			},
-			ROUTES.LOGS_EXPLORER,
-		);
+		if (sourcepage) {
+			handleExplorerTabChange(
+				currentPanelType,
+				{
+					query,
+					name,
+					uuid,
+				},
+				SOURCEPAGE_VS_ROUTES[sourcepage],
+			);
+		}
 	};
 
 	const columns: TableProps<ViewProps>['columns'] = [
