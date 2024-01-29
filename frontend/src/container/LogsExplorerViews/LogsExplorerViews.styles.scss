@@ -80,11 +80,23 @@
 			.ant-card {
 				border: none !important;
 			}
+
+			.query-table {
+				.ant-table {
+					table {
+						min-width: 99% !important;
+					}
+				}
+			}
 		}
 	}
 
 	.ant-card-body {
 		background-color: var(--bg-ink-500);
+	}
+
+	.logs-histogram {
+		margin-bottom: 0px;
 	}
 }
 
@@ -96,6 +108,26 @@
 
 		.views-tabs-container {
 			border: 1px solid var(--text-vanilla-300);
+
+			.views-tabs {
+				.tab {
+					border: 1px solid var(--bg-vanilla-300);
+				}
+
+				.tab::before {
+					background: var(--bg-vanilla-300);
+				}
+
+				.selected_view {
+					background: white;
+					color: var(--text-robin-400);
+					border: 1px solid var(--bg-robin-400);
+				}
+
+				.selected_view::before {
+					background: var(--bg-robin-400);
+				}
+			}
 		}
 	}
 }

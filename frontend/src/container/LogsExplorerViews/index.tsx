@@ -184,7 +184,7 @@ function LogsExplorerViews({
 		enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
 	});
 
-	const { data, isLoading, isError } = useGetExplorerQueryRange(
+	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
 		requestData,
 		panelType,
 		{
@@ -502,7 +502,13 @@ function LogsExplorerViews({
 		<div className="logs-explorer-views-container">
 			{showHistogram && (
 				<LogsExplorerChart
-					isLoading={isFetchingListChartData || isLoadingListChartData}
+					className="logs-histogram"
+					isLoading={
+						isFetchingListChartData ||
+						isLoadingListChartData ||
+						isLoading ||
+						isFetching
+					}
 					data={chartData}
 				/>
 			)}
@@ -579,13 +585,17 @@ function LogsExplorerViews({
 					)}
 
 					{selectedPanelType === PANEL_TYPES.TIME_SERIES && (
-						<TimeSeriesView isLoading={isLoading} data={data} isError={isError} />
+						<TimeSeriesView
+							isLoading={isLoading || isFetching}
+							data={data}
+							isError={isError}
+						/>
 					)}
 
 					{selectedPanelType === PANEL_TYPES.TABLE && (
 						<LogsExplorerTable
 							data={data?.payload.data.newResult.data.result || []}
-							isLoading={isLoading}
+							isLoading={isLoading || isFetching}
 						/>
 					)}
 				</div>
