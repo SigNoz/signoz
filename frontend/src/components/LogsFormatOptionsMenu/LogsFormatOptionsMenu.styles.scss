@@ -248,7 +248,7 @@
 
 			.column-divider {
 				margin: 12px 0;
-				border-top: 2px solid #1d212d;
+				border-top: 2px solid var(--bg-slate-400);
 			}
 		}
 	}
@@ -259,7 +259,7 @@
 
 			.item {
 				.item-label {
-					color: var(--bg-vanilla-400, #c0c1c3);
+					color: var(--bg-vanilla-400);
 				}
 			}
 		}
@@ -269,7 +269,7 @@
 			margin-left: -5%;
 
 			border-radius: 4px;
-			border: 1px solid var(--bg-slate-400, #1d212d);
+			border: 1px solid var(--bg-slate-400);
 			background: linear-gradient(
 				139deg,
 				rgba(18, 19, 23, 0.8) 0%,
@@ -299,6 +299,12 @@
 
 		.horizontal-line {
 			background: var(--bg-vanilla-300);
+		}
+
+		.item-content {
+			.column-divider {
+				border-top: 2px solid var(--bg-vanilla-300);
+			}
 		}
 
 		.max-lines-per-row {
