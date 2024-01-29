@@ -28,6 +28,7 @@ import {
 	OrganizationSettings,
 	PasswordReset,
 	PipelinePage,
+	SaveViews,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -85,6 +86,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 		exact: true,
 		key: 'SERVICE_MAP',
+	},
+	{
+		path: ROUTES.SAVE_VIEWS,
+		component: SaveViews,
+		isPrivate: true,
+		exact: true,
+		key: 'SAVE_VIEWS',
 	},
 	{
 		path: ROUTES.TRACE_DETAIL,

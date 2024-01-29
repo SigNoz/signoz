@@ -39,5 +39,6 @@
 	"LIST_LICENSES": "SigNoz | List of Licenses",
 	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
 	"SUPPORT": "SigNoz | Support",
+	"SAVE_VIEWS": "SigNoz | Save Views",
 	"DEFAULT": "Open source Observability Platform | SigNoz"
 }
