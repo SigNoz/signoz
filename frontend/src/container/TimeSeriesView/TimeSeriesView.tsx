@@ -1,10 +1,14 @@
 import './TimeSeriesView.styles.scss';
 
-import { Typography } from 'antd';
 import Uplot from 'components/Uplot';
+import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
+import LogsError from 'container/LogsError/LogsError';
+import { LogsLoading } from 'container/LogsLoading/LogsLoading';
+import NoLogs from 'container/NoLogs/NoLogs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { isEmpty } from 'lodash-es';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -13,13 +17,14 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getTimeRange } from 'utils/getTimeRange';
 
-import { Container, ErrorText } from './styles';
+import { Container } from './styles';
 
 function TimeSeriesView({
 	data,
 	isLoading,
 	isError,
 	yAxisUnit,
+	isFilterApplied,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -66,32 +71,34 @@ function TimeSeriesView({
 
 	return (
 		<Container>
-			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
+			{isError && <LogsError />}
+			{}
 			<div
 				className="graph-container"
 				style={{ height: '100%', width: '100%' }}
 				ref={graphRef}
 			>
-				{isLoading && (
-					<div className="loading-time-series">
-						<div className="loading-time-series-content">
-							<img
-								className="loading-gif"
-								src="/Icons/loading-plane.gif"
-								alt="wait-icon"
-							/>
+				{isLoading && <LogsLoading />}
 
-							<Typography>
-								Just a bit of patience, just a little bit’s enough ⎯ we’re getting your
-								logs!
-							</Typography>
-						</div>
-					</div>
-				)}
+				{chartData &&
+					chartData[0] &&
+					chartData[0]?.length === 0 &&
+					!isLoading &&
+					!isError &&
+					isFilterApplied && <EmptyLogsSearch />}
 
-				{!isLoading && !isError && chartData && chartOptions && (
-					<Uplot data={chartData} options={chartOptions} />
-				)}
+				{chartData &&
+					chartData[0] &&
+					chartData[0]?.length === 0 &&
+					!isLoading &&
+					!isError &&
+					!isFilterApplied && <NoLogs />}
+
+				{!isLoading &&
+					!isError &&
+					chartData &&
+					!isEmpty(chartData?.[0]) &&
+					chartOptions && <Uplot data={chartData} options={chartOptions} />}
 			</div>
 		</Container>
 	);
@@ -102,6 +109,7 @@ interface TimeSeriesViewProps {
 	yAxisUnit?: string;
 	isLoading: boolean;
 	isError: boolean;
+	isFilterApplied: boolean;
 }
 
 TimeSeriesView.defaultProps = {
