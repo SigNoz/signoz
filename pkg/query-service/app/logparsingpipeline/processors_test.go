@@ -79,3 +79,68 @@ func TestRegexProcessor(t *testing.T) {
 	processed := result[0]
 	require.Equal(testPan, processed.Attributes_string["pan"])
 }
+
+func TestGrokProcessor(t *testing.T) {
+	require := require.New(t)
+
+	testPipelines := []Pipeline{
+		{
+			OrderId: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+			Filter: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "method",
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeTag,
+						},
+						Operator: "=",
+						Value:    "GET",
+					},
+				},
+			},
+			Config: []PipelineOperator{},
+		},
+	}
+
+	var parserOp PipelineOperator
+	err := json.Unmarshal([]byte(`
+		{
+			"orderId": 1,
+			"enabled": true,
+			"type": "grok_parser",
+			"name": "Test grok parser",
+			"id": "test-grok-parser",
+			"parse_from": "body",
+			"parse_to": "attributes",
+			"pattern": "status: %{INT:http_status_code:int}"
+		}
+	`), &parserOp)
+	require.Nil(err)
+	testPipelines[0].Config = append(testPipelines[0].Config, parserOp)
+
+	testStatusCode := 404
+	testLog := makeTestSignozLog(
+		fmt.Sprintf("some http log with status: %d and some more text", testStatusCode),
+		map[string]interface{}{
+			"method": "GET",
+		},
+	)
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(),
+		testPipelines,
+		[]model.SignozLog{
+			testLog,
+		},
+	)
+	require.Nil(err)
+	require.Equal(1, len(result))
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+	processed := result[0]
+	require.Equal(testStatusCode, processed.Attributes_int64["http_status_code"])
+}
