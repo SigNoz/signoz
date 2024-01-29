@@ -63,8 +63,9 @@ function SaveView(): JSX.Element {
 		setIsDeleteModalOpen(false);
 	};
 
-	const handleDeleteModelOpen = (uuid: string): void => {
+	const handleDeleteModelOpen = (uuid: string, name: string): void => {
 		setActiveViewKey(uuid);
+		setActiveViewName(name);
 		setIsDeleteModalOpen(true);
 	};
 
@@ -243,7 +244,7 @@ function SaveView(): JSX.Element {
 								<Trash2
 									size={14}
 									color={Color.BG_CHERRY_500}
-									onClick={(): void => handleDeleteModelOpen(view.uuid)}
+									onClick={(): void => handleDeleteModelOpen(view.uuid, view.name)}
 								/>
 							</div>
 						</div>
@@ -317,7 +318,9 @@ function SaveView(): JSX.Element {
 				]}
 			>
 				<Typography.Text className="delete-text">
-					{t('delete_confirm_message')}
+					{t('delete_confirm_message', {
+						viewName: activeViewName,
+					})}
 				</Typography.Text>
 			</Modal>
 
