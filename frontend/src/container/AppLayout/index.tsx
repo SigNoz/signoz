@@ -233,7 +233,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isLogsView = (): boolean =>
 		routeKey === 'LOGS' ||
 		routeKey === 'LOGS_EXPLORER' ||
-		routeKey === 'LOGS_PIPELINES';
+		routeKey === 'LOGS_PIPELINES' ||
+		routeKey === 'SAVE_VIEWS';
 
 	useEffect(() => {
 		if (isDarkMode) {

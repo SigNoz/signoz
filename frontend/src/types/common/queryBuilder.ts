@@ -1,4 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import { Format } from 'container/NewWidget/RightContainer/types';
 import {
 	IBuilderFormula,
@@ -187,6 +188,7 @@ export type QueryBuilderContextType = {
 	redirectWithQueryBuilderData: (
 		query: Query,
 		searchParams?: Record<string, unknown>,
+		redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
 	) => void;
 	handleRunQuery: () => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;
