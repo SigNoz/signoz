@@ -9,6 +9,8 @@ import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import LogsError from 'container/LogsError/LogsError';
+import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
@@ -34,6 +36,7 @@ function LogsExplorerList({
 	currentStagedQueryData,
 	logs,
 	onEndReached,
+	isError,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 	const { initialDataSource } = useQueryBuilder();
@@ -150,9 +153,12 @@ function LogsExplorerList({
 
 	return (
 		<div className="logs-list-view-container">
-			{!isLoading && logs.length === 0 && <NoLogs />}
+			{isLoading && <LogsLoading />}
+			{!isLoading && logs.length === 0 && !isError && <NoLogs />}
 
-			{!isLoading && logs.length > 0 && (
+			{isError && !isLoading && <LogsError />}
+
+			{!isLoading && logs.length > 0 && !isError && (
 				<>
 					<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
 

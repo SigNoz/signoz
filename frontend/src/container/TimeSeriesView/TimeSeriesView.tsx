@@ -1,7 +1,7 @@
 import './TimeSeriesView.styles.scss';
 
-import { Typography } from 'antd';
 import Uplot from 'components/Uplot';
+import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
@@ -72,22 +72,7 @@ function TimeSeriesView({
 				style={{ height: '100%', width: '100%' }}
 				ref={graphRef}
 			>
-				{isLoading && (
-					<div className="loading-time-series">
-						<div className="loading-time-series-content">
-							<img
-								className="loading-gif"
-								src="/Icons/loading-plane.gif"
-								alt="wait-icon"
-							/>
-
-							<Typography>
-								Just a bit of patience, just a little bit’s enough ⎯ we’re getting your
-								logs!
-							</Typography>
-						</div>
-					</div>
-				)}
+				{isLoading && <LogsLoading />}
 
 				{!isLoading && !isError && chartData && chartOptions && (
 					<Uplot data={chartData} options={chartOptions} />

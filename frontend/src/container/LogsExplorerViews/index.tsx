@@ -577,10 +577,11 @@ function LogsExplorerViews({
 				<div className="logs-explorer-views-type-content">
 					{selectedPanelType === PANEL_TYPES.LIST && (
 						<LogsExplorerList
-							isLoading={isLoading}
+							isLoading={isLoading || isFetching}
 							currentStagedQueryData={listQuery}
 							logs={logs}
 							onEndReached={handleEndReached}
+							isError={isError}
 						/>
 					)}
 
