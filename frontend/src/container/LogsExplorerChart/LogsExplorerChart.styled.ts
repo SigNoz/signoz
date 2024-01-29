@@ -8,8 +8,7 @@ export const CardStyled = styled(Card)`
 	.ant-card-body {
 		height: 200px;
 		min-height: 200px;
-		padding: 0 12px 12px;
-
-		font-family: monospace;
+		padding: 0 16px 16px 16px;
+		font-family: 'Space Mono', monospace;
 	}
 `;
