@@ -8,6 +8,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
 import ExportPanel from 'container/ExportPanel';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
+import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
@@ -185,6 +186,7 @@ function TracesExplorer(): JSX.Element {
 			<>
 				<div className="trace-explorer-run-query">
 					<RightToolbarActions onStageRunQuery={handleRunQuery} />
+					<DateTimeSelector showAutoRefresh />
 				</div>
 				<ExplorerCard sourcepage={DataSource.TRACES}>
 					<QuerySection />
