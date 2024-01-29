@@ -1,6 +1,6 @@
 import { DatePicker, Modal } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 
 export type DateTimeRangeType = [Dayjs | null, Dayjs | null] | null;
 
@@ -10,6 +10,7 @@ function CustomDateTimeModal({
 	visible,
 	onCreate,
 	onCancel,
+	setCustomDTPickerVisible,
 }: CustomDateTimeModalProps): JSX.Element {
 	const [selectedDate, setDateTime] = useState<DateTimeRangeType>();
 
@@ -25,7 +26,10 @@ function CustomDateTimeModal({
 	};
 
 	const onOk = (): void => {
-		if (selectedDate) onCreate(selectedDate);
+		if (selectedDate) {
+			onCreate(selectedDate);
+			setCustomDTPickerVisible(false);
+		}
 	};
 
 	return (
@@ -52,6 +56,7 @@ interface CustomDateTimeModalProps {
 	visible: boolean;
 	onCreate: (dateTimeRange: DateTimeRangeType) => void;
 	onCancel: () => void;
+	setCustomDTPickerVisible: Dispatch<SetStateAction<boolean>>;
 }
 
 export default CustomDateTimeModal;
