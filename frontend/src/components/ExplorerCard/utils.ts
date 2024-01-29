@@ -81,6 +81,9 @@ export const isQueryUpdatedInView = ({
 	stagedQuery,
 	currentPanelType,
 }: IsQueryUpdatedInViewProps): boolean => {
+	if (data !== undefined) {
+		return false;
+	}
 	const currentViewDetails = getViewDetailsUsingViewKey(viewKey, data);
 	if (!currentViewDetails) {
 		return false;
@@ -89,6 +92,8 @@ export const isQueryUpdatedInView = ({
 
 	// Omitting id from aggregateAttribute and groupBy
 	const updatedCurrentQuery = omitIdFromQuery(stagedQuery);
+
+	console.log({ panelType, currentPanelType });
 
 	return (
 		panelType !== currentPanelType ||
