@@ -1,0 +1,30 @@
+.empty-logs-search-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 240px;
+
+	.empty-logs-search-container-content {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+
+		color: var(--text-vanilla-400);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px; /* 128.571% */
+		letter-spacing: -0.07px;
+
+		.empty-state-svg {
+			height: 50px;
+			width: 50px;
+		}
+
+		.sub-text {
+			font-weight: 600;
+		}
+	}
+}
