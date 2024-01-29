@@ -35,22 +35,20 @@ function TopNav(): JSX.Element | null {
 		return null;
 	}
 
-	return (
+	return !isRouteToSkip ? (
 		<Row style={{ marginBottom: '1rem' }}>
-			{!isRouteToSkip && (
-				<Col span={24} style={{ marginTop: '1rem' }}>
-					<Row justify="end">
-						<Space align="center" size={16} direction="horizontal">
-							<NewExplorerCTA />
-							<div>
-								<DateTimeSelector showAutoRefresh />
-							</div>
-						</Space>
-					</Row>
-				</Col>
-			)}
+			<Col span={24} style={{ marginTop: '1rem' }}>
+				<Row justify="end">
+					<Space align="center" size={16} direction="horizontal">
+						<NewExplorerCTA />
+						<div>
+							<DateTimeSelector showAutoRefresh />
+						</div>
+					</Space>
+				</Row>
+			</Col>
 		</Row>
-	);
+	) : null;
 }
 
 export default TopNav;

@@ -30,7 +30,7 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { Check, ConciergeBell, Disc3, Plus, X } from 'lucide-react';
-import { CSSProperties, useCallback, useRef, useState } from 'react';
+import { CSSProperties, useCallback, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -229,19 +229,23 @@ function ExplorerOptions({
 		});
 	};
 
-	const dropdownStyle: CSSProperties = {
-		borderRadius: '4px',
-		border: isDarkMode
-			? `1px solid ${Color.BG_SLATE_400}`
-			: `1px solid ${Color.BG_VANILLA_300}`,
-		background: isDarkMode
-			? 'linear-gradient(139deg, rgba(18, 19, 23, 0.80) 0%, rgba(18, 19, 23, 0.90) 98.68%)'
-			: 'linear-gradient(139deg, rgba(241, 241, 241, 0.8) 0%, rgba(241, 241, 241, 0.9) 98.68%)',
-		boxShadow: '4px 10px 16px 2px rgba(0, 0, 0, 0.20)',
-		backdropFilter: 'blur(20px)',
-		bottom: '74px',
-		width: '191px',
-	};
+	// TODO: Remove this and move this to scss file
+	const dropdownStyle: CSSProperties = useMemo(
+		() => ({
+			borderRadius: '4px',
+			border: isDarkMode
+				? `1px solid ${Color.BG_SLATE_400}`
+				: `1px solid ${Color.BG_VANILLA_300}`,
+			background: isDarkMode
+				? 'linear-gradient(139deg, rgba(18, 19, 23, 0.80) 0%, rgba(18, 19, 23, 0.90) 98.68%)'
+				: 'linear-gradient(139deg, rgba(241, 241, 241, 0.8) 0%, rgba(241, 241, 241, 0.9) 98.68%)',
+			boxShadow: '4px 10px 16px 2px rgba(0, 0, 0, 0.20)',
+			backdropFilter: 'blur(20px)',
+			bottom: '74px',
+			width: '191px',
+		}),
+		[isDarkMode],
+	);
 
 	return (
 		<>

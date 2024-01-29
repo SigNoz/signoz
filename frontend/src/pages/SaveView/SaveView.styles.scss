@@ -251,3 +251,94 @@
         line-height: 20px; /* 142.857% */
 	}
 }
+
+.lightMode {
+    .save-view-container {
+        .save-view-content {
+            .ant-table-row {
+                .ant-table-cell {
+                    background: var(--bg-vanilla-200); 
+                }
+
+                &:hover {
+                    .ant-table-cell {
+                        background: var(--bg-vanilla-200) !important; 
+                    }
+                }
+
+                .column-render {
+                    border: 1px solid var(--bg-vanilla-200);
+                    background: var(--bg-vanilla-100);
+
+                    .title-with-action {
+                        .save-view-title {
+                            .ant-typography {
+                                color: var(--bg-ink-500);
+                            }
+                        }
+
+                        .action-btn {
+                            .ant-typography {
+                                color: var(--bg-ink-500);
+                            }
+                        }
+                    }
+
+                    .view-details {
+                        .view-tag {
+                            background: var(--bg-vanilla-200);
+                            .tag-text {
+                                color: var(--bg-ink-500);
+                            }
+                        }
+
+                        .view-created-by {
+                            color: var(--bg-ink-500);
+                        }
+
+                        .view-created-at {
+                            .ant-typography {
+                                color: var(--bg-ink-500);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .delete-view-modal {
+        .ant-modal-content {
+            border: 1px solid var(--bg-vanilla-200);
+            background: var(--bg-vanilla-100);
+
+            .ant-modal-header {
+                background: var(--bg-vanilla-100);
+
+                .title {
+                    color: var(--bg-ink-500);
+                }
+            }
+
+            .ant-modal-body {
+                .ant-typography {
+                    color: var(--bg-ink-500);
+                }
+
+                .save-view-input {
+                    .ant-input {
+                        background: var(--bg-vanilla-200);
+                        color: var(--bg-ink-500);
+                    }
+                }
+            }
+
+            .ant-modal-footer {
+                .cancel-btn {
+                    background: var(--bg-vanilla-300);
+                    color: var(--bg-ink-400);
+                }
+            }
+        }
+    }
+}

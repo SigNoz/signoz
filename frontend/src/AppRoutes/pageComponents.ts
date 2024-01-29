@@ -16,7 +16,7 @@ export const ServiceMapPage = Loadable(
 );
 
 export const SaveViews = Loadable(
-	() => import(/* webpackChunkName: "SaveViews" */ 'pages/LogsModulePage'),
+	() => import(/* webpackChunkName: "SaveViews" */ 'pages/LogsModulePage'), // TODO: Add a wrapper so that the same component can be used in traces
 );
 
 export const TracesExplorer = Loadable(
