@@ -444,3 +444,67 @@ func TestRemoveProcessor(t *testing.T) {
 	_, methodExists := processed.Attributes_string["method"]
 	require.False(methodExists)
 }
+
+func TestCopyProcessor(t *testing.T) {
+	require := require.New(t)
+
+	testPipelines := []Pipeline{
+		{
+			OrderId: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+			Filter: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "method",
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeTag,
+						},
+						Operator: "=",
+						Value:    "GET",
+					},
+				},
+			},
+			Config: []PipelineOperator{},
+		},
+	}
+
+	var parserOp PipelineOperator
+	err := json.Unmarshal([]byte(`
+		{
+			"orderId": 1,
+			"enabled": true,
+			"type": "copy",
+			"name": "Test copy parser",
+			"id": "test-add-parser",
+			"from": "attributes.method",
+			"to": "attributes.copied_method"
+		}
+	`), &parserOp)
+	require.Nil(err)
+	testPipelines[0].Config = append(testPipelines[0].Config, parserOp)
+
+	testLog := makeTestSignozLog(
+		"test log",
+		map[string]interface{}{
+			"method": "GET",
+		},
+	)
+
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
+		context.Background(),
+		testPipelines,
+		[]model.SignozLog{
+			testLog,
+		},
+	)
+	require.Nil(err)
+	require.Equal(1, len(result))
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
+	processed := result[0]
+	require.Equal("GET", processed.Attributes_string["method"])
+	require.Equal("GET", processed.Attributes_string["copied_method"])
+}
