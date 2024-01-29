@@ -592,6 +592,7 @@ function LogsExplorerViews({
 							isLoading={isLoading || isFetching}
 							data={data}
 							isError={isError}
+							isFilterApplied={!isEmpty(listQuery?.filters.items)}
 						/>
 					)}
 
