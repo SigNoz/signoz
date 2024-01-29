@@ -16,12 +16,12 @@ export const ServiceMapPage = Loadable(
 );
 
 export const SaveViews = Loadable(
-	() => import(/* webpackChunkName: "SaveViews" */ 'pages/LogsModulePage'), // TODO: Add a wrapper so that the same component can be used in traces
+	() => import(/* webpackChunkName: "SaveViews" */ 'pages/ModulePage'), // TODO: Add a wrapper so that the same component can be used in traces
 );
 
 export const TracesExplorer = Loadable(
 	() =>
-		import(/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesExplorer'),
+		import(/* webpackChunkName: "Traces Explorer Page" */ 'pages/ModulePage'),
 );
 
 export const TraceFilter = Loadable(
@@ -116,11 +116,11 @@ export const MySettings = Loadable(
 );
 
 export const Logs = Loadable(
-	() => import(/* webpackChunkName: "Logs" */ 'pages/LogsModulePage'),
+	() => import(/* webpackChunkName: "Logs" */ 'pages/ModulePage'),
 );
 
 export const LogsExplorer = Loadable(
-	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsModulePage'),
+	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/ModulePage'),
 );
 
 export const OldLogsExplorer = Loadable(
@@ -132,7 +132,7 @@ export const LiveLogs = Loadable(
 );
 
 export const PipelinePage = Loadable(
-	() => import(/* webpackChunkName: "Pipelines" */ 'pages/LogsModulePage'),
+	() => import(/* webpackChunkName: "Pipelines" */ 'pages/ModulePage'),
 );
 
 export const Login = Loadable(

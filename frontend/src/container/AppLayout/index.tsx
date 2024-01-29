@@ -234,6 +234,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'LOGS' ||
 		routeKey === 'LOGS_EXPLORER' ||
 		routeKey === 'LOGS_PIPELINES' ||
+		routeKey === 'TRACES_EXPLORER' ||
 		routeKey === 'SAVE_VIEWS';
 
 	useEffect(() => {
