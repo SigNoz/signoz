@@ -254,15 +254,7 @@ function ExplorerOptions({
 							icon={<X size={14} />}
 						/>
 					</Tooltip>
-					<Divider
-						type="vertical"
-						style={{
-							height: '28px',
-							border: isDarkMode
-								? `1px solid ${Color.BG_SLATE_400}`
-								: `1px solid ${Color.BG_VANILLA_300}`,
-						}}
-					/>
+					<Divider type="vertical" />
 					<Tooltip title="Update this view" placement="top">
 						<Button
 							className="action-icon"
@@ -369,7 +361,7 @@ function ExplorerOptions({
 						onChange={(value, hex): void => setColor(hex)}
 					/>
 					<Input
-						placeholder="e.g. Crash landing view"
+						placeholder="e.g. External http method view"
 						value={newViewName}
 						onChange={(e): void => setNewViewName(e.target.value)}
 					/>

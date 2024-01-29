@@ -7,7 +7,7 @@
 	gap: 12px;
 	padding: 10px 12px;
 	border-radius: 50px;
-	border: 1px solid var(--bg-slate-400, #1d212d);
+	border: 1px solid var(--bg-slate-400);
 	background: rgba(22, 24, 29, 0.6);
 	box-shadow: 4px 4px 16px 4px rgba(0, 0, 0, 0.25);
 	backdrop-filter: blur(20px);
@@ -25,6 +25,8 @@
 
 	.ant-divider {
 		margin: 0;
+		height: 28px;
+		border: 1px solid var(--bg-slate-400);
 	}
 }
 
@@ -33,7 +35,7 @@
 	gap: 16px;
 	padding: 10px 12px;
 	border-radius: 50px;
-	border: 1px solid var(--bg-slate-400, #1d212d);
+	border: 1px solid var(--bg-slate-400);
 	background: rgba(22, 24, 29, 0.6);
 	box-shadow: 4px 4px 16px 4px rgba(0, 0, 0, 0.25);
 	backdrop-filter: blur(20px);
@@ -246,6 +248,10 @@
 		.action-icon {
 			border: 1px solid var(--bg-vanilla-300);
 			background: var(--bg-vanilla-300);
+		}
+
+		.ant-divider {
+			border-color: var(--bg-vanilla-300);
 		}
 	}
 

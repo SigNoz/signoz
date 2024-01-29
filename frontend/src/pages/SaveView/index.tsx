@@ -33,6 +33,7 @@ import {
 	X,
 } from 'lucide-react';
 import { ChangeEvent, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { ViewProps } from 'types/api/saveViews/types';
@@ -56,6 +57,7 @@ function SaveView(): JSX.Element {
 	] = useState<ICompositeMetricQuery | null>(null);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [dataSource, setDataSource] = useState<ViewProps[]>([]);
+	const { t } = useTranslation(['explorer']);
 
 	const hideDeleteViewModal = (): void => {
 		setIsDeleteModalOpen(false);
@@ -315,8 +317,7 @@ function SaveView(): JSX.Element {
 				]}
 			>
 				<Typography.Text className="delete-text">
-					Are you sure you want to delete this view? Deleting a view is irreversible
-					and cannot be undone.
+					{t('delete_confirm_message')}
 				</Typography.Text>
 			</Modal>
 

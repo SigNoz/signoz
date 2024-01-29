@@ -5,25 +5,24 @@
     width: 100%;
 
     .save-view-content {
-        width: calc(53% - 10px);  
+        width: calc(100% - 30px);  
+        max-width: 736px;
 
         
         .title {
             color: var(--bg-vanilla-100);
-            font-family: Inter;
-            font-size: 18px;
+            font-size: var(--font-size-lg);
             font-style: normal;
-            font-weight: 500;
+            font-weight: var(--font-weight-normal);
             line-height: 28px; /* 155.556% */
             letter-spacing: -0.09px;
         }
         
         .subtitle {
             color: var(---bg-vanilla-400);
-            font-family: Inter;
-            font-size: 14px;
+            font-size: var(--font-size-sm);
             font-style: normal;
-            font-weight: 400;
+            font-weight: var(--font-weight-normal);
             line-height: 20px; /* 142.857% */
             letter-spacing: -0.07px;
         }
@@ -37,7 +36,7 @@
             .ant-table-cell {
                 padding: 0;
                 border: none;
-                background: #0b0c0e;
+                background: var(--bg-ink-500);
                 
             }
             .column-render {
@@ -63,10 +62,9 @@
                         }
                         .ant-typography {
                             color: var(--bg-vanilla-400);
-                            font-family: Inter;
-                            font-size: 14px;
+                            font-size: var(--font-size-sm);
                             font-style: normal;
-                            font-weight: 500;
+                            font-weight: var(--font-weight-medium);
                             line-height: 20px;
                             letter-spacing: -0.07px;
                         }
@@ -98,12 +96,9 @@
                             color: var(--bg-vanilla-400);
                             leading-trim: both;
                             text-edge: cap;
-                            font-variant-numeric: lining-nums tabular-nums stacked-fractions;
-                            font-feature-settings: 'dlig' on;
-                            font-family: Inter;
                             font-size: 10px;
                             font-style: normal;
-                            font-weight: 400;
+                            font-weight: var(--font-weight-normal);
                             line-height: normal;
                             letter-spacing: -0.05px;
                         }
@@ -120,12 +115,9 @@
                         .ant-typography {
                             margin-left: 6px;
                             color: var(--bg-vanilla-400);
-                            font-variant-numeric: lining-nums tabular-nums stacked-fractions slashed-zero;
-                            font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
-                            font-family: Inter;
-                            font-size: 14px;
+                            font-size: var(--font-size-sm);
                             font-style: normal;
-                            font-weight: 400;
+                            font-weight: var(--font-weight-normal);
                             line-height: 18px; /* 128.571% */
                             letter-spacing: -0.07px;
                         }
@@ -144,10 +136,9 @@
                 color: var(--bg-vanilla-400);
                 font-variant-numeric: lining-nums tabular-nums slashed-zero;
                 font-feature-settings: 'dlig' on, 'salt' on, 'case' on, 'cpsp' on;
-                font-family: Inter;
-                font-size: 14px;
+                font-size: var(--font-size-sm);
                 font-style: normal;
-                font-weight: 400;
+                font-weight: var(--font-weight-normal);
                 line-height: 20px; /* 142.857% */
             }
 
@@ -157,12 +148,9 @@
             background-color: var(--bg-robin-500);
             > a {
                 color: var(--bg-ink-500) !important;
-                font-variant-numeric: lining-nums tabular-nums slashed-zero;
-                font-feature-settings: 'dlig' on, 'salt' on, 'case' on, 'cpsp' on;
-                font-family: Inter;
-                font-size: 14px;
+                font-size: var(--font-size-sm);
                 font-style: normal;
-                font-weight: 500;
+                font-weight: var(--font-weight-medium);
                 line-height: 20px; 
             }
         }
@@ -170,7 +158,8 @@
 } 
 
 .delete-view-modal {
-	width: 384px !important;
+    width: calc(100% - 30px) !important; /* Adjust the 20px as needed */
+    max-width: 384px;
 	.ant-modal-content {
 		padding: 0;
 		border-radius: 4px;
@@ -188,10 +177,9 @@
 
 			.ant-typography {
 				color: var(--bg-vanilla-400);
-                font-family: Inter;
-                font-size: 14px;
+                font-size: var(--font-size-sm);
                 font-style: normal;
-                font-weight: 400;
+                font-weight: var(--font-weight-normal);
                 line-height: 20px;
                 letter-spacing: -0.07px;
 			}
@@ -257,10 +245,9 @@
 	}
 	.title {
 		color: var(--bg-vanilla-100);
-        font-family: Inter;
-        font-size: 14px;
+        font-size: var(--font-size-sm);
         font-style: normal;
-        font-weight: 500;
+        font-weight: var(--font-weight-medium);
         line-height: 20px; /* 142.857% */
 	}
 }
