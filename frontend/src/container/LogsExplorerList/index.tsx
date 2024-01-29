@@ -9,6 +9,7 @@ import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
@@ -37,6 +38,7 @@ function LogsExplorerList({
 	logs,
 	onEndReached,
 	isError,
+	isFilterApplied,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 	const { initialDataSource } = useQueryBuilder();
@@ -154,7 +156,13 @@ function LogsExplorerList({
 	return (
 		<div className="logs-list-view-container">
 			{isLoading && <LogsLoading />}
-			{!isLoading && logs.length === 0 && !isError && <NoLogs />}
+			{!isLoading && logs.length === 0 && !isError && !isFilterApplied && (
+				<NoLogs />
+			)}
+
+			{!isLoading && logs.length === 0 && !isError && isFilterApplied && (
+				<EmptyLogsSearch />
+			)}
 
 			{isError && !isLoading && <LogsError />}
 

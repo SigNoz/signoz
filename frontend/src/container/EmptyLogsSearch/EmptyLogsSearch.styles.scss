@@ -1,11 +1,11 @@
-.logs-error-container {
+.empty-logs-search-container {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
 	height: 240px;
 
-	.logs-error-content {
+	.empty-logs-search-container-content {
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
@@ -18,25 +18,13 @@
 		line-height: 18px; /* 128.571% */
 		letter-spacing: -0.07px;
 
-		.aww-snap {
-			font-weight: 600;
-		}
-
-		.error-state-svg {
+		.empty-state-svg {
 			height: 50px;
 			width: 50px;
 		}
 
-		.contact-support {
-			display: flex;
-			align-items: center;
-			margin-top: 8px;
-			gap: 4px;
-
-			.text {
-				color: var(--text-robin-400);
-				font-weight: 500;
-			}
+		.sub-text {
+			font-weight: 600;
 		}
 	}
 }

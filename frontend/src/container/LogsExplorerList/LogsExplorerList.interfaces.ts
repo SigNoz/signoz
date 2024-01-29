@@ -7,4 +7,5 @@ export type LogsExplorerListProps = {
 	logs: ILog[];
 	onEndReached: (index: number) => void;
 	isError: boolean;
+	isFilterApplied: boolean;
 };

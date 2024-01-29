@@ -33,6 +33,7 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
+import { isEmpty } from 'lodash-es';
 import { Sliders } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -577,11 +578,12 @@ function LogsExplorerViews({
 				<div className="logs-explorer-views-type-content">
 					{selectedPanelType === PANEL_TYPES.LIST && (
 						<LogsExplorerList
-							isLoading={isLoading || isFetching}
+							isLoading={isLoading}
 							currentStagedQueryData={listQuery}
 							logs={logs}
 							onEndReached={handleEndReached}
 							isError={isError}
+							isFilterApplied={!isEmpty(listQuery?.filters.items)}
 						/>
 					)}
 
