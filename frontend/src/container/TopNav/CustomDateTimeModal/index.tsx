@@ -16,7 +16,6 @@ function CustomDateTimeModal({
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const onModalOkHandler = (date_time: any): void => {
-		onCreate(date_time);
 		setDateTime(date_time);
 	};
 
@@ -46,7 +45,6 @@ function CustomDateTimeModal({
 				allowClear
 				onOk={onModalOkHandler}
 				showTime
-				onCalendarChange={onModalOkHandler}
 			/>
 		</Modal>
 	);
