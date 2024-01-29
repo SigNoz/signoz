@@ -1,3 +1,5 @@
+import './DateTimeSelection.styles.scss';
+
 import { SyncOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -279,7 +281,7 @@ function DateTimeSelection({
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
 
 	return (
-		<>
+		<div className="date-time-selection-container">
 			<Form
 				form={formSelector}
 				layout="inline"
@@ -322,7 +324,7 @@ function DateTimeSelection({
 				</FormContainer>
 			</Form>
 
-			{!hasSelectedTimeError && (
+			{!hasSelectedTimeError && selectedTime !== 'custom' && (
 				<RefreshText
 					{...{
 						onLastRefreshHandler,
@@ -338,7 +340,7 @@ function DateTimeSelection({
 					setCustomDTPickerVisible(false);
 				}}
 			/>
-		</>
+		</div>
 	);
 }
 

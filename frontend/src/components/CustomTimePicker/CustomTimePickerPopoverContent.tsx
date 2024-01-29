@@ -1,6 +1,7 @@
 import './CustomTimePicker.styles.scss';
 
 import { Button, DatePicker } from 'antd';
+import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
@@ -9,7 +10,10 @@ import {
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs, { Dayjs } from 'dayjs';
 import { Dispatch, SetStateAction, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 interface CustomTimePickerPopoverContentProps {
 	options: any[];
@@ -19,6 +23,7 @@ interface CustomTimePickerPopoverContentProps {
 	onCustomDateHandler: (dateTimeRange: DateTimeRangeType) => void;
 	onSelectHandler: (label: string, value: string) => void;
 	handleGoLive: () => void;
+	selectedTime: string;
 }
 
 function CustomTimePickerPopoverContent({
@@ -29,9 +34,14 @@ function CustomTimePickerPopoverContent({
 	onCustomDateHandler,
 	onSelectHandler,
 	handleGoLive,
+	selectedTime,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { RangePicker } = DatePicker;
 	const { pathname } = useLocation();
+
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
 		pathname,
@@ -89,18 +99,25 @@ function CustomTimePickerPopoverContent({
 						onClick={(): void => {
 							onSelectHandler(option.label, option.value);
 						}}
-						className="date-time-options-btn"
+						className={cx(
+							'date-time-options-btn',
+							selectedTime === option.value && 'active',
+						)}
 					>
 						{option.label}
 					</Button>
 				))}
 			</div>
 			<div className="relative-date-time">
-				{customDateTimeVisible ? (
+				{selectedTime === 'custom' || customDateTimeVisible ? (
 					<RangePicker
 						disabledDate={disabledDate}
 						allowClear
 						onCalendarChange={onModalOkHandler}
+						// eslint-disable-next-line react/jsx-props-no-spreading
+						{...(selectedTime === 'custom' && {
+							defaultValue: [dayjs(minTime / 1000000), dayjs(maxTime / 1000000)],
+						})}
 					/>
 				) : (
 					<div>
