@@ -5,7 +5,7 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { Atom, LucideAccessibility, Play, Terminal } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -25,6 +25,7 @@ function QuerySection({
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
+	const [currentTab, setCurrentTab] = useState(queryCategory);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -34,6 +35,7 @@ function QuerySection({
 		featureResponse.refetch().then(() => {
 			setQueryCategory(queryType as EQueryType);
 		});
+		setCurrentTab(queryType as EQueryType);
 	};
 
 	const renderPromqlUI = (): JSX.Element => <PromqlSection />;
@@ -109,8 +111,8 @@ function QuerySection({
 						<Tabs
 							type="card"
 							style={{ width: '100%' }}
-							defaultActiveKey={EQueryType.QUERY_BUILDER}
-							activeKey={queryCategory}
+							defaultActiveKey={currentTab}
+							activeKey={currentTab}
 							onChange={handleQueryCategoryChange}
 							tabBarExtraContent={
 								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -135,8 +137,8 @@ function QuerySection({
 						<Tabs
 							type="card"
 							style={{ width: '100%' }}
-							defaultActiveKey={EQueryType.QUERY_BUILDER}
-							activeKey={queryCategory}
+							defaultActiveKey={currentTab}
+							activeKey={currentTab}
 							onChange={handleQueryCategoryChange}
 							tabBarExtraContent={
 								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -173,7 +175,7 @@ function QuerySection({
 			<StepHeading> {t('alert_form_step1')}</StepHeading>
 			<FormContainer>
 				<div>{renderTabs(alertType)}</div>
-				{renderQuerySection(queryCategory)}
+				{renderQuerySection(currentTab)}
 			</FormContainer>
 		</>
 	);
