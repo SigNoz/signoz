@@ -1,6 +1,7 @@
 import './TimeSeriesView.styles.scss';
 
 import Uplot from 'components/Uplot';
+import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
@@ -13,7 +14,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getTimeRange } from 'utils/getTimeRange';
 
-import { Container, ErrorText } from './styles';
+import { Container } from './styles';
 
 function TimeSeriesView({
 	data,
@@ -66,7 +67,7 @@ function TimeSeriesView({
 
 	return (
 		<Container>
-			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
+			{isError && <LogsError />}
 			<div
 				className="graph-container"
 				style={{ height: '100%', width: '100%' }}

@@ -597,6 +597,7 @@ function LogsExplorerViews({
 						<LogsExplorerTable
 							data={data?.payload.data.newResult.data.result || []}
 							isLoading={isLoading || isFetching}
+							isError={isError}
 						/>
 					)}
 				</div>
