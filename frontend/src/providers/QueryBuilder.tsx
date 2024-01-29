@@ -15,6 +15,7 @@ import {
 	MAX_QUERIES,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -464,7 +465,11 @@ export function QueryBuilderProvider({
 	);
 
 	const redirectWithQueryBuilderData = useCallback(
-		(query: Partial<Query>, searchParams?: Record<string, unknown>) => {
+		(
+			query: Partial<Query>,
+			searchParams?: Record<string, unknown>,
+			redirectingUrl?: typeof ROUTES[keyof typeof ROUTES],
+		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
 					? EQueryType.QUERY_BUILDER
@@ -519,7 +524,9 @@ export function QueryBuilderProvider({
 				);
 			}
 
-			const generatedUrl = `${location.pathname}?${urlQuery}`;
+			const generatedUrl = redirectingUrl
+				? `${redirectingUrl}?${urlQuery}`
+				: `${location.pathname}?${urlQuery}`;
 
 			history.replace(generatedUrl);
 		},

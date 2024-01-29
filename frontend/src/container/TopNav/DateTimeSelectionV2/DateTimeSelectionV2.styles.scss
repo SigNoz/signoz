@@ -100,6 +100,16 @@
 			border-bottom: 1px solid var(--bg-slate-400, #1d212d);
 		}
 
+		.active {
+			background-color: rgba(171, 189, 255, 0.04) !important;
+		}
+
+		.data-time-live:hover {
+			&.ant-btn-text {
+				background-color: rgba(171, 189, 255, 0.04) !important;
+			}
+		}
+
 		.date-time-options-btn {
 			text-align: start;
 			padding: 8px 13px;
@@ -111,13 +121,18 @@
 			line-height: normal;
 			letter-spacing: 0.14px;
 		}
+		.date-time-options-btn:hover {
+			&.ant-btn-text {
+				background-color: rgba(171, 189, 255, 0.04) !important;
+			}
+		}
 	}
 
 	.relative-date-time {
 		width: 307px;
 		display: flex;
 		flex-direction: column;
-		gap: 26px;
+		gap: 35px;
 		padding: 13px 14px;
 
 		.relative-date-time-section {
@@ -183,6 +198,22 @@
 
 			.date-time-options-btn {
 				color: var(--bg-slate-400);
+			}
+
+			.active {
+				background-color: var(--bg-vanilla-300) !important;
+			}
+
+			.data-time-live:hover {
+				&.ant-btn-text {
+					background-color: var(--bg-vanilla-300) !important;
+				}
+			}
+
+			.date-time-options-btn:hover {
+				&.ant-btn-text {
+					background-color: var(--bg-vanilla-300) !important;
+				}
 			}
 		}
 

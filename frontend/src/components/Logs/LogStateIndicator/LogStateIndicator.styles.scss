@@ -21,4 +21,10 @@
 			background-color: #e5484d;
 		}
 	}
+
+	&.isActive {
+		.line {
+			background-color: var(--bg-robin-400, #7190f9);
+		}
+	}
 }

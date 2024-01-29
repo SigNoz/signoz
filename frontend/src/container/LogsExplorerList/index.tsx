@@ -68,7 +68,12 @@ function LogsExplorerList({
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
 				return (
-					<RawLogView key={log.id} data={log} linesPerRow={options.maxLines} />
+					<RawLogView
+						key={log.id}
+						data={log}
+						linesPerRow={options.maxLines}
+						selectedFields={selectedFields}
+					/>
 				);
 			}
 
@@ -79,10 +84,12 @@ function LogsExplorerList({
 					selectedFields={selectedFields}
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
+					activeLog={activeLog}
 				/>
 			);
 		},
 		[
+			activeLog,
 			onAddToQuery,
 			onSetActiveLog,
 			options.format,

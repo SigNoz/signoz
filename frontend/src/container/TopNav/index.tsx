@@ -31,26 +31,24 @@ function TopNav(): JSX.Element | null {
 		[location.pathname],
 	);
 
-	if (isSignUpPage || isDisabled) {
+	if (isSignUpPage || isDisabled || isRouteToSkip) {
 		return null;
 	}
 
-	return (
-		<Row>
-			{!isRouteToSkip && (
-				<Col span={24} style={{ marginTop: '1rem' }}>
-					<Row justify="end">
-						<Space align="start" size={60} direction="horizontal">
-							<NewExplorerCTA />
-							<div>
-								<DateTimeSelector showAutoRefresh />
-							</div>
-						</Space>
-					</Row>
-				</Col>
-			)}
+	return !isRouteToSkip ? (
+		<Row style={{ marginBottom: '1rem' }}>
+			<Col span={24} style={{ marginTop: '1rem' }}>
+				<Row justify="end">
+					<Space align="center" size={16} direction="horizontal">
+						<NewExplorerCTA />
+						<div>
+							<DateTimeSelector showAutoRefresh />
+						</div>
+					</Space>
+				</Row>
+			</Col>
 		</Row>
-	);
+	) : null;
 }
 
 export default TopNav;

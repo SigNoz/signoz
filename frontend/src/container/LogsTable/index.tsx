@@ -59,7 +59,14 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 			const log = logs[index];
 
 			if (viewMode === 'raw') {
-				return <RawLogView key={log.id} data={log} linesPerRow={linesPerRow} />;
+				return (
+					<RawLogView
+						key={log.id}
+						data={log}
+						linesPerRow={linesPerRow}
+						selectedFields={selected}
+					/>
+				);
 			}
 
 			return (

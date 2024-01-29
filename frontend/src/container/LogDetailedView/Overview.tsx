@@ -2,10 +2,18 @@ import './Overview.styles.scss';
 
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Collapse, Divider, Switch, Tag, Typography } from 'antd';
+import {
+	Button,
+	Collapse,
+	Divider,
+	Input,
+	Switch,
+	Tag,
+	Typography,
+} from 'antd';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 
@@ -15,7 +23,6 @@ import { aggregateAttributesResourcesToString } from './utils';
 
 interface OverviewProps {
 	logData: ILog;
-	fieldSearchInput: string;
 }
 
 type Props = OverviewProps &
@@ -25,10 +32,14 @@ type Props = OverviewProps &
 function Overview({
 	logData,
 	onAddToQuery,
-	fieldSearchInput,
 	onClickActionItem,
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(false);
+	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
+	const [isAttributesExpanded, setIsAttributesExpanded] = useState<boolean>(
+		true,
+	);
+	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
 	const logJsonData = useMemo(
 		() => aggregateAttributesResourcesToString(logData),
@@ -82,6 +93,14 @@ function Overview({
 		});
 	}
 
+	const handleSearchVisible = (): void => {
+		setIsSearchVisible(!isSearchVisible);
+	};
+
+	const toogleAttributePanelOpenState = (): void => {
+		setIsAttributesExpanded(!isAttributesExpanded);
+	};
+
 	return (
 		<div className="overview-container">
 			<Collapse
@@ -121,19 +140,6 @@ function Overview({
 										<Typography.Text>Wrap text</Typography.Text>
 										<Switch checked={isWrapWord} onChange={handleWrapWord} size="small" />
 									</div>
-
-									<div>
-										<Button.Group>
-											<Button
-												className="log-switch-btn"
-												icon={<ChevronLeft size={14} />}
-											/>
-											<Button
-												className="log-switch-btn"
-												icon={<ChevronRight size={14} />}
-											/>
-										</Button.Group>
-									</div>
 								</div>
 							</div>
 						),
@@ -151,19 +157,48 @@ function Overview({
 					{
 						key: '1',
 						label: (
-							<Tag bordered={false}>
-								<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
-									Attributes
-								</Typography.Text>
-							</Tag>
+							// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+							<div
+								className="attribute-tab-header"
+								onClick={toogleAttributePanelOpenState}
+							>
+								<Tag bordered={false}>
+									<Typography.Text style={{ color: Color.BG_ROBIN_400 }}>
+										Attributes
+									</Typography.Text>
+								</Tag>
+
+								{isAttributesExpanded && (
+									<Button
+										className="action-btn"
+										icon={<Search size={14} />}
+										onClick={(e): void => {
+											e.stopPropagation();
+											handleSearchVisible();
+										}}
+									/>
+								)}
+							</div>
 						),
 						children: (
-							<TableView
-								logData={logData}
-								onAddToQuery={onAddToQuery}
-								fieldSearchInput={fieldSearchInput}
-								onClickActionItem={onClickActionItem}
-							/>
+							<>
+								{isSearchVisible && (
+									<Input
+										autoFocus
+										placeholder="Search for a field..."
+										className="search-input"
+										value={fieldSearchInput}
+										onChange={(e): void => setFieldSearchInput(e.target.value)}
+									/>
+								)}
+
+								<TableView
+									logData={logData}
+									onAddToQuery={onAddToQuery}
+									fieldSearchInput={fieldSearchInput}
+									onClickActionItem={onClickActionItem}
+								/>
+							</>
 						),
 						className: 'collapse-content attribute-collapse',
 					},

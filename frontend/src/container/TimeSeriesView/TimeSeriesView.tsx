@@ -1,4 +1,6 @@
-import Spinner from 'components/Spinner';
+import './TimeSeriesView.styles.scss';
+
+import { Typography } from 'antd';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
@@ -64,13 +66,29 @@ function TimeSeriesView({
 
 	return (
 		<Container>
-			{isLoading && <Spinner height="50vh" size="small" tip="Loading..." />}
 			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
 			<div
 				className="graph-container"
 				style={{ height: '100%', width: '100%' }}
 				ref={graphRef}
 			>
+				{isLoading && (
+					<div className="loading-time-series">
+						<div className="loading-time-series-content">
+							<img
+								className="loading-gif"
+								src="/Icons/loading-plane.gif"
+								alt="wait-icon"
+							/>
+
+							<Typography>
+								Just a bit of patience, just a little bit’s enough ⎯ we’re getting your
+								logs!
+							</Typography>
+						</div>
+					</div>
+				)}
+
 				{!isLoading && !isError && chartData && chartOptions && (
 					<Uplot data={chartData} options={chartOptions} />
 				)}

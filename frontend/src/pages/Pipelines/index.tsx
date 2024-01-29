@@ -1,3 +1,5 @@
+import './Pipelines.styles.scss';
+
 import type { TabsProps } from 'antd';
 import { Tabs } from 'antd';
 import getPipeline from 'api/pipeline/get';
@@ -81,7 +83,11 @@ function Pipelines(): JSX.Element {
 
 	return (
 		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-			<Tabs defaultActiveKey="pipelines" items={tabItems} />
+			<Tabs
+				className="pipeline-tabs"
+				defaultActiveKey="pipelines"
+				items={tabItems}
+			/>
 		</ErrorBoundary>
 	);
 }

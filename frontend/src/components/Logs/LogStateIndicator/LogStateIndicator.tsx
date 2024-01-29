@@ -7,15 +7,22 @@ export const LogType = {
 	WARNING: 'WARNING',
 	ERROR: 'ERROR',
 };
-
-export default function LogStateIndicator({
+function LogStateIndicator({
 	type,
+	isActive,
 }: {
 	type: string;
+	isActive?: boolean;
 }): JSX.Element {
 	return (
-		<div className="log-state-indicator">
+		<div className={cx('log-state-indicator', isActive ? 'isActive' : '')}>
 			<div className={cx('line', type)}> </div>
 		</div>
 	);
 }
+
+LogStateIndicator.defaultProps = {
+	isActive: false,
+};
+
+export default LogStateIndicator;

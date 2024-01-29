@@ -1,6 +1,7 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './LogsExplorerViews.styles.scss';
 
-import { Button, Dropdown, MenuProps, Radio } from 'antd';
+import { Button, Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/lib';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -32,7 +33,7 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { FileDigit, FileDown, Sheet, Sliders } from 'lucide-react';
+import { Sliders } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
@@ -65,9 +66,6 @@ function LogsExplorerViews({
 	const history = useHistory();
 
 	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
-	const [selectedPanelType, setSelectedPanelType] = useState<PANEL_TYPES>(
-		PANEL_TYPES.LIST,
-	);
 
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
@@ -88,6 +86,10 @@ function LogsExplorerViews({
 		panelType,
 		updateAllQueriesOperators,
 	} = useQueryBuilder();
+
+	const [selectedPanelType, setSelectedPanelType] = useState<PANEL_TYPES>(
+		panelType || PANEL_TYPES.LIST,
+	);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
@@ -171,6 +173,7 @@ function LogsExplorerViews({
 	const handleModeChange = (e: RadioChangeEvent): void => {
 		setSelectedPanelType(e.target.value);
 		setShowFormatMenuItems(false);
+		handleExplorerTabChange(e.target.value);
 	};
 
 	const {
@@ -181,7 +184,7 @@ function LogsExplorerViews({
 		enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
 	});
 
-	const { data, isLoading, isError } = useGetExplorerQueryRange(
+	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
 		requestData,
 		panelType,
 		{
@@ -360,12 +363,17 @@ function LogsExplorerViews({
 			handleExplorerTabChange(PANEL_TYPES.TIME_SERIES);
 			setSelectedPanelType(PANEL_TYPES.TIME_SERIES);
 		}
+
+		if (panelType) {
+			setSelectedPanelType(panelType);
+		}
 	}, [
 		isMultipleQueries,
 		isGroupByExist,
 		selectedPanelType,
 		selectedView,
 		handleExplorerTabChange,
+		panelType,
 	]);
 
 	useEffect(() => {
@@ -455,25 +463,6 @@ function LogsExplorerViews({
 		return isGroupByExist ? data.payload.data.result : firstPayloadQueryArray;
 	}, [stagedQuery, panelType, data, listChartData, listQuery]);
 
-	const exportItems: MenuProps['items'] = [
-		{
-			type: 'group',
-			label: 'EXPORT AS',
-			children: [
-				{
-					key: 'excel',
-					label: 'Excel (.xslx)',
-					icon: <Sheet size={14} />,
-				},
-				{
-					key: 'csv',
-					label: 'CSV',
-					icon: <FileDigit size={14} />,
-				},
-			],
-		},
-	];
-
 	const formatItems = [
 		{
 			key: 'raw',
@@ -513,7 +502,13 @@ function LogsExplorerViews({
 		<div className="logs-explorer-views-container">
 			{showHistogram && (
 				<LogsExplorerChart
-					isLoading={isFetchingListChartData || isLoadingListChartData}
+					className="logs-histogram"
+					isLoading={
+						isFetchingListChartData ||
+						isLoadingListChartData ||
+						isLoading ||
+						isFetching
+					}
 					data={chartData}
 				/>
 			)}
@@ -527,29 +522,40 @@ function LogsExplorerViews({
 					>
 						<Radio.Button
 							value={PANEL_TYPES.LIST}
+							className={
+								// eslint-disable-next-line sonarjs/no-duplicate-string
+								selectedPanelType === PANEL_TYPES.LIST ? 'selected_view tab' : 'tab'
+							}
 							disabled={
 								(isMultipleQueries || isGroupByExist) && selectedView !== 'search'
 							}
 						>
 							List view
 						</Radio.Button>
-						<Radio.Button value={PANEL_TYPES.TIME_SERIES}> Time series </Radio.Button>
-						<Radio.Button value={PANEL_TYPES.TABLE}> Table </Radio.Button>
+						<Radio.Button
+							value={PANEL_TYPES.TIME_SERIES}
+							className={
+								// eslint-disable-next-line sonarjs/no-duplicate-string
+								selectedPanelType === PANEL_TYPES.TIME_SERIES
+									? 'selected_view tab'
+									: 'tab'
+							}
+						>
+							Time series
+						</Radio.Button>
+						<Radio.Button
+							value={PANEL_TYPES.TABLE}
+							className={
+								// eslint-disable-next-line sonarjs/no-duplicate-string
+								selectedPanelType === PANEL_TYPES.TABLE ? 'selected_view tab' : 'tab'
+							}
+						>
+							Table
+						</Radio.Button>
 					</Radio.Group>
 
 					{selectedPanelType === PANEL_TYPES.LIST && (
 						<div className="tab-options">
-							<Dropdown
-								menu={{ items: exportItems }}
-								className="dropdown"
-								placement="bottomRight"
-								trigger={['click']}
-							>
-								<Button>
-									<FileDown size={16} />
-								</Button>
-							</Dropdown>
-
 							<div className="format-options-container" ref={menuRef}>
 								<Button onClick={handleToggleShowFormatOptions}>
 									<Sliders size={16} />
@@ -579,13 +585,17 @@ function LogsExplorerViews({
 					)}
 
 					{selectedPanelType === PANEL_TYPES.TIME_SERIES && (
-						<TimeSeriesView isLoading={isLoading} data={data} isError={isError} />
+						<TimeSeriesView
+							isLoading={isLoading || isFetching}
+							data={data}
+							isError={isError}
+						/>
 					)}
 
 					{selectedPanelType === PANEL_TYPES.TABLE && (
 						<LogsExplorerTable
 							data={data?.payload.data.newResult.data.result || []}
-							isLoading={isLoading}
+							isLoading={isLoading || isFetching}
 						/>
 					)}
 				</div>
@@ -598,6 +608,7 @@ function LogsExplorerViews({
 				query={exportDefaultQuery}
 				isLoading={isUpdateDashboardLoading}
 				onExport={handleExport}
+				sourcepage={DataSource.LOGS}
 			/>
 		</div>
 	);
