@@ -456,6 +456,129 @@ func TestJsonEnrich(t *testing.T) {
 	}
 }
 
+var TestJsonReplaceFieldData = []struct {
+	Name   string
+	Filter v3.FilterItem
+	Result v3.FilterItem
+}{
+	{
+		Name: "key in nested json",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.method.name",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "has",
+			Value:    "index_service",
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "method.name",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeTag,
+				IsJSON:   false,
+			},
+			Operator: "has",
+			Value:    "index_service",
+		},
+	},
+	{
+		Name: "key at top level",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.status",
+				DataType: v3.AttributeKeyDataTypeInt64,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "=",
+			Value:    10,
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "status",
+				DataType: v3.AttributeKeyDataTypeInt64,
+				Type:     v3.AttributeKeyTypeTag,
+				IsJSON:   false,
+			},
+			Operator: "=",
+			Value:    10,
+		},
+	},
+	{
+		Name: "key not present",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.status.code",
+				DataType: v3.AttributeKeyDataTypeInt64,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "=",
+			Value:    10,
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.status.code",
+				DataType: v3.AttributeKeyDataTypeInt64,
+				Type:     v3.AttributeKeyTypeUnspecified,
+				IsJSON:   false,
+			},
+			Operator: "=",
+			Value:    10,
+		},
+	},
+	{
+		Name: "key materialized",
+		Filter: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "body.data.error",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeUnspecified,
+			},
+			Operator: "=",
+			Value:    10,
+		},
+		Result: v3.FilterItem{
+			Key: v3.AttributeKey{
+				Key:      "data.error",
+				DataType: v3.AttributeKeyDataTypeString,
+				Type:     v3.AttributeKeyTypeTag,
+				IsJSON:   false,
+				IsColumn: true,
+			},
+			Operator: "=",
+			Value:    10,
+		},
+	},
+}
+
+func TestJsonReplaceField(t *testing.T) {
+	fields := map[string]v3.AttributeKey{
+		"method.name": {
+			Key:      "method.name",
+			DataType: v3.AttributeKeyDataTypeString,
+			Type:     v3.AttributeKeyTypeTag,
+		},
+		"status": {
+			Key:      "status",
+			DataType: v3.AttributeKeyDataTypeInt64,
+			Type:     v3.AttributeKeyTypeTag,
+		},
+		"data.error": {
+			Key:      "data.error",
+			DataType: v3.AttributeKeyDataTypeString,
+			Type:     v3.AttributeKeyTypeTag,
+			IsColumn: true,
+		},
+	}
+	for _, tt := range TestJsonReplaceFieldData {
+		Convey(tt.Name, t, func() {
+			res := jsonReplaceField(tt.Filter, fields)
+			So(res, ShouldResemble, tt.Result)
+		})
+	}
+}
+
 var testParseStrValueData = []struct {
 	Name       string
 	Operator   v3.FilterOperator
