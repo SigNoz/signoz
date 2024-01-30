@@ -3,7 +3,6 @@ import ROUTES from 'constants/routes';
 import { Compass, TowerControl } from 'lucide-react';
 import SaveView from 'pages/SaveView';
 import TracesExplorer from 'pages/TracesExplorer';
-import { DataSource } from 'types/common/queryBuilder';
 
 export const tracesExplorer: TabRoutes = {
 	Component: TracesExplorer,
@@ -23,6 +22,6 @@ export const tracesSaveView: TabRoutes = {
 			<TowerControl size={16} /> Views
 		</div>
 	),
-	route: `${ROUTES.TRACES_SAVE_VIEWS}?sourcepage=${DataSource.TRACES}`,
+	route: ROUTES.TRACES_SAVE_VIEWS,
 	key: ROUTES.TRACES_SAVE_VIEWS,
 };

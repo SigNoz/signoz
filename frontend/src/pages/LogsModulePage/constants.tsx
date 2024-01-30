@@ -4,7 +4,6 @@ import { Compass, TowerControl, Workflow } from 'lucide-react';
 import LogsExplorer from 'pages/LogsExplorer';
 import Pipelines from 'pages/Pipelines';
 import SaveView from 'pages/SaveView';
-import { DataSource } from 'types/common/queryBuilder';
 
 export const logsExplorer: TabRoutes = {
 	Component: LogsExplorer,
@@ -35,6 +34,6 @@ export const logSaveView: TabRoutes = {
 			<TowerControl size={16} /> Views
 		</div>
 	),
-	route: `${ROUTES.LOGS_SAVE_VIEWS}?sourcepage=${DataSource.LOGS}`,
+	route: ROUTES.LOGS_SAVE_VIEWS,
 	key: ROUTES.LOGS_SAVE_VIEWS,
 };
