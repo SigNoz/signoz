@@ -62,7 +62,7 @@ function DateTimeSelection({
 			const selectedTime = routesObject[location.pathname];
 
 			if (selectedTime) {
-				let parsedSelectedTime;
+				let parsedSelectedTime: TimeRange;
 				try {
 					parsedSelectedTime = JSON.parse(selectedTime);
 				} catch {
@@ -71,8 +71,8 @@ function DateTimeSelection({
 
 				if (isObject(parsedSelectedTime)) {
 					return {
-						localstorageStartTime: (parsedSelectedTime as TimeRange).startTime,
-						localstorageEndTime: (parsedSelectedTime as TimeRange).endTime,
+						localstorageStartTime: parsedSelectedTime.startTime,
+						localstorageEndTime: parsedSelectedTime.endTime,
 					};
 				}
 				return { localstorageStartTime: null, localstorageEndTime: null };
@@ -152,7 +152,7 @@ function DateTimeSelection({
 			const selectedTime = routesObject[pathName];
 
 			if (selectedTime) {
-				let parsedSelectedTime;
+				let parsedSelectedTime: TimeRange;
 				try {
 					parsedSelectedTime = JSON.parse(selectedTime);
 				} catch {
