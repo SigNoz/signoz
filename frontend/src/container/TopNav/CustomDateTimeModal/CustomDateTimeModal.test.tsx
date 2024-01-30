@@ -12,6 +12,7 @@ describe('CustomDateTimeModal', () => {
 				visible
 				onCreate={handleCreate}
 				onCancel={handleCancel}
+				setCustomDTPickerVisible={jest.fn()}
 			/>,
 		);
 	});
