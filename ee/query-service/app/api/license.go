@@ -40,6 +40,7 @@ type billingDetails struct {
 		BillingPeriodEnd   int64   `json:"billingPeriodEnd"`
 		Details            details `json:"details"`
 		Discount           float64 `json:"discount"`
+		SubscriptionStatus string  `json:"subscriptionStatus"`
 	} `json:"data"`
 }
 
