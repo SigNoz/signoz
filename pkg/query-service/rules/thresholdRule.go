@@ -629,6 +629,26 @@ func (r *ThresholdRule) prepareBuilderQueries(ts time.Time) (map[string]string, 
 	return runQueries, err
 }
 
+// The following function is used to prepare the where clause for the query
+// `lbls` contains the key value pairs of the labels from the result of the query
+// We iterate over the where clause and replace the labels with the actual values
+// There are two cases:
+// 1. The label is present in the where clause
+// 2. The label is not present in the where clause
+//
+// Example for case 2:
+// Latency by serviceName without any filter
+// In this case, for each service with latency > threshold we send a notification
+// The expectation will be that clicking on the related traces for service A, will
+// take us to the traces page with the filter serviceName=A
+// So for all the missing labels in the where clause, we add them as key = value
+//
+// Example for case 1:
+// Severity text IN (WARN, ERROR)
+// In this case, the Severity text will appear in the `lbls` if it were part of the group
+// by clause, in which case we replace it with the actual value for the notification
+// i.e Severity text = WARN
+// If the Severity text is not part of the group by clause, then we add it as it is
 func (r *ThresholdRule) fetchFilters(selectedQuery string, lbls labels.Labels) []v3.FilterItem {
 	var filterItems []v3.FilterItem
 
