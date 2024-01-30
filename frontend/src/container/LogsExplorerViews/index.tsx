@@ -172,7 +172,6 @@ function LogsExplorerViews({
 	);
 
 	const handleModeChange = (e: RadioChangeEvent): void => {
-		setSelectedPanelType(e.target.value);
 		setShowFormatMenuItems(false);
 		handleExplorerTabChange(e.target.value);
 	};
