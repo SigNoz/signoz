@@ -1,0 +1,17 @@
+.traces-module-container {
+	.ant-tabs-nav {
+		padding: 0 16px;
+		margin-bottom: 0px;
+
+		&::before {
+			border-bottom: none !important;
+		}
+	}
+
+	.tab-item {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 8px;
+	}
+}
