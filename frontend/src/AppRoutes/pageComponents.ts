@@ -15,13 +15,20 @@ export const ServiceMapPage = Loadable(
 	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
 );
 
-export const SaveViews = Loadable(
-	() => import(/* webpackChunkName: "SaveViews" */ 'pages/LogsModulePage'), // TODO: Add a wrapper so that the same component can be used in traces
+export const LogsSaveViews = Loadable(
+	() => import(/* webpackChunkName: "LogsSaveViews" */ 'pages/LogsModulePage'), // TODO: Add a wrapper so that the same component can be used in traces
 );
 
 export const TracesExplorer = Loadable(
 	() =>
-		import(/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesExplorer'),
+		import(
+			/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesModulePage'
+		),
+);
+
+export const TracesSaveViews = Loadable(
+	() =>
+		import(/* webpackChunkName: "Traces Save Views" */ 'pages/TracesModulePage'),
 );
 
 export const TraceFilter = Loadable(

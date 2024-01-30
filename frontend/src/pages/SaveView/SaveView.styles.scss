@@ -255,6 +255,11 @@
 .lightMode {
     .save-view-container {
         .save-view-content {
+
+            .title {
+                color: var(--bg-ink-500);
+            }
+
             .ant-table-row {
                 .ant-table-cell {
                     background: var(--bg-vanilla-200); 
