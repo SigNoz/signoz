@@ -4,19 +4,7 @@ import { Compass, TowerControl, Workflow } from 'lucide-react';
 import LogsExplorer from 'pages/LogsExplorer';
 import Pipelines from 'pages/Pipelines';
 import SaveView from 'pages/SaveView';
-import TracesExplorer from 'pages/TracesExplorer';
 import { DataSource } from 'types/common/queryBuilder';
-
-export const tracesExplorer: TabRoutes = {
-	Component: TracesExplorer,
-	name: (
-		<div className="tab-item">
-			<Compass size={16} /> Explorer
-		</div>
-	),
-	route: ROUTES.TRACES_EXPLORER,
-	key: ROUTES.TRACES_EXPLORER,
-};
 
 export const logsExplorer: TabRoutes = {
 	Component: LogsExplorer,
@@ -47,20 +35,6 @@ export const logSaveView: TabRoutes = {
 			<TowerControl size={16} /> Views
 		</div>
 	),
-	route: `${ROUTES.SAVE_VIEWS}?sourcepage=${DataSource.LOGS}`,
-	key: ROUTES.SAVE_VIEWS,
+	route: `${ROUTES.LOGS_SAVE_VIEWS}?sourcepage=${DataSource.LOGS}`,
+	key: ROUTES.LOGS_SAVE_VIEWS,
 };
-
-export const tracesSaveView: TabRoutes = {
-	Component: SaveView,
-	name: (
-		<div className="tab-item">
-			<TowerControl size={16} /> Views
-		</div>
-	),
-	route: `${ROUTES.SAVE_VIEWS}?sourcepage=${DataSource.TRACES}`,
-	key: ROUTES.SAVE_VIEWS,
-};
-
-export const TAB_LOGS_PATH: string[] = [ROUTES.LOGS, ROUTES.LOGS_PIPELINES];
-export const TAB_TRACES_PATH: string[] = [ROUTES.TRACES_EXPLORER];
