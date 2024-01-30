@@ -21,6 +21,7 @@ import {
 	Logs,
 	LogsExplorer,
 	LogsIndexToFields,
+	LogsSaveViews,
 	MySettings,
 	NewDashboardPage,
 	OldLogsExplorer,
@@ -28,7 +29,6 @@ import {
 	OrganizationSettings,
 	PasswordReset,
 	PipelinePage,
-	SaveViews,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -40,6 +40,7 @@ import {
 	TraceDetail,
 	TraceFilter,
 	TracesExplorer,
+	TracesSaveViews,
 	UnAuthorized,
 	UsageExplorerPage,
 } from './pageComponents';
@@ -88,11 +89,11 @@ const routes: AppRoutes[] = [
 		key: 'SERVICE_MAP',
 	},
 	{
-		path: ROUTES.SAVE_VIEWS,
-		component: SaveViews,
+		path: ROUTES.LOGS_SAVE_VIEWS,
+		component: LogsSaveViews,
 		isPrivate: true,
 		exact: true,
-		key: 'SAVE_VIEWS',
+		key: 'LOGS_SAVE_VIEWS',
 	},
 	{
 		path: ROUTES.TRACE_DETAIL,
@@ -170,6 +171,13 @@ const routes: AppRoutes[] = [
 		component: TracesExplorer,
 		isPrivate: true,
 		key: 'TRACES_EXPLORER',
+	},
+	{
+		path: ROUTES.TRACES_SAVE_VIEWS,
+		exact: true,
+		component: TracesSaveViews,
+		isPrivate: true,
+		key: 'TRACES_SAVE_VIEWS',
 	},
 	{
 		path: ROUTES.CHANNELS_NEW,

@@ -14,7 +14,6 @@ import {
 	getViewDetailsUsingViewKey,
 	showErrorNotification,
 } from 'components/ExplorerCard/utils';
-import ROUTES from 'constants/routes';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
@@ -22,7 +21,6 @@ import { useUpdateView } from 'hooks/saveViews/useUpdateView';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
-import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	CalendarClock,
 	Check,
@@ -34,17 +32,17 @@ import {
 } from 'lucide-react';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { ROUTES_VS_SOURCEPAGE, SOURCEPAGE_VS_ROUTES } from './constants';
 import { deleteViewHandler } from './utils';
 
 function SaveView(): JSX.Element {
-	const urlQuery = useUrlQuery();
-	const sourcepage = urlQuery.get('sourcepage');
-	const history = useHistory();
+	const { pathname } = useLocation();
+	const sourcepage = ROUTES_VS_SOURCEPAGE[pathname];
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [activeViewKey, setActiveViewKey] = useState<string>('');
 	const [newViewName, setNewViewName] = useState<string>('');
@@ -81,10 +79,6 @@ function SaveView(): JSX.Element {
 		setActiveCompositeQuery(view.compositeQuery);
 		setIsEditModalOpen(true);
 	};
-
-	if (!sourcepage) {
-		history.replace('/404');
-	}
 
 	const { notifications } = useNotifications();
 
@@ -147,7 +141,7 @@ function SaveView(): JSX.Element {
 				compositeQuery: activeCompositeQuery || ({} as ICompositeMetricQuery),
 				viewKey: activeViewKey,
 				extraData: JSON.stringify({ color }),
-				sourcePage: sourcepage || DataSource.LOGS,
+				sourcePage: sourcepage,
 				viewName: activeViewName,
 			},
 			{
@@ -175,15 +169,17 @@ function SaveView(): JSX.Element {
 		if (!currentViewDetails) return;
 		const { query, name, uuid, panelType: currentPanelType } = currentViewDetails;
 
-		handleExplorerTabChange(
-			currentPanelType,
-			{
-				query,
-				name,
-				uuid,
-			},
-			ROUTES.LOGS_EXPLORER,
-		);
+		if (sourcepage) {
+			handleExplorerTabChange(
+				currentPanelType,
+				{
+					query,
+					name,
+					uuid,
+				},
+				SOURCEPAGE_VS_ROUTES[sourcepage],
+			);
+		}
 	};
 
 	const columns: TableProps<ViewProps>['columns'] = [

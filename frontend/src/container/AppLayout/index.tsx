@@ -234,7 +234,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		routeKey === 'LOGS' ||
 		routeKey === 'LOGS_EXPLORER' ||
 		routeKey === 'LOGS_PIPELINES' ||
-		routeKey === 'SAVE_VIEWS';
+		routeKey === 'LOGS_SAVE_VIEWS';
+
+	const isTracesView = (): boolean =>
+		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
 	useEffect(() => {
 		if (isDarkMode) {
@@ -282,7 +285,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						<LayoutContent>
 							<ChildrenContainer
 								style={{
-									margin: isLogsView() ? 0 : ' 0 1rem',
+									margin: isLogsView() || isTracesView() ? 0 : ' 0 1rem',
 								}}
 							>
 								{isToDisplayLayout && !renderFullScreen && <TopNav />}

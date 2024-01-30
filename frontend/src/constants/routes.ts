@@ -41,7 +41,8 @@ const ROUTES = {
 	TRACE_EXPLORER: '/trace-explorer',
 	BILLING: '/billing',
 	SUPPORT: '/support',
-	SAVE_VIEWS: '/save-views',
+	LOGS_SAVE_VIEWS: '/logs-save-views',
+	TRACES_SAVE_VIEWS: '/traces-save-views',
 	WORKSPACE_LOCKED: '/workspace-locked',
 } as const;
 
