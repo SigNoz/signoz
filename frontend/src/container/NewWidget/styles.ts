@@ -25,7 +25,7 @@ export const LeftContainerWrapper = styled(Col)`
 
 export const ButtonContainer = styled.div`
 	display: flex;
-	gap: 1rem;
+	gap: 8px;
 	margin-bottom: 1rem;
 	justify-content: flex-end;
 `;
