@@ -254,7 +254,8 @@ type timeRange struct {
 }
 
 type builderQuery struct {
-	QueryData []v3.BuilderQuery `json:"queryData"`
+	QueryData     []v3.BuilderQuery `json:"queryData"`
+	QueryFormulas []string          `json:"queryFormulas"`
 }
 
 type urlShareableCompositeQuery struct {

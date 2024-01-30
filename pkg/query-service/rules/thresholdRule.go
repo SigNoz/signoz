@@ -725,6 +725,7 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 					},
 				},
 			},
+			QueryFormulas: make([]string, 0),
 		},
 	}
 
@@ -734,7 +735,7 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
 
-	return fmt.Sprintf("compositeQuery=%s?timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
 }
 
 func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) string {
@@ -787,6 +788,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 					},
 				},
 			},
+			QueryFormulas: make([]string, 0),
 		},
 	}
 
@@ -797,7 +799,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
 
-	return fmt.Sprintf("compositeQuery=%s?timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
 }
 
 func (r *ThresholdRule) hostFromSource() string {
