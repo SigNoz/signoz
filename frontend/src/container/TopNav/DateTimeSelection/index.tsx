@@ -28,7 +28,13 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
-import { getDefaultOption, getOptions, Time } from './config';
+import {
+	getDefaultOption,
+	getOptions,
+	LocalStorageTimeRange,
+	Time,
+	TimeRange,
+} from './config';
 import RefreshText from './Refresh';
 import { Form, FormContainer, FormItem } from './styles';
 
@@ -45,7 +51,10 @@ function DateTimeSelection({
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
 
-	const { localstorageStartTime, localstorageEndTime } = ((): any => {
+	const {
+		localstorageStartTime,
+		localstorageEndTime,
+	} = ((): LocalStorageTimeRange => {
 		const routes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
 
 		if (routes !== null) {
@@ -62,8 +71,8 @@ function DateTimeSelection({
 
 				if (isObject(parsedSelectedTime)) {
 					return {
-						localstorageStartTime: (parsedSelectedTime as any).startTime,
-						localstorageEndTime: (parsedSelectedTime as any).endTime,
+						localstorageStartTime: (parsedSelectedTime as TimeRange).startTime,
+						localstorageEndTime: (parsedSelectedTime as TimeRange).endTime,
 					};
 				}
 				return { localstorageStartTime: null, localstorageEndTime: null };
