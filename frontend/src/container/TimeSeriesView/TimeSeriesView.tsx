@@ -74,7 +74,6 @@ function TimeSeriesView({
 	return (
 		<Container>
 			{isError && <LogsError />}
-			{}
 			<div
 				className="graph-container"
 				style={{ height: '100%', width: '100%' }}
