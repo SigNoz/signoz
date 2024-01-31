@@ -77,6 +77,7 @@ function ResizeTable({
 		hideOnSinglePage: true,
 		showTotal: (total: number, range: number[]): string =>
 			`${range[0]}-${range[1]} of ${total} items`,
+		...tableParams.pagination,
 	};
 
 	return onDragColumn ? (
