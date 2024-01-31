@@ -107,7 +107,7 @@ func (p *PqlEngine) RunAlertQuery(ctx context.Context, qs string, start, end tim
 		for _, smpl := range value {
 			series = append(series, pql.Series{
 				Metric: smpl.Metric,
-				Floats: []pql.FPoint{pql.FPoint{T: smpl.T, F: smpl.F}},
+				Floats: []pql.FPoint{{T: smpl.T, F: smpl.F}},
 			})
 		}
 		return series, nil
@@ -115,7 +115,7 @@ func (p *PqlEngine) RunAlertQuery(ctx context.Context, qs string, start, end tim
 		value := res.Value.(pql.Scalar)
 		series := make([]pql.Series, 0, 1)
 		series = append(series, pql.Series{
-			Floats: []pql.FPoint{pql.FPoint{T: value.T, F: value.V}},
+			Floats: []pql.FPoint{{T: value.T, F: value.V}},
 		})
 		return series, nil
 	case pql.Matrix:
