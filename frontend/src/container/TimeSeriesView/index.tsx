@@ -68,6 +68,7 @@ function TimeSeriesViewContainer({
 
 	return (
 		<TimeSeriesView
+			isFilterApplied={false} // @vikrant to update this
 			isError={isError}
 			isLoading={isLoading}
 			data={responseData}
