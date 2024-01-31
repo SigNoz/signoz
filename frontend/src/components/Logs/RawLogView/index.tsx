@@ -64,20 +64,6 @@ function RawLogView({
 
 	const severityText = data.severity_text ? `${data.severity_text} |` : '';
 
-	const updatedSelecedFields = useMemo(
-		() => selectedFields.filter((e) => e.name !== 'id'),
-		[selectedFields],
-	);
-
-	const attributesValues = updatedSelecedFields
-		.map((field) => flattenLogData[field.name])
-		.filter((attribute) => !isUndefined(attribute) && !isEmpty(attribute));
-
-	let attributesText = attributesValues.join(' | ');
-
-	if (attributesText.length > 0) {
-		attributesText += ' | ';
-	}
 	const logType = data?.attributes_string?.log_level || LogType.INFO;
 
 	const updatedSelecedFields = useMemo(
