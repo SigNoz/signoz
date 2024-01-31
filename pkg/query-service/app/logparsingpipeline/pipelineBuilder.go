@@ -21,7 +21,100 @@ func CollectorConfProcessorName(p Pipeline) string {
 	return constants.LogsPPLPfx + p.Alias
 }
 
+// a.b.c -> ["a", "b", "c"]
+// a.b["c.d"].e -> ["a", "b", "c.d", "e"]
+func pathParts(path string) []string {
+	// Split once from the right to include the rightmost membership op and everything after it.
+	// Eg: `attributes.test["a.b"].value["c.d"].e` would result in `attributes.test["a.b"].value` and `["c.d"].e`
+	memberOpParts := rSplitAfterN(path, "[", 2)
+	if len(memberOpParts) < 2 {
+		// there is no [] access in fieldPath
+		return strings.Split(path, ".")
+	}
+
+	parts := pathParts(memberOpParts[0])
+
+	suffixParts := strings.SplitAfter(memberOpParts[1], "]") // ["c.d"], ".e"
+
+	parts = append(parts, suffixParts[0][1:len(suffixParts[0])-1])
+	if len(suffixParts) > 0 {
+		parts = append(parts, strings.Split(suffixParts[1][1:], ".")...)
+	}
+	return parts
+}
+
+func ottlPath(path string) string {
+	if !(strings.HasPrefix(path, "attributes") || strings.HasPrefix(path, "resource")) {
+		return path
+	}
+
+	parts := pathParts(path)
+	ottlPathParts := []string{parts[0]}
+	for _, p := range parts[1:] {
+		ottlPathParts = append(ottlPathParts, fmt.Sprintf(`["%s"]`, p))
+	}
+
+	return strings.Join(ottlPathParts, "")
+}
+
 func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []string, error) {
+	processors := map[string]interface{}{}
+	names := []string{}
+
+	enabledPipelines := []Pipeline{}
+	for _, p := range pipelines {
+		if p.Enabled {
+			enabledPipelines = append(enabledPipelines, p)
+		}
+	}
+
+	if len(enabledPipelines) < 1 {
+		return processors, names, nil
+	}
+
+	ottlStatements := []string{}
+	for _, pipeline := range enabledPipelines {
+		filterExpr, err := queryBuilderToExpr.Parse(pipeline.Filter)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to parse pipeline filter: %w", err)
+		}
+
+		for _, operator := range pipeline.Config {
+			statement := ""
+
+			if operator.Type == "add" {
+				statement = fmt.Sprintf(`set(%s, "%s")`, ottlPath(operator.Field), operator.Value)
+
+			} else {
+				return nil, nil, fmt.Errorf("unsupported pipeline operator type: %s", operator.Type)
+			}
+
+			if len(filterExpr) > 0 {
+				// filterExpr = `attributes.method == "GET"`
+				statement = fmt.Sprintf("%s where %s", statement, filterExpr)
+			}
+
+			ottlStatements = append(ottlStatements, statement)
+		}
+	}
+
+	// TODO(Raj): Maybe validate ottl statements
+
+	pipelinesProcessorName := "transform/logs-pipelines"
+	names = append(names, pipelinesProcessorName)
+	processors[pipelinesProcessorName] = map[string]interface{}{
+		"error_mode": "ignore",
+		"log_statements": []map[string]interface{}{
+			{
+				"context":    "log",
+				"statements": ottlStatements,
+			},
+		},
+	}
+	return processors, names, nil
+}
+
+func PreparePipelineProcessorOld(pipelines []Pipeline) (map[string]interface{}, []string, error) {
 	processors := map[string]interface{}{}
 	names := []string{}
 	for pipelineIdx, v := range pipelines {

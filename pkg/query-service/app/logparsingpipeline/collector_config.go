@@ -222,5 +222,7 @@ func GenerateCollectorConfigWithPipelines(
 		return nil, coreModel.BadRequest(err)
 	}
 
+	fmt.Printf("DEBUG: Config Generated\n%s", updatedConf)
+
 	return updatedConf, nil
 }
