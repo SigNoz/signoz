@@ -49,6 +49,12 @@ import NavItem from './NavItem/NavItem';
 import { SecondaryMenuItemKey } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 
+interface UserManagementMenuItems {
+	key: string;
+	label: string;
+	icon: JSX.Element;
+}
+
 function SideNav({
 	licenseData,
 	isFetching,
@@ -80,9 +86,9 @@ function SideNav({
 		icon: <UserCircle size={16} />,
 	};
 
-	const [userManagementMenuItems, setUserManagementMenuItems] = useState([
-		manageLicenseMenuItem,
-	]);
+	const [userManagementMenuItems, setUserManagementMenuItems] = useState<
+		UserManagementMenuItems[]
+	>([manageLicenseMenuItem]);
 
 	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
