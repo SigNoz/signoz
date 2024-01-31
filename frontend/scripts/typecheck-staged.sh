@@ -9,7 +9,7 @@ done
 # create temporary tsconfig which includes only passed files
 str="{
   \"extends\": \"./tsconfig.json\",
-  \"include\": [\"src/global.d.ts\", $files]
+  \"include\": [\"src/types/global.d.ts\",\"src/typings/window.ts\", $files]
 }"
 echo $str > tsconfig.tmp
 
