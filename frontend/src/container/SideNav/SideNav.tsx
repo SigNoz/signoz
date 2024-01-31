@@ -74,6 +74,8 @@ function SideNav({
 		isCurrentVersionError,
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
+	const [licenseTag, setLicenseTag] = useState('');
+
 	const userSettingsMenuItem = {
 		key: ROUTES.MY_SETTINGS,
 		label: user?.name || 'User',
@@ -239,6 +241,18 @@ function SideNav({
 		}
 	};
 
+	useEffect(() => {
+		if (!isFetching) {
+			if (isCloudUserVal) {
+				setLicenseTag('Cloud');
+			} else if (isEnterprise) {
+				setLicenseTag('Enterprise');
+			} else {
+				setLicenseTag('Free');
+			}
+		}
+	}, [isCloudUserVal, isEnterprise, isFetching]);
+
 	return (
 		<div className={cx('sideNav', collapsed ? 'collapsed' : '')}>
 			<div className="brand">
@@ -257,7 +271,7 @@ function SideNav({
 
 				{!collapsed && (
 					<>
-						<div className="license tag">{!isEnterprise ? 'Free' : 'Enterprise'}</div>
+						{!isFetching && <div className="license tag">{licenseTag}</div>}
 
 						<ToggleButton
 							checked={isDarkMode}
