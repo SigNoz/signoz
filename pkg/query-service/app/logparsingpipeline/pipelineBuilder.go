@@ -83,7 +83,11 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 						statement = fmt.Sprintf(`set(%s, "%s")`, ottlPath(operator.Field), operator.Value)
 
 					} else if operator.Type == "remove" {
-						statement = fmt.Sprintf(`set(%s, "%s")`, ottlPath(operator.Field), operator.Value)
+						fieldPath := ottlPath(operator.Field)
+						fieldPathParts := rSplitAfterN(fieldPath, "[", 2)
+						target := fieldPathParts[0]
+						key := fieldPathParts[1][1 : len(fieldPathParts[1])-1]
+						statement = fmt.Sprintf(`delete_key(%s, %s)`, target, key)
 
 					} else {
 						return nil, nil, fmt.Errorf("unsupported pipeline operator type: %s", operator.Type)
