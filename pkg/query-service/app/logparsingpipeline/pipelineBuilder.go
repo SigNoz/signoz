@@ -50,6 +50,10 @@ func ottlPath(path string) string {
 
 	parts := pathParts(path)
 	ottlPathParts := []string{parts[0]}
+	if ottlPathParts[0] == "resource" {
+		// https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl/contexts/ottllog#paths
+		ottlPathParts[0] = "resource.attributes"
+	}
 	for _, p := range parts[1:] {
 		ottlPathParts = append(ottlPathParts, fmt.Sprintf(`["%s"]`, p))
 	}
@@ -61,55 +65,54 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 	processors := map[string]interface{}{}
 	names := []string{}
 
-	enabledPipelines := []Pipeline{}
-	for _, p := range pipelines {
-		if p.Enabled {
-			enabledPipelines = append(enabledPipelines, p)
-		}
-	}
-
-	if len(enabledPipelines) < 1 {
-		return processors, names, nil
-	}
-
 	ottlStatements := []string{}
-	for _, pipeline := range enabledPipelines {
-		filterExpr, err := queryBuilderToExpr.Parse(pipeline.Filter)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to parse pipeline filter: %w", err)
-		}
+	for _, pipeline := range pipelines {
+		if pipeline.Enabled {
 
-		for _, operator := range pipeline.Config {
-			statement := ""
-
-			if operator.Type == "add" {
-				statement = fmt.Sprintf(`set(%s, "%s")`, ottlPath(operator.Field), operator.Value)
-
-			} else {
-				return nil, nil, fmt.Errorf("unsupported pipeline operator type: %s", operator.Type)
+			filterExpr, err := queryBuilderToExpr.Parse(pipeline.Filter)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to parse pipeline filter: %w", err)
 			}
 
-			if len(filterExpr) > 0 {
-				// filterExpr = `attributes.method == "GET"`
-				statement = fmt.Sprintf("%s where %s", statement, filterExpr)
-			}
+			for _, operator := range pipeline.Config {
+				if operator.Enabled {
 
-			ottlStatements = append(ottlStatements, statement)
+					statement := ""
+
+					if operator.Type == "add" {
+						statement = fmt.Sprintf(`set(%s, "%s")`, ottlPath(operator.Field), operator.Value)
+
+					} else if operator.Type == "remove" {
+						statement = fmt.Sprintf(`set(%s, "%s")`, ottlPath(operator.Field), operator.Value)
+
+					} else {
+						return nil, nil, fmt.Errorf("unsupported pipeline operator type: %s", operator.Type)
+					}
+
+					if len(filterExpr) > 0 {
+						// filterExpr = `attributes.method == "GET"`
+						statement = fmt.Sprintf("%s where %s", statement, filterExpr)
+					}
+
+					ottlStatements = append(ottlStatements, statement)
+				}
+			}
 		}
 	}
 
 	// TODO(Raj): Maybe validate ottl statements
-
-	pipelinesProcessorName := "transform/logs-pipelines"
-	names = append(names, pipelinesProcessorName)
-	processors[pipelinesProcessorName] = map[string]interface{}{
-		"error_mode": "ignore",
-		"log_statements": []map[string]interface{}{
-			{
-				"context":    "log",
-				"statements": ottlStatements,
+	if len(ottlStatements) > 0 {
+		pipelinesProcessorName := "transform/logs-pipelines"
+		names = append(names, pipelinesProcessorName)
+		processors[pipelinesProcessorName] = map[string]interface{}{
+			"error_mode": "ignore",
+			"log_statements": []map[string]interface{}{
+				{
+					"context":    "log",
+					"statements": ottlStatements,
+				},
 			},
-		},
+		}
 	}
 	return processors, names, nil
 }

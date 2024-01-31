@@ -346,9 +346,8 @@ func TestAddProcessor(t *testing.T) {
 		},
 	}
 
-	var parserOp PipelineOperator
-	err := json.Unmarshal([]byte(`
-		{
+	for _, procJson := range []string{
+		`{
 			"orderId": 1,
 			"enabled": true,
 			"type": "add",
@@ -356,10 +355,29 @@ func TestAddProcessor(t *testing.T) {
 			"id": "test-add-parser",
 			"field": "attributes.test",
 			"value": "test"
-		}
-	`), &parserOp)
-	require.Nil(err)
-	testPipelines[0].Config = append(testPipelines[0].Config, parserOp)
+		}`, `{
+			"orderId": 2,
+			"enabled": true,
+			"type": "add",
+			"name": "Test enabled add resource parser",
+			"id": "test-add-parser",
+			"field": "resource.test",
+			"value": "test"
+		}`, `{
+			"orderId": 3,
+			"enabled": false,
+			"type": "add",
+			"name": "Test disabled add parser",
+			"id": "test-add-parser",
+			"field": "attributes.testMissing",
+			"value": "test"
+		}`,
+	} {
+		var parserOp PipelineOperator
+		err := json.Unmarshal([]byte(procJson), &parserOp)
+		require.Nil(err)
+		testPipelines[0].Config = append(testPipelines[0].Config, parserOp)
+	}
 
 	testLog := makeTestSignozLog(
 		"test log",
@@ -380,6 +398,8 @@ func TestAddProcessor(t *testing.T) {
 	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
 	processed := result[0]
 	require.Equal("test", processed.Attributes_string["test"])
+	require.Equal("test", processed.Resources_string["test"])
+	require.Equal("", processed.Attributes_string["testMissing"])
 }
 
 func TestRemoveProcessor(t *testing.T) {
