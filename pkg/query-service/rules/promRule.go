@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
@@ -115,7 +116,9 @@ func (r *PromRule) targetVal() float64 {
 		return 0
 	}
 
-	return *r.ruleCondition.Target
+	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
+	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
+	return value.F
 }
 
 func (r *PromRule) Type() RuleType {
@@ -322,14 +325,7 @@ func (r *PromRule) getPqlQuery() (string, error) {
 				if query == "" {
 					return query, fmt.Errorf("a promquery needs to be set for this rule to function")
 				}
-				if r.ruleCondition.Target != nil && r.ruleCondition.CompareOp != CompareOpNone {
-					unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
-					value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
-					query = fmt.Sprintf("(%s) %s %f", query, ResolveCompareOp(r.ruleCondition.CompareOp), value.F)
-					return query, nil
-				} else {
-					return query, nil
-				}
+				return query, nil
 			}
 		}
 	}
@@ -388,130 +384,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			continue
 		}
 
-		alertSmpl := pql.Sample{}
-
-		shouldAlert := false
-
-		switch r.matchType() {
-		case AtleastOnce:
-			// If any sample matches the condition, the rule is firing.
-			if r.compareOp() == ValueIsAbove {
-				for _, smpl := range series.Floats {
-					if smpl.F > r.targetVal() {
-						alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
-						shouldAlert = true
-						break
-					}
-				}
-			} else if r.compareOp() == ValueIsBelow {
-				for _, smpl := range series.Floats {
-					if smpl.F < r.targetVal() {
-						alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
-						shouldAlert = true
-						break
-					}
-				}
-			} else if r.compareOp() == ValueIsEq {
-				for _, smpl := range series.Floats {
-					if smpl.F == r.targetVal() {
-						alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
-						shouldAlert = true
-						break
-					}
-				}
-			} else if r.compareOp() == ValueIsNotEq {
-				for _, smpl := range series.Floats {
-					if smpl.F != r.targetVal() {
-						alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
-						shouldAlert = true
-						break
-					}
-				}
-			}
-		case AllTheTimes:
-			// If all samples match the condition, the rule is firing.
-			shouldAlert = true
-			alertSmpl = pql.Sample{F: r.targetVal(), Metric: series.Metric}
-			if r.compareOp() == ValueIsAbove {
-				for _, smpl := range series.Floats {
-					if smpl.F <= r.targetVal() {
-						shouldAlert = false
-						break
-					}
-				}
-			} else if r.compareOp() == ValueIsBelow {
-				for _, smpl := range series.Floats {
-					if smpl.F >= r.targetVal() {
-						shouldAlert = false
-						break
-					}
-				}
-			} else if r.compareOp() == ValueIsEq {
-				for _, smpl := range series.Floats {
-					if smpl.F != r.targetVal() {
-						shouldAlert = false
-						break
-					}
-				}
-			} else if r.compareOp() == ValueIsNotEq {
-				for _, smpl := range series.Floats {
-					if smpl.F == r.targetVal() {
-						shouldAlert = false
-						break
-					}
-				}
-			}
-		case OnAverage:
-			// If the average of all samples matches the condition, the rule is firing.
-			var sum float64
-			for _, smpl := range series.Floats {
-				sum += smpl.F
-			}
-			avg := sum / float64(len(series.Floats))
-			alertSmpl = pql.Sample{F: avg, Metric: series.Metric}
-			if r.compareOp() == ValueIsAbove {
-				if avg > r.targetVal() {
-					shouldAlert = true
-				}
-			} else if r.compareOp() == ValueIsBelow {
-				if avg < r.targetVal() {
-					shouldAlert = true
-				}
-			} else if r.compareOp() == ValueIsEq {
-				if avg == r.targetVal() {
-					shouldAlert = true
-				}
-			} else if r.compareOp() == ValueIsNotEq {
-				if avg != r.targetVal() {
-					shouldAlert = true
-				}
-			}
-		case InTotal:
-			// If the sum of all samples matches the condition, the rule is firing.
-			var sum float64
-			for _, smpl := range series.Floats {
-				sum += smpl.F
-			}
-			alertSmpl = pql.Sample{F: sum, Metric: series.Metric}
-			if r.compareOp() == ValueIsAbove {
-				if sum > r.targetVal() {
-					shouldAlert = true
-				}
-			} else if r.compareOp() == ValueIsBelow {
-				if sum < r.targetVal() {
-					shouldAlert = true
-				}
-			} else if r.compareOp() == ValueIsEq {
-				if sum == r.targetVal() {
-					shouldAlert = true
-				}
-			} else if r.compareOp() == ValueIsNotEq {
-				if sum != r.targetVal() {
-					shouldAlert = true
-				}
-			}
-		}
-
+		alertSmpl, shouldAlert := r.shouldAlert(series)
 		if !shouldAlert {
 			continue
 		}
@@ -621,6 +494,137 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 	r.lastError = err
 
 	return len(r.active), nil
+}
+
+func (r *PromRule) shouldAlert(series pql.Series) (pql.Sample, bool) {
+	var alertSmpl pql.Sample
+	var shouldAlert bool
+	switch r.matchType() {
+	case AtleastOnce:
+		// If any sample matches the condition, the rule is firing.
+		if r.compareOp() == ValueIsAbove {
+			for _, smpl := range series.Floats {
+				if smpl.F > r.targetVal() {
+					alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
+					shouldAlert = true
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			for _, smpl := range series.Floats {
+				if smpl.F < r.targetVal() {
+					alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
+					shouldAlert = true
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsEq {
+			for _, smpl := range series.Floats {
+				if smpl.F == r.targetVal() {
+					alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
+					shouldAlert = true
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			for _, smpl := range series.Floats {
+				if smpl.F != r.targetVal() {
+					alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
+					shouldAlert = true
+					break
+				}
+			}
+		}
+	case AllTheTimes:
+		// If all samples match the condition, the rule is firing.
+		shouldAlert = true
+		alertSmpl = pql.Sample{F: r.targetVal(), Metric: series.Metric}
+		if r.compareOp() == ValueIsAbove {
+			for _, smpl := range series.Floats {
+				if smpl.F <= r.targetVal() {
+					shouldAlert = false
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			for _, smpl := range series.Floats {
+				if smpl.F >= r.targetVal() {
+					shouldAlert = false
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsEq {
+			for _, smpl := range series.Floats {
+				if smpl.F != r.targetVal() {
+					shouldAlert = false
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			for _, smpl := range series.Floats {
+				if smpl.F == r.targetVal() {
+					shouldAlert = false
+					break
+				}
+			}
+		}
+	case OnAverage:
+		// If the average of all samples matches the condition, the rule is firing.
+		var sum float64
+		for _, smpl := range series.Floats {
+			if math.IsNaN(smpl.F) {
+				continue
+			}
+			sum += smpl.F
+		}
+		avg := sum / float64(len(series.Floats))
+		alertSmpl = pql.Sample{F: avg, Metric: series.Metric}
+		if r.compareOp() == ValueIsAbove {
+			if avg > r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			if avg < r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsEq {
+			if avg == r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			if avg != r.targetVal() {
+				shouldAlert = true
+			}
+		}
+	case InTotal:
+		// If the sum of all samples matches the condition, the rule is firing.
+		var sum float64
+		for _, smpl := range series.Floats {
+			if math.IsNaN(smpl.F) {
+				continue
+			}
+			sum += smpl.F
+		}
+		alertSmpl = pql.Sample{F: sum, Metric: series.Metric}
+		if r.compareOp() == ValueIsAbove {
+			if sum > r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			if sum < r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsEq {
+			if sum == r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			if sum != r.targetVal() {
+				shouldAlert = true
+			}
+		}
+	}
+	return alertSmpl, shouldAlert
 }
 
 func (r *PromRule) String() string {
