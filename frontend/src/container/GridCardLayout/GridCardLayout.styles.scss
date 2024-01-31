@@ -1,8 +1,10 @@
 .fullscreen-grid-container {
 	overflow: auto;
+	margin-top: 1rem;
 
 	.react-grid-layout {
 		border: none !important;
+		margin-top: 0;
 	}
 }
 
@@ -11,5 +13,11 @@
 
 	&.graph {
 		height: calc(100% - 30px);
+	}
+}
+
+.lightMode {
+	.fullscreen-grid-container {
+		background-color: rgb(250, 250, 250);
 	}
 }

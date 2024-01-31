@@ -307,7 +307,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							disabled={isSaveDisabled}
 							onClick={onSaveDashboard}
 						>
-							Save
+							Save Changes
 						</Button>
 					</Tooltip>
 				)}
@@ -316,13 +316,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					<Button
 						type="primary"
 						data-testid="new-widget-save"
+						loading={updateDashboardMutation.isLoading}
 						disabled={isSaveDisabled}
 						onClick={onSaveDashboard}
 					>
-						Save
+						Save Changes
 					</Button>
 				)}
-				<Button onClick={onClickDiscardHandler}>Discard</Button>
+				<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
 			</ButtonContainer>
 
 			<PanelContainer>
@@ -385,6 +386,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				closable
 				onCancel={closeModal}
 				onOk={onClickSaveHandler}
+				confirmLoading={updateDashboardMutation.isLoading}
 				centered
 				open={saveModal}
 				width={600}

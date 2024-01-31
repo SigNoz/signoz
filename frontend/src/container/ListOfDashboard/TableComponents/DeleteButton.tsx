@@ -1,3 +1,5 @@
+import './DeleteButton.styles.scss';
+
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal, Tooltip, Typography } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -64,6 +66,7 @@ function DeleteButton({
 			okText: 'Delete',
 			okButtonProps: { danger: true },
 			centered: true,
+			className: 'delete-modal',
 		});
 	}, [modal, name, deleteDashboardMutation, notifications, t, queryClient]);
 

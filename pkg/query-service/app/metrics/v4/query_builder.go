@@ -24,7 +24,10 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	groupBy := helpers.GroupByAttributeKeyTags(mq.GroupBy...)
 	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
 
-	if mq.Quantile != 0 {
+	var quantile float64
+
+	if v3.IsPercentileOperator(mq.SpaceAggregation) {
+		quantile = v3.GetPercentileFromOperator(mq.SpaceAggregation)
 		// If quantile is set, we need to group by le
 		// and set the space aggregation to sum
 		// and time aggregation to rate
@@ -57,8 +60,8 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 		return "", err
 	}
 
-	if mq.Quantile != 0 {
-		query = fmt.Sprintf(`SELECT %s, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s`, groupBy, mq.Quantile, query, groupBy, orderBy)
+	if quantile != 0 {
+		query = fmt.Sprintf(`SELECT %s, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s`, groupBy, quantile, query, groupBy, orderBy)
 	}
 
 	return query, nil

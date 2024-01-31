@@ -59,6 +59,7 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 				width: MIN_WIDTH,
 				color,
 				nodeVal: MIN_WIDTH,
+				name: node,
 			};
 		}
 		if (service.errorRate > 0) {
@@ -72,6 +73,7 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 			width,
 			color,
 			nodeVal: width,
+			name: node,
 		};
 	});
 	return {
@@ -123,9 +125,12 @@ export const getTooltip = (link: {
 							</div>`;
 };
 
-export const transformLabel = (label: string) => {
-	const MAX_LENGTH = 13;
-	const MAX_SHOW = 10;
+export const transformLabel = (label: string, zoomLevel: number) => {
+	//? 13 is the minimum label length. Scaling factor of 0.9 which is slightly less than 1
+	//? ensures smoother zoom transitions, gradually increasing MAX_LENGTH, displaying more of the label as
+	//? zooming in.
+	const MAX_LENGTH = 13 * (zoomLevel / 0.9);
+	const MAX_SHOW = MAX_LENGTH - 3;
 	if (label.length > MAX_LENGTH) {
 		return `${label.slice(0, MAX_SHOW)}...`;
 	}
