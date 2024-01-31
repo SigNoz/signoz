@@ -1,3 +1,5 @@
+import './DateTimeSelection.styles.scss';
+
 import { SyncOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
@@ -211,11 +213,9 @@ function DateTimeSelection({
 	};
 
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
-		console.log('dateTimeRange', dateTimeRange);
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
-				setCustomDTPickerVisible(false);
 				updateTimeInterval('custom', [
 					startTimeMoment?.toDate().getTime() || 0,
 					endTimeMoment?.toDate().getTime() || 0,
@@ -279,11 +279,23 @@ function DateTimeSelection({
 		setRefreshButtonHidden(updatedTime === 'custom');
 
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
+
+		if (updatedTime !== 'custom') {
+			const { minTime, maxTime } = GetMinMax(updatedTime);
+			urlQuery.set(QueryParams.startTime, minTime.toString());
+			urlQuery.set(QueryParams.endTime, maxTime.toString());
+		} else {
+			urlQuery.set(QueryParams.startTime, preStartTime.toString());
+			urlQuery.set(QueryParams.endTime, preEndTime.toString());
+		}
+		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+		history.replace(generatedUrl);
+
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
 
 	return (
-		<>
+		<div className="date-time-selection-container">
 			<Form
 				form={formSelector}
 				layout="inline"
@@ -324,7 +336,7 @@ function DateTimeSelection({
 				</FormContainer>
 			</Form>
 
-			{!hasSelectedTimeError && (
+			{!hasSelectedTimeError && selectedTime !== 'custom' && (
 				<RefreshText
 					{...{
 						onLastRefreshHandler,
@@ -339,8 +351,9 @@ function DateTimeSelection({
 				onCancel={(): void => {
 					setCustomDTPickerVisible(false);
 				}}
+				setCustomDTPickerVisible={setCustomDTPickerVisible}
 			/>
-		</>
+		</div>
 	);
 }
 

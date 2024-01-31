@@ -17,7 +17,6 @@ import {
 	SetStateAction,
 	useCallback,
 	useEffect,
-	useMemo,
 	useRef,
 	useState,
 } from 'react';
@@ -39,14 +38,15 @@ function WidgetGraphComponent({
 	queryResponse,
 	errorMessage,
 	name,
-	onClickHandler,
 	threshold,
 	headerMenuList,
 	isWarning,
 	data,
 	options,
+	graphVisibiltyState,
+	onClickHandler,
 	onDragSelect,
-	graphVisibility,
+	setGraphVisibility,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -60,33 +60,28 @@ function WidgetGraphComponent({
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
 
-	const { graphVisibilityStates: localStoredVisibilityStates } = useMemo(
-		() =>
-			getGraphVisibilityStateOnDataChange({
+	useEffect(() => {
+		if (queryResponse.isSuccess) {
+			const {
+				graphVisibilityStates: localStoredVisibilityState,
+			} = getGraphVisibilityStateOnDataChange({
 				options,
-				isExpandedName: true,
+				isExpandedName: false,
 				name,
-			}),
-		[options, name],
-	);
-
-	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
-		boolean[]
-	>(localStoredVisibilityStates);
+			});
+			setGraphVisibility(localStoredVisibilityState);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [queryResponse.isSuccess]);
 
 	useEffect(() => {
-		setGraphsVisibilityStates(localStoredVisibilityStates);
 		if (!lineChartRef.current) return;
 
-		localStoredVisibilityStates.forEach((state, index) => {
+		graphVisibiltyState.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);
 		});
-		setGraphsVisibilityStates(localStoredVisibilityStates);
-	}, [localStoredVisibilityStates]);
-
-	graphVisibility?.forEach((state, index) => {
-		lineChartRef.current?.toggleGraph(index, state);
-	});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -129,6 +124,7 @@ function WidgetGraphComponent({
 				if (setSelectedDashboard && updatedDashboard.payload) {
 					setSelectedDashboard(updatedDashboard.payload);
 				}
+				setDeleteModal(false);
 				featureResponse.refetch();
 			},
 			onError: () => {
@@ -260,6 +256,7 @@ function WidgetGraphComponent({
 				destroyOnClose
 				onCancel={onDeleteModelHandler}
 				open={deleteModal}
+				confirmLoading={updateDashboardMutation.isLoading}
 				title="Delete"
 				height="10vh"
 				onOk={onDeleteHandler}
@@ -279,13 +276,14 @@ function WidgetGraphComponent({
 			>
 				<FullView
 					name={`${name}expanded`}
+					originalName={name}
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
 					parentChartRef={lineChartRef}
+					parentGraphVisibilityState={setGraphVisibility}
 					onDragSelect={onDragSelect}
-					setGraphsVisibilityStates={setGraphsVisibilityStates}
-					graphsVisibilityStates={graphsVisibilityStates}
+					options={options}
 				/>
 			</Modal>
 

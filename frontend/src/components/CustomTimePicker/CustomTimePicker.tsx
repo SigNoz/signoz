@@ -178,7 +178,10 @@ function CustomTimePicker({
 	return (
 		<div className="custom-time-picker">
 			<Popover
-				className="timeSelection-input-container"
+				className={cx(
+					'timeSelection-input-container',
+					selectedTime === 'custom' && inputValue === '' ? 'custom-time' : '',
+				)}
 				placement="bottomRight"
 				getPopupContainer={popupContainer}
 				content={content}
@@ -193,12 +196,7 @@ function CustomTimePicker({
 				<Input
 					className="timeSelection-input"
 					type="text"
-					style={{
-						minWidth: '120px',
-						width: '100%',
-					}}
 					status={inputValue && inputStatus === 'error' ? 'error' : ''}
-					allowClear={!isInputFocused && selectedTime === 'custom'}
 					placeholder={
 						isInputFocused
 							? 'Time Format (1m or 2h or 3d or 4w)'
