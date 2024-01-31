@@ -74,6 +74,7 @@ function ResizeTable({
 	}, [columns]);
 
 	const paginationConfig = {
+		...tableParams.pagination,
 		hideOnSinglePage: true,
 		showTotal: (total: number, range: number[]): string =>
 			`${range[0]}-${range[1]} of ${total} items`,
