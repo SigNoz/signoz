@@ -216,7 +216,6 @@ function DateTimeSelection({
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
-				setCustomDTPickerVisible(false);
 				updateTimeInterval('custom', [
 					startTimeMoment?.toDate().getTime() || 0,
 					endTimeMoment?.toDate().getTime() || 0,
@@ -352,6 +351,7 @@ function DateTimeSelection({
 				onCancel={(): void => {
 					setCustomDTPickerVisible(false);
 				}}
+				setCustomDTPickerVisible={setCustomDTPickerVisible}
 			/>
 		</div>
 	);
