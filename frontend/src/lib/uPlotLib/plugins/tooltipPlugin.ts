@@ -1,11 +1,12 @@
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import { themeColors } from 'constants/theme';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import getLabelName from 'lib/getLabelName';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
-import { colors } from '../../getRandomColor';
 import { placement } from '../placement';
+import { generateColor } from '../utils/generateColor';
 
 dayjs.extend(customParseFormat);
 
@@ -54,12 +55,14 @@ const generateTooltipContent = (
 				const value = data[index][idx];
 				const label = getLabelName(metric, queryName || '', legend || '');
 
+				const color = generateColor(label, themeColors.chartcolors);
+
 				if (Number.isFinite(value)) {
 					const tooltipValue = getToolTipValue(value, yAxisUnit);
 
 					const dataObj = {
 						show: item.show || false,
-						color: colors[(index - 1) % colors.length],
+						color,
 						label,
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore
