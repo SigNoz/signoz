@@ -827,6 +827,9 @@ func (r *ThresholdRule) hostFromSource() string {
 	if err != nil {
 		return ""
 	}
+	if parsedUrl.Port() != "" {
+		return fmt.Sprintf("%s:%s", parsedUrl.Hostname(), parsedUrl.Port())
+	}
 	return parsedUrl.Hostname()
 }
 
@@ -1053,12 +1056,12 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 		if r.typ == "TRACES_BASED_ALERT" {
 			link := r.prepareLinksToTraces(ts, smpl.Metric)
-			if link != "" {
+			if link != "" && r.hostFromSource() != "" {
 				lb.Set("See related traces: ", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link))
 			}
 		} else if r.typ == "LOGS_BASED_ALERT" {
 			link := r.prepareLinksToLogs(ts, smpl.Metric)
-			if link != "" {
+			if link != "" && r.hostFromSource() != "" {
 				lb.Set("See related logs: ", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link))
 			}
 		}
