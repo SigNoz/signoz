@@ -3,9 +3,7 @@
 import './SideNav.styles.scss';
 
 import { Button } from 'antd';
-import getLocalStorageKey from 'api/browser/localstorage/get';
 import cx from 'classnames';
-import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -19,17 +17,10 @@ import {
 	RocketIcon,
 	UserCircle,
 } from 'lucide-react';
-import {
-	useCallback,
-	useEffect,
-	useLayoutEffect,
-	useMemo,
-	useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { sideBarCollapse } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
@@ -58,15 +49,15 @@ interface UserManagementMenuItems {
 function SideNav({
 	licenseData,
 	isFetching,
+	onCollapse,
+	collapsed,
 }: {
 	licenseData: any;
 	isFetching: boolean;
+	onCollapse: () => void;
+	collapsed: boolean;
 }): JSX.Element {
-	const dispatch = useDispatch();
 	const [menuItems, setMenuItems] = useState(defaultMenuItems);
-	const [collapsed, setCollapsed] = useState<boolean>(
-		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
-	);
 
 	const { pathname, search } = useLocation();
 	const {
@@ -151,14 +142,6 @@ function SideNav({
 	}, [licenseData?.payload?.licenses, isFetching, role]);
 
 	const { t } = useTranslation('');
-
-	const onCollapse = useCallback(() => {
-		setCollapsed((collapsed) => !collapsed);
-	}, []);
-
-	useLayoutEffect(() => {
-		dispatch(sideBarCollapse(collapsed));
-	}, [collapsed, dispatch]);
 
 	const isLicenseActive =
 		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ===
@@ -279,7 +262,9 @@ function SideNav({
 					{!collapsed && <span className="brand-logo-name"> SigNoz </span>}
 				</div>
 
-				{!collapsed && <div className="license tag">{licenseTag}</div>}
+				{!collapsed && licenseTag && (
+					<div className="license tag">{licenseTag}</div>
+				)}
 			</div>
 
 			{isCloudUserVal && (
