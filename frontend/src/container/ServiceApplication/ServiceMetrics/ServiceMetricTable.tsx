@@ -91,6 +91,11 @@ function ServiceMetricTable({
 			<ResourceAttributesFilter />
 
 			<ResizeTable
+				pagination={{
+					defaultPageSize: 10,
+					showTotal: (total: number, range: number[]): string =>
+						`${range[0]}-${range[1]} of ${total} items`,
+				}}
 				columns={tableColumns}
 				loading={isLoading}
 				dataSource={services}
