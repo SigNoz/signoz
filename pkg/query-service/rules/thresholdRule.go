@@ -1057,12 +1057,12 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		if r.typ == "TRACES_BASED_ALERT" {
 			link := r.prepareLinksToTraces(ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
-				lb.Set("See related traces: ", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link))
+				lb.Set("RelatedLogs", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link))
 			}
 		} else if r.typ == "LOGS_BASED_ALERT" {
 			link := r.prepareLinksToLogs(ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
-				lb.Set("See related logs: ", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link))
+				lb.Set("RelatedTraces", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link))
 			}
 		}
 
