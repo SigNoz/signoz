@@ -171,7 +171,7 @@ function LogsExplorerList({
 
 			{isError && !isLoading && !isFetching && <LogsError />}
 
-			{!isLoading && !isFetching && !isError && logs.length > 0 && (
+			{!isLoading && !isError && logs.length > 0 && (
 				<>
 					<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
 
