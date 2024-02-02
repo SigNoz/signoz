@@ -136,3 +136,13 @@ export const routesToSkip = [
 ];
 
 export const routesToDisable = [ROUTES.LOGS_EXPLORER, ROUTES.LIVE_LOGS];
+
+export interface LocalStorageTimeRange {
+	localstorageStartTime: string | null;
+	localstorageEndTime: string | null;
+}
+
+export interface TimeRange {
+	startTime: string;
+	endTime: string;
+}
