@@ -55,6 +55,10 @@
 				border-color: var(--bg-vanilla-300);
 				background: var(--bg-vanilla-100);
 				color: var(--bg-ink-200);
+
+				&.active-tab {
+					background-color: var(--bg-robin-100);
+				}
 			}
 		}
 	}

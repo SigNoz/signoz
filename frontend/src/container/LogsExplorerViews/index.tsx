@@ -184,13 +184,7 @@ function LogsExplorerViews({
 		enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
 	});
 
-	const {
-		data,
-		isLoading,
-		isFetching,
-		isFetched,
-		isError,
-	} = useGetExplorerQueryRange(
+	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
 		requestData,
 		panelType,
 		{
@@ -589,7 +583,6 @@ function LogsExplorerViews({
 						<LogsExplorerList
 							isLoading={isLoading}
 							isFetching={isFetching}
-							isDataFetched={isFetched}
 							currentStagedQueryData={listQuery}
 							logs={logs}
 							onEndReached={handleEndReached}
