@@ -31,11 +31,9 @@ import { convertKeysToColumnFields } from './utils';
 function Footer(): JSX.Element {
 	return <Spinner height={20} tip="Getting Logs" />;
 }
-
 function LogsExplorerList({
 	isLoading,
 	isFetching,
-	isDataFetched,
 	currentStagedQueryData,
 	logs,
 	onEndReached,
@@ -161,21 +159,19 @@ function LogsExplorerList({
 
 			{!isLoading &&
 				!isFetching &&
-				isDataFetched &&
 				!isError &&
 				!isFilterApplied &&
 				logs.length === 0 && <NoLogs />}
 
 			{!isLoading &&
 				!isFetching &&
-				isDataFetched &&
 				logs.length === 0 &&
 				!isError &&
 				isFilterApplied && <EmptyLogsSearch />}
 
-			{isError && !isLoading && !isFetching && isDataFetched && <LogsError />}
+			{isError && !isLoading && !isFetching && <LogsError />}
 
-			{!isLoading && !isFetching && !isError && isDataFetched && logs.length > 0 && (
+			{!isLoading && !isFetching && !isError && logs.length > 0 && (
 				<>
 					<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
 
