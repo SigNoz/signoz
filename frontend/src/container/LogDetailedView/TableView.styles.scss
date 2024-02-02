@@ -31,9 +31,16 @@
 		.value-field-container {
 			background: rgba(22, 25, 34, 0.4);
 
+			.value-field {
+				position: relative;
+			}
+
 			.action-btn {
 				display: none;
 				width: max-content;
+				position: absolute;
+				padding: 0 16px;
+				right: 0;
 
 				.filter-btn {
 					display: flex;

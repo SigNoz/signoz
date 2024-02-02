@@ -4,6 +4,7 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 export type LogsExplorerListProps = {
 	isLoading: boolean;
 	isFetching: boolean;
+	isDataFetched: boolean;
 	currentStagedQueryData: IBuilderQuery | null;
 	logs: ILog[];
 	onEndReached: (index: number) => void;
