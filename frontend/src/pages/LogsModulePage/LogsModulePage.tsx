@@ -14,7 +14,7 @@ export default function LogsModulePage(): JSX.Element {
 
 	return (
 		<div className="logs-module-container">
-			<RouteTab routes={routes} activeKey={pathname} history={history} />;
+			<RouteTab routes={routes} activeKey={pathname} history={history} />
 		</div>
 	);
 }

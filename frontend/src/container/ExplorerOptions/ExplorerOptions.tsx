@@ -278,56 +278,56 @@ function ExplorerOptions({
 					backdropFilter: 'blur(20px)',
 				}}
 			>
-				{viewsData?.data.data && viewsData?.data.data.length && (
-					<>
-						<div className="view-options">
-							<Select<string, { key: string; value: string }>
-								showSearch
-								placeholder="Select a view"
-								loading={viewsIsLoading || isRefetching}
-								value={viewName || undefined}
-								onSelect={handleSelect}
-								style={{
-									minWidth: 170,
-								}}
-								dropdownStyle={dropdownStyle}
-								className="views-dropdown"
-								allowClear
-								onClear={handleClearSelect}
-								ref={ref}
-							>
-								{viewsData?.data.data.map((view) => {
-									const extraData =
-										view.extraData !== '' ? JSON.parse(view.extraData) : '';
-									let bgColor = getRandomColor();
-									if (extraData !== '') {
-										bgColor = extraData.color;
-									}
-									return (
-										<Select.Option key={view.uuid} value={view.name}>
-											<div className="render-options">
-												<span
-													className="dot"
-													style={{
-														background: bgColor,
-														boxShadow: `0px 0px 6px 0px ${bgColor}`,
-													}}
-												/>{' '}
-												{view.name}
-											</div>
-										</Select.Option>
-									);
-								})}
-							</Select>
+				<div className="view-options">
+					<Select<string, { key: string; value: string }>
+						showSearch
+						placeholder="Select a view"
+						loading={viewsIsLoading || isRefetching}
+						value={viewName || undefined}
+						onSelect={handleSelect}
+						style={{
+							minWidth: 170,
+						}}
+						dropdownStyle={dropdownStyle}
+						className="views-dropdown"
+						allowClear
+						onClear={handleClearSelect}
+						ref={ref}
+					>
+						{viewsData?.data.data.map((view) => {
+							const extraData =
+								view.extraData !== '' ? JSON.parse(view.extraData) : '';
+							let bgColor = getRandomColor();
+							if (extraData !== '') {
+								bgColor = extraData.color;
+							}
+							return (
+								<Select.Option key={view.uuid} value={view.name}>
+									<div className="render-options">
+										<span
+											className="dot"
+											style={{
+												background: bgColor,
+												boxShadow: `0px 0px 6px 0px ${bgColor}`,
+											}}
+										/>{' '}
+										{view.name}
+									</div>
+								</Select.Option>
+							);
+						})}
+					</Select>
 
-							<Button shape="round" onClick={handleSaveViewModalToggle}>
-								<Disc3 size={16} /> Save this view
-							</Button>
-						</div>
+					<Button
+						shape="round"
+						onClick={handleSaveViewModalToggle}
+						disabled={viewsIsLoading || isRefetching}
+					>
+						<Disc3 size={16} /> Save this view
+					</Button>
+				</div>
 
-						<hr />
-					</>
-				)}
+				<hr />
 
 				<div className="actions">
 					<Button disabled={disabled} shape="circle" onClick={onCreateAlertsHandler}>

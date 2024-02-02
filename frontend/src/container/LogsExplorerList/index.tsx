@@ -35,6 +35,7 @@ function Footer(): JSX.Element {
 function LogsExplorerList({
 	isLoading,
 	isFetching,
+	isDataFetched,
 	currentStagedQueryData,
 	logs,
 	onEndReached,
@@ -160,17 +161,21 @@ function LogsExplorerList({
 
 			{!isLoading &&
 				!isFetching &&
+				isDataFetched &&
+				!isError &&
+				!isFilterApplied &&
+				logs.length === 0 && <NoLogs />}
+
+			{!isLoading &&
+				!isFetching &&
+				isDataFetched &&
 				logs.length === 0 &&
 				!isError &&
-				!isFilterApplied && <NoLogs />}
+				isFilterApplied && <EmptyLogsSearch />}
 
-			{!isLoading && logs.length === 0 && !isError && isFilterApplied && (
-				<EmptyLogsSearch />
-			)}
+			{isError && !isLoading && !isFetching && isDataFetched && <LogsError />}
 
-			{isError && !isLoading && <LogsError />}
-
-			{!isLoading && logs.length > 0 && !isError && (
+			{!isLoading && !isFetching && !isError && isDataFetched && logs.length > 0 && (
 				<>
 					<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
 
