@@ -1,3 +1,5 @@
+import './QueryBuilderSearch.styles.scss';
+
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
 import { getDataTypes } from 'container/LogDetailedView/utils';
@@ -201,6 +203,7 @@ function QueryBuilderSearch({
 				value={queryTags}
 				searchValue={searchValue}
 				className={className}
+				rootClassName="query-builder-search"
 				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 				style={selectStyle}
 				onSearch={handleSearch}
