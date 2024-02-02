@@ -253,6 +253,15 @@ function SideNav({
 		}
 	}, [isCloudUserVal, isEnterprise, isFetching]);
 
+	const [isCurrentOrgSettings] = useComponentPermission(
+		['current_org_settings'],
+		role,
+	);
+
+	const settingsRoute = isCurrentOrgSettings
+		? ROUTES.ORG_SETTINGS
+		: ROUTES.SETTINGS;
+
 	return (
 		<div className={cx('sideNav', collapsed ? 'collapsed' : '')}>
 			<div className="brand">
@@ -302,7 +311,9 @@ function SideNav({
 						item={item}
 						isActive={activeMenuKey === item.key}
 						onClick={(): void => {
-							if (item) {
+							if (item.key === ROUTES.SETTINGS) {
+								history.push(settingsRoute);
+							} else if (item) {
 								onClickHandler(item?.key as string);
 							}
 						}}
