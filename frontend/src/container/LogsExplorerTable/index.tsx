@@ -2,6 +2,7 @@ import './LogsExplorerTable.styles.scss';
 
 import { initialQueriesMap } from 'constants/queryBuilder';
 import LogsError from 'container/LogsError/LogsError';
+import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { QueryTable } from 'container/QueryTable';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { memo } from 'react';
@@ -14,6 +15,10 @@ function LogsExplorerTable({
 	isError,
 }: LogsExplorerTableProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
+
+	if (isLoading) {
+		return <LogsLoading />;
+	}
 
 	if (isError) {
 		return <LogsError />;
