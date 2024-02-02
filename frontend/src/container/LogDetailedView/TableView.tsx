@@ -208,32 +208,36 @@ function TableView({
 							</span>
 						</CopyClipboardHOC>
 						<span className="action-btn">
-							<Button
-								className="filter-btn"
-								icon={
-									isfilterInLoading ? (
-										<Spin size="small" />
-									) : (
-										<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
-									)
-								}
-								onClick={onClickHandler(OPERATORS.IN, fieldFilterKey, fieldData.value)}
-							>
-								Filter for value
-							</Button>
-							<Button
-								className="filter-btn"
-								icon={
-									isfilterOutLoading ? (
-										<Spin size="small" />
-									) : (
-										<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
-									)
-								}
-								onClick={onClickHandler(OPERATORS.NIN, fieldFilterKey, fieldData.value)}
-							>
-								Filter out value
-							</Button>
+							<Tooltip title="Filter for value">
+								<Button
+									className="filter-btn periscope-btn"
+									icon={
+										isfilterInLoading ? (
+											<Spin size="small" />
+										) : (
+											<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
+										)
+									}
+									onClick={onClickHandler(OPERATORS.IN, fieldFilterKey, fieldData.value)}
+								/>
+							</Tooltip>
+							<Tooltip title="Filter out value">
+								<Button
+									className="filter-btn periscope-btn"
+									icon={
+										isfilterOutLoading ? (
+											<Spin size="small" />
+										) : (
+											<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
+										)
+									}
+									onClick={onClickHandler(
+										OPERATORS.NIN,
+										fieldFilterKey,
+										fieldData.value,
+									)}
+								/>
+							</Tooltip>
 						</span>
 					</div>
 				);

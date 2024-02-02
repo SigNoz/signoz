@@ -588,7 +588,8 @@ function LogsExplorerViews({
 					{selectedPanelType === PANEL_TYPES.LIST && (
 						<LogsExplorerList
 							isLoading={isLoading}
-							isFetching={isFetching || isFetched}
+							isFetching={isFetching}
+							isDataFetched={isFetched}
 							currentStagedQueryData={listQuery}
 							logs={logs}
 							onEndReached={handleEndReached}
