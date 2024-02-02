@@ -14,12 +14,11 @@ import {
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 
 import { ActionItemProps } from './ActionItem';
 import TableView from './TableView';
-import { aggregateAttributesResourcesToString } from './utils';
 
 interface OverviewProps {
 	logData: ILog;
@@ -40,11 +39,6 @@ function Overview({
 		true,
 	);
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
-
-	const logJsonData = useMemo(
-		() => aggregateAttributesResourcesToString(logData),
-		[logData],
-	);
 
 	const isDarkMode = useIsDarkMode();
 
@@ -118,11 +112,11 @@ function Overview({
 						children: (
 							<div className="logs-body-content">
 								<MEditor
-									value={isWrapWord ? JSON.stringify(logData) : logJsonData}
+									value={isWrapWord ? JSON.stringify(logData.body) : logData.body}
 									language={isWrapWord ? 'placetext' : 'json'}
 									options={options}
 									onChange={(): void => {}}
-									height="40vh"
+									height="20vh"
 									theme={isDarkMode ? 'my-theme' : 'light'}
 									// eslint-disable-next-line react/jsx-no-bind
 									beforeMount={setEditorTheme}
@@ -171,7 +165,7 @@ function Overview({
 								{isAttributesExpanded && (
 									<Button
 										className="action-btn"
-										icon={<Search size={14} />}
+										icon={<Search size={12} />}
 										onClick={(e): void => {
 											e.stopPropagation();
 											handleSearchVisible();

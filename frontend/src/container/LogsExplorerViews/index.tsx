@@ -184,7 +184,13 @@ function LogsExplorerViews({
 		enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
 	});
 
-	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
+	const {
+		data,
+		isLoading,
+		isFetching,
+		isFetched,
+		isError,
+	} = useGetExplorerQueryRange(
 		requestData,
 		panelType,
 		{
@@ -554,30 +560,35 @@ function LogsExplorerViews({
 						</Radio.Button>
 					</Radio.Group>
 
-					{selectedPanelType === PANEL_TYPES.LIST && (
-						<div className="tab-options">
-							<div className="format-options-container" ref={menuRef}>
-								<Button onClick={handleToggleShowFormatOptions}>
-									<Sliders size={16} />
-								</Button>
-
-								{showFormatMenuItems && (
-									<LogsFormatOptionsMenu
-										title="FORMAT"
-										items={formatItems}
-										selectedOptionFormat={options.format}
-										config={config}
+					<div className="logs-actions-container">
+						{selectedPanelType === PANEL_TYPES.LIST && (
+							<div className="tab-options">
+								<div className="format-options-container" ref={menuRef}>
+									<Button
+										className="periscope-btn"
+										onClick={handleToggleShowFormatOptions}
+										icon={<Sliders size={14} />}
 									/>
-								)}
+
+									{showFormatMenuItems && (
+										<LogsFormatOptionsMenu
+											title="FORMAT"
+											items={formatItems}
+											selectedOptionFormat={options.format}
+											config={config}
+										/>
+									)}
+								</div>
 							</div>
-						</div>
-					)}
+						)}
+					</div>
 				</div>
 
 				<div className="logs-explorer-views-type-content">
 					{selectedPanelType === PANEL_TYPES.LIST && (
 						<LogsExplorerList
 							isLoading={isLoading}
+							isFetching={isFetching || isFetched}
 							currentStagedQueryData={listQuery}
 							logs={logs}
 							onEndReached={handleEndReached}

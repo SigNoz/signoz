@@ -1,6 +1,6 @@
 import './QueryBuilder.styles.scss';
 
-import { Button, Col, Divider, Row } from 'antd';
+import { Button, Col, Divider, Row, Tooltip } from 'antd';
 import { MAX_FORMULAS, MAX_QUERIES } from 'constants/queryBuilder';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -92,13 +92,17 @@ export const QueryBuilder = memo(function QueryBuilder({
 			className="query-builder-container"
 		>
 			<div className="new-query-formula-buttons-container">
-				<Button disabled={isDisabledQueryButton} onClick={addNewBuilderQuery}>
-					<DatabaseZap size={12} />
-				</Button>
+				<Tooltip title="Add Query">
+					<Button disabled={isDisabledQueryButton} onClick={addNewBuilderQuery}>
+						<DatabaseZap size={12} />
+					</Button>
+				</Tooltip>
 
-				<Button disabled={isDisabledFormulaButton} onClick={addNewFormula}>
-					<Sigma size={12} />
-				</Button>
+				<Tooltip title="Add Formula">
+					<Button disabled={isDisabledFormulaButton} onClick={addNewFormula}>
+						<Sigma size={12} />
+					</Button>
+				</Tooltip>
 			</div>
 
 			<Col span={23} className="qb-entities-list">
