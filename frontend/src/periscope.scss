@@ -24,6 +24,18 @@
 	}
 
 	cursor: pointer;
+
+	&.primary {
+		color: #fff;
+		background-color: #4566d6;
+		box-shadow: 0 2px 0 rgba(62, 86, 245, 0.09);
+	}
+}
+
+.periscope-tab {
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 
 .lightMode {

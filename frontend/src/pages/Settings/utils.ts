@@ -3,6 +3,7 @@ import { TFunction } from 'i18next';
 import { isCloudUser } from 'utils/app';
 
 import {
+	apiKeys,
 	commonRoutes,
 	ingestionSettings,
 	organizationSettings,
@@ -19,7 +20,7 @@ export const getRoutes = (
 	}
 
 	if (isCloudUser()) {
-		common = [...common, ...ingestionSettings(t)];
+		common = [...common, ...ingestionSettings(t), ...apiKeys(t)];
 	}
 
 	return common;

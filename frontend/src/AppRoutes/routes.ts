@@ -5,6 +5,7 @@ import { RouteProps } from 'react-router-dom';
 import {
 	AllAlertChannels,
 	AllErrors,
+	APIKeys,
 	BillingPage,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
@@ -234,6 +235,13 @@ const routes: AppRoutes[] = [
 		component: IngestionSettings,
 		isPrivate: true,
 		key: 'INGESTION_SETTINGS',
+	},
+	{
+		path: ROUTES.API_KEYS,
+		exact: true,
+		component: APIKeys,
+		isPrivate: true,
+		key: 'API_KEYS',
 	},
 	{
 		path: ROUTES.MY_SETTINGS,

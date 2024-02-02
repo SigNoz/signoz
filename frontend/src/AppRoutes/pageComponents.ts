@@ -118,6 +118,10 @@ export const IngestionSettings = Loadable(
 	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
 );
 
+export const APIKeys = Loadable(
+	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
+);
+
 export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
 );
