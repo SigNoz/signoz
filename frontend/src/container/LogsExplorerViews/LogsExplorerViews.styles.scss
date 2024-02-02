@@ -60,19 +60,23 @@
 				align-items: center;
 
 				.ant-btn {
-					padding: 8px 12px;
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					// border: 1px solid var(--text-slate-400);
 					border: none;
-					// background: #16181d;
-					// box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 				}
 
 				.format-options-container {
 					position: relative;
 				}
+			}
+		}
+
+		.logs-actions-container {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: 8px;
+
+			.ant-btn {
+				border: none;
 			}
 		}
 

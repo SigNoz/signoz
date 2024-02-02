@@ -34,6 +34,7 @@ function Footer(): JSX.Element {
 
 function LogsExplorerList({
 	isLoading,
+	isFetching,
 	currentStagedQueryData,
 	logs,
 	onEndReached,
@@ -155,10 +156,13 @@ function LogsExplorerList({
 
 	return (
 		<div className="logs-list-view-container">
-			{isLoading && <LogsLoading />}
-			{!isLoading && logs.length === 0 && !isError && !isFilterApplied && (
-				<NoLogs />
-			)}
+			{(isLoading || (isFetching && logs.length === 0)) && <LogsLoading />}
+
+			{!isLoading &&
+				!isFetching &&
+				logs.length === 0 &&
+				!isError &&
+				!isFilterApplied && <NoLogs />}
 
 			{!isLoading && logs.length === 0 && !isError && isFilterApplied && (
 				<EmptyLogsSearch />
