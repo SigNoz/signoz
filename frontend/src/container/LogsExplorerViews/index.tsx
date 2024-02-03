@@ -86,6 +86,7 @@ function LogsExplorerViews({
 		stagedQuery,
 		panelType,
 		updateAllQueriesOperators,
+		handleSetConfig,
 	} = useQueryBuilder();
 
 	const [selectedPanelType, setSelectedPanelType] = useState<PANEL_TYPES>(
@@ -172,8 +173,14 @@ function LogsExplorerViews({
 	);
 
 	const handleModeChange = (e: RadioChangeEvent): void => {
+		const panelType = e.target.value;
+
+		if (selectedView === 'search') {
+			handleSetConfig(panelType, DataSource.LOGS);
+		}
+
 		setShowFormatMenuItems(false);
-		handleExplorerTabChange(e.target.value);
+		handleExplorerTabChange(panelType);
 	};
 
 	const {
@@ -414,10 +421,6 @@ function LogsExplorerViews({
 			setPage(1);
 			setRequestData(newRequestData);
 			currentMinTimeRef.current = minTime;
-
-			if (!activeLogId) {
-				onTimeRangeChange(null);
-			}
 		}
 	}, [
 		stagedQuery,
@@ -430,6 +433,7 @@ function LogsExplorerViews({
 		activeLogId,
 		onTimeRangeChange,
 		panelType,
+		selectedView,
 	]);
 
 	const { options, config } = useOptionsMenu({
