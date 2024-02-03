@@ -2,7 +2,7 @@ import './TableView.styles.scss';
 
 import { LinkOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Space, Spin, Tooltip, Tree } from 'antd';
+import { Button, Space, Spin, Tooltip, Tree, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import AddToQueryHOC, {
 	AddToQueryHOCProps,
@@ -144,7 +144,7 @@ function TableView({
 
 					return (
 						<Space size="middle" className="log-attribute">
-							{renderedField}
+							<Typography.Text>{renderedField}</Typography.Text>
 
 							{traceId && (
 								<Tooltip title="Inspect in Trace">
