@@ -1,6 +1,6 @@
 import './FieldRenderer.styles.scss';
 
-import { Divider } from 'antd';
+import { Divider, Tooltip, Typography } from 'antd';
 
 import { TagContainer, TagLabel, TagValue } from './FieldRenderer.styles';
 import { FieldRendererProps } from './LogDetailedView.types';
@@ -13,7 +13,11 @@ function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 		<span className="field-renderer-container">
 			{dataType && newField && logType ? (
 				<>
-					<div className="label">{newField} </div>
+					<Tooltip placement="left" title={newField}>
+						<Typography.Text ellipsis className="label">
+							{newField}{' '}
+						</Typography.Text>
+					</Tooltip>
 
 					<div className="tags">
 						<TagContainer>
