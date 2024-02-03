@@ -1,8 +1,9 @@
 .field-renderer-container {
 	display: flex !important;
 	gap: 8px;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: space-between;
+	flex-direction: column;
 
 	.label {
 		color: var(--text-robin-400);
