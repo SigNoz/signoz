@@ -1,4 +1,5 @@
 import { DataNode } from 'antd/es/tree';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import { uniqueId } from 'lodash-es';
 import { ILog, ILogAggregateAttributesResources } from 'types/api/logs/log';
@@ -6,7 +7,11 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import BodyTitleRenderer from './BodyTitleRenderer';
 import { typeToArrayTypeMapper } from './config';
-import { AnyObject, IFieldAttributes } from './LogDetailedView.types';
+import {
+	AnyObject,
+	IFieldAttributes,
+	LogDataSource,
+} from './LogDetailedView.types';
 
 export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	try {
@@ -262,3 +267,63 @@ export const removeEscapeCharacters = (str: string): string =>
 		};
 		return escapeMap[char as keyof typeof escapeMap];
 	});
+
+export const addPinnedItemToLocalStorage = (fieldKey: string): void => {
+	try {
+		const pinnedItems = localStorage.getItem(LOCALSTORAGE.LOGS_PIN_ITEMS);
+		const pinnedItemsArray = pinnedItems ? JSON.parse(pinnedItems) : [];
+		if (!pinnedItemsArray.includes(fieldKey)) {
+			pinnedItemsArray.push(fieldKey);
+			localStorage.setItem(
+				LOCALSTORAGE.LOGS_PIN_ITEMS,
+				JSON.stringify(pinnedItemsArray),
+			);
+		}
+	} catch (e) {
+		console.error(e);
+	}
+};
+
+export const getPinnedLogItems = (): string[] => {
+	try {
+		const pinnedItems = localStorage.getItem(LOCALSTORAGE.LOGS_PIN_ITEMS);
+		return pinnedItems ? JSON.parse(pinnedItems) : [];
+	} catch (e) {
+		console.error(e);
+		return [];
+	}
+};
+
+export const getRearrangedDataSource = (
+	dataSource: LogDataSource,
+): LogDataSource => {
+	try {
+		const logsPinnedItem = localStorage.getItem(LOCALSTORAGE.LOGS_PIN_ITEMS);
+		const pinnedItems = logsPinnedItem ? JSON.parse(logsPinnedItem) : [];
+		const newDataSource = [...dataSource];
+		pinnedItems.forEach((item: string) => {
+			const index = newDataSource.findIndex((data) => data.field === item);
+			const removedItem = newDataSource.splice(index, 1);
+			newDataSource.unshift(removedItem[0]);
+		});
+		return newDataSource;
+	} catch (e) {
+		console.error(e);
+		return dataSource;
+	}
+};
+
+export const removePinnedLogItem = (fieldKey: string): void => {
+	try {
+		const pinnedItems = localStorage.getItem(LOCALSTORAGE.LOGS_PIN_ITEMS);
+		const pinnedItemsArray = pinnedItems ? JSON.parse(pinnedItems) : [];
+		const index = pinnedItemsArray.findIndex((item: string) => item === fieldKey);
+		pinnedItemsArray.splice(index, 1);
+		localStorage.setItem(
+			LOCALSTORAGE.LOGS_PIN_ITEMS,
+			JSON.stringify(pinnedItemsArray),
+		);
+	} catch (e) {
+		console.error(e);
+	}
+};

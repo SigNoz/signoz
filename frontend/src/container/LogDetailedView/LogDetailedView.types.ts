@@ -23,3 +23,9 @@ export interface IFieldAttributes {
 export interface JSONViewProps {
 	logData: ILog;
 }
+
+export type LogDataSource = {
+	key: string;
+	field: string;
+	value: string;
+}[];
