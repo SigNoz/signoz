@@ -23,25 +23,37 @@ func isSubset(super, sub map[string]string) bool {
 
 // Function to find unique label sets
 func findUniqueLabelSets(results []*v3.Result) []map[string]string {
-	uniqueSets := make([]map[string]string, 0)
-
+	allLabelSets := make([]map[string]string, 0)
 	// The size of the `results` small, It is the number of queries in the request
 	for _, result := range results {
 		// The size of the `result.Series` slice is usually small, It is the number of series in the query result.
 		// We will limit the number of series in the query result to order of 100-1000.
 		for _, series := range result.Series {
-			isUnique := true
-			for _, uSet := range uniqueSets {
-				if isSubset(series.Labels, uSet) || isSubset(uSet, series.Labels) {
-					isUnique = false
-					break
-				}
-			}
-			if isUnique {
-				uniqueSets = append(uniqueSets, series.Labels)
-			}
+			allLabelSets = append(allLabelSets, series.Labels)
 		}
 	}
+
+	// sort the label sets by the number of labels in descending order
+	sort.Slice(allLabelSets, func(i, j int) bool {
+		return len(allLabelSets[i]) > len(allLabelSets[j])
+	})
+
+	uniqueSets := make([]map[string]string, 0)
+
+	for _, labelSet := range allLabelSets {
+		// If the label set is not a subset of any of the unique label sets, add it to the unique label sets
+		isUnique := true
+		for _, uniqueLabelSet := range uniqueSets {
+			if isSubset(uniqueLabelSet, labelSet) {
+				isUnique = false
+				break
+			}
+		}
+		if isUnique {
+			uniqueSets = append(uniqueSets, labelSet)
+		}
+	}
+
 	return uniqueSets
 }
 
@@ -55,7 +67,7 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 		var matchingSeries *v3.Series
 		// We try to find a series that matches the label set from the current query result
 		for _, series := range result.Series {
-			if isSubset(series.Labels, uniqueLabelSet) {
+			if isSubset(uniqueLabelSet, series.Labels) {
 				matchingSeries = series
 				break
 			}
@@ -84,6 +96,9 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 	}
 
 	// There is no series that matches the label set from all queries
+	// TODO: Does the lack of a series from one query mean that the result should be nil?
+	// Or should we interpret the series as having a value of 0 at all timestamps?
+	// The current behaviour with ClickHouse is to show no data
 	if doesNotHaveAllVars {
 		return nil, nil
 	}
@@ -99,7 +114,7 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 		return timestamps[i] < timestamps[j]
 	})
 
-	for timestamp := range uniqueTimestamps {
+	for _, timestamp := range timestamps {
 		values := make(map[string]interface{})
 		for queryName, series := range seriesMap {
 			values[queryName] = series[timestamp]

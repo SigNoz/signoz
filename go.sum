@@ -96,6 +96,8 @@ github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb h1:bneLSKPf9YUSFmafKx32bynV6QrzViL/s+ZDvQxH1E4=
 github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb/go.mod h1:JznGDNg9x1cujDKa22RaQOimOvvEfy3nxzDGd8XDgmA=
+github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd h1:Bk43AsDYe0fhkbj57eGXx8H3ZJ4zhmQXBnrW523ktj8=
+github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd/go.mod h1:nxRcH/OEdM8QxzH37xkGzomr1O0JpYBRS6pwjsWW6Pc=
 github.com/SigNoz/prometheus v1.9.78 h1:bB3yuDrRzi/Mv00kWayR9DZbyjTuGfendSqISyDcXiY=
 github.com/SigNoz/prometheus v1.9.78/go.mod h1:MffmFu2qFILQrOHehx3D0XjYtaZMVfI+Ppeiv98x4Ww=
 github.com/SigNoz/signoz-otel-collector v0.88.8 h1:oa/0gSfkGhjzXtz1htzWBQx3p4VhBPs5iwMRxqfa2uo=
