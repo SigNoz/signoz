@@ -1177,6 +1177,21 @@ func TestQueryRangeFormula(t *testing.T) {
 			},
 			expectErr: false,
 		},
+		{
+			desc: "Unknow variable in expression",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"F1": {
+						QueryName:  "F1",
+						Expression: "A + B",
+					},
+				},
+			},
+			expectErr: true,
+			errMsg:    "unknown variable",
+		},
 	}
 
 	for _, tc := range reqCases {

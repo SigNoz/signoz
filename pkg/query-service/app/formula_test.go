@@ -110,6 +110,67 @@ func TestFindUniqueLabelSets(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "empty result",
+			result: []*v3.Result{
+				{
+					QueryName: "A",
+					Series:    []*v3.Series{},
+				},
+				{
+					QueryName: "B",
+					Series:    []*v3.Series{},
+				},
+			},
+			want: []map[string]string{},
+		},
+		{
+			name: "results with overlapping labels",
+			result: []*v3.Result{
+				{
+					QueryName: "A",
+					Series: []*v3.Series{
+						{
+							Labels: map[string]string{
+								"service_name": "frontend",
+								"operation":    "GET /api",
+							},
+						},
+						{
+							Labels: map[string]string{
+								"service_name": "redis",
+								"operation":    "GET /api",
+							},
+						},
+					},
+				},
+				{
+					QueryName: "B",
+					Series: []*v3.Series{
+						{
+							Labels: map[string]string{
+								"service_name": "redis",
+							},
+						},
+						{
+							Labels: map[string]string{
+								"service_name": "frontend",
+							},
+						},
+					},
+				},
+			},
+			want: []map[string]string{
+				{
+					"service_name": "frontend",
+					"operation":    "GET /api",
+				},
+				{
+					"service_name": "redis",
+					"operation":    "GET /api",
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

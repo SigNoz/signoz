@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"math"
 	"sort"
 
@@ -124,9 +125,14 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 			return nil, err
 		}
 
+		val, ok := newValue.(float64)
+		if !ok {
+			return nil, fmt.Errorf("expected float64, got %T", newValue)
+		}
+
 		resultSeries.Points = append(resultSeries.Points, v3.Point{
 			Timestamp: timestamp,
-			Value:     newValue.(float64),
+			Value:     val,
 		})
 	}
 	return resultSeries, nil

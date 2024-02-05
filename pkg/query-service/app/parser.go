@@ -1000,6 +1000,8 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 						for _, key := range varQuery.GroupBy {
 							groupKeys[v] = append(groupKeys[v], key.Key)
 						}
+					} else {
+						return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unknown variable %s", v)}
 					}
 				}
 
