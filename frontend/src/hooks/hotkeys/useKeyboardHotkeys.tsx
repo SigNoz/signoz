@@ -44,6 +44,17 @@ const useKeyboardHotkeys = (): KeyboardHotkeysContextReturnValue => {
 	return context;
 };
 
+function overrideSystemHandling(e: KeyboardEvent): void {
+	if (e) {
+		if (e.preventDefault) e.preventDefault();
+		if (e.stopPropagation) {
+			e.stopPropagation();
+		} else if (window.event) {
+			window.event.cancelBubble = true;
+		}
+	}
+}
+
 function KeyboardHotkeysProvider({
 	children,
 }: {
@@ -52,6 +63,10 @@ function KeyboardHotkeysProvider({
 	const shortcuts = useRef<Record<string, () => void>>({});
 
 	const handleKeyPress = (event: KeyboardEvent): void => {
+		overrideSystemHandling(event);
+		event.preventDefault();
+		event.stopPropagation();
+
 		const { key, ctrlKey, altKey, shiftKey, metaKey, target } = event;
 
 		if (IGNORE_INPUTS.includes((target as HTMLElement).tagName.toLowerCase())) {
@@ -63,12 +78,13 @@ function KeyboardHotkeysProvider({
 
 		let shortcutKey = `${key.toLowerCase()}`;
 
-		const isCtrlkey = `${modifiers.ctrlKey ? '+ctrl' : ''}`;
 		const isAltKey = `${modifiers.altKey ? '+alt' : ''}`;
 		const isShiftKey = `${modifiers.shiftKey ? '+shift' : ''}`;
-		const isMetaKey = `${modifiers.metaKey ? '+meta' : ''}`;
 
-		shortcutKey = shortcutKey + isCtrlkey + isAltKey + isShiftKey + isMetaKey;
+		// ctrl and cmd have the same functionality for mac and windows parity
+		const isMetaKey = `${modifiers.metaKey || modifiers.ctrlKey ? '+meta' : ''}`;
+
+		shortcutKey = shortcutKey + isAltKey + isShiftKey + isMetaKey;
 
 		if (shortcuts.current[shortcutKey]) {
 			shortcuts.current[shortcutKey]();
