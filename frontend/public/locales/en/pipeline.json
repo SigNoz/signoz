@@ -42,5 +42,7 @@
 	"processor_span_id_placeholder": "Parse Span ID from",
 	"processor_trace_flags_placeholder": "Parse Trace flags from",
 	"processor_from_placeholder": "From",
-	"processor_to_placeholder": "To"
+	"processor_to_placeholder": "To",
+	"share": "Share",
+	"import": "Import"
 }
