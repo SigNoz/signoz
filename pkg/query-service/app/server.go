@@ -152,6 +152,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
+	if err != nil {
+		return nil, err
+	}
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
 	if err != nil {
@@ -264,6 +267,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	api.RegisterMetricsRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
+	api.RegisterQueryRangeV4Routes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -371,7 +375,10 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 			telemetry.GetInstance().AddActiveLogsUser()
 		}
 		data["dataSources"] = dataSources
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_V3, data, true)
+		userEmail, err := auth.GetEmailFromJwt(r.Context())
+		if err == nil {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_V3, data, userEmail, true)
+		}
 	}
 	return data, true
 }
@@ -392,6 +399,8 @@ func getActiveLogs(path string, r *http.Request) {
 
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := auth.AttachJwtToContext(r.Context(), r)
+		r = r.WithContext(ctx)
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
@@ -409,12 +418,31 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		}
 
 		// if telemetry.GetInstance().IsSampled() {
-		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+		if _, ok := telemetry.EnabledPaths()[path]; ok {
+			userEmail, err := auth.GetEmailFromJwt(r.Context())
+			if err == nil {
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail)
+			}
 		}
 		// }
 
 	})
+}
+
+func getRouteContextTimeout(overrideTimeout string) time.Duration {
+	var timeout time.Duration
+	var err error
+	if overrideTimeout != "" {
+		timeout, err = time.ParseDuration(overrideTimeout + "s")
+		if err != nil {
+			timeout = constants.ContextTimeout
+		}
+		if timeout > constants.ContextTimeoutMaxAllowed {
+			timeout = constants.ContextTimeoutMaxAllowed
+		}
+		return timeout
+	}
+	return constants.ContextTimeout
 }
 
 func setTimeoutMiddleware(next http.Handler) http.Handler {
@@ -424,7 +452,7 @@ func setTimeoutMiddleware(next http.Handler) http.Handler {
 		// check if route is not excluded
 		url := r.URL.Path
 		if _, ok := constants.TimeoutExcludedRoutes[url]; !ok {
-			ctx, cancel = context.WithTimeout(r.Context(), constants.ContextTimeout)
+			ctx, cancel = context.WithTimeout(r.Context(), getRouteContextTimeout(r.Header.Get("timeout")))
 			defer cancel()
 		}
 

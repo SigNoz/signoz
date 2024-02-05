@@ -1,7 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import { Tag } from 'antd';
 
-import { Data } from '../index';
+import { Data } from '../DashboardsList';
 
 function Tags(data: Data['tags']): JSX.Element {
 	return (

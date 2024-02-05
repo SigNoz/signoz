@@ -41,6 +41,7 @@ import {
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
+import { v4 } from 'uuid';
 
 import { ActionsWrapper } from './LogsExplorerViews.styled';
 
@@ -146,13 +147,13 @@ function LogsExplorerViews(): JSX.Element {
 		[currentQuery, updateAllQueriesOperators],
 	);
 
-	const listChartData = useGetExplorerQueryRange(
-		listChartQuery,
-		PANEL_TYPES.TIME_SERIES,
-		{
-			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
-		},
-	);
+	const {
+		data: listChartData,
+		isFetching: isFetchingListChartData,
+		isLoading: isLoadingListChartData,
+	} = useGetExplorerQueryRange(listChartQuery, PANEL_TYPES.TIME_SERIES, {
+		enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
+	});
 
 	const { data, isFetching, isError } = useGetExplorerQueryRange(
 		requestData,
@@ -268,9 +269,12 @@ function LogsExplorerViews(): JSX.Element {
 				? panelType
 				: PANEL_TYPES.TIME_SERIES;
 
+			const widgetId = v4();
+
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
 				exportDefaultQuery,
+				widgetId,
 				panelTypeParam,
 			);
 
@@ -304,6 +308,7 @@ function LogsExplorerViews(): JSX.Element {
 						query: exportDefaultQuery,
 						panelType: panelTypeParam,
 						dashboardId: data.payload?.uuid || '',
+						widgetId,
 					});
 
 					history.push(dashboardEditView);
@@ -440,12 +445,8 @@ function LogsExplorerViews(): JSX.Element {
 		if (!stagedQuery) return [];
 
 		if (panelType === PANEL_TYPES.LIST) {
-			if (
-				listChartData &&
-				listChartData.data &&
-				listChartData.data.payload.data.result.length > 0
-			) {
-				return listChartData.data.payload.data.result;
+			if (listChartData && listChartData.payload.data.result.length > 0) {
+				return listChartData.payload.data.result;
 			}
 			return [];
 		}
@@ -467,7 +468,10 @@ function LogsExplorerViews(): JSX.Element {
 
 	return (
 		<>
-			<LogsExplorerChart isLoading={isFetching} data={chartData} />
+			<LogsExplorerChart
+				isLoading={isFetchingListChartData || isLoadingListChartData}
+				data={chartData}
+			/>
 			{stagedQuery && (
 				<ActionsWrapper>
 					<ExportPanel

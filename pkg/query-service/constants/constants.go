@@ -53,6 +53,8 @@ func GetAlertManagerApiPrefix() string {
 	return "http://alertmanager:9093/api/"
 }
 
+var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email_template.html")
+
 // Alert manager channel subpath
 var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
 
@@ -134,6 +136,17 @@ func GetContextTimeout() time.Duration {
 }
 
 var ContextTimeout = GetContextTimeout()
+
+func GetContextTimeoutMaxAllowed() time.Duration {
+	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT_MAX_ALLOWED", "600")
+	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
+	if err != nil {
+		return time.Minute
+	}
+	return contextTimeoutDuration
+}
+
+var ContextTimeoutMaxAllowed = GetContextTimeoutMaxAllowed()
 
 const (
 	TraceID                        = "traceID"
@@ -339,3 +352,36 @@ const TIMESTAMP = "timestamp"
 
 const FirstQueryGraphLimit = "first_query_graph_limit"
 const SecondQueryGraphLimit = "second_query_graph_limit"
+
+var TracesListViewDefaultSelectedColumns = []v3.AttributeKey{
+	{
+		Key:      "serviceName",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "name",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "durationNano",
+		DataType: v3.AttributeKeyDataTypeArrayFloat64,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "httpMethod",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "responseStatusCode",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+}

@@ -494,6 +494,20 @@ export function QueryBuilderProvider({
 				unit: query.unit || initialQueryState.unit,
 			};
 
+			const pagination = urlQuery.get(QueryParams.pagination);
+
+			if (pagination) {
+				const parsedPagination = JSON.parse(pagination);
+
+				urlQuery.set(
+					QueryParams.pagination,
+					JSON.stringify({
+						limit: parsedPagination.limit,
+						offset: 0,
+					}),
+				);
+			}
+
 			urlQuery.set(
 				QueryParams.compositeQuery,
 				encodeURIComponent(JSON.stringify(currentGeneratedQuery)),

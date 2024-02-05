@@ -13,10 +13,13 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
+import { v4 } from 'uuid';
 
 import { ActionsWrapper, Container } from './styles';
 import { getTabsItems } from './utils';
@@ -97,9 +100,12 @@ function TracesExplorer(): JSX.Element {
 				? panelType
 				: PANEL_TYPES.TIME_SERIES;
 
+			const widgetId = v4();
+
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
 				exportDefaultQuery,
+				widgetId,
 				panelTypeParam,
 			);
 
@@ -132,6 +138,7 @@ function TracesExplorer(): JSX.Element {
 						query: exportDefaultQuery,
 						panelType: panelTypeParam,
 						dashboardId: data.payload?.uuid || '',
+						widgetId,
 					});
 
 					history.push(dashboardEditView);
@@ -168,28 +175,30 @@ function TracesExplorer(): JSX.Element {
 	]);
 
 	return (
-		<>
-			<ExplorerCard sourcepage={DataSource.TRACES}>
-				<QuerySection />
-			</ExplorerCard>
+		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+			<>
+				<ExplorerCard sourcepage={DataSource.TRACES}>
+					<QuerySection />
+				</ExplorerCard>
 
-			<Container>
-				<ActionsWrapper>
-					<ExportPanel
-						query={exportDefaultQuery}
-						isLoading={isLoading}
-						onExport={handleExport}
+				<Container>
+					<ActionsWrapper>
+						<ExportPanel
+							query={exportDefaultQuery}
+							isLoading={isLoading}
+							onExport={handleExport}
+						/>
+					</ActionsWrapper>
+
+					<Tabs
+						defaultActiveKey={currentTab}
+						activeKey={currentTab}
+						items={tabsItems}
+						onChange={handleExplorerTabChange}
 					/>
-				</ActionsWrapper>
-
-				<Tabs
-					defaultActiveKey={currentTab}
-					activeKey={currentTab}
-					items={tabsItems}
-					onChange={handleExplorerTabChange}
-				/>
-			</Container>
-		</>
+				</Container>
+			</>
+		</ErrorBoundary>
 	);
 }
 

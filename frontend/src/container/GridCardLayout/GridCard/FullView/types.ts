@@ -1,9 +1,11 @@
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { ChartData, ChartDataset } from 'chart.js';
-import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
+import { ToggleGraphProps } from 'components/Graph/types';
+import { UplotProps } from 'components/Uplot/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { MutableRefObject } from 'react';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
+import uPlot from 'uplot';
 
 export interface DataSetProps {
 	index: number;
@@ -22,12 +24,13 @@ export interface LegendEntryProps {
 	show: boolean;
 }
 
-export type ExtendedChartDataset = ChartDataset & {
+export type ExtendedChartDataset = uPlot.Series & {
 	show: boolean;
 	sum: number;
 	avg: number;
 	min: number;
 	max: number;
+	index: number;
 };
 
 export type PanelTypeAndGraphManagerVisibilityProps = Record<
@@ -39,42 +42,45 @@ export interface LabelProps {
 	labelClickedHandler: (labelIndex: number) => void;
 	labelIndex: number;
 	label: string;
+	disabled?: boolean;
 }
 
 export interface FullViewProps {
 	widget: Widgets;
 	fullViewOptions?: boolean;
-	onClickHandler?: GraphOnClickHandler;
+	onClickHandler?: OnClickPluginOpts['onClick'];
 	name: string;
+	originalName: string;
+	options: uPlot.Options;
 	yAxisUnit?: string;
-	onDragSelect?: (start: number, end: number) => void;
+	onDragSelect: (start: number, end: number) => void;
 	isDependedDataLoaded?: boolean;
-	graphsVisibilityStates?: boolean[];
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
-	setGraphsVisibilityStates: (graphsVisibilityStates: boolean[]) => void;
 	parentChartRef: GraphManagerProps['lineChartRef'];
+	parentGraphVisibilityState: Dispatch<SetStateAction<boolean[]>>;
 }
 
-export interface GraphManagerProps {
-	data: ChartData;
+export interface GraphManagerProps extends UplotProps {
 	name: string;
 	yAxisUnit?: string;
 	onToggleModelHandler?: () => void;
-	setGraphsVisibilityStates: FullViewProps['setGraphsVisibilityStates'];
-	graphsVisibilityStates: FullViewProps['graphsVisibilityStates'];
+	options: uPlot.Options;
+	graphsVisibilityStates?: boolean[];
+	setGraphsVisibilityStates: Dispatch<SetStateAction<boolean[]>>;
 	lineChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
 	parentChartRef?: MutableRefObject<ToggleGraphProps | undefined>;
 }
 
 export interface CheckBoxProps {
-	data: ChartData;
+	data: ExtendedChartDataset[];
 	index: number;
 	graphVisibilityState: boolean[];
 	checkBoxOnChangeHandler: (e: CheckboxChangeEvent, index: number) => void;
+	disabled?: boolean;
 }
 
 export interface SaveLegendEntriesToLocalStoreProps {
-	data: ChartData;
+	options: uPlot.Options;
 	graphVisibilityState: boolean[];
 	name: string;
 }

@@ -5,12 +5,14 @@ import Label from './Label';
 
 export const getLabel = (
 	labelClickedHandler: (labelIndex: number) => void,
+	disabled?: boolean,
 ): ColumnType<DataSetProps> => ({
-	render: (label: string, _, index): JSX.Element => (
+	render: (label: string, record): JSX.Element => (
 		<Label
 			label={label}
-			labelIndex={index}
+			labelIndex={record.index}
 			labelClickedHandler={labelClickedHandler}
+			disabled={disabled}
 		/>
 	),
 });

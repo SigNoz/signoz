@@ -6,7 +6,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/knadh/koanf/parsers/yaml"
+	"gopkg.in/yaml.v3"
+
+	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	coreModel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
@@ -14,11 +16,15 @@ import (
 
 var lockLogsPipelineSpec sync.RWMutex
 
-// check if the processors already exis
+// check if the processors already exist
 // if yes then update the processor.
 // if something doesn't exists then remove it.
 func buildLogParsingProcessors(agentConf, parsingProcessors map[string]interface{}) error {
-	agentProcessors := agentConf["processors"].(map[string]interface{})
+	agentProcessors := map[string]interface{}{}
+	if agentConf["processors"] != nil {
+		agentProcessors = (agentConf["processors"]).(map[string]interface{})
+	}
+
 	exists := map[string]struct{}{}
 	for key, params := range parsingProcessors {
 		agentProcessors[key] = params
@@ -44,7 +50,7 @@ type otelPipeline struct {
 	} `json:"pipelines" yaml:"pipelines"`
 }
 
-func getOtelPipelinFromConfig(config map[string]interface{}) (*otelPipeline, error) {
+func getOtelPipelineFromConfig(config map[string]interface{}) (*otelPipeline, error) {
 	if _, ok := config["service"]; !ok {
 		return nil, fmt.Errorf("service not found in OTEL config")
 	}
@@ -146,17 +152,51 @@ func checkDuplicateString(pipeline []string) bool {
 
 func GenerateCollectorConfigWithPipelines(
 	config []byte,
-	parsingProcessors map[string]interface{},
-	parsingProcessorsNames []string,
+	pipelines []Pipeline,
 ) ([]byte, *coreModel.ApiError) {
-	c, err := yaml.Parser().Unmarshal([]byte(config))
+	var c map[string]interface{}
+	err := yaml.Unmarshal([]byte(config), &c)
 	if err != nil {
 		return nil, coreModel.BadRequest(err)
 	}
 
-	buildLogParsingProcessors(c, parsingProcessors)
+	processors, procNames, err := PreparePipelineProcessor(pipelines)
+	if err != nil {
+		return nil, coreModel.BadRequest(errors.Wrap(
+			err, "could not prepare otel collector processors for log pipelines",
+		))
+	}
 
-	p, err := getOtelPipelinFromConfig(c)
+	// Escape any `$`s as `$$` in config generated for pipelines, to ensure any occurrences
+	// like $data do not end up being treated as env vars when loading collector config.
+	for _, procName := range procNames {
+		procConf := processors[procName]
+		serializedProcConf, err := yaml.Marshal(procConf)
+		if err != nil {
+			return nil, coreModel.InternalError(fmt.Errorf(
+				"could not marshal processor config for %s: %w", procName, err,
+			))
+		}
+		escapedSerializedConf := strings.ReplaceAll(
+			string(serializedProcConf), "$", "$$",
+		)
+
+		var escapedConf map[string]interface{}
+		err = yaml.Unmarshal([]byte(escapedSerializedConf), &escapedConf)
+		if err != nil {
+			return nil, coreModel.InternalError(fmt.Errorf(
+				"could not unmarshal dollar escaped processor config for %s: %w", procName, err,
+			))
+		}
+
+		processors[procName] = escapedConf
+	}
+
+	// Add processors to unmarshaled collector config `c`
+	buildLogParsingProcessors(c, processors)
+
+	// build the new processor list in service.pipelines.logs
+	p, err := getOtelPipelineFromConfig(c)
 	if err != nil {
 		return nil, coreModel.BadRequest(err)
 	}
@@ -166,14 +206,13 @@ func GenerateCollectorConfigWithPipelines(
 		))
 	}
 
-	// build the new processor list
-	updatedProcessorList, _ := buildLogsProcessors(p.Pipelines.Logs.Processors, parsingProcessorsNames)
+	updatedProcessorList, _ := buildLogsProcessors(p.Pipelines.Logs.Processors, procNames)
 	p.Pipelines.Logs.Processors = updatedProcessorList
 
 	// add the new processor to the data ( no checks required as the keys will exists)
 	c["service"].(map[string]interface{})["pipelines"].(map[string]interface{})["logs"] = p.Pipelines.Logs
 
-	updatedConf, err := yaml.Parser().Marshal(c)
+	updatedConf, err := yaml.Marshal(c)
 	if err != nil {
 		return nil, coreModel.BadRequest(err)
 	}

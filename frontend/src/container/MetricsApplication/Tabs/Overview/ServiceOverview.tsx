@@ -1,19 +1,22 @@
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
-import { GraphTitle } from 'container/MetricsApplication/constant';
+import {
+	GraphTitle,
+	SERVICE_CHART_ID,
+} from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import useFeatureFlag from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/utils';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { ClickHandlerType } from '../Overview';
 import { Button } from '../styles';
 import { IServiceName } from '../types';
 import { handleNonInQueryRange, onViewTracePopupClick } from '../util';
@@ -59,6 +62,7 @@ function ServiceOverview({
 				title: GraphTitle.LATENCY,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'ns',
+				id: SERVICE_CHART_ID.latency,
 			}),
 		[servicename, isSpanMetricEnable, topLevelOperationsRoute, tagFilterItems],
 	);
@@ -80,7 +84,7 @@ function ServiceOverview({
 			>
 				View Traces
 			</Button>
-			<Card>
+			<Card data-testid="service_latency">
 				<GraphContainer>
 					<Graph
 						name="service_latency"
@@ -88,6 +92,7 @@ function ServiceOverview({
 						widget={latencyWidget}
 						onClickHandler={handleGraphClick('Service')}
 						isQueryEnabled={isQueryEnabled}
+						fillSpans={false}
 					/>
 				</GraphContainer>
 			</Card>
@@ -99,7 +104,7 @@ interface ServiceOverviewProps {
 	selectedTimeStamp: number;
 	selectedTraceTags: string;
 	onDragSelect: (start: number, end: number) => void;
-	handleGraphClick: (type: string) => ClickHandlerType;
+	handleGraphClick: (type: string) => OnClickPluginOpts['onClick'];
 	topLevelOperationsRoute: string[];
 	topLevelOperationsIsLoading: boolean;
 }

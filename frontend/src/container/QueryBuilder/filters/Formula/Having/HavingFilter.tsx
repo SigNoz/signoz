@@ -28,7 +28,7 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 		currentFormValue.value,
 	);
 
-	const columnName = formula.expression.toUpperCase();
+	const columnName = formula.expression.replace(/ /g, '').toUpperCase();
 
 	const aggregatorOptions: SelectOption<string, string>[] = useMemo(
 		() => [{ label: columnName, value: columnName }],

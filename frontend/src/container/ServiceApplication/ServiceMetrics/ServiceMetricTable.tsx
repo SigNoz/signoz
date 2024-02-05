@@ -1,12 +1,20 @@
+import { WarningFilled } from '@ant-design/icons';
+import { Flex, Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
+import { MAX_RPS_LIMIT } from 'constants/global';
+import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
+import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isCloudUser } from 'utils/app';
+import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
 import { ServiceMetricsTableProps } from '../types';
@@ -22,6 +30,10 @@ function ServiceMetricTable({
 	>((state) => state.globalTime);
 
 	const { notifications } = useNotifications();
+	const { t: getText } = useTranslation(['services']);
+
+	const { data: licenseData, isFetching } = useLicense();
+	const isCloudUserVal = isCloudUser();
 
 	const queries = useGetQueriesRange(queryRangeRequestData, {
 		queryKey: [
@@ -53,14 +65,43 @@ function ServiceMetricTable({
 
 	const { search } = useLocation();
 	const tableColumns = useMemo(() => getColumns(search, true), [search]);
+	const [RPS, setRPS] = useState(0);
+
+	useEffect(() => {
+		if (!isFetching && licenseData?.payload?.onTrial && isCloudUserVal) {
+			if (services.length > 0) {
+				const rps = getTotalRPS(services);
+				setRPS(rps);
+			} else {
+				setRPS(0);
+			}
+		}
+	}, [services, licenseData, isFetching, isCloudUserVal]);
 
 	return (
-		<ResizeTable
-			columns={tableColumns}
-			loading={isLoading}
-			dataSource={services}
-			rowKey="serviceName"
-		/>
+		<>
+			{RPS > MAX_RPS_LIMIT && (
+				<Flex justify="center">
+					<Typography.Title level={5} type="warning" style={{ marginTop: 0 }}>
+						<WarningFilled /> {getText('rps_over_100')}
+					</Typography.Title>
+				</Flex>
+			)}
+
+			<ResourceAttributesFilter />
+
+			<ResizeTable
+				pagination={{
+					defaultPageSize: 10,
+					showTotal: (total: number, range: number[]): string =>
+						`${range[0]}-${range[1]} of ${total} items`,
+				}}
+				columns={tableColumns}
+				loading={isLoading}
+				dataSource={services}
+				rowKey="serviceName"
+			/>
+		</>
 	);
 }
 

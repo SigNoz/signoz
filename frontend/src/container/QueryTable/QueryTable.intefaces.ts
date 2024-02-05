@@ -16,4 +16,6 @@ export type QueryTableProps = Omit<
 	modifyColumns?: (columns: ColumnsType<RowData>) => ColumnsType<RowData>;
 	renderColumnCell?: Record<string, (record: RowData) => ReactNode>;
 	downloadOption?: DownloadOptions;
+	columns?: ColumnsType<RowData>;
+	dataSource?: RowData[];
 };

@@ -220,7 +220,11 @@ function ExplorerCard({
 								open={isOpen}
 								onOpenChange={handleOpenChange}
 							>
-								<Button type={saveButtonType} icon={saveButtonIcon}>
+								<Button
+									type={saveButtonType}
+									icon={saveButtonIcon}
+									data-testid="traces-save-view-action"
+								>
 									{isQueryUpdated
 										? SaveButtonText.SAVE_AS_NEW_VIEW
 										: SaveButtonText.SAVE_VIEW}

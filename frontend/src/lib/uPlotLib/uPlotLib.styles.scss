@@ -1,0 +1,39 @@
+.pointSquare {
+	width: 12px;
+	height: 12px;
+	background-color: transparent;
+	border: 2px solid white;
+	box-sizing: border-box;
+	border-radius: 50%;
+}
+
+.tooltip-content-header {
+	margin-bottom: 8px;
+	font-size: 13px;
+}
+
+.tooltip-data-point {
+	font-size: 11px;
+
+	flex: 1;
+	overflow: hidden;
+	word-wrap: break-word;
+}
+
+.tooltip-content {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 4px;
+
+	.pointSquare,
+	.tooltip-data-point {
+		font-size: 12px !important;
+		opacity: 0.9;
+
+		&.focus {
+			opacity: 1;
+			font-weight: 700;
+		}
+	}
+}

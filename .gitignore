@@ -37,7 +37,7 @@ frontend/src/constants/env.ts
 **/locust-scripts/__pycache__/
 **/__debug_bin
 
-frontend/.env
+.env
 pkg/query-service/signoz.db
 
 pkg/query-service/tests/test-deploy/data/
@@ -53,3 +53,12 @@ ee/query-service/tests/test-deploy/data/
 bin/
 
 */query-service/queries.active
+
+# e2e
+
+e2e/node_modules/
+e2e/test-results/
+e2e/playwright-report/
+e2e/blob-report/
+e2e/playwright/.cache/
+e2e/.auth

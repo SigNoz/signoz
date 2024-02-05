@@ -23,6 +23,7 @@ import {
 	LogsIndexToFields,
 	MySettings,
 	NewDashboardPage,
+	OldLogsExplorer,
 	Onboarding,
 	OrganizationSettings,
 	PasswordReset,
@@ -191,13 +192,6 @@ const routes: AppRoutes[] = [
 		key: 'ALL_ERROR',
 	},
 	{
-		path: ROUTES.LIST_LICENSES,
-		exact: true,
-		component: LicensePage,
-		isPrivate: true,
-		key: 'LIST_LICENSES',
-	},
-	{
 		path: ROUTES.ERROR_DETAIL,
 		exact: true,
 		component: ErrorDetails,
@@ -244,6 +238,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: LogsExplorer,
 		key: 'LOGS_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.OLD_LOGS_EXPLORER,
+		exact: true,
+		component: OldLogsExplorer,
+		key: 'OLD_LOGS_EXPLORER',
 		isPrivate: true,
 	},
 	{
@@ -310,6 +311,14 @@ export const SUPPORT_ROUTE: AppRoutes = {
 	component: SupportPage,
 	key: 'SUPPORT',
 	isPrivate: true,
+};
+
+export const LIST_LICENSES: AppRoutes = {
+	path: ROUTES.LIST_LICENSES,
+	exact: true,
+	component: LicensePage,
+	isPrivate: true,
+	key: 'LIST_LICENSES',
 };
 
 export interface AppRoutes {

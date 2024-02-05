@@ -45,7 +45,7 @@ function DashboardGraphSlider(): JSX.Element {
 							i: id,
 							w: 6,
 							x: 0,
-							h: 2,
+							h: 3,
 							y: 0,
 						},
 						...(layouts.filter((layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET) ||
@@ -63,6 +63,8 @@ function DashboardGraphSlider(): JSX.Element {
 							panelTypes: name,
 							query: initialQueriesMap.metrics,
 							timePreferance: 'GLOBAL_TIME',
+							softMax: null,
+							softMin: null,
 						},
 					],
 				},
