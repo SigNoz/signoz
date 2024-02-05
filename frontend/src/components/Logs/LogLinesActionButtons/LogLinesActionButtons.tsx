@@ -17,7 +17,7 @@ export default function LogLinesActionButtons({
 }: LogLinesActionButtonsProps): JSX.Element {
 	return (
 		<div className={`log-line-action-buttons ${customClassName}`}>
-			<Tooltip title="Show Context">
+			<Tooltip title="Show in Context">
 				<Button
 					size="small"
 					icon={<TextSelect size={14} />}
