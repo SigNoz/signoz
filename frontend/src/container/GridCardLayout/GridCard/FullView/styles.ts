@@ -31,10 +31,14 @@ export const GraphContainer = styled.div<GraphContainerProps>`
 		isGraphLegendToggleAvailable ? '50%' : '100%'};
 `;
 
-export const LabelContainer = styled.button`
+export const LabelContainer = styled.button<{
+	isDarkMode?: boolean;
+	disabled?: boolean;
+}>`
 	max-width: 18.75rem;
-	cursor: pointer;
+	cursor: ${(props): string => (props.disabled ? 'no-drop' : 'pointer')};
 	border: none;
 	background-color: transparent;
-	color: ${themeColors.white};
+	color: ${(props): string =>
+		props.isDarkMode ? themeColors.white : themeColors.black};
 `;

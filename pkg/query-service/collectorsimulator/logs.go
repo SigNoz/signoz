@@ -12,33 +12,33 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
-type ProcessorConfig struct {
-	Name   string
-	Config map[string]interface{}
-}
-
 // Simulate processing of logs through the otel collector.
 // Useful for testing, validation and generating previews.
 func SimulateLogsProcessing(
 	ctx context.Context,
 	processorFactories map[component.Type]processor.Factory,
-	processorConfigs []ProcessorConfig,
+	configGenerator ConfigGenerator,
 	logs []plog.Logs,
 	timeout time.Duration,
 ) (
 	outputLogs []plog.Logs, collectorErrs []string, apiErr *model.ApiError,
 ) {
 	// Construct and start a simulator (wraps a collector service)
-	simulator, apiErr := NewCollectorSimulator(
-		ctx, component.DataTypeLogs, processorFactories, processorConfigs,
+	simulator, simulatorInitCleanup, apiErr := NewCollectorSimulator(
+		ctx, processorFactories, configGenerator,
 	)
+	if simulatorInitCleanup != nil {
+		defer simulatorInitCleanup()
+	}
 	if apiErr != nil {
 		return nil, nil, model.WrapApiError(apiErr, "could not create logs processing simulator")
 	}
 
 	simulatorCleanup, apiErr := simulator.Start(ctx)
 	// We can not rely on collector service to shutdown successfully and cleanup refs to inmemory components.
-	defer simulatorCleanup()
+	if simulatorCleanup != nil {
+		defer simulatorCleanup()
+	}
 	if apiErr != nil {
 		return nil, nil, apiErr
 	}

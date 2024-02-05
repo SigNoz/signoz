@@ -10,6 +10,7 @@
 	"SETTINGS": "SigNoz | Settings",
 	"USAGE_EXPLORER": "SigNoz | Usage Explorer",
 	"APPLICATION": "SigNoz | Home",
+	"BILLING": "SigNoz | Billing",
 	"ALL_DASHBOARD": "SigNoz | All Dashboards",
 	"DASHBOARD": "SigNoz | Dashboard",
 	"DASHBOARD_WIDGET": "SigNoz | Dashboard Widget",
@@ -30,9 +31,13 @@
 	"NOT_FOUND": "SigNoz | Page Not Found",
 	"LOGS": "SigNoz | Logs",
 	"LOGS_EXPLORER": "SigNoz | Logs Explorer",
+	"OLD_LOGS_EXPLORER": "SigNoz | Old Logs Explorer",
 	"LIVE_LOGS": "SigNoz | Live Logs",
+	"LOGS_PIPELINES": "SigNoz | Logs Pipelines",
 	"HOME_PAGE": "Open source Observability Platform | SigNoz",
 	"PASSWORD_RESET": "SigNoz | Password Reset",
 	"LIST_LICENSES": "SigNoz | List of Licenses",
+	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
+	"SUPPORT": "SigNoz | Support",
 	"DEFAULT": "Open source Observability Platform | SigNoz"
 }

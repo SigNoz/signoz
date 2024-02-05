@@ -8,7 +8,10 @@ import {
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import DisplayThreshold from 'container/GridCardLayout/WidgetHeader/DisplayThreshold';
-import { GraphTitle } from 'container/MetricsApplication/constant';
+import {
+	GraphTitle,
+	SERVICE_CHART_ID,
+} from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { ReactNode, useMemo } from 'react';
@@ -59,6 +62,7 @@ function ApDexMetrics({
 					</Space>
 				),
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				id: SERVICE_CHART_ID.apdex,
 			}),
 		[
 			delta,
@@ -77,13 +81,14 @@ function ApDexMetrics({
 
 	const isQueryEnabled =
 		topLevelOperationsRoute.length > 0 &&
-		metricsBuckets &&
+		!!metricsBuckets &&
 		metricsBuckets?.length > 0 &&
 		delta !== undefined;
 
 	return (
 		<Graph
 			name="apdex"
+			fillSpans={false}
 			widget={apDexMetricsWidget}
 			onDragSelect={onDragSelect}
 			onClickHandler={handleGraphClick('ApDex')}

@@ -94,8 +94,8 @@ export const externalCallErrorPercent = ({
 	const additionalItems = [additionalItemsA, additionalItemsB];
 
 	const aggregateOperators = [
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM_RATE,
+		MetricAggregateOperator.SUM_RATE,
 	];
 	const legends = [legend, legend];
 	const dataSource = DataSource.METRICS;
@@ -153,8 +153,8 @@ export const externalCallDuration = ({
 	const additionalItems = [additionalItemsA, additionalItemsA];
 	const legends = [legend, legend];
 	const aggregateOperators = [
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM_RATE,
+		MetricAggregateOperator.SUM_RATE,
 	];
 	const dataSource = DataSource.METRICS;
 
@@ -251,8 +251,8 @@ export const externalCallDurationByAddress = ({
 	const additionalItems = [additionalItemsA, additionalItemsA];
 	const legends = [legend, legend];
 	const aggregateOperators = [
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM_RATE,
+		MetricAggregateOperator.SUM_RATE,
 	];
 	const dataSource = DataSource.METRICS;
 

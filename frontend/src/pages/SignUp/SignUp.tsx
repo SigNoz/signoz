@@ -7,6 +7,7 @@ import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -17,7 +18,7 @@ import { useLocation } from 'react-router-dom';
 import { SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
 import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
-import { trackEvent } from 'utils/segmentAnalytics';
+import { isCloudUser } from 'utils/app';
 
 import {
 	ButtonContainer,
@@ -56,6 +57,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		false,
 	);
 	const { search } = useLocation();
+	const { trackEvent } = useAnalytics();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
@@ -93,6 +95,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 				source: 'SigNoz Cloud',
 			});
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		getInviteDetailsResponse.data?.payload,
 		form,
@@ -233,8 +236,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	const handleSubmit = (): void => {
 		(async (): Promise<void> => {
-			const { hostname } = window.location;
-
 			try {
 				const values = form.getFieldsValue();
 				setLoading(true);
@@ -260,11 +261,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					await commonHandler(
 						values,
 						async (): Promise<void> => {
-							if (
-								isOnboardingEnabled &&
-								hostname &&
-								hostname.endsWith('signoz.cloud')
-							) {
+							if (isOnboardingEnabled && isCloudUser()) {
 								history.push(ROUTES.GET_STARTED);
 							} else {
 								history.push(ROUTES.APPLICATION);
@@ -347,7 +344,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 									placeholder={t('placeholder_firstname')}
 									required
 									id="signupFirstName"
-									disabled={isDetailsDisable}
+									disabled={isDetailsDisable && form.getFieldValue('firstName')}
 								/>
 							</FormContainer.Item>
 						</div>

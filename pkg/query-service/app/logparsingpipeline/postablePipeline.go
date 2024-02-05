@@ -8,6 +8,7 @@ import (
 
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
+	"golang.org/x/exp/slices"
 )
 
 // PostablePipelines are a list of user defined pielines
@@ -137,20 +138,80 @@ func isValidOperator(op PipelineOperator) error {
 		if op.Field == "" {
 			return fmt.Errorf(fmt.Sprintf("field of %s remove operator cannot be empty", op.ID))
 		}
-	case "traceParser":
+	case "trace_parser":
 		if op.TraceParser == nil {
 			return fmt.Errorf(fmt.Sprintf("field of %s remove operator cannot be empty", op.ID))
 		}
 
-		if op.TraceParser.SpanId.ParseFrom == "" && op.TraceParser.TraceId.ParseFrom == "" && op.TraceParser.TraceFlags.ParseFrom == "" {
-			return fmt.Errorf(fmt.Sprintf("one of trace_id,span_id,parse_from of %s traceParser operator must be present", op.ID))
+		hasTraceIdParseFrom := (op.TraceParser.TraceId != nil && op.TraceParser.TraceId.ParseFrom != "")
+		hasSpanIdParseFrom := (op.TraceParser.SpanId != nil && op.TraceParser.SpanId.ParseFrom != "")
+		hasTraceFlagsParseFrom := (op.TraceParser.TraceFlags != nil && op.TraceParser.TraceFlags.ParseFrom != "")
+
+		if !(hasTraceIdParseFrom || hasSpanIdParseFrom || hasTraceFlagsParseFrom) {
+			return fmt.Errorf(fmt.Sprintf("one of trace_id, span_id, trace_flags of %s trace_parser operator must be present", op.ID))
 		}
+
+		if hasTraceIdParseFrom && !isValidOtelValue(op.TraceParser.TraceId.ParseFrom) {
+			return fmt.Errorf("trace id can't be parsed from %s", op.TraceParser.TraceId.ParseFrom)
+		}
+		if hasSpanIdParseFrom && !isValidOtelValue(op.TraceParser.SpanId.ParseFrom) {
+			return fmt.Errorf("span id can't be parsed from %s", op.TraceParser.SpanId.ParseFrom)
+		}
+		if hasTraceFlagsParseFrom && !isValidOtelValue(op.TraceParser.TraceFlags.ParseFrom) {
+			return fmt.Errorf("trace flags can't be parsed from %s", op.TraceParser.TraceFlags.ParseFrom)
+		}
+
 	case "retain":
 		if len(op.Fields) == 0 {
 			return fmt.Errorf(fmt.Sprintf("fields of %s retain operator cannot be empty", op.ID))
 		}
+
+	case "time_parser":
+		if op.ParseFrom == "" {
+			return fmt.Errorf("parse from of time parsing processor %s cannot be empty", op.ID)
+		}
+		if op.LayoutType != "epoch" && op.LayoutType != "strptime" {
+			// TODO(Raj): Maybe add support for gotime format
+			return fmt.Errorf(
+				"invalid format type '%s' of time parsing processor %s", op.LayoutType, op.ID,
+			)
+		}
+		if op.Layout == "" {
+			return fmt.Errorf(fmt.Sprintf("format can not be empty for time parsing processor %s", op.ID))
+		}
+
+		validEpochLayouts := []string{"s", "ms", "us", "ns", "s.ms", "s.us", "s.ns"}
+		if op.LayoutType == "epoch" && !slices.Contains(validEpochLayouts, op.Layout) {
+			return fmt.Errorf(
+				"invalid epoch format '%s' of time parsing processor %s", op.LayoutType, op.ID,
+			)
+		}
+
+		// TODO(Raj): Add validation for strptime layouts via
+		// collector simulator maybe.
+		if op.LayoutType == "strptime" {
+			_, err := RegexForStrptimeLayout(op.Layout)
+			if err != nil {
+				return fmt.Errorf(
+					"invalid strptime format '%s' of time parsing processor %s: %w", op.LayoutType, op.ID, err,
+				)
+			}
+		}
+
+	case "severity_parser":
+		if op.ParseFrom == "" {
+			return fmt.Errorf("parse from of severity parsing processor %s cannot be empty", op.ID)
+		}
+
+		validMappingLevels := []string{"trace", "debug", "info", "warn", "error", "fatal"}
+		for k, _ := range op.SeverityMapping {
+			if !slices.Contains(validMappingLevels, strings.ToLower(k)) {
+				return fmt.Errorf("%s is not a valid severity in processor %s", k, op.ID)
+			}
+		}
+
 	default:
-		return fmt.Errorf(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, traceParser, retain)", op.Type, op.ID))
+		return fmt.Errorf(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, trace_parser, retain)", op.Type, op.ID))
 	}
 
 	if !isValidOtelValue(op.ParseFrom) ||

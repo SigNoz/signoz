@@ -57,6 +57,7 @@ function DashboardWidget(): JSX.Element | null {
 		<NewWidget
 			yAxisUnit={selectedWidget.yAxisUnit}
 			selectedGraph={selectedGraph}
+			fillSpans={selectedWidget.fillSpans}
 		/>
 	);
 }

@@ -31,6 +31,7 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.LIST_LICENSES]: [QueryParams.resourceAttributes],
 	[ROUTES.LOGIN]: [QueryParams.resourceAttributes],
 	[ROUTES.LOGS]: [QueryParams.resourceAttributes],
+	[ROUTES.LOGS_BASE]: [QueryParams.resourceAttributes],
 	[ROUTES.MY_SETTINGS]: [QueryParams.resourceAttributes],
 	[ROUTES.NOT_FOUND]: [QueryParams.resourceAttributes],
 	[ROUTES.ORG_SETTINGS]: [QueryParams.resourceAttributes],
@@ -45,5 +46,6 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.USAGE_EXPLORER]: [QueryParams.resourceAttributes],
 	[ROUTES.VERSION]: [QueryParams.resourceAttributes],
 	[ROUTES.TRACE_EXPLORER]: [QueryParams.resourceAttributes],
-	[ROUTES.PIPELINES]: [QueryParams.resourceAttributes],
+	[ROUTES.LOGS_PIPELINES]: [QueryParams.resourceAttributes],
+	[ROUTES.WORKSPACE_LOCKED]: [QueryParams.resourceAttributes],
 };

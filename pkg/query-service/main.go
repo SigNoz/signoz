@@ -34,6 +34,7 @@ func main() {
 
 	// the url used to build link in the alert messages in slack and other systems
 	var ruleRepoURL, cacheConfigPath, fluxInterval string
+	var cluster string
 
 	var preferDelta bool
 	var preferSpanMetrics bool
@@ -53,6 +54,7 @@ func main() {
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", constants.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
+	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
 	flag.Parse()
 
 	loggerMgr := initZapLog()
@@ -76,6 +78,7 @@ func main() {
 		DialTimeout:       dialTimeout,
 		CacheConfigPath:   cacheConfigPath,
 		FluxInterval:      fluxInterval,
+		Cluster:           cluster,
 	}
 
 	// Read the jwt secret key

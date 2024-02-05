@@ -3,6 +3,7 @@ package v3
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -129,13 +130,18 @@ func buildMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tableNam
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
 		rateOrderBy := "fingerprint, " + orderBy
+		partitionBy := "fingerprint"
+		if len(groupTags) != 0 {
+			partitionBy += ", " + groupTags
+			partitionBy = strings.Trim(partitionBy, ", ")
+		}
 		op := "max(value)"
 		subQuery := fmt.Sprintf(
 			queryTmplCounterInner, rateGroupTags, step, op, filterSubQuery, rateGroupBy, rateOrderBy,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
-		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s toStartOfHour(now()) as ts, %s(value)/%d as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, aggregateOperatorToSQLFunc[mq.AggregateOperator], points, query, groupBy, orderBy)
+		query := `SELECT %s ts, ` + rateWithoutNegative + `as rate_value FROM(%s) WINDOW rate_window as (PARTITION BY %s ORDER BY %s ts)`
+		query = fmt.Sprintf(query, groupTags, subQuery, partitionBy, rateOrderBy)
+		query = fmt.Sprintf(`SELECT %s toStartOfHour(now()) as ts, %s(rate_value)/%d as value FROM (%s) WHERE isNaN(rate_value) = 0 GROUP BY %s ORDER BY %s ts`, groupTags, aggregateOperatorToSQLFunc[mq.AggregateOperator], points, query, groupBy, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
@@ -145,8 +151,13 @@ func buildMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tableNam
 		step = ((end - start + 1) / 1000) / 2
 		op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
 		subQuery := fmt.Sprintf(queryTmplCounterInner, groupTags, step, op, filterSubQuery, groupBy, orderBy)
-		query := `SELECT %s toStartOfHour(now()) as ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
-		query = fmt.Sprintf(query, groupTags, subQuery)
+		partitionBy := ""
+		if len(groupTags) != 0 {
+			partitionBy = "PARTITION BY " + groupTags
+			partitionBy = strings.Trim(partitionBy, ", ")
+		}
+		query := `SELECT %s toStartOfHour(now()) as ts, ` + rateWithoutNegative + `as value FROM(%s) WINDOW rate_window as (%s ORDER BY %s ts)`
+		query = fmt.Sprintf(query, groupTags, subQuery, partitionBy, groupTags)
 		return query, nil
 	case
 		v3.AggregateOperatorP05,
@@ -165,13 +176,18 @@ func buildMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tableNam
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
 		rateOrderBy := "fingerprint, " + orderBy
+		partitionBy := "fingerprint"
+		if len(groupTags) != 0 {
+			partitionBy += ", " + groupTags
+			partitionBy = strings.Trim(partitionBy, ", ")
+		}
 		op := "max(value)"
 		subQuery := fmt.Sprintf(
 			queryTmplCounterInner, rateGroupTags, step, op, filterSubQuery, rateGroupBy, rateOrderBy,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
-		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s toStartOfHour(now()) as ts, sum(value)/%d as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, points, query, groupBy, orderBy)
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as rate_value FROM(%s) WINDOW rate_window as (PARTITION BY %s ORDER BY %s ts)`
+		query = fmt.Sprintf(query, groupTags, subQuery, partitionBy, rateOrderBy)
+		query = fmt.Sprintf(`SELECT %s toStartOfHour(now()) as ts, sum(rate_value)/%d as value FROM (%s) WHERE isNaN(rate_value) = 0 GROUP BY %s ORDER BY %s ts`, groupTags, points, query, groupBy, orderBy)
 		value := aggregateOperatorToPercentile[mq.AggregateOperator]
 
 		query = fmt.Sprintf(`SELECT %s toStartOfHour(now()) as ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, orderWithoutLe)

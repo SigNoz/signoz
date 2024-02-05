@@ -9,9 +9,10 @@ import {
 
 export const getMetricsQueryRange = async (
 	props: QueryRangePayload,
+	signal: AbortSignal,
 ): Promise<SuccessResponse<MetricRangePayloadV3> | ErrorResponse> => {
 	try {
-		const response = await axios.post('/query_range', props);
+		const response = await axios.post('/query_range', props, { signal });
 
 		return {
 			statusCode: 200,

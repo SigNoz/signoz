@@ -152,12 +152,16 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v2/metrics/query_range", am.ViewAccess(ah.queryRangeMetricsV2)).Methods(http.MethodPost)
 
 	// PAT APIs
-	router.HandleFunc("/api/v1/pat", am.OpenAccess(ah.createPAT)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/pat", am.OpenAccess(ah.getPATs)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/pat/{id}", am.OpenAccess(ah.deletePAT)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/pat", am.AdminAccess(ah.createPAT)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/pat", am.AdminAccess(ah.getPATs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/pat/{id}", am.AdminAccess(ah.deletePAT)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/checkout", am.AdminAccess(ah.checkout)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/billing", am.AdminAccess(ah.getBilling)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/portal", am.AdminAccess(ah.portalSession)).Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/dashboards/{uuid}/lock", am.EditAccess(ah.lockDashboard)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/dashboards/{uuid}/unlock", am.EditAccess(ah.unlockDashboard)).Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v2/licenses",
 		am.ViewAccess(ah.listLicensesV2)).

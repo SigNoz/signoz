@@ -1,9 +1,11 @@
 import ROUTES from 'constants/routes';
+import WorkspaceBlocked from 'pages/WorkspaceLocked';
 import { RouteProps } from 'react-router-dom';
 
 import {
 	AllAlertChannels,
 	AllErrors,
+	BillingPage,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
@@ -21,6 +23,7 @@ import {
 	LogsIndexToFields,
 	MySettings,
 	NewDashboardPage,
+	OldLogsExplorer,
 	Onboarding,
 	OrganizationSettings,
 	PasswordReset,
@@ -32,6 +35,7 @@ import {
 	SignupPage,
 	SomethingWentWrong,
 	StatusPage,
+	SupportPage,
 	TraceDetail,
 	TraceFilter,
 	TracesExplorer,
@@ -188,13 +192,6 @@ const routes: AppRoutes[] = [
 		key: 'ALL_ERROR',
 	},
 	{
-		path: ROUTES.LIST_LICENSES,
-		exact: true,
-		component: LicensePage,
-		isPrivate: true,
-		key: 'LIST_LICENSES',
-	},
-	{
 		path: ROUTES.ERROR_DETAIL,
 		exact: true,
 		component: ErrorDetails,
@@ -244,6 +241,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
+		path: ROUTES.OLD_LOGS_EXPLORER,
+		exact: true,
+		component: OldLogsExplorer,
+		key: 'OLD_LOGS_EXPLORER',
+		isPrivate: true,
+	},
+	{
 		path: ROUTES.LIVE_LOGS,
 		exact: true,
 		component: LiveLogs,
@@ -279,13 +283,43 @@ const routes: AppRoutes[] = [
 		isPrivate: false,
 	},
 	{
-		path: ROUTES.PIPELINES,
+		path: ROUTES.LOGS_PIPELINES,
 		exact: true,
 		component: PipelinePage,
-		key: 'PIPELINES',
+		key: 'LOGS_PIPELINES',
 		isPrivate: true,
 	},
+	{
+		path: ROUTES.BILLING,
+		exact: true,
+		component: BillingPage,
+		key: 'BILLING',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.WORKSPACE_LOCKED,
+		exact: true,
+		component: WorkspaceBlocked,
+		isPrivate: true,
+		key: 'WORKSPACE_LOCKED',
+	},
 ];
+
+export const SUPPORT_ROUTE: AppRoutes = {
+	path: ROUTES.SUPPORT,
+	exact: true,
+	component: SupportPage,
+	key: 'SUPPORT',
+	isPrivate: true,
+};
+
+export const LIST_LICENSES: AppRoutes = {
+	path: ROUTES.LIST_LICENSES,
+	exact: true,
+	component: LicensePage,
+	isPrivate: true,
+	key: 'LIST_LICENSES',
+};
 
 export interface AppRoutes {
 	component: RouteProps['component'];

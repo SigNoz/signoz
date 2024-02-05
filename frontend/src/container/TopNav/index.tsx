@@ -4,10 +4,8 @@ import { useMemo } from 'react';
 import { matchPath, useHistory } from 'react-router-dom';
 
 import NewExplorerCTA from '../NewExplorerCTA';
-import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
 import { routesToDisable, routesToSkip } from './DateTimeSelection/config';
-import { Container } from './styles';
 
 function TopNav(): JSX.Element | null {
 	const { location } = useHistory();
@@ -38,13 +36,9 @@ function TopNav(): JSX.Element | null {
 	}
 
 	return (
-		<Container>
-			<Col span={16}>
-				<ShowBreadcrumbs />
-			</Col>
-
+		<Row>
 			{!isRouteToSkip && (
-				<Col span={8}>
+				<Col span={24} style={{ marginTop: '1rem' }}>
 					<Row justify="end">
 						<Space align="start" size={60} direction="horizontal">
 							<NewExplorerCTA />
@@ -55,7 +49,7 @@ function TopNav(): JSX.Element | null {
 					</Row>
 				</Col>
 			)}
-		</Container>
+		</Row>
 	);
 }
 

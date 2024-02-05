@@ -552,6 +552,7 @@ type SignozLog struct {
 	Attributes_string  map[string]string  `json:"attributes_string" ch:"attributes_string"`
 	Attributes_int64   map[string]int64   `json:"attributes_int" ch:"attributes_int64"`
 	Attributes_float64 map[string]float64 `json:"attributes_float" ch:"attributes_float64"`
+	Attributes_bool    map[string]bool    `json:"attributes_bool" ch:"attributes_bool"`
 }
 
 type LogsTailClient struct {
@@ -612,6 +613,20 @@ type DashboardVar struct {
 type TagsInfo struct {
 	Languages map[string]interface{} `json:"languages"`
 	Env       string                 `json:"env"`
+}
+
+type AlertsInfo struct {
+	TotalAlerts       int `json:"totalAlerts"`
+	LogsBasedAlerts   int `json:"logsBasedAlerts"`
+	MetricBasedAlerts int `json:"metricBasedAlerts"`
+	TracesBasedAlerts int `json:"tracesBasedAlerts"`
+}
+
+type DashboardsInfo struct {
+	TotalDashboards   int `json:"totalDashboards"`
+	LogsBasedPanels   int `json:"logsBasedPanels"`
+	MetricBasedPanels int `json:"metricBasedPanels"`
+	TracesBasedPanels int `json:"tracesBasedPanels"`
 }
 
 type TagTelemetryData struct {

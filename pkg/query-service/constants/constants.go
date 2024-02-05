@@ -17,6 +17,10 @@ const (
 	OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket
 )
 
+type ContextKey string
+
+const ContextUserKey ContextKey = "user"
+
 var ConfigSignozIo = "https://config.signoz.io/api/v1"
 
 var DEFAULT_TELEMETRY_ANONYMOUS = false
@@ -48,6 +52,8 @@ func GetAlertManagerApiPrefix() string {
 	}
 	return "http://alertmanager:9093/api/"
 }
+
+var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email_template.html")
 
 // Alert manager channel subpath
 var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
@@ -130,6 +136,17 @@ func GetContextTimeout() time.Duration {
 }
 
 var ContextTimeout = GetContextTimeout()
+
+func GetContextTimeoutMaxAllowed() time.Duration {
+	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT_MAX_ALLOWED", "600")
+	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
+	if err != nil {
+		return time.Minute
+	}
+	return contextTimeoutDuration
+}
+
+var ContextTimeoutMaxAllowed = GetContextTimeoutMaxAllowed()
 
 const (
 	TraceID                        = "traceID"
@@ -265,6 +282,7 @@ const (
 		"CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
 		"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64," +
 		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
+		"CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool," +
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "
 	TracesExplorerViewSQLSelectWithSubQuery = "WITH subQuery AS (SELECT distinct on (traceID) traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s %s ORDER BY durationNano DESC "
@@ -334,3 +352,36 @@ const TIMESTAMP = "timestamp"
 
 const FirstQueryGraphLimit = "first_query_graph_limit"
 const SecondQueryGraphLimit = "second_query_graph_limit"
+
+var TracesListViewDefaultSelectedColumns = []v3.AttributeKey{
+	{
+		Key:      "serviceName",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "name",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "durationNano",
+		DataType: v3.AttributeKeyDataTypeArrayFloat64,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "httpMethod",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "responseStatusCode",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+}

@@ -1,5 +1,6 @@
 import { Input } from 'antd';
-import React, { Dispatch, SetStateAction, useCallback } from 'react';
+import { debounce } from 'lodash-es';
+import { BaseSyntheticEvent, Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
 function PipelinesSearchSection({
@@ -7,18 +8,18 @@ function PipelinesSearchSection({
 }: PipelinesSearchSectionProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 
-	const onSeachHandler = useCallback(
-		(event: React.SetStateAction<string>) => {
-			setPipelineSearchValue(event);
-		},
-		[setPipelineSearchValue],
-	);
+	const handleSearch = (searchEv: BaseSyntheticEvent): void => {
+		setPipelineSearchValue(searchEv?.target?.value || '');
+	};
+
+	const debouncedHandleSearch = debounce(handleSearch, 300);
 
 	return (
-		<Input.Search
+		<Input
+			type="text"
 			allowClear
 			placeholder={t('search_pipeline_placeholder')}
-			onSearch={onSeachHandler}
+			onChange={debouncedHandleSearch}
 		/>
 	);
 }

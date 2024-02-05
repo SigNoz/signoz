@@ -1,6 +1,6 @@
 import './IngestionSettings.styles.scss';
 
-import { Table, Typography } from 'antd';
+import { Skeleton, Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import getIngestionData from 'api/settings/getIngestionData';
 import { useQuery } from 'react-query';
@@ -12,7 +12,7 @@ import AppReducer from 'types/reducer/app';
 export default function IngestionSettings(): JSX.Element {
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const { data: ingestionData } = useQuery({
+	const { data: ingestionData, isFetching } = useQuery({
 		queryFn: getIngestionData,
 		queryKey: ['getIngestionData', user?.userId],
 	});
@@ -25,11 +25,19 @@ export default function IngestionSettings(): JSX.Element {
 			render: (text): JSX.Element => <Typography.Text> {text} </Typography.Text>,
 		},
 		{
-			title: 'Value',
+			title: '',
 			dataIndex: 'value',
 			key: 'value',
 			render: (text): JSX.Element => (
-				<Typography.Text copyable>{text}</Typography.Text>
+				<div>
+					{isFetching ? (
+						<Skeleton.Input active style={{ height: 20 }} />
+					) : (
+						<Typography.Text copyable={!isFetching && text !== ''}>
+							{text}
+						</Typography.Text>
+					)}
+				</div>
 			),
 		},
 	];

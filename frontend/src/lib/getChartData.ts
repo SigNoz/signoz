@@ -63,10 +63,6 @@ const getChartData = ({
 			}),
 	);
 
-	const allLabels = response
-		.map((e) => e.map((e) => e.label))
-		.reduce((a, b) => [...a, ...b], []);
-
 	const modifiedData = response
 		.flat()
 		.sort((a, b) => {
@@ -89,10 +85,14 @@ const getChartData = ({
 		? modifiedData.slice(0, limit)
 		: modifiedData;
 
+	const allLabels = modifiedData.map((e) => e.label);
+
 	const updatedDataSet = updatedSortedData.map((e, index) => {
+		const label = allLabels[index];
+
 		const datasetBaseConfig = {
 			index,
-			label: allLabels[index],
+			label,
 			borderColor: colors[index % colors.length] || 'red',
 			data: e.second,
 			borderWidth: 1.5,

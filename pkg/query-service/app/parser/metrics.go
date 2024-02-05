@@ -91,7 +91,6 @@ func ParseMetricAutocompleteTagParams(r *http.Request) (*model.MetricAutocomplet
 	}
 
 	tagsStr := r.URL.Query().Get("tags")
-	// fmt.Println(tagsStr)
 
 	// parsing tags
 	var tags map[string]string

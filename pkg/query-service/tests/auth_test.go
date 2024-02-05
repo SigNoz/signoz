@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
@@ -19,7 +20,7 @@ func invite(t *testing.T, email string) *model.InviteResponse {
 	require.NoError(t, err)
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
 	var inviteResp model.InviteResponse
@@ -48,7 +49,7 @@ func register(email, password, token string) (string, error) {
 	}
 
 	defer resp.Body.Close()
-	b, err = ioutil.ReadAll(resp.Body)
+	b, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -75,7 +76,7 @@ func login(email, password, refreshToken string) (*model.LoginResponse, error) {
 	}
 
 	defer resp.Body.Close()
-	b, err = ioutil.ReadAll(resp.Body)
+	b, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read body")
 	}

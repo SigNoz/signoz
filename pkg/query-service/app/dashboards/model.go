@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"github.com/gosimple/slug"
 	"github.com/jmoiron/sqlx"
 	"github.com/mitchellh/mapstructure"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
@@ -95,6 +97,43 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("error in creating ttl_status table: %s", err.Error())
 	}
 
+	// sqlite does not support "IF NOT EXISTS"
+	createdAt := `ALTER TABLE rules ADD COLUMN created_at datetime;`
+	_, err = db.Exec(createdAt)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
+		return nil, fmt.Errorf("error in adding column created_at to rules table: %s", err.Error())
+	}
+
+	createdBy := `ALTER TABLE rules ADD COLUMN created_by TEXT;`
+	_, err = db.Exec(createdBy)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
+		return nil, fmt.Errorf("error in adding column created_by to rules table: %s", err.Error())
+	}
+
+	updatedBy := `ALTER TABLE rules ADD COLUMN updated_by TEXT;`
+	_, err = db.Exec(updatedBy)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
+		return nil, fmt.Errorf("error in adding column updated_by to rules table: %s", err.Error())
+	}
+
+	createdBy = `ALTER TABLE dashboards ADD COLUMN created_by TEXT;`
+	_, err = db.Exec(createdBy)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
+		return nil, fmt.Errorf("error in adding column created_by to dashboards table: %s", err.Error())
+	}
+
+	updatedBy = `ALTER TABLE dashboards ADD COLUMN updated_by TEXT;`
+	_, err = db.Exec(updatedBy)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
+		return nil, fmt.Errorf("error in adding column updated_by to dashboards table: %s", err.Error())
+	}
+
+	locked := `ALTER TABLE dashboards ADD COLUMN locked INTEGER DEFAULT 0;`
+	_, err = db.Exec(locked)
+	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
+		return nil, fmt.Errorf("error in adding column locked to dashboards table: %s", err.Error())
+	}
+
 	return db, nil
 }
 
@@ -103,9 +142,12 @@ type Dashboard struct {
 	Uuid      string    `json:"uuid" db:"uuid"`
 	Slug      string    `json:"-" db:"-"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	CreateBy  *string   `json:"created_by" db:"created_by"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+	UpdateBy  *string   `json:"updated_by" db:"updated_by"`
 	Title     string    `json:"-" db:"-"`
 	Data      Data      `json:"data" db:"data"`
+	Locked    *int      `json:"isLocked" db:"locked"`
 }
 
 type Data map[string]interface{}
@@ -132,16 +174,22 @@ func (c *Data) Scan(src interface{}) error {
 }
 
 // CreateDashboard creates a new dashboard
-func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (*Dashboard, *model.ApiError) {
+func CreateDashboard(ctx context.Context, data map[string]interface{}, fm interfaces.FeatureLookup) (*Dashboard, *model.ApiError) {
 	dash := &Dashboard{
 		Data: data,
 	}
+	var userEmail string
+	if user := common.GetUserFromContext(ctx); user != nil {
+		userEmail = user.Email
+	}
 	dash.CreatedAt = time.Now()
+	dash.CreateBy = &userEmail
 	dash.UpdatedAt = time.Now()
+	dash.UpdateBy = &userEmail
 	dash.UpdateSlug()
 	dash.Uuid = uuid.New().String()
 
-	map_data, err := json.Marshal(dash.Data)
+	mapData, err := json.Marshal(dash.Data)
 	if err != nil {
 		zap.S().Errorf("Error in marshalling data field in dashboard: ", dash, err)
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
@@ -155,8 +203,8 @@ func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (
 		}
 	}
 
-	// db.Prepare("Insert into dashboards where")
-	result, err := db.Exec("INSERT INTO dashboards (uuid, created_at, updated_at, data) VALUES ($1, $2, $3, $4)", dash.Uuid, dash.CreatedAt, dash.UpdatedAt, map_data)
+	result, err := db.Exec("INSERT INTO dashboards (uuid, created_at, created_by, updated_at, updated_by, data) VALUES ($1, $2, $3, $4, $5, $6)",
+		dash.Uuid, dash.CreatedAt, userEmail, dash.UpdatedAt, userEmail, mapData)
 
 	if err != nil {
 		zap.S().Errorf("Error in inserting dashboard data: ", dash, err)
@@ -177,7 +225,7 @@ func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (
 	return dash, nil
 }
 
-func GetDashboards() ([]Dashboard, *model.ApiError) {
+func GetDashboards(ctx context.Context) ([]Dashboard, *model.ApiError) {
 
 	dashboards := []Dashboard{}
 	query := `SELECT * FROM dashboards`
@@ -190,12 +238,18 @@ func GetDashboards() ([]Dashboard, *model.ApiError) {
 	return dashboards, nil
 }
 
-func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
+func DeleteDashboard(ctx context.Context, uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 
-	dashboard, dErr := GetDashboard(uuid)
+	dashboard, dErr := GetDashboard(ctx, uuid)
 	if dErr != nil {
 		zap.S().Errorf("Error in getting dashboard: ", uuid, dErr)
 		return dErr
+	}
+
+	if user := common.GetUserFromContext(ctx); user != nil {
+		if dashboard.Locked != nil && *dashboard.Locked == 1 {
+			return model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to delete it"))
+		}
 	}
 
 	query := `DELETE FROM dashboards WHERE uuid=?`
@@ -222,7 +276,7 @@ func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 	return nil
 }
 
-func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
+func GetDashboard(ctx context.Context, uuid string) (*Dashboard, *model.ApiError) {
 
 	dashboard := Dashboard{}
 	query := `SELECT * FROM dashboards WHERE uuid=?`
@@ -235,17 +289,25 @@ func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
 	return &dashboard, nil
 }
 
-func UpdateDashboard(uuid string, data map[string]interface{}, fm interfaces.FeatureLookup) (*Dashboard, *model.ApiError) {
+func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface{}, fm interfaces.FeatureLookup) (*Dashboard, *model.ApiError) {
 
-	map_data, err := json.Marshal(data)
+	mapData, err := json.Marshal(data)
 	if err != nil {
 		zap.S().Errorf("Error in marshalling data field in dashboard: ", data, err)
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
-	dashboard, apiErr := GetDashboard(uuid)
+	dashboard, apiErr := GetDashboard(ctx, uuid)
 	if apiErr != nil {
 		return nil, apiErr
+	}
+
+	var userEmail string
+	if user := common.GetUserFromContext(ctx); user != nil {
+		userEmail = user.Email
+		if dashboard.Locked != nil && *dashboard.Locked == 1 {
+			return nil, model.BadRequest(fmt.Errorf("dashboard is locked, please unlock the dashboard to be able to edit it"))
+		}
 	}
 
 	// check if the count of trace and logs QB panel has changed, if yes, then check feature flag count
@@ -265,10 +327,11 @@ func UpdateDashboard(uuid string, data map[string]interface{}, fm interfaces.Fea
 	}
 
 	dashboard.UpdatedAt = time.Now()
+	dashboard.UpdateBy = &userEmail
 	dashboard.Data = data
 
-	// db.Prepare("Insert into dashboards where")
-	_, err = db.Exec("UPDATE dashboards SET updated_at=$1, data=$2 WHERE uuid=$3 ", dashboard.UpdatedAt, map_data, dashboard.Uuid)
+	_, err = db.Exec("UPDATE dashboards SET updated_at=$1, updated_by=$2, data=$3 WHERE uuid=$4;",
+		dashboard.UpdatedAt, userEmail, mapData, dashboard.Uuid)
 
 	if err != nil {
 		zap.S().Errorf("Error in inserting dashboard data: ", data, err)
@@ -279,6 +342,24 @@ func UpdateDashboard(uuid string, data map[string]interface{}, fm interfaces.Fea
 		updateFeatureUsage(fm, newCount-existingCount)
 	}
 	return dashboard, nil
+}
+
+func LockUnlockDashboard(ctx context.Context, uuid string, lock bool) *model.ApiError {
+	var query string
+	if lock {
+		query = `UPDATE dashboards SET locked=1 WHERE uuid=?;`
+	} else {
+		query = `UPDATE dashboards SET locked=0 WHERE uuid=?;`
+	}
+
+	_, err := db.Exec(query, uuid)
+
+	if err != nil {
+		zap.S().Errorf("Error in updating dashboard: ", uuid, err)
+		return &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	return nil
 }
 
 func updateFeatureUsage(fm interfaces.FeatureLookup, usage int64) *model.ApiError {

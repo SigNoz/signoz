@@ -142,18 +142,24 @@ func (agents *Agents) RecommendLatestConfigToAll(
 			return nil
 		}
 
-		agent.SendToAgent(&protobufs.ServerToAgent{
-			RemoteConfig: &protobufs.AgentRemoteConfig{
-				Config: &protobufs.AgentConfigMap{
-					ConfigMap: map[string]*protobufs.AgentConfigFile{
-						CollectorConfigFilename: {
-							Body:        newConfig,
-							ContentType: "application/x-yaml",
-						},
+		newRemoteConfig := &protobufs.AgentRemoteConfig{
+			Config: &protobufs.AgentConfigMap{
+				ConfigMap: map[string]*protobufs.AgentConfigFile{
+					CollectorConfigFilename: {
+						Body:        newConfig,
+						ContentType: "application/x-yaml",
 					},
 				},
-				ConfigHash: []byte(confId),
 			},
+			ConfigHash: []byte(confId),
+		}
+
+		agent.mux.Lock()
+		defer agent.mux.Unlock()
+		agent.remoteConfig = newRemoteConfig
+
+		agent.SendToAgent(&protobufs.ServerToAgent{
+			RemoteConfig: newRemoteConfig,
 		})
 
 		ListenToConfigUpdate(agent.ID, confId, provider.ReportConfigDeploymentStatus)

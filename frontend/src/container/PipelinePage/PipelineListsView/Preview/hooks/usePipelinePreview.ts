@@ -27,7 +27,8 @@ const usePipelinePreview = ({
 	// ILog allows both number and string while the API needs a number
 	const simulationInput = inputLogs.map((l) => ({
 		...l,
-		timestamp: new Date(l.timestamp).getTime(),
+		// log timestamps in query service API are unix nanos
+		timestamp: new Date(l.timestamp).getTime() * 10 ** 6,
 	}));
 
 	const response = useQuery<PipelineSimulationResponse, AxiosError>({
@@ -42,11 +43,17 @@ const usePipelinePreview = ({
 
 	const { isFetching, isError, data, error } = response;
 
+	const outputLogs = (data?.logs || []).map((l: ILog) => ({
+		...l,
+		// log timestamps in query service API are unix nanos
+		timestamp: (l.timestamp as number) / 10 ** 6,
+	}));
+
 	return {
 		isLoading: isFetching,
-		outputLogs: data?.logs || [],
+		outputLogs,
 		isError,
-		errorMsg: error?.response?.data?.error || '',
+		errorMsg: error?.message || '',
 	};
 };
 

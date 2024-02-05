@@ -30,7 +30,7 @@ function ApDexApplication({
 	}
 
 	return (
-		<Card>
+		<Card data-testid="apdex">
 			<GraphContainer>
 				<ApDexMetricsApplication
 					handleGraphClick={handleGraphClick}

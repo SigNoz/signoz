@@ -8,15 +8,19 @@ type GenerateExportToDashboardLinkParams = {
 	dashboardId: string;
 	panelType: PANEL_TYPES;
 	query: Query;
+	widgetId: string;
 };
 
 export const generateExportToDashboardLink = ({
 	query,
 	dashboardId,
 	panelType,
+	widgetId,
 }: GenerateExportToDashboardLinkParams): string =>
 	`${generatePath(ROUTES.DASHBOARD, {
 		dashboardId,
-	})}/new?${QueryParams.graphType}=${panelType}&${QueryParams.widgetId}=empty&${
-		QueryParams.compositeQuery
-	}=${encodeURIComponent(JSON.stringify(query))}`;
+	})}/new?${QueryParams.graphType}=${panelType}&${
+		QueryParams.widgetId
+	}=${widgetId}&${QueryParams.compositeQuery}=${encodeURIComponent(
+		JSON.stringify(query),
+	)}`;
