@@ -71,6 +71,8 @@ type Reader interface {
 	GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error)
 	LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClient)
 
+	GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error)
+	GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error)
 	GetTotalSpans(ctx context.Context) (uint64, error)
 	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)
 	GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error)

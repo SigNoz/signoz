@@ -35,9 +35,7 @@ export default function DataSource(): JSX.Element {
 		selectedFramework,
 		updateSelectedDataSource,
 		updateServiceName,
-		updateSelectedEnvironment,
 		updateSelectedFramework,
-		updateErrorDetails,
 	} = useOnboardingContext();
 
 	const [supportedDataSources, setSupportedDataSources] = useState<
@@ -55,11 +53,6 @@ export default function DataSource(): JSX.Element {
 
 			setSupportedDataSources(dataSource);
 		}
-
-		updateSelectedEnvironment('');
-		updateErrorDetails('');
-		updateServiceName('');
-		updateSelectedFramework('');
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 

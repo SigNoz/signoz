@@ -54,7 +54,7 @@ function OnboardingContextProvider({
 	const [selectedFramework, setSelectedFramework] = useState<string>('');
 
 	const [selectedMethod, setSelectedMethod] = useState(
-		OnboardingMethods.RECOMMENDED_STEPS,
+		OnboardingMethods.QUICK_START,
 	);
 
 	const [
@@ -104,7 +104,7 @@ function OnboardingContextProvider({
 		setSelectedDataSource(defaultApplicationDataSource);
 		setSelectedEnvironment('');
 		setSelectedFramework('');
-		setSelectedMethod(OnboardingMethods.RECOMMENDED_STEPS);
+		setSelectedMethod(OnboardingMethods.QUICK_START);
 		updateActiveStep(null);
 	};
 

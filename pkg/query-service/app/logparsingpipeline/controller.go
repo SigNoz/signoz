@@ -73,12 +73,6 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 
 	}
 
-	if !agentConf.Ready() {
-		return nil, model.UnavailableError(fmt.Errorf(
-			"agent updater unavailable at the moment. Please try in sometime",
-		))
-	}
-
 	// prepare config elements
 	elements := make([]string, len(pipelines))
 	for i, p := range pipelines {
@@ -177,13 +171,8 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", model.InternalError(multierr.Combine(errs...))
 	}
 
-	processors, procNames, err := PreparePipelineProcessor(pipelines)
-	if err != nil {
-		return nil, "", model.BadRequest(errors.Wrap(err, "could not prepare otel collector processors for log pipelines"))
-	}
-
 	updatedConf, apiErr := GenerateCollectorConfigWithPipelines(
-		currentConfYaml, processors, procNames,
+		currentConfYaml, pipelines,
 	)
 	if apiErr != nil {
 		return nil, "", model.WrapApiError(apiErr, "could not marshal yaml for updated conf")

@@ -3,6 +3,19 @@ import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems
 import getMicroSeconds from './getMicroSeconds';
 import getMinAgo from './getMinAgo';
 
+const calculateStartAndEndTime = (
+	minutes: number,
+	endString: string,
+): Payload => {
+	const agodate = getMinAgo({ minutes }).getTime();
+	const agoString = getMicroSeconds({ time: agodate });
+
+	return {
+		start: agoString,
+		end: endString,
+	};
+};
+
 const GetStartAndEndTime = ({
 	type,
 	minTime,
@@ -12,73 +25,35 @@ const GetStartAndEndTime = ({
 	const endString = getMicroSeconds({ time: end });
 
 	if (type === 'LAST_5_MIN') {
-		const agodate = getMinAgo({ minutes: 5 }).getTime();
-		const agoString = getMicroSeconds({ time: agodate });
-
-		return {
-			start: agoString,
-			end: endString,
-		};
+		return calculateStartAndEndTime(5, endString);
 	}
 
 	if (type === 'LAST_30_MIN') {
-		const agodate = getMinAgo({ minutes: 30 }).getTime();
-		const agoString = getMicroSeconds({ time: agodate });
-
-		return {
-			start: agoString,
-			end: endString,
-		};
+		return calculateStartAndEndTime(30, endString);
 	}
 
 	if (type === 'LAST_1_HR') {
-		const agodate = getMinAgo({ minutes: 60 }).getTime();
-		const agoString = getMicroSeconds({ time: agodate });
-
-		return {
-			start: agoString,
-			end: endString,
-		};
+		return calculateStartAndEndTime(60, endString);
 	}
 
 	if (type === 'LAST_15_MIN') {
-		const agodate = getMinAgo({ minutes: 15 }).getTime();
-		const agoString = getMicroSeconds({ time: agodate });
-
-		return {
-			start: agoString,
-			end: endString,
-		};
+		return calculateStartAndEndTime(15, endString);
 	}
 
 	if (type === 'LAST_6_HR') {
-		const agoDate = getMinAgo({ minutes: 6 * 60 }).getTime();
-		const agoString = getMicroSeconds({ time: agoDate });
-
-		return {
-			start: agoString,
-			end: endString,
-		};
+		return calculateStartAndEndTime(6 * 60, endString);
 	}
 
 	if (type === 'LAST_1_DAY') {
-		const agoDate = getMinAgo({ minutes: 24 * 60 }).getTime();
-		const agoString = getMicroSeconds({ time: agoDate });
+		return calculateStartAndEndTime(24 * 60, endString);
+	}
 
-		return {
-			start: agoString,
-			end: endString,
-		};
+	if (type === 'LAST_3_DAYS') {
+		return calculateStartAndEndTime(24 * 60 * 3, endString);
 	}
 
 	if (type === 'LAST_1_WEEK') {
-		const agoDate = getMinAgo({ minutes: 24 * 60 * 7 }).getTime();
-		const agoString = getMicroSeconds({ time: agoDate });
-
-		return {
-			start: agoString,
-			end: endString,
-		};
+		return calculateStartAndEndTime(24 * 60 * 7, endString);
 	}
 
 	return {

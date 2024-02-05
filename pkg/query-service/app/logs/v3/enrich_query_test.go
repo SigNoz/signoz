@@ -279,6 +279,68 @@ var testEnrichParamsData = []struct {
 			},
 		},
 	},
+	{
+		Name: "Enriching query range v3 params with dot support",
+		Params: v3.QueryRangeParamsV3{
+			CompositeQuery: &v3.CompositeQuery{
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"test": {
+						QueryName:  "test",
+						Expression: "test",
+						DataSource: v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "method.name",
+						},
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "service.name"}, Value: "test", Operator: "="},
+						}},
+						GroupBy: []v3.AttributeKey{{Key: "host.name"}},
+						OrderBy: []v3.OrderBy{{ColumnName: "host.name"}},
+					},
+				},
+			},
+		},
+		Fields: map[string]v3.AttributeKey{
+			"method.name": {
+				Key:      "method.name",
+				Type:     v3.AttributeKeyTypeTag,
+				DataType: v3.AttributeKeyDataTypeString,
+				IsColumn: true,
+			},
+			"service.name": {
+				Key:      "service.name",
+				Type:     v3.AttributeKeyTypeTag,
+				DataType: v3.AttributeKeyDataTypeString,
+			},
+			"host.name": {
+				Key:      "host.name",
+				Type:     v3.AttributeKeyTypeTag,
+				DataType: v3.AttributeKeyDataTypeString,
+			},
+		},
+		Result: v3.QueryRangeParamsV3{
+			CompositeQuery: &v3.CompositeQuery{
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"test": {
+						QueryName:  "test",
+						Expression: "test",
+						DataSource: v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{
+							Key:      "method.name",
+							Type:     v3.AttributeKeyTypeTag,
+							DataType: v3.AttributeKeyDataTypeString,
+							IsColumn: true,
+						},
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "service.name", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString}, Value: "test", Operator: "="},
+						}},
+						GroupBy: []v3.AttributeKey{{Key: "host.name", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString}},
+						OrderBy: []v3.OrderBy{{ColumnName: "host.name", Key: "host.name", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString}},
+					},
+				},
+			},
+		},
+	},
 }
 
 func TestEnrichParams(t *testing.T) {

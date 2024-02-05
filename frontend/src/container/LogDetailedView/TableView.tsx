@@ -22,6 +22,7 @@ import { ILog } from 'types/api/logs/log';
 import ActionItem, { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
 import {
+	filterKeyForField,
 	flattenObject,
 	jsonToDataNodes,
 	recursiveParseJSON,
@@ -98,11 +99,12 @@ function TableView({
 			title: 'Action',
 			width: 11,
 			render: (fieldData: Record<string, string>): JSX.Element | null => {
-				const fieldKey = fieldData.field.split('.').slice(-1);
-				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
+				const fieldFilterKey = filterKeyForField(fieldData.field);
+
+				if (!RESTRICTED_FIELDS.includes(fieldFilterKey)) {
 					return (
 						<ActionItem
-							fieldKey={fieldKey[0]}
+							fieldKey={fieldFilterKey}
 							fieldValue={fieldData.value}
 							onClickActionItem={onClickActionItem}
 						/>
@@ -119,7 +121,6 @@ function TableView({
 			align: 'left',
 			ellipsis: true,
 			render: (field: string, record): JSX.Element => {
-				const fieldKey = field.split('.').slice(-1);
 				const renderedField = <FieldRenderer field={field} />;
 
 				if (record.field === 'trace_id') {
@@ -148,10 +149,11 @@ function TableView({
 					);
 				}
 
-				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
+				const fieldFilterKey = filterKeyForField(field);
+				if (!RESTRICTED_FIELDS.includes(fieldFilterKey)) {
 					return (
 						<AddToQueryHOC
-							fieldKey={fieldKey[0]}
+							fieldKey={fieldFilterKey}
 							fieldValue={flattenLogData[field]}
 							onAddToQuery={onAddToQuery}
 						>
