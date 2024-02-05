@@ -66,6 +66,15 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 	names := []string{}
 
 	ottlStatements := []string{}
+
+	deleteStatement := func(path string) string {
+		fieldPath := ottlPath(path)
+		fieldPathParts := rSplitAfterN(fieldPath, "[", 2)
+		target := fieldPathParts[0]
+		key := fieldPathParts[1][1 : len(fieldPathParts[1])-1]
+		return fmt.Sprintf(`delete_key(%s, %s)`, target, key)
+	}
+
 	for _, pipeline := range pipelines {
 		if pipeline.Enabled {
 
@@ -74,31 +83,37 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 				return nil, nil, fmt.Errorf("failed to parse pipeline filter: %w", err)
 			}
 
+			appendStatement := func(statement string) {
+				if len(filterExpr) > 0 {
+					statement = fmt.Sprintf("%s where %s", statement, filterExpr)
+				}
+				ottlStatements = append(ottlStatements, statement)
+			}
+
 			for _, operator := range pipeline.Config {
 				if operator.Enabled {
 
-					statement := ""
-
 					if operator.Type == "add" {
-						statement = fmt.Sprintf(`set(%s, "%s")`, ottlPath(operator.Field), operator.Value)
+						value := fmt.Sprintf(`"%s"`, operator.Value)
+						if strings.HasPrefix(operator.Value, "EXPR(") {
+							value = operator.Value[5 : len(operator.Value)-1]
+						}
+						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.Field), value))
 
 					} else if operator.Type == "remove" {
-						fieldPath := ottlPath(operator.Field)
-						fieldPathParts := rSplitAfterN(fieldPath, "[", 2)
-						target := fieldPathParts[0]
-						key := fieldPathParts[1][1 : len(fieldPathParts[1])-1]
-						statement = fmt.Sprintf(`delete_key(%s, %s)`, target, key)
+						appendStatement(deleteStatement(operator.Field))
+
+					} else if operator.Type == "copy" {
+						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.To), ottlPath(operator.From)))
+
+					} else if operator.Type == "move" {
+						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.To), ottlPath(operator.From)))
+						appendStatement(deleteStatement(operator.From))
 
 					} else {
 						return nil, nil, fmt.Errorf("unsupported pipeline operator type: %s", operator.Type)
 					}
 
-					if len(filterExpr) > 0 {
-						// filterExpr = `attributes.method == "GET"`
-						statement = fmt.Sprintf("%s where %s", statement, filterExpr)
-					}
-
-					ottlStatements = append(ottlStatements, statement)
 				}
 			}
 		}

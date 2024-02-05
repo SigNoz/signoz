@@ -353,16 +353,16 @@ func TestAddProcessor(t *testing.T) {
 			"type": "add",
 			"name": "Test add parser",
 			"id": "test-add-parser",
-			"field": "attributes.test",
-			"value": "test"
+			"field": "resource.test",
+			"value": "1"
 		}`, `{
 			"orderId": 2,
 			"enabled": true,
 			"type": "add",
 			"name": "Test enabled add resource parser",
 			"id": "test-add-parser",
-			"field": "resource.test",
-			"value": "test"
+			"field": "attributes.test",
+			"value": "EXPR(int(resource.test) + 1)"
 		}`, `{
 			"orderId": 3,
 			"enabled": false,
@@ -397,8 +397,8 @@ func TestAddProcessor(t *testing.T) {
 	require.Equal(1, len(result))
 	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
 	processed := result[0]
-	require.Equal("test", processed.Attributes_string["test"])
-	require.Equal("test", processed.Resources_string["test"])
+	require.Equal("1", processed.Resources_string["test"])
+	require.Equal(2, processed.Attributes_int64["test"])
 	require.Equal("", processed.Attributes_string["testMissing"])
 }
 
