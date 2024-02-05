@@ -12,6 +12,7 @@ import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
 
 import { ButtonContainer, CustomButton } from '../../styles';
 import PipelinesExportModal from './PipelinesExportModal';
+import PipelinesImportModal from './PipelinesImportModal/PipelinesImportModal';
 
 function PipelinesActions({
 	setActionType,
@@ -23,6 +24,7 @@ function PipelinesActions({
 	const { trackEvent } = useAnalytics();
 
 	const [isExportModalVisible, setIsExportModalVisible] = useState(false);
+	const [isImportModalVisible, setIsImportModalVisible] = useState(false);
 
 	const pipelinesExist = useMemo(() => pipelineData?.pipelines?.length > 0, [
 		pipelineData?.pipelines,
@@ -62,7 +64,7 @@ function PipelinesActions({
 				)}
 				{inEditMode && (
 					<CustomButton
-						onClick={(): void => setIsExportModalVisible(true)}
+						onClick={(): void => setIsImportModalVisible(true)}
 						icon={<ImportOutlined />}
 					>
 						{t('import')}
@@ -91,6 +93,10 @@ function PipelinesActions({
 				open={isExportModalVisible}
 				onCancel={(): void => setIsExportModalVisible(false)}
 				pipelines={pipelineData.pipelines}
+			/>
+			<PipelinesImportModal
+				open={isImportModalVisible}
+				onCancel={(): void => setIsImportModalVisible(false)}
 			/>
 		</>
 	);
