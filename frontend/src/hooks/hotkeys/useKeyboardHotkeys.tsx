@@ -10,11 +10,17 @@ import {
 
 interface KeyboardHotkeysContextReturnValue {
 	/**
-	 *
 	 * @param keyCombination provide the string for which the subsequent callback should be triggered. Example 'ctrl+a'
 	 * @param callback the callback that should be triggered when the above key combination is being pressed
+	 * @returns void
 	 */
 	registerShortcut: (keyCombination: string, callback: () => void) => void;
+
+	/**
+	 *
+	 * @param keyCombination provide the string for which we want to deregister the callback
+	 * @returns void
+	 */
 	deregisterShortcut: (keyCombination: string) => void;
 }
 
@@ -51,10 +57,18 @@ function KeyboardHotkeysProvider({
 		if (IGNORE_INPUTS.includes((target as HTMLElement).tagName.toLowerCase())) {
 			return;
 		}
+
+		// https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/metaKey
 		const modifiers = { ctrlKey, altKey, shiftKey, metaKey };
-		const shortcutKey = `${key.toLowerCase()}${modifiers.ctrlKey ? '+ctrl' : ''}${
-			modifiers.altKey ? '+alt' : ''
-		}${modifiers.shiftKey ? '+shift' : ''}${modifiers.metaKey ? '+meta' : ''}`;
+
+		let shortcutKey = `${key.toLowerCase()}`;
+
+		const isCtrlkey = `${modifiers.ctrlKey ? '+ctrl' : ''}`;
+		const isAltKey = `${modifiers.altKey ? '+alt' : ''}`;
+		const isShiftKey = `${modifiers.shiftKey ? '+shift' : ''}`;
+		const isMetaKey = `${modifiers.metaKey ? '+meta' : ''}`;
+
+		shortcutKey = shortcutKey + isCtrlkey + isAltKey + isShiftKey + isMetaKey;
 
 		if (shortcuts.current[shortcutKey]) {
 			shortcuts.current[shortcutKey]();

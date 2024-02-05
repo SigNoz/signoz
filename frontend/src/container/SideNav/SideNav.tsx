@@ -8,6 +8,7 @@ import cx from 'classnames';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { ToggleButton } from 'container/Header/styles';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -160,10 +161,10 @@ function SideNav({
 	}, [collapsed, dispatch]);
 
 	useEffect(() => {
-		registerShortcut('b+meta', onCollapse);
+		registerShortcut(GlobalShortcuts.SidebarCollapse, onCollapse);
 
 		return (): void => {
-			deregisterShortcut('b+meta');
+			deregisterShortcut(GlobalShortcuts.SidebarCollapse);
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
