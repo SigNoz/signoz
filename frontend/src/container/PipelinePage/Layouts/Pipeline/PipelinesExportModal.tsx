@@ -14,7 +14,12 @@ export default function PipelinesExportModal({
 	pipelines,
 }: PipelinesExportModalProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
-	const pipelinesPropJson = JSON.stringify(pipelines, null, 2);
+	const postablePipelines = pipelines.map((p) =>
+		Object.fromEntries(
+			Object.entries(p).filter((e) => !['createdBy', 'createdAt'].includes(e[0])),
+		),
+	);
+	const pipelinesPropJson = JSON.stringify(postablePipelines, null, 2);
 	const [pipelinesJson, setPipelinesJson] = useState(pipelinesPropJson);
 	useEffect(() => {
 		setPipelinesJson(pipelinesPropJson);
