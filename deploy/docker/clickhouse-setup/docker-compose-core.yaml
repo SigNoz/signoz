@@ -19,7 +19,7 @@ services:
       - ZOO_AUTOPURGE_INTERVAL=1
 
   clickhouse:
-    image: clickhouse/clickhouse-server:23.7.3-alpine
+    image: clickhouse/clickhouse-server:24.1.2-alpine
     container_name: signoz-clickhouse
     # ports:
     # - "9000:9000"
