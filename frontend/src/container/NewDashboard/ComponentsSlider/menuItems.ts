@@ -1,3 +1,4 @@
+import List from 'assets/Dashboard/List';
 import TableIcon from 'assets/Dashboard/Table';
 import TimeSeriesIcon from 'assets/Dashboard/TimeSeries';
 import ValueIcon from 'assets/Dashboard/Value';
@@ -16,6 +17,7 @@ const Items: ItemsProps[] = [
 		display: 'Value',
 	},
 	{ name: PANEL_TYPES.TABLE, Icon: TableIcon, display: 'Table' },
+	{ name: PANEL_TYPES.LIST, Icon: List, display: 'List' },
 ];
 
 interface ItemsProps {

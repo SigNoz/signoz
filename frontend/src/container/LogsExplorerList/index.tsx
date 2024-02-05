@@ -59,6 +59,8 @@ function LogsExplorerList({
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
 	});
 
+	console.log({ options, config });
+
 	const activeLogIndex = useMemo(
 		() => logs.findIndex(({ id }) => id === activeLogId),
 		[logs, activeLogId],

@@ -1,7 +1,9 @@
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
+import { useLogsData } from 'hooks/useLogsData';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 
@@ -32,6 +34,11 @@ function WidgetGraphContainer({
 		selectedTime: selectedTime.enum,
 	});
 
+	const logs = useLogsData({
+		result: getWidgetQueryRange.data?.payload.data.newResult.data.result,
+		panelType: selectedGraph,
+	});
+
 	if (selectedWidget === undefined) {
 		return <Card>Invalid widget</Card>;
 	}
@@ -46,7 +53,21 @@ function WidgetGraphContainer({
 	if (getWidgetQueryRange.isLoading) {
 		return <Spinner size="large" tip="Loading..." />;
 	}
-	if (getWidgetQueryRange.data?.payload.data.result.length === 0) {
+
+	if (
+		selectedGraph !== PANEL_TYPES.LIST &&
+		getWidgetQueryRange.data?.payload.data.result.length === 0
+	) {
+		return (
+			<NotFoundContainer>
+				<Typography>No Data</Typography>
+			</NotFoundContainer>
+		);
+	}
+	if (
+		selectedGraph === PANEL_TYPES.LIST &&
+		getWidgetQueryRange.data?.payload.data.newResult.data.result.length === 0
+	) {
 		return (
 			<NotFoundContainer>
 				<Typography>No Data</Typography>
@@ -63,6 +84,7 @@ function WidgetGraphContainer({
 			fillSpans={fillSpans}
 			softMax={softMax}
 			softMin={softMin}
+			logs={logs}
 		/>
 	);
 }

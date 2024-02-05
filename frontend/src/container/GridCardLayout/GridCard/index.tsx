@@ -5,6 +5,7 @@ import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
+import { useLogsData } from 'hooks/useLogsData';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import GetMinMax from 'lib/getMinMax';
@@ -143,6 +144,11 @@ function GridCardGraph({
 		},
 	);
 
+	const logs = useLogsData({
+		result: queryResponse.data?.payload.data.newResult.data.result,
+		panelType: widget.panelTypes,
+	});
+
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 
 	const containerDimensions = useResizeObserver(graphRef);
@@ -222,6 +228,7 @@ function GridCardGraph({
 					onClickHandler={onClickHandler}
 					graphVisibiltyState={graphVisibility}
 					setGraphVisibility={setGraphVisibility}
+					logs={logs}
 				/>
 			)}
 		</div>

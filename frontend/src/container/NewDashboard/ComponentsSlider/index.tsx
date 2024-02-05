@@ -8,8 +8,10 @@ import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { CSSProperties } from 'react';
+import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
+import { PANEL_TYPES_INITIAL_QUERY } from './constants';
 import menuItems from './menuItems';
 import { Card, Container, Text } from './styles';
 
@@ -73,12 +75,40 @@ function DashboardGraphSlider(): JSX.Element {
 				onSuccess: (data) => {
 					if (data.payload) {
 						handleToggleDashboardSlider(false);
+						const queryParamsLog = {
+							graphType: name,
+							widgetId: id,
+							[QueryParams.compositeQuery]: JSON.stringify({
+								...PANEL_TYPES_INITIAL_QUERY[name],
+								builder: {
+									...PANEL_TYPES_INITIAL_QUERY[name].builder,
+									queryData: [
+										{
+											...PANEL_TYPES_INITIAL_QUERY[name].builder.queryData[0],
+											aggregateOperator: LogsAggregatorOperator.NOOP,
+											orderBy: [{ columnName: 'timestamp', order: 'desc' }],
+											offset: 0,
+											pageSize: 100,
+										},
+									],
+								},
+							}),
+						};
 
 						const queryParams = {
 							graphType: name,
 							widgetId: id,
-							[QueryParams.compositeQuery]: JSON.stringify(initialQueriesMap.metrics),
+							[QueryParams.compositeQuery]: JSON.stringify(
+								PANEL_TYPES_INITIAL_QUERY[name],
+							),
 						};
+
+						if (name === PANEL_TYPES.LIST) {
+							history.push(
+								`${history.location.pathname}/new?${createQueryParams(queryParamsLog)}`,
+							);
+							return;
+						}
 
 						history.push(
 							`${history.location.pathname}/new?${createQueryParams(queryParams)}`,

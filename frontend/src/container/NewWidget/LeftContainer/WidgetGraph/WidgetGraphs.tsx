@@ -18,6 +18,7 @@ import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getTimeRange } from 'utils/getTimeRange';
@@ -30,6 +31,7 @@ function WidgetGraph({
 	fillSpans,
 	softMax,
 	softMin,
+	logs,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 
@@ -156,10 +158,15 @@ function WidgetGraph({
 				}
 				query={stagedQuery || selectedWidget.query}
 				thresholds={thresholds}
+				logs={logs}
 			/>
 		</div>
 	);
 }
+
+WidgetGraph.defaultProps = {
+	logs: [],
+};
 
 interface WidgetGraphProps {
 	thresholds: ThresholdProps[];
@@ -170,6 +177,7 @@ interface WidgetGraphProps {
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
+	logs?: ILog[];
 	softMax: number | null;
 	softMin: number | null;
 }

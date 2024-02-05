@@ -47,6 +47,7 @@ function WidgetGraphComponent({
 	onClickHandler,
 	onDragSelect,
 	setGraphVisibility,
+	logs,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -319,6 +320,7 @@ function WidgetGraphComponent({
 						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
 						query={widget.query}
 						thresholds={widget.thresholds}
+						logs={logs}
 					/>
 				</div>
 			)}

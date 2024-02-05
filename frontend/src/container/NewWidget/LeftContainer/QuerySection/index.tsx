@@ -134,6 +134,31 @@ function QuerySection({
 		return config;
 	}, []);
 
+	const listFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
+		const config: QueryBuilderProps['filterConfigs'] = {
+			stepInterval: { isHidden: true, isDisabled: true },
+			orderBy: { isHidden: true, isDisabled: true },
+			groupBy: { isHidden: true, isDisabled: true },
+			reduceTo: { isHidden: true, isDisabled: true },
+			aggregateAttribute: { isHidden: true, isDisabled: true },
+			aggregateOperator: { isHidden: true, isDisabled: true },
+			having: { isHidden: true, isDisabled: true },
+		};
+
+		return config;
+	}, []);
+
+	const listItems = [
+		{
+			key: EQueryType.QUERY_BUILDER,
+			label: 'Logs',
+			tab: <Typography>Log</Typography>,
+			children: (
+				<QueryBuilder panelType={selectedGraph} filterConfigs={listFilterConfigs} />
+			),
+		},
+	];
+
 	const items = [
 		{
 			key: EQueryType.QUERY_BUILDER,
@@ -197,7 +222,7 @@ function QuerySection({
 						</Button>
 					</span>
 				}
-				items={items}
+				items={selectedGraph === PANEL_TYPES.LIST ? listItems : items}
 			/>
 		</div>
 	);
