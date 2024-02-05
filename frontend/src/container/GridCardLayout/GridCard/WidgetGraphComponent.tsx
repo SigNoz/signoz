@@ -124,6 +124,7 @@ function WidgetGraphComponent({
 				if (setSelectedDashboard && updatedDashboard.payload) {
 					setSelectedDashboard(updatedDashboard.payload);
 				}
+				setDeleteModal(false);
 				featureResponse.refetch();
 			},
 			onError: () => {
@@ -255,6 +256,7 @@ function WidgetGraphComponent({
 				destroyOnClose
 				onCancel={onDeleteModelHandler}
 				open={deleteModal}
+				confirmLoading={updateDashboardMutation.isLoading}
 				title="Delete"
 				height="10vh"
 				onOk={onDeleteHandler}

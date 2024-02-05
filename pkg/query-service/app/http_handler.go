@@ -3237,7 +3237,13 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		result = postProcessResult(result, queryRangeParams)
+		result, err = postProcessResult(result, queryRangeParams)
+	}
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
 	}
 
 	resp := v3.QueryRangeResponse{
@@ -3273,7 +3279,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 // Much of this work can be done in the ClickHouse query, but we decided to do it here because:
 // 1. Effective use of caching
 // 2. Easier to add new functions
-func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) []*v3.Result {
+func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) ([]*v3.Result, error) {
 	// Having clause is not part of the clickhouse query, so we need to apply it here
 	// It's not included in the query because it doesn't work nicely with caching
 	// With this change, if you have a query with a having clause, and then you change the having clause
@@ -3296,21 +3302,25 @@ func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	applyFunctions(result, queryRangeParams)
 
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+		// The way we distinguish between a formula and a query is by checking if the expression
+		// is the same as the query name
+		// TODO(srikanthccv): Update the UI to send a flag to distinguish between a formula and a query
 		if query.Expression != query.QueryName {
 			expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
+			// This shouldn't happen here, because it should have been caught earlier in validation
 			if err != nil {
 				zap.S().Errorf("error in expression: %s", err.Error())
-				continue
+				return nil, err
 			}
 			formulaResult, err := processResults(result, expression)
 			if err != nil {
 				zap.S().Errorf("error in expression: %s", err.Error())
-				continue
+				return nil, err
 			}
 			result = append(result, formulaResult)
 		}
 	}
-	return result
+	return result, nil
 }
 
 // applyFunctions applies functions for each query in the composite query

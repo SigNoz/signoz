@@ -356,3 +356,36 @@ const TIMESTAMP = "timestamp"
 
 const FirstQueryGraphLimit = "first_query_graph_limit"
 const SecondQueryGraphLimit = "second_query_graph_limit"
+
+var TracesListViewDefaultSelectedColumns = []v3.AttributeKey{
+	{
+		Key:      "serviceName",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "name",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "durationNano",
+		DataType: v3.AttributeKeyDataTypeArrayFloat64,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "httpMethod",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "responseStatusCode",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+}
