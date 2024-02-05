@@ -1,4 +1,9 @@
-import { EditFilled, PlusOutlined, ShareAltOutlined } from '@ant-design/icons';
+import {
+	EditFilled,
+	ImportOutlined,
+	PlusOutlined,
+	ShareAltOutlined,
+} from '@ant-design/icons';
 import TextToolTip from 'components/TextToolTip';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useMemo, useState } from 'react';
@@ -53,6 +58,14 @@ function PipelinesActions({
 						icon={<ShareAltOutlined />}
 					>
 						{t('share')}
+					</CustomButton>
+				)}
+				{inEditMode && (
+					<CustomButton
+						onClick={(): void => setIsExportModalVisible(true)}
+						icon={<ImportOutlined />}
+					>
+						{t('import')}
 					</CustomButton>
 				)}
 				{pipelinesExist && (
