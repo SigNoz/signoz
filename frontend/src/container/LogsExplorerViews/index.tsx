@@ -507,12 +507,7 @@ function LogsExplorerViews({
 			{showHistogram && (
 				<LogsExplorerChart
 					className="logs-histogram"
-					isLoading={
-						isFetchingListChartData ||
-						isLoadingListChartData ||
-						isLoading ||
-						isFetching
-					}
+					isLoading={isFetchingListChartData || isLoadingListChartData}
 					data={chartData}
 				/>
 			)}

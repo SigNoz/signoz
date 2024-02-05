@@ -16,7 +16,7 @@ import { WrapperStyled } from './styles';
 
 function LogsExplorer(): JSX.Element {
 	const [showHistogram, setShowHistogram] = useState(true);
-	const [selectedView, setSelectedView] = useState('query-builder');
+	const [selectedView, setSelectedView] = useState('search');
 
 	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
