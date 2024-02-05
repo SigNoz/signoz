@@ -1,4 +1,4 @@
-import { noop } from 'lodash-es';
+import { noop, unset } from 'lodash-es';
 import {
 	createContext,
 	useCallback,
@@ -67,6 +67,8 @@ function KeyboardHotkeysProvider({
 		(keyCombination: string, callback: () => void): void => {
 			if (!shortcuts.current[keyCombination]) {
 				shortcuts.current[keyCombination] = callback;
+			} else {
+				throw new Error('This shortcut is already present in current scope');
 			}
 		},
 		[shortcuts],
@@ -75,7 +77,7 @@ function KeyboardHotkeysProvider({
 	const deregisterShortcut = useCallback(
 		(keyCombination: string): void => {
 			if (shortcuts.current[keyCombination]) {
-				delete shortcuts.current[keyCombination];
+				unset(shortcuts.current, keyCombination);
 			}
 		},
 		[shortcuts],
