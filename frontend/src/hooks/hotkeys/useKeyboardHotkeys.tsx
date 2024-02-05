@@ -9,6 +9,11 @@ import {
 } from 'react';
 
 interface KeyboardHotkeysContextReturnValue {
+	/**
+	 *
+	 * @param keyCombination provide the string for which the subsequent callback should be triggered. Example 'ctrl+a'
+	 * @param callback the callback that should be triggered when the above key combination is being pressed
+	 */
 	registerShortcut: (keyCombination: string, callback: () => void) => void;
 	deregisterShortcut: (keyCombination: string) => void;
 }
@@ -47,7 +52,7 @@ function KeyboardHotkeysProvider({
 			return;
 		}
 		const modifiers = { ctrlKey, altKey, shiftKey, metaKey };
-		const shortcutKey = `${key}${modifiers.ctrlKey ? '+ctrl' : ''}${
+		const shortcutKey = `${key.toLowerCase()}${modifiers.ctrlKey ? '+ctrl' : ''}${
 			modifiers.altKey ? '+alt' : ''
 		}${modifiers.shiftKey ? '+shift' : ''}${modifiers.metaKey ? '+meta' : ''}`;
 
