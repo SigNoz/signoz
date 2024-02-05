@@ -1,3 +1,3 @@
 export const GlobalShortcuts = {
-	SidebarCollapse: 'b+meta',
+	SidebarCollapse: '\\+meta',
 };
