@@ -9,6 +9,8 @@ function Editor({
 	readOnly,
 	height,
 	options,
+	beforeMount,
+	onValidate,
 }: MEditorProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
@@ -31,6 +33,8 @@ function Editor({
 			options={editorOptions}
 			height={height}
 			onChange={onChangeHandler}
+			beforeMount={beforeMount}
+			onValidate={onValidate}
 			data-testid="monaco-editor"
 		/>
 	);
@@ -43,6 +47,8 @@ interface MEditorProps {
 	readOnly?: boolean;
 	height?: string;
 	options?: EditorProps['options'];
+	beforeMount?: EditorProps['beforeMount'];
+	onValidate?: EditorProps['onValidate'];
 }
 
 Editor.defaultProps = {
@@ -51,6 +57,8 @@ Editor.defaultProps = {
 	height: '40vh',
 	options: {},
 	onChange: (): void => {},
+	beforeMount: (): void => {},
+	onValidate: (): void => {},
 };
 
 export default Editor;
