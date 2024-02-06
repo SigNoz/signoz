@@ -10,7 +10,7 @@
 		margin-bottom: 0px;
 
 		&::before {
-			border-bottom: none !important;
+			border-bottom: 1px solid var(--bg-slate-400) !important;
 		}
 	}
 
