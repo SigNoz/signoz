@@ -1,4 +1,5 @@
 import ROUTES from 'constants/routes';
+import Shortcuts from 'pages/Shortcuts/Shortcuts';
 import WorkspaceBlocked from 'pages/WorkspaceLocked';
 import { RouteProps } from 'react-router-dom';
 
@@ -318,6 +319,13 @@ const routes: AppRoutes[] = [
 		component: WorkspaceBlocked,
 		isPrivate: true,
 		key: 'WORKSPACE_LOCKED',
+	},
+	{
+		path: ROUTES.SHORTCUTS,
+		exact: true,
+		component: Shortcuts,
+		isPrivate: true,
+		key: 'SHORTCUTS',
 	},
 ];
 
