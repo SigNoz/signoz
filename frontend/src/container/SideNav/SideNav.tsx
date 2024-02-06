@@ -8,7 +8,9 @@ import cx from 'classnames';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { ToggleButton } from 'container/Header/styles';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
@@ -98,6 +100,8 @@ function SideNav({
 
 	const [inviteMembers] = useComponentPermission(['invite_members'], role);
 
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+
 	useEffect(() => {
 		if (inviteMembers) {
 			const updatedUserManagementMenuItems = [
@@ -155,6 +159,15 @@ function SideNav({
 	useLayoutEffect(() => {
 		dispatch(sideBarCollapse(collapsed));
 	}, [collapsed, dispatch]);
+
+	useEffect(() => {
+		registerShortcut(GlobalShortcuts.SidebarCollapse, onCollapse);
+
+		return (): void => {
+			deregisterShortcut(GlobalShortcuts.SidebarCollapse);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const isLicenseActive =
 		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ===
