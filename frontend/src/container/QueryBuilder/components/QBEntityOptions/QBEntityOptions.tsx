@@ -2,6 +2,7 @@ import './QBEntityOptions.styles.scss';
 
 import { Button, Col } from 'antd';
 import cx from 'classnames';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ChevronDown, ChevronRight, Eye, EyeOff, Trash2 } from 'lucide-react';
 
 interface QBEntityOptionsProps {
@@ -21,6 +22,10 @@ export default function QBEntityOptions({
 	onToggleVisibility,
 	onCollapseEntity,
 }: QBEntityOptionsProps): JSX.Element {
+	const { currentQuery } = useQueryBuilder();
+
+	const showDeleteButton = currentQuery.builder.queryData.length > 1;
+
 	return (
 		<Col span={24}>
 			<div className="qb-entity-options">
@@ -61,9 +66,11 @@ export default function QBEntityOptions({
 					)}
 				</div>
 
-				<Button className="periscope-btn ghost" onClick={onDelete}>
-					<Trash2 size={14} />
-				</Button>
+				{showDeleteButton && (
+					<Button className="periscope-btn ghost" onClick={onDelete}>
+						<Trash2 size={14} />
+					</Button>
+				)}
 			</div>
 		</Col>
 	);
