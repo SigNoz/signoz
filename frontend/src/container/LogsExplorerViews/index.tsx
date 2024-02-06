@@ -1,8 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './LogsExplorerViews.styles.scss';
 
-import { Button, Radio } from 'antd';
-import { RadioChangeEvent } from 'antd/lib';
+import { Button } from 'antd';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
@@ -177,9 +176,7 @@ function LogsExplorerViews({
 		[currentQuery, updateAllQueriesOperators],
 	);
 
-	const handleModeChange = (e: RadioChangeEvent): void => {
-		const panelType = e.target.value;
-
+	const handleModeChange = (panelType: PANEL_TYPES): void => {
 		if (selectedView === SELECTED_VIEWS.SEARCH) {
 			handleSetConfig(panelType, DataSource.LOGS);
 		}
@@ -531,25 +528,21 @@ function LogsExplorerViews({
 
 			<div className="logs-explorer-views-types">
 				<div className="views-tabs-container">
-					<Radio.Group
-						className="views-tabs"
-						onChange={handleModeChange}
-						value={selectedPanelType}
-					>
-						<Radio.Button
+					<Button.Group className="views-tabs">
+						<Button
 							value={PANEL_TYPES.LIST}
 							className={
 								// eslint-disable-next-line sonarjs/no-duplicate-string
 								selectedPanelType === PANEL_TYPES.LIST ? 'selected_view tab' : 'tab'
 							}
 							disabled={
-								(isMultipleQueries || isGroupByExist) &&
-								selectedView !== SELECTED_VIEWS.SEARCH
+								(isMultipleQueries || isGroupByExist) && selectedView !== 'search'
 							}
+							onClick={(): void => handleModeChange(PANEL_TYPES.LIST)}
 						>
 							List view
-						</Radio.Button>
-						<Radio.Button
+						</Button>
+						<Button
 							value={PANEL_TYPES.TIME_SERIES}
 							className={
 								// eslint-disable-next-line sonarjs/no-duplicate-string
@@ -557,20 +550,21 @@ function LogsExplorerViews({
 									? 'selected_view tab'
 									: 'tab'
 							}
+							onClick={(): void => handleModeChange(PANEL_TYPES.TIME_SERIES)}
 						>
 							Time series
-						</Radio.Button>
-						<Radio.Button
+						</Button>
+						<Button
 							value={PANEL_TYPES.TABLE}
 							className={
 								// eslint-disable-next-line sonarjs/no-duplicate-string
 								selectedPanelType === PANEL_TYPES.TABLE ? 'selected_view tab' : 'tab'
 							}
+							onClick={(): void => handleModeChange(PANEL_TYPES.TABLE)}
 						>
 							Table
-						</Radio.Button>
-					</Radio.Group>
-
+						</Button>
+					</Button.Group>
 					<div className="logs-actions-container">
 						{selectedPanelType === PANEL_TYPES.LIST && (
 							<div className="tab-options">
