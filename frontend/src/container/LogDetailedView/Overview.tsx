@@ -13,8 +13,8 @@ import {
 } from 'antd';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Search } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronDown, ChevronRight, Search } from 'lucide-react';
+import { ReactNode, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 
 import { ActionItemProps } from './ActionItem';
@@ -99,6 +99,10 @@ function Overview({
 		<div className="overview-container">
 			<Collapse
 				defaultActiveKey={['1']}
+				// eslint-disable-next-line react/no-unstable-nested-components
+				expandIcon={(props): ReactNode =>
+					props.isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+				}
 				items={[
 					{
 						key: '1',
@@ -147,6 +151,10 @@ function Overview({
 				className="attribute-table"
 				defaultActiveKey={['1']}
 				bordered={false}
+				// eslint-disable-next-line react/no-unstable-nested-components
+				expandIcon={(props): ReactNode =>
+					props.isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+				}
 				items={[
 					{
 						key: '1',

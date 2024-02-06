@@ -92,17 +92,19 @@ export const QueryBuilder = memo(function QueryBuilder({
 			className="query-builder-container"
 		>
 			<div className="new-query-formula-buttons-container">
-				<Tooltip title="Add Query">
-					<Button disabled={isDisabledQueryButton} onClick={addNewBuilderQuery}>
-						<DatabaseZap size={12} />
-					</Button>
-				</Tooltip>
+				<Button.Group>
+					<Tooltip title="Add Query">
+						<Button disabled={isDisabledQueryButton} onClick={addNewBuilderQuery}>
+							<DatabaseZap size={12} />
+						</Button>
+					</Tooltip>
 
-				<Tooltip title="Add Formula">
-					<Button disabled={isDisabledFormulaButton} onClick={addNewFormula}>
-						<Sigma size={12} />
-					</Button>
-				</Tooltip>
+					<Tooltip title="Add Formula">
+						<Button disabled={isDisabledFormulaButton} onClick={addNewFormula}>
+							<Sigma size={12} />
+						</Button>
+					</Tooltip>
+				</Button.Group>
 			</div>
 
 			<Col span={23} className="qb-entities-list">

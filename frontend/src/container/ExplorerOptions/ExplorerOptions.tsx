@@ -29,7 +29,7 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { Check, ConciergeBell, Disc3, Plus, X } from 'lucide-react';
+import { Check, ConciergeBell, Disc3, Plus, X, XCircle } from 'lucide-react';
 import { CSSProperties, useCallback, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
@@ -290,7 +290,9 @@ function ExplorerOptions({
 						}}
 						dropdownStyle={dropdownStyle}
 						className="views-dropdown"
-						allowClear
+						allowClear={{
+							clearIcon: <XCircle size={16} style={{ marginTop: '-3px' }} />,
+						}}
 						onClear={handleClearSelect}
 						ref={ref}
 					>
@@ -330,13 +332,21 @@ function ExplorerOptions({
 				<hr />
 
 				<div className="actions">
-					<Button disabled={disabled} shape="circle" onClick={onCreateAlertsHandler}>
-						<ConciergeBell size={16} />
-					</Button>
+					<Tooltip title="Create Alerts">
+						<Button
+							disabled={disabled}
+							shape="circle"
+							onClick={onCreateAlertsHandler}
+						>
+							<ConciergeBell size={16} />
+						</Button>
+					</Tooltip>
 
-					<Button disabled={disabled} shape="circle" onClick={onAddToDashboard}>
-						<Plus size={16} />
-					</Button>
+					<Tooltip title="Add to Dashboard">
+						<Button disabled={disabled} shape="circle" onClick={onAddToDashboard}>
+							<Plus size={16} />
+						</Button>
+					</Tooltip>
 				</div>
 			</div>
 
