@@ -43,6 +43,6 @@
 	"processor_trace_flags_placeholder": "Parse Trace flags from",
 	"processor_from_placeholder": "From",
 	"processor_to_placeholder": "To",
-	"share": "Share",
-	"import": "Import"
+	"share_pipelines": "Share Pipelines",
+	"import_pipelines": "Import Pipelines"
 }

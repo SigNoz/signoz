@@ -65,7 +65,7 @@ function PipelinesActions({
 						onClick={(): void => setIsExportModalVisible(true)}
 						icon={<ShareAltOutlined />}
 					>
-						{t('share')}
+						{t('share_pipelines')}
 					</CustomButton>
 				)}
 				{(inEditMode || !pipelinesExist) && (
@@ -76,7 +76,7 @@ function PipelinesActions({
 						}}
 						icon={<ImportOutlined />}
 					>
-						{t('import')}
+						{t('import_pipelines')}
 					</CustomButton>
 				)}
 				{pipelinesExist && (
