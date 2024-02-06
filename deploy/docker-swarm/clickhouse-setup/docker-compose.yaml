@@ -1,7 +1,7 @@
 version: "3.9"
 
 x-clickhouse-defaults: &clickhouse-defaults
-  image: clickhouse/clickhouse-server:23.11.1-alpine
+  image: clickhouse/clickhouse-server:24.1.2-alpine
   tty: true
   deploy:
     restart_policy:
