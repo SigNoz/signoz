@@ -935,11 +935,10 @@ func validateExpressions(expressions []string, funcs map[string]govaluate.Expres
 	for _, exp := range expressions {
 		evalExp, err := govaluate.NewEvaluableExpressionWithFunctions(exp, funcs)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, fmt.Errorf("invalid expression %s: %v", exp, err))
 			continue
 		}
-		variables := evalExp.Vars()
-		for _, v := range variables {
+		for _, v := range evalExp.Vars() {
 			var hasVariable bool
 			for _, q := range cq.BuilderQueries {
 				if q.Expression == v {
@@ -961,7 +960,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 
 	// parse the request body
 	if err := json.NewDecoder(r.Body).Decode(&queryRangeParams); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 
 	// validate the request body
@@ -1053,6 +1052,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 					function := &query.Functions[idx]
 					if function.Name == v3.FunctionNameTimeShift {
 						// move the function to the beginning of the list
+						// so any other function can use the shifted time
 						var fns []v3.Function
 						fns = append(fns, *function)
 						fns = append(fns, query.Functions[:idx]...)

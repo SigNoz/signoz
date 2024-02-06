@@ -642,8 +642,8 @@ func (b *BuilderQuery) Validate() error {
 			return fmt.Errorf("data source is invalid: %w", err)
 		}
 		if b.DataSource == DataSourceMetrics {
-			// if no time aggregation is specified, then the request is using v3 payload
-			if b.TimeAggregation == TimeAggregationUnspecified {
+			// if AggregateOperator is specified, then the request is using v3 payload
+			if b.AggregateOperator != "" {
 				if err := b.AggregateOperator.Validate(); err != nil {
 					return fmt.Errorf("aggregate operator is invalid: %w", err)
 				}

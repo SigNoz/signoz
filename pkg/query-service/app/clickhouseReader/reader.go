@@ -3288,7 +3288,7 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []s
 
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 
-	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, signozMetricDBName, signozTSTableName)
+	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, signozMetricDBName, signozTSTableNameV41Day)
 
 	rows, err := r.db.Query(ctx, query, metricNames)
 	if err != nil {
@@ -3952,7 +3952,7 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 	var rows driver.Rows
 	var response v3.AggregateAttributeResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT(metric_name) from %s.%s WHERE metric_name ILIKE $1", signozMetricDBName, signozTSTableName)
+	query = fmt.Sprintf("SELECT DISTINCT metric_name, type from %s.%s WHERE metric_name ILIKE $1", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
@@ -3964,15 +3964,16 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 	}
 	defer rows.Close()
 
-	var metricName string
+	var metricName, typ string
 	for rows.Next() {
-		if err := rows.Scan(&metricName); err != nil {
+		if err := rows.Scan(&metricName, &typ); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+		// unlike traces/logs `tag`/`resource` type, the `Type` will be metric type
 		key := v3.AttributeKey{
 			Key:      metricName,
 			DataType: v3.AttributeKeyDataTypeFloat64,
-			Type:     v3.AttributeKeyTypeUnspecified,
+			Type:     v3.AttributeKeyType(typ),
 			IsColumn: true,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
@@ -4104,11 +4105,14 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 }
 
 func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, serviceName string) (*v3.MetricMetadataResponse, error) {
+	// Note: metric metadata should be accessible regardless of the time range selection
+	// our standard retention period is 30 days, so we are querying the table v4_1_day to reduce the
+	// amount of data scanned
 	query := fmt.Sprintf("SELECT DISTINCT temporality, description, type, unit, is_monotonic from %s.%s WHERE metric_name=$1", signozMetricDBName, signozTSTableNameV41Day)
 	rows, err := r.db.Query(ctx, query, metricName)
 	if err != nil {
 		zap.S().Error(err)
-		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+		return nil, fmt.Errorf("error while fetching metric metadata: %s", err.Error())
 	}
 	defer rows.Close()
 

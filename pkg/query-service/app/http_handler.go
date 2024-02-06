@@ -84,6 +84,12 @@ type APIHandler struct {
 	preferDelta       bool
 	preferSpanMetrics bool
 
+	// temporalityMap is a map of metric name to temporality
+	// to avoid fetching temporality for the same metric multiple times
+	// querying the v4 table on low cardinal temporality column
+	// should be fast but we can still avoid the query if we have the data in memory
+	temporalityMap map[string]map[v3.Temporality]bool
+
 	maxIdleConns int
 	maxOpenConns int
 	dialTimeout  time.Duration
@@ -161,6 +167,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		skipConfig:                    opts.SkipConfig,
 		preferDelta:                   opts.PerferDelta,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
+		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		maxIdleConns:                  opts.MaxIdleConns,
 		maxOpenConns:                  opts.MaxOpenConns,
 		dialTimeout:                   opts.DialTimeout,
@@ -781,6 +788,58 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 	resp := ResponseFormat{ResultType: "matrix", Result: seriesList}
 	aH.Respond(w, resp)
+}
+
+// populateTemporality same as addTemporality but for v4 and better
+func (aH *APIHandler) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+
+	missingTemporality := make([]string, 0)
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for _, query := range qp.CompositeQuery.BuilderQueries {
+			// if there is no temporality specified in the query but we have it in the map
+			// then use the value from the map
+			if query.Temporality == "" && aH.temporalityMap[query.AggregateAttribute.Key] != nil {
+				// We prefer delta if it is available
+				if aH.temporalityMap[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if aH.temporalityMap[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+			}
+			// we don't have temporality for this metric
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				missingTemporality = append(missingTemporality, query.AggregateAttribute.Key)
+			}
+			if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
+				metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
+			}
+		}
+	}
+
+	nameToTemporality, err := aH.reader.FetchTemporality(ctx, missingTemporality)
+	if err != nil {
+		return err
+	}
+
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for name := range qp.CompositeQuery.BuilderQueries {
+			query := qp.CompositeQuery.BuilderQueries[name]
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				if nameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if nameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+				aH.temporalityMap[query.AggregateAttribute.Key] = nameToTemporality[query.AggregateAttribute.Key]
+			}
+		}
+	}
+	return nil
 }
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
@@ -3263,7 +3322,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add temporality for each metric
-	temporalityErr := aH.addTemporality(r.Context(), queryRangeParams)
+	temporalityErr := aH.populateTemporality(r.Context(), queryRangeParams)
 	if temporalityErr != nil {
 		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
@@ -3317,8 +3376,23 @@ func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 				zap.S().Errorf("error in expression: %s", err.Error())
 				return nil, err
 			}
+			formulaResult.QueryName = query.QueryName
 			result = append(result, formulaResult)
 		}
+	}
+	// we are done with the formula calculations, only send the results for enabled queries
+	removeDisabledQueries := func(result []*v3.Result) []*v3.Result {
+		var newResult []*v3.Result
+		for _, res := range result {
+			if queryRangeParams.CompositeQuery.BuilderQueries[res.QueryName].Disabled {
+				continue
+			}
+			newResult = append(newResult, res)
+		}
+		return newResult
+	}
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		result = removeDisabledQueries(result)
 	}
 	return result, nil
 }

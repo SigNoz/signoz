@@ -10,17 +10,22 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
+var (
+	sixHoursInMilliseconds = time.Hour.Milliseconds() * 6
+	oneDayInMilliseconds   = time.Hour.Milliseconds() * 24
+)
+
 // start and end are in milliseconds
 func which(start, end int64) (int64, int64, string) {
 	// If time range is less than 6 hours, we need to use the `time_series_v4` table
 	// else if time range is less than 1 day and greater than 6 hours, we need to use the `time_series_v4_6hrs` table
 	// else we need to use the `time_series_v4_1day` table
 	var tableName string
-	if end-start <= time.Hour.Milliseconds()*6 {
+	if end-start <= sixHoursInMilliseconds {
 		// adjust the start time to nearest 1 hour
 		start = start - (start % (time.Hour.Milliseconds() * 1))
 		tableName = constants.SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME
-	} else if end-start <= time.Hour.Milliseconds()*24 {
+	} else if end-start <= oneDayInMilliseconds {
 		// adjust the start time to nearest 6 hours
 		start = start - (start % (time.Hour.Milliseconds() * 6))
 		tableName = constants.SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME
