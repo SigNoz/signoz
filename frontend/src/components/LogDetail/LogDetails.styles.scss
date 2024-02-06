@@ -151,6 +151,12 @@
 		border: 1px solid var(--bg-slate-400);
 		height: 46px;
 		padding: var(--padding-1) var(--padding-2);
+		box-shadow: none;
+		border-radius: 0;
+	}
+
+	.ant-drawer-close {
+		padding: 0px;
 	}
 }
 
