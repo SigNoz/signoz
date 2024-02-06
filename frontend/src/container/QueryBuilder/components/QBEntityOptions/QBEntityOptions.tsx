@@ -2,6 +2,7 @@ import './QBEntityOptions.styles.scss';
 
 import { Button, Col } from 'antd';
 import cx from 'classnames';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ChevronDown, ChevronRight, Eye, EyeOff, Trash2 } from 'lucide-react';
 
 interface QBEntityOptionsProps {
@@ -21,34 +22,40 @@ export default function QBEntityOptions({
 	onToggleVisibility,
 	onCollapseEntity,
 }: QBEntityOptionsProps): JSX.Element {
+	const { currentQuery } = useQueryBuilder();
+
+	const showDeleteButton = currentQuery.builder.queryData.length > 1;
+
 	return (
 		<Col span={24}>
 			<div className="qb-entity-options">
 				<div className="left-col-items">
 					<div className="options periscope-btn-group">
-						<Button
-							value="search"
-							className="periscope-btn collapse"
-							onClick={onCollapseEntity}
-						>
-							{isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-						</Button>
-						<Button
-							value="query-builder"
-							className="periscope-btn visibility-toggle"
-							onClick={onToggleVisibility}
-						>
-							{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
-						</Button>
+						<Button.Group>
+							<Button
+								value="search"
+								className="periscope-btn collapse"
+								onClick={onCollapseEntity}
+							>
+								{isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+							</Button>
+							<Button
+								value="query-builder"
+								className="periscope-btn visibility-toggle"
+								onClick={onToggleVisibility}
+							>
+								{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
+							</Button>
 
-						<Button
-							className={cx(
-								'periscope-btn',
-								entityType === 'query' ? 'query-name' : 'formula-name',
-							)}
-						>
-							{entityData.queryName}
-						</Button>
+							<Button
+								className={cx(
+									'periscope-btn',
+									entityType === 'query' ? 'query-name' : 'formula-name',
+								)}
+							>
+								{entityData.queryName}
+							</Button>
+						</Button.Group>
 					</div>
 
 					{isCollapsed && (
@@ -59,9 +66,11 @@ export default function QBEntityOptions({
 					)}
 				</div>
 
-				<Button className="periscope-btn ghost" onClick={onDelete}>
-					<Trash2 size={14} />
-				</Button>
+				{showDeleteButton && (
+					<Button className="periscope-btn ghost" onClick={onDelete}>
+						<Trash2 size={14} />
+					</Button>
+				)}
 			</div>
 		</Col>
 	);

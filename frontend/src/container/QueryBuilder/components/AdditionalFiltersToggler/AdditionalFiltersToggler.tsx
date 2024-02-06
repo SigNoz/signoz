@@ -1,5 +1,8 @@
+import './AdditionalFiltersToggler.styles.scss';
+
+import { Color } from '@signozhq/design-tokens';
 import { Col, Row, Typography } from 'antd';
-import { MinusSquare, PlusSquare } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 import { Fragment, memo, ReactNode, useState } from 'react';
 
 // ** Types
@@ -38,13 +41,17 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	});
 
 	return (
-		<Row>
+		<Row className="additinal-filters-container">
 			<Col span={24}>
 				<StyledInner onClick={handleToggleOpenFilters} style={{ marginBottom: 0 }}>
 					{isOpenedFilters ? (
-						<MinusSquare size={14} fill="#4E74F8" />
+						<span className="action-btn">
+							<Minus size={14} color={Color.BG_INK_500} />
+						</span>
 					) : (
-						<PlusSquare size={14} fill="#4E74F8" />
+						<span className="action-btn">
+							<Plus size={14} color={Color.BG_INK_500} />
+						</span>
 					)}
 
 					{!isOpenedFilters && (
