@@ -1,6 +1,6 @@
 import './ToolbarActions.styles.scss';
 
-import { Button, Switch, Typography } from 'antd';
+import { Button, Switch, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { Atom, MousePointerSquare, Terminal } from 'lucide-react';
 
@@ -14,7 +14,7 @@ interface LeftToolbarActionsProps {
 
 const activeTab = 'active-tab';
 const actionBtn = 'action-btn';
-const queryBuilder = 'query-builder';
+export const queryBuilder = 'query-builder';
 
 export default function LeftToolbarActions({
 	items,
@@ -28,28 +28,32 @@ export default function LeftToolbarActions({
 	return (
 		<div className="left-toolbar">
 			<div className="left-toolbar-query-actions">
-				<Button
-					disabled={search.disabled}
-					className={cx(
-						'search',
-						actionBtn,
-						selectedView === 'search' ? activeTab : '',
-					)}
-					onClick={(): void => onChangeSelectedView('search')}
-				>
-					<MousePointerSquare size={14} />
-				</Button>
-				<Button
-					disabled={QB.disabled}
-					className={cx(
-						queryBuilder,
-						actionBtn,
-						selectedView === queryBuilder ? activeTab : '',
-					)}
-					onClick={(): void => onChangeSelectedView(queryBuilder)}
-				>
-					<Atom size={14} />
-				</Button>
+				<Tooltip title="Search">
+					<Button
+						disabled={search.disabled}
+						className={cx(
+							'search',
+							actionBtn,
+							selectedView === 'search' ? activeTab : '',
+						)}
+						onClick={(): void => onChangeSelectedView('search')}
+					>
+						<MousePointerSquare size={14} />
+					</Button>
+				</Tooltip>
+				<Tooltip title="Query Builder">
+					<Button
+						disabled={QB.disabled}
+						className={cx(
+							queryBuilder,
+							actionBtn,
+							selectedView === queryBuilder ? activeTab : '',
+						)}
+						onClick={(): void => onChangeSelectedView(queryBuilder)}
+					>
+						<Atom size={14} />
+					</Button>
+				</Tooltip>
 
 				{clickhouse?.show && (
 					<Button
