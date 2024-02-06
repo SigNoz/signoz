@@ -26,6 +26,8 @@ export type GridPanelSwitchProps = {
 	query: Query;
 	thresholds?: Widgets['thresholds'];
 	logs?: ILog[];
+	selectedLogFields?: Widgets['selectedLogFields'];
+	isTableHeaderDraggable?: InfinityTableProps['isTableHeaderDraggable'];
 };
 
 export type PropsTypePropsMap = {

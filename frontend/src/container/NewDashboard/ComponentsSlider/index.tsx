@@ -67,6 +67,18 @@ function DashboardGraphSlider(): JSX.Element {
 							timePreferance: 'GLOBAL_TIME',
 							softMax: null,
 							softMin: null,
+							selectedLogFields: [
+								{
+									dataType: 'string',
+									type: '',
+									name: 'body',
+								},
+								{
+									dataType: 'string',
+									type: '',
+									name: 'timestamp',
+								},
+							],
 						},
 					],
 				},

@@ -5,6 +5,7 @@ import { Button } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import {
 	timeItems,
@@ -199,13 +200,21 @@ function FullView({
 
 			<div
 				className={
-					isDashboardLocked ? 'graph-container disabled' : 'graph-container'
+					isDashboardLocked
+						? `graph-container disabled ${
+								widget.panelTypes === PANEL_TYPES.LIST && 'list-graph-container'
+						  }`
+						: `graph-container ${
+								widget.panelTypes === PANEL_TYPES.LIST && 'list-graph-container'
+						  }`
 				}
 				ref={fullViewRef}
 			>
-				{chartOptions && (
+				{chartOptions !== undefined && (
 					<GraphContainer
-						style={{ height: '90%' }}
+						style={{
+							height: widget.panelTypes === PANEL_TYPES.LIST ? '100%' : '90%',
+						}}
 						isGraphLegendToggleAvailable={canModifyChart}
 					>
 						<GridPanelSwitch
@@ -221,6 +230,8 @@ function FullView({
 							ref={fullViewChartRef}
 							thresholds={widget.thresholds}
 							logs={logs}
+							selectedLogFields={widget.selectedLogFields}
+							isTableHeaderDraggable={false}
 						/>
 					</GraphContainer>
 				)}

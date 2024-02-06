@@ -15,6 +15,7 @@ export const getDraggedColumns = <T>(
 	currentColumns: ColumnsType<T>,
 	draggedColumns: ColumnsType<T>,
 ): ColumnsType<T> => {
+	console.log({ draggedColumns, currentColumns });
 	if (draggedColumns.length) {
 		const actualDruggedColumns = filterColumns<T>(draggedColumns, currentColumns);
 		const newColumns = filterColumns<T>(

@@ -13,7 +13,12 @@ import { useMemo } from 'react';
 import LogStateIndicator, {
 	LogType,
 } from '../LogStateIndicator/LogStateIndicator';
-import { defaultTableStyle, getDefaultCellStyle } from './config';
+import { ExpandIconWrapper } from '../RawLogView/styles';
+import {
+	defaultIsDashboardPanelStyle,
+	defaultTableStyle,
+	getDefaultCellStyle,
+} from './config';
 import { TableBodyContent } from './styles';
 import {
 	ColumnTypeRender,
@@ -31,6 +36,9 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		appendTo = 'center',
 		activeContextLog,
 		activeLog,
+		onOpenLogsContext,
+		onClickExpand,
+		isDashboardPanel,
 	} = props;
 
 	const isDarkMode = useIsDarkMode();
@@ -57,6 +65,32 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					),
 				}),
 			}));
+
+		if (isDashboardPanel) {
+			return [
+				{
+					title: '',
+					dataIndex: 'id',
+					key: 'expand',
+					// https://github.com/ant-design/ant-design/discussions/36886
+					render: (_, item, index): ColumnTypeRender<Record<string, unknown>> => ({
+						props: {
+							style: getDefaultCellStyle(isDarkMode),
+						},
+						children: (
+							<ExpandIconWrapper
+								onClick={(): void => {
+									handleClickExpand(index);
+								}}
+							>
+								<ExpandAltOutlined />
+							</ExpandIconWrapper>
+						),
+					}),
+				},
+				...fieldColumns,
+			];
+		}
 
 		return [
 			{
@@ -110,6 +144,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		];
 	}, [
 		fields,
+		isDashboardPanel,
 		appendTo,
 		isDarkMode,
 		linesPerRow,

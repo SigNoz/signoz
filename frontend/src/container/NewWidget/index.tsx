@@ -24,6 +24,7 @@ import { useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
@@ -110,6 +111,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			: selectedWidget?.softMin || 0,
 	);
 
+	const [selectedLogFields, setSelectedLogFields] = useState<IField[] | null>(
+		selectedWidget?.selectedLogFields || null,
+	);
+
 	const [softMax, setSoftMax] = useState<number | null>(
 		selectedWidget?.softMax === null || selectedWidget?.softMax === undefined
 			? null
@@ -194,6 +199,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						softMin,
 						softMax,
 						fillSpans: isFillSpans,
+						selectedLogFields,
 					},
 					...afterWidgets,
 				],
@@ -232,6 +238,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		softMin,
 		softMax,
 		isFillSpans,
+		selectedLogFields,
 		afterWidgets,
 		updateDashboardMutation,
 		setSelectedDashboard,
@@ -338,6 +345,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						fillSpans={isFillSpans}
 						softMax={softMax}
 						softMin={softMin}
+						selectedLogFields={selectedLogFields}
+						setSelectedLogFields={setSelectedLogFields}
 					/>
 				</LeftContainerWrapper>
 

@@ -11,7 +11,18 @@ const GridPanelSwitch = forwardRef<
 	GridPanelSwitchProps
 >(
 	(
-		{ panelType, data, yAxisUnit, panelData, query, options, thresholds, logs },
+		{
+			panelType,
+			data,
+			yAxisUnit,
+			panelData,
+			query,
+			options,
+			thresholds,
+			logs,
+			selectedLogFields,
+			isTableHeaderDraggable,
+		},
 		ref,
 	): JSX.Element | null => {
 		const currentProps: PropsTypePropsMap = useMemo(() => {
@@ -35,17 +46,30 @@ const GridPanelSwitch = forwardRef<
 				[PANEL_TYPES.LIST]: {
 					tableViewProps: {
 						logs: logs || [],
-						fields: [],
+						fields: selectedLogFields || [],
 						linesPerRow: 1,
 						appendTo: 'end',
 					},
+					isTableHeaderDraggable,
+					isDashboardPanel: true,
 				},
 				[PANEL_TYPES.TRACE]: null,
 				[PANEL_TYPES.EMPTY_WIDGET]: null,
 			};
 
 			return result;
-		}, [data, options, ref, yAxisUnit, thresholds, panelData, query, logs]);
+		}, [
+			data,
+			options,
+			ref,
+			yAxisUnit,
+			thresholds,
+			panelData,
+			query,
+			logs,
+			selectedLogFields,
+			isTableHeaderDraggable,
+		]);
 
 		const Component = PANEL_TYPES_COMPONENT_MAP[panelType] as FC<
 			PropsTypePropsMap[typeof panelType]

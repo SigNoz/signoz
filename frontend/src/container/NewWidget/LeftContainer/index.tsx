@@ -1,6 +1,7 @@
 import { memo } from 'react';
 
 import { WidgetGraphProps } from '../types';
+import LogColumnsRenderer from './LogColumnsRenderer';
 import QuerySection from './QuerySection';
 import { QueryContainer } from './styles';
 import WidgetGraph from './WidgetGraph';
@@ -13,6 +14,8 @@ function LeftContainer({
 	fillSpans,
 	softMax,
 	softMin,
+	selectedLogFields,
+	setSelectedLogFields,
 }: WidgetGraphProps): JSX.Element {
 	return (
 		<>
@@ -24,9 +27,16 @@ function LeftContainer({
 				fillSpans={fillSpans}
 				softMax={softMax}
 				softMin={softMin}
+				selectedLogFields={selectedLogFields}
 			/>
 			<QueryContainer>
 				<QuerySection selectedTime={selectedTime} selectedGraph={selectedGraph} />
+				{selectedGraph === 'list' && (
+					<LogColumnsRenderer
+						selectedLogFields={selectedLogFields}
+						setSelectedLogFields={setSelectedLogFields}
+					/>
+				)}
 			</QueryContainer>
 		</>
 	);

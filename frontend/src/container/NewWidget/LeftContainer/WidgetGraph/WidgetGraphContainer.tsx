@@ -18,6 +18,7 @@ function WidgetGraphContainer({
 	fillSpans = false,
 	softMax,
 	softMin,
+	selectedLogFields,
 }: WidgetGraphProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 
@@ -85,6 +86,7 @@ function WidgetGraphContainer({
 			softMax={softMax}
 			softMin={softMin}
 			logs={logs}
+			selectedLogFields={selectedLogFields}
 		/>
 	);
 }

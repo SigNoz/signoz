@@ -22,6 +22,11 @@ export const defaultTableStyle: CSSProperties = {
 	maxWidth: '40rem',
 };
 
+export const defaultIsDashboardPanelStyle: CSSProperties = {
+	width: 'max-content',
+	maxWidth: '40rem',
+};
+
 export const tableScroll: TableProps<Record<string, unknown>>['scroll'] = {
 	x: true,
 };

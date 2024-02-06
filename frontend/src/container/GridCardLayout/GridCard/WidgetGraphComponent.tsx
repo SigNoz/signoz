@@ -321,6 +321,8 @@ function WidgetGraphComponent({
 						query={widget.query}
 						thresholds={widget.thresholds}
 						logs={logs}
+						selectedLogFields={widget.selectedLogFields}
+						isTableHeaderDraggable={false}
 					/>
 				</div>
 			)}
