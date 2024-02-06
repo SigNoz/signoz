@@ -257,22 +257,22 @@ function DateTimeSelection({
 		const monthsDiff = currentTime.diff(lastRefresh, 'months');
 
 		if (monthsDiff > 0) {
-			return `Refreshed -${monthsDiff} months ago`;
+			return `Refreshed ${monthsDiff} months ago`;
 		}
 
 		if (daysDiff > 0) {
-			return `Refreshed - ${daysDiff} days ago`;
+			return `Refreshed ${daysDiff} days ago`;
 		}
 
 		if (hoursDiff > 0) {
-			return `Refreshed - ${hoursDiff} hrs ago`;
+			return `Refreshed ${hoursDiff} hrs ago`;
 		}
 
 		if (minutedDiff > 0) {
-			return `Refreshed - ${minutedDiff} mins ago`;
+			return `Refreshed ${minutedDiff} mins ago`;
 		}
 
-		return `Refreshed - ${secondsDiff} sec ago`;
+		return `Refreshed ${secondsDiff} sec ago`;
 	}, [maxTime, minTime, selectedTime]);
 
 	const isLogsExplorerPage = useMemo(
