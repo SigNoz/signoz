@@ -330,13 +330,21 @@ function ExplorerOptions({
 				<hr />
 
 				<div className="actions">
-					<Button disabled={disabled} shape="circle" onClick={onCreateAlertsHandler}>
-						<ConciergeBell size={16} />
-					</Button>
+					<Tooltip title="Create Alerts">
+						<Button
+							disabled={disabled}
+							shape="circle"
+							onClick={onCreateAlertsHandler}
+						>
+							<ConciergeBell size={16} />
+						</Button>
+					</Tooltip>
 
-					<Button disabled={disabled} shape="circle" onClick={onAddToDashboard}>
-						<Plus size={16} />
-					</Button>
+					<Tooltip title="Add to Dashboard">
+						<Button disabled={disabled} shape="circle" onClick={onAddToDashboard}>
+							<Plus size={16} />
+						</Button>
+					</Tooltip>
 				</div>
 			</div>
 
