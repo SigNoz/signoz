@@ -177,7 +177,7 @@ function LogsExplorerViews({
 	);
 
 	const handleModeChange = (panelType: PANEL_TYPES): void => {
-		if (selectedView === 'search') {
+		if (selectedView === SELECTED_VIEWS.SEARCH) {
 			handleSetConfig(panelType, DataSource.LOGS);
 		}
 
