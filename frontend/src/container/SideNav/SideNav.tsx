@@ -35,6 +35,7 @@ import defaultMenuItems, {
 	helpSupportMenuItem,
 	inviteMemberMenuItem,
 	manageLicenseMenuItem,
+	shortcutMenuItem,
 	slackSupportMenuItem,
 	trySignozCloudMenuItem,
 } from './menuItems';
@@ -170,6 +171,10 @@ function SideNav({
 			'https://signoz.io/oss-to-cloud/?utm_source=product_navbar&utm_medium=frontend&utm_campaign=oss_users',
 			'_blank',
 		);
+	};
+
+	const onClickShortcuts = (): void => {
+		history.push(`/shortcuts`);
 	};
 
 	const onClickGetStarted = (): void => {
@@ -309,6 +314,14 @@ function SideNav({
 			</div>
 
 			<div className="secondary-nav-items">
+				<NavItem
+					isCollapsed={collapsed}
+					key="keyboardShortcuts"
+					item={shortcutMenuItem}
+					isActive={false}
+					onClick={onClickShortcuts}
+				/>
+
 				{licenseData && !isLicenseActive && (
 					<NavItem
 						isCollapsed={collapsed}

@@ -90,4 +90,5 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	TRACES_SAVE_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS_BASE: [],
 	OLD_LOGS_EXPLORER: [],
+	SHORTCUTS: ['ADMIN', 'EDITOR', 'VIEWER'],
 };
