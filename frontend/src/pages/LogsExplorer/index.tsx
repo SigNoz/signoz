@@ -13,10 +13,13 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { WrapperStyled } from './styles';
+import { SELECTED_VIEWS } from './utils';
 
 function LogsExplorer(): JSX.Element {
 	const [showHistogram, setShowHistogram] = useState(true);
-	const [selectedView, setSelectedView] = useState('search');
+	const [selectedView, setSelectedView] = useState<SELECTED_VIEWS>(
+		SELECTED_VIEWS.SEARCH,
+	);
 
 	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
@@ -24,7 +27,7 @@ function LogsExplorer(): JSX.Element {
 		setShowHistogram(!showHistogram);
 	};
 
-	const handleChangeSelectedView = (view: string): void => {
+	const handleChangeSelectedView = (view: SELECTED_VIEWS): void => {
 		setSelectedView(view);
 	};
 
