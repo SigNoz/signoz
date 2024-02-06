@@ -3,18 +3,18 @@ import './ToolbarActions.styles.scss';
 import { Button, Switch, Typography } from 'antd';
 import cx from 'classnames';
 import { Atom, MousePointerSquare, Terminal } from 'lucide-react';
+import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 
 interface LeftToolbarActionsProps {
 	items: any;
 	selectedView: string;
 	onToggleHistrogramVisibility: () => void;
-	onChangeSelectedView: (view: string) => void;
+	onChangeSelectedView: (view: SELECTED_VIEWS) => void;
 	showHistogram: boolean;
 }
 
 const activeTab = 'active-tab';
 const actionBtn = 'action-btn';
-const queryBuilder = 'query-builder';
 
 export default function LeftToolbarActions({
 	items,
@@ -31,22 +31,22 @@ export default function LeftToolbarActions({
 				<Button
 					disabled={search.disabled}
 					className={cx(
-						'search',
+						SELECTED_VIEWS.SEARCH,
 						actionBtn,
 						selectedView === 'search' ? activeTab : '',
 					)}
-					onClick={(): void => onChangeSelectedView('search')}
+					onClick={(): void => onChangeSelectedView(SELECTED_VIEWS.SEARCH)}
 				>
 					<MousePointerSquare size={14} />
 				</Button>
 				<Button
 					disabled={QB.disabled}
 					className={cx(
-						queryBuilder,
+						SELECTED_VIEWS.QUERY_BUILDER,
 						actionBtn,
-						selectedView === queryBuilder ? activeTab : '',
+						selectedView === SELECTED_VIEWS.QUERY_BUILDER ? activeTab : '',
 					)}
-					onClick={(): void => onChangeSelectedView(queryBuilder)}
+					onClick={(): void => onChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER)}
 				>
 					<Atom size={14} />
 				</Button>
@@ -55,11 +55,11 @@ export default function LeftToolbarActions({
 					<Button
 						disabled={clickhouse.disabled}
 						className={cx(
-							'clickhouse',
+							SELECTED_VIEWS.CLICKHOUSE,
 							actionBtn,
-							selectedView === 'clickhouse' ? activeTab : '',
+							selectedView === SELECTED_VIEWS.CLICKHOUSE ? activeTab : '',
 						)}
-						onClick={(): void => onChangeSelectedView('clickhouse')}
+						onClick={(): void => onChangeSelectedView(SELECTED_VIEWS.CLICKHOUSE)}
 					>
 						<Terminal size={14} />
 					</Button>

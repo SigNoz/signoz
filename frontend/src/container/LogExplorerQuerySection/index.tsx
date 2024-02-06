@@ -14,7 +14,10 @@ import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQ
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
+import {
+	prepareQueryWithDefaultTimestamp,
+	SELECTED_VIEWS,
+} from 'pages/LogsExplorer/utils';
 import { memo, useCallback, useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -22,7 +25,7 @@ import { DataSource } from 'types/common/queryBuilder';
 function LogExplorerQuerySection({
 	selectedView,
 }: {
-	selectedView: string;
+	selectedView: SELECTED_VIEWS;
 }): JSX.Element {
 	const { currentQuery, updateAllQueriesOperators } = useQueryBuilder();
 
@@ -84,7 +87,7 @@ function LogExplorerQuerySection({
 
 	return (
 		<>
-			{selectedView === 'search' && (
+			{selectedView === SELECTED_VIEWS.SEARCH && (
 				<div className="qb-search-view-container">
 					<QueryBuilderSearch
 						query={query}
@@ -94,7 +97,7 @@ function LogExplorerQuerySection({
 				</div>
 			)}
 
-			{selectedView === 'query-builder' && (
+			{selectedView === SELECTED_VIEWS.QUERY_BUILDER && (
 				<QueryBuilder
 					panelType={panelTypes}
 					config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}

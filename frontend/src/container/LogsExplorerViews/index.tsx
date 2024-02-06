@@ -26,6 +26,7 @@ import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { LogTimeRange } from 'hooks/logs/types';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
+import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useAxiosError from 'hooks/useAxiosError';
 import useClickOutside from 'hooks/useClickOutside';
@@ -33,8 +34,9 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { isEmpty } from 'lodash-es';
+import { defaultTo, isEmpty } from 'lodash-es';
 import { Sliders } from 'lucide-react';
+import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
@@ -60,11 +62,14 @@ function LogsExplorerViews({
 	selectedView,
 	showHistogram,
 }: {
-	selectedView: string;
+	selectedView: SELECTED_VIEWS;
 	showHistogram: boolean;
 }): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
+
+	// this is to respect the panel type present in the URL rather than defaulting it to list always.
+	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
 	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
 
@@ -175,7 +180,7 @@ function LogsExplorerViews({
 	const handleModeChange = (e: RadioChangeEvent): void => {
 		const panelType = e.target.value;
 
-		if (selectedView === 'search') {
+		if (selectedView === SELECTED_VIEWS.SEARCH) {
 			handleSetConfig(panelType, DataSource.LOGS);
 		}
 
@@ -364,7 +369,8 @@ function LogsExplorerViews({
 
 	useEffect(() => {
 		const shouldChangeView =
-			(isMultipleQueries || isGroupByExist) && selectedView !== 'search';
+			(isMultipleQueries || isGroupByExist) &&
+			selectedView !== SELECTED_VIEWS.SEARCH;
 
 		if (selectedPanelType === PANEL_TYPES.LIST && shouldChangeView) {
 			handleExplorerTabChange(PANEL_TYPES.TIME_SERIES);
@@ -382,6 +388,17 @@ function LogsExplorerViews({
 		handleExplorerTabChange,
 		panelType,
 	]);
+
+	useEffect(() => {
+		if (
+			selectedView &&
+			selectedView === SELECTED_VIEWS.SEARCH &&
+			handleSetConfig
+		) {
+			handleSetConfig(defaultTo(panelTypes, PANEL_TYPES.LIST), DataSource.LOGS);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	useEffect(() => {
 		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
@@ -526,7 +543,8 @@ function LogsExplorerViews({
 								selectedPanelType === PANEL_TYPES.LIST ? 'selected_view tab' : 'tab'
 							}
 							disabled={
-								(isMultipleQueries || isGroupByExist) && selectedView !== 'search'
+								(isMultipleQueries || isGroupByExist) &&
+								selectedView !== SELECTED_VIEWS.SEARCH
 							}
 						>
 							List view
