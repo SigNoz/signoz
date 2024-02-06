@@ -26,29 +26,31 @@ export default function QBEntityOptions({
 			<div className="qb-entity-options">
 				<div className="left-col-items">
 					<div className="options periscope-btn-group">
-						<Button
-							value="search"
-							className="periscope-btn collapse"
-							onClick={onCollapseEntity}
-						>
-							{isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-						</Button>
-						<Button
-							value="query-builder"
-							className="periscope-btn visibility-toggle"
-							onClick={onToggleVisibility}
-						>
-							{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
-						</Button>
+						<Button.Group>
+							<Button
+								value="search"
+								className="periscope-btn collapse"
+								onClick={onCollapseEntity}
+							>
+								{isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+							</Button>
+							<Button
+								value="query-builder"
+								className="periscope-btn visibility-toggle"
+								onClick={onToggleVisibility}
+							>
+								{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
+							</Button>
 
-						<Button
-							className={cx(
-								'periscope-btn',
-								entityType === 'query' ? 'query-name' : 'formula-name',
-							)}
-						>
-							{entityData.queryName}
-						</Button>
+							<Button
+								className={cx(
+									'periscope-btn',
+									entityType === 'query' ? 'query-name' : 'formula-name',
+								)}
+							>
+								{entityData.queryName}
+							</Button>
+						</Button.Group>
 					</div>
 
 					{isCollapsed && (
