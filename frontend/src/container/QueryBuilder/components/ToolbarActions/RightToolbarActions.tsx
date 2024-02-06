@@ -1,7 +1,7 @@
 import './ToolbarActions.styles.scss';
 
 import { Button } from 'antd';
-import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
+import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { Play } from 'lucide-react';
 import { useEffect } from 'react';
@@ -16,10 +16,10 @@ export default function RightToolbarActions({
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	useEffect(() => {
-		registerShortcut(GlobalShortcuts.StageAndRunQuery, onStageRunQuery);
+		registerShortcut(LogsExplorerShortcuts.StageAndRunQuery, onStageRunQuery);
 
 		return (): void => {
-			deregisterShortcut(GlobalShortcuts.StageAndRunQuery);
+			deregisterShortcut(LogsExplorerShortcuts.StageAndRunQuery);
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);

@@ -1,10 +1,11 @@
 import { TableProps } from 'antd';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
+import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ALL_SHORTCUTS: Record<string, Record<string, string>> = {
 	'Global Shortcuts': GlobalShortcuts,
-	'Global Shortcuts 1': GlobalShortcuts,
+	'Logs Explorer Shortcuts': LogsExplorerShortcuts,
 };
 
 export const shortcutColumns = [
