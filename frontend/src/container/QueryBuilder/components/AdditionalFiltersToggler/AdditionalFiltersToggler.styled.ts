@@ -1,4 +1,5 @@
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
+import { Color } from '@signozhq/design-tokens';
 import { Col, Typography } from 'antd';
 import styled, { css } from 'styled-components';
 
@@ -32,4 +33,5 @@ export const StyledInner = styled(Col)`
 
 export const StyledLink = styled(Typography.Link)`
 	pointer-events: none;
+	color: ${Color.BG_ROBIN_400} !important;
 `;

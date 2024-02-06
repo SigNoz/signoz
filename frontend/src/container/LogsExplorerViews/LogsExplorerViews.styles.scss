@@ -25,6 +25,10 @@
 					font-weight: var(--font-weight-normal);
 				}
 
+				.ant-btn {
+					box-shadow: none;
+				}
+
 				.tab {
 					border: 1px solid var(--bg-slate-400);
 					width: 114px;
