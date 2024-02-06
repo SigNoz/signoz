@@ -4,14 +4,16 @@ import { ImportOutlined } from '@ant-design/icons';
 import { Monaco } from '@monaco-editor/react';
 import { Button, Modal } from 'antd';
 import Editor from 'components/Editor';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { PipelineData } from 'types/api/pipeline/def';
 
 import { PipelinesJSONSchema } from '../schema';
 
 export default function PipelinesImportModal({
 	open,
-	onCancel,
+	onClose,
+	setCurrentPipelines,
 }: PipelinesImportModalProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	const [pipelinesJson, setPipelinesJson] = useState('');
@@ -20,6 +22,15 @@ export default function PipelinesImportModal({
 	const isInvalid = (editorErrors || []).length > 0;
 
 	const firstError = editorErrors?.[0];
+	const onImport = useCallback((): void => {
+		try {
+			const pipelines = JSON.parse(pipelinesJson);
+			setCurrentPipelines(pipelines);
+			onClose();
+		} catch (error) {
+			setEditorErrors([String(error)]);
+		}
+	}, [pipelinesJson, setCurrentPipelines, onClose]);
 	const footer = useMemo(
 		() => (
 			<div className="pipelines-import-modal-footer">
@@ -28,19 +39,19 @@ export default function PipelinesImportModal({
 					disabled={isEmpty || isInvalid}
 					type="primary"
 					size="small"
-					onClick={(): void => {}}
+					onClick={onImport}
 				>
 					<ImportOutlined /> {t('import')}
 				</Button>
 			</div>
 		),
-		[t, isEmpty, isInvalid, firstError],
+		[t, isEmpty, isInvalid, firstError, onImport],
 	);
 
 	return (
 		<Modal
 			open={open}
-			onCancel={onCancel}
+			onCancel={onClose}
 			width="80vw"
 			centered
 			title={t('import')}
@@ -77,5 +88,8 @@ export default function PipelinesImportModal({
 
 interface PipelinesImportModalProps {
 	open: boolean;
-	onCancel: VoidFunction;
+	onClose: VoidFunction;
+	setCurrentPipelines: (
+		value: React.SetStateAction<Array<PipelineData>>,
+	) => void;
 }

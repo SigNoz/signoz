@@ -25,6 +25,7 @@ function PipelinePageLayout({
 				setActionMode={setActionMode}
 				isActionMode={isActionMode}
 				pipelineData={pipelineData}
+				setCurrentPipelines={setCurrentPipelines}
 			/>
 			<PipelineListsView
 				isActionType={String(isActionType)}

@@ -10,7 +10,7 @@ import { PipelineData } from 'types/api/pipeline/def';
 
 export default function PipelinesExportModal({
 	open,
-	onCancel,
+	onClose,
 	pipelines,
 }: PipelinesExportModalProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
@@ -76,7 +76,7 @@ export default function PipelinesExportModal({
 	return (
 		<Modal
 			open={open}
-			onCancel={onCancel}
+			onCancel={onClose}
 			width="80vw"
 			centered
 			title={t('share')}
@@ -94,6 +94,6 @@ export default function PipelinesExportModal({
 
 interface PipelinesExportModalProps {
 	open: boolean;
-	onCancel: VoidFunction;
+	onClose: VoidFunction;
 	pipelines: Array<PipelineData>;
 }

@@ -8,7 +8,12 @@ import TextToolTip from 'components/TextToolTip';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
+import {
+	ActionMode,
+	ActionType,
+	Pipeline,
+	PipelineData,
+} from 'types/api/pipeline/def';
 
 import { ButtonContainer, CustomButton } from '../../styles';
 import PipelinesExportModal from './PipelinesExportModal';
@@ -19,6 +24,7 @@ function PipelinesActions({
 	isActionMode,
 	setActionMode,
 	pipelineData,
+	setCurrentPipelines,
 }: PipelinesActionsProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	const { trackEvent } = useAnalytics();
@@ -62,9 +68,12 @@ function PipelinesActions({
 						{t('share')}
 					</CustomButton>
 				)}
-				{inEditMode && (
+				{(inEditMode || !pipelinesExist) && (
 					<CustomButton
-						onClick={(): void => setIsImportModalVisible(true)}
+						onClick={(): void => {
+							onEnterEditMode();
+							setIsImportModalVisible(true);
+						}}
 						icon={<ImportOutlined />}
 					>
 						{t('import')}
@@ -91,12 +100,13 @@ function PipelinesActions({
 			</ButtonContainer>
 			<PipelinesExportModal
 				open={isExportModalVisible}
-				onCancel={(): void => setIsExportModalVisible(false)}
+				onClose={(): void => setIsExportModalVisible(false)}
 				pipelines={pipelineData.pipelines}
 			/>
 			<PipelinesImportModal
 				open={isImportModalVisible}
-				onCancel={(): void => setIsImportModalVisible(false)}
+				onClose={(): void => setIsImportModalVisible(false)}
+				setCurrentPipelines={setCurrentPipelines}
 			/>
 		</>
 	);
@@ -107,6 +117,9 @@ interface PipelinesActionsProps {
 	isActionMode: string;
 	setActionMode: (actionMode: string) => void;
 	pipelineData: Pipeline;
+	setCurrentPipelines: (
+		value: React.SetStateAction<Array<PipelineData>>,
+	) => void;
 }
 
 export default PipelinesActions;
