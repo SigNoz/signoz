@@ -1,4 +1,4 @@
-import { orange } from '@ant-design/colors';
+import { grey } from '@ant-design/colors';
 import { themeColors } from 'constants/theme';
 import getAlphaColor from 'utils/getAlphaColor';
 
@@ -18,5 +18,5 @@ export const getDefaultLogBackground = (
 
 export const getActiveLogBackground = (isActiveLog = true): string => {
 	if (!isActiveLog) return '';
-	return `background-color: ${orange[3]};`;
+	return `background-color: ${grey[5]};`;
 };
