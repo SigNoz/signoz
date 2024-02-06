@@ -3,9 +3,7 @@ import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
 // import LogsTopNav from 'container/LogsTopNav';
-import LeftToolbarActions, {
-	queryBuilder,
-} from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
+import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -36,7 +34,7 @@ function LogsExplorer(): JSX.Element {
 	// Switch to query builder view if there are more than 1 queries
 	useEffect(() => {
 		if (currentQuery.builder.queryData.length > 1) {
-			handleChangeSelectedView(queryBuilder);
+			handleChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER);
 		}
 	}, [currentQuery.builder.queryData.length]);
 
