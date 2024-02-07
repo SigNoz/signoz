@@ -22,7 +22,7 @@ export default function RightToolbarActions({
 			deregisterShortcut(LogsExplorerShortcuts.StageAndRunQuery);
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [onStageRunQuery]);
 	return (
 		<div>
 			<Button
