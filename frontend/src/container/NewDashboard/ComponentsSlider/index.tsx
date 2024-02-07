@@ -1,6 +1,6 @@
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
@@ -8,6 +8,7 @@ import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { CSSProperties } from 'react';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
@@ -30,8 +31,25 @@ function DashboardGraphSlider(): JSX.Element {
 
 	const updateDashboardMutation = useUpdateDashboard();
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onClickHandler = (name: PANEL_TYPES) => (): void => {
 		const id = uuid();
+
+		const listTypeQuery: Query = {
+			...PANEL_TYPES_INITIAL_QUERY[name],
+			builder: {
+				...PANEL_TYPES_INITIAL_QUERY[name].builder,
+				queryData: [
+					{
+						...PANEL_TYPES_INITIAL_QUERY[name].builder.queryData[0],
+						aggregateOperator: LogsAggregatorOperator.NOOP,
+						orderBy: [{ columnName: 'timestamp', order: 'desc' }],
+						offset: 0,
+						pageSize: 100,
+					},
+				],
+			},
+		};
 
 		updateDashboardMutation.mutateAsync(
 			{
@@ -63,7 +81,10 @@ function DashboardGraphSlider(): JSX.Element {
 							nullZeroValues: '',
 							opacity: '',
 							panelTypes: name,
-							query: initialQueriesMap.metrics,
+							query:
+								name === PANEL_TYPES.LIST
+									? listTypeQuery
+									: PANEL_TYPES_INITIAL_QUERY[name],
 							timePreferance: 'GLOBAL_TIME',
 							softMax: null,
 							softMin: null,
@@ -119,12 +140,11 @@ function DashboardGraphSlider(): JSX.Element {
 							history.push(
 								`${history.location.pathname}/new?${createQueryParams(queryParamsLog)}`,
 							);
-							return;
+						} else {
+							history.push(
+								`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
+							);
 						}
-
-						history.push(
-							`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
-						);
 					}
 				},
 				onError: () => {

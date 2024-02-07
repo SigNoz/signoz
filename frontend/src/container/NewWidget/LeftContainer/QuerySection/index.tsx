@@ -24,6 +24,7 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -154,6 +155,10 @@ function QuerySection({
 					panelType={PANEL_TYPES.LIST}
 					filterConfigs={listFilterConfigs}
 					isDashboardPanel
+					config={{
+						initialDataSource: DataSource.LOGS,
+						queryVariant: 'static',
+					}}
 				/>
 			),
 		},
