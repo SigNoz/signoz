@@ -33,6 +33,7 @@ function WidgetGraph({
 	softMin,
 	logs,
 	selectedLogFields,
+	handleEndReached,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 
@@ -161,6 +162,7 @@ function WidgetGraph({
 				thresholds={thresholds}
 				logs={logs}
 				selectedLogFields={selectedLogFields}
+				handleEndReached={handleEndReached}
 			/>
 		</div>
 	);
@@ -183,6 +185,7 @@ interface WidgetGraphProps {
 	softMax: number | null;
 	softMin: number | null;
 	selectedLogFields: Widgets['selectedLogFields'];
+	handleEndReached: (index: number) => void;
 }
 
 export default WidgetGraph;

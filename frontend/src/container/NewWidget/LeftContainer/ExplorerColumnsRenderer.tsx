@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import './LogColumnsRenderer.styles.scss';
+import './ExplorerColumnsRenderer.styles.scss';
 
-import { Button, Checkbox, Divider, Dropdown, Typography } from 'antd';
+import { Button, Checkbox, Divider, Dropdown, Input, Typography } from 'antd';
 import { MenuProps } from 'antd/lib';
 import Spinner from 'components/Spinner';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
@@ -21,7 +21,7 @@ type LogColumnsRendererProps = {
 	selectedLogFields: WidgetGraphProps['selectedLogFields'];
 };
 
-function LogColumnsRenderer({
+function ExplorerColumnsRenderer({
 	selectedLogFields,
 	setSelectedLogFields,
 }: LogColumnsRendererProps): JSX.Element {
@@ -82,6 +82,12 @@ function LogColumnsRenderer({
 		}),
 	);
 
+	// add search box to items at the beginning
+	items?.unshift({
+		key: 'search',
+		label: <Input type="text" placeholder="Search" className="search-input" />,
+	});
+
 	const removeSelectedLogField = (name: string): void => {
 		if (setSelectedLogFields && selectedLogFields) {
 			setSelectedLogFields(
@@ -109,15 +115,15 @@ function LogColumnsRenderer({
 	}
 
 	return (
-		<div className="log-columns-renderer">
+		<div className="explorer-columns-renderer">
 			<Typography.Text>Columns</Typography.Text>
 			<Divider />
-			<div className="log-columns-contents">
+			<div className="explorer-columns-contents">
 				<DragDropContext onDragEnd={onDragEnd}>
 					<Droppable droppableId="drag-drop-list" direction="horizontal">
 						{(provided): JSX.Element => (
 							<div
-								className="log-columns"
+								className="explorer-columns"
 								{...provided.droppableProps}
 								ref={provided.innerRef}
 							>
@@ -127,12 +133,12 @@ function LogColumnsRenderer({
 										<Draggable key={index} draggableId={index.toString()} index={index}>
 											{(dragProvided): JSX.Element => (
 												<div
-													className="log-column-card"
+													className="explorer-column-card"
 													ref={dragProvided.innerRef}
 													{...dragProvided.draggableProps}
 													{...dragProvided.dragHandleProps}
 												>
-													<div className="log-column-title">
+													<div className="explorer-column-title">
 														<GripVertical size={12} color="#5A5A5A" />
 														{field.name}
 													</div>
@@ -164,4 +170,4 @@ function LogColumnsRenderer({
 	);
 }
 
-export default LogColumnsRenderer;
+export default ExplorerColumnsRenderer;

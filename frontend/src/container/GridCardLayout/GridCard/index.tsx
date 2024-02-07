@@ -144,9 +144,10 @@ function GridCardGraph({
 		},
 	);
 
-	const logs = useLogsData({
+	const { logs, handleEndReached, isFetching } = useLogsData({
 		result: queryResponse.data?.payload.data.newResult.data.result,
 		panelType: widget.panelTypes,
+		stagedQuery: widget.query,
 	});
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
@@ -229,6 +230,8 @@ function GridCardGraph({
 					graphVisibiltyState={graphVisibility}
 					setGraphVisibility={setGraphVisibility}
 					logs={logs}
+					handleEndReached={handleEndReached}
+					isFetchingResponse={queryResponse.isFetching || isFetching}
 				/>
 			)}
 		</div>

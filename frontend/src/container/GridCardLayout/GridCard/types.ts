@@ -32,6 +32,8 @@ export interface WidgetGraphComponentProps extends UplotProps {
 	graphVisibiltyState: boolean[];
 	setGraphVisibility: Dispatch<SetStateAction<boolean[]>>;
 	logs?: ILog[];
+	handleEndReached?: (index: number) => void;
+	isFetchingResponse: boolean;
 }
 
 export interface GridCardGraphProps {

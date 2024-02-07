@@ -48,6 +48,8 @@ function WidgetGraphComponent({
 	onDragSelect,
 	setGraphVisibility,
 	logs,
+	handleEndReached,
+	isFetchingResponse,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -301,6 +303,7 @@ function WidgetGraphComponent({
 					threshold={threshold}
 					headerMenuList={headerMenuList}
 					isWarning={isWarning}
+					isFetchingResponse={isFetchingResponse}
 				/>
 			</div>
 			{queryResponse.isLoading && <Skeleton />}
@@ -323,6 +326,7 @@ function WidgetGraphComponent({
 						logs={logs}
 						selectedLogFields={widget.selectedLogFields}
 						isTableHeaderDraggable={false}
+						handleEndReached={handleEndReached}
 					/>
 				</div>
 			)}

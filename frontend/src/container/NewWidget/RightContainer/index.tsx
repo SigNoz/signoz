@@ -17,7 +17,12 @@ import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 
-import { panelTypeVsSoftMinMax, panelTypeVsThreshold } from './constants';
+import {
+	panelTypeVsFillSpan,
+	panelTypeVsSoftMinMax,
+	panelTypeVsThreshold,
+	panelTypeVsYAxisUnit,
+} from './constants';
 import { Container, Title } from './styles';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
@@ -62,6 +67,8 @@ function RightContainer({
 
 	const allowThreshold = panelTypeVsThreshold[selectedGraph];
 	const allowSoftMinMax = panelTypeVsSoftMinMax[selectedGraph];
+	const allowFillSpans = panelTypeVsFillSpan[selectedGraph];
+	const allowYAxisUnit = panelTypeVsYAxisUnit[selectedGraph];
 
 	const softMinHandler = useCallback(
 		(value: number | null) => {
@@ -117,14 +124,16 @@ function RightContainer({
 				}
 			/>
 
-			<Space style={{ marginTop: 10 }} direction="vertical">
-				<Typography>Fill gaps</Typography>
+			{allowFillSpans && (
+				<Space style={{ marginTop: 10 }} direction="vertical">
+					<Typography>Fill gaps</Typography>
 
-				<Switch
-					checked={isFillSpans}
-					onChange={(checked): void => setIsFillSpans(checked)}
-				/>
-			</Space>
+					<Switch
+						checked={isFillSpans}
+						onChange={(checked): void => setIsFillSpans(checked)}
+					/>
+				</Space>
+			)}
 
 			<Title light="true">Panel Time Preference</Title>
 
@@ -136,11 +145,13 @@ function RightContainer({
 					}}
 				/>
 
-				<YAxisUnitSelector
-					defaultValue={yAxisUnit}
-					onSelect={setYAxisUnit}
-					fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
-				/>
+				{allowYAxisUnit && (
+					<YAxisUnitSelector
+						defaultValue={yAxisUnit}
+						onSelect={setYAxisUnit}
+						fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
+					/>
+				)}
 
 				{selectedWidget?.panelTypes !== PANEL_TYPES.TABLE && (
 					<Button icon={<UploadOutlined />} onClick={onCreateAlertsHandler}>

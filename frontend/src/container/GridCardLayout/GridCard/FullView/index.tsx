@@ -102,9 +102,11 @@ function FullView({
 		},
 	);
 
-	const logs = useLogsData({
+	const { logs, handleEndReached } = useLogsData({
 		result: response.data?.payload.data.newResult.data.result,
 		panelType: widget.panelTypes,
+		stagedQuery: widget.query,
+		isDashboardPanel: true,
 	});
 
 	const canModifyChart = useChartMutable({
@@ -232,6 +234,7 @@ function FullView({
 							logs={logs}
 							selectedLogFields={widget.selectedLogFields}
 							isTableHeaderDraggable={false}
+							handleEndReached={handleEndReached}
 						/>
 					</GraphContainer>
 				)}

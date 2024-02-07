@@ -33,6 +33,7 @@ import PromQLQueryContainer from './QueryBuilder/promQL';
 function QuerySection({
 	selectedGraph,
 	selectedTime,
+	isDashboardPanel = false,
 }: QueryProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const [currentTab, setCurrentTab] = useState(currentQuery.queryType);
@@ -137,11 +138,6 @@ function QuerySection({
 	const listFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const config: QueryBuilderProps['filterConfigs'] = {
 			stepInterval: { isHidden: true, isDisabled: true },
-			orderBy: { isHidden: true, isDisabled: true },
-			groupBy: { isHidden: true, isDisabled: true },
-			reduceTo: { isHidden: true, isDisabled: true },
-			aggregateAttribute: { isHidden: true, isDisabled: true },
-			aggregateOperator: { isHidden: true, isDisabled: true },
 			having: { isHidden: true, isDisabled: true },
 		};
 
@@ -154,7 +150,11 @@ function QuerySection({
 			label: 'Logs',
 			tab: <Typography>Log</Typography>,
 			children: (
-				<QueryBuilder panelType={selectedGraph} filterConfigs={listFilterConfigs} />
+				<QueryBuilder
+					panelType={PANEL_TYPES.LIST}
+					filterConfigs={listFilterConfigs}
+					isDashboardPanel
+				/>
 			),
 		},
 	];
@@ -231,6 +231,7 @@ function QuerySection({
 interface QueryProps {
 	selectedGraph: PANEL_TYPES;
 	selectedTime: WidgetGraphProps['selectedTime'];
+	isDashboardPanel: boolean;
 }
 
 export default QuerySection;

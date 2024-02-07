@@ -22,6 +22,7 @@ const GridPanelSwitch = forwardRef<
 			logs,
 			selectedLogFields,
 			isTableHeaderDraggable,
+			handleEndReached,
 		},
 		ref,
 	): JSX.Element | null => {
@@ -50,6 +51,9 @@ const GridPanelSwitch = forwardRef<
 						linesPerRow: 1,
 						appendTo: 'end',
 					},
+					infitiyTableProps: {
+						onEndReached: handleEndReached || ((): void => {}),
+					},
 					isTableHeaderDraggable,
 					isDashboardPanel: true,
 				},
@@ -68,6 +72,7 @@ const GridPanelSwitch = forwardRef<
 			query,
 			logs,
 			selectedLogFields,
+			handleEndReached,
 			isTableHeaderDraggable,
 		]);
 

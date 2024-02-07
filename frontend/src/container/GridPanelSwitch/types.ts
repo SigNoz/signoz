@@ -28,6 +28,7 @@ export type GridPanelSwitchProps = {
 	logs?: ILog[];
 	selectedLogFields?: Widgets['selectedLogFields'];
 	isTableHeaderDraggable?: InfinityTableProps['isTableHeaderDraggable'];
+	handleEndReached?: (index: number) => void;
 };
 
 export type PropsTypePropsMap = {

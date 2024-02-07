@@ -46,6 +46,7 @@ export const Query = memo(function Query({
 	query,
 	filterConfigs,
 	queryComponents,
+	isExplorerPanel = false,
 }: QueryProps): JSX.Element {
 	const { panelType, currentQuery } = useQueryBuilder();
 	const { pathname } = useLocation();

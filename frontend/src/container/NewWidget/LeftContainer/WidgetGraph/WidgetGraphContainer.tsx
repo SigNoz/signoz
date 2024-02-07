@@ -3,6 +3,7 @@ import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useLogsData } from 'hooks/useLogsData';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -29,15 +30,18 @@ function WidgetGraphContainer({
 	const widgetId = params.get('widgetId');
 
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
+	const { stagedQuery } = useQueryBuilder();
 
 	const getWidgetQueryRange = useGetWidgetQueryRange({
 		graphType: selectedGraph,
 		selectedTime: selectedTime.enum,
 	});
 
-	const logs = useLogsData({
+	const { logs, handleEndReached } = useLogsData({
 		result: getWidgetQueryRange.data?.payload.data.newResult.data.result,
 		panelType: selectedGraph,
+		stagedQuery,
+		isDashboardPanel: true,
 	});
 
 	if (selectedWidget === undefined) {
@@ -87,6 +91,7 @@ function WidgetGraphContainer({
 			softMin={softMin}
 			logs={logs}
 			selectedLogFields={selectedLogFields}
+			handleEndReached={handleEndReached}
 		/>
 	);
 }
