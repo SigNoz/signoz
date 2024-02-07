@@ -8,6 +8,7 @@ import {
 	WhereClauseConfig,
 } from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	KeyboardEvent,
 	ReactElement,
@@ -15,6 +16,7 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useState,
 } from 'react';
 import {
 	BaseAutocompleteData,
@@ -63,11 +65,14 @@ function QueryBuilderSearch({
 		searchKey,
 	} = useAutoComplete(query, whereClauseConfig);
 
+	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
 		searchValue,
 		query,
 		searchKey,
 	);
+
+	const { handleRunQuery } = useQueryBuilder();
 
 	const onTagRender = ({
 		value,
@@ -119,6 +124,13 @@ function QueryBuilderSearch({
 	const onInputKeyDownHandler = (event: KeyboardEvent<Element>): void => {
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
+
+		if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+			event.preventDefault();
+			event.stopPropagation();
+			handleRunQuery();
+			setIsOpen(false);
+		}
 	};
 
 	const handleDeselect = useCallback(
@@ -197,6 +209,8 @@ function QueryBuilderSearch({
 				showSearch
 				tagRender={onTagRender}
 				filterOption={false}
+				open={isOpen}
+				onFocus={(): void => setIsOpen(true)}
 				autoClearSearchValue={false}
 				mode="multiple"
 				placeholder={placeholder}
