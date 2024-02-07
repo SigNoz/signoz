@@ -115,6 +115,36 @@ export default function ConnectionStatus(): JSX.Element {
 						imgClassName="supported-language-img"
 					/>
 				);
+			case 'rust':
+				return (
+					<Header
+						entity="rust"
+						heading="Rust OpenTelemetry Instrumentation"
+						imgURL="/Logos/rust.png"
+						docsURL="https://signoz.io/docs/instrumentation/rust/"
+						imgClassName="supported-language-img"
+					/>
+				);
+			case 'elixir':
+				return (
+					<Header
+						entity="rust"
+						heading="Elixir OpenTelemetry Instrumentation"
+						imgURL="/Logos/elixir.png"
+						docsURL="https://signoz.io/docs/instrumentation/elixir/"
+						imgClassName="supported-language-img"
+					/>
+				);
+			case 'swift':
+				return (
+					<Header
+						entity="swift"
+						heading="Elixir OpenTelemetry Instrumentation"
+						imgURL="/Logos/swift.png"
+						docsURL="https://signoz.io/docs/instrumentation/swift/"
+						imgClassName="supported-language-img"
+					/>
+				);
 
 			default:
 				return <> </>;
