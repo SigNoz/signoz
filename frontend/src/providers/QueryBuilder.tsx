@@ -528,7 +528,7 @@ export function QueryBuilderProvider({
 				? `${redirectingUrl}?${urlQuery}`
 				: `${location.pathname}?${urlQuery}`;
 
-			history.replace(generatedUrl);
+			history.push(generatedUrl);
 		},
 		[history, location.pathname, urlQuery],
 	);
