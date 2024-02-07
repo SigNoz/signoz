@@ -26,9 +26,6 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 		end = end - mq.ShiftBy*1000
 	}
 
-	groupBy := helpers.GroupByAttributeKeyTags(mq.GroupBy...)
-	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
-
 	var quantile float64
 
 	if v3.IsPercentileOperator(mq.SpaceAggregation) {
@@ -38,11 +35,21 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 		// and time aggregation to rate
 		mq.TimeAggregation = v3.TimeAggregationRate
 		mq.SpaceAggregation = v3.SpaceAggregationSum
-		mq.GroupBy = append(mq.GroupBy, v3.AttributeKey{
-			Key:      "le",
-			Type:     v3.AttributeKeyTypeTag,
-			DataType: v3.AttributeKeyDataTypeString,
-		})
+		// If le is not present in group by for quantile, add it
+		leFound := false
+		for _, groupBy := range mq.GroupBy {
+			if groupBy.Key == "le" {
+				leFound = true
+				break
+			}
+		}
+		if !leFound {
+			mq.GroupBy = append(mq.GroupBy, v3.AttributeKey{
+				Key:      "le",
+				Type:     v3.AttributeKeyTypeTag,
+				DataType: v3.AttributeKeyDataTypeString,
+			})
+		}
 	}
 
 	var query string
@@ -64,6 +71,15 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	if err != nil {
 		return "", err
 	}
+
+	groupByWithoutLe := []v3.AttributeKey{}
+	for _, groupBy := range mq.GroupBy {
+		if groupBy.Key != "le" {
+			groupByWithoutLe = append(groupByWithoutLe, groupBy)
+		}
+	}
+	groupBy := helpers.GroupByAttributeKeyTags(groupByWithoutLe...)
+	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, groupByWithoutLe)
 
 	if quantile != 0 {
 		query = fmt.Sprintf(`SELECT %s, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s`, groupBy, quantile, query, groupBy, orderBy)
