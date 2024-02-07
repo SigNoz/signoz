@@ -210,7 +210,7 @@ function QueryBuilderSearch({
 				tagRender={onTagRender}
 				filterOption={false}
 				open={isOpen}
-				onFocus={(): void => setIsOpen(true)}
+				onDropdownVisibleChange={setIsOpen}
 				autoClearSearchValue={false}
 				mode="multiple"
 				placeholder={placeholder}
