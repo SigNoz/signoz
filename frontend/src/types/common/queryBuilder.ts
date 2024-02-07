@@ -206,7 +206,7 @@ export type QueryBuilderContextType = {
 			index: number,
 		) => QueryBuilderData[T][number],
 	) => Query;
-	initQueryBuilderData: (query: Query) => void;
+	initQueryBuilderData: (query: Query, timeUpdated?: boolean) => void;
 	isStagedQueryUpdated: (
 		viewData: ViewProps[] | undefined,
 		viewKey: string,
