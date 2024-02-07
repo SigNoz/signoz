@@ -5,13 +5,8 @@ import { Table, Typography } from 'antd';
 import { ALL_SHORTCUTS, generateTableData, shortcutColumns } from './utils';
 
 function Shortcuts(): JSX.Element {
-	function getShortcutTable(
-		shortcuts: Record<string, string>,
-		shortcutSection: string,
-	): JSX.Element {
-		console.log(shortcuts);
-
-		const tableData = generateTableData(shortcuts);
+	function getShortcutTable(shortcutSection: string): JSX.Element {
+		const tableData = generateTableData(shortcutSection);
 
 		return (
 			<section className="shortcut-section">
@@ -31,7 +26,7 @@ function Shortcuts(): JSX.Element {
 	return (
 		<div className="keyboard-shortcuts">
 			{Object.keys(ALL_SHORTCUTS).map((shortcutSection) =>
-				getShortcutTable(ALL_SHORTCUTS[shortcutSection], shortcutSection),
+				getShortcutTable(shortcutSection),
 			)}
 		</div>
 	);
