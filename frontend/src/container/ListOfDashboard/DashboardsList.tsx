@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { PlusOutlined } from '@ant-design/icons';
 import { Card, Col, Dropdown, Input, Row, TableColumnProps } from 'antd';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
@@ -28,6 +29,7 @@ import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import DeleteButton from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
+import axios from 'axios';
 
 const { Search } = Input;
 
@@ -293,14 +295,14 @@ function DashboardsList(): JSX.Element {
 						justifyContent: 'flex-end',
 					}}
 				>
-					<ButtonContainer>
+					{/* <ButtonContainer>
 						<TextToolTip
 							{...{
 								text: `More details on how to create dashboards`,
 								url: 'https://signoz.io/docs/userguide/dashboards',
 							}}
 						/>
-					</ButtonContainer>
+					</ButtonContainer> */}
 
 					<Dropdown
 						menu={{ items: getMenuItems }}
@@ -331,6 +333,21 @@ function DashboardsList(): JSX.Element {
 		],
 	);
 
+	const handleDemo = () => {
+		axios
+			.get('http://localhost:8080/api/v1/demo', {
+				headers: {
+					Authorization: `Bearer ${localStorage.getItem('AUTH_TOKEN')}`,
+				},
+			})
+			.then((data) => {
+				console.log('data', data);
+			})
+			.catch((err) => {
+				console.warn('err', err);
+			});
+	};
+
 	return (
 		<Card>
 			{GetHeader}
@@ -341,6 +358,7 @@ function DashboardsList(): JSX.Element {
 					uploadedGrafana={uploadedGrafana}
 					onModalHandler={(): void => onModalHandler(false)}
 				/>
+				<button onClick={handleDemo}>TestService</button>
 				<DynamicColumnTable
 					tablesource={TableDataSource.Dashboard}
 					dynamicColumns={dynamicColumns}

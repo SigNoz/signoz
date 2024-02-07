@@ -94,6 +94,7 @@ func main() {
 	if err != nil {
 		logger.Fatal("Failed to create server", zap.Error(err))
 	}
+	// logger.Fatal("hahaha", zap.Error(err))
 
 	if err := server.Start(); err != nil {
 		logger.Fatal("Could not start servers", zap.Error(err))

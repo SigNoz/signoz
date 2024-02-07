@@ -61,7 +61,8 @@ var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/rout
 var OTLPTarget = GetOrDefaultEnv("OTLP_TARGET", "")
 var LogExportBatchSize = GetOrDefaultEnv("LOG_EXPORT_BATCH_SIZE", "1000")
 
-var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
+// var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
+var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "./signoz.db")
 
 var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
 

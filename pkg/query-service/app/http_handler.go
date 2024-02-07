@@ -331,6 +331,8 @@ func (aH *APIHandler) RegisterPrivateRoutes(router *mux.Router) {
 
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
+	router.HandleFunc("/api/v1/demo", am.ViewAccess(aH.demo)).Methods(http.MethodGet)
+
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels", am.ViewAccess(aH.listChannels)).Methods(http.MethodGet)
@@ -1263,6 +1265,11 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) queryRangeMetricsFromClickhouse(w http.ResponseWriter, r *http.Request) {
 
 }
+
+func (aH *APIHandler) demo(w http.ResponseWriter, r *http.Request) {
+	aH.Respond(w, "demostrin32222")
+}
+
 func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
 
 	query, apiErrorObj := parseQueryRangeRequest(r)
