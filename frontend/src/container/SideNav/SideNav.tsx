@@ -8,7 +8,9 @@ import cx from 'classnames';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { ToggleButton } from 'container/Header/styles';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
@@ -74,6 +76,8 @@ function SideNav({
 		isCurrentVersionError,
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
+	const [licenseTag, setLicenseTag] = useState('');
+
 	const userSettingsMenuItem = {
 		key: ROUTES.MY_SETTINGS,
 		label: user?.name || 'User',
@@ -95,6 +99,8 @@ function SideNav({
 	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
 	const [inviteMembers] = useComponentPermission(['invite_members'], role);
+
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	useEffect(() => {
 		if (inviteMembers) {
@@ -153,6 +159,15 @@ function SideNav({
 	useLayoutEffect(() => {
 		dispatch(sideBarCollapse(collapsed));
 	}, [collapsed, dispatch]);
+
+	useEffect(() => {
+		registerShortcut(GlobalShortcuts.SidebarCollapse, onCollapse);
+
+		return (): void => {
+			deregisterShortcut(GlobalShortcuts.SidebarCollapse);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const isLicenseActive =
 		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ===
@@ -239,6 +254,27 @@ function SideNav({
 		}
 	};
 
+	useEffect(() => {
+		if (!isFetching) {
+			if (isCloudUserVal) {
+				setLicenseTag('Cloud');
+			} else if (isEnterprise) {
+				setLicenseTag('Enterprise');
+			} else {
+				setLicenseTag('Free');
+			}
+		}
+	}, [isCloudUserVal, isEnterprise, isFetching]);
+
+	const [isCurrentOrgSettings] = useComponentPermission(
+		['current_org_settings'],
+		role,
+	);
+
+	const settingsRoute = isCurrentOrgSettings
+		? ROUTES.ORG_SETTINGS
+		: ROUTES.SETTINGS;
+
 	return (
 		<div className={cx('sideNav', collapsed ? 'collapsed' : '')}>
 			<div className="brand">
@@ -257,7 +293,7 @@ function SideNav({
 
 				{!collapsed && (
 					<>
-						<div className="license tag">{!isEnterprise ? 'Free' : 'Enterprise'}</div>
+						{!isFetching && <div className="license tag">{licenseTag}</div>}
 
 						<ToggleButton
 							checked={isDarkMode}
@@ -288,7 +324,9 @@ function SideNav({
 						item={item}
 						isActive={activeMenuKey === item.key}
 						onClick={(): void => {
-							if (item) {
+							if (item.key === ROUTES.SETTINGS) {
+								history.push(settingsRoute);
+							} else if (item) {
 								onClickHandler(item?.key as string);
 							}
 						}}

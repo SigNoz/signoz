@@ -55,7 +55,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 
-	const [dashboardLayout, setDashboardLayout] = useState(layouts);
+	const [dashboardLayout, setDashboardLayout] = useState<Layout[]>([]);
 
 	const updateDashboardMutation = useUpdateDashboard();
 
@@ -76,6 +76,10 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 		permissions,
 		userRole,
 	);
+
+	useEffect(() => {
+		setDashboardLayout(layouts);
+	}, [layouts]);
 
 	const onSaveHandler = (): void => {
 		if (!selectedDashboard) return;

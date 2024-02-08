@@ -49,6 +49,11 @@ function ServiceTraceTable({
 			<ResourceAttributesFilter />
 
 			<ResizeTable
+				pagination={{
+					defaultPageSize: 10,
+					showTotal: (total: number, range: number[]): string =>
+						`${range[0]}-${range[1]} of ${total} items`,
+				}}
 				columns={tableColumns}
 				loading={loading}
 				dataSource={services}
