@@ -130,4 +130,4 @@ Add the below code block within a function or a section of your code where you'r
     shutdown_tracer_provider()
 ```
 
-The above code block will create a span named operation which sets an attribute and an event to it saying "SigNoz is working!". You can read more about spans (here)[https://opentelemetry.io/docs/concepts/signals/traces/#spans]
+The above code block will create a span named operation which sets an attribute and an event to it saying "SigNoz is working!". You can read more about spans [here](https://opentelemetry.io/docs/concepts/signals/traces/#spans)
