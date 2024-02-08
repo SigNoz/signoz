@@ -24,7 +24,7 @@ import ZipkinExporter
 &nbsp;
 
 ### Step 2: Initialize tracer
-Intialize the tracer using the code block below in the `main.swift` file inside the main function or you can create another function for initializing the tracer and call it in some other block of code. 
+Initialize the tracer using the code block below in the `main.swift` file inside the main function or you can create another function for initializing the tracer and call it in some other block of code. 
 
 ```swift
 var resources = DefaultResources().get()
@@ -66,4 +66,4 @@ func doWork() {
 
 &nbsp;
 
-If you call this `doWork` function, it will add a trace with span name "doWork" and attributes with key-value pair. You can modify this function accordign to your needs. To read more about spans, you can follow [this link](https://opentelemetry.io/docs/concepts/signals/traces/#spans)
+If you call this `doWork` function, it will add a trace with span name "doWork" and attributes with key-value pair. You can modify this function according to your needs. To read more about spans, you can follow [this link](https://opentelemetry.io/docs/concepts/signals/traces/#spans)

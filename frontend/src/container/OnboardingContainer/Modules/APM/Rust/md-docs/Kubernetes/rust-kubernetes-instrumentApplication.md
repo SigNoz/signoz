@@ -15,7 +15,7 @@ tonic = { version = "0.8.2", features = ["tls-roots"] }
 ```
 &nbsp;
 
-Use the above crates in entry point of your rust application, which is genrally your `main.rs` file 
+Use the above crates in entry point of your rust application, which is generally your `main.rs` file 
 
 ```rust
 use opentelemetry::global::shutdown_tracer_provider;

@@ -14,7 +14,7 @@ dotenv = "0.15.0"
 ```
 &nbsp;
 
-Use the above crates in entry point of your rust application, which is genrally your `main.rs` file 
+Use the above crates in entry point of your rust application, which is generally your `main.rs` file 
 
 ```rust
 use dotenv::dotenv;
@@ -72,7 +72,7 @@ project_root/
 |-- .env
 ```
 
-In your environement file, paste the below variables which will be used in the next steps.
+In your environment file, paste the below variables which will be used in the next steps.
 
 ```rust
 PORT=3000 // If it is a web app pass port or else you can ignore this variable

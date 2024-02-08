@@ -1,6 +1,6 @@
 &nbsp;
 
-Once you are done intrumenting your Swift application, you can run it using the below commands
+Once you are done instrumenting your Swift application, you can run it using the below commands
 
 &nbsp;
 

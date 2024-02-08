@@ -1,6 +1,6 @@
 &nbsp;
 
-Once you are done intrumenting your Rust application, you can run it using the below commands
+Once you are done instrumenting your Rust application, you can run it using the below commands
 
 &nbsp;
 

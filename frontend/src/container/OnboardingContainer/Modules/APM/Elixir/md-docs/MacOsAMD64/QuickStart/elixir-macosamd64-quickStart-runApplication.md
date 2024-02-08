@@ -1,6 +1,6 @@
 ### Running your Elixir application
 
-Once you are done instrumenting your Elixir (Phoenix + Ecto) application, you should install the dependecies and run your appllcation as you normally would.
+Once you are done instrumenting your Elixir (Phoenix + Ecto) application, you should install the dependencies and run your application as you normally would.
 
 &nbsp;
 

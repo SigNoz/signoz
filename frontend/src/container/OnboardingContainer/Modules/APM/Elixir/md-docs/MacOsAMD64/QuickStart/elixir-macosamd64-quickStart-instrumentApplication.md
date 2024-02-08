@@ -1,6 +1,6 @@
 &nbsp;
 
-Follow the steps below to instrument your Elixir (Phoneix + Ecto) Application
+Follow the steps below to instrument your Elixir (Phoenix + Ecto) Application
 
 ### Step 1: Add dependencies
 Install dependencies related to OpenTelemetry by adding them to `mix.exs` file 
@@ -41,7 +41,7 @@ end
 &nbsp;
 
 ### Step 2: Configure Application
-You need to configure your application to send telemtry data by adding the follwing config to your `runtime.exs` file:
+You need to configure your application to send telemetry data by adding the following config to your `runtime.exs` file:
 
 ```bash
 config :opentelemetry, :resource, service: %{name: "{{MYAPP}}"}

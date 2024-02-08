@@ -24,7 +24,7 @@ import ZipkinExporter
 &nbsp;
 
 ### Step 2: Initialize tracer
-Intialize the tracer using the code block below in the `main.swift` file : 
+Initialize the tracer using the code block below in the `main.swift` file : 
 
 ```swift
 var resources = DefaultResources().get()
@@ -51,7 +51,7 @@ OpenTelemetry.registerTracerProvider(tracerProvider:
 ```
 - <OTEL_EXPORTER_OTLP_ENDPOINT> - The default value for this is `http://localhost:4317`
 <!---
-Imporve this - Verify once if <OTEL_EXPORTER_OTLP_ENDPOINT> this should be localhost or http://localhost:4317
+Improve this - Verify once if <OTEL_EXPORTER_OTLP_ENDPOINT> this should be localhost or http://localhost:4317
 --->
 
 ### Step 3: Add OpenTelemetry instrumentation
