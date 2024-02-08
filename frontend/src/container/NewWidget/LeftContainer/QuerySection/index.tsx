@@ -104,10 +104,6 @@ function QuerySection({
 					],
 				},
 			});
-
-			console.log({ updatedQuery });
-			console.log({ selectedWidget });
-
 			redirectWithQueryBuilderData(updatedQuery);
 		},
 		[
@@ -182,10 +178,10 @@ function QuerySection({
 					panelType={PANEL_TYPES.LIST}
 					filterConfigs={listViewLogFilterConfigs}
 					isDashboardPanel
-					config={{
-						initialDataSource: DataSource.LOGS,
-						queryVariant: 'static',
-					}}
+					// config={{
+					// 	initialDataSource: DataSource.LOGS,
+					// 	queryVariant: 'static',
+					// }}
 				/>
 			),
 		},
@@ -198,10 +194,10 @@ function QuerySection({
 					panelType={PANEL_TYPES.LIST}
 					filterConfigs={listViewTracesFilterConfigs}
 					isDashboardPanel
-					config={{
-						initialDataSource: DataSource.TRACES,
-						queryVariant: 'static',
-					}}
+					// config={{
+					// 	initialDataSource: DataSource.TRACES,
+					// 	queryVariant: 'static',
+					// }}
 				/>
 			),
 		},

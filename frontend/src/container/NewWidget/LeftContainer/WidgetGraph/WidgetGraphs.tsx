@@ -20,7 +20,6 @@ import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getTimeRange } from 'utils/getTimeRange';
 
@@ -37,7 +36,7 @@ function WidgetGraph({
 	handleEndReached,
 	selectedTracesFields,
 }: WidgetGraphProps): JSX.Element {
-	const { stagedQuery, initialDataSource } = useQueryBuilder();
+	const { stagedQuery, currentQuery } = useQueryBuilder();
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -166,7 +165,7 @@ function WidgetGraph({
 				selectedLogFields={selectedLogFields}
 				handleEndReached={handleEndReached}
 				selectedTracesFields={selectedTracesFields}
-				dataSource={initialDataSource || DataSource.LOGS}
+				dataSource={currentQuery.builder.queryData[0].dataSource}
 			/>
 		</div>
 	);

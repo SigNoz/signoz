@@ -31,7 +31,9 @@ function ExplorerColumnsRenderer({
 	selectedTracesFields,
 	setSelectedTracesFields,
 }: LogColumnsRendererProps): JSX.Element {
-	const { currentQuery, initialDataSource } = useQueryBuilder();
+	const { currentQuery } = useQueryBuilder();
+
+	const initialDataSource = currentQuery.builder.queryData[0].dataSource;
 
 	const { data, isLoading } = useGetAggregateKeys(
 		{
