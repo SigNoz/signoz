@@ -24,12 +24,10 @@ export const useLogsData = ({
 	result,
 	panelType,
 	stagedQuery,
-	isDashboardPanel,
 }: {
 	result: QueryDataV3[] | undefined;
 	panelType: PANEL_TYPES;
 	stagedQuery: Query | null;
-	isDashboardPanel?: boolean;
 }): {
 	logs: ILog[];
 	handleEndReached: (index: number) => void;
@@ -38,6 +36,7 @@ export const useLogsData = ({
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [page, setPage] = useState<number>(1);
 	const [requestData, setRequestData] = useState<Query | null>(null);
+	const [shouldLoadMoreLogs, setShouldLoadMoreLogs] = useState<boolean>(false);
 
 	const { queryData: pageSize } = useUrlQueryData(
 		QueryParams.pageSize,
@@ -124,7 +123,6 @@ export const useLogsData = ({
 	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
 
 	const { data, isFetching } = useGetExplorerQueryRange(
-		// , isFetching, isError to be handled
 		requestData,
 		panelType,
 		{
@@ -139,7 +137,7 @@ export const useLogsData = ({
 					end: timeRange.end,
 				}),
 		},
-		isDashboardPanel,
+		shouldLoadMoreLogs,
 	);
 
 	useEffect(() => {
@@ -190,6 +188,7 @@ export const useLogsData = ({
 		setPage((prevPage) => prevPage + 1);
 
 		setRequestData(newRequestData);
+		setShouldLoadMoreLogs(true);
 	};
 
 	return { logs, handleEndReached, isFetching };

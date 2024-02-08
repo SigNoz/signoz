@@ -106,7 +106,6 @@ function FullView({
 		result: response.data?.payload.data.newResult.data.result,
 		panelType: widget.panelTypes,
 		stagedQuery: widget.query,
-		isDashboardPanel: true,
 	});
 
 	const canModifyChart = useChartMutable({
