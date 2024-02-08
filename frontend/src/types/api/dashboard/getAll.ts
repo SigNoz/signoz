@@ -6,6 +6,7 @@ import { Layout } from 'react-grid-layout';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { IField } from '../logs/fields';
+import { BaseAutocompleteData } from '../queryBuilder/queryAutocompleteResponse';
 
 export type PayloadProps = Dashboard[];
 
@@ -79,6 +80,7 @@ export interface IBaseWidget {
 	softMax: number | null;
 	fillSpans?: boolean;
 	selectedLogFields: IField[] | null;
+	selectedTracesFields: BaseAutocompleteData[] | null;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

@@ -20,6 +20,7 @@ function WidgetGraph({
 	softMax,
 	softMin,
 	selectedLogFields,
+	selectedTracesFields,
 }: WidgetGraphProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const { selectedDashboard } = useDashboard();
@@ -59,6 +60,7 @@ function WidgetGraph({
 				softMax={softMax}
 				softMin={softMin}
 				selectedLogFields={selectedLogFields}
+				selectedTracesFields={selectedTracesFields}
 			/>
 		</Container>
 	);

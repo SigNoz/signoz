@@ -20,6 +20,7 @@ function WidgetGraphContainer({
 	softMax,
 	softMin,
 	selectedLogFields,
+	selectedTracesFields,
 }: WidgetGraphProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 
@@ -41,7 +42,6 @@ function WidgetGraphContainer({
 		result: getWidgetQueryRange.data?.payload.data.newResult.data.result,
 		panelType: selectedGraph,
 		stagedQuery,
-		isDashboardPanel: true,
 	});
 
 	if (selectedWidget === undefined) {
@@ -92,6 +92,7 @@ function WidgetGraphContainer({
 			logs={logs}
 			selectedLogFields={selectedLogFields}
 			handleEndReached={handleEndReached}
+			selectedTracesFields={selectedTracesFields}
 		/>
 	);
 }

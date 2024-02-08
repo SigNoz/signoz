@@ -115,6 +115,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedWidget?.selectedLogFields || null,
 	);
 
+	const [selectedTracesFields, setSelectedTracesFields] = useState(
+		selectedWidget?.selectedTracesFields || null,
+	);
+
 	const [softMax, setSoftMax] = useState<number | null>(
 		selectedWidget?.softMax === null || selectedWidget?.softMax === undefined
 			? null
@@ -200,6 +204,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						softMax,
 						fillSpans: isFillSpans,
 						selectedLogFields,
+						selectedTracesFields,
 					},
 					...afterWidgets,
 				],
@@ -239,6 +244,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		softMax,
 		isFillSpans,
 		selectedLogFields,
+		selectedTracesFields,
 		afterWidgets,
 		updateDashboardMutation,
 		setSelectedDashboard,
@@ -347,6 +353,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						softMin={softMin}
 						selectedLogFields={selectedLogFields}
 						setSelectedLogFields={setSelectedLogFields}
+						selectedTracesFields={selectedTracesFields}
+						setSelectedTracesFields={setSelectedTracesFields}
 					/>
 				</LeftContainerWrapper>
 

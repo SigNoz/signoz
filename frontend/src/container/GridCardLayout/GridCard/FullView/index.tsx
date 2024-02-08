@@ -234,6 +234,7 @@ function FullView({
 							selectedLogFields={widget.selectedLogFields}
 							isTableHeaderDraggable={false}
 							handleEndReached={handleEndReached}
+							dataSource={widget.query.builder.queryData[0].dataSource}
 						/>
 					</GraphContainer>
 				)}

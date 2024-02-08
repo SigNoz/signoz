@@ -18,4 +18,8 @@ export interface WidgetGraphProps extends NewWidgetProps {
 	softMax: number | null;
 	selectedLogFields: Widgets['selectedLogFields'];
 	setSelectedLogFields?: Dispatch<SetStateAction<Widgets['selectedLogFields']>>;
+	selectedTracesFields: Widgets['selectedTracesFields'];
+	setSelectedTracesFields?: Dispatch<
+		SetStateAction<Widgets['selectedTracesFields']>
+	>;
 }

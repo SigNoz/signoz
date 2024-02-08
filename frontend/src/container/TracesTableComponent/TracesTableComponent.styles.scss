@@ -1,0 +1,14 @@
+.traces-table {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .resize-table {
+        flex-grow: 0.8;
+        height: 80%;
+    }
+    .controller {
+        flex-grow: 1;
+    }
+}

@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable react/jsx-props-no-spreading */
 import './ExplorerColumnsRenderer.styles.scss';
 
@@ -13,19 +14,24 @@ import {
 	Droppable,
 	DropResult,
 } from 'react-beautiful-dnd';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { WidgetGraphProps } from '../types';
 
 type LogColumnsRendererProps = {
 	setSelectedLogFields: WidgetGraphProps['setSelectedLogFields'];
 	selectedLogFields: WidgetGraphProps['selectedLogFields'];
+	selectedTracesFields: WidgetGraphProps['selectedTracesFields'];
+	setSelectedTracesFields: WidgetGraphProps['setSelectedTracesFields'];
 };
 
 function ExplorerColumnsRenderer({
 	selectedLogFields,
 	setSelectedLogFields,
+	selectedTracesFields,
+	setSelectedTracesFields,
 }: LogColumnsRendererProps): JSX.Element {
-	const { currentQuery } = useQueryBuilder();
+	const { currentQuery, initialDataSource } = useQueryBuilder();
 
 	const { data, isLoading } = useGetAggregateKeys(
 		{
@@ -44,27 +50,50 @@ function ExplorerColumnsRenderer({
 	);
 
 	const isAttributeKeySelected = (key: string): boolean => {
-		if (selectedLogFields) {
+		if (initialDataSource === DataSource.LOGS && selectedLogFields) {
 			return selectedLogFields.some((field) => field.name === key);
+		}
+		if (initialDataSource === DataSource.TRACES && selectedTracesFields) {
+			return selectedTracesFields.some((field) => field.key === key);
 		}
 		return false;
 	};
 
 	const handleCheckboxChange = (key: string): void => {
-		if (setSelectedLogFields === undefined) return;
-		if (selectedLogFields) {
-			if (isAttributeKeySelected(key)) {
-				setSelectedLogFields(
-					selectedLogFields.filter((field) => field.name !== key),
-				);
+		if (
+			initialDataSource === DataSource.LOGS &&
+			setSelectedLogFields !== undefined
+		) {
+			if (selectedLogFields) {
+				if (isAttributeKeySelected(key)) {
+					setSelectedLogFields(
+						selectedLogFields.filter((field) => field.name !== key),
+					);
+				} else {
+					setSelectedLogFields([
+						...selectedLogFields,
+						{ dataType: 'string', name: key, type: '' },
+					]);
+				}
 			} else {
-				setSelectedLogFields([
-					...selectedLogFields,
-					{ dataType: 'string', name: key, type: '' },
-				]);
+				setSelectedLogFields([{ dataType: 'string', name: key, type: '' }]);
 			}
-		} else {
-			setSelectedLogFields([{ dataType: 'string', name: key, type: '' }]);
+		} else if (
+			initialDataSource === DataSource.TRACES &&
+			setSelectedTracesFields !== undefined
+		) {
+			const selectedField = data?.payload?.attributeKeys?.find(
+				(attributeKey) => attributeKey.key === key,
+			);
+			if (selectedTracesFields) {
+				if (isAttributeKeySelected(key)) {
+					setSelectedTracesFields(
+						selectedTracesFields.filter((field) => field.key !== key),
+					);
+				} else if (selectedField) {
+					setSelectedTracesFields([...selectedTracesFields, selectedField]);
+				}
+			} else if (selectedField) setSelectedTracesFields([selectedField]);
 		}
 	};
 
@@ -89,9 +118,22 @@ function ExplorerColumnsRenderer({
 	});
 
 	const removeSelectedLogField = (name: string): void => {
-		if (setSelectedLogFields && selectedLogFields) {
+		if (
+			initialDataSource === DataSource.LOGS &&
+			setSelectedLogFields &&
+			selectedLogFields
+		) {
 			setSelectedLogFields(
 				selectedLogFields.filter((field) => field.name !== name),
+			);
+		}
+		if (
+			initialDataSource === DataSource.TRACES &&
+			setSelectedTracesFields &&
+			selectedTracesFields
+		) {
+			setSelectedTracesFields(
+				selectedTracesFields.filter((field) => field.key !== name),
 			);
 		}
 	};
@@ -101,12 +143,27 @@ function ExplorerColumnsRenderer({
 			return;
 		}
 
-		if (selectedLogFields && setSelectedLogFields) {
+		if (
+			initialDataSource === DataSource.LOGS &&
+			selectedLogFields &&
+			setSelectedLogFields
+		) {
 			const items = [...selectedLogFields];
 			const [reorderedItem] = items.splice(result.source.index, 1);
 			items.splice(result.destination.index, 0, reorderedItem);
 
 			setSelectedLogFields(items);
+		}
+		if (
+			initialDataSource === DataSource.TRACES &&
+			selectedTracesFields &&
+			setSelectedTracesFields
+		) {
+			const items = [...selectedTracesFields];
+			const [reorderedItem] = items.splice(result.source.index, 1);
+			items.splice(result.destination.index, 0, reorderedItem);
+
+			setSelectedTracesFields(items);
 		}
 	};
 
@@ -127,7 +184,8 @@ function ExplorerColumnsRenderer({
 								{...provided.droppableProps}
 								ref={provided.innerRef}
 							>
-								{selectedLogFields &&
+								{initialDataSource === DataSource.LOGS &&
+									selectedLogFields &&
 									selectedLogFields.map((field, index) => (
 										// eslint-disable-next-line react/no-array-index-key
 										<Draggable key={index} draggableId={index.toString()} index={index}>
@@ -146,6 +204,31 @@ function ExplorerColumnsRenderer({
 														size={12}
 														color="red"
 														onClick={(): void => removeSelectedLogField(field.name)}
+													/>
+												</div>
+											)}
+										</Draggable>
+									))}
+								{initialDataSource === DataSource.TRACES &&
+									selectedTracesFields &&
+									selectedTracesFields.map((field, index) => (
+										// eslint-disable-next-line react/no-array-index-key
+										<Draggable key={index} draggableId={index.toString()} index={index}>
+											{(dragProvided): JSX.Element => (
+												<div
+													className="explorer-column-card"
+													ref={dragProvided.innerRef}
+													{...dragProvided.draggableProps}
+													{...dragProvided.dragHandleProps}
+												>
+													<div className="explorer-column-title">
+														<GripVertical size={12} color="#5A5A5A" />
+														{field.key}
+													</div>
+													<Trash2
+														size={12}
+														color="red"
+														onClick={(): void => removeSelectedLogField(field.key)}
 													/>
 												</div>
 											)}

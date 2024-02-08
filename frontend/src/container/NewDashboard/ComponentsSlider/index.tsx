@@ -8,11 +8,14 @@ import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { CSSProperties } from 'react';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
-import { PANEL_TYPES_INITIAL_QUERY } from './constants';
+import {
+	listViewInitialLogQuery,
+	listViewInitialTraceQuery,
+	PANEL_TYPES_INITIAL_QUERY,
+} from './constants';
 import menuItems from './menuItems';
 import { Card, Container, Text } from './styles';
 
@@ -34,22 +37,6 @@ function DashboardGraphSlider(): JSX.Element {
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onClickHandler = (name: PANEL_TYPES) => (): void => {
 		const id = uuid();
-
-		const listTypeQuery: Query = {
-			...PANEL_TYPES_INITIAL_QUERY[name],
-			builder: {
-				...PANEL_TYPES_INITIAL_QUERY[name].builder,
-				queryData: [
-					{
-						...PANEL_TYPES_INITIAL_QUERY[name].builder.queryData[0],
-						aggregateOperator: LogsAggregatorOperator.NOOP,
-						orderBy: [{ columnName: 'timestamp', order: 'desc' }],
-						offset: 0,
-						pageSize: 100,
-					},
-				],
-			},
-		};
 
 		updateDashboardMutation.mutateAsync(
 			{
@@ -83,7 +70,7 @@ function DashboardGraphSlider(): JSX.Element {
 							panelTypes: name,
 							query:
 								name === PANEL_TYPES.LIST
-									? listTypeQuery
+									? listViewInitialLogQuery
 									: PANEL_TYPES_INITIAL_QUERY[name],
 							timePreferance: 'GLOBAL_TIME',
 							softMax: null,
@@ -99,6 +86,9 @@ function DashboardGraphSlider(): JSX.Element {
 									type: '',
 									name: 'timestamp',
 								},
+							],
+							selectedTracesFields: [
+								...listViewInitialTraceQuery.builder.queryData[0].selectColumns,
 							],
 						},
 					],

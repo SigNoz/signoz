@@ -1,8 +1,9 @@
 import { ToggleGraphProps } from 'components/Graph/types';
-import { PANEL_TYPES_COMPONENT_MAP } from 'constants/panelTypes';
+import { getComponentForPanelType } from 'constants/panelTypes';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GRID_TABLE_CONFIG } from 'container/GridTableComponent/config';
 import { FC, forwardRef, memo, useMemo } from 'react';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { GridPanelSwitchProps, PropsTypePropsMap } from './types';
 
@@ -21,6 +22,8 @@ const GridPanelSwitch = forwardRef<
 			thresholds,
 			logs,
 			selectedLogFields,
+			selectedTracesFields,
+			dataSource,
 			isTableHeaderDraggable,
 			handleEndReached,
 		},
@@ -44,19 +47,25 @@ const GridPanelSwitch = forwardRef<
 					query,
 					thresholds,
 				},
-				[PANEL_TYPES.LIST]: {
-					tableViewProps: {
-						logs: logs || [],
-						fields: selectedLogFields || [],
-						linesPerRow: 1,
-						appendTo: 'end',
-					},
-					infitiyTableProps: {
-						onEndReached: handleEndReached || ((): void => {}),
-					},
-					isTableHeaderDraggable,
-					isDashboardPanel: true,
-				},
+				[PANEL_TYPES.LIST]:
+					dataSource === DataSource.LOGS
+						? {
+								tableViewProps: {
+									logs: logs || [],
+									fields: selectedLogFields || [],
+									linesPerRow: 1,
+									appendTo: 'end',
+								},
+								infitiyTableProps: {
+									onEndReached: handleEndReached || ((): void => {}),
+								},
+								isTableHeaderDraggable,
+								isDashboardPanel: true,
+						  }
+						: {
+								selectedTracesFields: selectedTracesFields || [],
+								query,
+						  },
 				[PANEL_TYPES.TRACE]: null,
 				[PANEL_TYPES.EMPTY_WIDGET]: null,
 			};
@@ -70,13 +79,18 @@ const GridPanelSwitch = forwardRef<
 			thresholds,
 			panelData,
 			query,
+			dataSource,
 			logs,
 			selectedLogFields,
 			handleEndReached,
 			isTableHeaderDraggable,
+			selectedTracesFields,
 		]);
 
-		const Component = PANEL_TYPES_COMPONENT_MAP[panelType] as FC<
+		// const Component = PANEL_TYPES_COMPONENT_MAP[panelType] as FC<
+		// 	PropsTypePropsMap[typeof panelType]
+		// >;
+		const Component = getComponentForPanelType(panelType, dataSource) as FC<
 			PropsTypePropsMap[typeof panelType]
 		>;
 		const componentProps = useMemo(() => currentProps[panelType], [

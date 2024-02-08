@@ -17,6 +17,8 @@ function LeftContainer({
 	softMin,
 	selectedLogFields,
 	setSelectedLogFields,
+	selectedTracesFields,
+	setSelectedTracesFields,
 }: WidgetGraphProps): JSX.Element {
 	return (
 		<>
@@ -29,17 +31,16 @@ function LeftContainer({
 				softMax={softMax}
 				softMin={softMin}
 				selectedLogFields={selectedLogFields}
+				selectedTracesFields={selectedTracesFields}
 			/>
 			<QueryContainer>
-				<QuerySection
-					selectedTime={selectedTime}
-					selectedGraph={selectedGraph}
-					isDashboardPanel
-				/>
+				<QuerySection selectedTime={selectedTime} selectedGraph={selectedGraph} />
 				{selectedGraph === PANEL_TYPES.LIST && (
 					<ExplorerColumnsRenderer
 						selectedLogFields={selectedLogFields}
 						setSelectedLogFields={setSelectedLogFields}
+						selectedTracesFields={selectedTracesFields}
+						setSelectedTracesFields={setSelectedTracesFields}
 					/>
 				)}
 			</QueryContainer>
