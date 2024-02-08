@@ -148,15 +148,6 @@ function SideNav({
 
 	const { t } = useTranslation('');
 
-	useEffect(() => {
-		registerShortcut(GlobalShortcuts.SidebarCollapse, onCollapse);
-
-		return (): void => {
-			deregisterShortcut(GlobalShortcuts.SidebarCollapse);
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
 	const isLicenseActive =
 		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ===
 		LICENSE_PLAN_STATUS.VALID;
@@ -263,6 +254,43 @@ function SideNav({
 	const settingsRoute = isCurrentOrgSettings
 		? ROUTES.ORG_SETTINGS
 		: ROUTES.SETTINGS;
+
+	useEffect(() => {
+		registerShortcut(GlobalShortcuts.SidebarCollapse, onCollapse);
+
+		registerShortcut(GlobalShortcuts.NavigateToServices, () =>
+			onClickHandler(ROUTES.APPLICATION),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToTraces, () =>
+			onClickHandler(ROUTES.TRACE),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToLogs, () =>
+			onClickHandler(ROUTES.LOGS),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToDashboards, () =>
+			onClickHandler(ROUTES.ALL_DASHBOARD),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToAlerts, () =>
+			onClickHandler(ROUTES.LIST_ALL_ALERT),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToExceptions, () =>
+			onClickHandler(ROUTES.ALL_ERROR),
+		);
+
+		return (): void => {
+			deregisterShortcut(GlobalShortcuts.SidebarCollapse);
+			deregisterShortcut(GlobalShortcuts.NavigateToServices);
+			deregisterShortcut(GlobalShortcuts.NavigateToTraces);
+			deregisterShortcut(GlobalShortcuts.NavigateToLogs);
+			deregisterShortcut(GlobalShortcuts.NavigateToDashboards);
+			deregisterShortcut(GlobalShortcuts.NavigateToAlerts);
+			deregisterShortcut(GlobalShortcuts.NavigateToExceptions);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	return (
 		<div className={cx('sideNav', collapsed ? 'collapsed' : '')}>
