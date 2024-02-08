@@ -1,6 +1,6 @@
 import './QuerySection.styles.scss';
 
-import { Button, Tabs, Typography } from 'antd';
+import { Button, Tabs, Tooltip, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphProps } from 'container/NewWidget/types';
@@ -11,7 +11,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Atom, LucideAccessibility, Play, Terminal } from 'lucide-react';
+import { Atom, Play, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
@@ -138,9 +138,11 @@ function QuerySection({
 		{
 			key: EQueryType.QUERY_BUILDER,
 			label: (
-				<Button className="nav-btns">
-					<Atom size={14} />
-				</Button>
+				<Tooltip title="Query Builder">
+					<Button className="nav-btns">
+						<Atom size={14} />
+					</Button>
+				</Tooltip>
 			),
 			tab: <Typography>Query Builder</Typography>,
 			children: (
@@ -150,9 +152,11 @@ function QuerySection({
 		{
 			key: EQueryType.CLICKHOUSE,
 			label: (
-				<Button className="nav-btns">
-					<Terminal size={14} />
-				</Button>
+				<Tooltip title="Clickhouse">
+					<Button className="nav-btns">
+						<Terminal size={14} />
+					</Button>
+				</Tooltip>
 			),
 			tab: <Typography>ClickHouse Query</Typography>,
 			children: <ClickHouseQueryContainer />,
@@ -160,9 +164,11 @@ function QuerySection({
 		{
 			key: EQueryType.PROM,
 			label: (
-				<Button className="nav-btns">
-					<LucideAccessibility size={14} />
-				</Button>
+				<Tooltip title="PromQL">
+					<Button className="nav-btns">
+						<img src="/Icons/promQL.svg" alt="Prom Ql" className="prom-ql-icon" />
+					</Button>
+				</Tooltip>
 			),
 			tab: <Typography>PromQL</Typography>,
 			children: <PromQLQueryContainer />,

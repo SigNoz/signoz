@@ -8,6 +8,11 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
+
+			.prom-ql-icon {
+				height: 14px;
+				width: 14px;
+			}
 		}
 		.ant-btn-default {
 			border-color: transparent;
