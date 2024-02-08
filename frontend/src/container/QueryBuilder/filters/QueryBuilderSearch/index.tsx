@@ -2,13 +2,16 @@ import './QueryBuilderSearch.styles.scss';
 
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
+import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { getDataTypes } from 'container/LogDetailedView/utils';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import {
 	useAutoComplete,
 	WhereClauseConfig,
 } from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import type { BaseSelectRef } from 'rc-select';
 import {
 	KeyboardEvent,
 	ReactElement,
@@ -16,6 +19,7 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import {
@@ -66,11 +70,14 @@ function QueryBuilderSearch({
 	} = useAutoComplete(query, whereClauseConfig);
 
 	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const selectRef = useRef<BaseSelectRef>(null);
 	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
 		searchValue,
 		query,
 		searchKey,
 	);
+
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const { handleRunQuery } = useQueryBuilder();
 
@@ -197,6 +204,18 @@ function QueryBuilderSearch({
 		/* eslint-disable react-hooks/exhaustive-deps */
 	}, [sourceKeys]);
 
+	useEffect(() => {
+		registerShortcut(LogsExplorerShortcuts.FocusTheSearchBar, () => {
+			// set timeout is needed here else the select treats the hotkey as input value
+			setTimeout(() => {
+				selectRef.current?.focus();
+			}, 20);
+		});
+
+		return (): void =>
+			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
+	}, []);
+
 	return (
 		<div
 			style={{
@@ -204,6 +223,7 @@ function QueryBuilderSearch({
 			}}
 		>
 			<Select
+				ref={selectRef}
 				getPopupContainer={popupContainer}
 				virtual
 				showSearch
@@ -227,6 +247,7 @@ function QueryBuilderSearch({
 				onInputKeyDown={onInputKeyDownHandler}
 				notFoundContent={isFetching ? <Spin size="small" /> : null}
 				suffixIcon={suffixIcon}
+				showAction={['focus']}
 			>
 				{options.map((option) => (
 					<Select.Option key={option.label} value={option.value}>
