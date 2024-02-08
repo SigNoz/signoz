@@ -40,54 +40,128 @@ func (q *querier) runBuilderQuery(
 		var query string
 		var err error
 		// for ts query with limit replace it as it is already formed
-		if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
-			limitQuery, err := logsV3.PrepareLogsQuery(
-				params.Start,
-				params.End,
-				params.CompositeQuery.QueryType,
-				params.CompositeQuery.PanelType,
-				builderQuery,
-				logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
-			)
+		if _, ok := cacheKeys[queryName]; !ok {
+			if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
+				limitQuery, err := logsV3.PrepareLogsQuery(
+					params.Start,
+					params.End,
+					params.CompositeQuery.QueryType,
+					params.CompositeQuery.PanelType,
+					builderQuery,
+					logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
+				)
+				if err != nil {
+					ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
+					return
+				}
+				placeholderQuery, err := logsV3.PrepareLogsQuery(
+					params.Start,
+					params.End,
+					params.CompositeQuery.QueryType,
+					params.CompositeQuery.PanelType,
+					builderQuery,
+					logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
+				)
+				if err != nil {
+					ch <- channelResult{Err: err, Name: queryName, Query: placeholderQuery, Series: nil}
+					return
+				}
+				query = strings.Replace(placeholderQuery, "#LIMIT_PLACEHOLDER", limitQuery, 1)
+			} else {
+				query, err = logsV3.PrepareLogsQuery(
+					params.Start,
+					params.End,
+					params.CompositeQuery.QueryType,
+					params.CompositeQuery.PanelType,
+					builderQuery,
+					logsV3.Options{PreferRPM: preferRPM},
+				)
+				if err != nil {
+					ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
+					return
+				}
+			}
+
 			if err != nil {
-				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
+				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
 			}
-			placeholderQuery, err := logsV3.PrepareLogsQuery(
-				params.Start,
-				params.End,
-				params.CompositeQuery.QueryType,
-				params.CompositeQuery.PanelType,
-				builderQuery,
-				logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
-			)
-			if err != nil {
-				ch <- channelResult{Err: err, Name: queryName, Query: placeholderQuery, Series: nil}
-				return
+			series, err := q.execClickHouseQuery(ctx, query)
+			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
+			return
+		}
+
+		cacheKey := cacheKeys[queryName]
+		var cachedData []byte
+		if !params.NoCache && q.cache != nil {
+			var retrieveStatus status.RetrieveStatus
+			data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
+			zap.S().Infof("cache retrieve status: %s", retrieveStatus.String())
+			if err == nil {
+				cachedData = data
 			}
-			query = strings.Replace(placeholderQuery, "#LIMIT_PLACEHOLDER", limitQuery, 1)
-		} else {
+		}
+		misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
+		missedSeries := make([]*v3.Series, 0)
+		cachedSeries := make([]*v3.Series, 0)
+		for _, miss := range misses {
 			query, err = logsV3.PrepareLogsQuery(
-				params.Start,
-				params.End,
+				miss.start,
+				miss.end,
 				params.CompositeQuery.QueryType,
 				params.CompositeQuery.PanelType,
 				builderQuery,
 				logsV3.Options{PreferRPM: preferRPM},
 			)
 			if err != nil {
-				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
+				ch <- channelResult{
+					Err:    err,
+					Name:   queryName,
+					Query:  query,
+					Series: nil,
+				}
+				return
+			}
+			series, err := q.execClickHouseQuery(ctx, query)
+			if err != nil {
+				ch <- channelResult{
+					Err:    err,
+					Name:   queryName,
+					Query:  query,
+					Series: nil,
+				}
+				return
+			}
+			missedSeries = append(missedSeries, series...)
+		}
+		if err := json.Unmarshal(cachedData, &cachedSeries); err != nil && cachedData != nil {
+			zap.S().Error("error unmarshalling cached data", zap.Error(err))
+		}
+		mergedSeries := mergeSerieses(cachedSeries, missedSeries)
+
+		ch <- channelResult{
+			Err:    nil,
+			Name:   queryName,
+			Query:  "xyz",
+			Series: mergedSeries,
+		}
+		// Cache the seriesList for future queries
+		if len(missedSeries) > 0 && !params.NoCache && q.cache != nil {
+			// caching the data
+			mergedSeriesData, err := json.Marshal(mergedSeries)
+			if err != nil {
+				zap.S().Error("error marshalling merged series", zap.Error(err))
+				return
+			}
+			err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
+			if err != nil {
+				zap.S().Error("error storing merged series", zap.Error(err))
 				return
 			}
 		}
 
-		if err != nil {
-			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
-			return
-		}
-		series, err := q.execClickHouseQuery(ctx, query)
-		ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
 		return
+
 	}
 
 	if builderQuery.DataSource == v3.DataSourceTraces {

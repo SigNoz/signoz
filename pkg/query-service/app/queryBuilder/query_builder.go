@@ -320,7 +320,47 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 
 	// Build keys for each builder query
 	for queryName, query := range params.CompositeQuery.BuilderQueries {
-		if query.Expression == queryName && query.DataSource == v3.DataSourceMetrics {
+		// limit = 0, since limit >0 requires special handling
+		if query.Expression == queryName && query.DataSource == v3.DataSourceLogs && query.Limit == 0 {
+			var parts []string
+
+			// We need to build uniqe cache query for BuilderQuery
+			parts = append(parts, fmt.Sprintf("source=%s", query.DataSource))
+			parts = append(parts, fmt.Sprintf("step=%d", query.StepInterval))
+			parts = append(parts, fmt.Sprintf("aggregate=%s", query.AggregateOperator))
+			parts = append(parts, fmt.Sprintf("limit=%d", query.Limit))
+
+			if query.AggregateAttribute.Key != "" {
+				parts = append(parts, fmt.Sprintf("aggregateAttribute=%s", query.AggregateAttribute.CacheKey()))
+			}
+
+			if query.Filters != nil && len(query.Filters.Items) > 0 {
+				for idx, filter := range query.Filters.Items {
+					parts = append(parts, fmt.Sprintf("filter-%d=%s", idx, filter.CacheKey()))
+				}
+			}
+
+			if len(query.GroupBy) > 0 {
+				for idx, groupBy := range query.GroupBy {
+					parts = append(parts, fmt.Sprintf("groupBy-%d=%s", idx, groupBy.CacheKey()))
+				}
+			}
+
+			if len(query.OrderBy) > 0 {
+				for idx, orderBy := range query.OrderBy {
+					parts = append(parts, fmt.Sprintf("orderBy-%d=%s", idx, orderBy.CacheKey()))
+				}
+			}
+
+			if len(query.Having) > 0 {
+				for idx, having := range query.Having {
+					parts = append(parts, fmt.Sprintf("having-%d=%s", idx, having.CacheKey()))
+				}
+			}
+
+			key := strings.Join(parts, "&")
+			keys[queryName] = key
+		} else if query.Expression == queryName && query.DataSource == v3.DataSourceMetrics {
 			var parts []string
 
 			// We need to build uniqe cache query for BuilderQuery
