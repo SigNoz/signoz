@@ -1,3 +1,5 @@
+import './InfinityTable.styles.scss';
+
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { useTableView } from 'components/Logs/TableView/useTableView';
@@ -51,6 +53,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			infitiyTableProps,
 			isTableHeaderDraggable = true,
 			isDashboardPanel = false,
+			className,
 		},
 		ref,
 	): JSX.Element | null {
@@ -146,6 +149,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					ref={ref}
 					style={infinityDefaultStyles}
 					data={dataSource}
+					className={className || ''} // only used in dashboard panels
 					components={{
 						// eslint-disable-next-line react/jsx-props-no-spreading
 						Table: LogsCustomTable({ isLoading, handleDragEnd }),

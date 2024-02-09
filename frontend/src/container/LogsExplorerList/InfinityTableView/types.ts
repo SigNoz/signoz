@@ -8,4 +8,5 @@ export type InfinityTableProps = {
 		onEndReached: (index: number) => void;
 	};
 	isDashboardPanel?: boolean;
+	className?: 'logs-infinity-table' | null;
 };

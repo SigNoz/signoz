@@ -7,18 +7,29 @@
     .resize-table {
         height: calc(90% - 10px);
         overflow: scroll;
-
+        
         .ant-table-wrapper .ant-table-tbody >tr >td {
-            border: 0.5px solid #1d1d1d;
-            background-color: #000000;
-            font-size: 13px;
+            border: 0.5px solid rgba(255, 255, 255, 0.06);
+            background-color: #141414;
+            color: var(--colorText, rgba(255, 255, 255, 0.85));
+            font-size: 14px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 22px; 
+            padding: 8px;
+            font-family: Open Sans;
         }
         .ant-table-wrapper .ant-table-thead > tr > th {
-            background-color: #1d1d1d;
-            border: none;
+            font-family: Open Sans;
+            background-color: #434343;
+            border: 0.5px solid rgba(255, 255, 255, 0.06);
+            font-size: 14px;
+            font-style: normal;
+            font-weight: 600;
+            line-height: 22px;
+            letter-spacing: 0.5px;
+            padding: 8px;
         }
-
-        
     }
 
     .controller {

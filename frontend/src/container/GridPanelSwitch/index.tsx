@@ -61,6 +61,7 @@ const GridPanelSwitch = forwardRef<
 								},
 								isTableHeaderDraggable,
 								isDashboardPanel: true,
+								className: 'logs-infinity-table',
 						  }
 						: {
 								selectedTracesFields: selectedTracesFields || [],

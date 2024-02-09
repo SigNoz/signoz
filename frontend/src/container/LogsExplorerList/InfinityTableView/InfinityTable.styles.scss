@@ -1,0 +1,24 @@
+.logs-infinity-table {
+    table > thead > tr> th {
+        background-color: #434343;
+        color: #ffffff;
+        font-family: Open Sans;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 22px;
+        letter-spacing: 0.5px;
+        text-align: left;
+        padding: 8px;
+    }
+
+    table > tbody > tr > td {
+        background-color: #141414;
+        font-family: Open Sans;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 22px;
+        letter-spacing: 0.5px;
+        text-align: left;
+        padding: 8px;
+    }
+}
