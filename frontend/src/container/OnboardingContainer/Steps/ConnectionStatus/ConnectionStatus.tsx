@@ -139,7 +139,7 @@ export default function ConnectionStatus(): JSX.Element {
 				return (
 					<Header
 						entity="swift"
-						heading="Elixir OpenTelemetry Instrumentation"
+						heading="Swift OpenTelemetry Instrumentation"
 						imgURL="/Logos/swift.png"
 						docsURL="https://signoz.io/docs/instrumentation/swift/"
 						imgClassName="supported-language-img"
