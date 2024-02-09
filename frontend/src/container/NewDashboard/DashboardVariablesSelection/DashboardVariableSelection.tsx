@@ -103,8 +103,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 		(a: { order: number }, b: { order: number }) => a.order - b.order,
 	);
 
-	console.log(selectedDashboard);
-
 	return (
 		<Row>
 			{orderBasedSortedVariables &&
