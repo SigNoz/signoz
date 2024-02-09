@@ -320,7 +320,6 @@ export function DashboardProvider({
 			setSelectedDashboard,
 			updatedTimeRef,
 			setToScrollWidgetId,
-			transformDashboardVariables,
 		}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
