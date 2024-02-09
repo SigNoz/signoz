@@ -19,9 +19,8 @@ kill "$(< otel-pid)"
 ```
 &nbsp;
 
-### Step 2: ### Running your Elixir application
-
-Once you are done instrumenting your Elixir (Phoenix + Ecto) application, you should install the dependencies and run your application as you normally would.
+### Step 2: Running your Elixir application
+Once you are done instrumenting your Elixir (Phoenix + Ecto) application with OpenTelemetry, you should install the dependencies needed to run your application and run it as you normally would.
 
 &nbsp;
 

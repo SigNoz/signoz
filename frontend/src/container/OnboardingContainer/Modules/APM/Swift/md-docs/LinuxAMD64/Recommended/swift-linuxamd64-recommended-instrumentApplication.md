@@ -51,9 +51,12 @@ OpenTelemetry.registerTracerProvider(tracerProvider:
 ```
 - <OtelCollector_URL> - The endpoint where Otel Collector is running. For ex -> "localhost:4317"
 
-<!---
-Confirm this - should <OtelCollector_URL>, port: 443, be replaced with localhost, and port should be changed to 4317
---->
+
+<!--
+
+Confirm this - should <OtelCollector_URL>, port: 443, be replaced with localhost, and port should be changed to 4317 
+
+-->
 
 ### Step 3: Add OpenTelemetry instrumentation
 
@@ -68,4 +71,4 @@ func doWork() {
 
 &nbsp;
 
-If you call this `doWork` function, it will add a trace with span name "doWork" and attributes with key-value pair. You can modify this function according to your needs. To read more about spans, you can follow [this link](https://opentelemetry.io/docs/concepts/signals/traces/#spans)
+If you call this `doWork` function, it will add a trace with span name "doWork" and attributes with key-value pair. You can modify this function according to your needs. 

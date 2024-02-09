@@ -50,9 +50,8 @@ OpenTelemetry.registerTracerProvider(tracerProvider:
 )
 ```
 - <OTEL_EXPORTER_OTLP_ENDPOINT> - The default value for this is `http://localhost:4317`
-<!---
-Improve this - Verify once if <OTEL_EXPORTER_OTLP_ENDPOINT> this should be localhost or http://localhost:4317
---->
+
+<!-- Improve this - Verify once if <OTEL_EXPORTER_OTLP_ENDPOINT> this should be localhost or http://localhost:4317 -->
 
 ### Step 3: Add OpenTelemetry instrumentation
 

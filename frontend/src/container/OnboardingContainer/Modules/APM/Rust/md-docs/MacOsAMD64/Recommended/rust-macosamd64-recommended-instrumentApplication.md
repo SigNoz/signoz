@@ -15,7 +15,7 @@ tonic = { version = "0.8.2", features = ["tls-roots"] }
 ```
 &nbsp;
 
-Use the above crates in entry point of your rust application, which is generally your `main.rs` file 
+Use the above crates in entry point of your Rust application, which is generally your `main.rs` file 
 
 ```rust
 use opentelemetry::global::shutdown_tracer_provider;
@@ -92,4 +92,4 @@ Add the below code block within a function or a section of your code where you'r
     shutdown_tracer_provider()
 ```
 
-The above code block will create a span named operation which sets an attribute and an event to it saying "SigNoz is working!". You can read more about spans [here](https://opentelemetry.io/docs/concepts/signals/traces/#spans)
+The above code block will create a span named operation which sets an attribute and an event to it saying "SigNoz is working!". 

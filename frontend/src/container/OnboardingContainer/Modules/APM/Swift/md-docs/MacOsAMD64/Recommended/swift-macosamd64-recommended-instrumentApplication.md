@@ -68,4 +68,4 @@ func doWork() {
 
 &nbsp;
 
-If you call this `doWork` function, it will add a trace with span name "doWork" and attributes with key-value pair. You can modify this function according to your needs. To read more about spans, you can follow [this link](https://opentelemetry.io/docs/concepts/signals/traces/#spans)
+If you call this `doWork` function, it will add a trace with span name "doWork" and attributes with key-value pair. You can modify this function according to your needs. 

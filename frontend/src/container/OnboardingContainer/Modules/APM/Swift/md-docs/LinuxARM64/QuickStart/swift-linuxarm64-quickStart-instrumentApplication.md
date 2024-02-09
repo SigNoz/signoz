@@ -1,7 +1,5 @@
 &nbsp;
 
-After setting up the Otel collector agent, follow the steps below to instrument your Swift Application
-
 ### Step 1: Add dependencies
 
 To configure your Swift application to send data you need to initialize OpenTelemetry. Add these dependency in `Package.swift` file of your project or if you are using XCode then you need to add this [dependency](https://github.com/open-telemetry/opentelemetry-swift) and then import these below dependencies in the main file.
