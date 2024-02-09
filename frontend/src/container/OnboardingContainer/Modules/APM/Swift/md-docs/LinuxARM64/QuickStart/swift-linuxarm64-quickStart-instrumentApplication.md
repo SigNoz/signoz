@@ -47,9 +47,6 @@ OpenTelemetry.registerTracerProvider(tracerProvider:
         .build()
 )
 ```
-<!---
-Confirm this - should https://ingest.{{REGION}}.signoz.cloud:443 be included in the " " or directly without considering it as a string.
---->
 
 ### Step 3: Add OpenTelemetry instrumentation
 

@@ -32,7 +32,7 @@ let instrumentationScopeVersion = "semver:0.1.0"
 
 let otlpConfiguration: OtlpConfiguration = OtlpConfiguration(timeout: TimeInterval(10))
 
-let grpcChannel = ClientConnection.usingPlatformAppropriateTLS(for: MultiThreadedEventLoopGroup(numberOfThreads:1)).connect(host: <OtelCollector_URL>, port: 443)
+let grpcChannel = ClientConnection.usingPlatformAppropriateTLS(for: MultiThreadedEventLoopGroup(numberOfThreads:1)).connect(host: <OtelCollector_URL>, port: 4317)
 
 let otlpTraceExporter = OtlpTraceExporter(channel: grpcChannel,
                                       config: otlpConfiguration)
@@ -47,11 +47,8 @@ OpenTelemetry.registerTracerProvider(tracerProvider:
         .build()
 )
 ```
-- <OtelCollector_URL> - The endpoint where Otel Collector is running. For ex -> "localhost:4317"
+- <OtelCollector_URL> - The endpoint where Otel Collector is running. For ex -> "localhost"
 
-<!---
-Confirm this - should <OtelCollector_URL>, port: 443, be replaced with localhost, and port should be changed to 4317
---->
 
 ### Step 3: Add OpenTelemetry instrumentation
 
