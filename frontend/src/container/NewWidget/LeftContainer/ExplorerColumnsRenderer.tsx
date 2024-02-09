@@ -7,7 +7,8 @@ import { MenuProps } from 'antd/lib';
 import Spinner from 'components/Spinner';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { GripVertical, PlusCircle, Trash2 } from 'lucide-react';
+import { GripVertical, PlusCircle, Search, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import {
 	DragDropContext,
 	Draggable,
@@ -32,6 +33,8 @@ function ExplorerColumnsRenderer({
 	setSelectedTracesFields,
 }: LogColumnsRendererProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
+	const [searchText, setSearchText] = useState<string>('');
+	const [open, setOpen] = useState<boolean>(false);
 
 	const initialDataSource = currentQuery.builder.queryData[0].dataSource;
 
@@ -97,26 +100,43 @@ function ExplorerColumnsRenderer({
 				}
 			} else if (selectedField) setSelectedTracesFields([selectedField]);
 		}
+		setOpen(false);
 	};
 
-	const items: MenuProps['items'] = data?.payload?.attributeKeys?.map(
-		(attributeKey) => ({
+	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+		setSearchText(e.target.value);
+	};
+
+	const items: MenuProps['items'] = data?.payload?.attributeKeys
+		?.filter((attributeKey) =>
+			attributeKey.key.toLowerCase().includes(searchText.toLowerCase()),
+		)
+		?.map((attributeKey) => ({
 			key: attributeKey.key,
 			label: (
 				<Checkbox
 					checked={isAttributeKeySelected(attributeKey.key)}
 					onChange={(): void => handleCheckboxChange(attributeKey.key)}
+					style={{ padding: 0 }}
 				>
 					{attributeKey.key}
 				</Checkbox>
 			),
-		}),
-	);
+		}));
 
 	// add search box to items at the beginning
 	items?.unshift({
 		key: 'search',
-		label: <Input type="text" placeholder="Search" className="search-input" />,
+		label: (
+			<Input
+				type="text"
+				placeholder="Search"
+				className="explorer-columns-search"
+				value={searchText}
+				onChange={handleSearchChange}
+				prefix={<Search size={16} style={{ padding: '6px' }} />}
+			/>
+		),
 	});
 
 	const removeSelectedLogField = (name: string): void => {
@@ -166,6 +186,13 @@ function ExplorerColumnsRenderer({
 			items.splice(result.destination.index, 0, reorderedItem);
 
 			setSelectedTracesFields(items);
+		}
+	};
+
+	const toggleDropdown = (): void => {
+		setOpen(!open);
+		if (!open) {
+			setSearchText('');
 		}
 	};
 
@@ -243,11 +270,21 @@ function ExplorerColumnsRenderer({
 				<div>
 					<Dropdown
 						menu={{ items }}
-						placement="bottomLeft"
 						arrow
-						overlayStyle={{ maxHeight: '200px', overflow: 'auto' }}
+						overlayStyle={{
+							maxHeight: '200px',
+							overflow: 'auto',
+							padding: 0,
+							margin: 0,
+						}}
+						open={open}
+						overlayClassName="explorer-columns-dropdown"
 					>
-						<Button className="action-btn" icon={<PlusCircle size={16} />} />
+						<Button
+							className="action-btn"
+							icon={<PlusCircle size={16} />}
+							onClick={toggleDropdown}
+						/>
 					</Dropdown>
 				</div>
 			</div>

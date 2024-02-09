@@ -62,3 +62,28 @@
         }
     }
 }
+
+.explorer-columns-search {
+    border: 1px solid rgba(118, 136, 201, 0.12);
+    border-radius: 6px;
+    padding: 0px;
+    background:#141414;
+    > input {
+        height: 32px;
+        padding: 0 6px;
+    }
+}
+
+.explorer-columns-dropdown {
+    .ant-dropdown-menu {
+        background-color: #141414;
+        padding: 0;
+
+        .ant-dropdown-menu-item {
+            padding: 4px;
+            .ant-checkbox-wrapper {
+                padding: 0 8px !important;
+            }
+        }
+    }
+}
