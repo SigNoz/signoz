@@ -118,7 +118,6 @@ function QuerySection({
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
 		const currentQueryType = qCategory;
-		console.log({ currentQueryType });
 
 		if (selectedGraph === PANEL_TYPES.LIST) {
 			if (currentQueryType === DataSource.LOGS) {
@@ -243,9 +242,6 @@ function QuerySection({
 			children: <PromQLQueryContainer />,
 		},
 	];
-
-	console.log({ activeKey: currentQuery.builder.queryData[0].dataSource });
-	console.log({ currentQuery });
 
 	return (
 		<div className="dashboard-navigation">

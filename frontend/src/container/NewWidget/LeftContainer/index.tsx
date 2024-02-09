@@ -20,7 +20,6 @@ function LeftContainer({
 	selectedTracesFields,
 	setSelectedTracesFields,
 }: WidgetGraphProps): JSX.Element {
-	console.log('  dnewkfnkewn ', selectedLogFields, selectedTracesFields);
 	return (
 		<>
 			<WidgetGraph
