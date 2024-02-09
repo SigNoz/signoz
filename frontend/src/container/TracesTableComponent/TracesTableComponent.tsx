@@ -1,8 +1,11 @@
 import './TracesTableComponent.styles.scss';
 
 import { ResizeTable } from 'components/ResizeTable';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import Controls from 'container/Controls';
+import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
 import {
 	getListColumns,
@@ -29,7 +32,7 @@ function TracesTableComponent({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const [paginationQueryData, setPaginationQueryData] = useState<Pagination>({
+	const [pagination, setPagination] = useState<Pagination>({
 		offset: 0,
 		limit: 10,
 	});
@@ -44,7 +47,7 @@ function TracesTableComponent({
 				dataSource: 'traces',
 			},
 			tableParams: {
-				pagination: paginationQueryData,
+				pagination,
 				selectColumns: selectedTracesFields,
 			},
 		},
@@ -55,8 +58,7 @@ function TracesTableComponent({
 				maxTime,
 				minTime,
 				query,
-				paginationQueryData,
-				selectedTracesFields,
+				pagination,
 			],
 			enabled: !!query && !!selectedTracesFields?.length,
 		},
@@ -93,25 +95,52 @@ function TracesTableComponent({
 		[],
 	);
 
+	if (isError) {
+		return <div>{SOMETHING_WENT_WRONG}</div>;
+	}
+
 	return (
-		<div>
-			{!isError && (
-				<div className="traces-table">
-					<div className="resize-table">
-						<ResizeTable
-							pagination={false}
-							tableLayout="fixed"
-							scroll={{ x: true, y: 330 }}
-							loading={isFetching}
-							style={tableStyles}
-							dataSource={transformedQueryTableData}
-							columns={columns}
-							onRow={handleRow}
-						/>
-					</div>
-					<div className="controller">Controller</div>
-				</div>
-			)}
+		<div className="traces-table">
+			<div className="resize-table">
+				<ResizeTable
+					pagination={false}
+					tableLayout="fixed"
+					scroll={{ x: true, y: 300 }}
+					loading={isFetching}
+					style={tableStyles}
+					dataSource={transformedQueryTableData}
+					columns={columns}
+					onRow={handleRow}
+				/>
+			</div>
+			<div className="controller">
+				<Controls
+					totalCount={totalCount}
+					perPageOptions={PER_PAGE_OPTIONS}
+					isLoading={isFetching}
+					offset={pagination.offset}
+					countPerPage={pagination.limit}
+					handleNavigatePrevious={(): void => {
+						setPagination({
+							...pagination,
+							offset: pagination.offset - pagination.limit,
+						});
+					}}
+					handleNavigateNext={(): void => {
+						setPagination({
+							...pagination,
+							offset: pagination.offset + pagination.limit,
+						});
+					}}
+					handleCountItemsPerPageChange={(value): void => {
+						setPagination({
+							...pagination,
+							limit: value,
+							offset: 0,
+						});
+					}}
+				/>
+			</div>
 		</div>
 	);
 }

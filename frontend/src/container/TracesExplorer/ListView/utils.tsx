@@ -51,6 +51,7 @@ export const getListColumns = (
 
 				return <Typography data-testid={key}>{value}</Typography>;
 			},
+			responsive: ['md'],
 		})) || [];
 
 	return [...initialColumns, ...columns];

@@ -5,10 +5,25 @@
     height: 100%;
 
     .resize-table {
-        flex-grow: 0.8;
-        height: 80%;
+        height: calc(90% - 10px);
+        overflow: scroll;
+
+        .ant-table-wrapper .ant-table-tbody >tr >td {
+            border: 0.5px solid #1d1d1d;
+            background-color: #000000;
+            font-size: 13px;
+        }
+        .ant-table-wrapper .ant-table-thead > tr > th {
+            background-color: #1d1d1d;
+            border: none;
+        }
+
+        
     }
+
     .controller {
-        flex-grow: 1;
+        position: absolute;
+        bottom: 5px;
+        right: 10px;
     }
 }
