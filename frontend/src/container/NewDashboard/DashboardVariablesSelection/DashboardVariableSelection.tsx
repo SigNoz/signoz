@@ -73,7 +73,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 					return variableCopy;
 				},
 			);
-			updateLocalStorageDashboardVariables(id, value, allSelected);
+			updateLocalStorageDashboardVariables(name, value, allSelected);
 
 			const variables = convertVariablesToDbFormat(newVariablesArr);
 
@@ -102,6 +102,8 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const orderBasedSortedVariables = variablesTableData.sort(
 		(a: { order: number }, b: { order: number }) => a.order - b.order,
 	);
+
+	console.log(selectedDashboard);
 
 	return (
 		<Row>

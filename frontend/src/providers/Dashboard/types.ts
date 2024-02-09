@@ -19,4 +19,5 @@ export interface IDashboardContext {
 	updatedTimeRef: React.MutableRefObject<dayjs.Dayjs | null>;
 	toScrollWidgetId: string;
 	setToScrollWidgetId: React.Dispatch<React.SetStateAction<string>>;
+	transformDashboardVariables: (data: Dashboard) => Dashboard;
 }
