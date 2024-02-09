@@ -19,7 +19,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 	panelType: newPanelType,
 	filterConfigs = {},
 	queryComponents,
-	isDashboardPanel = false,
+	isExplorerPanel = false,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,

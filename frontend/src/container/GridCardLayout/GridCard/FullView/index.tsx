@@ -172,6 +172,8 @@ function FullView({
 		parentGraphVisibilityState(graphsVisibilityStates);
 	}, [graphsVisibilityStates, parentGraphVisibilityState]);
 
+	const isListView = widget.panelTypes === PANEL_TYPES.LIST;
+
 	if (response.isFetching) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
@@ -202,19 +204,15 @@ function FullView({
 			<div
 				className={
 					isDashboardLocked
-						? `graph-container disabled ${
-								widget.panelTypes === PANEL_TYPES.LIST && 'list-graph-container'
-						  }`
-						: `graph-container ${
-								widget.panelTypes === PANEL_TYPES.LIST && 'list-graph-container'
-						  }`
+						? `graph-container disabled ${isListView && 'list-graph-container'}`
+						: `graph-container ${isListView && 'list-graph-container'}`
 				}
 				ref={fullViewRef}
 			>
 				{chartOptions !== undefined && (
 					<GraphContainer
 						style={{
-							height: widget.panelTypes === PANEL_TYPES.LIST ? '100%' : '90%',
+							height: isListView ? '100%' : '90%',
 						}}
 						isGraphLegendToggleAvailable={canModifyChart}
 					>

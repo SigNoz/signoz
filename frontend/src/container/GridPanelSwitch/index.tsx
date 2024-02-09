@@ -88,9 +88,6 @@ const GridPanelSwitch = forwardRef<
 			selectedTracesFields,
 		]);
 
-		// const Component = PANEL_TYPES_COMPONENT_MAP[panelType] as FC<
-		// 	PropsTypePropsMap[typeof panelType]
-		// >;
 		const Component = getComponentForPanelType(panelType, dataSource) as FC<
 			PropsTypePropsMap[typeof panelType]
 		>;

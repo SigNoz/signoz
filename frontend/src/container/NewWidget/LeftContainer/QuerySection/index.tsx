@@ -176,11 +176,7 @@ function QuerySection({
 				<QueryBuilder
 					panelType={PANEL_TYPES.LIST}
 					filterConfigs={listViewLogFilterConfigs}
-					isDashboardPanel
-					// config={{
-					// 	initialDataSource: DataSource.LOGS,
-					// 	queryVariant: 'static',
-					// }}
+					isExplorerPanel
 				/>
 			),
 		},
@@ -192,11 +188,7 @@ function QuerySection({
 				<QueryBuilder
 					panelType={PANEL_TYPES.LIST}
 					filterConfigs={listViewTracesFilterConfigs}
-					isDashboardPanel
-					// config={{
-					// 	initialDataSource: DataSource.TRACES,
-					// 	queryVariant: 'static',
-					// }}
+					isExplorerPanel
 				/>
 			),
 		},
