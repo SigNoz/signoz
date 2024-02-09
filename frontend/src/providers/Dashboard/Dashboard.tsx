@@ -52,7 +52,6 @@ const DashboardContext = createContext<IDashboardContext>({
 	updatedTimeRef: {} as React.MutableRefObject<Dayjs | null>,
 	toScrollWidgetId: '',
 	setToScrollWidgetId: () => {},
-	transformDashboardVariables: (data) => data,
 });
 
 interface Props {
@@ -114,13 +113,10 @@ export function DashboardProvider({
 		localStorageVariables: any,
 	): Dashboard => {
 		const updatedData = data;
-		console.log(updatedData);
 		if (data && localStorageVariables) {
 			const updatedVariables = data.data.variables;
-			console.log(updatedVariables);
 			Object.keys(data.data.variables).forEach((variable) => {
 				const variableData = data.data.variables[variable];
-				console.log(variableData, localStorageVariables[variableData.name as any]);
 				const updatedVariable = {
 					...data.data.variables[variable],
 					...localStorageVariables[variableData.name as any],
@@ -130,7 +126,6 @@ export function DashboardProvider({
 			});
 			updatedData.data.variables = updatedVariables;
 		}
-		console.log(updatedData);
 		return updatedData;
 	};
 	// As we do not have order and ID's in the variables object, we have to process variables to add order and ID if they do not exist in the variables object

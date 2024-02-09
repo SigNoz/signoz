@@ -77,11 +77,7 @@ function VariablesSetting(): JSX.Element {
 
 	const { t } = useTranslation(['dashboard']);
 
-	const {
-		selectedDashboard,
-		setSelectedDashboard,
-		transformDashboardVariables,
-	} = useDashboard();
+	const { selectedDashboard, setSelectedDashboard } = useDashboard();
 
 	const { notifications } = useNotifications();
 
@@ -170,9 +166,7 @@ function VariablesSetting(): JSX.Element {
 			{
 				onSuccess: (updatedDashboard) => {
 					if (updatedDashboard.payload) {
-						setSelectedDashboard(
-							transformDashboardVariables(updatedDashboard.payload),
-						);
+						setSelectedDashboard(updatedDashboard.payload);
 						notifications.success({
 							message: t('variable_updated_successfully'),
 						});
