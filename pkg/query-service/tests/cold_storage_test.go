@@ -28,6 +28,9 @@ func setTTL(table, coldStorage, toColdTTL, deleteTTL string, jwtToken string) ([
 	}
 	var bearer = "Bearer " + jwtToken
 	req, err := http.NewRequest("POST", endpoint+"/api/v1/settings/ttl?"+params, nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Authorization", bearer)
 
 	resp, err := client.Do(req)
@@ -129,6 +132,7 @@ func getTTL(t *testing.T, table string, jwtToken string) *model.GetTTLResponseIt
 
 	var bearer = "Bearer " + jwtToken
 	req, err := http.NewRequest("GET", url, nil)
+	require.NoError(t, err)
 	req.Header.Add("Authorization", bearer)
 	resp, err := client.Do(req)
 
