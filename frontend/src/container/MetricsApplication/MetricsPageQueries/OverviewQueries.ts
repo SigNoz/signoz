@@ -1,5 +1,8 @@
 import { OPERATORS } from 'constants/queryBuilder';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DataSource,
@@ -8,7 +11,6 @@ import {
 } from 'types/common/queryBuilder';
 
 import {
-	DataType,
 	FORMULA,
 	GraphTitle,
 	LATENCY_AGGREGATEOPERATOR,
@@ -18,7 +20,13 @@ import {
 	QUERYNAME_AND_EXPRESSION,
 	WidgetKeys,
 } from '../constant';
-import { LatencyProps, OperationPerSecProps } from '../Tabs/types';
+import {
+	ApDexMetricsQueryBuilderQueriesProps,
+	ApDexProps,
+	LatencyProps,
+	OperationPerSecProps,
+} from '../Tabs/types';
+import { convertMilSecToNanoSec, getNearestHighestBucketValue } from '../utils';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -34,9 +42,9 @@ export const latency = ({
 		key: isSpanMetricEnable
 			? WidgetKeys.Signoz_latency_bucket
 			: WidgetKeys.DurationNano,
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
-		type: isSpanMetricEnable ? null : MetricsType.Tag,
+		type: isSpanMetricEnable ? '' : MetricsType.Tag,
 	};
 
 	const autocompleteData = Array(3).fill(newAutoCompleteData);
@@ -46,7 +54,7 @@ export const latency = ({
 			id: '',
 			key: {
 				key: isSpanMetricEnable ? WidgetKeys.Service_name : WidgetKeys.ServiceName,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				type: isSpanMetricEnable ? MetricsType.Resource : MetricsType.Tag,
 				isColumn: !isSpanMetricEnable,
 			},
@@ -56,7 +64,7 @@ export const latency = ({
 		{
 			id: '',
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: !isSpanMetricEnable,
 				key: isSpanMetricEnable ? WidgetKeys.Operation : WidgetKeys.Name,
 				type: MetricsType.Tag,
@@ -85,6 +93,365 @@ export const latency = ({
 	});
 };
 
+export const apDexTracesQueryBuilderQueries = ({
+	servicename,
+	tagFilterItems,
+	topLevelOperationsRoute,
+	threashold,
+}: ApDexProps): QueryBuilderData => {
+	const autoCompleteDataA: BaseAutocompleteData = {
+		dataType: DataTypes.Float64,
+		isColumn: true,
+		key: '',
+		type: '',
+	};
+
+	const autoCompleteDataB: BaseAutocompleteData = {
+		dataType: DataTypes.Float64,
+		isColumn: true,
+		key: '',
+		type: '',
+	};
+
+	const autoCompleteDataC: BaseAutocompleteData = {
+		dataType: DataTypes.Float64,
+		isColumn: true,
+		key: '',
+		type: '',
+	};
+
+	const filterItemA: TagFilterItem[] = [
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.ServiceName,
+				dataType: DataTypes.String,
+				isColumn: true,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['='],
+			value: servicename,
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.Name,
+				dataType: DataTypes.String,
+				isColumn: true,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS.IN,
+			value: [...topLevelOperationsRoute],
+		},
+		...tagFilterItems,
+	];
+
+	const filterItemB: TagFilterItem[] = [
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.HasError,
+				dataType: DataTypes.bool,
+				isColumn: true,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['='],
+			value: false,
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.DurationNano,
+				dataType: DataTypes.Float64,
+				isColumn: true,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['<='],
+			value: convertMilSecToNanoSec(threashold),
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.ServiceName,
+				dataType: DataTypes.String,
+				isColumn: true,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['='],
+			value: servicename,
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.Name,
+				dataType: DataTypes.String,
+				isColumn: true,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS.IN,
+			value: [...topLevelOperationsRoute],
+		},
+	];
+
+	const filterItemC: TagFilterItem[] = [
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.DurationNano,
+				dataType: DataTypes.Float64,
+				isColumn: true,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['<='],
+			value: convertMilSecToNanoSec(threashold * 4),
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.HasError,
+				dataType: DataTypes.bool,
+				isColumn: true,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['='],
+			value: false,
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.ServiceName,
+				dataType: DataTypes.String,
+				isColumn: true,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['='],
+			value: servicename,
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.Name,
+				dataType: DataTypes.String,
+				isColumn: true,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS.IN,
+			value: [...topLevelOperationsRoute],
+		},
+	];
+
+	const autocompleteData = [
+		autoCompleteDataA,
+		autoCompleteDataB,
+		autoCompleteDataC,
+	];
+	const additionalItems = [filterItemA, filterItemB, filterItemC];
+	const legends = [GraphTitle.APDEX];
+	const disabled = Array(3).fill(true);
+	const expressions = [FORMULA.APDEX_TRACES];
+	const legendFormulas = [GraphTitle.APDEX];
+	const aggregateOperators = [
+		MetricAggregateOperator.COUNT,
+		MetricAggregateOperator.COUNT,
+		MetricAggregateOperator.COUNT,
+	];
+	const dataSource = DataSource.TRACES;
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
+		legends,
+		disabled,
+		expressions,
+		legendFormulas,
+		aggregateOperators,
+		dataSource,
+	});
+};
+
+export const apDexMetricsQueryBuilderQueries = ({
+	servicename,
+	tagFilterItems,
+	topLevelOperationsRoute,
+	threashold,
+	delta,
+	metricsBuckets,
+}: ApDexMetricsQueryBuilderQueriesProps): QueryBuilderData => {
+	const autoCompleteDataA: BaseAutocompleteData = {
+		key: WidgetKeys.SignozLatencyCount,
+		dataType: DataTypes.Float64,
+		isColumn: true,
+		type: '',
+	};
+
+	const autoCompleteDataB: BaseAutocompleteData = {
+		key: WidgetKeys.Signoz_latency_bucket,
+		dataType: DataTypes.Float64,
+		isColumn: true,
+		type: '',
+	};
+
+	const autoCompleteDataC: BaseAutocompleteData = {
+		key: WidgetKeys.Signoz_latency_bucket,
+		dataType: DataTypes.Float64,
+		isColumn: true,
+		type: '',
+	};
+
+	const filterItemA: TagFilterItem[] = [
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.Service_name,
+				dataType: DataTypes.String,
+				isColumn: false,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['='],
+			value: servicename,
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.Operation,
+				dataType: DataTypes.String,
+				isColumn: false,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS.IN,
+			value: [...topLevelOperationsRoute],
+		},
+		...tagFilterItems,
+	];
+
+	const filterItemB: TagFilterItem[] = [
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.StatusCode,
+				dataType: DataTypes.String,
+				isColumn: false,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['!='],
+			value: 'STATUS_CODE_ERROR',
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.Le,
+				dataType: DataTypes.String,
+				isColumn: false,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['='],
+			value: getNearestHighestBucketValue(threashold * 1000, metricsBuckets),
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.Service_name,
+				dataType: DataTypes.String,
+				isColumn: false,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['='],
+			value: servicename,
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.Operation,
+				dataType: DataTypes.String,
+				isColumn: false,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS.IN,
+			value: [...topLevelOperationsRoute],
+		},
+		...tagFilterItems,
+	];
+
+	const filterItemC: TagFilterItem[] = [
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.Le,
+				dataType: DataTypes.String,
+				isColumn: false,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['='],
+			value: getNearestHighestBucketValue(threashold * 1000 * 4, metricsBuckets),
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.StatusCode,
+				dataType: DataTypes.String,
+				isColumn: false,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['!='],
+			value: 'STATUS_CODE_ERROR',
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.Service_name,
+				dataType: DataTypes.String,
+				isColumn: false,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS['='],
+			value: servicename,
+		},
+		{
+			id: '',
+			key: {
+				key: WidgetKeys.Operation,
+				dataType: DataTypes.String,
+				isColumn: false,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS.IN,
+			value: [...topLevelOperationsRoute],
+		},
+		...tagFilterItems,
+	];
+
+	const autocompleteData = [
+		autoCompleteDataA,
+		autoCompleteDataB,
+		autoCompleteDataC,
+	];
+
+	const additionalItems = [filterItemA, filterItemB, filterItemC];
+	const legends = [GraphTitle.APDEX];
+	const disabled = Array(3).fill(true);
+	const expressions = delta
+		? [FORMULA.APDEX_DELTA_SPAN_METRICS]
+		: [FORMULA.APDEX_CUMULATIVE_SPAN_METRICS];
+	const legendFormulas = [GraphTitle.APDEX];
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM_RATE,
+		MetricAggregateOperator.SUM_RATE,
+		MetricAggregateOperator.SUM_RATE,
+	];
+	const dataSource = DataSource.METRICS;
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
+		legends,
+		disabled,
+		expressions,
+		legendFormulas,
+		aggregateOperators,
+		dataSource,
+	});
+};
+
 export const operationPerSec = ({
 	servicename,
 	tagFilterItems,
@@ -93,9 +460,9 @@ export const operationPerSec = ({
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
 			key: WidgetKeys.SignozLatencyCount,
-			dataType: DataType.FLOAT64,
+			dataType: DataTypes.Float64,
 			isColumn: true,
-			type: null,
+			type: '',
 		},
 	];
 
@@ -105,7 +472,7 @@ export const operationPerSec = ({
 				id: '',
 				key: {
 					key: WidgetKeys.Service_name,
-					dataType: DataType.STRING,
+					dataType: DataTypes.String,
 					isColumn: false,
 					type: MetricsType.Resource,
 				},
@@ -116,7 +483,7 @@ export const operationPerSec = ({
 				id: '',
 				key: {
 					key: WidgetKeys.Operation,
-					dataType: DataType.STRING,
+					dataType: DataTypes.String,
 					isColumn: false,
 					type: MetricsType.Tag,
 				},
@@ -145,15 +512,15 @@ export const errorPercentage = ({
 }: OperationPerSecProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 
 	const autocompleteData = [autocompleteDataA, autocompleteDataB];
@@ -163,7 +530,7 @@ export const errorPercentage = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Service_name,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Resource,
 			},
@@ -174,7 +541,7 @@ export const errorPercentage = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Operation,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -185,7 +552,7 @@ export const errorPercentage = ({
 			id: '',
 			key: {
 				key: WidgetKeys.StatusCode,
-				dataType: DataType.INT64,
+				dataType: DataTypes.Int64,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -200,7 +567,7 @@ export const errorPercentage = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Service_name,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Resource,
 			},
@@ -211,7 +578,7 @@ export const errorPercentage = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Operation,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},

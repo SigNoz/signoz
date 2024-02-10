@@ -1,13 +1,16 @@
 package v3
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -136,6 +139,24 @@ func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
 	}
 }
 
+func (a AggregateOperator) IsRateOperator() bool {
+	switch a {
+	case AggregateOperatorRate,
+		AggregateOperatorSumRate,
+		AggregateOperatorAvgRate,
+		AggregateOperatorMinRate,
+		AggregateOperatorMaxRate,
+		AggregateOperatorRateSum,
+		AggregateOperatorRateAvg,
+		AggregateOperatorRateMin,
+		AggregateOperatorRateMax:
+		return true
+
+	default:
+		return false
+	}
+}
+
 type ReduceToOperator string
 
 const (
@@ -234,11 +255,15 @@ type FilterAttributeKeyRequest struct {
 type AttributeKeyDataType string
 
 const (
-	AttributeKeyDataTypeUnspecified AttributeKeyDataType = ""
-	AttributeKeyDataTypeString      AttributeKeyDataType = "string"
-	AttributeKeyDataTypeInt64       AttributeKeyDataType = "int64"
-	AttributeKeyDataTypeFloat64     AttributeKeyDataType = "float64"
-	AttributeKeyDataTypeBool        AttributeKeyDataType = "bool"
+	AttributeKeyDataTypeUnspecified  AttributeKeyDataType = ""
+	AttributeKeyDataTypeString       AttributeKeyDataType = "string"
+	AttributeKeyDataTypeInt64        AttributeKeyDataType = "int64"
+	AttributeKeyDataTypeFloat64      AttributeKeyDataType = "float64"
+	AttributeKeyDataTypeBool         AttributeKeyDataType = "bool"
+	AttributeKeyDataTypeArrayString  AttributeKeyDataType = "array(string)"
+	AttributeKeyDataTypeArrayInt64   AttributeKeyDataType = "array(int64)"
+	AttributeKeyDataTypeArrayFloat64 AttributeKeyDataType = "array(float64)"
+	AttributeKeyDataTypeArrayBool    AttributeKeyDataType = "array(bool)"
 )
 
 func (q AttributeKeyDataType) Validate() error {
@@ -285,6 +310,7 @@ type AttributeKey struct {
 	DataType AttributeKeyDataType `json:"dataType"`
 	Type     AttributeKeyType     `json:"type"`
 	IsColumn bool                 `json:"isColumn"`
+	IsJSON   bool                 `json:"isJSON"`
 }
 
 func (a AttributeKey) CacheKey() string {
@@ -293,7 +319,7 @@ func (a AttributeKey) CacheKey() string {
 
 func (a AttributeKey) Validate() error {
 	switch a.DataType {
-	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeUnspecified:
+	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeArrayFloat64, AttributeKeyDataTypeArrayString, AttributeKeyDataTypeArrayInt64, AttributeKeyDataTypeArrayBool, AttributeKeyDataTypeUnspecified:
 		break
 	default:
 		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
@@ -324,7 +350,7 @@ type FilterAttributeValueResponse struct {
 type QueryRangeParamsV3 struct {
 	Start          int64                  `json:"start"`
 	End            int64                  `json:"end"`
-	Step           int64                  `json:"step"`
+	Step           int64                  `json:"step"` // step is in seconds; used for prometheus queries
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
 	NoCache        bool                   `json:"noCache"`
@@ -373,6 +399,7 @@ type CompositeQuery struct {
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
+	Unit              string                      `json:"unit,omitempty"`
 }
 
 func (c *CompositeQuery) Validate() error {
@@ -384,27 +411,21 @@ func (c *CompositeQuery) Validate() error {
 		return fmt.Errorf("composite query must contain at least one query")
 	}
 
-	if c.BuilderQueries != nil {
-		for name, query := range c.BuilderQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("builder query %s is invalid: %w", name, err)
-			}
+	for name, query := range c.BuilderQueries {
+		if err := query.Validate(); err != nil {
+			return fmt.Errorf("builder query %s is invalid: %w", name, err)
 		}
 	}
 
-	if c.ClickHouseQueries != nil {
-		for name, query := range c.ClickHouseQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
-			}
+	for name, query := range c.ClickHouseQueries {
+		if err := query.Validate(); err != nil {
+			return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
 		}
 	}
 
-	if c.PromQueries != nil {
-		for name, query := range c.PromQueries {
-			if err := query.Validate(); err != nil {
-				return fmt.Errorf("prom query %s is invalid: %w", name, err)
-			}
+	for name, query := range c.PromQueries {
+		if err := query.Validate(); err != nil {
+			return fmt.Errorf("prom query %s is invalid: %w", name, err)
 		}
 	}
 
@@ -427,6 +448,123 @@ const (
 	Cumulative  Temporality = "Cumulative"
 )
 
+type TimeAggregation string
+
+const (
+	TimeAggregationUnspecified   TimeAggregation = ""
+	TimeAggregationAnyLast       TimeAggregation = "latest"
+	TimeAggregationSum           TimeAggregation = "sum"
+	TimeAggregationAvg           TimeAggregation = "avg"
+	TimeAggregationMin           TimeAggregation = "min"
+	TimeAggregationMax           TimeAggregation = "max"
+	TimeAggregationCount         TimeAggregation = "count"
+	TimeAggregationCountDistinct TimeAggregation = "count_distinct"
+	TimeAggregationRate          TimeAggregation = "rate"
+	TimeAggregationIncrease      TimeAggregation = "increase"
+)
+
+func (t TimeAggregation) IsRateOperator() bool {
+	switch t {
+	case TimeAggregationRate, TimeAggregationIncrease:
+		return true
+	default:
+		return false
+	}
+}
+
+type SpaceAggregation string
+
+const (
+	SpaceAggregationUnspecified  SpaceAggregation = ""
+	SpaceAggregationSum          SpaceAggregation = "sum"
+	SpaceAggregationAvg          SpaceAggregation = "avg"
+	SpaceAggregationMin          SpaceAggregation = "min"
+	SpaceAggregationMax          SpaceAggregation = "max"
+	SpaceAggregationCount        SpaceAggregation = "count"
+	SpaceAggregationPercentile50 SpaceAggregation = "percentile_50"
+	SpaceAggregationPercentile75 SpaceAggregation = "percentile_75"
+	SpaceAggregationPercentile90 SpaceAggregation = "percentile_90"
+	SpaceAggregationPercentile95 SpaceAggregation = "percentile_95"
+	SpaceAggregationPercentile99 SpaceAggregation = "percentile_99"
+)
+
+func IsPercentileOperator(operator SpaceAggregation) bool {
+	switch operator {
+	case SpaceAggregationPercentile50,
+		SpaceAggregationPercentile75,
+		SpaceAggregationPercentile90,
+		SpaceAggregationPercentile95,
+		SpaceAggregationPercentile99:
+		return true
+	default:
+		return false
+	}
+}
+
+func GetPercentileFromOperator(operator SpaceAggregation) float64 {
+	// This could be done with a map, but it's just easier to read this way
+	switch operator {
+	case SpaceAggregationPercentile50:
+		return 0.5
+	case SpaceAggregationPercentile75:
+		return 0.75
+	case SpaceAggregationPercentile90:
+		return 0.9
+	case SpaceAggregationPercentile95:
+		return 0.95
+	case SpaceAggregationPercentile99:
+		return 0.99
+	default:
+		return 0
+	}
+}
+
+type FunctionName string
+
+const (
+	FunctionNameCutOffMin FunctionName = "cutOffMin"
+	FunctionNameCutOffMax FunctionName = "cutOffMax"
+	FunctionNameClampMin  FunctionName = "clampMin"
+	FunctionNameClampMax  FunctionName = "clampMax"
+	FunctionNameAbsolute  FunctionName = "absolute"
+	FunctionNameLog2      FunctionName = "log2"
+	FunctionNameLog10     FunctionName = "log10"
+	FunctionNameCumSum    FunctionName = "cumSum"
+	FunctionNameEWMA3     FunctionName = "ewma3"
+	FunctionNameEWMA5     FunctionName = "ewma5"
+	FunctionNameEWMA7     FunctionName = "ewma7"
+	FunctionNameMedian3   FunctionName = "median3"
+	FunctionNameMedian5   FunctionName = "median5"
+	FunctionNameMedian7   FunctionName = "median7"
+)
+
+func (f FunctionName) Validate() error {
+	switch f {
+	case FunctionNameCutOffMin,
+		FunctionNameCutOffMax,
+		FunctionNameClampMin,
+		FunctionNameClampMax,
+		FunctionNameAbsolute,
+		FunctionNameLog2,
+		FunctionNameLog10,
+		FunctionNameCumSum,
+		FunctionNameEWMA3,
+		FunctionNameEWMA5,
+		FunctionNameEWMA7,
+		FunctionNameMedian3,
+		FunctionNameMedian5,
+		FunctionNameMedian7:
+		return nil
+	default:
+		return fmt.Errorf("invalid function name: %s", f)
+	}
+}
+
+type Function struct {
+	Name FunctionName  `json:"name"`
+	Args []interface{} `json:"args,omitempty"`
+}
+
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
 	StepInterval       int64             `json:"stepInterval"`
@@ -446,6 +584,9 @@ type BuilderQuery struct {
 	OrderBy            []OrderBy         `json:"orderBy,omitempty"`
 	ReduceTo           ReduceToOperator  `json:"reduceTo,omitempty"`
 	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
+	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
+	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
+	Functions          []Function        `json:"functions,omitempty"`
 }
 
 func (b *BuilderQuery) Validate() error {
@@ -462,8 +603,16 @@ func (b *BuilderQuery) Validate() error {
 		if err := b.DataSource.Validate(); err != nil {
 			return fmt.Errorf("data source is invalid: %w", err)
 		}
-		if err := b.AggregateOperator.Validate(); err != nil {
-			return fmt.Errorf("aggregate operator is invalid: %w", err)
+		if b.DataSource == DataSourceMetrics {
+			if b.TimeAggregation == TimeAggregationUnspecified {
+				if err := b.AggregateOperator.Validate(); err != nil {
+					return fmt.Errorf("aggregate operator is invalid: %w", err)
+				}
+			}
+		} else {
+			if err := b.AggregateOperator.Validate(); err != nil {
+				return fmt.Errorf("aggregate operator is invalid: %w", err)
+			}
 		}
 		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute(b.DataSource) {
 			return fmt.Errorf("aggregate attribute is required")
@@ -489,17 +638,32 @@ func (b *BuilderQuery) Validate() error {
 		}
 	}
 
-	if b.SelectColumns != nil {
-		for _, selectColumn := range b.SelectColumns {
-			if err := selectColumn.Validate(); err != nil {
-				return fmt.Errorf("select column is invalid %w", err)
+	if b.Having != nil {
+		for _, having := range b.Having {
+			if err := having.Operator.Validate(); err != nil {
+				return fmt.Errorf("having operator is invalid: %w", err)
 			}
+		}
+	}
+
+	for _, selectColumn := range b.SelectColumns {
+		if err := selectColumn.Validate(); err != nil {
+			return fmt.Errorf("select column is invalid %w", err)
 		}
 	}
 
 	if b.Expression == "" {
 		return fmt.Errorf("expression is required")
 	}
+
+	if len(b.Functions) > 0 {
+		for _, function := range b.Functions {
+			if err := function.Name.Validate(); err != nil {
+				return fmt.Errorf("function name is invalid: %w", err)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -523,6 +687,22 @@ func (f *FilterSet) Validate() error {
 	return nil
 }
 
+// For serializing to and from db
+func (f *FilterSet) Scan(src interface{}) error {
+	if data, ok := src.([]byte); ok {
+		return json.Unmarshal(data, &f)
+	}
+	return nil
+}
+
+func (f *FilterSet) Value() (driver.Value, error) {
+	filterSetJson, err := json.Marshal(f)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not serialize FilterSet to JSON")
+	}
+	return filterSetJson, nil
+}
+
 type FilterOperator string
 
 const (
@@ -544,6 +724,9 @@ const (
 
 	FilterOperatorExists    FilterOperator = "exists"
 	FilterOperatorNotExists FilterOperator = "nexists"
+
+	FilterOperatorHas    FilterOperator = "has"
+	FilterOperatorNotHas FilterOperator = "nhas"
 )
 
 type FilterItem struct {
@@ -565,10 +748,43 @@ type OrderBy struct {
 	IsColumn   bool                 `json:"-"`
 }
 
+// See HAVING_OPERATORS in queryBuilder.ts
+
+type HavingOperator string
+
+const (
+	HavingOperatorEqual           HavingOperator = "="
+	HavingOperatorNotEqual        HavingOperator = "!="
+	HavingOperatorGreaterThan     HavingOperator = ">"
+	HavingOperatorGreaterThanOrEq HavingOperator = ">="
+	HavingOperatorLessThan        HavingOperator = "<"
+	HavingOperatorLessThanOrEq    HavingOperator = "<="
+	HavingOperatorIn              HavingOperator = "IN"
+	HavingOperatorNotIn           HavingOperator = "NOT_IN"
+)
+
+func (h HavingOperator) Validate() error {
+	switch h {
+	case HavingOperatorEqual,
+		HavingOperatorNotEqual,
+		HavingOperatorGreaterThan,
+		HavingOperatorGreaterThanOrEq,
+		HavingOperatorLessThan,
+		HavingOperatorLessThanOrEq,
+		HavingOperatorIn,
+		HavingOperatorNotIn,
+		HavingOperator(strings.ToLower(string(HavingOperatorIn))),
+		HavingOperator(strings.ToLower(string(HavingOperatorNotIn))):
+		return nil
+	default:
+		return fmt.Errorf("invalid having operator: %s", h)
+	}
+}
+
 type Having struct {
-	ColumnName string      `json:"columnName"`
-	Operator   string      `json:"op"`
-	Value      interface{} `json:"value"`
+	ColumnName string         `json:"columnName"`
+	Operator   HavingOperator `json:"op"`
+	Value      interface{}    `json:"value"`
 }
 
 func (h *Having) CacheKey() string {
@@ -576,8 +792,10 @@ func (h *Having) CacheKey() string {
 }
 
 type QueryRangeResponse struct {
-	ResultType string    `json:"resultType"`
-	Result     []*Result `json:"result"`
+	ContextTimeout        bool      `json:"contextTimeout,omitempty"`
+	ContextTimeoutMessage string    `json:"contextTimeoutMessage,omitempty"`
+	ResultType            string    `json:"resultType"`
+	Result                []*Result `json:"result"`
 }
 
 type Result struct {
@@ -588,7 +806,7 @@ type Result struct {
 
 type LogsLiveTailClient struct {
 	Name  string
-	Logs  chan *model.GetLogsResponse
+	Logs  chan *model.SignozLog
 	Done  chan *bool
 	Error chan error
 }
@@ -604,6 +822,35 @@ func (s *Series) SortPoints() {
 	sort.Slice(s.Points, func(i, j int) bool {
 		return s.Points[i].Timestamp < s.Points[j].Timestamp
 	})
+}
+
+func (s *Series) RemoveDuplicatePoints() {
+	if len(s.Points) == 0 {
+		return
+	}
+
+	// priortize the last point
+	// this is to handle the case where the same point is sent twice
+	// the last point is the most recent point adjusted for the flux interval
+
+	newPoints := make([]Point, 0)
+	for i := len(s.Points) - 1; i >= 0; i-- {
+		if len(newPoints) == 0 {
+			newPoints = append(newPoints, s.Points[i])
+			continue
+		}
+		if newPoints[len(newPoints)-1].Timestamp != s.Points[i].Timestamp {
+			newPoints = append(newPoints, s.Points[i])
+		}
+	}
+
+	// reverse the points
+	for i := len(newPoints)/2 - 1; i >= 0; i-- {
+		opp := len(newPoints) - 1 - i
+		newPoints[i], newPoints[opp] = newPoints[opp], newPoints[i]
+	}
+
+	s.Points = newPoints
 }
 
 type Row struct {
@@ -637,24 +884,26 @@ func (p *Point) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-// ExploreQuery is a query for the explore page
-// It is a composite query with a source page name
+// SavedView is a saved query for the explore page
+// It is a composite query with a source page name and user defined tags
 // The source page name is used to identify the page that initiated the query
-// The source page could be "traces", "logs", "metrics" or "dashboards", "alerts" etc.
-type ExplorerQuery struct {
+// The source page could be "traces", "logs", "metrics".
+type SavedView struct {
 	UUID           string          `json:"uuid,omitempty"`
+	Name           string          `json:"name"`
+	Category       string          `json:"category"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	CreatedBy      string          `json:"createdBy"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
+	UpdatedBy      string          `json:"updatedBy"`
 	SourcePage     string          `json:"sourcePage"`
+	Tags           []string        `json:"tags"`
 	CompositeQuery *CompositeQuery `json:"compositeQuery"`
 	// ExtraData is JSON encoded data used by frontend to store additional data
 	ExtraData string `json:"extraData"`
-	// 0 - false, 1 - true; this is int8 because sqlite doesn't support bool
-	IsView int8 `json:"isView"`
 }
 
-func (eq *ExplorerQuery) Validate() error {
-	if eq.IsView != 0 && eq.IsView != 1 {
-		return fmt.Errorf("isView must be 0 or 1")
-	}
+func (eq *SavedView) Validate() error {
 
 	if eq.CompositeQuery == nil {
 		return fmt.Errorf("composite query is required")

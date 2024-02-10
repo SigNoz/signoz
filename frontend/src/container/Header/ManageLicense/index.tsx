@@ -21,7 +21,7 @@ function ManageLicense({ onToggle }: ManageLicenseProps): JSX.Element {
 		return <Spin />;
 	}
 
-	const isEnterprise = data?.payload?.some(
+	const isEnterprise = data?.payload?.licenses?.some(
 		(license) =>
 			license.isCurrent && license.planKey === LICENSE_PLAN_KEY.ENTERPRISE_PLAN,
 	);

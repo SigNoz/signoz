@@ -8,12 +8,13 @@ import styled from 'styled-components';
 
 export const Card = styled(CardComponent)`
 	&&& {
-		padding: 10px;
+		height: 40vh;
+		overflow: hidden;
 	}
 
 	.ant-card-body {
+		height: calc(100% - 40px);
 		padding: 0;
-		min-height: 40vh;
 	}
 `;
 
@@ -29,8 +30,17 @@ export const Col = styled(ColComponent)`
 	}
 `;
 
+export const ColApDexContainer = styled(ColComponent)`
+	padding: 0 !important;
+`;
+
+export const ColErrorContainer = styled(ColComponent)`
+	padding: 2rem 0 !important;
+`;
+
 export const GraphContainer = styled.div`
-	height: 40vh;
+	min-height: calc(40vh - 40px);
+	height: calc(100% - 40px);
 `;
 
 export const GraphTitle = styled(Typography)`

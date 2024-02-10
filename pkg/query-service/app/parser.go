@@ -734,6 +734,14 @@ func parseSetApdexScoreRequest(r *http.Request) (*model.ApdexSettings, error) {
 	return &req, nil
 }
 
+func parseInsertIngestionKeyRequest(r *http.Request) (*model.IngestionKey, error) {
+	var req model.IngestionKey
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	return &req, nil
+}
+
 func parseRegisterRequest(r *http.Request) (*auth.RegisterRequest, error) {
 	var req auth.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -844,7 +852,6 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
-
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
 		limit = 50
@@ -978,6 +985,41 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			// Formula query
+			if query.QueryName != query.Expression {
+				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
+				if err != nil {
+					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+				}
+
+				// get the group keys for the vars
+				groupKeys := make(map[string][]string)
+				for _, v := range expression.Vars() {
+					if varQuery, ok := queryRangeParams.CompositeQuery.BuilderQueries[v]; ok {
+						groupKeys[v] = []string{}
+						for _, key := range varQuery.GroupBy {
+							groupKeys[v] = append(groupKeys[v], key.Key)
+						}
+					} else {
+						return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unknown variable %s", v)}
+					}
+				}
+
+				params := make(map[string]interface{})
+				for k, v := range groupKeys {
+					params[k] = v
+				}
+
+				can, _, err := expression.CanJoin(params)
+				if err != nil {
+					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+				}
+
+				if !can {
+					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot join the given group keys")}
+				}
+			}
+
 			if query.Filters == nil || len(query.Filters.Items) == 0 {
 				continue
 			}
@@ -1014,13 +1056,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 		queryRangeParams.Start = queryRangeParams.End
 	}
 
-	// round up the end to neaerest multiple
-	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		end := (queryRangeParams.End) / 1000
-		step := queryRangeParams.Step
-		queryRangeParams.End = (end / step * step) * 1000
-	}
-
 	// replace go template variables in clickhouse query
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
 		for _, chQuery := range queryRangeParams.CompositeQuery.ClickHouseQueries {
@@ -1042,6 +1077,30 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 			}
 			chQuery.Query = query.String()
+		}
+	}
+
+	// replace go template variables in prometheus query
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		for _, promQuery := range queryRangeParams.CompositeQuery.PromQueries {
+			if promQuery.Disabled {
+				continue
+			}
+			tmpl := template.New("prometheus-query")
+			tmpl, err := tmpl.Parse(promQuery.Query)
+			if err != nil {
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			}
+			var query bytes.Buffer
+
+			// replace go template variables
+			querytemplate.AssignReservedVarsV3(queryRangeParams)
+
+			err = tmpl.Execute(&query, queryRangeParams.Variables)
+			if err != nil {
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			}
+			promQuery.Query = query.String()
 		}
 	}
 

@@ -4,7 +4,7 @@ import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/logs/addToSelectedFields';
 
-const AddToSelectedFields = async (
+const addToSelectedFields = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
@@ -16,8 +16,8 @@ const AddToSelectedFields = async (
 			payload: data.data,
 		};
 	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
+		return Promise.reject(ErrorResponseHandler(error as AxiosError));
 	}
 };
 
-export default AddToSelectedFields;
+export default addToSelectedFields;

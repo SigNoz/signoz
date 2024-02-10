@@ -1,0 +1,31 @@
+.DynamicColumnTable {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+
+	.dynamicColumnTable-button {
+		align-self: flex-end;
+		margin: 10px 0;
+
+		&.filter-btn {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+	}
+}
+
+.dynamicColumnsTable-items {
+	display: flex;
+	width: 10.625rem;
+	justify-content: space-between;
+	align-items: center;
+}
+
+@media (max-width: 768px) {
+	.dynamicColumnsTable-items {
+		flex-direction: column;
+		width: auto;
+		text-align: center;
+	}
+}

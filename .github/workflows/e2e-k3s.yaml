@@ -13,7 +13,12 @@ jobs:
       DOCKER_TAG: pull-${{ github.event.number }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Setup golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
 
       - name: Build query-service image
         env:
@@ -65,9 +70,9 @@ jobs:
       - name: Kick off a sample-app workload
         run: |
           # start the locust swarm
-          kubectl -n sample-application run strzal --image=djbingham/curl \
-            --restart='OnFailure' -i --rm --command -- curl -X POST -F \
-            'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
+          kubectl --namespace sample-application run strzal --image=djbingham/curl \
+            --restart='OnFailure' -i --tty --rm --command -- curl -X POST -F \
+            'user_count=6' -F 'spawn_rate=2' http://locust-master:8089/swarm
 
       - name: Get short commit SHA, display tunnel URL and IP Address of the worker node
         id: get-subdomain

@@ -1,36 +1,32 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Card } from 'container/GridGraphLayout/styles';
+import { Card } from 'container/GridCardLayout/styles';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo } from 'react';
-import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import { WidgetGraphProps } from '../../types';
 import PlotTag from './PlotTag';
 import { AlertIconContainer, Container } from './styles';
-import WidgetGraphComponent from './WidgetGraph';
+import WidgetGraphComponent from './WidgetGraphContainer';
 
 function WidgetGraph({
 	selectedGraph,
 	yAxisUnit,
 	selectedTime,
+	thresholds,
+	fillSpans,
+	softMax,
+	softMin,
 }: WidgetGraphProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { selectedDashboard } = useDashboard();
 
-	const [selectedDashboard] = dashboards;
-	const { search } = useLocation();
+	const { widgets = [] } = selectedDashboard?.data || {};
 
-	const { data } = selectedDashboard;
+	const params = useUrlQuery();
 
-	const { widgets = [] } = data;
-
-	const params = new URLSearchParams(search);
 	const widgetId = params.get('widgetId');
 
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
@@ -54,9 +50,13 @@ function WidgetGraph({
 			)}
 
 			<WidgetGraphComponent
+				thresholds={thresholds}
 				selectedTime={selectedTime}
 				selectedGraph={selectedGraph}
 				yAxisUnit={yAxisUnit}
+				fillSpans={fillSpans}
+				softMax={softMax}
+				softMin={softMin}
 			/>
 		</Container>
 	);

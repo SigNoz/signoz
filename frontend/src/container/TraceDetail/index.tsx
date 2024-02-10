@@ -1,5 +1,9 @@
+import './TraceDetails.styles.scss';
+
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Col, Typography } from 'antd';
+import Sider from 'antd/es/layout/Sider';
+import cx from 'classnames';
 import {
 	StyledCol,
 	StyledDiv,
@@ -8,12 +12,13 @@ import {
 	StyledSpace,
 	StyledTypography,
 } from 'components/Styled';
-import * as StyledStyles from 'components/Styled/styles';
+import { Flex, Spacing } from 'components/Styled/styles';
 import GanttChart, { ITraceMetaData } from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
 import TraceFlameGraph from 'container/TraceFlameGraph';
 import dayjs from 'dayjs';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import history from 'lib/history';
@@ -100,11 +105,6 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		[activeSelectedId, treesData],
 	);
 
-	// const onSearchHandler = (value: string) => {
-	// 	setSearchSpanString(value);
-	// 	setTreeData(spanToTreeUtil(response[0].events));
-	// };
-
 	const onFocusSelectedSpanHandler = (): void => {
 		const treeNode = getNodeById(activeSelectedId, tree);
 
@@ -126,9 +126,12 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	);
 
 	const isGlobalTimeVisible = tree && traceMetaData.globalStart;
+	const [collapsed, setCollapsed] = useState(false);
+
+	const isDarkMode = useIsDarkMode();
 
 	return (
-		<StyledRow styledclass={[StyledStyles.Flex({ flex: 1 })]}>
+		<StyledRow styledclass={[Flex({ flex: 1 })]}>
 			<StyledCol flex="auto" styledclass={styles.leftContainer}>
 				<StyledRow styledclass={styles.flameAndTimelineContainer}>
 					<StyledCol
@@ -199,7 +202,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 				<StyledRow
 					styledclass={[
 						styles.traceDetailContentSpacing,
-						StyledStyles.Spacing({
+						Spacing({
 							margin: '1.5rem 1rem 0.5rem',
 						}),
 					]}
@@ -234,22 +237,38 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 					</GanttChartWrapper>
 				</StyledDiv>
 			</StyledCol>
+
 			<Col>
 				<StyledDivider styledclass={[styles.verticalSeparator]} type="vertical" />
 			</Col>
-			<StyledCol md={5} sm={5} styledclass={[styles.selectedSpanDetailContainer]}>
-				<SelectedSpanDetails
-					firstSpanStartTime={firstSpanStartTime}
-					tree={[
-						...(getSelectedNode.spanTree ? getSelectedNode.spanTree : []),
-						...(getSelectedNode.missingSpanTree
-							? getSelectedNode.missingSpanTree
-							: []),
-					]
-						.filter(Boolean)
-						.find((tree) => tree)}
-				/>
-			</StyledCol>
+
+			<Sider
+				className={cx('span-details-sider', isDarkMode ? 'dark' : 'light')}
+				style={{ background: isDarkMode ? '#000' : '#fff' }}
+				theme={isDarkMode ? 'dark' : 'light'}
+				collapsible
+				collapsed={collapsed}
+				reverseArrow
+				width={300}
+				collapsedWidth={40}
+				onCollapse={(value): void => setCollapsed(value)}
+			>
+				{!collapsed && (
+					<StyledCol styledclass={[styles.selectedSpanDetailContainer]}>
+						<SelectedSpanDetails
+							firstSpanStartTime={firstSpanStartTime}
+							tree={[
+								...(getSelectedNode.spanTree ? getSelectedNode.spanTree : []),
+								...(getSelectedNode.missingSpanTree
+									? getSelectedNode.missingSpanTree
+									: []),
+							]
+								.filter(Boolean)
+								.find((tree) => tree)}
+						/>
+					</StyledCol>
+				)}
+			</Sider>
 		</StyledRow>
 	);
 }

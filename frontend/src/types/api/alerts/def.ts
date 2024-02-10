@@ -21,13 +21,16 @@ export interface AlertDef {
 	source?: string;
 	disabled?: boolean;
 	preferredChannels?: string[];
+	broadcastToAll?: boolean;
 }
 
 export interface RuleCondition {
 	compositeQuery: ICompositeMetricQuery;
-	op?: string | undefined;
-	target?: number | undefined;
-	matchType?: string | undefined;
+	op?: string;
+	target?: number;
+	matchType?: string;
+	targetUnit?: string;
+	selectedQueryName?: string;
 }
 
 export interface Labels {

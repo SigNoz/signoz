@@ -1,0 +1,25 @@
+.trial-expiry-banner {
+	padding: 8px;
+	background-color: #f25733;
+	color: white;
+	text-align: center;
+}
+
+.upgrade-link {
+	padding: 0px;
+	padding-right: 4px;
+	display: inline !important;
+	color: white;
+	text-decoration: underline;
+	text-decoration-color: white;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 2px;
+
+	&:hover {
+		color: white;
+		text-decoration: underline;
+		text-decoration-color: white;
+		text-decoration-thickness: 2px;
+		text-underline-offset: 2px;
+	}
+}

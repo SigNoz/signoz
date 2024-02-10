@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -5,8 +6,10 @@ import { IServiceName } from './Tabs/types';
 
 export interface GetWidgetQueryBuilderProps {
 	query: Widgets['query'];
-	title?: string;
+	title?: ReactNode;
 	panelTypes: Widgets['panelTypes'];
+	yAxisUnit?: Widgets['yAxisUnit'];
+	id?: Widgets['id'];
 }
 
 export interface NavigateToTraceProps {

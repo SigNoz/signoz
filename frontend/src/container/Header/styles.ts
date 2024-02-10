@@ -3,6 +3,8 @@ import styled from 'styled-components';
 
 export const Header = styled(Layout.Header)`
 	background: #1f1f1f !important;
+	padding-left: 16px;
+	padding-right: 16px;
 `;
 
 export const Container = styled.div`

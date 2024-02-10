@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { functions } from './config';
 import { SelectComponent } from './styles';
@@ -63,6 +64,7 @@ function TraceGraphFilter(): JSX.Element {
 			<label htmlFor="selectedFunction">Function</label>
 
 			<SelectComponent
+				getPopupContainer={popupContainer}
 				dropdownMatchSelectWidth
 				data-testid="selectedFunction"
 				id="selectedFunction"
@@ -78,6 +80,7 @@ function TraceGraphFilter(): JSX.Element {
 
 			<label htmlFor="selectedGroupBy">Group By</label>
 			<AutoComplete
+				getPopupContainer={popupContainer}
 				dropdownMatchSelectWidth
 				id="selectedGroupBy"
 				data-testid="selectedGroupBy"

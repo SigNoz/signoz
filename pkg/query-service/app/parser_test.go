@@ -3,7 +3,6 @@ package app
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -749,10 +748,479 @@ func TestParseQueryRangeParamsDashboardVarsSubstitution(t *testing.T) {
 				require.Error(t, apiErr)
 				require.Contains(t, apiErr.Error(), tc.errMsg)
 			} else {
-				fmt.Println(apiErr)
 				require.Nil(t, apiErr)
 				require.Equal(t, parsedQueryRangeParams.CompositeQuery.BuilderQueries["A"].Filters.Items[0].Value, tc.expectedValue[0])
 				require.Equal(t, parsedQueryRangeParams.CompositeQuery.BuilderQueries["A"].Filters.Items[1].Value, tc.expectedValue[1])
+			}
+		})
+	}
+}
+
+func TestParseQueryRangeParamsPromQLVars(t *testing.T) {
+	reqCases := []struct {
+		desc           string
+		compositeQuery v3.CompositeQuery
+		variables      map[string]interface{}
+		expectErr      bool
+		errMsg         string
+		expectedQuery  string
+	}{
+		{
+			desc: "valid prom query with dashboard variables",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {
+						Query:    "http_calls_total{service_name=\"{{.service_name}}\", operation_name=~\"{{.operation_name}}\"}",
+						Disabled: false,
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"operation_name": []interface{}{
+					"GET /route",
+					"POST /route",
+				},
+			},
+			expectErr:     false,
+			expectedQuery: "http_calls_total{service_name=\"route\", operation_name=~\"GET /route|POST /route\"}",
+		},
+		{
+			desc: "valid prom query with dashboard variables",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {
+						Query:    "http_calls_total{service_name=\"{{.service_name}}\", status_code=~\"{{.status_code}}\"}",
+						Disabled: false,
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"status_code": []interface{}{
+					200,
+					505,
+				},
+			},
+			expectErr:     false,
+			expectedQuery: "http_calls_total{service_name=\"route\", status_code=~\"200|505\"}",
+		},
+		{
+			desc: "valid prom query with dashboard variables",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {
+						Query:    "http_calls_total{service_name=\"{{.service_name}}\", quantity=~\"{{.quantity}}\"}",
+						Disabled: false,
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"quantity": []interface{}{
+					4.5,
+					4.6,
+				},
+			},
+			expectErr:     false,
+			expectedQuery: "http_calls_total{service_name=\"route\", quantity=~\"4.5|4.6\"}",
+		},
+	}
+
+	for _, tc := range reqCases {
+		t.Run(tc.desc, func(t *testing.T) {
+
+			queryRangeParams := &v3.QueryRangeParamsV3{
+				Start:          time.Now().Add(-time.Hour).UnixMilli(),
+				End:            time.Now().UnixMilli(),
+				Step:           time.Minute.Microseconds(),
+				CompositeQuery: &tc.compositeQuery,
+				Variables:      tc.variables,
+			}
+
+			body := &bytes.Buffer{}
+			err := json.NewEncoder(body).Encode(queryRangeParams)
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodPost, "/api/v3/query_range", body)
+
+			parsedQueryRangeParams, apiErr := ParseQueryRangeParams(req)
+			if tc.expectErr {
+				require.Error(t, apiErr)
+				require.Contains(t, apiErr.Error(), tc.errMsg)
+			} else {
+				require.Nil(t, apiErr)
+				require.Equal(t, parsedQueryRangeParams.CompositeQuery.PromQueries["A"].Query, tc.expectedQuery)
+			}
+		})
+	}
+}
+
+func TestQueryRangeFormula(t *testing.T) {
+	reqCases := []struct {
+		desc           string
+		compositeQuery v3.CompositeQuery
+		variables      map[string]interface{}
+		expectErr      bool
+		errMsg         string
+	}{
+		{
+			desc: "disjoint group by keys",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}},
+
+						Expression: "A",
+					},
+					"B": {
+						QueryName:          "B",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "operation_name"}},
+						Expression:         "B",
+					},
+					"F1": {
+						QueryName:  "F1",
+						Expression: "B/A",
+					},
+				},
+			},
+			expectErr: true,
+			errMsg:    "Group keys must match or be a subset of the other but found left: [operation_name], right: [service_name]",
+		},
+		{
+			desc: "identical single group by key",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}},
+						Expression:         "A",
+					},
+					"B": {
+						QueryName:          "B",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}},
+						Expression:         "B",
+					},
+					"F1": {
+						QueryName:  "F1",
+						Expression: "B/A",
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			desc: "identical multiple group by keys",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}, {Key: "operation_name"}},
+						Expression:         "A",
+					},
+					"B": {
+						QueryName:          "B",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}, {Key: "operation_name"}},
+						Expression:         "B",
+					},
+					"F1": {
+						QueryName:  "F1",
+						Expression: "B/A",
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			desc: "identical multiple group by keys with different order",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}, {Key: "operation_name"}},
+						Expression:         "A",
+					},
+					"B": {
+						QueryName:          "B",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "operation_name"}, {Key: "service_name"}},
+						Expression:         "B",
+					},
+					"F1": {
+						QueryName:  "F1",
+						Expression: "B/A",
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			desc: "subset group by keys",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}, {Key: "operation_name"}},
+						Expression:         "A",
+					},
+					"B": {
+						QueryName:          "B",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}},
+						Expression:         "B",
+					},
+					"F1": {
+						QueryName:  "F1",
+						Expression: "A/B",
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			desc: "empty keys on one side",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}, {Key: "operation_name"}},
+						Expression:         "A",
+					},
+					"B": {
+						QueryName:          "B",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						Expression:         "B",
+					},
+					"F1": {
+						QueryName:  "F1",
+						Expression: "A/B",
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			desc: "empty keys on both sides",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						Expression:         "A",
+					},
+					"B": {
+						QueryName:          "B",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						Expression:         "B",
+					},
+					"F1": {
+						QueryName:  "F1",
+						Expression: "A/B",
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			desc: "multiple group by keys with partial overlap",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}, {Key: "operation_name"}},
+						Expression:         "A",
+					},
+					"B": {
+						QueryName:          "B",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "operation_name"}, {Key: "status_code"}},
+						Expression:         "B",
+					},
+					"F1": {
+						QueryName:  "F1",
+						Expression: "A/B",
+					},
+				},
+			},
+			expectErr: true,
+			errMsg:    "Group keys must match or be a subset of the other but found left: [service_name operation_name], right: [operation_name status_code]",
+		},
+		{
+			desc: "Nested Expressions with Matching Keys - Testing expressions that involve operations (e.g., addition, division) with series whose keys match or are subsets.",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}, {Key: "operation_name"}},
+						Expression:         "A",
+					},
+					"B": {
+						QueryName:          "B",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}, {Key: "operation_name"}},
+						Expression:         "B",
+					},
+					"F1": {
+						QueryName:  "F1",
+						Expression: "A + B",
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			desc: "Nested Expressions with Matching Keys - Testing expressions that involve operations (e.g., addition, division) with series whose keys match or are subsets.",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}, {Key: "operation_name"}},
+						Expression:         "A",
+					},
+					"B": {
+						QueryName:          "B",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}},
+						Expression:         "B",
+					},
+					"C": {
+						QueryName:          "C",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+						GroupBy:            []v3.AttributeKey{{Key: "service_name"}, {Key: "operation_name"}, {Key: "status_code"}},
+						Expression:         "C",
+					},
+					"F1": {
+						QueryName:  "F1",
+						Expression: "C/(A + B)",
+					},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			desc: "Unknow variable in expression",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"F1": {
+						QueryName:  "F1",
+						Expression: "A + B",
+					},
+				},
+			},
+			expectErr: true,
+			errMsg:    "unknown variable",
+		},
+	}
+
+	for _, tc := range reqCases {
+		t.Run(tc.desc, func(t *testing.T) {
+
+			queryRangeParams := &v3.QueryRangeParamsV3{
+				Start:          time.Now().Add(-time.Hour).UnixMilli(),
+				End:            time.Now().UnixMilli(),
+				Step:           time.Minute.Microseconds(),
+				CompositeQuery: &tc.compositeQuery,
+				Variables:      tc.variables,
+			}
+
+			body := &bytes.Buffer{}
+			err := json.NewEncoder(body).Encode(queryRangeParams)
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodPost, "/api/v4/query_range", body)
+
+			_, apiErr := ParseQueryRangeParams(req)
+			if tc.expectErr {
+				require.Error(t, apiErr)
+				require.Contains(t, apiErr.Error(), tc.errMsg)
+			} else {
+				if apiErr != nil {
+					if apiErr.Err != nil {
+						t.Fatalf("unexpected error for case: %s - %v", tc.desc, apiErr.Err)
+					}
+				}
+				require.Nil(t, apiErr)
 			}
 		})
 	}

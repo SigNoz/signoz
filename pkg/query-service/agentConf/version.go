@@ -18,11 +18,12 @@ const (
 type DeployStatus string
 
 const (
-	PendingDeploy   DeployStatus = "DIRTY"
-	Deploying       DeployStatus = "DEPLOYING"
-	Deployed        DeployStatus = "DEPLOYED"
-	DeployInitiated DeployStatus = "IN_PROGRESS"
-	DeployFailed    DeployStatus = "FAILED"
+	PendingDeploy       DeployStatus = "DIRTY"
+	Deploying           DeployStatus = "DEPLOYING"
+	Deployed            DeployStatus = "DEPLOYED"
+	DeployInitiated     DeployStatus = "IN_PROGRESS"
+	DeployFailed        DeployStatus = "FAILED"
+	DeployStatusUnknown DeployStatus = "UNKNOWN"
 )
 
 type ConfigVersion struct {
@@ -52,6 +53,8 @@ func NewConfigversion(typeDef ElementTypeDef) *ConfigVersion {
 		IsValid:      false,
 		Disabled:     false,
 		DeployStatus: PendingDeploy,
+		LastHash:     "",
+		LastConf:     "{}",
 		// todo: get user id from context?
 		// CreatedBy
 	}

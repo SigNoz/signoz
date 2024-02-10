@@ -1,10 +1,13 @@
+import './logsTable.styles.scss';
+
 import { Card, Typography } from 'antd';
+import LogDetail from 'components/LogDetail';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
-import { contentStyle } from 'container/Trace/Search/config';
+import { CARD_BODY_STYLE } from 'constants/card';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useMemo } from 'react';
@@ -27,7 +30,12 @@ type LogsTableProps = {
 function LogsTable(props: LogsTableProps): JSX.Element {
 	const { viewMode, linesPerRow } = props;
 
-	const { onSetActiveLog } = useActiveLog();
+	const {
+		activeLog,
+		onClearActiveLog,
+		onAddToQuery,
+		onSetActiveLog,
+	} = useActiveLog();
 
 	useFontFaceObserver(
 		[
@@ -64,12 +72,27 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 			const log = logs[index];
 
 			if (viewMode === 'raw') {
-				return <RawLogView key={log.id} data={log} linesPerRow={linesPerRow} />;
+				return (
+					<RawLogView
+						key={log.id}
+						data={log}
+						linesPerRow={linesPerRow}
+						selectedFields={selected}
+					/>
+				);
 			}
 
-			return <ListLogView key={log.id} logData={log} selectedFields={selected} />;
+			return (
+				<ListLogView
+					key={log.id}
+					logData={log}
+					selectedFields={selected}
+					onAddToQuery={onAddToQuery}
+					onSetActiveLog={onSetActiveLog}
+				/>
+			);
 		},
-		[logs, viewMode, selected, linesPerRow],
+		[logs, viewMode, selected, onAddToQuery, onSetActiveLog, linesPerRow],
 	);
 
 	const renderContent = useMemo(() => {
@@ -85,12 +108,8 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		}
 
 		return (
-			<Card bodyStyle={contentStyle}>
-				<Virtuoso
-					useWindowScroll
-					totalCount={logs.length}
-					itemContent={getItemContent}
-				/>
+			<Card className="logs-card" bodyStyle={CARD_BODY_STYLE}>
+				<Virtuoso totalCount={logs.length} itemContent={getItemContent} />
 			</Card>
 		);
 	}, [getItemContent, linesPerRow, logs, onSetActiveLog, selected, viewMode]);
@@ -112,6 +131,12 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 			{isNoLogs && <Typography>No logs lines found</Typography>}
 
 			{renderContent}
+			<LogDetail
+				log={activeLog}
+				onClose={onClearActiveLog}
+				onAddToQuery={onAddToQuery}
+				onClickActionItem={onAddToQuery}
+			/>
 		</Container>
 	);
 }

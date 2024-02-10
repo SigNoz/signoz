@@ -3,14 +3,15 @@ package sqlite
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"go.signoz.io/signoz/ee/query-service/model"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
-func (m *modelDao) CreatePAT(ctx context.Context, p *model.PAT) basemodel.BaseApiError {
-	_, err := m.DB().ExecContext(ctx,
+func (m *modelDao) CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basemodel.BaseApiError) {
+	result, err := m.DB().ExecContext(ctx,
 		"INSERT INTO personal_access_tokens (user_id, token, name, created_at, expires_at) VALUES ($1, $2, $3, $4, $5)",
 		p.UserID,
 		p.Token,
@@ -19,9 +20,15 @@ func (m *modelDao) CreatePAT(ctx context.Context, p *model.PAT) basemodel.BaseAp
 		p.ExpiresAt)
 	if err != nil {
 		zap.S().Errorf("Failed to insert PAT in db, err: %v", zap.Error(err))
-		return model.InternalError(fmt.Errorf("PAT insertion failed"))
+		return model.PAT{}, model.InternalError(fmt.Errorf("PAT insertion failed"))
 	}
-	return nil
+	id, err := result.LastInsertId()
+	if err != nil {
+		zap.S().Errorf("Failed to get last inserted id, err: %v", zap.Error(err))
+		return model.PAT{}, model.InternalError(fmt.Errorf("PAT insertion failed"))
+	}
+	p.Id = strconv.Itoa(int(id))
+	return p, nil
 }
 
 func (m *modelDao) ListPATs(ctx context.Context, userID string) ([]model.PAT, basemodel.BaseApiError) {
@@ -90,7 +97,7 @@ func (m *modelDao) GetUserByPAT(ctx context.Context, token string) (*basemodel.U
 				u.org_id,
 				u.group_id
 			  FROM users u, personal_access_tokens p
-			  WHERE u.id = p.user_id and p.token=?;`
+			  WHERE u.id = p.user_id and p.token=? and p.expires_at >= strftime('%s', 'now');`
 
 	if err := m.DB().Select(&users, query, token); err != nil {
 		return nil, model.InternalError(fmt.Errorf("failed to fetch user from PAT, err: %v", err))

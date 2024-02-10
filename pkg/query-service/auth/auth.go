@@ -1,8 +1,11 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"text/template"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -14,6 +17,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
+	smtpservice "go.signoz.io/signoz/pkg/query-service/utils/smtpService"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -27,11 +31,18 @@ var (
 	ErrorInvalidCreds = fmt.Errorf("Invalid credentials")
 )
 
+type InviteEmailData struct {
+	CustomerName string
+	InviterName  string
+	InviterEmail string
+	Link         string
+}
+
 // The root user should be able to invite people to create account on SigNoz cluster.
 func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteResponse, error) {
 	zap.S().Debugf("Got an invite request for email: %s\n", req.Email)
 
-	token, err := randomHex(opaqueTokenSize)
+	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate invite token")
 	}
@@ -49,8 +60,8 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.Wrap(err, "invalid invite request")
 	}
 
-	jwtAdmin, err := ExtractJwtFromContext(ctx)
-	if err != nil {
+	jwtAdmin, ok := ExtractJwtFromContext(ctx)
+	if !ok {
 		return nil, errors.Wrap(err, "failed to extract admin jwt token")
 	}
 
@@ -76,7 +87,49 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 		return nil, errors.Wrap(err.Err, "failed to write to DB")
 	}
 
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_SENT, map[string]interface{}{
+		"invited user email": req.Email,
+	}, au.Email)
+
+	// send email if SMTP is enabled
+	if os.Getenv("SMTP_ENABLED") == "true" && req.FrontendBaseUrl != "" {
+		inviteEmail(req, au, token)
+	}
+
 	return &model.InviteResponse{Email: inv.Email, InviteToken: inv.Token}, nil
+}
+
+func inviteEmail(req *model.InviteRequest, au *model.UserPayload, token string) {
+	smtp := smtpservice.GetInstance()
+	data := InviteEmailData{
+		CustomerName: req.Name,
+		InviterName:  au.Name,
+		InviterEmail: au.Email,
+		Link:         fmt.Sprintf("%s/signup?token=%s", req.FrontendBaseUrl, token),
+	}
+
+	tmpl, err := template.ParseFiles(constants.InviteEmailTemplate)
+	if err != nil {
+		zap.S().Errorf("failed to send email", err)
+		return
+	}
+
+	var body bytes.Buffer
+	if err := tmpl.Execute(&body, data); err != nil {
+		zap.S().Errorf("failed to send email", err)
+		return
+	}
+
+	err = smtp.SendEmail(
+		req.Email,
+		au.Name+" has invited you to their team in SigNoz",
+		body.String(),
+	)
+	if err != nil {
+		zap.S().Errorf("failed to send email", err)
+		return
+	}
+	return
 }
 
 // RevokeInvite is used to revoke the invitation for the given email.
@@ -140,7 +193,7 @@ func ValidateInvite(ctx context.Context, req *RegisterRequest) (*model.Invitatio
 }
 
 func CreateResetPasswordToken(ctx context.Context, userId string) (*model.ResetPasswordEntry, error) {
-	token, err := randomHex(opaqueTokenSize)
+	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate reset password token")
 	}
@@ -165,7 +218,7 @@ func ResetPassword(ctx context.Context, req *model.ResetPasswordRequest) error {
 		return errors.New("Invalid reset password request")
 	}
 
-	hash, err := passwordHash(req.Password)
+	hash, err := PasswordHash(req.Password)
 	if err != nil {
 		return errors.Wrap(err, "Failed to generate password hash")
 	}
@@ -192,7 +245,7 @@ func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) error
 		return ErrorInvalidCreds
 	}
 
-	hash, err := passwordHash(req.NewPassword)
+	hash, err := PasswordHash(req.NewPassword)
 	if err != nil {
 		return errors.Wrap(err, "Failed to generate password hash")
 	}
@@ -243,7 +296,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 	var hash string
 	var err error
 
-	hash, err = passwordHash(req.Password)
+	hash, err = PasswordHash(req.Password)
 	if err != nil {
 		zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
 		return nil, model.InternalError(model.ErrSignupFailed{})
@@ -314,13 +367,13 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 
 	// check if password is not empty, as for SSO case it can be
 	if req.Password != "" {
-		hash, err = passwordHash(req.Password)
+		hash, err = PasswordHash(req.Password)
 		if err != nil {
 			zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
 			return nil, model.InternalError(model.ErrSignupFailed{})
 		}
 	} else {
-		hash, err = passwordHash(utils.GeneratePassowrd())
+		hash, err = PasswordHash(utils.GeneratePassowrd())
 		if err != nil {
 			zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
 			return nil, model.InternalError(model.ErrSignupFailed{})
@@ -350,6 +403,9 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 		zap.S().Debugf("delete invitation failed, err: %v\n", apiErr.Err)
 		return nil, apiErr
 	}
+
+	telemetry.GetInstance().IdentifyUser(user)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_ACCEPTED, nil, req.Email)
 
 	return user, nil
 }
@@ -387,7 +443,10 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 		return nil, err
 	}
 
-	telemetry.GetInstance().IdentifyUser(&user.User)
+	// ignoring identity for unnamed users as a patch for #3863
+	if user.Name != "" {
+		telemetry.GetInstance().IdentifyUser(&user.User)
+	}
 
 	return &model.LoginResponse{
 		UserJwtObject: userjwt,
@@ -419,7 +478,7 @@ func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.Use
 }
 
 // Generate hash from the password.
-func passwordHash(pass string) (string, error) {
+func PasswordHash(pass string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err

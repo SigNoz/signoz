@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-    <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/query-service?label=Downloads"> </a>
+    <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/query-service?label=Docker Downloads"> </a>
     <img alt="GitHub issues" src="https://img.shields.io/github/issues/signoz/signoz"> </a>
     <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"> 
         <img alt="tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"> </a> 
@@ -199,10 +199,13 @@ Not sure how to get started? Just ping us on `#contributing` in our [slack commu
 #### Frontend
 
 - [Palash Gupta](https://github.com/palashgdev)
+- [Yunus M](https://github.com/YounixM)
+- [Rajat Dabade](https://github.com/Rajat-Dabade)
 
 #### DevOps
 
 - [Prashant Shahi](https://github.com/prashant-shahi)
+- [Dhawal Sanghvi](https://github.com/dhawal1248)
 
 <br /><br />
 

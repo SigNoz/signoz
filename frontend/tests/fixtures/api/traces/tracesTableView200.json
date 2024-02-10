@@ -1,0 +1,24 @@
+{
+	"status": "success",
+	"data": {
+		"resultType": "",
+		"result": [
+			{
+				"queryName": "A",
+				"series": [
+					{
+						"labels": {},
+						"labelsArray": null,
+						"values": [
+							{
+								"timestamp": 1700161420000,
+								"value": "85784"
+							}
+						]
+					}
+				],
+				"list": null
+			}
+		]
+	}
+}

@@ -13,6 +13,8 @@ import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { FlatLogData } from 'lib/logs/flatLogData';
+import { isEmpty, isUndefined } from 'lodash-es';
 import {
 	KeyboardEvent,
 	MouseEvent,
@@ -21,8 +23,6 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-// interfaces
-import { ILog } from 'types/api/logs/log';
 
 // styles
 import {
@@ -31,22 +31,23 @@ import {
 	RawLogContent,
 	RawLogViewContainer,
 } from './styles';
+import { RawLogViewProps } from './types';
 
 const convert = new Convert();
 
-interface RawLogViewProps {
-	isActiveLog?: boolean;
-	isReadOnly?: boolean;
-	data: ILog;
-	linesPerRow: number;
-}
-
-function RawLogView(props: RawLogViewProps): JSX.Element {
-	const { isActiveLog = false, isReadOnly = false, data, linesPerRow } = props;
-
+function RawLogView({
+	isActiveLog,
+	isReadOnly,
+	data,
+	linesPerRow,
+	isTextOverflowEllipsisDisabled,
+	selectedFields = [],
+}: RawLogViewProps): JSX.Element {
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
 	);
+	const flattenLogData = useMemo(() => FlatLogData(data), [data]);
+
 	const {
 		activeLog: activeContextLog,
 		onSetActiveLog: handleSetActiveContextLog,
@@ -64,12 +65,33 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const isReadOnlyLog = !isLogsExplorerPage || isReadOnly;
 
+	const severityText = data.severity_text ? `${data.severity_text} |` : '';
+
+	const updatedSelecedFields = useMemo(
+		() => selectedFields.filter((e) => e.name !== 'id'),
+		[selectedFields],
+	);
+
+	const attributesValues = updatedSelecedFields
+		.map((field) => flattenLogData[field.name])
+		.filter((attribute) => !isUndefined(attribute) && !isEmpty(attribute));
+
+	let attributesText = attributesValues.join(' | ');
+
+	if (attributesText.length > 0) {
+		attributesText += ' | ';
+	}
+
 	const text = useMemo(
 		() =>
 			typeof data.timestamp === 'string'
-				? `${dayjs(data.timestamp).format()} | ${data.body}`
-				: `${dayjs(data.timestamp / 1e6).format()} | ${data.body}`,
-		[data.timestamp, data.body],
+				? `${dayjs(data.timestamp).format()} | ${attributesText} ${severityText} ${
+						data.body
+				  }`
+				: `${dayjs(
+						data.timestamp / 1e6,
+				  ).format()} | ${attributesText} ${severityText} ${data.body}`,
+		[data.timestamp, data.body, severityText, attributesText],
 	);
 
 	const handleClickExpand = useCallback(() => {
@@ -118,11 +140,6 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		[text],
 	);
 
-	const mouseActions = useMemo(
-		() => ({ onMouseEnter: handleMouseEnter, onMouseLeave: handleMouseLeave }),
-		[handleMouseEnter, handleMouseLeave],
-	);
-
 	return (
 		<RawLogViewContainer
 			onClick={handleClickExpand}
@@ -131,8 +148,8 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			$isDarkMode={isDarkMode}
 			$isReadOnly={isReadOnly}
 			$isActiveLog={isHighlighted}
-			// eslint-disable-next-line react/jsx-props-no-spreading
-			{...mouseActions}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
 		>
 			{!isReadOnly && (
 				<ExpandIconWrapper flex="30px">
@@ -143,6 +160,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			<RawLogContent
 				$isReadOnly={isReadOnly}
 				$isActiveLog={isActiveLog}
+				$isTextOverflowEllipsisDisabled={isTextOverflowEllipsisDisabled}
 				linesPerRow={linesPerRow}
 				dangerouslySetInnerHTML={html}
 			/>
@@ -181,6 +199,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 RawLogView.defaultProps = {
 	isActiveLog: false,
 	isReadOnly: false,
+	isTextOverflowEllipsisDisabled: false,
 };
 
 export default RawLogView;

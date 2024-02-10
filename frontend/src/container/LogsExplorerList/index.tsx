@@ -1,13 +1,15 @@
 import { Card, Typography } from 'antd';
+import LogDetail from 'components/LogDetail';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
+import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { contentStyle } from 'container/Trace/Search/config';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useFontFaceObserver from 'hooks/useFontObserver';
@@ -36,6 +38,13 @@ function LogsExplorerList({
 	const { initialDataSource } = useQueryBuilder();
 
 	const { activeLogId } = useCopyLogLink();
+
+	const {
+		activeLog,
+		onClearActiveLog,
+		onAddToQuery,
+		onSetActiveLog,
+	} = useActiveLog();
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -71,15 +80,32 @@ function LogsExplorerList({
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
 				return (
-					<RawLogView key={log.id} data={log} linesPerRow={options.maxLines} />
+					<RawLogView
+						key={log.id}
+						data={log}
+						linesPerRow={options.maxLines}
+						selectedFields={selectedFields}
+					/>
 				);
 			}
 
 			return (
-				<ListLogView key={log.id} logData={log} selectedFields={selectedFields} />
+				<ListLogView
+					key={log.id}
+					logData={log}
+					selectedFields={selectedFields}
+					onAddToQuery={onAddToQuery}
+					onSetActiveLog={onSetActiveLog}
+				/>
 			);
 		},
-		[options.format, options.maxLines, selectedFields],
+		[
+			onAddToQuery,
+			onSetActiveLog,
+			options.format,
+			options.maxLines,
+			selectedFields,
+		],
 	);
 
 	useEffect(() => {
@@ -116,10 +142,9 @@ function LogsExplorerList({
 		}
 
 		return (
-			<Card style={{ width: '100%' }} bodyStyle={{ ...contentStyle }}>
+			<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
 				<Virtuoso
 					ref={ref}
-					useWindowScroll
 					data={logs}
 					endReached={onEndReached}
 					totalCount={logs.length}
@@ -128,19 +153,12 @@ function LogsExplorerList({
 				/>
 			</Card>
 		);
-	}, [
-		isLoading,
-		logs,
-		options.format,
-		options.maxLines,
-		onEndReached,
-		getItemContent,
-		selectedFields,
-	]);
+	}, [isLoading, options, logs, onEndReached, getItemContent, selectedFields]);
 
 	return (
 		<>
 			<ExplorerControlPanel
+				selectedOptionFormat={options.format}
 				isLoading={isLoading}
 				isShowPageSize={false}
 				optionsMenuConfig={config}
@@ -157,6 +175,13 @@ function LogsExplorerList({
 			)}
 
 			<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
+
+			<LogDetail
+				log={activeLog}
+				onClose={onClearActiveLog}
+				onAddToQuery={onAddToQuery}
+				onClickActionItem={onAddToQuery}
+			/>
 		</>
 	);
 }

@@ -8,11 +8,13 @@ import { useTranslation } from 'react-i18next';
 import { StyledSelect } from './styles';
 
 export interface ChannelSelectProps {
+	disabled?: boolean;
 	currentValue?: string[];
 	onSelectChannels: (s: string[]) => void;
 }
 
 function ChannelSelect({
+	disabled,
 	currentValue,
 	onSelectChannels,
 }: ChannelSelectProps): JSX.Element | null {
@@ -52,6 +54,7 @@ function ChannelSelect({
 	};
 	return (
 		<StyledSelect
+			disabled={disabled}
 			status={error ? 'error' : ''}
 			mode="multiple"
 			style={{ width: '100%' }}
@@ -68,6 +71,7 @@ function ChannelSelect({
 }
 
 ChannelSelect.defaultProps = {
+	disabled: false,
 	currentValue: [],
 };
 export default ChannelSelect;

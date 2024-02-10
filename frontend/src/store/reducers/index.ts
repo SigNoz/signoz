@@ -1,7 +1,6 @@
 import { combineReducers } from 'redux';
 
 import appReducer from './app';
-import dashboardReducer from './dashboard';
 import globalTimeReducer from './global';
 import { LogsReducer } from './logs';
 import metricsReducers from './metric';
@@ -14,7 +13,6 @@ const reducers = combineReducers({
 	usageDate: usageDataReducer,
 	globalTime: globalTimeReducer,
 	serviceMap: ServiceMapReducer,
-	dashboards: dashboardReducer,
 	app: appReducer,
 	metrics: metricsReducers,
 	logs: LogsReducer,

@@ -63,7 +63,7 @@ function LogDetailedView({
 				queryString,
 			);
 
-			history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
+			history.replace(`${ROUTES.OLD_LOGS_EXPLORER}?q=${updatedQueryString}`);
 		},
 		[history, queryString],
 	);

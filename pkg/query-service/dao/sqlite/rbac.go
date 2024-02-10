@@ -203,7 +203,7 @@ func (mds *ModelDaoSqlite) CreateUser(ctx context.Context,
 	}
 
 	telemetry.GetInstance().IdentifyUser(user)
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER, data, user.Email)
 
 	return user, nil
 }
@@ -563,13 +563,11 @@ func (mds *ModelDaoSqlite) UpdateUserFlags(ctx context.Context, userId string, f
 		return nil, apiError
 	}
 
-	if userPayload.Flags != nil {
-		for k, v := range userPayload.Flags {
-			if _, ok := flags[k]; !ok {
-				// insert only missing keys as we want to retain the
-				// flags in the db that are not part of this request
-				flags[k] = v
-			}
+	for k, v := range userPayload.Flags {
+		if _, ok := flags[k]; !ok {
+			// insert only missing keys as we want to retain the
+			// flags in the db that are not part of this request
+			flags[k] = v
 		}
 	}
 
@@ -596,4 +594,21 @@ func (mds *ModelDaoSqlite) UpdateUserFlags(ctx context.Context, userId string, f
 	}
 
 	return flags, nil
+}
+
+func (mds *ModelDaoSqlite) PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, model.BaseApiError) {
+	// assume user is valid unless proven otherwise and assign default values for rest of the fields
+	resp := &model.PrecheckResponse{IsUser: true, CanSelfRegister: false, SSO: false, SsoUrl: "", SsoError: ""}
+
+	// check if email is a valid user
+	userPayload, baseApiErr := mds.GetUserByEmail(ctx, email)
+	if baseApiErr != nil {
+		return resp, baseApiErr
+	}
+
+	if userPayload == nil {
+		resp.IsUser = false
+	}
+
+	return resp, nil
 }

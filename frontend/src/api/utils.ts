@@ -14,7 +14,11 @@ import {
 export const Logout = (): void => {
 	deleteLocalStorageKey(LOCALSTORAGE.AUTH_TOKEN);
 	deleteLocalStorageKey(LOCALSTORAGE.IS_LOGGED_IN);
+	deleteLocalStorageKey(LOCALSTORAGE.IS_IDENTIFIED_USER);
 	deleteLocalStorageKey(LOCALSTORAGE.REFRESH_AUTH_TOKEN);
+	deleteLocalStorageKey(LOCALSTORAGE.LOGGED_IN_USER_EMAIL);
+	deleteLocalStorageKey(LOCALSTORAGE.LOGGED_IN_USER_NAME);
+	deleteLocalStorageKey(LOCALSTORAGE.CHAT_SUPPORT);
 
 	store.dispatch({
 		type: LOGGED_IN,
@@ -59,6 +63,14 @@ export const Logout = (): void => {
 			org: [],
 		},
 	});
+
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	if (window && window.Intercom) {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		window.Intercom('shutdown');
+	}
 
 	history.push(ROUTES.LOGIN);
 };

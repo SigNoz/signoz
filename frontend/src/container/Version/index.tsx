@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
+import { checkVersionState } from 'utils/app';
 
 import { githubReleaseURL } from './constant';
 import { InputComponent } from './styles';
@@ -20,7 +21,8 @@ function Version(): JSX.Element {
 		isLatestVersionError,
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const isLatestVersion = currentVersion === latestVersion;
+	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
+
 	const isError = isCurrentVersionError || isLatestVersionError;
 
 	const latestVersionUrl = useMemo(
@@ -32,8 +34,8 @@ function Version(): JSX.Element {
 	);
 
 	return (
-		<Card>
-			<Typography.Title ellipsis level={4}>
+		<Card style={{ margin: '16px 0' }}>
+			<Typography.Title ellipsis level={4} style={{ marginTop: 0 }}>
 				{t('version')}
 			</Typography.Title>
 

@@ -4,8 +4,12 @@ import styled from 'styled-components';
 export const FormWrapper = styled(Card)`
 	display: flex;
 	justify-content: center;
-	max-width: 432px;
+	width: 432px;
 	flex: 1;
+
+	.ant-card-body {
+		width: 100%;
+	}
 `;
 
 export const ButtonContainer = styled.div`
