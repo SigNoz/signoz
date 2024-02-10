@@ -154,6 +154,11 @@ func processResults(results []*v3.Result, expression *govaluate.EvaluableExpress
 			return nil, err
 		}
 		if series != nil {
+			labelsArray := make([]map[string]string, 0)
+			for k, v := range series.Labels {
+				labelsArray = append(labelsArray, map[string]string{k: v})
+			}
+			series.LabelsArray = labelsArray
 			newSeries = append(newSeries, series)
 		}
 	}

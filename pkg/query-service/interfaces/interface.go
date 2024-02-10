@@ -99,6 +99,7 @@ type Reader interface {
 	CheckClickHouse(ctx context.Context) error
 
 	GetLatencyMetricMetadata(context.Context, string, string, bool) (*v3.LatencyMetricMetadataResponse, error)
+	GetMetricMetadata(context.Context, string, string) (*v3.MetricMetadataResponse, error)
 }
 
 type Querier interface {
