@@ -89,6 +89,8 @@ export default function LogsConnectionStatus(): JSX.Element {
 			refetchInterval: pollingInterval,
 			enabled: true,
 		},
+		{},
+		false,
 	);
 
 	const verifyLogsData = (
