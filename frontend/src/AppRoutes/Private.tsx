@@ -98,6 +98,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 				if (
 					userResponse &&
+					route &&
 					route.find((e) => e === userResponse.payload.role) === undefined
 				) {
 					history.push(ROUTES.UN_AUTHORIZED);
