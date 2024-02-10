@@ -15,13 +15,9 @@ receivers:
         # please remove names from below if you want to collect logs from them
       - type: filter
         id: signoz_logs_filter
-        expr: 'attributes.container_name matches "^signoz-(logspout|frontend|alertmanager|query-service|otel-collector|otel-collector-metrics|clickhouse|zookeeper)"'
+        expr: 'attributes.container_name matches "^signoz-(logspout|frontend|alertmanager|query-service|otel-collector|clickhouse|zookeeper)"'
   opencensus:
     endpoint: 0.0.0.0:55678
-  otlp/spanmetrics:
-    protocols:
-      grpc:
-        endpoint: localhost:12345
   otlp:
     protocols:
       grpc:
@@ -66,8 +62,9 @@ processors:
     send_batch_size: 10000
     send_batch_max_size: 11000
     timeout: 10s
-  signozspanmetrics/prometheus:
-    metrics_exporter: prometheus
+  signozspanmetrics/cumulative:
+    metrics_exporter: clickhousemetricswrite
+    metrics_flush_interval: 60s
     latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
     dimensions_cache_size: 100000
     dimensions:
@@ -98,6 +95,21 @@ processors:
     # Using OTEL_RESOURCE_ATTRIBUTES envvar, env detector adds custom labels.
     detectors: [env, system] # include ec2 for AWS, gcp for GCP and azure for Azure.
     timeout: 2s
+  signozspanmetrics/delta:
+    metrics_exporter: clickhousemetricswrite
+    metrics_flush_interval: 60s
+    latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
+    dimensions_cache_size: 100000
+    aggregation_temporality: AGGREGATION_TEMPORALITY_DELTA
+    dimensions:
+      - name: service.namespace
+        default: default
+      - name: deployment.environment
+        default: default
+      # This is added to ensure the uniqueness of the timeseries
+      # Otherwise, identical timeseries produced by multiple replicas of
+      # collectors result in incorrect APM metrics
+      - name: signoz.collector.id
 
 extensions:
   health_check:
@@ -118,21 +130,12 @@ exporters:
       enabled: true
   clickhousemetricswrite/prometheus:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
-  prometheus:
-    endpoint: 0.0.0.0:8889
   # logging: {}
 
   clickhouselogsexporter:
     dsn: tcp://clickhouse:9000/
     docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
-    timeout: 5s
-    sending_queue:
-      queue_size: 100
-    retry_on_failure:
-      enabled: true
-      initial_interval: 5s
-      max_interval: 30s
-      max_elapsed_time: 300s
+    timeout: 10s
 
 service:
   telemetry:
@@ -145,7 +148,7 @@ service:
   pipelines:
     traces:
       receivers: [jaeger, otlp]
-      processors: [signozspanmetrics/prometheus, batch]
+      processors: [signozspanmetrics/cumulative, signozspanmetrics/delta, batch]
       exporters: [clickhousetraces]
     metrics:
       receivers: [otlp]
@@ -159,9 +162,6 @@ service:
       receivers: [prometheus]
       processors: [batch]
       exporters: [clickhousemetricswrite/prometheus]
-    metrics/spanmetrics:
-      receivers: [otlp/spanmetrics]
-      exporters: [prometheus]
     logs:
       receivers: [otlp, tcplog/docker]
       processors: [batch]

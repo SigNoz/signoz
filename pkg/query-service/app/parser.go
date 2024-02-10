@@ -985,6 +985,41 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			// Formula query
+			if query.QueryName != query.Expression {
+				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
+				if err != nil {
+					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+				}
+
+				// get the group keys for the vars
+				groupKeys := make(map[string][]string)
+				for _, v := range expression.Vars() {
+					if varQuery, ok := queryRangeParams.CompositeQuery.BuilderQueries[v]; ok {
+						groupKeys[v] = []string{}
+						for _, key := range varQuery.GroupBy {
+							groupKeys[v] = append(groupKeys[v], key.Key)
+						}
+					} else {
+						return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unknown variable %s", v)}
+					}
+				}
+
+				params := make(map[string]interface{})
+				for k, v := range groupKeys {
+					params[k] = v
+				}
+
+				can, _, err := expression.CanJoin(params)
+				if err != nil {
+					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+				}
+
+				if !can {
+					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot join the given group keys")}
+				}
+			}
+
 			if query.Filters == nil || len(query.Filters.Items) == 0 {
 				continue
 			}
@@ -1019,13 +1054,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeValue &&
 		queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
 		queryRangeParams.Start = queryRangeParams.End
-	}
-
-	// round up the end to neaerest multiple
-	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		end := (queryRangeParams.End) / 1000
-		step := queryRangeParams.Step
-		queryRangeParams.End = (end / step * step) * 1000
 	}
 
 	// replace go template variables in clickhouse query

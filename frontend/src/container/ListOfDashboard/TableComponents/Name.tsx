@@ -1,20 +1,21 @@
 import { LockFilled } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { generatePath } from 'react-router-dom';
 
-import { Data } from '..';
+import { Data } from '../DashboardsList';
 import { TableLinkText } from './styles';
 
 function Name(name: Data['name'], data: Data): JSX.Element {
 	const { id: DashboardId, isLocked } = data;
 
-	const onClickHandler = (): void => {
-		history.push(
-			generatePath(ROUTES.DASHBOARD, {
-				dashboardId: DashboardId,
-			}),
-		);
+	const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${DashboardId}`;
+
+	const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
+		if (event.metaKey || event.ctrlKey) {
+			window.open(getLink(), '_blank');
+		} else {
+			history.push(getLink());
+		}
 	};
 
 	return (

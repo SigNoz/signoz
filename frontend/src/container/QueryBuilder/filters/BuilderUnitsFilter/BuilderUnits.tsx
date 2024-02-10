@@ -10,10 +10,11 @@ import { filterOption } from './utils';
 
 function BuilderUnitsFilter({
 	onChange,
+	yAxisUnit,
 }: IBuilderUnitsFilterProps): JSX.Element {
 	const { currentQuery, handleOnUnitsChange } = useQueryBuilder();
 
-	const selectedValue = currentQuery?.unit;
+	const selectedValue = yAxisUnit || currentQuery?.unit;
 
 	const allOptions = categoryToSupport.map((category) => ({
 		label: category,

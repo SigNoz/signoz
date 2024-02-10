@@ -1,0 +1,37 @@
+.full-screen-header-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 24px 0;
+
+	.brand-logo {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 16px;
+		cursor: pointer;
+
+		img {
+			height: 32px;
+			width: 32px;
+		}
+
+		.brand-logo-name {
+			font-family: 'Work Sans', sans-serif;
+			font-size: 24px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 18px;
+
+			color: #fff;
+		}
+	}
+}
+
+.lightMode {
+	.brand-logo {
+		.brand-logo-name {
+			color: black;
+		}
+	}
+}

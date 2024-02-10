@@ -33,7 +33,7 @@ type ModelDao interface {
 	DeleteDomain(ctx context.Context, id uuid.UUID) basemodel.BaseApiError
 	GetDomainByEmail(ctx context.Context, email string) (*model.OrgDomain, basemodel.BaseApiError)
 
-	CreatePAT(ctx context.Context, p *model.PAT) basemodel.BaseApiError
+	CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basemodel.BaseApiError)
 	GetPAT(ctx context.Context, pat string) (*model.PAT, basemodel.BaseApiError)
 	GetPATByID(ctx context.Context, id string) (*model.PAT, basemodel.BaseApiError)
 	GetUserByPAT(ctx context.Context, token string) (*basemodel.UserPayload, basemodel.BaseApiError)

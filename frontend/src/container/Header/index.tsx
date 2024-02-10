@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/anchor-is-valid */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Header.styles.scss';
 
 import {
@@ -143,9 +146,9 @@ function HeaderContainer(): JSX.Element {
 						<span>
 							{' '}
 							Please{' '}
-							<Button className="upgrade-link" type="link" onClick={handleUpgrade}>
+							<a className="upgrade-link" onClick={handleUpgrade}>
 								upgrade
-							</Button>
+							</a>
 							to continue using SigNoz features.
 						</span>
 					) : (

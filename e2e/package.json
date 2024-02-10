@@ -1,0 +1,14 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.22.0",
+    "@types/node": "^20.9.2"
+  },
+  "scripts": {},
+  "dependencies": {
+    "dotenv": "8.2.0"
+  }
+}

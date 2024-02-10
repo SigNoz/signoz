@@ -1,10 +1,11 @@
 import { Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
+import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Pagination, URL_PAGINATION } from 'hooks/queryPagination';
+import { Pagination } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { memo, useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -24,7 +25,7 @@ function TracesView(): JSX.Element {
 	>((state) => state.globalTime);
 
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
-		URL_PAGINATION,
+		QueryParams.pagination,
 	);
 
 	const { data, isLoading } = useGetQueryRange(

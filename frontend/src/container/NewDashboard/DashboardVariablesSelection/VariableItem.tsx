@@ -1,27 +1,38 @@
+import './DashboardVariableSelection.styles.scss';
+
 import { orange } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
-import { Input, Popover, Select, Typography } from 'antd';
-import query from 'api/dashboard/variables/query';
+import { Input, Popover, Select, Tooltip, Typography } from 'antd';
+import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
+import { debounce } from 'lodash-es';
 import map from 'lodash-es/map';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { memo, useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { VariableResponseProps } from 'types/api/dashboard/variables/query';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { variablePropsToPayloadVariables } from '../utils';
-import { SelectItemStyle, VariableContainer, VariableName } from './styles';
+import { SelectItemStyle, VariableContainer, VariableValue } from './styles';
 import { areArraysEqual } from './util';
 
 const ALL_SELECT_VALUE = '__ALL__';
+
+const variableRegexPattern = /\{\{\s*?\.([^\s}]+)\s*?\}\}/g;
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
 	existingVariables: Record<string, IDashboardVariable>;
 	onValueUpdate: (
 		name: string,
+		id: string,
 		arg1: IDashboardVariable['selectedValue'],
+		allSelected: boolean,
 	) => void;
-	onAllSelectedUpdate: (name: string, arg1: boolean) => void;
 	lastUpdatedVar: string;
 }
 
@@ -34,52 +45,69 @@ const getSelectValue = (
 	return selectedValue?.toString() || '';
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function VariableItem({
 	variableData,
 	existingVariables,
 	onValueUpdate,
-	onAllSelectedUpdate,
 	lastUpdatedVar,
 }: VariableItemProps): JSX.Element {
+	const { isDashboardLocked } = useDashboard();
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
 		[],
 	);
-	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
-	/* eslint-disable sonarjs/cognitive-complexity */
-	const getOptions = useCallback(async (): Promise<void> => {
-		if (variableData.type === 'QUERY') {
+	const getDependentVariables = (queryValue: string): string[] => {
+		const matches = queryValue.match(variableRegexPattern);
+
+		// Extract variable names from the matches array without {{ . }}
+		return matches
+			? matches.map((match) => match.replace(variableRegexPattern, '$1'))
+			: [];
+	};
+
+	const getQueryKey = (variableData: IDashboardVariable): string[] => {
+		let dependentVariablesStr = '';
+
+		const dependentVariables = getDependentVariables(
+			variableData.queryValue || '',
+		);
+
+		const variableName = variableData.name || '';
+
+		dependentVariables?.forEach((element) => {
+			const [, variable] =
+				Object.entries(existingVariables).find(
+					([, value]) => value.name === element,
+				) || [];
+
+			dependentVariablesStr += `${element}${variable?.selectedValue}`;
+		});
+
+		const variableKey = dependentVariablesStr.replace(/\s/g, '');
+
+		return [REACT_QUERY_KEY.DASHBOARD_BY_ID, variableName, variableKey];
+	};
+
+	// eslint-disable-next-line sonarjs/cognitive-complexity
+	const getOptions = (variablesRes: VariableResponseProps | null): void => {
+		if (variablesRes && variableData.type === 'QUERY') {
 			try {
 				setErrorMessage(null);
-				setIsLoading(true);
 
-				const response = await query({
-					query: variableData.queryValue || '',
-					variables: variablePropsToPayloadVariables(existingVariables),
-				});
-
-				setIsLoading(false);
-				if (response.error) {
-					let message = response.error;
-					if (response.error.includes('Syntax error:')) {
-						message =
-							'Please make sure query is valid and dependent variables are selected';
-					}
-					setErrorMessage(message);
-					return;
-				}
-				if (response.payload?.variableValues) {
+				if (
+					variablesRes?.variableValues &&
+					Array.isArray(variablesRes?.variableValues)
+				) {
 					const newOptionsData = sortValues(
-						response.payload?.variableValues,
+						variablesRes?.variableValues,
 						variableData.sort,
 					);
-					// Since there is a chance of a variable being dependent on other
-					// variables, we need to check if the optionsData has changed
-					// If it has changed, we need to update the dependent variable
-					// So we compare the new optionsData with the old optionsData
+
 					const oldOptionsData = sortValues(optionsData, variableData.sort) as never;
+
 					if (!areArraysEqual(newOptionsData, oldOptionsData)) {
 						/* eslint-disable no-useless-escape */
 						const re = new RegExp(`\\{\\{\\s*?\\.${lastUpdatedVar}\\s*?\\}\\}`); // regex for `{{.var}}`
@@ -103,11 +131,12 @@ function VariableItem({
 							} else {
 								[value] = newOptionsData;
 							}
-							if (variableData.name) {
-								onValueUpdate(variableData.name, value);
-								onAllSelectedUpdate(variableData.name, allSelected);
+
+							if (variableData && variableData?.name && variableData?.id) {
+								onValueUpdate(variableData.name, variableData.id, value, allSelected);
 							}
 						}
+
 						setOptionsData(newOptionsData);
 					}
 				}
@@ -115,26 +144,43 @@ function VariableItem({
 				console.error(e);
 			}
 		} else if (variableData.type === 'CUSTOM') {
-			setOptionsData(
-				sortValues(
-					commaValuesParser(variableData.customValue || ''),
-					variableData.sort,
-				) as never,
-			);
-		}
-	}, [
-		variableData,
-		existingVariables,
-		onValueUpdate,
-		onAllSelectedUpdate,
-		optionsData,
-		lastUpdatedVar,
-	]);
+			const optionsData = sortValues(
+				commaValuesParser(variableData.customValue || ''),
+				variableData.sort,
+			) as never;
 
-	useEffect(() => {
-		getOptions();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [variableData, existingVariables]);
+			setOptionsData(optionsData);
+		}
+	};
+
+	const { isLoading } = useQuery(getQueryKey(variableData), {
+		enabled: variableData && variableData.type === 'QUERY',
+		queryFn: () =>
+			dashboardVariablesQuery({
+				query: variableData.queryValue || '',
+				variables: variablePropsToPayloadVariables(existingVariables),
+			}),
+		refetchOnWindowFocus: false,
+		onSuccess: (response) => {
+			getOptions(response.payload);
+		},
+		onError: (error: {
+			details: {
+				error: string;
+			};
+		}) => {
+			const { details } = error;
+
+			if (details.error) {
+				let message = details.error;
+				if (details.error.includes('Syntax error:')) {
+					message =
+						'Please make sure query is valid and dependent variables are selected';
+				}
+				setErrorMessage(message);
+			}
+		},
+	});
 
 	const handleChange = (value: string | string[]): void => {
 		if (variableData.name)
@@ -143,13 +189,14 @@ function VariableItem({
 				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE)) ||
 				(Array.isArray(value) && value.length === 0)
 			) {
-				onValueUpdate(variableData.name, optionsData);
-				onAllSelectedUpdate(variableData.name, true);
+				onValueUpdate(variableData.name, variableData.id, optionsData, true);
 			} else {
-				onValueUpdate(variableData.name, value);
-				onAllSelectedUpdate(variableData.name, false);
+				onValueUpdate(variableData.name, variableData.id, value, false);
 			}
 	};
+
+	// do not debounce the above function as we do not need debounce in select variables
+	const debouncedHandleChange = debounce(handleChange, 500);
 
 	const { selectedValue } = variableData;
 	const selectedValueStringified = useMemo(() => getSelectValue(selectedValue), [
@@ -165,62 +212,94 @@ function VariableItem({
 			? 'multiple'
 			: undefined;
 	const enableSelectAll = variableData.multiSelect && variableData.showALLOption;
+
+	useEffect(() => {
+		// Fetch options for CUSTOM Type
+		if (variableData.type === 'CUSTOM') {
+			getOptions(null);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [variableData.type, variableData.customValue]);
+
 	return (
-		<VariableContainer>
-			<VariableName>${variableData.name}</VariableName>
-			{variableData.type === 'TEXTBOX' ? (
-				<Input
-					placeholder="Enter value"
-					bordered={false}
-					value={variableData.selectedValue?.toString()}
-					onChange={(e): void => {
-						handleChange(e.target.value || '');
-					}}
-					style={{
-						width:
-							50 + ((variableData.selectedValue?.toString()?.length || 0) * 7 || 50),
-					}}
-				/>
-			) : (
-				!errorMessage && (
-					<Select
-						value={selectValue}
-						onChange={handleChange}
-						bordered={false}
-						placeholder="Select value"
-						mode={mode}
-						dropdownMatchSelectWidth={false}
-						style={SelectItemStyle}
-						loading={isLoading}
-						showArrow
-						showSearch
-						data-testid="variable-select"
-					>
-						{enableSelectAll && (
-							<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
-								ALL
-							</Select.Option>
-						)}
-						{map(optionsData, (option) => (
-							<Select.Option
-								data-testid={`option-${option}`}
-								key={option.toString()}
-								value={option}
+		<Tooltip
+			placement="top"
+			title={isDashboardLocked ? 'Dashboard is locked' : ''}
+		>
+			<VariableContainer className="variable-item">
+				<Typography.Text className="variable-name" ellipsis>
+					${variableData.name}
+				</Typography.Text>
+				<VariableValue>
+					{variableData.type === 'TEXTBOX' ? (
+						<Input
+							placeholder="Enter value"
+							disabled={isDashboardLocked}
+							bordered={false}
+							key={variableData.selectedValue?.toString()}
+							defaultValue={variableData.selectedValue?.toString()}
+							onChange={(e): void => {
+								debouncedHandleChange(e.target.value || '');
+							}}
+							style={{
+								width:
+									50 + ((variableData.selectedValue?.toString()?.length || 0) * 7 || 50),
+							}}
+						/>
+					) : (
+						!errorMessage &&
+						optionsData && (
+							<Select
+								key={
+									selectValue && Array.isArray(selectValue)
+										? selectValue.join(' ')
+										: selectValue || variableData.id
+								}
+								defaultValue={selectValue}
+								onChange={handleChange}
+								bordered={false}
+								placeholder="Select value"
+								placement="bottomRight"
+								mode={mode}
+								dropdownMatchSelectWidth={false}
+								style={SelectItemStyle}
+								loading={isLoading}
+								showSearch
+								data-testid="variable-select"
+								className="variable-select"
+								disabled={isDashboardLocked}
+								getPopupContainer={popupContainer}
 							>
-								{option.toString()}
-							</Select.Option>
-						))}
-					</Select>
-				)
-			)}
-			{errorMessage && (
-				<span style={{ margin: '0 0.5rem' }}>
-					<Popover placement="top" content={<Typography>{errorMessage}</Typography>}>
-						<WarningOutlined style={{ color: orange[5] }} />
-					</Popover>
-				</span>
-			)}
-		</VariableContainer>
+								{enableSelectAll && (
+									<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
+										ALL
+									</Select.Option>
+								)}
+								{map(optionsData, (option) => (
+									<Select.Option
+										data-testid={`option-${option}`}
+										key={option.toString()}
+										value={option}
+									>
+										{option.toString()}
+									</Select.Option>
+								))}
+							</Select>
+						)
+					)}
+					{variableData.type !== 'TEXTBOX' && errorMessage && (
+						<span style={{ margin: '0 0.5rem' }}>
+							<Popover
+								placement="top"
+								content={<Typography>{errorMessage}</Typography>}
+							>
+								<WarningOutlined style={{ color: orange[5] }} />
+							</Popover>
+						</span>
+					)}
+				</VariableValue>
+			</VariableContainer>
+		</Tooltip>
 	);
 }
 

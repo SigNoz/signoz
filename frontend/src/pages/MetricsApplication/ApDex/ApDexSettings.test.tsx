@@ -28,7 +28,7 @@ describe('ApDexSettings', () => {
 	});
 
 	it('should render the spinner when the data is loading', () => {
-		render(
+		const { container } = render(
 			<ApDexSettings
 				servicename="mockServiceName"
 				handlePopOverClose={jest.fn()}
@@ -38,7 +38,10 @@ describe('ApDexSettings', () => {
 			/>,
 		);
 
-		expect(screen.getByText('Loading...')).toBeInTheDocument();
+		const loadingSpan = container.querySelector('[aria-label="loading"]');
+
+		// Assert that the loading span is found
+		expect(loadingSpan).toBeInTheDocument();
 	});
 
 	it('should close the popover when the cancel button is clicked', async () => {

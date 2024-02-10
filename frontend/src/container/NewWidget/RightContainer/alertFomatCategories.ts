@@ -6,6 +6,8 @@ import {
 	CategoryNames,
 	DataFormats,
 	DataRateFormats,
+	HelperCategory,
+	HelperFormat,
 	MiscellaneousFormats,
 	ThroughputFormats,
 	TimeFormats,
@@ -76,6 +78,7 @@ export const alertsCategory = [
 		name: CategoryNames.Miscellaneous,
 		formats: [
 			{ name: 'Percent (0.0-1.0)', id: MiscellaneousFormats.PercentUnit },
+			{ name: 'Percent (0 - 100)', id: MiscellaneousFormats.Percent },
 		],
 	},
 	{
@@ -119,3 +122,10 @@ export const getCategoryByOptionId = (id: string): Category | undefined =>
 
 export const isCategoryName = (name: string): name is CategoryNames =>
 	alertsCategory.some((category) => category.name === name);
+
+const allFormats: HelperFormat[] = alertsCategory.flatMap(
+	(category: HelperCategory) => category.formats,
+);
+
+export const getFormatNameByOptionId = (id: string): string | undefined =>
+	allFormats.find((format) => format.id === id)?.name;

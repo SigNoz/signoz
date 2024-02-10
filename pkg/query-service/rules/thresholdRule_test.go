@@ -9,12 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
 func TestThresholdRuleCombinations(t *testing.T) {
 	postableRule := PostableRule{
 		Alert:      "Tricky Condition Tests",
-		AlertType:  "METRICS_BASED_ALERT",
+		AlertType:  "METRIC_BASED_ALERT",
 		RuleType:   RuleTypeThreshold,
 		EvalWindow: Duration(5 * time.Minute),
 		Frequency:  Duration(1 * time.Minute),
@@ -294,4 +295,128 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			assert.Equal(t, 0, len(result), "case %d", idx)
 		}
 	}
+}
+
+func TestNormalizeLabelName(t *testing.T) {
+	cases := []struct {
+		labelName string
+		expected  string
+	}{
+		{
+			labelName: "label",
+			expected:  "label",
+		},
+		{
+			labelName: "label.with.dots",
+			expected:  "label_with_dots",
+		},
+		{
+			labelName: "label-with-dashes",
+			expected:  "label_with_dashes",
+		},
+		{
+			labelName: "labelwithnospaces",
+			expected:  "labelwithnospaces",
+		},
+		{
+			labelName: "label with spaces",
+			expected:  "label_with_spaces",
+		},
+		{
+			labelName: "label with spaces and .dots",
+			expected:  "label_with_spaces_and__dots",
+		},
+		{
+			labelName: "label with spaces and -dashes",
+			expected:  "label_with_spaces_and__dashes",
+		},
+	}
+
+	for _, c := range cases {
+		assert.Equal(t, c.expected, normalizeLabelName(c.labelName))
+	}
+}
+
+func TestPrepareLinksToLogs(t *testing.T) {
+	postableRule := PostableRule{
+		Alert:      "Tricky Condition Tests",
+		AlertType:  "LOGS_BASED_ALERT",
+		RuleType:   RuleTypeThreshold,
+		EvalWindow: Duration(5 * time.Minute),
+		Frequency:  Duration(1 * time.Minute),
+		RuleCondition: &RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "",
+						},
+						AggregateOperator: v3.AggregateOperatorNoOp,
+						DataSource:        v3.DataSourceLogs,
+						Expression:        "A",
+					},
+				},
+			},
+			CompareOp:     "4", // Not Equals
+			MatchType:     "1", // Once
+			Target:        &[]float64{0.0}[0],
+			SelectedQuery: "A",
+		},
+	}
+	fm := featureManager.StartManager()
+
+	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm)
+	if err != nil {
+		assert.NoError(t, err)
+	}
+
+	ts := time.UnixMilli(1705469040000)
+
+	link := rule.prepareLinksToLogs(ts, labels.Labels{})
+	assert.Contains(t, link, "&timeRange=%7B%22start%22%3A1705468740000%2C%22end%22%3A1705469040000%2C%22pageSize%22%3A100%7D&startTime=1705468740000&endTime=1705469040000")
+}
+
+func TestPrepareLinksToTraces(t *testing.T) {
+	postableRule := PostableRule{
+		Alert:      "Links to traces test",
+		AlertType:  "TRACES_BASED_ALERT",
+		RuleType:   RuleTypeThreshold,
+		EvalWindow: Duration(5 * time.Minute),
+		Frequency:  Duration(1 * time.Minute),
+		RuleCondition: &RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "durationNano",
+						},
+						AggregateOperator: v3.AggregateOperatorAvg,
+						DataSource:        v3.DataSourceTraces,
+						Expression:        "A",
+					},
+				},
+			},
+			CompareOp:     "4", // Not Equals
+			MatchType:     "1", // Once
+			Target:        &[]float64{0.0}[0],
+			SelectedQuery: "A",
+		},
+	}
+	fm := featureManager.StartManager()
+
+	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm)
+	if err != nil {
+		assert.NoError(t, err)
+	}
+
+	ts := time.UnixMilli(1705469040000)
+
+	link := rule.prepareLinksToTraces(ts, labels.Labels{})
+	assert.Contains(t, link, "&timeRange=%7B%22start%22%3A1705468740000000000%2C%22end%22%3A1705469040000000000%2C%22pageSize%22%3A100%7D&startTime=1705468740000000000&endTime=1705469040000000000")
 }
