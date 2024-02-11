@@ -68,6 +68,8 @@ function TimeSeriesViewContainer({
 
 	return (
 		<TimeSeriesView
+			// TODO handle this when revamping trace explorer
+			isFilterApplied={false}
 			isError={isError}
 			isLoading={isLoading}
 			data={responseData}

@@ -22,6 +22,8 @@ export type UseTableViewProps = {
 	appendTo?: 'center' | 'end';
 	onOpenLogsContext?: (log: ILog) => void;
 	onClickExpand?: (log: ILog) => void;
+	activeLog?: ILog | null;
+	activeContextLog?: ILog | null;
 } & LogsTableViewProps;
 
 export type ActionsColumnProps = {
