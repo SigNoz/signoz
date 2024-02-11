@@ -1025,7 +1025,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 
-		// utility function to apply go template on labels and annots
+		// utility function to apply go template on labels and annotations
 		expand := func(text string) string {
 
 			tmpl := NewTemplateExpander(
