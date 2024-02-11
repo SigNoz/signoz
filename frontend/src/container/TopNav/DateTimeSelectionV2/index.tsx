@@ -305,7 +305,8 @@ function DateTimeSelection({
 		if (!stagedQuery) {
 			return;
 		}
-		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime));
+		// the second boolean param directs the qb about the time change so to merge the query and retain the current state
+		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime), true);
 	};
 
 	const onRefreshHandler = (): void => {

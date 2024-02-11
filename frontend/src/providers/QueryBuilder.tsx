@@ -23,6 +23,7 @@ import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
+import { merge } from 'lodash-es';
 import {
 	createContext,
 	PropsWithChildren,
@@ -196,7 +197,7 @@ export function QueryBuilderProvider({
 	);
 
 	const initQueryBuilderData = useCallback(
-		(query: Query): void => {
+		(query: Query, timeUpdated?: boolean): void => {
 			const { queryType: newQueryType, ...queryState } = prepareQueryBuilderData(
 				query,
 			);
@@ -211,10 +212,12 @@ export function QueryBuilderProvider({
 			const nextQuery: Query = { ...newQueryState, queryType: type };
 
 			setStagedQuery(nextQuery);
-			setCurrentQuery(newQueryState);
+			setCurrentQuery(
+				timeUpdated ? merge(currentQuery, newQueryState) : newQueryState,
+			);
 			setQueryType(type);
 		},
-		[prepareQueryBuilderData],
+		[prepareQueryBuilderData, currentQuery],
 	);
 
 	const updateAllQueriesOperators = useCallback(
