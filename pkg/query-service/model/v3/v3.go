@@ -489,6 +489,17 @@ func (t TimeAggregation) IsRateOperator() bool {
 	}
 }
 
+type MetricType string
+
+const (
+	MetricTypeUnspecified          MetricType = ""
+	MetricTypeSum                  MetricType = "Sum"
+	MetricTypeGauge                MetricType = "Gauge"
+	MetricTypeHistogram            MetricType = "Histogram"
+	MetricTypeSummary              MetricType = "Summary"
+	MetricTypeExponentialHistogram MetricType = "ExponentialHistogram"
+)
+
 type SpaceAggregation string
 
 const (
