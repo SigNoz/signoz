@@ -15,6 +15,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
+import { isObject } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -27,7 +28,13 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
-import { getDefaultOption, getOptions, Time } from './config';
+import {
+	getDefaultOption,
+	getOptions,
+	LocalStorageTimeRange,
+	Time,
+	TimeRange,
+} from './config';
 import RefreshText from './Refresh';
 import { Form, FormContainer, FormItem } from './styles';
 
@@ -44,8 +51,35 @@ function DateTimeSelection({
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
 
-	const localstorageStartTime = getLocalStorageKey('startTime');
-	const localstorageEndTime = getLocalStorageKey('endTime');
+	const {
+		localstorageStartTime,
+		localstorageEndTime,
+	} = ((): LocalStorageTimeRange => {
+		const routes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
+
+		if (routes !== null) {
+			const routesObject = JSON.parse(routes || '{}');
+			const selectedTime = routesObject[location.pathname];
+
+			if (selectedTime) {
+				let parsedSelectedTime: TimeRange;
+				try {
+					parsedSelectedTime = JSON.parse(selectedTime);
+				} catch {
+					parsedSelectedTime = selectedTime;
+				}
+
+				if (isObject(parsedSelectedTime)) {
+					return {
+						localstorageStartTime: parsedSelectedTime.startTime,
+						localstorageEndTime: parsedSelectedTime.endTime,
+					};
+				}
+				return { localstorageStartTime: null, localstorageEndTime: null };
+			}
+		}
+		return { localstorageStartTime: null, localstorageEndTime: null };
+	})();
 
 	const getTime = useCallback((): [number, number] | undefined => {
 		if (searchEndTime && searchStartTime) {
@@ -118,6 +152,15 @@ function DateTimeSelection({
 			const selectedTime = routesObject[pathName];
 
 			if (selectedTime) {
+				let parsedSelectedTime: TimeRange;
+				try {
+					parsedSelectedTime = JSON.parse(selectedTime);
+				} catch {
+					parsedSelectedTime = selectedTime;
+				}
+				if (isObject(parsedSelectedTime)) {
+					return 'custom';
+				}
 				return selectedTime;
 			}
 		}
@@ -125,7 +168,7 @@ function DateTimeSelection({
 		return defaultSelectedOption;
 	};
 
-	const updateLocalStorageForRoutes = (value: Time): void => {
+	const updateLocalStorageForRoutes = (value: Time | string): void => {
 		const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
 		if (preRoutes !== null) {
 			const preRoutesObject = JSON.parse(preRoutes);
@@ -220,9 +263,9 @@ function DateTimeSelection({
 					startTimeMoment?.toDate().getTime() || 0,
 					endTimeMoment?.toDate().getTime() || 0,
 				]);
-				setLocalStorageKey('startTime', startTimeMoment.toString());
-				setLocalStorageKey('endTime', endTimeMoment.toString());
-				updateLocalStorageForRoutes('custom');
+				updateLocalStorageForRoutes(
+					JSON.stringify({ startTime: startTimeMoment, endTime: endTimeMoment }),
+				);
 				if (!isLogsExplorerPage) {
 					urlQuery.set(
 						QueryParams.startTime,

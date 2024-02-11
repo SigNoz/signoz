@@ -73,19 +73,12 @@ function ResizeTable({
 		}
 	}, [columns]);
 
-	const paginationConfig = {
-		hideOnSinglePage: true,
-		showTotal: (total: number, range: number[]): string =>
-			`${range[0]}-${range[1]} of ${total} items`,
-		...tableParams.pagination,
-	};
-
 	return onDragColumn ? (
 		<ReactDragListView.DragColumn {...dragColumnParams} onDragEnd={onDragColumn}>
-			<Table {...tableParams} pagination={paginationConfig} />
+			<Table {...tableParams} />
 		</ReactDragListView.DragColumn>
 	) : (
-		<Table {...tableParams} pagination={paginationConfig} />
+		<Table {...tableParams} />
 	);
 }
 
