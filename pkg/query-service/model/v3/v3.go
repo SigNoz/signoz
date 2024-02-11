@@ -463,6 +463,23 @@ const (
 	TimeAggregationIncrease      TimeAggregation = "increase"
 )
 
+func (t TimeAggregation) Validate() error {
+	switch t {
+	case TimeAggregationAnyLast,
+		TimeAggregationSum,
+		TimeAggregationAvg,
+		TimeAggregationMin,
+		TimeAggregationMax,
+		TimeAggregationCount,
+		TimeAggregationCountDistinct,
+		TimeAggregationRate,
+		TimeAggregationIncrease:
+		return nil
+	default:
+		return fmt.Errorf("invalid time aggregation: %s", t)
+	}
+}
+
 func (t TimeAggregation) IsRateOperator() bool {
 	switch t {
 	case TimeAggregationRate, TimeAggregationIncrease:
@@ -487,6 +504,24 @@ const (
 	SpaceAggregationPercentile95 SpaceAggregation = "percentile_95"
 	SpaceAggregationPercentile99 SpaceAggregation = "percentile_99"
 )
+
+func (s SpaceAggregation) Validate() error {
+	switch s {
+	case SpaceAggregationSum,
+		SpaceAggregationAvg,
+		SpaceAggregationMin,
+		SpaceAggregationMax,
+		SpaceAggregationCount,
+		SpaceAggregationPercentile50,
+		SpaceAggregationPercentile75,
+		SpaceAggregationPercentile90,
+		SpaceAggregationPercentile95,
+		SpaceAggregationPercentile99:
+		return nil
+	default:
+		return fmt.Errorf("invalid space aggregation: %s", s)
+	}
+}
 
 func IsPercentileOperator(operator SpaceAggregation) bool {
 	switch operator {
@@ -536,6 +571,7 @@ const (
 	FunctionNameMedian3   FunctionName = "median3"
 	FunctionNameMedian5   FunctionName = "median5"
 	FunctionNameMedian7   FunctionName = "median7"
+	FunctionNameTimeShift FunctionName = "timeShift"
 )
 
 func (f FunctionName) Validate() error {
@@ -553,7 +589,8 @@ func (f FunctionName) Validate() error {
 		FunctionNameEWMA7,
 		FunctionNameMedian3,
 		FunctionNameMedian5,
-		FunctionNameMedian7:
+		FunctionNameMedian7,
+		FunctionNameTimeShift:
 		return nil
 	default:
 		return fmt.Errorf("invalid function name: %s", f)
@@ -587,6 +624,7 @@ type BuilderQuery struct {
 	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
 	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
 	Functions          []Function        `json:"functions,omitempty"`
+	ShiftBy            int64
 }
 
 func (b *BuilderQuery) Validate() error {
@@ -604,9 +642,18 @@ func (b *BuilderQuery) Validate() error {
 			return fmt.Errorf("data source is invalid: %w", err)
 		}
 		if b.DataSource == DataSourceMetrics {
-			if b.TimeAggregation == TimeAggregationUnspecified {
+			// if AggregateOperator is specified, then the request is using v3 payload
+			if b.AggregateOperator != "" {
 				if err := b.AggregateOperator.Validate(); err != nil {
 					return fmt.Errorf("aggregate operator is invalid: %w", err)
+				}
+			} else {
+				if err := b.TimeAggregation.Validate(); err != nil {
+					return fmt.Errorf("time aggregation is invalid: %w", err)
+				}
+
+				if err := b.SpaceAggregation.Validate(); err != nil {
+					return fmt.Errorf("space aggregation is invalid: %w", err)
 				}
 			}
 		} else {
@@ -660,6 +707,28 @@ func (b *BuilderQuery) Validate() error {
 		for _, function := range b.Functions {
 			if err := function.Name.Validate(); err != nil {
 				return fmt.Errorf("function name is invalid: %w", err)
+			}
+			if function.Name == FunctionNameTimeShift {
+				if len(function.Args) == 0 {
+					return fmt.Errorf("timeShiftBy param missing in query")
+				}
+			} else if function.Name == FunctionNameEWMA3 ||
+				function.Name == FunctionNameEWMA5 ||
+				function.Name == FunctionNameEWMA7 {
+				if len(function.Args) == 0 {
+					return fmt.Errorf("alpha param missing in query")
+				}
+				alpha := function.Args[0].(float64)
+				if alpha < 0 || alpha > 1 {
+					return fmt.Errorf("alpha param should be between 0 and 1")
+				}
+			} else if function.Name == FunctionNameCutOffMax ||
+				function.Name == FunctionNameCutOffMin ||
+				function.Name == FunctionNameClampMax ||
+				function.Name == FunctionNameClampMin {
+				if len(function.Args) == 0 {
+					return fmt.Errorf("threshold param missing in query")
+				}
 			}
 		}
 	}
@@ -922,4 +991,14 @@ func (eq *SavedView) Validate() error {
 type LatencyMetricMetadataResponse struct {
 	Delta bool      `json:"delta"`
 	Le    []float64 `json:"le"`
+}
+
+type MetricMetadataResponse struct {
+	Delta       bool      `json:"delta"`
+	Le          []float64 `json:"le"`
+	Description string    `json:"description"`
+	Unit        string    `json:"unit"`
+	Type        string    `json:"type"`
+	IsMonotonic bool      `json:"isMonotonic"`
+	Temporality string    `json:"temporality"`
 }
