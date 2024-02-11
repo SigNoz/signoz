@@ -318,7 +318,7 @@ export const Query = memo(function Query({
 												operators={operators}
 											/>
 										</Col>
-										<Col flex="1 1 12.5rem">
+										<Col flex="auto">
 											<AggregatorFilter
 												onChange={handleChangeAggregatorAttribute}
 												query={query}

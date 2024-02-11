@@ -1,10 +1,10 @@
 import './QuerySection.styles.scss';
 
-import { Button, Tabs } from 'antd';
+import { Button, Tabs, Tooltip } from 'antd';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
-import { Atom, LucideAccessibility, Play, Terminal } from 'lucide-react';
+import { Atom, Play, Terminal } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -55,17 +55,21 @@ function QuerySection({
 	const tabs = [
 		{
 			label: (
-				<Button className="nav-btns">
-					<Atom size={14} />
-				</Button>
+				<Tooltip title="Query Builder">
+					<Button className="nav-btns">
+						<Atom size={14} />
+					</Button>
+				</Tooltip>
 			),
 			key: EQueryType.QUERY_BUILDER,
 		},
 		{
 			label: (
-				<Button className="nav-btns">
-					<Terminal size={14} />
-				</Button>
+				<Tooltip title="ClickHouse">
+					<Button className="nav-btns">
+						<Terminal size={14} />
+					</Button>
+				</Tooltip>
 			),
 			key: EQueryType.CLICKHOUSE,
 		},
@@ -75,25 +79,31 @@ function QuerySection({
 		() => [
 			{
 				label: (
-					<Button className="nav-btns">
-						<Atom size={14} />
-					</Button>
+					<Tooltip title="Query Builder">
+						<Button className="nav-btns">
+							<Atom size={14} />
+						</Button>
+					</Tooltip>
 				),
 				key: EQueryType.QUERY_BUILDER,
 			},
 			{
 				label: (
-					<Button className="nav-btns">
-						<Terminal size={14} />
-					</Button>
+					<Tooltip title="ClickHouse">
+						<Button className="nav-btns">
+							<Terminal size={14} />
+						</Button>
+					</Tooltip>
 				),
 				key: EQueryType.CLICKHOUSE,
 			},
 			{
 				label: (
-					<Button className="nav-btns">
-						<LucideAccessibility size={14} />
-					</Button>
+					<Tooltip title="PromQL">
+						<Button className="nav-btns">
+							<img src="/Icons/promQL.svg" alt="Prom Ql" className="prom-ql-icon" />
+						</Button>
+					</Tooltip>
 				),
 				key: EQueryType.PROM,
 			},
