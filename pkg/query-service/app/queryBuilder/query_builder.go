@@ -295,7 +295,7 @@ func expressionToKey(expression *govaluate.EvaluableExpression, keys map[string]
 func isMetricExpression(expression *govaluate.EvaluableExpression, params *v3.QueryRangeParamsV3) bool {
 	variables := unique(expression.Vars())
 	for _, variable := range variables {
-		if params.CompositeQuery.BuilderQueries[variable].DataSource != v3.DataSourceMetrics {
+		if params.CompositeQuery.BuilderQueries[variable].DataSource != v3.DataSourceMetrics && params.CompositeQuery.BuilderQueries[variable].DataSource != v3.DataSourceLogs {
 			return false
 		}
 	}
