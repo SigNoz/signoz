@@ -243,6 +243,19 @@ func labelsToString(labels map[string]string) string {
 	return fmt.Sprintf("{%s}", strings.Join(labelKVs, ","))
 }
 
+func filterCachedPoints(cachedSeries []*v3.Series, start, end int64) {
+	for _, c := range cachedSeries {
+		points := []v3.Point{}
+		for _, p := range c.Points {
+			if p.Timestamp < start || p.Timestamp > end {
+				continue
+			}
+			points = append(points, p)
+		}
+		c.Points = points
+	}
+}
+
 func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 	// Merge the missed series with the cached series by timestamp
 	mergedSeries := make([]*v3.Series, 0)

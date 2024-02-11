@@ -320,8 +320,7 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 
 	// Build keys for each builder query
 	for queryName, query := range params.CompositeQuery.BuilderQueries {
-		// limit = 0, since limit >0 requires special handling
-		if query.Expression == queryName && query.DataSource == v3.DataSourceLogs && query.Limit == 0 {
+		if query.Expression == queryName && query.DataSource == v3.DataSourceLogs {
 			var parts []string
 
 			// We need to build uniqe cache query for BuilderQuery

@@ -105,14 +105,42 @@ func (q *querier) runBuilderQuery(
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
-			query, err = logsV3.PrepareLogsQuery(
-				miss.start,
-				miss.end,
-				params.CompositeQuery.QueryType,
-				params.CompositeQuery.PanelType,
-				builderQuery,
-				logsV3.Options{PreferRPM: preferRPM},
-			)
+			if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
+				limitQuery, err := logsV3.PrepareLogsQuery(
+					params.Start,
+					params.End,
+					params.CompositeQuery.QueryType,
+					params.CompositeQuery.PanelType,
+					builderQuery,
+					logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
+				)
+				if err != nil {
+					ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
+					return
+				}
+				placeholderQuery, err := logsV3.PrepareLogsQuery(
+					params.Start,
+					params.End,
+					params.CompositeQuery.QueryType,
+					params.CompositeQuery.PanelType,
+					builderQuery,
+					logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
+				)
+				if err != nil {
+					ch <- channelResult{Err: err, Name: queryName, Query: placeholderQuery, Series: nil}
+					return
+				}
+				query = strings.Replace(placeholderQuery, "#LIMIT_PLACEHOLDER", limitQuery, 1)
+			} else {
+				query, err = logsV3.PrepareLogsQuery(
+					miss.start,
+					miss.end,
+					params.CompositeQuery.QueryType,
+					params.CompositeQuery.PanelType,
+					builderQuery,
+					logsV3.Options{PreferRPM: preferRPM},
+				)
+			}
 			if err != nil {
 				ch <- channelResult{
 					Err:    err,
@@ -159,6 +187,9 @@ func (q *querier) runBuilderQuery(
 				return
 			}
 		}
+
+		// response doesn't need everything
+		filterCachedPoints(mergedSeries, params.Start, params.End)
 
 		return
 
