@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"sync"
@@ -159,17 +160,19 @@ func findMissingTimeRanges(start, end, step int64, seriesList []*v3.Series, flux
 		}
 	}
 
-	// endMillis := time.Now().UnixMilli()
-	// adjustStep := int64(math.Min(float64(step), 60))
-	// roundedMillis := endMillis - (endMillis % (adjustStep * 1000))
+	// time.Now is used because here we are considering the case where data might not
+	// be fully ingested for last (fluxInterval) minutes
+	endMillis := time.Now().UnixMilli()
+	adjustStep := int64(math.Min(float64(step), 60))
+	roundedMillis := endMillis - (endMillis % (adjustStep * 1000))
 
 	// Exclude the flux interval from the cached end time
-	// cachedEnd = int64(
-	// 	math.Min(
-	// 		float64(cachedEnd),
-	// 		float64(roundedMillis-fluxInterval.Milliseconds()),
-	// 	),
-	// )
+	cachedEnd = int64(
+		math.Min(
+			float64(cachedEnd),
+			float64(roundedMillis-fluxInterval.Milliseconds()),
+		),
+	)
 
 	// There are five cases to consider
 	// 1. Cached time range is a subset of the requested time range
