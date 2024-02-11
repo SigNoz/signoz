@@ -17,6 +17,56 @@ import (
 	"go.uber.org/zap"
 )
 
+func prepareLogsQuery(ctx context.Context,
+	start,
+	end int64,
+	builderQuery *v3.BuilderQuery,
+	params *v3.QueryRangeParamsV3,
+	preferRPM bool,
+) (string, error) {
+	query := ""
+	// for ts query with limit replace it as it is already formed
+	if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
+		limitQuery, err := logsV3.PrepareLogsQuery(
+			params.Start,
+			params.End,
+			params.CompositeQuery.QueryType,
+			params.CompositeQuery.PanelType,
+			builderQuery,
+			logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
+		)
+		if err != nil {
+			return query, err
+		}
+		placeholderQuery, err := logsV3.PrepareLogsQuery(
+			params.Start,
+			params.End,
+			params.CompositeQuery.QueryType,
+			params.CompositeQuery.PanelType,
+			builderQuery,
+			logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
+		)
+		if err != nil {
+			return query, err
+		}
+		query = strings.Replace(placeholderQuery, "#LIMIT_PLACEHOLDER", limitQuery, 1)
+		return query, err
+	}
+
+	query, err := logsV3.PrepareLogsQuery(
+		params.Start,
+		params.End,
+		params.CompositeQuery.QueryType,
+		params.CompositeQuery.PanelType,
+		builderQuery,
+		logsV3.Options{PreferRPM: preferRPM},
+	)
+	if err != nil {
+		return query, err
+	}
+	return query, err
+}
+
 func (q *querier) runBuilderQuery(
 	ctx context.Context,
 	builderQuery *v3.BuilderQuery,
@@ -35,53 +85,11 @@ func (q *querier) runBuilderQuery(
 		preferRPM = q.featureLookUp.CheckFeature(constants.PreferRPM) == nil
 	}
 
-	// TODO: handle other data sources
 	if builderQuery.DataSource == v3.DataSourceLogs {
 		var query string
 		var err error
-		// for ts query with limit replace it as it is already formed
 		if _, ok := cacheKeys[queryName]; !ok {
-			if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
-				limitQuery, err := logsV3.PrepareLogsQuery(
-					params.Start,
-					params.End,
-					params.CompositeQuery.QueryType,
-					params.CompositeQuery.PanelType,
-					builderQuery,
-					logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
-				)
-				if err != nil {
-					ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
-					return
-				}
-				placeholderQuery, err := logsV3.PrepareLogsQuery(
-					params.Start,
-					params.End,
-					params.CompositeQuery.QueryType,
-					params.CompositeQuery.PanelType,
-					builderQuery,
-					logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
-				)
-				if err != nil {
-					ch <- channelResult{Err: err, Name: queryName, Query: placeholderQuery, Series: nil}
-					return
-				}
-				query = strings.Replace(placeholderQuery, "#LIMIT_PLACEHOLDER", limitQuery, 1)
-			} else {
-				query, err = logsV3.PrepareLogsQuery(
-					params.Start,
-					params.End,
-					params.CompositeQuery.QueryType,
-					params.CompositeQuery.PanelType,
-					builderQuery,
-					logsV3.Options{PreferRPM: preferRPM},
-				)
-				if err != nil {
-					ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
-					return
-				}
-			}
-
+			query, err = prepareLogsQuery(ctx, params.Start, params.End, builderQuery, params, preferRPM)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
@@ -105,49 +113,9 @@ func (q *querier) runBuilderQuery(
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
-			if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
-				limitQuery, err := logsV3.PrepareLogsQuery(
-					params.Start,
-					params.End,
-					params.CompositeQuery.QueryType,
-					params.CompositeQuery.PanelType,
-					builderQuery,
-					logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
-				)
-				if err != nil {
-					ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
-					return
-				}
-				placeholderQuery, err := logsV3.PrepareLogsQuery(
-					params.Start,
-					params.End,
-					params.CompositeQuery.QueryType,
-					params.CompositeQuery.PanelType,
-					builderQuery,
-					logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
-				)
-				if err != nil {
-					ch <- channelResult{Err: err, Name: queryName, Query: placeholderQuery, Series: nil}
-					return
-				}
-				query = strings.Replace(placeholderQuery, "#LIMIT_PLACEHOLDER", limitQuery, 1)
-			} else {
-				query, err = logsV3.PrepareLogsQuery(
-					miss.start,
-					miss.end,
-					params.CompositeQuery.QueryType,
-					params.CompositeQuery.PanelType,
-					builderQuery,
-					logsV3.Options{PreferRPM: preferRPM},
-				)
-			}
+			query, err = prepareLogsQuery(ctx, miss.start, miss.end, builderQuery, params, preferRPM)
 			if err != nil {
-				ch <- channelResult{
-					Err:    err,
-					Name:   queryName,
-					Query:  query,
-					Series: nil,
-				}
+				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
 			}
 			series, err := q.execClickHouseQuery(ctx, query)
@@ -167,29 +135,35 @@ func (q *querier) runBuilderQuery(
 		}
 		mergedSeries := mergeSerieses(cachedSeries, missedSeries)
 
-		ch <- channelResult{
-			Err:    nil,
-			Name:   queryName,
-			Query:  "xyz",
-			Series: mergedSeries,
-		}
-		// Cache the seriesList for future queries
-		if len(missedSeries) > 0 && !params.NoCache && q.cache != nil {
+		var mergedSeriesData []byte
+		missedSeriesLen := len(missedSeries)
+		if missedSeriesLen > 0 && !params.NoCache && q.cache != nil {
 			// caching the data
-			mergedSeriesData, err := json.Marshal(mergedSeries)
+			mergedSeriesData, err = json.Marshal(mergedSeries)
 			if err != nil {
 				zap.S().Error("error marshalling merged series", zap.Error(err))
-				return
-			}
-			err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
-			if err != nil {
-				zap.S().Error("error storing merged series", zap.Error(err))
 				return
 			}
 		}
 
 		// response doesn't need everything
 		filterCachedPoints(mergedSeries, params.Start, params.End)
+
+		ch <- channelResult{
+			Err:    nil,
+			Name:   queryName,
+			Series: mergedSeries,
+		}
+
+		// Cache the seriesList for future queries
+		if missedSeriesLen > 0 && !params.NoCache && q.cache != nil {
+			// caching the data
+			err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
+			if err != nil {
+				zap.S().Error("error storing merged series", zap.Error(err))
+				return
+			}
+		}
 
 		return
 
@@ -313,14 +287,30 @@ func (q *querier) runBuilderQuery(
 		Name:   queryName,
 		Series: mergedSeries,
 	}
-	// Cache the seriesList for future queries
-	if len(missedSeries) > 0 && !params.NoCache && q.cache != nil {
-		mergedSeriesData, err := json.Marshal(mergedSeries)
+
+	var mergedSeriesData []byte
+	missedSeriesLen := len(missedSeries)
+	if missedSeriesLen > 0 && !params.NoCache && q.cache != nil {
+		// caching the data
+		var err error
+		mergedSeriesData, err = json.Marshal(mergedSeries)
 		if err != nil {
 			zap.S().Error("error marshalling merged series", zap.Error(err))
 			return
 		}
-		err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
+	}
+
+	// response doesn't need everything
+	filterCachedPoints(mergedSeries, params.Start, params.End)
+	ch <- channelResult{
+		Err:    nil,
+		Name:   queryName,
+		Series: mergedSeries,
+	}
+
+	// Cache the seriesList for future queries
+	if missedSeriesLen > 0 && !params.NoCache && q.cache != nil {
+		err := q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
 		if err != nil {
 			zap.S().Error("error storing merged series", zap.Error(err))
 			return
@@ -389,18 +379,28 @@ func (q *querier) runBuilderExpression(
 	}
 	mergedSeries := mergeSerieses(cachedSeries, missedSeries)
 
+	var mergedSeriesData []byte
+	missedSeriesLen := len(missedSeries)
+	if missedSeriesLen > 0 && !params.NoCache && q.cache != nil {
+		// caching the data
+		var err error
+		mergedSeriesData, err = json.Marshal(mergedSeries)
+		if err != nil {
+			zap.S().Error("error marshalling merged series", zap.Error(err))
+			return
+		}
+	}
+
+	// response doesn't need everything
+	filterCachedPoints(mergedSeries, params.Start, params.End)
 	ch <- channelResult{
 		Err:    nil,
 		Name:   queryName,
 		Series: mergedSeries,
 	}
+
 	// Cache the seriesList for future queries
 	if len(missedSeries) > 0 && !params.NoCache && q.cache != nil {
-		mergedSeriesData, err := json.Marshal(mergedSeries)
-		if err != nil {
-			zap.S().Error("error marshalling merged series", zap.Error(err))
-			return
-		}
 		err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
 		if err != nil {
 			zap.S().Error("error storing merged series", zap.Error(err))
