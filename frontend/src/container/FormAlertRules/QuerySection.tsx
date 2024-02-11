@@ -65,7 +65,7 @@ function QuerySection({
 		},
 		{
 			label: (
-				<Tooltip title="Clickhouse">
+				<Tooltip title="ClickHouse">
 					<Button className="nav-btns">
 						<Terminal size={14} />
 					</Button>
@@ -89,7 +89,7 @@ function QuerySection({
 			},
 			{
 				label: (
-					<Tooltip title="Clickhouse">
+					<Tooltip title="ClickHouse">
 						<Button className="nav-btns">
 							<Terminal size={14} />
 						</Button>
