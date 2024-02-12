@@ -8,6 +8,7 @@ import {
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
+	Layers2,
 	LayoutGrid,
 	MessageSquare,
 	Receipt,
@@ -42,6 +43,12 @@ export const helpSupportMenuItem = {
 	key: ROUTES.SUPPORT,
 	label: 'Help & Support',
 	icon: <MessageSquare size={16} />,
+};
+
+export const shortcutMenuItem = {
+	key: ROUTES.SHORTCUTS,
+	label: 'Keyboard Shortcuts',
+	icon: <Layers2 size={16} />,
 };
 
 export const slackSupportMenuItem = {

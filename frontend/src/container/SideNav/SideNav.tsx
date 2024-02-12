@@ -35,6 +35,7 @@ import defaultMenuItems, {
 	helpSupportMenuItem,
 	inviteMemberMenuItem,
 	manageLicenseMenuItem,
+	shortcutMenuItem,
 	slackSupportMenuItem,
 	trySignozCloudMenuItem,
 } from './menuItems';
@@ -147,15 +148,6 @@ function SideNav({
 
 	const { t } = useTranslation('');
 
-	useEffect(() => {
-		registerShortcut(GlobalShortcuts.SidebarCollapse, onCollapse);
-
-		return (): void => {
-			deregisterShortcut(GlobalShortcuts.SidebarCollapse);
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
 	const isLicenseActive =
 		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ===
 		LICENSE_PLAN_STATUS.VALID;
@@ -170,6 +162,10 @@ function SideNav({
 			'https://signoz.io/oss-to-cloud/?utm_source=product_navbar&utm_medium=frontend&utm_campaign=oss_users',
 			'_blank',
 		);
+	};
+
+	const onClickShortcuts = (): void => {
+		history.push(`/shortcuts`);
 	};
 
 	const onClickGetStarted = (): void => {
@@ -259,6 +255,42 @@ function SideNav({
 		? ROUTES.ORG_SETTINGS
 		: ROUTES.SETTINGS;
 
+	useEffect(() => {
+		registerShortcut(GlobalShortcuts.SidebarCollapse, onCollapse);
+
+		registerShortcut(GlobalShortcuts.NavigateToServices, () =>
+			onClickHandler(ROUTES.APPLICATION),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToTraces, () =>
+			onClickHandler(ROUTES.TRACE),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToLogs, () =>
+			onClickHandler(ROUTES.LOGS),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToDashboards, () =>
+			onClickHandler(ROUTES.ALL_DASHBOARD),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToAlerts, () =>
+			onClickHandler(ROUTES.LIST_ALL_ALERT),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToExceptions, () =>
+			onClickHandler(ROUTES.ALL_ERROR),
+		);
+
+		return (): void => {
+			deregisterShortcut(GlobalShortcuts.SidebarCollapse);
+			deregisterShortcut(GlobalShortcuts.NavigateToServices);
+			deregisterShortcut(GlobalShortcuts.NavigateToTraces);
+			deregisterShortcut(GlobalShortcuts.NavigateToLogs);
+			deregisterShortcut(GlobalShortcuts.NavigateToDashboards);
+			deregisterShortcut(GlobalShortcuts.NavigateToAlerts);
+			deregisterShortcut(GlobalShortcuts.NavigateToExceptions);
+		};
+	}, [deregisterShortcut, onClickHandler, onCollapse, registerShortcut]);
+
 	return (
 		<div className={cx('sideNav', collapsed ? 'collapsed' : '')}>
 			<div className="brand">
@@ -309,6 +341,14 @@ function SideNav({
 			</div>
 
 			<div className="secondary-nav-items">
+				<NavItem
+					isCollapsed={collapsed}
+					key="keyboardShortcuts"
+					item={shortcutMenuItem}
+					isActive={false}
+					onClick={onClickShortcuts}
+				/>
+
 				{licenseData && !isLicenseActive && (
 					<NavItem
 						isCollapsed={collapsed}

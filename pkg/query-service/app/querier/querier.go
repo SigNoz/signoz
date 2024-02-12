@@ -160,6 +160,8 @@ func findMissingTimeRanges(start, end, step int64, seriesList []*v3.Series, flux
 		}
 	}
 
+	// time.Now is used because here we are considering the case where data might not
+	// be fully ingested for last (fluxInterval) minutes
 	endMillis := time.Now().UnixMilli()
 	adjustStep := int64(math.Min(float64(step), 60))
 	roundedMillis := endMillis - (endMillis % (adjustStep * 1000))
@@ -239,6 +241,19 @@ func labelsToString(labels map[string]string) string {
 		labelKVs[idx] = labelsList[idx].Key + "=" + labelsList[idx].Value
 	}
 	return fmt.Sprintf("{%s}", strings.Join(labelKVs, ","))
+}
+
+func filterCachedPoints(cachedSeries []*v3.Series, start, end int64) {
+	for _, c := range cachedSeries {
+		points := []v3.Point{}
+		for _, p := range c.Points {
+			if p.Timestamp < start || p.Timestamp > end {
+				continue
+			}
+			points = append(points, p)
+		}
+		c.Points = points
+	}
 }
 
 func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
