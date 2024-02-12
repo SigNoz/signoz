@@ -47,7 +47,7 @@ export const Query = memo(function Query({
 	filterConfigs,
 	queryComponents,
 }: QueryProps): JSX.Element {
-	const { panelType } = useQueryBuilder();
+	const { panelType, currentQuery } = useQueryBuilder();
 	const { pathname } = useLocation();
 
 	const [isCollapse, setIsCollapsed] = useState(false);
@@ -288,6 +288,7 @@ export const Query = memo(function Query({
 				onToggleVisibility={handleToggleDisableQuery}
 				onDelete={handleDeleteQuery}
 				onCollapseEntity={handleToggleCollapsQuery}
+				showDeleteButton={currentQuery.builder.queryData.length > 1}
 			/>
 
 			{!isCollapse && (
