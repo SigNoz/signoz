@@ -2,9 +2,7 @@ import './QueryBuilderSearch.styles.scss';
 
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
-import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { getDataTypes } from 'container/LogDetailedView/utils';
-import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import {
 	useAutoComplete,
 	WhereClauseConfig,
@@ -76,8 +74,6 @@ function QueryBuilderSearch({
 		query,
 		searchKey,
 	);
-
-	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const { handleRunQuery } = useQueryBuilder();
 
@@ -203,18 +199,6 @@ function QueryBuilderSearch({
 		onChange(initialTagFilters);
 		/* eslint-disable react-hooks/exhaustive-deps */
 	}, [sourceKeys]);
-
-	useEffect(() => {
-		registerShortcut(LogsExplorerShortcuts.FocusTheSearchBar, () => {
-			// set timeout is needed here else the select treats the hotkey as input value
-			setTimeout(() => {
-				selectRef.current?.focus();
-			}, 0);
-		});
-
-		return (): void =>
-			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
-	}, []);
 
 	return (
 		<div
