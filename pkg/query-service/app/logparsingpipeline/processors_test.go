@@ -398,7 +398,7 @@ func TestAddProcessor(t *testing.T) {
 	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
 	processed := result[0]
 	require.Equal("1", processed.Resources_string["test"])
-	require.Equal(2, processed.Attributes_int64["test"])
+	require.Equal(int64(2), processed.Attributes_int64["test"])
 	require.Equal("", processed.Attributes_string["testMissing"])
 }
 

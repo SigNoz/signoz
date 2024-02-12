@@ -85,7 +85,14 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 
 			appendStatement := func(statement string) {
 				if len(filterExpr) > 0 {
-					statement = fmt.Sprintf("%s where %s", statement, filterExpr)
+					// statement = fmt.Sprintf(`%s where EXPR("%s")`, statement, strings.ReplaceAll(filterExpr, `"`, `\"`))
+					statement = fmt.Sprintf(
+						`%s where EXPR("%s")`,
+						statement,
+						strings.ReplaceAll(
+							strings.ReplaceAll(filterExpr, `\`, `\\`), `"`, `\"`,
+						),
+					)
 				}
 				ottlStatements = append(ottlStatements, statement)
 			}
@@ -96,7 +103,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 					if operator.Type == "add" {
 						value := fmt.Sprintf(`"%s"`, operator.Value)
 						if strings.HasPrefix(operator.Value, "EXPR(") {
-							value = operator.Value[5 : len(operator.Value)-1]
+							value = fmt.Sprintf(`EXPR("%s")`, operator.Value[5:len(operator.Value)-1])
 						}
 						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.Field), value))
 
