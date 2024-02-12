@@ -151,6 +151,27 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 							toOttlExpr(parseFromNotNilCheck),
 						)
 
+					} else if operator.Type == "json_parser" {
+						parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+						if err != nil {
+							return nil, nil, fmt.Errorf(
+								"couldn't generate nil check for parseFrom of json parser op %s: %w", operator.Name, err,
+							)
+						}
+						whereClause := strings.Join([]string{
+							toOttlExpr(parseFromNotNilCheck),
+							fmt.Sprintf(`IsMatch(%s, "^\\s*{.*}\\s*$")`, ottlPath(operator.ParseFrom)),
+							// toOttlExpr(fmt.Sprintf(`%s matches "^\\s*{.*}\\s*$"`, operator.ParseFrom)),
+						}, " and ")
+						appendStatement(
+							fmt.Sprintf(
+								`merge_maps(%s, ParseJSON(%s), "upsert")`,
+								ottlPath(operator.ParseTo),
+								ottlPath(operator.ParseFrom),
+							),
+							whereClause,
+						)
+
 					} else {
 						return nil, nil, fmt.Errorf("unsupported pipeline operator type: %s", operator.Type)
 					}
