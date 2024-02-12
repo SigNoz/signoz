@@ -151,6 +151,7 @@ export function Formula({
 				onToggleVisibility={handleToggleDisableFormula}
 				onDelete={handleDelete}
 				onCollapseEntity={handleToggleCollapseFormula}
+				showDeleteButton
 			/>
 
 			{!isCollapse && (

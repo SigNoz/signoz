@@ -2,7 +2,6 @@ import './QBEntityOptions.styles.scss';
 
 import { Button, Col } from 'antd';
 import cx from 'classnames';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ChevronDown, ChevronRight, Eye, EyeOff, Trash2 } from 'lucide-react';
 
 interface QBEntityOptionsProps {
@@ -12,6 +11,7 @@ interface QBEntityOptionsProps {
 	onDelete: () => void;
 	onToggleVisibility: () => void;
 	onCollapseEntity: () => void;
+	showDeleteButton: boolean;
 }
 
 export default function QBEntityOptions({
@@ -21,11 +21,8 @@ export default function QBEntityOptions({
 	onDelete,
 	onToggleVisibility,
 	onCollapseEntity,
+	showDeleteButton,
 }: QBEntityOptionsProps): JSX.Element {
-	const { currentQuery } = useQueryBuilder();
-
-	const showDeleteButton = currentQuery.builder.queryData.length > 1;
-
 	return (
 		<Col span={24}>
 			<div className="qb-entity-options">
