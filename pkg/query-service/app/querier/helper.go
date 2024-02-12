@@ -33,8 +33,8 @@ func prepareLogsQuery(ctx context.Context,
 	// for ts query with limit replace it as it is already formed
 	if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
 		limitQuery, err := logsV3.PrepareLogsQuery(
-			params.Start,
-			params.End,
+			start,
+			end,
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
@@ -44,8 +44,8 @@ func prepareLogsQuery(ctx context.Context,
 			return query, err
 		}
 		placeholderQuery, err := logsV3.PrepareLogsQuery(
-			params.Start,
-			params.End,
+			start,
+			end,
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
@@ -59,8 +59,8 @@ func prepareLogsQuery(ctx context.Context,
 	}
 
 	query, err := logsV3.PrepareLogsQuery(
-		params.Start,
-		params.End,
+		start,
+		end,
 		params.CompositeQuery.QueryType,
 		params.CompositeQuery.PanelType,
 		builderQuery,
