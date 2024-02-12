@@ -1,7 +1,7 @@
 import './QueryBuilder.styles.scss';
 
 import { Button, Col, Divider, Row, Tooltip } from 'antd';
-import { MAX_FORMULAS, MAX_QUERIES } from 'constants/queryBuilder';
+import { MAX_FORMULAS, MAX_QUERIES, PANEL_TYPES } from 'constants/queryBuilder';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DatabaseZap, Sigma } from 'lucide-react';
@@ -92,21 +92,23 @@ export const QueryBuilder = memo(function QueryBuilder({
 			justify="start"
 			className="query-builder-container"
 		>
-			<div className="new-query-formula-buttons-container">
-				<Button.Group>
-					<Tooltip title="Add Query">
-						<Button disabled={isDisabledQueryButton} onClick={addNewBuilderQuery}>
-							<DatabaseZap size={12} />
-						</Button>
-					</Tooltip>
+			{!isExplorerPanel && (
+				<div className="new-query-formula-buttons-container">
+					<Button.Group>
+						<Tooltip title="Add Query">
+							<Button disabled={isDisabledQueryButton} onClick={addNewBuilderQuery}>
+								<DatabaseZap size={12} />
+							</Button>
+						</Tooltip>
 
-					<Tooltip title="Add Formula">
-						<Button disabled={isDisabledFormulaButton} onClick={addNewFormula}>
-							<Sigma size={12} />
-						</Button>
-					</Tooltip>
-				</Button.Group>
-			</div>
+						<Tooltip title="Add Formula">
+							<Button disabled={isDisabledFormulaButton} onClick={addNewFormula}>
+								<Sigma size={12} />
+							</Button>
+						</Tooltip>
+					</Button.Group>
+				</div>
+			)}
 
 			<Col span={23} className="qb-entities-list">
 				<Row>
@@ -120,49 +122,62 @@ export const QueryBuilder = memo(function QueryBuilder({
 							className="query-builder-queries-formula-container"
 							ref={containerRef}
 						>
-							{currentQuery.builder.queryData.map((query, index) => (
-								<Col
-									key={query.queryName}
-									span={24}
-									className="query"
-									id={`qb-query-${query.queryName}`}
-								>
-									<Query
-										index={index}
-										isAvailableToDisable={isAvailableToDisableQuery}
-										queryVariant={config?.queryVariant || 'dropdown'}
-										query={query}
-										filterConfigs={filterConfigs}
-										queryComponents={queryComponents}
-									/>
-								</Col>
-							))}
-							{currentQuery.builder.queryFormulas.map((formula, index) => {
-								const isAllMetricDataSource = currentQuery.builder.queryData.every(
-									(query) => query.dataSource === DataSource.METRICS,
-								);
-
-								const query =
-									currentQuery.builder.queryData[index] ||
-									currentQuery.builder.queryData[0];
-
-								return (
+							{panelType === PANEL_TYPES.LIST && isExplorerPanel && (
+								<Query
+									index={0}
+									isAvailableToDisable={isAvailableToDisableQuery}
+									queryVariant="static"
+									query={currentQuery.builder.queryData[0]}
+									filterConfigs={filterConfigs}
+									queryComponents={queryComponents}
+									isExplorerPanel
+								/>
+							)}
+							{!isExplorerPanel &&
+								currentQuery.builder.queryData.map((query, index) => (
 									<Col
-										key={formula.queryName}
+										key={query.queryName}
 										span={24}
-										className="formula"
-										id={`qb-formula-${formula.queryName}`}
+										className="query"
+										id={`qb-query-${query.queryName}`}
 									>
-										<Formula
-											filterConfigs={filterConfigs}
-											query={query}
-											isAdditionalFilterEnable={isAllMetricDataSource}
-											formula={formula}
+										<Query
 											index={index}
+											isAvailableToDisable={isAvailableToDisableQuery}
+											queryVariant={config?.queryVariant || 'dropdown'}
+											query={query}
+											filterConfigs={filterConfigs}
+											queryComponents={queryComponents}
 										/>
 									</Col>
-								);
-							})}
+								))}
+							{!isExplorerPanel &&
+								currentQuery.builder.queryFormulas.map((formula, index) => {
+									const isAllMetricDataSource = currentQuery.builder.queryData.every(
+										(query) => query.dataSource === DataSource.METRICS,
+									);
+
+									const query =
+										currentQuery.builder.queryData[index] ||
+										currentQuery.builder.queryData[0];
+
+									return (
+										<Col
+											key={formula.queryName}
+											span={24}
+											className="formula"
+											id={`qb-formula-${formula.queryName}`}
+										>
+											<Formula
+												filterConfigs={filterConfigs}
+												query={query}
+												isAdditionalFilterEnable={isAllMetricDataSource}
+												formula={formula}
+												index={index}
+											/>
+										</Col>
+									);
+								})}
 						</Row>
 
 						<Col span={24} className="divider">
@@ -172,29 +187,31 @@ export const QueryBuilder = memo(function QueryBuilder({
 				</Row>
 			</Col>
 
-			<Col span={1} className="query-builder-mini-map">
-				{currentQuery.builder.queryData.map((query) => (
-					<Button
-						disabled={isDisabledQueryButton}
-						className="query-btn"
-						key={query.queryName}
-						onClick={(): void => handleScrollIntoView('query', query.queryName)}
-					>
-						{query.queryName}
-					</Button>
-				))}
+			{!isExplorerPanel && (
+				<Col span={1} className="query-builder-mini-map">
+					{currentQuery.builder.queryData.map((query) => (
+						<Button
+							disabled={isDisabledQueryButton}
+							className="query-btn"
+							key={query.queryName}
+							onClick={(): void => handleScrollIntoView('query', query.queryName)}
+						>
+							{query.queryName}
+						</Button>
+					))}
 
-				{currentQuery.builder.queryFormulas.map((formula) => (
-					<Button
-						disabled={isDisabledFormulaButton}
-						className="formula-btn"
-						key={formula.queryName}
-						onClick={(): void => handleScrollIntoView('formula', formula.queryName)}
-					>
-						{formula.queryName}
-					</Button>
-				))}
-			</Col>
+					{currentQuery.builder.queryFormulas.map((formula) => (
+						<Button
+							disabled={isDisabledFormulaButton}
+							className="formula-btn"
+							key={formula.queryName}
+							onClick={(): void => handleScrollIntoView('formula', formula.queryName)}
+						>
+							{formula.queryName}
+						</Button>
+					))}
+				</Col>
+			)}
 		</Row>
 	);
 });

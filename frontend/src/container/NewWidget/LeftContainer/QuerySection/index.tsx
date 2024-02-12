@@ -15,7 +15,13 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Atom, Play, Terminal } from 'lucide-react';
+import {
+	Atom,
+	DraftingCompass,
+	Play,
+	ScrollText,
+	Terminal,
+} from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
@@ -170,7 +176,13 @@ function QuerySection({
 	const listItems = [
 		{
 			key: DataSource.LOGS,
-			label: 'Logs',
+			label: (
+				<Tooltip title="Logs">
+					<Button className="nav-btns">
+						<ScrollText size={14} />
+					</Button>
+				</Tooltip>
+			),
 			tab: <Typography>Log</Typography>,
 			children: (
 				<QueryBuilder
@@ -182,7 +194,13 @@ function QuerySection({
 		},
 		{
 			key: DataSource.TRACES,
-			label: 'Traces',
+			label: (
+				<Tooltip title="Traces">
+					<Button className="nav-btns">
+						<DraftingCompass size={14} />
+					</Button>
+				</Tooltip>
+			),
 			tab: <Typography>Traces</Typography>,
 			children: (
 				<QueryBuilder
