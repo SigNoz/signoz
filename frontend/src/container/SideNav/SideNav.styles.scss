@@ -1,20 +1,19 @@
-@import '@signozhq/design-tokens';
-
 .sideNav {
 	flex: 0 0 240px;
 	max-width: 240px;
 	min-width: 240px;
 	width: 240px;
-	border-right: 1px solid $bg-slate-400;
+	border-right: 1px solid var(--bg-slate-400);
 	padding-bottom: 48px;
 	transition: all 0.3s, background 0s, border 0s;
 	position: relative;
+	z-index: 1;
 
 	.brand {
 		display: flex;
 		align-items: center;
 		gap: 12px;
-		padding: $padding-4;
+		padding: var(--padding-4);
 
 		.brand-logo {
 			display: flex;
@@ -24,7 +23,7 @@
 			cursor: pointer;
 
 			img {
-				height: $font-size-xl;
+				height: var(--font-size-xl);
 			}
 
 			.brand-logo-name {
@@ -45,13 +44,13 @@
 				padding: 0;
 				color: rgba(255, 255, 255, 0.85);
 				font-size: 8px;
-				font-weight: $font-weight-medium;
+				font-weight: var(--font-weight-medium);
 				letter-spacing: 0.6px;
 				padding: 4px 8px;
 				text-transform: uppercase;
 				white-space: nowrap;
-				background: $bg-slate-400;
-				border: 1px solid $bg-slate-400;
+				background: var(--bg-slate-400);
+				border: 1px solid var(--bg-slate-400);
 				border-radius: 20px;
 				opacity: 1;
 				transition: all 0.2s;
@@ -73,7 +72,7 @@
 			width: 100%;
 			height: 36px;
 
-			border: 1px solid $bg-slate-400;
+			border: 1px solid var(--bg-slate-400);
 
 			border-radius: 2px;
 			box-shadow: none !important;
@@ -81,7 +80,7 @@
 	}
 
 	.secondary-nav-items {
-		border-top: 1px solid $bg-slate-400;
+		border-top: 1px solid var(--bg-slate-400);
 		padding: 8px 0;
 		max-width: 100%;
 		position: fixed;
@@ -105,8 +104,8 @@
 			transition: display 0.3s;
 
 			svg {
-				fill: $bg-vanilla-300;
-				color: $bg-slate-300;
+				fill: var(--bg-vanilla-400);
+				color: var(--bg-slate-300);
 			}
 		}
 	}
@@ -141,30 +140,30 @@
 
 .lightMode {
 	.sideNav {
-		background: $bg-vanilla-300;
-		border-right: 1px solid $bg-vanilla-400;
+		background: var(--bg-vanilla-300);
+		border-right: 1px solid var(--bg-vanilla-400);
 
 		.get-started-nav-items {
 			.get-started-btn {
-				border: 1px solid $bg-vanilla-400;
+				border: 1px solid var(--bg-vanilla-400);
 			}
 		}
 
 		.brand {
 			.brand-logo {
 				.brand-logo-name {
-					color: $bg-slate-400;
+					color: var(--bg-slate-400);
 				}
 			}
 		}
 
 		.secondary-nav-items {
-			border-top: 1px solid $bg-vanilla-400;
+			border-top: 1px solid var(--bg-vanilla-400);
 
 			.collapse-expand-handlers {
 				svg {
-					color: $bg-slate-300;
-					fill: $bg-vanilla-300;
+					color: var(--bg-slate-300);
+					fill: var(--bg-vanilla-400);
 				}
 			}
 		}

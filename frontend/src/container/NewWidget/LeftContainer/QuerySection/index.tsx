@@ -1,4 +1,6 @@
-import { Button, Tabs, Typography } from 'antd';
+import './QuerySection.styles.scss';
+
+import { Button, Tabs, Tooltip, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphProps } from 'container/NewWidget/types';
@@ -9,13 +11,14 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { Atom, Play, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -32,6 +35,7 @@ function QuerySection({
 	selectedTime,
 }: QueryProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const [currentTab, setCurrentTab] = useState(currentQuery.queryType);
 	const urlQuery = useUrlQuery();
 
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -111,6 +115,7 @@ function QuerySection({
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
 		const currentQueryType = qCategory as EQueryType;
+		setCurrentTab(qCategory as EQueryType);
 
 		featureResponse.refetch().then(() => {
 			handleStageQuery({ ...currentQuery, queryType: currentQueryType });
@@ -132,7 +137,13 @@ function QuerySection({
 	const items = [
 		{
 			key: EQueryType.QUERY_BUILDER,
-			label: 'Query Builder',
+			label: (
+				<Tooltip title="Query Builder">
+					<Button className="nav-btns">
+						<Atom size={14} />
+					</Button>
+				</Tooltip>
+			),
 			tab: <Typography>Query Builder</Typography>,
 			children: (
 				<QueryBuilder panelType={selectedGraph} filterConfigs={filterConfigs} />
@@ -140,39 +151,55 @@ function QuerySection({
 		},
 		{
 			key: EQueryType.CLICKHOUSE,
-			label: 'ClickHouse Query',
+			label: (
+				<Tooltip title="ClickHouse">
+					<Button className="nav-btns">
+						<Terminal size={14} />
+					</Button>
+				</Tooltip>
+			),
 			tab: <Typography>ClickHouse Query</Typography>,
 			children: <ClickHouseQueryContainer />,
 		},
 		{
 			key: EQueryType.PROM,
-			label: 'PromQL',
+			label: (
+				<Tooltip title="PromQL">
+					<Button className="nav-btns">
+						<img src="/Icons/promQL.svg" alt="Prom Ql" className="prom-ql-icon" />
+					</Button>
+				</Tooltip>
+			),
 			tab: <Typography>PromQL</Typography>,
 			children: <PromQLQueryContainer />,
 		},
 	];
 
 	return (
-		<Tabs
-			type="card"
-			style={{ width: '100%' }}
-			defaultActiveKey={currentQuery.queryType}
-			activeKey={currentQuery.queryType}
-			onChange={handleQueryCategoryChange}
-			tabBarExtraContent={
-				<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-					<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
-					<Button
-						loading={getWidgetQueryRange.isFetching}
-						type="primary"
-						onClick={handleRunQuery}
-					>
-						Stage & Run Query
-					</Button>
-				</span>
-			}
-			items={items}
-		/>
+		<div className="dashboard-navigation">
+			<Tabs
+				type="card"
+				style={{ width: '100%' }}
+				defaultActiveKey={currentTab}
+				activeKey={currentTab}
+				onChange={handleQueryCategoryChange}
+				tabBarExtraContent={
+					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+						<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
+						<Button
+							loading={getWidgetQueryRange.isFetching}
+							type="primary"
+							onClick={handleRunQuery}
+							className="stage-run-query"
+							icon={<Play size={14} />}
+						>
+							Stage & Run Query
+						</Button>
+					</span>
+				}
+				items={items}
+			/>
+		</div>
 	);
 }
 
