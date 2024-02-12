@@ -79,7 +79,7 @@ function QueryBuilderSearch({
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const { handleRunQuery } = useQueryBuilder();
+	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
 	const onTagRender = ({
 		value,
@@ -203,14 +203,22 @@ function QueryBuilderSearch({
 		onChange(initialTagFilters);
 		/* eslint-disable react-hooks/exhaustive-deps */
 	}, [sourceKeys]);
+	const isMultipleQueries = useMemo(
+		() =>
+			currentQuery.builder.queryData.length > 1 ||
+			currentQuery.builder.queryFormulas.length > 0,
+		[currentQuery],
+	);
 
 	useEffect(() => {
-		registerShortcut(LogsExplorerShortcuts.FocusTheSearchBar, () => {
-			// set timeout is needed here else the select treats the hotkey as input value
-			setTimeout(() => {
-				selectRef.current?.focus();
-			}, 0);
-		});
+		if (!isMultipleQueries) {
+			registerShortcut(LogsExplorerShortcuts.FocusTheSearchBar, () => {
+				// set timeout is needed here else the select treats the hotkey as input value
+				setTimeout(() => {
+					selectRef.current?.focus();
+				}, 0);
+			});
+		}
 
 		return (): void =>
 			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
