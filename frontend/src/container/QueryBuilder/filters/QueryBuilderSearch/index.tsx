@@ -2,9 +2,7 @@ import './QueryBuilderSearch.styles.scss';
 
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
-import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { getDataTypes } from 'container/LogDetailedView/utils';
-import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import {
 	useAutoComplete,
 	WhereClauseConfig,
@@ -77,9 +75,7 @@ function QueryBuilderSearch({
 		searchKey,
 	);
 
-	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-
-	const { handleRunQuery, currentQuery } = useQueryBuilder();
+	const { handleRunQuery } = useQueryBuilder();
 
 	const onTagRender = ({
 		value,
@@ -203,26 +199,6 @@ function QueryBuilderSearch({
 		onChange(initialTagFilters);
 		/* eslint-disable react-hooks/exhaustive-deps */
 	}, [sourceKeys]);
-	const isMultipleQueries = useMemo(
-		() =>
-			currentQuery.builder.queryData.length > 1 ||
-			currentQuery.builder.queryFormulas.length > 0,
-		[currentQuery],
-	);
-
-	useEffect(() => {
-		if (!isMultipleQueries) {
-			registerShortcut(LogsExplorerShortcuts.FocusTheSearchBar, () => {
-				// set timeout is needed here else the select treats the hotkey as input value
-				setTimeout(() => {
-					selectRef.current?.focus();
-				}, 0);
-			});
-		}
-
-		return (): void =>
-			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
-	}, []);
 
 	return (
 		<div
