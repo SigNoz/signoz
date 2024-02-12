@@ -6,7 +6,6 @@ import {
 } from '@ant-design/icons';
 import {
 	Button,
-	Card,
 	Col,
 	Dropdown,
 	MenuProps,
@@ -152,95 +151,100 @@ function ExplorerCard({
 	const saveButtonType = isQueryUpdated ? 'default' : 'primary';
 	const saveButtonIcon = isQueryUpdated ? null : <SaveOutlined />;
 
+	const showSaveView = false;
+
 	return (
 		<>
-			<ExplorerCardHeadContainer size="small">
-				<Row align="middle">
-					<Col span={6}>
-						<Space>
-							<Typography>Query Builder</Typography>
-							<TextToolTip
-								url={ExploreHeaderToolTip.url}
-								text={ExploreHeaderToolTip.text}
-								useFilledIcon={false}
-							/>
-						</Space>
-					</Col>
-					<OffSetCol span={18}>
-						<Space size="large">
-							{viewsData?.data.data && viewsData?.data.data.length && (
-								<Space>
-									<Select
-										getPopupContainer={popupContainer}
-										loading={isLoading || isRefetching}
-										showSearch
-										placeholder="Select a view"
-										dropdownStyle={DropDownOverlay}
-										dropdownMatchSelectWidth={false}
-										optionLabelProp="value"
-										value={viewName || undefined}
+			{showSaveView && (
+				<ExplorerCardHeadContainer size="small">
+					<Row align="middle">
+						<Col span={6}>
+							<Space>
+								<Typography>Query Builder</Typography>
+								<TextToolTip
+									url={ExploreHeaderToolTip.url}
+									text={ExploreHeaderToolTip.text}
+									useFilledIcon={false}
+								/>
+							</Space>
+						</Col>
+						<OffSetCol span={18}>
+							<Space size="large">
+								{viewsData?.data.data && viewsData?.data.data.length && (
+									<Space>
+										<Select
+											getPopupContainer={popupContainer}
+											loading={isLoading || isRefetching}
+											showSearch
+											placeholder="Select a view"
+											dropdownStyle={DropDownOverlay}
+											dropdownMatchSelectWidth={false}
+											optionLabelProp="value"
+											value={viewName || undefined}
+										>
+											{viewsData?.data.data.map((view) => (
+												<Select.Option key={view.uuid} value={view.name}>
+													<MenuItemGenerator
+														viewName={view.name}
+														viewKey={viewKey}
+														createdBy={view.createdBy}
+														uuid={view.uuid}
+														refetchAllView={refetchAllView}
+														viewData={viewsData.data.data}
+														sourcePage={sourcepage}
+													/>
+												</Select.Option>
+											))}
+										</Select>
+									</Space>
+								)}
+								{isQueryUpdated && (
+									<Button
+										type="primary"
+										icon={<SaveOutlined />}
+										onClick={onUpdateQueryHandler}
 									>
-										{viewsData?.data.data.map((view) => (
-											<Select.Option key={view.uuid} value={view.name}>
-												<MenuItemGenerator
-													viewName={view.name}
-													viewKey={viewKey}
-													createdBy={view.createdBy}
-													uuid={view.uuid}
-													refetchAllView={refetchAllView}
-													viewData={viewsData.data.data}
-													sourcePage={sourcepage}
-												/>
-											</Select.Option>
-										))}
-									</Select>
-								</Space>
-							)}
-							{isQueryUpdated && (
-								<Button
-									type="primary"
-									icon={<SaveOutlined />}
-									onClick={onUpdateQueryHandler}
+										Save changes
+									</Button>
+								)}
+								<Popover
+									getPopupContainer={popupContainer}
+									placement="bottomLeft"
+									trigger="click"
+									content={
+										<SaveViewWithName
+											sourcePage={sourcepage}
+											handlePopOverClose={handleOpenChange}
+											refetchAllView={refetchAllView}
+										/>
+									}
+									showArrow={false}
+									open={isOpen}
+									onOpenChange={handleOpenChange}
 								>
-									Save changes
-								</Button>
-							)}
-							<Popover
-								getPopupContainer={popupContainer}
-								placement="bottomLeft"
-								trigger="click"
-								content={
-									<SaveViewWithName
-										sourcePage={sourcepage}
-										handlePopOverClose={handleOpenChange}
-										refetchAllView={refetchAllView}
-									/>
-								}
-								showArrow={false}
-								open={isOpen}
-								onOpenChange={handleOpenChange}
-							>
-								<Button
-									type={saveButtonType}
-									icon={saveButtonIcon}
-									data-testid="traces-save-view-action"
-								>
-									{isQueryUpdated
-										? SaveButtonText.SAVE_AS_NEW_VIEW
-										: SaveButtonText.SAVE_VIEW}
-								</Button>
-							</Popover>
-							<ShareAltOutlined onClick={onCopyUrlHandler} />
-							{viewKey && (
-								<Dropdown trigger={['click']} menu={moreOptionMenu}>
-									<MoreOutlined />
-								</Dropdown>
-							)}
-						</Space>
-					</OffSetCol>
-				</Row>
-			</ExplorerCardHeadContainer>
-			<Card>{children}</Card>
+									<Button
+										type={saveButtonType}
+										icon={saveButtonIcon}
+										data-testid="traces-save-view-action"
+									>
+										{isQueryUpdated
+											? SaveButtonText.SAVE_AS_NEW_VIEW
+											: SaveButtonText.SAVE_VIEW}
+									</Button>
+								</Popover>
+								<ShareAltOutlined onClick={onCopyUrlHandler} />
+								{viewKey && (
+									<Dropdown trigger={['click']} menu={moreOptionMenu}>
+										<MoreOutlined />
+									</Dropdown>
+								)}
+							</Space>
+						</OffSetCol>
+					</Row>
+				</ExplorerCardHeadContainer>
+			)}
+
+			<div>{children}</div>
 		</>
 	);
 }

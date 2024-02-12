@@ -7,6 +7,7 @@ export const Container = styled(Card)<{
 }>`
 	width: 100% !important;
 	margin-bottom: 0.3rem;
+	cursor: pointer;
 	.ant-card-body {
 		padding: 0.3rem 0.6rem;
 	}
@@ -29,11 +30,13 @@ export const TextContainer = styled.div`
 
 export const LogContainer = styled.div`
 	margin-left: 0.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 `;
 
 export const LogText = styled.div`
 	display: inline-block;
-
 	text-overflow: ellipsis;
 	overflow: hidden;
 	white-space: nowrap;
