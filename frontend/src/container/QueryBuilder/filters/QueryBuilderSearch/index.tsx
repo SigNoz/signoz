@@ -209,7 +209,7 @@ function QueryBuilderSearch({
 			// set timeout is needed here else the select treats the hotkey as input value
 			setTimeout(() => {
 				selectRef.current?.focus();
-			}, 20);
+			}, 0);
 		});
 
 		return (): void =>
