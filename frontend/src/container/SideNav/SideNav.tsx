@@ -289,8 +289,7 @@ function SideNav({
 			deregisterShortcut(GlobalShortcuts.NavigateToAlerts);
 			deregisterShortcut(GlobalShortcuts.NavigateToExceptions);
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [deregisterShortcut, onClickHandler, onCollapse, registerShortcut]);
 
 	return (
 		<div className={cx('sideNav', collapsed ? 'collapsed' : '')}>

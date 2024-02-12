@@ -248,8 +248,7 @@ function ExplorerOptions({
 			deregisterShortcut(LogsExplorerShortcuts.AddToDashboard);
 			deregisterShortcut(LogsExplorerShortcuts.AddAlert);
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [deregisterShortcut, onCreateAlertsHandler, registerShortcut]);
 
 	// TODO: Remove this and move this to scss file
 	const dropdownStyle: CSSProperties = useMemo(
