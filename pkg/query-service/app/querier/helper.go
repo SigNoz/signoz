@@ -25,6 +25,11 @@ func prepareLogsQuery(ctx context.Context,
 	preferRPM bool,
 ) (string, error) {
 	query := ""
+
+	if params == nil || builderQuery == nil {
+		return query, fmt.Errorf("params and builderQuery cannot be nil")
+	}
+
 	// for ts query with limit replace it as it is already formed
 	if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
 		limitQuery, err := logsV3.PrepareLogsQuery(
