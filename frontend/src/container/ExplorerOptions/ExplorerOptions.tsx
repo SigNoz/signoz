@@ -18,9 +18,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
-import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
@@ -32,14 +30,7 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { Check, ConciergeBell, Disc3, Plus, X, XCircle } from 'lucide-react';
-import {
-	CSSProperties,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { CSSProperties, useCallback, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -237,18 +228,6 @@ function ExplorerOptions({
 			setNewViewName,
 		});
 	};
-
-	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-
-	useEffect(() => {
-		registerShortcut(LogsExplorerShortcuts.AddToDashboard, onAddToDashboard);
-		registerShortcut(LogsExplorerShortcuts.AddAlert, onCreateAlertsHandler);
-
-		return (): void => {
-			deregisterShortcut(LogsExplorerShortcuts.AddToDashboard);
-			deregisterShortcut(LogsExplorerShortcuts.AddAlert);
-		};
-	}, [deregisterShortcut, onCreateAlertsHandler, registerShortcut]);
 
 	// TODO: Remove this and move this to scss file
 	const dropdownStyle: CSSProperties = useMemo(

@@ -1,11 +1,11 @@
 export const GlobalShortcuts = {
 	SidebarCollapse: '\\+meta',
-	NavigateToServices: '1',
-	NavigateToTraces: '2',
-	NavigateToLogs: '3',
-	NavigateToDashboards: '4',
-	NavigateToAlerts: '5',
-	NavigateToExceptions: '6',
+	NavigateToServices: 's+shift',
+	NavigateToTraces: 't+shift',
+	NavigateToLogs: 'l+shift',
+	NavigateToDashboards: 'd+shift',
+	NavigateToAlerts: 'a+shift',
+	NavigateToExceptions: 'e+shift',
 };
 
 export const GlobalShortcutsDescription = {
