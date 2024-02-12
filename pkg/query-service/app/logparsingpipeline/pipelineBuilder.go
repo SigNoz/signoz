@@ -83,17 +83,34 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 				return nil, nil, fmt.Errorf("failed to parse pipeline filter: %w", err)
 			}
 
-			appendStatement := func(statement string) {
+			escapeDoubleQuotes := func(str string) string {
+				return strings.ReplaceAll(
+					strings.ReplaceAll(str, `\`, `\\`), `"`, `\"`,
+				)
+			}
+
+			toOttlExpr := func(expr string) string {
+				return fmt.Sprintf(`EXPR("%s")`, escapeDoubleQuotes(expr))
+			}
+
+			appendStatement := func(statement string, additionalFilter string) {
+				whereConditions := []string{}
 				if len(filterExpr) > 0 {
-					// statement = fmt.Sprintf(`%s where EXPR("%s")`, statement, strings.ReplaceAll(filterExpr, `"`, `\"`))
-					statement = fmt.Sprintf(
-						`%s where EXPR("%s")`,
-						statement,
-						strings.ReplaceAll(
-							strings.ReplaceAll(filterExpr, `\`, `\\`), `"`, `\"`,
-						),
+					whereConditions = append(
+						whereConditions,
+						toOttlExpr(filterExpr),
 					)
 				}
+				if len(additionalFilter) > 0 {
+					whereConditions = append(whereConditions, additionalFilter)
+				}
+
+				if len(whereConditions) > 0 {
+					statement = fmt.Sprintf(
+						`%s where %s`, statement, strings.Join(whereConditions, " and "),
+					)
+				}
+
 				ottlStatements = append(ottlStatements, statement)
 			}
 
@@ -103,19 +120,36 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 					if operator.Type == "add" {
 						value := fmt.Sprintf(`"%s"`, operator.Value)
 						if strings.HasPrefix(operator.Value, "EXPR(") {
-							value = fmt.Sprintf(`EXPR("%s")`, operator.Value[5:len(operator.Value)-1])
+							value = toOttlExpr(operator.Value[5 : len(operator.Value)-1])
 						}
-						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.Field), value))
+						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.Field), value), "")
 
 					} else if operator.Type == "remove" {
-						appendStatement(deleteStatement(operator.Field))
+						appendStatement(deleteStatement(operator.Field), "")
 
 					} else if operator.Type == "copy" {
-						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.To), ottlPath(operator.From)))
+						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.To), ottlPath(operator.From)), "")
 
 					} else if operator.Type == "move" {
-						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.To), ottlPath(operator.From)))
-						appendStatement(deleteStatement(operator.From))
+						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.To), ottlPath(operator.From)), "")
+						appendStatement(deleteStatement(operator.From), "")
+
+					} else if operator.Type == "regex_parser" {
+						parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+						if err != nil {
+							return nil, nil, fmt.Errorf(
+								"couldn't generate nil check for parseFrom of regex op %s: %w", operator.Name, err,
+							)
+						}
+						appendStatement(
+							fmt.Sprintf(
+								`merge_maps(%s, ExtractPatterns(%s, "%s"), "upsert")`,
+								ottlPath(operator.ParseTo),
+								ottlPath(operator.ParseFrom),
+								escapeDoubleQuotes(operator.Regex),
+							),
+							toOttlExpr(parseFromNotNilCheck),
+						)
 
 					} else {
 						return nil, nil, fmt.Errorf("unsupported pipeline operator type: %s", operator.Type)
