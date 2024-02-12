@@ -295,7 +295,17 @@ func expressionToKey(expression *govaluate.EvaluableExpression, keys map[string]
 func isMetricExpression(expression *govaluate.EvaluableExpression, params *v3.QueryRangeParamsV3) bool {
 	variables := unique(expression.Vars())
 	for _, variable := range variables {
-		if params.CompositeQuery.BuilderQueries[variable].DataSource != v3.DataSourceMetrics && params.CompositeQuery.BuilderQueries[variable].DataSource != v3.DataSourceLogs {
+		if params.CompositeQuery.BuilderQueries[variable].DataSource != v3.DataSourceMetrics {
+			return false
+		}
+	}
+	return true
+}
+
+func isLogExpression(expression *govaluate.EvaluableExpression, params *v3.QueryRangeParamsV3) bool {
+	variables := unique(expression.Vars())
+	for _, variable := range variables {
+		if params.CompositeQuery.BuilderQueries[variable].DataSource != v3.DataSourceLogs {
 			return false
 		}
 	}
@@ -400,7 +410,7 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 		if query.Expression != query.QueryName {
 			expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
 
-			if !isMetricExpression(expression, params) {
+			if !isMetricExpression(expression, params) && !isLogExpression(expression, params) {
 				continue
 			}
 
