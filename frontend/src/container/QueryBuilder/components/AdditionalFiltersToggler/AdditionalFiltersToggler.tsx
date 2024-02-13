@@ -1,15 +1,14 @@
+import './AdditionalFiltersToggler.styles.scss';
+
+import { Color } from '@signozhq/design-tokens';
 import { Col, Row, Typography } from 'antd';
+import { Minus, Plus } from 'lucide-react';
 import { Fragment, memo, ReactNode, useState } from 'react';
 
 // ** Types
 import { AdditionalFiltersProps } from './AdditionalFiltersToggler.interfaces';
 // ** Styles
-import {
-	StyledIconClose,
-	StyledIconOpen,
-	StyledInner,
-	StyledLink,
-} from './AdditionalFiltersToggler.styled';
+import { StyledInner, StyledLink } from './AdditionalFiltersToggler.styled';
 
 export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	children,
@@ -42,10 +41,19 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	});
 
 	return (
-		<Row>
+		<Row className="additinal-filters-container">
 			<Col span={24}>
-				<StyledInner onClick={handleToggleOpenFilters}>
-					{isOpenedFilters ? <StyledIconClose /> : <StyledIconOpen />}
+				<StyledInner onClick={handleToggleOpenFilters} style={{ marginBottom: 0 }}>
+					{isOpenedFilters ? (
+						<span className="action-btn">
+							<Minus size={14} color={Color.BG_INK_500} />
+						</span>
+					) : (
+						<span className="action-btn">
+							<Plus size={14} color={Color.BG_INK_500} />
+						</span>
+					)}
+
 					{!isOpenedFilters && (
 						<Typography>Add conditions for {filtersTexts}</Typography>
 					)}

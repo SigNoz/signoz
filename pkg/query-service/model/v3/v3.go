@@ -828,6 +828,10 @@ type OrderBy struct {
 	IsColumn   bool                 `json:"-"`
 }
 
+func (o OrderBy) CacheKey() string {
+	return fmt.Sprintf("%s-%s", o.ColumnName, o.Order)
+}
+
 // See HAVING_OPERATORS in queryBuilder.ts
 
 type HavingOperator string
