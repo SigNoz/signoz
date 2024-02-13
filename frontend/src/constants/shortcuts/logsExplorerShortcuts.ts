@@ -5,5 +5,5 @@ export const LogsExplorerShortcuts = {
 
 export const LogsExplorerShortcutsDescription = {
 	StageAndRunQuery: 'Stage and Run the current query',
-	FocusTheSearchBar: 'Shift the focus to the filter bar',
+	FocusTheSearchBar: 'Shift the focus to the last query filter bar',
 };

@@ -2,13 +2,16 @@ import './QueryBuilderSearch.styles.scss';
 
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
+import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { getDataTypes } from 'container/LogDetailedView/utils';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import {
 	useAutoComplete,
 	WhereClauseConfig,
 } from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { isEqual } from 'lodash-es';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	KeyboardEvent,
@@ -75,7 +78,9 @@ function QueryBuilderSearch({
 		searchKey,
 	);
 
-	const { handleRunQuery } = useQueryBuilder();
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+
+	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
 	const onTagRender = ({
 		value,
@@ -197,8 +202,31 @@ function QueryBuilderSearch({
 		});
 
 		onChange(initialTagFilters);
-		/* eslint-disable react-hooks/exhaustive-deps */
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [sourceKeys]);
+
+	const isLastQuery = useMemo(
+		() =>
+			isEqual(
+				currentQuery.builder.queryData[currentQuery.builder.queryData.length - 1],
+				query,
+			),
+		[currentQuery, query],
+	);
+
+	useEffect(() => {
+		if (isLastQuery) {
+			registerShortcut(LogsExplorerShortcuts.FocusTheSearchBar, () => {
+				// set timeout is needed here else the select treats the hotkey as input value
+				setTimeout(() => {
+					selectRef.current?.focus();
+				}, 0);
+			});
+		}
+
+		return (): void =>
+			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
+	}, [deregisterShortcut, isLastQuery, registerShortcut]);
 
 	return (
 		<div
