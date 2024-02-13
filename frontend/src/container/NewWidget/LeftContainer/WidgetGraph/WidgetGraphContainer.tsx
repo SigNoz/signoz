@@ -31,7 +31,8 @@ function WidgetGraphContainer({
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
 	const getWidgetQueryRange = useGetWidgetQueryRange({
-		graphType: selectedGraph,
+		graphType:
+			selectedGraph === PANEL_TYPES.BAR ? PANEL_TYPES.TIME_SERIES : selectedGraph,
 		selectedTime: selectedTime.enum,
 	});
 

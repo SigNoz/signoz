@@ -58,6 +58,9 @@ const GridPanelSwitch = forwardRef<
 								selectedTime,
 						  },
 				[PANEL_TYPES.TRACE]: null,
+				[PANEL_TYPES.BAR]: {
+					title: 'Hello there',
+				},
 				[PANEL_TYPES.EMPTY_WIDGET]: null,
 			};
 
