@@ -116,9 +116,10 @@ export function DashboardProvider({
 		if (data && localStorageVariables) {
 			const updatedVariables = data.data.variables;
 			Object.keys(data.data.variables).forEach((variable) => {
+				const variableData = data.data.variables[variable];
 				const updatedVariable = {
 					...data.data.variables[variable],
-					...localStorageVariables[variable as any],
+					...localStorageVariables[variableData.name as any],
 				};
 
 				updatedVariables[variable] = updatedVariable;
