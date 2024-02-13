@@ -297,20 +297,19 @@ export const Query = memo(function Query({
 				<Row gutter={[0, 12]} className="qb-container">
 					<Col span={24}>
 						<Row align="middle" gutter={[5, 11]}>
-							{!isExplorerPage ||
-								(isExplorerPanel && (
-									<Col>
-										{queryVariant === 'dropdown' ? (
-											<DataSourceDropdown
-												onChange={handleChangeDataSource}
-												value={query.dataSource}
-												style={{ minWidth: '5.625rem' }}
-											/>
-										) : (
-											<FilterLabel label={transformToUpperCase(query.dataSource)} />
-										)}
-									</Col>
-								))}
+							{!isExplorerPage && (
+								<Col>
+									{queryVariant === 'dropdown' ? (
+										<DataSourceDropdown
+											onChange={handleChangeDataSource}
+											value={query.dataSource}
+											style={{ minWidth: '5.625rem' }}
+										/>
+									) : (
+										<FilterLabel label={transformToUpperCase(query.dataSource)} />
+									)}
+								</Col>
+							)}
 
 							{isMetricsDataSource && (
 								<Col span={12}>
