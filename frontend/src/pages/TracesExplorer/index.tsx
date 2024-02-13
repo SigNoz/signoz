@@ -1,9 +1,14 @@
+import './TracesExplorer.styles.scss';
+
 import { Tabs } from 'antd';
 import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
 import ExportPanel from 'container/ExportPanel';
+import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
+import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
@@ -31,6 +36,8 @@ function TracesExplorer(): JSX.Element {
 		currentQuery,
 		panelType,
 		updateAllQueriesOperators,
+		handleRunQuery,
+		stagedQuery,
 	} = useQueryBuilder();
 
 	const currentPanelType = useGetPanelTypesQueryParam();
@@ -177,6 +184,10 @@ function TracesExplorer(): JSX.Element {
 	return (
 		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
 			<>
+				<div className="trace-explorer-run-query">
+					<RightToolbarActions onStageRunQuery={handleRunQuery} />
+					<DateTimeSelector showAutoRefresh />
+				</div>
 				<ExplorerCard sourcepage={DataSource.TRACES}>
 					<QuerySection />
 				</ExplorerCard>
@@ -197,6 +208,13 @@ function TracesExplorer(): JSX.Element {
 						onChange={handleExplorerTabChange}
 					/>
 				</Container>
+				<ExplorerOptions
+					disabled={!stagedQuery}
+					query={exportDefaultQuery}
+					isLoading={isLoading}
+					onExport={handleExport}
+					sourcepage={DataSource.TRACES}
+				/>
 			</>
 		</ErrorBoundary>
 	);

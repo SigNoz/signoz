@@ -7,6 +7,7 @@ export const Container = styled.div`
 	display: flex;
 	position: relative;
 	width: 100%;
+	margin-top: 1rem;
 `;
 
 export const SearchComponent = styled(Search)`

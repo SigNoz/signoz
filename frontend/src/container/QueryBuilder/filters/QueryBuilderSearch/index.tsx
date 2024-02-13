@@ -1,3 +1,5 @@
+import './QueryBuilderSearch.styles.scss';
+
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
 import { getDataTypes } from 'container/LogDetailedView/utils';
@@ -6,6 +8,8 @@ import {
 	WhereClauseConfig,
 } from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import type { BaseSelectRef } from 'rc-select';
 import {
 	KeyboardEvent,
 	ReactElement,
@@ -13,6 +17,8 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
+	useState,
 } from 'react';
 import {
 	BaseAutocompleteData,
@@ -44,6 +50,7 @@ function QueryBuilderSearch({
 	whereClauseConfig,
 	className,
 	placeholder,
+	suffixIcon,
 }: QueryBuilderSearchProps): JSX.Element {
 	const {
 		updateTag,
@@ -60,11 +67,15 @@ function QueryBuilderSearch({
 		searchKey,
 	} = useAutoComplete(query, whereClauseConfig);
 
+	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const selectRef = useRef<BaseSelectRef>(null);
 	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
 		searchValue,
 		query,
 		searchKey,
 	);
+
+	const { handleRunQuery } = useQueryBuilder();
 
 	const onTagRender = ({
 		value,
@@ -116,6 +127,13 @@ function QueryBuilderSearch({
 	const onInputKeyDownHandler = (event: KeyboardEvent<Element>): void => {
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
+
+		if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+			event.preventDefault();
+			event.stopPropagation();
+			handleRunQuery();
+			setIsOpen(false);
+		}
 	};
 
 	const handleDeselect = useCallback(
@@ -183,38 +201,50 @@ function QueryBuilderSearch({
 	}, [sourceKeys]);
 
 	return (
-		<Select
-			getPopupContainer={popupContainer}
-			virtual
-			showSearch
-			tagRender={onTagRender}
-			filterOption={false}
-			autoClearSearchValue={false}
-			mode="multiple"
-			placeholder={placeholder}
-			value={queryTags}
-			searchValue={searchValue}
-			className={className}
-			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-			style={selectStyle}
-			onSearch={handleSearch}
-			onChange={onChangeHandler}
-			onSelect={handleSelect}
-			onDeselect={handleDeselect}
-			onInputKeyDown={onInputKeyDownHandler}
-			notFoundContent={isFetching ? <Spin size="small" /> : null}
+		<div
+			style={{
+				position: 'relative',
+			}}
 		>
-			{options.map((option) => (
-				<Select.Option key={option.label} value={option.value}>
-					<OptionRenderer
-						label={option.label}
-						value={option.value}
-						dataType={option.dataType || ''}
-					/>
-					{option.selected && <StyledCheckOutlined />}
-				</Select.Option>
-			))}
-		</Select>
+			<Select
+				ref={selectRef}
+				getPopupContainer={popupContainer}
+				virtual
+				showSearch
+				tagRender={onTagRender}
+				filterOption={false}
+				open={isOpen}
+				onDropdownVisibleChange={setIsOpen}
+				autoClearSearchValue={false}
+				mode="multiple"
+				placeholder={placeholder}
+				value={queryTags}
+				searchValue={searchValue}
+				className={className}
+				rootClassName="query-builder-search"
+				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				style={selectStyle}
+				onSearch={handleSearch}
+				onChange={onChangeHandler}
+				onSelect={handleSelect}
+				onDeselect={handleDeselect}
+				onInputKeyDown={onInputKeyDownHandler}
+				notFoundContent={isFetching ? <Spin size="small" /> : null}
+				suffixIcon={suffixIcon}
+				showAction={['focus']}
+			>
+				{options.map((option) => (
+					<Select.Option key={option.label} value={option.value}>
+						<OptionRenderer
+							label={option.label}
+							value={option.value}
+							dataType={option.dataType || ''}
+						/>
+						{option.selected && <StyledCheckOutlined />}
+					</Select.Option>
+				))}
+			</Select>
+		</div>
 	);
 }
 
@@ -224,12 +254,14 @@ interface QueryBuilderSearchProps {
 	whereClauseConfig?: WhereClauseConfig;
 	className?: string;
 	placeholder?: string;
+	suffixIcon?: React.ReactNode;
 }
 
 QueryBuilderSearch.defaultProps = {
 	whereClauseConfig: undefined,
 	className: '',
 	placeholder: PLACEHOLDER,
+	suffixIcon: undefined,
 };
 
 export interface CustomTagProps {

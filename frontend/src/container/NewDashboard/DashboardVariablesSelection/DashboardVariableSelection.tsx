@@ -73,7 +73,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 					return variableCopy;
 				},
 			);
-			updateLocalStorageDashboardVariables(id, value, allSelected);
+			updateLocalStorageDashboardVariables(name, value, allSelected);
 
 			const variables = convertVariablesToDbFormat(newVariablesArr);
 

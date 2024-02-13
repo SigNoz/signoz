@@ -1,0 +1,44 @@
+.log-line-action-buttons {
+	display: flex;
+	position: absolute;
+	transform: translate(-50%, -50%);
+	top: 50%;
+	right: 0;
+	cursor: pointer;
+	border-radius: 2px;
+	border: 1px solid var(--bg-slate-400);
+	background: var(--bg-ink-400);
+
+	.ant-btn-default {
+		border: none;
+		box-shadow: none;
+		padding: 9px;
+		justify-content: center;
+		align-items: center;
+		display: flex;
+
+		&.active-tab {
+			background-color: var(--bg-slate-400);
+		}
+	}
+
+	.copy-log-btn {
+		border-left: 1px solid var(--bg-slate-400);
+		border-color: var(--bg-slate-400) !important;
+	}
+}
+
+.lightMode {
+	.log-line-action-buttons {
+		border: 1px solid var(--bg-vanilla-400);
+		background: var(--bg-vanilla-400);
+
+		.ant-btn-default {
+		}
+
+		.copy-log-btn {
+			border-left: 1px solid var(--bg-vanilla-400);
+			border-color: var(--bg-vanilla-400) !important;
+		}
+	}
+}

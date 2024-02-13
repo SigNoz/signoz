@@ -276,14 +276,9 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 	var wg sync.WaitGroup
 
 	for queryName, builderQuery := range params.CompositeQuery.BuilderQueries {
-		if builderQuery.Disabled {
-			continue
-		}
-		wg.Add(1)
 		if queryName == builderQuery.Expression {
+			wg.Add(1)
 			go q.runBuilderQuery(ctx, builderQuery, params, keys, cacheKeys, ch, &wg)
-		} else {
-			go q.runBuilderExpression(ctx, builderQuery, params, keys, cacheKeys, ch, &wg)
 		}
 	}
 

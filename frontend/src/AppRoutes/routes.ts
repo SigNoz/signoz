@@ -1,4 +1,5 @@
 import ROUTES from 'constants/routes';
+import Shortcuts from 'pages/Shortcuts/Shortcuts';
 import WorkspaceBlocked from 'pages/WorkspaceLocked';
 import { RouteProps } from 'react-router-dom';
 
@@ -21,6 +22,7 @@ import {
 	Logs,
 	LogsExplorer,
 	LogsIndexToFields,
+	LogsSaveViews,
 	MySettings,
 	NewDashboardPage,
 	OldLogsExplorer,
@@ -39,6 +41,7 @@ import {
 	TraceDetail,
 	TraceFilter,
 	TracesExplorer,
+	TracesSaveViews,
 	UnAuthorized,
 	UsageExplorerPage,
 } from './pageComponents';
@@ -85,6 +88,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 		exact: true,
 		key: 'SERVICE_MAP',
+	},
+	{
+		path: ROUTES.LOGS_SAVE_VIEWS,
+		component: LogsSaveViews,
+		isPrivate: true,
+		exact: true,
+		key: 'LOGS_SAVE_VIEWS',
 	},
 	{
 		path: ROUTES.TRACE_DETAIL,
@@ -162,6 +172,13 @@ const routes: AppRoutes[] = [
 		component: TracesExplorer,
 		isPrivate: true,
 		key: 'TRACES_EXPLORER',
+	},
+	{
+		path: ROUTES.TRACES_SAVE_VIEWS,
+		exact: true,
+		component: TracesSaveViews,
+		isPrivate: true,
+		key: 'TRACES_SAVE_VIEWS',
 	},
 	{
 		path: ROUTES.CHANNELS_NEW,
@@ -302,6 +319,13 @@ const routes: AppRoutes[] = [
 		component: WorkspaceBlocked,
 		isPrivate: true,
 		key: 'WORKSPACE_LOCKED',
+	},
+	{
+		path: ROUTES.SHORTCUTS,
+		exact: true,
+		component: Shortcuts,
+		isPrivate: true,
+		key: 'SHORTCUTS',
 	},
 ];
 

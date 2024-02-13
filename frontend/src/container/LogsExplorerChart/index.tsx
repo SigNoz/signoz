@@ -46,13 +46,7 @@ function LogsExplorerChart({
 			{isLoading ? (
 				<Spinner size="default" height="100%" />
 			) : (
-				<Graph
-					name="logsExplorerChart"
-					data={graphData.data}
-					type="bar"
-					containerHeight="100%"
-					animate
-				/>
+				<Graph name="logsExplorerChart" data={graphData.data} type="bar" animate />
 			)}
 		</CardStyled>
 	);

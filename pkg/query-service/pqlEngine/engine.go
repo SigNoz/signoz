@@ -10,7 +10,6 @@ import (
 	"github.com/prometheus/common/promlog"
 	plog "github.com/prometheus/common/promlog"
 	pconfig "github.com/prometheus/prometheus/config"
-	plabels "github.com/prometheus/prometheus/model/labels"
 	pql "github.com/prometheus/prometheus/promql"
 	pstorage "github.com/prometheus/prometheus/storage"
 	premote "github.com/prometheus/prometheus/storage/remote"
@@ -89,8 +88,8 @@ func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 	}, nil
 }
 
-func (p *PqlEngine) RunAlertQuery(ctx context.Context, qs string, t time.Time) (pql.Vector, error) {
-	q, err := p.engine.NewInstantQuery(ctx, p.fanoutStorage, nil, qs, t)
+func (p *PqlEngine) RunAlertQuery(ctx context.Context, qs string, start, end time.Time, interval time.Duration) (pql.Matrix, error) {
+	q, err := p.engine.NewRangeQuery(ctx, p.fanoutStorage, nil, qs, start, end, interval)
 	if err != nil {
 		return nil, err
 	}
@@ -101,16 +100,26 @@ func (p *PqlEngine) RunAlertQuery(ctx context.Context, qs string, t time.Time) (
 		return nil, res.Err
 	}
 
-	switch v := res.Value.(type) {
+	switch typ := res.Value.(type) {
 	case pql.Vector:
-		return v, nil
+		series := make([]pql.Series, 0, len(typ))
+		value := res.Value.(pql.Vector)
+		for _, smpl := range value {
+			series = append(series, pql.Series{
+				Metric: smpl.Metric,
+				Floats: []pql.FPoint{{T: smpl.T, F: smpl.F}},
+			})
+		}
+		return series, nil
 	case pql.Scalar:
-		return pql.Vector{pql.Sample{
-			T:      v.T,
-			F:      v.V,
-			H:      nil,
-			Metric: plabels.Labels{},
-		}}, nil
+		value := res.Value.(pql.Scalar)
+		series := make([]pql.Series, 0, 1)
+		series = append(series, pql.Series{
+			Floats: []pql.FPoint{{T: value.T, F: value.V}},
+		})
+		return series, nil
+	case pql.Matrix:
+		return res.Value.(pql.Matrix), nil
 	default:
 		return nil, fmt.Errorf("rule result is not a vector or scalar")
 	}
