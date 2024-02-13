@@ -654,7 +654,7 @@ func (b *BuilderQuery) Validate() error {
 		}
 		if b.DataSource == DataSourceMetrics {
 			// if AggregateOperator is specified, then the request is using v3 payload
-			if b.AggregateOperator != "" {
+			if b.AggregateOperator != "" && b.SpaceAggregation == SpaceAggregationUnspecified {
 				if err := b.AggregateOperator.Validate(); err != nil {
 					return fmt.Errorf("aggregate operator is invalid: %w", err)
 				}
@@ -689,7 +689,7 @@ func (b *BuilderQuery) Validate() error {
 			}
 		}
 
-		if b.DataSource == DataSourceMetrics && len(b.GroupBy) > 0 {
+		if b.DataSource == DataSourceMetrics && len(b.GroupBy) > 0 && b.SpaceAggregation == SpaceAggregationUnspecified {
 			if b.AggregateOperator == AggregateOperatorNoOp || b.AggregateOperator == AggregateOperatorRate {
 				return fmt.Errorf("group by requires aggregate operator other than noop or rate")
 			}
