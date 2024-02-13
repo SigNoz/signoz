@@ -37,7 +37,7 @@ func pathParts(path string) []string {
 	suffixParts := strings.SplitAfter(memberOpParts[1], "]") // ["c.d"], ".e"
 
 	parts = append(parts, suffixParts[0][1:len(suffixParts[0])-1])
-	if len(suffixParts) > 0 {
+	if len(suffixParts[1]) > 0 {
 		parts = append(parts, strings.Split(suffixParts[1][1:], ".")...)
 	}
 	return parts
@@ -245,6 +245,42 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 						} else {
 							return nil, nil, fmt.Errorf("unsupported time layout %s", operator.LayoutType)
 						}
+
+					} else if operator.Type == "severity_parser" {
+						parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+						if err != nil {
+							return nil, nil, fmt.Errorf(
+								"couldn't generate nil check for parseFrom of severity parser %s: %w", operator.Name, err,
+							)
+						}
+
+						for severity, valuesToMap := range operator.SeverityMapping {
+							for _, value := range valuesToMap {
+								fmt.Print(value)
+								appendStatement(
+									fmt.Sprintf("set(severity_number, SEVERITY_NUMBER_%s)", strings.ToUpper(severity)),
+									strings.Join([]string{
+										toOttlExpr(parseFromNotNilCheck),
+										fmt.Sprintf(
+											`IsString(%s)`,
+											ottlPath(operator.ParseFrom),
+										),
+										fmt.Sprintf(
+											`IsMatch(%s, "^\\s*%s\\s*$")`,
+											ottlPath(operator.ParseFrom), value,
+										),
+									}, " and "),
+								)
+							}
+						}
+
+						// appendStatement(
+						// 	"",
+						// 	fmt.Sprintf(
+						// 		`%s && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
+						// 		parseFromNotNilCheck, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom,
+						// 	),
+						// )
 
 					} else {
 						return nil, nil, fmt.Errorf("unsupported pipeline operator type: %s", operator.Type)
