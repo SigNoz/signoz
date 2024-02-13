@@ -33,7 +33,9 @@ export const useGetExplorerQueryRange = (
 	const isEnabled = useMemo(() => {
 		if (!options) return isEnabledQuery;
 		if (typeof options.enabled === 'boolean') {
-			return !isDependentOnQB || (isEnabledQuery && options.enabled);
+			return (
+				(!isDependentOnQB && options.enabled) || (isEnabledQuery && options.enabled)
+			);
 		}
 
 		return isEnabledQuery;
