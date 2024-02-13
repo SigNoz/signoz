@@ -2,6 +2,7 @@ package common
 
 import (
 	"math"
+	"time"
 
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
@@ -16,4 +17,10 @@ func AdjustedMetricTimeRange(start, end, step int64, aggregaOperator v3.TimeAggr
 	adjustStep := int64(math.Min(float64(step), 60))
 	end = end - (end % (adjustStep * 1000))
 	return start, end
+}
+
+func PastDayRoundOff() int64 {
+	now := time.Now().UnixMilli()
+	pastDay := now - (now % (time.Hour.Milliseconds() * 24))
+	return pastDay
 }
