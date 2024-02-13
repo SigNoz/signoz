@@ -151,6 +151,23 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 							toOttlExpr(parseFromNotNilCheck),
 						)
 
+					} else if operator.Type == "grok_parser" {
+						parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+						if err != nil {
+							return nil, nil, fmt.Errorf(
+								"couldn't generate nil check for parseFrom of grok op %s: %w", operator.Name, err,
+							)
+						}
+						appendStatement(
+							fmt.Sprintf(
+								`merge_maps(%s, GrokParse(%s, "%s"), "upsert")`,
+								ottlPath(operator.ParseTo),
+								ottlPath(operator.ParseFrom),
+								escapeDoubleQuotes(operator.Pattern),
+							),
+							toOttlExpr(parseFromNotNilCheck),
+						)
+
 					} else if operator.Type == "json_parser" {
 						parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
 						if err != nil {
