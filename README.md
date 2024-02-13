@@ -108,7 +108,7 @@ We support [OpenTelemetry](https://opentelemetry.io) as the library which you ca
 
 - Java
 - Python
-- NodeJS
+- Node.js
 - Go
 - PHP
 - .NET
