@@ -107,7 +107,7 @@ function ExplorerOptions({
 	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
 
-	const extraData = viewsData?.data.data.find((view) => view.uuid === viewKey)
+	const extraData = viewsData?.data?.data?.find((view) => view.uuid === viewKey)
 		?.extraData;
 
 	const extraDataColor = extraData ? JSON.parse(extraData).color : '';
@@ -134,7 +134,7 @@ function ExplorerOptions({
 	};
 
 	const onUpdateQueryHandler = (): void => {
-		const extraData = viewsData?.data.data.find((view) => view.uuid === viewKey)
+		const extraData = viewsData?.data?.data?.find((view) => view.uuid === viewKey)
 			?.extraData;
 		updateViewAsync(
 			{
@@ -166,7 +166,7 @@ function ExplorerOptions({
 		({ key }: { key: string }): void => {
 			const currentViewDetails = getViewDetailsUsingViewKey(
 				key,
-				viewsData?.data.data,
+				viewsData?.data?.data,
 			);
 			if (!currentViewDetails) return;
 			const {
@@ -296,7 +296,7 @@ function ExplorerOptions({
 						onClear={handleClearSelect}
 						ref={ref}
 					>
-						{viewsData?.data.data.map((view) => {
+						{viewsData?.data?.data?.map((view) => {
 							const extraData =
 								view.extraData !== '' ? JSON.parse(view.extraData) : '';
 							let bgColor = getRandomColor();
