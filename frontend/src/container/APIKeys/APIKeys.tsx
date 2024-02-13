@@ -101,7 +101,7 @@ function APIKeys(): JSX.Element {
 		setActiveAPIKey(apiKey);
 
 		editForm.setFieldsValue({
-			label: apiKey.name,
+			name: apiKey.name,
 			role: apiKey.role || USER_ROLES.VIEWER,
 		});
 
@@ -132,6 +132,8 @@ function APIKeys(): JSX.Element {
 	useErrorNotification(error);
 
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
+		console.log('search', e.target.value, APIKeys);
+
 		setSearchValue(e.target.value);
 		const filteredData = APIKeys?.data?.data?.filter((key: any) =>
 			key.name.toLowerCase().includes(e.target.value.toLowerCase()),
@@ -154,6 +156,8 @@ function APIKeys(): JSX.Element {
 		{
 			onSuccess: (data) => {
 				setShowNewAPIKeyDetails(true);
+
+				console.log('data', data);
 				setActiveAPIKey(data.payload);
 			},
 			onError: (error) => {
@@ -197,30 +201,41 @@ function APIKeys(): JSX.Element {
 	};
 
 	const onUpdateApiKey = (): void => {
-		const { label, expiration, role } = editForm.getFieldsValue();
-
-		if (activeAPIKey) {
-			updateAPIKey({
-				id: activeAPIKey.id,
-				data: {
-					name: label,
-					expiresAt: expiration,
-					role,
-				},
+		editForm
+			.validateFields()
+			.then((values) => {
+				if (activeAPIKey) {
+					updateAPIKey({
+						id: activeAPIKey.id,
+						data: {
+							name: values.name,
+							expiresAt: values.expiration,
+							role: values.role,
+						},
+					});
+				}
+			})
+			.catch((errorInfo) => {
+				console.error('error info', errorInfo);
 			});
-		}
 	};
 
 	const onCreateAPIKey = (): void => {
-		const { label, expiration, role } = createForm.getFieldsValue();
-
-		if (user) {
-			createAPIKey({
-				name: label,
-				expiresAt: parseInt(expiration, 10),
-				role,
+		console.log('on create', createForm.getFieldsValue());
+		createForm
+			.validateFields()
+			.then((values) => {
+				if (user) {
+					createAPIKey({
+						name: values.name,
+						expiresAt: parseInt(values.expiration, 10),
+						role: values.role,
+					});
+				}
+			})
+			.catch((errorInfo) => {
+				console.error('error info', errorInfo);
 			});
-		}
 	};
 
 	const handleCopyKey = (text: string): void => {
@@ -462,16 +477,16 @@ function APIKeys(): JSX.Element {
 					layout="vertical"
 					autoComplete="off"
 					initialValues={{
-						label: activeAPIKey?.name,
+						name: activeAPIKey?.name,
 						role: activeAPIKey?.role,
 					}}
 				>
 					<Form.Item
-						name="label"
-						label="Label"
+						name="name"
+						label="Name"
 						rules={[{ required: true }, { type: 'string', min: 6 }]}
 					>
-						<Input placeholder="Top Secret" />
+						<Input placeholder="Enter Key Name" />
 					</Form.Item>
 
 					<Form.Item name="role" label="Role">
@@ -539,6 +554,7 @@ function APIKeys(): JSX.Element {
 								<Button
 									key="copy-key-close"
 									className="periscope-btn primary"
+									data-testid="copy-key-close-btn"
 									type="primary"
 									onClick={handleCopyClose}
 									icon={<Check size={12} />}
@@ -557,6 +573,7 @@ function APIKeys(): JSX.Element {
 								</Button>,
 								<Button
 									className="periscope-btn primary"
+									test-id="create-new-key"
 									key="submit"
 									type="primary"
 									icon={<Check size={14} />}
@@ -576,17 +593,18 @@ function APIKeys(): JSX.Element {
 						initialValues={{
 							role: USER_ROLES.ADMIN,
 							expiration: '1',
-							label: '',
+							name: '',
 						}}
 						layout="vertical"
 						autoComplete="off"
 					>
 						<Form.Item
-							name="label"
-							label="Label"
+							name="name"
+							label="Name"
 							rules={[{ required: true }, { type: 'string', min: 6 }]}
+							validateTrigger="onFinish"
 						>
-							<Input placeholder="Top Secret" />
+							<Input placeholder="Enter Key Name" autoFocus />
 						</Form.Item>
 
 						<Form.Item name="role" label="Role" rules={[{ required: true }]}>
@@ -597,17 +615,17 @@ function APIKeys(): JSX.Element {
 									defaultValue={USER_ROLES.ADMIN}
 								>
 									<Radio.Button value={USER_ROLES.ADMIN} className={cx('tab')}>
-										<div className="role">
+										<div className="role" data-testid="create-form-admin-role-btn">
 											<Contact2 size={14} /> Admin
 										</div>
 									</Radio.Button>
 									<Radio.Button value={USER_ROLES.EDITOR} className="tab">
-										<div className="role">
+										<div className="role" data-testid="create-form-editor-role-btn">
 											<ClipboardEdit size={14} /> Editor
 										</div>
 									</Radio.Button>
 									<Radio.Button value={USER_ROLES.VIEWER} className="tab">
-										<div className="role">
+										<div className="role" data-testid="create-form-viewer-role-btn">
 											<Eye size={14} /> Viewer
 										</div>
 									</Radio.Button>
@@ -696,7 +714,7 @@ function APIKeys(): JSX.Element {
 						</Row>
 
 						<Row>
-							<Col span={8}>Label</Col>
+							<Col span={8}>Name</Col>
 							<Col span={12}>{activeAPIKey?.name}</Col>
 						</Row>
 
