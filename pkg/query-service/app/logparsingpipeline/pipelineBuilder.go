@@ -161,7 +161,6 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 						whereClause := strings.Join([]string{
 							toOttlExpr(parseFromNotNilCheck),
 							fmt.Sprintf(`IsMatch(%s, "^\\s*{.*}\\s*$")`, ottlPath(operator.ParseFrom)),
-							// toOttlExpr(fmt.Sprintf(`%s matches "^\\s*{.*}\\s*$"`, operator.ParseFrom)),
 						}, " and ")
 						appendStatement(
 							fmt.Sprintf(
@@ -171,6 +170,64 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 							),
 							whereClause,
 						)
+
+					} else if operator.Type == "time_parser" {
+						parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+						if err != nil {
+							return nil, nil, fmt.Errorf(
+								"couldn't generate nil check for parseFrom of json parser op %s: %w", operator.Name, err,
+							)
+						}
+
+						whereClauseParts := []string{toOttlExpr(parseFromNotNilCheck)}
+
+						if operator.LayoutType == "strptime" {
+							regex, err := RegexForStrptimeLayout(operator.Layout)
+							if err != nil {
+								return nil, nil, fmt.Errorf(
+									"couldn't generate layout regex for time_parser %s: %w", operator.Name, err,
+								)
+							}
+							whereClauseParts = append(whereClauseParts,
+								fmt.Sprintf(`IsMatch(%s, "%s")`, ottlPath(operator.ParseFrom), regex),
+							)
+
+							appendStatement(
+								fmt.Sprintf(
+									`set(time, Time(%s, "%s"))`,
+									ottlPath(operator.ParseFrom),
+									operator.Layout,
+								),
+								strings.Join(whereClauseParts, " and "),
+							)
+
+						} else if operator.LayoutType == "epoch" {
+							valueRegex := `^\\s*[0-9]+\\s*$`
+							if strings.Contains(operator.Layout, ".") {
+								valueRegex = `^\\s*[0-9]+\\.[0-9]+\\s*$`
+							}
+
+							whereClauseParts = append(whereClauseParts,
+								toOttlExpr(fmt.Sprintf(
+									`string(%s) matches "%s"`, operator.ParseFrom, valueRegex,
+								)),
+							)
+
+							timeValue := fmt.Sprintf("Double(%s)", ottlPath(operator.ParseFrom))
+							if strings.HasPrefix(operator.Layout, "seconds") {
+								timeValue = fmt.Sprintf("%s * 1000000000", timeValue)
+							} else if operator.Layout == "milliseconds" {
+								timeValue = fmt.Sprintf("%s * 1000000", timeValue)
+							} else if operator.Layout == "microseconds" {
+								timeValue = fmt.Sprintf("%s * 1000", timeValue)
+							}
+							appendStatement(
+								fmt.Sprintf(`set(time_unix_nano, %s)`, timeValue),
+								strings.Join(whereClauseParts, " and "),
+							)
+						} else {
+							return nil, nil, fmt.Errorf("unsupported time layout %s", operator.LayoutType)
+						}
 
 					} else {
 						return nil, nil, fmt.Errorf("unsupported pipeline operator type: %s", operator.Type)
