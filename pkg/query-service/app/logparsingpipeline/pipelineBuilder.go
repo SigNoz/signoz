@@ -2,6 +2,7 @@ package logparsingpipeline
 
 import (
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -256,10 +257,21 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 
 						for severity, valuesToMap := range operator.SeverityMapping {
 							for _, value := range valuesToMap {
-								fmt.Print(value)
-								appendStatement(
-									fmt.Sprintf("set(severity_number, SEVERITY_NUMBER_%s)", strings.ToUpper(severity)),
-									strings.Join([]string{
+								// Special case for 2xx 3xx 4xx and 5xx
+								isSpecialValue, err := regexp.MatchString(`^\s*[2|3|4|5]xx\s*$`, strings.ToLower(value))
+								if err != nil {
+									return nil, nil, fmt.Errorf("couldn't regex match for wildcard severity values: %w", err)
+								}
+								if isSpecialValue {
+									whereClause := strings.Join([]string{
+										toOttlExpr(parseFromNotNilCheck),
+										toOttlExpr(fmt.Sprintf(`type(%s) in ["int", "float"] && %s == float(int(%s))`, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom)),
+										toOttlExpr(fmt.Sprintf(`string(int(%s)) matches "^%s$"`, operator.ParseFrom, fmt.Sprintf("%s[0-9]{2}", value[0:1]))),
+									}, " and ")
+									appendStatement(fmt.Sprintf("set(severity_number, SEVERITY_NUMBER_%s)", strings.ToUpper(severity)), whereClause)
+									appendStatement(fmt.Sprintf(`set(severity_text, "%s")`, strings.ToUpper(severity)), whereClause)
+								} else {
+									whereClause := strings.Join([]string{
 										toOttlExpr(parseFromNotNilCheck),
 										fmt.Sprintf(
 											`IsString(%s)`,
@@ -269,8 +281,10 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 											`IsMatch(%s, "^\\s*%s\\s*$")`,
 											ottlPath(operator.ParseFrom), value,
 										),
-									}, " and "),
-								)
+									}, " and ")
+									appendStatement(fmt.Sprintf("set(severity_number, SEVERITY_NUMBER_%s)", strings.ToUpper(severity)), whereClause)
+									appendStatement(fmt.Sprintf(`set(severity_text, "%s")`, strings.ToUpper(severity)), whereClause)
+								}
 							}
 						}
 
