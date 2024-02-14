@@ -1,7 +1,9 @@
+import MEditor, { Monaco } from '@monaco-editor/react';
+import { Color } from '@signozhq/design-tokens';
 import { Input } from 'antd';
-import MonacoEditor from 'components/Editor';
 import { LEGEND } from 'constants/global';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChangeEvent, useCallback } from 'react';
 import { IClickHouseQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -51,8 +53,10 @@ function ClickHouseQueryBuilder({
 	}, [handleSetQueryItemData, queryData, queryIndex]);
 
 	const handleUpdateEditor = useCallback(
-		(value: string) => {
-			handleUpdateQuery('query', value);
+		(value: string | undefined) => {
+			if (value !== undefined) {
+				handleUpdateQuery('query', value);
+			}
 		},
 		[handleUpdateQuery],
 	);
@@ -69,6 +73,28 @@ function ClickHouseQueryBuilder({
 		[handleUpdateQuery],
 	);
 
+	const isDarkMode = useIsDarkMode();
+
+	function setEditorTheme(monaco: Monaco): void {
+		monaco.editor.defineTheme('my-theme', {
+			base: 'vs-dark',
+			inherit: true,
+			rules: [
+				{ token: 'string.key.json', foreground: Color.BG_VANILLA_400 },
+				{ token: 'string.value.json', foreground: Color.BG_ROBIN_400 },
+			],
+			colors: {
+				'editor.background': Color.BG_INK_300,
+			},
+			// fontFamily: 'SF Mono',
+			fontFamily: 'Space Mono',
+			fontSize: 20,
+			fontWeight: 'normal',
+			lineHeight: 18,
+			letterSpacing: -0.06,
+		});
+	}
+
 	return (
 		<QueryHeader
 			name={queryData.name}
@@ -77,7 +103,7 @@ function ClickHouseQueryBuilder({
 			onDelete={handleRemoveQuery}
 			deletable={deletable}
 		>
-			<MonacoEditor
+			<MEditor
 				language="sql"
 				height="200px"
 				onChange={handleUpdateEditor}
@@ -89,7 +115,12 @@ function ClickHouseQueryBuilder({
 					minimap: {
 						enabled: false,
 					},
+					fontSize: 14,
+					fontFamily: 'Space Mono',
 				}}
+				theme={isDarkMode ? 'my-theme' : 'light'}
+				// eslint-disable-next-line react/jsx-no-bind
+				beforeMount={setEditorTheme}
 			/>
 			<Input
 				onChange={handleUpdateInput}

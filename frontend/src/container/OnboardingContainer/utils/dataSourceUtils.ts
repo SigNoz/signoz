@@ -107,6 +107,21 @@ const supportedLanguages = [
 		id: 'dotnet',
 		imgURL: `Logos/dotnet.png`,
 	},
+	{
+		name: 'rust',
+		id: 'rust',
+		imgURL: `Logos/rust.png`,
+	},
+	{
+		name: 'elixir',
+		id: 'elixir',
+		imgURL: `Logos/elixir.png`,
+	},
+	{
+		name: 'swift',
+		id: 'swift',
+		imgURL: `Logos/swift.png`,
+	},
 ];
 
 export const defaultLogsType = {
@@ -222,7 +237,10 @@ export const getSupportedFrameworks = ({
 	if (
 		(moduleID === ModulesMap.APM && dataSourceName === 'go') ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'rails') ||
-		(moduleID === ModulesMap.APM && dataSourceName === '.NET')
+		(moduleID === ModulesMap.APM && dataSourceName === '.NET') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'rust') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'elixir') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'swift')
 	) {
 		return [];
 	}
@@ -248,7 +266,10 @@ export const hasFrameworks = ({
 		moduleID === ModulesMap.InfrastructureMonitoring ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'go') ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'rails') ||
-		(moduleID === ModulesMap.APM && dataSourceName === '.NET')
+		(moduleID === ModulesMap.APM && dataSourceName === '.NET') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'rust') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'elixir') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'swift')
 	) {
 		return false;
 	}

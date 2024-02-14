@@ -397,7 +397,10 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 		} else if panelType == v3.PanelTypeList {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name := getClickhouseColumnName(attr)
-			orderBy = append(orderBy, fmt.Sprintf("`%s` %s", name, item.Order))
+			if item.IsColumn {
+				name = "`" + name + "`"
+			}
+			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 		}
 	}
 	return orderBy

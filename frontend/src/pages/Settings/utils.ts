@@ -3,7 +3,8 @@ import { TFunction } from 'i18next';
 import { isCloudUser } from 'utils/app';
 
 import {
-	commonRoutes,
+	alertChannels,
+	generalSettings,
 	ingestionSettings,
 	organizationSettings,
 } from './config';
@@ -12,15 +13,21 @@ export const getRoutes = (
 	isCurrentOrgSettings: boolean,
 	t: TFunction,
 ): RouteTabProps['routes'] => {
-	let common = commonRoutes(t);
+	const settings = [];
 
 	if (isCurrentOrgSettings) {
-		common = [...common, ...organizationSettings(t)];
+		settings.push(...organizationSettings(t));
 	}
 
 	if (isCloudUser()) {
-		common = [...common, ...ingestionSettings(t)];
+		settings.push(...ingestionSettings(t));
+		settings.push(...alertChannels(t));
+	} else {
+		settings.push(...alertChannels(t));
+		settings.push(...generalSettings(t));
 	}
 
-	return common;
+	settings.push(...generalSettings(t));
+
+	return settings;
 };

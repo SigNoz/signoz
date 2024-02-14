@@ -1,4 +1,5 @@
 import { Time } from 'container/TopNav/DateTimeSelection/config';
+import { Time as TimeV2 } from 'container/TopNav/DateTimeSelectionV2/config';
 
 import { ResetIdStartAndEnd, SetSearchQueryString } from './logs';
 
@@ -13,7 +14,7 @@ export type GlobalTime = {
 };
 
 interface UpdateTime extends GlobalTime {
-	selectedTime: Time;
+	selectedTime: Time | TimeV2;
 }
 
 interface UpdateTimeInterval {

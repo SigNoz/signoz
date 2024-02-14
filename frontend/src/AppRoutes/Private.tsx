@@ -160,7 +160,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				if (currentRoute) {
 					const { isPrivate, key } = currentRoute;
 
-					if (isPrivate && key !== ROUTES.WORKSPACE_LOCKED) {
+					if (isPrivate && key !== String(ROUTES.WORKSPACE_LOCKED)) {
 						handlePrivateRoutes(key);
 					} else {
 						// no need to fetch the user and make user fetching false
