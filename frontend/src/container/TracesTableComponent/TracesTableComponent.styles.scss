@@ -30,6 +30,10 @@
             letter-spacing: 0.5px;
             padding: 8px;
         }
+
+        .ant-table-wrapper .ant-table-thead > tr > th::before {
+            display: none;
+        }
     }
 
     .controller {
