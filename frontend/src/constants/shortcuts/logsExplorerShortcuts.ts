@@ -1,5 +1,10 @@
+import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
+
+const userOS = getUserOperatingSystem();
 export const LogsExplorerShortcuts = {
-	StageAndRunQuery: 'enter+meta',
+	StageAndRunQuery: `enter+${
+		userOS === UserOperatingSystem.MACOS ? 'cmd' : 'ctrl'
+	}`,
 	FocusTheSearchBar: 's',
 };
 

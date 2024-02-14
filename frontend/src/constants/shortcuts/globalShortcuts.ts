@@ -1,5 +1,8 @@
+import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
+
+const userOS = getUserOperatingSystem();
 export const GlobalShortcuts = {
-	SidebarCollapse: '\\+meta',
+	SidebarCollapse: `\\+${userOS === UserOperatingSystem.MACOS ? 'cmd' : 'ctrl'}`,
 	NavigateToServices: 's+shift',
 	NavigateToTraces: 't+shift',
 	NavigateToLogs: 'l+shift',

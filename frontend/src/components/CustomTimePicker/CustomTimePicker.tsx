@@ -233,8 +233,6 @@ function CustomTimePicker({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname]);
 
-	console.log(location.pathname);
-
 	return (
 		<div className="custom-time-picker">
 			<Popover
