@@ -6,8 +6,9 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import getChartData, { GetChartDataProps } from 'lib/getChartData';
 import GetMinMax from 'lib/getMinMax';
 import { colors } from 'lib/getRandomColor';
+import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -59,6 +60,30 @@ function LogsExplorerChart({
 		},
 		[dispatch, location.pathname, urlQuery],
 	);
+
+	const handleBackNavigation = (): void => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const startTime = searchParams.get(QueryParams.startTime);
+		const endTime = searchParams.get(QueryParams.endTime);
+
+		if (startTime && endTime && startTime !== endTime) {
+			dispatch(
+				UpdateTimeInterval('custom', [
+					parseInt(getTimeString(startTime), 10),
+					parseInt(getTimeString(endTime), 10),
+				]),
+			);
+		}
+	};
+
+	useEffect(() => {
+		window.addEventListener('popstate', handleBackNavigation);
+
+		return (): void => {
+			window.removeEventListener('popstate', handleBackNavigation);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const graphData = useMemo(
 		() =>
