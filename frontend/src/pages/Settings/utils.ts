@@ -5,7 +5,6 @@ import { isCloudUser } from 'utils/app';
 import {
 	alertChannels,
 	generalSettings,
-	generalSettingsCloud,
 	ingestionSettings,
 	organizationSettings,
 } from './config';
@@ -23,11 +22,11 @@ export const getRoutes = (
 	if (isCloudUser()) {
 		settings.push(...ingestionSettings(t));
 		settings.push(...alertChannels(t));
-		settings.push(...generalSettingsCloud(t));
 	} else {
 		settings.push(...alertChannels(t));
-		settings.push(...generalSettings(t));
 	}
+
+	settings.push(...generalSettings(t));
 
 	return settings;
 };
