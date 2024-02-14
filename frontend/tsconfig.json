@@ -11,7 +11,11 @@
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"lib": ["dom", "dom.iterable", "esnext"],
+		"lib": [
+			"dom",
+			"dom.iterable",
+			"esnext"
+		],
 		"allowSyntheticDefaultImports": true,
 		"noFallthroughCasesInSwitch": true,
 		"moduleResolution": "node",
@@ -20,13 +24,25 @@
 		"noEmit": true,
 		"baseUrl": "./src",
 		"downlevelIteration": true,
-		"plugins": [{ "name": "typescript-plugin-css-modules" }],
-		"types": ["node", "jest"],
+		"plugins": [
+			{
+				"name": "typescript-plugin-css-modules"
+			}
+		],
+		"types": [
+			"node",
+			"jest"
+		],
 	},
-	"exclude": ["node_modules"],
+	"exclude": [
+		"node_modules",
+		"./src/container/OnboardingContainer/constants/*.ts"
+	],
 	"include": [
 		"./src",
-		"./src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts",
+		"./src/**/*.ts",
+		"src/**/*.tsx",
+		"src/**/*.d.ts",
 		"./babel.config.js",
 		"./jest.config.ts",
 		"./.eslintrc.js",

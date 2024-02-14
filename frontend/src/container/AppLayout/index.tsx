@@ -4,10 +4,12 @@
 import './AppLayout.styles.scss';
 
 import { Flex } from 'antd';
+import getLocalStorageKey from 'api/browser/localstorage/get';
 import getDynamicConfigs from 'api/dynamicConfigs/getDynamicConfigs';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import cx from 'classnames';
+import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
@@ -16,7 +18,15 @@ import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	ReactNode,
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +34,7 @@ import { useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
+import { sideBarCollapse } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {
@@ -42,6 +53,10 @@ import { getRouteKey } from './utils';
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn, user, role } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
+	);
+
+	const [collapsed, setCollapsed] = useState<boolean>(
+		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
 
 	const isDarkMode = useIsDarkMode();
@@ -92,13 +107,21 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const { children } = props;
 
-	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const dispatch = useDispatch<Dispatch<AppActions | any>>();
 
 	const latestCurrentCounter = useRef(0);
 	const latestVersionCounter = useRef(0);
 	const latestConfigCounter = useRef(0);
 
 	const { notifications } = useNotifications();
+
+	const onCollapse = useCallback(() => {
+		setCollapsed((collapsed) => !collapsed);
+	}, []);
+
+	useLayoutEffect(() => {
+		dispatch(sideBarCollapse(collapsed));
+	}, [collapsed, dispatch]);
 
 	useEffect(() => {
 		if (
@@ -230,8 +253,34 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 	};
 
+	const isLogsView = (): boolean =>
+		routeKey === 'LOGS' ||
+		routeKey === 'LOGS_EXPLORER' ||
+		routeKey === 'LOGS_PIPELINES' ||
+		routeKey === 'LOGS_SAVE_VIEWS';
+
+	const isTracesView = (): boolean =>
+		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
+
+	useEffect(() => {
+		if (isDarkMode) {
+			document.body.classList.remove('lightMode');
+			document.body.classList.add('darkMode');
+		} else {
+			document.body.classList.add('lightMode');
+			document.body.classList.remove('darkMode');
+		}
+	}, [isDarkMode]);
+
+	const isSideNavCollapsed = getLocalStorageKey(IS_SIDEBAR_COLLAPSED);
+
 	return (
-		<Layout className={isDarkMode ? 'darkMode' : 'lightMode'}>
+		<Layout
+			className={cx(
+				isDarkMode ? 'darkMode' : 'lightMode',
+				isSideNavCollapsed ? 'sidebarCollapsed' : '',
+			)}
+		>
 			<Helmet>
 				<title>{pageTitle}</title>
 			</Helmet>
@@ -259,12 +308,21 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
 				{isToDisplayLayout && !renderFullScreen && (
-					<SideNav licenseData={licenseData} isFetching={isFetching} />
+					<SideNav
+						licenseData={licenseData}
+						isFetching={isFetching}
+						onCollapse={onCollapse}
+						collapsed={collapsed}
+					/>
 				)}
-				<div className="app-content">
+				<div className={cx('app-content', collapsed ? 'collapsed' : '')}>
 					<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
 						<LayoutContent>
-							<ChildrenContainer>
+							<ChildrenContainer
+								style={{
+									margin: isLogsView() || isTracesView() ? 0 : ' 0 1rem',
+								}}
+							>
 								{isToDisplayLayout && !renderFullScreen && <TopNav />}
 								{children}
 							</ChildrenContainer>

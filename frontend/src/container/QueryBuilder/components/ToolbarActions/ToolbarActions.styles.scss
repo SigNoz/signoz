@@ -1,0 +1,71 @@
+.left-toolbar {
+	display: flex;
+	align-items: center;
+
+	.left-toolbar-query-actions {
+		display: flex;
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-400, #1d212d);
+		background: var(--bg-ink-300, #16181d);
+		flex-direction: row;
+
+		.prom-ql-icon {
+			height: 14px;
+			width: 14px;
+		}
+
+		.ant-btn {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			border: none;
+			padding: 9px;
+			box-shadow: none;
+			border-radius: 0;
+
+			&.active-tab {
+				background-color: #1d212d;
+			}
+
+			&:disabled {
+				background-color: #121317;
+				opacity: 0.6;
+			}
+		}
+		.action-btn + .action-btn {
+			border-left: 1px solid var(--bg-slate-400, #1d212d);
+		}
+	}
+
+	.histogram-view-controller {
+		display: flex;
+		align-items: center;
+		padding-left: 8px;
+		gap: 8px;
+	}
+}
+
+.right-toolbar {
+	display: flex;
+	align-items: center;
+	background-color: var(--bg-robin-600);
+}
+
+.lightMode {
+	.left-toolbar {
+		.left-toolbar-query-actions {
+			border-color: var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+
+			.ant-btn {
+				border-color: var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+				color: var(--bg-ink-200);
+
+				&.active-tab {
+					background-color: var(--bg-robin-100);
+				}
+			}
+		}
+	}
+}

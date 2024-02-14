@@ -1,8 +1,8 @@
+import './AddToQueryHOC.styles.scss';
+
 import { Popover } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
 import { memo, ReactNode, useCallback, useMemo } from 'react';
-
-import { ButtonContainer } from './styles';
 
 function AddToQueryHOC({
 	fieldKey,
@@ -19,11 +19,12 @@ function AddToQueryHOC({
 	]);
 
 	return (
-		<ButtonContainer size="small" type="text" onClick={handleQueryAdd}>
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+		<div className="addToQueryContainer" onClick={handleQueryAdd}>
 			<Popover placement="top" content={popOverContent}>
 				{children}
 			</Popover>
-		</ButtonContainer>
+		</div>
 	);
 }
 
