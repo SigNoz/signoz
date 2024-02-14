@@ -1,6 +1,7 @@
 import './TracesTableComponent.styles.scss';
 
-import { ResizeTable } from 'components/ResizeTable';
+import { Table } from 'antd';
+// import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -76,7 +77,7 @@ function TracesTableComponent({
 	]);
 
 	const transformedQueryTableData = useMemo(
-		() => transformDataWithDate(queryTableData) || [],
+		() => ((transformDataWithDate(queryTableData) || []) as unknown) as RowData[],
 		[queryTableData],
 	);
 
@@ -102,10 +103,10 @@ function TracesTableComponent({
 	return (
 		<div className="traces-table">
 			<div className="resize-table">
-				<ResizeTable
+				<Table
 					pagination={false}
 					tableLayout="fixed"
-					scroll={{ x: true, y: 300 }}
+					scroll={{ x: true }}
 					loading={isFetching}
 					style={tableStyles}
 					dataSource={transformedQueryTableData}

@@ -184,6 +184,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					onClose={onClearActiveLog}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
+					isDashboardPanel={isDashboardPanel}
 				/>
 			</>
 		);

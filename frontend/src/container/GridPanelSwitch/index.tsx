@@ -26,6 +26,7 @@ const GridPanelSwitch = forwardRef<
 			dataSource,
 			isTableHeaderDraggable,
 			handleEndReached,
+			isDashboardPanel = false,
 		},
 		ref,
 	): JSX.Element | null => {
@@ -60,7 +61,7 @@ const GridPanelSwitch = forwardRef<
 									onEndReached: handleEndReached || ((): void => {}),
 								},
 								isTableHeaderDraggable,
-								isDashboardPanel: true,
+								isDashboardPanel,
 								className: 'logs-infinity-table',
 						  }
 						: {
@@ -85,6 +86,7 @@ const GridPanelSwitch = forwardRef<
 			selectedLogFields,
 			handleEndReached,
 			isTableHeaderDraggable,
+			isDashboardPanel,
 			selectedTracesFields,
 		]);
 

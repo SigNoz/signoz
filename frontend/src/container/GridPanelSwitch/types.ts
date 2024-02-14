@@ -33,6 +33,7 @@ export type GridPanelSwitchProps = {
 	selectedTracesFields?: Widgets['selectedTracesFields'];
 	isTableHeaderDraggable?: InfinityTableProps['isTableHeaderDraggable'];
 	handleEndReached?: (index: number) => void;
+	isDashboardPanel?: boolean;
 };
 
 export type PropsTypePropsMap = {

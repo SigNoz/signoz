@@ -329,6 +329,7 @@ function WidgetGraphComponent({
 						handleEndReached={handleEndReached}
 						dataSource={widget.query.builder?.queryData[0]?.dataSource}
 						selectedTracesFields={widget.selectedTracesFields}
+						isDashboardPanel
 					/>
 				</div>
 			)}

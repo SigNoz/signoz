@@ -40,6 +40,7 @@ const RESTRICTED_FIELDS = ['timestamp'];
 interface TableViewProps {
 	logData: ILog;
 	fieldSearchInput: string;
+	isDashboardPanel?: boolean;
 }
 
 type Props = TableViewProps &
@@ -51,6 +52,7 @@ function TableView({
 	fieldSearchInput,
 	onAddToQuery,
 	onClickActionItem,
+	isDashboardPanel = false,
 }: Props): JSX.Element | null {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
@@ -218,38 +220,45 @@ function TableView({
 								{removeEscapeCharacters(fieldData.value)}
 							</span>
 						</CopyClipboardHOC>
-						<span className="action-btn">
-							<Tooltip title="Filter for value">
-								<Button
-									className="filter-btn periscope-btn"
-									icon={
-										isfilterInLoading ? (
-											<Spin size="small" />
-										) : (
-											<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
-										)
-									}
-									onClick={onClickHandler(OPERATORS.IN, fieldFilterKey, fieldData.value)}
-								/>
-							</Tooltip>
-							<Tooltip title="Filter out value">
-								<Button
-									className="filter-btn periscope-btn"
-									icon={
-										isfilterOutLoading ? (
-											<Spin size="small" />
-										) : (
-											<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
-										)
-									}
-									onClick={onClickHandler(
-										OPERATORS.NIN,
-										fieldFilterKey,
-										fieldData.value,
-									)}
-								/>
-							</Tooltip>
-						</span>
+
+						{!isDashboardPanel && (
+							<span className="action-btn">
+								<Tooltip title="Filter for value">
+									<Button
+										className="filter-btn periscope-btn"
+										icon={
+											isfilterInLoading ? (
+												<Spin size="small" />
+											) : (
+												<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
+											)
+										}
+										onClick={onClickHandler(
+											OPERATORS.IN,
+											fieldFilterKey,
+											fieldData.value,
+										)}
+									/>
+								</Tooltip>
+								<Tooltip title="Filter out value">
+									<Button
+										className="filter-btn periscope-btn"
+										icon={
+											isfilterOutLoading ? (
+												<Spin size="small" />
+											) : (
+												<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
+											)
+										}
+										onClick={onClickHandler(
+											OPERATORS.NIN,
+											fieldFilterKey,
+											fieldData.value,
+										)}
+									/>
+								</Tooltip>
+							</span>
+						)}
 					</div>
 				);
 			},
@@ -267,6 +276,10 @@ function TableView({
 		/>
 	);
 }
+
+TableView.defaultProps = {
+	isDashboardPanel: false,
+};
 
 interface DataType {
 	key: string;

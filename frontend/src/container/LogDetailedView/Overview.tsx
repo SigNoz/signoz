@@ -22,6 +22,7 @@ import TableView from './TableView';
 
 interface OverviewProps {
 	logData: ILog;
+	isDashboardPanel?: boolean;
 }
 
 type Props = OverviewProps &
@@ -32,6 +33,7 @@ function Overview({
 	logData,
 	onAddToQuery,
 	onClickActionItem,
+	isDashboardPanel = false,
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(false);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
@@ -199,6 +201,7 @@ function Overview({
 									onAddToQuery={onAddToQuery}
 									fieldSearchInput={fieldSearchInput}
 									onClickActionItem={onClickActionItem}
+									isDashboardPanel={isDashboardPanel}
 								/>
 							</>
 						),
@@ -209,5 +212,9 @@ function Overview({
 		</div>
 	);
 }
+
+Overview.defaultProps = {
+	isDashboardPanel: false,
+};
 
 export default Overview;
