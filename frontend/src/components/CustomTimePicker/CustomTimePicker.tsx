@@ -224,6 +224,7 @@ function CustomTimePicker({
 		setIsInputFocused(false);
 	};
 
+	// this is required as TopNav component wraps the components and we need to clear the state on path change
 	useEffect(() => {
 		setInputStatus('');
 		onError(false);
