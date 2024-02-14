@@ -220,6 +220,8 @@ function DateTimeSelection({
 			if (isObject(parsedSelectedTime)) {
 				return 'custom';
 			}
+
+			return selectedTime;
 		}
 
 		return defaultSelectedOption;
