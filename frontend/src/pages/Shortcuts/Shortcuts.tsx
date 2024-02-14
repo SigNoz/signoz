@@ -18,6 +18,7 @@ function Shortcuts(): JSX.Element {
 					dataSource={tableData}
 					pagination={false}
 					className="shortcut-section-table"
+					bordered
 				/>
 			</section>
 		);
