@@ -24,7 +24,6 @@ export const getRoutes = (
 		settings.push(...alertChannels(t));
 	} else {
 		settings.push(...alertChannels(t));
-		settings.push(...generalSettings(t));
 	}
 
 	settings.push(...generalSettings(t));
