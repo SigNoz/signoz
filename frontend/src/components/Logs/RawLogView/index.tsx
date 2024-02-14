@@ -12,7 +12,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { isEmpty, isUndefined } from 'lodash-es';
+import { isEmpty, isNumber, isUndefined } from 'lodash-es';
 import {
 	KeyboardEvent,
 	MouseEvent,
@@ -73,7 +73,14 @@ function RawLogView({
 
 	const attributesValues = updatedSelecedFields
 		.map((field) => flattenLogData[field.name])
-		.filter((attribute) => !isUndefined(attribute) && !isEmpty(attribute));
+		.filter((attribute) => {
+			// loadash isEmpty doesnot work with numbers
+			if (isNumber(attribute)) {
+				return true;
+			}
+
+			return !isUndefined(attribute) && !isEmpty(attribute);
+		});
 
 	let attributesText = attributesValues.join(' | ');
 
