@@ -22,7 +22,6 @@ import axios, { AxiosError } from 'axios';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useGetAllAPIKeys } from 'hooks/APIKeys/useGetAllAPIKeys';
-import useErrorNotification from 'hooks/useErrorNotification';
 import { useNotifications } from 'hooks/useNotifications';
 import {
 	CalendarClock,
@@ -120,7 +119,6 @@ function APIKeys(): JSX.Element {
 	const {
 		data: APIKeys,
 		isLoading,
-		error,
 		isRefetching,
 		refetch: refetchAPIKeys,
 	} = useGetAllAPIKeys();
@@ -129,14 +127,13 @@ function APIKeys(): JSX.Element {
 		setDataSource(APIKeys?.data.data || []);
 	}, [APIKeys?.data.data]);
 
-	useErrorNotification(error);
-
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
-		console.log('search', e.target.value, APIKeys);
-
 		setSearchValue(e.target.value);
-		const filteredData = APIKeys?.data?.data?.filter((key: any) =>
-			key.name.toLowerCase().includes(e.target.value.toLowerCase()),
+		const filteredData = APIKeys?.data?.data?.filter(
+			(key: any) =>
+				key &&
+				key.name &&
+				key.name.toLowerCase().includes(e.target.value.toLowerCase()),
 		);
 		setDataSource(filteredData || []);
 	};
@@ -662,7 +659,7 @@ function APIKeys(): JSX.Element {
 										label: '1 year',
 									},
 									{
-										value: 'noExpiry',
+										value: '0',
 										label: 'No Expiry',
 									},
 								]}
@@ -706,7 +703,7 @@ function APIKeys(): JSX.Element {
 									size={12}
 									onClick={(): void => {
 										if (activeAPIKey) {
-											handleCopyKey(activeAPIKey.id);
+											handleCopyKey(activeAPIKey?.id.toString());
 										}
 									}}
 								/>
