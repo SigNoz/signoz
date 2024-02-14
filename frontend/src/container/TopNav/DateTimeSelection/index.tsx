@@ -258,7 +258,6 @@ function DateTimeSelection({
 	};
 
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
-		console.log('dateTimeRange', dateTimeRange);
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
