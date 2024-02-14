@@ -21,6 +21,7 @@ import {
 	useEffect,
 	useState,
 } from 'react';
+import { useLocation } from 'react-router-dom';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
@@ -68,6 +69,7 @@ function CustomTimePicker({
 	const [inputErrorMessage, setInputErrorMessage] = useState<string | null>(
 		null,
 	);
+	const location = useLocation();
 	const [isInputFocused, setIsInputFocused] = useState(false);
 
 	const getSelectedTimeRangeLabel = (
@@ -221,6 +223,16 @@ function CustomTimePicker({
 	const handleBlur = (): void => {
 		setIsInputFocused(false);
 	};
+
+	useEffect(() => {
+		setInputStatus('');
+		onError(false);
+		setInputErrorMessage(null);
+		setInputValue('');
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [location.pathname]);
+
+	console.log(location.pathname);
 
 	return (
 		<div className="custom-time-picker">
