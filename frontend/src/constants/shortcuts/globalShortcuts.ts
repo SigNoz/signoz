@@ -12,13 +12,13 @@ export const GlobalShortcuts = {
 };
 
 export const GlobalShortcutsName = {
-	SidebarCollapse: `\\+${userOS === UserOperatingSystem.MACOS ? 'cmd' : 'ctrl'}`,
-	NavigateToServices: 's+shift',
-	NavigateToTraces: 't+shift',
-	NavigateToLogs: 'l+shift',
-	NavigateToDashboards: 'd+shift',
-	NavigateToAlerts: 'a+shift',
-	NavigateToExceptions: 'e+shift',
+	SidebarCollapse: `${userOS === UserOperatingSystem.MACOS ? 'cmd' : 'ctrl'}+\\`,
+	NavigateToServices: 'shift+s',
+	NavigateToTraces: 'shift+t',
+	NavigateToLogs: 'shift+l',
+	NavigateToDashboards: 'shift+d',
+	NavigateToAlerts: 'shift+a',
+	NavigateToExceptions: 'shift+e',
 };
 
 export const GlobalShortcutsDescription = {
