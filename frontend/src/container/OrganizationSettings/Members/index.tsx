@@ -320,6 +320,7 @@ function Members(): JSX.Element {
 				dataSource={dataSource}
 				pagination={false}
 				loading={status === 'loading'}
+				bordered
 			/>
 		</Space>
 	);

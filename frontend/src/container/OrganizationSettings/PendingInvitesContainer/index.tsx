@@ -299,6 +299,7 @@ function PendingInvitesContainer(): JSX.Element {
 					dataSource={dataSource}
 					pagination={false}
 					loading={getPendingInvitesResponse.status === 'loading'}
+					bordered
 				/>
 			</Space>
 		</div>
