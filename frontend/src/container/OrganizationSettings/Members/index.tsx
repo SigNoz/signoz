@@ -231,7 +231,7 @@ function UserFunction({
 
 function Members(): JSX.Element {
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
-	const { status, data } = useQuery({
+	const { status, data, isLoading } = useQuery({
 		queryFn: () =>
 			getOrgUser({
 				orgId: (org || [])[0].id,
@@ -308,7 +308,12 @@ function Members(): JSX.Element {
 
 	return (
 		<Space direction="vertical" size="middle">
-			<Typography.Title level={3}>Members</Typography.Title>
+			<Typography.Title level={3}>
+				Members{' '}
+				{!isLoading && dataSource && (
+					<div className="members-count"> ({dataSource.length}) </div>
+				)}
+			</Typography.Title>
 			<ResizeTable
 				columns={columns}
 				tableLayout="fixed"
