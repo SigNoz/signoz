@@ -84,6 +84,7 @@ function WidgetGraphContainer({
 			selectedLogFields={selectedLogFields}
 			selectedTracesFields={selectedTracesFields}
 			selectedTime={selectedTime}
+			selectedGraph={selectedGraph}
 		/>
 	);
 }

@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -23,11 +24,12 @@ const paths = (
 	return renderer(u, seriesIdx, idx0, idx1, extendGap, buildClip);
 };
 
-const getSeries = (
-	apiResponse?: MetricRangePayloadProps,
-	widgetMetaData: QueryData[] = [],
-	graphsVisibilityStates?: boolean[],
-): uPlot.Options['series'] => {
+const getSeries = ({
+	apiResponse,
+	widgetMetaData,
+	graphsVisibilityStates,
+	panelType,
+}: GetSeriesProps): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
 	];
@@ -52,10 +54,14 @@ const getSeries = (
 
 		const seriesObj: any = {
 			paths,
-			drawStyle: drawStyles.line,
+			drawStyle:
+				panelType && panelType === PANEL_TYPES.BAR
+					? drawStyles.bars
+					: drawStyles.line,
 			lineInterpolation: lineInterpolations.spline,
 			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
 			label,
+			fill: panelType && panelType === PANEL_TYPES.BAR ? color : undefined,
 			stroke: color,
 			width: 2,
 			spanGaps: true,
@@ -70,6 +76,13 @@ const getSeries = (
 	}
 
 	return configurations;
+};
+
+type GetSeriesProps = {
+	apiResponse?: MetricRangePayloadProps;
+	widgetMetaData: QueryData[];
+	graphsVisibilityStates?: boolean[];
+	panelType?: PANEL_TYPES;
 };
 
 export default getSeries;

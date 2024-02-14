@@ -1,5 +1,4 @@
 import Uplot from 'components/Uplot';
-import UplotBar from 'components/UplotBar';
 import GridTableComponent from 'container/GridTableComponent';
 import GridValueComponent from 'container/GridValueComponent';
 import LogsPanelComponent from 'container/LogsPanelTable/LogsPanelComponent';
@@ -15,7 +14,7 @@ export const PANEL_TYPES_COMPONENT_MAP = {
 	[PANEL_TYPES.TRACE]: null,
 	[PANEL_TYPES.LIST]: LogsPanelComponent,
 	[PANEL_TYPES.EMPTY_WIDGET]: null,
-	[PANEL_TYPES.BAR]: UplotBar,
+	[PANEL_TYPES.BAR]: Uplot,
 } as const;
 
 export const getComponentForPanelType = (
