@@ -154,7 +154,7 @@ function CustomTimePicker({
 					break;
 			}
 
-			if (minTime && minTime < maxAllowedMinTime) {
+			if (minTime && (!minTime.isValid() || minTime < maxAllowedMinTime)) {
 				setInputStatus('error');
 				onError(true);
 				setInputErrorMessage('Please enter time less than 6 months');
