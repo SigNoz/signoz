@@ -2,8 +2,10 @@ import './APIKeys.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import {
+	Avatar,
 	Button,
 	Col,
+	Collapse,
 	Flex,
 	Form,
 	Input,
@@ -15,6 +17,8 @@ import {
 	TableProps,
 	Typography,
 } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
+import { CollapseProps } from 'antd/lib';
 import createAPIKeyApi from 'api/APIKeys/createAPIKey';
 import deleteAPIKeyApi from 'api/APIKeys/deleteAPIKey';
 import updateAPIKeyApi from 'api/APIKeys/updateAPIKey';
@@ -47,6 +51,31 @@ import { AppState } from 'store/reducers';
 import { APIKeyProps } from 'types/api/pat/types';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
+
+export const showErrorNotification = (
+	notifications: NotificationInstance,
+	err: Error,
+): void => {
+	notifications.error({
+		message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
+	});
+};
+
+type ExpiryOption = {
+	value: string;
+	label: string;
+};
+
+const EXPIRATION_WITHIN_SEVEN_DAYS = 7;
+
+const API_KEY_EXPIRY_OPTIONS: ExpiryOption[] = [
+	{ value: '1', label: '1 day' },
+	{ value: '7', label: '1 week' },
+	{ value: '30', label: '1 month' },
+	{ value: '90', label: '3 months' },
+	{ value: '365', label: '1 year' },
+	{ value: '0', label: 'No Expiry' },
+];
 
 function APIKeys(): JSX.Element {
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -121,16 +150,28 @@ function APIKeys(): JSX.Element {
 		isLoading,
 		isRefetching,
 		refetch: refetchAPIKeys,
+		error,
+		isError,
 	} = useGetAllAPIKeys();
+
+	useEffect(() => {
+		setActiveAPIKey(APIKeys?.data.data[0]);
+	}, [APIKeys]);
 
 	useEffect(() => {
 		setDataSource(APIKeys?.data.data || []);
 	}, [APIKeys?.data.data]);
 
+	useEffect(() => {
+		if (isError) {
+			showErrorNotification(notifications, error as AxiosError);
+		}
+	}, [error, isError, notifications]);
+
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setSearchValue(e.target.value);
 		const filteredData = APIKeys?.data?.data?.filter(
-			(key: any) =>
+			(key: APIKeyProps) =>
 				key &&
 				key.name &&
 				key.name.toLowerCase().includes(e.target.value.toLowerCase()),
@@ -142,23 +183,17 @@ function APIKeys(): JSX.Element {
 		setSearchValue('');
 	};
 
-	const showErrorNotification = (err: AxiosError): void => {
-		notifications.error({
-			message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
-		});
-	};
-
 	const { mutate: createAPIKey, isLoading: isLoadingCreateAPIKey } = useMutation(
 		createAPIKeyApi,
 		{
 			onSuccess: (data) => {
 				setShowNewAPIKeyDetails(true);
-
-				console.log('data', data);
 				setActiveAPIKey(data.payload);
+
+				refetchAPIKeys();
 			},
 			onError: (error) => {
-				showErrorNotification(error as AxiosError);
+				showErrorNotification(notifications, error as AxiosError);
 			},
 		},
 	);
@@ -171,7 +206,7 @@ function APIKeys(): JSX.Element {
 				setIsEditModalOpen(false);
 			},
 			onError: (error) => {
-				showErrorNotification(error as AxiosError);
+				showErrorNotification(notifications, error as AxiosError);
 			},
 		},
 	);
@@ -184,7 +219,7 @@ function APIKeys(): JSX.Element {
 				setIsDeleteModalOpen(false);
 			},
 			onError: (error) => {
-				showErrorNotification(error as AxiosError);
+				showErrorNotification(notifications, error as AxiosError);
 			},
 		},
 	);
@@ -218,7 +253,6 @@ function APIKeys(): JSX.Element {
 	};
 
 	const onCreateAPIKey = (): void => {
-		console.log('on create', createForm.getFieldsValue());
 		createForm
 			.validateFields()
 			.then((values) => {
@@ -265,7 +299,6 @@ function APIKeys(): JSX.Element {
 			dateOptions,
 		);
 
-		// Combine time and date
 		return `${formattedDate} ${formattedTime}`;
 	};
 
@@ -274,9 +307,17 @@ function APIKeys(): JSX.Element {
 			handleCopyKey(activeAPIKey?.token);
 		}
 
-		refetchAPIKeys();
-
 		hideAddViewModal();
+	};
+
+	const getDateDifference = (
+		createdTimestamp: number,
+		expiryTimestamp: number,
+	): number => {
+		const differenceInSeconds = Math.abs(expiryTimestamp - createdTimestamp);
+
+		// Convert seconds to days
+		return differenceInSeconds / (60 * 60 * 24);
 	};
 
 	const columns: TableProps<APIKeyProps>['columns'] = [
@@ -284,73 +325,151 @@ function APIKeys(): JSX.Element {
 			title: 'API Key',
 			key: 'api-key',
 			render: (APIKey: APIKeyProps): JSX.Element => {
-				let formattedDateAndTime = '';
+				const formattedDateAndTime =
+					APIKey && APIKey?.lastUsed && APIKey?.lastUsed !== 0
+						? getFormattedTime(APIKey?.lastUsed)
+						: 'Never';
 
-				if (APIKey && APIKey.createdAt) {
-					formattedDateAndTime = getFormattedTime(APIKey.createdAt);
-				}
+				const createdOn = getFormattedTime(APIKey.createdAt);
 
-				const expiringInLessThan7Days = parseInt(APIKey.id, 10) % 2 === 0;
+				const expiresIn =
+					APIKey.expiresAt === 0
+						? Number.POSITIVE_INFINITY
+						: getDateDifference(APIKey?.createdAt, APIKey?.expiresAt);
 
-				// this is to simulate the UI. Will update once BE finalises format and sends info correctly
+				const expiresOn =
+					APIKey.expiresAt === 0 ? 'No Expiry' : getFormattedTime(APIKey.expiresAt);
+
+				console.log('expiresIn', expiresIn);
+
+				const items: CollapseProps['items'] = [
+					{
+						key: '1',
+						label: (
+							<div className="title-with-action">
+								<div className="api-key-data">
+									<div className="api-key-title">
+										<Typography.Text>{APIKey?.name}</Typography.Text>
+									</div>
+
+									<div className="api-key-value">
+										<Typography.Text>
+											{APIKey?.token.substring(0, 2)}********
+											{APIKey?.token.substring(APIKey.token.length - 2).trim()}
+										</Typography.Text>
+
+										<Copy
+											className="copy-key-btn"
+											size={12}
+											onClick={(e): void => {
+												e.stopPropagation();
+												e.preventDefault();
+												handleCopyKey(APIKey.token);
+											}}
+										/>
+									</div>
+
+									{APIKey.role === USER_ROLES.ADMIN && (
+										<Contact2 size={14} color={Color.BG_ROBIN_400} />
+									)}
+
+									{APIKey.role === USER_ROLES.EDITOR && (
+										<ClipboardEdit size={14} color={Color.BG_ROBIN_400} />
+									)}
+
+									{APIKey.role === USER_ROLES.VIEWER && (
+										<View size={14} color={Color.BG_ROBIN_400} />
+									)}
+
+									{!APIKey.role && <View size={14} color={Color.BG_ROBIN_400} />}
+								</div>
+								<div className="action-btn">
+									<Button
+										className="periscope-btn ghost"
+										icon={<PenLine size={14} />}
+										onClick={(e): void => {
+											e.stopPropagation();
+											e.preventDefault();
+											showEditModal(APIKey);
+										}}
+									/>
+
+									<Button
+										className="periscope-btn ghost"
+										icon={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+										onClick={(e): void => {
+											e.stopPropagation();
+											e.preventDefault();
+											showDeleteModal(APIKey);
+										}}
+									/>
+								</div>
+							</div>
+						),
+						children: (
+							<div className="api-key-info-container">
+								{APIKey?.createdByUser && (
+									<Row>
+										<Col span={6}> Creator </Col>
+										<Col span={12} className="user-info">
+											<Avatar className="user-avatar" size="small">
+												{APIKey?.createdByUser?.name?.substring(0, 1)}
+											</Avatar>
+
+											<Typography.Text>{APIKey.createdByUser?.name}</Typography.Text>
+
+											<div className="user-email">{APIKey.createdByUser?.email}</div>
+										</Col>
+									</Row>
+								)}
+
+								<Row>
+									<Col span={6}> Created on </Col>
+									<Col span={12}>
+										<Typography.Text>{createdOn}</Typography.Text>
+									</Col>
+								</Row>
+
+								{APIKey?.updatedAt && (
+									<Row>
+										<Col span={6}> Updated on </Col>
+										<Col span={12}>
+											<Typography.Text>
+												{getFormattedTime(APIKey?.updatedAt)}
+											</Typography.Text>
+										</Col>
+									</Row>
+								)}
+
+								<Row>
+									<Col span={6}> Expires on </Col>
+									<Col span={12}>
+										<Typography.Text>{expiresOn}</Typography.Text>
+									</Col>
+								</Row>
+							</div>
+						),
+					},
+				];
 
 				return (
 					<div className="column-render">
-						<div className="title-with-action">
-							<div className="api-key-data">
-								<div className="api-key-title">
-									<Typography.Text>{APIKey?.name}</Typography.Text>
-								</div>
-
-								<div className="api-key-value">
-									<Typography.Text>
-										{APIKey?.token.substring(0, 2)}********
-										{APIKey?.token.substring(APIKey.token.length - 2).trim()}
-									</Typography.Text>
-
-									<Copy
-										className="copy-key-btn"
-										size={12}
-										onClick={(): void => handleCopyKey(APIKey.token)}
-									/>
-								</div>
-
-								{APIKey.role === USER_ROLES.ADMIN && (
-									<Contact2 size={14} color={Color.BG_ROBIN_400} />
-								)}
-
-								{APIKey.role === USER_ROLES.EDITOR && (
-									<ClipboardEdit size={14} color={Color.BG_ROBIN_400} />
-								)}
-
-								{APIKey.role === USER_ROLES.VIEWER && (
-									<View size={14} color={Color.BG_ROBIN_400} />
-								)}
-
-								{!APIKey.role && <View size={14} color={Color.BG_ROBIN_400} />}
-							</div>
-
-							<div className="action-btn">
-								<PenLine size={14} onClick={(): void => showEditModal(APIKey)} />
-
-								<Trash2
-									size={14}
-									color={Color.BG_CHERRY_500}
-									onClick={(): void => showDeleteModal(APIKey)}
-								/>
-							</div>
-						</div>
+						<Collapse items={items} />
 
 						<div className="api-key-details">
 							<div className="api-key-created-at">
 								<CalendarClock size={14} />
 								Last used <Minus size={12} />
-								<Typography.Text> {formattedDateAndTime} </Typography.Text>
+								<Typography.Text>{formattedDateAndTime}</Typography.Text>
 							</div>
-
-							{expiringInLessThan7Days && (
-								<div className="api-key-expires-in">
-									Expires in {APIKey.expiresAt} Days
+							{expiresIn <= EXPIRATION_WITHIN_SEVEN_DAYS && (
+								<div
+									className={cx(
+										'api-key-expires-in',
+										expiresIn <= 3 ? 'danger' : 'warning',
+									)}
+								>
+									<span className="dot" /> Expires in {expiresIn} Days
 								</div>
 							)}
 						</div>
@@ -393,7 +512,7 @@ function APIKeys(): JSX.Element {
 					loading={isLoading || isRefetching}
 					showHeader={false}
 					pagination={{
-						pageSize: 10,
+						pageSize: 5,
 						showTotal: (total: number, range: number[]): string =>
 							`${range[0]}-${range[1]} of ${total} API Keys`,
 					}}
@@ -491,41 +610,19 @@ function APIKeys(): JSX.Element {
 							<Radio.Group
 								buttonStyle="solid"
 								className="api-key-access-role"
-								value={activeAPIKey?.role}
+								defaultValue={activeAPIKey?.role}
 							>
-								<Radio.Button
-									value={USER_ROLES.ADMIN}
-									className={cx(
-										'tab',
-										editForm.getFieldValue('role') === USER_ROLES.ADMIN ? 'selected' : '',
-									)}
-								>
+								<Radio.Button value={USER_ROLES.ADMIN} className={cx('tab')}>
 									<div className="role">
 										<Contact2 size={14} /> Admin
 									</div>
 								</Radio.Button>
-								<Radio.Button
-									value={USER_ROLES.EDITOR}
-									className={cx(
-										'tab',
-										editForm.getFieldValue('role') === USER_ROLES.EDITOR
-											? 'selected'
-											: '',
-									)}
-								>
+								<Radio.Button value={USER_ROLES.EDITOR} className={cx('tab')}>
 									<div className="role">
 										<ClipboardEdit size={14} /> Editor
 									</div>
 								</Radio.Button>
-								<Radio.Button
-									value={USER_ROLES.VIEWER}
-									className={cx(
-										'tab',
-										editForm.getFieldValue('role') === USER_ROLES.VIEWER
-											? 'selected'
-											: '',
-									)}
-								>
+								<Radio.Button value={USER_ROLES.VIEWER} className={cx('tab')}>
 									<div className="role">
 										<Eye size={14} /> Viewer
 									</div>
@@ -637,39 +734,14 @@ function APIKeys(): JSX.Element {
 							<Select
 								className="expiration-selector"
 								placeholder="Expiration"
-								options={[
-									{
-										value: '1',
-										label: '1 day',
-									},
-									{
-										value: '7',
-										label: '1 week',
-									},
-									{
-										value: '30',
-										label: '1 month',
-									},
-									{
-										value: '90',
-										label: '3 months',
-									},
-									{
-										value: '365',
-										label: '1 year',
-									},
-									{
-										value: '0',
-										label: 'No Expiry',
-									},
-								]}
+								options={API_KEY_EXPIRY_OPTIONS}
 							/>
 						</Form.Item>
 					</Form>
 				)}
 
 				{showNewAPIKeyDetails && (
-					<div className="newAPIKeyDetails">
+					<div className="api-key-info-container">
 						<Row>
 							<Col span={8}>Key</Col>
 							<Col span={12} className="copyable-text">
@@ -691,49 +763,67 @@ function APIKeys(): JSX.Element {
 						</Row>
 
 						<Row>
-							<Col span={8}>ID</Col>
-							<Col span={12} className="copyable-text">
-								<Typography.Text>
-									{activeAPIKey?.token.substring(0, 2)}****************
-									{activeAPIKey?.token.substring(activeAPIKey.token.length - 2).trim()}
-								</Typography.Text>
-
-								<Copy
-									className="copy-key-btn"
-									size={12}
-									onClick={(): void => {
-										if (activeAPIKey) {
-											handleCopyKey(activeAPIKey?.id.toString());
-										}
-									}}
-								/>
-							</Col>
-						</Row>
-
-						<Row>
 							<Col span={8}>Name</Col>
 							<Col span={12}>{activeAPIKey?.name}</Col>
 						</Row>
 
 						<Row>
 							<Col span={8}>Role</Col>
-							<Col span={12}>{activeAPIKey?.role}</Col>
+							<Col span={12}>
+								{activeAPIKey?.role === USER_ROLES.ADMIN && (
+									<div className="role">
+										<Contact2 size={14} /> Admin
+									</div>
+								)}
+								{activeAPIKey?.role === USER_ROLES.EDITOR && (
+									<div className="role">
+										{' '}
+										<ClipboardEdit size={14} /> Editor
+									</div>
+								)}
+								{activeAPIKey?.role === USER_ROLES.VIEWER && (
+									<div className="role">
+										{' '}
+										<View size={14} /> Viewer
+									</div>
+								)}
+							</Col>
 						</Row>
 
 						<Row>
 							<Col span={8}>Creator</Col>
-							<Col span={12}>{activeAPIKey?.createdBy}</Col>
+
+							<Col span={12} className="user-info">
+								<Avatar className="user-avatar" size="small">
+									{activeAPIKey?.createdByUser?.name?.substring(0, 1)}
+								</Avatar>
+
+								<Typography.Text>{activeAPIKey?.createdByUser?.name}</Typography.Text>
+
+								<div className="user-email">{activeAPIKey?.createdByUser?.email}</div>
+							</Col>
 						</Row>
 
-						<Row>
-							<Col span={8}>Created on</Col>
-							<Col span={12}>{activeAPIKey?.createdAt}</Col>
-						</Row>
+						{activeAPIKey?.createdAt && (
+							<Row>
+								<Col span={8}>Created on</Col>
+								<Col span={12}>{getFormattedTime(activeAPIKey?.createdAt)}</Col>
+							</Row>
+						)}
 
-						<Row>
-							<Col span={8}>Expires on</Col>
-							<Col span={12}>{activeAPIKey?.expiresAt}</Col>
-						</Row>
+						{activeAPIKey?.expiresAt !== 0 && activeAPIKey?.expiresAt && (
+							<Row>
+								<Col span={8}>Expires on</Col>
+								<Col span={12}>{getFormattedTime(activeAPIKey?.expiresAt)}</Col>
+							</Row>
+						)}
+
+						{activeAPIKey?.expiresAt === 0 && (
+							<Row>
+								<Col span={8}>Expires on</Col>
+								<Col span={12}> No Expiry </Col>
+							</Row>
+						)}
 					</div>
 				)}
 			</Modal>

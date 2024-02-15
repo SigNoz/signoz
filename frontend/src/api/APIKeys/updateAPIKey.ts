@@ -8,7 +8,7 @@ const updateAPIKey = async (
 	props: UpdateAPIKeyProps,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.put(`/pat/${props.id}`, {
+		const response = await axios.put(`/pats/${props.id}`, {
 			...props.data,
 		});
 

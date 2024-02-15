@@ -1,5 +1,5 @@
 .api-key-container {
-	margin-top: 32px;
+	margin-top: 24px;
 	display: flex;
 	justify-content: center;
 	width: 100%;
@@ -108,7 +108,7 @@
 					.action-btn {
 						display: flex;
 						align-items: center;
-						gap: 20px;
+						gap: 4px;
 						cursor: pointer;
 					}
 
@@ -117,6 +117,31 @@
 						background: rgba(113, 144, 249, 0.1);
 					}
 				}
+
+				.ant-collapse {
+					border: none;
+
+					.ant-collapse-header {
+						padding: 0px 8px;
+
+						display: flex;
+						align-items: center;
+						background-color: #121317;
+					}
+
+					.ant-collapse-content {
+						border-top: 1px solid var(--bg-slate-500, #161922);
+					}
+
+					.ant-collapse-item {
+						border-bottom: none;
+					}
+
+					.ant-collapse-expand-icon {
+						padding-inline-end: 0px;
+					}
+				}
+
 				.api-key-details {
 					display: flex;
 					align-items: center;
@@ -170,13 +195,37 @@
 					}
 
 					.api-key-expires-in {
-						color: var(--Amber-400, #ffd778);
 						font-style: normal;
 						font-weight: 400;
 						line-height: 18px;
 
 						display: flex;
-						gap: 4px;
+						align-items: center;
+						gap: 8px;
+
+						.dot {
+							height: 6px;
+							width: 6px;
+							border-radius: 50%;
+						}
+
+						&.warning {
+							color: var(--bg-amber-400, #ffd778);
+
+							.dot {
+								background: var(--bg-amber-400, #ffd778);
+								box-shadow: 0px 0px 6px 0px var(--bg-amber-400, #ffd778);
+							}
+						}
+
+						&.danger {
+							color: var(--bg-cherry-400, #ea6d71);
+
+							.dot {
+								background: var(--bg-cherry-400, #ea6d71);
+								box-shadow: 0px 0px 6px 0px var(--bg-cherry-400, #ea6d71);
+							}
+						}
 					}
 				}
 			}
@@ -208,6 +257,41 @@
 				line-height: 20px;
 			}
 		}
+	}
+}
+
+.api-key-info-container {
+	display: flex;
+	gap: 12px;
+	flex-direction: column;
+
+	.user-info {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+
+		.user-avatar {
+			background-color: lightslategray;
+			vertical-align: middle;
+		}
+	}
+
+	.user-email {
+		display: inline-flex;
+		align-items: center;
+		gap: 12px;
+		margin-left: 8px;
+		border-radius: 20px;
+		padding: 0px 12px;
+		background: var(--bg-ink-200, #23262e);
+
+		font-family: 'Space Mono', monospace;
+	}
+
+	.role {
+		display: flex;
+		align-items: center;
+		gap: 12px;
 	}
 }
 
@@ -431,6 +515,18 @@
 				.column-render {
 					border: 1px solid var(--bg-vanilla-200);
 					background: var(--bg-vanilla-100);
+
+					.ant-collapse {
+						border: none;
+
+						.ant-collapse-header {
+							background: var(--bg-vanilla-100);
+						}
+
+						.ant-collapse-content {
+							border-top: 1px solid var(--bg-vanilla-300);
+						}
+					}
 
 					.title-with-action {
 						.api-key-title {

@@ -8,7 +8,7 @@ const get = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(`/pat/${props.id}`);
+		const response = await axios.get(`/pats/${props.id}`);
 
 		return {
 			statusCode: 200,
