@@ -395,7 +395,7 @@ function LogsExplorerViews({
 			handleSetConfig(defaultTo(panelTypes, PANEL_TYPES.LIST), DataSource.LOGS);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [handleSetConfig, panelTypes]);
 
 	useEffect(() => {
 		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
