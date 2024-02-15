@@ -340,8 +340,6 @@ function APIKeys(): JSX.Element {
 				const expiresOn =
 					APIKey.expiresAt === 0 ? 'No Expiry' : getFormattedTime(APIKey.expiresAt);
 
-				console.log('expiresIn', expiresIn);
-
 				const items: CollapseProps['items'] = [
 					{
 						key: '1',
