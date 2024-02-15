@@ -1,6 +1,5 @@
-import { Tag } from 'antd';
+import { Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import Typography from 'antd/es/typography/Typography';
 import ROUTES from 'constants/routes';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { formUrlParams } from 'container/TraceDetail/utils';
