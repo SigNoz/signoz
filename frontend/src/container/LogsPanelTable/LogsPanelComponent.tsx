@@ -92,17 +92,23 @@ function LogsPanelComponent({
 		setRequestData(newRequestData);
 	};
 
-	const { data, isFetching, isError } = useGetQueryRange(requestData, {
-		queryKey: [
-			REACT_QUERY_KEY.GET_QUERY_RANGE,
-			globalSelectedTime,
-			maxTime,
-			minTime,
-			requestData,
-			pagination,
-		],
-		enabled: !!requestData.query && !!selectedLogsFields?.length,
-	});
+	const { data, isFetching, isError } = useGetQueryRange(
+		{
+			...requestData,
+			globalSelectedInterval: globalSelectedTime,
+		},
+		{
+			queryKey: [
+				REACT_QUERY_KEY.GET_QUERY_RANGE,
+				globalSelectedTime,
+				maxTime,
+				minTime,
+				requestData,
+				pagination,
+			],
+			enabled: !!requestData.query && !!selectedLogsFields?.length,
+		},
+	);
 
 	const columns = getLogPanelColumnsList(selectedLogsFields);
 
