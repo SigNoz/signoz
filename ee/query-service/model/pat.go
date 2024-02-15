@@ -6,7 +6,7 @@ type User struct {
 	Email             string `json:"email" db:"email"`
 	CreatedAt         int64  `json:"createdAt" db:"created_at"`
 	ProfilePictureURL string `json:"profilePictureURL" db:"profile_picture_url"`
-	NotFound           bool   `json:"notFound"`
+	NotFound          bool   `json:"notFound"`
 }
 
 type PAT struct {
@@ -19,7 +19,7 @@ type PAT struct {
 	Name            string `json:"name" db:"name"`
 	CreatedAt       int64  `json:"createdAt" db:"created_at"`
 	ExpiresAt       int64  `json:"expiresAt" db:"expires_at"`
-	UpdatedAt        int64  `json:"updateAt" db:"updated_at"`
+	UpdatedAt       int64  `json:"updatedAt" db:"updated_at"`
 	LastUsed        int64  `json:"lastUsed" db:"last_used"`
 	Revoked         bool   `json:"revoked" db:"revoked"`
 	UpdatedByUserID string `json:"updatedByUserId" db:"updated_by_user_id"`

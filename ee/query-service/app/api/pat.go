@@ -91,11 +91,7 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	err := validatePATRequest(req)
-	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
-		return
-	}
+
 	user, err := auth.GetUserFromRequest(r)
 	if err != nil {
 		RespondError(w, &model.ApiError{
@@ -104,6 +100,13 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
+
+	err = validatePATRequest(req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
 	req.UpdatedByUserID = user.Id
 	id := mux.Vars(r)["id"]
 	req.UpdatedAt = time.Now().Unix()
@@ -160,7 +163,7 @@ func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	zap.S().Debugf("Revoke PAT with id: %+v", id)
-	if apierr := ah.AppDao().RevokePAT(ctx, id); apierr != nil {
+	if apierr := ah.AppDao().RevokePAT(ctx, id, user.Id); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}

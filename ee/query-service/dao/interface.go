@@ -40,5 +40,5 @@ type ModelDao interface {
 	GetPATByID(ctx context.Context, id string) (*model.PAT, basemodel.BaseApiError)
 	GetUserByPAT(ctx context.Context, token string) (*basemodel.UserPayload, basemodel.BaseApiError)
 	ListPATs(ctx context.Context, userID string) ([]model.PAT, basemodel.BaseApiError)
-	RevokePAT(ctx context.Context, id string) basemodel.BaseApiError
+	RevokePAT(ctx context.Context, id string, userID string) basemodel.BaseApiError
 }

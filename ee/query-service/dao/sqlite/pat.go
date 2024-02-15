@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"go.signoz.io/signoz/ee/query-service/model"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
@@ -113,10 +114,11 @@ func (m *modelDao) ListPATs(ctx context.Context, userID string) ([]model.PAT, ba
 	return pats, nil
 }
 
-func (m *modelDao) RevokePAT(ctx context.Context, id string) basemodel.BaseApiError {
+func (m *modelDao) RevokePAT(ctx context.Context, id string, userID string) basemodel.BaseApiError {
+	updatedAt := time.Now().Unix()
 	_, err := m.DB().ExecContext(ctx,
-		"UPDATE personal_access_tokens SET revoked=true WHERE id=$1",
-		id)
+		"UPDATE personal_access_tokens SET revoked=true, updated_by_user_id = $1, updated_at=$2 WHERE id=$3",
+		userID, updatedAt, id)
 	if err != nil {
 		zap.S().Errorf("Failed to revoke PAT in db, err: %v", zap.Error(err))
 		return model.InternalError(fmt.Errorf("PAT revoke failed"))
