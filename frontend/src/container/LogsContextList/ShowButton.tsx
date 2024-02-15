@@ -41,7 +41,7 @@ function ShowButton({
 			onClick={onClick}
 			icon={getIcons()}
 			className={cx(
-				'show-more-button',
+				'show-more-button periscope-btn',
 				order === ORDERBY_FILTERS.ASC ? 'up' : 'down',
 				isDisabled && 'disabled',
 			)}
