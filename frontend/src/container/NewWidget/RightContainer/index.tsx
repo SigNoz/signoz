@@ -18,7 +18,9 @@ import { Dispatch, SetStateAction, useCallback } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import {
+	panelTypeVsCreateAlert,
 	panelTypeVsFillSpan,
+	panelTypeVsPanelTimePreferences,
 	panelTypeVsSoftMinMax,
 	panelTypeVsThreshold,
 	panelTypeVsYAxisUnit,
@@ -69,6 +71,9 @@ function RightContainer({
 	const allowSoftMinMax = panelTypeVsSoftMinMax[selectedGraph];
 	const allowFillSpans = panelTypeVsFillSpan[selectedGraph];
 	const allowYAxisUnit = panelTypeVsYAxisUnit[selectedGraph];
+	const allowCreateAlerts = panelTypeVsCreateAlert[selectedGraph];
+	const allowPanelTimePreference =
+		panelTypeVsPanelTimePreferences[selectedGraph];
 
 	const softMinHandler = useCallback(
 		(value: number | null) => {
@@ -135,15 +140,19 @@ function RightContainer({
 				</Space>
 			)}
 
-			<Title light="true">Panel Time Preference</Title>
+			{allowPanelTimePreference && (
+				<Title light="true">Panel Time Preference</Title>
+			)}
 
 			<Space direction="vertical">
-				<TimePreference
-					{...{
-						selectedTime,
-						setSelectedTime,
-					}}
-				/>
+				{allowPanelTimePreference && (
+					<TimePreference
+						{...{
+							selectedTime,
+							setSelectedTime,
+						}}
+					/>
+				)}
 
 				{allowYAxisUnit && (
 					<YAxisUnitSelector
@@ -153,7 +162,7 @@ function RightContainer({
 					/>
 				)}
 
-				{selectedWidget?.panelTypes !== PANEL_TYPES.TABLE && (
+				{allowCreateAlerts && (
 					<Button icon={<UploadOutlined />} onClick={onCreateAlertsHandler}>
 						Create Alerts from Queries
 					</Button>

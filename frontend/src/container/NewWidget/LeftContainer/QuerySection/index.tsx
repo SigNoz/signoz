@@ -3,10 +3,6 @@ import './QuerySection.styles.scss';
 import { Button, Tabs, Tooltip, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import {
-	listViewInitialLogQuery,
-	listViewInitialTraceQuery,
-} from 'container/NewDashboard/ComponentsSlider/constants';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
@@ -28,7 +24,6 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -118,15 +113,6 @@ function QuerySection({
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
 		const currentQueryType = qCategory;
-
-		if (selectedGraph === PANEL_TYPES.LIST) {
-			if (currentQueryType === DataSource.LOGS) {
-				handleStageQuery(listViewInitialLogQuery);
-			} else {
-				handleStageQuery(listViewInitialTraceQuery);
-			}
-			return;
-		}
 
 		featureResponse.refetch().then(() => {
 			handleStageQuery({

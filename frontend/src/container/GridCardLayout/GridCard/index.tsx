@@ -163,7 +163,8 @@ function GridCardGraph({
 	const isDarkMode = useIsDarkMode();
 
 	const menuList =
-		widget.panelTypes === PANEL_TYPES.TABLE
+		widget.panelTypes === PANEL_TYPES.TABLE ||
+		widget.panelTypes === PANEL_TYPES.LIST
 			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
 			: headerMenuList;
 
