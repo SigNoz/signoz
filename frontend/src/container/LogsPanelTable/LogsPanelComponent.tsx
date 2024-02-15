@@ -63,6 +63,7 @@ function LogsPanelComponent({
 	useEffect(() => {
 		setRequestData({
 			...requestData,
+			globalSelectedInterval: globalSelectedTime,
 			tableParams: {
 				pagination,
 			},

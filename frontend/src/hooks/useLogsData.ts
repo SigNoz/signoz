@@ -75,8 +75,9 @@ export const useLogsData = ({
 			const newLogs = [...currentLogs];
 
 			setLogs(newLogs);
+		} else {
+			setLogs([]);
 		}
-
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [result]);
 
