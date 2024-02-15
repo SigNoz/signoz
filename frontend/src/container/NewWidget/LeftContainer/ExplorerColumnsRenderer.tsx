@@ -107,37 +107,74 @@ function ExplorerColumnsRenderer({
 		setSearchText(e.target.value);
 	};
 
-	const items: MenuProps['items'] = data?.payload?.attributeKeys
-		?.filter((attributeKey) =>
-			attributeKey.key.toLowerCase().includes(searchText.toLowerCase()),
-		)
-		?.map((attributeKey) => ({
-			key: attributeKey.key,
+	const items: MenuProps['items'] = [
+		{
+			key: 'search',
 			label: (
-				<Checkbox
-					checked={isAttributeKeySelected(attributeKey.key)}
-					onChange={(): void => handleCheckboxChange(attributeKey.key)}
-					style={{ padding: 0 }}
-				>
-					{attributeKey.key}
-				</Checkbox>
+				<Input
+					type="text"
+					placeholder="Search"
+					className="explorer-columns-search"
+					value={searchText}
+					onChange={handleSearchChange}
+					prefix={<Search size={16} style={{ padding: '6px' }} />}
+				/>
 			),
-		}));
+		},
+		{
+			key: 'columns',
+			label: (
+				<div className="attribute-columns">
+					{data?.payload?.attributeKeys
+						?.filter((attributeKey) =>
+							attributeKey.key.toLowerCase().includes(searchText.toLowerCase()),
+						)
+						?.map((attributeKey) => (
+							<Checkbox
+								checked={isAttributeKeySelected(attributeKey.key)}
+								onChange={(): void => handleCheckboxChange(attributeKey.key)}
+								style={{ padding: 0 }}
+								key={attributeKey.key}
+							>
+								{attributeKey.key}
+							</Checkbox>
+						))}
+				</div>
+			),
+		},
+	];
 
-	// add search box to items at the beginning
-	items?.unshift({
-		key: 'search',
-		label: (
-			<Input
-				type="text"
-				placeholder="Search"
-				className="explorer-columns-search"
-				value={searchText}
-				onChange={handleSearchChange}
-				prefix={<Search size={16} style={{ padding: '6px' }} />}
-			/>
-		),
-	});
+	// data?.payload?.attributeKeys
+	// 	?.filter((attributeKey) =>
+	// 		attributeKey.key.toLowerCase().includes(searchText.toLowerCase()),
+	// 	)
+	// 	?.map((attributeKey) => ({
+	// 		key: attributeKey.key,
+	// 		label: (
+	// 			<Checkbox
+	// 				checked={isAttributeKeySelected(attributeKey.key)}
+	// 				onChange={(): void => handleCheckboxChange(attributeKey.key)}
+	// 				style={{ padding: 0 }}
+	// 			>
+	// 				{attributeKey.key}
+	// 			</Checkbox>
+	// 		),
+	// 	}));
+
+	// // add search box to items at the beginning
+	// items?.unshift({
+	// 	key: 'search',
+	// 	label: (
+	// 		<Input
+	// 			type="text"
+	// 			placeholder="Search"
+	// 			className="explorer-columns-search"
+	// 			value={searchText}
+	// 			onChange={handleSearchChange}
+	// 			prefix={<Search size={16} style={{ padding: '6px' }} />}
+	// 		/>
+	// 	),
+	// });
 
 	const removeSelectedLogField = (name: string): void => {
 		if (
@@ -230,6 +267,7 @@ function ExplorerColumnsRenderer({
 														{field.name}
 													</div>
 													<Trash2
+														style={{ cursor: 'pointer' }}
 														size={12}
 														color="red"
 														onClick={(): void => removeSelectedLogField(field.name)}
@@ -271,6 +309,7 @@ function ExplorerColumnsRenderer({
 					<Dropdown
 						menu={{ items }}
 						arrow
+						placement="top"
 						overlayStyle={{
 							maxHeight: '200px',
 							overflow: 'auto',

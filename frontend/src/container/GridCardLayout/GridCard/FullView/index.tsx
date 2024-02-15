@@ -15,7 +15,6 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useLogsData } from 'hooks/useLogsData';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
@@ -101,12 +100,6 @@ function FullView({
 			enabled: !isDependedDataLoaded,
 		},
 	);
-
-	const { logs, handleEndReached } = useLogsData({
-		result: response.data?.payload.data.newResult.data.result,
-		panelType: widget.panelTypes,
-		stagedQuery: widget.query,
-	});
 
 	const canModifyChart = useChartMutable({
 		panelType: widget.panelTypes,
@@ -228,10 +221,7 @@ function FullView({
 							query={widget.query}
 							ref={fullViewChartRef}
 							thresholds={widget.thresholds}
-							logs={logs}
 							selectedLogFields={widget.selectedLogFields}
-							isTableHeaderDraggable={false}
-							handleEndReached={handleEndReached}
 							dataSource={widget.query.builder.queryData[0].dataSource}
 							selectedTracesFields={widget.selectedTracesFields}
 						/>

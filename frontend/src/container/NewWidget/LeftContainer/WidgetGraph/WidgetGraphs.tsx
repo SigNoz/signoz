@@ -18,7 +18,6 @@ import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getTimeRange } from 'utils/getTimeRange';
@@ -31,9 +30,7 @@ function WidgetGraph({
 	fillSpans,
 	softMax,
 	softMin,
-	logs,
 	selectedLogFields,
-	handleEndReached,
 	selectedTracesFields,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
@@ -161,19 +158,13 @@ function WidgetGraph({
 				}
 				query={stagedQuery || selectedWidget.query}
 				thresholds={thresholds}
-				logs={logs}
 				selectedLogFields={selectedLogFields}
-				handleEndReached={handleEndReached}
 				selectedTracesFields={selectedTracesFields}
 				dataSource={currentQuery.builder.queryData[0].dataSource}
 			/>
 		</div>
 	);
 }
-
-WidgetGraph.defaultProps = {
-	logs: [],
-};
 
 interface WidgetGraphProps {
 	thresholds: ThresholdProps[];
@@ -184,12 +175,10 @@ interface WidgetGraphProps {
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
-	logs?: ILog[];
 	softMax: number | null;
 	softMin: number | null;
 	selectedLogFields: Widgets['selectedLogFields'];
 	selectedTracesFields: Widgets['selectedTracesFields'];
-	handleEndReached: (index: number) => void;
 }
 
 export default WidgetGraph;

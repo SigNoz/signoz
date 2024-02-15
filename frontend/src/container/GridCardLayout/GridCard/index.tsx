@@ -5,7 +5,6 @@ import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
-import { useLogsData } from 'hooks/useLogsData';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import GetMinMax from 'lib/getMinMax';
@@ -136,19 +135,17 @@ function GridCardGraph({
 				widget.timePreferance,
 			],
 			keepPreviousData: true,
-			enabled: isVisible && !isEmptyWidget && isQueryEnabled,
+			enabled:
+				isVisible &&
+				!isEmptyWidget &&
+				isQueryEnabled &&
+				widget.panelTypes !== PANEL_TYPES.LIST,
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
 			},
 		},
 	);
-
-	const { logs, handleEndReached, isFetching } = useLogsData({
-		result: queryResponse.data?.payload.data.newResult.data.result,
-		panelType: widget.panelTypes,
-		stagedQuery: widget.query,
-	});
 
 	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 
@@ -229,9 +226,7 @@ function GridCardGraph({
 					onClickHandler={onClickHandler}
 					graphVisibiltyState={graphVisibility}
 					setGraphVisibility={setGraphVisibility}
-					logs={logs}
-					handleEndReached={handleEndReached}
-					isFetchingResponse={queryResponse.isFetching || isFetching}
+					isFetchingResponse={queryResponse.isFetching}
 				/>
 			)}
 		</div>

@@ -113,6 +113,7 @@ function TracesTableComponent({
 					dataSource={transformedQueryTableData}
 					columns={columns}
 					onRow={handleRow}
+					sticky
 				/>
 			</div>
 			<div className="controller">

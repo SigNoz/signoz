@@ -1,5 +1,3 @@
-import './InfinityTable.styles.scss';
-
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { useTableView } from 'components/Logs/TableView/useTableView';

@@ -5,7 +5,6 @@ import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
-import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
@@ -31,8 +30,6 @@ export interface WidgetGraphComponentProps extends UplotProps {
 	isWarning: boolean;
 	graphVisibiltyState: boolean[];
 	setGraphVisibility: Dispatch<SetStateAction<boolean[]>>;
-	logs?: ILog[];
-	handleEndReached?: (index: number) => void;
 	isFetchingResponse: boolean;
 }
 

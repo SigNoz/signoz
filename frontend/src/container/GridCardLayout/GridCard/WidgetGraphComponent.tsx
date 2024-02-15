@@ -5,6 +5,7 @@ import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
@@ -47,8 +48,6 @@ function WidgetGraphComponent({
 	onClickHandler,
 	onDragSelect,
 	setGraphVisibility,
-	logs,
-	handleEndReached,
 	isFetchingResponse,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -225,7 +224,10 @@ function WidgetGraphComponent({
 		});
 	};
 
-	if (queryResponse.isLoading || queryResponse.status === 'idle') {
+	if (
+		(queryResponse.isLoading || queryResponse.status === 'idle') &&
+		widget.panelTypes !== PANEL_TYPES.LIST
+	) {
 		return (
 			<Skeleton
 				style={{
@@ -276,6 +278,7 @@ function WidgetGraphComponent({
 				onCancel={onToggleModelHandler}
 				width="85%"
 				destroyOnClose
+				className="full-view-modal"
 			>
 				<FullView
 					name={`${name}expanded`}
@@ -307,7 +310,7 @@ function WidgetGraphComponent({
 				/>
 			</div>
 			{queryResponse.isLoading && <Skeleton />}
-			{queryResponse.isSuccess && (
+			{(queryResponse.isSuccess || widget.panelTypes === PANEL_TYPES.LIST) && (
 				<div
 					className={cx('widget-graph-container', widget.panelTypes)}
 					ref={graphRef}
@@ -323,13 +326,9 @@ function WidgetGraphComponent({
 						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
 						query={widget.query}
 						thresholds={widget.thresholds}
-						logs={logs}
 						selectedLogFields={widget.selectedLogFields}
-						isTableHeaderDraggable={false}
-						handleEndReached={handleEndReached}
 						dataSource={widget.query.builder?.queryData[0]?.dataSource}
 						selectedTracesFields={widget.selectedTracesFields}
-						isDashboardPanel
 					/>
 				</div>
 			)}

@@ -3,7 +3,7 @@
     .ant-typography {
         color: var(rgba(255, 255, 255, 0.85));
         font-family: "Inter";
-        font-size: 14px;
+        font-size: 13px;
         font-style: normal;
         font-weight: 400;
         line-height: 22px; 
@@ -11,7 +11,8 @@
     }
 
     .ant-divider {
-        margin: 14px 0 !important;
+        margin: 8px 0 !important;
+        border: 0.5px solid var(--bg-slate-400);
     }
 
     .explorer-columns-contents {
@@ -33,16 +34,18 @@
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 12px;
-                min-width: 253px;
-                border-radius: 6px;
+                padding: 8px;
+                min-width: 200px;
+                border-radius: 2px;
                 border: 1px solid var(--colorBorder, rgba(118, 136, 201, 0.12));
-                background: var(--colorBgElevated, #1F1F1F);
+                background: var(--bg-slate-500);
 
                 .explorer-column-title {
                     display: flex;
                     align-items: center;
                     gap: 8px;
+                    font-family: Inter;
+                    font-size: 12px;
                 }
 
             }
@@ -53,12 +56,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 44px;
-            height: 46px;
+            width: 38px;
+            height: 38px;
             padding: 0px 16px;
-            border-radius: 6px;
-            background: var(--bg-blue-600, #1C64F2);
-            box-shadow: 0px 2px 0px 0px rgba(0, 0, 0, 0.02);
+            border-radius: 2px;
+            background: #6086e4;
         }
     }
 }
@@ -72,17 +74,28 @@
         height: 32px;
         padding: 0 6px;
     }
+
+    
 }
 
 .explorer-columns-dropdown {
+    height: 200px;
+    background-color: #141414;
+    overflow: hidden !important;
     .ant-dropdown-menu {
-        background-color: #141414;
         padding: 0;
 
         .ant-dropdown-menu-item {
             padding: 4px;
             .ant-checkbox-wrapper {
-                padding: 0 8px !important;
+                padding: 2px 8px !important;
+            }
+
+            .attribute-columns {
+                display: flex;
+                flex-direction: column;
+                height: 200px;
+                overflow: scroll;
             }
         }
     }

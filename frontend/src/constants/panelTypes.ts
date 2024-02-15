@@ -1,7 +1,7 @@
 import Uplot from 'components/Uplot';
 import GridTableComponent from 'container/GridTableComponent';
 import GridValueComponent from 'container/GridValueComponent';
-import InfinityTableView from 'container/LogsExplorerList/InfinityTableView';
+import LogsPanelComponent from 'container/LogsPanelTable/LogsPanelComponent';
 import TracesTableComponent from 'container/TracesTableComponent/TracesTableComponent';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -12,7 +12,7 @@ export const PANEL_TYPES_COMPONENT_MAP = {
 	[PANEL_TYPES.VALUE]: GridValueComponent,
 	[PANEL_TYPES.TABLE]: GridTableComponent,
 	[PANEL_TYPES.TRACE]: null,
-	[PANEL_TYPES.LIST]: InfinityTableView,
+	[PANEL_TYPES.LIST]: LogsPanelComponent,
 	[PANEL_TYPES.EMPTY_WIDGET]: null,
 } as const;
 
@@ -26,7 +26,7 @@ export const getComponentForPanelType = (
 		[PANEL_TYPES.TABLE]: GridTableComponent,
 		[PANEL_TYPES.TRACE]: null,
 		[PANEL_TYPES.LIST]:
-			dataSource === DataSource.LOGS ? InfinityTableView : TracesTableComponent,
+			dataSource === DataSource.LOGS ? LogsPanelComponent : TracesTableComponent,
 		[PANEL_TYPES.EMPTY_WIDGET]: null,
 	};
 

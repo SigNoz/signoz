@@ -20,13 +20,9 @@ const GridPanelSwitch = forwardRef<
 			query,
 			options,
 			thresholds,
-			logs,
 			selectedLogFields,
 			selectedTracesFields,
 			dataSource,
-			isTableHeaderDraggable,
-			handleEndReached,
-			isDashboardPanel = false,
 		},
 		ref,
 	): JSX.Element | null => {
@@ -51,18 +47,8 @@ const GridPanelSwitch = forwardRef<
 				[PANEL_TYPES.LIST]:
 					dataSource === DataSource.LOGS
 						? {
-								tableViewProps: {
-									logs: logs || [],
-									fields: selectedLogFields || [],
-									linesPerRow: 1,
-									appendTo: 'end',
-								},
-								infitiyTableProps: {
-									onEndReached: handleEndReached || ((): void => {}),
-								},
-								isTableHeaderDraggable,
-								isDashboardPanel,
-								className: 'logs-infinity-table',
+								selectedLogsFields: selectedLogFields || [],
+								query,
 						  }
 						: {
 								selectedTracesFields: selectedTracesFields || [],
@@ -82,11 +68,7 @@ const GridPanelSwitch = forwardRef<
 			panelData,
 			query,
 			dataSource,
-			logs,
 			selectedLogFields,
-			handleEndReached,
-			isTableHeaderDraggable,
-			isDashboardPanel,
 			selectedTracesFields,
 		]);
 
