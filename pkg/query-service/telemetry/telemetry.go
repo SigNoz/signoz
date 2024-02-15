@@ -152,6 +152,7 @@ type Telemetry struct {
 	maxRandInt    int
 	rateLimits    map[string]int8
 	activeUser    map[string]int8
+	patTokenUser  bool
 	countUsers    int8
 	mutex         sync.RWMutex
 }
@@ -243,7 +244,9 @@ func createTelemetry() {
 					"metricsTTLStatus":                      metricsTTL.Status,
 					"tracesTTLStatus":                       traceTTL.Status,
 					"logsTTLStatus":                         logsTTL.Status,
+					"patUser":                               telemetry.patTokenUser,
 				}
+				telemetry.patTokenUser = false
 				for key, value := range tsInfo {
 					data[key] = value
 				}
@@ -344,6 +347,10 @@ func (a *Telemetry) SetCountUsers(countUsers int8) {
 
 func (a *Telemetry) SetUserEmail(email string) {
 	a.userEmail = email
+}
+
+func (a *Telemetry) SetPatTokenUser() {
+	a.patTokenUser = true
 }
 
 func (a *Telemetry) GetUserEmail() string {

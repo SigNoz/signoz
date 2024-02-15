@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
@@ -41,23 +42,25 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
+	err = validatePATRequest(req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
 
-	// All the PATs are associated with the user creating the PAT. Hence, the permissions
-	// associated with the PAT is also equivalent to that of the user.
+	// All the PATs are associated with the user creating the PAT.
 	req.UserID = user.Id
 	req.CreatedAt = time.Now().Unix()
+	req.UpdatedAt = time.Now().Unix()
+	req.LastUsed = 0
 	req.Token = generatePATToken()
 
-	// default expiry is 30 days
-	if req.ExpiresAt == 0 {
-		req.ExpiresAt = time.Now().AddDate(0, 0, 30).Unix()
-	}
-	// max expiry is 1 year
-	if req.ExpiresAt > time.Now().AddDate(1, 0, 0).Unix() {
-		req.ExpiresAt = time.Now().AddDate(1, 0, 0).Unix()
+	if req.ExpiresAt != 0 {
+		// convert expiresAt to unix timestamp from days
+		req.ExpiresAt = time.Now().Unix() + (req.ExpiresAt * 24 * 60 * 60)
 	}
 
-	zap.S().Debugf("Got PAT request: %+v", req)
+	zap.S().Debugf("Got Create PAT request: %+v", req)
 	var apierr basemodel.BaseApiError
 	if req, apierr = ah.AppDao().CreatePAT(ctx, req); apierr != nil {
 		RespondError(w, apierr, nil)
@@ -65,6 +68,53 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ah.Respond(w, &req)
+}
+
+func validatePATRequest(req model.PAT) error {
+	if req.Role == "" || (req.Role != baseconstants.ViewerGroup && req.Role != baseconstants.EditorGroup && req.Role != baseconstants.AdminGroup) {
+		return fmt.Errorf("valid role is required")
+	}
+	if req.ExpiresAt < 0 {
+		return fmt.Errorf("valid expiresAt is required")
+	}
+	if req.Name == "" {
+		return fmt.Errorf("valid name is required")
+	}
+	return nil
+}
+
+func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+
+	req := model.PAT{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	err := validatePATRequest(req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+	user, err := auth.GetUserFromRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorUnauthorized,
+			Err: err,
+		}, nil)
+		return
+	}
+	req.UpdatedByUserID = user.Id
+	id := mux.Vars(r)["id"]
+	req.UpdatedAt = time.Now().Unix()
+	zap.S().Debugf("Got Update PAT request: %+v", req)
+	var apierr basemodel.BaseApiError
+	if apierr = ah.AppDao().UpdatePAT(ctx, req, id); apierr != nil {
+		RespondError(w, apierr, nil)
+		return
+	}
+
+	ah.Respond(w, map[string]string{"data": "pat updated successfully"})
 }
 
 func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +136,7 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 	ah.Respond(w, pats)
 }
 
-func (ah *APIHandler) deletePAT(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	id := mux.Vars(r)["id"]
 	user, err := auth.GetUserFromRequest(r)
@@ -105,14 +155,14 @@ func (ah *APIHandler) deletePAT(w http.ResponseWriter, r *http.Request) {
 	if pat.UserID != user.Id {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorUnauthorized,
-			Err: fmt.Errorf("unauthorized PAT delete request"),
+			Err: fmt.Errorf("unauthorized PAT revoke request"),
 		}, nil)
 		return
 	}
-	zap.S().Debugf("Delete PAT with id: %+v", id)
-	if apierr := ah.AppDao().DeletePAT(ctx, id); apierr != nil {
+	zap.S().Debugf("Revoke PAT with id: %+v", id)
+	if apierr := ah.AppDao().RevokePAT(ctx, id); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}
-	ah.Respond(w, map[string]string{"data": "pat deleted successfully"})
+	ah.Respond(w, map[string]string{"data": "pat revoked successfully"})
 }
