@@ -8,7 +8,7 @@ const deleteAPIKey = async (
 	id: string,
 ): Promise<SuccessResponse<AllAPIKeyProps> | ErrorResponse> => {
 	try {
-		const response = await axios.delete(`/pat/${id}`);
+		const response = await axios.delete(`/pats/${id}`);
 
 		return {
 			statusCode: 200,

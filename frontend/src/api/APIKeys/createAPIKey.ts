@@ -8,7 +8,7 @@ const createAPIKey = async (
 	props: CreateAPIKeyProps,
 ): Promise<SuccessResponse<APIKeyProps> | ErrorResponse> => {
 	try {
-		const response = await axios.post('/pat', {
+		const response = await axios.post('/pats', {
 			...props,
 		});
 

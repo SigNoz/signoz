@@ -1,3 +1,12 @@
+export interface User {
+	createdAt?: number;
+	email?: string;
+	id: string;
+	name?: string;
+	notFound?: boolean;
+	profilePictureURL?: string;
+}
+
 export interface APIKeyProps {
 	name: string;
 	expiresAt: number;
@@ -5,9 +14,10 @@ export interface APIKeyProps {
 	token: string;
 	id: string;
 	createdAt: number;
-	createdBy?: string;
-	updatedAt?: string;
-	updatedBy?: string;
+	createdByUser?: User;
+	updatedAt?: number;
+	updatedByUser?: User;
+	lastUsed?: number;
 }
 
 export interface CreateAPIKeyProps {
