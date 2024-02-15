@@ -51,7 +51,7 @@ export const useGetExplorerQueryRange = (
 			...options,
 			retry: false,
 			queryKey: [key, globalSelectedInterval, requestData, minTime, maxTime],
-			enabled: isEnabled || isDashboardPanel,
+			enabled: isEnabled,
 		},
 	);
 };
