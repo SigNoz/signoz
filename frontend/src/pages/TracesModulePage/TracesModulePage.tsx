@@ -14,7 +14,7 @@ function TracesModulePage(): JSX.Element {
 
 	return (
 		<div className="traces-module-container">
-			<RouteTab routes={routes} activeKey={pathname} history={history} />;
+			<RouteTab routes={routes} activeKey={pathname} history={history} />
 		</div>
 	);
 }

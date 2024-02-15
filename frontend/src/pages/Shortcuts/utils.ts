@@ -2,16 +2,23 @@ import { TableProps } from 'antd';
 import {
 	GlobalShortcuts,
 	GlobalShortcutsDescription,
+	GlobalShortcutsName,
 } from 'constants/shortcuts/globalShortcuts';
 import {
 	LogsExplorerShortcuts,
 	LogsExplorerShortcutsDescription,
+	LogsExplorerShortcutsName,
 } from 'constants/shortcuts/logsExplorerShortcuts';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ALL_SHORTCUTS: Record<string, Record<string, string>> = {
 	'Global Shortcuts': GlobalShortcuts,
 	'Logs Explorer Shortcuts': LogsExplorerShortcuts,
+};
+
+export const ALL_SHORTCUTS_LABEL: Record<string, Record<string, string>> = {
+	'Global Shortcuts': GlobalShortcutsName,
+	'Logs Explorer Shortcuts': LogsExplorerShortcutsName,
 };
 
 export const ALL_SHORTCUTS_DESCRIPTION: Record<
@@ -46,9 +53,10 @@ export function generateTableData(
 ): TableProps<ShortcutRow>['dataSource'] {
 	const shortcuts = ALL_SHORTCUTS[shortcutSection];
 	const shortcutsDescription = ALL_SHORTCUTS_DESCRIPTION[shortcutSection];
+	const shortcutsLabel = ALL_SHORTCUTS_LABEL[shortcutSection];
 	return Object.keys(shortcuts).map((shortcutName) => ({
 		key: `${shortcuts[shortcutName]} ${shortcutName}`,
-		shortcutKey: shortcuts[shortcutName],
+		shortcutKey: shortcutsLabel[shortcutName],
 		shortcutDescription: shortcutsDescription[shortcutName],
 	}));
 }
