@@ -224,3 +224,21 @@ body {
 	margin-left: 8px;
 	margin-right: 8px;
 }
+
+.lightMode {
+	.ant-dropdown-menu {
+		border: 1px solid var(--bg-vanilla-300, #1d212d);
+		background: var(--bg-vanilla-100);
+		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+	}
+
+	.ant-dropdown-menu-item {
+		&:hover {
+			background-color: var(--bg-vanilla-300) !important;
+
+			&.ant-dropdown-menu-item-danger {
+				background-color: var(--bg-cherry-500) !important;
+			}
+		}
+	}
+}
