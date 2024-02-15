@@ -1,5 +1,3 @@
-import '@testing-library/jest-dom/extend-expect';
-
 import {
 	createAPIKeyResponse,
 	getAPIKeysResponse,
@@ -10,7 +8,7 @@ import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import APIKeys from './APIKeys';
 
-const apiKeysURL = 'http://localhost/api/v1/pat';
+const apiKeysURL = 'http://localhost/api/v1/pats';
 
 describe('APIKeys component', () => {
 	beforeEach(() => {
@@ -42,8 +40,8 @@ describe('APIKeys component', () => {
 		);
 
 		await waitFor(() => {
-			expect(screen.getByText('top-secret-3')).toBeInTheDocument();
-			expect(screen.getByText('1-10 of 30 API Keys')).toBeInTheDocument();
+			expect(screen.getByText('No Expiry Token')).toBeInTheDocument();
+			expect(screen.getByText('1-5 of 18 API Keys')).toBeInTheDocument();
 		});
 	});
 
