@@ -173,7 +173,9 @@ function LogsExplorerList({
 
 			{!isLoading && !isError && logs.length > 0 && (
 				<>
-					<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
+					<InfinityWrapperStyled data-testid="logs-list-virtuoso">
+						{renderContent}
+					</InfinityWrapperStyled>
 
 					<LogDetail
 						selectedTab={VIEW_TYPES.OVERVIEW}

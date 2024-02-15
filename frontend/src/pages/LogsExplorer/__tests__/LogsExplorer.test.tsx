@@ -1,5 +1,8 @@
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { I18nextProvider } from 'react-i18next';
@@ -10,6 +13,7 @@ import store from 'store';
 
 import LogsExplorer from '..';
 
+const queryRangeURL = 'http://localhost/api/v3/query_range';
 // mocking the graph components in this test as this should be handled separately
 jest.mock(
 	'container/TimeSeriesView/TimeSeriesView',
@@ -85,5 +89,42 @@ describe('Logs Explorer Tests', () => {
 		// check the presence of old logs explorer CTA
 		const oldLogsCTA = getByText('Switch to Old Logs Explorer');
 		expect(oldLogsCTA).toBeInTheDocument();
+	});
+
+	test('Logs Explorer Page should render with data', async () => {
+		server.use(
+			rest.post(queryRangeURL, (req, res, ctx) =>
+				res(ctx.status(200), ctx.json(logsQueryRangeSuccessResponse)),
+			),
+		);
+		const { queryByText, queryByTestId } = render(
+			<MemoryRouter initialEntries={['/logs/logs-explorer']}>
+				<Provider store={store}>
+					<I18nextProvider i18n={i18n}>
+						<MockQueryClientProvider>
+							<QueryBuilderProvider>
+								<LogsExplorer />
+							</QueryBuilderProvider>
+						</MockQueryClientProvider>
+					</I18nextProvider>
+				</Provider>
+			</MemoryRouter>,
+		);
+
+		await waitFor(() =>
+			expect(
+				queryByText(
+					`Just a bit of patience, just a little bit’s enough ⎯ we’re getting your logs!`,
+				),
+			).not.toBeInTheDocument(),
+		);
+
+		await waitFor(() =>
+			expect(queryByText('No logs yet.')).not.toBeInTheDocument(),
+		);
+
+		await waitFor(() =>
+			expect(queryByTestId('logs-list-virtuoso')).toBeInTheDocument(),
+		);
 	});
 });
