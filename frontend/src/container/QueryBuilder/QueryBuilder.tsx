@@ -85,6 +85,25 @@ export const QueryBuilder = memo(function QueryBuilder({
 		}
 	};
 
+	const listViewLogFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
+		const config: QueryBuilderProps['filterConfigs'] = {
+			stepInterval: { isHidden: true, isDisabled: true },
+			having: { isHidden: true, isDisabled: true },
+		};
+
+		return config;
+	}, []);
+
+	const listViewTracesFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
+		const config: QueryBuilderProps['filterConfigs'] = {
+			stepInterval: { isHidden: true, isDisabled: true },
+			having: { isHidden: true, isDisabled: true },
+			limit: { isHidden: true, isDisabled: true },
+		};
+
+		return config;
+	}, []);
+
 	return (
 		<Row
 			style={{ width: '100%' }}
@@ -126,9 +145,13 @@ export const QueryBuilder = memo(function QueryBuilder({
 								<Query
 									index={0}
 									isAvailableToDisable={isAvailableToDisableQuery}
-									queryVariant="static"
+									queryVariant="dropdown"
 									query={currentQuery.builder.queryData[0]}
-									filterConfigs={filterConfigs}
+									filterConfigs={
+										currentQuery.builder.queryData[0].dataSource === DataSource.TRACES
+											? listViewTracesFilterConfigs
+											: listViewLogFilterConfigs
+									}
 									queryComponents={queryComponents}
 									isExplorerPanel
 								/>

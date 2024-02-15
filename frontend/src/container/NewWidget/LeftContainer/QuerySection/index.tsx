@@ -15,13 +15,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
-import {
-	Atom,
-	DraftingCompass,
-	Play,
-	ScrollText,
-	Terminal,
-} from 'lucide-react';
+import { Atom, Play, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
@@ -154,58 +148,21 @@ function QuerySection({
 		return config;
 	}, []);
 
-	const listViewLogFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
-		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: true, isDisabled: true },
-			having: { isHidden: true, isDisabled: true },
-		};
-
-		return config;
-	}, []);
-
-	const listViewTracesFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
-		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: true, isDisabled: true },
-			having: { isHidden: true, isDisabled: true },
-			limit: { isHidden: true, isDisabled: true },
-		};
-
-		return config;
-	}, []);
-
 	const listItems = [
 		{
-			key: DataSource.LOGS,
+			key: EQueryType.QUERY_BUILDER,
 			label: (
-				<Tooltip title="Logs">
+				<Tooltip title="Query Builder">
 					<Button className="nav-btns">
-						<ScrollText size={14} />
+						<Atom size={14} />
 					</Button>
 				</Tooltip>
 			),
-			tab: <Typography>Log</Typography>,
+			tab: <Typography>Query Builder</Typography>,
 			children: (
 				<QueryBuilder
 					panelType={PANEL_TYPES.LIST}
-					filterConfigs={listViewLogFilterConfigs}
-					isExplorerPanel
-				/>
-			),
-		},
-		{
-			key: DataSource.TRACES,
-			label: (
-				<Tooltip title="Traces">
-					<Button className="nav-btns">
-						<DraftingCompass size={14} />
-					</Button>
-				</Tooltip>
-			),
-			tab: <Typography>Traces</Typography>,
-			children: (
-				<QueryBuilder
-					panelType={PANEL_TYPES.LIST}
-					filterConfigs={listViewTracesFilterConfigs}
+					filterConfigs={filterConfigs}
 					isExplorerPanel
 				/>
 			),
@@ -263,11 +220,7 @@ function QuerySection({
 						? currentQuery.queryType
 						: currentQuery.builder.queryData[0].dataSource
 				}
-				activeKey={
-					selectedGraph !== PANEL_TYPES.LIST
-						? currentQuery.queryType
-						: currentQuery.builder.queryData[0].dataSource
-				}
+				activeKey={currentQuery.queryType}
 				onChange={handleQueryCategoryChange}
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>

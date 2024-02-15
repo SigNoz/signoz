@@ -64,7 +64,7 @@ export const Query = memo(function Query({
 		handleChangeDataSource,
 		handleChangeOperator,
 		handleDeleteQuery,
-	} = useQueryOperations({ index, query, filterConfigs });
+	} = useQueryOperations({ index, query, filterConfigs, isExplorerPanel });
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -304,6 +304,7 @@ export const Query = memo(function Query({
 											onChange={handleChangeDataSource}
 											value={query.dataSource}
 											style={{ minWidth: '5.625rem' }}
+											isExplorerPanel={isExplorerPanel}
 										/>
 									) : (
 										<FilterLabel label={transformToUpperCase(query.dataSource)} />
