@@ -60,6 +60,7 @@ function TracesTableComponent({
 				minTime,
 				query,
 				pagination,
+				selectedTracesFields?.length,
 			],
 			enabled: !!query && !!selectedTracesFields?.length,
 		},
