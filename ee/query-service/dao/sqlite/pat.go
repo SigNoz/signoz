@@ -33,6 +33,21 @@ func (m *modelDao) CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basem
 		return model.PAT{}, model.InternalError(fmt.Errorf("PAT insertion failed"))
 	}
 	p.Id = strconv.Itoa(int(id))
+	createdByUser, _ := m.GetUser(ctx, p.UserID)
+	if createdByUser == nil {
+		p.CreatedByUser = model.User{
+			NotFound: true,
+		}
+	} else {
+		p.CreatedByUser = model.User{
+			Id:                createdByUser.Id,
+			Name:              createdByUser.Name,
+			Email:             createdByUser.Email,
+			CreatedAt:         createdByUser.CreatedAt,
+			ProfilePictureURL: createdByUser.ProfilePictureURL,
+			NotFound:          false,
+		}
+	}
 	return p, nil
 }
 
@@ -66,16 +81,12 @@ func (m *modelDao) UpdatePATLastUsed(ctx context.Context, token string, lastUsed
 func (m *modelDao) ListPATs(ctx context.Context, userID string) ([]model.PAT, basemodel.BaseApiError) {
 	pats := []model.PAT{}
 
-	if err := m.DB().Select(&pats, `SELECT * FROM personal_access_tokens WHERE user_id=? and revoked=false;`, userID); err != nil {
+	if err := m.DB().Select(&pats, `SELECT * FROM personal_access_tokens WHERE user_id=? and revoked=false ORDER by updated_at DESC;`, userID); err != nil {
 		zap.S().Errorf("Failed to fetch PATs for user: %s, err: %v", userID, zap.Error(err))
 		return nil, model.InternalError(fmt.Errorf("failed to fetch PATs"))
 	}
 	for i := range pats {
-		createdByUser, err := m.GetUser(ctx, pats[i].UserID)
-		if err != nil {
-			zap.S().Errorf("Failed to fetch createdByUser for PAT: %s, err: %v", pats[i].UserID, zap.Error(err))
-			return nil, model.InternalError(fmt.Errorf("failed to fetch createdByUser for PAT"))
-		}
+		createdByUser, _ := m.GetUser(ctx, pats[i].UserID)
 		if createdByUser == nil {
 			pats[i].CreatedByUser = model.User{
 				NotFound: true,
@@ -91,11 +102,7 @@ func (m *modelDao) ListPATs(ctx context.Context, userID string) ([]model.PAT, ba
 			}
 		}
 
-		updatedByUser, err := m.GetUser(ctx, pats[i].UpdatedByUserID)
-		if err != nil {
-			zap.S().Errorf("Failed to fetch updatedByUser for PAT: %s, err: %v", pats[i].UpdatedByUserID, zap.Error(err))
-			return nil, model.InternalError(fmt.Errorf("failed to fetch updatedByUser for PAT"))
-		}
+		updatedByUser, _ := m.GetUser(ctx, pats[i].UpdatedByUserID)
 		if updatedByUser == nil {
 			pats[i].UpdatedByUser = model.User{
 				NotFound: true,
