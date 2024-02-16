@@ -454,7 +454,7 @@ function APIKeys(): JSX.Element {
 						<Collapse items={items} />
 
 						<div className="api-key-details">
-							<div className="api-key-created-at">
+							<div className="api-key-last-used-at">
 								<CalendarClock size={14} />
 								Last used <Minus size={12} />
 								<Typography.Text>{formattedDateAndTime}</Typography.Text>
@@ -599,7 +599,7 @@ function APIKeys(): JSX.Element {
 						label="Name"
 						rules={[{ required: true }, { type: 'string', min: 6 }]}
 					>
-						<Input placeholder="Enter Key Name" />
+						<Input placeholder="Enter Key Name" autoFocus />
 					</Form.Item>
 
 					<Form.Item name="role" label="Role">
@@ -698,7 +698,7 @@ function APIKeys(): JSX.Element {
 							<Input placeholder="Enter Key Name" autoFocus />
 						</Form.Item>
 
-						<Form.Item name="role" label="Role" rules={[{ required: true }]}>
+						<Form.Item name="role" label="Role">
 							<Flex vertical gap="middle">
 								<Radio.Group
 									buttonStyle="solid"
@@ -723,11 +723,7 @@ function APIKeys(): JSX.Element {
 								</Radio.Group>
 							</Flex>
 						</Form.Item>
-						<Form.Item
-							name="expiration"
-							label="Expiration"
-							rules={[{ required: true }]}
-						>
+						<Form.Item name="expiration" label="Expiration">
 							<Select
 								className="expiration-selector"
 								placeholder="Expiration"
@@ -741,32 +737,34 @@ function APIKeys(): JSX.Element {
 					<div className="api-key-info-container">
 						<Row>
 							<Col span={8}>Key</Col>
-							<Col span={12} className="copyable-text">
-								<Typography.Text>
-									{activeAPIKey?.token.substring(0, 2)}****************
-									{activeAPIKey?.token.substring(activeAPIKey.token.length - 2).trim()}
-								</Typography.Text>
+							<Col span={16}>
+								<span className="copyable-text">
+									<Typography.Text>
+										{activeAPIKey?.token.substring(0, 2)}****************
+										{activeAPIKey?.token.substring(activeAPIKey.token.length - 2).trim()}
+									</Typography.Text>
 
-								<Copy
-									className="copy-key-btn"
-									size={12}
-									onClick={(): void => {
-										if (activeAPIKey) {
-											handleCopyKey(activeAPIKey.token);
-										}
-									}}
-								/>
+									<Copy
+										className="copy-key-btn"
+										size={12}
+										onClick={(): void => {
+											if (activeAPIKey) {
+												handleCopyKey(activeAPIKey.token);
+											}
+										}}
+									/>
+								</span>
 							</Col>
 						</Row>
 
 						<Row>
 							<Col span={8}>Name</Col>
-							<Col span={12}>{activeAPIKey?.name}</Col>
+							<Col span={16}>{activeAPIKey?.name}</Col>
 						</Row>
 
 						<Row>
 							<Col span={8}>Role</Col>
-							<Col span={12}>
+							<Col span={16}>
 								{activeAPIKey?.role === USER_ROLES.ADMIN && (
 									<div className="role">
 										<Contact2 size={14} /> Admin
@@ -790,7 +788,7 @@ function APIKeys(): JSX.Element {
 						<Row>
 							<Col span={8}>Creator</Col>
 
-							<Col span={12} className="user-info">
+							<Col span={16} className="user-info">
 								<Avatar className="user-avatar" size="small">
 									{activeAPIKey?.createdByUser?.name?.substring(0, 1)}
 								</Avatar>
@@ -804,21 +802,21 @@ function APIKeys(): JSX.Element {
 						{activeAPIKey?.createdAt && (
 							<Row>
 								<Col span={8}>Created on</Col>
-								<Col span={12}>{getFormattedTime(activeAPIKey?.createdAt)}</Col>
+								<Col span={16}>{getFormattedTime(activeAPIKey?.createdAt)}</Col>
 							</Row>
 						)}
 
 						{activeAPIKey?.expiresAt !== 0 && activeAPIKey?.expiresAt && (
 							<Row>
 								<Col span={8}>Expires on</Col>
-								<Col span={12}>{getFormattedTime(activeAPIKey?.expiresAt)}</Col>
+								<Col span={16}>{getFormattedTime(activeAPIKey?.expiresAt)}</Col>
 							</Row>
 						)}
 
 						{activeAPIKey?.expiresAt === 0 && (
 							<Row>
 								<Col span={8}>Expires on</Col>
-								<Col span={12}> No Expiry </Col>
+								<Col span={16}> No Expiry </Col>
 							</Row>
 						)}
 					</div>
