@@ -297,6 +297,7 @@ export const Query = memo(function Query({
 				onDelete={handleDeleteQuery}
 				onCollapseEntity={handleToggleCollapsQuery}
 				showDeleteButton={currentQuery.builder.queryData.length > 1}
+				isExplorerPanel={isExplorerPanel}
 			/>
 
 			{!isCollapse && (

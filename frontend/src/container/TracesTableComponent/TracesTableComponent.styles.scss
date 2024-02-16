@@ -18,7 +18,9 @@
             line-height: 18px; 
             padding: 10px 8px;
             font-family: Inter;
+            cursor: pointer;
         }
+
         .ant-table-wrapper .ant-table-thead > tr > th {
             font-family: Inter;
             color: var(--bg-vanilla-100);

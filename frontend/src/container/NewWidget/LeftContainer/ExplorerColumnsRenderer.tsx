@@ -235,10 +235,10 @@ function ExplorerColumnsRenderer({
 														{field.name}
 													</div>
 													<Trash2
-														style={{ cursor: 'pointer' }}
 														size={12}
 														color="red"
 														onClick={(): void => removeSelectedLogField(field.name)}
+														className="trash-icon"
 													/>
 												</div>
 											)}

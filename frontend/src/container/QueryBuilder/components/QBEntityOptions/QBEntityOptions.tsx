@@ -12,6 +12,7 @@ interface QBEntityOptionsProps {
 	onToggleVisibility: () => void;
 	onCollapseEntity: () => void;
 	showDeleteButton: boolean;
+	isExplorerPanel?: boolean;
 }
 
 export default function QBEntityOptions({
@@ -22,6 +23,7 @@ export default function QBEntityOptions({
 	onToggleVisibility,
 	onCollapseEntity,
 	showDeleteButton,
+	isExplorerPanel = false,
 }: QBEntityOptionsProps): JSX.Element {
 	return (
 		<Col span={24}>
@@ -40,10 +42,10 @@ export default function QBEntityOptions({
 								value="query-builder"
 								className="periscope-btn visibility-toggle"
 								onClick={onToggleVisibility}
+								disabled={isExplorerPanel}
 							>
 								{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
 							</Button>
-
 							<Button
 								className={cx(
 									'periscope-btn',
@@ -72,3 +74,7 @@ export default function QBEntityOptions({
 		</Col>
 	);
 }
+
+QBEntityOptions.defaultProps = {
+	isExplorerPanel: false,
+};

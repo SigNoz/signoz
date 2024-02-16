@@ -39,6 +39,7 @@
                 border-radius: 2px;
                 border: 1px solid var(--colorBorder, rgba(118, 136, 201, 0.12));
                 background: var(--bg-slate-500);
+                cursor: unset;
 
                 .explorer-column-title {
                     display: flex;
@@ -46,6 +47,11 @@
                     gap: 8px;
                     font-family: Inter;
                     font-size: 12px;
+                    cursor: grab;
+                }
+                
+                .lucide-trash2 {
+                    cursor: pointer !important;
                 }
 
             }
