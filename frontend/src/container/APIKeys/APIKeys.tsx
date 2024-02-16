@@ -241,7 +241,6 @@ function APIKeys(): JSX.Element {
 						id: activeAPIKey.id,
 						data: {
 							name: values.name,
-							expiresAt: values.expiration,
 							role: values.role,
 						},
 					});
@@ -259,7 +258,7 @@ function APIKeys(): JSX.Element {
 				if (user) {
 					createAPIKey({
 						name: values.name,
-						expiresAt: parseInt(values.expiration, 10),
+						expiresInDays: parseInt(values.expiration, 10),
 						role: values.role,
 					});
 				}
