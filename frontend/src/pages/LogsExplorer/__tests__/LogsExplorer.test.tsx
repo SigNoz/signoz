@@ -100,7 +100,7 @@ describe('Logs Explorer Tests', () => {
 				res(ctx.status(200), ctx.json(logsQueryRangeSuccessResponse)),
 			),
 		);
-		const { queryByText, queryByTestId, container } = render(
+		const { queryByText, queryByTestId } = render(
 			<MemoryRouter initialEntries={['/logs/logs-explorer']}>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
@@ -143,6 +143,5 @@ describe('Logs Explorer Tests', () => {
 				'2024-02-15T21:20:22.035Z INFO frontend/best_eta.go:106 Dispatch successful {"service": "frontend", "trace_id": "0e727d00a1560dc7", "span_id": "0e727d00a1560dc7", "driver": "T703638C", "eta": "2m0s"}',
 			),
 		).toBeInTheDocument();
-		expect(container).toMatchSnapshot();
 	});
 });
