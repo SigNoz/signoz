@@ -14,6 +14,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
 import onClickPlugin, { OnClickPluginOpts } from './plugins/onClickPlugin';
+import { seriesBarsPlugin } from './plugins/seriesBarChart';
 import tooltipPlugin from './plugins/tooltipPlugin';
 import getAxes from './utils/getAxes';
 import getSeries from './utils/getSeriesData';
@@ -104,6 +105,23 @@ export const getUPlotChartOptions = ({
 			},
 		},
 		plugins: [
+			{
+				hooks: {
+					init: [
+						(u): void => {
+							seriesBarsPlugin({
+								options: u,
+								radius: 0.3,
+								ignore: [],
+								ori: 0,
+								dir: 1,
+								stacked: true,
+							});
+						},
+					],
+				},
+			},
+
 			tooltipPlugin(apiResponse, yAxisUnit, fillSpans),
 			onClickPlugin({
 				onClick: onClickHandler,
