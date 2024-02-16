@@ -23,6 +23,7 @@ const GridPanelSwitch = forwardRef<
 			selectedLogFields,
 			selectedTracesFields,
 			dataSource,
+			selectedTime,
 		},
 		ref,
 	): JSX.Element | null => {
@@ -49,10 +50,12 @@ const GridPanelSwitch = forwardRef<
 						? {
 								selectedLogsFields: selectedLogFields || [],
 								query,
+								selectedTime,
 						  }
 						: {
 								selectedTracesFields: selectedTracesFields || [],
 								query,
+								selectedTime,
 						  },
 				[PANEL_TYPES.TRACE]: null,
 				[PANEL_TYPES.EMPTY_WIDGET]: null,
@@ -69,6 +72,7 @@ const GridPanelSwitch = forwardRef<
 			query,
 			dataSource,
 			selectedLogFields,
+			selectedTime,
 			selectedTracesFields,
 		]);
 

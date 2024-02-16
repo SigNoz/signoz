@@ -3,6 +3,7 @@ import { UplotProps } from 'components/Uplot/Uplot';
 import { GridTableComponentProps } from 'container/GridTableComponent/types';
 import { GridValueComponentProps } from 'container/GridValueComponent/types';
 import { LogsPanelComponentProps } from 'container/LogsPanelTable/LogsPanelComponent';
+import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { TracesTableComponentProps } from 'container/TracesTableComponent/TracesTableComponent';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { ForwardedRef } from 'react';
@@ -29,6 +30,7 @@ export type GridPanelSwitchProps = {
 	dataSource?: DataSource;
 	selectedLogFields?: Widgets['selectedLogFields'];
 	selectedTracesFields?: Widgets['selectedTracesFields'];
+	selectedTime?: timePreferance;
 };
 
 export type PropsTypePropsMap = {

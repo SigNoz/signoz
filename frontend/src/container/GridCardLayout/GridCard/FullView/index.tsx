@@ -97,7 +97,7 @@ function FullView({
 		},
 		{
 			queryKey: `FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
-			enabled: !isDependedDataLoaded,
+			enabled: !isDependedDataLoaded && widget.panelTypes !== PANEL_TYPES.LIST,
 		},
 	);
 
@@ -224,6 +224,7 @@ function FullView({
 							selectedLogFields={widget.selectedLogFields}
 							dataSource={widget.query.builder.queryData[0].dataSource}
 							selectedTracesFields={widget.selectedTracesFields}
+							selectedTime={selectedTime}
 						/>
 					</GraphContainer>
 				)}

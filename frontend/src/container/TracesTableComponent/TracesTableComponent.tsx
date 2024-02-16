@@ -6,6 +6,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import Controls from 'container/Controls';
+import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
 import {
@@ -27,6 +28,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 function TracesTableComponent({
 	selectedTracesFields,
 	query,
+	selectedTime,
 }: TracesTableComponentProps): JSX.Element {
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
 		AppState,
@@ -42,7 +44,7 @@ function TracesTableComponent({
 		{
 			query,
 			graphType: PANEL_TYPES.LIST,
-			selectedTime: 'GLOBAL_TIME',
+			selectedTime: selectedTime?.enum || 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
 			params: {
 				dataSource: 'traces',
@@ -61,6 +63,7 @@ function TracesTableComponent({
 				query,
 				pagination,
 				selectedTracesFields?.length,
+				selectedTime?.enum,
 			],
 			enabled: !!query && !!selectedTracesFields?.length,
 		},
@@ -151,6 +154,11 @@ function TracesTableComponent({
 export type TracesTableComponentProps = {
 	selectedTracesFields: Widgets['selectedTracesFields'];
 	query: Query;
+	selectedTime?: timePreferance;
+};
+
+TracesTableComponent.defaultProps = {
+	selectedTime: undefined,
 };
 
 export default TracesTableComponent;

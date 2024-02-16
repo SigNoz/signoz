@@ -8,6 +8,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import Controls from 'container/Controls';
+import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
@@ -35,6 +36,7 @@ import { getLogPanelColumnsList } from './utils';
 function LogsPanelComponent({
 	selectedLogsFields,
 	query,
+	selectedTime,
 }: LogsPanelComponentProps): JSX.Element {
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
 		AppState,
@@ -96,6 +98,7 @@ function LogsPanelComponent({
 		{
 			...requestData,
 			globalSelectedInterval: globalSelectedTime,
+			selectedTime: selectedTime?.enum || 'GLOBAL_TIME',
 		},
 		{
 			queryKey: [
@@ -206,6 +209,11 @@ function LogsPanelComponent({
 export type LogsPanelComponentProps = {
 	selectedLogsFields: Widgets['selectedLogFields'];
 	query: Query;
+	selectedTime?: timePreferance;
+};
+
+LogsPanelComponent.defaultProps = {
+	selectedTime: undefined,
 };
 
 export default LogsPanelComponent;
