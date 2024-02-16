@@ -144,38 +144,6 @@ function ExplorerColumnsRenderer({
 		},
 	];
 
-	// data?.payload?.attributeKeys
-	// 	?.filter((attributeKey) =>
-	// 		attributeKey.key.toLowerCase().includes(searchText.toLowerCase()),
-	// 	)
-	// 	?.map((attributeKey) => ({
-	// 		key: attributeKey.key,
-	// 		label: (
-	// 			<Checkbox
-	// 				checked={isAttributeKeySelected(attributeKey.key)}
-	// 				onChange={(): void => handleCheckboxChange(attributeKey.key)}
-	// 				style={{ padding: 0 }}
-	// 			>
-	// 				{attributeKey.key}
-	// 			</Checkbox>
-	// 		),
-	// 	}));
-
-	// // add search box to items at the beginning
-	// items?.unshift({
-	// 	key: 'search',
-	// 	label: (
-	// 		<Input
-	// 			type="text"
-	// 			placeholder="Search"
-	// 			className="explorer-columns-search"
-	// 			value={searchText}
-	// 			onChange={handleSearchChange}
-	// 			prefix={<Search size={16} style={{ padding: '6px' }} />}
-	// 		/>
-	// 	),
-	// });
-
 	const removeSelectedLogField = (name: string): void => {
 		if (
 			initialDataSource === DataSource.LOGS &&
