@@ -9,6 +9,7 @@ import (
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/ast"
 	"github.com/antonmedv/expr/parser"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
@@ -27,6 +28,8 @@ func CollectorConfProcessorName(p Pipeline) string {
 func pathParts(path string) []string {
 	// Split once from the right to include the rightmost membership op and everything after it.
 	// Eg: `attributes.test["a.b"].value["c.d"].e` would result in `attributes.test["a.b"].value` and `["c.d"].e`
+	path = strings.ReplaceAll(path, "?.", ".")
+
 	memberOpParts := rSplitAfterN(path, "[", 2)
 	if len(memberOpParts) < 2 {
 		// there is no [] access in fieldPath
@@ -37,7 +40,7 @@ func pathParts(path string) []string {
 
 	suffixParts := strings.SplitAfter(memberOpParts[1], "]") // ["c.d"], ".e"
 
-	parts = append(parts, suffixParts[0][1:len(suffixParts[0])-1])
+	parts = append(parts, suffixParts[0][2:len(suffixParts[0])-2])
 	if len(suffixParts[1]) > 0 {
 		parts = append(parts, strings.Split(suffixParts[1][1:], ".")...)
 	}
@@ -79,6 +82,16 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 	for _, pipeline := range pipelines {
 		if pipeline.Enabled {
 
+			enabledOperators := []PipelineOperator{}
+			for _, op := range pipeline.Config {
+				if op.Enabled {
+					enabledOperators = append(enabledOperators, op)
+				}
+			}
+			if len(enabledOperators) < 1 {
+				continue
+			}
+
 			filterExpr, err := queryBuilderToExpr.Parse(pipeline.Filter)
 			if err != nil {
 				return nil, nil, fmt.Errorf("failed to parse pipeline filter: %w", err)
@@ -94,26 +107,61 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 				return fmt.Sprintf(`EXPR("%s")`, escapeDoubleQuotes(expr))
 			}
 
+			// We are generating one or more ottl statements per pipeline operator.
+			// ottl statements have individual where conditions per statement
+			// The simplest path is to add where clause for pipeline filter to each statement.
+			// However, this breaks if an early operator statement in the pipeline ends up
+			// modifying the fields referenced in the pipeline filter.
+			// To work around this, we add statements before and after the actual pipeline
+			// operator statements, that add and remove a pipeline specific marker, ensuring
+			// all operators in a pipeline get to act on the log even if an op changes the filter referenced fields.
+			pipelineMarker := uuid.NewString()
+			addMarkerStatement := fmt.Sprintf(`set(attributes["__signoz_pipeline_marker__"], "%s")`, pipelineMarker)
+			if len(filterExpr) > 0 {
+				addMarkerStatement += fmt.Sprintf(" where %s", toOttlExpr(filterExpr))
+			}
+			ottlStatements = append(ottlStatements, addMarkerStatement)
+			pipelineMarkerWhereClause := fmt.Sprintf(
+				`attributes["__signoz_pipeline_marker__"] == "%s"`, pipelineMarker,
+			)
+
+			// to be called at the end
+			removePipelineMarker := func() {
+				ottlStatements = append(ottlStatements, fmt.Sprintf(
+					`delete_key(attributes, "__signoz_pipeline_marker__") where %s`, pipelineMarkerWhereClause,
+				))
+			}
+
 			appendStatement := func(statement string, additionalFilter string) {
-				whereConditions := []string{}
-				if len(filterExpr) > 0 {
-					whereConditions = append(
-						whereConditions,
-						toOttlExpr(filterExpr),
-					)
-				}
+				whereConditions := []string{pipelineMarkerWhereClause}
+				// if len(filterExpr) > 0 {
+				// 	whereConditions = append(
+				// 		whereConditions,
+				// 		toOttlExpr(filterExpr),
+				// 	)
+				// }
 				if len(additionalFilter) > 0 {
 					whereConditions = append(whereConditions, additionalFilter)
 				}
 
-				if len(whereConditions) > 0 {
-					statement = fmt.Sprintf(
-						`%s where %s`, statement, strings.Join(whereConditions, " and "),
-					)
-				}
+				// if len(whereConditions) > 0 {
+				statement = fmt.Sprintf(
+					`%s where %s`, statement, strings.Join(whereConditions, " and "),
+				)
+				// }
 
 				ottlStatements = append(ottlStatements, statement)
 			}
+
+			// appendMapExtractStatements := func(filterClause string, mapGenerator string, target string) {
+			// 	cacheKey := uuid.NewString()
+			// 	// Extract parsed map to cache.
+			// 	appendStatement(fmt.Sprintf(
+			// 		`set(cache["%s"], %s)`, cacheKey, mapGenerator,
+			// 	), filterClause)
+
+			// 	// Set target to a map if not already one.
+			// }
 
 			for _, operator := range pipeline.Config {
 				if operator.Enabled {
@@ -287,14 +335,51 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 								}
 							}
 						}
+					} else if operator.Type == "trace_parser" {
+						// panic("TODO(Raj): Implement trace parser translation")
+						if operator.TraceId != nil && len(operator.TraceId.ParseFrom) > 0 {
+							parseFromNotNilCheck, err := fieldNotNilCheck(operator.TraceId.ParseFrom)
+							if err != nil {
+								return nil, nil, fmt.Errorf(
+									"couldn't generate nil check for TraceId.parseFrom %s: %w", operator.Name, err,
+								)
+							}
+							// TODO(Raj): Also check for trace id regex pattern
+							appendStatement(
+								fmt.Sprintf(`set(trace_id.string, %s)`, ottlPath(operator.TraceId.ParseFrom)),
+								toOttlExpr(parseFromNotNilCheck),
+							)
+						}
 
-						// appendStatement(
-						// 	"",
-						// 	fmt.Sprintf(
-						// 		`%s && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
-						// 		parseFromNotNilCheck, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom,
-						// 	),
-						// )
+						if operator.SpanId != nil && len(operator.SpanId.ParseFrom) > 0 {
+							parseFromNotNilCheck, err := fieldNotNilCheck(operator.SpanId.ParseFrom)
+							if err != nil {
+								return nil, nil, fmt.Errorf(
+									"couldn't generate nil check for TraceId.parseFrom %s: %w", operator.Name, err,
+								)
+							}
+							// TODO(Raj): Also check for span id regex pattern
+							appendStatement(
+								fmt.Sprintf("set(span_id.string, %s)", ottlPath(operator.SpanId.ParseFrom)),
+								toOttlExpr(parseFromNotNilCheck),
+							)
+
+						}
+
+						if operator.TraceFlags != nil && len(operator.TraceFlags.ParseFrom) > 0 {
+
+							parseFromNotNilCheck, err := fieldNotNilCheck(operator.TraceFlags.ParseFrom)
+							if err != nil {
+								return nil, nil, fmt.Errorf(
+									"couldn't generate nil check for TraceId.parseFrom %s: %w", operator.Name, err,
+								)
+							}
+							// TODO(Raj): Also check for trace flags hex regex pattern
+							appendStatement(
+								fmt.Sprintf(`set(flags, Hex2Int(%s))`, ottlPath(operator.TraceFlags.ParseFrom)),
+								toOttlExpr(parseFromNotNilCheck),
+							)
+						}
 
 					} else {
 						return nil, nil, fmt.Errorf("unsupported pipeline operator type: %s", operator.Type)
@@ -302,6 +387,8 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 
 				}
 			}
+
+			removePipelineMarker()
 		}
 	}
 

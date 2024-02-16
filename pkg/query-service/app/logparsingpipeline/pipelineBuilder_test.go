@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
@@ -662,8 +663,16 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 				Enabled:   true,
 				Name:      "json",
 				ParseFrom: `attributes["order.products"]`,
-				ParseTo:   `attributes["order.products"]`,
+				ParseTo:   `attributes["some"].missing.target`,
 			}, {
+				ID:        "json",
+				Type:      "json_parser",
+				Enabled:   true,
+				Name:      "json",
+				ParseFrom: `attributes["order.products"]`,
+				ParseTo:   `attributes["order.products"]`,
+			},
+			{
 				ID:      "move1",
 				Type:    "move",
 				Enabled: true,
@@ -721,6 +730,8 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 	_, methodAttrExists := result[0].Attributes_string["http.method"]
 	require.False(methodAttrExists)
 	require.Equal("GET", result[0].Attributes_string["test.http.method"])
+	spew.Dump(testLogs)
+	spew.Dump(result)
 	require.Equal("pid0", result[0].Attributes_string["order.pids.pid0"])
 }
 

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -292,9 +293,12 @@ func TestTraceParsingProcessor(t *testing.T) {
 			testLog,
 		},
 	)
+
+	spew.Dump(testLog)
+	spew.Dump(result)
 	require.Nil(err)
 	require.Equal(1, len(result))
-	require.Equal(0, len(collectorWarnAndErrorLogs))
+	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
 	processed := result[0]
 
 	require.Equal(testTraceId, processed.TraceID)
