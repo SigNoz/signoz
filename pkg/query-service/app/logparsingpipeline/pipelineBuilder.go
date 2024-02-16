@@ -71,14 +71,6 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 
 	ottlStatements := []string{}
 
-	deleteStatement := func(path string) string {
-		fieldPath := ottlPath(path)
-		fieldPathParts := rSplitAfterN(fieldPath, "[", 2)
-		target := fieldPathParts[0]
-		key := fieldPathParts[1][1 : len(fieldPathParts[1])-1]
-		return fmt.Sprintf(`delete_key(%s, %s)`, target, key)
-	}
-
 	for _, pipeline := range pipelines {
 		if pipeline.Enabled {
 
@@ -152,36 +144,91 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 
 				ottlStatements = append(ottlStatements, statement)
 			}
+			appendDeleteStatement := func(path string) {
+				fieldPath := ottlPath(path)
+				fieldPathParts := rSplitAfterN(fieldPath, "[", 2)
+				target := fieldPathParts[0]
+				key := fieldPathParts[1][1 : len(fieldPathParts[1])-1]
 
-			// appendMapExtractStatements := func(filterClause string, mapGenerator string, target string) {
-			// 	cacheKey := uuid.NewString()
-			// 	// Extract parsed map to cache.
-			// 	appendStatement(fmt.Sprintf(
-			// 		`set(cache["%s"], %s)`, cacheKey, mapGenerator,
-			// 	), filterClause)
+				pathNotNilCheck, err := fieldNotNilCheck(path)
+				if err != nil {
+					panic(err)
+				}
 
-			// 	// Set target to a map if not already one.
+				appendStatement(
+					fmt.Sprintf(`delete_key(%s, %s)`, target, key),
+					toOttlExpr(pathNotNilCheck),
+				)
+			}
+
+			// ensureIntermediateMaps := func(path string, additionalFilter string) {
+			// parts := pathParts(path)
+			//
 			// }
+
+			appendMapExtractStatements := func(
+				filterClause string,
+				mapGenerator string,
+				target string,
+			) {
+				cacheKey := uuid.NewString()
+				// Extract parsed map to cache.
+				appendStatement(fmt.Sprintf(
+					`set(cache["%s"], %s)`, cacheKey, mapGenerator,
+				), filterClause)
+
+				// Set target to a map if not already one.
+				appendStatement(fmt.Sprintf(
+					`set(%s, ParseJSON("{}"))`, ottlPath(target),
+				), strings.Join([]string{
+					fmt.Sprintf(`cache["%s"] != nil`, cacheKey),
+					fmt.Sprintf("not IsMap(%s)", ottlPath(target)),
+				}, " and "))
+
+				appendStatement(
+					fmt.Sprintf(
+						`merge_maps(%s, cache["%s"], "upsert")`,
+						ottlPath(target), cacheKey,
+					),
+					fmt.Sprintf(`cache["%s"] != nil`, cacheKey),
+				)
+			}
 
 			for _, operator := range pipeline.Config {
 				if operator.Enabled {
 
 					if operator.Type == "add" {
 						value := fmt.Sprintf(`"%s"`, operator.Value)
+						condition := ""
 						if strings.HasPrefix(operator.Value, "EXPR(") {
-							value = toOttlExpr(operator.Value[5 : len(operator.Value)-1])
+							expression := strings.TrimSuffix(strings.TrimPrefix(operator.Value, "EXPR("), ")")
+							value = toOttlExpr(expression)
+							fieldsNotNilCheck, err := fieldsReferencedInExprNotNilCheck(expression)
+							if err != nil {
+								panic(err)
+								// return nil, fmt.Errorf(
+								// "could'nt generate nil check for fields referenced in value expr of add operator %s: %w",
+								// operator.Name, err,
+								// )
+							}
+							if fieldsNotNilCheck != "" {
+								condition = toOttlExpr(fieldsNotNilCheck)
+							}
 						}
-						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.Field), value), "")
+						appendStatement(
+							fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.Field), value),
+							condition,
+						)
 
 					} else if operator.Type == "remove" {
-						appendStatement(deleteStatement(operator.Field), "")
+						appendDeleteStatement(operator.Field)
 
 					} else if operator.Type == "copy" {
 						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.To), ottlPath(operator.From)), "")
 
 					} else if operator.Type == "move" {
 						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.To), ottlPath(operator.From)), "")
-						appendStatement(deleteStatement(operator.From), "")
+						appendDeleteStatement(operator.From)
 
 					} else if operator.Type == "regex_parser" {
 						parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
@@ -228,13 +275,19 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 							toOttlExpr(parseFromNotNilCheck),
 							fmt.Sprintf(`IsMatch(%s, "^\\s*{.*}\\s*$")`, ottlPath(operator.ParseFrom)),
 						}, " and ")
-						appendStatement(
-							fmt.Sprintf(
-								`merge_maps(%s, ParseJSON(%s), "upsert")`,
-								ottlPath(operator.ParseTo),
-								ottlPath(operator.ParseFrom),
-							),
+
+						// appendStatement(
+						// 	fmt.Sprintf(
+						// 		`merge_maps(%s, ParseJSON(%s), "upsert")`,
+						// 		ottlPath(operator.ParseTo),
+						// 		ottlPath(operator.ParseFrom),
+						// 	),
+						// 	whereClause,
+						// )
+						appendMapExtractStatements(
 							whereClause,
+							fmt.Sprintf("ParseJSON(%s)", ottlPath(operator.ParseFrom)),
+							ottlPath(operator.ParseTo),
 						)
 
 					} else if operator.Type == "time_parser" {

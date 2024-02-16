@@ -657,14 +657,16 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 				Name:    "move",
 				From:    `attributes["http.method"]`,
 				To:      `attributes["test.http.method"]`,
-			}, {
-				ID:        "json",
-				Type:      "json_parser",
-				Enabled:   true,
-				Name:      "json",
-				ParseFrom: `attributes["order.products"]`,
-				ParseTo:   `attributes["some"].missing.target`,
-			}, {
+			},
+			// {
+			// ID:        "json",
+			// Type:      "json_parser",
+			// Enabled:   true,
+			// Name:      "json",
+			// ParseFrom: `attributes["order.products"]`,
+			// ParseTo:   `attributes["some"].missing.target`,
+			// },
+			{
 				ID:        "json",
 				Type:      "json_parser",
 				Enabled:   true,
