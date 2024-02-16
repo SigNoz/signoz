@@ -3,14 +3,12 @@
 import './SideNav.styles.scss';
 
 import { Button } from 'antd';
-import getLocalStorageKey from 'api/browser/localstorage/get';
 import cx from 'classnames';
-import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
-import { ToggleButton } from 'container/Header/styles';
+import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import useComponentPermission from 'hooks/useComponentPermission';
-import useThemeMode, { useIsDarkMode } from 'hooks/useDarkMode';
 import { LICENSE_PLAN_KEY, LICENSE_PLAN_STATUS } from 'hooks/useLicense';
 import history from 'lib/history';
 import {
@@ -21,17 +19,10 @@ import {
 	RocketIcon,
 	UserCircle,
 } from 'lucide-react';
-import {
-	useCallback,
-	useEffect,
-	useLayoutEffect,
-	useMemo,
-	useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { sideBarCollapse } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
@@ -44,6 +35,7 @@ import defaultMenuItems, {
 	helpSupportMenuItem,
 	inviteMemberMenuItem,
 	manageLicenseMenuItem,
+	shortcutMenuItem,
 	slackSupportMenuItem,
 	trySignozCloudMenuItem,
 } from './menuItems';
@@ -51,18 +43,24 @@ import NavItem from './NavItem/NavItem';
 import { SecondaryMenuItemKey } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 
+interface UserManagementMenuItems {
+	key: string;
+	label: string;
+	icon: JSX.Element;
+}
+
 function SideNav({
 	licenseData,
 	isFetching,
+	onCollapse,
+	collapsed,
 }: {
 	licenseData: any;
 	isFetching: boolean;
+	onCollapse: () => void;
+	collapsed: boolean;
 }): JSX.Element {
-	const dispatch = useDispatch();
 	const [menuItems, setMenuItems] = useState(defaultMenuItems);
-	const [collapsed, setCollapsed] = useState<boolean>(
-		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
-	);
 
 	const { pathname, search } = useLocation();
 	const {
@@ -74,15 +72,17 @@ function SideNav({
 		isCurrentVersionError,
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
+	const [licenseTag, setLicenseTag] = useState('');
+
 	const userSettingsMenuItem = {
 		key: ROUTES.MY_SETTINGS,
 		label: user?.name || 'User',
 		icon: <UserCircle size={16} />,
 	};
 
-	const [userManagementMenuItems, setUserManagementMenuItems] = useState([
-		manageLicenseMenuItem,
-	]);
+	const [userManagementMenuItems, setUserManagementMenuItems] = useState<
+		UserManagementMenuItems[]
+	>([manageLicenseMenuItem]);
 
 	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
@@ -95,6 +95,8 @@ function SideNav({
 	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
 	const [inviteMembers] = useComponentPermission(['invite_members'], role);
+
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	useEffect(() => {
 		if (inviteMembers) {
@@ -146,14 +148,6 @@ function SideNav({
 
 	const { t } = useTranslation('');
 
-	const onCollapse = useCallback(() => {
-		setCollapsed((collapsed) => !collapsed);
-	}, []);
-
-	useLayoutEffect(() => {
-		dispatch(sideBarCollapse(collapsed));
-	}, [collapsed, dispatch]);
-
 	const isLicenseActive =
 		licenseData?.payload?.licenses?.find((e: License) => e.isCurrent)?.status ===
 		LICENSE_PLAN_STATUS.VALID;
@@ -168,6 +162,10 @@ function SideNav({
 			'https://signoz.io/oss-to-cloud/?utm_source=product_navbar&utm_medium=frontend&utm_campaign=oss_users',
 			'_blank',
 		);
+	};
+
+	const onClickShortcuts = (): void => {
+		history.push(`/shortcuts`);
 	};
 
 	const onClickGetStarted = (): void => {
@@ -191,9 +189,6 @@ function SideNav({
 	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
 		pathname,
 	]);
-
-	const isDarkMode = useIsDarkMode();
-	const { toggleTheme } = useThemeMode();
 
 	const isCloudUserVal = isCloudUser();
 
@@ -239,6 +234,63 @@ function SideNav({
 		}
 	};
 
+	useEffect(() => {
+		if (!isFetching) {
+			if (isCloudUserVal) {
+				setLicenseTag('Cloud');
+			} else if (isEnterprise) {
+				setLicenseTag('Enterprise');
+			} else {
+				setLicenseTag('Free');
+			}
+		}
+	}, [isCloudUserVal, isEnterprise, isFetching]);
+
+	const [isCurrentOrgSettings] = useComponentPermission(
+		['current_org_settings'],
+		role,
+	);
+
+	const settingsRoute = isCurrentOrgSettings
+		? ROUTES.ORG_SETTINGS
+		: ROUTES.SETTINGS;
+
+	useEffect(() => {
+		registerShortcut(GlobalShortcuts.SidebarCollapse, onCollapse);
+
+		registerShortcut(GlobalShortcuts.NavigateToServices, () =>
+			onClickHandler(ROUTES.APPLICATION),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToTraces, () =>
+			onClickHandler(ROUTES.TRACE),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToLogs, () =>
+			onClickHandler(ROUTES.LOGS),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToDashboards, () =>
+			onClickHandler(ROUTES.ALL_DASHBOARD),
+		);
+
+		registerShortcut(GlobalShortcuts.NavigateToAlerts, () =>
+			onClickHandler(ROUTES.LIST_ALL_ALERT),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToExceptions, () =>
+			onClickHandler(ROUTES.ALL_ERROR),
+		);
+
+		return (): void => {
+			deregisterShortcut(GlobalShortcuts.SidebarCollapse);
+			deregisterShortcut(GlobalShortcuts.NavigateToServices);
+			deregisterShortcut(GlobalShortcuts.NavigateToTraces);
+			deregisterShortcut(GlobalShortcuts.NavigateToLogs);
+			deregisterShortcut(GlobalShortcuts.NavigateToDashboards);
+			deregisterShortcut(GlobalShortcuts.NavigateToAlerts);
+			deregisterShortcut(GlobalShortcuts.NavigateToExceptions);
+		};
+	}, [deregisterShortcut, onClickHandler, onCollapse, registerShortcut]);
+
 	return (
 		<div className={cx('sideNav', collapsed ? 'collapsed' : '')}>
 			<div className="brand">
@@ -255,18 +307,8 @@ function SideNav({
 					{!collapsed && <span className="brand-logo-name"> SigNoz </span>}
 				</div>
 
-				{!collapsed && (
-					<>
-						<div className="license tag">{!isEnterprise ? 'Free' : 'Enterprise'}</div>
-
-						<ToggleButton
-							checked={isDarkMode}
-							onChange={toggleTheme}
-							defaultChecked={isDarkMode}
-							checkedChildren="🌜"
-							unCheckedChildren="🌞"
-						/>
-					</>
+				{!collapsed && licenseTag && (
+					<div className="license tag">{licenseTag}</div>
 				)}
 			</div>
 
@@ -288,7 +330,9 @@ function SideNav({
 						item={item}
 						isActive={activeMenuKey === item.key}
 						onClick={(): void => {
-							if (item) {
+							if (item.key === ROUTES.SETTINGS) {
+								history.push(settingsRoute);
+							} else if (item) {
 								onClickHandler(item?.key as string);
 							}
 						}}
@@ -297,6 +341,14 @@ function SideNav({
 			</div>
 
 			<div className="secondary-nav-items">
+				<NavItem
+					isCollapsed={collapsed}
+					key="keyboardShortcuts"
+					item={shortcutMenuItem}
+					isActive={false}
+					onClick={onClickShortcuts}
+				/>
+
 				{licenseData && !isLicenseActive && (
 					<NavItem
 						isCollapsed={collapsed}

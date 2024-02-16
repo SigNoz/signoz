@@ -1,7 +1,7 @@
 version: "3.9"
 
 x-clickhouse-defaults: &clickhouse-defaults
-  image: clickhouse/clickhouse-server:23.11.1-alpine
+  image: clickhouse/clickhouse-server:24.1.2-alpine
   tty: true
   deploy:
     restart_policy:
@@ -146,7 +146,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.37.1
+    image: signoz/query-service:0.39.0
     command:
       [
         "-config=/root/config/prometheus.yml",
@@ -186,7 +186,7 @@ services:
     <<: *db-depend
 
   frontend:
-    image: signoz/frontend:0.37.1
+    image: signoz/frontend:0.39.0
     deploy:
       restart_policy:
         condition: on-failure
@@ -199,7 +199,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.88.8
+    image: signoz/signoz-otel-collector:0.88.12
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
@@ -237,7 +237,7 @@ services:
       - query-service
 
   otel-collector-migrator:
-      image: signoz/signoz-schema-migrator:0.88.8
+      image: signoz/signoz-schema-migrator:0.88.12
       deploy:
         restart_policy:
           condition: on-failure

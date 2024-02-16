@@ -1,11 +1,18 @@
+import './QueryBuilderSearch.styles.scss';
+
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
+import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { getDataTypes } from 'container/LogDetailedView/utils';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import {
 	useAutoComplete,
 	WhereClauseConfig,
 } from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { isEqual } from 'lodash-es';
+import type { BaseSelectRef } from 'rc-select';
 import {
 	KeyboardEvent,
 	ReactElement,
@@ -13,6 +20,8 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
+	useState,
 } from 'react';
 import {
 	BaseAutocompleteData,
@@ -44,6 +53,7 @@ function QueryBuilderSearch({
 	whereClauseConfig,
 	className,
 	placeholder,
+	suffixIcon,
 }: QueryBuilderSearchProps): JSX.Element {
 	const {
 		updateTag,
@@ -60,11 +70,17 @@ function QueryBuilderSearch({
 		searchKey,
 	} = useAutoComplete(query, whereClauseConfig);
 
+	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const selectRef = useRef<BaseSelectRef>(null);
 	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
 		searchValue,
 		query,
 		searchKey,
 	);
+
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+
+	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
 	const onTagRender = ({
 		value,
@@ -116,6 +132,13 @@ function QueryBuilderSearch({
 	const onInputKeyDownHandler = (event: KeyboardEvent<Element>): void => {
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
+
+		if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+			event.preventDefault();
+			event.stopPropagation();
+			handleRunQuery();
+			setIsOpen(false);
+		}
 	};
 
 	const handleDeselect = useCallback(
@@ -150,20 +173,6 @@ function QueryBuilderSearch({
 			(item) => item.key as BaseAutocompleteData,
 		);
 
-		// Avoid updating query with onChange at the bottom of this useEffect
-		// if there are no `tags` that need to be normalized after receiving
-		// the latest `sourceKeys`.
-		//
-		// Executing the following logic for empty tags leads to emptying
-		// out of `query` via `onChange`.
-		// `tags` can contain stale empty value while being updated by `useTag`
-		// which maintains it as a state and updates it via useEffect when props change.
-		// This was observed when pipeline filters were becoming empty after
-		// returning from logs explorer.
-		if ((tags?.length || 0) < 1) {
-			return;
-		}
-
 		initialTagFilters.items = tags.map((tag, index) => {
 			const isJsonTrue = query.filters?.items[index]?.key?.isJSON;
 
@@ -193,42 +202,77 @@ function QueryBuilderSearch({
 		});
 
 		onChange(initialTagFilters);
-		/* eslint-disable react-hooks/exhaustive-deps */
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [sourceKeys]);
 
+	const isLastQuery = useMemo(
+		() =>
+			isEqual(
+				currentQuery.builder.queryData[currentQuery.builder.queryData.length - 1],
+				query,
+			),
+		[currentQuery, query],
+	);
+
+	useEffect(() => {
+		if (isLastQuery) {
+			registerShortcut(LogsExplorerShortcuts.FocusTheSearchBar, () => {
+				// set timeout is needed here else the select treats the hotkey as input value
+				setTimeout(() => {
+					selectRef.current?.focus();
+				}, 0);
+			});
+		}
+
+		return (): void =>
+			deregisterShortcut(LogsExplorerShortcuts.FocusTheSearchBar);
+	}, [deregisterShortcut, isLastQuery, registerShortcut]);
+
 	return (
-		<Select
-			getPopupContainer={popupContainer}
-			virtual
-			showSearch
-			tagRender={onTagRender}
-			filterOption={false}
-			autoClearSearchValue={false}
-			mode="multiple"
-			placeholder={placeholder}
-			value={queryTags}
-			searchValue={searchValue}
-			className={className}
-			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-			style={selectStyle}
-			onSearch={handleSearch}
-			onChange={onChangeHandler}
-			onSelect={handleSelect}
-			onDeselect={handleDeselect}
-			onInputKeyDown={onInputKeyDownHandler}
-			notFoundContent={isFetching ? <Spin size="small" /> : null}
+		<div
+			style={{
+				position: 'relative',
+			}}
 		>
-			{options.map((option) => (
-				<Select.Option key={option.label} value={option.value}>
-					<OptionRenderer
-						label={option.label}
-						value={option.value}
-						dataType={option.dataType || ''}
-					/>
-					{option.selected && <StyledCheckOutlined />}
-				</Select.Option>
-			))}
-		</Select>
+			<Select
+				ref={selectRef}
+				getPopupContainer={popupContainer}
+				virtual
+				showSearch
+				tagRender={onTagRender}
+				filterOption={false}
+				open={isOpen}
+				onDropdownVisibleChange={setIsOpen}
+				autoClearSearchValue={false}
+				mode="multiple"
+				placeholder={placeholder}
+				value={queryTags}
+				searchValue={searchValue}
+				className={className}
+				rootClassName="query-builder-search"
+				disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+				style={selectStyle}
+				onSearch={handleSearch}
+				onChange={onChangeHandler}
+				onSelect={handleSelect}
+				onDeselect={handleDeselect}
+				onInputKeyDown={onInputKeyDownHandler}
+				notFoundContent={isFetching ? <Spin size="small" /> : null}
+				suffixIcon={suffixIcon}
+				showAction={['focus']}
+			>
+				{options.map((option) => (
+					<Select.Option key={option.label} value={option.value}>
+						<OptionRenderer
+							label={option.label}
+							value={option.value}
+							dataType={option.dataType || ''}
+						/>
+						{option.selected && <StyledCheckOutlined />}
+					</Select.Option>
+				))}
+			</Select>
+		</div>
 	);
 }
 
@@ -238,12 +282,14 @@ interface QueryBuilderSearchProps {
 	whereClauseConfig?: WhereClauseConfig;
 	className?: string;
 	placeholder?: string;
+	suffixIcon?: React.ReactNode;
 }
 
 QueryBuilderSearch.defaultProps = {
 	whereClauseConfig: undefined,
 	className: '',
 	placeholder: PLACEHOLDER,
+	suffixIcon: undefined,
 };
 
 export interface CustomTagProps {

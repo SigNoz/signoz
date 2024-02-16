@@ -83,7 +83,7 @@ function RuleOptions({
 		</InlineSelect>
 	);
 
-	const renderThresholdMatchOpts = (): JSX.Element => (
+	const renderMatchOpts = (): JSX.Element => (
 		<InlineSelect
 			getPopupContainer={popupContainer}
 			defaultValue={defaultMatchType}
@@ -98,17 +98,13 @@ function RuleOptions({
 		</InlineSelect>
 	);
 
-	const renderPromMatchOpts = (): JSX.Element => (
-		<InlineSelect
-			getPopupContainer={popupContainer}
-			defaultValue={defaultMatchType}
-			style={{ minWidth: '130px' }}
-			value={alertDef.condition?.matchType}
-			onChange={(value: string | unknown): void => handleMatchOptChange(value)}
-		>
-			<Select.Option value="1">{t('option_atleastonce')}</Select.Option>
-		</InlineSelect>
-	);
+	const onChangeEvalWindow = (value: string | unknown): void => {
+		const ew = (value as string) || alertDef.evalWindow;
+		setAlertDef({
+			...alertDef,
+			evalWindow: ew,
+		});
+	};
 
 	const renderEvalWindows = (): JSX.Element => (
 		<InlineSelect
@@ -116,13 +112,7 @@ function RuleOptions({
 			defaultValue={defaultEvalWindow}
 			style={{ minWidth: '120px' }}
 			value={alertDef.evalWindow}
-			onChange={(value: string | unknown): void => {
-				const ew = (value as string) || alertDef.evalWindow;
-				setAlertDef({
-					...alertDef,
-					evalWindow: ew,
-				});
-			}}
+			onChange={onChangeEvalWindow}
 		>
 			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
 			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
@@ -130,6 +120,20 @@ function RuleOptions({
 			<Select.Option value="1h0m0s">{t('option_60min')}</Select.Option>
 			<Select.Option value="4h0m0s">{t('option_4hours')}</Select.Option>
 			<Select.Option value="24h0m0s">{t('option_24hours')}</Select.Option>
+		</InlineSelect>
+	);
+
+	const renderPromEvalWindows = (): JSX.Element => (
+		<InlineSelect
+			getPopupContainer={popupContainer}
+			defaultValue={defaultEvalWindow}
+			style={{ minWidth: '120px' }}
+			value={alertDef.evalWindow}
+			onChange={onChangeEvalWindow}
+		>
+			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
+			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
+			<Select.Option value="15m0s">{t('option_15min')}</Select.Option>
 		</InlineSelect>
 	);
 
@@ -147,7 +151,7 @@ function RuleOptions({
 					onChange={onChangeSelectedQueryName}
 				/>
 				<Typography.Text>is</Typography.Text>
-				{renderCompareOps()} {t('text_condition2')} {renderThresholdMatchOpts()}{' '}
+				{renderCompareOps()} {t('text_condition2')} {renderMatchOpts()}{' '}
 				{t('text_condition3')} {renderEvalWindows()}
 			</Typography.Text>
 		</Form.Item>
@@ -167,7 +171,8 @@ function RuleOptions({
 					onChange={onChangeSelectedQueryName}
 				/>
 				<Typography.Text>is</Typography.Text>
-				{renderCompareOps()} {t('text_condition2')} {renderPromMatchOpts()}
+				{renderCompareOps()} {t('text_condition2')} {renderMatchOpts()}
+				{t('text_condition3')} {renderPromEvalWindows()}
 			</Typography.Text>
 		</Form.Item>
 	);

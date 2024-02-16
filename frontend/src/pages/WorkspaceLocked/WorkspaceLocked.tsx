@@ -87,21 +87,18 @@ export default function WorkspaceBlocked(): JSX.Element {
 	const handleExtendTrial = (): void => {
 		trackEvent('Workspace Blocked: User Clicked Extend Trial');
 
-		const recipient = 'cloud-support@signoz.io';
-		const subject = 'Extend SigNoz Cloud Trial';
-		const body = `I'd like to request an extension for SigNoz Cloud for my account. Please find my account details below
-		
-		SigNoz URL: 
-		Admin Email:
-		`;
-
-		// Create the mailto link
-		const mailtoLink = `mailto:${recipient}?subject=${encodeURIComponent(
-			subject,
-		)}&body=${encodeURIComponent(body)}`;
-
-		// Open the default email client
-		window.location.href = mailtoLink;
+		notifications.info({
+			message: 'Extend Trial',
+			description: (
+				<Typography>
+					If you have a specific reason why you were not able to finish your PoC in
+					the trial period, please write to us on
+					<a href="mailto:cloud-support@signoz.io"> cloud-support@signoz.io </a>
+					with the reason. Sometimes we can extend trial by a few days on a case by
+					case basis
+				</Typography>
+			),
+		});
 	};
 
 	return (
@@ -152,7 +149,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 						<div className="contact-us">
 							Got Questions?
 							<span>
-								<a href="mailto:support@signoz.io"> Contact Us </a>
+								<a href="mailto:cloud-support@signoz.io"> Contact Us </a>
 							</span>
 						</div>
 					</>

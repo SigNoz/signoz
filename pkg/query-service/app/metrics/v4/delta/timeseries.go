@@ -9,24 +9,29 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
+// TODO(srikanthccv): support multiple quantiles; see https://github.com/SigNoz/signoz/issues/4016#issuecomment-1838583305
+var (
+	sketchFmt = "quantilesDDMerge(0.01, %f)(sketch)[1]"
+)
+
 // prepareTimeAggregationSubQuery builds the sub-query to be used for temporal aggregation
 func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	var subQuery string
 
-	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(mq)
+	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(start, end, mq)
 	if err != nil {
 		return "", err
 	}
 
-	samplesTableFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli < %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
 		"SELECT fingerprint, %s" +
-			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
+			" toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as per_series_value" +
-			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
+			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_V4_TABLENAME +
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
@@ -77,19 +82,23 @@ func prepareQueryOptimized(start, end, step int64, mq *v3.BuilderQuery) (string,
 
 	var query string
 
-	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(mq)
+	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(start, end, mq)
 	if err != nil {
 		return "", err
 	}
 
-	samplesTableFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli < %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
+	var tableName string = constants.SIGNOZ_SAMPLES_V4_TABLENAME
+	if mq.AggregateAttribute.Type == v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
+		tableName = "distributed_exp_hist"
+	}
 	// Select the aggregate value for interval
 	queryTmpl :=
 		"SELECT %s" +
-			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
+			" toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as value" +
-			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
+			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + tableName +
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
@@ -109,6 +118,13 @@ func prepareQueryOptimized(start, end, step int64, mq *v3.BuilderQuery) (string,
 		query = fmt.Sprintf(queryTmpl, selectLabels, step, op, timeSeriesSubQuery, groupBy, orderBy)
 	case v3.SpaceAggregationMax:
 		op := "max(value)"
+		query = fmt.Sprintf(queryTmpl, selectLabels, step, op, timeSeriesSubQuery, groupBy, orderBy)
+	case v3.SpaceAggregationPercentile50,
+		v3.SpaceAggregationPercentile75,
+		v3.SpaceAggregationPercentile90,
+		v3.SpaceAggregationPercentile95,
+		v3.SpaceAggregationPercentile99:
+		op := fmt.Sprintf(sketchFmt, v3.GetPercentileFromOperator(mq.SpaceAggregation))
 		query = fmt.Sprintf(queryTmpl, selectLabels, step, op, timeSeriesSubQuery, groupBy, orderBy)
 	}
 	return query, nil
@@ -178,6 +194,9 @@ func PrepareMetricQueryDeltaTimeSeries(start, end, step int64, mq *v3.BuilderQue
 // 4. time aggregation = max and space aggregation = max
 //   - max of maxs is same as max of all values
 //
+// 5. special case exphist, there is no need for per series/fingerprint aggregation
+// we can directly use the quantilesDDMerge function
+//
 // all of this is true only for delta metrics
 func canShortCircuit(mq *v3.BuilderQuery) bool {
 	if (mq.TimeAggregation == v3.TimeAggregationRate || mq.TimeAggregation == v3.TimeAggregationIncrease) && mq.SpaceAggregation == v3.SpaceAggregationSum {
@@ -190,6 +209,9 @@ func canShortCircuit(mq *v3.BuilderQuery) bool {
 		return true
 	}
 	if mq.TimeAggregation == v3.TimeAggregationMax && mq.SpaceAggregation == v3.SpaceAggregationMax {
+		return true
+	}
+	if mq.AggregateAttribute.Type == v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) && v3.IsPercentileOperator(mq.SpaceAggregation) {
 		return true
 	}
 	return false

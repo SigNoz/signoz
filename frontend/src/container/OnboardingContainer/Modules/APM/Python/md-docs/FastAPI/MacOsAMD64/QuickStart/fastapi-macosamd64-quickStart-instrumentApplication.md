@@ -16,8 +16,8 @@ This will create and activate a virtual environment named `.venv`
 ### Step 2 : Install the OpenTelemetry dependencies
 
 ```bash
-pip install opentelemetry-distro==0.38b0
-pip install opentelemetry-exporter-otlp==1.17.0
+pip install opentelemetry-distro==0.43b0
+pip install opentelemetry-exporter-otlp==1.22.0
 ```
 &nbsp;
 

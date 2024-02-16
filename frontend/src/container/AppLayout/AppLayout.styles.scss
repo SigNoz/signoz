@@ -1,12 +1,20 @@
-@import '@signozhq/design-tokens';
-
 .app-layout {
+	position: relative;
 	height: 100%;
 	width: 100%;
 
 	.app-content {
 		width: 100%;
 		overflow: auto;
+
+		.content-container {
+			position: relative;
+			margin: 0 1rem;
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			width: 100%;
+		}
 	}
 }
 
