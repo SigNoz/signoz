@@ -138,8 +138,14 @@ export const Query = memo(function Query({
 			});
 		}
 
-		return <OrderByFilter query={query} onChange={handleChangeOrderByKeys} />;
-	}, [queryComponents, query, handleChangeOrderByKeys]);
+		return (
+			<OrderByFilter
+				query={query}
+				onChange={handleChangeOrderByKeys}
+				isExplorerPanel={isExplorerPanel}
+			/>
+		);
+	}, [queryComponents, query, handleChangeOrderByKeys, isExplorerPanel]);
 
 	const renderAggregateEveryFilter = useCallback(
 		(): JSX.Element | null =>
