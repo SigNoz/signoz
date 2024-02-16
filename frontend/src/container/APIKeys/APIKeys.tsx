@@ -337,7 +337,14 @@ function APIKeys(): JSX.Element {
 						: getDateDifference(APIKey?.createdAt, APIKey?.expiresAt);
 
 				const expiresOn =
-					APIKey.expiresAt === 0 ? 'No Expiry' : getFormattedTime(APIKey.expiresAt);
+					!APIKey.expiresAt || APIKey.expiresAt === 0
+						? 'No Expiry'
+						: getFormattedTime(APIKey.expiresAt);
+
+				const updatedOn =
+					!APIKey.updatedAt || APIKey.updatedAt === 0
+						? null
+						: getFormattedTime(APIKey?.updatedAt);
 
 				const items: CollapseProps['items'] = [
 					{
@@ -419,21 +426,17 @@ function APIKeys(): JSX.Element {
 										</Col>
 									</Row>
 								)}
-
 								<Row>
 									<Col span={6}> Created on </Col>
 									<Col span={12}>
 										<Typography.Text>{createdOn}</Typography.Text>
 									</Col>
 								</Row>
-
-								{APIKey?.updatedAt && (
+								{updatedOn && (
 									<Row>
 										<Col span={6}> Updated on </Col>
 										<Col span={12}>
-											<Typography.Text>
-												{getFormattedTime(APIKey?.updatedAt)}
-											</Typography.Text>
+											<Typography.Text>{updatedOn}</Typography.Text>
 										</Col>
 									</Row>
 								)}
