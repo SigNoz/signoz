@@ -8,6 +8,8 @@ import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+// https://virtuoso.dev/mocking-in-tests/
+import { VirtuosoMockContext } from 'react-virtuoso';
 import i18n from 'ReactI18';
 import store from 'store';
 
@@ -92,18 +94,23 @@ describe('Logs Explorer Tests', () => {
 	});
 
 	test('Logs Explorer Page should render with data', async () => {
+		// mocking the query range API to return the logs
 		server.use(
 			rest.post(queryRangeURL, (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(logsQueryRangeSuccessResponse)),
 			),
 		);
-		const { queryByText, queryByTestId } = render(
+		const { queryByText, queryByTestId, container } = render(
 			<MemoryRouter initialEntries={['/logs/logs-explorer']}>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<MockQueryClientProvider>
 							<QueryBuilderProvider>
-								<LogsExplorer />
+								<VirtuosoMockContext.Provider
+									value={{ viewportHeight: 300, itemHeight: 100 }}
+								>
+									<LogsExplorer />
+								</VirtuosoMockContext.Provider>
 							</QueryBuilderProvider>
 						</MockQueryClientProvider>
 					</I18nextProvider>
@@ -111,6 +118,7 @@ describe('Logs Explorer Tests', () => {
 			</MemoryRouter>,
 		);
 
+		// check for loading state to be not present
 		await waitFor(() =>
 			expect(
 				queryByText(
@@ -119,12 +127,22 @@ describe('Logs Explorer Tests', () => {
 			).not.toBeInTheDocument(),
 		);
 
+		// check for no data state to not be present
 		await waitFor(() =>
 			expect(queryByText('No logs yet.')).not.toBeInTheDocument(),
 		);
 
+		// check for the data container loaded
 		await waitFor(() =>
 			expect(queryByTestId('logs-list-virtuoso')).toBeInTheDocument(),
 		);
+
+		// check for data being present in the UI
+		expect(
+			queryByText(
+				'2024-02-15T21:20:22.035Z INFO frontend/best_eta.go:106 Dispatch successful {"service": "frontend", "trace_id": "0e727d00a1560dc7", "span_id": "0e727d00a1560dc7", "driver": "T703638C", "eta": "2m0s"}',
+			),
+		).toBeInTheDocument();
+		expect(container).toMatchSnapshot();
 	});
 });
