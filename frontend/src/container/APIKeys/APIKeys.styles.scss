@@ -87,7 +87,7 @@
 							border-radius: 20px;
 							padding: 0px 12px;
 
-							background: var(--bg-ink-200, #23262e);
+							background: var(--bg-ink-200);
 
 							.ant-typography {
 								color: var(--bg-vanilla-400);
@@ -130,7 +130,7 @@
 					}
 
 					.ant-collapse-content {
-						border-top: 1px solid var(--bg-slate-500, #161922);
+						border-top: 1px solid var(--bg-slate-500);
 					}
 
 					.ant-collapse-item {
@@ -147,7 +147,7 @@
 					align-items: center;
 					justify-content: space-between;
 					gap: 8px;
-					border-top: 1px solid var(--bg-slate-500, #161922);
+					border-top: 1px solid var(--bg-slate-500);
 					padding: 8px;
 
 					.api-key-tag {
@@ -209,20 +209,20 @@
 						}
 
 						&.warning {
-							color: var(--bg-amber-400, #ffd778);
+							color: var(--bg-amber-400);
 
 							.dot {
-								background: var(--bg-amber-400, #ffd778);
-								box-shadow: 0px 0px 6px 0px var(--bg-amber-400, #ffd778);
+								background: var(--bg-amber-400);
+								box-shadow: 0px 0px 6px 0px var(--bg-amber-400);
 							}
 						}
 
 						&.danger {
-							color: var(--bg-cherry-400, #ea6d71);
+							color: var(--bg-cherry-400);
 
 							.dot {
-								background: var(--bg-cherry-400, #ea6d71);
-								box-shadow: 0px 0px 6px 0px var(--bg-cherry-400, #ea6d71);
+								background: var(--bg-cherry-400);
+								box-shadow: 0px 0px 6px 0px var(--bg-cherry-400);
 							}
 						}
 					}
@@ -282,7 +282,7 @@
 		gap: 12px;
 		border-radius: 20px;
 		padding: 0px 12px;
-		background: var(--bg-ink-200, #23262e);
+		background: var(--bg-ink-200);
 
 		font-family: 'Space Mono', monospace;
 	}
@@ -297,14 +297,14 @@
 .api-key-modal {
 	.ant-modal-content {
 		border-radius: 4px;
-		border: 1px solid var(--Slate-500, #161922);
-		background: var(--Ink-400, #121317);
+		border: 1px solid var(--bg-slate-500);
+		background: var(--bg-ink-400);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 		padding: 0;
 
 		.ant-modal-header {
 			background: none;
-			border-bottom: 1px solid var(--Slate-500, #161922);
+			border-bottom: 1px solid var(--bg-slate-500);
 			padding: 16px;
 		}
 
@@ -335,23 +335,23 @@
 
 		&.ant-radio-button-wrapper-checked {
 			color: #fff;
-			background: var(--Slate-400, #1d212d);
-			border-color: var(--Slate-400, #1d212d);
+			background: var(--bg-slate-400, #1d212d);
+			border-color: var(--bg-slate-400, #1d212d);
 
 			&:hover {
 				color: #fff;
-				background: var(--Slate-400, #1d212d);
-				border-color: var(--Slate-400, #1d212d);
+				background: var(--bg-slate-400, #1d212d);
+				border-color: var(--bg-slate-400, #1d212d);
 
 				&::before {
-					background-color: var(--Slate-400, #1d212d);
+					background-color: var(--bg-slate-400, #1d212d);
 				}
 			}
 
 			&:focus {
 				color: #fff;
-				background: var(--Slate-400, #1d212d);
-				border-color: var(--Slate-400, #1d212d);
+				background: var(--bg-slate-400, #1d212d);
+				border-color: var(--bg-slate-400, #1d212d);
 			}
 		}
 	}
@@ -369,7 +369,7 @@
 		}
 
 		&.selected {
-			background: var(--Slate-400, #1d212d);
+			background: var(--bg-slate-400, #1d212d);
 		}
 	}
 
@@ -541,6 +541,18 @@
 							}
 						}
 
+						.api-key-value {
+							background: var(--bg-vanilla-200);
+
+							.ant-typography {
+								color: var(--bg-slate-400);
+							}
+
+							.copy-key-btn {
+								cursor: pointer;
+							}
+						}
+
 						.action-btn {
 							.ant-typography {
 								color: var(--bg-ink-500);
@@ -549,6 +561,7 @@
 					}
 
 					.api-key-details {
+						border-top: 1px solid var(--bg-vanilla-200);
 						.api-key-tag {
 							background: var(--bg-vanilla-200);
 							.tag-text {
@@ -564,10 +577,6 @@
 							.ant-typography {
 								color: var(--bg-ink-500);
 							}
-						}
-
-						.api-key-expires-in {
-							color: var(--Amber-400, #ffd778);
 						}
 					}
 				}
@@ -608,5 +617,69 @@
 				}
 			}
 		}
+	}
+
+	.api-key-info-container {
+		.user-email {
+			background: var(--bg-vanilla-200);
+		}
+	}
+
+	.api-key-modal {
+		.ant-modal-content {
+			border-radius: 4px;
+			border: 1px solid var(--bg-vanilla-200);
+			background: var(--bg-vanilla-100);
+			box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
+			padding: 0;
+
+			.ant-modal-header {
+				background: none;
+				border-bottom: 1px solid var(--bg-vanilla-200);
+				padding: 16px;
+			}
+		}
+	}
+
+	.api-key-access-role {
+		.ant-radio-button-wrapper {
+			&.ant-radio-button-wrapper-checked {
+				color: var(--bg-ink-400);
+				background: var(--bg-vanilla-300);
+				border-color: var(--bg-vanilla-300);
+
+				&:hover {
+					color: var(--bg-ink-400);
+					background: var(--bg-vanilla-300);
+					border-color: var(--bg-vanilla-300);
+
+					&::before {
+						background-color: var(--bg-vanilla-300);
+					}
+				}
+
+				&:focus {
+					color: var(--bg-ink-400);
+					background: var(--bg-vanilla-300);
+					border-color: var(--bg-vanilla-300);
+				}
+			}
+		}
+
+		.tab {
+			border: 1px solid var(--bg-vanilla-300);
+
+			&::before {
+				background: var(--bg-vanilla-300);
+			}
+
+			&.selected {
+				background: var(--bg-vanilla-300);
+			}
+		}
+	}
+
+	.copyable-text {
+		background: var(--bg-vanilla-200);
 	}
 }
