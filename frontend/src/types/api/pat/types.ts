@@ -22,7 +22,7 @@ export interface APIKeyProps {
 
 export interface CreateAPIKeyProps {
 	name: string;
-	expiresAt: number;
+	expiresInDays: number;
 	role: string;
 }
 
@@ -41,7 +41,10 @@ export interface DeleteAPIKeyPayloadProps {
 
 export interface UpdateAPIKeyProps {
 	id: string;
-	data: CreateAPIKeyProps;
+	data: {
+		name: string;
+		role: string;
+	};
 }
 
 export type PayloadProps = {
