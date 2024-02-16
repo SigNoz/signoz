@@ -140,7 +140,7 @@ describe('Logs Explorer Tests', () => {
 		// check for data being present in the UI
 		expect(
 			queryByText(
-				'2024-02-15T21:20:22.035Z INFO frontend/best_eta.go:106 Dispatch successful {"service": "frontend", "trace_id": "0e727d00a1560dc7", "span_id": "0e727d00a1560dc7", "driver": "T703638C", "eta": "2m0s"}',
+				'2024-02-15T21:20:22.035Z INFO frontend Dispatch successful {"service": "frontend", "trace_id": "span_id", "span_id": "span_id", "driver": "driver", "eta": "2m0s"}',
 			),
 		).toBeInTheDocument();
 	});
