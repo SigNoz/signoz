@@ -29,7 +29,7 @@ func generatePATToken() string {
 func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
-	req := model.PAT{}
+	req := model.CreatePATRequestBody{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
@@ -42,32 +42,37 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	err = validatePATRequest(req)
+	pat := model.PAT{
+		Name: 	req.Name,
+		Role: 	req.Role,
+		ExpiresAt: req.ExpiresInDays,
+	}
+	err = validatePATRequest(pat)
 	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
 
 	// All the PATs are associated with the user creating the PAT.
-	req.UserID = user.Id
-	req.CreatedAt = time.Now().Unix()
-	req.UpdatedAt = time.Now().Unix()
-	req.LastUsed = 0
-	req.Token = generatePATToken()
+	pat.UserID = user.Id
+	pat.CreatedAt = time.Now().Unix()
+	pat.UpdatedAt = time.Now().Unix()
+	pat.LastUsed = 0
+	pat.Token = generatePATToken()
 
-	if req.ExpiresAt != 0 {
+	if pat.ExpiresAt != 0 {
 		// convert expiresAt to unix timestamp from days
-		req.ExpiresAt = time.Now().Unix() + (req.ExpiresAt * 24 * 60 * 60)
+		pat.ExpiresAt = time.Now().Unix() + (pat.ExpiresAt * 24 * 60 * 60)
 	}
 
-	zap.S().Debugf("Got Create PAT request: %+v", req)
+	zap.S().Debugf("Got Create PAT request: %+v", pat)
 	var apierr basemodel.BaseApiError
-	if req, apierr = ah.AppDao().CreatePAT(ctx, req); apierr != nil {
+	if pat, apierr = ah.AppDao().CreatePAT(ctx, pat); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}
 
-	ah.Respond(w, &req)
+	ah.Respond(w, &pat)
 }
 
 func validatePATRequest(req model.PAT) error {

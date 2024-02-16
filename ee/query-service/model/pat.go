@@ -9,6 +9,12 @@ type User struct {
 	NotFound          bool   `json:"notFound"`
 }
 
+type CreatePATRequestBody struct {
+	Name          string `json:"name"`
+	Role          string `json:"role"`
+	ExpiresInDays int64  `json:"expiresInDays"`
+}
+
 type PAT struct {
 	Id              string `json:"id" db:"id"`
 	UserID          string `json:"userId" db:"user_id"`
