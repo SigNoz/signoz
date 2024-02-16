@@ -15,9 +15,11 @@ import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { Pagination } from 'hooks/queryPagination';
 import { useLogsData } from 'hooks/useLogsData';
+import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	HTMLAttributes,
 	useCallback,
@@ -74,6 +76,7 @@ function LogsPanelComponent({
 	}, [pagination]);
 
 	const [pageSize, setPageSize] = useState<number>(10);
+	const { selectedDashboard } = useDashboard();
 
 	const handleChangePageSize = (value: number): void => {
 		setPagination({
@@ -99,6 +102,7 @@ function LogsPanelComponent({
 			...requestData,
 			globalSelectedInterval: globalSelectedTime,
 			selectedTime: selectedTime?.enum || 'GLOBAL_TIME',
+			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		},
 		{
 			queryKey: [
@@ -108,6 +112,7 @@ function LogsPanelComponent({
 				minTime,
 				requestData,
 				pagination,
+				selectedDashboard?.data.variables,
 			],
 			enabled: !!requestData.query && !!selectedLogsFields?.length,
 		},

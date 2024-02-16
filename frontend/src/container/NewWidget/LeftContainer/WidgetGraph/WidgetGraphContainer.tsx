@@ -82,6 +82,7 @@ function WidgetGraphContainer({
 			softMin={softMin}
 			selectedLogFields={selectedLogFields}
 			selectedTracesFields={selectedTracesFields}
+			selectedTime={selectedTime}
 		/>
 	);
 }

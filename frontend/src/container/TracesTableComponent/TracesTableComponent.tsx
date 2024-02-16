@@ -16,8 +16,10 @@ import {
 } from 'container/TracesExplorer/ListView/utils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { Pagination } from 'hooks/queryPagination';
+import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -40,6 +42,8 @@ function TracesTableComponent({
 		limit: 10,
 	});
 
+	const { selectedDashboard } = useDashboard();
+
 	const { data, isFetching, isError } = useGetQueryRange(
 		{
 			query,
@@ -53,6 +57,7 @@ function TracesTableComponent({
 				pagination,
 				selectColumns: selectedTracesFields,
 			},
+			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		},
 		{
 			queryKey: [
@@ -64,6 +69,7 @@ function TracesTableComponent({
 				pagination,
 				selectedTracesFields?.length,
 				selectedTime?.enum,
+				selectedDashboard?.data.variables,
 			],
 			enabled: !!query && !!selectedTracesFields?.length,
 		},
