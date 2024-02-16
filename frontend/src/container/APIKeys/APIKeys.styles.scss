@@ -175,13 +175,12 @@
 						margin-left: 8px;
 					}
 
-					.api-key-created-at {
+					.api-key-last-used-at {
 						display: flex;
 						align-items: center;
 						gap: 8px;
 
 						.ant-typography {
-							margin-left: 6px;
 							color: var(--bg-vanilla-400);
 							font-size: var(--font-size-sm);
 							font-style: normal;
@@ -269,6 +268,7 @@
 		display: flex;
 		gap: 8px;
 		align-items: center;
+		flex-wrap: wrap;
 
 		.user-avatar {
 			background-color: lightslategray;
@@ -280,7 +280,6 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 12px;
-		margin-left: 8px;
 		border-radius: 20px;
 		padding: 0px 12px;
 		background: var(--bg-ink-200, #23262e);
@@ -328,6 +327,8 @@
 }
 
 .api-key-access-role {
+	display: flex;
+
 	.ant-radio-button-wrapper {
 		font-size: 12px;
 		text-transform: capitalize;
@@ -357,6 +358,11 @@
 
 	.tab {
 		border: 1px solid var(--bg-slate-400);
+
+		flex: 1;
+
+		display: flex;
+		justify-content: center;
 
 		&::before {
 			background: var(--bg-slate-400);
@@ -482,7 +488,7 @@
 }
 
 .copyable-text {
-	display: flex;
+	display: inline-flex;
 	align-items: center;
 	gap: 12px;
 	border-radius: 20px;
@@ -554,7 +560,7 @@
 							color: var(--bg-ink-500);
 						}
 
-						.api-key-created-at {
+						.api-key-last-used-at {
 							.ant-typography {
 								color: var(--bg-ink-500);
 							}
