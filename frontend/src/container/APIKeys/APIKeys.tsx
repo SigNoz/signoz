@@ -15,6 +15,7 @@ import {
 	Select,
 	Table,
 	TableProps,
+	Tooltip,
 	Typography,
 } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
@@ -374,18 +375,28 @@ function APIKeys(): JSX.Element {
 									</div>
 
 									{APIKey.role === USER_ROLES.ADMIN && (
-										<Contact2 size={14} color={Color.BG_ROBIN_400} />
+										<Tooltip title={USER_ROLES.ADMIN}>
+											<Contact2 size={14} color={Color.BG_ROBIN_400} />
+										</Tooltip>
 									)}
 
 									{APIKey.role === USER_ROLES.EDITOR && (
-										<ClipboardEdit size={14} color={Color.BG_ROBIN_400} />
+										<Tooltip title={USER_ROLES.EDITOR}>
+											<ClipboardEdit size={14} color={Color.BG_ROBIN_400} />
+										</Tooltip>
 									)}
 
 									{APIKey.role === USER_ROLES.VIEWER && (
-										<View size={14} color={Color.BG_ROBIN_400} />
+										<Tooltip title={USER_ROLES.VIEWER}>
+											<View size={14} color={Color.BG_ROBIN_400} />
+										</Tooltip>
 									)}
 
-									{!APIKey.role && <View size={14} color={Color.BG_ROBIN_400} />}
+									{!APIKey.role && (
+										<Tooltip title={USER_ROLES.ADMIN}>
+											<Contact2 size={14} color={Color.BG_ROBIN_400} />
+										</Tooltip>
+									)}
 								</div>
 								<div className="action-btn">
 									<Button
