@@ -9,13 +9,17 @@ export default function NoLogs(): JSX.Element {
 			<div className="no-logs-container-content">
 				<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
 				<Typography className="no-logs-text">
-					No logs yet.{' '}
+					No logs yet.
 					<span className="sub-text">
 						When we receive logs, they would show up here
 					</span>
 				</Typography>
 
-				<Typography.Link className="send-logs-link">
+				<Typography.Link
+					className="send-logs-link"
+					href="https://signoz.io/docs/userguide/logs/"
+					target="_blank"
+				>
 					Sending Logs to SigNoz <ArrowUpRight size={16} />
 				</Typography.Link>
 			</div>

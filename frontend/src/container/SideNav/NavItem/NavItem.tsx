@@ -16,13 +16,16 @@ export default function NavItem({
 	isCollapsed: boolean;
 	item: SidebarItem;
 	isActive: boolean;
-	onClick: () => void;
+	onClick: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
 }): JSX.Element {
 	const { label, icon } = item;
 
 	return (
 		<Tooltip title={isCollapsed ? label : ''} placement="right">
-			<div className={cx('nav-item', isActive ? 'active' : '')} onClick={onClick}>
+			<div
+				className={cx('nav-item', isActive ? 'active' : '')}
+				onClick={(event): void => onClick(event)}
+			>
 				<div className="nav-item-active-marker" />
 				<div className="nav-item-data">
 					<div className="nav-item-icon">{icon}</div>
