@@ -389,6 +389,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			continue
 		}
 
+		for _, smpl := range series.Floats {
+			zap.S().Infof("rule: %s, value: %.2f, timestamp: %d", r.Name(), smpl.F, smpl.T)
+		}
+
 		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
 		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
 
