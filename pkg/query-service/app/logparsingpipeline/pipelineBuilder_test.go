@@ -658,14 +658,14 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 				From:    `attributes["http.method"]`,
 				To:      `attributes["test.http.method"]`,
 			},
-			// {
-			// ID:        "json",
-			// Type:      "json_parser",
-			// Enabled:   true,
-			// Name:      "json",
-			// ParseFrom: `attributes["order.products"]`,
-			// ParseTo:   `attributes["some"].missing.target`,
-			// },
+			{
+				ID:        "json",
+				Type:      "json_parser",
+				Enabled:   true,
+				Name:      "json",
+				ParseFrom: `attributes["order.products"]`,
+				ParseTo:   `attributes["some"].missing.target`,
+			},
 			{
 				ID:        "json",
 				Type:      "json_parser",
@@ -689,6 +689,14 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 				From:    `attributes.test?.doesnt_exist`,
 				To:      `attributes["test.doesnt_exist"]`,
 			}, {
+				ID:      "addToMissingField",
+				Type:    "add",
+				Enabled: true,
+				Name:    "add",
+				Field:   `attributes["another"].new.missing_field`,
+				Value:   `2`,
+			},
+			{
 				ID:      "add",
 				Type:    "add",
 				Enabled: true,
@@ -735,6 +743,7 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 	spew.Dump(testLogs)
 	spew.Dump(result)
 	require.Equal("pid0", result[0].Attributes_string["order.pids.pid0"])
+	require.Equal(`{"new":{"missing_field":"2"}}`, result[0].Attributes_string["another"])
 }
 
 func TestContainsFilterIsCaseInsensitive(t *testing.T) {
