@@ -3,9 +3,11 @@ import './QuerySection.styles.scss';
 import { Button, Tabs, Tooltip } from 'antd';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import { QueryBuilder } from 'container/QueryBuilder';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { Atom, Play, Terminal } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -110,6 +112,17 @@ function QuerySection({
 		],
 		[],
 	);
+
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+
+	useEffect(() => {
+		registerShortcut(QBShortcuts.StageAndRunQuery, runQuery);
+
+		return (): void => {
+			deregisterShortcut(QBShortcuts.StageAndRunQuery);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [runQuery]);
 
 	const renderTabs = (typ: AlertTypes): JSX.Element | null => {
 		switch (typ) {

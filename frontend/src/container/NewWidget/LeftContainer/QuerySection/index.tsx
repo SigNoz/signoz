@@ -3,9 +3,11 @@ import './QuerySection.styles.scss';
 import { Button, Tabs, Tooltip, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -18,7 +20,7 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -36,6 +38,7 @@ function QuerySection({
 }: QueryProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const urlQuery = useUrlQuery();
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -195,6 +198,15 @@ function QuerySection({
 			children: <PromQLQueryContainer />,
 		},
 	];
+
+	useEffect(() => {
+		registerShortcut(QBShortcuts.StageAndRunQuery, handleRunQuery);
+
+		return (): void => {
+			deregisterShortcut(QBShortcuts.StageAndRunQuery);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [handleRunQuery]);
 
 	return (
 		<div className="dashboard-navigation">

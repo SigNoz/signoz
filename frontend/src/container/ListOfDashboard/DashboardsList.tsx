@@ -305,6 +305,7 @@ function DashboardsList(): JSX.Element {
 						loading={isFilteringDashboards}
 						style={{ marginBottom: 16, marginTop: 16 }}
 						defaultValue={searchString}
+						autoFocus
 					/>
 				</Col>
 

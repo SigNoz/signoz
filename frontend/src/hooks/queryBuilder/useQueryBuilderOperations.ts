@@ -142,12 +142,6 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleMetricAggregateAtributeTypes = useCallback(
 		(aggregateAttribute: BaseAutocompleteData): any => {
-			console.log(
-				'handleMetricAggregateAtributeTypes ',
-				aggregateAttribute,
-				panelType,
-			);
-
 			const newOperators = getMetricsOperatorsByAttributeType({
 				dataSource: DataSource.METRICS,
 				panelType: panelType || PANEL_TYPES.TIME_SERIES,
