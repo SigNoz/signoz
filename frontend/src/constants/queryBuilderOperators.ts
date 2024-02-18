@@ -317,7 +317,7 @@ export const metricsSumAggregateOperatorOptions: SelectOption<
 	},
 ];
 
-export const metricsGuageAggregateOperatorOptions: SelectOption<
+export const metricsGaugeAggregateOperatorOptions: SelectOption<
 	string,
 	string
 >[] = [
@@ -373,7 +373,7 @@ export const metricsSumSpaceAggregateOperatorOptions: SelectOption<
 	},
 ];
 
-export const metricsGuageSpaceAggregateOperatorOptions: SelectOption<
+export const metricsGaugeSpaceAggregateOperatorOptions: SelectOption<
 	string,
 	string
 >[] = [

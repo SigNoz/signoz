@@ -36,8 +36,8 @@ import { v4 as uuid } from 'uuid';
 import {
 	logsAggregateOperatorOptions,
 	metricAggregateOperatorOptions,
-	metricsGuageAggregateOperatorOptions,
-	metricsGuageSpaceAggregateOperatorOptions,
+	metricsGaugeAggregateOperatorOptions,
+	metricsGaugeSpaceAggregateOperatorOptions,
 	metricsHistogramSpaceAggregateOperatorOptions,
 	metricsSumAggregateOperatorOptions,
 	metricsSumSpaceAggregateOperatorOptions,
@@ -81,12 +81,12 @@ export const mapOfOperators = {
 
 export const metricsOperatorsByType = {
 	Sum: metricsSumAggregateOperatorOptions,
-	Guage: metricsGuageAggregateOperatorOptions,
+	Gauge: metricsGaugeAggregateOperatorOptions,
 };
 
 export const metricsSpaceAggregationOperatorsByType = {
 	Sum: metricsSumSpaceAggregateOperatorOptions,
-	Guage: metricsGuageSpaceAggregateOperatorOptions,
+	Gauge: metricsGaugeSpaceAggregateOperatorOptions,
 	Histogram: metricsHistogramSpaceAggregateOperatorOptions,
 	ExponentialHistogram: metricsHistogramSpaceAggregateOperatorOptions,
 };

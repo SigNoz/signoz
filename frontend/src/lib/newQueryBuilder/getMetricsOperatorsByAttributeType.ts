@@ -23,7 +23,7 @@ export const getMetricsOperatorsByAttributeType = ({
 		}
 
 		if (aggregateAttributeType === ATTRIBUTE_TYPES.GAUGE) {
-			return metricsOperatorsByType.Guage;
+			return metricsOperatorsByType.Gauge;
 		}
 	}
 

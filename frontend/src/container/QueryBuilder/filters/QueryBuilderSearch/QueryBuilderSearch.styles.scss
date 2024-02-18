@@ -3,10 +3,11 @@
 	gap: 8px;
 	justify-content: space-between;
 	align-items: center;
+	overflow-x: auto;
 
-	::-webkit-scrollbar {
-		width: 0.1rem;
-		height: 0.1rem;
+	&::-webkit-scrollbar {
+		width: 0.2rem;
+		height: 0.2rem;
 	}
 }
 

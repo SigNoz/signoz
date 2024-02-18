@@ -8,7 +8,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import {
-	metricsGuageSpaceAggregateOperatorOptions,
+	metricsGaugeSpaceAggregateOperatorOptions,
 	metricsHistogramSpaceAggregateOperatorOptions,
 	metricsSumSpaceAggregateOperatorOptions,
 } from 'constants/queryBuilderOperators';
@@ -160,7 +160,7 @@ export const useQueryOperations: UseQueryOperations = ({
 					setSpaceAggregationOptions(metricsSumSpaceAggregateOperatorOptions);
 					break;
 				case ATTRIBUTE_TYPES.GAUGE:
-					setSpaceAggregationOptions(metricsGuageSpaceAggregateOperatorOptions);
+					setSpaceAggregationOptions(metricsGaugeSpaceAggregateOperatorOptions);
 					break;
 
 				case ATTRIBUTE_TYPES.HISTOGRAM:
@@ -171,7 +171,7 @@ export const useQueryOperations: UseQueryOperations = ({
 					setSpaceAggregationOptions(metricsHistogramSpaceAggregateOperatorOptions);
 					break;
 				default:
-					setSpaceAggregationOptions(metricsGuageSpaceAggregateOperatorOptions);
+					setSpaceAggregationOptions(metricsGaugeSpaceAggregateOperatorOptions);
 					break;
 			}
 
