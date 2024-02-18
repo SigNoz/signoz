@@ -108,7 +108,8 @@ export default function QueryFunctions({
 
 					const { showInput, placeholder } = queryFunctionsTypesConfig[func.name];
 
-					console.log('showInput', showInput);
+					const placeholderText =
+						(func.args && func.args.length > 0 && func.args[0]) || placeholder;
 
 					// eslint-disable-next-line react/no-array-index-key
 					return (
@@ -129,7 +130,7 @@ export default function QueryFunctions({
 
 							<Input
 								disabled={!showInput}
-								placeholder={func.args[0] || placeholder}
+								placeholder={placeholderText}
 								onChange={(event): void => {
 									debouncedhandleUpdateFunctionArgs(func, index, event.target.value);
 								}}
