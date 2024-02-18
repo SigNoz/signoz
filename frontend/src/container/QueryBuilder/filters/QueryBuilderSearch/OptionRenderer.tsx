@@ -1,9 +1,6 @@
-import {
-	SelectOptionContainer,
-	TagContainer,
-	TagLabel,
-	TagValue,
-} from './style';
+import './QueryBuilderSearch.styles.scss';
+
+import { TagContainer, TagLabel, TagValue } from './style';
 import { getOptionType } from './utils';
 
 function OptionRenderer({
@@ -16,7 +13,7 @@ function OptionRenderer({
 	return (
 		<span className="option">
 			{optionType ? (
-				<SelectOptionContainer>
+				<div className="selectOptionContainer">
 					<div className="option-value">{value}</div>
 					<div className="option-meta-data-container">
 						<TagContainer>
@@ -28,7 +25,7 @@ function OptionRenderer({
 							<TagValue>{dataType}</TagValue>
 						</TagContainer>
 					</div>
-				</SelectOptionContainer>
+				</div>
 			) : (
 				<span>{label}</span>
 			)}

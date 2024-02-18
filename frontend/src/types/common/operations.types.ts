@@ -4,6 +4,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import {
 	IBuilderFormula,
 	IBuilderQuery,
+	QueryFunctionProps,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -37,12 +38,15 @@ export type UseQueryOperations = (
 	isTracePanelType: boolean;
 	isMetricsDataSource: boolean;
 	operators: SelectOption<string, string>[];
+	spaceAggregationOptions: SelectOption<string, string>[];
 	listOfAdditionalFilters: string[];
 	handleChangeOperator: (value: string) => void;
+	handleSpaceAggregationChange: (value: string) => void;
 	handleChangeAggregatorAttribute: (value: BaseAutocompleteData) => void;
 	handleChangeDataSource: (newSource: DataSource) => void;
 	handleDeleteQuery: () => void;
 	handleChangeQueryData: HandleChangeQueryData;
 	handleChangeFormulaData: HandleChangeFormulaData;
+	handleQueryFunctionsUpdates: (functions: QueryFunctionProps[]) => void;
 	listOfAdditionalFormulaFilters: string[];
 };

@@ -211,6 +211,7 @@ function DashboardsList(): JSX.Element {
 					ns: 'dashboard',
 				}),
 				uploadedGrafana: false,
+				version: 'v4',
 			});
 
 			if (response.statusCode === 200) {

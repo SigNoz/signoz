@@ -92,6 +92,8 @@ export enum MetricAggregateOperator {
 	HIST_QUANTILE_90 = 'hist_quantile_90',
 	HIST_QUANTILE_95 = 'hist_quantile_95',
 	HIST_QUANTILE_99 = 'hist_quantile_99',
+	INCREASE = 'increase',
+	LATEST = 'latest',
 }
 
 export enum TracesAggregatorOperator {
@@ -140,6 +142,24 @@ export enum LogsAggregatorOperator {
 	RATE_AVG = 'rate_avg',
 	RATE_MIN = 'rate_min',
 	RATE_MAX = 'rate_max',
+}
+
+export enum QueryFunctionsTypes {
+	CUTOFF_MIN = 'cutOffMin',
+	CUTOFF_MAX = 'cutOffMax',
+	CLAMP_MIN = 'clampMin',
+	CLAMP_MAX = 'clampMax',
+	ABSOLUTE = 'absolute',
+	LOG_2 = 'log2',
+	LOG_10 = 'log10',
+	CUMULATIVE_SUM = 'cumSum',
+	EWMA_3 = 'ewma3',
+	EWMA_5 = 'ewma5',
+	EWMA_7 = 'ewma7',
+	MEDIAN_3 = 'median3',
+	MEDIAN_5 = 'median5',
+	MEDIAN_7 = 'median7',
+	TIME_SHIFT = 'timeShift',
 }
 
 export type PanelTypeKeys =

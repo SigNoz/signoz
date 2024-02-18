@@ -1,0 +1,35 @@
+.add-function-btn {
+	display: flex;
+	gap: 8px;
+
+	cursor: pointer;
+
+	margin: 12px 0;
+
+	border: 1px solid var(--bg-sakura-500);
+	background-color: var(--bg-sakura-500);
+}
+
+.query-functions-list {
+	margin: 16px 0;
+
+	.query-function {
+		margin: 16px 0;
+		position: relative;
+
+		input.ant-input-disabled {
+			background: #1d212d;
+		}
+
+		&:not(:last-child)::before {
+			content: '';
+			height: 16px;
+			background-color: var(--bg-robin-400);
+			width: 1px;
+			position: absolute;
+			// z-index: 1;
+			bottom: -16px;
+			left: 14px;
+		}
+	}
+}

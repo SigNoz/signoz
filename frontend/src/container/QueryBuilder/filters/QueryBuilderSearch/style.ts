@@ -16,14 +16,6 @@ export const StyledCheckOutlined = styled(CheckOutlined)`
 	float: right;
 `;
 
-export const SelectOptionContainer = styled.div`
-	display: flex;
-	gap: 8px;
-	justify-content: space-between;
-	align-items: center;
-	overflow-x: auto;
-`;
-
 export const TagContainer = styled(Tag)`
 	&&& {
 		border-radius: 3px;

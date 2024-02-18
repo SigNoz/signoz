@@ -1,3 +1,15 @@
+.selectOptionContainer {
+	display: flex;
+	gap: 8px;
+	justify-content: space-between;
+	align-items: center;
+
+	::-webkit-scrollbar {
+		width: 0.1rem;
+		height: 0.1rem;
+	}
+}
+
 .lightMode {
 	.query-builder-search {
 		.ant-select-dropdown {

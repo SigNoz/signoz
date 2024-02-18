@@ -302,3 +302,126 @@ export const logsAggregateOperatorOptions: SelectOption<string, string>[] = [
 		label: 'Rate_max',
 	},
 ];
+
+export const metricsSumAggregateOperatorOptions: SelectOption<
+	string,
+	string
+>[] = [
+	{
+		value: MetricAggregateOperator.RATE,
+		label: 'Rate',
+	},
+	{
+		value: MetricAggregateOperator.INCREASE,
+		label: 'Increase',
+	},
+];
+
+export const metricsGuageAggregateOperatorOptions: SelectOption<
+	string,
+	string
+>[] = [
+	{
+		value: MetricAggregateOperator.LATEST,
+		label: 'Latest',
+	},
+	{
+		value: MetricAggregateOperator.SUM,
+		label: 'Sum',
+	},
+	{
+		value: MetricAggregateOperator.AVG,
+		label: 'Avg',
+	},
+	{
+		value: MetricAggregateOperator.MIN,
+		label: 'Min',
+	},
+	{
+		value: MetricAggregateOperator.MAX,
+		label: 'Max',
+	},
+	{
+		value: MetricAggregateOperator.COUNT,
+		label: 'Count',
+	},
+	{
+		value: MetricAggregateOperator.COUNT_DISTINCT,
+		label: 'Count Distinct',
+	},
+];
+
+export const metricsSumSpaceAggregateOperatorOptions: SelectOption<
+	string,
+	string
+>[] = [
+	{
+		value: MetricAggregateOperator.SUM,
+		label: 'Sum By',
+	},
+	{
+		value: MetricAggregateOperator.AVG,
+		label: 'Avg By',
+	},
+	{
+		value: MetricAggregateOperator.MIN,
+		label: 'Min By',
+	},
+	{
+		value: MetricAggregateOperator.MAX,
+		label: 'Max By',
+	},
+];
+
+export const metricsGuageSpaceAggregateOperatorOptions: SelectOption<
+	string,
+	string
+>[] = [
+	{
+		value: MetricAggregateOperator.SUM,
+		label: 'Sum By',
+	},
+	{
+		value: MetricAggregateOperator.AVG,
+		label: 'Avg By',
+	},
+	{
+		value: MetricAggregateOperator.MIN,
+		label: 'Min By',
+	},
+	{
+		value: MetricAggregateOperator.MAX,
+		label: 'Max By',
+	},
+];
+
+export const metricsHistogramSpaceAggregateOperatorOptions: SelectOption<
+	string,
+	string
+>[] = [
+	{
+		value: MetricAggregateOperator.P50,
+		label: 'P50 By',
+	},
+	{
+		value: MetricAggregateOperator.P75,
+		label: 'P75 By',
+	},
+	{
+		value: MetricAggregateOperator.P90,
+		label: 'P90 By',
+	},
+	{
+		value: MetricAggregateOperator.P95,
+		label: 'P95 By',
+	},
+	{
+		value: MetricAggregateOperator.P99,
+		label: 'P99 By',
+	},
+];
+
+export const metricsEmptyTimeAggregateOperatorOptions: SelectOption<
+	string,
+	string
+>[] = [];

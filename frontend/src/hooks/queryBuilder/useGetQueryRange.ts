@@ -3,6 +3,7 @@ import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
@@ -14,6 +15,10 @@ type UseGetQueryRange = (
 ) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
 
 export const useGetQueryRange: UseGetQueryRange = (requestData, options) => {
+	const { selectedDashboard } = useDashboard();
+
+	const version = selectedDashboard?.data?.version || 'v4';
+
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
 			return [...options.queryKey];
@@ -27,7 +32,8 @@ export const useGetQueryRange: UseGetQueryRange = (requestData, options) => {
 	}, [options?.queryKey, requestData]);
 
 	return useQuery<SuccessResponse<MetricRangePayloadProps>, Error>({
-		queryFn: async ({ signal }) => GetMetricQueryRange(requestData, signal),
+		queryFn: async ({ signal }) =>
+			GetMetricQueryRange(requestData, version, signal),
 		...options,
 		queryKey,
 	});

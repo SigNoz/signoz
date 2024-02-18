@@ -3,7 +3,7 @@ import './Query.styles.scss';
 
 import { Col, Input, Row } from 'antd';
 // ** Constants
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 // ** Components
 import {
@@ -38,9 +38,12 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
+import QueryFunctions from '../QueryFunctions/QueryFunctions';
+import SpaceAggregationOptions from '../SpaceAggregationOptions/SpaceAggregationOptions';
 // ** Types
 import { QueryProps } from './Query.interfaces';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export const Query = memo(function Query({
 	index,
 	queryVariant,
@@ -56,6 +59,7 @@ export const Query = memo(function Query({
 
 	const {
 		operators,
+		spaceAggregationOptions,
 		isMetricsDataSource,
 		isTracePanelType,
 		listOfAdditionalFilters,
@@ -63,7 +67,9 @@ export const Query = memo(function Query({
 		handleChangeQueryData,
 		handleChangeDataSource,
 		handleChangeOperator,
+		handleSpaceAggregationChange,
 		handleDeleteQuery,
+		handleQueryFunctionsUpdates,
 	} = useQueryOperations({ index, query, filterConfigs, isListViewPanel });
 
 	const handleChangeAggregateEvery = useCallback(
@@ -287,6 +293,9 @@ export const Query = memo(function Query({
 		renderAggregateEveryFilter,
 	]);
 
+	const disableOperatorSelector =
+		!query?.aggregateAttribute.key || query?.aggregateAttribute.key === '';
+
 	return (
 		<Row gutter={[0, 12]}>
 			<QBEntityOptions
@@ -322,22 +331,27 @@ export const Query = memo(function Query({
 							{isMetricsDataSource && (
 								<Col span={12}>
 									<Row gutter={[11, 5]}>
-										<Col flex="5.93rem">
-											<OperatorsSelect
-												value={query.aggregateOperator}
-												onChange={handleChangeOperator}
-												operators={operators}
-											/>
-										</Col>
 										<Col flex="auto">
 											<AggregatorFilter
 												onChange={handleChangeAggregatorAttribute}
 												query={query}
 											/>
 										</Col>
+
+										{operators && Array.isArray(operators) && operators.length > 0 && (
+											<Col flex="5.93rem">
+												<OperatorsSelect
+													value={query.aggregateOperator}
+													onChange={handleChangeOperator}
+													operators={operators}
+													disabled={disableOperatorSelector}
+												/>
+											</Col>
+										)}
 									</Row>
 								</Col>
 							)}
+
 							<Col flex="1 1 20rem">
 								<Row gutter={[11, 5]}>
 									{isMetricsDataSource && (
@@ -400,6 +414,49 @@ export const Query = memo(function Query({
 							</Row>
 						</Col>
 					)}
+					{!isListViewPanel && (
+						<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									{!isMetricsDataSource ? (
+										<FilterLabel
+											label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
+										/>
+									) : (
+										<SpaceAggregationOptions
+											aggregatorAttributeType={
+												query?.aggregateAttribute.type as ATTRIBUTE_TYPES
+											}
+											disabled={disableOperatorSelector}
+											onSelect={handleSpaceAggregationChange}
+											operators={spaceAggregationOptions}
+										/>
+									)}
+								</Col>
+								<Col flex="1 1 12.5rem">
+									{panelType === PANEL_TYPES.VALUE ? (
+										<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+									) : (
+										<GroupByFilter
+											disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+											query={query}
+											onChange={handleChangeGroupByKeys}
+										/>
+									)}
+								</Col>
+							</Row>
+						</Col>
+					)}
+
+					{isMetricsDataSource && (
+						<Col span={24}>
+							<QueryFunctions
+								queryFunctions={query.functions}
+								onChange={handleQueryFunctionsUpdates}
+							/>
+						</Col>
+					)}
+
 					{!isTracePanelType && !isListViewPanel && (
 						<Col span={24}>
 							<AdditionalFiltersToggler
