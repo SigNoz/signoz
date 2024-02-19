@@ -3665,7 +3665,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
-		for _, table := range []string{r.logsLocalTable, r.logsTable} {
+		for _, table := range []string{r.logsTable, r.logsLocalTable} {
 			// drop materialized column from logs table
 			query := "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s "
 			err := r.db.Exec(ctx, fmt.Sprintf(query,
