@@ -29,6 +29,7 @@ import {
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -125,11 +126,21 @@ function LogsPanelComponent({
 		data?.payload?.data?.newResult?.data?.result[0]?.list?.length;
 	const totalCount = useMemo(() => dataLength || 0, [dataLength]);
 
+	const [firstLog, setFirstLog] = useState<ILog>();
+	const [lastLog, setLastLog] = useState<ILog>();
+
 	const { logs } = useLogsData({
 		result: data?.payload.data.newResult.data.result,
 		panelType: PANEL_TYPES.LIST,
 		stagedQuery: query,
 	});
+
+	useEffect(() => {
+		if (logs.length) {
+			setFirstLog(logs[0]);
+			setLastLog(logs[logs.length - 1]);
+		}
+	}, [logs]);
 
 	const flattenLogData = useMemo(
 		() => logs.map((log) => FlatLogData(log) as RowData),
@@ -180,7 +191,7 @@ function LogsPanelComponent({
 												isColumn: true,
 											},
 											op: OPERATORS['>'],
-											value: logs[0].id,
+											value: firstLog?.id || '',
 										},
 									],
 								},
@@ -221,7 +232,7 @@ function LogsPanelComponent({
 												isColumn: true,
 											},
 											op: OPERATORS['<'],
-											value: logs[logs.length - 1].id,
+											value: lastLog?.id || '',
 										},
 									],
 								},
