@@ -35,6 +35,7 @@ const (
 	TELEMETRY_LICENSE_ACT_FAILED             = "License Activation Failed"
 	TELEMETRY_EVENT_ENVIRONMENT              = "Environment"
 	TELEMETRY_EVENT_LANGUAGE                 = "Language"
+	TELEMETRY_EVENT_SERVICE                  = "ServiceName"
 	TELEMETRY_EVENT_LOGS_FILTERS             = "Logs Filters"
 	TELEMETRY_EVENT_DISTRIBUTED              = "Distributed"
 	TELEMETRY_EVENT_QUERY_RANGE_V3           = "Query Range V3 Metadata"
@@ -51,6 +52,7 @@ var SAAS_EVENTS_LIST = map[string]struct{}{
 	TELEMETRY_EVENT_ACTIVE_USER:              {},
 	TELEMETRY_EVENT_HEART_BEAT:               {},
 	TELEMETRY_EVENT_LANGUAGE:                 {},
+	TELEMETRY_EVENT_SERVICE:                  {},
 	TELEMETRY_EVENT_ENVIRONMENT:              {},
 	TELEMETRY_EVENT_USER_INVITATION_SENT:     {},
 	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED: {},
@@ -201,9 +203,15 @@ func createTelemetry() {
 			select {
 			case <-activeUserTicker.C:
 				if telemetry.activeUser["logs"] != 0 {
-					getLogsInfoInLastHeartBeatInterval, err := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(context.Background())
+					getLogsInfoInLastHeartBeatInterval, err := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(context.Background(), ACTIVE_USER_DURATION)
 					if err != nil && getLogsInfoInLastHeartBeatInterval == 0 {
 						telemetry.activeUser["logs"] = 0
+					}
+				}
+				if telemetry.activeUser["metrics"] != 0 {
+					getSamplesInfoInLastHeartBeatInterval, err := telemetry.reader.GetSamplesInfoInLastHeartBeatInterval(context.Background(), ACTIVE_USER_DURATION)
+					if err != nil && getSamplesInfoInLastHeartBeatInterval == 0 {
+						telemetry.activeUser["metrics"] = 0
 					}
 				}
 				if (telemetry.activeUser["traces"] != 0) || (telemetry.activeUser["metrics"] != 0) || (telemetry.activeUser["logs"] != 0) {
@@ -214,7 +222,7 @@ func createTelemetry() {
 
 			case <-ticker.C:
 
-				tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(context.Background())
+				tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
 
 				if len(tagsInfo.Env) != 0 {
 					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "")
@@ -224,12 +232,18 @@ func createTelemetry() {
 					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": language}, "")
 				}
 
+				for service, _ := range tagsInfo.Services {
+					telemetry.SendEvent(TELEMETRY_EVENT_SERVICE, map[string]interface{}{"serviceName": service}, "")
+				}
+
 				totalSpans, _ := telemetry.reader.GetTotalSpans(context.Background())
-				spansInLastHeartBeatInterval, _ := telemetry.reader.GetSpansInLastHeartBeatInterval(context.Background())
-				getSamplesInfoInLastHeartBeatInterval, _ := telemetry.reader.GetSamplesInfoInLastHeartBeatInterval(context.Background())
+				totalLogs, _ := telemetry.reader.GetTotalLogs(context.Background())
+				spansInLastHeartBeatInterval, _ := telemetry.reader.GetSpansInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
+				getSamplesInfoInLastHeartBeatInterval, _ := telemetry.reader.GetSamplesInfoInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
+				totalSamples, _ := telemetry.reader.GetTotalSamples(context.Background())
 				tsInfo, _ := telemetry.reader.GetTimeSeriesInfo(context.Background())
 
-				getLogsInfoInLastHeartBeatInterval, _ := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(context.Background())
+				getLogsInfoInLastHeartBeatInterval, _ := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
 
 				traceTTL, _ := telemetry.reader.GetTTL(context.Background(), &model.GetTTLParams{Type: constants.TraceTTL})
 				metricsTTL, _ := telemetry.reader.GetTTL(context.Background(), &model.GetTTLParams{Type: constants.MetricsTTL})
@@ -238,7 +252,9 @@ func createTelemetry() {
 				data := map[string]interface{}{
 					"totalSpans":                            totalSpans,
 					"spansInLastHeartBeatInterval":          spansInLastHeartBeatInterval,
+					"totalSamples":                          totalSamples,
 					"getSamplesInfoInLastHeartBeatInterval": getSamplesInfoInLastHeartBeatInterval,
+					"totalLogs":                             totalLogs,
 					"getLogsInfoInLastHeartBeatInterval":    getLogsInfoInLastHeartBeatInterval,
 					"countUsers":                            telemetry.countUsers,
 					"metricsTTLStatus":                      metricsTTL.Status,
@@ -269,7 +285,7 @@ func createTelemetry() {
 							"tracesBasedAlerts": alertsInfo.TracesBasedAlerts,
 						}
 						// send event only if there are dashboards or alerts
- 						if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 {
+						if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 {
 							telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
 						}
 					} else {
