@@ -2,13 +2,27 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './ExplorerColumnsRenderer.styles.scss';
 
-import { Button, Checkbox, Divider, Dropdown, Input, Typography } from 'antd';
+import {
+	Button,
+	Checkbox,
+	Divider,
+	Dropdown,
+	Input,
+	Tooltip,
+	Typography,
+} from 'antd';
 import { MenuProps } from 'antd/lib';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { GripVertical, PlusCircle, Search, Trash2 } from 'lucide-react';
+import {
+	AlertCircle,
+	GripVertical,
+	PlusCircle,
+	Search,
+	Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 import {
 	DragDropContext,
@@ -206,99 +220,104 @@ function ExplorerColumnsRenderer({
 		return <Spinner size="large" tip="Loading..." height="4vh" />;
 	}
 
-	if (isError) {
-		return <Typography.Text>{SOMETHING_WENT_WRONG}</Typography.Text>;
-	}
-
 	return (
 		<div className="explorer-columns-renderer">
-			<Typography.Text>Columns</Typography.Text>
-			<Divider />
-			<div className="explorer-columns-contents">
-				<DragDropContext onDragEnd={onDragEnd}>
-					<Droppable droppableId="drag-drop-list" direction="horizontal">
-						{(provided): JSX.Element => (
-							<div
-								className="explorer-columns"
-								{...provided.droppableProps}
-								ref={provided.innerRef}
-							>
-								{initialDataSource === DataSource.LOGS &&
-									selectedLogFields &&
-									selectedLogFields.map((field, index) => (
-										// eslint-disable-next-line react/no-array-index-key
-										<Draggable key={index} draggableId={index.toString()} index={index}>
-											{(dragProvided): JSX.Element => (
-												<div
-													className="explorer-column-card"
-													ref={dragProvided.innerRef}
-													{...dragProvided.draggableProps}
-													{...dragProvided.dragHandleProps}
-												>
-													<div className="explorer-column-title">
-														<GripVertical size={12} color="#5A5A5A" />
-														{field.name}
-													</div>
-													<Trash2
-														size={12}
-														color="red"
-														onClick={(): void => removeSelectedLogField(field.name)}
-													/>
-												</div>
-											)}
-										</Draggable>
-									))}
-								{initialDataSource === DataSource.TRACES &&
-									selectedTracesFields &&
-									selectedTracesFields.map((field, index) => (
-										// eslint-disable-next-line react/no-array-index-key
-										<Draggable key={index} draggableId={index.toString()} index={index}>
-											{(dragProvided): JSX.Element => (
-												<div
-													className="explorer-column-card"
-													ref={dragProvided.innerRef}
-													{...dragProvided.draggableProps}
-													{...dragProvided.dragHandleProps}
-												>
-													<div className="explorer-column-title">
-														<GripVertical size={12} color="#5A5A5A" />
-														{field.key}
-													</div>
-													<Trash2
-														size={12}
-														color="red"
-														onClick={(): void => removeSelectedLogField(field.key)}
-													/>
-												</div>
-											)}
-										</Draggable>
-									))}
-							</div>
-						)}
-					</Droppable>
-				</DragDropContext>
-				<div>
-					<Dropdown
-						menu={{ items }}
-						arrow
-						placement="top"
-						overlayStyle={{
-							maxHeight: '200px',
-							overflow: 'auto',
-							padding: 0,
-							margin: 0,
-						}}
-						open={open}
-						overlayClassName="explorer-columns-dropdown"
-					>
-						<Button
-							className="action-btn"
-							icon={<PlusCircle size={16} />}
-							onClick={toggleDropdown}
-						/>
-					</Dropdown>
-				</div>
+			<div className="title">
+				<Typography.Text>Columns</Typography.Text>
+				{isError && (
+					<Tooltip title={SOMETHING_WENT_WRONG}>
+						<AlertCircle size={16} />
+					</Tooltip>
+				)}
 			</div>
+			<Divider />
+			{!isError && (
+				<div className="explorer-columns-contents">
+					<DragDropContext onDragEnd={onDragEnd}>
+						<Droppable droppableId="drag-drop-list" direction="horizontal">
+							{(provided): JSX.Element => (
+								<div
+									className="explorer-columns"
+									{...provided.droppableProps}
+									ref={provided.innerRef}
+								>
+									{initialDataSource === DataSource.LOGS &&
+										selectedLogFields &&
+										selectedLogFields.map((field, index) => (
+											// eslint-disable-next-line react/no-array-index-key
+											<Draggable key={index} draggableId={index.toString()} index={index}>
+												{(dragProvided): JSX.Element => (
+													<div
+														className="explorer-column-card"
+														ref={dragProvided.innerRef}
+														{...dragProvided.draggableProps}
+														{...dragProvided.dragHandleProps}
+													>
+														<div className="explorer-column-title">
+															<GripVertical size={12} color="#5A5A5A" />
+															{field.name}
+														</div>
+														<Trash2
+															size={12}
+															color="red"
+															onClick={(): void => removeSelectedLogField(field.name)}
+														/>
+													</div>
+												)}
+											</Draggable>
+										))}
+									{initialDataSource === DataSource.TRACES &&
+										selectedTracesFields &&
+										selectedTracesFields.map((field, index) => (
+											// eslint-disable-next-line react/no-array-index-key
+											<Draggable key={index} draggableId={index.toString()} index={index}>
+												{(dragProvided): JSX.Element => (
+													<div
+														className="explorer-column-card"
+														ref={dragProvided.innerRef}
+														{...dragProvided.draggableProps}
+														{...dragProvided.dragHandleProps}
+													>
+														<div className="explorer-column-title">
+															<GripVertical size={12} color="#5A5A5A" />
+															{field.key}
+														</div>
+														<Trash2
+															size={12}
+															color="red"
+															onClick={(): void => removeSelectedLogField(field.key)}
+														/>
+													</div>
+												)}
+											</Draggable>
+										))}
+								</div>
+							)}
+						</Droppable>
+					</DragDropContext>
+					<div>
+						<Dropdown
+							menu={{ items }}
+							arrow
+							placement="top"
+							overlayStyle={{
+								maxHeight: '200px',
+								overflow: 'auto',
+								padding: 0,
+								margin: 0,
+							}}
+							open={open}
+							overlayClassName="explorer-columns-dropdown"
+						>
+							<Button
+								className="action-btn"
+								icon={<PlusCircle size={16} />}
+								onClick={toggleDropdown}
+							/>
+						</Dropdown>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
