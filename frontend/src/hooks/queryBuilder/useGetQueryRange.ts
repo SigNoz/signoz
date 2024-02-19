@@ -17,7 +17,7 @@ type UseGetQueryRange = (
 export const useGetQueryRange: UseGetQueryRange = (requestData, options) => {
 	const { selectedDashboard } = useDashboard();
 
-	const version = selectedDashboard?.data?.version || 'v4';
+	const version = selectedDashboard?.data?.version || 'v3';
 
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
