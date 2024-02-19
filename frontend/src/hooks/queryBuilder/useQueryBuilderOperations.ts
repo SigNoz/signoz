@@ -33,7 +33,7 @@ export const useQueryOperations: UseQueryOperations = ({
 	index,
 	filterConfigs,
 	formula,
-	isExplorerPanel = false,
+	isDashboardPanel = false,
 }) => {
 	const {
 		handleSetQueryData,
@@ -131,7 +131,7 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleChangeDataSource = useCallback(
 		(nextSource: DataSource): void => {
-			if (isExplorerPanel) {
+			if (isDashboardPanel) {
 				if (nextSource === DataSource.LOGS) {
 					redirectWithQueryBuilderData(listViewInitialLogQuery);
 				} else if (nextSource === DataSource.TRACES) {
@@ -161,7 +161,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			handleSetQueryData(index, newQuery);
 		},
 		[
-			isExplorerPanel,
+			isDashboardPanel,
 			panelType,
 			query,
 			handleSetQueryData,

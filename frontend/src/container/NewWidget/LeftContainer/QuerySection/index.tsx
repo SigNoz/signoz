@@ -149,7 +149,7 @@ function QuerySection({
 				<QueryBuilder
 					panelType={PANEL_TYPES.LIST}
 					filterConfigs={filterConfigs}
-					isExplorerPanel
+					isDashboardPanel
 				/>
 			),
 		},

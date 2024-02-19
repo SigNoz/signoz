@@ -24,7 +24,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 	panelType: newPanelType,
 	filterConfigs = {},
 	queryComponents,
-	isExplorerPanel = false,
+	isDashboardPanel = false,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
@@ -124,7 +124,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 			justify="start"
 			className="query-builder-container"
 		>
-			{!isExplorerPanel && (
+			{!isDashboardPanel && (
 				<div className="new-query-formula-buttons-container">
 					<Button.Group>
 						<Tooltip title="Add Query">
@@ -154,7 +154,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 							className="query-builder-queries-formula-container"
 							ref={containerRef}
 						>
-							{panelType === PANEL_TYPES.LIST && isExplorerPanel && (
+							{panelType === PANEL_TYPES.LIST && isDashboardPanel && (
 								<Query
 									index={0}
 									isAvailableToDisable={isAvailableToDisableQuery}
@@ -166,10 +166,10 @@ export const QueryBuilder = memo(function QueryBuilder({
 											: listViewLogFilterConfigs
 									}
 									queryComponents={queryComponents}
-									isExplorerPanel
+									isDashboardPanel
 								/>
 							)}
-							{!isExplorerPanel &&
+							{!isDashboardPanel &&
 								currentQuery.builder.queryData.map((query, index) => (
 									<Col
 										key={query.queryName}
@@ -187,7 +187,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 										/>
 									</Col>
 								))}
-							{!isExplorerPanel &&
+							{!isDashboardPanel &&
 								currentQuery.builder.queryFormulas.map((formula, index) => {
 									const isAllMetricDataSource = currentQuery.builder.queryData.every(
 										(query) => query.dataSource === DataSource.METRICS,
@@ -223,7 +223,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 				</Row>
 			</Col>
 
-			{!isExplorerPanel && (
+			{!isDashboardPanel && (
 				<Col span={1} className="query-builder-mini-map">
 					{currentQuery.builder.queryData.map((query) => (
 						<Button

@@ -116,6 +116,12 @@ function GridCardGraph({
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
 
+	const queryEnabledCondition =
+		isVisible &&
+		!isEmptyWidget &&
+		isQueryEnabled &&
+		widget.panelTypes !== PANEL_TYPES.LIST;
+
 	const queryResponse = useGetQueryRange(
 		{
 			selectedTime: widget?.timePreferance,
@@ -135,11 +141,7 @@ function GridCardGraph({
 				widget.timePreferance,
 			],
 			keepPreviousData: true,
-			enabled:
-				isVisible &&
-				!isEmptyWidget &&
-				isQueryEnabled &&
-				widget.panelTypes !== PANEL_TYPES.LIST,
+			enabled: queryEnabledCondition,
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);

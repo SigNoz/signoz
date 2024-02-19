@@ -11,7 +11,7 @@ import { useOrderByFilter } from './useOrderByFilter';
 export function OrderByFilter({
 	query,
 	onChange,
-	isExplorerPanel = false,
+	isDashboardPanel = false,
 }: OrderByFilterProps): JSX.Element {
 	const {
 		debouncedSearchText,
@@ -31,7 +31,7 @@ export function OrderByFilter({
 			searchText: debouncedSearchText,
 		},
 		{
-			enabled: !!query.aggregateAttribute.key || isExplorerPanel,
+			enabled: !!query.aggregateAttribute.key || isDashboardPanel,
 			keepPreviousData: true,
 		},
 	);

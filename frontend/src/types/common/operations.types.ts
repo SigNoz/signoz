@@ -12,7 +12,7 @@ import { SelectOption } from './select';
 type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> &
 	Pick<QueryBuilderProps, 'filterConfigs'> & {
 		formula?: IBuilderFormula;
-		isExplorerPanel?: boolean;
+		isDashboardPanel?: boolean;
 	};
 
 export type HandleChangeQueryData = <

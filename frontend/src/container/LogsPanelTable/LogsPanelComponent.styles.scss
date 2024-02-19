@@ -63,13 +63,17 @@
         .resize-table {
             .ant-table-wrapper .ant-table-tbody >tr >td {
                 background-color: var(--bg-vanilla-100);
-                color: var(--bg-ink-500);
-                border-color: rgba(0, 0, 0, 0.06);
+                .ant-typography {
+                    color: var(--bg-ink-500);
+                }
             }
             .ant-table-wrapper .ant-table-thead > tr > th {
-                background-color: var(--bg-vanilla-300);
+                background-color: var(--bg-vanilla-100);
                 color: var(--bg-ink-500); 
-                border-color: rgba(0, 0, 0, 0.06);
+            }
+
+            .ant-table-wrapper .ant-table-header {
+                border-bottom: 0.5px solid var(--bg-vanilla-400);
             }
         }
     }

@@ -224,10 +224,11 @@ function WidgetGraphComponent({
 		});
 	};
 
-	if (
+	const loadingState =
 		(queryResponse.isLoading || queryResponse.status === 'idle') &&
-		widget.panelTypes !== PANEL_TYPES.LIST
-	) {
+		widget.panelTypes !== PANEL_TYPES.LIST;
+
+	if (loadingState) {
 		return (
 			<Skeleton
 				style={{
@@ -278,7 +279,7 @@ function WidgetGraphComponent({
 				onCancel={onToggleModelHandler}
 				width="85%"
 				destroyOnClose
-				className="full-view-modal"
+				className="widget-full-view"
 			>
 				<FullView
 					name={`${name}expanded`}

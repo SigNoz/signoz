@@ -16,7 +16,7 @@
 	}
 }
 
-.full-view-modal {
+.widget-full-view {
 	.ant-modal-content {
 		background-color: var(--bg-ink-400);
 
@@ -29,5 +29,15 @@
 .lightMode {
 	.fullscreen-grid-container {
 		background-color: rgb(250, 250, 250);
+	}
+
+	.widget-full-view {
+		.ant-modal-content {
+			background-color: var(--bg-vanilla-100);
+		}
+
+		.ant-modal-header {
+			background-color: var(--bg-vanilla-100);
+		}
 	}
 }

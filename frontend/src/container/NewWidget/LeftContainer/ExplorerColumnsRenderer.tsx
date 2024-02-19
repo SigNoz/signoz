@@ -2,6 +2,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './ExplorerColumnsRenderer.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
 	Checkbox,
@@ -16,6 +17,7 @@ import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	AlertCircle,
 	GripVertical,
@@ -216,6 +218,8 @@ function ExplorerColumnsRenderer({
 		}
 	};
 
+	const isDarkMode = useIsDarkMode();
+
 	if (isLoading) {
 		return <Spinner size="large" tip="Loading..." height="4vh" />;
 	}
@@ -300,18 +304,17 @@ function ExplorerColumnsRenderer({
 							menu={{ items }}
 							arrow
 							placement="top"
-							overlayStyle={{
-								maxHeight: '200px',
-								overflow: 'auto',
-								padding: 0,
-								margin: 0,
-							}}
 							open={open}
 							overlayClassName="explorer-columns-dropdown"
 						>
 							<Button
 								className="action-btn"
-								icon={<PlusCircle size={16} />}
+								icon={
+									<PlusCircle
+										size={16}
+										color={isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100}
+									/>
+								}
 								onClick={toggleDropdown}
 							/>
 						</Dropdown>

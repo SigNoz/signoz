@@ -3,7 +3,6 @@ import './LogsPanelComponent.styles.scss';
 import { Table } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
-// import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -268,21 +267,7 @@ function LogsPanelComponent({
 							isLoading={isFetching}
 							offset={pagination.offset}
 							countPerPage={pageSize}
-							// handleNavigatePrevious={(): void => {
-							// 	setPagination({
-							// 		...pagination,
-							// 		limit: 0,
-							// 		offset: pagination.offset - pageSize,
-							// 	});
-							// }}
 							handleNavigatePrevious={handlePreviousPagination}
-							// handleNavigateNext={(): void => {
-							// 	setPagination({
-							// 		...pagination,
-							// 		limit: 0,
-							// 		offset: pagination.offset + pageSize,
-							// 	});
-							// }}
 							handleNavigateNext={handleNextPagination}
 							handleCountItemsPerPageChange={handleChangePageSize}
 							isLogPanel={isOrderByTimeStamp}

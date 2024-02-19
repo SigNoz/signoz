@@ -2,6 +2,7 @@ import './WidgetFullView.styles.scss';
 
 import { SyncOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
+import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
@@ -97,7 +98,7 @@ function FullView({
 		},
 		{
 			queryKey: `FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
-			enabled: !isDependedDataLoaded && widget.panelTypes !== PANEL_TYPES.LIST,
+			enabled: !isDependedDataLoaded && widget.panelTypes !== PANEL_TYPES.LIST, // Internally both the list view panel has it's own query range api call, so we don't need to call it again
 		},
 	);
 
@@ -195,14 +196,13 @@ function FullView({
 			</div>
 
 			<div
-				className={
-					isDashboardLocked
-						? `graph-container disabled ${isListView && 'list-graph-container'}`
-						: `graph-container ${isListView && 'list-graph-container'}`
-				}
+				className={cx('graph-container', {
+					disabled: isDashboardLocked,
+					'list-graph-container': isListView,
+				})}
 				ref={fullViewRef}
 			>
-				{chartOptions !== undefined && (
+				{chartOptions && (
 					<GraphContainer
 						style={{
 							height: isListView ? '100%' : '90%',

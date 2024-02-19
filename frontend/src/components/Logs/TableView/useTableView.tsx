@@ -14,7 +14,7 @@ import LogStateIndicator, {
 	LogType,
 } from '../LogStateIndicator/LogStateIndicator';
 import {
-	defaultIsDashboardPanelStyle,
+	defaultDashboardPanelStyle,
 	defaultTableStyle,
 	getDefaultCellStyle,
 } from './config';
@@ -54,7 +54,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
 						style: isDashboardPanel
-							? defaultIsDashboardPanelStyle
+							? defaultDashboardPanelStyle
 							: getDefaultCellStyle(isDarkMode),
 					},
 					children: (
