@@ -5,7 +5,7 @@ import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 // import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import Controls from 'container/Controls';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
@@ -30,8 +30,10 @@ import {
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { v4 as uuid } from 'uuid';
 
 import { getLogPanelColumnsList } from './utils';
 
@@ -152,6 +154,92 @@ function LogsPanelComponent({
 		[logs, onSetActiveLog],
 	);
 
+	const isOrderByTimeStamp =
+		query.builder.queryData[0].orderBy.length > 0 &&
+		query.builder.queryData[0].orderBy[0].columnName === 'timestamp';
+
+	const handlePreviousPagination = (): void => {
+		if (isOrderByTimeStamp) {
+			setRequestData({
+				...requestData,
+				query: {
+					...requestData.query,
+					builder: {
+						...requestData.query.builder,
+						queryData: [
+							{
+								...requestData.query.builder.queryData[0],
+								filters: {
+									...requestData.query.builder.queryData[0].filters,
+									items: [
+										{
+											id: uuid(),
+											key: {
+												key: 'id',
+												type: '',
+												dataType: DataTypes.String,
+												isColumn: true,
+											},
+											op: OPERATORS['<'],
+											value: logs[0].id,
+										},
+									],
+								},
+							},
+						],
+					},
+				},
+			});
+			return;
+		}
+		setPagination({
+			...pagination,
+			limit: 0,
+			offset: pagination.offset - pageSize,
+		});
+	};
+
+	const handleNextPagination = (): void => {
+		if (isOrderByTimeStamp) {
+			setRequestData({
+				...requestData,
+				query: {
+					...requestData.query,
+					builder: {
+						...requestData.query.builder,
+						queryData: [
+							{
+								...requestData.query.builder.queryData[0],
+								filters: {
+									...requestData.query.builder.queryData[0].filters,
+									items: [
+										{
+											id: uuid(),
+											key: {
+												key: 'id',
+												type: '',
+												dataType: DataTypes.String,
+												isColumn: true,
+											},
+											op: OPERATORS['>'],
+											value: logs[logs.length - 1].id,
+										},
+									],
+								},
+							},
+						],
+					},
+				},
+			});
+			return;
+		}
+		setPagination({
+			...pagination,
+			limit: 0,
+			offset: pagination.offset + pageSize,
+		});
+	};
+
 	if (isError) {
 		return <div>{SOMETHING_WENT_WRONG}</div>;
 	}
@@ -180,21 +268,24 @@ function LogsPanelComponent({
 							isLoading={isFetching}
 							offset={pagination.offset}
 							countPerPage={pageSize}
-							handleNavigatePrevious={(): void => {
-								setPagination({
-									...pagination,
-									limit: 0,
-									offset: pagination.offset - pageSize,
-								});
-							}}
-							handleNavigateNext={(): void => {
-								setPagination({
-									...pagination,
-									limit: 0,
-									offset: pagination.offset + pageSize,
-								});
-							}}
+							// handleNavigatePrevious={(): void => {
+							// 	setPagination({
+							// 		...pagination,
+							// 		limit: 0,
+							// 		offset: pagination.offset - pageSize,
+							// 	});
+							// }}
+							handleNavigatePrevious={handlePreviousPagination}
+							// handleNavigateNext={(): void => {
+							// 	setPagination({
+							// 		...pagination,
+							// 		limit: 0,
+							// 		offset: pagination.offset + pageSize,
+							// 	});
+							// }}
+							handleNavigateNext={handleNextPagination}
 							handleCountItemsPerPageChange={handleChangePageSize}
+							isLogPanel={isOrderByTimeStamp}
 						/>
 					</div>
 				)}
