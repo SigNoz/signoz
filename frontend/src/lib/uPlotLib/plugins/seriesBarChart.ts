@@ -294,19 +294,20 @@ export function seriesBarsPlugin(opts): uPlot.Plugin {
 				opts.padding = [0, null, 0, null];
 			}
 
-			uPlot.assign(opts.axes![0], {
-				splits: (u) => {
-					console.log({ u, data: u.data[0] });
+			console.log('opts', opts);
+
+			uPlot.assign(opts.axes[0], {
+				splits: (u, axisIdx) => {
 					const _dir = dir * (ori === 0 ? 1 : -1);
 					const splits2 = u._data[0].slice();
 					return _dir === 1 ? splits2 : splits2.reverse();
 				},
+				values: (u) => u.data[0],
 				gap: 15,
 				size: ori === 0 ? 40 : 150,
 				labelSize: 20,
 				grid: { show: false },
 				ticks: { show: false },
-
 				side: ori === 0 ? 2 : 3,
 			});
 
@@ -316,7 +317,6 @@ export function seriesBarsPlugin(opts): uPlot.Plugin {
 						//	pxAlign: false,
 						//	stroke: "rgba(255,0,0,0.5)",
 						paths: barsBuilder,
-						values: (u: uPlot) => u.data[0],
 						points: {
 							show: drawPoints,
 						},

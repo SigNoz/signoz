@@ -226,6 +226,6 @@ export const getUPlotChartOptions = ({
 			graphsVisibilityStates,
 			panelType,
 		}),
-		axes: getAxes(isDarkMode, yAxisUnit),
+		axes: getAxes(isDarkMode, yAxisUnit, panelType),
 	};
 };
