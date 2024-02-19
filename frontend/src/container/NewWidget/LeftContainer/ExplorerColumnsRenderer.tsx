@@ -5,6 +5,7 @@ import './ExplorerColumnsRenderer.styles.scss';
 import { Button, Checkbox, Divider, Dropdown, Input, Typography } from 'antd';
 import { MenuProps } from 'antd/lib';
 import Spinner from 'components/Spinner';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GripVertical, PlusCircle, Search, Trash2 } from 'lucide-react';
@@ -38,7 +39,7 @@ function ExplorerColumnsRenderer({
 
 	const initialDataSource = currentQuery.builder.queryData[0].dataSource;
 
-	const { data, isLoading } = useGetAggregateKeys(
+	const { data, isLoading, isError } = useGetAggregateKeys(
 		{
 			aggregateAttribute: '',
 			dataSource: currentQuery.builder.queryData[0].dataSource,
@@ -202,7 +203,11 @@ function ExplorerColumnsRenderer({
 	};
 
 	if (isLoading) {
-		return <Spinner size="large" tip="Loading..." />;
+		return <Spinner size="large" tip="Loading..." height="4vh" />;
+	}
+
+	if (isError) {
+		return <Typography.Text>{SOMETHING_WENT_WRONG}</Typography.Text>;
 	}
 
 	return (
