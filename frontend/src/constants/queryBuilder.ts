@@ -180,7 +180,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	orderBy: [],
 	groupBy: [],
 	legend: '',
-	reduceTo: 'sum',
+	reduceTo: 'avg',
 };
 
 const initialQueryBuilderFormLogsValues: IBuilderQuery = {

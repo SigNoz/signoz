@@ -101,7 +101,7 @@ export const insertWidgetIdInResponse = (widgetID: string): any => ({
 									limit: null,
 									orderBy: [],
 									queryName: 'A',
-									reduceTo: 'sum',
+									reduceTo: 'avg',
 									stepInterval: 60,
 								},
 							],

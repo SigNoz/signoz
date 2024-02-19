@@ -58,7 +58,7 @@ export const getTraceToLogsQuery = (
 					legend: '',
 					orderBy: [],
 					queryName: 'A',
-					reduceTo: 'min',
+					reduceTo: 'avg',
 					stepInterval: getStep({
 						start: minTime,
 						end: maxTime,

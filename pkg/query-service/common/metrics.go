@@ -21,6 +21,5 @@ func AdjustedMetricTimeRange(start, end, step int64, aggregaOperator v3.TimeAggr
 
 func PastDayRoundOff() int64 {
 	now := time.Now().UnixMilli()
-	pastDay := now - (now % (time.Hour.Milliseconds() * 24))
-	return pastDay
+	return int64(math.Floor(float64(now)/float64(time.Hour.Milliseconds()*24))) * time.Hour.Milliseconds() * 24
 }

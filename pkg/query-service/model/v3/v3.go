@@ -509,11 +509,11 @@ const (
 	SpaceAggregationMin          SpaceAggregation = "min"
 	SpaceAggregationMax          SpaceAggregation = "max"
 	SpaceAggregationCount        SpaceAggregation = "count"
-	SpaceAggregationPercentile50 SpaceAggregation = "percentile_50"
-	SpaceAggregationPercentile75 SpaceAggregation = "percentile_75"
-	SpaceAggregationPercentile90 SpaceAggregation = "percentile_90"
-	SpaceAggregationPercentile95 SpaceAggregation = "percentile_95"
-	SpaceAggregationPercentile99 SpaceAggregation = "percentile_99"
+	SpaceAggregationPercentile50 SpaceAggregation = "p50"
+	SpaceAggregationPercentile75 SpaceAggregation = "p75"
+	SpaceAggregationPercentile90 SpaceAggregation = "p90"
+	SpaceAggregationPercentile95 SpaceAggregation = "p95"
+	SpaceAggregationPercentile99 SpaceAggregation = "p99"
 )
 
 func (s SpaceAggregation) Validate() error {
@@ -659,8 +659,11 @@ func (b *BuilderQuery) Validate() error {
 					return fmt.Errorf("aggregate operator is invalid: %w", err)
 				}
 			} else {
-				if err := b.TimeAggregation.Validate(); err != nil {
-					return fmt.Errorf("time aggregation is invalid: %w", err)
+				// the time aggregation is not needed for percentile operators
+				if !IsPercentileOperator(b.SpaceAggregation) {
+					if err := b.TimeAggregation.Validate(); err != nil {
+						return fmt.Errorf("time aggregation is invalid: %w", err)
+					}
 				}
 
 				if err := b.SpaceAggregation.Validate(); err != nil {
@@ -723,13 +726,30 @@ func (b *BuilderQuery) Validate() error {
 				if len(function.Args) == 0 {
 					return fmt.Errorf("timeShiftBy param missing in query")
 				}
+				_, ok := function.Args[0].(float64)
+				if !ok {
+					// if string, attempt to convert to float
+					timeShiftBy, err := strconv.ParseFloat(function.Args[0].(string), 64)
+					if err != nil {
+						return fmt.Errorf("timeShiftBy param should be a number")
+					}
+					function.Args[0] = timeShiftBy
+				}
 			} else if function.Name == FunctionNameEWMA3 ||
 				function.Name == FunctionNameEWMA5 ||
 				function.Name == FunctionNameEWMA7 {
 				if len(function.Args) == 0 {
 					return fmt.Errorf("alpha param missing in query")
 				}
-				alpha := function.Args[0].(float64)
+				alpha, ok := function.Args[0].(float64)
+				if !ok {
+					// if string, attempt to convert to float
+					alpha, err := strconv.ParseFloat(function.Args[0].(string), 64)
+					if err != nil {
+						return fmt.Errorf("alpha param should be a float")
+					}
+					function.Args[0] = alpha
+				}
 				if alpha < 0 || alpha > 1 {
 					return fmt.Errorf("alpha param should be between 0 and 1")
 				}
@@ -739,6 +759,15 @@ func (b *BuilderQuery) Validate() error {
 				function.Name == FunctionNameClampMin {
 				if len(function.Args) == 0 {
 					return fmt.Errorf("threshold param missing in query")
+				}
+				_, ok := function.Args[0].(float64)
+				if !ok {
+					// if string, attempt to convert to float
+					threshold, err := strconv.ParseFloat(function.Args[0].(string), 64)
+					if err != nil {
+						return fmt.Errorf("threshold param should be a float")
+					}
+					function.Args[0] = threshold
 				}
 			}
 		}
