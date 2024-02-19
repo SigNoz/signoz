@@ -1,17 +1,15 @@
 import './QueryFunctions.styles.scss';
 
-import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Input, Select, Tooltip } from 'antd';
-import {
-	queryFunctionOptions,
-	queryFunctionsTypesConfig,
-} from 'constants/queryFunctionOptions';
-import debounce from 'lodash-es/debounce';
-import { FunctionSquare, Plus, Trash2 } from 'lucide-react';
+import { Button, Tooltip } from 'antd';
+import cx from 'classnames';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { cloneDeep, pullAt } from 'lodash-es';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { QueryFunctionProps } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunctionsTypes } from 'types/common/queryBuilder';
-import { v4 as uuid } from 'uuid';
+
+import Function from './Function';
 
 const defaultFunctionStruct: QueryFunctionProps = {
 	name: QueryFunctionsTypes.CUTOFF_MIN,
@@ -23,6 +21,55 @@ interface QueryFunctionsProps {
 	onChange: (functions: QueryFunctionProps[]) => void;
 }
 
+// SVG component
+function FunctionIcon({
+	fillColor = 'white',
+	className,
+}: {
+	fillColor: string;
+	className: string;
+}): JSX.Element {
+	return (
+		<svg
+			width="24"
+			height="24"
+			viewBox="0 0 24 24"
+			fill="none"
+			xmlns="http://www.w3.org/2000/svg"
+			className={className}
+		>
+			<path
+				d="M3 18.13C5.71436 18.13 6.8001 16.7728 6.8001 14.3299V8.62978C6.8001 5.91542 8.15728 4.15109 11.1431 4.55824"
+				stroke={fillColor}
+				strokeWidth="1.995"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+			<path
+				d="M3 10.2583H10.7359"
+				stroke={fillColor}
+				strokeWidth="1.995"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+			<path
+				d="M22.0005 11.344L15.2146 18.1299"
+				stroke={fillColor}
+				strokeWidth="1.995"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+			<path
+				d="M15.2146 11.344L22.0005 18.1299"
+				stroke={fillColor}
+				strokeWidth="1.995"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
+		</svg>
+	);
+}
+
 export default function QueryFunctions({
 	queryFunctions,
 	onChange,
@@ -31,12 +78,13 @@ export default function QueryFunctions({
 		queryFunctions,
 	);
 
+	const isDarkMode = useIsDarkMode();
+
 	const handleAddNewFunction = (): void => {
 		const updatedFunctionsArr = [
 			...functions,
 			{
 				...defaultFunctionStruct,
-				id: uuid(),
 			},
 		];
 
@@ -49,14 +97,11 @@ export default function QueryFunctions({
 		queryFunction: QueryFunctionProps,
 		index: number,
 	): void => {
-		console.log('function', queryFunction, index);
+		const clonedFunctions = cloneDeep(functions);
+		pullAt(clonedFunctions, index);
 
-		const filteredQueryFunctions = functions.filter(
-			(func) => queryFunction.id !== func.id,
-		);
-
-		setFunctions(filteredQueryFunctions);
-		onChange(filteredQueryFunctions);
+		setFunctions(clonedFunctions);
+		onChange(clonedFunctions);
 	};
 
 	const handleUpdateFunctionName = (
@@ -66,14 +111,12 @@ export default function QueryFunctions({
 	): void => {
 		console.log(func);
 
-		const updateFunctions = [...functions];
+		const updateFunctions = cloneDeep(functions);
 
-		for (let index = 0; index < updateFunctions.length; index++) {
-			if (updateFunctions[index].id === func.id) {
-				updateFunctions[index].name = value;
-				setFunctions(updateFunctions);
-				onChange(updateFunctions);
-			}
+		if (updateFunctions && updateFunctions.length > 0 && updateFunctions[index]) {
+			updateFunctions[index].name = value;
+			setFunctions(updateFunctions);
+			onChange(updateFunctions);
 		}
 	};
 
@@ -84,78 +127,57 @@ export default function QueryFunctions({
 	): void => {
 		console.log(func, index, value);
 
-		const updateFunctions = [...functions];
+		const updateFunctions = cloneDeep(functions);
 
-		for (let index = 0; index < updateFunctions.length; index++) {
-			if (updateFunctions[index].id === func.id) {
-				updateFunctions[index].args = [value];
-				setFunctions(updateFunctions);
-				onChange(updateFunctions);
-			}
+		if (updateFunctions && updateFunctions.length > 0 && updateFunctions[index]) {
+			updateFunctions[index].args = [value];
+			setFunctions(updateFunctions);
+			onChange(updateFunctions);
 		}
 	};
 
-	const debouncedhandleUpdateFunctionArgs = debounce(
-		handleUpdateFunctionArgs,
-		500,
-	);
-
 	return (
-		<div className="query-functions-container">
+		<div
+			className={cx(
+				'query-functions-container',
+				functions && functions.length > 0 ? 'hasFunctions' : '',
+			)}
+		>
+			<Button className="periscope-btn function-btn">
+				<FunctionIcon
+					className="function-icon"
+					fillColor={isDarkMode ? '#0B0C0E' : 'white'}
+				/>
+			</Button>
+
 			<div className="query-functions-list">
-				{functions.map((func, index) => {
-					console.log('func', func, queryFunctionsTypesConfig);
-
-					const { showInput, placeholder } = queryFunctionsTypesConfig[func.name];
-
-					const placeholderText =
-						(func.args && func.args.length > 0 && func.args[0]) || placeholder;
-
-					// eslint-disable-next-line react/no-array-index-key
-					return (
-						<Flex className="query-function" key={func.id} gap={8}>
-							<>
-								<Button className="periscope-btn">
-									<FunctionSquare size={16} />
-								</Button>
-								<Select
-									value={func.name}
-									style={{ minWidth: '180px' }}
-									onChange={(value): void => {
-										handleUpdateFunctionName(func, index, value);
-									}}
-									options={queryFunctionOptions}
-								/>
-							</>
-
-							<Input
-								disabled={!showInput}
-								placeholder={placeholderText}
-								onChange={(event): void => {
-									debouncedhandleUpdateFunctionArgs(func, index, event.target.value);
-								}}
-							/>
-
-							<Button
-								className="periscope-btn"
-								onClick={(): void => {
-									handleDeleteFunction(func, index);
-								}}
-							>
-								<Trash2 size={16} />
-							</Button>
-						</Flex>
-					);
-				})}
+				{functions.map((func, index) => (
+					<Function
+						funcData={func}
+						index={index}
+						// eslint-disable-next-line react/no-array-index-key
+						key={index}
+						handleUpdateFunctionArgs={handleUpdateFunctionArgs}
+						handleUpdateFunctionName={handleUpdateFunctionName}
+						handleDeleteFunction={handleDeleteFunction}
+					/>
+				))}
 			</div>
 
-			<Tooltip title="Add New Function" placement="right">
+			<Tooltip
+				title={
+					functions && functions.length >= 3
+						? 'Functions are in early access. You can add a maximum of 3 function as of now.'
+						: ''
+				}
+				placement="right"
+			>
 				<Button
 					className="periscope-btn add-function-btn"
+					disabled={functions && functions.length >= 3}
 					onClick={handleAddNewFunction}
 				>
-					<FunctionSquare size={16} color={Color.BG_INK_500} />
-					<Plus size={12} color={Color.BG_INK_500} />
+					<Plus size={14} color={isDarkMode ? '#0B0C0E' : 'white'} />
 				</Button>
 			</Tooltip>
 		</div>

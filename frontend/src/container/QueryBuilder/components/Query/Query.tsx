@@ -38,7 +38,6 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
-import QueryFunctions from '../QueryFunctions/QueryFunctions';
 import SpaceAggregationOptions from '../SpaceAggregationOptions/SpaceAggregationOptions';
 // ** Types
 import { QueryProps } from './Query.interfaces';
@@ -299,12 +298,15 @@ export const Query = memo(function Query({
 	return (
 		<Row gutter={[0, 12]}>
 			<QBEntityOptions
+				isMetricsDataSource={isMetricsDataSource}
 				isCollapsed={isCollapse}
 				entityType="query"
 				entityData={query}
 				onToggleVisibility={handleToggleDisableQuery}
 				onDelete={handleDeleteQuery}
 				onCollapseEntity={handleToggleCollapsQuery}
+				query={query}
+				onQueryFunctionsUpdates={handleQueryFunctionsUpdates}
 				showDeleteButton={currentQuery.builder.queryData.length > 1}
 				isListViewPanel={isListViewPanel}
 			/>
@@ -445,15 +447,6 @@ export const Query = memo(function Query({
 									)}
 								</Col>
 							</Row>
-						</Col>
-					)}
-
-					{isMetricsDataSource && (
-						<Col span={24}>
-							<QueryFunctions
-								queryFunctions={query.functions}
-								onChange={handleQueryFunctionsUpdates}
-							/>
 						</Col>
 					)}
 

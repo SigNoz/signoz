@@ -77,22 +77,22 @@ export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
 	cutOffMin: {
 		showInput: true,
 		inputType: 'text',
-		placeholder: 'Please enter Threshold',
+		placeholder: 'Threshold',
 	},
 	cutOffMax: {
 		showInput: true,
 		inputType: 'text',
-		placeholder: 'Please enter Threshold',
+		placeholder: 'Threshold',
 	},
 	clampMin: {
 		showInput: true,
 		inputType: 'text',
-		placeholder: 'Please enter Threshold',
+		placeholder: 'Threshold',
 	},
 	clampMax: {
 		showInput: true,
 		inputType: 'text',
-		placeholder: 'Please enter Threshold',
+		placeholder: 'Threshold',
 	},
 	absolute: {
 		showInput: false,
@@ -109,17 +109,17 @@ export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
 	ewma3: {
 		showInput: true,
 		inputType: 'text',
-		placeholder: 'Please enter alpha',
+		placeholder: 'Alpha',
 	},
 	ewma5: {
 		showInput: true,
 		inputType: 'text',
-		placeholder: 'Please enter alpha',
+		placeholder: 'Alpha',
 	},
 	ewma7: {
 		showInput: true,
 		inputType: 'text',
-		placeholder: 'Please enter alpha',
+		placeholder: 'Alpha',
 	},
 	median3: {
 		showInput: false,
