@@ -50,6 +50,8 @@ function CreateAlertChannels({
 
      *Summary:* {{ .Annotations.summary }}
      *Description:* {{ .Annotations.description }}
+     *RelatedLogs:* {{ .Annotations.related_logs }}
+     *RelatedTraces:* {{ .Annotations.related_traces }}
 
      *Details:*
        {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
