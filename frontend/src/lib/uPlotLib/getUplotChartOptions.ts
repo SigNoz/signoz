@@ -105,13 +105,16 @@ export const getUPlotChartOptions = ({
 			},
 		},
 		plugins: [
-			seriesBarsPlugin({
-				radius: 0.3,
-				ignore: [],
-				ori: 0,
-				dir: 1,
+			seriesBarsPlugin(
+				{
+					radius: 0.3,
+					ignore: [],
+					ori: 0,
+					dir: 1,
+					panelType,
+				},
 				panelType,
-			}),
+			),
 			tooltipPlugin(apiResponse, yAxisUnit, fillSpans),
 			onClickPlugin({
 				onClick: onClickHandler,
@@ -226,6 +229,6 @@ export const getUPlotChartOptions = ({
 			graphsVisibilityStates,
 			panelType,
 		}),
-		axes: getAxes(isDarkMode, yAxisUnit, panelType),
+		axes: getAxes(isDarkMode, yAxisUnit),
 	};
 };
