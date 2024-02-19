@@ -1,7 +1,12 @@
 import './QueryBuilder.styles.scss';
 
 import { Button, Col, Divider, Row, Tooltip } from 'antd';
-import { MAX_FORMULAS, MAX_QUERIES, PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	MAX_FORMULAS,
+	MAX_QUERIES,
+	OPERATORS,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DatabaseZap, Sigma } from 'lucide-react';
@@ -89,6 +94,10 @@ export const QueryBuilder = memo(function QueryBuilder({
 		const config: QueryBuilderProps['filterConfigs'] = {
 			stepInterval: { isHidden: true, isDisabled: true },
 			having: { isHidden: true, isDisabled: true },
+			filters: {
+				customKey: 'body',
+				customOp: OPERATORS.CONTAINS,
+			},
 		};
 
 		return config;
@@ -99,6 +108,10 @@ export const QueryBuilder = memo(function QueryBuilder({
 			stepInterval: { isHidden: true, isDisabled: true },
 			having: { isHidden: true, isDisabled: true },
 			limit: { isHidden: true, isDisabled: true },
+			filters: {
+				customKey: 'body',
+				customOp: OPERATORS.CONTAINS,
+			},
 		};
 
 		return config;
