@@ -238,7 +238,6 @@ function ExplorerColumnsRenderer({
 														size={12}
 														color="red"
 														onClick={(): void => removeSelectedLogField(field.name)}
-														className="trash-icon"
 													/>
 												</div>
 											)}
