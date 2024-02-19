@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
@@ -58,7 +59,10 @@ const getSeries = ({
 				panelType && panelType === PANEL_TYPES.BAR
 					? drawStyles.bars
 					: drawStyles.line,
-			lineInterpolation: lineInterpolations.spline,
+			lineInterpolation:
+				panelType && panelType === PANEL_TYPES.BAR
+					? null
+					: lineInterpolations.spline,
 			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
 			label,
 			fill: panelType && panelType === PANEL_TYPES.BAR ? color : undefined,

@@ -105,23 +105,13 @@ export const getUPlotChartOptions = ({
 			},
 		},
 		plugins: [
-			{
-				hooks: {
-					init: [
-						(u): void => {
-							seriesBarsPlugin({
-								options: u,
-								radius: 0.3,
-								ignore: [],
-								ori: 0,
-								dir: 1,
-								stacked: true,
-							});
-						},
-					],
-				},
-			},
-
+			seriesBarsPlugin({
+				radius: 0.3,
+				ignore: [],
+				ori: 0,
+				dir: 1,
+				panelType,
+			}),
 			tooltipPlugin(apiResponse, yAxisUnit, fillSpans),
 			onClickPlugin({
 				onClick: onClickHandler,

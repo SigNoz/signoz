@@ -1,5 +1,20 @@
-/* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
+/* eslint-disable @typescript-eslint/no-this-alias */
+const MAX_OBJECTS = 10;
+const MAX_LEVELS = 4;
+
+export type Quads = [Quadtree, Quadtree, Quadtree, Quadtree];
+export type Rect = {
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+	[_: string]: any;
+};
+
+/**
+ * @internal
+ */
 export function pointWithin(
 	px: number,
 	py: number,
@@ -11,59 +26,98 @@ export function pointWithin(
 	return px >= rlft && px <= rrgt && py >= rtop && py <= rbtm;
 }
 
-export const MAX_OBJECTS = 10;
-export const MAX_LEVELS = 4;
+/**
+ * @internal
+ */
+export function findRect(
+	qt: Quadtree,
+	sidx: number,
+	didx: number,
+): Rect | undefined {
+	let out: Rect | undefined;
 
+	if (qt.o.length) {
+		out = qt.o.find((rect) => rect.sidx === sidx && rect.didx === didx);
+	}
+
+	if (out == null && qt.q) {
+		for (let i = 0; i < qt.q.length; i++) {
+			out = findRect(qt.q[i], sidx, didx);
+
+			if (out) {
+				break;
+			}
+		}
+	}
+
+	return out;
+}
+
+/**
+ * @internal
+ *
+ * Determines if r2 is intersected by r1.
+ */
+export function intersects(r1: Rect, r2: Rect): boolean {
+	return (
+		r1.x <= r2.x + r2.w &&
+		r1.x + r1.w >= r2.x &&
+		r1.y + r1.h >= r2.y &&
+		r1.y <= r2.y + r2.h
+	);
+}
+
+/**
+ * @internal
+ */
 export class Quadtree {
-	x: number;
+	o: Rect[];
 
-	y: number;
+	q: Quads | null;
 
-	w: number;
-
-	h: number;
-
-	l: number;
-
-	o: any[];
-
-	q: Quadtree[];
-
-	constructor(x: number, y: number, w: number, h: number, l = 0) {
-		this.x = x;
-		this.y = y;
-		this.w = w;
-		this.h = h;
-		this.l = l;
+	constructor(
+		public x: number,
+		public y: number,
+		public w: number,
+		public h: number,
+		public l = 0,
+	) {
 		this.o = [];
-		this.q = [];
+		this.q = null;
 	}
 
 	split(): void {
-		const { x } = this;
-		const { y } = this;
-		const w = this.w / 2;
-		const h = this.h / 2;
-		const l = this.l + 1;
+		const t = this;
+		const { x } = t;
+		const { y } = t;
+		const w = t.w / 2;
+		const h = t.h / 2;
+		const l = t.l + 1;
 
-		this.q = [
-			new Quadtree(x + w, y, w, h, l), // top right
-			new Quadtree(x, y, w, h, l), // top left
-			new Quadtree(x, y + h, w, h, l), // bottom left
-			new Quadtree(x + w, y + h, w, h, l), // bottom right
+		t.q = [
+			// top right
+			new Quadtree(x + w, y, w, h, l),
+			// top left
+			new Quadtree(x, y, w, h, l),
+			// bottom left
+			new Quadtree(x, y + h, w, h, l),
+			// bottom right
+			new Quadtree(x + w, y + h, w, h, l),
 		];
 	}
 
+	// invokes callback with index of each overlapping quad
 	quads(
 		x: number,
 		y: number,
 		w: number,
 		h: number,
-		cb: (quad: Quadtree) => void,
+		cb: (q: Quadtree) => void,
 	): void {
-		const { q } = this;
-		const hzMid = this.x + this.w / 2;
-		const vtMid = this.y + this.h / 2;
+		const t = this;
+		const q = t.q!;
+		const hzMid = t.x + t.w / 2;
+		const vtMid = t.y + t.h / 2;
 		const startIsNorth = y < vtMid;
 		const startIsWest = x < hzMid;
 		const endIsEast = x + w > hzMid;
@@ -79,44 +133,51 @@ export class Quadtree {
 		endIsEast && endIsSouth && cb(q[3]);
 	}
 
-	add(o: any): void {
-		if (this.q != null) {
-			this.quads(o.x, o.y, o.w, o.h, (q: Quadtree) => {
+	add(o: Rect): void {
+		const t = this;
+
+		if (t.q != null) {
+			t.quads(o.x, o.y, o.w, o.h, (q) => {
 				q.add(o);
 			});
 		} else {
-			const os = this.o;
+			const os = t.o;
+
 			os.push(o);
 
-			if (os.length > MAX_OBJECTS && this.l < MAX_LEVELS) {
-				this.split();
+			if (os.length > MAX_OBJECTS && t.l < MAX_LEVELS) {
+				t.split();
 
-				for (const oi of os) {
-					this.quads(oi.x, oi.y, oi.w, oi.h, (q: Quadtree) => {
+				for (let i = 0; i < os.length; i++) {
+					const oi = os[i];
+
+					t.quads(oi.x, oi.y, oi.w, oi.h, (q) => {
 						q.add(oi);
 					});
 				}
 
-				this.o.length = 0;
+				t.o.length = 0;
 			}
 		}
 	}
 
-	get(x: number, y: number, w: number, h: number, cb: (o: any) => void): void {
-		const os = this.o;
-		for (const oi of os) {
-			cb(oi);
+	get(x: number, y: number, w: number, h: number, cb: (o: Rect) => void): void {
+		const t = this;
+		const os = t.o;
+
+		for (let i = 0; i < os.length; i++) {
+			cb(os[i]);
 		}
 
-		if (this.q != null) {
-			this.quads(x, y, w, h, (q: Quadtree) => {
-				this.get(x, y, w, h, cb);
+		if (t.q != null) {
+			t.quads(x, y, w, h, (q) => {
+				q.get(x, y, w, h, cb);
 			});
 		}
 	}
 
 	clear(): void {
 		this.o.length = 0;
-		this.q = [];
+		this.q = null;
 	}
 }
