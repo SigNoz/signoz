@@ -45,14 +45,7 @@ const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 
 const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	function InfinityTableView(
-		{
-			isLoading,
-			tableViewProps,
-			infitiyTableProps,
-			isTableHeaderDraggable = true,
-			isDashboardPanel = false,
-			className,
-		},
+		{ isLoading, tableViewProps, infitiyTableProps },
 		ref,
 	): JSX.Element | null {
 		const {
@@ -74,7 +67,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			onOpenLogsContext: handleSetActiveContextLog,
 			activeLog,
 			activeContextLog,
-			isDashboardPanel,
 		});
 
 		const { draggedColumns, onDragColumns } = useDragColumns<
@@ -83,12 +75,10 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 
 		const isDarkMode = useIsDarkMode();
 
-		const tableColumns = useMemo(() => {
-			if (isDashboardPanel) {
-				return columns;
-			}
-			return getDraggedColumns<Record<string, unknown>>(columns, draggedColumns);
-		}, [columns, draggedColumns, isDashboardPanel]);
+		const tableColumns = useMemo(
+			() => getDraggedColumns<Record<string, unknown>>(columns, draggedColumns),
+			[columns, draggedColumns],
+		);
 
 		const handleDragEnd = useCallback(
 			(fromIndex: number, toIndex: number) =>
@@ -123,8 +113,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 								$isDragColumn={isDragColumn}
 								key={column.key}
 								// eslint-disable-next-line react/jsx-props-no-spreading
-								{...(isDragColumn &&
-									isTableHeaderDraggable && { className: 'dragHandler' })}
+								{...(isDragColumn && { className: 'dragHandler' })}
 							>
 								{(column.title as string).replace(/^\w/, (c) => c.toUpperCase())}
 							</TableHeaderCellStyled>
@@ -132,7 +121,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					})}
 				</tr>
 			),
-			[tableColumns, isDarkMode, isTableHeaderDraggable],
+			[tableColumns, isDarkMode],
 		);
 
 		const handleClickExpand = (index: number): void => {
@@ -147,7 +136,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					ref={ref}
 					style={infinityDefaultStyles}
 					data={dataSource}
-					className={className || ''} // only used in dashboard panels
 					components={{
 						// eslint-disable-next-line react/jsx-props-no-spreading
 						Table: LogsCustomTable({ isLoading, handleDragEnd }),
@@ -182,7 +170,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					onClose={onClearActiveLog}
 					onAddToQuery={onAddToQuery}
 					onClickActionItem={onAddToQuery}
-					isDashboardPanel={isDashboardPanel}
 				/>
 			</>
 		);
