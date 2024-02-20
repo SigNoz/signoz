@@ -9,7 +9,7 @@ import {
 
 export const getMetricsQueryRange = async (
 	props: QueryRangePayload,
-	version: string | undefined,
+	version: string,
 	signal: AbortSignal,
 ): Promise<SuccessResponse<MetricRangePayloadV3> | ErrorResponse> => {
 	try {

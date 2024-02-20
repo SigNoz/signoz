@@ -24,7 +24,11 @@ export async function GetMetricQueryRange(
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
 
-	const response = await getMetricsQueryRange(queryPayload, version, signal);
+	const response = await getMetricsQueryRange(
+		queryPayload,
+		version || 'v3',
+		signal,
+	);
 
 	if (response.statusCode >= 400) {
 		throw new Error(

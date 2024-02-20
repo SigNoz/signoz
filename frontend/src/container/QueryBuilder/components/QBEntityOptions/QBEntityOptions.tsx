@@ -13,6 +13,7 @@ import QueryFunctions from '../QueryFunctions/QueryFunctions';
 interface QBEntityOptionsProps {
 	query?: IBuilderQuery;
 	isMetricsDataSource?: boolean;
+	showFunctions?: boolean;
 	isCollapsed: boolean;
 	entityType: string;
 	entityData: any;
@@ -28,6 +29,7 @@ export default function QBEntityOptions({
 	query,
 	isMetricsDataSource,
 	isCollapsed,
+	showFunctions,
 	entityType,
 	entityData,
 	onDelete,
@@ -67,12 +69,15 @@ export default function QBEntityOptions({
 							{entityData.queryName}
 						</Button>
 
-						{isMetricsDataSource && query && onQueryFunctionsUpdates && (
-							<QueryFunctions
-								queryFunctions={query.functions}
-								onChange={onQueryFunctionsUpdates}
-							/>
-						)}
+						{showFunctions &&
+							isMetricsDataSource &&
+							query &&
+							onQueryFunctionsUpdates && (
+								<QueryFunctions
+									queryFunctions={query.functions}
+									onChange={onQueryFunctionsUpdates}
+								/>
+							)}
 					</Button.Group>
 				</div>
 
@@ -98,4 +103,5 @@ QBEntityOptions.defaultProps = {
 	query: undefined,
 	isMetricsDataSource: false,
 	onQueryFunctionsUpdates: undefined,
+	showFunctions: false,
 };

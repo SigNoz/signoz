@@ -43,6 +43,7 @@ function DashboardGraphSlider(): JSX.Element {
 					description: data?.description || '',
 					name: data?.name || '',
 					tags: data?.tags || [],
+					version: data?.version || 'v3',
 					layout: [
 						{
 							i: id,

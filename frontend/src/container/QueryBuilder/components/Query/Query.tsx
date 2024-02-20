@@ -24,6 +24,7 @@ import LimitFilter from 'container/QueryBuilder/filters/LimitFilter/LimitFilter'
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 // ** Hooks
 import {
 	ChangeEvent,
@@ -55,6 +56,10 @@ export const Query = memo(function Query({
 	const { pathname } = useLocation();
 
 	const [isCollapse, setIsCollapsed] = useState(false);
+
+	const { selectedDashboard } = useDashboard();
+
+	const selectedDashboardVersion = selectedDashboard?.data?.version || 'v3';
 
 	const {
 		operators,
@@ -299,6 +304,9 @@ export const Query = memo(function Query({
 		<Row gutter={[0, 12]}>
 			<QBEntityOptions
 				isMetricsDataSource={isMetricsDataSource}
+				showFunctions={
+					(selectedDashboardVersion && selectedDashboardVersion === 'v4') || false
+				}
 				isCollapsed={isCollapse}
 				entityType="query"
 				entityData={query}
@@ -333,6 +341,16 @@ export const Query = memo(function Query({
 							{isMetricsDataSource && (
 								<Col span={12}>
 									<Row gutter={[11, 5]}>
+										{selectedDashboardVersion && selectedDashboardVersion === 'v3' && (
+											<Col flex="5.93rem">
+												<OperatorsSelect
+													value={query.aggregateOperator}
+													onChange={handleChangeOperator}
+													operators={operators}
+												/>
+											</Col>
+										)}
+
 										<Col flex="auto">
 											<AggregatorFilter
 												onChange={handleChangeAggregatorAttribute}
@@ -340,16 +358,20 @@ export const Query = memo(function Query({
 											/>
 										</Col>
 
-										{operators && Array.isArray(operators) && operators.length > 0 && (
-											<Col flex="5.93rem">
-												<OperatorsSelect
-													value={query.aggregateOperator}
-													onChange={handleChangeOperator}
-													operators={operators}
-													disabled={disableOperatorSelector}
-												/>
-											</Col>
-										)}
+										{selectedDashboardVersion &&
+											selectedDashboardVersion === 'v4' &&
+											operators &&
+											Array.isArray(operators) &&
+											operators.length > 0 && (
+												<Col flex="5.93rem">
+													<OperatorsSelect
+														value={query.aggregateOperator}
+														onChange={handleChangeOperator}
+														operators={operators}
+														disabled={disableOperatorSelector}
+													/>
+												</Col>
+											)}
 									</Row>
 								</Col>
 							)}
@@ -394,61 +416,43 @@ export const Query = memo(function Query({
 							</Row>
 						</Col>
 					)}
-					{!isListViewPanel && (
-						<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
+					<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
+						<Row gutter={[11, 5]}>
+							<Col flex="5.93rem">
+								{selectedDashboardVersion && selectedDashboardVersion === 'v3' && (
 									<FilterLabel
 										label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
 									/>
-								</Col>
-								<Col flex="1 1 12.5rem">
-									{panelType === PANEL_TYPES.VALUE ? (
-										<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
-									) : (
-										<GroupByFilter
-											disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-											query={query}
-											onChange={handleChangeGroupByKeys}
-										/>
-									)}
-								</Col>
-							</Row>
-						</Col>
-					)}
-					{!isListViewPanel && (
-						<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									{!isMetricsDataSource ? (
-										<FilterLabel
-											label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
-										/>
-									) : (
+								)}
+
+								{selectedDashboardVersion &&
+									selectedDashboardVersion === 'v4' &&
+									isMetricsDataSource && (
 										<SpaceAggregationOptions
+											key={query.spaceAggregation}
 											aggregatorAttributeType={
 												query?.aggregateAttribute.type as ATTRIBUTE_TYPES
 											}
+											selectedValue={query.spaceAggregation}
 											disabled={disableOperatorSelector}
 											onSelect={handleSpaceAggregationChange}
 											operators={spaceAggregationOptions}
 										/>
 									)}
-								</Col>
-								<Col flex="1 1 12.5rem">
-									{panelType === PANEL_TYPES.VALUE ? (
-										<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
-									) : (
-										<GroupByFilter
-											disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-											query={query}
-											onChange={handleChangeGroupByKeys}
-										/>
-									)}
-								</Col>
-							</Row>
-						</Col>
-					)}
+							</Col>
+							<Col flex="1 1 12.5rem">
+								{panelType === PANEL_TYPES.VALUE ? (
+									<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+								) : (
+									<GroupByFilter
+										disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+										query={query}
+										onChange={handleChangeGroupByKeys}
+									/>
+								)}
+							</Col>
+						</Row>
+					</Col>
 
 					{!isTracePanelType && !isListViewPanel && (
 						<Col span={24}>

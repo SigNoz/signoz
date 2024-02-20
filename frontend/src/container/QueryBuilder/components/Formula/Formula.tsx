@@ -146,6 +146,7 @@ export function Formula({
 		<Row gutter={[0, 15]}>
 			<QBEntityOptions
 				isCollapsed={isCollapse}
+				showFunctions={false}
 				entityType="formula"
 				entityData={formula}
 				onToggleVisibility={handleToggleDisableFormula}

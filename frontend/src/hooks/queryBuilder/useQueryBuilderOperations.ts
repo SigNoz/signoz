@@ -20,6 +20,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetricsOperatorsByAttributeType';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -59,6 +60,10 @@ export const useQueryOperations: UseQueryOperations = ({
 	>([]);
 
 	const { dataSource, aggregateOperator } = query;
+
+	const { selectedDashboard } = useDashboard();
+
+	const selectedDashboardVersion = selectedDashboard?.data?.version || 'v3';
 
 	const getNewListOfAdditionalFilters = useCallback(
 		(dataSource: DataSource, isQuery: boolean): string[] => {
@@ -182,7 +187,10 @@ export const useQueryOperations: UseQueryOperations = ({
 				having: [],
 			};
 
-			if (newQuery.dataSource === DataSource.METRICS) {
+			if (
+				newQuery.dataSource === DataSource.METRICS &&
+				selectedDashboardVersion === 'v4'
+			) {
 				handleMetricAggregateAtributeTypes(newQuery.aggregateAttribute);
 
 				if (newQuery.aggregateAttribute.type === ATTRIBUTE_TYPES.SUM) {
@@ -194,11 +202,19 @@ export const useQueryOperations: UseQueryOperations = ({
 				} else {
 					newQuery.timeAggregation = '';
 				}
+
+				newQuery.spaceAggregation = '';
 			}
 
 			handleSetQueryData(index, newQuery);
 		},
-		[query, handleSetQueryData, index, handleMetricAggregateAtributeTypes],
+		[
+			query,
+			selectedDashboardVersion,
+			handleSetQueryData,
+			index,
+			handleMetricAggregateAtributeTypes,
+		],
 	);
 
 	const handleChangeDataSource = useCallback(
@@ -297,7 +313,14 @@ export const useQueryOperations: UseQueryOperations = ({
 	useEffect(() => {
 		if (initialDataSource && dataSource !== initialDataSource) return;
 
-		if (dataSource !== DataSource.METRICS) {
+		if (
+			dataSource === DataSource.METRICS &&
+			query &&
+			query.aggregateAttribute &&
+			selectedDashboardVersion === 'v4'
+		) {
+			handleMetricAggregateAtributeTypes(query.aggregateAttribute);
+		} else {
 			const initialOperators = getOperatorsBySourceAndPanelType({
 				dataSource,
 				panelType: panelType || PANEL_TYPES.TIME_SERIES,
@@ -306,16 +329,16 @@ export const useQueryOperations: UseQueryOperations = ({
 			if (JSON.stringify(operators) === JSON.stringify(initialOperators)) return;
 
 			setOperators(initialOperators);
-		} else if (
-			dataSource === DataSource.METRICS &&
-			query &&
-			query.aggregateAttribute
-		) {
-			handleMetricAggregateAtributeTypes(query.aggregateAttribute);
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dataSource, initialDataSource, panelType, operators]);
+	}, [
+		dataSource,
+		initialDataSource,
+		panelType,
+		operators,
+		selectedDashboardVersion,
+	]);
 
 	useEffect(() => {
 		const additionalFilters = getNewListOfAdditionalFilters(dataSource, true);
