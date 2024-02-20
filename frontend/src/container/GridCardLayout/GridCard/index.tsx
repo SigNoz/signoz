@@ -116,6 +116,12 @@ function GridCardGraph({
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
 
+	const queryEnabledCondition =
+		isVisible &&
+		!isEmptyWidget &&
+		isQueryEnabled &&
+		widget.panelTypes !== PANEL_TYPES.LIST;
+
 	const queryResponse = useGetQueryRange(
 		{
 			selectedTime: widget?.timePreferance,
@@ -135,7 +141,7 @@ function GridCardGraph({
 				widget.timePreferance,
 			],
 			keepPreviousData: true,
-			enabled: isVisible && !isEmptyWidget && isQueryEnabled,
+			enabled: queryEnabledCondition,
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
@@ -159,7 +165,8 @@ function GridCardGraph({
 	const isDarkMode = useIsDarkMode();
 
 	const menuList =
-		widget.panelTypes === PANEL_TYPES.TABLE
+		widget.panelTypes === PANEL_TYPES.TABLE ||
+		widget.panelTypes === PANEL_TYPES.LIST
 			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
 			: headerMenuList;
 
@@ -222,6 +229,7 @@ function GridCardGraph({
 					onClickHandler={onClickHandler}
 					graphVisibiltyState={graphVisibility}
 					setGraphVisibility={setGraphVisibility}
+					isFetchingResponse={queryResponse.isFetching}
 				/>
 			)}
 		</div>

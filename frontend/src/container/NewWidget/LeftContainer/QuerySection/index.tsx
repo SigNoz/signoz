@@ -18,7 +18,7 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -35,7 +35,6 @@ function QuerySection({
 	selectedTime,
 }: QueryProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
-	const [currentTab, setCurrentTab] = useState(currentQuery.queryType);
 	const urlQuery = useUrlQuery();
 
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -100,7 +99,6 @@ function QuerySection({
 					],
 				},
 			});
-
 			redirectWithQueryBuilderData(updatedQuery);
 		},
 		[
@@ -114,11 +112,13 @@ function QuerySection({
 	);
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
-		const currentQueryType = qCategory as EQueryType;
-		setCurrentTab(qCategory as EQueryType);
+		const currentQueryType = qCategory;
 
 		featureResponse.refetch().then(() => {
-			handleStageQuery({ ...currentQuery, queryType: currentQueryType });
+			handleStageQuery({
+				...currentQuery,
+				queryType: currentQueryType as EQueryType,
+			});
 		});
 	};
 
@@ -133,6 +133,27 @@ function QuerySection({
 
 		return config;
 	}, []);
+
+	const listItems = [
+		{
+			key: EQueryType.QUERY_BUILDER,
+			label: (
+				<Tooltip title="Query Builder">
+					<Button className="nav-btns">
+						<Atom size={14} />
+					</Button>
+				</Tooltip>
+			),
+			tab: <Typography>Query Builder</Typography>,
+			children: (
+				<QueryBuilder
+					panelType={PANEL_TYPES.LIST}
+					filterConfigs={filterConfigs}
+					isListViewPanel
+				/>
+			),
+		},
+	];
 
 	const items = [
 		{
@@ -180,8 +201,12 @@ function QuerySection({
 			<Tabs
 				type="card"
 				style={{ width: '100%' }}
-				defaultActiveKey={currentTab}
-				activeKey={currentTab}
+				defaultActiveKey={
+					selectedGraph !== PANEL_TYPES.EMPTY_WIDGET
+						? currentQuery.queryType
+						: currentQuery.builder.queryData[0].dataSource
+				}
+				activeKey={currentQuery.queryType}
 				onChange={handleQueryCategoryChange}
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -197,7 +222,7 @@ function QuerySection({
 						</Button>
 					</span>
 				}
-				items={items}
+				items={selectedGraph === PANEL_TYPES.LIST ? listItems : items}
 			/>
 		</div>
 	);

@@ -45,6 +45,7 @@ interface IWidgetHeaderProps {
 	threshold?: ReactNode;
 	headerMenuList?: MenuItemKeys[];
 	isWarning: boolean;
+	isFetchingResponse: boolean;
 }
 
 function WidgetHeader({
@@ -59,6 +60,7 @@ function WidgetHeader({
 	threshold,
 	headerMenuList,
 	isWarning,
+	isFetchingResponse,
 }: IWidgetHeaderProps): JSX.Element | null {
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
@@ -170,7 +172,7 @@ function WidgetHeader({
 			</Typography.Text>
 			<div className="widget-header-actions">
 				<div className="widget-api-actions">{threshold}</div>
-				{queryResponse.isFetching && !queryResponse.isError && (
+				{isFetchingResponse && !queryResponse.isError && (
 					<Spinner style={{ paddingRight: '0.25rem' }} />
 				)}
 				{queryResponse.isError && (
