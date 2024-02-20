@@ -22,7 +22,7 @@ export const defaultTableStyle: CSSProperties = {
 	maxWidth: '40rem',
 };
 
-export const defaultDashboardPanelStyle: CSSProperties = {
+export const defaultListViewPanelStyle: CSSProperties = {
 	maxWidth: '40rem',
 };
 

@@ -40,7 +40,7 @@ const RESTRICTED_FIELDS = ['timestamp'];
 interface TableViewProps {
 	logData: ILog;
 	fieldSearchInput: string;
-	isDashboardPanel?: boolean;
+	isListViewPanel?: boolean;
 }
 
 type Props = TableViewProps &
@@ -52,7 +52,7 @@ function TableView({
 	fieldSearchInput,
 	onAddToQuery,
 	onClickActionItem,
-	isDashboardPanel = false,
+	isListViewPanel = false,
 }: Props): JSX.Element | null {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
@@ -221,7 +221,7 @@ function TableView({
 							</span>
 						</CopyClipboardHOC>
 
-						{!isDashboardPanel && (
+						{!isListViewPanel && (
 							<span className="action-btn">
 								<Tooltip title="Filter for value">
 									<Button
@@ -278,7 +278,7 @@ function TableView({
 }
 
 TableView.defaultProps = {
-	isDashboardPanel: false,
+	isListViewPanel: false,
 };
 
 interface DataType {

@@ -12,7 +12,7 @@ interface QBEntityOptionsProps {
 	onToggleVisibility: () => void;
 	onCollapseEntity: () => void;
 	showDeleteButton: boolean;
-	isDashboardPanel?: boolean;
+	isListViewPanel?: boolean;
 }
 
 export default function QBEntityOptions({
@@ -23,7 +23,7 @@ export default function QBEntityOptions({
 	onToggleVisibility,
 	onCollapseEntity,
 	showDeleteButton,
-	isDashboardPanel = false,
+	isListViewPanel = false,
 }: QBEntityOptionsProps): JSX.Element {
 	return (
 		<Col span={24}>
@@ -42,7 +42,7 @@ export default function QBEntityOptions({
 								value="query-builder"
 								className="periscope-btn visibility-toggle"
 								onClick={onToggleVisibility}
-								disabled={isDashboardPanel}
+								disabled={isListViewPanel}
 							>
 								{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
 							</Button>
@@ -76,5 +76,5 @@ export default function QBEntityOptions({
 }
 
 QBEntityOptions.defaultProps = {
-	isDashboardPanel: false,
+	isListViewPanel: false,
 };

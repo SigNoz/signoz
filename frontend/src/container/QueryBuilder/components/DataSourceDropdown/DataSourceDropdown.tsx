@@ -15,9 +15,9 @@ const exploreDataSourceMap = [DataSource.LOGS, DataSource.TRACES];
 export const DataSourceDropdown = memo(function DataSourceDropdown(
 	props: QueryLabelProps,
 ): JSX.Element {
-	const { onChange, value, style, isDashboardPanel = false } = props;
+	const { onChange, value, style, isListViewPanel = false } = props;
 
-	const dataSourceOptions: SelectOption<DataSource, string>[] = isDashboardPanel
+	const dataSourceOptions: SelectOption<DataSource, string>[] = isListViewPanel
 		? exploreDataSourceMap.map((source) => ({
 				label: transformToUpperCase(source),
 				value: source,

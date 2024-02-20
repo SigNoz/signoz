@@ -8,7 +8,7 @@ import { VIEWS } from './constants';
 export type LogDetailProps = {
 	log: ILog | null;
 	selectedTab: VIEWS;
-	isDashboardPanel?: boolean;
+	isListViewPanel?: boolean;
 } & Pick<AddToQueryHOCProps, 'onAddToQuery'> &
 	Partial<Pick<ActionItemProps, 'onClickActionItem'>> &
 	Pick<DrawerProps, 'onClose'>;

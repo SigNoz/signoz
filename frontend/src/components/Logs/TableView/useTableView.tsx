@@ -14,7 +14,7 @@ import LogStateIndicator, {
 	LogType,
 } from '../LogStateIndicator/LogStateIndicator';
 import {
-	defaultDashboardPanelStyle,
+	defaultListViewPanelStyle,
 	defaultTableStyle,
 	getDefaultCellStyle,
 } from './config';
@@ -35,7 +35,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		appendTo = 'center',
 		activeContextLog,
 		activeLog,
-		isDashboardPanel,
+		isListViewPanel,
 	} = props;
 
 	const isDarkMode = useIsDarkMode();
@@ -53,8 +53,8 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				key: name,
 				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
-						style: isDashboardPanel
-							? defaultDashboardPanelStyle
+						style: isListViewPanel
+							? defaultListViewPanelStyle
 							: getDefaultCellStyle(isDarkMode),
 					},
 					children: (
@@ -65,7 +65,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				}),
 			}));
 
-		if (isDashboardPanel) {
+		if (isListViewPanel) {
 			return [...fieldColumns];
 		}
 
@@ -121,7 +121,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		];
 	}, [
 		fields,
-		isDashboardPanel,
+		isListViewPanel,
 		appendTo,
 		isDarkMode,
 		linesPerRow,

@@ -47,7 +47,7 @@ export const Query = memo(function Query({
 	query,
 	filterConfigs,
 	queryComponents,
-	isDashboardPanel = false,
+	isListViewPanel = false,
 }: QueryProps): JSX.Element {
 	const { panelType, currentQuery } = useQueryBuilder();
 	const { pathname } = useLocation();
@@ -64,7 +64,7 @@ export const Query = memo(function Query({
 		handleChangeDataSource,
 		handleChangeOperator,
 		handleDeleteQuery,
-	} = useQueryOperations({ index, query, filterConfigs, isDashboardPanel });
+	} = useQueryOperations({ index, query, filterConfigs, isListViewPanel });
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -142,10 +142,10 @@ export const Query = memo(function Query({
 			<OrderByFilter
 				query={query}
 				onChange={handleChangeOrderByKeys}
-				isDashboardPanel={isDashboardPanel}
+				isListViewPanel={isListViewPanel}
 			/>
 		);
-	}, [queryComponents, query, handleChangeOrderByKeys, isDashboardPanel]);
+	}, [queryComponents, query, handleChangeOrderByKeys, isListViewPanel]);
 
 	const renderAggregateEveryFilter = useCallback(
 		(): JSX.Element | null =>
@@ -297,7 +297,7 @@ export const Query = memo(function Query({
 				onDelete={handleDeleteQuery}
 				onCollapseEntity={handleToggleCollapsQuery}
 				showDeleteButton={currentQuery.builder.queryData.length > 1}
-				isDashboardPanel={isDashboardPanel}
+				isListViewPanel={isListViewPanel}
 			/>
 
 			{!isCollapse && (
@@ -311,7 +311,7 @@ export const Query = memo(function Query({
 											onChange={handleChangeDataSource}
 											value={query.dataSource}
 											style={{ minWidth: '5.625rem' }}
-											isDashboardPanel={isDashboardPanel}
+											isListViewPanel={isListViewPanel}
 										/>
 									) : (
 										<FilterLabel label={transformToUpperCase(query.dataSource)} />
@@ -356,7 +356,7 @@ export const Query = memo(function Query({
 							</Col>
 						</Row>
 					</Col>
-					{!isMetricsDataSource && !isDashboardPanel && (
+					{!isMetricsDataSource && !isListViewPanel && (
 						<Col span={11}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
@@ -378,7 +378,7 @@ export const Query = memo(function Query({
 							</Row>
 						</Col>
 					)}
-					{!isDashboardPanel && (
+					{!isListViewPanel && (
 						<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
@@ -400,7 +400,7 @@ export const Query = memo(function Query({
 							</Row>
 						</Col>
 					)}
-					{!isTracePanelType && !isDashboardPanel && (
+					{!isTracePanelType && !isListViewPanel && (
 						<Col span={24}>
 							<AdditionalFiltersToggler
 								listOfAdditionalFilter={listOfAdditionalFilters}
@@ -411,7 +411,7 @@ export const Query = memo(function Query({
 							</AdditionalFiltersToggler>
 						</Col>
 					)}
-					{isDashboardPanel && (
+					{isListViewPanel && (
 						<Col span={24}>
 							<Row gutter={[0, 11]} justify="space-between">
 								{renderAdditionalFilters()}

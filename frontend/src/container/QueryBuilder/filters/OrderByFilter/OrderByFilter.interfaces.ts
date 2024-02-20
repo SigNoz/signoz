@@ -6,7 +6,7 @@ import {
 export type OrderByFilterProps = {
 	query: IBuilderQuery;
 	onChange: (values: OrderByPayload[]) => void;
-	isDashboardPanel?: boolean;
+	isListViewPanel?: boolean;
 };
 
 export type OrderByFilterValue = {

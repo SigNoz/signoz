@@ -292,7 +292,7 @@ function LogsPanelComponent({
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}
 				onClickActionItem={onAddToQuery}
-				isDashboardPanel
+				isListViewPanel
 			/>
 		</>
 	);

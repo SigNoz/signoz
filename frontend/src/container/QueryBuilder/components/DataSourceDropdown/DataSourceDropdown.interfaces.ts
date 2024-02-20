@@ -3,5 +3,5 @@ import { DataSource } from 'types/common/queryBuilder';
 
 export type QueryLabelProps = {
 	onChange: (value: DataSource) => void;
-	isDashboardPanel?: boolean;
+	isListViewPanel?: boolean;
 } & Omit<SelectProps, 'onChange'>;
