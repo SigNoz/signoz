@@ -1,5 +1,6 @@
 import './ReactI18';
 import 'styles.scss';
+import './instrumentation';
 
 import AppRoutes from 'AppRoutes';
 import { ThemeProvider } from 'hooks/useDarkMode';
