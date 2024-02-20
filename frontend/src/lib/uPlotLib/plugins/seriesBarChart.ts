@@ -571,7 +571,7 @@ export function seriesBarsPlugin(
 						distr: 2,
 						ori,
 						dir,
-							auto: true,
+						auto: true,
 						range: (u, min, max) => {
 							min = 0;
 							max = Math.max(1, u.data[0].length - 1);
