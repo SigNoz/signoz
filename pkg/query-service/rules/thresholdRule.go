@@ -437,7 +437,13 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		}
 
 		sample := Sample{}
+		// Why do we maintain two labels sets? Alertmanager requires
+		// label keys to follow the model https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+		// However, our traces and logs explorers support label keys with dot and other namespace characters
+		// Using normalized label keys results in invalid filter criteria.
+		// The original labels are used to prepare the related{logs, traces} link in alert notification
 		lbls := labels.NewBuilder(labels.Labels{})
+		lblsOrig := labels.NewBuilder(labels.Labels{})
 
 		for i, v := range vars {
 
@@ -446,6 +452,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			switch v := v.(type) {
 			case *string:
 				lbls.Set(colName, *v)
+				lblsOrig.Set(columnNames[i], *v)
 			case *time.Time:
 				timval := *v
 
@@ -453,6 +460,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.T = timval.Unix()
 				} else {
 					lbls.Set(colName, timval.Format("2006-01-02 15:04:05"))
+					lblsOrig.Set(columnNames[i], timval.Format("2006-01-02 15:04:05"))
 				}
 
 			case *float64:
@@ -460,6 +468,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.V = *v
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%f", *v))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", *v))
 				}
 			case **float64:
 				// ch seems to return this type when column is derived from
@@ -470,6 +479,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 						sample.Point.V = *floatVal
 					} else {
 						lbls.Set(colName, fmt.Sprintf("%f", *floatVal))
+						lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", *floatVal))
 					}
 				}
 			case *float32:
@@ -478,18 +488,21 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.V = float64(float32Val)
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%f", float32Val))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", float32Val))
 				}
 			case *uint8, *uint64, *uint16, *uint32:
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
 					sample.Point.V = float64(reflect.ValueOf(v).Elem().Uint())
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
 				}
 			case *int8, *int16, *int32, *int64:
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
 					sample.Point.V = float64(reflect.ValueOf(v).Elem().Int())
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
 				}
 			default:
 				zap.S().Errorf("ruleId:", r.ID(), "\t error: invalid var found in query result", v, columnNames[i])
@@ -503,6 +516,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 		// capture lables in result
 		sample.Metric = lbls.Labels()
+		sample.MetricOrig = lblsOrig.Labels()
 
 		labelHash := lbls.Labels().Hash()
 
@@ -750,7 +764,7 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
+	compositeQuery := url.QueryEscape(string(data))
 
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
@@ -813,8 +827,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	}
 
 	data, _ := json.Marshal(urlData)
-	// We need to double encode the composite query to remain compatible with the UI
-	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
+	compositeQuery := url.QueryEscape(string(data))
 
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
@@ -828,9 +841,9 @@ func (r *ThresholdRule) hostFromSource() string {
 		return ""
 	}
 	if parsedUrl.Port() != "" {
-		return fmt.Sprintf("%s:%s", parsedUrl.Hostname(), parsedUrl.Port())
+		return fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Hostname(), parsedUrl.Port())
 	}
-	return parsedUrl.Hostname()
+	return fmt.Sprintf("%s://%s", parsedUrl.Scheme, parsedUrl.Hostname())
 }
 
 func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]string, error) {
@@ -1054,21 +1067,24 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		lb.Set(labels.AlertRuleIdLabel, r.ID())
 		lb.Set(labels.RuleSourceLabel, r.GeneratorURL())
 
-		if r.typ == "TRACES_BASED_ALERT" {
-			link := r.prepareLinksToTraces(ts, smpl.Metric)
-			if link != "" && r.hostFromSource() != "" {
-				lb.Set("RelatedTraces", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link))
-			}
-		} else if r.typ == "LOGS_BASED_ALERT" {
-			link := r.prepareLinksToLogs(ts, smpl.Metric)
-			if link != "" && r.hostFromSource() != "" {
-				lb.Set("RelatedLogs", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link))
-			}
-		}
-
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
 			annotations = append(annotations, labels.Label{Name: normalizeLabelName(a.Name), Value: expand(a.Value)})
+		}
+
+		// Links with timestamps should go in annotations since labels
+		// is used alert grouping, and we want to group alerts with the same
+		// label set, but different timestamps, together.
+		if r.typ == "TRACES_BASED_ALERT" {
+			link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
+			if link != "" && r.hostFromSource() != "" {
+				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
+			}
+		} else if r.typ == "LOGS_BASED_ALERT" {
+			link := r.prepareLinksToLogs(ts, smpl.MetricOrig)
+			if link != "" && r.hostFromSource() != "" {
+				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
+			}
 		}
 
 		lbs := lb.Labels()
