@@ -114,6 +114,7 @@ export const getUPlotChartOptions = ({
 					panelType,
 				},
 				panelType,
+				isDarkMode,
 			),
 			tooltipPlugin(apiResponse, yAxisUnit, fillSpans),
 			onClickPlugin({

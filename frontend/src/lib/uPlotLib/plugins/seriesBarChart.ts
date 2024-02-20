@@ -7,8 +7,10 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import uPlot from 'uplot';
 
+import getGridColor from '../utils/getGridColor';
 import { distr, SPACE_BETWEEN } from './helper/distr';
 import { pointWithin, Quadtree } from './helper/quadtree';
+import { getXAxisScale } from '../utils/getXAxisScale';
 
 // export function seriesBarsPlugin(opts): uPlot.Plugin {
 // 	if (opts.panelType !== PANEL_TYPES.BAR) {
@@ -326,11 +328,15 @@ import { pointWithin, Quadtree } from './helper/quadtree';
 // 	};
 // }
 
-export function seriesBarsPlugin(opts, panelType: PANEL_TYPES) {
+export function seriesBarsPlugin(
+	opts,
+	panelType: PANEL_TYPES,
+	isDarkMode: boolean,
+) {
 	console.log({ panelType });
-	// if (panelType !== PANEL_TYPES.BAR) {
-	// 	return {};
-	// }
+	if (panelType !== PANEL_TYPES.BAR) {
+		return {};
+	}
 	let pxRatio;
 	let font;
 
@@ -483,7 +489,6 @@ export function seriesBarsPlugin(opts, panelType: PANEL_TYPES) {
 		return [0, max];
 	}
 
-
 	return {
 		hooks: {
 			drawClear: (u) => {
@@ -562,11 +567,11 @@ export function seriesBarsPlugin(opts, panelType: PANEL_TYPES) {
 				},
 				scales: {
 					x: {
-						time: false,
+						time: true,
 						distr: 2,
 						ori,
 						dir,
-						//	auto: true,
+							auto: true,
 						range: (u, min, max) => {
 							min = 0;
 							max = Math.max(1, u.data[0].length - 1);
@@ -611,16 +616,27 @@ export function seriesBarsPlugin(opts, panelType: PANEL_TYPES) {
 
 			uPlot.assign(opts.axes[0], {
 				splits: (u, axisIdx) => {
+					console.log({ rajat: u });
 					const _dir = dir * (ori == 0 ? 1 : -1);
 					const splits2 = u._data[0].slice();
 					return _dir == 1 ? splits2 : splits2.reverse();
 				},
-				values: (u) => u.data[0],
-				gap: 15,
+				values: (u, t) => {
+					console.log({ t });
+					return u.data[0];
+				},
+				gap: 5,
 				size: ori == 0 ? 40 : 150,
 				labelSize: 20,
-				grid: { show: false },
-				ticks: { show: false },
+				grid: {
+					stroke: getGridColor(isDarkMode), // Color of the grid lines
+					width: 0.2, // Width of the grid lines,
+					show: true,
+				},
+				ticks: {
+					width: 0.3, // Width of the tick lines,
+					show: true,
+				},
 
 				side: ori == 0 ? 2 : 3,
 			});
