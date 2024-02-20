@@ -13,7 +13,11 @@ import { useMemo } from 'react';
 import LogStateIndicator, {
 	LogType,
 } from '../LogStateIndicator/LogStateIndicator';
-import { defaultTableStyle, getDefaultCellStyle } from './config';
+import {
+	defaultListViewPanelStyle,
+	defaultTableStyle,
+	getDefaultCellStyle,
+} from './config';
 import { TableBodyContent } from './styles';
 import {
 	ColumnTypeRender,
@@ -31,6 +35,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		appendTo = 'center',
 		activeContextLog,
 		activeLog,
+		isListViewPanel,
 	} = props;
 
 	const isDarkMode = useIsDarkMode();
@@ -48,7 +53,9 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				key: name,
 				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
-						style: getDefaultCellStyle(isDarkMode),
+						style: isListViewPanel
+							? defaultListViewPanelStyle
+							: getDefaultCellStyle(isDarkMode),
 					},
 					children: (
 						<Typography.Paragraph ellipsis={{ rows: linesPerRow }}>
@@ -57,6 +64,10 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					),
 				}),
 			}));
+
+		if (isListViewPanel) {
+			return [...fieldColumns];
+		}
 
 		return [
 			{
@@ -110,6 +121,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		];
 	}, [
 		fields,
+		isListViewPanel,
 		appendTo,
 		isDarkMode,
 		linesPerRow,

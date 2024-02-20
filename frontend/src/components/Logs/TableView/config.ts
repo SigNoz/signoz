@@ -22,6 +22,10 @@ export const defaultTableStyle: CSSProperties = {
 	maxWidth: '40rem',
 };
 
+export const defaultListViewPanelStyle: CSSProperties = {
+	maxWidth: '40rem',
+};
+
 export const tableScroll: TableProps<Record<string, unknown>>['scroll'] = {
 	x: true,
 };
