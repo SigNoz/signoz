@@ -7,6 +7,7 @@
  */
 import '@testing-library/jest-dom';
 import 'jest-styled-components';
+import './src/styles.scss';
 
 import { server } from './src/mocks-server/server';
 // Establish API mocking before all tests.

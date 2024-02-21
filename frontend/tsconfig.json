@@ -23,6 +23,11 @@
 		"isolatedModules": true,
 		"noEmit": true,
 		"baseUrl": "./src",
+		"paths": {
+			"@constants/*": [
+				"/container/OnboardingContainer/constants/*"
+			]
+		},
 		"downlevelIteration": true,
 		"plugins": [
 			{

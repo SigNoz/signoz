@@ -22,4 +22,6 @@ export const getWidgetQueryBuilder = ({
 	yAxisUnit,
 	softMax: null,
 	softMin: null,
+	selectedLogFields: [],
+	selectedTracesFields: [],
 });

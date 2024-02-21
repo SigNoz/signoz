@@ -20,7 +20,7 @@ import { UPDATE_USER_IS_FETCH } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 import { routePermission } from 'utils/permission';
 
-import routes from './routes';
+import routes, { LIST_LICENSES } from './routes';
 import afterLogin from './utils';
 
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
@@ -29,7 +29,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const mapRoutes = useMemo(
 		() =>
 			new Map(
-				routes.map((e) => {
+				[...routes, LIST_LICENSES].map((e) => {
 					const currentPath = matchPath(pathname, {
 						path: e.path,
 					});
@@ -98,6 +98,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 				if (
 					userResponse &&
+					route &&
 					route.find((e) => e === userResponse.payload.role) === undefined
 				) {
 					history.push(ROUTES.UN_AUTHORIZED);
