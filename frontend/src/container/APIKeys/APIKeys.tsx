@@ -26,6 +26,7 @@ import updateAPIKeyApi from 'api/APIKeys/updateAPIKey';
 import axios, { AxiosError } from 'axios';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import dayjs from 'dayjs';
 import { useGetAllAPIKeys } from 'hooks/APIKeys/useGetAllAPIKeys';
 import { useNotifications } from 'hooks/useNotifications';
 import {
@@ -320,10 +321,20 @@ function APIKeys(): JSX.Element {
 		return differenceInSeconds / (60 * 60 * 24);
 	};
 
+	const isExpiredToken = (expiryTimestamp: number): boolean => {
+		if (expiryTimestamp === 0) {
+			return false;
+		}
+		const currentTime = dayjs();
+		const tokenExpiresAt = dayjs.unix(expiryTimestamp);
+		return tokenExpiresAt.isBefore(currentTime);
+	};
+
 	const columns: TableProps<APIKeyProps>['columns'] = [
 		{
 			title: 'API Key',
 			key: 'api-key',
+			// eslint-disable-next-line sonarjs/cognitive-complexity
 			render: (APIKey: APIKeyProps): JSX.Element => {
 				const formattedDateAndTime =
 					APIKey && APIKey?.lastUsed && APIKey?.lastUsed !== 0
@@ -336,6 +347,8 @@ function APIKeys(): JSX.Element {
 					APIKey.expiresAt === 0
 						? Number.POSITIVE_INFINITY
 						: getDateDifference(APIKey?.createdAt, APIKey?.expiresAt);
+
+				const isExpired = isExpiredToken(APIKey.expiresAt);
 
 				const expiresOn =
 					!APIKey.expiresAt || APIKey.expiresAt === 0
@@ -473,7 +486,8 @@ function APIKeys(): JSX.Element {
 								Last used <Minus size={12} />
 								<Typography.Text>{formattedDateAndTime}</Typography.Text>
 							</div>
-							{expiresIn <= EXPIRATION_WITHIN_SEVEN_DAYS && (
+
+							{!isExpired && expiresIn <= EXPIRATION_WITHIN_SEVEN_DAYS && (
 								<div
 									className={cx(
 										'api-key-expires-in',
@@ -481,6 +495,12 @@ function APIKeys(): JSX.Element {
 									)}
 								>
 									<span className="dot" /> Expires in {expiresIn} Days
+								</div>
+							)}
+
+							{isExpired && (
+								<div className={cx('api-key-expires-in danger')}>
+									<span className="dot" /> Expired
 								</div>
 							)}
 						</div>
