@@ -2,6 +2,8 @@ package integrations
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -63,13 +65,38 @@ func (m *Manager) ListInstalledIntegrations(
 ) ([]Integration, *model.ApiError) {
 	installed, apiErr := m.installedIntegrationsRepo.list(ctx)
 	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "could not fetch installed integrations data")
+		return nil, model.WrapApiError(
+			apiErr, "could not fetch installed integrations data",
+		)
+	}
+
+	integrationIds := []string{}
+	for _, ii := range installed {
+		integrationIds = append(integrationIds, ii.IntegrationId)
+	}
+	integrationDetails, apiErr := m.availableIntegrationsRepo.get(ctx, integrationIds)
+	if apiErr != nil {
+		return nil, model.WrapApiError(
+			apiErr, "could not fetch integrations details",
+		)
+	}
+	if len(integrationDetails) != len(integrationIds) {
+		missingIds := []string{}
+		for _, iid := range integrationIds {
+			if _, exists := integrationDetails[iid]; !exists {
+				missingIds = append(missingIds, iid)
+			}
+		}
+		return nil, model.NotFoundError(fmt.Errorf(
+			"could not get details for all installed integrations with id: %s",
+			strings.Join(missingIds, ", "),
+		))
 	}
 
 	result := []Integration{}
 	for _, ii := range installed {
 		result = append(result, Integration{
-			IntegrationDetails: ii.IntegrationDetails,
+			IntegrationDetails: integrationDetails[ii.IntegrationId],
 			IsInstalled:        true,
 		})
 	}
@@ -80,18 +107,31 @@ func (m *Manager) InstallIntegration(
 	ctx context.Context,
 	integrationId string,
 ) (*Integration, *model.ApiError) {
-	ai, apiErr := m.availableIntegrationsRepo.get(ctx, integrationId)
+	ais, apiErr := m.availableIntegrationsRepo.get(
+		ctx, []string{integrationId},
+	)
 	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "could not find integration to be installed")
+		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
+			"could not find integration to be installed: %s", integrationId,
+		))
 	}
 
-	ii, apiErr := m.installedIntegrationsRepo.upsert(ctx, *ai)
+	integrationDetails, wasFound := ais[integrationId]
+	if !wasFound {
+		return nil, model.NotFoundError(fmt.Errorf(
+			"could not find integration to be installed: %s", integrationId,
+		))
+	}
+
+	_, apiErr = m.installedIntegrationsRepo.upsert(
+		ctx, integrationDetails,
+	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "could not insert installed integration")
 	}
 
 	return &Integration{
-		IntegrationDetails: ii.IntegrationDetails,
+		IntegrationDetails: integrationDetails,
 		IsInstalled:        true,
 	}, nil
 }

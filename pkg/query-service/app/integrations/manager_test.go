@@ -2,8 +2,8 @@ package integrations
 
 import (
 	"context"
-	"fmt"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/jmoiron/sqlx"
@@ -147,20 +147,22 @@ func (t *TestAvailableIntegrations) list(
 }
 
 func (t *TestAvailableIntegrations) get(
-	ctx context.Context, id string,
-) (*IntegrationDetails, *model.ApiError) {
+	ctx context.Context, ids []string,
+) (map[string]IntegrationDetails, *model.ApiError) {
 	availableIntegrations, apiErr := t.list(ctx)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
+	result := map[string]IntegrationDetails{}
+
 	for _, ai := range availableIntegrations {
-		if ai.Id == id {
-			return &ai, nil
+		if slices.Contains(ids, ai.Id) {
+			result[ai.Id] = ai
 		}
 	}
 
-	return nil, model.NotFoundError(fmt.Errorf("no integration found with id %s", id))
+	return result, nil
 }
 
 func NewTestManager(t *testing.T) *Manager {

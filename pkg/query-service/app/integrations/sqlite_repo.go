@@ -17,8 +17,8 @@ func InitSqliteDBIfNeeded(db *sqlx.DB) error {
 
 	createTablesStatements := `
 		CREATE TABLE IF NOT EXISTS integrations_installed(
-			id TEXT PRIMARY KEY,
-			data TEXT,
+			integration_id TEXT PRIMARY KEY,
+			config_json TEXT,
 			installed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
 	`
@@ -54,23 +54,27 @@ func (r *InstalledIntegrationsSqliteRepo) list(
 }
 
 func (r *InstalledIntegrationsSqliteRepo) get(
-	ctx context.Context, ids []string,
+	ctx context.Context, integrationIds []string,
 ) (map[string]InstalledIntegration, *model.ApiError) {
 	integrations := []InstalledIntegration{}
 
 	idPlaceholders := []string{}
 	idValues := []interface{}{}
-	for _, id := range ids {
+	for _, id := range integrationIds {
 		idPlaceholders = append(idPlaceholders, "?")
 		idValues = append(idValues, id)
 	}
 
-	err := r.db.GetContext(ctx, &integrations, fmt.Sprintf(`
-		select
-			data
-			installed_at
-		from integrations_installed
-		where id in (%s)`, strings.Join(idPlaceholders, ", ")),
+	err := r.db.SelectContext(
+		ctx, &integrations, fmt.Sprintf(`
+			select
+				integration_id,
+				config_json,
+				installed_at
+			from integrations_installed
+			where integration_id in (%s)`,
+			strings.Join(idPlaceholders, ", "),
+		),
 		idValues...,
 	)
 	if err != nil {
@@ -81,7 +85,7 @@ func (r *InstalledIntegrationsSqliteRepo) get(
 
 	result := map[string]InstalledIntegration{}
 	for _, ii := range integrations {
-		result[ii.Id] = ii
+		result[ii.IntegrationId] = ii
 	}
 
 	return result, nil
@@ -98,10 +102,11 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 	_, dbErr := r.db.ExecContext(
 		ctx, `
 			INSERT INTO integrations_installed (
-				id,
-				data
+				integration_id,
+				config_json
 			) values ($1, $2)
-			on conflict(id) do update set data=excluded.data
+			on conflict(integration_id) do update
+				set config_json=excluded.config_json
 		`, integration.Id, string(integrationJson),
 	)
 	if dbErr != nil {
