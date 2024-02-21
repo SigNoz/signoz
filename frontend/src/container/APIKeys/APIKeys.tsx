@@ -322,6 +322,9 @@ function APIKeys(): JSX.Element {
 	};
 
 	const isExpiredToken = (expiryTimestamp: number): boolean => {
+		if (expiryTimestamp === 0) {
+			return false;
+		}
 		const currentTime = dayjs();
 		const tokenExpiresAt = dayjs.unix(expiryTimestamp);
 		return tokenExpiresAt.isBefore(currentTime);
