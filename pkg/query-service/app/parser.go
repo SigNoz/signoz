@@ -829,8 +829,10 @@ func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequ
 		limit = 50
 	}
 
-	if err := aggregateOperator.Validate(); err != nil {
-		return nil, err
+	if dataSource != v3.DataSourceMetrics {
+		if err := aggregateOperator.Validate(); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := dataSource.Validate(); err != nil {
@@ -861,8 +863,10 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		return nil, err
 	}
 
-	if err := aggregateOperator.Validate(); err != nil {
-		return nil, err
+	if dataSource != v3.DataSourceMetrics {
+		if err := aggregateOperator.Validate(); err != nil {
+			return nil, err
+		}
 	}
 
 	req = v3.FilterAttributeKeyRequest{
@@ -894,8 +898,10 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 		return nil, err
 	}
 
-	if err := aggregateOperator.Validate(); err != nil {
-		return nil, err
+	if dataSource != v3.DataSourceMetrics {
+		if err := aggregateOperator.Validate(); err != nil {
+			return nil, err
+		}
 	}
 
 	req = v3.FilterAttributeValueRequest{
