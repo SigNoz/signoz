@@ -38,7 +38,7 @@ export default function SpaceAggregationOptions({
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [aggregatorAttributeType]);
 
 	return (
 		<div
