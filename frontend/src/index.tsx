@@ -11,6 +11,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import store from 'store';
+import { reportErrorStackTrace } from 'utils/loggingUtils';
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -26,7 +27,10 @@ if (container) {
 	const root = createRoot(container);
 
 	root.render(
-		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+		<ErrorBoundary
+			FallbackComponent={ErrorBoundaryFallback}
+			onError={reportErrorStackTrace}
+		>
 			<HelmetProvider>
 				<ThemeProvider>
 					<QueryClientProvider client={queryClient}>
