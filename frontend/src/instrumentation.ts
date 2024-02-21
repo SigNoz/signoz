@@ -15,7 +15,7 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 
 const resource = Resource.default().merge(
 	new Resource({
-		[SemanticResourceAttributes.SERVICE_NAME]: 'service-name-here',
+		[SemanticResourceAttributes.SERVICE_NAME]: 'signoz-frontend',
 		[SemanticResourceAttributes.SERVICE_VERSION]: '0.1.0',
 	}),
 );
