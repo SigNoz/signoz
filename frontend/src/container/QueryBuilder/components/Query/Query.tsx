@@ -429,7 +429,7 @@ export const Query = memo(function Query({
 									selectedDashboardVersion === 'v4' &&
 									isMetricsDataSource && (
 										<SpaceAggregationOptions
-											key={query.spaceAggregation}
+											key={`${query.spaceAggregation}${query.timeAggregation}`}
 											aggregatorAttributeType={
 												query?.aggregateAttribute.type as ATTRIBUTE_TYPES
 											}
