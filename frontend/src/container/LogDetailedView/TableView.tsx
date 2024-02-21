@@ -40,6 +40,7 @@ const RESTRICTED_FIELDS = ['timestamp'];
 interface TableViewProps {
 	logData: ILog;
 	fieldSearchInput: string;
+	isListViewPanel?: boolean;
 }
 
 type Props = TableViewProps &
@@ -51,6 +52,7 @@ function TableView({
 	fieldSearchInput,
 	onAddToQuery,
 	onClickActionItem,
+	isListViewPanel = false,
 }: Props): JSX.Element | null {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
@@ -100,7 +102,10 @@ function TableView({
 				value: JSON.stringify(flattenLogData[key]),
 			}));
 
-	const onTraceHandler = (record: DataType) => (): void => {
+	const onTraceHandler = (
+		record: DataType,
+		event: React.MouseEvent<HTMLDivElement, MouseEvent>,
+	) => (): void => {
 		if (flattenLogData === null) return;
 
 		const traceId = flattenLogData[record.field];
@@ -119,7 +124,12 @@ function TableView({
 
 			const route = spanId ? `${basePath}?spanId=${spanId}` : basePath;
 
-			history.push(route);
+			if (event.ctrlKey || event.metaKey) {
+				// open the trace in new tab
+				window.open(route, '_blank');
+			} else {
+				history.push(route);
+			}
 		}
 	};
 
@@ -148,17 +158,20 @@ function TableView({
 
 							{traceId && (
 								<Tooltip title="Inspect in Trace">
-									<div
-										style={{ cursor: 'pointer' }}
-										role="presentation"
-										onClick={onTraceHandler(record)}
+									<Button
+										className="periscope-btn"
+										onClick={(
+											event: React.MouseEvent<HTMLDivElement, MouseEvent>,
+										): void => {
+											onTraceHandler(record, event);
+										}}
 									>
 										<LinkOutlined
 											style={{
 												width: '15px',
 											}}
 										/>
-									</div>
+									</Button>
 								</Tooltip>
 							)}
 						</Space>
@@ -207,38 +220,45 @@ function TableView({
 								{removeEscapeCharacters(fieldData.value)}
 							</span>
 						</CopyClipboardHOC>
-						<span className="action-btn">
-							<Tooltip title="Filter for value">
-								<Button
-									className="filter-btn periscope-btn"
-									icon={
-										isfilterInLoading ? (
-											<Spin size="small" />
-										) : (
-											<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
-										)
-									}
-									onClick={onClickHandler(OPERATORS.IN, fieldFilterKey, fieldData.value)}
-								/>
-							</Tooltip>
-							<Tooltip title="Filter out value">
-								<Button
-									className="filter-btn periscope-btn"
-									icon={
-										isfilterOutLoading ? (
-											<Spin size="small" />
-										) : (
-											<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
-										)
-									}
-									onClick={onClickHandler(
-										OPERATORS.NIN,
-										fieldFilterKey,
-										fieldData.value,
-									)}
-								/>
-							</Tooltip>
-						</span>
+
+						{!isListViewPanel && (
+							<span className="action-btn">
+								<Tooltip title="Filter for value">
+									<Button
+										className="filter-btn periscope-btn"
+										icon={
+											isfilterInLoading ? (
+												<Spin size="small" />
+											) : (
+												<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
+											)
+										}
+										onClick={onClickHandler(
+											OPERATORS.IN,
+											fieldFilterKey,
+											fieldData.value,
+										)}
+									/>
+								</Tooltip>
+								<Tooltip title="Filter out value">
+									<Button
+										className="filter-btn periscope-btn"
+										icon={
+											isfilterOutLoading ? (
+												<Spin size="small" />
+											) : (
+												<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
+											)
+										}
+										onClick={onClickHandler(
+											OPERATORS.NIN,
+											fieldFilterKey,
+											fieldData.value,
+										)}
+									/>
+								</Tooltip>
+							</span>
+						)}
 					</div>
 				);
 			},
@@ -256,6 +276,10 @@ function TableView({
 		/>
 	);
 }
+
+TableView.defaultProps = {
+	isListViewPanel: false,
+};
 
 interface DataType {
 	key: string;

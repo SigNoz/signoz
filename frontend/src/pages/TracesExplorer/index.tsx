@@ -192,7 +192,7 @@ function TracesExplorer(): JSX.Element {
 					<QuerySection />
 				</ExplorerCard>
 
-				<Container>
+				<Container className="traces-explorer-views">
 					<ActionsWrapper>
 						<ExportPanel
 							query={exportDefaultQuery}

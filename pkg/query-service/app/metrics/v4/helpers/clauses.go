@@ -37,17 +37,6 @@ func GroupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	return strings.Join(groupTags, ", ")
 }
 
-func GroupByAttributeKeyTagsWithoutLe(tags ...v3.AttributeKey) string {
-	groupTags := []string{}
-	for _, tag := range tags {
-		if tag.Key != "le" {
-			groupTags = append(groupTags, tag.Key)
-		}
-	}
-	groupTags = append(groupTags, "ts")
-	return strings.Join(groupTags, ", ")
-}
-
 // OrderByAttributeKeyTags returns a string of comma separated tags for order by clause
 // if the order is not specified, it defaults to ASC
 func OrderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string {
@@ -63,29 +52,6 @@ func OrderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string 
 		}
 		if !found {
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag.Key))
-		}
-	}
-
-	orderBy = append(orderBy, "ts ASC")
-
-	return strings.Join(orderBy, ", ")
-}
-
-func OrderByAttributeKeyTagsWithoutLe(items []v3.OrderBy, tags []v3.AttributeKey) string {
-	var orderBy []string
-	for _, tag := range tags {
-		if tag.Key != "le" {
-			found := false
-			for _, item := range items {
-				if item.ColumnName == tag.Key {
-					found = true
-					orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
-					break
-				}
-			}
-			if !found {
-				orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag.Key))
-			}
 		}
 	}
 

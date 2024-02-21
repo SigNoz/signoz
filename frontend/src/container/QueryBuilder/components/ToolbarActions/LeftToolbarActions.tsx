@@ -39,7 +39,7 @@ export default function LeftToolbarActions({
 						)}
 						onClick={(): void => onChangeSelectedView(SELECTED_VIEWS.SEARCH)}
 					>
-						<MousePointerSquare size={14} />
+						<MousePointerSquare size={14} data-testid="search-view" />
 					</Button>
 				</Tooltip>
 				<Tooltip title="Query Builder">
@@ -52,7 +52,7 @@ export default function LeftToolbarActions({
 						)}
 						onClick={(): void => onChangeSelectedView(SELECTED_VIEWS.QUERY_BUILDER)}
 					>
-						<Atom size={14} />
+						<Atom size={14} data-testid="query-builder-view" />
 					</Button>
 				</Tooltip>
 
@@ -66,7 +66,7 @@ export default function LeftToolbarActions({
 						)}
 						onClick={(): void => onChangeSelectedView(SELECTED_VIEWS.CLICKHOUSE)}
 					>
-						<Terminal size={14} />
+						<Terminal size={14} data-testid="clickhouse-view" />
 					</Button>
 				)}
 			</div>

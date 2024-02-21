@@ -395,7 +395,7 @@ function LogsExplorerViews({
 			handleSetConfig(defaultTo(panelTypes, PANEL_TYPES.LIST), DataSource.LOGS);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [handleSetConfig, panelTypes]);
 
 	useEffect(() => {
 		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
@@ -539,6 +539,7 @@ function LogsExplorerViews({
 								(isMultipleQueries || isGroupByExist) && selectedView !== 'search'
 							}
 							onClick={(): void => handleModeChange(PANEL_TYPES.LIST)}
+							data-testid="logs-list-view"
 						>
 							List view
 						</Button>
@@ -551,6 +552,7 @@ function LogsExplorerViews({
 									: 'tab'
 							}
 							onClick={(): void => handleModeChange(PANEL_TYPES.TIME_SERIES)}
+							data-testid="time-series-view"
 						>
 							Time series
 						</Button>
@@ -561,6 +563,7 @@ function LogsExplorerViews({
 								selectedPanelType === PANEL_TYPES.TABLE ? 'selected_view tab' : 'tab'
 							}
 							onClick={(): void => handleModeChange(PANEL_TYPES.TABLE)}
+							data-testid="table-view"
 						>
 							Table
 						</Button>
