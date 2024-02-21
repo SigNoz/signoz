@@ -15,6 +15,7 @@ import {
 } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import UPlot from 'uplot';
+import { reportErrorStackTrace } from 'utils/loggingUtils';
 
 import { dataMatch, optionsUpdateState } from './utils';
 
@@ -139,7 +140,10 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		}
 
 		return (
-			<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+			<ErrorBoundary
+				FallbackComponent={ErrorBoundaryFallback}
+				onError={reportErrorStackTrace}
+			>
 				<div className="uplot-graph-container" ref={targetRef}>
 					{data && data[0] && data[0]?.length === 0 ? (
 						<div className="not-found">

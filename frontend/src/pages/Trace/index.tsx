@@ -26,6 +26,7 @@ import AppActions from 'types/actions';
 import { RESET_TRACE_FILTER } from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
+import { reportErrorStackTrace } from 'utils/loggingUtils';
 
 import {
 	ClearAllFilter,
@@ -146,7 +147,10 @@ function Trace({
 	);
 
 	return (
-		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+		<ErrorBoundary
+			FallbackComponent={ErrorBoundaryFallback}
+			onError={reportErrorStackTrace}
+		>
 			<Search />
 			<Container>
 				<div>

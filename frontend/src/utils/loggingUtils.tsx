@@ -8,8 +8,8 @@ export function reportErrorStackTrace(error: Error, info: ErrorInfo): void {
 	tracer.startActiveSpan('Error Boundary', (span) => {
 		const stackTrace = error.stack;
 
-		span.setAttribute('Stack Trace', defaultTo(error.stack, ''));
-		span.setAttribute('Error Message', error.message);
+		span.setAttribute('stackTrace', defaultTo(error.stack, ''));
+		span.setAttribute('errorMessage', error.message);
 		console.log('Logging stack trace to logging system:');
 		console.log(stackTrace);
 		console.log(info);

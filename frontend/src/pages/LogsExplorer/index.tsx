@@ -11,6 +11,7 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { useEffect, useMemo, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { DataSource } from 'types/common/queryBuilder';
+import { reportErrorStackTrace } from 'utils/loggingUtils';
 
 import { WrapperStyled } from './styles';
 import { SELECTED_VIEWS } from './utils';
@@ -70,7 +71,10 @@ function LogsExplorer(): JSX.Element {
 	);
 
 	return (
-		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+		<ErrorBoundary
+			FallbackComponent={ErrorBoundaryFallback}
+			onError={reportErrorStackTrace}
+		>
 			<Toolbar
 				showAutoRefresh={false}
 				leftActions={

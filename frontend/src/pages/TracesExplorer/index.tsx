@@ -24,6 +24,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
+import { reportErrorStackTrace } from 'utils/loggingUtils';
 import { v4 } from 'uuid';
 
 import { ActionsWrapper, Container } from './styles';
@@ -182,7 +183,10 @@ function TracesExplorer(): JSX.Element {
 	]);
 
 	return (
-		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+		<ErrorBoundary
+			FallbackComponent={ErrorBoundaryFallback}
+			onError={reportErrorStackTrace}
+		>
 			<>
 				<div className="trace-explorer-run-query">
 					<RightToolbarActions onStageRunQuery={handleRunQuery} />

@@ -45,6 +45,7 @@ import {
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
+import { reportErrorStackTrace } from 'utils/loggingUtils';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
@@ -316,7 +317,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					/>
 				)}
 				<div className={cx('app-content', collapsed ? 'collapsed' : '')}>
-					<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+					<ErrorBoundary
+						FallbackComponent={ErrorBoundaryFallback}
+						onError={reportErrorStackTrace}
+					>
 						<LayoutContent>
 							<ChildrenContainer
 								style={{

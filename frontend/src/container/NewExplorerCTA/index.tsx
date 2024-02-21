@@ -2,7 +2,7 @@ import { CompassOutlined } from '@ant-design/icons';
 import { Badge, Button } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { buttonText, RIBBON_STYLES } from './config';
@@ -17,6 +17,11 @@ function NewExplorerCTA(): JSX.Element | null {
 			location.pathname === ROUTES.OLD_LOGS_EXPLORER,
 		[location.pathname],
 	);
+
+	useEffect(() => {
+		throw new Error(`Something went wrong : ${location.pathname}`);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const onClickHandler = useCallback((): void => {
 		if (location.pathname === ROUTES.LOGS_EXPLORER) {

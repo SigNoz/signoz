@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Pipeline } from 'types/api/pipeline/def';
+import { reportErrorStackTrace } from 'utils/loggingUtils';
 
 const pipelineRefetchInterval = (
 	pipelineResponse: SuccessResponse<Pipeline> | undefined,
@@ -82,7 +83,10 @@ function Pipelines(): JSX.Element {
 	}
 
 	return (
-		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+		<ErrorBoundary
+			FallbackComponent={ErrorBoundaryFallback}
+			onError={reportErrorStackTrace}
+		>
 			<Tabs
 				className="pipeline-tabs"
 				defaultActiveKey="pipelines"

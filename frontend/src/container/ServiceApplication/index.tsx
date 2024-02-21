@@ -2,6 +2,7 @@ import { FeatureKeys } from 'constants/features';
 import useFeatureFlag from 'hooks/useFeatureFlag';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ErrorBoundary } from 'react-error-boundary';
+import { reportErrorStackTrace } from 'utils/loggingUtils';
 
 import ServiceMetrics from './ServiceMetrics';
 import ServiceTraces from './ServiceTraces';
@@ -12,7 +13,10 @@ function Services(): JSX.Element {
 		?.active;
 
 	return (
-		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+		<ErrorBoundary
+			FallbackComponent={ErrorBoundaryFallback}
+			onError={reportErrorStackTrace}
+		>
 			<Container style={{ marginTop: 0 }}>
 				{isSpanMetricEnabled ? <ServiceMetrics /> : <ServiceTraces />}
 			</Container>
