@@ -10,9 +10,15 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
+type InstalledIntegration struct {
+	IntegrationId string                     `db:"integration_id"`
+	Config        InstalledIntegrationConfig `db:"config_json"`
+	InstalledAt   time.Time                  `db:"installed_at"`
+}
+
 type InstalledIntegrationConfig map[string]interface{}
 
-// For serializing to and from db
+// For serializing from db
 func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
 	if data, ok := src.([]byte); ok {
 		return json.Unmarshal(data, &c)
@@ -20,6 +26,7 @@ func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
 	return nil
 }
 
+// For serializing to db
 func (c *InstalledIntegrationConfig) Value() (driver.Value, error) {
 	filterSetJson, err := json.Marshal(c)
 	if err != nil {
@@ -28,25 +35,33 @@ func (c *InstalledIntegrationConfig) Value() (driver.Value, error) {
 	return filterSetJson, nil
 }
 
-// Actual integration details are expected to be fetched from relevant AvailableIntegrationsRepo.
-type InstalledIntegration struct {
-	IntegrationId string                     `db:"integration_id"`
-	Config        InstalledIntegrationConfig `db:"config_json"`
-	InstalledAt   time.Time                  `db:"installed_at"`
-}
-
 type InstalledIntegrationsRepo interface {
 	list(context.Context) ([]InstalledIntegration, *model.ApiError)
-	get(ctx context.Context, integrationIds []string) (map[string]InstalledIntegration, *model.ApiError)
-	upsert(context.Context, IntegrationDetails) (*InstalledIntegration, *model.ApiError)
+
+	get(
+		ctx context.Context, integrationIds []string,
+	) (map[string]InstalledIntegration, *model.ApiError)
+
+	upsert(
+		ctx context.Context,
+		integrationId string,
+		config InstalledIntegrationConfig,
+	) (*InstalledIntegration, *model.ApiError)
+
 	delete(ctx context.Context, integrationId string) *model.ApiError
 }
 
 type AvailableIntegrationsRepo interface {
 	list(context.Context) ([]IntegrationDetails, *model.ApiError)
-	get(ctx context.Context, integrationIds []string) (map[string]IntegrationDetails, *model.ApiError)
 
-	// AvailableIntegrationsRepo implementations are expected to cache details of installed integrations for quick retrieval.
-	// For v0 only bundled integrations are available, later versions are expected
-	// to add methods in this interface for caching details for installed integrations locally
+	get(
+		ctx context.Context, integrationIds []string,
+	) (map[string]IntegrationDetails, *model.ApiError)
+
+	// AvailableIntegrationsRepo implementations are expected to cache
+	// details of installed integrations for quick retrieval.
+	//
+	// For v0 only bundled integrations are available, later versions
+	// are expected to add methods in this interface for pinning installed
+	// integration details in local cache.
 }

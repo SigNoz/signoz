@@ -2,7 +2,6 @@ package integrations
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -24,7 +23,9 @@ func InitSqliteDBIfNeeded(db *sqlx.DB) error {
 	`
 	_, err := db.Exec(createTablesStatements)
 	if err != nil {
-		return fmt.Errorf("could not ensure integrations schema in sqlite DB: %w", err)
+		return fmt.Errorf(
+			"could not ensure integrations schema in sqlite DB: %w", err,
+		)
 	}
 
 	return nil
@@ -39,7 +40,9 @@ func NewInstalledIntegrationsSqliteRepo(db *sqlx.DB) (
 ) {
 	err := InitSqliteDBIfNeeded(db)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't ensure sqlite schema for installed integrations: %w", err)
+		return nil, fmt.Errorf(
+			"couldn't ensure sqlite schema for installed integrations: %w", err,
+		)
 	}
 
 	return &InstalledIntegrationsSqliteRepo{
@@ -108,11 +111,15 @@ func (r *InstalledIntegrationsSqliteRepo) get(
 }
 
 func (r *InstalledIntegrationsSqliteRepo) upsert(
-	ctx context.Context, integration IntegrationDetails,
+	ctx context.Context,
+	integrationId string,
+	config InstalledIntegrationConfig,
 ) (*InstalledIntegration, *model.ApiError) {
-	integrationJson, err := json.Marshal(integration)
+	serializedConfig, err := config.Value()
 	if err != nil {
-		return nil, model.BadRequest(err)
+		return nil, model.BadRequest(fmt.Errorf(
+			"could not serialize integration config: %w", err,
+		))
 	}
 
 	_, dbErr := r.db.ExecContext(
@@ -123,7 +130,7 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 			) values ($1, $2)
 			on conflict(integration_id) do update
 				set config_json=excluded.config_json
-		`, integration.Id, string(integrationJson),
+		`, integrationId, serializedConfig,
 	)
 	if dbErr != nil {
 		return nil, model.InternalError(fmt.Errorf(
@@ -131,12 +138,12 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 		))
 	}
 
-	res, apiErr := r.get(ctx, []string{integration.Id})
+	res, apiErr := r.get(ctx, []string{integrationId})
 	if apiErr != nil || len(res) < 1 {
 		return nil, model.WrapApiError(apiErr, "could not fetch installed integration")
 	}
 
-	installed := res[integration.Id]
+	installed := res[integrationId]
 
 	return &installed, nil
 }
@@ -147,6 +154,7 @@ func (r *InstalledIntegrationsSqliteRepo) delete(
 	_, dbErr := r.db.ExecContext(ctx, `
 		DELETE FROM integrations_installed where integration_id = ?
 	`, integrationId)
+
 	if dbErr != nil {
 		return model.InternalError(fmt.Errorf(
 			"could not delete installed integration record for %s: %w",

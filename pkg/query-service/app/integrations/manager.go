@@ -24,6 +24,8 @@ type IntegrationSummary struct {
 }
 
 type IntegrationAssets struct {
+	// Each integration is expected to specify all log transformations
+	// in a single pipeline with a source based filter
 	LogPipeline *logparsingpipeline.PostablePipeline
 
 	// TBD: Dashboards, alerts, saved views, facets (indexed attribs)...
@@ -46,26 +48,31 @@ type Manager struct {
 
 func (m *Manager) ListAvailableIntegrations(
 	ctx context.Context,
+	// Expected to have filters and pagination over time.
 ) ([]Integration, *model.ApiError) {
 	available, apiErr := m.availableIntegrationsRepo.list(ctx)
 	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "could not fetch available integrations")
+		return nil, model.WrapApiError(
+			apiErr, "could not fetch available integrations",
+		)
 	}
 
 	installed, apiErr := m.installedIntegrationsRepo.list(ctx)
 	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "could not fetch installed integrations")
+		return nil, model.WrapApiError(
+			apiErr, "could not fetch installed integrations",
+		)
 	}
-	installedIntegrationIds := []string{}
+	installedIds := []string{}
 	for _, ii := range installed {
-		installedIntegrationIds = append(installedIntegrationIds, ii.IntegrationId)
+		installedIds = append(installedIds, ii.IntegrationId)
 	}
 
 	result := []Integration{}
 	for _, ai := range available {
 		result = append(result, Integration{
 			IntegrationDetails: ai,
-			IsInstalled:        slices.Contains(installedIntegrationIds, ai.Id),
+			IsInstalled:        slices.Contains(installedIds, ai.Id),
 		})
 	}
 	return result, nil
@@ -81,19 +88,21 @@ func (m *Manager) ListInstalledIntegrations(
 		)
 	}
 
-	integrationIds := []string{}
+	installedIds := []string{}
 	for _, ii := range installed {
-		integrationIds = append(integrationIds, ii.IntegrationId)
+		installedIds = append(installedIds, ii.IntegrationId)
 	}
-	integrationDetails, apiErr := m.availableIntegrationsRepo.get(ctx, integrationIds)
+	integrationDetails, apiErr := m.availableIntegrationsRepo.get(
+		ctx, installedIds,
+	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
-			apiErr, "could not fetch integrations details",
+			apiErr, "could not fetch details for installed integrations",
 		)
 	}
-	if len(integrationDetails) != len(integrationIds) {
+	if len(integrationDetails) != len(installedIds) {
 		missingIds := []string{}
-		for _, iid := range integrationIds {
+		for _, iid := range installedIds {
 			if _, exists := integrationDetails[iid]; !exists {
 				missingIds = append(missingIds, iid)
 			}
@@ -117,13 +126,14 @@ func (m *Manager) ListInstalledIntegrations(
 func (m *Manager) InstallIntegration(
 	ctx context.Context,
 	integrationId string,
+	config InstalledIntegrationConfig,
 ) (*Integration, *model.ApiError) {
 	ais, apiErr := m.availableIntegrationsRepo.get(
 		ctx, []string{integrationId},
 	)
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
-			"could not find integration to be installed: %s", integrationId,
+			"could not fetch integration to be installed: %s", integrationId,
 		))
 	}
 
@@ -135,10 +145,12 @@ func (m *Manager) InstallIntegration(
 	}
 
 	_, apiErr = m.installedIntegrationsRepo.upsert(
-		ctx, integrationDetails,
+		ctx, integrationId, config,
 	)
 	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, "could not insert installed integration")
+		return nil, model.WrapApiError(
+			apiErr, "could not insert installed integration",
+		)
 	}
 
 	return &Integration{
