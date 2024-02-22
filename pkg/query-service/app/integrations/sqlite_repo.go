@@ -50,7 +50,23 @@ func NewInstalledIntegrationsSqliteRepo(db *sqlx.DB) (
 func (r *InstalledIntegrationsSqliteRepo) list(
 	ctx context.Context,
 ) ([]InstalledIntegration, *model.ApiError) {
-	return []InstalledIntegration{}, nil
+	integrations := []InstalledIntegration{}
+
+	err := r.db.SelectContext(
+		ctx, &integrations, `
+			select
+				integration_id,
+				config_json,
+				installed_at
+			from integrations_installed
+		`,
+	)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query installed integrations: %w", err,
+		))
+	}
+	return integrations, nil
 }
 
 func (r *InstalledIntegrationsSqliteRepo) get(
@@ -128,5 +144,15 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 func (r *InstalledIntegrationsSqliteRepo) delete(
 	ctx context.Context, integrationId string,
 ) *model.ApiError {
+	_, dbErr := r.db.ExecContext(ctx, `
+		DELETE FROM integrations_installed where integration_id = ?
+	`, integrationId)
+	if dbErr != nil {
+		return model.InternalError(fmt.Errorf(
+			"could not delete installed integration record for %s: %w",
+			integrationId, dbErr,
+		))
+	}
+
 	return nil
 }

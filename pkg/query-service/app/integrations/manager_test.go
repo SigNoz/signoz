@@ -68,7 +68,7 @@ func (t *TestAvailableIntegrations) list(
 				},
 			},
 			IntegrationAssets: IntegrationAssets{
-				LogPipeline: logparsingpipeline.PostablePipeline{
+				LogPipeline: &logparsingpipeline.PostablePipeline{
 					Name:    "pipeline1",
 					Alias:   "pipeline1",
 					Enabled: true,
@@ -111,7 +111,7 @@ func (t *TestAvailableIntegrations) list(
 				},
 			},
 			IntegrationAssets: IntegrationAssets{
-				LogPipeline: logparsingpipeline.PostablePipeline{
+				LogPipeline: &logparsingpipeline.PostablePipeline{
 					Name:    "pipeline2",
 					Alias:   "pipeline2",
 					Enabled: true,

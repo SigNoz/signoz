@@ -3,6 +3,7 @@ package integrations
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
@@ -23,7 +24,7 @@ type IntegrationSummary struct {
 }
 
 type IntegrationAssets struct {
-	LogPipeline logparsingpipeline.PostablePipeline
+	LogPipeline *logparsingpipeline.PostablePipeline
 
 	// TBD: Dashboards, alerts, saved views, facets (indexed attribs)...
 }
@@ -50,11 +51,21 @@ func (m *Manager) ListAvailableIntegrations(
 	if apiErr != nil {
 		return nil, model.WrapApiError(apiErr, "could not fetch available integrations")
 	}
+
+	installed, apiErr := m.installedIntegrationsRepo.list(ctx)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, "could not fetch installed integrations")
+	}
+	installedIntegrationIds := []string{}
+	for _, ii := range installed {
+		installedIntegrationIds = append(installedIntegrationIds, ii.IntegrationId)
+	}
+
 	result := []Integration{}
 	for _, ai := range available {
 		result = append(result, Integration{
 			IntegrationDetails: ai,
-			IsInstalled:        false,
+			IsInstalled:        slices.Contains(installedIntegrationIds, ai.Id),
 		})
 	}
 	return result, nil
@@ -140,5 +151,5 @@ func (m *Manager) UninstallIntegration(
 	ctx context.Context,
 	integrationId string,
 ) *model.ApiError {
-	return nil
+	return m.installedIntegrationsRepo.delete(ctx, integrationId)
 }
