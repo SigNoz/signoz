@@ -41,12 +41,12 @@ type AvailableIntegration struct {
 	IntegrationDetails
 	IsInstalled bool
 }
+
 type InstalledIntegration struct {
 	IntegrationId string                     `db:"integration_id"`
 	Config        InstalledIntegrationConfig `db:"config_json"`
 	InstalledAt   time.Time                  `db:"installed_at"`
 }
-
 type InstalledIntegrationConfig map[string]interface{}
 
 type InstalledIntegrationWithDetails struct {
@@ -97,7 +97,7 @@ func (m *Manager) ListInstalledIntegrations(
 	installed, apiErr := m.installedIntegrationsRepo.list(ctx)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
-			apiErr, "could not fetch installed integrations data",
+			apiErr, "could not fetch installed integrations",
 		)
 	}
 
@@ -105,6 +105,7 @@ func (m *Manager) ListInstalledIntegrations(
 	for _, ii := range installed {
 		installedIds = append(installedIds, ii.IntegrationId)
 	}
+
 	integrationDetails, apiErr := m.availableIntegrationsRepo.get(
 		ctx, installedIds,
 	)

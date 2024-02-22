@@ -140,7 +140,9 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 
 	res, apiErr := r.get(ctx, []string{integrationId})
 	if apiErr != nil || len(res) < 1 {
-		return nil, model.WrapApiError(apiErr, "could not fetch installed integration")
+		return nil, model.WrapApiError(
+			apiErr, "could not fetch installed integration",
+		)
 	}
 
 	installed := res[integrationId]
