@@ -100,8 +100,12 @@ export function QueryBuilderProvider({
 		null,
 	);
 
+	const panelTypeQueryParams = urlQuery.get(
+		QueryParams.panelTypes,
+	) as PANEL_TYPES | null;
+
 	const [panelType, setPanelType] = useState<PANEL_TYPES | null>(
-		urlQuery.get(QueryParams.panelTypes) as PANEL_TYPES | null,
+		panelTypeQueryParams,
 	);
 
 	const [currentQuery, setCurrentQuery] = useState<QueryState>(queryState);
