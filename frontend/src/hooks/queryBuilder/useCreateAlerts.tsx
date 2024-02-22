@@ -1,6 +1,7 @@
 import { getQueryRangeFormat } from 'api/dashboard/queryRangeFormat';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
@@ -33,7 +34,10 @@ const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 		const { queryPayload } = prepareQueryRangePayload({
 			query: widget.query,
 			globalSelectedInterval,
-			graphType: widget.panelTypes,
+			graphType:
+				widget.panelTypes === PANEL_TYPES.BAR
+					? PANEL_TYPES.TIME_SERIES
+					: widget.panelTypes,
 			selectedTime: widget.timePreferance,
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		});
@@ -44,7 +48,7 @@ const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 				history.push(
 					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
 						JSON.stringify(updatedQuery),
-					)}`,
+					)}&${QueryParams.panelTypes}=${widget.panelTypes}`,
 				);
 			},
 			onError: () => {

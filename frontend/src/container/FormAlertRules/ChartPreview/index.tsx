@@ -86,7 +86,8 @@ function ChartPreview({
 		{
 			query: query || initialQueriesMap.metrics,
 			globalSelectedInterval: selectedInterval,
-			graphType,
+			graphType:
+				graphType === PANEL_TYPES.BAR ? PANEL_TYPES.TIME_SERIES : graphType,
 			selectedTime,
 			params: {
 				allowSelectedIntervalForStepGen,
@@ -153,6 +154,7 @@ function ChartPreview({
 				],
 				softMax: null,
 				softMin: null,
+				panelType: graphType,
 			}),
 		[
 			yAxisUnit,
@@ -165,6 +167,7 @@ function ChartPreview({
 			t,
 			optionName,
 			alertDef?.condition.targetUnit,
+			graphType,
 		],
 	);
 

@@ -423,6 +423,7 @@ function FormAlertRules({
 			selectedInterval={globalSelectedInterval}
 			alertDef={alertDef}
 			yAxisUnit={yAxisUnit || ''}
+			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 		/>
 	);
 
@@ -439,6 +440,7 @@ function FormAlertRules({
 			alertDef={alertDef}
 			selectedInterval={globalSelectedInterval}
 			yAxisUnit={yAxisUnit || ''}
+			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 		/>
 	);
 
