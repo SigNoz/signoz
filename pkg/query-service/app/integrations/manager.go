@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
@@ -37,8 +38,8 @@ type IntegrationDetails struct {
 	IntegrationAssets
 }
 
-type AvailableIntegration struct {
-	IntegrationDetails
+type AvailableIntegrationSummary struct {
+	IntegrationSummary
 	IsInstalled bool
 }
 
@@ -59,10 +60,25 @@ type Manager struct {
 	installedIntegrationsRepo InstalledIntegrationsRepo
 }
 
+func NewManager(db *sqlx.DB) (*Manager, error) {
+	iiRepo, err := NewInstalledIntegrationsSqliteRepo(db)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not init sqlite DB for installed integrations: %w", err,
+		)
+	}
+
+	return &Manager{
+		// TODO(Raj): Hook up a real available integrations provider.
+		availableIntegrationsRepo: &TestAvailableIntegrationsRepo{},
+		installedIntegrationsRepo: iiRepo,
+	}, nil
+}
+
 func (m *Manager) ListAvailableIntegrations(
 	ctx context.Context,
 	// Expected to have filters and pagination over time.
-) ([]AvailableIntegration, *model.ApiError) {
+) ([]AvailableIntegrationSummary, *model.ApiError) {
 	available, apiErr := m.availableIntegrationsRepo.list(ctx)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
@@ -81,10 +97,10 @@ func (m *Manager) ListAvailableIntegrations(
 		installedIds = append(installedIds, ii.IntegrationId)
 	}
 
-	result := []AvailableIntegration{}
+	result := []AvailableIntegrationSummary{}
 	for _, ai := range available {
-		result = append(result, AvailableIntegration{
-			IntegrationDetails: ai,
+		result = append(result, AvailableIntegrationSummary{
+			IntegrationSummary: ai.IntegrationSummary,
 			IsInstalled:        slices.Contains(installedIds, ai.Id),
 		})
 	}
@@ -141,7 +157,7 @@ func (m *Manager) InstallIntegration(
 	ctx context.Context,
 	integrationId string,
 	config InstalledIntegrationConfig,
-) (*AvailableIntegration, *model.ApiError) {
+) (*AvailableIntegrationSummary, *model.ApiError) {
 	ais, apiErr := m.availableIntegrationsRepo.get(
 		ctx, []string{integrationId},
 	)
@@ -167,8 +183,8 @@ func (m *Manager) InstallIntegration(
 		)
 	}
 
-	return &AvailableIntegration{
-		IntegrationDetails: integrationDetails,
+	return &AvailableIntegrationSummary{
+		IntegrationSummary: integrationDetails.IntegrationSummary,
 		IsInstalled:        true,
 	}, nil
 }

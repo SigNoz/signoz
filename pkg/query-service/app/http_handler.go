@@ -23,6 +23,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
@@ -94,6 +95,8 @@ type APIHandler struct {
 	maxOpenConns int
 	dialTimeout  time.Duration
 
+	IntegrationsController *integrations.Controller
+
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
@@ -125,8 +128,12 @@ type APIHandlerOpts struct {
 	// feature flags querier
 	FeatureFlags interfaces.FeatureLookup
 
+	// Integrations
+	IntegrationsController *integrations.Controller
+
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
+
 	// cache
 	Cache cache.Cache
 
@@ -174,6 +181,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		alertManager:                  alertManager,
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
+		IntegrationsController:        opts.IntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
@@ -2390,6 +2398,17 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	resp, _ := marshall(response)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resp)
+}
+
+// Integrations
+// TODO(Raj): Register integrations handler paths and do e2e test with mux
+func (aH *APIHandler) ListAvailableIntegrations(w http.ResponseWriter, r *http.Request) {
+	resp, apiErr := aH.IntegrationsController.ListAvailableIntegrations(r.Context())
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch fields from the DB")
+		return
+	}
+	aH.Respond(w, resp)
 }
 
 // logs
