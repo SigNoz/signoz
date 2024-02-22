@@ -280,6 +280,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
+		path: ROUTES.LOGS_PIPELINES,
+		exact: true,
+		component: PipelinePage,
+		key: 'LOGS_PIPELINES',
+		isPrivate: true,
+	},
+	{
 		path: ROUTES.LOGIN,
 		exact: true,
 		component: Login,
@@ -306,13 +313,6 @@ const routes: AppRoutes[] = [
 		component: SomethingWentWrong,
 		key: 'SOMETHING_WENT_WRONG',
 		isPrivate: false,
-	},
-	{
-		path: ROUTES.LOGS_PIPELINES,
-		exact: true,
-		component: PipelinePage,
-		key: 'LOGS_PIPELINES',
-		isPrivate: true,
 	},
 	{
 		path: ROUTES.BILLING,
@@ -351,6 +351,20 @@ export const LIST_LICENSES: AppRoutes = {
 	component: LicensePage,
 	isPrivate: true,
 	key: 'LIST_LICENSES',
+};
+
+export const oldRoutes = [
+	'/pipelines',
+	'/logs/old-logs-explorer',
+	'/logs-explorer',
+	'/logs-explorer/live',
+];
+
+export const oldNewRoutesMapping: Record<string, string> = {
+	'/pipelines': '/logs/pipelines',
+	'/logs/old-logs-explorer': '/logs/old-logs-explorer',
+	'/logs-explorer': '/logs/logs-explorer',
+	'/logs-explorer/live': '/logs/logs-explorer/live',
 };
 
 export interface AppRoutes {
