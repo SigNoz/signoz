@@ -37,7 +37,7 @@ type IntegrationDetails struct {
 	IntegrationAssets
 }
 
-type Integration struct {
+type AvailableIntegration struct {
 	IntegrationDetails
 	IsInstalled bool
 }
@@ -62,7 +62,7 @@ type Manager struct {
 func (m *Manager) ListAvailableIntegrations(
 	ctx context.Context,
 	// Expected to have filters and pagination over time.
-) ([]Integration, *model.ApiError) {
+) ([]AvailableIntegration, *model.ApiError) {
 	available, apiErr := m.availableIntegrationsRepo.list(ctx)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
@@ -81,9 +81,9 @@ func (m *Manager) ListAvailableIntegrations(
 		installedIds = append(installedIds, ii.IntegrationId)
 	}
 
-	result := []Integration{}
+	result := []AvailableIntegration{}
 	for _, ai := range available {
-		result = append(result, Integration{
+		result = append(result, AvailableIntegration{
 			IntegrationDetails: ai,
 			IsInstalled:        slices.Contains(installedIds, ai.Id),
 		})
@@ -140,7 +140,7 @@ func (m *Manager) InstallIntegration(
 	ctx context.Context,
 	integrationId string,
 	config InstalledIntegrationConfig,
-) (*Integration, *model.ApiError) {
+) (*AvailableIntegration, *model.ApiError) {
 	ais, apiErr := m.availableIntegrationsRepo.get(
 		ctx, []string{integrationId},
 	)
@@ -166,7 +166,7 @@ func (m *Manager) InstallIntegration(
 		)
 	}
 
-	return &Integration{
+	return &AvailableIntegration{
 		IntegrationDetails: integrationDetails,
 		IsInstalled:        true,
 	}, nil
