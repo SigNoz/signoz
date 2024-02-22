@@ -5,6 +5,7 @@ import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
+	LexicalContext,
 	Option,
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
@@ -20,7 +21,10 @@ interface CustomTimePickerPopoverContentProps {
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
 	customDateTimeVisible: boolean;
 	setCustomDTPickerVisible: Dispatch<SetStateAction<boolean>>;
-	onCustomDateHandler: (dateTimeRange: DateTimeRangeType) => void;
+	onCustomDateHandler: (
+		dateTimeRange: DateTimeRangeType,
+		lexicalContext?: LexicalContext,
+	) => void;
 	onSelectHandler: (label: string, value: string) => void;
 	handleGoLive: () => void;
 	selectedTime: string;
@@ -63,7 +67,7 @@ function CustomTimePickerPopoverContent({
 		if (date_time?.[1]) {
 			onPopoverClose(false);
 		}
-		onCustomDateHandler(date_time);
+		onCustomDateHandler(date_time, LexicalContext.CUSTOM_DATE_PICKER);
 	};
 	function getTimeChips(options: Option[]): JSX.Element {
 		return (
