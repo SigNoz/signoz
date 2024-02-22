@@ -27,4 +27,5 @@ export type QueryBuilderProps = {
 	filterConfigs?: Partial<FilterConfigs>;
 	queryComponents?: { renderOrderBy?: (props: OrderByFilterProps) => ReactNode };
 	isListViewPanel?: boolean;
+	showFunctions?: boolean;
 };

@@ -25,6 +25,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 	filterConfigs = {},
 	queryComponents,
 	isListViewPanel = false,
+	showFunctions = false,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
@@ -166,6 +167,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 											: listViewLogFilterConfigs
 									}
 									queryComponents={queryComponents}
+									showFunctions={showFunctions}
 									isListViewPanel
 								/>
 							)}
@@ -184,6 +186,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 											query={query}
 											filterConfigs={filterConfigs}
 											queryComponents={queryComponents}
+											showFunctions={showFunctions}
 										/>
 									</Col>
 								))}

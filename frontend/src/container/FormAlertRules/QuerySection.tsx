@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 import AppReducer from 'types/reducer/app';
 
@@ -24,6 +25,7 @@ function QuerySection({
 	setQueryCategory,
 	alertType,
 	runQuery,
+	alertDef,
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -51,6 +53,9 @@ function QuerySection({
 				queryVariant: 'static',
 				initialDataSource: ALERTS_DATA_SOURCE_MAP[alertType],
 			}}
+			showFunctions={
+				alertType === AlertTypes.METRICS_BASED_ALERT && alertDef.version === 'v4'
+			}
 		/>
 	);
 
@@ -209,6 +214,7 @@ interface QuerySectionProps {
 	setQueryCategory: (n: EQueryType) => void;
 	alertType: AlertTypes;
 	runQuery: VoidFunction;
+	alertDef: AlertDef;
 }
 
 export default QuerySection;

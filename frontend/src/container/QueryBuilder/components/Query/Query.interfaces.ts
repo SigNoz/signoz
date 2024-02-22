@@ -7,4 +7,5 @@ export type QueryProps = {
 	query: IBuilderQuery;
 	queryVariant: 'static' | 'dropdown';
 	isListViewPanel?: boolean;
+	showFunctions?: boolean;
 } & Pick<QueryBuilderProps, 'filterConfigs' | 'queryComponents'>;

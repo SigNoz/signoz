@@ -292,7 +292,7 @@ function FormAlertRules({
 		initQuery,
 	]);
 
-	const isAlertAvialable = useIsFeatureDisabled(
+	const isAlertAvailable = useIsFeatureDisabled(
 		FeatureKeys.QUERY_BUILDER_ALERTS,
 	);
 
@@ -444,8 +444,8 @@ function FormAlertRules({
 
 	const isAlertNameMissing = !formInstance.getFieldValue('alert');
 
-	const isAlertAvialableToSave =
-		isAlertAvialable &&
+	const isAlertAvailableToSave =
+		isAlertAvailable &&
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 		alertType !== AlertTypes.METRICS_BASED_ALERT;
 
@@ -495,6 +495,7 @@ function FormAlertRules({
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
 							runQuery={handleRunQuery}
+							alertDef={alertDef}
 						/>
 
 						<RuleOptions
@@ -506,7 +507,7 @@ function FormAlertRules({
 
 						{renderBasicInfo()}
 						<ButtonContainer>
-							<Tooltip title={isAlertAvialableToSave ? MESSAGE.ALERT : ''}>
+							<Tooltip title={isAlertAvailableToSave ? MESSAGE.ALERT : ''}>
 								<ActionButton
 									loading={loading || false}
 									type="primary"
@@ -514,7 +515,7 @@ function FormAlertRules({
 									icon={<SaveOutlined />}
 									disabled={
 										isAlertNameMissing ||
-										isAlertAvialableToSave ||
+										isAlertAvailableToSave ||
 										!isChannelConfigurationValid
 									}
 								>

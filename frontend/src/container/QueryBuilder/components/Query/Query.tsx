@@ -51,6 +51,7 @@ export const Query = memo(function Query({
 	filterConfigs,
 	queryComponents,
 	isListViewPanel = false,
+	showFunctions = false,
 }: QueryProps): JSX.Element {
 	const { panelType, currentQuery } = useQueryBuilder();
 	const { pathname } = useLocation();
@@ -305,7 +306,9 @@ export const Query = memo(function Query({
 			<QBEntityOptions
 				isMetricsDataSource={isMetricsDataSource}
 				showFunctions={
-					(selectedDashboardVersion && selectedDashboardVersion === 'v4') || false
+					(selectedDashboardVersion && selectedDashboardVersion === 'v4') ||
+					showFunctions ||
+					false
 				}
 				isCollapsed={isCollapse}
 				entityType="query"
