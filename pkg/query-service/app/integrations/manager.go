@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -39,6 +40,18 @@ type IntegrationDetails struct {
 type Integration struct {
 	IntegrationDetails
 	IsInstalled bool
+}
+type InstalledIntegration struct {
+	IntegrationId string                     `db:"integration_id"`
+	Config        InstalledIntegrationConfig `db:"config_json"`
+	InstalledAt   time.Time                  `db:"installed_at"`
+}
+
+type InstalledIntegrationConfig map[string]interface{}
+
+type InstalledIntegrationWithDetails struct {
+	InstalledIntegration
+	IntegrationDetails
 }
 
 type Manager struct {
@@ -80,7 +93,7 @@ func (m *Manager) ListAvailableIntegrations(
 
 func (m *Manager) ListInstalledIntegrations(
 	ctx context.Context,
-) ([]Integration, *model.ApiError) {
+) ([]InstalledIntegrationWithDetails, *model.ApiError) {
 	installed, apiErr := m.installedIntegrationsRepo.list(ctx)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
@@ -113,11 +126,11 @@ func (m *Manager) ListInstalledIntegrations(
 		))
 	}
 
-	result := []Integration{}
+	result := []InstalledIntegrationWithDetails{}
 	for _, ii := range installed {
-		result = append(result, Integration{
-			IntegrationDetails: integrationDetails[ii.IntegrationId],
-			IsInstalled:        true,
+		result = append(result, InstalledIntegrationWithDetails{
+			InstalledIntegration: ii,
+			IntegrationDetails:   integrationDetails[ii.IntegrationId],
 		})
 	}
 	return result, nil

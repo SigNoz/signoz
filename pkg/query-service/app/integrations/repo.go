@@ -4,19 +4,10 @@ import (
 	"context"
 	"database/sql/driver"
 	"encoding/json"
-	"time"
 
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
-
-type InstalledIntegration struct {
-	IntegrationId string                     `db:"integration_id"`
-	Config        InstalledIntegrationConfig `db:"config_json"`
-	InstalledAt   time.Time                  `db:"installed_at"`
-}
-
-type InstalledIntegrationConfig map[string]interface{}
 
 // For serializing from db
 func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
