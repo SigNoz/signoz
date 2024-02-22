@@ -44,6 +44,7 @@ import { DateTimeRangeType } from '../CustomDateTimeModal';
 import {
 	getDefaultOption,
 	getOptions,
+	LexicalContext,
 	LocalStorageTimeRange,
 	Time,
 	TimeRange,
@@ -318,31 +319,37 @@ function DateTimeSelection({
 		onLastRefreshHandler();
 	};
 
-	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
+	const onCustomDateHandler = (
+		dateTimeRange: DateTimeRangeType,
+		lexicalContext?: LexicalContext,
+	): void => {
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
+				let startTime = startTimeMoment;
+				let endTime = endTimeMoment;
+				if (
+					lexicalContext &&
+					lexicalContext === LexicalContext.CUSTOM_DATE_PICKER
+				) {
+					startTime = startTime.startOf('day');
+					endTime = endTime.endOf('day');
+				}
 				setCustomDTPickerVisible(false);
-				startTimeMoment.startOf('day').toString();
 				updateTimeInterval('custom', [
-					startTimeMoment.startOf('day').toDate().getTime(),
-					endTimeMoment.endOf('day').toDate().getTime(),
+					startTime.toDate().getTime(),
+					endTime.toDate().getTime(),
 				]);
-				setLocalStorageKey('startTime', startTimeMoment.toString());
-				setLocalStorageKey('endTime', endTimeMoment.toString());
-				updateLocalStorageForRoutes(
-					JSON.stringify({ startTime: startTimeMoment, endTime: endTimeMoment }),
-				);
+				setLocalStorageKey('startTime', startTime.toString());
+				setLocalStorageKey('endTime', endTime.toString());
+				updateLocalStorageForRoutes(JSON.stringify({ startTime, endTime }));
 
 				if (!isLogsExplorerPage) {
 					urlQuery.set(
 						QueryParams.startTime,
-						startTimeMoment?.toDate().getTime().toString(),
+						startTime?.toDate().getTime().toString(),
 					);
-					urlQuery.set(
-						QueryParams.endTime,
-						endTimeMoment?.toDate().getTime().toString(),
-					);
+					urlQuery.set(QueryParams.endTime, endTime?.toDate().getTime().toString());
 					const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 					history.replace(generatedUrl);
 				}
