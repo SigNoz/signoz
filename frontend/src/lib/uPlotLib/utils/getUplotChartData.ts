@@ -74,7 +74,5 @@ export const getUPlotChartData = (
 		fillSpans || false,
 	);
 
-	const data = [timestampArr, ...yAxisValuesArr];
-	console.log({ data });
-	return data;
+	return [timestampArr, ...yAxisValuesArr];
 };
