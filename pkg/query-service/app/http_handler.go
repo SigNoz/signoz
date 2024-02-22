@@ -2402,6 +2402,11 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 
 // Integrations
 // TODO(Raj): Register integrations handler paths and do e2e test with mux
+func (aH *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()
+	subRouter.HandleFunc("/available", am.ViewAccess(aH.ListAvailableIntegrations)).Methods(http.MethodGet)
+}
+
 func (aH *APIHandler) ListAvailableIntegrations(w http.ResponseWriter, r *http.Request) {
 	resp, apiErr := aH.IntegrationsController.ListAvailableIntegrations(r.Context())
 	if apiErr != nil {

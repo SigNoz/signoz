@@ -3,12 +3,14 @@ package tests
 import (
 	"encoding/json"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
@@ -27,9 +29,9 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 }
 
 type IntegrationsTestBed struct {
-	t          *testing.T
-	testUser   *model.User
-	apiHandler *app.APIHandler
+	t             *testing.T
+	testUser      *model.User
+	qsHttpHandler http.Handler
 }
 
 func (tb *IntegrationsTestBed) GetAvailableIntegrationsFromQS() *integrations.AvailableIntegrationsResponse {
@@ -39,14 +41,9 @@ func (tb *IntegrationsTestBed) GetAvailableIntegrationsFromQS() *integrations.Av
 	if err != nil {
 		tb.t.Fatalf("couldn't create authenticated test request: %v", err)
 	}
-	// req = mux.SetURLVars(req, map[string]string{
-	// "version": "latest",
-	// })
-
-	// TODO(Raj): Test with Mux
 
 	respWriter := httptest.NewRecorder()
-	tb.apiHandler.ListAvailableIntegrations(respWriter, req)
+	tb.qsHttpHandler.ServeHTTP(respWriter, req)
 	response := respWriter.Result()
 	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -100,14 +97,18 @@ func NewIntegrationsTestBed(t *testing.T) *IntegrationsTestBed {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
+	router := app.NewRouter()
+	am := app.NewAuthMiddleware(auth.GetUserFromRequest)
+	apiHandler.RegisterIntegrationRoutes(router, am)
+
 	user, apiErr := createTestUser()
 	if apiErr != nil {
 		t.Fatalf("could not create a test user: %v", apiErr)
 	}
 
 	return &IntegrationsTestBed{
-		t:          t,
-		testUser:   user,
-		apiHandler: apiHandler,
+		t:             t,
+		testUser:      user,
+		qsHttpHandler: router,
 	}
 }
