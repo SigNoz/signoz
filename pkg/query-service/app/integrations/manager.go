@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
@@ -37,8 +36,8 @@ type IntegrationDetails struct {
 	IntegrationAssets
 }
 
-type AvailableIntegration struct {
-	IntegrationDetails
+type IntegrationsListItem struct {
+	IntegrationSummary
 	IsInstalled bool
 }
 
@@ -49,9 +48,9 @@ type InstalledIntegration struct {
 }
 type InstalledIntegrationConfig map[string]interface{}
 
-type InstalledIntegrationWithDetails struct {
-	InstalledIntegration
+type Integration struct {
 	IntegrationDetails
+	Installation *InstalledIntegration
 }
 
 type Manager struct {
@@ -59,10 +58,15 @@ type Manager struct {
 	installedIntegrationsRepo InstalledIntegrationsRepo
 }
 
-func (m *Manager) ListAvailableIntegrations(
+type IntegrationsFilter struct {
+	IsInstalled *bool
+}
+
+func (m *Manager) ListIntegrations(
 	ctx context.Context,
-	// Expected to have filters and pagination over time.
-) ([]AvailableIntegration, *model.ApiError) {
+	filter *IntegrationsFilter,
+	// Expected to have pagination over time.
+) ([]IntegrationsListItem, *model.ApiError) {
 	available, apiErr := m.availableIntegrationsRepo.list(ctx)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
@@ -81,81 +85,61 @@ func (m *Manager) ListAvailableIntegrations(
 		installedIds = append(installedIds, ii.IntegrationId)
 	}
 
-	result := []AvailableIntegration{}
+	result := []IntegrationsListItem{}
 	for _, ai := range available {
-		result = append(result, AvailableIntegration{
-			IntegrationDetails: ai,
+		result = append(result, IntegrationsListItem{
+			IntegrationSummary: ai.IntegrationSummary,
 			IsInstalled:        slices.Contains(installedIds, ai.Id),
 		})
 	}
+
+	if filter != nil {
+		if filter.IsInstalled != nil {
+			filteredResult := []IntegrationsListItem{}
+			for _, r := range result {
+				if r.IsInstalled == *filter.IsInstalled {
+					filteredResult = append(filteredResult, r)
+				}
+			}
+			result = filteredResult
+		}
+	}
+
 	return result, nil
 }
 
-func (m *Manager) ListInstalledIntegrations(
+func (m *Manager) GetIntegration(
 	ctx context.Context,
-) ([]InstalledIntegrationWithDetails, *model.ApiError) {
-	installed, apiErr := m.installedIntegrationsRepo.list(ctx)
-	if apiErr != nil {
-		return nil, model.WrapApiError(
-			apiErr, "could not fetch installed integrations",
-		)
-	}
-
-	installedIds := []string{}
-	for _, ii := range installed {
-		installedIds = append(installedIds, ii.IntegrationId)
-	}
-
-	integrationDetails, apiErr := m.availableIntegrationsRepo.get(
-		ctx, installedIds,
+	integrationId string,
+) (*Integration, *model.ApiError) {
+	integrationDetails, apiErr := m.getIntegrationDetails(
+		ctx, integrationId,
 	)
 	if apiErr != nil {
-		return nil, model.WrapApiError(
-			apiErr, "could not fetch details for installed integrations",
-		)
-	}
-	if len(integrationDetails) != len(installedIds) {
-		missingIds := []string{}
-		for _, iid := range installedIds {
-			if _, exists := integrationDetails[iid]; !exists {
-				missingIds = append(missingIds, iid)
-			}
-		}
-		return nil, model.NotFoundError(fmt.Errorf(
-			"could not get details for all installed integrations with id: %s",
-			strings.Join(missingIds, ", "),
-		))
+		return nil, apiErr
 	}
 
-	result := []InstalledIntegrationWithDetails{}
-	for _, ii := range installed {
-		result = append(result, InstalledIntegrationWithDetails{
-			InstalledIntegration: ii,
-			IntegrationDetails:   integrationDetails[ii.IntegrationId],
-		})
+	installation, apiErr := m.getInstalledIntegration(
+		ctx, integrationId,
+	)
+	if apiErr != nil {
+		return nil, apiErr
 	}
-	return result, nil
+
+	return &Integration{
+		IntegrationDetails: *integrationDetails,
+		Installation:       installation,
+	}, nil
 }
 
 func (m *Manager) InstallIntegration(
 	ctx context.Context,
 	integrationId string,
 	config InstalledIntegrationConfig,
-) (*AvailableIntegration, *model.ApiError) {
-	ais, apiErr := m.availableIntegrationsRepo.get(
-		ctx, []string{integrationId},
-	)
+) (*IntegrationsListItem, *model.ApiError) {
+	integrationDetails, apiErr := m.getIntegrationDetails(ctx, integrationId)
 	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
-			"could not fetch integration to be installed: %s", integrationId,
-		))
-	}
-
-	integrationDetails, wasFound := ais[integrationId]
-	if !wasFound {
-		return nil, model.NotFoundError(fmt.Errorf(
-			"could not find integration to be installed: %s", integrationId,
-		))
+		return nil, apiErr
 	}
 
 	_, apiErr = m.installedIntegrationsRepo.upsert(
@@ -167,8 +151,8 @@ func (m *Manager) InstallIntegration(
 		)
 	}
 
-	return &AvailableIntegration{
-		IntegrationDetails: integrationDetails,
+	return &IntegrationsListItem{
+		IntegrationSummary: integrationDetails.IntegrationSummary,
 		IsInstalled:        true,
 	}, nil
 }
@@ -178,4 +162,47 @@ func (m *Manager) UninstallIntegration(
 	integrationId string,
 ) *model.ApiError {
 	return m.installedIntegrationsRepo.delete(ctx, integrationId)
+}
+
+// Helpers.
+func (m *Manager) getIntegrationDetails(
+	ctx context.Context,
+	integrationId string,
+) (*IntegrationDetails, *model.ApiError) {
+	ais, apiErr := m.availableIntegrationsRepo.get(
+		ctx, []string{integrationId},
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
+			"could not fetch integration: %s", integrationId,
+		))
+	}
+
+	integrationDetails, wasFound := ais[integrationId]
+	if !wasFound {
+		return nil, model.NotFoundError(fmt.Errorf(
+			"could not find integration: %s", integrationId,
+		))
+	}
+	return &integrationDetails, nil
+}
+
+func (m *Manager) getInstalledIntegration(
+	ctx context.Context,
+	integrationId string,
+) (*InstalledIntegration, *model.ApiError) {
+	iis, apiErr := m.installedIntegrationsRepo.get(
+		ctx, []string{integrationId},
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
+			"could not fetch installed integration: %s", integrationId,
+		))
+	}
+
+	installation, wasFound := iis[integrationId]
+	if !wasFound {
+		return nil, nil
+	}
+	return &installation, nil
 }

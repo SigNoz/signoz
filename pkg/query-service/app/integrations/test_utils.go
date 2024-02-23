@@ -12,7 +12,9 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-func NewTestIntegrationsManager(t *testing.T) *Manager {
+func NewTestSqliteDB(t *testing.T) (
+	db *sqlx.DB, dbFilePath string,
+) {
 	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
 	if err != nil {
 		t.Fatalf("could not create temp file for test db: %v", err)
@@ -25,6 +27,13 @@ func NewTestIntegrationsManager(t *testing.T) *Manager {
 	if err != nil {
 		t.Fatalf("could not open test db sqlite file: %v", err)
 	}
+
+	return testDB, testDBFilePath
+}
+
+func NewTestIntegrationsManager(t *testing.T) *Manager {
+	testDB, _ := NewTestSqliteDB(t)
+
 	installedIntegrationsRepo, err := NewInstalledIntegrationsSqliteRepo(testDB)
 	if err != nil {
 		t.Fatalf("could not init sqlite DB for installed integrations: %v", err)
