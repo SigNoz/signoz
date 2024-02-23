@@ -20,7 +20,7 @@ import getSeries from './utils/getSeriesData';
 import { getXAxisScale } from './utils/getXAxisScale';
 import { getYAxisScale } from './utils/getYAxisScale';
 
-interface GetUPlotChartOptions {
+export interface GetUPlotChartOptions {
 	id?: string;
 	apiResponse?: MetricRangePayloadProps;
 	dimensions: Dimensions;
