@@ -26,7 +26,7 @@ func NewController(db *sqlx.DB) (
 }
 
 func (c *Controller) ListAvailableIntegrations(ctx context.Context) (
-	*AvailableIntegrationsResponse, *model.ApiError,
+	*IntegrationsListResponse, *model.ApiError,
 ) {
 	// TODO(Raj): See if there is a way to pass context
 	integrations, apiErr := c.mgr.ListAvailableIntegrations(ctx)
@@ -34,13 +34,13 @@ func (c *Controller) ListAvailableIntegrations(ctx context.Context) (
 		return nil, apiErr
 	}
 
-	return &AvailableIntegrationsResponse{
+	return &IntegrationsListResponse{
 		Integrations: integrations,
 	}, nil
 }
 
-type AvailableIntegrationsResponse struct {
-	Integrations []AvailableIntegrationSummary `json:"integrations"`
+type IntegrationsListResponse struct {
+	Integrations []IntegrationListItem `json:"integrations"`
 
 	// Pagination details to come later
 }

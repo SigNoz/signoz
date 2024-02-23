@@ -38,7 +38,7 @@ type IntegrationDetails struct {
 	IntegrationAssets
 }
 
-type AvailableIntegrationSummary struct {
+type IntegrationListItem struct {
 	IntegrationSummary
 	IsInstalled bool
 }
@@ -78,7 +78,7 @@ func NewManager(db *sqlx.DB) (*Manager, error) {
 func (m *Manager) ListAvailableIntegrations(
 	ctx context.Context,
 	// Expected to have filters and pagination over time.
-) ([]AvailableIntegrationSummary, *model.ApiError) {
+) ([]IntegrationListItem, *model.ApiError) {
 	available, apiErr := m.availableIntegrationsRepo.list(ctx)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
@@ -97,9 +97,9 @@ func (m *Manager) ListAvailableIntegrations(
 		installedIds = append(installedIds, ii.IntegrationId)
 	}
 
-	result := []AvailableIntegrationSummary{}
+	result := []IntegrationListItem{}
 	for _, ai := range available {
-		result = append(result, AvailableIntegrationSummary{
+		result = append(result, IntegrationListItem{
 			IntegrationSummary: ai.IntegrationSummary,
 			IsInstalled:        slices.Contains(installedIds, ai.Id),
 		})
@@ -157,7 +157,7 @@ func (m *Manager) InstallIntegration(
 	ctx context.Context,
 	integrationId string,
 	config InstalledIntegrationConfig,
-) (*AvailableIntegrationSummary, *model.ApiError) {
+) (*IntegrationListItem, *model.ApiError) {
 	ais, apiErr := m.availableIntegrationsRepo.get(
 		ctx, []string{integrationId},
 	)
@@ -183,7 +183,7 @@ func (m *Manager) InstallIntegration(
 		)
 	}
 
-	return &AvailableIntegrationSummary{
+	return &IntegrationListItem{
 		IntegrationSummary: integrationDetails.IntegrationSummary,
 		IsInstalled:        true,
 	}, nil

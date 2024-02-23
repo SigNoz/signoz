@@ -21,6 +21,12 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 	require := require.New(t)
 	testbed := NewIntegrationsTestBed(t)
 
+	installedResp := testbed.GetInstalledIntegrationsFromQS()
+	require.Greater(
+		len(installedResp.Integrations), 0,
+		"no integrations should be installed at the beginning",
+	)
+
 	availableResp := testbed.GetAvailableIntegrationsFromQS()
 	require.Greater(
 		len(availableResp.Integrations), 0,
@@ -34,7 +40,42 @@ type IntegrationsTestBed struct {
 	qsHttpHandler http.Handler
 }
 
-func (tb *IntegrationsTestBed) GetAvailableIntegrationsFromQS() *integrations.AvailableIntegrationsResponse {
+func (tb *IntegrationsTestBed) GetAvailableIntegrationsFromQS() *integrations.IntegrationsListResponse {
+	result := tb.RequestQS("/api/v1/integrations/available", nil)
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+	var integrationsResp integrations.IntegrationsListResponse
+	err = json.Unmarshal(dataJson, &integrationsResp)
+	if err != nil {
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into PipelinesResponse")
+	}
+
+	return &integrationsResp
+}
+
+func (tb *IntegrationsTestBed) GetInstalledIntegrationsFromQS() *integrations.IntegrationsListResponse {
+	result := tb.RequestQS("/api/v1/integrations/available", nil)
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+	var integrationsResp integrations.IntegrationsListResponse
+	err = json.Unmarshal(dataJson, &integrationsResp)
+	if err != nil {
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into PipelinesResponse")
+	}
+
+	return &integrationsResp
+}
+
+func (tb *IntegrationsTestBed) RequestQS(
+	path string,
+	postData interface{},
+) *app.ApiResponse {
 	req, err := NewAuthenticatedTestRequest(
 		tb.testUser, "/api/v1/integrations/available", nil,
 	)
@@ -65,17 +106,8 @@ func (tb *IntegrationsTestBed) GetAvailableIntegrationsFromQS() *integrations.Av
 			string(responseBody),
 		)
 	}
-	dataJson, err := json.Marshal(result.Data)
-	if err != nil {
-		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
-	}
-	var integrationsResp integrations.AvailableIntegrationsResponse
-	err = json.Unmarshal(dataJson, &integrationsResp)
-	if err != nil {
-		tb.t.Fatalf("could not unmarshal apiResponse.Data json into PipelinesResponse")
-	}
 
-	return &integrationsResp
+	return &result
 }
 
 func NewIntegrationsTestBed(t *testing.T) *IntegrationsTestBed {
