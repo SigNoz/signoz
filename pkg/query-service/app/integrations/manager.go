@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -38,7 +37,7 @@ type IntegrationDetails struct {
 	IntegrationAssets
 }
 
-type IntegrationListItem struct {
+type IntegrationsListItem struct {
 	IntegrationSummary
 	IsInstalled bool
 }
@@ -75,10 +74,15 @@ func NewManager(db *sqlx.DB) (*Manager, error) {
 	}, nil
 }
 
-func (m *Manager) ListAvailableIntegrations(
+type IntegrationsFilter struct {
+	IsInstalled *bool
+}
+
+func (m *Manager) ListIntegrations(
 	ctx context.Context,
-	// Expected to have filters and pagination over time.
-) ([]IntegrationListItem, *model.ApiError) {
+	filter *IntegrationsFilter,
+	// Expected to have pagination over time.
+) ([]IntegrationsListItem, *model.ApiError) {
 	available, apiErr := m.availableIntegrationsRepo.list(ctx)
 	if apiErr != nil {
 		return nil, model.WrapApiError(
@@ -97,59 +101,26 @@ func (m *Manager) ListAvailableIntegrations(
 		installedIds = append(installedIds, ii.IntegrationId)
 	}
 
-	result := []IntegrationListItem{}
+	result := []IntegrationsListItem{}
 	for _, ai := range available {
-		result = append(result, IntegrationListItem{
+		result = append(result, IntegrationsListItem{
 			IntegrationSummary: ai.IntegrationSummary,
 			IsInstalled:        slices.Contains(installedIds, ai.Id),
 		})
 	}
-	return result, nil
-}
 
-func (m *Manager) ListInstalledIntegrations(
-	ctx context.Context,
-) ([]InstalledIntegrationWithDetails, *model.ApiError) {
-	installed, apiErr := m.installedIntegrationsRepo.list(ctx)
-	if apiErr != nil {
-		return nil, model.WrapApiError(
-			apiErr, "could not fetch installed integrations",
-		)
-	}
-
-	installedIds := []string{}
-	for _, ii := range installed {
-		installedIds = append(installedIds, ii.IntegrationId)
-	}
-
-	integrationDetails, apiErr := m.availableIntegrationsRepo.get(
-		ctx, installedIds,
-	)
-	if apiErr != nil {
-		return nil, model.WrapApiError(
-			apiErr, "could not fetch details for installed integrations",
-		)
-	}
-	if len(integrationDetails) != len(installedIds) {
-		missingIds := []string{}
-		for _, iid := range installedIds {
-			if _, exists := integrationDetails[iid]; !exists {
-				missingIds = append(missingIds, iid)
+	if filter != nil {
+		if filter.IsInstalled != nil {
+			filteredResult := []IntegrationsListItem{}
+			for _, r := range result {
+				if r.IsInstalled == *filter.IsInstalled {
+					filteredResult = append(filteredResult, r)
+				}
 			}
+			result = filteredResult
 		}
-		return nil, model.NotFoundError(fmt.Errorf(
-			"could not get details for all installed integrations with id: %s",
-			strings.Join(missingIds, ", "),
-		))
 	}
 
-	result := []InstalledIntegrationWithDetails{}
-	for _, ii := range installed {
-		result = append(result, InstalledIntegrationWithDetails{
-			InstalledIntegration: ii,
-			IntegrationDetails:   integrationDetails[ii.IntegrationId],
-		})
-	}
 	return result, nil
 }
 
@@ -157,7 +128,7 @@ func (m *Manager) InstallIntegration(
 	ctx context.Context,
 	integrationId string,
 	config InstalledIntegrationConfig,
-) (*IntegrationListItem, *model.ApiError) {
+) (*IntegrationsListItem, *model.ApiError) {
 	ais, apiErr := m.availableIntegrationsRepo.get(
 		ctx, []string{integrationId},
 	)
@@ -183,7 +154,7 @@ func (m *Manager) InstallIntegration(
 		)
 	}
 
-	return &IntegrationListItem{
+	return &IntegrationsListItem{
 		IntegrationSummary: integrationDetails.IntegrationSummary,
 		IsInstalled:        true,
 	}, nil

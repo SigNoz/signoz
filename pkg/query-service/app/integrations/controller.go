@@ -29,7 +29,7 @@ func (c *Controller) ListAvailableIntegrations(ctx context.Context) (
 	*IntegrationsListResponse, *model.ApiError,
 ) {
 	// TODO(Raj): See if there is a way to pass context
-	integrations, apiErr := c.mgr.ListAvailableIntegrations(ctx)
+	integrations, apiErr := c.mgr.ListIntegrations(ctx, nil)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -40,7 +40,7 @@ func (c *Controller) ListAvailableIntegrations(ctx context.Context) (
 }
 
 type IntegrationsListResponse struct {
-	Integrations []IntegrationListItem `json:"integrations"`
+	Integrations []IntegrationsListItem `json:"integrations"`
 
 	// Pagination details to come later
 }

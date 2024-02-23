@@ -14,11 +14,18 @@ func TestIntegrationLifecycle(t *testing.T) {
 	mgr := NewTestIntegrationsManager(t)
 	ctx := context.Background()
 
-	installedIntegrations, apiErr := mgr.ListInstalledIntegrations(ctx)
-	require.Nil(apiErr)
-	require.Equal([]InstalledIntegrationWithDetails{}, installedIntegrations)
+	ii := true
+	installedIntegrationsFilter := &IntegrationsFilter{
+		IsInstalled: &ii,
+	}
 
-	availableIntegrations, apiErr := mgr.ListAvailableIntegrations(ctx)
+	installedIntegrations, apiErr := mgr.ListIntegrations(
+		ctx, installedIntegrationsFilter,
+	)
+	require.Nil(apiErr)
+	require.Equal([]IntegrationsListItem{}, installedIntegrations)
+
+	availableIntegrations, apiErr := mgr.ListIntegrations(ctx, nil)
 	require.Nil(apiErr)
 	require.Equal(2, len(availableIntegrations))
 	require.False(availableIntegrations[0].IsInstalled)
@@ -31,12 +38,14 @@ func TestIntegrationLifecycle(t *testing.T) {
 	require.Nil(apiErr)
 	require.Equal(installed.Id, availableIntegrations[1].Id)
 
-	installedIntegrations, apiErr = mgr.ListInstalledIntegrations(ctx)
+	installedIntegrations, apiErr = mgr.ListIntegrations(
+		ctx, installedIntegrationsFilter,
+	)
 	require.Nil(apiErr)
 	require.Equal(1, len(installedIntegrations))
 	require.Equal(availableIntegrations[1].Id, installedIntegrations[0].Id)
 
-	availableIntegrations, apiErr = mgr.ListAvailableIntegrations(ctx)
+	availableIntegrations, apiErr = mgr.ListIntegrations(ctx, nil)
 	require.Nil(apiErr)
 	require.Equal(2, len(availableIntegrations))
 	require.False(availableIntegrations[0].IsInstalled)
@@ -45,11 +54,13 @@ func TestIntegrationLifecycle(t *testing.T) {
 	apiErr = mgr.UninstallIntegration(ctx, installed.Id)
 	require.Nil(apiErr)
 
-	installedIntegrations, apiErr = mgr.ListInstalledIntegrations(ctx)
+	installedIntegrations, apiErr = mgr.ListIntegrations(
+		ctx, installedIntegrationsFilter,
+	)
 	require.Nil(apiErr)
 	require.Equal(0, len(installedIntegrations))
 
-	availableIntegrations, apiErr = mgr.ListAvailableIntegrations(ctx)
+	availableIntegrations, apiErr = mgr.ListIntegrations(ctx, nil)
 	require.Nil(apiErr)
 	require.Equal(2, len(availableIntegrations))
 	require.False(availableIntegrations[0].IsInstalled)
