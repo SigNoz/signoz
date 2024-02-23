@@ -2402,18 +2402,66 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 
 // Integrations
 // TODO(Raj): Register integrations handler paths and do e2e test with mux
-func (aH *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
+func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()
-	subRouter.HandleFunc("/available", am.ViewAccess(aH.ListAvailableIntegrations)).Methods(http.MethodGet)
+	subRouter.HandleFunc(
+		"/install", am.ViewAccess(ah.InstallIntegration),
+	).Methods(http.MethodPost)
+	subRouter.HandleFunc(
+		"/uninstall", am.ViewAccess(ah.UninstallIntegration),
+	).Methods(http.MethodPost)
+	subRouter.HandleFunc("", am.ViewAccess(ah.ListIntegrations)).Methods(http.MethodGet)
 }
 
-func (aH *APIHandler) ListAvailableIntegrations(w http.ResponseWriter, r *http.Request) {
-	resp, apiErr := aH.IntegrationsController.ListAvailableIntegrations(r.Context())
+func (ah *APIHandler) ListIntegrations(w http.ResponseWriter, r *http.Request) {
+	params := map[string]string{}
+	for k, values := range r.URL.Query() {
+		params[k] = values[0]
+	}
+
+	resp, apiErr := ah.IntegrationsController.ListIntegrations(r.Context(), params)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch fields from the DB")
 		return
 	}
-	aH.Respond(w, resp)
+	ah.Respond(w, resp)
+}
+
+func (ah *APIHandler) InstallIntegration(w http.ResponseWriter, r *http.Request) {
+	req := integrations.InstallIntegrationRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	integration, apiErr := ah.IntegrationsController.Install(
+		r.Context(), &req,
+	)
+
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, integration)
+}
+
+func (ah *APIHandler) UninstallIntegration(w http.ResponseWriter, r *http.Request) {
+	req := integrations.UninstallIntegrationRequest{}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, map[string]interface{}{})
 }
 
 // logs

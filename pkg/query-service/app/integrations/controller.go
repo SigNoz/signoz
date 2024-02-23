@@ -25,11 +25,26 @@ func NewController(db *sqlx.DB) (
 	}, nil
 }
 
-func (c *Controller) ListAvailableIntegrations(ctx context.Context) (
+type IntegrationsListResponse struct {
+	Integrations []IntegrationsListItem `json:"integrations"`
+
+	// Pagination details to come later
+}
+
+func (c *Controller) ListIntegrations(
+	ctx context.Context, params map[string]string,
+) (
 	*IntegrationsListResponse, *model.ApiError,
 ) {
-	// TODO(Raj): See if there is a way to pass context
-	integrations, apiErr := c.mgr.ListIntegrations(ctx, nil)
+	var filters *IntegrationsFilter
+	if isInstalledFilter, exists := params["is_installed"]; exists {
+		isInstalled := !(isInstalledFilter == "false")
+		filters = &IntegrationsFilter{
+			IsInstalled: &isInstalled,
+		}
+	}
+
+	integrations, apiErr := c.mgr.ListIntegrations(ctx, filters)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -39,8 +54,27 @@ func (c *Controller) ListAvailableIntegrations(ctx context.Context) (
 	}, nil
 }
 
-type IntegrationsListResponse struct {
-	Integrations []IntegrationsListItem `json:"integrations"`
+type InstallIntegrationRequest struct {
+	IntegrationId string                 `json:"integration_id"`
+	Config        map[string]interface{} `json:"config"`
+}
 
-	// Pagination details to come later
+func (c *Controller) Install(
+	ctx context.Context, req *InstallIntegrationRequest,
+) (*IntegrationsListItem, *model.ApiError) {
+	return c.mgr.InstallIntegration(
+		ctx, req.IntegrationId, req.Config,
+	)
+}
+
+type UninstallIntegrationRequest struct {
+	IntegrationId string `json:"integration_id"`
+}
+
+func (c *Controller) Uninstall(
+	ctx context.Context, req *UninstallIntegrationRequest,
+) *model.ApiError {
+	return c.mgr.UninstallIntegration(
+		ctx, req.IntegrationId,
+	)
 }

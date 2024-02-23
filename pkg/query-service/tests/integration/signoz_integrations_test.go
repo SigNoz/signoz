@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"runtime/debug"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,16 +23,45 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 	testbed := NewIntegrationsTestBed(t)
 
 	installedResp := testbed.GetInstalledIntegrationsFromQS()
-	require.Greater(
+	require.Equal(
 		len(installedResp.Integrations), 0,
 		"no integrations should be installed at the beginning",
 	)
 
 	availableResp := testbed.GetAvailableIntegrationsFromQS()
+	availableIntegrations := availableResp.Integrations
 	require.Greater(
-		len(availableResp.Integrations), 0,
+		len(availableIntegrations), 0,
 		"some integrations should come bundled with SigNoz",
 	)
+
+	require.False(availableIntegrations[0].IsInstalled)
+	testbed.RequestQSToInstallIntegration(
+		availableIntegrations[0].Id, map[string]interface{}{},
+	)
+
+	installedResp = testbed.GetInstalledIntegrationsFromQS()
+	installedIntegrations := installedResp.Integrations
+	require.Equal(len(installedIntegrations), 1)
+	require.Equal(installedIntegrations[0].Id, availableIntegrations[0].Id)
+
+	availableResp = testbed.GetAvailableIntegrationsFromQS()
+	availableIntegrations = availableResp.Integrations
+	require.Greater(len(availableIntegrations), 0)
+
+	require.True(availableIntegrations[0].IsInstalled)
+	testbed.RequestQSToUninstallIntegration(
+		availableIntegrations[0].Id,
+	)
+
+	installedResp = testbed.GetInstalledIntegrationsFromQS()
+	installedIntegrations = installedResp.Integrations
+	require.Equal(len(installedIntegrations), 0)
+
+	availableResp = testbed.GetAvailableIntegrationsFromQS()
+	availableIntegrations = availableResp.Integrations
+	require.Greater(len(availableIntegrations), 0)
+	require.False(availableIntegrations[0].IsInstalled)
 }
 
 type IntegrationsTestBed struct {
@@ -41,7 +71,7 @@ type IntegrationsTestBed struct {
 }
 
 func (tb *IntegrationsTestBed) GetAvailableIntegrationsFromQS() *integrations.IntegrationsListResponse {
-	result := tb.RequestQS("/api/v1/integrations/available", nil)
+	result := tb.RequestQS("/api/v1/integrations", nil)
 
 	dataJson, err := json.Marshal(result.Data)
 	if err != nil {
@@ -57,7 +87,7 @@ func (tb *IntegrationsTestBed) GetAvailableIntegrationsFromQS() *integrations.In
 }
 
 func (tb *IntegrationsTestBed) GetInstalledIntegrationsFromQS() *integrations.IntegrationsListResponse {
-	result := tb.RequestQS("/api/v1/integrations/available", nil)
+	result := tb.RequestQS("/api/v1/integrations?is_installed=true", nil)
 
 	dataJson, err := json.Marshal(result.Data)
 	if err != nil {
@@ -72,12 +102,31 @@ func (tb *IntegrationsTestBed) GetInstalledIntegrationsFromQS() *integrations.In
 	return &integrationsResp
 }
 
+func (tb *IntegrationsTestBed) RequestQSToInstallIntegration(
+	integrationId string, config map[string]interface{},
+) {
+	request := integrations.InstallIntegrationRequest{
+		IntegrationId: integrationId,
+		Config:        config,
+	}
+	tb.RequestQS("/api/v1/integrations/install", request)
+}
+
+func (tb *IntegrationsTestBed) RequestQSToUninstallIntegration(
+	integrationId string,
+) {
+	request := integrations.UninstallIntegrationRequest{
+		IntegrationId: integrationId,
+	}
+	tb.RequestQS("/api/v1/integrations/uninstall", request)
+}
+
 func (tb *IntegrationsTestBed) RequestQS(
 	path string,
 	postData interface{},
 ) *app.ApiResponse {
 	req, err := NewAuthenticatedTestRequest(
-		tb.testUser, "/api/v1/integrations/available", nil,
+		tb.testUser, path, postData,
 	)
 	if err != nil {
 		tb.t.Fatalf("couldn't create authenticated test request: %v", err)
@@ -93,8 +142,8 @@ func (tb *IntegrationsTestBed) RequestQS(
 
 	if response.StatusCode != 200 {
 		tb.t.Fatalf(
-			"could not list available integrations. status: %d, body: %v",
-			response.StatusCode, string(responseBody),
+			"unexpected response status from query service for path %s. status: %d, body: %v\n%v",
+			path, response.StatusCode, string(responseBody), string(debug.Stack()),
 		)
 	}
 
