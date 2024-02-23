@@ -228,14 +228,20 @@ func createTelemetry() {
 					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "")
 				}
 
-				for language, _ := range tagsInfo.Languages {
-					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": language}, "")
+				languages := []string{}
+				for language := range tagsInfo.Languages {
+					languages = append(languages, language)
 				}
-
-				for service, _ := range tagsInfo.Services {
-					telemetry.SendEvent(TELEMETRY_EVENT_SERVICE, map[string]interface{}{"serviceName": service}, "")
+				if len(languages) > 0 {
+					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": languages}, "")
 				}
-
+				services := []string{}
+				for service := range tagsInfo.Services {
+					services = append(services, service)
+				}
+				if len(services) > 0 {
+					telemetry.SendEvent(TELEMETRY_EVENT_SERVICE, map[string]interface{}{"serviceName": services}, "")
+				}
 				totalSpans, _ := telemetry.reader.GetTotalSpans(context.Background())
 				totalLogs, _ := telemetry.reader.GetTotalLogs(context.Background())
 				spansInLastHeartBeatInterval, _ := telemetry.reader.GetSpansInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
