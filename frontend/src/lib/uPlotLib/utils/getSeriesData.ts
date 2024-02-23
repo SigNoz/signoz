@@ -5,8 +5,9 @@ import getLabelName from 'lib/getLabelName';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 
+import { drawStyles, lineInterpolations } from './constants';
 import { generateColor } from './generateColor';
-import getRenderer, { drawStyles, lineInterpolations } from './getRenderer';
+import getRenderer from './getRenderer';
 
 const paths = (
 	u: any,
@@ -92,7 +93,7 @@ const getSeries = ({
 	return configurations;
 };
 
-type GetSeriesProps = {
+export type GetSeriesProps = {
 	apiResponse?: MetricRangePayloadProps;
 	widgetMetaData: QueryData[];
 	graphsVisibilityStates?: boolean[];

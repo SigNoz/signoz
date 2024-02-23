@@ -2,7 +2,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 
 export const inputPropsTimeSeries = {
-	id: 'a5c18d63-e3c2-4d45-a558-ab3c65ff412b',
+	id: '',
 	dimensions: {
 		width: 400,
 		height: 288,
@@ -206,7 +206,7 @@ export const inputPropsTimeSeries = {
 } as GetUPlotChartOptions;
 
 export const inputPropsBar = {
-	id: 'a5c18d63-e3c2-4d45-a558-ab3c65ff412b',
+	id: '',
 	dimensions: {
 		width: 400,
 		height: 288,
