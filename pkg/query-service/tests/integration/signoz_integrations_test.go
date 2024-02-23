@@ -2,6 +2,7 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -40,6 +41,10 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 		availableIntegrations[0].Id, map[string]interface{}{},
 	)
 
+	ii := testbed.GetIntegrationDetailsFromQS(availableIntegrations[0].Id)
+	require.Equal(ii.Id, availableIntegrations[0].Id)
+	require.NotNil(ii.Installation)
+
 	installedResp = testbed.GetInstalledIntegrationsFromQS()
 	installedIntegrations := installedResp.Integrations
 	require.Equal(len(installedIntegrations), 1)
@@ -53,6 +58,10 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 	testbed.RequestQSToUninstallIntegration(
 		availableIntegrations[0].Id,
 	)
+
+	ii = testbed.GetIntegrationDetailsFromQS(availableIntegrations[0].Id)
+	require.Equal(ii.Id, availableIntegrations[0].Id)
+	require.Nil(ii.Installation)
 
 	installedResp = testbed.GetInstalledIntegrationsFromQS()
 	installedIntegrations = installedResp.Integrations
@@ -100,6 +109,26 @@ func (tb *IntegrationsTestBed) GetInstalledIntegrationsFromQS() *integrations.In
 	}
 
 	return &integrationsResp
+}
+
+func (tb *IntegrationsTestBed) GetIntegrationDetailsFromQS(
+	integrationId string,
+) *integrations.Integration {
+	result := tb.RequestQS(fmt.Sprintf(
+		"/api/v1/integrations/%s", integrationId,
+	), nil)
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+	var integrationResp integrations.Integration
+	err = json.Unmarshal(dataJson, &integrationResp)
+	if err != nil {
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json into PipelinesResponse")
+	}
+
+	return &integrationResp
 }
 
 func (tb *IntegrationsTestBed) RequestQSToInstallIntegration(

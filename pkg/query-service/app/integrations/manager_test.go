@@ -38,6 +38,11 @@ func TestIntegrationLifecycle(t *testing.T) {
 	require.Nil(apiErr)
 	require.Equal(installed.Id, availableIntegrations[1].Id)
 
+	integration, apiErr := mgr.GetIntegration(ctx, availableIntegrations[1].Id)
+	require.Nil(apiErr)
+	require.Equal(integration.Id, availableIntegrations[1].Id)
+	require.NotNil(integration.Installation)
+
 	installedIntegrations, apiErr = mgr.ListIntegrations(
 		ctx, installedIntegrationsFilter,
 	)
@@ -53,6 +58,11 @@ func TestIntegrationLifecycle(t *testing.T) {
 
 	apiErr = mgr.UninstallIntegration(ctx, installed.Id)
 	require.Nil(apiErr)
+
+	integration, apiErr = mgr.GetIntegration(ctx, availableIntegrations[1].Id)
+	require.Nil(apiErr)
+	require.Equal(integration.Id, availableIntegrations[1].Id)
+	require.Nil(integration.Installation)
 
 	installedIntegrations, apiErr = mgr.ListIntegrations(
 		ctx, installedIntegrationsFilter,

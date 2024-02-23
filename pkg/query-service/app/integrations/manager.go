@@ -49,9 +49,9 @@ type InstalledIntegration struct {
 }
 type InstalledIntegrationConfig map[string]interface{}
 
-type InstalledIntegrationWithDetails struct {
-	InstalledIntegration
+type Integration struct {
 	IntegrationDetails
+	Installation *InstalledIntegration
 }
 
 type Manager struct {
@@ -124,25 +124,38 @@ func (m *Manager) ListIntegrations(
 	return result, nil
 }
 
+func (m *Manager) GetIntegration(
+	ctx context.Context,
+	integrationId string,
+) (*Integration, *model.ApiError) {
+	integrationDetails, apiErr := m.getIntegrationDetails(
+		ctx, integrationId,
+	)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	installation, apiErr := m.getInstalledIntegration(
+		ctx, integrationId,
+	)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	return &Integration{
+		IntegrationDetails: *integrationDetails,
+		Installation:       installation,
+	}, nil
+}
+
 func (m *Manager) InstallIntegration(
 	ctx context.Context,
 	integrationId string,
 	config InstalledIntegrationConfig,
 ) (*IntegrationsListItem, *model.ApiError) {
-	ais, apiErr := m.availableIntegrationsRepo.get(
-		ctx, []string{integrationId},
-	)
+	integrationDetails, apiErr := m.getIntegrationDetails(ctx, integrationId)
 	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
-			"could not fetch integration to be installed: %s", integrationId,
-		))
-	}
-
-	integrationDetails, wasFound := ais[integrationId]
-	if !wasFound {
-		return nil, model.NotFoundError(fmt.Errorf(
-			"could not find integration to be installed: %s", integrationId,
-		))
+		return nil, apiErr
 	}
 
 	_, apiErr = m.installedIntegrationsRepo.upsert(
@@ -165,4 +178,47 @@ func (m *Manager) UninstallIntegration(
 	integrationId string,
 ) *model.ApiError {
 	return m.installedIntegrationsRepo.delete(ctx, integrationId)
+}
+
+// Helpers.
+func (m *Manager) getIntegrationDetails(
+	ctx context.Context,
+	integrationId string,
+) (*IntegrationDetails, *model.ApiError) {
+	ais, apiErr := m.availableIntegrationsRepo.get(
+		ctx, []string{integrationId},
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
+			"could not fetch integration: %s", integrationId,
+		))
+	}
+
+	integrationDetails, wasFound := ais[integrationId]
+	if !wasFound {
+		return nil, model.NotFoundError(fmt.Errorf(
+			"could not find integration: %s", integrationId,
+		))
+	}
+	return &integrationDetails, nil
+}
+
+func (m *Manager) getInstalledIntegration(
+	ctx context.Context,
+	integrationId string,
+) (*InstalledIntegration, *model.ApiError) {
+	iis, apiErr := m.installedIntegrationsRepo.get(
+		ctx, []string{integrationId},
+	)
+	if apiErr != nil {
+		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
+			"could not fetch installed integration: %s", integrationId,
+		))
+	}
+
+	installation, wasFound := iis[integrationId]
+	if !wasFound {
+		return nil, nil
+	}
+	return &installation, nil
 }

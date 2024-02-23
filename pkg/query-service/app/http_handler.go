@@ -2410,6 +2410,9 @@ func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMidd
 	subRouter.HandleFunc(
 		"/uninstall", am.ViewAccess(ah.UninstallIntegration),
 	).Methods(http.MethodPost)
+	subRouter.HandleFunc(
+		"/{integrationId}", am.ViewAccess(ah.GetIntegration),
+	).Methods(http.MethodGet)
 	subRouter.HandleFunc("", am.ViewAccess(ah.ListIntegrations)).Methods(http.MethodGet)
 }
 
@@ -2420,6 +2423,16 @@ func (ah *APIHandler) ListIntegrations(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, apiErr := ah.IntegrationsController.ListIntegrations(r.Context(), params)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch fields from the DB")
+		return
+	}
+	ah.Respond(w, resp)
+}
+
+func (ah *APIHandler) GetIntegration(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	resp, apiErr := ah.IntegrationsController.GetIntegration(r.Context(), params["integrationId"])
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch fields from the DB")
 		return
