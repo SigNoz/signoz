@@ -81,6 +81,10 @@ type APIHandler struct {
 	queryBuilder      *queryBuilder.QueryBuilder
 	preferDelta       bool
 	preferSpanMetrics bool
+	
+	maxIdleConns int
+	maxOpenConns int
+	dialTimeout  time.Duration
 
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
@@ -99,6 +103,10 @@ type APIHandlerOpts struct {
 
 	PerferDelta       bool
 	PreferSpanMetrics bool
+
+	MaxIdleConns int
+	MaxOpenConns int
+	DialTimeout  time.Duration
 
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
