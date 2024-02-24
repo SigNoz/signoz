@@ -81,7 +81,7 @@ type APIHandler struct {
 	queryBuilder      *queryBuilder.QueryBuilder
 	preferDelta       bool
 	preferSpanMetrics bool
-	
+
 	maxIdleConns int
 	maxOpenConns int
 	dialTimeout  time.Duration
