@@ -3,7 +3,7 @@ package cumulative
 import (
 	"fmt"
 
-	v4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
+	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
@@ -104,22 +104,22 @@ const (
 // value to be reset to 0. This will produce an inaccurate result. The max is the best approximation we can get.
 // We don't expect the process to restart very often, so this should be a good approximation.
 
-func prepareTimeAggregationSubQueryTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 	var subQuery string
 
-	timeSeriesSubQuery, err := v4.PrepareTimeseriesFilterQuery(mq)
+	timeSeriesSubQuery, err := helpers.PrepareTimeseriesFilterQuery(start, end, mq)
 	if err != nil {
 		return "", err
 	}
 
-	samplesTableFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli < %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
 		"SELECT fingerprint, %s" +
-			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
+			" toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as per_series_value" +
-			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
+			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_V4_TABLENAME +
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
@@ -127,15 +127,8 @@ func prepareTimeAggregationSubQueryTimeSeries(start, end, step int64, mq *v3.Bui
 			" GROUP BY fingerprint, ts" +
 			" ORDER BY fingerprint, ts"
 
-	var selectLabelsAny string
-	for _, tag := range mq.GroupBy {
-		selectLabelsAny += fmt.Sprintf("any(%s) as %s,", tag.Key, tag.Key)
-	}
-
-	var selectLabels string
-	for _, tag := range mq.GroupBy {
-		selectLabels += tag.Key + ","
-	}
+	selectLabelsAny := helpers.SelectLabelsAny(mq.GroupBy)
+	selectLabels := helpers.SelectLabels(mq.GroupBy)
 
 	switch mq.TimeAggregation {
 	case v3.TimeAggregationAvg:
@@ -177,18 +170,18 @@ func prepareTimeAggregationSubQueryTimeSeries(start, end, step int64, mq *v3.Bui
 	return subQuery, nil
 }
 
-// prepareMetricQueryCumulativeTimeSeries prepares the query to be used for fetching metrics
-func prepareMetricQueryCumulativeTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+// PrepareMetricQueryCumulativeTimeSeries prepares the query to be used for fetching metrics
+func PrepareMetricQueryCumulativeTimeSeries(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 	var query string
 
-	temporalAggSubQuery, err := prepareTimeAggregationSubQueryTimeSeries(start, end, step, mq)
+	temporalAggSubQuery, err := prepareTimeAggregationSubQuery(start, end, step, mq)
 	if err != nil {
 		return "", err
 	}
 
-	groupBy := groupingSetsByAttributeKeyTags(mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
-	selectLabels := groupByAttributeKeyTags(mq.GroupBy...)
+	groupBy := helpers.GroupingSetsByAttributeKeyTags(mq.GroupBy...)
+	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
+	selectLabels := helpers.GroupByAttributeKeyTags(mq.GroupBy...)
 
 	queryTmpl :=
 		"SELECT %s," +

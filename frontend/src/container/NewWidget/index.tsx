@@ -24,6 +24,7 @@ import { useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
@@ -104,6 +105,26 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
 
+	const [softMin, setSoftMin] = useState<number | null>(
+		selectedWidget?.softMin === null || selectedWidget?.softMin === undefined
+			? null
+			: selectedWidget?.softMin || 0,
+	);
+
+	const [selectedLogFields, setSelectedLogFields] = useState<IField[] | null>(
+		selectedWidget?.selectedLogFields || null,
+	);
+
+	const [selectedTracesFields, setSelectedTracesFields] = useState(
+		selectedWidget?.selectedTracesFields || null,
+	);
+
+	const [softMax, setSoftMax] = useState<number | null>(
+		selectedWidget?.softMax === null || selectedWidget?.softMax === undefined
+			? null
+			: selectedWidget?.softMax || 0,
+	);
+
 	const closeModal = (): void => {
 		setSaveModal(false);
 		setDiscardModal(false);
@@ -177,7 +198,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						title,
 						yAxisUnit,
 						panelTypes: graphType,
+						query: currentQuery,
 						thresholds,
+						softMin,
+						softMax,
+						fillSpans: isFillSpans,
+						selectedLogFields,
+						selectedTracesFields,
 					},
 					...afterWidgets,
 				],
@@ -211,7 +238,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		title,
 		yAxisUnit,
 		graphType,
+		currentQuery,
 		thresholds,
+		softMin,
+		softMax,
+		isFillSpans,
+		selectedLogFields,
+		selectedTracesFields,
 		afterWidgets,
 		updateDashboardMutation,
 		setSelectedDashboard,
@@ -289,7 +322,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							disabled={isSaveDisabled}
 							onClick={onSaveDashboard}
 						>
-							Save
+							Save Changes
 						</Button>
 					</Tooltip>
 				)}
@@ -298,13 +331,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					<Button
 						type="primary"
 						data-testid="new-widget-save"
+						loading={updateDashboardMutation.isLoading}
 						disabled={isSaveDisabled}
 						onClick={onSaveDashboard}
 					>
-						Save
+						Save Changes
 					</Button>
 				)}
-				<Button onClick={onClickDiscardHandler}>Discard</Button>
+				<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
 			</ButtonContainer>
 
 			<PanelContainer>
@@ -315,6 +349,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						yAxisUnit={yAxisUnit}
 						thresholds={thresholds}
 						fillSpans={isFillSpans}
+						softMax={softMax}
+						softMin={softMin}
+						selectedLogFields={selectedLogFields}
+						setSelectedLogFields={setSelectedLogFields}
+						selectedTracesFields={selectedTracesFields}
+						setSelectedTracesFields={setSelectedTracesFields}
 					/>
 				</LeftContainerWrapper>
 
@@ -341,6 +381,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						selectedWidget={selectedWidget}
 						isFillSpans={isFillSpans}
 						setIsFillSpans={setIsFillSpans}
+						softMin={softMin}
+						setSoftMin={setSoftMin}
+						softMax={softMax}
+						setSoftMax={setSoftMax}
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>
@@ -361,6 +405,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				closable
 				onCancel={closeModal}
 				onOk={onClickSaveHandler}
+				confirmLoading={updateDashboardMutation.isLoading}
 				centered
 				open={saveModal}
 				width={600}

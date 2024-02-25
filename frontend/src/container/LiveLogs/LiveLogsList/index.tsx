@@ -1,5 +1,6 @@
 import { Card, Typography } from 'antd';
 import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
@@ -13,7 +14,6 @@ import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
-import useFontFaceObserver from 'hooks/useFontObserver';
 import { useEventSource } from 'providers/EventSource';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -51,26 +51,18 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 		[logs, activeLogId],
 	);
 
-	useFontFaceObserver(
-		[
-			{
-				family: 'Fira Code',
-				weight: '300',
-			},
-		],
-		options.format === 'raw',
-		{
-			timeout: 5000,
-		},
-	);
-
 	const selectedFields = convertKeysToColumnFields(options.selectColumns);
 
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
 				return (
-					<RawLogView key={log.id} data={log} linesPerRow={options.maxLines} />
+					<RawLogView
+						key={log.id}
+						data={log}
+						linesPerRow={options.maxLines}
+						selectedFields={selectedFields}
+					/>
 				);
 			}
 
@@ -145,6 +137,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 				</InfinityWrapperStyled>
 			)}
 			<LogDetail
+				selectedTab={VIEW_TYPES.OVERVIEW}
 				log={activeLog}
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}

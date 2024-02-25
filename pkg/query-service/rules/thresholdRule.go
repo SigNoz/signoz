@@ -3,8 +3,10 @@ package rules
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
+	"net/url"
 	"reflect"
 	"regexp"
 	"sort"
@@ -60,6 +62,7 @@ type ThresholdRule struct {
 	queryBuilder *queryBuilder.QueryBuilder
 
 	opts ThresholdRuleOpts
+	typ  string
 }
 
 type ThresholdRuleOpts struct {
@@ -98,6 +101,7 @@ func NewThresholdRule(
 		health:            HealthUnknown,
 		active:            map[uint64]*Alert{},
 		opts:              opts,
+		typ:               p.AlertType,
 	}
 
 	if int64(t.evalWindow) == 0 {
@@ -433,7 +437,13 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		}
 
 		sample := Sample{}
+		// Why do we maintain two labels sets? Alertmanager requires
+		// label keys to follow the model https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+		// However, our traces and logs explorers support label keys with dot and other namespace characters
+		// Using normalized label keys results in invalid filter criteria.
+		// The original labels are used to prepare the related{logs, traces} link in alert notification
 		lbls := labels.NewBuilder(labels.Labels{})
+		lblsOrig := labels.NewBuilder(labels.Labels{})
 
 		for i, v := range vars {
 
@@ -442,6 +452,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			switch v := v.(type) {
 			case *string:
 				lbls.Set(colName, *v)
+				lblsOrig.Set(columnNames[i], *v)
 			case *time.Time:
 				timval := *v
 
@@ -449,6 +460,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.T = timval.Unix()
 				} else {
 					lbls.Set(colName, timval.Format("2006-01-02 15:04:05"))
+					lblsOrig.Set(columnNames[i], timval.Format("2006-01-02 15:04:05"))
 				}
 
 			case *float64:
@@ -456,6 +468,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.V = *v
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%f", *v))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", *v))
 				}
 			case **float64:
 				// ch seems to return this type when column is derived from
@@ -466,6 +479,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 						sample.Point.V = *floatVal
 					} else {
 						lbls.Set(colName, fmt.Sprintf("%f", *floatVal))
+						lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", *floatVal))
 					}
 				}
 			case *float32:
@@ -474,18 +488,21 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.V = float64(float32Val)
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%f", float32Val))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", float32Val))
 				}
 			case *uint8, *uint64, *uint16, *uint32:
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
 					sample.Point.V = float64(reflect.ValueOf(v).Elem().Uint())
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
 				}
 			case *int8, *int16, *int32, *int64:
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
 					sample.Point.V = float64(reflect.ValueOf(v).Elem().Int())
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
 				}
 			default:
 				zap.S().Errorf("ruleId:", r.ID(), "\t error: invalid var found in query result", v, columnNames[i])
@@ -499,6 +516,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 		// capture lables in result
 		sample.Metric = lbls.Labels()
+		sample.MetricOrig = lblsOrig.Labels()
 
 		labelHash := lbls.Labels().Hash()
 
@@ -625,6 +643,209 @@ func (r *ThresholdRule) prepareBuilderQueries(ts time.Time) (map[string]string, 
 	return runQueries, err
 }
 
+// The following function is used to prepare the where clause for the query
+// `lbls` contains the key value pairs of the labels from the result of the query
+// We iterate over the where clause and replace the labels with the actual values
+// There are two cases:
+// 1. The label is present in the where clause
+// 2. The label is not present in the where clause
+//
+// Example for case 2:
+// Latency by serviceName without any filter
+// In this case, for each service with latency > threshold we send a notification
+// The expectation will be that clicking on the related traces for service A, will
+// take us to the traces page with the filter serviceName=A
+// So for all the missing labels in the where clause, we add them as key = value
+//
+// Example for case 1:
+// Severity text IN (WARN, ERROR)
+// In this case, the Severity text will appear in the `lbls` if it were part of the group
+// by clause, in which case we replace it with the actual value for the notification
+// i.e Severity text = WARN
+// If the Severity text is not part of the group by clause, then we add it as it is
+func (r *ThresholdRule) fetchFilters(selectedQuery string, lbls labels.Labels) []v3.FilterItem {
+	var filterItems []v3.FilterItem
+
+	added := make(map[string]struct{})
+
+	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder &&
+		r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+		r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters != nil {
+
+		for _, item := range r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items {
+			exists := false
+			for _, label := range lbls {
+				if item.Key.Key == label.Name {
+					// if the label is present in the where clause, replace it with key = value
+					filterItems = append(filterItems, v3.FilterItem{
+						Key:      item.Key,
+						Operator: v3.FilterOperatorEqual,
+						Value:    label.Value,
+					})
+					exists = true
+					added[label.Name] = struct{}{}
+					break
+				}
+			}
+
+			if !exists {
+				// if the label is not present in the where clause, add it as it is
+				filterItems = append(filterItems, item)
+			}
+		}
+	}
+
+	// add the labels which are not present in the where clause
+	for _, label := range lbls {
+		if _, ok := added[label.Name]; !ok {
+			filterItems = append(filterItems, v3.FilterItem{
+				Key:      v3.AttributeKey{Key: label.Name},
+				Operator: v3.FilterOperatorEqual,
+				Value:    label.Value,
+			})
+		}
+	}
+
+	return filterItems
+}
+
+func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) string {
+	selectedQuery := r.GetSelectedQuery()
+
+	// TODO(srikanthccv): handle formula queries
+	if selectedQuery < "A" || selectedQuery > "Z" {
+		return ""
+	}
+
+	// Logs list view expects time in milliseconds
+	tr := timeRange{
+		Start:    ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
+		End:      ts.UnixMilli(),
+		PageSize: 100,
+	}
+
+	options := Options{
+		MaxLines:      2,
+		Format:        "list",
+		SelectColumns: []v3.AttributeKey{},
+	}
+
+	period, _ := json.Marshal(tr)
+	urlEncodedTimeRange := url.QueryEscape(string(period))
+
+	filterItems := r.fetchFilters(selectedQuery, lbls)
+	urlData := urlShareableCompositeQuery{
+		QueryType: string(v3.QueryTypeBuilder),
+		Builder: builderQuery{
+			QueryData: []v3.BuilderQuery{
+				{
+					DataSource:         v3.DataSourceLogs,
+					QueryName:          "A",
+					AggregateOperator:  v3.AggregateOperatorNoOp,
+					AggregateAttribute: v3.AttributeKey{},
+					Filters: &v3.FilterSet{
+						Items:    filterItems,
+						Operator: "AND",
+					},
+					Expression:   "A",
+					Disabled:     false,
+					Having:       []v3.Having{},
+					StepInterval: 60,
+					OrderBy: []v3.OrderBy{
+						{
+							ColumnName: "timestamp",
+							Order:      "desc",
+						},
+					},
+				},
+			},
+			QueryFormulas: make([]string, 0),
+		},
+	}
+
+	data, _ := json.Marshal(urlData)
+	compositeQuery := url.QueryEscape(string(data))
+
+	optionsData, _ := json.Marshal(options)
+	urlEncodedOptions := url.QueryEscape(string(optionsData))
+
+	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+}
+
+func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) string {
+	selectedQuery := r.GetSelectedQuery()
+
+	// TODO(srikanthccv): handle formula queries
+	if selectedQuery < "A" || selectedQuery > "Z" {
+		return ""
+	}
+
+	// Traces list view expects time in nanoseconds
+	tr := timeRange{
+		Start:    ts.Add(-time.Duration(r.evalWindow)).UnixNano(),
+		End:      ts.UnixNano(),
+		PageSize: 100,
+	}
+
+	options := Options{
+		MaxLines:      2,
+		Format:        "list",
+		SelectColumns: constants.TracesListViewDefaultSelectedColumns,
+	}
+
+	period, _ := json.Marshal(tr)
+	urlEncodedTimeRange := url.QueryEscape(string(period))
+
+	filterItems := r.fetchFilters(selectedQuery, lbls)
+	urlData := urlShareableCompositeQuery{
+		QueryType: string(v3.QueryTypeBuilder),
+		Builder: builderQuery{
+			QueryData: []v3.BuilderQuery{
+				{
+					DataSource:         v3.DataSourceTraces,
+					QueryName:          "A",
+					AggregateOperator:  v3.AggregateOperatorNoOp,
+					AggregateAttribute: v3.AttributeKey{},
+					Filters: &v3.FilterSet{
+						Items:    filterItems,
+						Operator: "AND",
+					},
+					Expression:   "A",
+					Disabled:     false,
+					Having:       []v3.Having{},
+					StepInterval: 60,
+					OrderBy: []v3.OrderBy{
+						{
+							ColumnName: "timestamp",
+							Order:      "desc",
+						},
+					},
+				},
+			},
+			QueryFormulas: make([]string, 0),
+		},
+	}
+
+	data, _ := json.Marshal(urlData)
+	compositeQuery := url.QueryEscape(string(data))
+
+	optionsData, _ := json.Marshal(options)
+	urlEncodedOptions := url.QueryEscape(string(optionsData))
+
+	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+}
+
+func (r *ThresholdRule) hostFromSource() string {
+	parsedUrl, err := url.Parse(r.source)
+	if err != nil {
+		return ""
+	}
+	if parsedUrl.Port() != "" {
+		return fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Hostname(), parsedUrl.Port())
+	}
+	return fmt.Sprintf("%s://%s", parsedUrl.Scheme, parsedUrl.Hostname())
+}
+
 func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]string, error) {
 	queries := make(map[string]string)
 
@@ -668,7 +889,7 @@ func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]strin
 
 func (r *ThresholdRule) GetSelectedQuery() string {
 
-	// The acutal query string is not relevant here
+	// The actual query string is not relevant here
 	// we just need to know the selected query
 
 	var queries map[string]string
@@ -817,7 +1038,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 
-		// utility function to apply go template on labels and annots
+		// utility function to apply go template on labels and annotations
 		expand := func(text string) string {
 
 			tmpl := NewTemplateExpander(
@@ -849,6 +1070,21 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
 			annotations = append(annotations, labels.Label{Name: normalizeLabelName(a.Name), Value: expand(a.Value)})
+		}
+
+		// Links with timestamps should go in annotations since labels
+		// is used alert grouping, and we want to group alerts with the same
+		// label set, but different timestamps, together.
+		if r.typ == "TRACES_BASED_ALERT" {
+			link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
+			if link != "" && r.hostFromSource() != "" {
+				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
+			}
+		} else if r.typ == "LOGS_BASED_ALERT" {
+			link := r.prepareLinksToLogs(ts, smpl.MetricOrig)
+			if link != "" && r.hostFromSource() != "" {
+				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
+			}
 		}
 
 		lbs := lb.Labels()

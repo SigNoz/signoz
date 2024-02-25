@@ -2,6 +2,7 @@ import './logsTable.styles.scss';
 
 import { Card, Typography } from 'antd';
 import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
@@ -9,7 +10,6 @@ import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
-import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';
@@ -37,19 +37,6 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		onSetActiveLog,
 	} = useActiveLog();
 
-	useFontFaceObserver(
-		[
-			{
-				family: 'Fira Code',
-				weight: '300',
-			},
-		],
-		viewMode === 'raw',
-		{
-			timeout: 5000,
-		},
-	);
-
 	const {
 		logs,
 		fields: { selected },
@@ -72,7 +59,14 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 			const log = logs[index];
 
 			if (viewMode === 'raw') {
-				return <RawLogView key={log.id} data={log} linesPerRow={linesPerRow} />;
+				return (
+					<RawLogView
+						key={log.id}
+						data={log}
+						linesPerRow={linesPerRow}
+						selectedFields={selected}
+					/>
+				);
 			}
 
 			return (
@@ -125,6 +119,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 
 			{renderContent}
 			<LogDetail
+				selectedTab={VIEW_TYPES.OVERVIEW}
 				log={activeLog}
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}

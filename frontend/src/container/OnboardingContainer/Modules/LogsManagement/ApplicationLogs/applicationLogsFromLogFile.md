@@ -9,11 +9,13 @@
     ...
     filelog/app:
       include: [ /tmp/app.log ]
-      start_at: beginning
+      start_at: end
   ...
   ```
 
-  `start_at: beginning` can be removed once you are done testing.
+  Replace `/tmp/app.log` with the path to your log file.
+
+  Note: change the `start_at` value to `beginning` if you want to read the log file from the beginning. It may be useful if you want to send old logs to SigNoz. The log records older than the standard log retention period (default 15 days) will be discarded.
 
   For parsing logs of different formats you will have to use operators, you can read more about operators [here](https://signoz.io/docs/userguide/logs/#operators-for-parsing-and-manipulating-logs).
 

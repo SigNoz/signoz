@@ -1,10 +1,12 @@
 import ROUTES from 'constants/routes';
+import Shortcuts from 'pages/Shortcuts/Shortcuts';
 import WorkspaceBlocked from 'pages/WorkspaceLocked';
 import { RouteProps } from 'react-router-dom';
 
 import {
 	AllAlertChannels,
 	AllErrors,
+	APIKeys,
 	BillingPage,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
@@ -21,8 +23,10 @@ import {
 	Logs,
 	LogsExplorer,
 	LogsIndexToFields,
+	LogsSaveViews,
 	MySettings,
 	NewDashboardPage,
+	OldLogsExplorer,
 	Onboarding,
 	OrganizationSettings,
 	PasswordReset,
@@ -38,6 +42,7 @@ import {
 	TraceDetail,
 	TraceFilter,
 	TracesExplorer,
+	TracesSaveViews,
 	UnAuthorized,
 	UsageExplorerPage,
 } from './pageComponents';
@@ -84,6 +89,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 		exact: true,
 		key: 'SERVICE_MAP',
+	},
+	{
+		path: ROUTES.LOGS_SAVE_VIEWS,
+		component: LogsSaveViews,
+		isPrivate: true,
+		exact: true,
+		key: 'LOGS_SAVE_VIEWS',
 	},
 	{
 		path: ROUTES.TRACE_DETAIL,
@@ -163,6 +175,13 @@ const routes: AppRoutes[] = [
 		key: 'TRACES_EXPLORER',
 	},
 	{
+		path: ROUTES.TRACES_SAVE_VIEWS,
+		exact: true,
+		component: TracesSaveViews,
+		isPrivate: true,
+		key: 'TRACES_SAVE_VIEWS',
+	},
+	{
 		path: ROUTES.CHANNELS_NEW,
 		exact: true,
 		component: CreateAlertChannelAlerts,
@@ -189,13 +208,6 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 		component: AllErrors,
 		key: 'ALL_ERROR',
-	},
-	{
-		path: ROUTES.LIST_LICENSES,
-		exact: true,
-		component: LicensePage,
-		isPrivate: true,
-		key: 'LIST_LICENSES',
 	},
 	{
 		path: ROUTES.ERROR_DETAIL,
@@ -226,6 +238,13 @@ const routes: AppRoutes[] = [
 		key: 'INGESTION_SETTINGS',
 	},
 	{
+		path: ROUTES.API_KEYS,
+		exact: true,
+		component: APIKeys,
+		isPrivate: true,
+		key: 'API_KEYS',
+	},
+	{
 		path: ROUTES.MY_SETTINGS,
 		exact: true,
 		component: MySettings,
@@ -247,10 +266,24 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
+		path: ROUTES.OLD_LOGS_EXPLORER,
+		exact: true,
+		component: OldLogsExplorer,
+		key: 'OLD_LOGS_EXPLORER',
+		isPrivate: true,
+	},
+	{
 		path: ROUTES.LIVE_LOGS,
 		exact: true,
 		component: LiveLogs,
 		key: 'LIVE_LOGS',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LOGS_PIPELINES,
+		exact: true,
+		component: PipelinePage,
+		key: 'LOGS_PIPELINES',
 		isPrivate: true,
 	},
 	{
@@ -282,13 +315,6 @@ const routes: AppRoutes[] = [
 		isPrivate: false,
 	},
 	{
-		path: ROUTES.LOGS_PIPELINES,
-		exact: true,
-		component: PipelinePage,
-		key: 'LOGS_PIPELINES',
-		isPrivate: true,
-	},
-	{
 		path: ROUTES.BILLING,
 		exact: true,
 		component: BillingPage,
@@ -302,6 +328,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 		key: 'WORKSPACE_LOCKED',
 	},
+	{
+		path: ROUTES.SHORTCUTS,
+		exact: true,
+		component: Shortcuts,
+		isPrivate: true,
+		key: 'SHORTCUTS',
+	},
 ];
 
 export const SUPPORT_ROUTE: AppRoutes = {
@@ -310,6 +343,28 @@ export const SUPPORT_ROUTE: AppRoutes = {
 	component: SupportPage,
 	key: 'SUPPORT',
 	isPrivate: true,
+};
+
+export const LIST_LICENSES: AppRoutes = {
+	path: ROUTES.LIST_LICENSES,
+	exact: true,
+	component: LicensePage,
+	isPrivate: true,
+	key: 'LIST_LICENSES',
+};
+
+export const oldRoutes = [
+	'/pipelines',
+	'/logs/old-logs-explorer',
+	'/logs-explorer',
+	'/logs-explorer/live',
+];
+
+export const oldNewRoutesMapping: Record<string, string> = {
+	'/pipelines': '/logs/pipelines',
+	'/logs/old-logs-explorer': '/logs/old-logs-explorer',
+	'/logs-explorer': '/logs/logs-explorer',
+	'/logs-explorer/live': '/logs/logs-explorer/live',
 };
 
 export interface AppRoutes {

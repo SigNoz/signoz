@@ -48,7 +48,7 @@ function DashboardDescription(): JSX.Element {
 	};
 
 	return (
-		<Card>
+		<Card style={{ marginTop: '1rem' }}>
 			<Row gutter={16}>
 				<Col flex={1} span={9}>
 					<Typography.Title
