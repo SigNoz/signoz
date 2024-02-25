@@ -52,9 +52,9 @@ func main() {
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
-	flag.IntVar(&maxIdleConns, "max-idle-conns", 0, "(number of connections to maintain in the pool.)")
-	flag.IntVar(&maxOpenConns, "max-open-conns", 0, "(max connections for use at any time.)")
-	flag.DurationVar(&dialTimeout, "dial-timeout", 0, "(the maximum time to establish a connection.)")
+	flag.IntVar(&maxIdleConns, "max-idle-conns", 50, "(number of connections to maintain in the pool, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
+	flag.IntVar(&maxOpenConns, "max-open-conns", 100, "(max connections for use at any time, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
+	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
 	flag.Parse()
 
 	loggerMgr := initZapLog()

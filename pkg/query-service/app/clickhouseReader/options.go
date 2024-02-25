@@ -94,15 +94,18 @@ func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	if cfg.MaxIdleConns != 0 {
+
+	// Check if the DSN contained any of the following options, if not set from configuration
+	if options.MaxIdleConns == 0 {
 		options.MaxIdleConns = cfg.MaxIdleConns
 	}
-	if cfg.MaxOpenConns != 0 {
+	if options.MaxOpenConns == 0 {
 		options.MaxOpenConns = cfg.MaxOpenConns
 	}
-	if cfg.DialTimeout != 0 {
+	if options.DialTimeout == 0 {
 		options.DialTimeout = cfg.DialTimeout
 	}
+
 	zap.S().Infof("Connecting to Clickhouse at %s, Secure: %t, MaxIdleConns: %d, MaxOpenConns: %d, DialTimeout: %s", options.Addr, options.TLS != nil, options.MaxIdleConns, options.MaxOpenConns, options.DialTimeout)
 	db, err := clickhouse.Open(options)
 	if err != nil {
