@@ -1,5 +1,6 @@
 import './ContextView.styles.scss';
 
+import cx from 'classnames';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -22,31 +23,7 @@ function ContextView({
 	if (!contextQuery) return <></>;
 
 	return (
-		<div className="log-context-container">
-			{/* <LogsContextList
-				className="logs-context-list-asc"
-				order={ORDERBY_FILTERS.ASC}
-				filters={filters}
-				isEdit={isEdit}
-				log={log}
-				query={contextQuery}
-			/>
-			<RawLogView
-				isActiveLog
-				isReadOnly
-				isTextOverflowEllipsisDisabled={false}
-				data={log}
-				linesPerRow={1}
-			/>
-			<LogsContextList
-				className="logs-context-list-desc"
-				order={ORDERBY_FILTERS.DESC}
-				filters={filters}
-				isEdit={isEdit}
-				log={log}
-				query={contextQuery}
-			/> */}
-
+		<div className={cx('log-context-container', { isEditable: isEdit })}>
 			<ContextLogRenderer
 				filters={filters}
 				log={log}

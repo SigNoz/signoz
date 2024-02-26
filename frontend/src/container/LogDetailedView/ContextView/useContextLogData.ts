@@ -7,7 +7,14 @@ import {
 import { getRequestData } from 'container/LogsContextList/utils';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { SuccessResponse } from 'types/api';
 import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -19,23 +26,25 @@ export const useContextLogData = ({
 	order,
 	isEdit,
 	filters,
+	page,
+	setPage,
 }: {
 	log: ILog;
 	query: Query;
 	order: string;
 	isEdit: boolean;
 	filters: TagFilter | null;
+	page: number;
+	setPage: Dispatch<SetStateAction<number>>;
 }): {
 	logs: ILog[];
 	handleShowNextLines: () => void;
 	isError: boolean;
 	isFetching: boolean;
+	isDisabledFetch: boolean;
 } => {
 	const [logs, setLogs] = useState<ILog[]>([]);
-	const [page, setPage] = useState<number>(1);
 
-	const firstLog = useMemo(() => logs[0], [logs]);
-	const lastLog = useMemo(() => logs[logs.length - 1], [logs]);
 	const orderByTimestamp = useMemo(() => getOrderByTimestamp(order), [order]);
 
 	const logsMorePageSize = useMemo(() => (page - 1) * LOGS_MORE_PAGE_SIZE, [
@@ -84,9 +93,9 @@ export const useContextLogData = ({
 
 				if (order === ORDERBY_FILTERS.ASC) {
 					const reversedCurrentLogs = currentLogs.reverse();
-					setLogs((prevLogs) => [...reversedCurrentLogs, ...prevLogs]);
+					setLogs([...reversedCurrentLogs]);
 				} else {
-					setLogs((prevLogs) => [...prevLogs, ...currentLogs]);
+					setLogs([...currentLogs]);
 				}
 			}
 		},
@@ -104,9 +113,7 @@ export const useContextLogData = ({
 	);
 
 	const handleShowNextLines = useCallback(() => {
-		if (isDisabledFetch) return;
-
-		const log = order === ORDERBY_FILTERS.ASC ? firstLog : lastLog;
+		// if (isDisabledFetch) return;
 
 		const newRequestData = getRequestData({
 			stagedQueryData: currentStagedQueryData,
@@ -119,10 +126,9 @@ export const useContextLogData = ({
 
 		setPage((prevPage) => prevPage + 1);
 		setRequestData(newRequestData);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		query,
-		firstLog,
-		lastLog,
 		page,
 		order,
 		currentStagedQueryData,
@@ -152,5 +158,6 @@ export const useContextLogData = ({
 		handleShowNextLines,
 		isError,
 		isFetching,
+		isDisabledFetch,
 	};
 };
