@@ -1,0 +1,29 @@
+.create-alert-modal {
+   .ant-modal-content {
+        background-color: var(--bg-ink-400);
+        .ant-modal-confirm-title {
+            color: var(--bg-vanilla-100);
+        }
+
+        .ant-modal-confirm-content {
+            .ant-typography {
+                color: var(--bg-vanilla-100);
+            }
+        }
+   } 
+}
+
+.lightMode {
+    .ant-modal-content {
+        background-color: var(--bg-vanilla-100);
+        .ant-modal-confirm-title {
+            color: var(--bg-ink-500);
+        }
+
+        .ant-modal-confirm-content {
+            .ant-typography {
+                color: var(--bg-ink-500);
+            }
+        }
+   }  
+}
