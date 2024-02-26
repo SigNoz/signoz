@@ -1,4 +1,4 @@
-import { OpsgenieChannel, PagerChannel } from './config';
+import { EmailChannel, OpsgenieChannel, PagerChannel } from './config';
 
 export const PagerInitialConfig: Partial<PagerChannel> = {
 	description: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
@@ -49,4 +49,30 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 	{{- end }}`,
 	priority:
 		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
+};
+
+export const EmailInitialConfig: Partial<EmailChannel> = {
+	send_resolved: true,
+	html: `{{ if gt (len .Alerts.Firing) 0 -}}
+	Alerts Firing: <br>
+	{{ range .Alerts.Firing }}
+	Message: {{ .Annotations.description }} <br>
+	Labels: <br>
+	{{ range .Labels.SortedPairs }}   - {{ .Name }} = {{ .Value }} <br>
+	{{ end }}   Annotations: <br>
+	{{ range .Annotations.SortedPairs }}   - {{ .Name }} = {{ .Value }} <br>
+	{{ end }}   Source: {{ .GeneratorURL }} <br>
+	{{ end }}
+	{{- end }}
+	{{ if gt (len .Alerts.Resolved) 0 -}}
+	Alerts Resolved: <br>
+	{{ range .Alerts.Resolved }}
+	Message: {{ .Annotations.description }} <br>
+	Labels: <br>
+	{{ range .Labels.SortedPairs }}   - {{ .Name }} = {{ .Value }} <br>
+	{{ end }}   Annotations: <br>
+	{{ range .Annotations.SortedPairs }}   - {{ .Name }} = {{ .Value }} <br>
+	{{ end }}   Source: {{ .GeneratorURL }} <br>
+	{{ end }}
+	{{- end }}`,
 };
