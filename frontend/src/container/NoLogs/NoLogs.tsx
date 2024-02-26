@@ -11,7 +11,9 @@ export default function NoLogs({
 }: {
 	dataSource: DataSource;
 }): JSX.Element {
-	const handleLinkClick = (e: any): void => {
+	const handleLinkClick = (
+		e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+	): void => {
 		e.preventDefault();
 		e.stopPropagation();
 		history.push(
