@@ -1,10 +1,9 @@
 import './ContextView.styles.scss';
 
-import RawLogView from 'components/Logs/RawLogView';
-import LogsContextList from 'container/LogsContextList';
-import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+
+import ContextLogRenderer from './ContextLogRenderer';
 
 interface LogContextProps {
 	log: ILog;
@@ -24,7 +23,7 @@ function ContextView({
 
 	return (
 		<div className="log-context-container">
-			<LogsContextList
+			{/* <LogsContextList
 				className="logs-context-list-asc"
 				order={ORDERBY_FILTERS.ASC}
 				filters={filters}
@@ -46,6 +45,13 @@ function ContextView({
 				isEdit={isEdit}
 				log={log}
 				query={contextQuery}
+			/> */}
+
+			<ContextLogRenderer
+				filters={filters}
+				log={log}
+				query={contextQuery}
+				isEdit={isEdit}
 			/>
 		</div>
 	);
