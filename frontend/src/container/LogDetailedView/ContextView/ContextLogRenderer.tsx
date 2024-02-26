@@ -97,7 +97,6 @@ function ContextLogRenderer({
 				data={logs}
 				itemContent={getItemContent}
 				style={{ height: `calc(${logs.length} * 32px)` }}
-				// followOutput={order === ORDERBY_FILTERS.DESC}
 			/>
 			{isAfterLogsFetching && <Spinner size="large" height="20rem" />}
 			<ShowButton
