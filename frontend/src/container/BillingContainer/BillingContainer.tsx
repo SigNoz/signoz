@@ -13,6 +13,7 @@ import useAnalytics from 'hooks/analytics/useAnalytics';
 import useAxiosError from 'hooks/useAxiosError';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
+import { pick } from 'lodash-es';
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -305,7 +306,7 @@ export default function BillingContainer(): JSX.Element {
 	const handleBilling = useCallback(async () => {
 		if (isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription) {
 			trackEvent('Billing : Upgrade Plan', {
-				user,
+				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
 
@@ -316,7 +317,7 @@ export default function BillingContainer(): JSX.Element {
 			});
 		} else {
 			trackEvent('Billing : Manage Billing', {
-				user,
+				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
 
