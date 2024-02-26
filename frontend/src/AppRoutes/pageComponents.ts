@@ -190,3 +190,24 @@ export const WorkspaceBlocked = Loadable(
 export const ShortcutsPage = Loadable(
 	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
 );
+
+export const IntegrationsModulePage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "IntegrationsModulePage" */ 'pages/IntegrationsModulePage'
+		),
+);
+
+export const IntegrationsMarketPlace = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "IntegrationsMarketPlace" */ 'pages/IntegrationsMarketPlace'
+		),
+);
+
+export const InstalledIntegrations = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "InstalledIntegrations" */ 'pages/InstalledIntegrations'
+		),
+);
