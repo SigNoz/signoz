@@ -13,22 +13,22 @@ import (
 )
 
 type IntegrationAuthor struct {
-	Name     string
-	Email    string
-	HomePage string
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	HomePage string `json:"homepage"`
 }
 type IntegrationSummary struct {
-	Id          string
-	Title       string
-	Description string // A short description
+	Id          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"` // A short description
 
-	Author IntegrationAuthor
+	Author IntegrationAuthor `json:"author"`
 }
 
 type IntegrationAssets struct {
 	// Each integration is expected to specify all log transformations
 	// in a single pipeline with a source based filter
-	LogPipeline *logparsingpipeline.PostablePipeline
+	LogPipeline *logparsingpipeline.PostablePipeline `json:"log_pipeline"`
 
 	// TBD: Dashboards, alerts, saved views, facets (indexed attribs)...
 }
@@ -40,7 +40,7 @@ type IntegrationDetails struct {
 
 type IntegrationsListItem struct {
 	IntegrationSummary
-	IsInstalled bool
+	IsInstalled bool `json:"is_installed"`
 }
 
 type InstalledIntegration struct {
