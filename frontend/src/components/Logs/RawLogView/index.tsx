@@ -164,7 +164,11 @@ function RawLogView({
 		>
 			<LogStateIndicator
 				type={logType}
-				isActive={activeLog?.id === data.id || activeContextLog?.id === data.id}
+				isActive={
+					activeLog?.id === data.id ||
+					activeContextLog?.id === data.id ||
+					isActiveLog
+				}
 			/>
 
 			<RawLogContent
