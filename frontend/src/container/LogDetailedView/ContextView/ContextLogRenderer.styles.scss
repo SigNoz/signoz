@@ -18,7 +18,7 @@
             background: var(--bg-slate-200);
         }
         
-        /* Adjust width to fit content for accessing the third descendant, which renders logs */
+        /* Adjust width to fit content of the third descendant inside virtuoso */
         > div > div > div {
             width: fit-content;
         }
