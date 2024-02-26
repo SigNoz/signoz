@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -185,6 +186,12 @@ func (m *Manager) getIntegrationDetails(
 	ctx context.Context,
 	integrationId string,
 ) (*IntegrationDetails, *model.ApiError) {
+	if len(strings.TrimSpace(integrationId)) < 1 {
+		return nil, model.BadRequest(fmt.Errorf(
+			"integrationId is required",
+		))
+	}
+
 	ais, apiErr := m.availableIntegrationsRepo.get(
 		ctx, []string{integrationId},
 	)

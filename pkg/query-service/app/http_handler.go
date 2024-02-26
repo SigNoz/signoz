@@ -2401,49 +2401,65 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 }
 
 // Integrations
-// TODO(Raj): Register integrations handler paths and do e2e test with mux
 func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()
+
 	subRouter.HandleFunc(
 		"/install", am.ViewAccess(ah.InstallIntegration),
 	).Methods(http.MethodPost)
+
 	subRouter.HandleFunc(
 		"/uninstall", am.ViewAccess(ah.UninstallIntegration),
 	).Methods(http.MethodPost)
+
 	subRouter.HandleFunc(
 		"/{integrationId}", am.ViewAccess(ah.GetIntegration),
 	).Methods(http.MethodGet)
-	subRouter.HandleFunc("", am.ViewAccess(ah.ListIntegrations)).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"", am.ViewAccess(ah.ListIntegrations),
+	).Methods(http.MethodGet)
 }
 
-func (ah *APIHandler) ListIntegrations(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) ListIntegrations(
+	w http.ResponseWriter, r *http.Request,
+) {
 	params := map[string]string{}
 	for k, values := range r.URL.Query() {
 		params[k] = values[0]
 	}
 
-	resp, apiErr := ah.IntegrationsController.ListIntegrations(r.Context(), params)
+	resp, apiErr := ah.IntegrationsController.ListIntegrations(
+		r.Context(), params,
+	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch fields from the DB")
+		RespondError(w, apiErr, "Failed to fetch integrations")
 		return
 	}
 	ah.Respond(w, resp)
 }
 
-func (ah *APIHandler) GetIntegration(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	resp, apiErr := ah.IntegrationsController.GetIntegration(r.Context(), params["integrationId"])
+func (ah *APIHandler) GetIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	resp, apiErr := ah.IntegrationsController.GetIntegration(
+		r.Context(), integrationId,
+	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch fields from the DB")
+		RespondError(w, apiErr, "Failed to fetch integration details")
 		return
 	}
 	ah.Respond(w, resp)
 }
 
-func (ah *APIHandler) InstallIntegration(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) InstallIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
 	req := integrations.InstallIntegrationRequest{}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
@@ -2451,7 +2467,6 @@ func (ah *APIHandler) InstallIntegration(w http.ResponseWriter, r *http.Request)
 	integration, apiErr := ah.IntegrationsController.Install(
 		r.Context(), &req,
 	)
-
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -2460,8 +2475,11 @@ func (ah *APIHandler) InstallIntegration(w http.ResponseWriter, r *http.Request)
 	ah.Respond(w, integration)
 }
 
-func (ah *APIHandler) UninstallIntegration(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) UninstallIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
 	req := integrations.UninstallIntegrationRequest{}
+
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondError(w, model.BadRequest(err), nil)
