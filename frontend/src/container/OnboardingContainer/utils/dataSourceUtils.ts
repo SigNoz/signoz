@@ -1,5 +1,13 @@
-import { ModuleProps, ModulesMap } from '../OnboardingContainer';
+import ROUTES from 'constants/routes';
+
+import { ModuleProps } from '../OnboardingContainer';
 import { DataSourceType } from '../Steps/DataSource/DataSource';
+
+export enum ModulesMap {
+	APM = 'APM',
+	LogsManagement = 'LogsManagement',
+	InfrastructureMonitoring = 'InfrastructureMonitoring',
+}
 
 export const frameworksMap = {
 	APM: {
@@ -81,135 +89,135 @@ const supportedLanguages = [
 	{
 		name: 'java',
 		id: 'java',
-		imgURL: `Logos/java.png`,
+		imgURL: `/Logos/java.png`,
 	},
 	{
 		name: 'python',
 		id: 'python',
-		imgURL: `Logos/python.png`,
+		imgURL: `/Logos/python.png`,
 	},
 	{
 		name: 'go',
 		id: 'go',
-		imgURL: `Logos/go.png`,
+		imgURL: `/Logos/go.png`,
 	},
 	{
 		name: 'javascript',
 		id: 'javascript',
-		imgURL: `Logos/javascript.png`,
+		imgURL: `/Logos/javascript.png`,
 	},
 	{
 		name: 'rails',
 		id: 'rails',
-		imgURL: `Logos/rails.png`,
+		imgURL: `/Logos/rails.png`,
 	},
 	{
 		name: '.NET',
 		id: 'dotnet',
-		imgURL: `Logos/dotnet.png`,
+		imgURL: `/Logos/dotnet.png`,
 	},
 	{
 		name: 'rust',
 		id: 'rust',
-		imgURL: `Logos/rust.png`,
+		imgURL: `/Logos/rust.png`,
 	},
 	{
 		name: 'elixir',
 		id: 'elixir',
-		imgURL: `Logos/elixir.png`,
+		imgURL: `/Logos/elixir.png`,
 	},
 	{
 		name: 'swift',
 		id: 'swift',
-		imgURL: `Logos/swift.png`,
+		imgURL: `/Logos/swift.png`,
 	},
 ];
 
 export const defaultLogsType = {
 	name: 'Kubernetes Pod Logs',
 	id: 'kubernetes',
-	imgURL: `Logos/kubernetes.svg`,
+	imgURL: `/Logos/kubernetes.svg`,
 };
 
 const supportedLogsTypes = [
 	{
 		name: 'Kubernetes Pod Logs',
 		id: 'kubernetes',
-		imgURL: `Logos/kubernetes.svg`,
+		imgURL: `/Logos/kubernetes.svg`,
 	},
 	{
 		name: 'Docker Container Logs',
 		id: 'docker',
-		imgURL: `Logos/docker.svg`,
+		imgURL: `/Logos/docker.svg`,
 	},
 	{
 		name: 'SysLogs',
 		id: 'syslogs',
-		imgURL: `Logos/syslogs.svg`,
+		imgURL: `/Logos/syslogs.svg`,
 	},
 	{
 		name: 'Application Logs',
 		id: 'application_logs',
-		imgURL: `Logos/software-window.svg`,
+		imgURL: `/Logos/software-window.svg`,
 	},
 	{
 		name: 'FluentBit',
 		id: 'fluentBit',
-		imgURL: `Logos/fluent-bit.png`,
+		imgURL: `/Logos/fluent-bit.png`,
 	},
 	{
 		name: 'FluentD',
 		id: 'fluentD',
-		imgURL: `Logos/fluentd.png`,
+		imgURL: `/Logos/fluentd.png`,
 	},
 	{
 		name: 'LogStash',
 		id: 'logStash',
-		imgURL: `Logos/logstash.svg`,
+		imgURL: `/Logos/logstash.svg`,
 	},
 	{
 		name: 'Heroku',
 		id: 'heroku',
-		imgURL: `Logos/heroku.png`,
+		imgURL: `/Logos/heroku.png`,
 	},
 	{
 		name: 'Vercel',
 		id: 'vercel',
-		imgURL: `Logos/vercel.png`,
+		imgURL: `/Logos/vercel.png`,
 	},
 	{
 		name: 'HTTP',
 		id: 'http',
-		imgURL: `Logos/http.png`,
+		imgURL: `/Logos/http.png`,
 	},
 	{
 		name: 'Cloudwatch',
 		id: 'cloudwatch',
-		imgURL: `Logos/cloudwatch.png`,
+		imgURL: `/Logos/cloudwatch.png`,
 	},
 ];
 
 export const defaultInfraMetricsType = {
 	name: 'Kubernetes Infra Metrics',
 	id: 'kubernetesInfraMetrics',
-	imgURL: `Logos/kubernetes.svg`,
+	imgURL: `/Logos/kubernetes.svg`,
 };
 
 const supportedInfraMetrics = [
 	{
 		name: 'Kubernetes Infra Metrics',
 		id: 'kubernetesInfraMetrics',
-		imgURL: `Logos/kubernetes.svg`,
+		imgURL: `/Logos/kubernetes.svg`,
 	},
 	{
 		name: 'HostMetrics',
 		id: 'hostMetrics',
-		imgURL: `Logos/software-window.svg`,
+		imgURL: `/Logos/software-window.svg`,
 	},
 	{
 		name: 'Other Metrics',
 		id: 'otherMetrics',
-		imgURL: `Logos/cmd-terminal.svg`,
+		imgURL: `/Logos/cmd-terminal.svg`,
 	},
 ];
 
@@ -319,4 +327,11 @@ export const hasFrameworks = ({
 	}
 
 	return true;
+};
+
+export const moduleRouteMap = {
+	[ModulesMap.APM]: ROUTES.GET_STARTED_APPLICATION_MONITORING,
+	[ModulesMap.LogsManagement]: ROUTES.GET_STARTED_LOGS_MANAGEMENT,
+	[ModulesMap.InfrastructureMonitoring]:
+		ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING,
 };

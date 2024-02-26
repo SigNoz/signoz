@@ -6,9 +6,11 @@ import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
+import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import history from 'lib/history';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
@@ -24,6 +26,7 @@ import {
 	defaultAwsServices,
 	defaultInfraMetricsType,
 	defaultLogsType,
+	moduleRouteMap,
 } from './utils/dataSourceUtils';
 import {
 	APM_STEPS,
@@ -89,6 +92,7 @@ export default function Onboarding(): JSX.Element {
 	const [current, setCurrent] = useState(0);
 	const isDarkMode = useIsDarkMode();
 	const { trackEvent } = useAnalytics();
+	const { location } = history;
 
 	const {
 		selectedDataSource,
@@ -196,7 +200,7 @@ export default function Onboarding(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedModule, selectedDataSource, selectedEnvironment, selectedMethod]);
 
-	const handleNext = (): void => {
+	const handleNextStep = (): void => {
 		if (activeStep <= 3) {
 			const nextStep = activeStep + 1;
 
@@ -217,11 +221,38 @@ export default function Onboarding(): JSX.Element {
 		}
 	};
 
+	const handleNext = (): void => {
+		if (activeStep <= 3) {
+			handleNextStep();
+			history.replace(moduleRouteMap[selectedModule.id as ModulesMap]);
+		}
+	};
+
 	const handleModuleSelect = (module: ModuleProps): void => {
 		setSelectedModule(module);
 		updateSelectedModule(module);
 		updateSelectedDataSource(null);
 	};
+
+	useEffect(() => {
+		console.log(location.pathname, 'location.pathname');
+		if (location.pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING) {
+			console.log('APM');
+			handleModuleSelect(useCases.APM);
+			handleNextStep();
+		} else if (
+			location.pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING
+		) {
+			console.log('INFRA');
+			handleModuleSelect(useCases.InfrastructureMonitoring);
+			handleNextStep();
+		} else if (location.pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT) {
+			console.log('LOGS');
+			handleModuleSelect(useCases.LogsManagement);
+			handleNextStep();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	return (
 		<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
@@ -285,6 +316,7 @@ export default function Onboarding(): JSX.Element {
 							setActiveStep(activeStep - 1);
 							setSelectedModule(useCases.APM);
 							resetProgress();
+							history.push(ROUTES.GET_STARTED);
 						}}
 						selectedModule={selectedModule}
 						selectedModuleSteps={selectedModuleSteps}
