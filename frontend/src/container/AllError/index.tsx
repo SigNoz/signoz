@@ -559,6 +559,7 @@ function AllErrors(): JSX.Element {
 							<Input
 								style={{ width: 160 }}
 								placeholder="Please input"
+								allowClear
 								defaultValue={getUpdatedMessage}
 								onChange={(e) => handleChangeType('message', e.target.value)}
 							/>
@@ -569,6 +570,7 @@ function AllErrors(): JSX.Element {
 							<Input
 								style={{ width: 160 }}
 								placeholder="Please input"
+								allowClear
 								defaultValue={getUpdatedServiceName}
 								onChange={(e) => handleChangeType('serviceName', e.target.value)}
 							/>
