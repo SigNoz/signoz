@@ -113,8 +113,6 @@ export const useContextLogData = ({
 	);
 
 	const handleShowNextLines = useCallback(() => {
-		// if (isDisabledFetch) return;
-
 		const newRequestData = getRequestData({
 			stagedQueryData: currentStagedQueryData,
 			query,
