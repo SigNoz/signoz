@@ -458,6 +458,7 @@ type Error struct {
 	FirstSeen      time.Time `json:"firstSeen" ch:"firstSeen"`
 	ServiceName    string    `json:"serviceName" ch:"serviceName"`
 	GroupID        string    `json:"groupID" ch:"groupID"`
+	IssueStatus    int8      `json:"issueStatus" ch:"issueStatus"`
 }
 
 type ErrorWithSpan struct {

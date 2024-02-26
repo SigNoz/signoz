@@ -99,6 +99,9 @@ type Reader interface {
 	CheckClickHouse(ctx context.Context) error
 
 	GetLatencyMetricMetadata(context.Context, string, bool) (*v3.LatencyMetricMetadataResponse, error)
+
+	// 自定义服务
+	ChangeIssueStatus(ctx context.Context, params *model.ChangeIssueStatusParams) (bool, *model.ApiError)
 }
 
 type Querier interface {

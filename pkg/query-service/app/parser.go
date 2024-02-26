@@ -1071,3 +1071,14 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 
 	return queryRangeParams, nil
 }
+
+func parseChangeIssueStatusRequest(r *http.Request) (*model.ChangeIssueStatusParams, error) {
+	var postData *model.ChangeIssueStatusParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return postData, nil
+}

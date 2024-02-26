@@ -433,6 +433,9 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.changePassword)).Methods(http.MethodPost)
+
+	// 自定义服务接口
+	router.HandleFunc("/api/v1/changeIssueStatus", am.ViewAccess(aH.changeIssueStatus)).Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -3247,4 +3250,19 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+func (aH *APIHandler) changeIssueStatus(w http.ResponseWriter, r *http.Request) {
+
+	query, err := parseChangeIssueStatusRequest(r)
+	if aH.HandleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	fmt.Println(query)
+	result, apiErr := aH.reader.ChangeIssueStatus(r.Context(), query)
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
 }

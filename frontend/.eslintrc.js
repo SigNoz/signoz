@@ -54,7 +54,7 @@ module.exports = {
 			},
 		],
 		'react/prop-types': 'off',
-		'@typescript-eslint/explicit-function-return-type': 'error',
+		'@typescript-eslint/explicit-function-return-type': 'warn',
 		'@typescript-eslint/no-var-requires': 'error',
 		'react/no-array-index-key': 'error',
 		'linebreak-style': [

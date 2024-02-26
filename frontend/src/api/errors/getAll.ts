@@ -18,6 +18,8 @@ const getAll = async (
 			exceptionType: props.exceptionType,
 			serviceName: props.serviceName,
 			tags: props.tags,
+			issueStatus: props.issueStatus,
+			message: props.message,
 		});
 
 		return {

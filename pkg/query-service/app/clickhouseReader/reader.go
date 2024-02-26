@@ -2713,11 +2713,85 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 }
 
+/*
+	 func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.ListErrorsParams) (*[]model.Error, *model.ApiError) {
+
+		var getErrorResponses []model.Error
+
+		query := "SELECT any(exceptionMessage) as exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, groupID"
+		if len(queryParams.ServiceName) != 0 {
+			query = query + ", serviceName"
+		} else {
+			query = query + ", any(serviceName) as serviceName"
+		}
+		if len(queryParams.ExceptionType) != 0 {
+			query = query + ", exceptionType"
+		} else {
+			query = query + ", any(exceptionType) as exceptionType"
+		}
+		query += fmt.Sprintf(" FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.errorTable)
+		args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
+
+		if len(queryParams.ServiceName) != 0 {
+			query = query + " AND serviceName ilike @serviceName"
+			args = append(args, clickhouse.Named("serviceName", "%"+queryParams.ServiceName+"%"))
+		}
+		if len(queryParams.ExceptionType) != 0 {
+			query = query + " AND exceptionType ilike @exceptionType"
+			args = append(args, clickhouse.Named("exceptionType", "%"+queryParams.ExceptionType+"%"))
+		}
+
+		// create TagQuery from TagQueryParams
+		tags := createTagQueryFromTagQueryParams(queryParams.Tags)
+		subQuery, argsSubQuery, errStatus := buildQueryWithTagParams(ctx, tags)
+		query += subQuery
+		args = append(args, argsSubQuery...)
+
+		if errStatus != nil {
+			zap.S().Error("Error in processing tags: ", errStatus)
+			return nil, errStatus
+		}
+		query = query + " GROUP BY groupID"
+		if len(queryParams.ServiceName) != 0 {
+			query = query + ", serviceName"
+		}
+		if len(queryParams.ExceptionType) != 0 {
+			query = query + ", exceptionType"
+		}
+		if len(queryParams.OrderParam) != 0 {
+			if queryParams.Order == constants.Descending {
+				query = query + " ORDER BY " + queryParams.OrderParam + " DESC"
+			} else if queryParams.Order == constants.Ascending {
+				query = query + " ORDER BY " + queryParams.OrderParam + " ASC"
+			}
+		}
+		if queryParams.Limit > 0 {
+			query = query + " LIMIT @limit"
+			args = append(args, clickhouse.Named("limit", queryParams.Limit))
+		}
+
+		if queryParams.Offset > 0 {
+			query = query + " OFFSET @offset"
+			args = append(args, clickhouse.Named("offset", queryParams.Offset))
+		}
+
+		err := r.db.Select(ctx, &getErrorResponses, query, args...)
+		zap.S().Info(query)
+
+		if err != nil {
+			zap.S().Debug("Error in processing sql query: ", err)
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+		}
+
+		return &getErrorResponses, nil
+	}
+*/
+
 func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.ListErrorsParams) (*[]model.Error, *model.ApiError) {
 
 	var getErrorResponses []model.Error
 
-	query := "SELECT any(exceptionMessage) as exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, groupID"
+	query := "SELECT count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, groupID"
 	if len(queryParams.ServiceName) != 0 {
 		query = query + ", serviceName"
 	} else {
@@ -2728,6 +2802,18 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 	} else {
 		query = query + ", any(exceptionType) as exceptionType"
 	}
+
+	if len(queryParams.IssueStatus) != 0 {
+		query = query + ", issueStatus"
+	} else {
+		query = query + ", any(issueStatus) as issueStatus"
+	}
+	if len(queryParams.Message) != 0 {
+		query = query + ", exceptionMessage"
+	} else {
+		query = query + ", any(exceptionMessage) as exceptionMessage"
+	}
+
 	query += fmt.Sprintf(" FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 
@@ -2736,8 +2822,29 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 		args = append(args, clickhouse.Named("serviceName", "%"+queryParams.ServiceName+"%"))
 	}
 	if len(queryParams.ExceptionType) != 0 {
-		query = query + " AND exceptionType ilike @exceptionType"
-		args = append(args, clickhouse.Named("exceptionType", "%"+queryParams.ExceptionType+"%"))
+		// query = query + " AND exceptionType ilike @exceptionType"
+		// args = append(args, clickhouse.Named("exceptionType", "%"+queryParams.ExceptionType+"%"))
+		quotedTypes := make([]string, len(queryParams.ExceptionType))
+		for i, etype := range queryParams.ExceptionType {
+			quotedTypes[i] = fmt.Sprintf("'%s'", etype)
+		}
+		exceptionTypeStr := strings.Join(quotedTypes, ", ")
+		query = query + " AND exceptionType in (" + exceptionTypeStr + ")"
+	}
+	if len(queryParams.Message) != 0 {
+		query = query + " AND exceptionMessage ilike @exceptionMessage"
+		args = append(args, clickhouse.Named("exceptionMessage", "%"+queryParams.Message+"%"))
+	}
+
+	if len(queryParams.IssueStatus) != 0 {
+		var int8s []int8
+		for _, str := range queryParams.IssueStatus {
+			// 将字符串转换为 int
+			i, _ := strconv.Atoi(str)
+			int8s = append(int8s, int8(i))
+		}
+		query = query + " AND issueStatus in (@issueStatus)"
+		args = append(args, clickhouse.Named("issueStatus", int8s))
 	}
 
 	// create TagQuery from TagQueryParams
@@ -2757,6 +2864,12 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 	if len(queryParams.ExceptionType) != 0 {
 		query = query + ", exceptionType"
 	}
+	if len(queryParams.Message) != 0 {
+		query = query + ", exceptionMessage"
+	}
+	if len(queryParams.IssueStatus) != 0 {
+		query = query + ", issueStatus"
+	}
 	if len(queryParams.OrderParam) != 0 {
 		if queryParams.Order == constants.Descending {
 			query = query + " ORDER BY " + queryParams.OrderParam + " DESC"
@@ -2773,6 +2886,8 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 		query = query + " OFFSET @offset"
 		args = append(args, clickhouse.Named("offset", queryParams.Offset))
 	}
+
+	fmt.Println(args)
 
 	err := r.db.Select(ctx, &getErrorResponses, query, args...)
 	zap.S().Info(query)
@@ -2795,9 +2910,31 @@ func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.C
 		query = query + " AND serviceName ilike @serviceName"
 		args = append(args, clickhouse.Named("serviceName", "%"+queryParams.ServiceName+"%"))
 	}
+	// if len(queryParams.ExceptionType) != 0 {
+	// 	query = query + " AND exceptionType ilike @exceptionType"
+	// 	args = append(args, clickhouse.Named("exceptionType", "%"+queryParams.ExceptionType+"%"))
+	// }
 	if len(queryParams.ExceptionType) != 0 {
-		query = query + " AND exceptionType ilike @exceptionType"
-		args = append(args, clickhouse.Named("exceptionType", "%"+queryParams.ExceptionType+"%"))
+		quotedTypes := make([]string, len(queryParams.ExceptionType))
+		for i, etype := range queryParams.ExceptionType {
+			quotedTypes[i] = fmt.Sprintf("'%s'", etype)
+		}
+		exceptionTypeStr := strings.Join(quotedTypes, ", ")
+		query = query + " AND exceptionType in (" + exceptionTypeStr + ")"
+	}
+	if len(queryParams.Message) != 0 {
+		query = query + " AND exceptionMessage ilike @exceptionMessage"
+		args = append(args, clickhouse.Named("exceptionMessage", "%"+queryParams.Message+"%"))
+	}
+	if len(queryParams.IssueStatus) != 0 {
+		var int8s []int8
+		for _, str := range queryParams.IssueStatus {
+			// 将字符串转换为 int
+			i, _ := strconv.Atoi(str)
+			int8s = append(int8s, int8(i))
+		}
+		query = query + " AND issueStatus in (@issueStatus)"
+		args = append(args, clickhouse.Named("issueStatus", int8s))
 	}
 
 	// create TagQuery from TagQueryParams
@@ -4900,4 +5037,14 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 			}
 		}
 	}
+}
+
+func (r *ClickHouseReader) ChangeIssueStatus(ctx context.Context, queryParams *model.ChangeIssueStatusParams) (bool, *model.ApiError) {
+	query := fmt.Sprintf("ALTER TABLE signoz_traces.signoz_error_index_v2 UPDATE issueStatus = %d WHERE groupID = '%s'", queryParams.IssueStatus, queryParams.GroupID)
+	zap.S().Info(query)
+	err := r.db.Exec(ctx, query)
+	if err != nil {
+		return false, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+	return true, nil
 }

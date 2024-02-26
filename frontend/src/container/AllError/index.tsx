@@ -1,8 +1,12 @@
 import { SearchOutlined } from '@ant-design/icons';
+import type { SelectProps } from 'antd';
 import {
 	Button,
 	Card,
+	Form,
 	Input,
+	message,
+	Select,
 	Space,
 	TableProps,
 	Tooltip,
@@ -12,6 +16,7 @@ import { ColumnType, TablePaginationConfig } from 'antd/es/table';
 import { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { ColumnsType } from 'antd/lib/table';
 import { FilterConfirmProps } from 'antd/lib/table/interface';
+import axios from 'api';
 import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
 import { ResizeTable } from 'components/ResizeTable';
@@ -23,7 +28,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -48,7 +53,53 @@ import {
 	urlKey,
 } from './utils';
 
+const exceptionTypeOptions: SelectProps['options'] = [
+	{
+		value: 'JS_ERROR',
+		label: 'JS_ERROR',
+	},
+	{
+		value: 'Unhandled_Rejection',
+		label: 'Rejection',
+	},
+	{
+		value: 'XHR',
+		label: 'XHR',
+	},
+	{
+		value: 'FETCH',
+		label: 'FETCH',
+	},
+	{
+		value: 'RESOURCE',
+		label: 'RESOURCE',
+	},
+];
+
+const issueStatusOptions: SelectProps['options'] = [
+	{ value: '0', label: '未修复' },
+	{ value: '1', label: '修复中' },
+	{ value: '2', label: '已修复' },
+	{ value: '3', label: '已忽略' },
+	{ value: '4', label: '重复出现' },
+];
+
+type SearchParamType = {
+	exceptionType: string[];
+	message: string;
+	serviceName: string;
+	issueStatus: string[];
+};
+
 function AllErrors(): JSX.Element {
+	const [changeIssueStatusNum, setChangeIssueStatusNum] = useState<number>(0);
+	const [searchParam, setSearchParam] = useState<SearchParamType>({
+		exceptionType: [],
+		message: '',
+		serviceName: '',
+		issueStatus: [],
+	});
+	const [messageApi, contextHolder] = message.useMessage();
 	const { maxTime, minTime, loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -62,6 +113,8 @@ function AllErrors(): JSX.Element {
 		getUpdatedPageSize,
 		getUpdatedExceptionType,
 		getUpdatedServiceName,
+		getUpdatedMessage,
+		getUpdatedIssueStatus,
 	} = useMemo(
 		() => ({
 			updatedOrder: getOrder(params.get(urlKey.order)),
@@ -70,6 +123,8 @@ function AllErrors(): JSX.Element {
 			getUpdatedPageSize: getUpdatePageSize(params.get(urlKey.pageSize)),
 			getUpdatedExceptionType: getFilterString(params.get(urlKey.exceptionType)),
 			getUpdatedServiceName: getFilterString(params.get(urlKey.serviceName)),
+			getUpdatedMessage: getFilterString(params.get(urlKey.message)),
+			getUpdatedIssueStatus: getFilterString(params.get(urlKey.issueStatus)),
 		}),
 		[params],
 	);
@@ -83,6 +138,8 @@ function AllErrors(): JSX.Element {
 				pageSize: getUpdatedPageSize,
 				exceptionType: getUpdatedExceptionType,
 				serviceName: getUpdatedServiceName,
+				message: getUpdatedMessage,
+				issueStatus: getUpdatedIssueStatus,
 			})}`,
 		[
 			pathname,
@@ -92,6 +149,8 @@ function AllErrors(): JSX.Element {
 			getUpdatedPageSize,
 			getUpdatedExceptionType,
 			getUpdatedServiceName,
+			getUpdatedMessage,
+			getUpdatedIssueStatus,
 		],
 	);
 
@@ -99,7 +158,14 @@ function AllErrors(): JSX.Element {
 
 	const [{ isLoading, data }, errorCountResponse] = useQueries([
 		{
-			queryKey: ['getAllErrors', updatedPath, maxTime, minTime, queries],
+			queryKey: [
+				'getAllErrors',
+				updatedPath,
+				maxTime,
+				minTime,
+				queries,
+				changeIssueStatusNum,
+			],
 			queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> =>
 				getAll({
 					end: maxTime,
@@ -108,9 +174,15 @@ function AllErrors(): JSX.Element {
 					limit: getUpdatedPageSize,
 					offset: getUpdatedOffset,
 					orderParam: getUpdatedParams,
-					exceptionType: getUpdatedExceptionType,
+					exceptionType: getUpdatedExceptionType.length
+						? getUpdatedExceptionType.split(',')
+						: [],
 					serviceName: getUpdatedServiceName,
 					tags: convertRawQueriesToTraceSelectedTags(queries),
+					message: getUpdatedMessage,
+					issueStatus: getUpdatedIssueStatus.length
+						? getUpdatedIssueStatus.split(',')
+						: [],
 				}),
 			enabled: !loading,
 		},
@@ -127,9 +199,15 @@ function AllErrors(): JSX.Element {
 				getErrorCounts({
 					end: maxTime,
 					start: minTime,
-					exceptionType: getUpdatedExceptionType,
+					exceptionType: getUpdatedExceptionType.length
+						? getUpdatedExceptionType.split(',')
+						: [],
 					serviceName: getUpdatedServiceName,
 					tags: convertRawQueriesToTraceSelectedTags(queries),
+					message: getUpdatedMessage,
+					issueStatus: getUpdatedIssueStatus.length
+						? getUpdatedIssueStatus.split(',')
+						: [],
 				}),
 			enabled: !loading,
 		},
@@ -263,13 +341,40 @@ function AllErrors(): JSX.Element {
 		[filterIcon, filterDropdownWrapper],
 	);
 
+	const handleIssueChange = (value: string, groupID: string) => {
+		axios
+			.post(`/changeIssueStatus`, {
+				groupID,
+				issueStatus: Number(value),
+			})
+			.then(({ data }) => {
+				if (data) {
+					messageApi.open({
+						type: 'success',
+						content: 'change success',
+					});
+					setTimeout(() => {
+						setChangeIssueStatusNum(changeIssueStatusNum + 1);
+					}, 800);
+					return;
+				}
+				messageApi.open({
+					type: 'warning',
+					content: data,
+				});
+			})
+			.catch((error) => {
+				console.warn('handleIssueChangeError', error);
+			});
+	};
+
 	const columns: ColumnsType<Exception> = [
 		{
 			title: 'Exception Type',
 			width: 100,
 			dataIndex: 'exceptionType',
 			key: 'exceptionType',
-			...getFilter(onExceptionTypeFilter, 'Search By Exception', 'exceptionType'),
+			// ...getFilter(onExceptionTypeFilter, 'Search By Exception', 'exceptionType'),
 			render: (value, record): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
 					<Link
@@ -354,10 +459,25 @@ function AllErrors(): JSX.Element {
 				updatedOrder,
 				'serviceName',
 			),
-			...getFilter(
-				onApplicationTypeFilter,
-				'Search By Application',
-				'serviceName',
+			// ...getFilter(
+			// 	onApplicationTypeFilter,
+			// 	'Search By Application',
+			// 	'serviceName',
+			// ),
+		},
+		{
+			title: 'issueStatus',
+			dataIndex: 'issueStatus',
+			width: 100,
+			key: 'issueStatus',
+			sorter: false,
+			render: (_, record) => (
+				<Select
+					defaultValue={String(record.issueStatus)}
+					style={{ width: 100 }}
+					onChange={(value) => handleIssueChange(value, record.groupID)}
+					options={issueStatusOptions}
+				/>
 			),
 		},
 	];
@@ -372,42 +492,126 @@ function AllErrors(): JSX.Element {
 				const { pageSize = 0, current = 0 } = paginations;
 				const { columnKey = '', order } = sorter;
 				const updatedOrder = order === 'ascend' ? 'ascending' : 'descending';
-				const params = new URLSearchParams(window.location.search);
-				const { exceptionType, serviceName } = extractFilterValues(filters, {
-					serviceName: getFilterString(params.get(urlKey.serviceName)),
-					exceptionType: getFilterString(params.get(urlKey.exceptionType)),
-				});
+				// const params = new URLSearchParams(window.location.search);
+				// const { exceptionType, serviceName } = extractFilterValues(filters, {
+				// 	serviceName: getFilterString(params.get(urlKey.serviceName)),
+				// 	exceptionType: getFilterString(params.get(urlKey.exceptionType)),
+				// });
 				history.replace(
 					`${pathname}?${createQueryParams({
 						order: updatedOrder,
 						offset: (current - 1) * pageSize,
 						orderParam: columnKey,
 						pageSize,
-						exceptionType,
-						serviceName,
+						// exceptionType,
+						// serviceName,
+						...searchParam,
 					})}`,
 				);
 			}
 		},
-		[pathname],
+		[pathname, searchParam],
 	);
 
-	return (
-		<ResizeTable
-			columns={columns}
-			tableLayout="fixed"
-			dataSource={data?.payload as Exception[]}
-			rowKey="firstSeen"
-			loading={isLoading || false || errorCountResponse.status === 'loading'}
-			pagination={{
+	const handleChangeType = (type: string, value: any) => {
+		setSearchParam((old) => ({
+			...old,
+			[type]: value,
+		}));
+	};
+
+	const handleNewSearch = () => {
+		history.replace(
+			`${pathname}?${createQueryParams({
+				order: updatedOrder,
+				offset: 0,
+				orderParam: getUpdatedParams,
 				pageSize: getUpdatedPageSize,
-				responsive: true,
-				current: getUpdatedOffset / 10 + 1,
-				position: ['bottomLeft'],
-				total: errorCountResponse.data?.payload || 0,
-			}}
-			onChange={onChangeHandler}
-		/>
+				...searchParam,
+			})}`,
+		);
+	};
+
+	return (
+		<>
+			{contextHolder}
+			<div style={{ marginBottom: 20 }}>
+				<Form name="search-form" layout="inline" labelCol={{ span: 8 }}>
+					<Form.Item label="type">
+						<Form.Item name="exceptionType">
+							<Select
+								mode="tags"
+								style={{ width: 160 }}
+								allowClear
+								placeholder="Please select"
+								defaultValue={
+									getUpdatedExceptionType?.length
+										? getUpdatedExceptionType.split(',')
+										: []
+								}
+								onChange={(value) => handleChangeType('exceptionType', value)}
+								options={exceptionTypeOptions}
+							/>
+						</Form.Item>
+					</Form.Item>
+					<Form.Item label="message">
+						<Form.Item name="message">
+							<Input
+								style={{ width: 160 }}
+								placeholder="Please input"
+								defaultValue={getUpdatedMessage}
+								onChange={(e) => handleChangeType('message', e.target.value)}
+							/>
+						</Form.Item>
+					</Form.Item>
+					<Form.Item label="Application">
+						<Form.Item name="serviceName">
+							<Input
+								style={{ width: 160 }}
+								placeholder="Please input"
+								defaultValue={getUpdatedServiceName}
+								onChange={(e) => handleChangeType('serviceName', e.target.value)}
+							/>
+						</Form.Item>
+					</Form.Item>
+					<Form.Item label="issueStatus">
+						<Form.Item name="issueStatus">
+							<Select
+								mode="tags"
+								style={{ width: 160 }}
+								allowClear
+								placeholder="Please select"
+								defaultValue={
+									getUpdatedIssueStatus?.length ? getUpdatedIssueStatus.split(',') : []
+								}
+								onChange={(value) => handleChangeType('issueStatus', value)}
+								options={issueStatusOptions}
+							/>
+						</Form.Item>
+					</Form.Item>
+					<Form.Item label=" " colon={false}>
+						<Button type="primary" onClick={handleNewSearch}>
+							Search
+						</Button>
+					</Form.Item>
+				</Form>
+			</div>
+			<ResizeTable
+				columns={columns}
+				tableLayout="fixed"
+				dataSource={data?.payload as Exception[]}
+				rowKey="firstSeen"
+				loading={isLoading || false || errorCountResponse.status === 'loading'}
+				pagination={{
+					pageSize: getUpdatedPageSize,
+					responsive: true,
+					current: getUpdatedOffset / 10 + 1,
+					position: ['bottomLeft'],
+					total: errorCountResponse.data?.payload || 0,
+				}}
+				onChange={onChangeHandler}
+			/>
+		</>
 	);
 }
 

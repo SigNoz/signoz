@@ -14,6 +14,8 @@ const getErrorCounts = async (
 			exceptionType: props.exceptionType,
 			serviceName: props.serviceName,
 			tags: props.tags,
+			message: props.message,
+			issueStatus: props.issueStatus,
 		});
 
 		return {

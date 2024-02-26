@@ -18,6 +18,8 @@ export const urlKey = {
 	pageSize: 'pageSize',
 	exceptionType: 'exceptionType',
 	serviceName: 'serviceName',
+	message: 'message',
+	issueStatus: 'issueStatus',
 };
 
 export const isOrderParams = (orderBy: string | null): orderBy is OrderBy =>
