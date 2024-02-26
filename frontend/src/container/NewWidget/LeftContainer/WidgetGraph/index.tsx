@@ -1,11 +1,11 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Card } from 'container/GridCardLayout/styles';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo } from 'react';
+import { getGraphType } from 'utils/getGraphType';
 
 import { WidgetGraphProps } from '../../types';
 import PlotTag from './PlotTag';
@@ -35,8 +35,7 @@ function WidgetGraph({
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
 	const getWidgetQueryRange = useGetWidgetQueryRange({
-		graphType:
-			selectedGraph === PANEL_TYPES.BAR ? PANEL_TYPES.TIME_SERIES : selectedGraph,
+		graphType: getGraphType(selectedGraph),
 		selectedTime: selectedTime.enum,
 	});
 

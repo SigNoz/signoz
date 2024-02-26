@@ -19,6 +19,7 @@ import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getGraphType } from 'utils/getGraphType';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
@@ -86,8 +87,7 @@ function ChartPreview({
 		{
 			query: query || initialQueriesMap.metrics,
 			globalSelectedInterval: selectedInterval,
-			graphType:
-				graphType === PANEL_TYPES.BAR ? PANEL_TYPES.TIME_SERIES : graphType,
+			graphType: getGraphType(graphType),
 			selectedTime,
 			params: {
 				allowSelectedIntervalForStepGen,

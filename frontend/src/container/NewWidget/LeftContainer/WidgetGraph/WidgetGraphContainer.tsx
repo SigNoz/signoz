@@ -5,6 +5,7 @@ import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { getGraphType } from 'utils/getGraphType';
 
 import { NotFoundContainer } from './styles';
 import WidgetGraph from './WidgetGraphs';
@@ -31,8 +32,7 @@ function WidgetGraphContainer({
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
 	const getWidgetQueryRange = useGetWidgetQueryRange({
-		graphType:
-			selectedGraph === PANEL_TYPES.BAR ? PANEL_TYPES.TIME_SERIES : selectedGraph,
+		graphType: getGraphType(selectedGraph),
 		selectedTime: selectedTime.enum,
 	});
 

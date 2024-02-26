@@ -21,6 +21,7 @@ import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getGraphType } from 'utils/getGraphType';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import EmptyWidget from '../EmptyWidget';
@@ -125,10 +126,7 @@ function GridCardGraph({
 	const queryResponse = useGetQueryRange(
 		{
 			selectedTime: widget?.timePreferance,
-			graphType:
-				widget?.panelTypes === PANEL_TYPES.BAR
-					? PANEL_TYPES.TIME_SERIES
-					: widget?.panelTypes,
+			graphType: getGraphType(widget.panelTypes),
 			query: updatedQuery,
 			globalSelectedInterval,
 			variables: getDashboardVariables(variables),
