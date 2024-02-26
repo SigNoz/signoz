@@ -235,19 +235,15 @@ export default function Onboarding(): JSX.Element {
 	};
 
 	useEffect(() => {
-		console.log(location.pathname, 'location.pathname');
 		if (location.pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING) {
-			console.log('APM');
 			handleModuleSelect(useCases.APM);
 			handleNextStep();
 		} else if (
 			location.pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING
 		) {
-			console.log('INFRA');
 			handleModuleSelect(useCases.InfrastructureMonitoring);
 			handleNextStep();
 		} else if (location.pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT) {
-			console.log('LOGS');
 			handleModuleSelect(useCases.LogsManagement);
 			handleNextStep();
 		}
