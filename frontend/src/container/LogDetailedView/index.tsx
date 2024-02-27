@@ -1,4 +1,5 @@
 import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ROUTES from 'constants/routes';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import getStep from 'lib/getStep';
@@ -63,7 +64,7 @@ function LogDetailedView({
 				queryString,
 			);
 
-			history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
+			history.replace(`${ROUTES.OLD_LOGS_EXPLORER}?q=${updatedQueryString}`);
 		},
 		[history, queryString],
 	);
@@ -136,6 +137,7 @@ function LogDetailedView({
 
 	return (
 		<LogDetail
+			selectedTab={VIEW_TYPES.OVERVIEW}
 			log={detailedLog}
 			onClose={onDrawerClose}
 			onAddToQuery={handleAddToQuery}

@@ -1,4 +1,5 @@
-import { Form, Select } from 'antd';
+import { Form, Select, Switch } from 'antd';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
@@ -7,7 +8,6 @@ import { popupContainer } from 'utils/selectPopupContainer';
 import ChannelSelect from './ChannelSelect';
 import LabelSelect from './labels';
 import {
-	ChannelSelectTip,
 	FormContainer,
 	FormItemMedium,
 	InputSmall,
@@ -19,13 +19,40 @@ import {
 const { Option } = Select;
 
 interface BasicInfoProps {
+	isNewRule: boolean;
 	alertDef: AlertDef;
 	setAlertDef: (a: AlertDef) => void;
 }
 
-function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
-	// init namespace for translations
+function BasicInfo({
+	isNewRule,
+	alertDef,
+	setAlertDef,
+}: BasicInfoProps): JSX.Element {
 	const { t } = useTranslation('alerts');
+
+	const [
+		shouldBroadCastToAllChannels,
+		setShouldBroadCastToAllChannels,
+	] = useState(false);
+
+	useEffect(() => {
+		const hasPreferredChannels =
+			(alertDef.preferredChannels && alertDef.preferredChannels.length > 0) ||
+			isNewRule;
+
+		setShouldBroadCastToAllChannels(!hasPreferredChannels);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const handleBroadcastToAllChannels = (shouldBroadcast: boolean): void => {
+		setShouldBroadCastToAllChannels(shouldBroadcast);
+
+		setAlertDef({
+			...alertDef,
+			broadcastToAll: shouldBroadcast,
+		});
+	};
 
 	return (
 		<>
@@ -105,18 +132,38 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 						initialValues={alertDef.labels}
 					/>
 				</FormItemMedium>
-				<FormItemMedium label="Notification Channels">
-					<ChannelSelect
-						currentValue={alertDef.preferredChannels}
-						onSelectChannels={(preferredChannels): void => {
-							setAlertDef({
-								...alertDef,
-								preferredChannels,
-							});
-						}}
+
+				<FormItemMedium
+					name="alert_all_configured_channels"
+					label="Alert all the configured channels"
+				>
+					<Switch
+						checked={shouldBroadCastToAllChannels}
+						onChange={handleBroadcastToAllChannels}
 					/>
-					<ChannelSelectTip> {t('channel_select_tooltip')}</ChannelSelectTip>
 				</FormItemMedium>
+
+				{!shouldBroadCastToAllChannels && (
+					<FormItemMedium
+						label="Notification Channels"
+						name="notification_channels"
+						required
+						rules={[
+							{ required: true, message: requireErrorMessage(t('field_alert_name')) },
+						]}
+					>
+						<ChannelSelect
+							disabled={shouldBroadCastToAllChannels}
+							currentValue={alertDef.preferredChannels}
+							onSelectChannels={(preferredChannels): void => {
+								setAlertDef({
+									...alertDef,
+									preferredChannels,
+								});
+							}}
+						/>
+					</FormItemMedium>
+				)}
 			</FormContainer>
 		</>
 	);

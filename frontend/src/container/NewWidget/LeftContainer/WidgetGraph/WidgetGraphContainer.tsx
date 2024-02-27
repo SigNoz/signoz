@@ -1,5 +1,6 @@
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -14,6 +15,10 @@ function WidgetGraphContainer({
 	selectedTime,
 	thresholds,
 	fillSpans = false,
+	softMax,
+	softMin,
+	selectedLogFields,
+	selectedTracesFields,
 }: WidgetGraphProps): JSX.Element {
 	const { selectedDashboard } = useDashboard();
 
@@ -44,7 +49,21 @@ function WidgetGraphContainer({
 	if (getWidgetQueryRange.isLoading) {
 		return <Spinner size="large" tip="Loading..." />;
 	}
-	if (getWidgetQueryRange.data?.payload.data.result.length === 0) {
+
+	if (
+		selectedGraph !== PANEL_TYPES.LIST &&
+		getWidgetQueryRange.data?.payload.data.result.length === 0
+	) {
+		return (
+			<NotFoundContainer>
+				<Typography>No Data</Typography>
+			</NotFoundContainer>
+		);
+	}
+	if (
+		selectedGraph === PANEL_TYPES.LIST &&
+		getWidgetQueryRange.data?.payload.data.newResult.data.result.length === 0
+	) {
 		return (
 			<NotFoundContainer>
 				<Typography>No Data</Typography>
@@ -59,6 +78,11 @@ function WidgetGraphContainer({
 			selectedWidget={selectedWidget}
 			thresholds={thresholds}
 			fillSpans={fillSpans}
+			softMax={softMax}
+			softMin={softMin}
+			selectedLogFields={selectedLogFields}
+			selectedTracesFields={selectedTracesFields}
+			selectedTime={selectedTime}
 		/>
 	);
 }

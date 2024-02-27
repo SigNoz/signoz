@@ -246,3 +246,25 @@ type GettableRule struct {
 	UpdatedAt *time.Time `json:"updateAt"`
 	UpdatedBy *string    `json:"updateBy"`
 }
+
+type timeRange struct {
+	Start    int64 `json:"start"`
+	End      int64 `json:"end"`
+	PageSize int64 `json:"pageSize"`
+}
+
+type builderQuery struct {
+	QueryData     []v3.BuilderQuery `json:"queryData"`
+	QueryFormulas []string          `json:"queryFormulas"`
+}
+
+type urlShareableCompositeQuery struct {
+	QueryType string       `json:"queryType"`
+	Builder   builderQuery `json:"builder"`
+}
+
+type Options struct {
+	MaxLines      int               `json:"maxLines"`
+	Format        string            `json:"format"`
+	SelectColumns []v3.AttributeKey `json:"selectColumns"`
+}

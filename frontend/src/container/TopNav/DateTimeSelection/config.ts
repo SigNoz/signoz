@@ -90,6 +90,19 @@ export const routesToSkip = [
 	ROUTES.BILLING,
 	ROUTES.SUPPORT,
 	ROUTES.WORKSPACE_LOCKED,
+	ROUTES.LOGS,
+	ROUTES.MY_SETTINGS,
+	ROUTES.LIST_LICENSES,
 ];
 
 export const routesToDisable = [ROUTES.LOGS_EXPLORER, ROUTES.LIVE_LOGS];
+
+export interface LocalStorageTimeRange {
+	localstorageStartTime: string | null;
+	localstorageEndTime: string | null;
+}
+
+export interface TimeRange {
+	startTime: string;
+	endTime: string;
+}

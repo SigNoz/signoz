@@ -1,0 +1,42 @@
+.logs-error-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 240px;
+
+	.logs-error-content {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+
+		color: var(--text-vanilla-400);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px; /* 128.571% */
+		letter-spacing: -0.07px;
+
+		.aww-snap {
+			font-weight: 600;
+		}
+
+		.error-state-svg {
+			height: 50px;
+			width: 50px;
+		}
+
+		.contact-support {
+			display: flex;
+			align-items: center;
+			margin-top: 8px;
+			gap: 4px;
+
+			.text {
+				color: var(--text-robin-400);
+				font-weight: 500;
+			}
+		}
+	}
+}

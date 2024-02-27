@@ -20,10 +20,11 @@ import (
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/signoz/ee/query-service/app/api"
 	"go.signoz.io/signoz/ee/query-service/app/db"
+	"go.signoz.io/signoz/ee/query-service/auth"
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/dao"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/auth"
+	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	baseInterface "go.signoz.io/signoz/pkg/query-service/interfaces"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
@@ -37,7 +38,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
@@ -193,7 +193,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New("sqlite", localDB, lm.GetRepo(), reader.GetConn())
+	usageManager, err := usage.New("sqlite", modelDao, lm.GetRepo(), reader.GetConn())
 	if err != nil {
 		return nil, err
 	}
@@ -304,25 +304,12 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 
 	r := mux.NewRouter()
 
+	// add auth middleware
 	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
-		patToken := r.Header.Get("SIGNOZ-API-KEY")
-		if len(patToken) > 0 {
-			zap.S().Debugf("Received a non-zero length PAT token")
-			ctx := context.Background()
-			dao := apiHandler.AppDao()
-
-			user, err := dao.GetUserByPAT(ctx, patToken)
-			if err == nil && user != nil {
-				zap.S().Debugf("Found valid PAT user: %+v", user)
-				return user, nil
-			}
-			if err != nil {
-				zap.S().Debugf("Error while getting user for PAT: %+v", err)
-			}
-		}
-		return baseauth.GetUserFromRequest(r)
+		return auth.GetUserFromRequest(r, apiHandler)
 	}
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
+
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
@@ -331,6 +318,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	apiHandler.RegisterMetricsRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
+	apiHandler.RegisterQueryRangeV4Routes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -438,7 +426,7 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 			telemetry.GetInstance().AddActiveLogsUser()
 		}
 		data["dataSources"] = dataSources
-		userEmail, err := auth.GetEmailFromJwt(r.Context())
+		userEmail, err := baseauth.GetEmailFromJwt(r.Context())
 		if err == nil {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_V3, data, userEmail, true)
 		}
@@ -462,7 +450,7 @@ func getActiveLogs(path string, r *http.Request) {
 
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := auth.AttachJwtToContext(r.Context(), r)
+		ctx := baseauth.AttachJwtToContext(r.Context(), r)
 		r = r.WithContext(ctx)
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
@@ -481,7 +469,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		}
 
 		if _, ok := telemetry.EnabledPaths()[path]; ok {
-			userEmail, err := auth.GetEmailFromJwt(r.Context())
+			userEmail, err := baseauth.GetEmailFromJwt(r.Context())
 			if err == nil {
 				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail)
 			}

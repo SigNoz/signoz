@@ -53,6 +53,7 @@ import {
 import UserGuide from './UserGuide';
 import { getSelectedQueryOptions } from './utils';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function FormAlertRules({
 	alertType,
 	formInstance,
@@ -77,6 +78,8 @@ function FormAlertRules({
 
 	// use query client
 	const ruleCache = useQueryClient();
+
+	const isNewRule = ruleId === 0;
 
 	const [loading, setLoading] = useState(false);
 
@@ -108,8 +111,17 @@ function FormAlertRules({
 	useShareBuilderUrl(sq);
 
 	useEffect(() => {
-		setAlertDef(initialValue);
-	}, [initialValue]);
+		const broadcastToSpecificChannels =
+			(initialValue &&
+				initialValue.preferredChannels &&
+				initialValue.preferredChannels.length > 0) ||
+			isNewRule;
+
+		setAlertDef({
+			...initialValue,
+			broadcastToAll: !broadcastToSpecificChannels,
+		});
+	}, [initialValue, isNewRule]);
 
 	useEffect(() => {
 		// Set selectedQueryName based on the length of queryOptions
@@ -130,6 +142,10 @@ function FormAlertRules({
 	// onQueryCategoryChange handles changes to query category
 	// in state as well as sets additional defaults
 	const onQueryCategoryChange = (val: EQueryType): void => {
+		const element = document.getElementById('top');
+		if (element) {
+			element.scrollIntoView({ behavior: 'smooth' });
+		}
 		if (val === EQueryType.PROM) {
 			setAlertDef({
 				...alertDef,
@@ -243,6 +259,7 @@ function FormAlertRules({
 	const preparePostData = (): AlertDef => {
 		const postableAlert: AlertDef = {
 			...alertDef,
+			preferredChannels: alertDef.broadcastToAll ? [] : alertDef.preferredChannels,
 			alertType,
 			source: window?.location.toString(),
 			ruleType:
@@ -386,7 +403,11 @@ function FormAlertRules({
 	}, [t, isFormValid, memoizedPreparePostData, notifications]);
 
 	const renderBasicInfo = (): JSX.Element => (
-		<BasicInfo alertDef={alertDef} setAlertDef={setAlertDef} />
+		<BasicInfo
+			alertDef={alertDef}
+			setAlertDef={setAlertDef}
+			isNewRule={isNewRule}
+		/>
 	);
 
 	const renderQBChartPreview = (): JSX.Element => (
@@ -421,8 +442,6 @@ function FormAlertRules({
 		/>
 	);
 
-	const isNewRule = ruleId === 0;
-
 	const isAlertNameMissing = !formInstance.getFieldValue('alert');
 
 	const isAlertAvialableToSave =
@@ -442,11 +461,15 @@ function FormAlertRules({
 		}));
 	};
 
+	const isChannelConfigurationValid =
+		alertDef?.broadcastToAll ||
+		(alertDef.preferredChannels && alertDef.preferredChannels.length > 0);
+
 	return (
 		<>
 			{Element}
 
-			<PanelContainer>
+			<PanelContainer id="top">
 				<StyledLeftContainer flex="5 1 600px" md={18}>
 					<MainFormContainer
 						initialValues={initialValue}
@@ -489,7 +512,11 @@ function FormAlertRules({
 									type="primary"
 									onClick={onSaveHandler}
 									icon={<SaveOutlined />}
-									disabled={isAlertNameMissing || isAlertAvialableToSave}
+									disabled={
+										isAlertNameMissing ||
+										isAlertAvialableToSave ||
+										!isChannelConfigurationValid
+									}
 								>
 									{isNewRule ? t('button_createrule') : t('button_savechanges')}
 								</ActionButton>
@@ -497,6 +524,7 @@ function FormAlertRules({
 
 							<ActionButton
 								loading={loading || false}
+								disabled={isAlertNameMissing || !isChannelConfigurationValid}
 								type="default"
 								onClick={onTestRuleHandler}
 							>

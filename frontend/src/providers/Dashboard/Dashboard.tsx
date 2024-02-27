@@ -6,6 +6,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs, { Dayjs } from 'dayjs';
+import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import useAxiosError from 'hooks/useAxiosError';
 import useTabVisibility from 'hooks/useTabFocus';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
@@ -95,6 +96,10 @@ export function DashboardProvider({
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
 
+	const { currentDashboard } = useDashboardVariablesFromLocalStorage(
+		dashboardId,
+	);
+
 	const updatedTimeRef = useRef<Dayjs | null>(null); // Using ref to store the updated time
 	const modalRef = useRef<any>(null);
 
@@ -103,11 +108,34 @@ export function DashboardProvider({
 	const { t } = useTranslation(['dashboard']);
 	const dashboardRef = useRef<Dashboard>();
 
+	const mergeDBWithLocalStorage = (
+		data: Dashboard,
+		localStorageVariables: any,
+	): Dashboard => {
+		const updatedData = data;
+		if (data && localStorageVariables) {
+			const updatedVariables = data.data.variables;
+			Object.keys(data.data.variables).forEach((variable) => {
+				const variableData = data.data.variables[variable];
+				const updatedVariable = {
+					...data.data.variables[variable],
+					...localStorageVariables[variableData.name as any],
+				};
+
+				updatedVariables[variable] = updatedVariable;
+			});
+			updatedData.data.variables = updatedVariables;
+		}
+		return updatedData;
+	};
 	// As we do not have order and ID's in the variables object, we have to process variables to add order and ID if they do not exist in the variables object
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const transformDashboardVariables = (data: Dashboard): Dashboard => {
 		if (data && data.data && data.data.variables) {
-			const clonedDashboardData = JSON.parse(JSON.stringify(data));
+			const clonedDashboardData = mergeDBWithLocalStorage(
+				JSON.parse(JSON.stringify(data)),
+				currentDashboard,
+			);
 			const { variables } = clonedDashboardData.data;
 			const existingOrders: Set<number> = new Set();
 

@@ -1,3 +1,4 @@
+import { LEGEND } from 'constants/global';
 import {
 	initialAutocompleteData,
 	initialQueryBuilderFormValuesMap,
@@ -5,6 +6,10 @@ import {
 	mapOfQueryFilters,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import {
+	listViewInitialLogQuery,
+	listViewInitialTraceQuery,
+} from 'container/NewDashboard/ComponentsSlider/constants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
@@ -21,12 +26,14 @@ import {
 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
+import { getFormatedLegend } from 'utils/getFormatedLegend';
 
 export const useQueryOperations: UseQueryOperations = ({
 	query,
 	index,
 	filterConfigs,
 	formula,
+	isListViewPanel = false,
 }) => {
 	const {
 		handleSetQueryData,
@@ -35,6 +42,7 @@ export const useQueryOperations: UseQueryOperations = ({
 		panelType,
 		initialDataSource,
 		currentQuery,
+		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
 	const [operators, setOperators] = useState<SelectOption<string, string>[]>([]);
@@ -123,6 +131,14 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleChangeDataSource = useCallback(
 		(nextSource: DataSource): void => {
+			if (isListViewPanel) {
+				if (nextSource === DataSource.LOGS) {
+					redirectWithQueryBuilderData(listViewInitialLogQuery);
+				} else if (nextSource === DataSource.TRACES) {
+					redirectWithQueryBuilderData(listViewInitialTraceQuery);
+				}
+			}
+
 			const newOperators = getOperatorsBySourceAndPanelType({
 				dataSource: nextSource,
 				panelType: panelType || PANEL_TYPES.TIME_SERIES,
@@ -144,7 +160,14 @@ export const useQueryOperations: UseQueryOperations = ({
 			setOperators(newOperators);
 			handleSetQueryData(index, newQuery);
 		},
-		[index, query, panelType, handleSetQueryData],
+		[
+			isListViewPanel,
+			panelType,
+			query,
+			handleSetQueryData,
+			index,
+			redirectWithQueryBuilderData,
+		],
 	);
 
 	const handleDeleteQuery = useCallback(() => {
@@ -157,7 +180,10 @@ export const useQueryOperations: UseQueryOperations = ({
 		(key, value) => {
 			const newQuery: IBuilderQuery = {
 				...query,
-				[key]: value,
+				[key]:
+					key === LEGEND && typeof value === 'string'
+						? getFormatedLegend(value)
+						: value,
 			};
 
 			handleSetQueryData(index, newQuery);

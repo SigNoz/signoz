@@ -71,6 +71,7 @@ const (
 	signozSampleLocalTableName = "samples_v2"
 	signozSampleTableName      = "distributed_samples_v2"
 	signozTSTableName          = "distributed_time_series_v2"
+	signozTSTableNameV41Day    = "distributed_time_series_v4_1day"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -3409,22 +3410,32 @@ func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {
 	return totalSpans, nil
 }
 
-func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var spansInLastHeartBeatInterval uint64
 
-	queryStr := fmt.Sprintf("SELECT count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, signozSpansTable, 30)
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, signozSpansTable, int(interval.Minutes()))
 
 	r.db.QueryRow(ctx, queryStr).Scan(&spansInLastHeartBeatInterval)
 
 	return spansInLastHeartBeatInterval, nil
 }
 
+func (r *ClickHouseReader) GetTotalLogs(ctx context.Context) (uint64, error) {
+
+	var totalLogs uint64
+
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s;", r.logsDB, r.logsTable)
+	r.db.QueryRow(ctx, queryStr).Scan(&totalLogs)
+
+	return totalLogs, nil
+}
+
 func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error) {
 
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 
-	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, signozMetricDBName, signozTSTableName)
+	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, signozMetricDBName, signozTSTableNameV41Day)
 
 	rows, err := r.db.Query(ctx, query, metricNames)
 	if err != nil {
@@ -3446,20 +3457,9 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []s
 	return metricNameToTemporality, nil
 }
 
-// func sum(array []tsByMetricName) uint64 {
-// 	var result uint64
-// 	result = 0
-// 	for _, v := range array {
-// 		result += v.count
-// 	}
-// 	return result
-// }
-
 func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error) {
 
-	queryStr := fmt.Sprintf("SELECT count() as count from %s.%s group by metric_name order by count desc;", signozMetricDBName, signozTSTableName)
-
-	// r.db.Select(ctx, &tsByMetricName, queryStr)
+	queryStr := fmt.Sprintf("SELECT count() as count from %s.%s where metric_name not like 'signoz_%%' group by metric_name order by count desc;", signozMetricDBName, signozTSTableName)
 
 	rows, _ := r.db.Query(ctx, queryStr)
 
@@ -3488,11 +3488,21 @@ func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]in
 	return timeSeriesData, nil
 }
 
-func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var totalSamples uint64
 
-	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp_ms > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, 30)
+	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%' and timestamp_ms > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, int(interval.Minutes()))
+
+	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
+
+	return totalSamples, nil
+}
+
+func (r *ClickHouseReader) GetTotalSamples(ctx context.Context) (uint64, error) {
+	var totalSamples uint64
+
+	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%';", signozMetricDBName, signozSampleTableName)
 
 	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
 
@@ -3512,23 +3522,23 @@ func (r *ClickHouseReader) GetDistributedInfoInLastHeartBeatInterval(ctx context
 	return nil, nil
 }
 
-func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var totalLogLines uint64
 
-	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))*1000000000;", r.logsDB, r.logsTable, 30)
+	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))*1000000000;", r.logsDB, r.logsTable, int(interval.Minutes()))
 
 	err := r.db.QueryRow(ctx, queryStr).Scan(&totalLogLines)
 
 	return totalLogLines, err
 }
 
-func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context) (*model.TagsInfo, error) {
+func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (*model.TagsInfo, error) {
 
 	queryStr := fmt.Sprintf(`select serviceName, stringTagMap['deployment.environment'] as env, 
 	stringTagMap['telemetry.sdk.language'] as language from %s.%s 
 	where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))
-	group by serviceName, env, language;`, r.TraceDB, r.indexTable, 1)
+	group by serviceName, env, language;`, r.TraceDB, r.indexTable, int(interval.Minutes()))
 
 	tagTelemetryDataList := []model.TagTelemetryData{}
 	err := r.db.Select(ctx, &tagTelemetryDataList, queryStr)
@@ -3541,6 +3551,7 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 
 	tagsInfo := model.TagsInfo{
 		Languages: make(map[string]interface{}),
+		Services:  make(map[string]interface{}),
 	}
 
 	for _, tagTelemetryData := range tagTelemetryDataList {
@@ -3553,6 +3564,9 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 		}
 		if len(tagTelemetryData.Language) != 0 {
 			tagsInfo.Languages[tagTelemetryData.Language] = struct{}{}
+		}
+		if len(tagTelemetryData.ServiceName) != 0 {
+			tagsInfo.Services[tagTelemetryData.ServiceName] = struct{}{}
 		}
 
 	}
@@ -3810,7 +3824,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
-		for _, table := range []string{r.logsLocalTable, r.logsTable} {
+		for _, table := range []string{r.logsTable, r.logsLocalTable} {
 			// drop materialized column from logs table
 			query := "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s "
 			err := r.db.Exec(ctx, fmt.Sprintf(query,
@@ -4097,7 +4111,7 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 	var rows driver.Rows
 	var response v3.AggregateAttributeResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT(metric_name) from %s.%s WHERE metric_name ILIKE $1", signozMetricDBName, signozTSTableName)
+	query = fmt.Sprintf("SELECT DISTINCT metric_name, type from %s.%s WHERE metric_name ILIKE $1", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
@@ -4109,15 +4123,16 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 	}
 	defer rows.Close()
 
-	var metricName string
+	var metricName, typ string
 	for rows.Next() {
-		if err := rows.Scan(&metricName); err != nil {
+		if err := rows.Scan(&metricName, &typ); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+		// unlike traces/logs `tag`/`resource` type, the `Type` will be metric type
 		key := v3.AttributeKey{
 			Key:      metricName,
 			DataType: v3.AttributeKeyDataTypeFloat64,
-			Type:     v3.AttributeKeyTypeUnspecified,
+			Type:     v3.AttributeKeyType(typ),
 			IsColumn: true,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
@@ -4194,8 +4209,8 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	return &attributeValues, nil
 }
 
-func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricName string, preferDelta bool) (*v3.LatencyMetricMetadataResponse, error) {
-	query := fmt.Sprintf("SELECT DISTINCT(temporality) from %s.%s WHERE metric_name='%s'", signozMetricDBName, signozTSTableName, metricName)
+func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricName, serviceName string, preferDelta bool) (*v3.LatencyMetricMetadataResponse, error) {
+	query := fmt.Sprintf("SELECT DISTINCT(temporality) from %s.%s WHERE metric_name='%s' AND JSONExtractString(labels, 'service_name') = '%s'", signozMetricDBName, signozTSTableName, metricName, serviceName)
 	rows, err := r.db.Query(ctx, query, metricName)
 	if err != nil {
 		zap.S().Error(err)
@@ -4214,7 +4229,7 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 		}
 	}
 
-	query = fmt.Sprintf("SELECT DISTINCT(toFloat64(JSONExtractString(labels, 'le'))) as le from %s.%s WHERE metric_name='%s' ORDER BY le", signozMetricDBName, signozTSTableName, metricName)
+	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, 'le')) as le from %s.%s WHERE metric_name='%s' AND JSONExtractString(labels, 'service_name') = '%s' ORDER BY le", signozMetricDBName, signozTSTableName, metricName, serviceName)
 	rows, err = r.db.Query(ctx, query, metricName)
 	if err != nil {
 		zap.S().Error(err)
@@ -4224,9 +4239,17 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 
 	var leFloat64 []float64
 	for rows.Next() {
-		var le float64
-		if err := rows.Scan(&le); err != nil {
+		var leStr string
+		if err := rows.Scan(&leStr); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		le, err := strconv.ParseFloat(leStr, 64)
+		// ignore the error and continue if the value is not a float
+		// ideally this should not happen but we have seen ClickHouse
+		// returning empty string for some values
+		if err != nil {
+			zap.S().Error("error while parsing le value: ", err)
+			continue
 		}
 		if math.IsInf(le, 0) {
 			continue
@@ -4237,6 +4260,68 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 	return &v3.LatencyMetricMetadataResponse{
 		Delta: deltaExists && preferDelta,
 		Le:    leFloat64,
+	}, nil
+}
+
+func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, serviceName string) (*v3.MetricMetadataResponse, error) {
+	// Note: metric metadata should be accessible regardless of the time range selection
+	// our standard retention period is 30 days, so we are querying the table v4_1_day to reduce the
+	// amount of data scanned
+	query := fmt.Sprintf("SELECT DISTINCT temporality, description, type, unit, is_monotonic from %s.%s WHERE metric_name=$1", signozMetricDBName, signozTSTableNameV41Day)
+	rows, err := r.db.Query(ctx, query, metricName)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while fetching metric metadata: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var deltaExists, isMonotonic bool
+	var temporality, description, metricType, unit string
+	for rows.Next() {
+		if err := rows.Scan(&temporality, &description, &metricType, &unit, &isMonotonic); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		if temporality == string(v3.Delta) {
+			deltaExists = true
+		}
+	}
+
+	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, 'le')) as le from %s.%s WHERE metric_name=$1 AND type = 'Histogram' AND JSONExtractString(labels, 'service_name') = $2 ORDER BY le", signozMetricDBName, signozTSTableNameV41Day)
+	rows, err = r.db.Query(ctx, query, metricName, serviceName)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var leFloat64 []float64
+	for rows.Next() {
+		var leStr string
+		if err := rows.Scan(&leStr); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		le, err := strconv.ParseFloat(leStr, 64)
+		// ignore the error and continue if the value is not a float
+		// ideally this should not happen but we have seen ClickHouse
+		// returning empty string for some values
+		if err != nil {
+			zap.S().Error("error while parsing le value: ", err)
+			continue
+		}
+		if math.IsInf(le, 0) {
+			continue
+		}
+		leFloat64 = append(leFloat64, le)
+	}
+
+	return &v3.MetricMetadataResponse{
+		Delta:       deltaExists,
+		Le:          leFloat64,
+		Description: description,
+		Unit:        unit,
+		Type:        metricType,
+		IsMonotonic: isMonotonic,
+		Temporality: temporality,
 	}, nil
 }
 

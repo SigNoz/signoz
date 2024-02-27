@@ -1,11 +1,11 @@
 module go.signoz.io/signoz
 
-go 1.21
+go 1.21.3
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.15.0
-	github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb
-	github.com/SigNoz/signoz-otel-collector v0.88.6
+	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
+	github.com/SigNoz/signoz-otel-collector v0.88.13
 	github.com/SigNoz/zap_otlp/zap_otlp_encoder v0.0.0-20230822164844-1b861a431974
 	github.com/SigNoz/zap_otlp/zap_otlp_sync v0.0.0-20230822164844-1b861a431974
 	github.com/antonmedv/expr v1.15.3
@@ -19,7 +19,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.11.5
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gosimple/slug v1.10.0
@@ -61,13 +61,13 @@ require (
 	go.opentelemetry.io/collector/processor v0.88.0
 	go.opentelemetry.io/collector/receiver v0.88.0
 	go.opentelemetry.io/collector/service v0.88.0
-	go.opentelemetry.io/otel v1.19.0
-	go.opentelemetry.io/otel/sdk v1.19.0
+	go.opentelemetry.io/otel v1.22.0
+	go.opentelemetry.io/otel/sdk v1.22.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.17.0
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
-	golang.org/x/net v0.17.0
+	golang.org/x/net v0.19.0
 	golang.org/x/oauth2 v0.13.0
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
@@ -100,9 +100,9 @@ require (
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
 	github.com/go-faster/city v1.0.1 // indirect
-	github.com/go-faster/errors v0.6.1 // indirect
+	github.com/go-faster/errors v0.7.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
-	github.com/go-logr/logr v1.2.4 // indirect
+	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -122,7 +122,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
-	github.com/klauspost/compress v1.17.1 // indirect
+	github.com/klauspost/compress v1.17.5 // indirect
 	github.com/klauspost/cpuid v1.2.3 // indirect
 	github.com/knadh/koanf/v2 v2.0.1 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
@@ -142,7 +142,7 @@ require (
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.88.0 // indirect
 	github.com/paulmach/orb v0.10.0 // indirect
-	github.com/pierrec/lz4/v4 v4.1.18 // indirect
+	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
@@ -157,7 +157,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.23.9 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/sirupsen/logrus v1.9.2 // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/smarty/assertions v1.15.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -183,14 +183,14 @@ require (
 	go.opentelemetry.io/otel/exporters/prometheus v0.42.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdoutmetric v0.42.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.19.0 // indirect
-	go.opentelemetry.io/otel/metric v1.19.0 // indirect
+	go.opentelemetry.io/otel/metric v1.22.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.19.0 // indirect
-	go.opentelemetry.io/otel/trace v1.19.0 // indirect
+	go.opentelemetry.io/otel/trace v1.22.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/goleak v1.2.1 // indirect
-	golang.org/x/sync v0.4.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gonum.org/v1/gonum v0.14.0 // indirect

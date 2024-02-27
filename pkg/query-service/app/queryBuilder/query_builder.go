@@ -302,6 +302,16 @@ func isMetricExpression(expression *govaluate.EvaluableExpression, params *v3.Qu
 	return true
 }
 
+func isLogExpression(expression *govaluate.EvaluableExpression, params *v3.QueryRangeParamsV3) bool {
+	variables := unique(expression.Vars())
+	for _, variable := range variables {
+		if params.CompositeQuery.BuilderQueries[variable].DataSource != v3.DataSourceLogs {
+			return false
+		}
+	}
+	return true
+}
+
 func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[string]string {
 	keys := make(map[string]string)
 
@@ -320,7 +330,46 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 
 	// Build keys for each builder query
 	for queryName, query := range params.CompositeQuery.BuilderQueries {
-		if query.Expression == queryName && query.DataSource == v3.DataSourceMetrics {
+		if query.Expression == queryName && query.DataSource == v3.DataSourceLogs {
+			var parts []string
+
+			// We need to build uniqe cache query for BuilderQuery
+			parts = append(parts, fmt.Sprintf("source=%s", query.DataSource))
+			parts = append(parts, fmt.Sprintf("step=%d", query.StepInterval))
+			parts = append(parts, fmt.Sprintf("aggregate=%s", query.AggregateOperator))
+			parts = append(parts, fmt.Sprintf("limit=%d", query.Limit))
+
+			if query.AggregateAttribute.Key != "" {
+				parts = append(parts, fmt.Sprintf("aggregateAttribute=%s", query.AggregateAttribute.CacheKey()))
+			}
+
+			if query.Filters != nil && len(query.Filters.Items) > 0 {
+				for idx, filter := range query.Filters.Items {
+					parts = append(parts, fmt.Sprintf("filter-%d=%s", idx, filter.CacheKey()))
+				}
+			}
+
+			if len(query.GroupBy) > 0 {
+				for idx, groupBy := range query.GroupBy {
+					parts = append(parts, fmt.Sprintf("groupBy-%d=%s", idx, groupBy.CacheKey()))
+				}
+			}
+
+			if len(query.OrderBy) > 0 {
+				for idx, orderBy := range query.OrderBy {
+					parts = append(parts, fmt.Sprintf("orderBy-%d=%s", idx, orderBy.CacheKey()))
+				}
+			}
+
+			if len(query.Having) > 0 {
+				for idx, having := range query.Having {
+					parts = append(parts, fmt.Sprintf("having-%d=%s", idx, having.CacheKey()))
+				}
+			}
+
+			key := strings.Join(parts, "&")
+			keys[queryName] = key
+		} else if query.Expression == queryName && query.DataSource == v3.DataSourceMetrics {
 			var parts []string
 
 			// We need to build uniqe cache query for BuilderQuery
@@ -361,7 +410,7 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 		if query.Expression != query.QueryName {
 			expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
 
-			if !isMetricExpression(expression, params) {
+			if !isMetricExpression(expression, params) && !isLogExpression(expression, params) {
 				continue
 			}
 

@@ -2,12 +2,14 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	height: 40px;
+	height: 30px;
 	width: 100%;
 	padding: 0.5rem;
 	box-sizing: border-box;
 	font-size: 14px;
 	font-weight: 600;
+
+	cursor: move;
 }
 
 .widget-header-title {

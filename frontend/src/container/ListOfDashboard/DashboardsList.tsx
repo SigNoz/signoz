@@ -25,11 +25,14 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 
 import DateComponent from '../../components/ResizeTable/TableComponent/DateComponent';
+import useSortableTable from '../../hooks/ResizeTable/useSortableTable';
+import useUrlQuery from '../../hooks/useUrlQuery';
+import { GettableAlert } from '../../types/api/alerts/get';
 import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import DeleteButton from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
-import axios from 'axios';
+import { filterDashboard } from './utils';
 
 const { Search } = Input;
 
@@ -57,7 +60,25 @@ function DashboardsList(): JSX.Element {
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
 	const [isFilteringDashboards, setIsFilteringDashboards] = useState(false);
 
+	const params = useUrlQuery();
+	const orderColumnParam = params.get('columnKey');
+	const orderQueryParam = params.get('order');
+	const paginationParam = params.get('page');
+	const searchParams = params.get('search');
+	const [searchString, setSearchString] = useState<string>(searchParams || '');
+
 	const [dashboards, setDashboards] = useState<Dashboard[]>();
+
+	const sortingOrder: 'ascend' | 'descend' | null =
+		orderQueryParam === 'ascend' || orderQueryParam === 'descend'
+			? orderQueryParam
+			: null;
+
+	const { sortedInfo, handleChange } = useSortableTable<GettableAlert>(
+		sortingOrder,
+		orderColumnParam || '',
+		searchString,
+	);
 
 	const sortDashboardsByCreatedAt = (dashboards: Dashboard[]): void => {
 		const sortedDashboards = dashboards.sort(
@@ -69,7 +90,12 @@ function DashboardsList(): JSX.Element {
 
 	useEffect(() => {
 		sortDashboardsByCreatedAt(dashboardListResponse);
-	}, [dashboardListResponse]);
+		const filteredDashboards = filterDashboard(
+			searchString,
+			dashboardListResponse,
+		);
+		setDashboards(filteredDashboards || []);
+	}, [dashboardListResponse, searchString]);
 
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
@@ -91,6 +117,10 @@ function DashboardsList(): JSX.Element {
 				return prev - next;
 			},
 			render: DateComponent,
+			sortOrder:
+				sortedInfo.columnKey === DynamicColumnsKey.CreatedAt
+					? sortedInfo.order
+					: null,
 		},
 		{
 			title: 'Created By',
@@ -110,6 +140,10 @@ function DashboardsList(): JSX.Element {
 				return prev - next;
 			},
 			render: DateComponent,
+			sortOrder:
+				sortedInfo.columnKey === DynamicColumnsKey.UpdatedAt
+					? sortedInfo.order
+					: null,
 		},
 		{
 			title: 'Last Updated By',
@@ -251,28 +285,13 @@ function DashboardsList(): JSX.Element {
 		return menuItems;
 	}, [createNewDashboard, isDashboardListLoading, onNewDashboardHandler, t]);
 
-	const searchArrayOfObjects = (searchValue: string): any[] => {
-		// Convert the searchValue to lowercase for case-insensitive search
-		const searchValueLowerCase = searchValue.toLowerCase();
-
-		// Use the filter method to find matching objects
-		return dashboardListResponse.filter((item: any) => {
-			// Convert each property value to lowercase for case-insensitive search
-			const itemValues = Object.values(item?.data).map((value: any) =>
-				value.toString().toLowerCase(),
-			);
-
-			// Check if any property value contains the searchValue
-			return itemValues.some((value) => value.includes(searchValueLowerCase));
-		});
-	};
-
 	const handleSearch = useDebouncedFn((event: unknown): void => {
 		setIsFilteringDashboards(true);
 		const searchText = (event as React.BaseSyntheticEvent)?.target?.value || '';
-		const filteredDashboards = searchArrayOfObjects(searchText);
+		const filteredDashboards = filterDashboard(searchText, dashboardListResponse);
 		setDashboards(filteredDashboards);
 		setIsFilteringDashboards(false);
+		setSearchString(searchText);
 	}, 500);
 
 	const GetHeader = useMemo(
@@ -285,6 +304,7 @@ function DashboardsList(): JSX.Element {
 						onChange={handleSearch}
 						loading={isFilteringDashboards}
 						style={{ marginBottom: 16, marginTop: 16 }}
+						defaultValue={searchString}
 					/>
 				</Col>
 
@@ -330,26 +350,12 @@ function DashboardsList(): JSX.Element {
 			newDashboardState.loading,
 			newDashboardState.error,
 			getText,
+			searchString,
 		],
 	);
 
-	const handleDemo = () => {
-		axios
-			.get('http://localhost:8080/api/v1/demo', {
-				headers: {
-					Authorization: `Bearer ${localStorage.getItem('AUTH_TOKEN')}`,
-				},
-			})
-			.then((data) => {
-				console.log('data', data);
-			})
-			.catch((err) => {
-				console.warn('err', err);
-			});
-	};
-
 	return (
-		<Card>
+		<Card style={{ margin: '16px 0' }}>
 			{GetHeader}
 
 			<TableContainer>
@@ -358,7 +364,6 @@ function DashboardsList(): JSX.Element {
 					uploadedGrafana={uploadedGrafana}
 					onModalHandler={(): void => onModalHandler(false)}
 				/>
-				<button onClick={handleDemo}>TestService</button>
 				<DynamicColumnTable
 					tablesource={TableDataSource.Dashboard}
 					dynamicColumns={dynamicColumns}
@@ -367,12 +372,14 @@ function DashboardsList(): JSX.Element {
 						pageSize: 10,
 						defaultPageSize: 10,
 						total: data?.length || 0,
+						defaultCurrent: Number(paginationParam) || 1,
 					}}
 					showHeader
 					bordered
 					sticky
 					loading={isDashboardListLoading}
 					dataSource={data}
+					onChange={handleChange}
 					showSorterTooltip
 				/>
 			</TableContainer>

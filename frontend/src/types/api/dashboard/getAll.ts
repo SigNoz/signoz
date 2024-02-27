@@ -5,6 +5,9 @@ import { ReactNode } from 'react';
 import { Layout } from 'react-grid-layout';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { IField } from '../logs/fields';
+import { BaseAutocompleteData } from '../queryBuilder/queryAutocompleteResponse';
+
 export type PayloadProps = Dashboard[];
 
 export const VariableQueryTypeArr = ['QUERY', 'TEXTBOX', 'CUSTOM'] as const;
@@ -73,7 +76,11 @@ export interface IBaseWidget {
 	stepSize?: number;
 	yAxisUnit?: string;
 	thresholds?: ThresholdProps[];
+	softMin: number | null;
+	softMax: number | null;
 	fillSpans?: boolean;
+	selectedLogFields: IField[] | null;
+	selectedTracesFields: BaseAutocompleteData[] | null;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

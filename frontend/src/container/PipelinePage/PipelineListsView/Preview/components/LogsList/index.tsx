@@ -2,6 +2,7 @@ import './styles.scss';
 
 import { ExpandAltOutlined } from '@ant-design/icons';
 import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import dayjs from 'dayjs';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { ILog } from 'types/api/logs/log';
@@ -36,6 +37,7 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 				</div>
 			))}
 			<LogDetail
+				selectedTab={VIEW_TYPES.OVERVIEW}
 				log={activeLog}
 				onClose={onClearActiveLog}
 				onAddToQuery={onAddToQuery}

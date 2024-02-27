@@ -19,7 +19,8 @@ function SettingsPage(): JSX.Element {
 	);
 	const { t } = useTranslation(['routes']);
 
-	const routes = useMemo(() => getRoutes(isCurrentOrgSettings, t), [
+	const routes = useMemo(() => getRoutes(role, isCurrentOrgSettings, t), [
+		role,
 		isCurrentOrgSettings,
 		t,
 	]);

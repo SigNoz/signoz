@@ -3,6 +3,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Divider, Modal, Row, Spin, Typography } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import TextToolTip from 'components/TextToolTip';
+import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import find from 'lodash-es/find';
@@ -24,6 +25,7 @@ import {
 	PayloadPropsTraces as GetRetentionPeriodTracesPayload,
 } from 'types/api/settings/getRetention';
 import AppReducer from 'types/reducer/app';
+import { isCloudUser } from 'utils/app';
 
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
@@ -394,6 +396,8 @@ function GeneralSettings({
 		onModalToggleHandler(type);
 	};
 
+	const isCloudUserVal = isCloudUser();
+
 	const renderConfig = [
 		{
 			name: 'Metrics',
@@ -521,7 +525,7 @@ function GeneralSettings({
 			return (
 				<Fragment key={category.name}>
 					<Col xs={22} xl={11} key={category.name} style={{ margin: '0.5rem' }}>
-						<Card style={{ height: '100%', minHeight: 300 }}>
+						<Card style={{ height: '100%' }}>
 							<Typography.Title style={{ margin: 0 }} level={3}>
 								{category.name}
 							</Typography.Title>
@@ -542,38 +546,43 @@ function GeneralSettings({
 									hide={!!retentionField.hide}
 								/>
 							))}
-							<ActionItemsContainer>
-								<Button
-									type="primary"
-									onClick={category.save.modalOpen}
-									disabled={category.save.isDisabled}
-								>
-									{category.save.saveButtonText}
-								</Button>
-								{category.statusComponent}
-							</ActionItemsContainer>
-							<Modal
-								title={t('retention_confirmation')}
-								focusTriggerAfterClose
-								forceRender
-								destroyOnClose
-								closable
-								onCancel={(): void =>
-									onModalToggleHandler(category.name.toLowerCase() as TTTLType)
-								}
-								onOk={(): Promise<void> =>
-									onOkHandler(category.name.toLowerCase() as TTTLType)
-								}
-								centered
-								open={category.save.modal}
-								confirmLoading={category.save.apiLoading}
-							>
-								<Typography>
-									{t('retention_confirmation_description', {
-										name: category.name.toLowerCase(),
-									})}
-								</Typography>
-							</Modal>
+
+							{!isCloudUserVal && (
+								<>
+									<ActionItemsContainer>
+										<Button
+											type="primary"
+											onClick={category.save.modalOpen}
+											disabled={category.save.isDisabled}
+										>
+											{category.save.saveButtonText}
+										</Button>
+										{category.statusComponent}
+									</ActionItemsContainer>
+									<Modal
+										title={t('retention_confirmation')}
+										focusTriggerAfterClose
+										forceRender
+										destroyOnClose
+										closable
+										onCancel={(): void =>
+											onModalToggleHandler(category.name.toLowerCase() as TTTLType)
+										}
+										onOk={(): Promise<void> =>
+											onOkHandler(category.name.toLowerCase() as TTTLType)
+										}
+										centered
+										open={category.save.modal}
+										confirmLoading={category.save.apiLoading}
+									>
+										<Typography>
+											{t('retention_confirmation_description', {
+												name: category.name.toLowerCase(),
+											})}
+										</Typography>
+									</Modal>
+								</>
+							)}
 						</Card>
 					</Col>
 				</Fragment>
@@ -587,16 +596,20 @@ function GeneralSettings({
 			{Element}
 			<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
 				<ErrorTextContainer>
-					<TextToolTip
-						{...{
-							text: `More details on how to set retention period`,
-							url: 'https://signoz.io/docs/userguide/retention-period/',
-						}}
-					/>
+					{!isCloudUserVal && (
+						<TextToolTip
+							{...{
+								text: `More details on how to set retention period`,
+								url: 'https://signoz.io/docs/userguide/retention-period/',
+							}}
+						/>
+					)}
 					{errorText && <ErrorText>{errorText}</ErrorText>}
 				</ErrorTextContainer>
 
 				<Row justify="start">{renderConfig}</Row>
+
+				{isCloudUserVal && <GeneralSettingsCloud />}
 			</Col>
 		</>
 	);

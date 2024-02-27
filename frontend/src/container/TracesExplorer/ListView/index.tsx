@@ -4,6 +4,7 @@ import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination } from 'hooks/queryPagination';
@@ -18,7 +19,6 @@ import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import TraceExplorerControls from '../Controls';
 import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
 import { Container, ErrorText, tableStyles } from './styles';
 import { getListColumns, getTraceLink, transformDataWithDate } from './utils';
