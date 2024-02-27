@@ -2,8 +2,13 @@ import './Integrations.styles.scss';
 
 import { Button, List, Typography } from 'antd';
 
-function IntegrationsList(): JSX.Element {
+interface IntegrationsListProps {
+	setSelectedIntegration: (id: string) => void;
+}
+
+function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 	// TODO get the data from the list API call here
+	const { setSelectedIntegration } = props;
 	const data = [
 		{
 			title: 'Redis',
@@ -46,7 +51,12 @@ function IntegrationsList(): JSX.Element {
 									{item.description}
 								</Typography.Text>
 							</div>
-							<Button className="configure-btn">Configure</Button>
+							<Button
+								className="configure-btn"
+								onClick={(): void => setSelectedIntegration(item.id)}
+							>
+								Configure
+							</Button>
 						</List.Item>
 					);
 				}}
