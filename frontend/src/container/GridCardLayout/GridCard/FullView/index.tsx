@@ -18,6 +18,7 @@ import { useChartMutable } from 'hooks/useChartMutable';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
+import { getSortedSeriesData } from 'lib/uPlotLib/utils/getSortedSeriesData';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -30,7 +31,6 @@ import { getTimeRange } from 'utils/getTimeRange';
 import { getGraphVisibilityStateOnDataChange } from '../utils';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
-// import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
 
@@ -106,6 +106,13 @@ function FullView({
 		panelType: widget.panelTypes,
 		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
+
+	if (response.data && widget.panelTypes === PANEL_TYPES.BAR) {
+		const sortedSeriesData = getSortedSeriesData(
+			response.data?.payload.data.result,
+		);
+		response.data.payload.data.result = sortedSeriesData;
+	}
 
 	const chartData = getUPlotChartData(response?.data?.payload, widget.fillSpans);
 

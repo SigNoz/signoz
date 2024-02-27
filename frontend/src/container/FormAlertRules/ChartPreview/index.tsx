@@ -10,6 +10,7 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
+import { getSortedSeriesData } from 'lib/uPlotLib/utils/getSortedSeriesData';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -114,6 +115,13 @@ function ChartPreview({
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
 	}, [maxTime, minTime, globalSelectedInterval, queryResponse]);
+
+	if (queryResponse.data && graphType === PANEL_TYPES.BAR) {
+		const sortedSeriesData = getSortedSeriesData(
+			queryResponse.data?.payload.data.result,
+		);
+		queryResponse.data.payload.data.result = sortedSeriesData;
+	}
 
 	const chartData = getUPlotChartData(queryResponse?.data?.payload);
 

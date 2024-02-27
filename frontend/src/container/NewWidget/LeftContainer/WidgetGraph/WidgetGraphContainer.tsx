@@ -4,6 +4,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { getSortedSeriesData } from 'lib/uPlotLib/utils/getSortedSeriesData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { getGraphType } from 'utils/getGraphType';
 
@@ -35,6 +36,13 @@ function WidgetGraphContainer({
 		graphType: getGraphType(selectedGraph),
 		selectedTime: selectedTime.enum,
 	});
+
+	if (getWidgetQueryRange.data && selectedGraph === PANEL_TYPES.BAR) {
+		const sortedSeriesData = getSortedSeriesData(
+			getWidgetQueryRange.data?.payload.data.result,
+		);
+		getWidgetQueryRange.data.payload.data.result = sortedSeriesData;
+	}
 
 	if (selectedWidget === undefined) {
 		return <Card>Invalid widget</Card>;

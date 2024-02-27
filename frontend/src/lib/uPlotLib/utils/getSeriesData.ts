@@ -37,20 +37,9 @@ const getSeries = ({
 	];
 
 	const seriesList = apiResponse?.data.result || [];
-
-	const sortedSeriesList = seriesList.sort((a, b) => {
-		const avgA =
-			a.values.reduce((acc, curr) => acc + parseFloat(curr[1]), 0) /
-			a.values.length;
-		const avgB =
-			b.values.reduce((acc, curr) => acc + parseFloat(curr[1]), 0) /
-			b.values.length;
-		return avgB - avgA;
-	});
-
 	const newGraphVisibilityStates = graphsVisibilityStates?.slice(1);
 
-	for (let i = 0; i < sortedSeriesList?.length; i += 1) {
+	for (let i = 0; i < seriesList?.length; i += 1) {
 		const { metric = {}, queryName = '', legend = '' } = widgetMetaData[i] || {};
 
 		const label = getLabelName(
@@ -61,8 +50,8 @@ const getSeries = ({
 
 		const color = generateColor(label, themeColors.chartcolors);
 
-		const pointSize = sortedSeriesList[i].values.length > 1 ? 5 : 10;
-		const showPoints = !(sortedSeriesList[i].values.length > 1);
+		const pointSize = seriesList[i].values.length > 1 ? 5 : 10;
+		const showPoints = !(seriesList[i].values.length > 1);
 
 		const seriesObj: any = {
 			paths,

@@ -11,6 +11,7 @@ import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
+import { getSortedSeriesData } from 'lib/uPlotLib/utils/getSortedSeriesData';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import isEmpty from 'lodash-es/isEmpty';
 import _noop from 'lodash-es/noop';
@@ -160,6 +161,13 @@ function GridCardGraph({
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
 	}, [maxTime, minTime, globalSelectedInterval, queryResponse]);
+
+	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.BAR) {
+		const sortedSeriesData = getSortedSeriesData(
+			queryResponse.data?.payload.data.result,
+		);
+		queryResponse.data.payload.data.result = sortedSeriesData;
+	}
 
 	const chartData = getUPlotChartData(queryResponse?.data?.payload, fillSpans);
 
