@@ -30,7 +30,7 @@ function IntergrationsUninstallBar(
 				<Typography.Text className="heading">Remove Integration</Typography.Text>
 				<Typography.Text className="subtitle">
 					Removing the {integrationTitle} integration would make your workspace stop
-					listening for data from Redis instances.
+					listening for data from {integrationTitle} instances.
 				</Typography.Text>
 			</div>
 			<Button
