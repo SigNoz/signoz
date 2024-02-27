@@ -93,6 +93,7 @@
 		padding: 10px 16px;
 		border: 1px solid var(--bg-slate-500);
 		background: var(--bg-ink-400, #121317);
+		min-height: 300px;
 
 		.integration-tab-btns {
 			display: flex;
