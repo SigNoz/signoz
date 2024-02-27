@@ -204,7 +204,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
-	_, err = opAmpModel.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	_, err = opAmpModel.InitDB(localDB)
 	if err != nil {
 		return nil, err
 	}
