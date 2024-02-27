@@ -2,6 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
+	margin-top: 12px;
 
 	.all-integrations-btn {
 		width: fit-content;
@@ -84,6 +85,43 @@
 			border-radius: 2px;
 			border: 1px solid var(--bg-ink-50);
 			background: var(--bg-ink-200);
+		}
+	}
+
+	.integration-detail-container {
+		border-radius: 6px;
+		padding: 10px 16px;
+		border: 1px solid var(--bg-slate-500);
+		background: var(--bg-ink-400, #121317);
+
+		.integration-tab-btns {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 8px 8px 18px 8px !important;
+		}
+
+		.integration-tab-btns:hover {
+			&.ant-btn-text {
+				background-color: unset !important;
+			}
+		}
+
+		.ant-tabs-nav-list {
+			gap: 24px;
+		}
+
+		.ant-tabs-nav {
+			padding: 0px !important;
+			margin-bottom: 0.5rem;
+		}
+
+		.ant-tabs-tab {
+			padding: 0 !important;
+		}
+
+		.ant-tabs-tab + .ant-tabs-tab {
+			margin: 0px !important;
 		}
 	}
 }
