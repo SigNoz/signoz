@@ -90,11 +90,21 @@ func (q *querier) runBuilderQuery(
 		preferRPM = q.featureLookUp.CheckFeature(constants.PreferRPM) == nil
 	}
 
+	// making a local clone since we should not update the global params if there is sift by
+	start := params.Start
+	end := params.End
+
 	if builderQuery.DataSource == v3.DataSourceLogs {
+
+		if builderQuery.ShiftBy != 0 {
+			start = start - builderQuery.ShiftBy*1000
+			end = end - builderQuery.ShiftBy*1000
+		}
+
 		var query string
 		var err error
 		if _, ok := cacheKeys[queryName]; !ok {
-			query, err = prepareLogsQuery(ctx, params.Start, params.End, builderQuery, params, preferRPM)
+			query, err = prepareLogsQuery(ctx, start, end, builderQuery, params, preferRPM)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
@@ -114,7 +124,7 @@ func (q *querier) runBuilderQuery(
 				cachedData = data
 			}
 		}
-		misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
+		misses := q.findMissingTimeRanges(start, end, params.Step, cachedData)
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
@@ -152,7 +162,7 @@ func (q *querier) runBuilderQuery(
 		}
 
 		// response doesn't need everything
-		filterCachedPoints(mergedSeries, params.Start, params.End)
+		filterCachedPoints(mergedSeries, start, end)
 
 		ch <- channelResult{
 			Err:    nil,

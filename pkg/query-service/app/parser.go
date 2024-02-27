@@ -1019,26 +1019,25 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				}
 			}
 
-			if query.Filters == nil || len(query.Filters.Items) == 0 {
-				continue
-			}
-			for idx := range query.Filters.Items {
-				item := &query.Filters.Items[idx]
-				value := item.Value
-				if value != nil {
-					switch x := value.(type) {
-					case string:
-						variableName := strings.Trim(x, "{{ . }}")
-						if _, ok := queryRangeParams.Variables[variableName]; ok {
-							item.Value = queryRangeParams.Variables[variableName]
-						}
-					case []interface{}:
-						if len(x) > 0 {
-							switch x[0].(type) {
-							case string:
-								variableName := strings.Trim(x[0].(string), "{{ . }}")
-								if _, ok := queryRangeParams.Variables[variableName]; ok {
-									item.Value = queryRangeParams.Variables[variableName]
+			if query.Filters != nil && len(query.Filters.Items) != 0 {
+				for idx := range query.Filters.Items {
+					item := &query.Filters.Items[idx]
+					value := item.Value
+					if value != nil {
+						switch x := value.(type) {
+						case string:
+							variableName := strings.Trim(x, "{{ . }}")
+							if _, ok := queryRangeParams.Variables[variableName]; ok {
+								item.Value = queryRangeParams.Variables[variableName]
+							}
+						case []interface{}:
+							if len(x) > 0 {
+								switch x[0].(type) {
+								case string:
+									variableName := strings.Trim(x[0].(string), "{{ . }}")
+									if _, ok := queryRangeParams.Variables[variableName]; ok {
+										item.Value = queryRangeParams.Variables[variableName]
+									}
 								}
 							}
 						}
