@@ -2,7 +2,6 @@ package clickhouseReader
 
 import (
 	"context"
-	"net/url"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -91,24 +90,23 @@ type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
 
 func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 	ctx := context.Background()
-	dsnURL, err := url.Parse(cfg.Datasource)
+	options, err := clickhouse.ParseDSN(cfg.Datasource)
 	if err != nil {
 		return nil, err
 	}
-	options := &clickhouse.Options{
-		Addr:         []string{dsnURL.Host},
-		MaxOpenConns: cfg.MaxOpenConns,
-		MaxIdleConns: cfg.MaxIdleConns,
-		DialTimeout:  cfg.DialTimeout,
+
+	// Check if the DSN contained any of the following options, if not set from configuration
+	if options.MaxIdleConns == 0 {
+		options.MaxIdleConns = cfg.MaxIdleConns
 	}
-	if dsnURL.Query().Get("username") != "" {
-		auth := clickhouse.Auth{
-			Username: dsnURL.Query().Get("username"),
-			Password: dsnURL.Query().Get("password"),
-		}
-		options.Auth = auth
+	if options.MaxOpenConns == 0 {
+		options.MaxOpenConns = cfg.MaxOpenConns
 	}
-	zap.S().Infof("Connecting to Clickhouse at %s, MaxIdleConns: %d, MaxOpenConns: %d, DialTimeout: %s", dsnURL.Host, options.MaxIdleConns, options.MaxOpenConns, options.DialTimeout)
+	if options.DialTimeout == 0 {
+		options.DialTimeout = cfg.DialTimeout
+	}
+
+	zap.S().Infof("Connecting to Clickhouse at %s, Secure: %t, MaxIdleConns: %d, MaxOpenConns: %d, DialTimeout: %s", options.Addr, options.TLS != nil, options.MaxIdleConns, options.MaxOpenConns, options.DialTimeout)
 	db, err := clickhouse.Open(options)
 	if err != nil {
 		return nil, err
