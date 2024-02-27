@@ -7,6 +7,8 @@ export const getSortedSeriesData = (
 	const seriesList = result || [];
 
 	return seriesList.sort((a, b) => {
+		if (a.values.length === 0) return 1;
+		if (b.values.length === 0) return -1;
 		const avgA =
 			a.values.reduce((acc, curr) => acc + parseFloat(curr[1]), 0) /
 			a.values.length;
