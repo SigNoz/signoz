@@ -4,9 +4,9 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { getSortedSeriesData } from 'lib/uPlotLib/utils/getSortedSeriesData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { getGraphType } from 'utils/getGraphType';
+import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
 import { NotFoundContainer } from './styles';
 import WidgetGraph from './WidgetGraphs';
