@@ -191,23 +191,17 @@ export const ShortcutsPage = Loadable(
 	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
 );
 
-export const IntegrationsModulePage = Loadable(
+export const InstalledIntegrations = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "IntegrationsModulePage" */ 'pages/IntegrationsModulePage'
+			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
 		),
 );
 
 export const IntegrationsMarketPlace = Loadable(
+	// eslint-disable-next-line sonarjs/no-identical-functions
 	() =>
 		import(
-			/* webpackChunkName: "IntegrationsMarketPlace" */ 'pages/IntegrationsMarketPlace'
-		),
-);
-
-export const InstalledIntegrations = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "InstalledIntegrations" */ 'pages/InstalledIntegrations'
+			/* webpackChunkName: "IntegrationsMarketPlace" */ 'pages/IntegrationsModulePage'
 		),
 );

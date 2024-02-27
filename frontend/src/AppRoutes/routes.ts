@@ -16,7 +16,6 @@ import {
 	IngestionSettings,
 	InstalledIntegrations,
 	IntegrationsMarketPlace,
-	IntegrationsModulePage,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
@@ -337,13 +336,6 @@ const routes: AppRoutes[] = [
 		component: ShortcutsPage,
 		isPrivate: true,
 		key: 'SHORTCUTS',
-	},
-	{
-		path: ROUTES.INTEGRATIONS_BASE,
-		exact: true,
-		component: IntegrationsModulePage,
-		isPrivate: true,
-		key: 'INTEGRATIONS_BASE',
 	},
 	{
 		path: ROUTES.INTEGRATIONS_INSTALLED,
