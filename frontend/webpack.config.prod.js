@@ -4,6 +4,7 @@
 const { resolve } = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
+const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const dotenv = require('dotenv');
 const webpack = require('webpack');
@@ -26,6 +27,12 @@ const plugins = [
 		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 		SEGMENT_ID: process.env.SEGMENT_ID,
 		CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+		SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
+		SENTRY_ORG: process.env.SENTRY_ORG,
+		SENTRY_PROJECT_ID: process.env.SENTRY_PROJECT_ID,
+		SENTRY_DSN: process.env.SENTRY_DSN,
+		TUNNEL_URL: process.env.TUNNEL_URL,
+		TUNNEL_DOMAIN: process.env.TUNNEL_DOMAIN,
 	}),
 	new CompressionPlugin({
 		exclude: /.map$/,
@@ -42,6 +49,12 @@ const plugins = [
 			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 			SEGMENT_ID: process.env.SEGMENT_ID,
 			CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
+			SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
+			SENTRY_ORG: process.env.SENTRY_ORG,
+			SENTRY_PROJECT_ID: process.env.SENTRY_PROJECT_ID,
+			SENTRY_DSN: process.env.SENTRY_DSN,
+			TUNNEL_URL: process.env.TUNNEL_URL,
+			TUNNEL_DOMAIN: process.env.TUNNEL_DOMAIN,
 		}),
 	}),
 	new MiniCssExtractPlugin(),
@@ -52,6 +65,11 @@ const plugins = [
 		// Public path of the CSS resources. This prefix is removed from the href
 		publicPath: resolve(__dirname, './public/css'),
 		fonts: true,
+	}),
+	sentryWebpackPlugin({
+		authToken: process.env.SENTRY_AUTH_TOKEN,
+		org: process.env.SENTRY_ORG,
+		project: process.env.SENTRY_PROJECT_ID,
 	}),
 ];
 
