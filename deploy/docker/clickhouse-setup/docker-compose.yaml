@@ -101,10 +101,9 @@ services:
     container_name: signoz-clickhouse
     hostname: clickhouse
     ports:
-      # - "9000:9000"
-      # - "8123:8123"
-      # - "9181:9181"
-      - 9001:9000
+      - "9000:9000"
+      - "8123:8123"
+      - "9181:9181"
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
       - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
