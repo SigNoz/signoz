@@ -58,7 +58,7 @@ function LogsPanelComponent({
 		return {
 			query: updatedQuery,
 			graphType: PANEL_TYPES.LIST,
-			selectedTime: 'GLOBAL_TIME',
+			selectedTime: selectedTime?.enum || 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
 			tableParams: {
 				pagination,
@@ -115,6 +115,7 @@ function LogsPanelComponent({
 				requestData,
 				pagination,
 				selectedDashboard?.data.variables,
+				selectedTime?.enum,
 			],
 			enabled: !!requestData.query && !!selectedLogsFields?.length,
 		},
