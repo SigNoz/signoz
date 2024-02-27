@@ -152,3 +152,37 @@
 		}
 	}
 }
+
+.integration-detail-configure {
+	display: flex;
+
+	.configure-menu {
+		display: flex;
+		flex-direction: column;
+		width: 25%;
+		padding: 16px 16px 0px 0px;
+		border-right: 1px solid #161922;
+		gap: 8px;
+
+		.configure-menu-item {
+			padding: 4px 8px;
+			text-align: start;
+			color: var(--bg-vanilla-100);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 18px; /* 128.571% */
+		}
+
+		.active {
+			color: rgba(255, 255, 255, 0.85);
+			background-color: rgba(255, 255, 255, 0.12);
+		}
+	}
+
+	.markdown-container {
+		width: 75%;
+		padding: 16px 0px 0px 16px;
+	}
+}

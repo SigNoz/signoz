@@ -17,7 +17,7 @@ function IntegrationDetailContent(): JSX.Element {
 					className="integration-tab-btns"
 					icon={<Drum size={14} />}
 				>
-					<Typography.Text>Overview</Typography.Text>
+					<Typography.Text className="typography">Overview</Typography.Text>
 				</Button>
 			),
 			children: <Overview />,
@@ -30,7 +30,7 @@ function IntegrationDetailContent(): JSX.Element {
 					className="integration-tab-btns"
 					icon={<Hammer size={14} />}
 				>
-					<Typography.Text>Configuration</Typography.Text>
+					<Typography.Text className="typography">Configuration</Typography.Text>
 				</Button>
 			),
 			children: <Configure />,
@@ -43,7 +43,7 @@ function IntegrationDetailContent(): JSX.Element {
 					className="integration-tab-btns"
 					icon={<Table2 size={14} />}
 				>
-					<Typography.Text>Data Collected</Typography.Text>
+					<Typography.Text className="typography">Data Collected</Typography.Text>
 				</Button>
 			),
 			children: <DataCollected />,

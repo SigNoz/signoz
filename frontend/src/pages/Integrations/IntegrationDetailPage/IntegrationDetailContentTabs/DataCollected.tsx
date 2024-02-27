@@ -1,3 +1,5 @@
+import './IntegrationDetailContentTabs.styles.scss';
+
 import { Table, Typography } from 'antd';
 import { BarChart2, ScrollText } from 'lucide-react';
 
