@@ -146,7 +146,7 @@ export default function QueryFunctions({
 			<Button className="periscope-btn function-btn">
 				<FunctionIcon
 					className="function-icon"
-					fillColor={isDarkMode ? '#0B0C0E' : 'white'}
+					fillColor={!isDarkMode ? '#0B0C0E' : 'white'}
 				/>
 			</Button>
 
@@ -177,7 +177,7 @@ export default function QueryFunctions({
 					disabled={functions && functions.length >= 3}
 					onClick={handleAddNewFunction}
 				>
-					<Plus size={14} color={isDarkMode ? '#0B0C0E' : 'white'} />
+					<Plus size={14} color={!isDarkMode ? '#0B0C0E' : 'white'} />
 				</Button>
 			</Tooltip>
 		</div>

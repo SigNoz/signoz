@@ -70,7 +70,6 @@ export default function Function({
 					className="query-function-value"
 					autoFocus
 					defaultValue={functionValue}
-					style={{ width: '100px' }}
 					onChange={(event): void => {
 						debouncedhandleUpdateFunctionArgs(funcData, index, event.target.value);
 					}}
