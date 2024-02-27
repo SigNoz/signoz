@@ -23,19 +23,23 @@ type IntegrationSummary struct {
 	Description string `json:"description"` // A short description
 
 	Author IntegrationAuthor `json:"author"`
+
+	Icon string `json:"icon"`
 }
 
 type IntegrationAssets struct {
-	// Each integration is expected to specify all log transformations
-	// in a single pipeline with a source based filter
-	LogPipeline *logparsingpipeline.PostablePipeline `json:"log_pipeline"`
+	Logs LogsAssets `json:"logs"`
 
 	// TBD: Dashboards, alerts, saved views, facets (indexed attribs)...
 }
 
+type LogsAssets struct {
+	Pipelines []logparsingpipeline.PostablePipeline `json:"pipelines"`
+}
+
 type IntegrationDetails struct {
 	IntegrationSummary
-	IntegrationAssets
+	Assets IntegrationAssets `json:"assets"`
 }
 
 type IntegrationsListItem struct {
@@ -44,15 +48,15 @@ type IntegrationsListItem struct {
 }
 
 type InstalledIntegration struct {
-	IntegrationId string                     `db:"integration_id"`
-	Config        InstalledIntegrationConfig `db:"config_json"`
-	InstalledAt   time.Time                  `db:"installed_at"`
+	IntegrationId string                     `json:"integration_id" db:"integration_id"`
+	Config        InstalledIntegrationConfig `json:"config_json" db:"config_json"`
+	InstalledAt   time.Time                  `json:"installed_at" db:"installed_at"`
 }
 type InstalledIntegrationConfig map[string]interface{}
 
 type Integration struct {
 	IntegrationDetails
-	Installation *InstalledIntegration
+	Installation *InstalledIntegration `json:"installation"`
 }
 
 type Manager struct {
