@@ -74,6 +74,7 @@ function TimeSeriesViewContainer({
 			isLoading={isLoading}
 			data={responseData}
 			yAxisUnit={isValidToConvertToMs ? 'ms' : 'short'}
+			dataSource={dataSource}
 		/>
 	);
 }
