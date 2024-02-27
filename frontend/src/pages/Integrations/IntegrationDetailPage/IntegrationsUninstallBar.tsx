@@ -52,10 +52,9 @@ function IntergrationsUninstallBar(
 				}}
 			>
 				<Typography.Text>
-					Removing this integration makes SigNoz stop listening for data from
-					{integrationTitle}
-					instances. Youd still have to manually remove the configuration in your
-					code to stop sending data.
+					Removing this integration makes SigNoz stop listening for data from{' '}
+					{integrationTitle} instances. You would still have to manually remove the
+					configuration in your code to stop sending data.
 				</Typography.Text>
 			</Modal>
 		</div>
