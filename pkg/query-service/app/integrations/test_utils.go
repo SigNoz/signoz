@@ -2,37 +2,20 @@ package integrations
 
 import (
 	"context"
-	"os"
 	"slices"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-func NewTestSqliteDB(t *testing.T) (
-	db *sqlx.DB, dbFilePath string,
-) {
-	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
-	if err != nil {
-		t.Fatalf("could not create temp file for test db: %v", err)
-	}
-	testDBFilePath := testDBFile.Name()
-	t.Cleanup(func() { os.Remove(testDBFilePath) })
-	testDBFile.Close()
-
-	testDB, err := sqlx.Open("sqlite3", testDBFilePath)
-	if err != nil {
-		t.Fatalf("could not open test db sqlite file: %v", err)
-	}
-
-	return testDB, testDBFilePath
-}
+// TODO(Raj): Maybe move this to project level utils
+// and use the same helper in integration tests too
 
 func NewTestIntegrationsManager(t *testing.T) *Manager {
-	testDB, _ := NewTestSqliteDB(t)
+	testDB := utils.NewQueryServiceDBForTests(t)
 
 	installedIntegrationsRepo, err := NewInstalledIntegrationsSqliteRepo(testDB)
 	if err != nil {

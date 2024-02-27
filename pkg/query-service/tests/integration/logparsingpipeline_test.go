@@ -1,14 +1,10 @@
 package tests
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
@@ -31,12 +27,13 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
 
 func TestLogPipelinesLifecycle(t *testing.T) {
-	testbed := NewLogPipelinesTestBed(t)
+	testbed := NewLogPipelinesTestBed(t, nil)
 	assert := assert.New(t)
 
 	getPipelinesResp := testbed.GetPipelinesFromQS()
@@ -174,7 +171,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 
 func TestLogPipelinesHistory(t *testing.T) {
 	require := require.New(t)
-	testbed := NewLogPipelinesTestBed(t)
+	testbed := NewLogPipelinesTestBed(t, nil)
 
 	// Only the latest config version can be "IN_PROGRESS",
 	// other incomplete deployments should have status "UNKNOWN"
@@ -356,7 +353,7 @@ func TestLogPipelinesValidation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			testbed := NewLogPipelinesTestBed(t)
+			testbed := NewLogPipelinesTestBed(t, nil)
 			testbed.PostPipelinesToQSExpectingStatusCode(
 				logparsingpipeline.PostablePipelines{
 					Pipelines: []logparsingpipeline.PostablePipeline{tc.Pipeline},
@@ -369,7 +366,7 @@ func TestLogPipelinesValidation(t *testing.T) {
 
 func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 	require := require.New(t)
-	testbed := NewTestbedWithoutOpamp(t)
+	testbed := NewTestbedWithoutOpamp(t, nil)
 
 	getPipelinesResp := testbed.GetPipelinesFromQS()
 	require.Equal(0, len(getPipelinesResp.Pipelines))
@@ -422,7 +419,6 @@ func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 // configuring log pipelines and provides test helpers.
 type LogPipelinesTestBed struct {
 	t               *testing.T
-	testDBFilePath  string
 	testUser        *model.User
 	apiHandler      *app.APIHandler
 	agentConfMgr    *agentConf.Manager
@@ -430,24 +426,12 @@ type LogPipelinesTestBed struct {
 	opampClientConn *opamp.MockOpAmpConnection
 }
 
-func NewTestbedWithoutOpamp(t *testing.T) *LogPipelinesTestBed {
-	// Create a tmp file based sqlite db for testing.
-	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
-	if err != nil {
-		t.Fatalf("could not create temp file for test db: %v", err)
+// testDB can be injected for sharing a DB across multiple integration testbeds.
+func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed {
+	if testDB == nil {
+		testDB = utils.NewQueryServiceDBForTests(t)
 	}
-	testDBFilePath := testDBFile.Name()
-	t.Cleanup(func() { os.Remove(testDBFilePath) })
-	testDBFile.Close()
 
-	// TODO(Raj): move away from singleton DB instances to avoid
-	// issues when running tests in parallel.
-	dao.InitDao("sqlite", testDBFilePath)
-
-	testDB, err := sqlx.Open("sqlite3", testDBFilePath)
-	if err != nil {
-		t.Fatalf("could not open test db sqlite file: %v", err)
-	}
 	controller, err := logparsingpipeline.NewLogParsingPipelinesController(testDB, "sqlite")
 	if err != nil {
 		t.Fatalf("could not create a logparsingpipelines controller: %v", err)
@@ -467,7 +451,7 @@ func NewTestbedWithoutOpamp(t *testing.T) *LogPipelinesTestBed {
 	}
 
 	// Mock an available opamp agent
-	testDB, err = opampModel.InitDB(testDBFilePath)
+	testDB, err = opampModel.InitDB(testDB)
 	require.Nil(t, err, "failed to init opamp model")
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
@@ -479,16 +463,15 @@ func NewTestbedWithoutOpamp(t *testing.T) *LogPipelinesTestBed {
 	require.Nil(t, err, "failed to init agentConf")
 
 	return &LogPipelinesTestBed{
-		t:              t,
-		testDBFilePath: testDBFilePath,
-		testUser:       user,
-		apiHandler:     apiHandler,
-		agentConfMgr:   agentConfMgr,
+		t:            t,
+		testUser:     user,
+		apiHandler:   apiHandler,
+		agentConfMgr: agentConfMgr,
 	}
 }
 
-func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
-	testbed := NewTestbedWithoutOpamp(t)
+func NewLogPipelinesTestBed(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed {
+	testbed := NewTestbedWithoutOpamp(t, testDB)
 
 	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
 	err := opampServer.Start(opamp.GetAvailableLocalAddress())
@@ -791,61 +774,4 @@ func newInitialAgentConfigMap() *protobufs.AgentConfigMap {
 			},
 		},
 	}
-}
-
-func createTestUser() (*model.User, *model.ApiError) {
-	// Create a test user for auth
-	ctx := context.Background()
-	org, apiErr := dao.DB().CreateOrg(ctx, &model.Organization{
-		Name: "test",
-	})
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	group, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	auth.InitAuthCache(ctx)
-
-	return dao.DB().CreateUser(
-		ctx,
-		&model.User{
-			Name:     "test",
-			Email:    "test@test.com",
-			Password: "test",
-			OrgId:    org.Id,
-			GroupId:  group.Id,
-		},
-		true,
-	)
-}
-
-func NewAuthenticatedTestRequest(
-	user *model.User,
-	path string,
-	postData interface{},
-) (*http.Request, error) {
-	userJwt, err := auth.GenerateJWTForUser(user)
-	if err != nil {
-		return nil, err
-	}
-
-	var req *http.Request
-
-	if postData != nil {
-		var body bytes.Buffer
-		err = json.NewEncoder(&body).Encode(postData)
-		if err != nil {
-			return nil, err
-		}
-		req = httptest.NewRequest(http.MethodPost, path, &body)
-	} else {
-		req = httptest.NewRequest(http.MethodGet, path, nil)
-	}
-
-	req.Header.Add("Authorization", "Bearer "+userJwt.AccessJwt)
-	return req, nil
 }
