@@ -3129,6 +3129,16 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 	applyMetricLimit(result, queryRangeParams)
 
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		result, err = postProcessResult(result, queryRangeParams)
+	}
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
@@ -3403,7 +3413,7 @@ func applyFunctions(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV
 	for idx, result := range results {
 		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
 
-		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics) {
+		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics || builderQueries[result.QueryName].DataSource == v3.DataSourceLogs) {
 			functions := builderQueries[result.QueryName].Functions
 
 			for _, function := range functions {
