@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/app"
@@ -17,13 +18,14 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 // Higher level tests for UI facing APIs
 
 func TestSignozIntegrationLifeCycle(t *testing.T) {
 	require := require.New(t)
-	testbed := NewIntegrationsTestBed(t)
+	testbed := NewIntegrationsTestBed(t, nil)
 
 	installedResp := testbed.GetInstalledIntegrationsFromQS()
 	require.Equal(
@@ -92,6 +94,11 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 	require.False(availableIntegrations[0].IsInstalled)
 }
 
+func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
+	// require := require.New(t)
+	// require.True(false)
+}
+
 type IntegrationsTestBed struct {
 	t              *testing.T
 	testUser       *model.User
@@ -125,7 +132,7 @@ func (tb *IntegrationsTestBed) GetInstalledIntegrationsFromQS() *integrations.In
 	var integrationsResp integrations.IntegrationsListResponse
 	err = json.Unmarshal(dataJson, &integrationsResp)
 	if err != nil {
-		tb.t.Fatalf("could not unmarshal apiResponse.Data json into PipelinesResponse")
+		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into PipelinesResponse")
 	}
 
 	return &integrationsResp
@@ -142,6 +149,7 @@ func (tb *IntegrationsTestBed) GetIntegrationDetailsFromQS(
 	if err != nil {
 		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
 	}
+	fmt.Printf("\n\n%s\n\n", string(dataJson))
 	var integrationResp integrations.Integration
 	err = json.Unmarshal(dataJson, &integrationResp)
 	if err != nil {
@@ -232,11 +240,11 @@ func (tb *IntegrationsTestBed) mockLogQueryResponse(logsInResponse []model.Signo
 	addLogsQueryExpectation(tb.mockClickhouse, logsInResponse)
 }
 
-func NewIntegrationsTestBed(t *testing.T) *IntegrationsTestBed {
-	testDB, testDBFilePath := integrations.NewTestSqliteDB(t)
-
-	// TODO(Raj): This should not require passing in the DB file path
-	dao.InitDao("sqlite", testDBFilePath)
+// testDB can be injected for sharing a DB across multiple integration testbeds.
+func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed {
+	if testDB == nil {
+		testDB = utils.NewQueryServiceDBForTests(t)
+	}
 
 	controller, err := integrations.NewController(testDB)
 	if err != nil {
