@@ -30,7 +30,7 @@ describe('getUPlotChartOptions', () => {
 		expect(options.series[1].label).toBe('A');
 	});
 
-	test('Should render line chart for time series', () => {
+	test('Should return line chart as drawStyle for time series', () => {
 		const options = getUPlotChartOptions(inputPropsTimeSeries);
 		// @ts-ignore
 		expect(options.series[1].drawStyle).toBe('line');
@@ -46,7 +46,7 @@ describe('getUPlotChartOptions', () => {
 		expect(options.series[1].points.size).toBe(5);
 	});
 
-	test('should render bar chart for panel type bar', () => {
+	test('should return bar chart as drawStyle for panel type bar', () => {
 		const options = getUPlotChartOptions({
 			...inputPropsTimeSeries,
 			panelType: PANEL_TYPES.BAR,
