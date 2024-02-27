@@ -1,0 +1,31 @@
+.installed-integrations-container {
+	margin-top: 24px;
+	display: flex;
+	justify-content: center;
+	width: 100%;
+
+	.installed-integrations-content {
+		width: calc(100% - 30px);
+		max-width: 736px;
+
+		.installed-integrations-header {
+			.title {
+				color: var(--bg-vanilla-100);
+				font-size: var(--font-size-lg);
+				font-style: normal;
+				font-weight: var(--font-weight-normal);
+				line-height: 28px; /* 155.556% */
+				letter-spacing: -0.09px;
+			}
+
+			.subtitle {
+				color: var(--bg-vanilla-400);
+				font-size: var(--font-size-sm);
+				font-style: normal;
+				font-weight: var(--font-weight-normal);
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+		}
+	}
+}

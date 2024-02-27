@@ -1,7 +1,13 @@
+import './InstalledIntegrations.styles.scss';
+
+import Header from './Header';
+
 function InstalledIntegrations(): JSX.Element {
 	return (
-		<div>
-			<h1>InstalledIntegrations</h1>
+		<div className="installed-integrations-container">
+			<div className="installed-integrations-content">
+				<Header />
+			</div>
 		</div>
 	);
 }
