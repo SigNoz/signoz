@@ -95,8 +95,56 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 }
 
 func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
-	// require := require.New(t)
-	// require.True(false)
+	require := require.New(t)
+
+	testDB := utils.NewQueryServiceDBForTests(t)
+	integrationsTB := NewIntegrationsTestBed(t, testDB)
+	pipelinesTB := NewLogPipelinesTestBed(t, testDB)
+
+	availableIntegrationsResp := integrationsTB.GetAvailableIntegrationsFromQS()
+	availableIntegrations := availableIntegrationsResp.Integrations
+	require.Greater(
+		len(availableIntegrations), 0,
+		"some integrations should come bundled with SigNoz",
+	)
+
+	getPipelinesResp := pipelinesTB.GetPipelinesFromQS()
+	require.Equal(
+		0, len(getPipelinesResp.Pipelines),
+		"There should be no pipelines at the start",
+	)
+
+	// Installing an integration should make it visible in pipelines list
+	require.False(availableIntegrations[0].IsInstalled)
+	integrationsTB.RequestQSToInstallIntegration(
+		availableIntegrations[0].Id, map[string]interface{}{},
+	)
+
+	testIntegration := integrationsTB.GetIntegrationDetailsFromQS(availableIntegrations[0].Id)
+	require.Equal(testIntegration.Id, availableIntegrations[0].Id)
+	require.NotNil(testIntegration.Installation)
+	testIntegrationPipelines := testIntegration.Assets.Logs.Pipelines
+	require.Greater(
+		len(testIntegrationPipelines), 0,
+		"test integration expected to have a pipeline",
+	)
+
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(
+		len(testIntegrationPipelines), len(getPipelinesResp.Pipelines),
+		"Pipelines for installed integrations should appear in pipelines list",
+	)
+
+	// Uninstalling an integration should remove its pipelines
+	// from pipelines list in the UI
+	integrationsTB.RequestQSToUninstallIntegration(
+		testIntegration.Id,
+	)
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(
+		0, len(getPipelinesResp.Pipelines),
+		"Pipelines for uninstalled integrations should get removed from pipelines list",
+	)
 }
 
 type IntegrationsTestBed struct {

@@ -157,11 +157,13 @@ func createTestUser() (*model.User, *model.ApiError) {
 
 	auth.InitAuthCache(ctx)
 
+	userId := uuid.NewString()
 	return dao.DB().CreateUser(
 		ctx,
 		&model.User{
+			Id:       userId,
 			Name:     "test",
-			Email:    "test@test.com",
+			Email:    userId[:8] + "test@test.com",
 			Password: "test",
 			OrgId:    org.Id,
 			GroupId:  group.Id,
