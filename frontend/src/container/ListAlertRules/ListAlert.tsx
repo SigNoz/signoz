@@ -120,7 +120,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				history.push(
 					`${ROUTES.EDIT_ALERTS}?ruleId=${record.id.toString()}&${
 						QueryParams.compositeQuery
-					}=${encodeURIComponent(JSON.stringify(compositeQuery))}`,
+					}=${encodeURIComponent(JSON.stringify(compositeQuery))}&panelTypes=${
+						record.condition.compositeQuery.panelType
+					}`,
 				);
 			})
 			.catch(handleError);
