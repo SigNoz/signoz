@@ -78,18 +78,18 @@ function LogsPanelComponent({
 	}, [pagination]);
 
 	useEffect(() => {
-		const newRequestData = { ...requestData };
 		const newQueryData = { ...query };
-		newRequestData.query = newQueryData;
-		if (
-			query.builder.queryData[0].limit === 0 &&
-			newRequestData.tableParams?.pagination
-		) {
-			newRequestData.tableParams.pagination.limit = 0;
-		} else if (newRequestData.tableParams?.pagination) {
-			newRequestData.tableParams.pagination.limit =
-				newQueryData.builder.queryData[0].limit || 0;
+		const newRequestData = {
+			...requestData,
+			query: newQueryData,
+		};
+
+		const { tableParams } = newRequestData;
+		if (tableParams?.pagination) {
+			const { limit } = newQueryData.builder.queryData[0];
+			tableParams.pagination.limit = limit === 0 ? 0 : limit || 0;
 		}
+
 		setRequestData(newRequestData);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [query]);
