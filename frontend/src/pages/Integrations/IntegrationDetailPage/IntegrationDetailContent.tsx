@@ -30,7 +30,7 @@ function IntegrationDetailContent(): JSX.Element {
 					className="integration-tab-btns"
 					icon={<Hammer size={14} />}
 				>
-					<Typography.Text className="typography">Configuration</Typography.Text>
+					<Typography.Text className="typography">Configure</Typography.Text>
 				</Button>
 			),
 			children: <Configure />,

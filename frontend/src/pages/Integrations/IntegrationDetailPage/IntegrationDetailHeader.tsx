@@ -2,7 +2,7 @@
 import './IntegrationDetailPage.styles.scss';
 
 import { Button, Modal, Typography } from 'antd';
-import { ArrowLeftRight } from 'lucide-react';
+import { ArrowLeftRight, Check } from 'lucide-react';
 import { useState } from 'react';
 
 import TestConnection, { ConnectionStates } from './TestConnection';
@@ -20,7 +20,7 @@ function IntegrationDetailHeader(
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const [connectionState] = useState<ConnectionStates>(
-		ConnectionStates.Connected,
+		ConnectionStates.NoDataSinceLong,
 	);
 
 	const showModal = (): void => {
@@ -61,7 +61,8 @@ function IntegrationDetailHeader(
 				title="Test Connection"
 				onOk={handleOk}
 				onCancel={handleCancel}
-				okText="I Understand"
+				okText="I understand"
+				okButtonProps={{ className: 'understandBtn', icon: <Check size={14} /> }}
 				cancelButtonProps={{ style: { display: 'none' } }}
 			>
 				<div className="connection-content">

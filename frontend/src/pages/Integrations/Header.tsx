@@ -19,7 +19,7 @@ function Header(): JSX.Element {
 			</Typography.Text>
 
 			<Input
-				placeholder="Search for any integration..."
+				placeholder="Search for an integration..."
 				prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
 				value={searchValue}
 				onChange={handleSearch}

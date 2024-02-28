@@ -25,7 +25,7 @@ function Configure(): JSX.Element {
 		<div className="integration-detail-configure">
 			<div className="configure-menu">
 				{configuration.map((config, index) => (
-					<Tooltip title={config.title} key={config.title}>
+					<Tooltip title={config.title} key={config.title} placement="left">
 						<Button
 							key={config.title}
 							type="text"

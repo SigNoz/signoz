@@ -38,28 +38,25 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 			<List
 				dataSource={data}
 				itemLayout="horizontal"
-				renderItem={(item, index): JSX.Element => {
-					console.log(item, index);
-					return (
-						<List.Item key={item.id} className="integrations-list-item">
-							<div className="list-item-image-container">
-								<img src={item.icon} alt={item.title} className="list-item-image" />
-							</div>
-							<div className="list-item-details">
-								<Typography.Text className="heading">{item.title}</Typography.Text>
-								<Typography.Text className="description">
-									{item.description}
-								</Typography.Text>
-							</div>
-							<Button
-								className="configure-btn"
-								onClick={(): void => setSelectedIntegration(item.id)}
-							>
-								Configure
-							</Button>
-						</List.Item>
-					);
-				}}
+				renderItem={(item): JSX.Element => (
+					<List.Item key={item.id} className="integrations-list-item">
+						<div className="list-item-image-container">
+							<img src={item.icon} alt={item.title} className="list-item-image" />
+						</div>
+						<div className="list-item-details">
+							<Typography.Text className="heading">{item.title}</Typography.Text>
+							<Typography.Text className="description">
+								{item.description}
+							</Typography.Text>
+						</div>
+						<Button
+							className="configure-btn"
+							onClick={(): void => setSelectedIntegration(item.id)}
+						>
+							Configure
+						</Button>
+					</List.Item>
+				)}
 			/>
 		</div>
 	);
