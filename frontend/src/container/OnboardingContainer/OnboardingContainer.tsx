@@ -23,6 +23,7 @@ import {
 } from './context/OnboardingContext';
 import { DataSourceType } from './Steps/DataSource/DataSource';
 import {
+	defaultApplicationDataSource,
 	defaultAwsServices,
 	defaultInfraMetricsType,
 	defaultLogsType,
@@ -232,12 +233,12 @@ export default function Onboarding(): JSX.Element {
 		setSelectedModule(module);
 		updateSelectedModule(module);
 		updateSelectedDataSource(null);
-		resetProgress();
 	};
 
 	useEffect(() => {
 		if (location.pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING) {
 			handleModuleSelect(useCases.APM);
+			updateSelectedDataSource(defaultApplicationDataSource);
 			handleNextStep();
 		} else if (
 			location.pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING
