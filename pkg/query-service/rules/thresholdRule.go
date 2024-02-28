@@ -315,14 +315,12 @@ func (r *ThresholdRule) FetchTemporality(ctx context.Context, metricNames []stri
 		}
 		metricNameToTemporality[metricName][v3.Temporality(temporality)] = true
 	}
-	fmt.Println("metricNameToTemporality", metricNameToTemporality)
 	return metricNameToTemporality, nil
 }
 
 // populateTemporality same as addTemporality but for v4 and better
 func (r *ThresholdRule) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3, ch driver.Conn) error {
 
-	fmt.Println("populate", r.temporalityMap)
 	missingTemporality := make([]string, 0)
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
@@ -350,7 +348,6 @@ func (r *ThresholdRule) populateTemporality(ctx context.Context, qp *v3.QueryRan
 	}
 
 	nameToTemporality, err := r.FetchTemporality(ctx, missingTemporality, ch)
-	fmt.Println("nameToTemporality", nameToTemporality, err)
 	if err != nil {
 		return err
 	}
@@ -737,16 +734,13 @@ func (r *ThresholdRule) prepareBuilderQueries(ts time.Time, ch driver.Conn) (map
 
 	}
 
-	fmt.Println("here", ch)
-
-	if ch != nil {
-		r.populateTemporality(context.Background(), params, ch)
-	}
-
 	var runQueries map[string]string
 	var err error
 
 	if r.version == "v4" {
+		if ch != nil {
+			r.populateTemporality(context.Background(), params, ch)
+		}
 		runQueries, err = r.queryBuilderV4.PrepareQueries(params)
 	} else {
 		runQueries, err = r.queryBuilder.PrepareQueries(params)
