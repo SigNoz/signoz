@@ -20,6 +20,15 @@ import {
 	SetupOtelCollectorStep,
 	StartContainer,
 	TestConnectionStep,
+	SetupDaemonService,
+	CreateOtelConfig,
+	CreateDaemonService,
+	EcsSendData,
+	CreateSidecarCollectorContainer,
+	DeployTaskDefinition,
+	EcsSendLogsData,
+	MonitorDashboard
+
 } from '../constants/stepsConfig';
 import { ModuleProps, SelectedModuleStepProps } from '../OnboardingContainer';
 import { DataSourceType } from '../Steps/DataSource/DataSource';
@@ -44,6 +53,10 @@ export const LOGS_MANAGEMENT_STEPS: SelectedModuleStepProps[] = [
 ];
 
 export const INFRASTRUCTURE_MONITORING_STEPS: SelectedModuleStepProps[] = [
+	DataSourceStep,
+];
+
+export const AWS_MONITORING_STEPS: SelectedModuleStepProps[] = [
 	DataSourceStep,
 ];
 
@@ -111,7 +124,55 @@ export const getSteps = ({
 				SetupOtelCollectorStep,
 				ConfigureMetricsReceiver,
 			];
+		case 'awsEc2ApplicationLogs':
+			return [
+				DataSourceStep,
+				EnvDetailsStep,
+				SetupOtelCollectorStep,
+				ConfigureReceiver,
+				RestartOtelCollector,
+			];
+		case 'awsEc2InfrastructureMetrics':
+			return [
+				DataSourceStep,
+				EnvDetailsStep,
+				SetupOtelCollectorStep,
+				ConfigureHostmetricsJSON,
+			];
+		case 'awsEcsEc2':
+			return [
+				DataSourceStep,
+				SetupDaemonService,
+				CreateOtelConfig,
+				CreateDaemonService,
+				EcsSendData
+			];
+		case 'awsEcsExternal':
+			return [
+				DataSourceStep,
+				SetupDaemonService,
+				CreateOtelConfig,
+				CreateDaemonService,
+				EcsSendData
+			];
+		case 'awsEcsFargate':
+			return [
+				DataSourceStep,
+				CreateOtelConfig,
+				CreateSidecarCollectorContainer,
+				DeployTaskDefinition,
+				EcsSendData,
+				EcsSendLogsData,
+			];
+		case 'awsEks':
+			return [
+				DataSourceStep,
+				SetupOtelCollectorStep,
+				MonitorDashboard
+			];
+
 		default:
 			return [DataSourceStep];
 	}
 };
+

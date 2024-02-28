@@ -68,6 +68,7 @@ export const frameworksMap = {
 	},
 	LogsManagement: {},
 	InfrastructureMonitoring: {},
+	AwsMonitoring: {}
 };
 
 export const defaultApplicationDataSource = {
@@ -212,6 +213,45 @@ const supportedInfraMetrics = [
 	},
 ];
 
+export const defaultAwsServices = {
+	name: 'EC2 - Application Logs',
+	id: 'awsEc2ApplicationLogs',
+	imgURL: `Logos/ec2.svg`,
+};
+
+const supportedAwsServices = [
+	{
+		name: 'EC2 - App/Server Logs',
+		id: 'awsEc2ApplicationLogs',
+		imgURL: `Logos/ec2.svg`,
+	},
+	{
+		name: 'EC2 - Infra Metrics',
+		id: 'awsEc2InfrastructureMetrics',
+		imgURL: `Logos/ec2.svg`,
+	},
+	{
+		name: 'ECS - EC2',
+		id: 'awsEcsEc2',
+		imgURL: `Logos/ecs.svg`,
+	},
+	{
+		name: 'ECS - Fargate',
+		id: 'awsEcsFargate',
+		imgURL: `Logos/ecs.svg`,
+	},
+	{
+		name: 'ECS - External',
+		id: 'awsEcsExternal',
+		imgURL: `Logos/ecs.svg`,
+	},
+	{
+		name: 'EKS',
+		id: 'awsEks',
+		imgURL: `Logos/eks.svg`,
+	},
+];
+
 export const getDataSources = (module: ModuleProps): DataSourceType[] => {
 	if (module.id === ModulesMap.APM) {
 		return supportedLanguages;
@@ -221,7 +261,11 @@ export const getDataSources = (module: ModuleProps): DataSourceType[] => {
 		return supportedInfraMetrics;
 	}
 
-	return supportedLogsTypes;
+	if (module.id === ModulesMap.LogsManagement) {
+		return supportedLogsTypes;
+	}
+
+	return supportedAwsServices;
 };
 
 export const getSupportedFrameworks = ({
@@ -269,7 +313,7 @@ export const hasFrameworks = ({
 		(moduleID === ModulesMap.APM && dataSourceName === '.NET') ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'rust') ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'elixir') ||
-		(moduleID === ModulesMap.APM && dataSourceName === 'swift')
+		(moduleID === ModulesMap.APM && dataSourceName === 'swift') 
 	) {
 		return false;
 	}

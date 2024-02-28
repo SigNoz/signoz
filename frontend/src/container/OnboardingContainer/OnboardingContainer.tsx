@@ -21,6 +21,7 @@ import {
 } from './context/OnboardingContext';
 import { DataSourceType } from './Steps/DataSource/DataSource';
 import {
+	defaultAwsServices,
 	defaultInfraMetricsType,
 	defaultLogsType,
 } from './utils/dataSourceUtils';
@@ -29,12 +30,14 @@ import {
 	getSteps,
 	INFRASTRUCTURE_MONITORING_STEPS,
 	LOGS_MANAGEMENT_STEPS,
+	AWS_MONITORING_STEPS
 } from './utils/getSteps';
 
 export enum ModulesMap {
 	APM = 'APM',
 	LogsManagement = 'LogsManagement',
 	InfrastructureMonitoring = 'InfrastructureMonitoring',
+	AwsMonitoring = 'AwsMonitoring',
 }
 
 export interface ModuleProps {
@@ -68,6 +71,12 @@ export const useCases = {
 		desc:
 			'Monitor Kubernetes infrastructure metrics, hostmetrics, or metrics of any third-party integration',
 	},
+	AwsMonitoring: {
+        id: ModulesMap.AwsMonitoring,
+        title: 'AWS Monitoring',
+        desc:
+            'Monitor your traces, logs and metrics for AWS services like EC2, ECS, EKS etc.',      
+    },
 };
 
 export default function Onboarding(): JSX.Element {
@@ -172,6 +181,13 @@ export default function Onboarding(): JSX.Element {
 			} else {
 				setSelectedModuleSteps(LOGS_MANAGEMENT_STEPS);
 				updateSelectedDataSource(defaultLogsType);
+			}
+		} else if (selectedModule?.id === ModulesMap.AwsMonitoring) {
+			if (selectedDataSource) {
+				setModuleStepsBasedOnSelectedDataSource(selectedDataSource);
+			} else {
+				setSelectedModuleSteps(AWS_MONITORING_STEPS);
+				updateSelectedDataSource(defaultAwsServices);
 			}
 		} else if (selectedModule?.id === ModulesMap.APM) {
 			handleAPMSteps();
