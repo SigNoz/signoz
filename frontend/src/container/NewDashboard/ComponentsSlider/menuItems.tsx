@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { LineChart, List, SigmaSquare, Table } from 'lucide-react';
+import { BarChart3, LineChart, List, SigmaSquare, Table } from 'lucide-react';
 
 const Items: ItemsProps[] = [
 	{
@@ -22,6 +22,11 @@ const Items: ItemsProps[] = [
 		name: PANEL_TYPES.LIST,
 		icon: <List size={32} color={Color.BG_ROBIN_400} />,
 		display: 'List',
+	},
+	{
+		name: PANEL_TYPES.BAR,
+		icon: <BarChart3 size={32} color={Color.BG_ROBIN_400} />,
+		display: 'Bar',
 	},
 ];
 
