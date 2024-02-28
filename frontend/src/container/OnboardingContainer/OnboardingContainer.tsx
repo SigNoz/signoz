@@ -196,6 +196,7 @@ export default function Onboarding(): JSX.Element {
 			}
 		} else if (selectedModule?.id === ModulesMap.APM) {
 			handleAPMSteps();
+			updateSelectedDataSource(defaultApplicationDataSource);
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
