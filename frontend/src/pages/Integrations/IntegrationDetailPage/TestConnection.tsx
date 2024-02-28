@@ -13,8 +13,7 @@ enum ConnectionStates {
 const ConnectionStatesLabelMap = {
 	[ConnectionStates.Connected]: 'This integration is working properly',
 	[ConnectionStates.TestingConnection]: 'Listening for data...',
-	[ConnectionStates.ConnectionFailed]:
-		'There is some issue with this integration :/',
+	[ConnectionStates.ConnectionFailed]: 'Something went wrong :/',
 	[ConnectionStates.NoDataSinceLong]:
 		'This integration has not received data in a while :/',
 };
