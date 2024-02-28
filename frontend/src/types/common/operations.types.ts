@@ -14,6 +14,7 @@ type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> &
 	Pick<QueryBuilderProps, 'filterConfigs'> & {
 		formula?: IBuilderFormula;
 		isListViewPanel?: boolean;
+		entityVersion: string;
 	};
 
 export type HandleChangeQueryData = <

@@ -4,7 +4,6 @@ import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
@@ -12,13 +11,15 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
+	version: string,
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
 ) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
 
-export const useGetQueryRange: UseGetQueryRange = (requestData, options) => {
-	const { selectedDashboard } = useDashboard();
-
-	const version = selectedDashboard?.data?.version || 'v3';
+export const useGetQueryRange: UseGetQueryRange = (
+	requestData,
+	version,
+	options,
+) => {
 	const newRequestData: GetQueryResultsProps = useMemo(
 		() => ({
 			...requestData,

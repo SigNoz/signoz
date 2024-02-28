@@ -1,3 +1,4 @@
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValues,
@@ -126,6 +127,7 @@ export const useLogsData = ({
 	const { data, isFetching } = useGetExplorerQueryRange(
 		requestData,
 		panelType,
+		DEFAULT_ENTITY_VERSION,
 		{
 			keepPreviousData: true,
 			enabled: !isLimit && !!requestData,

@@ -109,8 +109,6 @@ export default function QueryFunctions({
 		index: number,
 		value: string,
 	): void => {
-		console.log(func);
-
 		const updateFunctions = cloneDeep(functions);
 
 		if (updateFunctions && updateFunctions.length > 0 && updateFunctions[index]) {
@@ -125,8 +123,6 @@ export default function QueryFunctions({
 		index: number,
 		value: string,
 	): void => {
-		console.log(func, index, value);
-
 		const updateFunctions = cloneDeep(functions);
 
 		if (updateFunctions && updateFunctions.length > 0 && updateFunctions[index]) {

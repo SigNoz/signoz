@@ -20,7 +20,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetricsOperatorsByAttributeType';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -43,6 +42,7 @@ export const useQueryOperations: UseQueryOperations = ({
 	filterConfigs,
 	formula,
 	isListViewPanel = false,
+	entityVersion,
 }) => {
 	const {
 		handleSetQueryData,
@@ -60,10 +60,6 @@ export const useQueryOperations: UseQueryOperations = ({
 	>([]);
 
 	const { dataSource, aggregateOperator } = query;
-
-	const { selectedDashboard } = useDashboard();
-
-	const selectedDashboardVersion = selectedDashboard?.data?.version || 'v3';
 
 	const getNewListOfAdditionalFilters = useCallback(
 		(dataSource: DataSource, isQuery: boolean): string[] => {
@@ -187,10 +183,7 @@ export const useQueryOperations: UseQueryOperations = ({
 				having: [],
 			};
 
-			if (
-				newQuery.dataSource === DataSource.METRICS &&
-				selectedDashboardVersion === 'v4'
-			) {
+			if (newQuery.dataSource === DataSource.METRICS && entityVersion === 'v4') {
 				handleMetricAggregateAtributeTypes(newQuery.aggregateAttribute);
 
 				if (newQuery.aggregateAttribute.type === ATTRIBUTE_TYPES.SUM) {
@@ -210,7 +203,7 @@ export const useQueryOperations: UseQueryOperations = ({
 		},
 		[
 			query,
-			selectedDashboardVersion,
+			entityVersion,
 			handleSetQueryData,
 			index,
 			handleMetricAggregateAtributeTypes,
@@ -317,7 +310,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			dataSource === DataSource.METRICS &&
 			query &&
 			query.aggregateAttribute &&
-			selectedDashboardVersion === 'v4'
+			entityVersion === 'v4'
 		) {
 			handleMetricAggregateAtributeTypes(query.aggregateAttribute);
 		} else {
@@ -332,13 +325,7 @@ export const useQueryOperations: UseQueryOperations = ({
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		dataSource,
-		initialDataSource,
-		panelType,
-		operators,
-		selectedDashboardVersion,
-	]);
+	}, [dataSource, initialDataSource, panelType, operators, entityVersion]);
 
 	useEffect(() => {
 		const additionalFilters = getNewListOfAdditionalFilters(dataSource, true);

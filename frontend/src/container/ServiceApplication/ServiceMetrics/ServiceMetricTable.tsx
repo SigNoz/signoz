@@ -1,6 +1,7 @@
 import { WarningFilled } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
@@ -35,22 +36,26 @@ function ServiceMetricTable({
 	const { data: licenseData, isFetching } = useLicense();
 	const isCloudUserVal = isCloudUser();
 
-	const queries = useGetQueriesRange(queryRangeRequestData, {
-		queryKey: [
-			`GetMetricsQueryRange-${queryRangeRequestData[0].selectedTime}-${globalSelectedInterval}`,
-			maxTime,
-			minTime,
-			globalSelectedInterval,
-		],
-		keepPreviousData: true,
-		enabled: true,
-		refetchOnMount: false,
-		onError: (error) => {
-			notifications.error({
-				message: error.message,
-			});
+	const queries = useGetQueriesRange(
+		queryRangeRequestData,
+		DEFAULT_ENTITY_VERSION,
+		{
+			queryKey: [
+				`GetMetricsQueryRange-${queryRangeRequestData[0].selectedTime}-${globalSelectedInterval}`,
+				maxTime,
+				minTime,
+				globalSelectedInterval,
+			],
+			keepPreviousData: true,
+			enabled: true,
+			refetchOnMount: false,
+			onError: (error) => {
+				notifications.error({
+					message: error.message,
+				});
+			},
 		},
-	});
+	);
 
 	const isLoading = queries.some((query) => query.isLoading);
 	const services: ServicesList[] = useMemo(

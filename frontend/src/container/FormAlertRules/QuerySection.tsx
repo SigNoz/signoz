@@ -57,6 +57,7 @@ function QuerySection({
 			showFunctions={
 				alertType === AlertTypes.METRICS_BASED_ALERT && alertDef.version === 'v4'
 			}
+			version={alertDef.version || 'v3'}
 		/>
 	);
 

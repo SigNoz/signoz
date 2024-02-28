@@ -8,4 +8,5 @@ export type QueryProps = {
 	queryVariant: 'static' | 'dropdown';
 	isListViewPanel?: boolean;
 	showFunctions?: boolean;
+	version: string;
 } & Pick<QueryBuilderProps, 'filterConfigs' | 'queryComponents'>;

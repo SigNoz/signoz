@@ -204,6 +204,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 										headerMenuList={widgetActions}
 										variables={variables}
 										fillSpans={currentWidget?.fillSpans}
+										version={selectedDashboard?.data?.version}
 									/>
 								</Card>
 							</CardContainer>

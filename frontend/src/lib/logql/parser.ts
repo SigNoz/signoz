@@ -144,8 +144,6 @@ export const parseQuery = (queryString) => {
 			];
 		}
 	}
-
-	// console.log(parsedRaw);
 	return parsedRaw;
 };
 
