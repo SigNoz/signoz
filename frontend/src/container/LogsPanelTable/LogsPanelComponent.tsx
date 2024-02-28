@@ -77,6 +77,23 @@ function LogsPanelComponent({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [pagination]);
 
+	useEffect(() => {
+		const newRequestData = { ...requestData };
+		const newQueryData = { ...query };
+		newRequestData.query = newQueryData;
+		if (
+			query.builder.queryData[0].limit === 0 &&
+			newRequestData.tableParams?.pagination
+		) {
+			newRequestData.tableParams.pagination.limit = 0;
+		} else if (newRequestData.tableParams?.pagination) {
+			newRequestData.tableParams.pagination.limit =
+				newQueryData.builder.queryData[0].limit || 0;
+		}
+		setRequestData(newRequestData);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [query]);
+
 	const [pageSize, setPageSize] = useState<number>(10);
 	const { selectedDashboard } = useDashboard();
 

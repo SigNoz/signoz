@@ -32,10 +32,15 @@ function WidgetGraphContainer({
 
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
-	const getWidgetQueryRange = useGetWidgetQueryRange({
-		graphType: getGraphType(selectedGraph),
-		selectedTime: selectedTime.enum,
-	});
+	const getWidgetQueryRange = useGetWidgetQueryRange(
+		{
+			graphType: getGraphType(selectedGraph),
+			selectedTime: selectedTime.enum,
+		},
+		{
+			enabled: selectedGraph !== PANEL_TYPES.LIST,
+		},
+	);
 
 	if (getWidgetQueryRange.data && selectedGraph === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
@@ -55,7 +60,7 @@ function WidgetGraphContainer({
 			</NotFoundContainer>
 		);
 	}
-	if (getWidgetQueryRange.isLoading) {
+	if (getWidgetQueryRange.isLoading && selectedGraph !== PANEL_TYPES.LIST) {
 		return <Spinner size="large" tip="Loading..." />;
 	}
 

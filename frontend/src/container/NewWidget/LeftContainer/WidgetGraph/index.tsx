@@ -1,4 +1,5 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Card } from 'container/GridCardLayout/styles';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -34,10 +35,15 @@ function WidgetGraph({
 
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
-	const getWidgetQueryRange = useGetWidgetQueryRange({
-		graphType: getGraphType(selectedGraph),
-		selectedTime: selectedTime.enum,
-	});
+	const getWidgetQueryRange = useGetWidgetQueryRange(
+		{
+			graphType: getGraphType(selectedGraph),
+			selectedTime: selectedTime.enum,
+		},
+		{
+			enabled: selectedGraph !== PANEL_TYPES.LIST,
+		},
+	);
 
 	if (selectedWidget === undefined) {
 		return <Card $panelType={selectedGraph}>Invalid widget</Card>;

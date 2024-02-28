@@ -47,10 +47,15 @@ function QuerySection({
 
 	const { selectedDashboard, setSelectedDashboard } = useDashboard();
 
-	const getWidgetQueryRange = useGetWidgetQueryRange({
-		graphType: selectedGraph,
-		selectedTime: selectedTime.enum,
-	});
+	const getWidgetQueryRange = useGetWidgetQueryRange(
+		{
+			graphType: selectedGraph,
+			selectedTime: selectedTime.enum,
+		},
+		{
+			enabled: selectedGraph !== PANEL_TYPES.LIST,
+		},
+	);
 
 	const { widgets } = selectedDashboard?.data || {};
 
