@@ -27,10 +27,10 @@ import {
 } from './utils/dataSourceUtils';
 import {
 	APM_STEPS,
+	AWS_MONITORING_STEPS,
 	getSteps,
 	INFRASTRUCTURE_MONITORING_STEPS,
 	LOGS_MANAGEMENT_STEPS,
-	AWS_MONITORING_STEPS
 } from './utils/getSteps';
 
 export enum ModulesMap {
@@ -72,11 +72,11 @@ export const useCases = {
 			'Monitor Kubernetes infrastructure metrics, hostmetrics, or metrics of any third-party integration',
 	},
 	AwsMonitoring: {
-        id: ModulesMap.AwsMonitoring,
-        title: 'AWS Monitoring',
-        desc:
-            'Monitor your traces, logs and metrics for AWS services like EC2, ECS, EKS etc.',      
-    },
+		id: ModulesMap.AwsMonitoring,
+		title: 'AWS Monitoring',
+		desc:
+			'Monitor your traces, logs and metrics for AWS services like EC2, ECS, EKS etc.',
+	},
 };
 
 export default function Onboarding(): JSX.Element {

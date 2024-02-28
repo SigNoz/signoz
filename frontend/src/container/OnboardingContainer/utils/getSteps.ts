@@ -6,29 +6,28 @@ import {
 	ConfigureHostmetricsJSON,
 	ConfigureMetricsReceiver,
 	ConfigureReceiver,
+	CreateDaemonService,
 	CreateHttpPayload,
+	CreateOtelConfig,
+	CreateSidecarCollectorContainer,
 	DataSourceStep,
+	DeployTaskDefinition,
+	EcsSendData,
+	EcsSendLogsData,
 	EnvDetailsStep,
 	InstallOpenTelemetryStep,
 	LogsTestConnectionStep,
+	MonitorDashboard,
 	PlotMetrics,
 	RestartOtelCollector,
 	RunApplicationStep,
 	SelectMethodStep,
 	SendLogsCloudwatch,
+	SetupDaemonService,
 	SetupLogDrains,
 	SetupOtelCollectorStep,
 	StartContainer,
 	TestConnectionStep,
-	SetupDaemonService,
-	CreateOtelConfig,
-	CreateDaemonService,
-	EcsSendData,
-	CreateSidecarCollectorContainer,
-	DeployTaskDefinition,
-	EcsSendLogsData,
-	MonitorDashboard
-
 } from '../constants/stepsConfig';
 import { ModuleProps, SelectedModuleStepProps } from '../OnboardingContainer';
 import { DataSourceType } from '../Steps/DataSource/DataSource';
@@ -56,9 +55,7 @@ export const INFRASTRUCTURE_MONITORING_STEPS: SelectedModuleStepProps[] = [
 	DataSourceStep,
 ];
 
-export const AWS_MONITORING_STEPS: SelectedModuleStepProps[] = [
-	DataSourceStep,
-];
+export const AWS_MONITORING_STEPS: SelectedModuleStepProps[] = [DataSourceStep];
 
 export const getSteps = ({
 	selectedDataSource,
@@ -85,6 +82,7 @@ export const getSteps = ({
 		case 'fluentD':
 		case 'fluentBit':
 		case 'logStash':
+		case 'awsEc2ApplicationLogs':
 			return [
 				DataSourceStep,
 				EnvDetailsStep,
@@ -111,6 +109,7 @@ export const getSteps = ({
 		case 'kubernetesInfraMetrics':
 			return [DataSourceStep, SetupOtelCollectorStep, PlotMetrics];
 		case 'hostMetrics':
+		case 'awsEc2InfrastructureMetrics':
 			return [
 				DataSourceStep,
 				EnvDetailsStep,
@@ -124,37 +123,16 @@ export const getSteps = ({
 				SetupOtelCollectorStep,
 				ConfigureMetricsReceiver,
 			];
-		case 'awsEc2ApplicationLogs':
-			return [
-				DataSourceStep,
-				EnvDetailsStep,
-				SetupOtelCollectorStep,
-				ConfigureReceiver,
-				RestartOtelCollector,
-			];
-		case 'awsEc2InfrastructureMetrics':
-			return [
-				DataSourceStep,
-				EnvDetailsStep,
-				SetupOtelCollectorStep,
-				ConfigureHostmetricsJSON,
-			];
+		case 'awsEcsExternal':
 		case 'awsEcsEc2':
 			return [
 				DataSourceStep,
 				SetupDaemonService,
 				CreateOtelConfig,
 				CreateDaemonService,
-				EcsSendData
+				EcsSendData,
 			];
-		case 'awsEcsExternal':
-			return [
-				DataSourceStep,
-				SetupDaemonService,
-				CreateOtelConfig,
-				CreateDaemonService,
-				EcsSendData
-			];
+
 		case 'awsEcsFargate':
 			return [
 				DataSourceStep,
@@ -165,14 +143,9 @@ export const getSteps = ({
 				EcsSendLogsData,
 			];
 		case 'awsEks':
-			return [
-				DataSourceStep,
-				SetupOtelCollectorStep,
-				MonitorDashboard
-			];
+			return [DataSourceStep, SetupOtelCollectorStep, MonitorDashboard];
 
 		default:
 			return [DataSourceStep];
 	}
 };
-

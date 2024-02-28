@@ -40,7 +40,7 @@ import AwsMonitoring_awsEc2InfrastructureMetrics_macOsAMD64_configureHostmetrics
 import AwsMonitoring_awsEc2InfrastructureMetrics_macOsARM64_setupOtelCollector from '../Modules/AwsMonitoring/EC2InfrastructureMetrics/md-docs/MacOsARM64/hostmetrics-setupOtelCollector.md';
 import AwsMonitoring_awsEc2InfrastructureMetrics_macOsARM64_configureHostmetricsJson from '../Modules/AwsMonitoring/EC2InfrastructureMetrics/md-docs/MacOsARM64/hostmetrics-configureHostmetricsJson.md';
 
-//Hostmetrics End
+// Hostmetrics End
 // AwsMonitoring_awsEc2ApplicationLogs_linuxAMD64_restartOtelCollector,
 
 import AwsMonitoring_awsEcsEc2_setupDaemonService from '../Modules/AwsMonitoring/ECSEc2/md-docs/ecsEc2-setupDeamonService.md';
@@ -65,66 +65,63 @@ import AwsMonitoring_awsEks_setupOtelCollector from '../Modules/AwsMonitoring/EK
 import AwsMonitoring_awsEks_monitorDashboard from '../Modules/AwsMonitoring/EKS/eks-monitorUsingDashboard.md';
 
 export const AwsMonitoringDocFilePaths = {
+	/// /// AWS EC2 Application Logs
 
-    ////// AWS EC2 Application Logs
+	// Linux AMD64
+	AwsMonitoring_awsEc2ApplicationLogs_linuxAMD64_setupOtelCollector,
+	AwsMonitoring_awsEc2ApplicationLogs_linuxAMD64_configureReceiver,
+	AwsMonitoring_awsEc2ApplicationLogs_linuxAMD64_restartOtelCollector,
+	// LINUX ARM 64
+	AwsMonitoring_awsEc2ApplicationLogs_linuxARM64_setupOtelCollector,
+	AwsMonitoring_awsEc2ApplicationLogs_linuxARM64_configureReceiver,
+	AwsMonitoring_awsEc2ApplicationLogs_linuxARM64_restartOtelCollector,
+	// MacOS AMD 64
+	AwsMonitoring_awsEc2ApplicationLogs_macOsAMD64_setupOtelCollector,
+	AwsMonitoring_awsEc2ApplicationLogs_macOsAMD64_configureReceiver,
+	AwsMonitoring_awsEc2ApplicationLogs_macOsAMD64_restartOtelCollector,
+	// MacOS ARM 64
+	AwsMonitoring_awsEc2ApplicationLogs_macOsARM64_setupOtelCollector,
+	AwsMonitoring_awsEc2ApplicationLogs_macOsARM64_configureReceiver,
+	AwsMonitoring_awsEc2ApplicationLogs_macOsARM64_restartOtelCollector,
 
-    // Linux AMD64
-    AwsMonitoring_awsEc2ApplicationLogs_linuxAMD64_setupOtelCollector,
-    AwsMonitoring_awsEc2ApplicationLogs_linuxAMD64_configureReceiver,
-    AwsMonitoring_awsEc2ApplicationLogs_linuxAMD64_restartOtelCollector,
-    //LINUX ARM 64
-    AwsMonitoring_awsEc2ApplicationLogs_linuxARM64_setupOtelCollector,
-    AwsMonitoring_awsEc2ApplicationLogs_linuxARM64_configureReceiver,
-    AwsMonitoring_awsEc2ApplicationLogs_linuxARM64_restartOtelCollector,
-    // MacOS AMD 64
-    AwsMonitoring_awsEc2ApplicationLogs_macOsAMD64_setupOtelCollector,
-    AwsMonitoring_awsEc2ApplicationLogs_macOsAMD64_configureReceiver,
-    AwsMonitoring_awsEc2ApplicationLogs_macOsAMD64_restartOtelCollector,
-    // MacOS ARM 64
-    AwsMonitoring_awsEc2ApplicationLogs_macOsARM64_setupOtelCollector,
-    AwsMonitoring_awsEc2ApplicationLogs_macOsARM64_configureReceiver,
-    AwsMonitoring_awsEc2ApplicationLogs_macOsARM64_restartOtelCollector,
+	/// /// AWS EC2 Infrastructure Metrics
 
+	// Linux AMD64
+	AwsMonitoring_awsEc2InfrastructureMetrics_linuxAMD64_setupOtelCollector,
+	AwsMonitoring_awsEc2InfrastructureMetrics_linuxAMD64_configureHostmetricsJson,
 
-    ////// AWS EC2 Infrastructure Metrics
+	// Linux ARM64
+	AwsMonitoring_awsEc2InfrastructureMetrics_linuxARM64_setupOtelCollector,
+	AwsMonitoring_awsEc2InfrastructureMetrics_linuxARM64_configureHostmetricsJson,
 
-    // Linux AMD64
-    AwsMonitoring_awsEc2InfrastructureMetrics_linuxAMD64_setupOtelCollector,
-    AwsMonitoring_awsEc2InfrastructureMetrics_linuxAMD64_configureHostmetricsJson,
+	// MacOS AMD64
+	AwsMonitoring_awsEc2InfrastructureMetrics_macOsAMD64_setupOtelCollector,
+	AwsMonitoring_awsEc2InfrastructureMetrics_macOsAMD64_configureHostmetricsJson,
 
-    // Linux ARM64
-    AwsMonitoring_awsEc2InfrastructureMetrics_linuxARM64_setupOtelCollector,
-    AwsMonitoring_awsEc2InfrastructureMetrics_linuxARM64_configureHostmetricsJson,
+	// MacOS ARM64
+	AwsMonitoring_awsEc2InfrastructureMetrics_macOsARM64_setupOtelCollector,
+	AwsMonitoring_awsEc2InfrastructureMetrics_macOsARM64_configureHostmetricsJson,
 
-    // MacOS AMD64
-    AwsMonitoring_awsEc2InfrastructureMetrics_macOsAMD64_setupOtelCollector,
-    AwsMonitoring_awsEc2InfrastructureMetrics_macOsAMD64_configureHostmetricsJson,
+	/// //// AWS ECS EC2
+	AwsMonitoring_awsEcsEc2_setupDaemonService,
+	AwsMonitoring_awsEcsEc2_createOtelConfig,
+	AwsMonitoring_awsEcsEc2_createDaemonService,
+	AwsMonitoring_awsEcsEc2_ecsSendData,
 
-    // MacOS ARM64
-    AwsMonitoring_awsEc2InfrastructureMetrics_macOsARM64_setupOtelCollector,
-    AwsMonitoring_awsEc2InfrastructureMetrics_macOsARM64_configureHostmetricsJson,
+	/// //// AWS ECS External
+	AwsMonitoring_awsEcsExternal_setupDaemonService,
+	AwsMonitoring_awsEcsExternal_createOtelConfig,
+	AwsMonitoring_awsEcsExternal_createDaemonService,
+	AwsMonitoring_awsEcsExternal_ecsSendData,
 
+	/// //// AWS ECS Fargate
+	AwsMonitoring_awsEcsFargate_createOtelConfig,
+	AwsMonitoring_awsEcsFargate_createSidecarCollectorContainer,
+	AwsMonitoring_awsEcsFargate_deployTaskDefinition,
+	AwsMonitoring_awsEcsFargate_ecsSendData,
+	AwsMonitoring_awsEcsFargate_ecsSendLogsData,
 
-    /////// AWS ECS EC2
-    AwsMonitoring_awsEcsEc2_setupDaemonService, 
-    AwsMonitoring_awsEcsEc2_createOtelConfig,
-    AwsMonitoring_awsEcsEc2_createDaemonService,
-    AwsMonitoring_awsEcsEc2_ecsSendData,
-
-    /////// AWS ECS External
-    AwsMonitoring_awsEcsExternal_setupDaemonService, 
-    AwsMonitoring_awsEcsExternal_createOtelConfig,
-    AwsMonitoring_awsEcsExternal_createDaemonService,
-    AwsMonitoring_awsEcsExternal_ecsSendData,
-
-    /////// AWS ECS Fargate
-    AwsMonitoring_awsEcsFargate_createOtelConfig,
-    AwsMonitoring_awsEcsFargate_createSidecarCollectorContainer,
-    AwsMonitoring_awsEcsFargate_deployTaskDefinition,
-    AwsMonitoring_awsEcsFargate_ecsSendData,
-    AwsMonitoring_awsEcsFargate_ecsSendLogsData,
-
-    ////// AWS EKS
-    AwsMonitoring_awsEks_setupOtelCollector,
-    AwsMonitoring_awsEks_monitorDashboard,
+	/// /// AWS EKS
+	AwsMonitoring_awsEks_setupOtelCollector,
+	AwsMonitoring_awsEks_monitorDashboard,
 };

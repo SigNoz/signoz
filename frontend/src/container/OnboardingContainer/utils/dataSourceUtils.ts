@@ -68,7 +68,7 @@ export const frameworksMap = {
 	},
 	LogsManagement: {},
 	InfrastructureMonitoring: {},
-	AwsMonitoring: {}
+	AwsMonitoring: {},
 };
 
 export const defaultApplicationDataSource = {
@@ -313,7 +313,7 @@ export const hasFrameworks = ({
 		(moduleID === ModulesMap.APM && dataSourceName === '.NET') ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'rust') ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'elixir') ||
-		(moduleID === ModulesMap.APM && dataSourceName === 'swift') 
+		(moduleID === ModulesMap.APM && dataSourceName === 'swift')
 	) {
 		return false;
 	}
