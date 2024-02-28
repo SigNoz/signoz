@@ -51,7 +51,7 @@ function IntergrationsUninstallBar(
 					danger: true,
 				}}
 			>
-				<Typography.Text>
+				<Typography.Text className="remove-integration-text">
 					Removing this integration makes SigNoz stop listening for data from{' '}
 					{integrationTitle} instances. You would still have to manually remove the
 					configuration in your code to stop sending data.
