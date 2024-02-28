@@ -12,7 +12,7 @@
 		font-family: Inter;
 		font-size: 11px;
 		font-style: normal;
-		font-weight: 500;
+		font-weight: 400;
 		line-height: 16px; /* 145.455% */
 		letter-spacing: 0.44px;
 		text-transform: uppercase;
@@ -39,6 +39,7 @@
 					font-weight: 400;
 					line-height: 20px; /* 142.857% */
 					letter-spacing: -0.07px;
+					text-transform: none;
 				}
 			}
 		}
@@ -48,6 +49,7 @@
 			flex-direction: column;
 
 			.assets-list {
+				margin-left: 5px;
 				margin-top: 12px;
 				color: var(--bg-vanilla-400);
 				font-family: Inter;
