@@ -419,43 +419,45 @@ export const Query = memo(function Query({
 							</Row>
 						</Col>
 					)}
-					<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
-						<Row gutter={[11, 5]}>
-							<Col flex="5.93rem">
-								{selectedDashboardVersion && selectedDashboardVersion === 'v3' && (
-									<FilterLabel
-										label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
-									/>
-								)}
-
-								{selectedDashboardVersion &&
-									selectedDashboardVersion === 'v4' &&
-									isMetricsDataSource && (
-										<SpaceAggregationOptions
-											key={`${query.spaceAggregation}${query.timeAggregation}`}
-											aggregatorAttributeType={
-												query?.aggregateAttribute.type as ATTRIBUTE_TYPES
-											}
-											selectedValue={query.spaceAggregation}
-											disabled={disableOperatorSelector}
-											onSelect={handleSpaceAggregationChange}
-											operators={spaceAggregationOptions}
+					{!isListViewPanel && (
+						<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									{selectedDashboardVersion && selectedDashboardVersion === 'v3' && (
+										<FilterLabel
+											label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
 										/>
 									)}
-							</Col>
-							<Col flex="1 1 12.5rem">
-								{panelType === PANEL_TYPES.VALUE ? (
-									<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
-								) : (
-									<GroupByFilter
-										disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-										query={query}
-										onChange={handleChangeGroupByKeys}
-									/>
-								)}
-							</Col>
-						</Row>
-					</Col>
+
+									{selectedDashboardVersion &&
+										selectedDashboardVersion === 'v4' &&
+										isMetricsDataSource && (
+											<SpaceAggregationOptions
+												key={`${query.spaceAggregation}${query.timeAggregation}`}
+												aggregatorAttributeType={
+													query?.aggregateAttribute.type as ATTRIBUTE_TYPES
+												}
+												selectedValue={query.spaceAggregation}
+												disabled={disableOperatorSelector}
+												onSelect={handleSpaceAggregationChange}
+												operators={spaceAggregationOptions}
+											/>
+										)}
+								</Col>
+								<Col flex="1 1 12.5rem">
+									{panelType === PANEL_TYPES.VALUE ? (
+										<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+									) : (
+										<GroupByFilter
+											disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+											query={query}
+											onChange={handleChangeGroupByKeys}
+										/>
+									)}
+								</Col>
+							</Row>
+						</Col>
+					)}
 
 					{!isTracePanelType && !isListViewPanel && (
 						<Col span={24}>
