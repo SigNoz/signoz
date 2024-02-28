@@ -1,9 +1,8 @@
 import './IntegrationDetailPage.styles.scss';
 
 import cx from 'classnames';
-import { useState } from 'react';
 
-enum ConnectionStates {
+export enum ConnectionStates {
 	Connected = 'connected',
 	TestingConnection = 'testingConnection',
 	ConnectionFailed = 'connectionFailed',
@@ -18,10 +17,12 @@ const ConnectionStatesLabelMap = {
 		'This integration has not received data in a while :/',
 };
 
-function TestConnection(): JSX.Element {
-	const [connectionState] = useState<ConnectionStates>(
-		ConnectionStates.TestingConnection,
-	);
+interface TestConnectionProps {
+	connectionState: ConnectionStates;
+}
+
+function TestConnection(props: TestConnectionProps): JSX.Element {
+	const { connectionState } = props;
 	return (
 		<div className={cx('connection-container', connectionState)}>
 			<ul className="connection-text">

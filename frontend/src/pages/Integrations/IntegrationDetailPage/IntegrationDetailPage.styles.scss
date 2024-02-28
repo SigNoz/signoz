@@ -126,6 +126,10 @@
 		}
 
 		.connectionFailed {
+			border-radius: 4px;
+			border: 1px solid rgba(218, 85, 101, 0.2);
+			background: rgba(218, 85, 101, 0.06);
+			color: var(--bg-cherry-500);
 		}
 
 		.noDataSinceLong {
@@ -260,7 +264,7 @@
 .test-connection-modal {
 	.ant-modal-content {
 		width: 512px;
-		height: 243px;
+		min-height: 170px;
 		flex-shrink: 0;
 		border-radius: 4px;
 		border: 1px solid var(--bg-slate-500);
@@ -297,6 +301,12 @@
 				line-height: 22px; /* 157.143% */
 				letter-spacing: -0.07px;
 			}
+		}
+
+		.data-test-connection {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
 		}
 		.data-info {
 			display: flex;
@@ -336,6 +346,10 @@
 		}
 
 		.connectionFailed {
+			border-radius: 4px;
+			border: 1px solid rgba(218, 85, 101, 0.2);
+			background: rgba(218, 85, 101, 0.06);
+			color: var(--bg-cherry-500);
 		}
 
 		.noDataSinceLong {

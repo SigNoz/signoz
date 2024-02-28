@@ -1,10 +1,11 @@
+/* eslint-disable no-nested-ternary */
 import './IntegrationDetailPage.styles.scss';
 
 import { Button, Modal, Typography } from 'antd';
 import { ArrowLeftRight } from 'lucide-react';
 import { useState } from 'react';
 
-import TestConnection from './TestConnection';
+import TestConnection, { ConnectionStates } from './TestConnection';
 
 interface IntegrationDetailHeaderProps {
 	id: string;
@@ -17,6 +18,10 @@ function IntegrationDetailHeader(
 ): JSX.Element {
 	const { id, title, icon, description } = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
+
+	const [connectionState] = useState<ConnectionStates>(
+		ConnectionStates.Connected,
+	);
 
 	const showModal = (): void => {
 		setIsModalOpen(true);
@@ -48,7 +53,7 @@ function IntegrationDetailHeader(
 					Connect {title}
 				</Button>
 			</div>
-			<TestConnection />
+			<TestConnection connectionState={connectionState} />
 
 			<Modal
 				className="test-connection-modal"
@@ -60,21 +65,39 @@ function IntegrationDetailHeader(
 				cancelButtonProps={{ style: { display: 'none' } }}
 			>
 				<div className="connection-content">
-					<TestConnection />
-					<div className="data-info">
-						<Typography.Text className="last-data">
-							Last recieved from
-						</Typography.Text>
-						<Typography.Text className="last-value">
-							redis.service.alert
-						</Typography.Text>
-					</div>
-					<div className="data-info">
-						<Typography.Text className="last-data">Last recieved at</Typography.Text>
-						<Typography.Text className="last-value">
-							27.02.2024⎯10:30:23
-						</Typography.Text>
-					</div>
+					<TestConnection connectionState={connectionState} />
+					{connectionState === ConnectionStates.Connected ||
+					connectionState === ConnectionStates.NoDataSinceLong ? (
+						<>
+							<div className="data-info">
+								<Typography.Text className="last-data">
+									Last recieved from
+								</Typography.Text>
+								<Typography.Text className="last-value">
+									redis.service.alert
+								</Typography.Text>
+							</div>
+							<div className="data-info">
+								<Typography.Text className="last-data">
+									Last recieved at
+								</Typography.Text>
+								<Typography.Text className="last-value">
+									27.02.2024⎯10:30:23
+								</Typography.Text>
+							</div>
+						</>
+					) : connectionState === ConnectionStates.TestingConnection ? (
+						<div className="data-test-connection">
+							<div className="last-data">
+								After adding the {title} integration, you need to manually configure
+								your Redis data source to start sending data to SigNoz.
+							</div>
+							<div className="last-data">
+								The status bar above would turn green if we are successfully receiving
+								the data.
+							</div>
+						</div>
+					) : null}
 				</div>
 			</Modal>
 		</div>
