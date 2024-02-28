@@ -151,6 +151,10 @@ export default function ModuleStepsContainer({
 			history.push(ROUTES.LOGS_EXPLORER);
 		} else if (selectedModule.id === ModulesMap.InfrastructureMonitoring) {
 			history.push(ROUTES.APPLICATION);
+		} else if (selectedModule.id === ModulesMap.AwsMonitoring) {
+			history.push(ROUTES.APPLICATION);
+		} else {
+			history.push(ROUTES.APPLICATION);
 		}
 	};
 
