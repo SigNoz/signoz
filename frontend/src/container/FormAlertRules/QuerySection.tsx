@@ -22,6 +22,7 @@ function QuerySection({
 	setQueryCategory,
 	alertType,
 	runQuery,
+	panelType,
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -44,7 +45,7 @@ function QuerySection({
 
 	const renderMetricUI = (): JSX.Element => (
 		<QueryBuilder
-			panelType={PANEL_TYPES.TIME_SERIES}
+			panelType={panelType}
 			config={{
 				queryVariant: 'static',
 				initialDataSource: ALERTS_DATA_SOURCE_MAP[alertType],
@@ -196,6 +197,7 @@ interface QuerySectionProps {
 	setQueryCategory: (n: EQueryType) => void;
 	alertType: AlertTypes;
 	runQuery: VoidFunction;
+	panelType: PANEL_TYPES;
 }
 
 export default QuerySection;
