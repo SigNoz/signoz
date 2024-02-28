@@ -147,7 +147,6 @@ function LogsPanelComponent({
 				maxTime,
 				minTime,
 				requestData,
-				pagination,
 				selectedDashboard?.data.variables,
 				selectedTime?.enum,
 			],
