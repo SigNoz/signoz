@@ -16,6 +16,9 @@ Note: change the `start_at` value to `beginning` if you want to read the log fil
 
 For more configurations that are available for filelog receiver please check [here](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/filelogreceiver).
 
+&nbsp;
+&nbsp;
+
 ### Step 2: Include filelog receiver in the Pipeline
 We will modify our pipeline inside `config.yaml` to include the receiver we have created above.
 ```bash
