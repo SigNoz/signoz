@@ -97,23 +97,40 @@ function LogsPanelComponent({
 	const [pageSize, setPageSize] = useState<number>(10);
 	const { selectedDashboard } = useDashboard();
 
-	const handleChangePageSize = (value: number): void => {
-		setPagination({
-			...pagination,
+	const updatePagination = (value: number): void => {
+		setPagination((prevPagination) => ({
+			...prevPagination,
 			limit: 0,
 			offset: value,
-		});
-		setPageSize(value);
-		const newQueryData = { ...requestData.query };
-		newQueryData.builder.queryData[0].pageSize = value;
-		const newRequestData = {
-			...requestData,
-			query: newQueryData,
+		}));
+	};
+
+	const updateRequestData = (pageSize: number): void => {
+		setRequestData((prevRequestData) => ({
+			...prevRequestData,
+			query: {
+				...prevRequestData.query,
+				builder: {
+					...prevRequestData.query.builder,
+					queryData: [
+						{
+							...prevRequestData.query.builder.queryData[0],
+							pageSize,
+						},
+					],
+				},
+			},
 			tableParams: {
+				...prevRequestData.tableParams,
 				pagination,
 			},
-		};
-		setRequestData(newRequestData);
+		}));
+	};
+
+	const handleChangePageSize = (value: number): void => {
+		updatePagination(value);
+		setPageSize(value);
+		updateRequestData(value);
 	};
 
 	const { data, isFetching, isError } = useGetQueryRange(
