@@ -3273,15 +3273,25 @@ func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {
 	return totalSpans, nil
 }
 
-func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var spansInLastHeartBeatInterval uint64
 
-	queryStr := fmt.Sprintf("SELECT count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, signozSpansTable, 30)
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, signozSpansTable, int(interval.Minutes()))
 
 	r.db.QueryRow(ctx, queryStr).Scan(&spansInLastHeartBeatInterval)
 
 	return spansInLastHeartBeatInterval, nil
+}
+
+func (r *ClickHouseReader) GetTotalLogs(ctx context.Context) (uint64, error) {
+
+	var totalLogs uint64
+
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s;", r.logsDB, r.logsTable)
+	r.db.QueryRow(ctx, queryStr).Scan(&totalLogs)
+
+	return totalLogs, nil
 }
 
 func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error) {
@@ -3312,9 +3322,7 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []s
 
 func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error) {
 
-	queryStr := fmt.Sprintf("SELECT count() as count from %s.%s group by metric_name order by count desc;", signozMetricDBName, signozTSTableName)
-
-	// r.db.Select(ctx, &tsByMetricName, queryStr)
+	queryStr := fmt.Sprintf("SELECT count() as count from %s.%s where metric_name not like 'signoz_%%' group by metric_name order by count desc;", signozMetricDBName, signozTSTableName)
 
 	rows, _ := r.db.Query(ctx, queryStr)
 
@@ -3343,11 +3351,21 @@ func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]in
 	return timeSeriesData, nil
 }
 
-func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var totalSamples uint64
 
-	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp_ms > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, 30)
+	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%' and timestamp_ms > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, int(interval.Minutes()))
+
+	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
+
+	return totalSamples, nil
+}
+
+func (r *ClickHouseReader) GetTotalSamples(ctx context.Context) (uint64, error) {
+	var totalSamples uint64
+
+	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%';", signozMetricDBName, signozSampleTableName)
 
 	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
 
@@ -3367,23 +3385,23 @@ func (r *ClickHouseReader) GetDistributedInfoInLastHeartBeatInterval(ctx context
 	return nil, nil
 }
 
-func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var totalLogLines uint64
 
-	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))*1000000000;", r.logsDB, r.logsTable, 30)
+	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))*1000000000;", r.logsDB, r.logsTable, int(interval.Minutes()))
 
 	err := r.db.QueryRow(ctx, queryStr).Scan(&totalLogLines)
 
 	return totalLogLines, err
 }
 
-func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context) (*model.TagsInfo, error) {
+func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (*model.TagsInfo, error) {
 
 	queryStr := fmt.Sprintf(`select serviceName, stringTagMap['deployment.environment'] as env, 
 	stringTagMap['telemetry.sdk.language'] as language from %s.%s 
 	where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))
-	group by serviceName, env, language;`, r.TraceDB, r.indexTable, 1)
+	group by serviceName, env, language;`, r.TraceDB, r.indexTable, int(interval.Minutes()))
 
 	tagTelemetryDataList := []model.TagTelemetryData{}
 	err := r.db.Select(ctx, &tagTelemetryDataList, queryStr)
@@ -3396,6 +3414,7 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 
 	tagsInfo := model.TagsInfo{
 		Languages: make(map[string]interface{}),
+		Services:  make(map[string]interface{}),
 	}
 
 	for _, tagTelemetryData := range tagTelemetryDataList {
@@ -3408,6 +3427,9 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 		}
 		if len(tagTelemetryData.Language) != 0 {
 			tagsInfo.Languages[tagTelemetryData.Language] = struct{}{}
+		}
+		if len(tagTelemetryData.ServiceName) != 0 {
+			tagsInfo.Services[tagTelemetryData.ServiceName] = struct{}{}
 		}
 
 	}

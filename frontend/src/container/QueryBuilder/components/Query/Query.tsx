@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import './Query.styles.scss';
 
 import { Col, Input, Row } from 'antd';
@@ -46,6 +47,7 @@ export const Query = memo(function Query({
 	query,
 	filterConfigs,
 	queryComponents,
+	isListViewPanel = false,
 }: QueryProps): JSX.Element {
 	const { panelType, currentQuery } = useQueryBuilder();
 	const { pathname } = useLocation();
@@ -62,7 +64,7 @@ export const Query = memo(function Query({
 		handleChangeDataSource,
 		handleChangeOperator,
 		handleDeleteQuery,
-	} = useQueryOperations({ index, query, filterConfigs });
+	} = useQueryOperations({ index, query, filterConfigs, isListViewPanel });
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -136,8 +138,14 @@ export const Query = memo(function Query({
 			});
 		}
 
-		return <OrderByFilter query={query} onChange={handleChangeOrderByKeys} />;
-	}, [queryComponents, query, handleChangeOrderByKeys]);
+		return (
+			<OrderByFilter
+				query={query}
+				onChange={handleChangeOrderByKeys}
+				isListViewPanel={isListViewPanel}
+			/>
+		);
+	}, [queryComponents, query, handleChangeOrderByKeys, isListViewPanel]);
 
 	const renderAggregateEveryFilter = useCallback(
 		(): JSX.Element | null =>
@@ -289,6 +297,7 @@ export const Query = memo(function Query({
 				onDelete={handleDeleteQuery}
 				onCollapseEntity={handleToggleCollapsQuery}
 				showDeleteButton={currentQuery.builder.queryData.length > 1}
+				isListViewPanel={isListViewPanel}
 			/>
 
 			{!isCollapse && (
@@ -302,6 +311,7 @@ export const Query = memo(function Query({
 											onChange={handleChangeDataSource}
 											value={query.dataSource}
 											style={{ minWidth: '5.625rem' }}
+											isListViewPanel={isListViewPanel}
 										/>
 									) : (
 										<FilterLabel label={transformToUpperCase(query.dataSource)} />
@@ -346,7 +356,7 @@ export const Query = memo(function Query({
 							</Col>
 						</Row>
 					</Col>
-					{!isMetricsDataSource && (
+					{!isMetricsDataSource && !isListViewPanel && (
 						<Col span={11}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
@@ -368,27 +378,29 @@ export const Query = memo(function Query({
 							</Row>
 						</Col>
 					)}
-					<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
-						<Row gutter={[11, 5]}>
-							<Col flex="5.93rem">
-								<FilterLabel
-									label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
-								/>
-							</Col>
-							<Col flex="1 1 12.5rem">
-								{panelType === PANEL_TYPES.VALUE ? (
-									<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
-								) : (
-									<GroupByFilter
-										disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-										query={query}
-										onChange={handleChangeGroupByKeys}
+					{!isListViewPanel && (
+						<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel
+										label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
 									/>
-								)}
-							</Col>
-						</Row>
-					</Col>
-					{!isTracePanelType && (
+								</Col>
+								<Col flex="1 1 12.5rem">
+									{panelType === PANEL_TYPES.VALUE ? (
+										<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+									) : (
+										<GroupByFilter
+											disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+											query={query}
+											onChange={handleChangeGroupByKeys}
+										/>
+									)}
+								</Col>
+							</Row>
+						</Col>
+					)}
+					{!isTracePanelType && !isListViewPanel && (
 						<Col span={24}>
 							<AdditionalFiltersToggler
 								listOfAdditionalFilter={listOfAdditionalFilters}
@@ -397,6 +409,13 @@ export const Query = memo(function Query({
 									{renderAdditionalFilters()}
 								</Row>
 							</AdditionalFiltersToggler>
+						</Col>
+					)}
+					{isListViewPanel && (
+						<Col span={24}>
+							<Row gutter={[0, 11]} justify="space-between">
+								{renderAdditionalFilters()}
+							</Row>
 						</Col>
 					)}
 					{panelType !== PANEL_TYPES.LIST && panelType !== PANEL_TYPES.TRACE && (

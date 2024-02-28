@@ -1,6 +1,6 @@
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
@@ -8,8 +8,14 @@ import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { CSSProperties } from 'react';
+import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
+import {
+	listViewInitialLogQuery,
+	listViewInitialTraceQuery,
+	PANEL_TYPES_INITIAL_QUERY,
+} from './constants';
 import menuItems from './menuItems';
 import { Card, Container, Text } from './styles';
 
@@ -28,6 +34,7 @@ function DashboardGraphSlider(): JSX.Element {
 
 	const updateDashboardMutation = useUpdateDashboard();
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onClickHandler = (name: PANEL_TYPES) => (): void => {
 		const id = uuid();
 
@@ -61,10 +68,28 @@ function DashboardGraphSlider(): JSX.Element {
 							nullZeroValues: '',
 							opacity: '',
 							panelTypes: name,
-							query: initialQueriesMap.metrics,
+							query:
+								name === PANEL_TYPES.LIST
+									? listViewInitialLogQuery
+									: PANEL_TYPES_INITIAL_QUERY[name],
 							timePreferance: 'GLOBAL_TIME',
 							softMax: null,
 							softMin: null,
+							selectedLogFields: [
+								{
+									dataType: 'string',
+									type: '',
+									name: 'body',
+								},
+								{
+									dataType: 'string',
+									type: '',
+									name: 'timestamp',
+								},
+							],
+							selectedTracesFields: [
+								...listViewInitialTraceQuery.builder.queryData[0].selectColumns,
+							],
 						},
 					],
 				},
@@ -73,16 +98,43 @@ function DashboardGraphSlider(): JSX.Element {
 				onSuccess: (data) => {
 					if (data.payload) {
 						handleToggleDashboardSlider(false);
+						const queryParamsLog = {
+							graphType: name,
+							widgetId: id,
+							[QueryParams.compositeQuery]: JSON.stringify({
+								...PANEL_TYPES_INITIAL_QUERY[name],
+								builder: {
+									...PANEL_TYPES_INITIAL_QUERY[name].builder,
+									queryData: [
+										{
+											...PANEL_TYPES_INITIAL_QUERY[name].builder.queryData[0],
+											aggregateOperator: LogsAggregatorOperator.NOOP,
+											orderBy: [{ columnName: 'timestamp', order: 'desc' }],
+											offset: 0,
+											pageSize: 100,
+										},
+									],
+								},
+							}),
+						};
 
 						const queryParams = {
 							graphType: name,
 							widgetId: id,
-							[QueryParams.compositeQuery]: JSON.stringify(initialQueriesMap.metrics),
+							[QueryParams.compositeQuery]: JSON.stringify(
+								PANEL_TYPES_INITIAL_QUERY[name],
+							),
 						};
 
-						history.push(
-							`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
-						);
+						if (name === PANEL_TYPES.LIST) {
+							history.push(
+								`${history.location.pathname}/new?${createQueryParams(queryParamsLog)}`,
+							);
+						} else {
+							history.push(
+								`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
+							);
+						}
 					}
 				},
 				onError: () => {

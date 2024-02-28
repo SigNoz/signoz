@@ -148,3 +148,8 @@ export interface TimeRange {
 	startTime: string;
 	endTime: string;
 }
+
+export enum LexicalContext {
+	CUSTOM_DATE_PICKER = 'customDatePicker',
+	CUSTOM_DATE_TIME_INPUT = 'customDateTimeInput',
+}

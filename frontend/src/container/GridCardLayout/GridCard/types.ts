@@ -30,6 +30,7 @@ export interface WidgetGraphComponentProps extends UplotProps {
 	isWarning: boolean;
 	graphVisibiltyState: boolean[];
 	setGraphVisibility: Dispatch<SetStateAction<boolean[]>>;
+	isFetchingResponse: boolean;
 }
 
 export interface GridCardGraphProps {

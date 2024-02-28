@@ -24,6 +24,7 @@ export type UseTableViewProps = {
 	onClickExpand?: (log: ILog) => void;
 	activeLog?: ILog | null;
 	activeContextLog?: ILog | null;
+	isListViewPanel?: boolean;
 } & LogsTableViewProps;
 
 export type ActionsColumnProps = {
