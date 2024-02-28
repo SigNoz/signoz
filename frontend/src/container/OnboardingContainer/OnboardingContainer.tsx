@@ -232,6 +232,7 @@ export default function Onboarding(): JSX.Element {
 		setSelectedModule(module);
 		updateSelectedModule(module);
 		updateSelectedDataSource(null);
+		resetProgress();
 	};
 
 	useEffect(() => {
