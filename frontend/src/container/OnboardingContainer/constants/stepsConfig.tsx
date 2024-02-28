@@ -34,9 +34,7 @@ export const stepsMap = {
 	createSidecarCollectorContainer: `createSidecarCollectorContainer`,
 	deployTaskDefinition: `deployTaskDefinition`,
 	ecsSendLogsData: `ecsSendLogsData`,
-	monitorDashboard: `monitorDashboard`
-
-
+	monitorDashboard: `monitorDashboard`,
 };
 
 export const DataSourceStep: SelectedModuleStepProps = {
