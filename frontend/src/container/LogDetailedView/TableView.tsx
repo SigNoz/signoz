@@ -105,7 +105,7 @@ function TableView({
 	const onTraceHandler = (
 		record: DataType,
 		event: React.MouseEvent<HTMLDivElement, MouseEvent>,
-	) => (): void => {
+	): void => {
 		if (flattenLogData === null) return;
 
 		const traceId = flattenLogData[record.field];

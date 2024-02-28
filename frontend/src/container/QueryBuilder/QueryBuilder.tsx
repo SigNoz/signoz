@@ -46,6 +46,10 @@ export const QueryBuilder = memo(function QueryBuilder({
 
 	useEffect(() => {
 		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
+			if (panelType === PANEL_TYPES.BAR) {
+				handleSetConfig(PANEL_TYPES.BAR, DataSource.METRICS);
+				return;
+			}
 			handleSetConfig(newPanelType, currentDataSource);
 		}
 	}, [
