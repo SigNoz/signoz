@@ -136,7 +136,7 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	zap.S().Infof("Get PATs for user: %+v", user.Id)
-	pats, apierr := ah.AppDao().ListPATs(ctx, user.Id)
+	pats, apierr := ah.AppDao().ListPATs(ctx)
 	if apierr != nil {
 		RespondError(w, apierr, nil)
 		return
