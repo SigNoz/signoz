@@ -235,7 +235,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		pathname === ROUTES.WORKSPACE_LOCKED ||
 		pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING ||
 		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
-		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT;
+		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
+		pathname === ROUTES.GET_STARTED_AWS_MONITORING;
 
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 

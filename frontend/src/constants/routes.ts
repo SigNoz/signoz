@@ -11,6 +11,7 @@ const ROUTES = {
 	GET_STARTED_LOGS_MANAGEMENT: '/get-started/logs-management',
 	GET_STARTED_INFRASTRUCTURE_MONITORING:
 		'/get-started/infrastructure-monitoring',
+	GET_STARTED_AWS_MONITORING: '/get-started/aws-monitoring',
 	USAGE_EXPLORER: '/usage-explorer',
 	APPLICATION: '/services',
 	ALL_DASHBOARD: '/dashboard',

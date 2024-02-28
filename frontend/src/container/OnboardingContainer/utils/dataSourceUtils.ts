@@ -7,6 +7,7 @@ export enum ModulesMap {
 	APM = 'APM',
 	LogsManagement = 'LogsManagement',
 	InfrastructureMonitoring = 'InfrastructureMonitoring',
+	AwsMonitoring = 'AwsMonitoring',
 }
 
 export const frameworksMap = {
@@ -224,39 +225,39 @@ const supportedInfraMetrics = [
 export const defaultAwsServices = {
 	name: 'EC2 - Application Logs',
 	id: 'awsEc2ApplicationLogs',
-	imgURL: `Logos/ec2.svg`,
+	imgURL: `/Logos/ec2.svg`,
 };
 
 const supportedAwsServices = [
 	{
 		name: 'EC2 - App/Server Logs',
 		id: 'awsEc2ApplicationLogs',
-		imgURL: `Logos/ec2.svg`,
+		imgURL: `/Logos/ec2.svg`,
 	},
 	{
 		name: 'EC2 - Infra Metrics',
 		id: 'awsEc2InfrastructureMetrics',
-		imgURL: `Logos/ec2.svg`,
+		imgURL: `/Logos/ec2.svg`,
 	},
 	{
 		name: 'ECS - EC2',
 		id: 'awsEcsEc2',
-		imgURL: `Logos/ecs.svg`,
+		imgURL: `/Logos/ecs.svg`,
 	},
 	{
 		name: 'ECS - Fargate',
 		id: 'awsEcsFargate',
-		imgURL: `Logos/ecs.svg`,
+		imgURL: `/Logos/ecs.svg`,
 	},
 	{
 		name: 'ECS - External',
 		id: 'awsEcsExternal',
-		imgURL: `Logos/ecs.svg`,
+		imgURL: `/Logos/ecs.svg`,
 	},
 	{
 		name: 'EKS',
 		id: 'awsEks',
-		imgURL: `Logos/eks.svg`,
+		imgURL: `/Logos/eks.svg`,
 	},
 ];
 
@@ -334,4 +335,5 @@ export const moduleRouteMap = {
 	[ModulesMap.LogsManagement]: ROUTES.GET_STARTED_LOGS_MANAGEMENT,
 	[ModulesMap.InfrastructureMonitoring]:
 		ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING,
+	[ModulesMap.AwsMonitoring]: ROUTES.GET_STARTED_AWS_MONITORING,
 };
