@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"runtime/debug"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/app"
@@ -44,6 +45,17 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 	ii := testbed.GetIntegrationDetailsFromQS(availableIntegrations[0].Id)
 	require.Equal(ii.Id, availableIntegrations[0].Id)
 	require.NotNil(ii.Installation)
+
+	// Connection status should be incomplete before corresponding logs exist
+	require.NotNil(ii.ConnectionStatus)
+	require.Nil(ii.ConnectionStatus.Logs)
+
+	// Mock presence of expected logs.
+	testLogTs := time.Now().Unix()
+
+	require.NotNil(ii.ConnectionStatus)
+	require.NotNil(ii.ConnectionStatus.Logs)
+	require.Equal(ii.ConnectionStatus.Logs.LastReceivedTs, testLogTs)
 
 	installedResp = testbed.GetInstalledIntegrationsFromQS()
 	installedIntegrations := installedResp.Integrations

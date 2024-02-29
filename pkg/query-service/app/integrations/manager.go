@@ -33,7 +33,7 @@ type IntegrationAssets struct {
 	Logs       LogsAssets             `json:"logs"`
 	Dashboards []dashboards.Dashboard `json:"dashboards"`
 
-	// TODO(Raj): Maybe use a struct for alerts
+	// TODO(Raj): Figure out the struct to use for alerts
 	Alerts []map[string]interface{} `json:"alerts"`
 }
 
