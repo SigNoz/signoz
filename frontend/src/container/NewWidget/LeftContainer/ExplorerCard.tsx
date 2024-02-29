@@ -7,17 +7,19 @@ import { GripVertical, Trash2 } from 'lucide-react';
 import { BaseAutocompleteDataWithId } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
 
-function ExplorerCard({
-	field,
-	removeExplorerCard,
-}: {
+type ExplorerCardProps = {
 	field:
 		| (IField & {
 				id: string;
 		  })
 		| BaseAutocompleteDataWithId;
 	removeExplorerCard: (name: string) => void;
-}): JSX.Element {
+};
+
+function ExplorerCard({
+	field,
+	removeExplorerCard,
+}: ExplorerCardProps): JSX.Element {
 	const {
 		attributes,
 		listeners,
