@@ -25,12 +25,12 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
+import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { getGraphVisibilityStateOnDataChange } from '../utils';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
-// import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
 
@@ -107,6 +107,13 @@ function FullView({
 		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
 
+	if (response.data && widget.panelTypes === PANEL_TYPES.BAR) {
+		const sortedSeriesData = getSortedSeriesData(
+			response.data?.payload.data.result,
+		);
+		response.data.payload.data.result = sortedSeriesData;
+	}
+
 	const chartData = getUPlotChartData(response?.data?.payload, widget.fillSpans);
 
 	const isDarkMode = useIsDarkMode();
@@ -152,6 +159,7 @@ function FullView({
 				maxTimeScale,
 				softMax: widget.softMax === undefined ? null : widget.softMax,
 				softMin: widget.softMin === undefined ? null : widget.softMin,
+				panelType: widget.panelTypes,
 			});
 
 			setChartOptions(newChartOptions);
