@@ -136,7 +136,7 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	zap.S().Infof("Get PATs for user: %+v", user.Id)
-	pats, apierr := ah.AppDao().ListPATs(ctx, user.Id)
+	pats, apierr := ah.AppDao().ListPATs(ctx)
 	if apierr != nil {
 		RespondError(w, apierr, nil)
 		return
@@ -155,18 +155,7 @@ func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	pat, apierr := ah.AppDao().GetPATByID(ctx, id)
-	if apierr != nil {
-		RespondError(w, apierr, nil)
-		return
-	}
-	if pat.UserID != user.Id {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
-			Err: fmt.Errorf("unauthorized PAT revoke request"),
-		}, nil)
-		return
-	}
+
 	zap.S().Debugf("Revoke PAT with id: %+v", id)
 	if apierr := ah.AppDao().RevokePAT(ctx, id, user.Id); apierr != nil {
 		RespondError(w, apierr, nil)
