@@ -15,7 +15,10 @@ import (
 )
 
 func GetUserFromRequest(r *http.Request, apiHandler *api.APIHandler) (*basemodel.UserPayload, error) {
-	patToken := r.Header.Get("SIGNOZ-API-KEY")
+	patToken := r.Header.Get("SIGNOZ-ACCESS-TOKEN")
+	if len(patToken) == 0 {
+		patToken = r.Header.Get("SIGNOZ-API-KEY")
+	}
 	if len(patToken) > 0 {
 		zap.S().Debugf("Received a non-zero length PAT token")
 		ctx := context.Background()
