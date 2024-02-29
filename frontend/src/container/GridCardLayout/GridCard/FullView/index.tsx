@@ -173,7 +173,6 @@ function FullView({
 		graphsVisibilityStates?.forEach((e, i) => {
 			fullViewChartRef?.current?.toggleGraph(i, e);
 		});
-		// parentGraphVisibilityState(graphsVisibilityStates);
 	}, [graphsVisibilityStates]);
 
 	const isListView = widget.panelTypes === PANEL_TYPES.LIST;
