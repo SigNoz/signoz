@@ -29,6 +29,7 @@ import { getTimeRange } from 'utils/getTimeRange';
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
 import { GridCardGraphProps } from './types';
+import { getLocalStorageGraphVisibilityState } from './utils';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
 function GridCardGraph({
@@ -185,6 +186,16 @@ function GridCardGraph({
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
 		Array(queryResponse.data?.payload?.data.result.length || 0).fill(true),
 	);
+
+	useEffect(() => {
+		const {
+			graphVisibilityStates: localStoredVisibilityState,
+		} = getLocalStorageGraphVisibilityState({
+			apiResponse: queryResponse.data?.payload.data.result || [],
+			name,
+		});
+		setGraphVisibility(localStoredVisibilityState);
+	}, [name, queryResponse.data?.payload.data.result]);
 
 	const options = useMemo(
 		() =>
