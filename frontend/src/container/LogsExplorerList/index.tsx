@@ -161,7 +161,7 @@ function LogsExplorerList({
 				!isFetching &&
 				!isError &&
 				!isFilterApplied &&
-				logs.length === 0 && <NoLogs />}
+				logs.length === 0 && <NoLogs dataSource={DataSource.LOGS} />}
 
 			{!isLoading &&
 				!isFetching &&

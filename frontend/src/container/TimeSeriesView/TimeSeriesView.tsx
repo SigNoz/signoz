@@ -14,6 +14,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getTimeRange } from 'utils/getTimeRange';
 
@@ -25,6 +26,7 @@ function TimeSeriesView({
 	isError,
 	yAxisUnit,
 	isFilterApplied,
+	dataSource,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -93,7 +95,7 @@ function TimeSeriesView({
 					chartData[0]?.length === 0 &&
 					!isLoading &&
 					!isError &&
-					!isFilterApplied && <NoLogs />}
+					!isFilterApplied && <NoLogs dataSource={dataSource} />}
 
 				{!isLoading &&
 					!isError &&
@@ -111,6 +113,7 @@ interface TimeSeriesViewProps {
 	isLoading: boolean;
 	isError: boolean;
 	isFilterApplied: boolean;
+	dataSource: DataSource;
 }
 
 TimeSeriesView.defaultProps = {
