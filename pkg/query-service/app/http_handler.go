@@ -2450,7 +2450,83 @@ func (ah *APIHandler) GetIntegration(
 		RespondError(w, apiErr, "Failed to fetch integration details")
 		return
 	}
+
+	// Add connection status details.
+	connectionStatus, apiErr := ah.calculateConnectionStatus(
+		r.Context(), resp.ConnectionTests,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to calculate integration connection status")
+		return
+	}
+	resp.ConnectionStatus = connectionStatus
+
 	ah.Respond(w, resp)
+}
+
+func (ah *APIHandler) calculateConnectionStatus(
+	ctx context.Context,
+	connectionTests *integrations.IntegrationConnectionTests,
+) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
+	result := &integrations.IntegrationConnectionStatus{}
+
+	if connectionTests.Logs != nil {
+		qrParams := &v3.QueryRangeParamsV3{
+			Start: time.Now().UnixMilli() - (7 * 86400),
+			End:   time.Now().UnixMilli(),
+			Step:  840,
+			CompositeQuery: &v3.CompositeQuery{
+				PanelType: v3.PanelTypeList,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						PageSize:          1,
+						Filters:           connectionTests.Logs,
+						QueryName:         "A",
+						DataSource:        v3.DataSourceLogs,
+						StepInterval:      840,
+						Expression:        "A",
+						AggregateOperator: v3.AggregateOperatorNoOp,
+					},
+				},
+			},
+		}
+		queryRes, err, _ := ah.querier.QueryRange(
+			ctx, qrParams, map[string]v3.AttributeKey{},
+		)
+		if err != nil {
+			return nil, model.InternalError(fmt.Errorf(
+				"could not query for integration connection status: %w", err,
+			))
+		}
+		if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+			lastLog := queryRes[0].List[0]
+
+			resourceSummaryParts := []string{}
+			lastLogResourceAttribs := lastLog.Data["resources_string"]
+			if lastLogResourceAttribs != nil {
+				resourceAttribs, ok := lastLogResourceAttribs.(*map[string]string)
+				if !ok {
+					return nil, model.InternalError(fmt.Errorf(
+						"could not cast log resource attribs",
+					))
+				}
+				for k, v := range *resourceAttribs {
+					resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+						"%s=%s", k, v,
+					))
+				}
+			}
+			lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
+
+			result.Logs = &integrations.SignalConnectionStatus{
+				LastReceivedTs:   lastLog.Timestamp.Unix(),
+				LastReceivedFrom: lastLogResourceSummary,
+			}
+		}
+	}
+
+	return result, nil
 }
 
 func (ah *APIHandler) InstallIntegration(
