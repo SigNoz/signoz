@@ -67,17 +67,6 @@ function LogsPanelComponent({
 	});
 
 	useEffect(() => {
-		setRequestData({
-			...requestData,
-			globalSelectedInterval: globalSelectedTime,
-			tableParams: {
-				pagination,
-			},
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [pagination]);
-
-	useEffect(() => {
 		const newQueryData = { ...query };
 		const newRequestData = {
 			...requestData,
@@ -241,6 +230,16 @@ function LogsPanelComponent({
 			limit: 0,
 			offset: pagination.offset - pageSize,
 		});
+		setRequestData({
+			...requestData,
+			globalSelectedInterval: globalSelectedTime,
+			tableParams: {
+				pagination: {
+					limit: 0,
+					offset: pagination.offset - pageSize,
+				},
+			},
+		});
 	};
 
 	const handleNextPagination = (): void => {
@@ -281,6 +280,16 @@ function LogsPanelComponent({
 			...pagination,
 			limit: 0,
 			offset: pagination.offset + pageSize,
+		});
+		setRequestData({
+			...requestData,
+			globalSelectedInterval: globalSelectedTime,
+			tableParams: {
+				pagination: {
+					limit: 0,
+					offset: pagination.offset + pageSize,
+				},
+			},
 		});
 	};
 
