@@ -3135,12 +3135,6 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		applyFunctions(result, queryRangeParams)
 	}
 
-	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
-		return
-	}
-
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
