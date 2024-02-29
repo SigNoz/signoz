@@ -62,6 +62,7 @@ func (r *InstalledIntegrationsSqliteRepo) list(
 				config_json,
 				installed_at
 			from integrations_installed
+			order by installed_at
 		`,
 	)
 	if err != nil {
@@ -74,7 +75,7 @@ func (r *InstalledIntegrationsSqliteRepo) list(
 
 func (r *InstalledIntegrationsSqliteRepo) get(
 	ctx context.Context, integrationIds []string,
-) (map[string]InstalledIntegration, *model.ApiError) {
+) (map[string]*InstalledIntegration, *model.ApiError) {
 	integrations := []InstalledIntegration{}
 
 	idPlaceholders := []string{}
@@ -102,9 +103,9 @@ func (r *InstalledIntegrationsSqliteRepo) get(
 		))
 	}
 
-	result := map[string]InstalledIntegration{}
+	result := map[string]*InstalledIntegration{}
 	for _, ii := range integrations {
-		result[ii.IntegrationId] = ii
+		result[ii.IntegrationId] = &ii
 	}
 
 	return result, nil
@@ -145,9 +146,7 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 		)
 	}
 
-	installed := res[integrationId]
-
-	return &installed, nil
+	return res[integrationId], nil
 }
 
 func (r *InstalledIntegrationsSqliteRepo) delete(

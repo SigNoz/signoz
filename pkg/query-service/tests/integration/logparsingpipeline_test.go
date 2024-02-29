@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http/httptest"
+	"runtime/debug"
 	"strings"
 	"testing"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opampModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
@@ -432,7 +434,14 @@ func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed 
 		testDB = utils.NewQueryServiceDBForTests(t)
 	}
 
-	controller, err := logparsingpipeline.NewLogParsingPipelinesController(testDB, "sqlite")
+	ic, err := integrations.NewController(testDB)
+	if err != nil {
+		t.Fatalf("could not create integrations controller: %v", err)
+	}
+
+	controller, err := logparsingpipeline.NewLogParsingPipelinesController(
+		testDB, "sqlite", ic.GetPipelinesForInstalledIntegrations,
+	)
 	if err != nil {
 		t.Fatalf("could not create a logparsingpipelines controller: %v", err)
 	}
@@ -573,8 +582,8 @@ func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.Pipeline
 
 	if response.StatusCode != 200 {
 		tb.t.Fatalf(
-			"could not list log parsing pipelines. status: %d, body: %v",
-			response.StatusCode, string(responseBody),
+			"could not list log parsing pipelines. status: %d, body: %v\n%s",
+			response.StatusCode, string(responseBody), string(debug.Stack()),
 		)
 	}
 

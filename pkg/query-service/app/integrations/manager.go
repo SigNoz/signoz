@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -133,24 +132,21 @@ func (m *Manager) GetIntegration(
 	ctx context.Context,
 	integrationId string,
 ) (*Integration, *model.ApiError) {
-	integrationDetails, apiErr := m.getIntegrationDetails(
-		ctx, integrationId,
+	integrations, apiErr := m.getIntegrations(
+		ctx, []string{integrationId},
 	)
 	if apiErr != nil {
 		return nil, apiErr
 	}
 
-	installation, apiErr := m.getInstalledIntegration(
-		ctx, integrationId,
-	)
-	if apiErr != nil {
-		return nil, apiErr
+	integration, exists := integrations[integrationId]
+	if !exists {
+		return nil, model.NotFoundError(fmt.Errorf(
+			"couldn't find integration with id: %s", integrationId,
+		))
 	}
 
-	return &Integration{
-		IntegrationDetails: *integrationDetails,
-		Installation:       installation,
-	}, nil
+	return integration, nil
 }
 
 func (m *Manager) InstallIntegration(
@@ -158,22 +154,23 @@ func (m *Manager) InstallIntegration(
 	integrationId string,
 	config InstalledIntegrationConfig,
 ) (*IntegrationsListItem, *model.ApiError) {
-	integrationDetails, apiErr := m.getIntegrationDetails(ctx, integrationId)
+	integration, apiErr := m.GetIntegration(ctx, integrationId)
 	if apiErr != nil {
 		return nil, apiErr
 	}
-
-	_, apiErr = m.installedIntegrationsRepo.upsert(
-		ctx, integrationId, config,
-	)
-	if apiErr != nil {
-		return nil, model.WrapApiError(
-			apiErr, "could not insert installed integration",
+	if integration.Installation == nil {
+		_, apiErr = m.installedIntegrationsRepo.upsert(
+			ctx, integrationId, config,
 		)
+		if apiErr != nil {
+			return nil, model.WrapApiError(
+				apiErr, "could not insert installed integration",
+			)
+		}
 	}
 
 	return &IntegrationsListItem{
-		IntegrationSummary: integrationDetails.IntegrationSummary,
+		IntegrationSummary: integration.IntegrationDetails.IntegrationSummary,
 		IsInstalled:        true,
 	}, nil
 }
@@ -186,50 +183,79 @@ func (m *Manager) UninstallIntegration(
 }
 
 // Helpers.
-func (m *Manager) getIntegrationDetails(
-	ctx context.Context,
-	integrationId string,
-) (*IntegrationDetails, *model.ApiError) {
-	if len(strings.TrimSpace(integrationId)) < 1 {
-		return nil, model.BadRequest(fmt.Errorf(
-			"integrationId is required",
-		))
-	}
 
+func (m *Manager) getIntegrations(
+	ctx context.Context,
+	integrationIds []string,
+) (map[string]*Integration, *model.ApiError) {
 	ais, apiErr := m.availableIntegrationsRepo.get(
-		ctx, []string{integrationId},
+		ctx, integrationIds,
 	)
 	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
-			"could not fetch integration: %s", integrationId,
-		))
+		return nil, apiErr
 	}
 
-	integrationDetails, wasFound := ais[integrationId]
-	if !wasFound {
-		return nil, model.NotFoundError(fmt.Errorf(
-			"could not find integration: %s", integrationId,
-		))
+	iis, apiErr := m.installedIntegrationsRepo.get(
+		ctx, integrationIds,
+	)
+	if apiErr != nil {
+		return nil, apiErr
 	}
-	return &integrationDetails, nil
+
+	result := map[string]*Integration{}
+	for iid, ai := range ais {
+		result[iid] = &Integration{
+			IntegrationDetails: ai,
+			Installation:       iis[iid],
+		}
+	}
+
+	return result, nil
 }
 
-func (m *Manager) getInstalledIntegration(
+func (m *Manager) getInstalledIntegrations(
 	ctx context.Context,
-	integrationId string,
-) (*InstalledIntegration, *model.ApiError) {
-	iis, apiErr := m.installedIntegrationsRepo.get(
-		ctx, []string{integrationId},
-	)
+) (map[string]*Integration, *model.ApiError) {
+	iis, apiErr := m.installedIntegrationsRepo.list(ctx)
 	if apiErr != nil {
-		return nil, model.WrapApiError(apiErr, fmt.Sprintf(
-			"could not fetch installed integration: %s", integrationId,
-		))
+		return nil, model.WrapApiError(
+			apiErr, "could not fetch installed integrations",
+		)
 	}
 
-	installation, wasFound := iis[integrationId]
-	if !wasFound {
-		return nil, nil
+	installedIds := []string{}
+	for _, ii := range iis {
+		installedIds = append(installedIds, ii.IntegrationId)
 	}
-	return &installation, nil
+
+	return m.getIntegrations(ctx, installedIds)
+}
+
+var INTEGRATION_PIPELINE_PREFIX string = "integration-pipeline"
+
+func (m *Manager) GetPipelinesForInstalledIntegrations(
+	ctx context.Context,
+) ([]logparsingpipeline.Pipeline, *model.ApiError) {
+	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	pipelines := []logparsingpipeline.Pipeline{}
+	for _, ii := range installedIntegrations {
+		for _, p := range ii.Assets.Logs.Pipelines {
+			pipelines = append(pipelines, logparsingpipeline.Pipeline{
+				Id:          fmt.Sprintf("%s::%s", INTEGRATION_PIPELINE_PREFIX, p.Id),
+				OrderId:     p.OrderId,
+				Enabled:     p.Enabled,
+				Name:        p.Name,
+				Alias:       p.Alias,
+				Description: &p.Description,
+				Filter:      p.Filter,
+				Config:      p.Config,
+			})
+		}
+	}
+
+	return pipelines, nil
 }
