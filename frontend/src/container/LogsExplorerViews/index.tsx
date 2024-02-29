@@ -611,6 +611,7 @@ function LogsExplorerViews({
 							data={data}
 							isError={isError}
 							isFilterApplied={!isEmpty(listQuery?.filters.items)}
+							dataSource={DataSource.LOGS}
 						/>
 					)}
 
