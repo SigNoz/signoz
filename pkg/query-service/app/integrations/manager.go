@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
@@ -28,18 +29,47 @@ type IntegrationSummary struct {
 }
 
 type IntegrationAssets struct {
-	Logs LogsAssets `json:"logs"`
+	Logs       LogsAssets             `json:"logs"`
+	Dashboards []dashboards.Dashboard `json:"dashboards"`
 
-	// TBD: Dashboards, alerts, saved views, facets (indexed attribs)...
+	// TODO(Raj): Maybe use a struct for alerts
+	Alerts []map[string]interface{} `json:"alerts"`
 }
 
 type LogsAssets struct {
 	Pipelines []logparsingpipeline.PostablePipeline `json:"pipelines"`
 }
 
+type IntegrationConfigStep struct {
+	Title        string `json:"title"`
+	Instructions string `json:"instructions"`
+}
+
+type DataCollectedForIntegration struct {
+	Logs    []CollectedLogAttribute `json:"logs"`
+	Metrics []CollectedMetric       `json:"metrics"`
+}
+
+type CollectedLogAttribute struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+type CollectedMetric struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+	Unit string `json:"unit"`
+}
+
 type IntegrationDetails struct {
 	IntegrationSummary
-	Assets IntegrationAssets `json:"assets"`
+
+	Categories    []string                    `json:"categories"`
+	Overview      string                      `json:"overview"` // markdown
+	Configuration []IntegrationConfigStep     `json:"configuration"`
+	DataCollected DataCollectedForIntegration `json:"data_collected"`
+	Assets        IntegrationAssets           `json:"assets"`
 }
 
 type IntegrationsListItem struct {

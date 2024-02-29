@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -63,6 +64,18 @@ func (t *TestAvailableIntegrationsRepo) list(
 				},
 				Icon: `data:image/svg+xml;utf8,<svg ... > ... </svg>`,
 			},
+			Categories: []string{"testcat1", "testcat2"},
+			Overview:   "test integration overview",
+			Configuration: []IntegrationConfigStep{
+				{
+					Title:        "Step 1",
+					Instructions: "Set source attrib on your signals",
+				},
+			},
+			DataCollected: DataCollectedForIntegration{
+				Logs:    []CollectedLogAttribute{},
+				Metrics: []CollectedMetric{},
+			},
 			Assets: IntegrationAssets{
 				Logs: LogsAssets{
 					Pipelines: []logparsingpipeline.PostablePipeline{
@@ -98,6 +111,8 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
+				Dashboards: []dashboards.Dashboard{},
+				Alerts:     []map[string]interface{}{},
 			},
 		}, {
 			IntegrationSummary: IntegrationSummary{
@@ -110,6 +125,18 @@ func (t *TestAvailableIntegrationsRepo) list(
 					HomePage: "https://signoz.io",
 				},
 				Icon: `data:image/svg+xml;utf8,<svg ... > ... </svg>`,
+			},
+			Categories: []string{"testcat1", "testcat2"},
+			Overview:   "test integration overview",
+			Configuration: []IntegrationConfigStep{
+				{
+					Title:        "Step 1",
+					Instructions: "Set source attrib on your signals",
+				},
+			},
+			DataCollected: DataCollectedForIntegration{
+				Logs:    []CollectedLogAttribute{},
+				Metrics: []CollectedMetric{},
 			},
 			Assets: IntegrationAssets{
 				Logs: LogsAssets{
@@ -146,6 +173,8 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
+				Dashboards: []dashboards.Dashboard{},
+				Alerts:     []map[string]interface{}{},
 			},
 		},
 	}, nil
