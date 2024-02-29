@@ -4,8 +4,6 @@ import { useTranslation } from 'react-i18next';
 
 import { EmailChannel } from '../../CreateAlertChannels/config';
 
-const { TextArea } = Input;
-
 function EmailForm({ setSelectedConfig }: EmailFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
 
@@ -32,13 +30,13 @@ function EmailForm({ setSelectedConfig }: EmailFormProps): JSX.Element {
 				/>
 			</Form.Item>
 
-			<Form.Item name="html" label={t('field_email_html')} required>
+			{/* <Form.Item name="html" label={t('field_email_html')} required>
 				<TextArea
 					rows={4}
 					onChange={handleInputChange('html')}
 					placeholder={t('placeholder_email_html')}
 				/>
-			</Form.Item>
+			</Form.Item> */}
 		</>
 	);
 }

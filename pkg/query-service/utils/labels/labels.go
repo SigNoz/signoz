@@ -16,8 +16,6 @@ const sep = '\xff'
 const (
 	MetricNameLabel = "__name__"
 	AlertNameLabel  = "alertname"
-	BucketLabel     = "le"
-	InstanceName    = "instance"
 
 	// AlertStateLabel is the label name indicating the state of an alert.
 	AlertStateLabel = "alertstate"
@@ -25,9 +23,8 @@ const (
 	AlertRuleIdLabel = "ruleId"
 	RuleSourceLabel  = "ruleSource"
 
-	RuleThresholdLabel       = "threshold"
-	AlertAdditionalInfoLabel = "additionalInfo"
-	AlertSummaryLabel        = "summary"
+	RuleThresholdLabel = "threshold"
+	AlertSummaryLabel  = "summary"
 )
 
 // Label is a key/value pair of strings.
