@@ -61,35 +61,40 @@ func (t *TestAvailableIntegrationsRepo) list(
 					Email:    "integrations@signoz.io",
 					HomePage: "https://signoz.io",
 				},
+				Icon: `data:image/svg+xml;utf8,<svg ... > ... </svg>`,
 			},
-			IntegrationAssets: IntegrationAssets{
-				LogPipeline: &logparsingpipeline.PostablePipeline{
-					Name:    "pipeline1",
-					Alias:   "pipeline1",
-					Enabled: true,
-					Filter: &v3.FilterSet{
-						Operator: "AND",
-						Items: []v3.FilterItem{
-							{
-								Key: v3.AttributeKey{
-									Key:      "method",
-									DataType: v3.AttributeKeyDataTypeString,
-									Type:     v3.AttributeKeyTypeTag,
-								},
-								Operator: "=",
-								Value:    "GET",
-							},
-						},
-					},
-					Config: []logparsingpipeline.PipelineOperator{
+			Assets: IntegrationAssets{
+				Logs: LogsAssets{
+					Pipelines: []logparsingpipeline.PostablePipeline{
 						{
-							OrderId: 1,
-							ID:      "add",
-							Type:    "add",
-							Field:   "attributes.test",
-							Value:   "val",
+							Name:    "pipeline1",
+							Alias:   "pipeline1",
 							Enabled: true,
-							Name:    "test add",
+							Filter: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{
+										Key: v3.AttributeKey{
+											Key:      "method",
+											DataType: v3.AttributeKeyDataTypeString,
+											Type:     v3.AttributeKeyTypeTag,
+										},
+										Operator: "=",
+										Value:    "GET",
+									},
+								},
+							},
+							Config: []logparsingpipeline.PipelineOperator{
+								{
+									OrderId: 1,
+									ID:      "add",
+									Type:    "add",
+									Field:   "attributes.test",
+									Value:   "val",
+									Enabled: true,
+									Name:    "test add",
+								},
+							},
 						},
 					},
 				},
@@ -104,35 +109,40 @@ func (t *TestAvailableIntegrationsRepo) list(
 					Email:    "integrations@signoz.io",
 					HomePage: "https://signoz.io",
 				},
+				Icon: `data:image/svg+xml;utf8,<svg ... > ... </svg>`,
 			},
-			IntegrationAssets: IntegrationAssets{
-				LogPipeline: &logparsingpipeline.PostablePipeline{
-					Name:    "pipeline2",
-					Alias:   "pipeline2",
-					Enabled: true,
-					Filter: &v3.FilterSet{
-						Operator: "AND",
-						Items: []v3.FilterItem{
-							{
-								Key: v3.AttributeKey{
-									Key:      "method",
-									DataType: v3.AttributeKeyDataTypeString,
-									Type:     v3.AttributeKeyTypeTag,
-								},
-								Operator: "=",
-								Value:    "GET",
-							},
-						},
-					},
-					Config: []logparsingpipeline.PipelineOperator{
+			Assets: IntegrationAssets{
+				Logs: LogsAssets{
+					Pipelines: []logparsingpipeline.PostablePipeline{
 						{
-							OrderId: 1,
-							ID:      "add",
-							Type:    "add",
-							Field:   "attributes.test",
-							Value:   "val",
+							Name:    "pipeline2",
+							Alias:   "pipeline2",
 							Enabled: true,
-							Name:    "test add",
+							Filter: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{
+										Key: v3.AttributeKey{
+											Key:      "method",
+											DataType: v3.AttributeKeyDataTypeString,
+											Type:     v3.AttributeKeyTypeTag,
+										},
+										Operator: "=",
+										Value:    "GET",
+									},
+								},
+							},
+							Config: []logparsingpipeline.PipelineOperator{
+								{
+									OrderId: 1,
+									ID:      "add",
+									Type:    "add",
+									Field:   "attributes.test",
+									Value:   "val",
+									Enabled: true,
+									Name:    "test add",
+								},
+							},
 						},
 					},
 				},
