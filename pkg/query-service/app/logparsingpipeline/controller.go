@@ -17,12 +17,21 @@ import (
 // Controller takes care of deployment cycle of log parsing pipelines.
 type LogParsingPipelineController struct {
 	Repo
+
+	GetIntegrationPipelines func(context.Context) ([]Pipeline, *model.ApiError)
 }
 
-func NewLogParsingPipelinesController(db *sqlx.DB, engine string) (*LogParsingPipelineController, error) {
+func NewLogParsingPipelinesController(
+	db *sqlx.DB,
+	engine string,
+	getIntegrationPipelines func(context.Context) ([]Pipeline, *model.ApiError),
+) (*LogParsingPipelineController, error) {
 	repo := NewRepo(db)
 	err := repo.InitDB(engine)
-	return &LogParsingPipelineController{Repo: repo}, err
+	return &LogParsingPipelineController{
+		Repo:                    repo,
+		GetIntegrationPipelines: getIntegrationPipelines,
+	}, err
 }
 
 // PipelinesResponse is used to prepare http response for pipelines config related requests
@@ -100,19 +109,52 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	return response, nil
 }
 
+// Returns effective list of pipelines including user created
+// pipelines and pipelines for installed integrations
+func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
+	ctx context.Context, version int,
+) ([]Pipeline, *model.ApiError) {
+	pipelines := []Pipeline{}
+	if version >= 0 {
+		pvs, errors := ic.getPipelinesByVersion(ctx, version)
+		if errors != nil {
+			zap.S().Errorf("failed to get pipelines for version %d, %w", version, errors)
+			return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version"))
+		}
+		pipelines = pvs
+	}
+
+	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx)
+	if apiErr != nil {
+		return nil, model.WrapApiError(
+			apiErr, "could not get pipelines for installed integrations",
+		)
+	}
+	for _, ip := range integrationPipelines {
+		pipelines = append(pipelines, ip)
+	}
+
+	return pipelines, nil
+}
+
 // GetPipelinesByVersion responds with version info and associated pipelines
 func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 	ctx context.Context, version int,
 ) (*PipelinesResponse, *model.ApiError) {
-	pipelines, errors := ic.getPipelinesByVersion(ctx, version)
+	pipelines, errors := ic.getEffectivePipelinesByVersion(ctx, version)
 	if errors != nil {
 		zap.S().Errorf("failed to get pipelines for version %d, %w", version, errors)
 		return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version"))
 	}
-	configVersion, err := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeLogPipelines, version)
-	if err != nil {
-		zap.S().Errorf("failed to get config for version %d, %s", version, err.Error())
-		return nil, model.WrapApiError(err, "failed to get config for given version")
+
+	var configVersion *agentConf.ConfigVersion
+	if version >= 0 {
+		cv, err := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeLogPipelines, version)
+		if err != nil {
+			zap.S().Errorf("failed to get config for version %d, %s", version, err.Error())
+			return nil, model.WrapApiError(err, "failed to get config for given version")
+		}
+		configVersion = cv
 	}
 
 	return &PipelinesResponse{

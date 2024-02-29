@@ -159,12 +159,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	integrationsController, err := integrations.NewController(localDB)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't create integrations controller: %w", err,
-		)
+		return nil, fmt.Errorf("couldn't create integrations controller: %w", err)
 	}
 
-	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
+		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
+	)
 	if err != nil {
 		return nil, err
 	}
