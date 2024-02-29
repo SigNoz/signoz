@@ -2,9 +2,11 @@ import './WidgetFullView.styles.scss';
 
 import { SyncOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
+import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import {
 	timeItems,
@@ -96,7 +98,7 @@ function FullView({
 		},
 		{
 			queryKey: `FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
-			enabled: !isDependedDataLoaded,
+			enabled: !isDependedDataLoaded && widget.panelTypes !== PANEL_TYPES.LIST, // Internally both the list view panel has it's own query range api call, so we don't need to call it again
 		},
 	);
 
@@ -164,6 +166,8 @@ function FullView({
 		parentGraphVisibilityState(graphsVisibilityStates);
 	}, [graphsVisibilityStates, parentGraphVisibilityState]);
 
+	const isListView = widget.panelTypes === PANEL_TYPES.LIST;
+
 	if (response.isFetching) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
@@ -192,14 +196,17 @@ function FullView({
 			</div>
 
 			<div
-				className={
-					isDashboardLocked ? 'graph-container disabled' : 'graph-container'
-				}
+				className={cx('graph-container', {
+					disabled: isDashboardLocked,
+					'list-graph-container': isListView,
+				})}
 				ref={fullViewRef}
 			>
 				{chartOptions && (
 					<GraphContainer
-						style={{ height: '90%' }}
+						style={{
+							height: isListView ? '100%' : '90%',
+						}}
 						isGraphLegendToggleAvailable={canModifyChart}
 					>
 						<GridPanelSwitch
@@ -214,6 +221,10 @@ function FullView({
 							query={widget.query}
 							ref={fullViewChartRef}
 							thresholds={widget.thresholds}
+							selectedLogFields={widget.selectedLogFields}
+							dataSource={widget.query.builder.queryData[0].dataSource}
+							selectedTracesFields={widget.selectedTracesFields}
+							selectedTime={selectedTime}
 						/>
 					</GraphContainer>
 				)}

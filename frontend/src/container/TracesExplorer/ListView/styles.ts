@@ -3,7 +3,7 @@ import { CSSProperties } from 'react';
 import styled from 'styled-components';
 
 export const tableStyles: CSSProperties = {
-	cursor: 'pointer',
+	cursor: 'unset',
 };
 
 export const Container = styled.div`

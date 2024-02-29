@@ -20,11 +20,16 @@ import { UPDATE_USER_IS_FETCH } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 import { routePermission } from 'utils/permission';
 
-import routes, { LIST_LICENSES } from './routes';
+import routes, {
+	LIST_LICENSES,
+	oldNewRoutesMapping,
+	oldRoutes,
+} from './routes';
 import afterLogin from './utils';
 
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
-	const { pathname } = useLocation();
+	const location = useLocation();
+	const { pathname } = location;
 
 	const mapRoutes = useMemo(
 		() =>
@@ -58,6 +63,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const { notifications } = useNotifications();
 
 	const currentRoute = mapRoutes.get('current');
+
+	const isOldRoute = oldRoutes.indexOf(pathname) > -1;
 
 	const isLocalStorageLoggedIn =
 		getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true';
@@ -158,6 +165,16 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
+				if (isOldRoute) {
+					const redirectUrl = oldNewRoutesMapping[pathname];
+
+					const newLocation = {
+						...location,
+						pathname: redirectUrl,
+					};
+					history.replace(newLocation);
+				}
+
 				if (currentRoute) {
 					const { isPrivate, key } = currentRoute;
 
