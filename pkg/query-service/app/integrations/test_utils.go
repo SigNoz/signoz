@@ -88,12 +88,12 @@ func (t *TestAvailableIntegrationsRepo) list(
 								Items: []v3.FilterItem{
 									{
 										Key: v3.AttributeKey{
-											Key:      "method",
+											Key:      "source",
 											DataType: v3.AttributeKeyDataTypeString,
 											Type:     v3.AttributeKeyTypeTag,
 										},
 										Operator: "=",
-										Value:    "GET",
+										Value:    "nginx",
 									},
 								},
 							},
@@ -113,6 +113,22 @@ func (t *TestAvailableIntegrationsRepo) list(
 				},
 				Dashboards: []dashboards.Dashboard{},
 				Alerts:     []map[string]interface{}{},
+			},
+			ConnectionTests: &IntegrationConnectionTests{
+				Logs: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "source",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: "=",
+							Value:    "nginx",
+						},
+					},
+				},
 			},
 		}, {
 			IntegrationSummary: IntegrationSummary{
@@ -150,12 +166,12 @@ func (t *TestAvailableIntegrationsRepo) list(
 								Items: []v3.FilterItem{
 									{
 										Key: v3.AttributeKey{
-											Key:      "method",
+											Key:      "source",
 											DataType: v3.AttributeKeyDataTypeString,
 											Type:     v3.AttributeKeyTypeTag,
 										},
 										Operator: "=",
-										Value:    "GET",
+										Value:    "redis",
 									},
 								},
 							},
@@ -175,6 +191,22 @@ func (t *TestAvailableIntegrationsRepo) list(
 				},
 				Dashboards: []dashboards.Dashboard{},
 				Alerts:     []map[string]interface{}{},
+			},
+			ConnectionTests: &IntegrationConnectionTests{
+				Logs: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "source",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: "=",
+							Value:    "nginx",
+						},
+					},
+				},
 			},
 		},
 	}, nil

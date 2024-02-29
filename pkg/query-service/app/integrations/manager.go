@@ -11,6 +11,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 type IntegrationAuthor struct {
@@ -62,6 +63,21 @@ type CollectedMetric struct {
 	Unit string `json:"unit"`
 }
 
+type SignalConnectionStatus struct {
+	LastReceivedTs   int64  `json:"last_received_ts"`   // epoch seconds
+	LastReceivedFrom string `json:"last_received_from"` // resource identifier
+}
+
+type IntegrationConnectionStatus struct {
+	Logs    *SignalConnectionStatus `json:"logs"`
+	Metrics *SignalConnectionStatus `json:"metrics"`
+}
+
+type IntegrationConnectionTests struct {
+	Logs *v3.FilterSet `json:"logs"`
+	// TODO(Raj): Add connection tests for other signals.
+}
+
 type IntegrationDetails struct {
 	IntegrationSummary
 
@@ -70,6 +86,12 @@ type IntegrationDetails struct {
 	Configuration []IntegrationConfigStep     `json:"configuration"`
 	DataCollected DataCollectedForIntegration `json:"data_collected"`
 	Assets        IntegrationAssets           `json:"assets"`
+
+	// ConnectionTests is expected to have one entry per signal type
+	ConnectionTests *IntegrationConnectionTests `json:"connection_tests"`
+
+	// ConnectionStatus gets derived using `ConnectionTests`
+	ConnectionStatus *IntegrationConnectionStatus `json:"connection_status"`
 }
 
 type IntegrationsListItem struct {
