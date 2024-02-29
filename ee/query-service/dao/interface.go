@@ -39,6 +39,6 @@ type ModelDao interface {
 	UpdatePATLastUsed(ctx context.Context, pat string, lastUsed int64) basemodel.BaseApiError
 	GetPATByID(ctx context.Context, id string) (*model.PAT, basemodel.BaseApiError)
 	GetUserByPAT(ctx context.Context, token string) (*basemodel.UserPayload, basemodel.BaseApiError)
-	ListPATs(ctx context.Context, userID string) ([]model.PAT, basemodel.BaseApiError)
+	ListPATs(ctx context.Context) ([]model.PAT, basemodel.BaseApiError)
 	RevokePAT(ctx context.Context, id string, userID string) basemodel.BaseApiError
 }

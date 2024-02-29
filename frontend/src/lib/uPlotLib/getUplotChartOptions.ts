@@ -4,6 +4,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './uPlotLib.styles.scss';
 
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { Dimensions } from 'hooks/useDimensions';
@@ -19,11 +20,12 @@ import getSeries from './utils/getSeriesData';
 import { getXAxisScale } from './utils/getXAxisScale';
 import { getYAxisScale } from './utils/getYAxisScale';
 
-interface GetUPlotChartOptions {
+export interface GetUPlotChartOptions {
 	id?: string;
 	apiResponse?: MetricRangePayloadProps;
 	dimensions: Dimensions;
 	isDarkMode: boolean;
+	panelType?: PANEL_TYPES;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	yAxisUnit?: string;
 	onClickHandler?: OnClickPluginOpts['onClick'];
@@ -55,6 +57,7 @@ export const getUPlotChartOptions = ({
 	fillSpans,
 	softMax,
 	softMin,
+	panelType,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -209,12 +212,12 @@ export const getUPlotChartOptions = ({
 				},
 			],
 		},
-		series: getSeries(
+		series: getSeries({
 			apiResponse,
-			apiResponse?.data.result,
+			widgetMetaData: apiResponse?.data.result,
 			graphsVisibilityStates,
-			fillSpans,
-		),
+			panelType,
+		}),
 		axes: getAxes(isDarkMode, yAxisUnit),
 	};
 };
