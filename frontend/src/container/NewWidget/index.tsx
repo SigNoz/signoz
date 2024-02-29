@@ -28,6 +28,7 @@ import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
+import { v4 as uuid } from 'uuid';
 
 import LeftContainer from './LeftContainer';
 import QueryTypeTag from './LeftContainer/QueryTypeTag';
@@ -111,8 +112,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			: selectedWidget?.softMin || 0,
 	);
 
-	const [selectedLogFields, setSelectedLogFields] = useState<IField[] | null>(
-		selectedWidget?.selectedLogFields || null,
+	const [selectedLogFields, setSelectedLogFields] = useState<
+		(IField & { id: string })[] | null
+	>(
+		selectedWidget?.selectedLogFields?.map((field) => ({
+			...field,
+			id: field.id || uuid(), // for does how have id as empty string
+		})) || null,
 	);
 
 	const [selectedTracesFields, setSelectedTracesFields] = useState(

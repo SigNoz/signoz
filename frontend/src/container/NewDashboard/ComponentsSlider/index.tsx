@@ -77,11 +77,13 @@ function DashboardGraphSlider(): JSX.Element {
 							softMin: null,
 							selectedLogFields: [
 								{
+									id: uuid(),
 									dataType: 'string',
 									type: '',
 									name: 'body',
 								},
 								{
+									id: uuid(),
 									dataType: 'string',
 									type: '',
 									name: 'timestamp',
