@@ -24,6 +24,7 @@ const defaultAnnotations = {
 
 export const alertDefaults: AlertDef = {
 	alertType: AlertTypes.METRICS_BASED_ALERT,
+	version: 'v4',
 	condition: {
 		compositeQuery: {
 			builderQueries: {

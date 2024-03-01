@@ -43,6 +43,7 @@ export interface GridCardGraphProps {
 	isQueryEnabled: boolean;
 	variables?: Dashboard['data']['variables'];
 	fillSpans?: boolean;
+	version?: string;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

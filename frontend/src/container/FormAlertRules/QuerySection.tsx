@@ -3,13 +3,16 @@ import './QuerySection.styles.scss';
 import { Button, Tabs, Tooltip } from 'antd';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import { QueryBuilder } from 'container/QueryBuilder';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { Atom, Play, Terminal } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 import AppReducer from 'types/reducer/app';
 
@@ -22,6 +25,7 @@ function QuerySection({
 	setQueryCategory,
 	alertType,
 	runQuery,
+	alertDef,
 	panelType,
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
@@ -50,6 +54,10 @@ function QuerySection({
 				queryVariant: 'static',
 				initialDataSource: ALERTS_DATA_SOURCE_MAP[alertType],
 			}}
+			showFunctions={
+				alertType === AlertTypes.METRICS_BASED_ALERT && alertDef.version === 'v4'
+			}
+			version={alertDef.version || 'v3'}
 		/>
 	);
 
@@ -111,6 +119,17 @@ function QuerySection({
 		],
 		[],
 	);
+
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+
+	useEffect(() => {
+		registerShortcut(QBShortcuts.StageAndRunQuery, runQuery);
+
+		return (): void => {
+			deregisterShortcut(QBShortcuts.StageAndRunQuery);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [runQuery]);
 
 	const renderTabs = (typ: AlertTypes): JSX.Element | null => {
 		switch (typ) {
@@ -197,6 +216,7 @@ interface QuerySectionProps {
 	setQueryCategory: (n: EQueryType) => void;
 	alertType: AlertTypes;
 	runQuery: VoidFunction;
+	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
 }
 
