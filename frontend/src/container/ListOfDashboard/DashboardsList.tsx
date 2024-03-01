@@ -109,7 +109,6 @@ function DashboardsList(): JSX.Element {
 			width: 30,
 			key: DynamicColumnsKey.CreatedAt,
 			sorter: (a: Data, b: Data): number => {
-				console.log({ a });
 				const prev = new Date(a.createdAt).getTime();
 				const next = new Date(b.createdAt).getTime();
 
@@ -211,6 +210,7 @@ function DashboardsList(): JSX.Element {
 					ns: 'dashboard',
 				}),
 				uploadedGrafana: false,
+				version: 'v4',
 			});
 
 			if (response.statusCode === 200) {
@@ -304,6 +304,7 @@ function DashboardsList(): JSX.Element {
 						loading={isFilteringDashboards}
 						style={{ marginBottom: 16, marginTop: 16 }}
 						defaultValue={searchString}
+						autoFocus
 					/>
 				</Col>
 

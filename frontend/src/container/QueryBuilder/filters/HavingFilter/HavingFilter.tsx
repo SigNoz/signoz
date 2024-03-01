@@ -22,6 +22,7 @@ import { getHavingObject, isValidHavingValue } from '../utils';
 import { HavingFilterProps } from './HavingFilter.interfaces';
 
 export function HavingFilter({
+	entityVersion,
 	query,
 	onChange,
 }: HavingFilterProps): JSX.Element {
@@ -48,10 +49,18 @@ export function HavingFilter({
 		[query],
 	);
 
-	const columnName = useMemo(
-		() => `${query.aggregateOperator.toUpperCase()}(${aggregatorAttribute})`,
-		[query, aggregatorAttribute],
-	);
+	const columnName = useMemo(() => {
+		if (
+			query &&
+			query.dataSource === DataSource.METRICS &&
+			query.spaceAggregation &&
+			entityVersion === 'v4'
+		) {
+			return `${query.spaceAggregation.toUpperCase()}(${aggregatorAttribute})`;
+		}
+
+		return `${query.aggregateOperator.toUpperCase()}(${aggregatorAttribute})`;
+	}, [query, aggregatorAttribute, entityVersion]);
 
 	const aggregatorOptions: SelectOption<string, string>[] = useMemo(
 		() => [{ label: columnName, value: columnName }],
@@ -211,7 +220,7 @@ export function HavingFilter({
 			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 			style={{ width: '100%' }}
 			notFoundContent={currentFormValue.value.length === 0 ? undefined : null}
-			placeholder="Count(operation) > 5"
+			placeholder="GroupBy(operation) > 5"
 			onDeselect={handleDeselect}
 			onChange={handleChange}
 			onSelect={handleSelect}

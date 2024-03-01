@@ -48,7 +48,7 @@ export const getQueryBuilderQueries = ({
 				items: filterItems[index],
 				op: 'AND',
 			},
-			reduceTo: 'sum',
+			reduceTo: 'avg',
 			dataSource,
 		};
 
@@ -86,7 +86,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 		aggregateAttribute: autocompleteData[index],
 		queryName: alphabet[index],
 		expression: alphabet[index],
-		reduceTo: 'sum',
+		reduceTo: 'avg',
 		filters: {
 			items: additionalItems[index],
 			op: 'AND',

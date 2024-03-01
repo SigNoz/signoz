@@ -18,11 +18,16 @@ import { prepareQueryRangePayload } from './prepareQueryRangePayload';
 
 export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
+	version: string,
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
 
-	const response = await getMetricsQueryRange(queryPayload, signal);
+	const response = await getMetricsQueryRange(
+		queryPayload,
+		version || 'v3',
+		signal,
+	);
 
 	if (response.statusCode >= 400) {
 		throw new Error(

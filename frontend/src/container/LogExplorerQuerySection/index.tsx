@@ -62,6 +62,7 @@ function LogExplorerQuerySection({
 		index: 0,
 		query,
 		filterConfigs,
+		entityVersion: '',
 	});
 
 	const renderOrderBy = useCallback(
@@ -103,6 +104,7 @@ function LogExplorerQuerySection({
 					config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}
 					filterConfigs={filterConfigs}
 					queryComponents={queryComponents}
+					version="v3" // setting this to v3 as we this is rendered in logs explorer
 				/>
 			)}
 		</>
