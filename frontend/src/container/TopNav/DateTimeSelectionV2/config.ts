@@ -53,7 +53,7 @@ export const Options: Option[] = [
 	{ value: '1day', label: 'Last 1 day' },
 	{ value: '3days', label: 'Last 3 days' },
 	{ value: '1week', label: 'Last 1 week' },
-	{ value: 'custom', label: 'Custom...' },
+	{ value: 'custom', label: 'Custom' },
 ];
 
 export interface Option {

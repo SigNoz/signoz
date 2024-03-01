@@ -112,7 +112,14 @@ function CustomTimePickerPopoverContent({
 					</Button>
 				))}
 			</div>
-			<div className="relative-date-time">
+			<div
+				className={cx(
+					'relative-date-time',
+					selectedTime === 'custom' || customDateTimeVisible
+						? 'date-picker'
+						: 'relative-times',
+				)}
+			>
 				{selectedTime === 'custom' || customDateTimeVisible ? (
 					<RangePicker
 						disabledDate={disabledDate}
@@ -124,7 +131,7 @@ function CustomTimePickerPopoverContent({
 						})}
 					/>
 				) : (
-					<div>
+					<div className="relative-times-container">
 						<div className="time-heading">RELATIVE TIMES</div>
 						<div>{getTimeChips(RelativeDurationSuggestionOptions)}</div>
 					</div>
