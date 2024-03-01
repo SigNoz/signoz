@@ -132,6 +132,7 @@ export const topOperationQueries = ({
 		MetricAggregateOperator.P99,
 		MetricAggregateOperator.SUM,
 		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
 	const expressions = ['D*100/E'];
 	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];

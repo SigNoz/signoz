@@ -173,7 +173,7 @@ export const serviceMetricsQuery = (
 		MetricAggregateOperator.RATE,
 	];
 	const spaceAggregateOperators = [
-		MetricAggregateOperator.P90,
+		MetricAggregateOperator.P99,
 		MetricAggregateOperator.SUM,
 		MetricAggregateOperator.SUM,
 		MetricAggregateOperator.SUM,
