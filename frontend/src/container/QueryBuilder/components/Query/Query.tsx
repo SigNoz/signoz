@@ -316,6 +316,8 @@ export const Query = memo(function Query({
 	const disableOperatorSelector =
 		!query?.aggregateAttribute.key || query?.aggregateAttribute.key === '';
 
+	const isVersionV4 = version && version === 'v4';
+
 	return (
 		<Row gutter={[0, 12]}>
 			<QBEntityOptions
@@ -431,18 +433,13 @@ export const Query = memo(function Query({
 						</Col>
 					)}
 					{!isListViewPanel && (
-						<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
+						<Col span={24}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
-									{version && version === 'v3' && (
-										<FilterLabel
-											label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
-										/>
-									)}
-
-									{version && version === 'v4' && isMetricsDataSource && (
+									{isVersionV4 && isMetricsDataSource ? (
 										<SpaceAggregationOptions
-											key={`${query.spaceAggregation}${query.timeAggregation}`}
+											panelType={panelType}
+											key={`${panelType}${query.spaceAggregation}${query.timeAggregation}`}
 											aggregatorAttributeType={
 												query?.aggregateAttribute.type as ATTRIBUTE_TYPES
 											}
@@ -451,11 +448,25 @@ export const Query = memo(function Query({
 											onSelect={handleSpaceAggregationChange}
 											operators={spaceAggregationOptions}
 										/>
+									) : (
+										<FilterLabel
+											label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
+										/>
 									)}
 								</Col>
+
 								<Col flex="1 1 12.5rem">
 									{panelType === PANEL_TYPES.VALUE ? (
-										<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+										<Row>
+											{isVersionV4 && isMetricsDataSource && (
+												<Col span={4}>
+													<FilterLabel label="Reduce to" />
+												</Col>
+											)}
+											<Col span={isVersionV4 && isMetricsDataSource ? 20 : 24}>
+												<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+											</Col>
+										</Row>
 									) : (
 										<GroupByFilter
 											disabled={isMetricsDataSource && !query.aggregateAttribute.key}
@@ -464,6 +475,20 @@ export const Query = memo(function Query({
 										/>
 									)}
 								</Col>
+
+								{isVersionV4 && isMetricsDataSource && panelType === PANEL_TYPES.TABLE && (
+									<Col flex="1 1 12.5rem">
+										<Row>
+											<Col span={6}>
+												<FilterLabel label="Reduce to" />
+											</Col>
+
+											<Col span={18}>
+												<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+											</Col>
+										</Row>
+									</Col>
+								)}
 							</Row>
 						</Col>
 					)}

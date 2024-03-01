@@ -1,9 +1,10 @@
 import { Select } from 'antd';
-import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
+import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { useEffect, useState } from 'react';
 import { MetricAggregateOperator } from 'types/common/queryBuilder';
 
 interface SpaceAggregationOptionsProps {
+	panelType: PANEL_TYPES | null;
 	selectedValue: string | undefined;
 	aggregatorAttributeType: ATTRIBUTE_TYPES | null;
 	disabled: boolean;
@@ -12,13 +13,17 @@ interface SpaceAggregationOptionsProps {
 }
 
 export default function SpaceAggregationOptions({
+	panelType,
 	selectedValue,
 	aggregatorAttributeType = ATTRIBUTE_TYPES.GAUGE,
 	disabled,
 	onSelect,
 	operators,
 }: SpaceAggregationOptionsProps): JSX.Element {
-	const [defaultValue, setDefaultValue] = useState(selectedValue || 'Sum By');
+	const placeHolderText = panelType === PANEL_TYPES.VALUE ? 'Sum' : 'Sum By';
+	const [defaultValue, setDefaultValue] = useState(
+		selectedValue || placeHolderText,
+	);
 
 	useEffect(() => {
 		if (!selectedValue) {
@@ -50,8 +55,13 @@ export default function SpaceAggregationOptions({
 				style={{ minWidth: '5.625rem' }}
 				disabled={disabled}
 				onChange={onSelect}
-				options={operators}
-			/>
+			>
+				{operators.map((operator) => (
+					<Select.Option key={operator.value} value={operator.value}>
+						{operator.label} {panelType !== PANEL_TYPES.VALUE ? ' By' : ''}
+					</Select.Option>
+				))}
+			</Select>
 		</div>
 	);
 }

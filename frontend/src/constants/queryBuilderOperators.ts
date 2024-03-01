@@ -357,19 +357,19 @@ export const metricsSumSpaceAggregateOperatorOptions: SelectOption<
 >[] = [
 	{
 		value: MetricAggregateOperator.SUM,
-		label: 'Sum By',
+		label: 'Sum',
 	},
 	{
 		value: MetricAggregateOperator.AVG,
-		label: 'Avg By',
+		label: 'Avg',
 	},
 	{
 		value: MetricAggregateOperator.MIN,
-		label: 'Min By',
+		label: 'Min',
 	},
 	{
 		value: MetricAggregateOperator.MAX,
-		label: 'Max By',
+		label: 'Max',
 	},
 ];
 
@@ -379,19 +379,19 @@ export const metricsGaugeSpaceAggregateOperatorOptions: SelectOption<
 >[] = [
 	{
 		value: MetricAggregateOperator.SUM,
-		label: 'Sum By',
+		label: 'Sum',
 	},
 	{
 		value: MetricAggregateOperator.AVG,
-		label: 'Avg By',
+		label: 'Avg',
 	},
 	{
 		value: MetricAggregateOperator.MIN,
-		label: 'Min By',
+		label: 'Min',
 	},
 	{
 		value: MetricAggregateOperator.MAX,
-		label: 'Max By',
+		label: 'Max',
 	},
 ];
 
@@ -401,23 +401,23 @@ export const metricsHistogramSpaceAggregateOperatorOptions: SelectOption<
 >[] = [
 	{
 		value: MetricAggregateOperator.P50,
-		label: 'P50 By',
+		label: 'P50',
 	},
 	{
 		value: MetricAggregateOperator.P75,
-		label: 'P75 By',
+		label: 'P75',
 	},
 	{
 		value: MetricAggregateOperator.P90,
-		label: 'P90 By',
+		label: 'P90',
 	},
 	{
 		value: MetricAggregateOperator.P95,
-		label: 'P95 By',
+		label: 'P95',
 	},
 	{
 		value: MetricAggregateOperator.P99,
-		label: 'P99 By',
+		label: 'P99',
 	},
 ];
 
