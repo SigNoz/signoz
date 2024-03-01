@@ -2,11 +2,21 @@ import './LogStateIndicator.styles.scss';
 
 import cx from 'classnames';
 
+export const SEVERITY_TEXT_TYPE = {
+	TRACE: 'TRACE',
+	DEBUG: 'DEBUG',
+	INFO: 'INFO',
+	WARN: 'WARN',
+	ERROR: 'ERROR',
+	FATAL: 'FATAL',
+} as const;
+
 export const LogType = {
 	INFO: 'INFO',
 	WARNING: 'WARNING',
 	ERROR: 'ERROR',
-};
+} as const;
+
 function LogStateIndicator({
 	type,
 	isActive,
