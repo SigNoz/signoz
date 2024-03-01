@@ -1,4 +1,5 @@
 import { ToggleGraphProps } from 'components/Graph/types';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { getComponentForPanelType } from 'constants/panelTypes';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GRID_TABLE_CONFIG } from 'container/GridTableComponent/config';
@@ -50,11 +51,13 @@ const GridPanelSwitch = forwardRef<
 						? {
 								selectedLogsFields: selectedLogFields || [],
 								query,
+								version: DEFAULT_ENTITY_VERSION, // As we don't support for Metrics, defaulting to v3
 								selectedTime,
 						  }
 						: {
 								selectedTracesFields: selectedTracesFields || [],
 								query,
+								version: DEFAULT_ENTITY_VERSION, // As we don't support for Metrics, defaulting to v3
 								selectedTime,
 						  },
 				[PANEL_TYPES.TRACE]: null,

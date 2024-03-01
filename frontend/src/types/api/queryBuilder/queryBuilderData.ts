@@ -47,12 +47,20 @@ export type OrderByPayload = {
 	order: string;
 };
 
+export interface QueryFunctionProps {
+	name: string;
+	args: string[];
+}
+
 // Type for query builder
 export type IBuilderQuery = {
 	queryName: string;
 	dataSource: DataSource;
 	aggregateOperator: string;
 	aggregateAttribute: BaseAutocompleteData;
+	timeAggregation: string;
+	spaceAggregation?: string;
+	functions: QueryFunctionProps[];
 	filters: TagFilter;
 	groupBy: BaseAutocompleteData[];
 	expression: string;
