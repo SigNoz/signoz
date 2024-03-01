@@ -80,7 +80,6 @@ export const getQueryBuilderQuerieswithFormula = ({
 	})),
 	queryData: autocompleteData.map((_, index) => ({
 		...initialQueryBuilderFormValuesMap.metrics,
-		aggregateOperator: timeAggregateOperators[index],
 		timeAggregation: timeAggregateOperators[index],
 		spaceAggregation: spaceAggregateOperators[index],
 		temporality: 'Delta',
