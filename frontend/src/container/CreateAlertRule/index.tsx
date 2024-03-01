@@ -44,7 +44,7 @@ function CreateRules(): JSX.Element {
 			default:
 				setInitValues({
 					...alertDefaults,
-					version: version || 'v3',
+					version: version || 'v4',
 				});
 		}
 	};
