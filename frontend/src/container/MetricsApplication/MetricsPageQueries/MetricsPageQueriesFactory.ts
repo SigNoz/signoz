@@ -69,7 +69,8 @@ export const getQueryBuilderQuerieswithFormula = ({
 	disabled,
 	expressions,
 	legendFormulas,
-	aggregateOperators,
+	timeAggregateOperators,
+	spaceAggregateOperators,
 	dataSource,
 }: BuilderQuerieswithFormulaProps): QueryBuilderData => ({
 	queryFormulas: expressions.map((expression, index) => ({
@@ -79,7 +80,10 @@ export const getQueryBuilderQuerieswithFormula = ({
 	})),
 	queryData: autocompleteData.map((_, index) => ({
 		...initialQueryBuilderFormValuesMap.metrics,
-		aggregateOperator: aggregateOperators[index],
+		aggregateOperator: timeAggregateOperators[index],
+		timeAggregation: timeAggregateOperators[index],
+		spaceAggregation: spaceAggregateOperators[index],
+		temporality: 'Delta',
 		disabled: disabled[index],
 		groupBy,
 		legend: legends[index],

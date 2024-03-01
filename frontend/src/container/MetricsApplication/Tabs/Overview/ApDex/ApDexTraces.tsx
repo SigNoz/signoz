@@ -54,6 +54,7 @@ function ApDexTraces({
 			onClickHandler={handleGraphClick('ApDex')}
 			threshold={thresholdValue}
 			isQueryEnabled={isQueryEnabled}
+			version="v4"
 		/>
 	);
 }

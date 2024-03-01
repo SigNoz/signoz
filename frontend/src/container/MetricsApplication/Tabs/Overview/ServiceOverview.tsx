@@ -93,6 +93,7 @@ function ServiceOverview({
 						onClickHandler={handleGraphClick('Service')}
 						isQueryEnabled={isQueryEnabled}
 						fillSpans={false}
+						version="v4"
 					/>
 				</GraphContainer>
 			</Card>

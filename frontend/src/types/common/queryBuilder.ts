@@ -62,6 +62,7 @@ export enum BoolOperators {
 }
 
 export enum MetricAggregateOperator {
+	EMPTY = '', // used as time aggregator for histograms
 	NOOP = 'noop',
 	COUNT = 'count',
 	COUNT_DISTINCT = 'count_distinct',

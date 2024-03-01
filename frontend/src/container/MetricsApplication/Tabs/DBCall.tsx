@@ -121,6 +121,7 @@ function DBCall(): JSX.Element {
 									'database_call_rps',
 								);
 							}}
+							version="v4"
 						/>
 					</GraphContainer>
 				</Card>
@@ -156,6 +157,7 @@ function DBCall(): JSX.Element {
 									'database_call_avg_duration',
 								);
 							}}
+							version="v4"
 						/>
 					</GraphContainer>
 				</Card>

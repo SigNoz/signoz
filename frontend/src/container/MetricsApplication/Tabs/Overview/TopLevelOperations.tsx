@@ -33,6 +33,7 @@ function TopLevelOperation({
 						onClickHandler={handleGraphClick(opName)}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={!topLevelOperationsIsLoading}
+						version="v4"
 					/>
 				</GraphContainer>
 			)}

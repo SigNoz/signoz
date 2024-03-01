@@ -165,6 +165,7 @@ function External(): JSX.Element {
 										'external_call_error_percentage',
 									);
 								}}
+								version="v4"
 							/>
 						</GraphContainer>
 					</Card>
@@ -201,6 +202,7 @@ function External(): JSX.Element {
 										'external_call_duration',
 									);
 								}}
+								version="v4"
 							/>
 						</GraphContainer>
 					</Card>
@@ -238,6 +240,7 @@ function External(): JSX.Element {
 										'external_call_rps_by_address',
 									)
 								}
+								version="v4"
 							/>
 						</GraphContainer>
 					</Card>
@@ -274,6 +277,7 @@ function External(): JSX.Element {
 										'external_call_duration_by_address',
 									);
 								}}
+								version="v4"
 							/>
 						</GraphContainer>
 					</Card>
