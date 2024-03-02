@@ -1,6 +1,7 @@
 import { WarningFilled } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
@@ -35,7 +36,7 @@ function ServiceMetricTable({
 	const { data: licenseData, isFetching } = useLicense();
 	const isCloudUserVal = isCloudUser();
 
-	const queries = useGetQueriesRange(queryRangeRequestData, 'v4', {
+	const queries = useGetQueriesRange(queryRangeRequestData, ENTITY_VERSION_V4, {
 		queryKey: [
 			`GetMetricsQueryRange-${queryRangeRequestData[0].selectedTime}-${globalSelectedInterval}`,
 			maxTime,

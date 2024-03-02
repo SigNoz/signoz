@@ -2,6 +2,7 @@ import './QuerySection.styles.scss';
 
 import { Button, Tabs, Tooltip } from 'antd';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import { QueryBuilder } from 'container/QueryBuilder';
@@ -55,7 +56,8 @@ function QuerySection({
 				initialDataSource: ALERTS_DATA_SOURCE_MAP[alertType],
 			}}
 			showFunctions={
-				alertType === AlertTypes.METRICS_BASED_ALERT && alertDef.version === 'v4'
+				alertType === AlertTypes.METRICS_BASED_ALERT &&
+				alertDef.version === ENTITY_VERSION_V4
 			}
 			version={alertDef.version || 'v3'}
 		/>

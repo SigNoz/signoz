@@ -1,3 +1,4 @@
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { topOperationMetricsDownloadOptions } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
@@ -67,7 +68,7 @@ function TopOperationMetrics(): JSX.Element {
 			globalSelectedInterval,
 			variables: {},
 		},
-		'v4',
+		ENTITY_VERSION_V4,
 		{
 			queryKey: [
 				`GetMetricsQueryRange-${keyOperationWidget?.timePreferance}-${globalSelectedInterval}-${keyOperationWidget?.id}`,

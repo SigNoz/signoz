@@ -1,3 +1,4 @@
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import {
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
@@ -24,7 +25,7 @@ const defaultAnnotations = {
 
 export const alertDefaults: AlertDef = {
 	alertType: AlertTypes.METRICS_BASED_ALERT,
-	version: 'v4',
+	version: ENTITY_VERSION_V4,
 	condition: {
 		compositeQuery: {
 			builderQueries: {

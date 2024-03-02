@@ -1,4 +1,5 @@
 import { Form, Row } from 'antd';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import FormAlertRules from 'container/FormAlertRules';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useEffect, useState } from 'react';
@@ -44,7 +45,7 @@ function CreateRules(): JSX.Element {
 			default:
 				setInitValues({
 					...alertDefaults,
-					version: version || 'v4',
+					version: version || ENTITY_VERSION_V4,
 				});
 		}
 	};

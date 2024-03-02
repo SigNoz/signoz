@@ -1,4 +1,5 @@
 import { Select } from 'antd';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 // ** Constants
 import { HAVING_OPERATORS, initialHavingValues } from 'constants/queryBuilder';
 import { HavingFilterTag } from 'container/QueryBuilder/components';
@@ -54,7 +55,7 @@ export function HavingFilter({
 			query &&
 			query.dataSource === DataSource.METRICS &&
 			query.spaceAggregation &&
-			entityVersion === 'v4'
+			entityVersion === ENTITY_VERSION_V4
 		) {
 			return `${query.spaceAggregation.toUpperCase()}(${aggregatorAttribute})`;
 		}
