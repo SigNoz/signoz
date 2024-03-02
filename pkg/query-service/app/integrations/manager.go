@@ -4,58 +4,109 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
+	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type IntegrationAuthor struct {
-	Name     string
-	Email    string
-	HomePage string
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	HomePage string `json:"homepage"`
 }
 type IntegrationSummary struct {
-	Id          string
-	Title       string
-	Description string // A short description
+	Id          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"` // A short description
 
-	Author IntegrationAuthor
+	Author IntegrationAuthor `json:"author"`
+
+	Icon string `json:"icon"`
 }
 
 type IntegrationAssets struct {
-	// Each integration is expected to specify all log transformations
-	// in a single pipeline with a source based filter
-	LogPipeline *logparsingpipeline.PostablePipeline
+	Logs       LogsAssets             `json:"logs"`
+	Dashboards []dashboards.Dashboard `json:"dashboards"`
 
-	// TBD: Dashboards, alerts, saved views, facets (indexed attribs)...
+	// TODO(Raj): Maybe use a struct for alerts
+	Alerts []map[string]interface{} `json:"alerts"`
+}
+
+type LogsAssets struct {
+	Pipelines []logparsingpipeline.PostablePipeline `json:"pipelines"`
+}
+
+type IntegrationConfigStep struct {
+	Title        string `json:"title"`
+	Instructions string `json:"instructions"`
+}
+
+type DataCollectedForIntegration struct {
+	Logs    []CollectedLogAttribute `json:"logs"`
+	Metrics []CollectedMetric       `json:"metrics"`
+}
+
+type CollectedLogAttribute struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+type CollectedMetric struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+	Unit string `json:"unit"`
 }
 
 type IntegrationDetails struct {
 	IntegrationSummary
-	IntegrationAssets
+
+	Categories    []string                    `json:"categories"`
+	Overview      string                      `json:"overview"` // markdown
+	Configuration []IntegrationConfigStep     `json:"configuration"`
+	DataCollected DataCollectedForIntegration `json:"data_collected"`
+	Assets        IntegrationAssets           `json:"assets"`
 }
 
 type IntegrationsListItem struct {
 	IntegrationSummary
-	IsInstalled bool
+	IsInstalled bool `json:"is_installed"`
 }
 
 type InstalledIntegration struct {
-	IntegrationId string                     `db:"integration_id"`
-	Config        InstalledIntegrationConfig `db:"config_json"`
-	InstalledAt   time.Time                  `db:"installed_at"`
+	IntegrationId string                     `json:"integration_id" db:"integration_id"`
+	Config        InstalledIntegrationConfig `json:"config_json" db:"config_json"`
+	InstalledAt   time.Time                  `json:"installed_at" db:"installed_at"`
 }
 type InstalledIntegrationConfig map[string]interface{}
 
 type Integration struct {
 	IntegrationDetails
-	Installation *InstalledIntegration
+	Installation *InstalledIntegration `json:"installation"`
 }
 
 type Manager struct {
 	availableIntegrationsRepo AvailableIntegrationsRepo
 	installedIntegrationsRepo InstalledIntegrationsRepo
+}
+
+func NewManager(db *sqlx.DB) (*Manager, error) {
+	iiRepo, err := NewInstalledIntegrationsSqliteRepo(db)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not init sqlite DB for installed integrations: %w", err,
+		)
+	}
+
+	return &Manager{
+		// TODO(Raj): Hook up a real available integrations provider.
+		availableIntegrationsRepo: &TestAvailableIntegrationsRepo{},
+		installedIntegrationsRepo: iiRepo,
+	}, nil
 }
 
 type IntegrationsFilter struct {
@@ -169,6 +220,12 @@ func (m *Manager) getIntegrationDetails(
 	ctx context.Context,
 	integrationId string,
 ) (*IntegrationDetails, *model.ApiError) {
+	if len(strings.TrimSpace(integrationId)) < 1 {
+		return nil, model.BadRequest(fmt.Errorf(
+			"integrationId is required",
+		))
+	}
+
 	ais, apiErr := m.availableIntegrationsRepo.get(
 		ctx, []string{integrationId},
 	)
