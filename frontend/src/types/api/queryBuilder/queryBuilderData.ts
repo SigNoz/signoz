@@ -60,6 +60,7 @@ export type IBuilderQuery = {
 	aggregateAttribute: BaseAutocompleteData;
 	timeAggregation: string;
 	spaceAggregation?: string;
+	temporality?: string;
 	functions: QueryFunctionProps[];
 	filters: TagFilter;
 	groupBy: BaseAutocompleteData[];

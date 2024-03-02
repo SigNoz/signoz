@@ -9,6 +9,7 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	MetricAggregateOperator,
 	QueryBuilderData,
+	Temporality,
 } from 'types/common/queryBuilder';
 
 import {
@@ -82,7 +83,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 		...initialQueryBuilderFormValuesMap.metrics,
 		timeAggregation: timeAggregateOperators[index],
 		spaceAggregation: spaceAggregateOperators[index],
-		temporality: 'Delta',
+		temporality: Temporality.Delta,
 		disabled: disabled[index],
 		groupBy,
 		legend: legends[index],
