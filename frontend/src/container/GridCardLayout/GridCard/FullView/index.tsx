@@ -40,6 +40,7 @@ function FullView({
 	fullViewOptions = true,
 	onClickHandler,
 	name,
+	version,
 	originalName,
 	yAxisUnit,
 	options,
@@ -97,7 +98,7 @@ function FullView({
 			globalSelectedInterval: globalSelectedTime,
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		},
-		selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
+		selectedDashboard?.data?.version || version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: `FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
 			enabled: !isDependedDataLoaded && widget.panelTypes !== PANEL_TYPES.LIST, // Internally both the list view panel has it's own query range api call, so we don't need to call it again
