@@ -87,6 +87,23 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 		}
 	}
 
+	vars := expression.Vars()
+	var doesNotHaveAllVars bool
+	for _, v := range vars {
+		if _, ok := seriesMap[v]; !ok {
+			doesNotHaveAllVars = true
+			break
+		}
+	}
+
+	// There is no series that matches the label set from all queries
+	// TODO: Does the lack of a series from one query mean that the result should be nil?
+	// Or should we interpret the series as having a value of 0 at all timestamps?
+	// The current behaviour with ClickHouse is to show no data
+	if doesNotHaveAllVars {
+		return nil, nil
+	}
+
 	resultSeries := &v3.Series{
 		Labels: uniqueLabelSet,
 	}
