@@ -654,22 +654,22 @@ func (b *BuilderQuery) Validate() error {
 		}
 		if b.DataSource == DataSourceMetrics {
 			// if AggregateOperator is specified, then the request is using v3 payload
-			if b.AggregateOperator != "" && b.SpaceAggregation == SpaceAggregationUnspecified {
-				if err := b.AggregateOperator.Validate(); err != nil {
-					return fmt.Errorf("aggregate operator is invalid: %w", err)
-				}
-			} else {
-				// the time aggregation is not needed for percentile operators
-				if !IsPercentileOperator(b.SpaceAggregation) {
-					if err := b.TimeAggregation.Validate(); err != nil {
-						return fmt.Errorf("time aggregation is invalid: %w", err)
-					}
-				}
+			// if b.AggregateOperator != "" && b.SpaceAggregation == SpaceAggregationUnspecified {
+			// 	if err := b.AggregateOperator.Validate(); err != nil {
+			// 		return fmt.Errorf("aggregate operator is invalid: %w", err)
+			// 	}
+			// } else {
+			// 	// the time aggregation is not needed for percentile operators
+			// 	if !IsPercentileOperator(b.SpaceAggregation) {
+			// 		if err := b.TimeAggregation.Validate(); err != nil {
+			// 			return fmt.Errorf("time aggregation is invalid: %w", err)
+			// 		}
+			// 	}
 
-				if err := b.SpaceAggregation.Validate(); err != nil {
-					return fmt.Errorf("space aggregation is invalid: %w", err)
-				}
-			}
+			// 	if err := b.SpaceAggregation.Validate(); err != nil {
+			// 		return fmt.Errorf("space aggregation is invalid: %w", err)
+			// 	}
+			// }
 		} else {
 			if err := b.AggregateOperator.Validate(); err != nil {
 				return fmt.Errorf("aggregate operator is invalid: %w", err)
