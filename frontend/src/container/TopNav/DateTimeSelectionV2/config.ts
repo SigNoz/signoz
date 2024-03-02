@@ -53,7 +53,7 @@ export const Options: Option[] = [
 	{ value: '1day', label: 'Last 1 day' },
 	{ value: '3days', label: 'Last 3 days' },
 	{ value: '1week', label: 'Last 1 week' },
-	{ value: 'custom', label: 'Custom...' },
+	{ value: 'custom', label: 'Custom' },
 ];
 
 export interface Option {
@@ -121,6 +121,7 @@ export const routesToSkip = [
 	ROUTES.ALL_DASHBOARD,
 	ROUTES.ORG_SETTINGS,
 	ROUTES.INGESTION_SETTINGS,
+	ROUTES.API_KEYS,
 	ROUTES.ERROR_DETAIL,
 	ROUTES.LOGS_PIPELINES,
 	ROUTES.BILLING,
@@ -146,4 +147,9 @@ export interface LocalStorageTimeRange {
 export interface TimeRange {
 	startTime: string;
 	endTime: string;
+}
+
+export enum LexicalContext {
+	CUSTOM_DATE_PICKER = 'customDatePicker',
+	CUSTOM_DATE_TIME_INPUT = 'customDateTimeInput',
 }

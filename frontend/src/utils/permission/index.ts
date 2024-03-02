@@ -88,6 +88,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	SOMETHING_WENT_WRONG: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS_SAVE_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACES_SAVE_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
+	API_KEYS: ['ADMIN'],
 	LOGS_BASE: [],
 	OLD_LOGS_EXPLORER: [],
 	SHORTCUTS: ['ADMIN', 'EDITOR', 'VIEWER'],

@@ -1,6 +1,8 @@
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -30,8 +32,12 @@ function WidgetGraph({
 	fillSpans,
 	softMax,
 	softMin,
+	selectedLogFields,
+	selectedTracesFields,
+	selectedTime,
+	selectedGraph,
 }: WidgetGraphProps): JSX.Element {
-	const { stagedQuery } = useQueryBuilder();
+	const { stagedQuery, currentQuery } = useQueryBuilder();
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -126,6 +132,7 @@ function WidgetGraph({
 				maxTimeScale,
 				softMax,
 				softMin,
+				panelType: selectedGraph,
 			}),
 		[
 			widgetId,
@@ -140,6 +147,7 @@ function WidgetGraph({
 			maxTimeScale,
 			softMax,
 			softMin,
+			selectedGraph,
 		],
 	);
 
@@ -156,6 +164,10 @@ function WidgetGraph({
 				}
 				query={stagedQuery || selectedWidget.query}
 				thresholds={thresholds}
+				selectedLogFields={selectedLogFields}
+				selectedTracesFields={selectedTracesFields}
+				dataSource={currentQuery.builder.queryData[0].dataSource}
+				selectedTime={selectedTime}
 			/>
 		</div>
 	);
@@ -172,6 +184,10 @@ interface WidgetGraphProps {
 	>;
 	softMax: number | null;
 	softMin: number | null;
+	selectedLogFields: Widgets['selectedLogFields'];
+	selectedTracesFields: Widgets['selectedTracesFields'];
+	selectedTime: timePreferance;
+	selectedGraph: PANEL_TYPES;
 }
 
 export default WidgetGraph;

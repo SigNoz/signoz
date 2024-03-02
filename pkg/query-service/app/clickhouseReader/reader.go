@@ -47,6 +47,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -3273,15 +3274,25 @@ func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {
 	return totalSpans, nil
 }
 
-func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var spansInLastHeartBeatInterval uint64
 
-	queryStr := fmt.Sprintf("SELECT count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, signozSpansTable, 30)
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, signozSpansTable, int(interval.Minutes()))
 
 	r.db.QueryRow(ctx, queryStr).Scan(&spansInLastHeartBeatInterval)
 
 	return spansInLastHeartBeatInterval, nil
+}
+
+func (r *ClickHouseReader) GetTotalLogs(ctx context.Context) (uint64, error) {
+
+	var totalLogs uint64
+
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s;", r.logsDB, r.logsTable)
+	r.db.QueryRow(ctx, queryStr).Scan(&totalLogs)
+
+	return totalLogs, nil
 }
 
 func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error) {
@@ -3312,9 +3323,7 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []s
 
 func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error) {
 
-	queryStr := fmt.Sprintf("SELECT count() as count from %s.%s group by metric_name order by count desc;", signozMetricDBName, signozTSTableName)
-
-	// r.db.Select(ctx, &tsByMetricName, queryStr)
+	queryStr := fmt.Sprintf("SELECT count() as count from %s.%s where metric_name not like 'signoz_%%' group by metric_name order by count desc;", signozMetricDBName, signozTSTableName)
 
 	rows, _ := r.db.Query(ctx, queryStr)
 
@@ -3343,11 +3352,21 @@ func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]in
 	return timeSeriesData, nil
 }
 
-func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var totalSamples uint64
 
-	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp_ms > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, 30)
+	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%' and timestamp_ms > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, int(interval.Minutes()))
+
+	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
+
+	return totalSamples, nil
+}
+
+func (r *ClickHouseReader) GetTotalSamples(ctx context.Context) (uint64, error) {
+	var totalSamples uint64
+
+	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%';", signozMetricDBName, signozSampleTableName)
 
 	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
 
@@ -3367,23 +3386,23 @@ func (r *ClickHouseReader) GetDistributedInfoInLastHeartBeatInterval(ctx context
 	return nil, nil
 }
 
-func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var totalLogLines uint64
 
-	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))*1000000000;", r.logsDB, r.logsTable, 30)
+	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))*1000000000;", r.logsDB, r.logsTable, int(interval.Minutes()))
 
 	err := r.db.QueryRow(ctx, queryStr).Scan(&totalLogLines)
 
 	return totalLogLines, err
 }
 
-func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context) (*model.TagsInfo, error) {
+func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (*model.TagsInfo, error) {
 
 	queryStr := fmt.Sprintf(`select serviceName, stringTagMap['deployment.environment'] as env, 
 	stringTagMap['telemetry.sdk.language'] as language from %s.%s 
 	where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))
-	group by serviceName, env, language;`, r.TraceDB, r.indexTable, 1)
+	group by serviceName, env, language;`, r.TraceDB, r.indexTable, int(interval.Minutes()))
 
 	tagTelemetryDataList := []model.TagTelemetryData{}
 	err := r.db.Select(ctx, &tagTelemetryDataList, queryStr)
@@ -3396,6 +3415,7 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 
 	tagsInfo := model.TagsInfo{
 		Languages: make(map[string]interface{}),
+		Services:  make(map[string]interface{}),
 	}
 
 	for _, tagTelemetryData := range tagTelemetryDataList {
@@ -3408,6 +3428,9 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 		}
 		if len(tagTelemetryData.Language) != 0 {
 			tagsInfo.Languages[tagTelemetryData.Language] = struct{}{}
+		}
+		if len(tagTelemetryData.ServiceName) != 0 {
+			tagsInfo.Services[tagTelemetryData.ServiceName] = struct{}{}
 		}
 
 	}
@@ -3952,7 +3975,7 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 	var rows driver.Rows
 	var response v3.AggregateAttributeResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT metric_name, type from %s.%s WHERE metric_name ILIKE $1", signozMetricDBName, signozTSTableNameV41Day)
+	query = fmt.Sprintf("SELECT metric_name, type, is_monotonic, temporality FROM %s.%s WHERE metric_name ILIKE $1 GROUP BY metric_name, type, is_monotonic, temporality", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
@@ -3964,10 +3987,17 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 	}
 	defer rows.Close()
 
-	var metricName, typ string
+	seen := make(map[string]struct{})
+
+	var metricName, typ, temporality string
+	var isMonotonic bool
 	for rows.Next() {
-		if err := rows.Scan(&metricName, &typ); err != nil {
+		if err := rows.Scan(&metricName, &typ, &isMonotonic, &temporality); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		// Non-monotonic cumulative sums are treated as gauges
+		if typ == "Sum" && !isMonotonic && temporality == string(v3.Cumulative) {
+			typ = "Gauge"
 		}
 		// unlike traces/logs `tag`/`resource` type, the `Type` will be metric type
 		key := v3.AttributeKey{
@@ -3976,6 +4006,11 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 			Type:     v3.AttributeKeyType(typ),
 			IsColumn: true,
 		}
+		// remove duplicates
+		if _, ok := seen[metricName+typ]; ok {
+			continue
+		}
+		seen[metricName+typ] = struct{}{}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 
@@ -3990,11 +4025,11 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 	var response v3.FilterAttributeKeyResponse
 
 	// skips the internal attributes i.e attributes starting with __
-	query = fmt.Sprintf("SELECT DISTINCT arrayJoin(tagKeys) as distinctTagKey from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1) WHERE distinctTagKey ILIKE $2 AND distinctTagKey NOT LIKE '\\_\\_%%'", signozMetricDBName, signozTSTableName)
+	query = fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE metric_name=$1 AND unix_milli >= $2 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $3 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
+	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, common.PastDayRoundOff(), fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
 		zap.S().Error(err)
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
@@ -4025,11 +4060,11 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, $1)) from %s.%s WHERE metric_name=$2 AND JSONExtractString(labels, $3) ILIKE $4", signozMetricDBName, signozTSTableName)
+	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name=$2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText))
+	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
 
 	if err != nil {
 		zap.S().Error(err)

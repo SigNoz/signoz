@@ -6,6 +6,7 @@ import { RouteProps } from 'react-router-dom';
 import {
 	AllAlertChannels,
 	AllErrors,
+	APIKeys,
 	BillingPage,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
@@ -237,6 +238,13 @@ const routes: AppRoutes[] = [
 		key: 'INGESTION_SETTINGS',
 	},
 	{
+		path: ROUTES.API_KEYS,
+		exact: true,
+		component: APIKeys,
+		isPrivate: true,
+		key: 'API_KEYS',
+	},
+	{
 		path: ROUTES.MY_SETTINGS,
 		exact: true,
 		component: MySettings,
@@ -272,6 +280,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
+		path: ROUTES.LOGS_PIPELINES,
+		exact: true,
+		component: PipelinePage,
+		key: 'LOGS_PIPELINES',
+		isPrivate: true,
+	},
+	{
 		path: ROUTES.LOGIN,
 		exact: true,
 		component: Login,
@@ -298,13 +313,6 @@ const routes: AppRoutes[] = [
 		component: SomethingWentWrong,
 		key: 'SOMETHING_WENT_WRONG',
 		isPrivate: false,
-	},
-	{
-		path: ROUTES.LOGS_PIPELINES,
-		exact: true,
-		component: PipelinePage,
-		key: 'LOGS_PIPELINES',
-		isPrivate: true,
 	},
 	{
 		path: ROUTES.BILLING,
@@ -343,6 +351,22 @@ export const LIST_LICENSES: AppRoutes = {
 	component: LicensePage,
 	isPrivate: true,
 	key: 'LIST_LICENSES',
+};
+
+export const oldRoutes = [
+	'/pipelines',
+	'/logs/old-logs-explorer',
+	'/logs-explorer',
+	'/logs-explorer/live',
+	'/settings/api-keys',
+];
+
+export const oldNewRoutesMapping: Record<string, string> = {
+	'/pipelines': '/logs/pipelines',
+	'/logs/old-logs-explorer': '/logs/old-logs-explorer',
+	'/logs-explorer': '/logs/logs-explorer',
+	'/logs-explorer/live': '/logs/logs-explorer/live',
+	'/settings/api-keys': '/settings/access-tokens',
 };
 
 export interface AppRoutes {

@@ -20,9 +20,11 @@ const config: Config.InitialOptions = {
 	transform: {
 		'^.+\\.(ts|tsx)?$': 'ts-jest',
 		'^.+\\.(js|jsx)$': 'babel-jest',
+		'^.+\\.(css|scss|sass|less)$': 'jest-preview/transforms/css',
+		'^(?!.*\\.(js|jsx|mjs|cjs|ts|tsx|css|json)$)': 'jest-preview/transforms/file',
 	},
 	transformIgnorePatterns: [
-		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens)/)',
+		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens|d3-interpolate|d3-color)/)',
 	],
 	setupFilesAfterEnv: ['<rootDir>jest.setup.ts'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],

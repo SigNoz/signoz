@@ -3,6 +3,7 @@ import './LogsExplorerViews.styles.scss';
 
 import { Button } from 'antd';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
@@ -189,13 +190,19 @@ function LogsExplorerViews({
 		data: listChartData,
 		isFetching: isFetchingListChartData,
 		isLoading: isLoadingListChartData,
-	} = useGetExplorerQueryRange(listChartQuery, PANEL_TYPES.TIME_SERIES, {
-		enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
-	});
+	} = useGetExplorerQueryRange(
+		listChartQuery,
+		PANEL_TYPES.TIME_SERIES,
+		DEFAULT_ENTITY_VERSION,
+		{
+			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
+		},
+	);
 
 	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
 		requestData,
 		panelType,
+		DEFAULT_ENTITY_VERSION,
 		{
 			keepPreviousData: true,
 			enabled: !isLimit && !!requestData,
@@ -611,6 +618,7 @@ function LogsExplorerViews({
 							data={data}
 							isError={isError}
 							isFilterApplied={!isEmpty(listQuery?.filters.items)}
+							dataSource={DataSource.LOGS}
 						/>
 					)}
 

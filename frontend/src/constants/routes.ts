@@ -24,6 +24,7 @@ const ROUTES = {
 	MY_SETTINGS: '/my-settings',
 	SETTINGS: '/settings',
 	ORG_SETTINGS: '/settings/org-settings',
+	API_KEYS: '/settings/access-tokens',
 	INGESTION_SETTINGS: '/settings/ingestion-settings',
 	SOMETHING_WENT_WRONG: '/something-went-wrong',
 	UN_AUTHORIZED: '/un-authorized',

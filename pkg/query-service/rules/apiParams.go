@@ -50,6 +50,8 @@ type PostableRule struct {
 
 	PreferredChannels []string `json:"preferredChannels,omitempty"`
 
+	Version string `json:"version,omitempty"`
+
 	// legacy
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`

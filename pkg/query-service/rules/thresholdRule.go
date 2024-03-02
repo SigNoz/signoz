@@ -18,6 +18,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"go.signoz.io/signoz/pkg/query-service/converter"
 
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
@@ -31,6 +32,7 @@ import (
 
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/formatter"
 
@@ -59,7 +61,14 @@ type ThresholdRule struct {
 	// map of active alerts
 	active map[uint64]*Alert
 
-	queryBuilder *queryBuilder.QueryBuilder
+	queryBuilder   *queryBuilder.QueryBuilder
+	version        string
+	queryBuilderV4 *queryBuilder.QueryBuilder
+	// temporalityMap is a map of metric name to temporality
+	// to avoid fetching temporality for the same metric multiple times
+	// querying the v4 table on low cardinal temporality column
+	// should be fast but we can still avoid the query if we have the data in memory
+	temporalityMap map[string]map[v3.Temporality]bool
 
 	opts ThresholdRuleOpts
 	typ  string
@@ -102,6 +111,8 @@ func NewThresholdRule(
 		active:            map[uint64]*Alert{},
 		opts:              opts,
 		typ:               p.AlertType,
+		version:           p.Version,
+		temporalityMap:    make(map[string]map[v3.Temporality]bool),
 	}
 
 	if int64(t.evalWindow) == 0 {
@@ -114,6 +125,13 @@ func NewThresholdRule(
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
 	t.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, featureFlags)
+
+	builderOptsV4 := queryBuilder.QueryBuilderOptions{
+		BuildMetricQuery: metricsV4.PrepareMetricQuery,
+		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
+		BuildLogQuery:    logsv3.PrepareLogsQuery,
+	}
+	t.queryBuilderV4 = queryBuilder.NewQueryBuilder(builderOptsV4, featureFlags)
 
 	zap.S().Info("msg:", "creating new alerting rule", "\t name:", t.name, "\t condition:", t.ruleCondition.String(), "\t generatorURL:", t.GeneratorURL())
 
@@ -272,6 +290,84 @@ func (r *ThresholdRule) ActiveAlerts() []*Alert {
 		}
 	}
 	return res
+}
+
+func (r *ThresholdRule) FetchTemporality(ctx context.Context, metricNames []string, ch driver.Conn) (map[string]map[v3.Temporality]bool, error) {
+
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+
+	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME)
+
+	rows, err := ch.Query(ctx, query, metricNames)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var metricName, temporality string
+		err := rows.Scan(&metricName, &temporality)
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := metricNameToTemporality[metricName]; !ok {
+			metricNameToTemporality[metricName] = make(map[v3.Temporality]bool)
+		}
+		metricNameToTemporality[metricName][v3.Temporality(temporality)] = true
+	}
+	return metricNameToTemporality, nil
+}
+
+// populateTemporality same as addTemporality but for v4 and better
+func (r *ThresholdRule) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3, ch driver.Conn) error {
+
+	missingTemporality := make([]string, 0)
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for _, query := range qp.CompositeQuery.BuilderQueries {
+			// if there is no temporality specified in the query but we have it in the map
+			// then use the value from the map
+			if query.Temporality == "" && r.temporalityMap[query.AggregateAttribute.Key] != nil {
+				// We prefer delta if it is available
+				if r.temporalityMap[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if r.temporalityMap[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+			}
+			// we don't have temporality for this metric
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				missingTemporality = append(missingTemporality, query.AggregateAttribute.Key)
+			}
+			if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
+				metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
+			}
+		}
+	}
+
+	nameToTemporality, err := r.FetchTemporality(ctx, missingTemporality, ch)
+	if err != nil {
+		return err
+	}
+
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for name := range qp.CompositeQuery.BuilderQueries {
+			query := qp.CompositeQuery.BuilderQueries[name]
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				if nameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if nameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+				r.temporalityMap[query.AggregateAttribute.Key] = nameToTemporality[query.AggregateAttribute.Key]
+			}
+		}
+	}
+	return nil
 }
 
 // ForEachActiveAlert runs the given function on each alert.
@@ -437,7 +533,13 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		}
 
 		sample := Sample{}
+		// Why do we maintain two labels sets? Alertmanager requires
+		// label keys to follow the model https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+		// However, our traces and logs explorers support label keys with dot and other namespace characters
+		// Using normalized label keys results in invalid filter criteria.
+		// The original labels are used to prepare the related{logs, traces} link in alert notification
 		lbls := labels.NewBuilder(labels.Labels{})
+		lblsOrig := labels.NewBuilder(labels.Labels{})
 
 		for i, v := range vars {
 
@@ -446,6 +548,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			switch v := v.(type) {
 			case *string:
 				lbls.Set(colName, *v)
+				lblsOrig.Set(columnNames[i], *v)
 			case *time.Time:
 				timval := *v
 
@@ -453,6 +556,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.T = timval.Unix()
 				} else {
 					lbls.Set(colName, timval.Format("2006-01-02 15:04:05"))
+					lblsOrig.Set(columnNames[i], timval.Format("2006-01-02 15:04:05"))
 				}
 
 			case *float64:
@@ -460,6 +564,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.V = *v
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%f", *v))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", *v))
 				}
 			case **float64:
 				// ch seems to return this type when column is derived from
@@ -470,6 +575,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 						sample.Point.V = *floatVal
 					} else {
 						lbls.Set(colName, fmt.Sprintf("%f", *floatVal))
+						lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", *floatVal))
 					}
 				}
 			case *float32:
@@ -478,18 +584,21 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.V = float64(float32Val)
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%f", float32Val))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", float32Val))
 				}
 			case *uint8, *uint64, *uint16, *uint32:
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
 					sample.Point.V = float64(reflect.ValueOf(v).Elem().Uint())
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
 				}
 			case *int8, *int16, *int32, *int64:
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
 					sample.Point.V = float64(reflect.ValueOf(v).Elem().Int())
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
 				}
 			default:
 				zap.S().Errorf("ruleId:", r.ID(), "\t error: invalid var found in query result", v, columnNames[i])
@@ -503,6 +612,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 		// capture lables in result
 		sample.Metric = lbls.Labels()
+		sample.MetricOrig = lblsOrig.Labels()
 
 		labelHash := lbls.Labels().Hash()
 
@@ -612,7 +722,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 	return result, nil
 }
 
-func (r *ThresholdRule) prepareBuilderQueries(ts time.Time) (map[string]string, error) {
+func (r *ThresholdRule) prepareBuilderQueries(ts time.Time, ch driver.Conn) (map[string]string, error) {
 	params := r.prepareQueryRange(ts)
 	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
@@ -624,7 +734,17 @@ func (r *ThresholdRule) prepareBuilderQueries(ts time.Time) (map[string]string, 
 
 	}
 
-	runQueries, err := r.queryBuilder.PrepareQueries(params)
+	var runQueries map[string]string
+	var err error
+
+	if r.version == "v4" {
+		if ch != nil {
+			r.populateTemporality(context.Background(), params, ch)
+		}
+		runQueries, err = r.queryBuilderV4.PrepareQueries(params)
+	} else {
+		runQueries, err = r.queryBuilder.PrepareQueries(params)
+	}
 
 	return runQueries, err
 }
@@ -750,7 +870,7 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 	}
 
 	data, _ := json.Marshal(urlData)
-	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
+	compositeQuery := url.QueryEscape(string(data))
 
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
@@ -813,8 +933,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	}
 
 	data, _ := json.Marshal(urlData)
-	// We need to double encode the composite query to remain compatible with the UI
-	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
+	compositeQuery := url.QueryEscape(string(data))
 
 	optionsData, _ := json.Marshal(options)
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
@@ -828,9 +947,9 @@ func (r *ThresholdRule) hostFromSource() string {
 		return ""
 	}
 	if parsedUrl.Port() != "" {
-		return fmt.Sprintf("%s:%s", parsedUrl.Hostname(), parsedUrl.Port())
+		return fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Hostname(), parsedUrl.Port())
 	}
-	return parsedUrl.Hostname()
+	return fmt.Sprintf("%s://%s", parsedUrl.Scheme, parsedUrl.Hostname())
 }
 
 func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]string, error) {
@@ -883,7 +1002,7 @@ func (r *ThresholdRule) GetSelectedQuery() string {
 	var err error
 
 	if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
-		queries, err = r.prepareBuilderQueries(time.Now())
+		queries, err = r.prepareBuilderQueries(time.Now(), nil)
 		if err != nil {
 			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare metric queries", zap.Error(err))
 			return ""
@@ -937,7 +1056,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	// fetch the target query based on query type
 	if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
 
-		queries, err = r.prepareBuilderQueries(ts)
+		queries, err = r.prepareBuilderQueries(ts, ch)
 
 		if err != nil {
 			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare metric queries", zap.Error(err))
@@ -1054,21 +1173,24 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		lb.Set(labels.AlertRuleIdLabel, r.ID())
 		lb.Set(labels.RuleSourceLabel, r.GeneratorURL())
 
-		if r.typ == "TRACES_BASED_ALERT" {
-			link := r.prepareLinksToTraces(ts, smpl.Metric)
-			if link != "" && r.hostFromSource() != "" {
-				lb.Set("RelatedTraces", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link))
-			}
-		} else if r.typ == "LOGS_BASED_ALERT" {
-			link := r.prepareLinksToLogs(ts, smpl.Metric)
-			if link != "" && r.hostFromSource() != "" {
-				lb.Set("RelatedLogs", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link))
-			}
-		}
-
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
 			annotations = append(annotations, labels.Label{Name: normalizeLabelName(a.Name), Value: expand(a.Value)})
+		}
+
+		// Links with timestamps should go in annotations since labels
+		// is used alert grouping, and we want to group alerts with the same
+		// label set, but different timestamps, together.
+		if r.typ == "TRACES_BASED_ALERT" {
+			link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
+			if link != "" && r.hostFromSource() != "" {
+				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
+			}
+		} else if r.typ == "LOGS_BASED_ALERT" {
+			link := r.prepareLinksToLogs(ts, smpl.MetricOrig)
+			if link != "" && r.hostFromSource() != "" {
+				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
+			}
 		}
 
 		lbs := lb.Labels()

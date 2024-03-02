@@ -1,5 +1,6 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import Spinner from 'components/Spinner';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
@@ -19,6 +20,8 @@ import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getGraphType } from 'utils/getGraphType';
+import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
@@ -37,6 +40,7 @@ export interface ChartPreviewProps {
 	yAxisUnit: string;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function ChartPreview({
 	name,
 	query,
@@ -86,12 +90,13 @@ function ChartPreview({
 		{
 			query: query || initialQueriesMap.metrics,
 			globalSelectedInterval: selectedInterval,
-			graphType,
+			graphType: getGraphType(graphType),
 			selectedTime,
 			params: {
 				allowSelectedIntervalForStepGen,
 			},
 		},
+		alertDef?.version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				'chartPreview',
@@ -113,6 +118,13 @@ function ChartPreview({
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
 	}, [maxTime, minTime, globalSelectedInterval, queryResponse]);
+
+	if (queryResponse.data && graphType === PANEL_TYPES.BAR) {
+		const sortedSeriesData = getSortedSeriesData(
+			queryResponse.data?.payload.data.result,
+		);
+		queryResponse.data.payload.data.result = sortedSeriesData;
+	}
 
 	const chartData = getUPlotChartData(queryResponse?.data?.payload);
 
@@ -153,6 +165,7 @@ function ChartPreview({
 				],
 				softMax: null,
 				softMin: null,
+				panelType: graphType,
 			}),
 		[
 			yAxisUnit,
@@ -165,6 +178,7 @@ function ChartPreview({
 			t,
 			optionName,
 			alertDef?.condition.targetUnit,
+			graphType,
 		],
 	);
 

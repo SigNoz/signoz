@@ -11,11 +11,7 @@
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"lib": [
-			"dom",
-			"dom.iterable",
-			"esnext"
-		],
+		"lib": ["dom", "dom.iterable", "esnext"],
 		"allowSyntheticDefaultImports": true,
 		"noFallthroughCasesInSwitch": true,
 		"moduleResolution": "node",
@@ -23,21 +19,18 @@
 		"isolatedModules": true,
 		"noEmit": true,
 		"baseUrl": "./src",
+		"paths": {
+			"@constants/*": ["/container/OnboardingContainer/constants/*"]
+		},
 		"downlevelIteration": true,
 		"plugins": [
 			{
 				"name": "typescript-plugin-css-modules"
 			}
 		],
-		"types": [
-			"node",
-			"jest"
-		],
+		"types": ["node", "jest"]
 	},
-	"exclude": [
-		"node_modules",
-		"./src/container/OnboardingContainer/constants/*.ts"
-	],
+	"exclude": ["node_modules"],
 	"include": [
 		"./src",
 		"./src/**/*.ts",

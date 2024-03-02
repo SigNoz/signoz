@@ -613,6 +613,7 @@ type DashboardVar struct {
 type TagsInfo struct {
 	Languages map[string]interface{} `json:"languages"`
 	Env       string                 `json:"env"`
+	Services  map[string]interface{} `json:"services"`
 }
 
 type AlertsInfo struct {

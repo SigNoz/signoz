@@ -17,7 +17,7 @@ export const Card = styled(CardComponent)<CardProps>`
 	}
 
 	.ant-card-body {
-		height: calc(100% - 40px);
+		height: calc(100% - 30px);
 		padding: 0;
 	}
 `;
@@ -80,7 +80,6 @@ export const ReactGridLayout = styled(ReactGridLayoutComponent)`
 export const ButtonContainer = styled(Space)`
 	display: flex;
 	justify-content: end;
-	margin-top: 1rem;
 `;
 
 export const Button = styled(ButtonComponent)`

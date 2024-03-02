@@ -1,7 +1,12 @@
 import './QueryBuilder.styles.scss';
 
 import { Button, Col, Divider, Row, Tooltip } from 'antd';
-import { MAX_FORMULAS, MAX_QUERIES } from 'constants/queryBuilder';
+import {
+	MAX_FORMULAS,
+	MAX_QUERIES,
+	OPERATORS,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DatabaseZap, Sigma } from 'lucide-react';
@@ -19,6 +24,9 @@ export const QueryBuilder = memo(function QueryBuilder({
 	panelType: newPanelType,
 	filterConfigs = {},
 	queryComponents,
+	isListViewPanel = false,
+	showFunctions = false,
+	version,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
@@ -40,6 +48,10 @@ export const QueryBuilder = memo(function QueryBuilder({
 
 	useEffect(() => {
 		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
+			if (newPanelType === PANEL_TYPES.BAR) {
+				handleSetConfig(PANEL_TYPES.BAR, DataSource.METRICS);
+				return;
+			}
 			handleSetConfig(newPanelType, currentDataSource);
 		}
 	}, [
@@ -84,6 +96,33 @@ export const QueryBuilder = memo(function QueryBuilder({
 		}
 	};
 
+	const listViewLogFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
+		const config: QueryBuilderProps['filterConfigs'] = {
+			stepInterval: { isHidden: true, isDisabled: true },
+			having: { isHidden: true, isDisabled: true },
+			filters: {
+				customKey: 'body',
+				customOp: OPERATORS.CONTAINS,
+			},
+		};
+
+		return config;
+	}, []);
+
+	const listViewTracesFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
+		const config: QueryBuilderProps['filterConfigs'] = {
+			stepInterval: { isHidden: true, isDisabled: true },
+			having: { isHidden: true, isDisabled: true },
+			limit: { isHidden: true, isDisabled: true },
+			filters: {
+				customKey: 'body',
+				customOp: OPERATORS.CONTAINS,
+			},
+		};
+
+		return config;
+	}, []);
+
 	return (
 		<Row
 			style={{ width: '100%' }}
@@ -91,21 +130,23 @@ export const QueryBuilder = memo(function QueryBuilder({
 			justify="start"
 			className="query-builder-container"
 		>
-			<div className="new-query-formula-buttons-container">
-				<Button.Group>
-					<Tooltip title="Add Query">
-						<Button disabled={isDisabledQueryButton} onClick={addNewBuilderQuery}>
-							<DatabaseZap size={12} />
-						</Button>
-					</Tooltip>
+			{!isListViewPanel && (
+				<div className="new-query-formula-buttons-container">
+					<Button.Group>
+						<Tooltip title="Add Query">
+							<Button disabled={isDisabledQueryButton} onClick={addNewBuilderQuery}>
+								<DatabaseZap size={12} />
+							</Button>
+						</Tooltip>
 
-					<Tooltip title="Add Formula">
-						<Button disabled={isDisabledFormulaButton} onClick={addNewFormula}>
-							<Sigma size={12} />
-						</Button>
-					</Tooltip>
-				</Button.Group>
-			</div>
+						<Tooltip title="Add Formula">
+							<Button disabled={isDisabledFormulaButton} onClick={addNewFormula}>
+								<Sigma size={12} />
+							</Button>
+						</Tooltip>
+					</Button.Group>
+				</div>
+			)}
 
 			<Col span={23} className="qb-entities-list">
 				<Row>
@@ -119,49 +160,70 @@ export const QueryBuilder = memo(function QueryBuilder({
 							className="query-builder-queries-formula-container"
 							ref={containerRef}
 						>
-							{currentQuery.builder.queryData.map((query, index) => (
-								<Col
-									key={query.queryName}
-									span={24}
-									className="query"
-									id={`qb-query-${query.queryName}`}
-								>
-									<Query
-										index={index}
-										isAvailableToDisable={isAvailableToDisableQuery}
-										queryVariant={config?.queryVariant || 'dropdown'}
-										query={query}
-										filterConfigs={filterConfigs}
-										queryComponents={queryComponents}
-									/>
-								</Col>
-							))}
-							{currentQuery.builder.queryFormulas.map((formula, index) => {
-								const isAllMetricDataSource = currentQuery.builder.queryData.every(
-									(query) => query.dataSource === DataSource.METRICS,
-								);
-
-								const query =
-									currentQuery.builder.queryData[index] ||
-									currentQuery.builder.queryData[0];
-
-								return (
+							{panelType === PANEL_TYPES.LIST && isListViewPanel && (
+								<Query
+									index={0}
+									isAvailableToDisable={isAvailableToDisableQuery}
+									queryVariant="dropdown"
+									query={currentQuery.builder.queryData[0]}
+									filterConfigs={
+										currentQuery.builder.queryData[0].dataSource === DataSource.TRACES
+											? listViewTracesFilterConfigs
+											: listViewLogFilterConfigs
+									}
+									queryComponents={queryComponents}
+									showFunctions={showFunctions}
+									version={version}
+									isListViewPanel
+								/>
+							)}
+							{!isListViewPanel &&
+								currentQuery.builder.queryData.map((query, index) => (
 									<Col
-										key={formula.queryName}
+										key={query.queryName}
 										span={24}
-										className="formula"
-										id={`qb-formula-${formula.queryName}`}
+										className="query"
+										id={`qb-query-${query.queryName}`}
 									>
-										<Formula
-											filterConfigs={filterConfigs}
-											query={query}
-											isAdditionalFilterEnable={isAllMetricDataSource}
-											formula={formula}
+										<Query
 											index={index}
+											isAvailableToDisable={isAvailableToDisableQuery}
+											queryVariant={config?.queryVariant || 'dropdown'}
+											query={query}
+											filterConfigs={filterConfigs}
+											queryComponents={queryComponents}
+											showFunctions={showFunctions}
+											version={version}
 										/>
 									</Col>
-								);
-							})}
+								))}
+							{!isListViewPanel &&
+								currentQuery.builder.queryFormulas.map((formula, index) => {
+									const isAllMetricDataSource = currentQuery.builder.queryData.every(
+										(query) => query.dataSource === DataSource.METRICS,
+									);
+
+									const query =
+										currentQuery.builder.queryData[index] ||
+										currentQuery.builder.queryData[0];
+
+									return (
+										<Col
+											key={formula.queryName}
+											span={24}
+											className="formula"
+											id={`qb-formula-${formula.queryName}`}
+										>
+											<Formula
+												filterConfigs={filterConfigs}
+												query={query}
+												isAdditionalFilterEnable={isAllMetricDataSource}
+												formula={formula}
+												index={index}
+											/>
+										</Col>
+									);
+								})}
 						</Row>
 
 						<Col span={24} className="divider">
@@ -171,29 +233,31 @@ export const QueryBuilder = memo(function QueryBuilder({
 				</Row>
 			</Col>
 
-			<Col span={1} className="query-builder-mini-map">
-				{currentQuery.builder.queryData.map((query) => (
-					<Button
-						disabled={isDisabledQueryButton}
-						className="query-btn"
-						key={query.queryName}
-						onClick={(): void => handleScrollIntoView('query', query.queryName)}
-					>
-						{query.queryName}
-					</Button>
-				))}
+			{!isListViewPanel && (
+				<Col span={1} className="query-builder-mini-map">
+					{currentQuery.builder.queryData.map((query) => (
+						<Button
+							disabled={isDisabledQueryButton}
+							className="query-btn"
+							key={query.queryName}
+							onClick={(): void => handleScrollIntoView('query', query.queryName)}
+						>
+							{query.queryName}
+						</Button>
+					))}
 
-				{currentQuery.builder.queryFormulas.map((formula) => (
-					<Button
-						disabled={isDisabledFormulaButton}
-						className="formula-btn"
-						key={formula.queryName}
-						onClick={(): void => handleScrollIntoView('formula', formula.queryName)}
-					>
-						{formula.queryName}
-					</Button>
-				))}
-			</Col>
+					{currentQuery.builder.queryFormulas.map((formula) => (
+						<Button
+							disabled={isDisabledFormulaButton}
+							className="formula-btn"
+							key={formula.queryName}
+							onClick={(): void => handleScrollIntoView('formula', formula.queryName)}
+						>
+							{formula.queryName}
+						</Button>
+					))}
+				</Col>
+			)}
 		</Row>
 	);
 });

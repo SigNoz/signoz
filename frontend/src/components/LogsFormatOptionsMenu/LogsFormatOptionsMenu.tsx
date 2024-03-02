@@ -72,8 +72,6 @@ export default function LogsFormatOptionsMenu({
 		setAddNewColumn(!addNewColumn);
 	};
 
-	// console.log('optionsMenuConfig', config);
-
 	const handleLinesPerRowChange = (maxLinesPerRow: number | null): void => {
 		if (
 			maxLinesPerRow &&
@@ -221,8 +219,6 @@ export default function LogsFormatOptionsMenu({
 											className="column-name"
 											key={value}
 											onClick={(eve): void => {
-												console.log('coluimn name', label, value);
-
 												eve.stopPropagation();
 
 												if (addColumn && addColumn?.onSelect) {

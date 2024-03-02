@@ -1,6 +1,7 @@
 import './GridCardLayout.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
@@ -144,17 +145,19 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	return (
 		<>
 			<ButtonContainer>
-				<Button
-					loading={updateDashboardMutation.isLoading}
-					onClick={handle.enter}
-					icon={<FullscreenIcon size={16} />}
-					disabled={updateDashboardMutation.isLoading}
-				>
-					{t('dashboard:full_view')}
-				</Button>
+				<Tooltip title="Open in Full Screen">
+					<Button
+						className="periscope-btn"
+						loading={updateDashboardMutation.isLoading}
+						onClick={handle.enter}
+						icon={<FullscreenIcon size={16} />}
+						disabled={updateDashboardMutation.isLoading}
+					/>
+				</Tooltip>
 
 				{!isDashboardLocked && addPanelPermission && (
 					<Button
+						className="periscope-btn"
 						onClick={onAddPanelHandler}
 						icon={<PlusOutlined />}
 						data-testid="add-panel"
@@ -201,6 +204,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 										headerMenuList={widgetActions}
 										variables={variables}
 										fillSpans={currentWidget?.fillSpans}
+										version={selectedDashboard?.data?.version}
 									/>
 								</Card>
 							</CardContainer>
