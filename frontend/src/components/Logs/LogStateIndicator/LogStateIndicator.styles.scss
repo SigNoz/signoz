@@ -13,12 +13,24 @@
 			background-color: #1d212d;
 		}
 
-		&.WARNING {
+		&.WARNING, &.WARN {
 			background-color: #ffcd56;
 		}
 
 		&.ERROR {
 			background-color: #e5484d;
+		}
+
+		&.TRACE {
+			background-color: #fef443;
+		}
+
+		&.DEBUG {
+			background-color: #15e587;
+		}
+
+		&.FATAL {
+			background-color: #ff02f7;
 		}
 	}
 
