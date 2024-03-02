@@ -23,6 +23,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
@@ -94,6 +95,8 @@ type APIHandler struct {
 	maxOpenConns int
 	dialTimeout  time.Duration
 
+	IntegrationsController *integrations.Controller
+
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
@@ -125,8 +128,12 @@ type APIHandlerOpts struct {
 	// feature flags querier
 	FeatureFlags interfaces.FeatureLookup
 
+	// Integrations
+	IntegrationsController *integrations.Controller
+
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
+
 	// cache
 	Cache cache.Cache
 
@@ -174,6 +181,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		alertManager:                  alertManager,
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
+		IntegrationsController:        opts.IntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
@@ -2390,6 +2398,101 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	resp, _ := marshall(response)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resp)
+}
+
+// Integrations
+func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()
+
+	subRouter.HandleFunc(
+		"/install", am.ViewAccess(ah.InstallIntegration),
+	).Methods(http.MethodPost)
+
+	subRouter.HandleFunc(
+		"/uninstall", am.ViewAccess(ah.UninstallIntegration),
+	).Methods(http.MethodPost)
+
+	subRouter.HandleFunc(
+		"/{integrationId}", am.ViewAccess(ah.GetIntegration),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"", am.ViewAccess(ah.ListIntegrations),
+	).Methods(http.MethodGet)
+}
+
+func (ah *APIHandler) ListIntegrations(
+	w http.ResponseWriter, r *http.Request,
+) {
+	params := map[string]string{}
+	for k, values := range r.URL.Query() {
+		params[k] = values[0]
+	}
+
+	resp, apiErr := ah.IntegrationsController.ListIntegrations(
+		r.Context(), params,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integrations")
+		return
+	}
+	ah.Respond(w, resp)
+}
+
+func (ah *APIHandler) GetIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	resp, apiErr := ah.IntegrationsController.GetIntegration(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration details")
+		return
+	}
+	ah.Respond(w, resp)
+}
+
+func (ah *APIHandler) InstallIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.InstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	integration, apiErr := ah.IntegrationsController.Install(
+		r.Context(), &req,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, integration)
+}
+
+func (ah *APIHandler) UninstallIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.UninstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, map[string]interface{}{})
 }
 
 // logs
