@@ -1,3 +1,4 @@
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
@@ -93,7 +94,7 @@ function ServiceOverview({
 						onClickHandler={handleGraphClick('Service')}
 						isQueryEnabled={isQueryEnabled}
 						fillSpans={false}
-						version="v4"
+						version={ENTITY_VERSION_V4}
 					/>
 				</GraphContainer>
 			</Card>

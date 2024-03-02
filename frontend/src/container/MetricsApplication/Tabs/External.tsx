@@ -1,4 +1,5 @@
 import { Col } from 'antd';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import {
@@ -165,7 +166,7 @@ function External(): JSX.Element {
 										'external_call_error_percentage',
 									);
 								}}
-								version="v4"
+								version={ENTITY_VERSION_V4}
 							/>
 						</GraphContainer>
 					</Card>
@@ -202,7 +203,7 @@ function External(): JSX.Element {
 										'external_call_duration',
 									);
 								}}
-								version="v4"
+								version={ENTITY_VERSION_V4}
 							/>
 						</GraphContainer>
 					</Card>
@@ -240,7 +241,7 @@ function External(): JSX.Element {
 										'external_call_rps_by_address',
 									)
 								}
-								version="v4"
+								version={ENTITY_VERSION_V4}
 							/>
 						</GraphContainer>
 					</Card>
@@ -277,7 +278,7 @@ function External(): JSX.Element {
 										'external_call_duration_by_address',
 									);
 								}}
-								version="v4"
+								version={ENTITY_VERSION_V4}
 							/>
 						</GraphContainer>
 					</Card>

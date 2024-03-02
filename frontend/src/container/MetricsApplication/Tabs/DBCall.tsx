@@ -1,4 +1,5 @@
 import { Col } from 'antd';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import {
@@ -121,7 +122,7 @@ function DBCall(): JSX.Element {
 									'database_call_rps',
 								);
 							}}
-							version="v4"
+							version={ENTITY_VERSION_V4}
 						/>
 					</GraphContainer>
 				</Card>
@@ -157,7 +158,7 @@ function DBCall(): JSX.Element {
 									'database_call_avg_duration',
 								);
 							}}
-							version="v4"
+							version={ENTITY_VERSION_V4}
 						/>
 					</GraphContainer>
 				</Card>
