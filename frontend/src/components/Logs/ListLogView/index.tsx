@@ -20,7 +20,7 @@ import { ILog } from 'types/api/logs/log';
 import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
-import { getIndicatorType } from '../LogStateIndicator/utils';
+import { getLogIndicatorType } from '../LogStateIndicator/utils';
 // styles
 import {
 	Container,
@@ -148,8 +148,7 @@ function ListLogView({
 		[flattenLogData.timestamp],
 	);
 
-	// const logType = logData?.attributes_string?.log_level || LogType.INFO;
-	const logType = getIndicatorType(logData);
+	const logType = getLogIndicatorType(logData);
 
 	const handleMouseEnter = (): void => {
 		setHasActionButtons(true);
