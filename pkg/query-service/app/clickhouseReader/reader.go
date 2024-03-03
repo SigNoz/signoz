@@ -133,7 +133,6 @@ func NewReader(
 	dialTimeout time.Duration,
 	cluster string,
 ) *ClickHouseReader {
-
 	datasource := os.Getenv("ClickHouseUrl")
 	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
 	db, err := initialize(options)
@@ -143,6 +142,17 @@ func NewReader(
 		os.Exit(1)
 	}
 
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster)
+}
+
+func NewReaderFromClickhouseConnection(
+	db driver.Conn,
+	options *Options,
+	localDB *sqlx.DB,
+	configFile string,
+	featureFlag interfaces.FeatureLookup,
+	cluster string,
+) *ClickHouseReader {
 	alertManager, err := am.New("")
 	if err != nil {
 		zap.S().Errorf("msg: failed to initialize alert manager: ", "/t error:", err)

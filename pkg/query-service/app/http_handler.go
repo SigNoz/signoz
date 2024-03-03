@@ -2416,6 +2416,11 @@ func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMidd
 		"/{integrationId}", am.ViewAccess(ah.GetIntegration),
 	).Methods(http.MethodGet)
 
+	// Used for polling for status in v0
+	subRouter.HandleFunc(
+		"/{integrationId}/connection_status", am.ViewAccess(ah.GetIntegrationConnectionStatus),
+	).Methods(http.MethodGet)
+
 	subRouter.HandleFunc(
 		"", am.ViewAccess(ah.ListIntegrations),
 	).Methods(http.MethodGet)
@@ -2464,6 +2469,31 @@ func (ah *APIHandler) GetIntegration(
 	ah.Respond(w, resp)
 }
 
+func (ah *APIHandler) GetIntegrationConnectionStatus(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	connectionTests, apiErr := ah.IntegrationsController.GetIntegrationConnectionTests(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration connection tests")
+		return
+	}
+
+	connectionStatus, apiErr := ah.calculateConnectionStatus(
+		r.Context(), connectionTests,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to calculate integration connection status")
+		return
+	}
+
+	ah.Respond(w, connectionStatus)
+}
+
+// TODO(Raj): Move this business logic to integrations
+// controller and manager.
 func (ah *APIHandler) calculateConnectionStatus(
 	ctx context.Context,
 	connectionTests *integrations.IntegrationConnectionTests,
@@ -2484,7 +2514,6 @@ func (ah *APIHandler) calculateConnectionStatus(
 						Filters:           connectionTests.Logs,
 						QueryName:         "A",
 						DataSource:        v3.DataSourceLogs,
-						StepInterval:      840,
 						Expression:        "A",
 						AggregateOperator: v3.AggregateOperatorNoOp,
 					},
@@ -2520,8 +2549,8 @@ func (ah *APIHandler) calculateConnectionStatus(
 			lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
 
 			result.Logs = &integrations.SignalConnectionStatus{
-				LastReceivedTs:   lastLog.Timestamp.Unix(),
-				LastReceivedFrom: lastLogResourceSummary,
+				LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+				LastReceivedFrom:     lastLogResourceSummary,
 			}
 		}
 	}
