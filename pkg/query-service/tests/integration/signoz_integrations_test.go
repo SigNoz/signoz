@@ -8,13 +8,14 @@ import (
 	"net/http/httptest"
 	"runtime/debug"
 	"testing"
-	"time"
 
+	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/dao"
+	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -37,25 +38,18 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 		"some integrations should come bundled with SigNoz",
 	)
 
+	// Should be able to install integration
 	require.False(availableIntegrations[0].IsInstalled)
 	testbed.RequestQSToInstallIntegration(
 		availableIntegrations[0].Id, map[string]interface{}{},
 	)
 
+	testbed.mockLogQueryResponse([]model.SignozLog{})
 	ii := testbed.GetIntegrationDetailsFromQS(availableIntegrations[0].Id)
 	require.Equal(ii.Id, availableIntegrations[0].Id)
 	require.NotNil(ii.Installation)
-
-	// Connection status should be incomplete before corresponding logs exist
 	require.NotNil(ii.ConnectionStatus)
 	require.Nil(ii.ConnectionStatus.Logs)
-
-	// Mock presence of expected logs.
-	testLogTs := time.Now().Unix()
-
-	require.NotNil(ii.ConnectionStatus)
-	require.NotNil(ii.ConnectionStatus.Logs)
-	require.Equal(ii.ConnectionStatus.Logs.LastReceivedTs, testLogTs)
 
 	installedResp = testbed.GetInstalledIntegrationsFromQS()
 	installedIntegrations := installedResp.Integrations
@@ -66,11 +60,29 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 	availableIntegrations = availableResp.Integrations
 	require.Greater(len(availableIntegrations), 0)
 
+	// Integration connection status should get updated after signal data has been received.
+	testLog := makeTestSignozLog("test log body", map[string]interface{}{
+		"source": "nginx",
+	})
+	testbed.mockLogQueryResponse([]model.SignozLog{testLog})
+	connectionStatus := testbed.GetIntegrationConnectionStatus(ii.Id)
+	require.NotNil(connectionStatus)
+	require.NotNil(connectionStatus.Logs)
+	require.Equal(connectionStatus.Logs.LastReceivedTsMillis, int64(testLog.Timestamp/1000000))
+
+	testbed.mockLogQueryResponse([]model.SignozLog{testLog})
+	ii = testbed.GetIntegrationDetailsFromQS(ii.Id)
+	require.NotNil(ii.ConnectionStatus)
+	require.NotNil(ii.ConnectionStatus.Logs)
+	require.Equal(connectionStatus.Logs.LastReceivedTsMillis, int64(testLog.Timestamp/1000000))
+
+	// Should be able to uninstall integration
 	require.True(availableIntegrations[0].IsInstalled)
 	testbed.RequestQSToUninstallIntegration(
 		availableIntegrations[0].Id,
 	)
 
+	testbed.mockLogQueryResponse([]model.SignozLog{})
 	ii = testbed.GetIntegrationDetailsFromQS(availableIntegrations[0].Id)
 	require.Equal(ii.Id, availableIntegrations[0].Id)
 	require.Nil(ii.Installation)
@@ -86,9 +98,10 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 }
 
 type IntegrationsTestBed struct {
-	t             *testing.T
-	testUser      *model.User
-	qsHttpHandler http.Handler
+	t              *testing.T
+	testUser       *model.User
+	qsHttpHandler  http.Handler
+	mockClickhouse mockhouse.ClickConnMockCommon
 }
 
 func (tb *IntegrationsTestBed) GetAvailableIntegrationsFromQS() *integrations.IntegrationsListResponse {
@@ -137,10 +150,30 @@ func (tb *IntegrationsTestBed) GetIntegrationDetailsFromQS(
 	var integrationResp integrations.Integration
 	err = json.Unmarshal(dataJson, &integrationResp)
 	if err != nil {
-		tb.t.Fatalf("could not unmarshal apiResponse.Data json into PipelinesResponse")
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json")
 	}
 
 	return &integrationResp
+}
+
+func (tb *IntegrationsTestBed) GetIntegrationConnectionStatus(
+	integrationId string,
+) *integrations.IntegrationConnectionStatus {
+	result := tb.RequestQS(fmt.Sprintf(
+		"/api/v1/integrations/%s/connection_status", integrationId,
+	), nil)
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+	var connectionStatus integrations.IntegrationConnectionStatus
+	err = json.Unmarshal(dataJson, &connectionStatus)
+	if err != nil {
+		tb.t.Fatalf("could not unmarshal apiResponse.Data json")
+	}
+
+	return &connectionStatus
 }
 
 func (tb *IntegrationsTestBed) RequestQSToInstallIntegration(
@@ -200,6 +233,10 @@ func (tb *IntegrationsTestBed) RequestQS(
 	return &result
 }
 
+func (tb *IntegrationsTestBed) mockLogQueryResponse(logsInResponse []model.SignozLog) {
+	ExpectLogsQuery(tb.t, tb.mockClickhouse, logsInResponse)
+}
+
 func NewIntegrationsTestBed(t *testing.T) *IntegrationsTestBed {
 	testDB, testDBFilePath := integrations.NewTestSqliteDB(t)
 
@@ -211,9 +248,14 @@ func NewIntegrationsTestBed(t *testing.T) *IntegrationsTestBed {
 		t.Fatalf("could not create integrations controller: %v", err)
 	}
 
+	fm := featureManager.StartManager()
+	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
+
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
+		Reader:                 reader,
 		AppDao:                 dao.DB(),
 		IntegrationsController: controller,
+		FeatureFlags:           fm,
 	})
 	if err != nil {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
@@ -229,8 +271,9 @@ func NewIntegrationsTestBed(t *testing.T) *IntegrationsTestBed {
 	}
 
 	return &IntegrationsTestBed{
-		t:             t,
-		testUser:      user,
-		qsHttpHandler: router,
+		t:              t,
+		testUser:       user,
+		qsHttpHandler:  router,
+		mockClickhouse: mockClickhouse,
 	}
 }
