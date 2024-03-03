@@ -64,8 +64,8 @@ type CollectedMetric struct {
 }
 
 type SignalConnectionStatus struct {
-	LastReceivedTs   int64  `json:"last_received_ts"`   // epoch seconds
-	LastReceivedFrom string `json:"last_received_from"` // resource identifier
+	LastReceivedTsMillis int64  `json:"last_received_ts_ms"` // epoch milliseconds
+	LastReceivedFrom     string `json:"last_received_from"`  // resource identifier
 }
 
 type IntegrationConnectionStatus struct {
@@ -203,6 +203,19 @@ func (m *Manager) GetIntegration(
 		IntegrationDetails: *integrationDetails,
 		Installation:       installation,
 	}, nil
+}
+
+func (m *Manager) GetIntegrationConnectionTests(
+	ctx context.Context,
+	integrationId string,
+) (*IntegrationConnectionTests, *model.ApiError) {
+	integrationDetails, apiErr := m.getIntegrationDetails(
+		ctx, integrationId,
+	)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+	return integrationDetails.ConnectionTests, nil
 }
 
 func (m *Manager) InstallIntegration(
