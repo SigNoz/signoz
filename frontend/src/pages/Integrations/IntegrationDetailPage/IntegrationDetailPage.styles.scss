@@ -37,6 +37,7 @@
 		.integration-detail-header {
 			display: flex;
 			gap: 10px;
+			justify-content: space-between;
 
 			.image-container {
 				height: 40px;
@@ -84,9 +85,9 @@
 				align-self: flex-start;
 				gap: 2px;
 				flex-shrink: 0;
-				width: 143px;
+				min-width: 143px;
 				height: 30px;
-				padding: 6px 1px;
+				padding: 6px;
 				border-radius: 2px;
 				border: 1px solid var(--bg-ink-50);
 				background: var(--bg-robin-500);

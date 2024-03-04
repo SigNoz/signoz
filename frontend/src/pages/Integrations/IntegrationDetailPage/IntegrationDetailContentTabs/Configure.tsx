@@ -4,23 +4,17 @@ import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { useState } from 'react';
 
-function Configure(): JSX.Element {
+interface ConfigurationProps {
+	configuration: Array<{ title: string; instructions: string }>;
+}
+
+function Configure(props: ConfigurationProps): JSX.Element {
+	const { configuration } = props;
 	const [selectedConfigStep, setSelectedConfigStep] = useState(0);
 
 	const handleMenuClick = (index: number): void => {
 		setSelectedConfigStep(index);
 	};
-
-	const configuration = [
-		{
-			title: 'Install Otel Collector',
-			instructions: '<markdown1>',
-		},
-		{
-			title: 'Configure Nginx Receiver',
-			instructions: '<markdown2>',
-		},
-	];
 	return (
 		<div className="integration-detail-configure">
 			<div className="configure-menu">

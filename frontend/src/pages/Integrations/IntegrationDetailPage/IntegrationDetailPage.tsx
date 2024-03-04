@@ -1,6 +1,8 @@
 import './IntegrationDetailPage.styles.scss';
 
 import { Button } from 'antd';
+import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
+import { defaultTo } from 'lodash-es';
 import { ArrowLeft } from 'lucide-react';
 
 import IntegrationDetailContent from './IntegrationDetailContent';
@@ -15,27 +17,48 @@ interface IntegrationDetailPageProps {
 
 function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 	const { selectedIntegration, setSelectedIntegration, activeDetailTab } = props;
+
+	const { data, isLoading, isFetching } = useGetIntegration({
+		integrationId: selectedIntegration,
+	});
+
+	console.log(data);
+	const loading = isLoading || isFetching;
+	const integrationData = data?.data.data;
 	return (
 		<div className="integration-detail-content">
-			<Button
-				type="text"
-				icon={<ArrowLeft size={14} />}
-				className="all-integrations-btn"
-				onClick={(): void => {
-					setSelectedIntegration(null);
-				}}
-			>
-				All Integrations
-			</Button>
-			<IntegrationDetailHeader
-				id={selectedIntegration}
-				title="Redis"
-				description="Redis is an open source (BSD licensed), in-memory data structure store, used as a database, cache, and message broker."
-				icon="/Icons/redis-logo.svg"
-			/>
-			<IntegrationDetailContent activeDetailTab={activeDetailTab} />
+			{loading ? (
+				<div>Loading </div>
+			) : (
+				integrationData && (
+					<>
+						<Button
+							type="text"
+							icon={<ArrowLeft size={14} />}
+							className="all-integrations-btn"
+							onClick={(): void => {
+								setSelectedIntegration(null);
+							}}
+						>
+							All Integrations
+						</Button>
+						<IntegrationDetailHeader
+							id={selectedIntegration}
+							title={defaultTo(integrationData?.title, '')}
+							description={defaultTo(integrationData?.description, '')}
+							icon={defaultTo(integrationData?.icon, '')}
+						/>
+						<IntegrationDetailContent
+							activeDetailTab={activeDetailTab}
+							integrationData={integrationData}
+						/>
 
-			<IntergrationsUninstallBar integrationTitle="Redis" />
+						<IntergrationsUninstallBar
+							integrationTitle={defaultTo(integrationData?.title, '')}
+						/>
+					</>
+				)
+			)}
 		</div>
 	);
 }

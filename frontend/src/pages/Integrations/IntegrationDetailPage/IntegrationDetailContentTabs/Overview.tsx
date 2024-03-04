@@ -2,16 +2,21 @@ import './IntegrationDetailContentTabs.styles.scss';
 
 import { Typography } from 'antd';
 
-function Overview(): JSX.Element {
-	// TODO: Add markdown content
-	const categories = ['Caching', 'Datastore', 'Logs', 'Tracing'];
-	const assets = {
+interface OverviewProps {
+	categories: string[];
+	assets: {
 		logs: {
-			pipelines: ['fe', 'ef', 'deef'],
-		},
-		dashboards: ['ffeef', 'fefef'],
-		alerts: ['effefef'],
+			pipelines: Array<any>;
+		};
+		dashboards: Array<any>;
+		alerts: Array<any>;
 	};
+	overviewContent: string;
+}
+
+function Overview(props: OverviewProps): JSX.Element {
+	const { categories, assets, overviewContent } = props;
+	// TODO: Add markdown content
 	const assetsCount = [
 		assets.logs.pipelines.length,
 		assets.dashboards.length,
@@ -49,7 +54,7 @@ function Overview(): JSX.Element {
 				</div>
 			</div>
 			<div className="integration-detail-overview-right-container">
-				Markdown content
+				{overviewContent}
 			</div>
 		</div>
 	);

@@ -18,7 +18,7 @@ export interface AllIntegrationsProps {
 	};
 }
 
-interface IntegrationDetailedProps {
+export interface IntegrationDetailedProps {
 	description: string;
 	id: string;
 	// check for the correct type here

@@ -13,6 +13,6 @@ export const useGetIntegration = ({
 	AxiosError
 > =>
 	useQuery<AxiosResponse<GetIntegrationProps>, AxiosError>({
-		queryKey: ['Integrations'],
+		queryKey: ['Integration', integrationId],
 		queryFn: () => getIntegration({ integrationId }),
 	});

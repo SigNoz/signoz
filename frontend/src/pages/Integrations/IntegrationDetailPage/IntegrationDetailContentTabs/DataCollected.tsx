@@ -3,7 +3,13 @@ import './IntegrationDetailContentTabs.styles.scss';
 import { Table, Typography } from 'antd';
 import { BarChart2, ScrollText } from 'lucide-react';
 
-function DataCollected(): JSX.Element {
+interface DataCollectedProps {
+	logsData: Array<any>;
+	metricsData: Array<any>;
+}
+
+function DataCollected(props: DataCollectedProps): JSX.Element {
+	const { logsData, metricsData } = props;
 	const logsColumns = [
 		{
 			title: 'Name',
@@ -28,15 +34,6 @@ function DataCollected(): JSX.Element {
 		},
 	];
 
-	const logsData = [
-		{
-			name: 'Name',
-			path: 'Path',
-			facetType: 'Facet Type',
-			group: 'Group',
-		},
-	];
-
 	const metricsColumns = [
 		{
 			title: 'Name',
@@ -56,68 +53,6 @@ function DataCollected(): JSX.Element {
 		},
 	];
 
-	const metricsData = [
-		{
-			name: 'Name',
-			unit: 'Unit',
-			group: 'Group',
-		},
-		{
-			name: 'Name',
-			unit: 'Unit',
-			group: 'Group',
-		},
-		{
-			name: 'Name',
-			unit: 'Unit',
-			group: 'Group',
-		},
-		{
-			name: 'Name',
-			unit: 'Unit',
-			group: 'Group',
-		},
-		{
-			name: 'Name',
-			unit: 'Unit',
-			group: 'Group',
-		},
-		{
-			name: 'Name',
-			unit: 'Unit',
-			group: 'Group',
-		},
-		{
-			name: 'Name',
-			unit: 'Unit',
-			group: 'Group',
-		},
-		{
-			name: 'Name',
-			unit: 'Unit',
-			group: 'Group',
-		},
-		{
-			name: 'Name',
-			unit: 'Unit',
-			group: 'Group',
-		},
-		{
-			name: 'Name',
-			unit: 'Unit',
-			group: 'Group',
-		},
-		{
-			name: 'Name',
-			unit: 'Unit',
-			group: 'Group',
-		},
-		{
-			name: 'Name',
-			unit: 'Unit',
-			group: 'Group',
-		},
-	];
 	return (
 		<div className="integration-data-collected">
 			<div className="logs-section">

@@ -38,12 +38,14 @@ function IntegrationDetailHeader(
 	return (
 		<div className="integration-connection-header">
 			<div className="integration-detail-header" key={id}>
-				<div className="image-container">
-					<img src={icon} alt={title} className="image" />
-				</div>
-				<div className="details">
-					<Typography.Text className="heading">{title}</Typography.Text>
-					<Typography.Text className="description">{description}</Typography.Text>
+				<div style={{ display: 'flex', gap: '10px' }}>
+					<div className="image-container">
+						<img src={icon} alt={title} className="image" />
+					</div>
+					<div className="details">
+						<Typography.Text className="heading">{title}</Typography.Text>
+						<Typography.Text className="description">{description}</Typography.Text>
+					</div>
 				</div>
 				<Button
 					className="configure-btn"
