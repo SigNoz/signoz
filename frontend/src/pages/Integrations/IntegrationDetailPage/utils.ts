@@ -10,7 +10,6 @@ export function getConnectionStatesFromConnectionStatus(
 		  }
 		| undefined,
 ): ConnectionStates {
-	console.log(connectionStatus);
 	if (isUndefined(connectionStatus)) {
 		return ConnectionStates.NotInstalled;
 	}

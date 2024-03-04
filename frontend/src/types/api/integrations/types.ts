@@ -66,7 +66,7 @@ export interface GetIntegrationPayloadProps {
 }
 
 export interface InstallIntegrationKeyProps {
-	integrationId: string;
+	integration_id: string;
 	// TODO exact object for config
 	config: any;
 }

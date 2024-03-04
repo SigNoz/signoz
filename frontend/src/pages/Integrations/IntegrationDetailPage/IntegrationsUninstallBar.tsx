@@ -2,6 +2,8 @@ import './IntegrationDetailPage.styles.scss';
 
 import { Button, Modal, Typography } from 'antd';
 import unInstallIntegration from 'api/Integrations/uninstallIntegration';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { useNotifications } from 'hooks/useNotifications';
 import { X } from 'lucide-react';
 import { useState } from 'react';
 import { useMutation } from 'react-query';
@@ -15,6 +17,7 @@ function IntergrationsUninstallBar(
 	props: IntergrationsUninstallBarProps,
 ): JSX.Element {
 	const { integrationTitle, integrationId, refetchIntegrationDetails } = props;
+	const { notifications } = useNotifications();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const {
@@ -25,7 +28,11 @@ function IntergrationsUninstallBar(
 			refetchIntegrationDetails();
 			setIsModalOpen(false);
 		},
-		onError: () => {},
+		onError: () => {
+			notifications.error({
+				message: SOMETHING_WENT_WRONG,
+			});
+		},
 	});
 
 	const showModal = (): void => {

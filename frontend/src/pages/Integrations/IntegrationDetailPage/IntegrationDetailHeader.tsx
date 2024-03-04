@@ -3,6 +3,8 @@ import './IntegrationDetailPage.styles.scss';
 
 import { Button, Modal, Typography } from 'antd';
 import installIntegration from 'api/Integrations/installIntegration';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { useNotifications } from 'hooks/useNotifications';
 import { ArrowLeftRight, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useMutation } from 'react-query';
@@ -41,6 +43,8 @@ function IntegrationDetailHeader(
 			getConnectionStatesFromConnectionStatus(connectionStatus),
 	);
 
+	const { notifications } = useNotifications();
+
 	const showModal = (): void => {
 		setIsModalOpen(true);
 	};
@@ -59,7 +63,11 @@ function IntegrationDetailHeader(
 			onSuccess: () => {
 				refetchIntegrationDetails();
 			},
-			onError: () => {},
+			onError: () => {
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				});
+			},
 		},
 	);
 
@@ -81,7 +89,7 @@ function IntegrationDetailHeader(
 					disabled={isInstallLoading}
 					onClick={(): void => {
 						if (connectionState === ConnectionStates.NotInstalled) {
-							mutate({ integrationId: id, config: {} });
+							mutate({ integration_id: id, config: {} });
 						} else {
 							showModal();
 						}

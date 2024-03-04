@@ -24,7 +24,6 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 		integrationId: selectedIntegration,
 	});
 
-	console.log(data);
 	const loading = isLoading || isFetching;
 	const integrationData = data?.data.data;
 	return (
