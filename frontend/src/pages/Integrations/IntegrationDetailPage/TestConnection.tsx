@@ -7,6 +7,7 @@ export enum ConnectionStates {
 	TestingConnection = 'testingConnection',
 	ConnectionFailed = 'connectionFailed',
 	NoDataSinceLong = 'noDataSinceLong',
+	NotInstalled = 'notInstalled',
 }
 
 const ConnectionStatesLabelMap = {
@@ -15,6 +16,7 @@ const ConnectionStatesLabelMap = {
 	[ConnectionStates.ConnectionFailed]: 'Something went wrong :/',
 	[ConnectionStates.NoDataSinceLong]:
 		'This integration has not received data in a while :/',
+	[ConnectionStates.NotInstalled]: '',
 };
 
 interface TestConnectionProps {

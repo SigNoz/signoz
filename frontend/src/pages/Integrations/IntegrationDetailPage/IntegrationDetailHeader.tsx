@@ -6,21 +6,29 @@ import { ArrowLeftRight, Check } from 'lucide-react';
 import { useState } from 'react';
 
 import TestConnection, { ConnectionStates } from './TestConnection';
+import { getConnectionStatesFromConnectionStatus } from './utils';
 
 interface IntegrationDetailHeaderProps {
 	id: string;
 	title: string;
 	description: string;
 	icon: string;
+	connectionStatus:
+		| {
+				last_received_ts: number;
+				last_received_from: string;
+		  }
+		| undefined;
 }
 function IntegrationDetailHeader(
 	props: IntegrationDetailHeaderProps,
 ): JSX.Element {
-	const { id, title, icon, description } = props;
+	const { id, title, icon, description, connectionStatus } = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const [connectionState] = useState<ConnectionStates>(
-		ConnectionStates.NoDataSinceLong,
+		(): ConnectionStates =>
+			getConnectionStatesFromConnectionStatus(connectionStatus),
 	);
 
 	const showModal = (): void => {
@@ -52,10 +60,15 @@ function IntegrationDetailHeader(
 					icon={<ArrowLeftRight size={14} />}
 					onClick={(): void => showModal()}
 				>
-					Connect {title}
+					{connectionState === ConnectionStates.NotInstalled
+						? `Connect ${title}`
+						: `Test Connection`}
 				</Button>
 			</div>
-			<TestConnection connectionState={connectionState} />
+
+			{connectionState !== ConnectionStates.NotInstalled && (
+				<TestConnection connectionState={connectionState} />
+			)}
 
 			<Modal
 				className="test-connection-modal"

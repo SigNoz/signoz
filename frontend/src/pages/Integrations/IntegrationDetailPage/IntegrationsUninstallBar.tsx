@@ -1,24 +1,41 @@
 import './IntegrationDetailPage.styles.scss';
 
 import { Button, Modal, Typography } from 'antd';
+import unInstallIntegration from 'api/Integrations/uninstallIntegration';
 import { X } from 'lucide-react';
 import { useState } from 'react';
+import { useMutation } from 'react-query';
 
 interface IntergrationsUninstallBarProps {
 	integrationTitle: string;
+	integrationId: string;
+	refetchIntegrationDetails: () => void;
 }
 function IntergrationsUninstallBar(
 	props: IntergrationsUninstallBarProps,
 ): JSX.Element {
-	const { integrationTitle } = props;
+	const { integrationTitle, integrationId, refetchIntegrationDetails } = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
+
+	const {
+		mutate: uninstallIntegration,
+		isLoading: isUninstallLoading,
+	} = useMutation(unInstallIntegration, {
+		onSuccess: () => {
+			refetchIntegrationDetails();
+			setIsModalOpen(false);
+		},
+		onError: () => {},
+	});
 
 	const showModal = (): void => {
 		setIsModalOpen(true);
 	};
 
 	const handleOk = (): void => {
-		setIsModalOpen(false);
+		uninstallIntegration({
+			integrationId,
+		});
 	};
 
 	const handleCancel = (): void => {
@@ -49,6 +66,7 @@ function IntergrationsUninstallBar(
 				okText="Remove Integration"
 				okButtonProps={{
 					danger: true,
+					disabled: isUninstallLoading,
 				}}
 			>
 				<Typography.Text className="remove-integration-text">

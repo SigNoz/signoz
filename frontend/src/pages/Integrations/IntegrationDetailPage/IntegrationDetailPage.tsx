@@ -8,6 +8,8 @@ import { ArrowLeft } from 'lucide-react';
 import IntegrationDetailContent from './IntegrationDetailContent';
 import IntegrationDetailHeader from './IntegrationDetailHeader';
 import IntergrationsUninstallBar from './IntegrationsUninstallBar';
+import { ConnectionStates } from './TestConnection';
+import { getConnectionStatesFromConnectionStatus } from './utils';
 
 interface IntegrationDetailPageProps {
 	selectedIntegration: string;
@@ -18,7 +20,7 @@ interface IntegrationDetailPageProps {
 function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 	const { selectedIntegration, setSelectedIntegration, activeDetailTab } = props;
 
-	const { data, isLoading, isFetching } = useGetIntegration({
+	const { data, isLoading, isFetching, refetch } = useGetIntegration({
 		integrationId: selectedIntegration,
 	});
 
@@ -50,15 +52,22 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							title={defaultTo(integrationData?.title, '')}
 							description={defaultTo(integrationData?.description, '')}
 							icon={defaultTo(integrationData?.icon, '')}
+							connectionStatus={integrationData?.connection_status}
 						/>
 						<IntegrationDetailContent
 							activeDetailTab={activeDetailTab}
 							integrationData={integrationData}
 						/>
 
-						<IntergrationsUninstallBar
-							integrationTitle={defaultTo(integrationData?.title, '')}
-						/>
+						{getConnectionStatesFromConnectionStatus(
+							integrationData.connection_status,
+						) !== ConnectionStates.NotInstalled && (
+							<IntergrationsUninstallBar
+								integrationTitle={defaultTo(integrationData?.title, '')}
+								integrationId={selectedIntegration}
+								refetchIntegrationDetails={refetch}
+							/>
+						)}
 					</>
 				)
 			)}
