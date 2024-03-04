@@ -1,0 +1,141 @@
+receivers:
+  otlp/spanmetrics:
+    protocols:
+      grpc:
+        endpoint: "localhost:12345"
+  otlp:
+    protocols:
+      grpc:
+      http:
+  jaeger:
+    protocols:
+      grpc:
+      thrift_http:
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+      load:
+      memory:
+      disk:
+      filesystem:
+      network:
+  filelog/containers:
+    include: [  "/var/lib/docker/containers/*/*.log" ]
+    start_at: end
+    include_file_path: true
+    include_file_name: false
+    operators:
+      # Find out which format is used by docker
+      - type: router
+        id: get-format
+        routes:
+          - output: parser-docker
+            expr: 'body matches "^\\{"'
+      # Parse Docker format
+      - type: json_parser
+        id: parser-docker
+        output: extract_metadata_from_filepath
+        timestamp:
+          parse_from: attributes.time
+          layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+
+      # Extract metadata from file path
+      - type: regex_parser
+        id: extract_metadata_from_filepath
+        regex: '^.*containers/(?P<container_id>[^_]+)/.*log$'
+        parse_from: attributes["log.file.path"]
+        output: parse_body
+      - type: move
+        id: parse_body
+        from: attributes.log
+        to: body
+        output: add_source
+      - type: add
+        id: add_source
+        field: resource["source"]
+        value: "docker"
+  filelog/syslog:
+    include: [  "/var/log/*log" ]
+    start_at: end
+    include_file_path: true
+    include_file_name: false
+    operators:
+      # Extract metadata from file path
+      - type: regex_parser
+        regex: '^.*(?P<time>[A-Za-z]{3} [0-9: ]{11}) ip-(?P<ip>[0-9-]+).*$'
+        parse_from: body
+        timestamp:
+          parse_from: attributes.time
+          layout_type: gotime
+          layout: 'Jan 02 15:04:05'
+      - type: add
+        field: resource["source"]
+        value: "syslog"
+processors:
+  batch:
+    send_batch_size: 1000
+    timeout: 10s
+  signozspanmetrics/prometheus:
+    metrics_exporter: prometheus
+    latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
+    dimensions_cache_size: 10000
+    dimensions:
+      - name: service.namespace
+        default: default
+      - name: deployment.environment
+        default: default
+  # memory_limiter:
+  #   # 80% of maximum memory up to 2G
+  #   limit_mib: 1500
+  #   # 25% of limit up to 2G
+  #   spike_limit_mib: 512
+  #   check_interval: 5s
+  #
+  #   # 50% of the maximum memory
+  #   limit_percentage: 50
+  #   # 20% of max memory usage spike expected
+  #   spike_limit_percentage: 20
+  # queued_retry:
+  #   num_workers: 4
+  #   queue_size: 100
+  #   retry_on_failure: true
+extensions:
+  health_check:
+  pprof:
+  zpages:
+  memory_ballast:
+    size_mib: 1000
+exporters:
+  clickhousetraces:
+    datasource: tcp://signoz-host:9000/?database=signoz_traces
+  clickhousemetricswrite:
+    endpoint: tcp://signoz-host:9000/?database=signoz_metrics
+    resource_to_telemetry_conversion:
+      enabled: true
+  clickhouselogsexporter:
+    dsn: tcp://signoz-host:9000
+    timeout: 10s
+    sending_queue:
+      queue_size: 150
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+service:
+  extensions: [zpages]
+  pipelines:
+    traces:
+      receivers: [jaeger, otlp]
+      processors: [signozspanmetrics/prometheus, batch]
+      exporters: [clickhousetraces]
+    metrics:
+      receivers: [otlp, hostmetrics]
+      processors: [batch]
+      exporters: [clickhousemetricswrite]
+    metrics/spanmetrics:
+      receivers: [otlp/spanmetrics]
+      exporters: [prometheus]

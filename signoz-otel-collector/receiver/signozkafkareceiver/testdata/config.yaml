@@ -1,0 +1,41 @@
+signozkafkareceiver:
+  topic: spans
+  brokers:
+    - "foo:123"
+    - "bar:456"
+  client_id: otel-collector
+  group_id: otel-collector
+  auth:
+    tls:
+      ca_file: ca.pem
+      cert_file: cert.pem
+      key_file: key.pem
+  metadata:
+    retry:
+      max: 10
+      backoff: 5s
+  sarama_consumer_config:
+    fetch_min_bytes: 1
+    fetch_default_bytes: 64
+    fetch_max_bytes: 128
+    max_processing_time: 500ms
+    messages_channel_size: 1024
+    consumer_group_session_timeout: 30s
+signozkafkareceiver/logs:
+  topic: logs
+  encoding: direct
+  brokers:
+    - "coffee:123"
+    - "foobar:456"
+  client_id: otel-collector
+  group_id: otel-collector
+  initial_offset: earliest
+  auth:
+    tls:
+      ca_file: ca.pem
+      cert_file: cert.pem
+      key_file: key.pem
+  metadata:
+    retry:
+      max: 10
+      backoff: 5s

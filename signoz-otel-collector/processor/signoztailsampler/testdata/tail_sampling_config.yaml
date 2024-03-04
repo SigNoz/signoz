@@ -1,0 +1,30 @@
+signoz_tail_sampling:
+  decision_wait: 10s
+  num_traces: 100
+  expected_new_traces_per_sec: 10
+  policies:
+    [
+        {
+          name: test-policy-1,
+          type: policy_group,
+          priority: 1,
+          policy_filter: {
+            string_attributes: {
+              key: source,
+              values: ["security"]
+            }
+          }, 
+          sampling: {sampling_percentage: 100},
+          sub_policies: [{
+            name: condition-1, 
+            type: policy_group, 
+            priority: 1, 
+            policy_filter: {
+              string_attributes: {
+                key: source,
+                values: ["security"]
+              }
+            }, 
+          }]
+        },
+    ]

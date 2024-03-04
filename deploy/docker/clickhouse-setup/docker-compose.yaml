@@ -56,6 +56,7 @@ services:
       - "3888:3888"
     volumes:
       - /home/ubuntu/signoz-data/data/zookeeper-1:/bitnami/zookeeper
+      # - ./data/zookeeper-1:/bitnami/zookeeper
     environment:
       - ZOO_SERVER_ID=1
       # - ZOO_SERVERS=0.0.0.0:2888:3888,zookeeper-2:2888:3888,zookeeper-3:2888:3888
@@ -111,7 +112,9 @@ services:
       - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
       # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
       - /home/ubuntu/signoz-data/data/clickhouse/:/var/lib/clickhouse/
+      # - ./data/clickhouse/:/var/lib/clickhouse/
       - /home/ubuntu/signoz-data/user_scripts:/var/lib/clickhouse/user_scripts/
+      # - ./user_scripts:/var/lib/clickhouse/user_scripts/
 
   # clickhouse-2:
   #   <<: *clickhouse-defaults
@@ -153,6 +156,7 @@ services:
     container_name: signoz-alertmanager
     volumes:
       - /home/ubuntu/signoz-data/data/alertmanager:/data
+      # - ./data/alertmanager:/data
     expose:
       - "9093"
     ports:
@@ -182,7 +186,9 @@ services:
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - /home/ubuntu/signoz-data/dashboards:/root/config/dashboards
+      # - ./dashboards:/root/config/dashboards
       - /home/ubuntu/signoz-data/data/signoz/:/var/lib/signoz/
+      # - ./data/signoz/:/var/lib/signoz/
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
       - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
@@ -253,7 +259,10 @@ services:
 
 
   otel-collector:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.88.13}
+    # image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.88.13}
+    build:
+      context: "../../../signoz-otel-collector"
+      dockerfile: "./cmd/signozcollector/Dockerfile"
     container_name: signoz-otel-collector
     command:
       [
@@ -268,6 +277,7 @@ services:
       - ./otel-collector-opamp-config.yaml:/etc/manager-config.yaml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /home/ubuntu/templogs/:/tmp/
+      # - ./templogs/:/tmp/
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
       - DOCKER_MULTI_NODE_CLUSTER=false

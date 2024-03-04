@@ -1,0 +1,6 @@
+type: signoztransform
+
+status:
+  class: processor
+  stability:
+    alpha: [traces, metrics, logs]

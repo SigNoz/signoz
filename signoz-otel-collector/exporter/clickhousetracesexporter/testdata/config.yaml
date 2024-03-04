@@ -1,0 +1,30 @@
+receivers:
+  nop:
+
+processors:
+  nop:
+
+exporters:
+  clickhousetraces:
+    datasource: tcp://127.0.0.1:9000/?database=signoz_traces&username=admin&password=password
+  clickhousetraces/2:
+    datasource: tcp://127.0.0.1:9000/?database=signoz_traces&username=admin&password=password
+    timeout: 5s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+      randomization_factor: 0.7
+      multiplier: 1.3
+    sending_queue:
+      enabled: true
+      queue_size: 100
+      num_consumers: 5
+
+service:
+  pipelines:
+    traces:
+      receivers: [nop]
+      processors: [nop]
+      exporters: [clickhousetraces]
