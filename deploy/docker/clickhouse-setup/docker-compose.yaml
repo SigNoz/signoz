@@ -259,10 +259,10 @@ services:
 
 
   otel-collector:
-    # image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.88.13}
-    build:
-      context: "../../../signoz-otel-collector"
-      dockerfile: "./cmd/signozcollector/Dockerfile"
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.88.13}
+    # build:
+    #   context: "../../../signoz-otel-collector"
+    #   dockerfile: "./cmd/signozcollector/Dockerfile"
     container_name: signoz-otel-collector
     command:
       [
