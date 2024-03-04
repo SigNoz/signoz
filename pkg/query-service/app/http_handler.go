@@ -2492,8 +2492,6 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 	ah.Respond(w, connectionStatus)
 }
 
-// TODO(Raj): Move this business logic to integrations
-// controller and manager.
 func (ah *APIHandler) calculateConnectionStatus(
 	ctx context.Context,
 	connectionTests *integrations.IntegrationConnectionTests,

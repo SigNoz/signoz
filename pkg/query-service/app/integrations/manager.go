@@ -12,6 +12,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/rules"
 )
 
 type IntegrationAuthor struct {
@@ -33,8 +34,7 @@ type IntegrationAssets struct {
 	Logs       LogsAssets             `json:"logs"`
 	Dashboards []dashboards.Dashboard `json:"dashboards"`
 
-	// TODO(Raj): Figure out the struct to use for alerts
-	Alerts []map[string]interface{} `json:"alerts"`
+	Alerts []rules.PostableRule `json:"alerts"`
 }
 
 type LogsAssets struct {

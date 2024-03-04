@@ -11,6 +11,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/rules"
 )
 
 func NewTestSqliteDB(t *testing.T) (
@@ -112,7 +113,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 					},
 				},
 				Dashboards: []dashboards.Dashboard{},
-				Alerts:     []map[string]interface{}{},
+				Alerts:     []rules.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
 				Logs: &v3.FilterSet{
@@ -190,7 +191,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 					},
 				},
 				Dashboards: []dashboards.Dashboard{},
-				Alerts:     []map[string]interface{}{},
+				Alerts:     []rules.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
 				Logs: &v3.FilterSet{
