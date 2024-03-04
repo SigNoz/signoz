@@ -1,9 +1,9 @@
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import {
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	AlertDef,
@@ -25,6 +25,7 @@ const defaultAnnotations = {
 
 export const alertDefaults: AlertDef = {
 	alertType: AlertTypes.METRICS_BASED_ALERT,
+	version: ENTITY_VERSION_V4,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -78,7 +79,6 @@ export const logAlertDefaults: AlertDef = {
 	},
 	labels: {
 		severity: 'warning',
-		details: `${window.location.protocol}//${window.location.host}${ROUTES.LOGS_EXPLORER}`,
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
@@ -109,7 +109,6 @@ export const traceAlertDefaults: AlertDef = {
 	},
 	labels: {
 		severity: 'warning',
-		details: `${window.location.protocol}//${window.location.host}/traces`,
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
@@ -140,7 +139,6 @@ export const exceptionAlertDefaults: AlertDef = {
 	},
 	labels: {
 		severity: 'warning',
-		details: `${window.location.protocol}//${window.location.host}/exceptions`,
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,

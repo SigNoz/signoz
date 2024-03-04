@@ -1,9 +1,8 @@
-import {
-	SelectOptionContainer,
-	TagContainer,
-	TagLabel,
-	TagValue,
-} from './style';
+import './QueryBuilderSearch.styles.scss';
+
+import { Tooltip } from 'antd';
+
+import { TagContainer, TagLabel, TagValue } from './style';
 import { getOptionType } from './utils';
 
 function OptionRenderer({
@@ -16,21 +15,25 @@ function OptionRenderer({
 	return (
 		<span className="option">
 			{optionType ? (
-				<SelectOptionContainer>
-					<div className="option-value">{value}</div>
-					<div className="option-meta-data-container">
-						<TagContainer>
-							<TagLabel>Type: </TagLabel>
-							<TagValue>{optionType}</TagValue>
-						</TagContainer>
-						<TagContainer>
-							<TagLabel>Data type: </TagLabel>
-							<TagValue>{dataType}</TagValue>
-						</TagContainer>
+				<Tooltip title={`${value}`} placement="topLeft">
+					<div className="selectOptionContainer">
+						<div className="option-value">{value}</div>
+						<div className="option-meta-data-container">
+							<TagContainer>
+								<TagLabel>Type: </TagLabel>
+								<TagValue>{optionType}</TagValue>
+							</TagContainer>
+							<TagContainer>
+								<TagLabel>Data type: </TagLabel>
+								<TagValue>{dataType}</TagValue>
+							</TagContainer>
+						</div>
 					</div>
-				</SelectOptionContainer>
+				</Tooltip>
 			) : (
-				<span>{label}</span>
+				<Tooltip title={label} placement="topLeft">
+					<span>{label}</span>
+				</Tooltip>
 			)}
 		</span>
 	);

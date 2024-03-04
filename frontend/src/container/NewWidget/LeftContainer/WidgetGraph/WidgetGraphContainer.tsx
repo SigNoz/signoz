@@ -1,10 +1,13 @@
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { getGraphType } from 'utils/getGraphType';
+import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
 import { NotFoundContainer } from './styles';
 import WidgetGraph from './WidgetGraphs';
@@ -30,10 +33,20 @@ function WidgetGraphContainer({
 
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
-	const getWidgetQueryRange = useGetWidgetQueryRange({
-		graphType: selectedGraph,
-		selectedTime: selectedTime.enum,
-	});
+	const getWidgetQueryRange = useGetWidgetQueryRange(
+		{
+			graphType: getGraphType(selectedGraph),
+			selectedTime: selectedTime.enum,
+		},
+		selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
+	);
+
+	if (getWidgetQueryRange.data && selectedGraph === PANEL_TYPES.BAR) {
+		const sortedSeriesData = getSortedSeriesData(
+			getWidgetQueryRange.data?.payload.data.result,
+		);
+		getWidgetQueryRange.data.payload.data.result = sortedSeriesData;
+	}
 
 	if (selectedWidget === undefined) {
 		return <Card>Invalid widget</Card>;
@@ -83,6 +96,7 @@ function WidgetGraphContainer({
 			selectedLogFields={selectedLogFields}
 			selectedTracesFields={selectedTracesFields}
 			selectedTime={selectedTime}
+			selectedGraph={selectedGraph}
 		/>
 	);
 }

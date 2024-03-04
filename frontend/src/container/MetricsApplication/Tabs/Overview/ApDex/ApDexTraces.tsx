@@ -1,5 +1,6 @@
 // This component is not been used in the application as we support only metrics for ApDex as of now.
 // This component is been kept for future reference.
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import { GraphTitle } from 'container/MetricsApplication/constant';
@@ -54,6 +55,7 @@ function ApDexTraces({
 			onClickHandler={handleGraphClick('ApDex')}
 			threshold={thresholdValue}
 			isQueryEnabled={isQueryEnabled}
+			version={ENTITY_VERSION_V4}
 		/>
 	);
 }

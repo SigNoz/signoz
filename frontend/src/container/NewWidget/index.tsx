@@ -5,7 +5,9 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
@@ -18,7 +20,7 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
@@ -52,6 +54,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	} = useDashboard();
 
 	const { t } = useTranslation(['dashboard']);
+
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const { currentQuery, stagedQuery } = useQueryBuilder();
 
@@ -311,6 +315,17 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		isNewTraceLogsAvailable,
 	]);
 
+	useEffect(() => {
+		registerShortcut(DashboardShortcuts.SaveChanges, onSaveDashboard);
+		registerShortcut(DashboardShortcuts.DiscardChanges, onClickDiscardHandler);
+
+		return (): void => {
+			deregisterShortcut(DashboardShortcuts.SaveChanges);
+			deregisterShortcut(DashboardShortcuts.DiscardChanges);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [onSaveDashboard]);
+
 	return (
 		<Container>
 			<ButtonContainer>
@@ -414,7 +429,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					<Typography>
 						{t('your_graph_build_with')}{' '}
 						<QueryTypeTag queryType={currentQuery.queryType} />
-						{t('dashboar_ok_confirm')}
+						{t('dashboard_ok_confirm')}
 					</Typography>
 				) : (
 					<Typography>{t('dashboard_unsave_changes')} </Typography>
