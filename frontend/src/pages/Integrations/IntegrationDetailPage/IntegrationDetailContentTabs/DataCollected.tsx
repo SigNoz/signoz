@@ -15,7 +15,6 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
-			width: '30%',
 		},
 		{
 			title: 'Path',
@@ -23,14 +22,9 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 			key: 'path',
 		},
 		{
-			title: 'Facet Type',
-			dataIndex: 'facetType',
-			key: 'facetType',
-		},
-		{
-			title: 'Group',
-			dataIndex: 'group',
-			key: 'group',
+			title: 'Type',
+			dataIndex: 'type',
+			key: 'type',
 		},
 	];
 
@@ -39,17 +33,16 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
-			width: '30%',
+		},
+		{
+			title: 'Type',
+			dataIndex: 'type',
+			key: 'type',
 		},
 		{
 			title: 'Unit',
 			dataIndex: 'unit',
 			key: 'unit',
-		},
-		{
-			title: 'Group',
-			dataIndex: 'group',
-			key: 'group',
 		},
 	];
 
