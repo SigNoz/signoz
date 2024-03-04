@@ -44,64 +44,48 @@ func addLogsQueryExpectation(
 	logsToReturn []model.SignozLog,
 ) {
 	cols := []mockhouse.ColumnType{}
+	cols = append(cols, mockhouse.ColumnType{Type: "UInt64", Name: "timestamp"})
+	cols = append(cols, mockhouse.ColumnType{Type: "UInt64", Name: "observed_timestamp"})
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "id"})
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "trace_id"})
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "span_id"})
+	cols = append(cols, mockhouse.ColumnType{Type: "UInt32", Name: "trace_flags"})
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "severity_text"})
+	cols = append(cols, mockhouse.ColumnType{Type: "UInt8", Name: "severity_number"})
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "body"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "resources_string_key"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "resources_string_value"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "attributes_string_key"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "attributes_string_value"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "attributes_int64_key"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Array(Int64)", Name: "attributes_int64_value"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "attributes_float64_key"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Array(Float64)", Name: "attributes_float64_value"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "attributes_bool_key"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Array(Bool)", Name: "attributes_bool_value"})
+
 	values := [][]any{}
-
 	for _, l := range logsToReturn {
-
 		rowValues := []any{}
-
-		cols = append(cols, mockhouse.ColumnType{Type: "UInt64", Name: "timestamp"})
 		rowValues = append(rowValues, l.Timestamp)
-
-		cols = append(cols, mockhouse.ColumnType{Type: "UInt64", Name: "observed_timestamp"})
 		rowValues = append(rowValues, l.Timestamp)
-
-		cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "id"})
 		rowValues = append(rowValues, l.ID)
-
-		cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "trace_id"})
 		rowValues = append(rowValues, l.TraceID)
-
-		cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "span_id"})
 		rowValues = append(rowValues, l.SpanID)
-
-		cols = append(cols, mockhouse.ColumnType{Type: "UInt32", Name: "trace_flags"})
 		rowValues = append(rowValues, l.TraceFlags)
-
-		cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "severity_text"})
 		rowValues = append(rowValues, l.SeverityText)
-
-		cols = append(cols, mockhouse.ColumnType{Type: "UInt8", Name: "severity_number"})
 		rowValues = append(rowValues, l.SeverityNumber)
-
-		cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "body"})
 		rowValues = append(rowValues, l.Body)
-
-		cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "resources_string_key"})
 		rowValues = append(rowValues, maps.Keys(l.Resources_string))
-		cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "resources_string_value"})
 		rowValues = append(rowValues, maps.Values(l.Resources_string))
-
-		cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "attributes_string_key"})
 		rowValues = append(rowValues, maps.Keys(l.Attributes_string))
-		cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "attributes_string_value"})
 		rowValues = append(rowValues, maps.Values(l.Attributes_string))
-
-		cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "attributes_int64_key"})
 		rowValues = append(rowValues, maps.Keys(l.Attributes_int64))
-		cols = append(cols, mockhouse.ColumnType{Type: "Array(Int64)", Name: "attributes_int64_value"})
 		rowValues = append(rowValues, maps.Values(l.Attributes_int64))
-
-		cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "attributes_float64_key"})
 		rowValues = append(rowValues, maps.Keys(l.Attributes_float64))
-		cols = append(cols, mockhouse.ColumnType{Type: "Array(Float64)", Name: "attributes_float64_value"})
 		rowValues = append(rowValues, maps.Values(l.Attributes_float64))
-
-		cols = append(cols, mockhouse.ColumnType{Type: "Array(String)", Name: "attributes_bool_key"})
 		rowValues = append(rowValues, maps.Keys(l.Attributes_bool))
-		cols = append(cols, mockhouse.ColumnType{Type: "Array(Bool)", Name: "attributes_bool_value"})
 		rowValues = append(rowValues, maps.Values(l.Attributes_bool))
-
 		values = append(values, rowValues)
 	}
 

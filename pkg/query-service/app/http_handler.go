@@ -2500,9 +2500,9 @@ func (ah *APIHandler) calculateConnectionStatus(
 
 	if connectionTests.Logs != nil {
 		qrParams := &v3.QueryRangeParamsV3{
-			Start: time.Now().UnixMilli() - (7 * 86400),
+			// Look back up to 7 days for integration logs
+			Start: time.Now().UnixMilli() - (7 * 86400000),
 			End:   time.Now().UnixMilli(),
-			Step:  840,
 			CompositeQuery: &v3.CompositeQuery{
 				PanelType: v3.PanelTypeList,
 				QueryType: v3.QueryTypeBuilder,

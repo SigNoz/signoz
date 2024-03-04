@@ -75,6 +75,7 @@ type IntegrationConnectionStatus struct {
 
 type IntegrationConnectionTests struct {
 	Logs *v3.FilterSet `json:"logs"`
+
 	// TODO(Raj): Add connection tests for other signals.
 }
 
@@ -87,9 +88,7 @@ type IntegrationDetails struct {
 	DataCollected DataCollectedForIntegration `json:"data_collected"`
 	Assets        IntegrationAssets           `json:"assets"`
 
-	// ConnectionTests is expected to have one entry per signal type
 	ConnectionTests *IntegrationConnectionTests `json:"connection_tests"`
-
 	// ConnectionStatus gets derived using `ConnectionTests`
 	ConnectionStatus *IntegrationConnectionStatus `json:"connection_status"`
 }
