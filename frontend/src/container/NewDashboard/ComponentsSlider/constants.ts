@@ -9,6 +9,7 @@ export const PANEL_TYPES_INITIAL_QUERY = {
 	[PANEL_TYPES.TABLE]: initialQueriesMap.metrics,
 	[PANEL_TYPES.LIST]: initialQueriesMap.logs,
 	[PANEL_TYPES.TRACE]: initialQueriesMap.traces,
+	[PANEL_TYPES.BAR]: initialQueriesMap.metrics,
 	[PANEL_TYPES.EMPTY_WIDGET]: initialQueriesMap.metrics,
 };
 

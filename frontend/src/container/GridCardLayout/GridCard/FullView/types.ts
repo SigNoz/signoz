@@ -50,6 +50,7 @@ export interface FullViewProps {
 	fullViewOptions?: boolean;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	name: string;
+	version?: string;
 	originalName: string;
 	options: uPlot.Options;
 	yAxisUnit?: string;

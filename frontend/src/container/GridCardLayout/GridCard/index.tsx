@@ -1,3 +1,4 @@
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -21,6 +22,8 @@ import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getGraphType } from 'utils/getGraphType';
+import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import EmptyWidget from '../EmptyWidget';
@@ -37,6 +40,7 @@ function GridCardGraph({
 	threshold,
 	variables,
 	fillSpans = false,
+	version,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -125,11 +129,12 @@ function GridCardGraph({
 	const queryResponse = useGetQueryRange(
 		{
 			selectedTime: widget?.timePreferance,
-			graphType: widget?.panelTypes,
+			graphType: getGraphType(widget.panelTypes),
 			query: updatedQuery,
 			globalSelectedInterval,
 			variables: getDashboardVariables(variables),
 		},
+		version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				maxTime,
@@ -159,6 +164,13 @@ function GridCardGraph({
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
 	}, [maxTime, minTime, globalSelectedInterval, queryResponse]);
+
+	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.BAR) {
+		const sortedSeriesData = getSortedSeriesData(
+			queryResponse.data?.payload.data.result,
+		);
+		queryResponse.data.payload.data.result = sortedSeriesData;
+	}
 
 	const chartData = getUPlotChartData(queryResponse?.data?.payload, fillSpans);
 
@@ -191,6 +203,7 @@ function GridCardGraph({
 				softMin: widget.softMin === undefined ? null : widget.softMin,
 				graphsVisibilityStates: graphVisibility,
 				setGraphsVisibilityStates: setGraphVisibility,
+				panelType: widget.panelTypes,
 			}),
 		[
 			widget?.id,
@@ -207,6 +220,7 @@ function GridCardGraph({
 			maxTimeScale,
 			graphVisibility,
 			setGraphVisibility,
+			widget.panelTypes,
 		],
 	);
 
@@ -223,6 +237,7 @@ function GridCardGraph({
 					errorMessage={errorMessage}
 					isWarning={false}
 					name={name}
+					version={version}
 					onDragSelect={onDragSelect}
 					threshold={threshold}
 					headerMenuList={menuList}
@@ -242,6 +257,7 @@ GridCardGraph.defaultProps = {
 	isQueryEnabled: true,
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
+	version: 'v3',
 };
 
 export default memo(GridCardGraph);

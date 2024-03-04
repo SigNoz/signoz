@@ -26,7 +26,7 @@
 	"MY_SETTINGS": "SigNoz | My Settings",
 	"ORG_SETTINGS": "SigNoz | Organization Settings",
 	"INGESTION_SETTINGS": "SigNoz | Ingestion Settings",
-	"API_KEYS": "SigNoz | API Keys",
+	"API_KEYS": "SigNoz | Access Tokens",
 	"SOMETHING_WENT_WRONG": "SigNoz | Something Went Wrong",
 	"UN_AUTHORIZED": "SigNoz | Unauthorized",
 	"NOT_FOUND": "SigNoz | Page Not Found",
@@ -40,8 +40,8 @@
 	"LIST_LICENSES": "SigNoz | List of Licenses",
 	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
 	"SUPPORT": "SigNoz | Support",
-	"LOGS_SAVE_VIEWS": "SigNoz | Logs Save Views",
-	"TRACES_SAVE_VIEWS": "SigNoz | Traces Save Views",
+	"LOGS_SAVE_VIEWS": "SigNoz | Logs Saved Views",
+	"TRACES_SAVE_VIEWS": "SigNoz | Traces Saved Views",
 	"DEFAULT": "Open source Observability Platform | SigNoz",
 	"SHORTCUTS": "SigNoz | Shortcuts"
 }

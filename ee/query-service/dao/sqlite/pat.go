@@ -13,7 +13,7 @@ import (
 
 func (m *modelDao) CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basemodel.BaseApiError) {
 	result, err := m.DB().ExecContext(ctx,
-		"INSERT INTO personal_access_tokens (user_id, token, role, name, created_at, expires_at, updated_at, updated_by_user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+		"INSERT INTO personal_access_tokens (user_id, token, role, name, created_at, expires_at, updated_at, updated_by_user_id, last_used, revoked) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
 		p.UserID,
 		p.Token,
 		p.Role,
@@ -22,6 +22,8 @@ func (m *modelDao) CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basem
 		p.ExpiresAt,
 		p.UpdatedAt,
 		p.UpdatedByUserID,
+		p.LastUsed,
+		p.Revoked,
 	)
 	if err != nil {
 		zap.S().Errorf("Failed to insert PAT in db, err: %v", zap.Error(err))
@@ -78,11 +80,11 @@ func (m *modelDao) UpdatePATLastUsed(ctx context.Context, token string, lastUsed
 	return nil
 }
 
-func (m *modelDao) ListPATs(ctx context.Context, userID string) ([]model.PAT, basemodel.BaseApiError) {
+func (m *modelDao) ListPATs(ctx context.Context) ([]model.PAT, basemodel.BaseApiError) {
 	pats := []model.PAT{}
 
-	if err := m.DB().Select(&pats, `SELECT * FROM personal_access_tokens WHERE user_id=? and revoked=false ORDER by updated_at DESC;`, userID); err != nil {
-		zap.S().Errorf("Failed to fetch PATs for user: %s, err: %v", userID, zap.Error(err))
+	if err := m.DB().Select(&pats, "SELECT * FROM personal_access_tokens WHERE revoked=false ORDER by updated_at DESC;"); err != nil {
+		zap.S().Errorf("Failed to fetch PATs err: %v", zap.Error(err))
 		return nil, model.InternalError(fmt.Errorf("failed to fetch PATs"))
 	}
 	for i := range pats {

@@ -6,6 +6,7 @@ import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import {
@@ -25,12 +26,12 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
+import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { getGraphVisibilityStateOnDataChange } from '../utils';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
-// import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
 
@@ -39,6 +40,7 @@ function FullView({
 	fullViewOptions = true,
 	onClickHandler,
 	name,
+	version,
 	originalName,
 	yAxisUnit,
 	options,
@@ -96,6 +98,7 @@ function FullView({
 			globalSelectedInterval: globalSelectedTime,
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		},
+		selectedDashboard?.data?.version || version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: `FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
 			enabled: !isDependedDataLoaded && widget.panelTypes !== PANEL_TYPES.LIST, // Internally both the list view panel has it's own query range api call, so we don't need to call it again
@@ -106,6 +109,13 @@ function FullView({
 		panelType: widget.panelTypes,
 		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
+
+	if (response.data && widget.panelTypes === PANEL_TYPES.BAR) {
+		const sortedSeriesData = getSortedSeriesData(
+			response.data?.payload.data.result,
+		);
+		response.data.payload.data.result = sortedSeriesData;
+	}
 
 	const chartData = getUPlotChartData(response?.data?.payload, widget.fillSpans);
 
@@ -152,6 +162,7 @@ function FullView({
 				maxTimeScale,
 				softMax: widget.softMax === undefined ? null : widget.softMax,
 				softMin: widget.softMin === undefined ? null : widget.softMin,
+				panelType: widget.panelTypes,
 			});
 
 			setChartOptions(newChartOptions);

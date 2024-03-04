@@ -133,7 +133,7 @@ services:
   #     - ./data/clickhouse-3/:/var/lib/clickhouse/
 
   alertmanager:
-    image: signoz/alertmanager:0.23.4
+    image: signoz/alertmanager:0.23.5
     volumes:
       - ./data/alertmanager:/data
     command:
@@ -160,7 +160,7 @@ services:
       - ../dashboards:/root/config/dashboards
       - ./data/signoz/:/var/lib/signoz/
     environment:
-      - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
+      - ClickHouseUrl=tcp://clickhouse:9000
       - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
       - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
       - DASHBOARDS_PATH=/root/config/dashboards

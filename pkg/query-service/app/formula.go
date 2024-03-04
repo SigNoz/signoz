@@ -120,6 +120,13 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 		for queryName, series := range seriesMap {
 			values[queryName] = series[timestamp]
 		}
+
+		// If the value is not present in the values map, set it to 0
+		for _, v := range expression.Vars() {
+			if _, ok := values[v]; !ok {
+				values[v] = 0
+			}
+		}
 		newValue, err := expression.Evaluate(values)
 		if err != nil {
 			return nil, err

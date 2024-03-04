@@ -10,6 +10,7 @@ import {
 import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -109,7 +110,6 @@ function DashboardsList(): JSX.Element {
 			width: 30,
 			key: DynamicColumnsKey.CreatedAt,
 			sorter: (a: Data, b: Data): number => {
-				console.log({ a });
 				const prev = new Date(a.createdAt).getTime();
 				const next = new Date(b.createdAt).getTime();
 
@@ -211,6 +211,7 @@ function DashboardsList(): JSX.Element {
 					ns: 'dashboard',
 				}),
 				uploadedGrafana: false,
+				version: ENTITY_VERSION_V4,
 			});
 
 			if (response.statusCode === 200) {
@@ -304,6 +305,7 @@ function DashboardsList(): JSX.Element {
 						loading={isFilteringDashboards}
 						style={{ marginBottom: 16, marginTop: 16 }}
 						defaultValue={searchString}
+						autoFocus
 					/>
 				</Col>
 
