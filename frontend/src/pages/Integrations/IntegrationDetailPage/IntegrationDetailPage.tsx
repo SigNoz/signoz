@@ -53,6 +53,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							description={defaultTo(integrationData?.description, '')}
 							icon={defaultTo(integrationData?.icon, '')}
 							connectionStatus={integrationData?.connection_status}
+							refetchIntegrationDetails={refetch}
 						/>
 						<IntegrationDetailContent
 							activeDetailTab={activeDetailTab}

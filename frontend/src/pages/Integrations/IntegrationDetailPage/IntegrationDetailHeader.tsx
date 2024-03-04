@@ -2,8 +2,10 @@
 import './IntegrationDetailPage.styles.scss';
 
 import { Button, Modal, Typography } from 'antd';
+import installIntegration from 'api/Integrations/installIntegration';
 import { ArrowLeftRight, Check } from 'lucide-react';
 import { useState } from 'react';
+import { useMutation } from 'react-query';
 
 import TestConnection, { ConnectionStates } from './TestConnection';
 import { getConnectionStatesFromConnectionStatus } from './utils';
@@ -13,6 +15,7 @@ interface IntegrationDetailHeaderProps {
 	title: string;
 	description: string;
 	icon: string;
+	refetchIntegrationDetails: () => void;
 	connectionStatus:
 		| {
 				last_received_ts: number;
@@ -23,7 +26,14 @@ interface IntegrationDetailHeaderProps {
 function IntegrationDetailHeader(
 	props: IntegrationDetailHeaderProps,
 ): JSX.Element {
-	const { id, title, icon, description, connectionStatus } = props;
+	const {
+		id,
+		title,
+		icon,
+		description,
+		connectionStatus,
+		refetchIntegrationDetails,
+	} = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const [connectionState] = useState<ConnectionStates>(
@@ -43,6 +53,16 @@ function IntegrationDetailHeader(
 		setIsModalOpen(false);
 	};
 
+	const { mutate, isLoading: isInstallLoading } = useMutation(
+		installIntegration,
+		{
+			onSuccess: () => {
+				refetchIntegrationDetails();
+			},
+			onError: () => {},
+		},
+	);
+
 	return (
 		<div className="integration-connection-header">
 			<div className="integration-detail-header" key={id}>
@@ -58,7 +78,14 @@ function IntegrationDetailHeader(
 				<Button
 					className="configure-btn"
 					icon={<ArrowLeftRight size={14} />}
-					onClick={(): void => showModal()}
+					disabled={isInstallLoading}
+					onClick={(): void => {
+						if (connectionState === ConnectionStates.NotInstalled) {
+							mutate({ integrationId: id, config: {} });
+						} else {
+							showModal();
+						}
+					}}
 				>
 					{connectionState === ConnectionStates.NotInstalled
 						? `Connect ${title}`
