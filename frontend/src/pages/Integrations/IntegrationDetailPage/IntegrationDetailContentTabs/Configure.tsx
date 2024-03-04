@@ -2,6 +2,7 @@ import './IntegrationDetailContentTabs.styles.scss';
 
 import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
+// import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { useState } from 'react';
 
 interface ConfigurationProps {
@@ -36,6 +37,10 @@ function Configure(props: ConfigurationProps): JSX.Element {
 			</div>
 			<div className="markdown-container">
 				{configuration[selectedConfigStep].instructions}
+				{/* <MarkdownRenderer
+					variables={{}}
+					markdownContent="<customtag color='red'>Yoiiiiii</customtag>"
+				/> */}
 			</div>
 		</div>
 	);
