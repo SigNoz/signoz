@@ -133,6 +133,7 @@ func NewReader(
 	dialTimeout time.Duration,
 	cluster string,
 ) *ClickHouseReader {
+
 	datasource := os.Getenv("ClickHouseUrl")
 	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
 	db, err := initialize(options)

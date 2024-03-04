@@ -234,7 +234,7 @@ func (tb *IntegrationsTestBed) RequestQS(
 }
 
 func (tb *IntegrationsTestBed) mockLogQueryResponse(logsInResponse []model.SignozLog) {
-	ExpectLogsQuery(tb.t, tb.mockClickhouse, logsInResponse)
+	addLogsQueryExpectation(tb.mockClickhouse, logsInResponse)
 }
 
 func NewIntegrationsTestBed(t *testing.T) *IntegrationsTestBed {

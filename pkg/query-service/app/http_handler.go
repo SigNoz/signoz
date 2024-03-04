@@ -2412,13 +2412,13 @@ func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMidd
 		"/uninstall", am.ViewAccess(ah.UninstallIntegration),
 	).Methods(http.MethodPost)
 
-	subRouter.HandleFunc(
-		"/{integrationId}", am.ViewAccess(ah.GetIntegration),
-	).Methods(http.MethodGet)
-
 	// Used for polling for status in v0
 	subRouter.HandleFunc(
 		"/{integrationId}/connection_status", am.ViewAccess(ah.GetIntegrationConnectionStatus),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"/{integrationId}", am.ViewAccess(ah.GetIntegration),
 	).Methods(http.MethodGet)
 
 	subRouter.HandleFunc(
@@ -2448,7 +2448,7 @@ func (ah *APIHandler) GetIntegration(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
-	resp, apiErr := ah.IntegrationsController.GetIntegration(
+	integration, apiErr := ah.IntegrationsController.GetIntegration(
 		r.Context(), integrationId,
 	)
 	if apiErr != nil {
@@ -2458,15 +2458,15 @@ func (ah *APIHandler) GetIntegration(
 
 	// Add connection status details.
 	connectionStatus, apiErr := ah.calculateConnectionStatus(
-		r.Context(), resp.ConnectionTests,
+		r.Context(), integration.ConnectionTests,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to calculate integration connection status")
 		return
 	}
-	resp.ConnectionStatus = connectionStatus
+	integration.ConnectionStatus = connectionStatus
 
-	ah.Respond(w, resp)
+	ah.Respond(w, integration)
 }
 
 func (ah *APIHandler) GetIntegrationConnectionStatus(

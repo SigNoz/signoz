@@ -18,7 +18,7 @@ import (
 )
 
 func NewMockClickhouseReader(
-	t *testing.T, testDB *sqlx.DB, featureFlag interfaces.FeatureLookup,
+	t *testing.T, testDB *sqlx.DB, featureFlags interfaces.FeatureLookup,
 ) (
 	*clickhouseReader.ClickHouseReader, mockhouse.ClickConnMockCommon,
 ) {
@@ -32,20 +32,17 @@ func NewMockClickhouseReader(
 		clickhouseReader.NewOptions("", 10, 10, 10*time.Second, ""),
 		testDB,
 		"",
-		featureFlag,
+		featureFlags,
 		"",
 	)
 
 	return reader, mockDB
 }
 
-func ExpectLogsQuery(
-	t *testing.T,
+func addLogsQueryExpectation(
 	mockClickhouse mockhouse.ClickConnMockCommon,
 	logsToReturn []model.SignozLog,
 ) {
-
-	// mock presence of no logs for connection
 	cols := []mockhouse.ColumnType{}
 	values := [][]any{}
 
@@ -58,7 +55,6 @@ func ExpectLogsQuery(
 
 		cols = append(cols, mockhouse.ColumnType{Type: "UInt64", Name: "observed_timestamp"})
 		rowValues = append(rowValues, l.Timestamp)
-		// time.Now().UnixMilli())
 
 		cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "id"})
 		rowValues = append(rowValues, l.ID)
