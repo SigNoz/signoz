@@ -13,7 +13,9 @@ interface IntegrationsProps {
 
 export interface AllIntegrationsProps {
 	status: string;
-	data: IntegrationsProps[];
+	data: {
+		integrations: IntegrationsProps[];
+	};
 }
 
 interface IntegrationDetailedProps {

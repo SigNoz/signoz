@@ -3,13 +3,18 @@ import './Integrations.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Input, Typography } from 'antd';
 import { Search } from 'lucide-react';
-import { useState } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 
-function Header(): JSX.Element {
-	const [searchValue, setSearchValue] = useState<string>('');
+interface HeaderProps {
+	searchTerm: string;
+	setSearchTerm: Dispatch<SetStateAction<string>>;
+}
+
+function Header(props: HeaderProps): JSX.Element {
+	const { searchTerm, setSearchTerm } = props;
 
 	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		setSearchValue(e.target.value);
+		setSearchTerm(e.target.value);
 	};
 	return (
 		<div className="integrations-header">
@@ -21,7 +26,7 @@ function Header(): JSX.Element {
 			<Input
 				placeholder="Search for an integration..."
 				prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
-				value={searchValue}
+				value={searchTerm}
 				onChange={handleSearch}
 				className="integrations-search-input"
 			/>
