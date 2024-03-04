@@ -14,12 +14,13 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 		init: (u: uPlot) => {
 			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 			handleClick = function (event: MouseEvent) {
-				const mouseX = event.offsetX;
-				const mouseY = event.offsetY;
+				const mouseX = event.offsetX + 40;
+				const mouseY = event.offsetY + 40;
 
 				// Convert pixel positions to data values
-				const xValue = u.posToVal(mouseX, 'x');
-				const yValue = u.posToVal(mouseY, 'y');
+				// do not use mouseX and mouseY here as it offsets the timestamp as well
+				const xValue = u.posToVal(event.offsetX, 'x');
+				const yValue = u.posToVal(event.offsetY, 'y');
 
 				opts.onClick(xValue, yValue, mouseX, mouseY);
 			};
