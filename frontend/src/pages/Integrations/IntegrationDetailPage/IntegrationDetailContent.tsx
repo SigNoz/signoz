@@ -7,7 +7,14 @@ import Configure from './IntegrationDetailContentTabs/Configure';
 import DataCollected from './IntegrationDetailContentTabs/DataCollected';
 import Overview from './IntegrationDetailContentTabs/Overview';
 
-function IntegrationDetailContent(): JSX.Element {
+interface IntegrationDetailContentProps {
+	activeDetailTab: string;
+}
+
+function IntegrationDetailContent(
+	props: IntegrationDetailContentProps,
+): JSX.Element {
+	const { activeDetailTab } = props;
 	const items: TabsProps['items'] = [
 		{
 			key: 'overview',
@@ -51,7 +58,7 @@ function IntegrationDetailContent(): JSX.Element {
 	];
 	return (
 		<div className="integration-detail-container">
-			<Tabs defaultActiveKey="1" items={items} />
+			<Tabs defaultActiveKey="1" items={items} activeKey={activeDetailTab} />
 		</div>
 	);
 }

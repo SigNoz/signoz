@@ -11,14 +11,17 @@ function Integrations(): JSX.Element {
 		null,
 	);
 
+	const [activeDetailTab, setActiveDetailTab] = useState<string | null>(null);
+
 	const [searchTerm, setSearchTerm] = useState<string>('');
 	return (
 		<div className="integrations-container">
 			<div className="integrations-content">
-				{selectedIntegration ? (
+				{selectedIntegration && activeDetailTab ? (
 					<IntegrationDetailPage
 						selectedIntegration={selectedIntegration}
 						setSelectedIntegration={setSelectedIntegration}
+						activeDetailTab={activeDetailTab}
 					/>
 				) : (
 					<>
@@ -26,6 +29,7 @@ function Integrations(): JSX.Element {
 						<IntegrationsList
 							setSelectedIntegration={setSelectedIntegration}
 							searchTerm={searchTerm}
+							setActiveDetailTab={setActiveDetailTab}
 						/>
 					</>
 				)}

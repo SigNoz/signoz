@@ -10,10 +10,11 @@ import IntergrationsUninstallBar from './IntegrationsUninstallBar';
 interface IntegrationDetailPageProps {
 	selectedIntegration: string;
 	setSelectedIntegration: (id: string | null) => void;
+	activeDetailTab: string;
 }
 
 function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
-	const { selectedIntegration, setSelectedIntegration } = props;
+	const { selectedIntegration, setSelectedIntegration, activeDetailTab } = props;
 	return (
 		<div className="integration-detail-content">
 			<Button
@@ -32,7 +33,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 				description="Redis is an open source (BSD licensed), in-memory data structure store, used as a database, cache, and message broker."
 				icon="/Icons/redis-logo.svg"
 			/>
-			<IntegrationDetailContent />
+			<IntegrationDetailContent activeDetailTab={activeDetailTab} />
 
 			<IntergrationsUninstallBar integrationTitle="Redis" />
 		</div>

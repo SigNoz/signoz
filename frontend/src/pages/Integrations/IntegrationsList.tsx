@@ -2,15 +2,16 @@ import './Integrations.styles.scss';
 
 import { Button, List, Typography } from 'antd';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
-import { useMemo } from 'react';
+import { Dispatch, SetStateAction, useMemo } from 'react';
 
 interface IntegrationsListProps {
 	setSelectedIntegration: (id: string) => void;
+	setActiveDetailTab: Dispatch<SetStateAction<string | null>>;
 	searchTerm: string;
 }
 
 function IntegrationsList(props: IntegrationsListProps): JSX.Element {
-	const { setSelectedIntegration, searchTerm } = props;
+	const { setSelectedIntegration, searchTerm, setActiveDetailTab } = props;
 
 	const { data, isFetching, isLoading } = useGetAllIntegrations();
 
@@ -30,7 +31,14 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 				loading={isFetching || isLoading}
 				itemLayout="horizontal"
 				renderItem={(item): JSX.Element => (
-					<List.Item key={item.id} className="integrations-list-item">
+					<List.Item
+						key={item.id}
+						className="integrations-list-item"
+						onClick={(): void => {
+							setSelectedIntegration(item.id);
+							setActiveDetailTab('overview');
+						}}
+					>
 						<div style={{ display: 'flex', gap: '10px' }}>
 							<div className="list-item-image-container">
 								<img src={item.icon} alt={item.title} className="list-item-image" />
@@ -44,7 +52,11 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 						</div>
 						<Button
 							className="configure-btn"
-							onClick={(): void => setSelectedIntegration(item.id)}
+							onClick={(event): void => {
+								event.stopPropagation();
+								setSelectedIntegration(item.id);
+								setActiveDetailTab('configuration');
+							}}
 						>
 							Configure
 						</Button>
