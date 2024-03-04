@@ -1,3 +1,4 @@
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LIVE_TAIL_GRAPH_INTERVAL } from 'constants/liveTail';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import LogsExplorerChart from 'container/LogsExplorerChart';
@@ -41,6 +42,7 @@ function LiveLogsListChart({
 	const { data, isFetching } = useGetExplorerQueryRange(
 		listChartQuery,
 		PANEL_TYPES.TIME_SERIES,
+		DEFAULT_ENTITY_VERSION,
 		{
 			enabled: isConnectionOpen,
 			refetchInterval: LIVE_TAIL_GRAPH_INTERVAL,

@@ -866,7 +866,6 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 	if parsedRule.RuleType == RuleTypeThreshold {
 
 		// add special labels for test alerts
-		parsedRule.Labels[labels.AlertAdditionalInfoLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
 		parsedRule.Annotations[labels.AlertSummaryLabel] = fmt.Sprintf("The rule threshold is set to %.4f, and the observed metric value is {{$value}}.", *parsedRule.RuleCondition.Target)
 		parsedRule.Labels[labels.RuleSourceLabel] = ""
 		parsedRule.Labels[labels.AlertRuleIdLabel] = ""

@@ -80,7 +80,6 @@ export const ReactGridLayout = styled(ReactGridLayoutComponent)`
 export const ButtonContainer = styled(Space)`
 	display: flex;
 	justify-content: end;
-	margin-top: 1rem;
 `;
 
 export const Button = styled(ButtonComponent)`

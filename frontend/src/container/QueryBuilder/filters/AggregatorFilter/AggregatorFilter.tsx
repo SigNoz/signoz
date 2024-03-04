@@ -111,7 +111,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 				debouncedValue,
 				query.aggregateOperator,
 				query.dataSource,
-			])?.payload.attributeKeys || [],
+			])?.payload?.attributeKeys || [],
 		[debouncedValue, query.aggregateOperator, query.dataSource, queryClient],
 	);
 
