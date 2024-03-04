@@ -44,6 +44,53 @@
 		.integrations-list {
 			margin-top: 16px;
 
+			.error-container {
+				display: flex;
+				border-radius: 6px;
+				border: 1px solid var(--bg-slate-500);
+				background: var(--bg-ink-400);
+				align-items: center;
+				justify-content: center;
+				flex-direction: column;
+
+				.error-content {
+					display: flex;
+					flex-direction: column;
+					justify-content: center;
+					height: 300px;
+					gap: 15px;
+
+					.error-btns {
+						display: flex;
+						flex-direction: row;
+						gap: 16px;
+						align-items: center;
+
+						.retry-btn {
+							display: flex;
+							align-items: center;
+						}
+
+						.contact-support {
+							display: flex;
+							align-items: center;
+							gap: 4px;
+							cursor: pointer;
+
+							.text {
+								color: var(--text-robin-400);
+								font-weight: 500;
+							}
+						}
+					}
+
+					.error-state-svg {
+						height: 40px;
+						width: 40px;
+					}
+				}
+			}
+
 			.ant-list-items {
 				gap: 16px;
 				display: flex;

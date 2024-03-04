@@ -1,9 +1,15 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable no-nested-ternary */
 import './IntegrationDetailPage.styles.scss';
 
-import { Button } from 'antd';
+import { Color } from '@signozhq/design-tokens';
+import { Button, Typography } from 'antd';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
+import history from 'lib/history';
 import { defaultTo } from 'lodash-es';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
+import { isCloudUser } from 'utils/app';
 
 import IntegrationDetailContent from './IntegrationDetailContent';
 import IntegrationDetailHeader from './IntegrationDetailHeader';
@@ -20,11 +26,25 @@ interface IntegrationDetailPageProps {
 function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 	const { selectedIntegration, setSelectedIntegration, activeDetailTab } = props;
 
-	const { data, isLoading, isFetching, refetch } = useGetIntegration({
+	const handleContactSupport = (): void => {
+		if (isCloudUser()) {
+			history.push('/support');
+		} else {
+			window.open('https://signoz.io/slack', '_blank');
+		}
+	};
+	const {
+		data,
+		isLoading,
+		isFetching,
+		refetch,
+		isRefetching,
+		isError,
+	} = useGetIntegration({
 		integrationId: selectedIntegration,
 	});
 
-	const loading = isLoading || isFetching;
+	const loading = isLoading || isFetching || isRefetching;
 	const integrationData = data?.data.data;
 	return (
 		<div className="integration-detail-content">
@@ -42,6 +62,34 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 			{loading ? (
 				<div className="loading-integration-details">
 					Please wait.. While we load the integration details
+				</div>
+			) : isError ? (
+				<div className="error-container">
+					<div className="error-content">
+						<img
+							src="/Icons/awwSnap.svg"
+							alt="error-emoji"
+							className="error-state-svg"
+						/>
+						<Typography.Text>
+							Something went wrong :/ Refresh the page or contact support.
+						</Typography.Text>
+						<div className="error-btns">
+							<Button
+								type="primary"
+								className="retry-btn"
+								onClick={(): Promise<any> => refetch()}
+								icon={<RotateCw size={14} />}
+							>
+								Retry
+							</Button>
+							<div className="contact-support" onClick={handleContactSupport}>
+								<Typography.Link className="text">Contact Support </Typography.Link>
+
+								<MoveUpRight size={14} color={Color.BG_ROBIN_400} />
+							</div>
+						</div>
+					</div>
 				</div>
 			) : (
 				integrationData && (
