@@ -49,8 +49,8 @@ export const getLogIndicatorType = (logData: ILog): string => {
 export const getLogIndicatorTypeForTable = (
 	log: Record<string, unknown>,
 ): string => {
-	if (log.severityText) {
-		return getSeverityType(log.severityText as string);
+	if (log.severity_text) {
+		return getSeverityType(log.severity_text as string);
 	}
 	return (log.log_level as string) || LogType.INFO;
 };
