@@ -15,8 +15,8 @@ interface OverviewProps {
 }
 
 function Overview(props: OverviewProps): JSX.Element {
+	// TODO: Add markdown content for overview instructions
 	const { categories, assets, overviewContent } = props;
-	// TODO: Add markdown content
 	const assetsCount = [
 		assets.logs.pipelines.length,
 		assets.dashboards.length,

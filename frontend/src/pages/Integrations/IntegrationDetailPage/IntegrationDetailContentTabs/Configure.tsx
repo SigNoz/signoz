@@ -9,6 +9,7 @@ interface ConfigurationProps {
 }
 
 function Configure(props: ConfigurationProps): JSX.Element {
+	// TODO Mardown renderer support once instructions are ready
 	const { configuration } = props;
 	const [selectedConfigStep, setSelectedConfigStep] = useState(0);
 
