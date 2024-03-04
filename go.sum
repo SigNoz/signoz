@@ -812,6 +812,8 @@ github.com/srikanthccv/ClickHouse-go-mock v0.4.0 h1:tLk7qoDLg7Z5YD5mOmNqjRDbsm6e
 github.com/srikanthccv/ClickHouse-go-mock v0.4.0/go.mod h1:kRG9cuhS527AMXqKYgsii/CP28L/22fyJcOBExmLpEw=
 github.com/srikanthccv/ClickHouse-go-mock v0.6.0 h1:Dok9g6l1OwBWOv9c6PHR1XeGE3YfwNcft40rRjpS/TU=
 github.com/srikanthccv/ClickHouse-go-mock v0.6.0/go.mod h1:IJZ/eL1h4cOy/Jo3PzNKXSPmqRus15BC2MbduYPpA/g=
+github.com/srikanthccv/ClickHouse-go-mock v0.7.0 h1:XhRMX2663xkDGq3DYavw8m75O94s9u76hOIjo9QBl8c=
+github.com/srikanthccv/ClickHouse-go-mock v0.7.0/go.mod h1:IJZ/eL1h4cOy/Jo3PzNKXSPmqRus15BC2MbduYPpA/g=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
