@@ -306,9 +306,9 @@ const (
 )
 
 type AttributeKey struct {
-	Key      string               `json:"key"`
-	DataType AttributeKeyDataType `json:"dataType"`
-	Type     AttributeKeyType     `json:"type"`
+	Key      string               `json:"key" yaml:"key"`
+	DataType AttributeKeyDataType `json:"dataType" yaml:"data_type"`
+	Type     AttributeKeyType     `json:"type" yaml:"type"`
 	IsColumn bool                 `json:"isColumn"`
 	IsJSON   bool                 `json:"isJSON"`
 }
@@ -839,9 +839,9 @@ const (
 )
 
 type FilterItem struct {
-	Key      AttributeKey   `json:"key"`
-	Value    interface{}    `json:"value"`
-	Operator FilterOperator `json:"op"`
+	Key      AttributeKey   `json:"key" yaml:"key"`
+	Value    interface{}    `json:"value" yaml:"value"`
+	Operator FilterOperator `json:"op" yaml:"op"`
 }
 
 func (f *FilterItem) CacheKey() string {

@@ -16,51 +16,53 @@ import (
 )
 
 type IntegrationAuthor struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	HomePage string `json:"homepage"`
+	Name     string `json:"name" yaml:"name"`
+	Email    string `json:"email" yaml:"email"`
+	HomePage string `json:"homepage" yaml:"homepage"`
 }
 type IntegrationSummary struct {
-	Id          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"` // A short description
+	Id          string `json:"id" yaml:"id"`
+	Title       string `json:"title" yaml:"title"`
+	Description string `json:"description" yaml:"description"` // A short description
 
-	Author IntegrationAuthor `json:"author"`
+	Author IntegrationAuthor `json:"author" yaml:"author"`
 
 	Icon string `json:"icon"`
 }
 
 type IntegrationAssets struct {
-	Logs       LogsAssets             `json:"logs"`
-	Dashboards []dashboards.Dashboard `json:"dashboards"`
+	Logs       LogsAssets             `json:"logs" yaml:"logs"`
+	Dashboards []dashboards.Dashboard `json:"dashboards" yaml:"dashboards"`
 
-	Alerts []rules.PostableRule `json:"alerts"`
+	Alerts []rules.PostableRule `json:"alerts" yaml:"alerts"`
 }
 
 type LogsAssets struct {
-	Pipelines []logparsingpipeline.PostablePipeline `json:"pipelines"`
+	Pipelines []logparsingpipeline.PostablePipeline `json:"pipelines" yaml:"pipelines"`
 }
 
 type IntegrationConfigStep struct {
-	Title        string `json:"title"`
-	Instructions string `json:"instructions"`
+	Title        string `json:"title" yaml:"title"`
+	Instructions string `json:"instructions" yaml:"instructions"`
 }
 
 type DataCollectedForIntegration struct {
-	Logs    []CollectedLogAttribute `json:"logs"`
-	Metrics []CollectedMetric       `json:"metrics"`
+	Logs    []CollectedLogAttribute `json:"logs" yaml:"logs"`
+	Metrics []CollectedMetric       `json:"metrics" yaml:"metrics"`
 }
 
 type CollectedLogAttribute struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-	Type string `json:"type"`
+	Name        string `json:"name" yaml:"name"`
+	Path        string `json:"path" yaml:"path"`
+	Type        string `json:"type" yaml:"type"`
+	Description string `json:"description" yaml:"description"`
 }
 
 type CollectedMetric struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-	Unit string `json:"unit"`
+	Name        string `json:"name" yaml:"name"`
+	Type        string `json:"type" yaml:"type"`
+	Unit        string `json:"unit" yaml:"unit"`
+	Description string `json:"description" yaml:"description"`
 }
 
 type SignalConnectionStatus struct {
@@ -74,7 +76,7 @@ type IntegrationConnectionStatus struct {
 }
 
 type IntegrationConnectionTests struct {
-	Logs *v3.FilterSet `json:"logs"`
+	Logs *v3.FilterSet `json:"logs" yaml:"logs"`
 
 	// TODO(Raj): Add connection tests for other signals.
 }
@@ -82,11 +84,11 @@ type IntegrationConnectionTests struct {
 type IntegrationDetails struct {
 	IntegrationSummary
 
-	Categories    []string                    `json:"categories"`
-	Overview      string                      `json:"overview"` // markdown
-	Configuration []IntegrationConfigStep     `json:"configuration"`
-	DataCollected DataCollectedForIntegration `json:"data_collected"`
-	Assets        IntegrationAssets           `json:"assets"`
+	Categories    []string                    `json:"categories" yaml:"categories"`
+	Overview      string                      `json:"overview" yaml:"overview"` // markdown
+	Configuration []IntegrationConfigStep     `json:"configuration" yaml:"configuration"`
+	DataCollected DataCollectedForIntegration `json:"data_collected" yaml:"data_collected"`
+	Assets        IntegrationAssets           `json:"assets" yaml:"assets"`
 
 	ConnectionTests *IntegrationConnectionTests `json:"connection_tests"`
 }
