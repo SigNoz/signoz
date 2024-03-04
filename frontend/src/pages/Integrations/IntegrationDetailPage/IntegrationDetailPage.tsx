@@ -27,21 +27,24 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 	const integrationData = data?.data.data;
 	return (
 		<div className="integration-detail-content">
+			<Button
+				type="text"
+				icon={<ArrowLeft size={14} />}
+				className="all-integrations-btn"
+				onClick={(): void => {
+					setSelectedIntegration(null);
+				}}
+			>
+				All Integrations
+			</Button>
+
 			{loading ? (
-				<div>Loading </div>
+				<div className="loading-integration-details">
+					Please wait.. While we load the integration details
+				</div>
 			) : (
 				integrationData && (
 					<>
-						<Button
-							type="text"
-							icon={<ArrowLeft size={14} />}
-							className="all-integrations-btn"
-							onClick={(): void => {
-								setSelectedIntegration(null);
-							}}
-						>
-							All Integrations
-						</Button>
 						<IntegrationDetailHeader
 							id={selectedIntegration}
 							title={defaultTo(integrationData?.title, '')}

@@ -4,6 +4,13 @@
 	gap: 16px;
 	margin: 12px 0px 20px 0px;
 
+	.loading-integration-details {
+		display: flex;
+		height: 400px;
+		justify-content: center;
+		align-items: center;
+	}
+
 	.all-integrations-btn {
 		width: fit-content;
 		display: flex;
