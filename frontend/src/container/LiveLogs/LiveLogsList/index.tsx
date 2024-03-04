@@ -112,7 +112,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 			{logs.length === 0 && <Typography>{t('fetching_log_lines')}</Typography>}
 
 			{logs.length !== 0 && (
-				<InfinityWrapperStyled>
+				<InfinityWrapperStyled $height={logs.length}>
 					{options.format === OptionFormatTypes.TABLE ? (
 						<InfinityTableView
 							ref={ref}

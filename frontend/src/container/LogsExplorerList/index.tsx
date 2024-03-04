@@ -173,7 +173,10 @@ function LogsExplorerList({
 
 			{!isLoading && !isError && logs.length > 0 && (
 				<>
-					<InfinityWrapperStyled data-testid="logs-list-virtuoso">
+					<InfinityWrapperStyled
+						$height={logs.length}
+						data-testid="logs-list-virtuoso"
+					>
 						{renderContent}
 					</InfinityWrapperStyled>
 
