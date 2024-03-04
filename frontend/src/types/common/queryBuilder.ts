@@ -61,7 +61,14 @@ export enum BoolOperators {
 	COUNT_DISTINCT = 'count_distinct',
 }
 
+export enum Temporality {
+	Unspecified = 'Unspecified',
+	Delta = 'Delta',
+	Cumulative = 'Cumulative',
+}
+
 export enum MetricAggregateOperator {
+	EMPTY = '', // used as time aggregator for histograms
 	NOOP = 'noop',
 	COUNT = 'count',
 	COUNT_DISTINCT = 'count_distinct',

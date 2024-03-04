@@ -10,6 +10,7 @@ import {
 import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -210,7 +211,7 @@ function DashboardsList(): JSX.Element {
 					ns: 'dashboard',
 				}),
 				uploadedGrafana: false,
-				version: 'v4',
+				version: ENTITY_VERSION_V4,
 			});
 
 			if (response.statusCode === 200) {

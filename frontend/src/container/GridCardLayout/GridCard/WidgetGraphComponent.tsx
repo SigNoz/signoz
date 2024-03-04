@@ -39,6 +39,7 @@ function WidgetGraphComponent({
 	queryResponse,
 	errorMessage,
 	name,
+	version,
 	threshold,
 	headerMenuList,
 	isWarning,
@@ -283,6 +284,7 @@ function WidgetGraphComponent({
 			>
 				<FullView
 					name={`${name}expanded`}
+					version={version}
 					originalName={name}
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}

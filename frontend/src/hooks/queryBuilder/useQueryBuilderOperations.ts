@@ -1,3 +1,4 @@
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { LEGEND } from 'constants/global';
 import {
 	ATTRIBUTE_TYPES,
@@ -183,7 +184,10 @@ export const useQueryOperations: UseQueryOperations = ({
 				having: [],
 			};
 
-			if (newQuery.dataSource === DataSource.METRICS && entityVersion === 'v4') {
+			if (
+				newQuery.dataSource === DataSource.METRICS &&
+				entityVersion === ENTITY_VERSION_V4
+			) {
 				handleMetricAggregateAtributeTypes(newQuery.aggregateAttribute);
 
 				if (newQuery.aggregateAttribute.type === ATTRIBUTE_TYPES.SUM) {
@@ -310,7 +314,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			dataSource === DataSource.METRICS &&
 			query &&
 			query.aggregateAttribute &&
-			entityVersion === 'v4'
+			entityVersion === ENTITY_VERSION_V4
 		) {
 			handleMetricAggregateAtributeTypes(query.aggregateAttribute);
 		} else {

@@ -11,6 +11,10 @@ export const handlers = [
 		res(ctx.status(200), ctx.json(queryRangeSuccessResponse)),
 	),
 
+	rest.post('http://localhost/api/v4/query_range', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(queryRangeSuccessResponse)),
+	),
+
 	rest.post('http://localhost/api/v1/services', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(serviceSuccessResponse)),
 	),

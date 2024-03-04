@@ -1,6 +1,7 @@
 import { ApiV3Instance, ApiV4Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	MetricRangePayloadV3,
@@ -13,7 +14,7 @@ export const getMetricsQueryRange = async (
 	signal: AbortSignal,
 ): Promise<SuccessResponse<MetricRangePayloadV3> | ErrorResponse> => {
 	try {
-		if (version && version === 'v4') {
+		if (version && version === ENTITY_VERSION_V4) {
 			const response = await ApiV4Instance.post('/query_range', props, { signal });
 
 			return {

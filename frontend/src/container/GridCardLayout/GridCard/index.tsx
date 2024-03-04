@@ -237,6 +237,7 @@ function GridCardGraph({
 					errorMessage={errorMessage}
 					isWarning={false}
 					name={name}
+					version={version}
 					onDragSelect={onDragSelect}
 					threshold={threshold}
 					headerMenuList={menuList}

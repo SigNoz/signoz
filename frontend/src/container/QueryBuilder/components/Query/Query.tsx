@@ -2,6 +2,7 @@
 import './Query.styles.scss';
 
 import { Col, Input, Row } from 'antd';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 // ** Constants
 import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -316,13 +317,15 @@ export const Query = memo(function Query({
 	const disableOperatorSelector =
 		!query?.aggregateAttribute.key || query?.aggregateAttribute.key === '';
 
-	const isVersionV4 = version && version === 'v4';
+	const isVersionV4 = version && version === ENTITY_VERSION_V4;
 
 	return (
 		<Row gutter={[0, 12]}>
 			<QBEntityOptions
 				isMetricsDataSource={isMetricsDataSource}
-				showFunctions={(version && version === 'v4') || showFunctions || false}
+				showFunctions={
+					(version && version === ENTITY_VERSION_V4) || showFunctions || false
+				}
 				isCollapsed={isCollapse}
 				entityType="query"
 				entityData={query}
@@ -375,7 +378,7 @@ export const Query = memo(function Query({
 										</Col>
 
 										{version &&
-											version === 'v4' &&
+											version === ENTITY_VERSION_V4 &&
 											operators &&
 											Array.isArray(operators) &&
 											operators.length > 0 && (

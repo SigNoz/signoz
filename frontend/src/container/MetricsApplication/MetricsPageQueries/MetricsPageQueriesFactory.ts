@@ -9,6 +9,7 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	MetricAggregateOperator,
 	QueryBuilderData,
+	Temporality,
 } from 'types/common/queryBuilder';
 
 import {
@@ -69,7 +70,8 @@ export const getQueryBuilderQuerieswithFormula = ({
 	disabled,
 	expressions,
 	legendFormulas,
-	aggregateOperators,
+	timeAggregateOperators,
+	spaceAggregateOperators,
 	dataSource,
 }: BuilderQuerieswithFormulaProps): QueryBuilderData => ({
 	queryFormulas: expressions.map((expression, index) => ({
@@ -79,7 +81,9 @@ export const getQueryBuilderQuerieswithFormula = ({
 	})),
 	queryData: autocompleteData.map((_, index) => ({
 		...initialQueryBuilderFormValuesMap.metrics,
-		aggregateOperator: aggregateOperators[index],
+		timeAggregation: timeAggregateOperators[index],
+		spaceAggregation: spaceAggregateOperators[index],
+		temporality: Temporality.Delta,
 		disabled: disabled[index],
 		groupBy,
 		legend: legends[index],
