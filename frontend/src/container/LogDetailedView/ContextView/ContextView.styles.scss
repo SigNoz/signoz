@@ -1,6 +1,7 @@
 .log-context-container {
     border: 1px solid var(--bg-slate-400);
-    height: 80vh;
+    height: auto;
+    max-height: 80vh;
     position: relative;
     overflow: scroll;
     overflow-x: hidden;
