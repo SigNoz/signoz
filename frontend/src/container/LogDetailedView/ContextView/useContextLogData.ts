@@ -1,3 +1,4 @@
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	getOrderByTimestamp,
@@ -105,6 +106,7 @@ export const useContextLogData = ({
 	const { isError, isFetching } = useGetExplorerQueryRange(
 		requestData,
 		PANEL_TYPES.LIST,
+		DEFAULT_ENTITY_VERSION,
 		{
 			keepPreviousData: true,
 			enabled: !!requestData,
