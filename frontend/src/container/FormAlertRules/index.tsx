@@ -1,3 +1,5 @@
+import './FormAlertRules.styles.scss';
+
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import {
 	Col,
@@ -373,6 +375,7 @@ function FormAlertRules({
 			centered: true,
 			content,
 			onOk: saveRule,
+			className: 'create-alert-modal',
 		});
 	}, [t, saveRule, currentQuery]);
 

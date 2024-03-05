@@ -11,6 +11,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/rules"
 )
 
 type IntegrationAuthor struct {
@@ -32,8 +34,7 @@ type IntegrationAssets struct {
 	Logs       LogsAssets             `json:"logs"`
 	Dashboards []dashboards.Dashboard `json:"dashboards"`
 
-	// TODO(Raj): Maybe use a struct for alerts
-	Alerts []map[string]interface{} `json:"alerts"`
+	Alerts []rules.PostableRule `json:"alerts"`
 }
 
 type LogsAssets struct {
@@ -62,6 +63,22 @@ type CollectedMetric struct {
 	Unit string `json:"unit"`
 }
 
+type SignalConnectionStatus struct {
+	LastReceivedTsMillis int64  `json:"last_received_ts_ms"` // epoch milliseconds
+	LastReceivedFrom     string `json:"last_received_from"`  // resource identifier
+}
+
+type IntegrationConnectionStatus struct {
+	Logs    *SignalConnectionStatus `json:"logs"`
+	Metrics *SignalConnectionStatus `json:"metrics"`
+}
+
+type IntegrationConnectionTests struct {
+	Logs *v3.FilterSet `json:"logs"`
+
+	// TODO(Raj): Add connection tests for other signals.
+}
+
 type IntegrationDetails struct {
 	IntegrationSummary
 
@@ -70,6 +87,10 @@ type IntegrationDetails struct {
 	Configuration []IntegrationConfigStep     `json:"configuration"`
 	DataCollected DataCollectedForIntegration `json:"data_collected"`
 	Assets        IntegrationAssets           `json:"assets"`
+
+	ConnectionTests *IntegrationConnectionTests `json:"connection_tests"`
+	// ConnectionStatus gets derived using `ConnectionTests`
+	ConnectionStatus *IntegrationConnectionStatus `json:"connection_status"`
 }
 
 type IntegrationsListItem struct {
@@ -181,6 +202,19 @@ func (m *Manager) GetIntegration(
 		IntegrationDetails: *integrationDetails,
 		Installation:       installation,
 	}, nil
+}
+
+func (m *Manager) GetIntegrationConnectionTests(
+	ctx context.Context,
+	integrationId string,
+) (*IntegrationConnectionTests, *model.ApiError) {
+	integrationDetails, apiErr := m.getIntegrationDetails(
+		ctx, integrationId,
+	)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+	return integrationDetails.ConnectionTests, nil
 }
 
 func (m *Manager) InstallIntegration(

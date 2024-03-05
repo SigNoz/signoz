@@ -60,6 +60,12 @@ func (c *Controller) GetIntegration(
 	return c.mgr.GetIntegration(ctx, integrationId)
 }
 
+func (c *Controller) GetIntegrationConnectionTests(
+	ctx context.Context, integrationId string,
+) (*IntegrationConnectionTests, *model.ApiError) {
+	return c.mgr.GetIntegrationConnectionTests(ctx, integrationId)
+}
+
 type InstallIntegrationRequest struct {
 	IntegrationId string                 `json:"integration_id"`
 	Config        map[string]interface{} `json:"config"`

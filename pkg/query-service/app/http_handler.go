@@ -2412,6 +2412,11 @@ func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMidd
 		"/uninstall", am.ViewAccess(ah.UninstallIntegration),
 	).Methods(http.MethodPost)
 
+	// Used for polling for status in v0
+	subRouter.HandleFunc(
+		"/{integrationId}/connection_status", am.ViewAccess(ah.GetIntegrationConnectionStatus),
+	).Methods(http.MethodGet)
+
 	subRouter.HandleFunc(
 		"/{integrationId}", am.ViewAccess(ah.GetIntegration),
 	).Methods(http.MethodGet)
@@ -2443,14 +2448,112 @@ func (ah *APIHandler) GetIntegration(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
-	resp, apiErr := ah.IntegrationsController.GetIntegration(
+	integration, apiErr := ah.IntegrationsController.GetIntegration(
 		r.Context(), integrationId,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to fetch integration details")
 		return
 	}
-	ah.Respond(w, resp)
+
+	// Add connection status details.
+	connectionStatus, apiErr := ah.calculateConnectionStatus(
+		r.Context(), integration.ConnectionTests,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to calculate integration connection status")
+		return
+	}
+	integration.ConnectionStatus = connectionStatus
+
+	ah.Respond(w, integration)
+}
+
+func (ah *APIHandler) GetIntegrationConnectionStatus(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	connectionTests, apiErr := ah.IntegrationsController.GetIntegrationConnectionTests(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration connection tests")
+		return
+	}
+
+	connectionStatus, apiErr := ah.calculateConnectionStatus(
+		r.Context(), connectionTests,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to calculate integration connection status")
+		return
+	}
+
+	ah.Respond(w, connectionStatus)
+}
+
+func (ah *APIHandler) calculateConnectionStatus(
+	ctx context.Context,
+	connectionTests *integrations.IntegrationConnectionTests,
+) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
+	result := &integrations.IntegrationConnectionStatus{}
+
+	if connectionTests.Logs != nil {
+		qrParams := &v3.QueryRangeParamsV3{
+			// Look back up to 7 days for integration logs
+			Start: time.Now().UnixMilli() - (7 * 86400000),
+			End:   time.Now().UnixMilli(),
+			CompositeQuery: &v3.CompositeQuery{
+				PanelType: v3.PanelTypeList,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						PageSize:          1,
+						Filters:           connectionTests.Logs,
+						QueryName:         "A",
+						DataSource:        v3.DataSourceLogs,
+						Expression:        "A",
+						AggregateOperator: v3.AggregateOperatorNoOp,
+					},
+				},
+			},
+		}
+		queryRes, err, _ := ah.querier.QueryRange(
+			ctx, qrParams, map[string]v3.AttributeKey{},
+		)
+		if err != nil {
+			return nil, model.InternalError(fmt.Errorf(
+				"could not query for integration connection status: %w", err,
+			))
+		}
+		if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+			lastLog := queryRes[0].List[0]
+
+			resourceSummaryParts := []string{}
+			lastLogResourceAttribs := lastLog.Data["resources_string"]
+			if lastLogResourceAttribs != nil {
+				resourceAttribs, ok := lastLogResourceAttribs.(*map[string]string)
+				if !ok {
+					return nil, model.InternalError(fmt.Errorf(
+						"could not cast log resource attribs",
+					))
+				}
+				for k, v := range *resourceAttribs {
+					resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+						"%s=%s", k, v,
+					))
+				}
+			}
+			lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
+
+			result.Logs = &integrations.SignalConnectionStatus{
+				LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+				LastReceivedFrom:     lastLogResourceSummary,
+			}
+		}
+	}
+
+	return result, nil
 }
 
 func (ah *APIHandler) InstallIntegration(
