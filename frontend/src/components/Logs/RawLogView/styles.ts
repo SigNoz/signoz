@@ -30,6 +30,13 @@ export const RawLogViewContainer = styled(Row)<{
 		$isActiveLog
 			? getActiveLogBackground($isActiveLog, $isDarkMode)
 			: getDefaultLogBackground($isReadOnly, $isDarkMode)}
+
+	${({ $isHightlightedLog, $isDarkMode }): string =>
+		$isHightlightedLog
+			? `background-color: ${
+					$isDarkMode ? Color.BG_SLATE_500 : Color.BG_VANILLA_400
+			  }`
+			: ''}
 `;
 
 export const ExpandIconWrapper = styled(Col)`
