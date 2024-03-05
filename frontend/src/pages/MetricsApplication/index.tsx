@@ -13,7 +13,13 @@ import { MetricsApplicationTab, TAB_KEY_VS_LABEL } from './types';
 import useMetricsApplicationTabKey from './useMetricsApplicationTabKey';
 
 function MetricsApplication(): JSX.Element {
-	const { servicename } = useParams<{ servicename: string }>();
+	const { servicename: encodedServiceName } = useParams<{
+		servicename: string;
+	}>();
+
+	const servicename = decodeURIComponent(encodedServiceName);
+
+	console.log(servicename);
 
 	const activeKey = useMetricsApplicationTabKey();
 

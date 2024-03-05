@@ -21,7 +21,8 @@ function ApDexTraces({
 	tagFilterItems,
 	thresholdValue,
 }: ApDexDataSwitcherProps): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
 
 	const apDexTracesWidget = useMemo(
 		() =>

@@ -24,7 +24,8 @@ import ColumnWithLink from './TableRenderer/ColumnWithLink';
 import { getTableColumnRenderer } from './TableRenderer/TableColumnRenderer';
 
 function TopOperationMetrics(): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
 
 	const { notifications } = useNotifications();
 
