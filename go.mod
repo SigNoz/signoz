@@ -48,7 +48,7 @@ require (
 	github.com/smartystreets/assertions v1.13.1
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/soheilhy/cmux v0.1.5
-	github.com/srikanthccv/ClickHouse-go-mock v0.6.0
+	github.com/srikanthccv/ClickHouse-go-mock v0.7.0
 	github.com/stretchr/testify v1.8.4
 	go.opentelemetry.io/collector/component v0.88.0
 	go.opentelemetry.io/collector/confmap v0.88.0
