@@ -5,7 +5,7 @@ services:
   otel-collector:
     build:
       context: "../../../signoz-otel-collector"
-      dockerfile: "./cmd/signozcollector/Dockerfile"
+      dockerfile: "cmd/signozcollector/Dockerfile"
     container_name: signoz-otel-collector
     # image: signoz/signoz-otel-collector:0.88.13
     command:
