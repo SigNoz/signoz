@@ -1,6 +1,5 @@
 import './ContextView.styles.scss';
 
-import cx from 'classnames';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -23,7 +22,7 @@ function ContextView({
 	if (!contextQuery) return <></>;
 
 	return (
-		<div className={cx('log-context-container', { isEditable: isEdit })}>
+		<div className="log-context-container">
 			<ContextLogRenderer
 				filters={filters}
 				log={log}

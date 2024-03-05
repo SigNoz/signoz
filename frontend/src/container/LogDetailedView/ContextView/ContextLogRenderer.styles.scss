@@ -19,7 +19,7 @@
         }
         
         /* Adjust width to fit content of the third descendant inside virtuoso */
-        > div > div > div {
+        .ant-row {
             width: fit-content;
         }
 	}

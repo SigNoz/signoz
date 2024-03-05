@@ -1,7 +1,7 @@
 import './ContextLogRenderer.styles.scss';
 
+import { Skeleton } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
-import Spinner from 'components/Spinner';
 import ShowButton from 'container/LogsContextList/ShowButton';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useCallback, useEffect, useState } from 'react';
@@ -17,8 +17,6 @@ function ContextLogRenderer({
 	log,
 	filters,
 }: ContextLogRendererProps): JSX.Element {
-	const [firstLog, setFirstLog] = useState<ILog>(log);
-	const [lastLog, setLastLog] = useState<ILog>(log);
 	const [prevLogPage, setPrevLogPage] = useState<number>(1);
 	const [afterLogPage, setAfterLogPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([log]);
@@ -28,7 +26,7 @@ function ContextLogRenderer({
 		isFetching: isPreviousLogsFetching,
 		handleShowNextLines: handlePreviousLogsShowNextLine,
 	} = useContextLogData({
-		log: firstLog,
+		log,
 		filters,
 		isEdit,
 		query,
@@ -42,7 +40,7 @@ function ContextLogRenderer({
 		isFetching: isAfterLogsFetching,
 		handleShowNextLines: handleAfterLogsShowNextLine,
 	} = useContextLogData({
-		log: lastLog,
+		log,
 		filters,
 		isEdit,
 		query,
@@ -53,13 +51,11 @@ function ContextLogRenderer({
 
 	useEffect(() => {
 		setLogs((prev) => [...previousLogs, ...prev]);
-		setFirstLog(logs[0]);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [previousLogs]);
 
 	useEffect(() => {
 		setLogs((prev) => [...prev, ...afterLogs]);
-		setLastLog(logs[logs.length - 1]);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [afterLogs]);
 
@@ -90,7 +86,14 @@ function ContextLogRenderer({
 				order={ORDERBY_FILTERS.ASC}
 				onClick={handlePreviousLogsShowNextLine}
 			/>
-			{isPreviousLogsFetching && <Spinner size="large" height="20rem" />}
+			{isPreviousLogsFetching && (
+				<Skeleton
+					style={{
+						height: '100%',
+						padding: '16px',
+					}}
+				/>
+			)}
 			<Virtuoso
 				className="virtuoso-list"
 				initialTopMostItemIndex={0}
@@ -98,7 +101,14 @@ function ContextLogRenderer({
 				itemContent={getItemContent}
 				style={{ height: `calc(${logs.length} * 32px)` }}
 			/>
-			{isAfterLogsFetching && <Spinner size="large" height="20rem" />}
+			{isAfterLogsFetching && (
+				<Skeleton
+					style={{
+						height: '100%',
+						padding: '16px',
+					}}
+				/>
+			)}
 			<ShowButton
 				isLoading={isAfterLogsFetching}
 				isDisabled={false}

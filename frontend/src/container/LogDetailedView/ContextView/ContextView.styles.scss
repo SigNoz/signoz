@@ -1,7 +1,6 @@
 .log-context-container {
     border: 1px solid var(--bg-slate-400);
-    height: auto;
-    max-height: 80vh;
+    flex: 1;
     position: relative;
     overflow: scroll;
     overflow-x: hidden;
@@ -21,8 +20,4 @@
     &::-webkit-scrollbar-thumb:hover {
         background: var(--bg-slate-200);
     }
-}
-
-.isEditable {
-    height: 73vh; // When edit mode is enabled, reducing the size of log-context-container to avoid unnecessary scroll bars.
 }
