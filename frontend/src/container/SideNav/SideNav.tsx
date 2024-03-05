@@ -341,12 +341,12 @@ function SideNav({
 				>
 					<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
 
-					{!collapsed && <span className="brand-logo-name"> SigNoz </span>}
+					{!collapsed && <span className="brand-logo-name"> Weee Raptor </span>}
 				</div>
 
-				{!collapsed && licenseTag && (
+				{/* {!collapsed && licenseTag && (
 					<div className="license tag">{licenseTag}</div>
-				)}
+				)} */}
 			</div>
 
 			{isCloudUserVal && (
@@ -379,15 +379,15 @@ function SideNav({
 			</div>
 
 			<div className="secondary-nav-items">
-				<NavItem
+				{/* <NavItem
 					isCollapsed={collapsed}
 					key="keyboardShortcuts"
 					item={shortcutMenuItem}
 					isActive={false}
 					onClick={onClickShortcuts}
-				/>
+				/> */}
 
-				{licenseData && !isLicenseActive && (
+				{/* {licenseData && !isLicenseActive && (
 					<NavItem
 						isCollapsed={collapsed}
 						key="trySignozCloud"
@@ -395,9 +395,9 @@ function SideNav({
 						isActive={false}
 						onClick={onClickSignozCloud}
 					/>
-				)}
+				)} */}
 
-				{userManagementMenuItems.map(
+				{/* {userManagementMenuItems.map(
 					(item, index): JSX.Element => (
 						<NavItem
 							isCollapsed={collapsed}
@@ -409,7 +409,7 @@ function SideNav({
 							}}
 						/>
 					),
-				)}
+				)} */}
 
 				{inviteMembers && (
 					<NavItem

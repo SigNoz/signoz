@@ -64,25 +64,25 @@ export const trySignozCloudMenuItem: SidebarItem = {
 };
 
 const menuItems: SidebarItem[] = [
+	// {
+	// 	key: ROUTES.APPLICATION,
+	// 	label: 'Services',
+	// 	icon: <BarChart2 size={16} />,
+	// },
+	// {
+	// 	key: ROUTES.TRACE,
+	// 	label: 'Traces',
+	// 	icon: <DraftingCompass size={16} />,
+	// },
 	{
-		key: ROUTES.APPLICATION,
-		label: 'Services',
-		icon: <BarChart2 size={16} />,
-	},
-	{
-		key: ROUTES.TRACE,
-		label: 'Traces',
-		icon: <DraftingCompass size={16} />,
+		key: ROUTES.ALL_DASHBOARD,
+		label: 'Dashboards',
+		icon: <LayoutGrid size={16} />,
 	},
 	{
 		key: ROUTES.LOGS,
 		label: 'Logs',
 		icon: <ScrollText size={16} />,
-	},
-	{
-		key: ROUTES.ALL_DASHBOARD,
-		label: 'Dashboards',
-		icon: <LayoutGrid size={16} />,
 	},
 	{
 		key: ROUTES.LIST_ALL_ALERT,
@@ -94,21 +94,21 @@ const menuItems: SidebarItem[] = [
 		label: 'Exceptions',
 		icon: <BugIcon size={16} />,
 	},
-	{
-		key: ROUTES.SERVICE_MAP,
-		label: 'Service Map',
-		icon: <Route size={16} />,
-	},
+	// {
+	// 	key: ROUTES.SERVICE_MAP,
+	// 	label: 'Service Map',
+	// 	icon: <Route size={16} />,
+	// },
 	{
 		key: ROUTES.USAGE_EXPLORER,
 		label: 'Usage Explorer',
 		icon: <AreaChart size={16} />,
 	},
-	{
-		key: ROUTES.BILLING,
-		label: 'Billing',
-		icon: <Receipt size={16} />,
-	},
+	// {
+	// 	key: ROUTES.BILLING,
+	// 	label: 'Billing',
+	// 	icon: <Receipt size={16} />,
+	// },
 	{
 		key: ROUTES.SETTINGS,
 		label: 'Settings',

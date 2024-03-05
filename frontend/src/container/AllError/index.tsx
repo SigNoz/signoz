@@ -548,6 +548,7 @@ function AllErrors(): JSX.Element {
 				...searchParam,
 			})}`,
 		);
+		setChangeIssueStatusNum(changeIssueStatusNum + 1);
 	};
 
 	return (
