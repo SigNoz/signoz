@@ -554,13 +554,13 @@ function AllErrors(): JSX.Element {
 	return (
 		<>
 			{contextHolder}
-			<div style={{ marginBottom: 20 }}>
+			<div>
 				<Form name="search-form" layout="inline" labelCol={{ span: 8 }}>
-					<Form.Item label="type">
+					<Form.Item label="type" style={{ marginBottom: 10 }}>
 						<Form.Item name="exceptionType">
 							<Select
 								mode="tags"
-								style={{ width: 160 }}
+								style={{ width: 140 }}
 								allowClear
 								placeholder="Please select"
 								defaultValue={
@@ -573,10 +573,10 @@ function AllErrors(): JSX.Element {
 							/>
 						</Form.Item>
 					</Form.Item>
-					<Form.Item label="message">
+					<Form.Item label="message" style={{ marginBottom: 10 }}>
 						<Form.Item name="message">
 							<Input
-								style={{ width: 160 }}
+								style={{ width: 140 }}
 								placeholder="Please input"
 								allowClear
 								defaultValue={getUpdatedMessage}
@@ -584,10 +584,10 @@ function AllErrors(): JSX.Element {
 							/>
 						</Form.Item>
 					</Form.Item>
-					<Form.Item label="Application">
+					<Form.Item label="Application" style={{ marginBottom: 10 }}>
 						<Form.Item name="serviceName">
 							<Input
-								style={{ width: 160 }}
+								style={{ width: 140 }}
 								placeholder="Please input"
 								allowClear
 								defaultValue={getUpdatedServiceName}
@@ -595,11 +595,11 @@ function AllErrors(): JSX.Element {
 							/>
 						</Form.Item>
 					</Form.Item>
-					<Form.Item label="issueStatus">
+					<Form.Item label="issueStatus" style={{ marginBottom: 10 }}>
 						<Form.Item name="issueStatus">
 							<Select
 								mode="tags"
-								style={{ width: 160 }}
+								style={{ width: 140 }}
 								allowClear
 								placeholder="Please select"
 								defaultValue={
@@ -610,10 +610,26 @@ function AllErrors(): JSX.Element {
 							/>
 						</Form.Item>
 					</Form.Item>
-					<Form.Item label=" " colon={false}>
+					<Form.Item label=" " colon={false} style={{ marginBottom: 10 }}>
 						<Button type="primary" onClick={handleNewSearch}>
 							Search
 						</Button>
+					</Form.Item>
+					<Form.Item label=" " colon={false} style={{ marginBottom: 10 }}>
+						<div style={{ display: 'flex', alignItems: 'center' }}>
+							<span style={{ color: 'grey', fontSize: 14, marginRight: 10 }}>
+								totalCount:{' '}
+							</span>
+							<span
+								style={{
+									color: 'rgba(255, 255, 255, 0.85)',
+									fontSize: 22,
+									fontWeight: 400,
+								}}
+							>
+								{errorCountResponse.data?.payload || 0}
+							</span>
+						</div>
 					</Form.Item>
 				</Form>
 			</div>
