@@ -143,6 +143,17 @@ func NewReader(
 		os.Exit(1)
 	}
 
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster)
+}
+
+func NewReaderFromClickhouseConnection(
+	db driver.Conn,
+	options *Options,
+	localDB *sqlx.DB,
+	configFile string,
+	featureFlag interfaces.FeatureLookup,
+	cluster string,
+) *ClickHouseReader {
 	alertManager, err := am.New("")
 	if err != nil {
 		zap.S().Errorf("msg: failed to initialize alert manager: ", "/t error:", err)
