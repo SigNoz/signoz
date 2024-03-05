@@ -34,8 +34,9 @@ export const RawLogViewContainer = styled(Row)<{
 	${({ $isHightlightedLog, $isDarkMode }): string =>
 		$isHightlightedLog
 			? `background-color: ${
-					$isDarkMode ? Color.BG_SLATE_500 : Color.BG_VANILLA_400
-			  }`
+					$isDarkMode ? Color.BG_SLATE_500 : Color.BG_VANILLA_300
+			  };
+			  transition: background-color 2s ease-in;`
 			: ''}
 `;
 

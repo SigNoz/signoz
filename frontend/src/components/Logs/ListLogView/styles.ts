@@ -15,7 +15,7 @@ export const Container = styled(Card)<{
 		${({ $isActiveLog, $isDarkMode }): string =>
 			$isActiveLog
 				? `background-color: ${
-						$isDarkMode ? Color.BG_SLATE_500 : Color.BG_VANILLA_400
+						$isDarkMode ? Color.BG_SLATE_500 : Color.BG_VANILLA_300
 				  } !important`
 				: ''}
 	}
