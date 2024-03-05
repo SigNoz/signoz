@@ -23,6 +23,7 @@ const getSeverityType = (severityText: string): string => {
 		case SEVERITY_TEXT_TYPE.WARN2:
 		case SEVERITY_TEXT_TYPE.WARN3:
 		case SEVERITY_TEXT_TYPE.WARN4:
+		case SEVERITY_TEXT_TYPE.WARNING:
 			return SEVERITY_TEXT_TYPE.WARN;
 		case SEVERITY_TEXT_TYPE.ERROR:
 		case SEVERITY_TEXT_TYPE.ERROR2:
@@ -40,8 +41,8 @@ const getSeverityType = (severityText: string): string => {
 };
 
 export const getLogIndicatorType = (logData: ILog): string => {
-	if (logData.severityText) {
-		return getSeverityType(logData.severityText);
+	if (logData.severity_text) {
+		return getSeverityType(logData.severity_text);
 	}
 	return logData.attributes_string?.log_level || LogType.INFO;
 };

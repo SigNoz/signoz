@@ -39,10 +39,10 @@ describe('getLogIndicatorType', () => {
 			attributes_string: {},
 			attributesInt: {},
 			attributesFloat: {},
-			severity_text: '',
+			severity_text: 'FATAL',
 			severityText: '',
 		};
-		expect(getLogIndicatorType(log)).toBe('INFO');
+		expect(getLogIndicatorType(log)).toBe('FATAL');
 	});
 });
 
