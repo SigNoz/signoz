@@ -6,9 +6,12 @@ import './IntegrationDetailPage.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Typography } from 'antd';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
+import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
+import useTabVisibility from 'hooks/useTabFocus';
 import history from 'lib/history';
 import { defaultTo } from 'lodash-es';
 import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
+import { useEffect } from 'react';
 import { isCloudUser } from 'utils/app';
 
 import IntegrationDetailContent from './IntegrationDetailContent';
@@ -25,6 +28,8 @@ interface IntegrationDetailPageProps {
 
 function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 	const { selectedIntegration, setSelectedIntegration, activeDetailTab } = props;
+
+	const isVisible = useTabVisibility();
 
 	const handleContactSupport = (): void => {
 		if (isCloudUser()) {
@@ -44,8 +49,36 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 		integrationId: selectedIntegration,
 	});
 
+	const {
+		data: integrationStatus,
+		refetch: refetchStatus,
+	} = useGetIntegrationStatus({
+		integrationId: selectedIntegration,
+	});
+
 	const loading = isLoading || isFetching || isRefetching;
 	const integrationData = data?.data.data;
+
+	const connectionStatus = getConnectionStatesFromConnectionStatus(
+		integrationData?.installation,
+		defaultTo(
+			integrationStatus?.data.data.connection_status,
+			defaultTo(integrationData?.connection_status, { logs: null, metrics: null }),
+		),
+	);
+
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			if (isVisible) {
+				refetchStatus();
+			}
+		}, 1000);
+
+		return (): void => {
+			clearTimeout(timer);
+		};
+	}, [refetchStatus, isVisible]);
+
 	return (
 		<div className="integration-detail-content">
 			<Button
@@ -99,7 +132,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							title={defaultTo(integrationData?.title, '')}
 							description={defaultTo(integrationData?.description, '')}
 							icon={defaultTo(integrationData?.icon, '')}
-							connectionStatus={integrationData?.connection_status}
+							connectionState={connectionStatus}
 							refetchIntegrationDetails={refetch}
 						/>
 						<IntegrationDetailContent
@@ -107,9 +140,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							integrationData={integrationData}
 						/>
 
-						{getConnectionStatesFromConnectionStatus(
-							integrationData.connection_status,
-						) !== ConnectionStates.NotInstalled && (
+						{connectionStatus !== ConnectionStates.NotInstalled && (
 							<IntergrationsUninstallBar
 								integrationTitle={defaultTo(integrationData?.title, '')}
 								integrationId={selectedIntegration}

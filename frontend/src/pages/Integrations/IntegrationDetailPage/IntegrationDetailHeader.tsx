@@ -10,7 +10,6 @@ import { useState } from 'react';
 import { useMutation } from 'react-query';
 
 import TestConnection, { ConnectionStates } from './TestConnection';
-import { getConnectionStatesFromConnectionStatus } from './utils';
 
 interface IntegrationDetailHeaderProps {
 	id: string;
@@ -18,12 +17,7 @@ interface IntegrationDetailHeaderProps {
 	description: string;
 	icon: string;
 	refetchIntegrationDetails: () => void;
-	connectionStatus:
-		| {
-				last_received_ts: number;
-				last_received_from: string;
-		  }
-		| undefined;
+	connectionState: ConnectionStates;
 }
 function IntegrationDetailHeader(
 	props: IntegrationDetailHeaderProps,
@@ -33,15 +27,10 @@ function IntegrationDetailHeader(
 		title,
 		icon,
 		description,
-		connectionStatus,
+		connectionState,
 		refetchIntegrationDetails,
 	} = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
-
-	const [connectionState] = useState<ConnectionStates>(
-		(): ConnectionStates =>
-			getConnectionStatesFromConnectionStatus(connectionStatus),
-	);
 
 	const { notifications } = useNotifications();
 
