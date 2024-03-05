@@ -2456,16 +2456,6 @@ func (ah *APIHandler) GetIntegration(
 		return
 	}
 
-	// Add connection status details.
-	connectionStatus, apiErr := ah.calculateConnectionStatus(
-		r.Context(), integration.ConnectionTests,
-	)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to calculate integration connection status")
-		return
-	}
-	integration.ConnectionStatus = connectionStatus
-
 	ah.Respond(w, integration)
 }
 
@@ -2481,8 +2471,14 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 		return
 	}
 
+	lookbackSecondsStr := r.URL.Query().Get("lookback_seconds")
+	lookbackSeconds, err := strconv.ParseInt(lookbackSecondsStr, 10, 64)
+	if err != nil {
+		lookbackSeconds = 15 * 60
+	}
+
 	connectionStatus, apiErr := ah.calculateConnectionStatus(
-		r.Context(), connectionTests,
+		r.Context(), connectionTests, lookbackSeconds,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to calculate integration connection status")
@@ -2495,13 +2491,13 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 func (ah *APIHandler) calculateConnectionStatus(
 	ctx context.Context,
 	connectionTests *integrations.IntegrationConnectionTests,
+	lookbackSeconds int64,
 ) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
 	result := &integrations.IntegrationConnectionStatus{}
 
 	if connectionTests.Logs != nil {
 		qrParams := &v3.QueryRangeParamsV3{
-			// Look back up to 7 days for integration logs
-			Start: time.Now().UnixMilli() - (7 * 86400000),
+			Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
 			End:   time.Now().UnixMilli(),
 			CompositeQuery: &v3.CompositeQuery{
 				PanelType: v3.PanelTypeList,

@@ -44,12 +44,9 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 		availableIntegrations[0].Id, map[string]interface{}{},
 	)
 
-	testbed.mockLogQueryResponse([]model.SignozLog{})
 	ii := testbed.GetIntegrationDetailsFromQS(availableIntegrations[0].Id)
 	require.Equal(ii.Id, availableIntegrations[0].Id)
 	require.NotNil(ii.Installation)
-	require.NotNil(ii.ConnectionStatus)
-	require.Nil(ii.ConnectionStatus.Logs)
 
 	installedResp = testbed.GetInstalledIntegrationsFromQS()
 	installedIntegrations := installedResp.Integrations
@@ -61,19 +58,18 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 	require.Greater(len(availableIntegrations), 0)
 
 	// Integration connection status should get updated after signal data has been received.
+	testbed.mockLogQueryResponse([]model.SignozLog{})
+	connectionStatus := testbed.GetIntegrationConnectionStatus(ii.Id)
+	require.NotNil(connectionStatus)
+	require.Nil(connectionStatus.Logs)
+
 	testLog := makeTestSignozLog("test log body", map[string]interface{}{
 		"source": "nginx",
 	})
 	testbed.mockLogQueryResponse([]model.SignozLog{testLog})
-	connectionStatus := testbed.GetIntegrationConnectionStatus(ii.Id)
+	connectionStatus = testbed.GetIntegrationConnectionStatus(ii.Id)
 	require.NotNil(connectionStatus)
 	require.NotNil(connectionStatus.Logs)
-	require.Equal(connectionStatus.Logs.LastReceivedTsMillis, int64(testLog.Timestamp/1000000))
-
-	testbed.mockLogQueryResponse([]model.SignozLog{testLog})
-	ii = testbed.GetIntegrationDetailsFromQS(ii.Id)
-	require.NotNil(ii.ConnectionStatus)
-	require.NotNil(ii.ConnectionStatus.Logs)
 	require.Equal(connectionStatus.Logs.LastReceivedTsMillis, int64(testLog.Timestamp/1000000))
 
 	// Should be able to uninstall integration
@@ -82,7 +78,6 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 		availableIntegrations[0].Id,
 	)
 
-	testbed.mockLogQueryResponse([]model.SignozLog{})
 	ii = testbed.GetIntegrationDetailsFromQS(availableIntegrations[0].Id)
 	require.Equal(ii.Id, availableIntegrations[0].Id)
 	require.Nil(ii.Installation)
