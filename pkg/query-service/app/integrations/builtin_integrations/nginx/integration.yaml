@@ -38,7 +38,7 @@ assets:
             enabled: true
             name: Parse Body
             parse_to: attributes
-            pattern: %{IP:client.address} - %{USERNAME:enduser.id} \[%{HTTPDATE:time.local}\] "((%{WORD:http.method} %{DATA:http.path}(\?%{DATA:http.query})? %{WORD:network.protocol.name}/%{NOTSPACE:network.protocol.version})|%{DATA})" %{INT:http.response.status_code:int} %{INT:http.request.body.bytes:int} "%{NOTSPACE:http.referer}" "%{DATA:http.user.agent}" %{INT:http.request.bytes:int} %{NUMBER:http.request.time:float} \[%{DATA:proxy.upstream.name}?\] \[%{DATA:proxy.alternative.upstream.name}?\] ((%{IP:network.peer.address}:%{INT:network.peer.port:int})|%{DATA})? (%{INT:http.response.bytes:int}|-)? (%{NUMBER:http.response.time:float}|-)? (%{NUMBER:network.peer.status.code:int}|-)? %{NOTSPACE:request.id}
+            pattern: '%{IP:client.address} - %{USERNAME:enduser.id} \[%{HTTPDATE:time.local}\] "((%{WORD:http.method} %{DATA:http.path}(\?%{DATA:http.query})? %{WORD:network.protocol.name}/%{NOTSPACE:network.protocol.version})|%{DATA})" %{INT:http.response.status_code:int} %{INT:http.request.body.bytes:int} "%{NOTSPACE:http.referer}" "%{DATA:http.user.agent}" %{INT:http.request.bytes:int} %{NUMBER:http.request.time:float} \[%{DATA:proxy.upstream.name}?\] \[%{DATA:proxy.alternative.upstream.name}?\] ((%{IP:network.peer.address}:%{INT:network.peer.port:int})|%{DATA})? (%{INT:http.response.bytes:int}|-)? (%{NUMBER:http.response.time:float}|-)? (%{NUMBER:network.peer.status.code:int}|-)? %{NOTSPACE:request.id}'
             parse_from: body
           - type: severity_parser
             id: parse-sev
@@ -93,5 +93,5 @@ data_collected:
       description: Duration of HTTP server requests
     - name: http.server.active_requests
       type: UpDownCounter
-      unit: { request }
+      unit: "{ request }"
       description: Number of active HTTP server requests

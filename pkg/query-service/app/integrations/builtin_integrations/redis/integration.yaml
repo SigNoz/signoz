@@ -1,0 +1,77 @@
+id: redis
+title: Redis
+description: Monitor Redis using logs and connection and request metrics.
+author:
+  name: SigNoz
+  email: integrations@signoz.io
+  homepage: https://signoz.io
+icon: file://icon.svg
+catagories:
+  - Database
+  - Cache
+overview: file://overview.md
+configuration:
+  - title: Prepare redis
+    instructions: file://config/prepare-redis.md
+  - title: Configure Otel Collector
+    instructions: file://config/configure-otel-collector.md
+assets:
+  logs:
+    pipelines:
+      - id: parse-default-redis-log
+        name: Parse default redis log
+        alias: parse-default-redis-log
+        description: Parse standard redis log
+        filter:
+          op: AND
+          items:
+            - key:
+                type: tag
+                key: source
+                data_type: string
+              op: "="
+              value: redis
+        config:
+          - type: grok_parser
+            id: parse-body-grok
+            orderId: 1
+            enabled: true
+            name: Parse Body
+            parse_to: attributes
+            pattern: "%{GREEDYDATA}"
+            parse_from: body
+  dashboards:
+  alerts:
+connection_tests:
+  logs:
+    op: AND
+    items:
+      - key:
+          type: tag
+          key: source
+          data_type: string
+        op: "="
+        value: redis
+data_collected:
+  logs:
+    - name: Request Method
+      path: attributes["http.request.method"]
+      type: string
+      description: HTTP method
+    - name: Request Path
+      path: attributes["url.path"]
+      type: string
+      description: path requested
+    - name: Response Status Code
+      path: attributes["http.response.status_code"]
+      type: int
+      description: HTTP response code
+  metrics:
+    - name: http.server.request.duration
+      type: Histogram
+      unit: s
+      description: Duration of HTTP server requests
+    - name: http.server.active_requests
+      type: UpDownCounter
+      unit: "{ request }"
+      description: Number of active HTTP server requests
