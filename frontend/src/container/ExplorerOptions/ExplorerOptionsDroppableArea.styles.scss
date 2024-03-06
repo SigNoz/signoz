@@ -1,10 +1,12 @@
 .explorer-option-droppable-container {
     position: fixed;
 	bottom: 0;
-    width: 100%;
+    width: -webkit-fill-available;
     height: 24px;
     display: flex;
     justify-content: center;
+    border-top-left-radius: 50px;
+    border-top-right-radius: 50px; 
 
     .explorer-actions-btn {
         display: flex;
@@ -32,7 +34,7 @@
         align-self: center;
         padding: 8px 12px;
         height: 24px !important;
-        margin-right: calc(15% - 100px);
+        // margin-right:  calc(30% - 350px);
 
         .menu-bar {
             border-radius: 50px;
