@@ -102,12 +102,7 @@ type SearchParamType = {
 
 function AllErrors(): JSX.Element {
 	const [changeIssueStatusNum, setChangeIssueStatusNum] = useState<number>(0);
-	const [searchParam, setSearchParam] = useState<SearchParamType>({
-		exceptionType: [],
-		message: '',
-		serviceName: '',
-		issueStatus: [],
-	});
+
 	const [messageApi, contextHolder] = message.useMessage();
 	const { maxTime, minTime, loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -162,6 +157,17 @@ function AllErrors(): JSX.Element {
 			getUpdatedIssueStatus,
 		],
 	);
+
+	const [searchParam, setSearchParam] = useState<SearchParamType>({
+		exceptionType: getUpdatedExceptionType.length
+			? getUpdatedExceptionType.split(',')
+			: [],
+		message: getUpdatedMessage,
+		serviceName: getUpdatedServiceName,
+		issueStatus: getUpdatedIssueStatus.length
+			? getUpdatedIssueStatus.split(',')
+			: [],
+	});
 
 	const { queries } = useResourceAttribute();
 
@@ -540,6 +546,7 @@ function AllErrors(): JSX.Element {
 	};
 
 	const handleNewSearch = () => {
+		console.log('searchParam', searchParam);
 		history.replace(
 			`${pathname}?${createQueryParams({
 				order: updatedOrder,
