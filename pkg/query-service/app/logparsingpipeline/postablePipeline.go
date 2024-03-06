@@ -19,14 +19,14 @@ type PostablePipelines struct {
 // PostablePipeline captures user inputs in setting the pipeline
 
 type PostablePipeline struct {
-	Id          string             `json:"id" yaml:"id"`
-	OrderId     int                `json:"orderId" yaml:"order_id"`
-	Name        string             `json:"name" yaml:"name"`
-	Alias       string             `json:"alias" yaml:"alias"`
-	Description string             `json:"description" yaml:"description"`
-	Enabled     bool               `json:"enabled" yaml:"enabled"`
-	Filter      *v3.FilterSet      `json:"filter" yaml:"filter"`
-	Config      []PipelineOperator `json:"config" yaml:"config"`
+	Id          string             `json:"id"`
+	OrderId     int                `json:"orderId"`
+	Name        string             `json:"name"`
+	Alias       string             `json:"alias"`
+	Description string             `json:"description"`
+	Enabled     bool               `json:"enabled"`
+	Filter      *v3.FilterSet      `json:"filter"`
+	Config      []PipelineOperator `json:"config"`
 }
 
 // IsValid checks if postable pipeline has all the required params
