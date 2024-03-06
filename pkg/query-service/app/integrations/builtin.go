@@ -169,10 +169,17 @@ func readFileIfUri(maybeFileUri string, basedir string) (interface{}, error) {
 
 	fileContents, err := integrationFiles.ReadFile(fullPath)
 	if err != nil {
-		return "", fmt.Errorf("couldn't read freferenced file: %w", err)
+		return nil, fmt.Errorf("couldn't read referenced file: %w", err)
 	}
 	if strings.HasSuffix(maybeFileUri, ".md") {
 		return fileContents, nil
+
+	} else if strings.HasSuffix(maybeFileUri, ".json") {
+		parsed, err := koanfJson.Parser().Unmarshal(fileContents)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't parse referenced JSON file: %w", err)
+		}
+		return parsed, nil
 
 	} else if strings.HasSuffix(maybeFileUri, ".svg") {
 		base64Svg := base64.StdEncoding.EncodeToString(fileContents)
