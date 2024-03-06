@@ -203,6 +203,7 @@ function AllErrors(): JSX.Element {
 				getUpdatedExceptionType,
 				getUpdatedServiceName,
 				queries,
+				changeIssueStatusNum,
 			],
 			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
 				getErrorCounts({
@@ -548,6 +549,7 @@ function AllErrors(): JSX.Element {
 				...searchParam,
 			})}`,
 		);
+		console.log('newUrl', window.location.href);
 		setChangeIssueStatusNum(changeIssueStatusNum + 1);
 	};
 
@@ -627,7 +629,7 @@ function AllErrors(): JSX.Element {
 									fontWeight: 400,
 								}}
 							>
-								{errorCountResponse.data?.payload || 0}
+								{errorCountResponse.data?.payload || '-'}
 							</span>
 						</div>
 					</Form.Item>
