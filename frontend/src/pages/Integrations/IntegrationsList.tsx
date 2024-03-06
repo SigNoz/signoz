@@ -5,10 +5,11 @@ import './Integrations.styles.scss';
 import { Color } from '@signozhq/design-tokens';
 import { Button, List, Typography } from 'antd';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
-import history from 'lib/history';
 import { MoveUpRight, RotateCw } from 'lucide-react';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { isCloudUser } from 'utils/app';
+
+import { handleContactSupport } from './utils';
 
 interface IntegrationsListProps {
 	setSelectedIntegration: (id: string) => void;
@@ -39,14 +40,6 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 
 	const loading = isLoading || isFetching || isRefetching;
 
-	const handleContactSupport = (): void => {
-		if (isCloudUser()) {
-			history.push('/support');
-		} else {
-			window.open('https://signoz.io/slack', '_blank');
-		}
-	};
-
 	return (
 		<div className="integrations-list">
 			{!loading && isError && (
@@ -69,7 +62,10 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 							>
 								Retry
 							</Button>
-							<div className="contact-support" onClick={handleContactSupport}>
+							<div
+								className="contact-support"
+								onClick={(): void => handleContactSupport(isCloudUser())}
+							>
 								<Typography.Link className="text">Contact Support </Typography.Link>
 
 								<MoveUpRight size={14} color={Color.BG_ROBIN_400} />

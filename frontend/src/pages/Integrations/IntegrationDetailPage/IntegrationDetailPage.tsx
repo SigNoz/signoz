@@ -7,12 +7,12 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Typography } from 'antd';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
-import history from 'lib/history';
 import { defaultTo } from 'lodash-es';
 import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
 import { useEffect } from 'react';
 import { isCloudUser } from 'utils/app';
 
+import { handleContactSupport } from '../utils';
 import IntegrationDetailContent from './IntegrationDetailContent';
 import IntegrationDetailHeader from './IntegrationDetailHeader';
 import IntergrationsUninstallBar from './IntegrationsUninstallBar';
@@ -28,13 +28,6 @@ interface IntegrationDetailPageProps {
 function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 	const { selectedIntegration, setSelectedIntegration, activeDetailTab } = props;
 
-	const handleContactSupport = (): void => {
-		if (isCloudUser()) {
-			history.push('/support');
-		} else {
-			window.open('https://signoz.io/slack', '_blank');
-		}
-	};
 	const {
 		data,
 		isLoading,
@@ -104,7 +97,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							className="error-state-svg"
 						/>
 						<Typography.Text>
-							Something went wrong :/ Refresh the page or contact support.
+							Something went wrong :/ Please retry or contact support.
 						</Typography.Text>
 						<div className="error-btns">
 							<Button
@@ -115,7 +108,10 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							>
 								Retry
 							</Button>
-							<div className="contact-support" onClick={handleContactSupport}>
+							<div
+								className="contact-support"
+								onClick={(): void => handleContactSupport(isCloudUser())}
+							>
 								<Typography.Link className="text">Contact Support </Typography.Link>
 
 								<MoveUpRight size={14} color={Color.BG_ROBIN_400} />

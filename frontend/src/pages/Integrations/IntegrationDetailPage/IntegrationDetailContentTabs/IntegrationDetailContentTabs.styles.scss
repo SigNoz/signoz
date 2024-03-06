@@ -6,7 +6,7 @@
 		flex-direction: column;
 		width: 25%;
 		gap: 26px;
-		border-right: 1px solid #161922;
+		border-right: 1px solid var(--bg-slate-500);
 		padding: 16px 0;
 		color: var(--bg-vanilla-400);
 		font-family: Inter;
@@ -187,7 +187,7 @@
 		flex-direction: column;
 		width: 25%;
 		padding: 16px 16px 0px 0px;
-		border-right: 1px solid #161922;
+		border-right: 1px solid var(--bg-slate-500);
 		gap: 8px;
 
 		.configure-menu-item {
