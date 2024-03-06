@@ -65,6 +65,7 @@ export interface DashboardData {
 	title: string;
 	layout?: Layout[];
 	variables: Record<string, IDashboardVariable>;
+	version?: string;
 }
 
 export interface BaseAutocompleteDataWithId {

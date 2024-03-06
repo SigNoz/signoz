@@ -36,6 +36,11 @@ import { v4 as uuid } from 'uuid';
 import {
 	logsAggregateOperatorOptions,
 	metricAggregateOperatorOptions,
+	metricsGaugeAggregateOperatorOptions,
+	metricsGaugeSpaceAggregateOperatorOptions,
+	metricsHistogramSpaceAggregateOperatorOptions,
+	metricsSumAggregateOperatorOptions,
+	metricsSumSpaceAggregateOperatorOptions,
 	tracesAggregateOperatorOptions,
 } from './queryBuilderOperators';
 
@@ -72,6 +77,18 @@ export const mapOfOperators = {
 	metrics: metricAggregateOperatorOptions,
 	logs: logsAggregateOperatorOptions,
 	traces: tracesAggregateOperatorOptions,
+};
+
+export const metricsOperatorsByType = {
+	Sum: metricsSumAggregateOperatorOptions,
+	Gauge: metricsGaugeAggregateOperatorOptions,
+};
+
+export const metricsSpaceAggregationOperatorsByType = {
+	Sum: metricsSumSpaceAggregateOperatorOptions,
+	Gauge: metricsGaugeSpaceAggregateOperatorOptions,
+	Histogram: metricsHistogramSpaceAggregateOperatorOptions,
+	ExponentialHistogram: metricsHistogramSpaceAggregateOperatorOptions,
 };
 
 export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
@@ -148,6 +165,9 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	aggregateOperator: MetricAggregateOperator.COUNT,
 	aggregateAttribute: initialAutocompleteData,
+	timeAggregation: MetricAggregateOperator.RATE,
+	spaceAggregation: MetricAggregateOperator.SUM,
+	functions: [],
 	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({
 		existNames: [],
@@ -160,7 +180,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	orderBy: [],
 	groupBy: [],
 	legend: '',
-	reduceTo: 'sum',
+	reduceTo: 'avg',
 };
 
 const initialQueryBuilderFormLogsValues: IBuilderQuery = {
@@ -266,6 +286,14 @@ export enum PANEL_TYPES {
 	TRACE = 'trace',
 	BAR = 'bar',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum ATTRIBUTE_TYPES {
+	SUM = 'Sum',
+	GAUGE = 'Gauge',
+	HISTOGRAM = 'Histogram',
+	EXPONENTIAL_HISTOGRAM = 'ExponentialHistogram',
 }
 
 export type IQueryBuilderState = 'search';

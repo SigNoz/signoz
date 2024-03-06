@@ -28,5 +28,5 @@
 	"dashboard_unsave_changes": "There are unsaved changes in the Query builder, please stage and run the query or the changes will be lost. Press OK to discard.",
 	"dashboard_save_changes": "Your graph built with {{queryTag}} query will be saved. Press OK to confirm.",
 	"your_graph_build_with": "Your graph built with",
-	"dashboar_ok_confirm": "query will be saved. Press OK to confirm."
+	"dashboard_ok_confirm": "query will be saved. Press OK to confirm."
 }

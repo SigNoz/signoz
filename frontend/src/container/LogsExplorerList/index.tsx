@@ -16,7 +16,7 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
@@ -103,16 +103,6 @@ function LogsExplorerList({
 		],
 	);
 
-	useEffect(() => {
-		if (!activeLogId || activeLogIndex < 0) return;
-
-		ref?.current?.scrollToIndex({
-			index: activeLogIndex,
-			align: 'start',
-			behavior: 'smooth',
-		});
-	}, [activeLogId, activeLogIndex]);
-
 	const renderContent = useMemo(() => {
 		const components = isLoading
 			? {
@@ -130,6 +120,7 @@ function LogsExplorerList({
 						fields: selectedFields,
 						linesPerRow: options.maxLines,
 						appendTo: 'end',
+						activeLogIndex,
 					}}
 					infitiyTableProps={{ onEndReached }}
 				/>
@@ -143,6 +134,7 @@ function LogsExplorerList({
 			>
 				<Virtuoso
 					ref={ref}
+					initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
 					data={logs}
 					endReached={onEndReached}
 					totalCount={logs.length}
@@ -151,7 +143,16 @@ function LogsExplorerList({
 				/>
 			</Card>
 		);
-	}, [isLoading, options, logs, onEndReached, getItemContent, selectedFields]);
+	}, [
+		isLoading,
+		options.format,
+		options.maxLines,
+		activeLogIndex,
+		logs,
+		onEndReached,
+		getItemContent,
+		selectedFields,
+	]);
 
 	return (
 		<div className="logs-list-view-container">

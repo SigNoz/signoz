@@ -4,6 +4,7 @@ import { Table } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import Controls from 'container/Controls';
@@ -129,6 +130,7 @@ function LogsPanelComponent({
 			selectedTime: selectedTime?.enum || 'GLOBAL_TIME',
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		},
+		DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,

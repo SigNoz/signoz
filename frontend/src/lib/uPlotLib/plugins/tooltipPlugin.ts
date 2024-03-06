@@ -18,6 +18,7 @@ interface UplotTooltipDataProps {
 	value: number;
 	tooltipValue: string;
 	textContent: string;
+	queryName: string;
 }
 
 const generateTooltipContent = (
@@ -35,6 +36,7 @@ const generateTooltipContent = (
 
 	let tooltipTitle = '';
 	const formattedData: Record<string, UplotTooltipDataProps> = {};
+	const duplicatedLegendLabels: Record<string, true> = {};
 
 	function sortTooltipContentBasedOnValue(
 		tooltipDataObj: Record<string, UplotTooltipDataProps>,
@@ -57,8 +59,29 @@ const generateTooltipContent = (
 
 				const color = generateColor(label, themeColors.chartcolors);
 
+				let tooltipItemLabel = label;
+
 				if (Number.isFinite(value)) {
 					const tooltipValue = getToolTipValue(value, yAxisUnit);
+					if (
+						duplicatedLegendLabels[label] ||
+						Object.prototype.hasOwnProperty.call(formattedData, label)
+					) {
+						duplicatedLegendLabels[label] = true;
+						const tempDataObj = formattedData[label];
+
+						if (tempDataObj) {
+							const newLabel = `${tempDataObj.queryName}: ${tempDataObj.label}`;
+
+							tempDataObj.textContent = `${newLabel} : ${tempDataObj.tooltipValue}`;
+
+							formattedData[newLabel] = tempDataObj;
+
+							delete formattedData[label];
+						}
+
+						tooltipItemLabel = `${queryName}: ${label}`;
+					}
 
 					const dataObj = {
 						show: item.show || false,
@@ -69,11 +92,13 @@ const generateTooltipContent = (
 						focus: item?._focus || false,
 						value,
 						tooltipValue,
-						textContent: `${label} : ${tooltipValue}`,
+						queryName,
+						textContent: `${tooltipItemLabel} : ${tooltipValue}`,
 					};
 
 					tooltipCount += 1;
-					formattedData[label] = dataObj;
+
+					formattedData[tooltipItemLabel] = dataObj;
 				}
 			}
 		});

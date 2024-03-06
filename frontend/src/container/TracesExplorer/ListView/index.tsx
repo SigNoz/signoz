@@ -1,4 +1,5 @@
 import { ResizeTable } from 'components/ResizeTable';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -62,6 +63,7 @@ function ListView(): JSX.Element {
 				selectColumns: options?.selectColumns,
 			},
 		},
+		DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,

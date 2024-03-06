@@ -30,6 +30,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 function TracesTableComponent({
 	selectedTracesFields,
 	query,
+	version,
 	selectedTime,
 }: TracesTableComponentProps): JSX.Element {
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
@@ -59,6 +60,7 @@ function TracesTableComponent({
 			},
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		},
+		version,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -160,6 +162,7 @@ function TracesTableComponent({
 export type TracesTableComponentProps = {
 	selectedTracesFields: Widgets['selectedTracesFields'];
 	query: Query;
+	version: string;
 	selectedTime?: timePreferance;
 };
 

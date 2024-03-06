@@ -1,18 +1,24 @@
+import { Color } from '@signozhq/design-tokens';
 import { Card, Typography } from 'antd';
 import styled from 'styled-components';
-import { getActiveLogBackground } from 'utils/logs';
 
 export const Container = styled(Card)<{
 	$isActiveLog: boolean;
+	$isDarkMode: boolean;
 }>`
 	width: 100% !important;
 	margin-bottom: 0.3rem;
 	cursor: pointer;
 	.ant-card-body {
 		padding: 0.3rem 0.6rem;
-	}
 
-	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
+		${({ $isActiveLog, $isDarkMode }): string =>
+			$isActiveLog
+				? `background-color: ${
+						$isDarkMode ? Color.BG_SLATE_500 : Color.BG_VANILLA_300
+				  } !important`
+				: ''}
+	}
 `;
 
 export const Text = styled(Typography.Text)`

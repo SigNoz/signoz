@@ -1,5 +1,6 @@
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
@@ -37,7 +38,8 @@ function WidgetGraphContainer({
 			graphType: getGraphType(selectedGraph),
 			selectedTime: selectedTime.enum,
 		},
-		{
+		selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
+    {
 			enabled: selectedGraph !== PANEL_TYPES.LIST,
 		},
 	);

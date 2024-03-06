@@ -2,12 +2,10 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { CSSProperties } from 'react';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
@@ -20,8 +18,6 @@ import menuItems from './menuItems';
 import { Card, Container, Text } from './styles';
 
 function DashboardGraphSlider(): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-
 	const {
 		handleToggleDashboardSlider,
 		layouts,
@@ -47,6 +43,7 @@ function DashboardGraphSlider(): JSX.Element {
 					description: data?.description || '',
 					name: data?.name || '',
 					tags: data?.tags || [],
+					version: data?.version || 'v3',
 					layout: [
 						{
 							i: id,
@@ -148,13 +145,11 @@ function DashboardGraphSlider(): JSX.Element {
 		);
 	};
 
-	const fillColor: CSSProperties['color'] = isDarkMode ? 'white' : 'black';
-
 	return (
 		<Container>
-			{menuItems.map(({ name, Icon, display }) => (
+			{menuItems.map(({ name, icon, display }) => (
 				<Card onClick={onClickHandler(name)} id={name} key={name}>
-					<Icon fillColor={fillColor} />
+					{icon}
 					<Text>{display}</Text>
 				</Card>
 			))}

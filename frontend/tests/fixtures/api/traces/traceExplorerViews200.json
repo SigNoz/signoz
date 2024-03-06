@@ -40,7 +40,7 @@
 								"order": "desc"
 							}
 						],
-						"reduceTo": "sum"
+						"reduceTo": "avg"
 					}
 				},
 				"panelType": "table",
