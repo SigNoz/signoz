@@ -1,7 +1,11 @@
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import ExplorerOptions, { ExplorerOptionsProps } from './ExplorerOptions';
+import {
+	getExplorerToolBarVisibility,
+	setExplorerToolBarVisibility,
+} from './utils';
 
 type ExplorerOptionsWrapperProps = Omit<
 	ExplorerOptionsProps,
@@ -15,7 +19,13 @@ function ExplorerOptionWrapper({
 	onExport,
 	sourcepage,
 }: ExplorerOptionsWrapperProps): JSX.Element {
-	const [isExplorerOptionDrop, setIsExplorerOptionDrop] = useState(false);
+	const [isExplorerOptionHidden, setIsExplorerOptionHidden] = useState(false);
+
+	useEffect(() => {
+		const toolbarVisibility = getExplorerToolBarVisibility(sourcepage);
+		setIsExplorerOptionHidden(!toolbarVisibility);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const handleDragEnd = (event: DragEndEvent): void => {
 		const { active, over } = event;
@@ -24,7 +34,8 @@ function ExplorerOptionWrapper({
 			active.id === 'explorer-options-draggable' &&
 			over.id === 'explorer-options-droppable'
 		) {
-			setIsExplorerOptionDrop(true);
+			setIsExplorerOptionHidden(true);
+			setExplorerToolBarVisibility(false, sourcepage);
 		}
 	};
 	return (
@@ -35,8 +46,8 @@ function ExplorerOptionWrapper({
 				isLoading={isLoading}
 				onExport={onExport}
 				sourcepage={sourcepage}
-				isExplorerOptionDrop={isExplorerOptionDrop}
-				setIsExplorerOptionDrop={setIsExplorerOptionDrop}
+				isExplorerOptionHidden={isExplorerOptionHidden}
+				setIsExplorerOptionHidden={setIsExplorerOptionHidden}
 			/>
 		</DndContext>
 	);

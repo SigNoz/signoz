@@ -7,19 +7,24 @@ import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Disc3, X } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
+import { DataSource } from 'types/common/queryBuilder';
+
+import { setExplorerToolBarVisibility } from './utils';
 
 interface DroppableAreaProps {
 	isQueryUpdated: boolean;
-	isExplorerOptionDrop?: boolean;
-	setIsExplorerOptionDrop?: Dispatch<SetStateAction<boolean>>;
+	isExplorerOptionHidden?: boolean;
+	sourcepage: DataSource;
+	setIsExplorerOptionHidden?: Dispatch<SetStateAction<boolean>>;
 	handleClearSelect: () => void;
 	onUpdateQueryHandler: () => void;
 }
 
 function ExplorerOptionsDroppableArea({
 	isQueryUpdated,
-	isExplorerOptionDrop,
-	setIsExplorerOptionDrop,
+	isExplorerOptionHidden,
+	sourcepage,
+	setIsExplorerOptionHidden,
 	handleClearSelect,
 	onUpdateQueryHandler,
 }: DroppableAreaProps): JSX.Element {
@@ -39,8 +44,9 @@ function ExplorerOptionsDroppableArea({
 	};
 
 	const handleShowExplorerOption = (): void => {
-		if (setIsExplorerOptionDrop) {
-			setIsExplorerOptionDrop(false);
+		if (setIsExplorerOptionHidden) {
+			setIsExplorerOptionHidden(false);
+			setExplorerToolBarVisibility(true, sourcepage);
 		}
 	};
 
@@ -52,7 +58,7 @@ function ExplorerOptionsDroppableArea({
 				...style,
 			}}
 		>
-			{isExplorerOptionDrop && (
+			{isExplorerOptionHidden && (
 				<>
 					{isQueryUpdated && (
 						<div className="explorer-actions-btn">
@@ -84,8 +90,8 @@ function ExplorerOptionsDroppableArea({
 }
 
 ExplorerOptionsDroppableArea.defaultProps = {
-	isExplorerOptionDrop: undefined,
-	setIsExplorerOptionDrop: undefined,
+	isExplorerOptionHidden: undefined,
+	setIsExplorerOptionHidden: undefined,
 };
 
 export default ExplorerOptionsDroppableArea;

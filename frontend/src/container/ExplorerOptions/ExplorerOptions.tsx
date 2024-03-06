@@ -68,8 +68,8 @@ function ExplorerOptions({
 	onExport,
 	query,
 	sourcepage,
-	isExplorerOptionDrop = false,
-	setIsExplorerOptionDrop,
+	isExplorerOptionHidden = false,
+	setIsExplorerOptionHidden,
 }: ExplorerOptionsProps): JSX.Element {
 	const [isExport, setIsExport] = useState<boolean>(false);
 	const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -288,7 +288,7 @@ function ExplorerOptions({
 		? {
 				transform: `translate3d(${transform.x - 338}px, ${transform.y}px, 0)`,
 				width: `${400 - transform.y * 6}px`,
-				maxWidth: '436px', // initial width of the explorer options
+				maxWidth: '440px', // initial width of the explorer options
 				overflow: 'hidden',
 		  }
 		: undefined;
@@ -323,7 +323,7 @@ function ExplorerOptions({
 					</Tooltip>
 				</div>
 			)}
-			{!isExplorerOptionDrop && (
+			{!isExplorerOptionHidden && (
 				<div
 					className="explorer-options"
 					style={{
@@ -415,8 +415,9 @@ function ExplorerOptions({
 			)}
 
 			<ExplorerOptionsDroppableArea
-				isExplorerOptionDrop={isExplorerOptionDrop}
-				setIsExplorerOptionDrop={setIsExplorerOptionDrop}
+				isExplorerOptionHidden={isExplorerOptionHidden}
+				setIsExplorerOptionHidden={setIsExplorerOptionHidden}
+				sourcepage={sourcepage}
 				isQueryUpdated={isQueryUpdated}
 				handleClearSelect={handleClearSelect}
 				onUpdateQueryHandler={onUpdateQueryHandler}
@@ -478,14 +479,14 @@ export interface ExplorerOptionsProps {
 	query: Query | null;
 	disabled: boolean;
 	sourcepage: DataSource;
-	isExplorerOptionDrop?: boolean;
-	setIsExplorerOptionDrop?: Dispatch<SetStateAction<boolean>>;
+	isExplorerOptionHidden?: boolean;
+	setIsExplorerOptionHidden?: Dispatch<SetStateAction<boolean>>;
 }
 
 ExplorerOptions.defaultProps = {
 	isLoading: false,
-	isExplorerOptionDrop: false,
-	setIsExplorerOptionDrop: undefined,
+	isExplorerOptionHidden: false,
+	setIsExplorerOptionHidden: undefined,
 };
 
 export default ExplorerOptions;
