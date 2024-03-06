@@ -35,9 +35,10 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { defaultTo, isEmpty } from 'lodash-es';
-import { Sliders } from 'lucide-react';
+import { FullscreenIcon, Sliders } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -523,6 +524,8 @@ function LogsExplorerViews({
 		},
 	});
 
+	const handle = useFullScreenHandle();
+
 	return (
 		<div className="logs-explorer-views-container">
 			{showHistogram && (
@@ -533,104 +536,111 @@ function LogsExplorerViews({
 				/>
 			)}
 
-			<div className="logs-explorer-views-types">
-				<div className="views-tabs-container">
-					<Button.Group className="views-tabs">
-						<Button
-							value={PANEL_TYPES.LIST}
-							className={
-								// eslint-disable-next-line sonarjs/no-duplicate-string
-								selectedPanelType === PANEL_TYPES.LIST ? 'selected_view tab' : 'tab'
-							}
-							disabled={
-								(isMultipleQueries || isGroupByExist) && selectedView !== 'search'
-							}
-							onClick={(): void => handleModeChange(PANEL_TYPES.LIST)}
-							data-testid="logs-list-view"
-						>
-							List view
-						</Button>
-						<Button
-							value={PANEL_TYPES.TIME_SERIES}
-							className={
-								// eslint-disable-next-line sonarjs/no-duplicate-string
-								selectedPanelType === PANEL_TYPES.TIME_SERIES
-									? 'selected_view tab'
-									: 'tab'
-							}
-							onClick={(): void => handleModeChange(PANEL_TYPES.TIME_SERIES)}
-							data-testid="time-series-view"
-						>
-							Time series
-						</Button>
-						<Button
-							value={PANEL_TYPES.TABLE}
-							className={
-								// eslint-disable-next-line sonarjs/no-duplicate-string
-								selectedPanelType === PANEL_TYPES.TABLE ? 'selected_view tab' : 'tab'
-							}
-							onClick={(): void => handleModeChange(PANEL_TYPES.TABLE)}
-							data-testid="table-view"
-						>
-							Table
-						</Button>
-					</Button.Group>
-					<div className="logs-actions-container">
-						{selectedPanelType === PANEL_TYPES.LIST && (
-							<div className="tab-options">
-								<div className="format-options-container" ref={menuRef}>
-									<Button
-										className="periscope-btn"
-										onClick={handleToggleShowFormatOptions}
-										icon={<Sliders size={14} />}
-									/>
-
-									{showFormatMenuItems && (
-										<LogsFormatOptionsMenu
-											title="FORMAT"
-											items={formatItems}
-											selectedOptionFormat={options.format}
-											config={config}
+			<FullScreen handle={handle}>
+				<div className="logs-explorer-views-types">
+					<div className="views-tabs-container">
+						<Button.Group className="views-tabs">
+							<Button
+								value={PANEL_TYPES.LIST}
+								className={
+									// eslint-disable-next-line sonarjs/no-duplicate-string
+									selectedPanelType === PANEL_TYPES.LIST ? 'selected_view tab' : 'tab'
+								}
+								disabled={
+									(isMultipleQueries || isGroupByExist) && selectedView !== 'search'
+								}
+								onClick={(): void => handleModeChange(PANEL_TYPES.LIST)}
+								data-testid="logs-list-view"
+							>
+								List view
+							</Button>
+							<Button
+								value={PANEL_TYPES.TIME_SERIES}
+								className={
+									// eslint-disable-next-line sonarjs/no-duplicate-string
+									selectedPanelType === PANEL_TYPES.TIME_SERIES
+										? 'selected_view tab'
+										: 'tab'
+								}
+								onClick={(): void => handleModeChange(PANEL_TYPES.TIME_SERIES)}
+								data-testid="time-series-view"
+							>
+								Time series
+							</Button>
+							<Button
+								value={PANEL_TYPES.TABLE}
+								className={
+									// eslint-disable-next-line sonarjs/no-duplicate-string
+									selectedPanelType === PANEL_TYPES.TABLE ? 'selected_view tab' : 'tab'
+								}
+								onClick={(): void => handleModeChange(PANEL_TYPES.TABLE)}
+								data-testid="table-view"
+							>
+								Table
+							</Button>
+						</Button.Group>
+						<div className="logs-actions-container">
+							<Button
+								className="periscope-btn"
+								onClick={handle.enter}
+								icon={<FullscreenIcon size={16} />}
+							/>
+							{selectedPanelType === PANEL_TYPES.LIST && (
+								<div className="tab-options">
+									<div className="format-options-container" ref={menuRef}>
+										<Button
+											className="periscope-btn"
+											onClick={handleToggleShowFormatOptions}
+											icon={<Sliders size={14} />}
 										/>
-									)}
+
+										{showFormatMenuItems && (
+											<LogsFormatOptionsMenu
+												title="FORMAT"
+												items={formatItems}
+												selectedOptionFormat={options.format}
+												config={config}
+											/>
+										)}
+									</div>
 								</div>
-							</div>
+							)}
+						</div>
+					</div>
+
+					<div className="logs-explorer-views-type-content">
+						{selectedPanelType === PANEL_TYPES.LIST && (
+							<LogsExplorerList
+								isLoading={isLoading}
+								isFetching={isFetching}
+								currentStagedQueryData={listQuery}
+								logs={logs}
+								onEndReached={handleEndReached}
+								isError={isError}
+								isFilterApplied={!isEmpty(listQuery?.filters.items)}
+							/>
+						)}
+
+						{selectedPanelType === PANEL_TYPES.TIME_SERIES && (
+							<TimeSeriesView
+								isLoading={isLoading || isFetching}
+								data={data}
+								isError={isError}
+								isFilterApplied={!isEmpty(listQuery?.filters.items)}
+								dataSource={DataSource.LOGS}
+							/>
+						)}
+
+						{selectedPanelType === PANEL_TYPES.TABLE && (
+							<LogsExplorerTable
+								data={data?.payload.data.newResult.data.result || []}
+								isLoading={isLoading || isFetching}
+								isError={isError}
+							/>
 						)}
 					</div>
 				</div>
-
-				<div className="logs-explorer-views-type-content">
-					{selectedPanelType === PANEL_TYPES.LIST && (
-						<LogsExplorerList
-							isLoading={isLoading}
-							isFetching={isFetching}
-							currentStagedQueryData={listQuery}
-							logs={logs}
-							onEndReached={handleEndReached}
-							isError={isError}
-							isFilterApplied={!isEmpty(listQuery?.filters.items)}
-						/>
-					)}
-
-					{selectedPanelType === PANEL_TYPES.TIME_SERIES && (
-						<TimeSeriesView
-							isLoading={isLoading || isFetching}
-							data={data}
-							isError={isError}
-							isFilterApplied={!isEmpty(listQuery?.filters.items)}
-							dataSource={DataSource.LOGS}
-						/>
-					)}
-
-					{selectedPanelType === PANEL_TYPES.TABLE && (
-						<LogsExplorerTable
-							data={data?.payload.data.newResult.data.result || []}
-							isLoading={isLoading || isFetching}
-							isError={isError}
-						/>
-					)}
-				</div>
-			</div>
+			</FullScreen>
 
 			<GoToTop />
 
