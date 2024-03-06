@@ -27,7 +27,6 @@ export function getConnectionStatesFromConnectionStatus(
 			| undefined;
 	},
 ): ConnectionStates {
-	console.log(installation, connection_status);
 	if (isNull(installation) || isUndefined(installation)) {
 		return ConnectionStates.NotInstalled;
 	}

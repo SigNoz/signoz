@@ -8,6 +8,7 @@ import {
 
 export const useGetIntegrationStatus = ({
 	integrationId,
+	enabled,
 }: GetIntegrationPayloadProps): UseQueryResult<
 	AxiosResponse<GetIntegrationStatusProps>,
 	AxiosError
@@ -15,4 +16,5 @@ export const useGetIntegrationStatus = ({
 	useQuery<AxiosResponse<GetIntegrationStatusProps>, AxiosError>({
 		queryKey: ['Integration', integrationId, Date.now()],
 		queryFn: () => getIntegrationStatus({ integrationId }),
+		enabled,
 	});

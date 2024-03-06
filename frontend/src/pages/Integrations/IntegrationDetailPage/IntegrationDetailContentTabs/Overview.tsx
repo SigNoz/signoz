@@ -1,6 +1,7 @@
 import './IntegrationDetailContentTabs.styles.scss';
 
 import { Typography } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
 interface OverviewProps {
 	categories: string[];
@@ -15,7 +16,6 @@ interface OverviewProps {
 }
 
 function Overview(props: OverviewProps): JSX.Element {
-	// TODO: Add markdown content for overview instructions
 	const { categories, assets, overviewContent } = props;
 	const assetsCount = [
 		assets.logs.pipelines.length,
@@ -54,7 +54,7 @@ function Overview(props: OverviewProps): JSX.Element {
 				</div>
 			</div>
 			<div className="integration-detail-overview-right-container">
-				{overviewContent}
+				<MarkdownRenderer variables={{}} markdownContent={overviewContent} />
 			</div>
 		</div>
 	);

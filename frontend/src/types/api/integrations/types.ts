@@ -84,6 +84,7 @@ export interface GetIntegrationStatusProps {
 
 export interface GetIntegrationPayloadProps {
 	integrationId: string;
+	enabled?: boolean;
 }
 
 export interface InstallIntegrationKeyProps {

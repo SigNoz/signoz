@@ -59,7 +59,7 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 						index % 2 === 0 ? 'table-row-dark' : ''
 					}
 					dataSource={logsData}
-					pagination={false}
+					pagination={{ pageSize: 3 }}
 					className="logs-section-table"
 				/>
 			</div>
@@ -74,7 +74,7 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 						index % 2 === 0 ? 'table-row-dark' : ''
 					}
 					dataSource={metricsData}
-					pagination={{ pageSize: 5 }}
+					pagination={{ pageSize: 3 }}
 					className="metrics-section-table"
 				/>
 			</div>

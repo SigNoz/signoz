@@ -7,7 +7,6 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Typography } from 'antd';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
-import useTabVisibility from 'hooks/useTabFocus';
 import history from 'lib/history';
 import { defaultTo } from 'lodash-es';
 import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
@@ -28,8 +27,6 @@ interface IntegrationDetailPageProps {
 
 function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 	const { selectedIntegration, setSelectedIntegration, activeDetailTab } = props;
-
-	const isVisible = useTabVisibility();
 
 	const handleContactSupport = (): void => {
 		if (isCloudUser()) {
@@ -52,11 +49,13 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 	const {
 		data: integrationStatus,
 		refetch: refetchStatus,
+		isLoading: isStatusLoading,
 	} = useGetIntegrationStatus({
 		integrationId: selectedIntegration,
+		enabled: false,
 	});
 
-	const loading = isLoading || isFetching || isRefetching;
+	const loading = isLoading || isFetching || isRefetching || isStatusLoading;
 	const integrationData = data?.data.data;
 
 	const connectionStatus = getConnectionStatesFromConnectionStatus(
@@ -68,16 +67,16 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 	);
 
 	useEffect(() => {
-		const timer = setTimeout(() => {
-			if (isVisible) {
-				refetchStatus();
-			}
-		}, 1000);
+		// we should once get data on load and then keep polling every 5 seconds
+		refetchStatus();
+		const timer = setInterval(() => {
+			refetchStatus();
+		}, 5000);
 
 		return (): void => {
-			clearTimeout(timer);
+			clearInterval(timer);
 		};
-	}, [refetchStatus, isVisible]);
+	}, [refetchStatus]);
 
 	return (
 		<div className="integration-detail-content">

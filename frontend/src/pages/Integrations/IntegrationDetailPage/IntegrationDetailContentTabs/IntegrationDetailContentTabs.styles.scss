@@ -67,6 +67,8 @@
 	.integration-detail-overview-right-container {
 		width: 75%;
 		padding: 16px 0 0 16px;
+		max-height: 600px;
+		overflow-y: auto;
 	}
 }
 
@@ -186,5 +188,7 @@
 	.markdown-container {
 		width: 75%;
 		padding: 16px 0px 0px 16px;
+		max-height: 600px;
+		overflow-y: auto;
 	}
 }
