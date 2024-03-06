@@ -1,7 +1,7 @@
 {
-  "id": "redis",
-  "title": "Redis",
-  "description": "Monitor redis using logs and connection and request metrics.",
+  "id": "postgres",
+  "title": "PostgreSQL",
+  "description": "Monitor postgres using logs and connection and request metrics.",
   "author": {
     "name": "SigNoz",
     "email": "integrations@signoz.io",
@@ -44,7 +44,7 @@
             "data_type": "string"
           },
           "op": "=",
-          "value": "redis"
+          "value": "postgres"
         }
       ]
     }

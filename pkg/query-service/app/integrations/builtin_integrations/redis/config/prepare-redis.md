@@ -1,1 +1,0 @@
-# Prepare redis for monitoring
