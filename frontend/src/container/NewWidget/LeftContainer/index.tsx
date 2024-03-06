@@ -23,7 +23,6 @@ function LeftContainer({
 }: WidgetGraphProps): JSX.Element {
 	return (
 		<>
-			{/* {selectedGraph !== PANEL_TYPES.LIST && ( */}
 			<WidgetGraph
 				thresholds={thresholds}
 				selectedTime={selectedTime}
@@ -35,8 +34,6 @@ function LeftContainer({
 				selectedLogFields={selectedLogFields}
 				selectedTracesFields={selectedTracesFields}
 			/>
-			{/* )} */}
-			{/* {selectedGraph === PANEL_TYPES.LIST && <WidgetListView />} */}
 			<QueryContainer>
 				<QuerySection selectedTime={selectedTime} selectedGraph={selectedGraph} />
 				{selectedGraph === PANEL_TYPES.LIST && (
