@@ -4,10 +4,12 @@ import './IntegrationDetailPage.styles.scss';
 import { Button, Modal, Typography } from 'antd';
 import installIntegration from 'api/Integrations/installIntegration';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowLeftRight, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useMutation } from 'react-query';
+import { IntegrationStatusProps } from 'types/api/integrations/types';
 
 import TestConnection, { ConnectionStates } from './TestConnection';
 
@@ -18,6 +20,7 @@ interface IntegrationDetailHeaderProps {
 	icon: string;
 	refetchIntegrationDetails: () => void;
 	connectionState: ConnectionStates;
+	connectionData: IntegrationStatusProps['connection_status'];
 }
 function IntegrationDetailHeader(
 	props: IntegrationDetailHeaderProps,
@@ -28,6 +31,7 @@ function IntegrationDetailHeader(
 		icon,
 		description,
 		connectionState,
+		connectionData,
 		refetchIntegrationDetails,
 	} = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,6 +64,43 @@ function IntegrationDetailHeader(
 		},
 	);
 
+	let latestData: {
+		last_received_ts_ms: number | null;
+		last_received_from: string | null;
+	} = {
+		last_received_ts_ms: null,
+		last_received_from: null,
+	};
+
+	if (
+		connectionData.logs?.last_received_ts_ms &&
+		connectionData.metrics?.last_received_ts_ms
+	) {
+		if (
+			connectionData.logs.last_received_ts_ms >
+			connectionData.metrics.last_received_ts_ms
+		) {
+			latestData = {
+				last_received_ts_ms: connectionData.logs.last_received_ts_ms,
+				last_received_from: connectionData.logs.last_received_from,
+			};
+		} else {
+			latestData = {
+				last_received_ts_ms: connectionData.metrics.last_received_ts_ms,
+				last_received_from: connectionData.metrics.last_received_from,
+			};
+		}
+	} else if (connectionData.logs?.last_received_ts_ms) {
+		latestData = {
+			last_received_ts_ms: connectionData.logs.last_received_ts_ms,
+			last_received_from: connectionData.logs.last_received_from,
+		};
+	} else if (connectionData.metrics?.last_received_ts_ms) {
+		latestData = {
+			last_received_ts_ms: connectionData.metrics.last_received_ts_ms,
+			last_received_from: connectionData.metrics.last_received_from,
+		};
+	}
 	return (
 		<div className="integration-connection-header">
 			<div className="integration-detail-header" key={id}>
@@ -114,7 +155,7 @@ function IntegrationDetailHeader(
 									Last recieved from
 								</Typography.Text>
 								<Typography.Text className="last-value">
-									redis.service.alert
+									{latestData.last_received_from}
 								</Typography.Text>
 							</div>
 							<div className="data-info">
@@ -122,7 +163,9 @@ function IntegrationDetailHeader(
 									Last recieved at
 								</Typography.Text>
 								<Typography.Text className="last-value">
-									27.02.2024⎯10:30:23
+									{latestData.last_received_ts_ms
+										? dayjs(latestData.last_received_ts_ms).format('DD MMM YYYY HH:mm')
+										: ''}
 								</Typography.Text>
 							</div>
 						</>

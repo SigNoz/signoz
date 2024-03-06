@@ -128,6 +128,10 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							description={defaultTo(integrationData?.description, '')}
 							icon={defaultTo(integrationData?.icon, '')}
 							connectionState={connectionStatus}
+							connectionData={defaultTo(
+								integrationStatus?.data.data.connection_status,
+								{ logs: null, metrics: null },
+							)}
 							refetchIntegrationDetails={refetch}
 						/>
 						<IntegrationDetailContent

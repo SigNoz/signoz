@@ -33,11 +33,11 @@ export interface IntegrationDetailedProps {
 	icon: string;
 	connection_status: {
 		logs: {
-			last_received_ts: number;
+			last_received_ts_ms: number;
 			last_received_from: string;
 		} | null;
 		metrics: {
-			last_received_ts: number;
+			last_received_ts_ms: number;
 			last_received_from: string;
 		} | null;
 	};
@@ -68,11 +68,11 @@ export interface GetIntegrationProps {
 export interface IntegrationStatusProps {
 	connection_status: {
 		logs: {
-			last_received_ts: number;
+			last_received_ts_ms: number;
 			last_received_from: string;
 		} | null;
 		metrics: {
-			last_received_ts: number;
+			last_received_ts_ms: number;
 			last_received_from: string;
 		} | null;
 	};

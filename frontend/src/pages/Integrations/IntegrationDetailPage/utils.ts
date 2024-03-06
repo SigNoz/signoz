@@ -13,14 +13,14 @@ export function getConnectionStatesFromConnectionStatus(
 	connection_status: {
 		logs:
 			| {
-					last_received_ts: number;
+					last_received_ts_ms: number;
 					last_received_from: string;
 			  }
 			| null
 			| undefined;
 		metrics:
 			| {
-					last_received_ts: number;
+					last_received_ts_ms: number;
 					last_received_from: string;
 			  }
 			| null
@@ -41,8 +41,8 @@ export function getConnectionStatesFromConnectionStatus(
 		return ConnectionStates.TestingConnection;
 	}
 
-	const logsDate = dayjs(connection_status.logs?.last_received_ts);
-	const metricsDate = dayjs(connection_status.metrics?.last_received_ts);
+	const logsDate = dayjs(connection_status.logs?.last_received_ts_ms);
+	const metricsDate = dayjs(connection_status.metrics?.last_received_ts_ms);
 
 	if (
 		logsDate.isBefore(dayjs().subtract(7, 'days')) &&
