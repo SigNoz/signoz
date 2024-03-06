@@ -39,7 +39,7 @@ function WidgetGraphContainer({
 			selectedTime: selectedTime.enum,
 		},
 		selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
-    {
+		{
 			enabled: selectedGraph !== PANEL_TYPES.LIST,
 		},
 	);
