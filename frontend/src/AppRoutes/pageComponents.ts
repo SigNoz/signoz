@@ -190,3 +190,18 @@ export const WorkspaceBlocked = Loadable(
 export const ShortcutsPage = Loadable(
 	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
 );
+
+export const InstalledIntegrations = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
+		),
+);
+
+export const IntegrationsMarketPlace = Loadable(
+	// eslint-disable-next-line sonarjs/no-identical-functions
+	() =>
+		import(
+			/* webpackChunkName: "IntegrationsMarketPlace" */ 'pages/IntegrationsModulePage'
+		),
+);
