@@ -1,0 +1,1 @@
+# Prepare nginx for observability

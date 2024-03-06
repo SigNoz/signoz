@@ -2,6 +2,7 @@ package integrations
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -25,6 +26,7 @@ func TestBuiltinIntegrations(t *testing.T) {
 	})
 	require.Nil(apiErr)
 
-	_, exists := res[nginxIntegrationId]
+	nginxIntegration, exists := res[nginxIntegrationId]
 	require.True(exists)
+	require.False(strings.HasPrefix(nginxIntegration.Overview, "file://"))
 }
