@@ -3,7 +3,7 @@ import './ExplorerOptionsDroppableArea.styles.scss';
 
 import { useDroppable } from '@dnd-kit/core';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Disc3, X } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
@@ -62,18 +62,22 @@ function ExplorerOptionsDroppableArea({
 				<>
 					{isQueryUpdated && (
 						<div className="explorer-actions-btn">
-							<Button
-								onClick={handleClearSelect}
-								className="action-btn"
-								style={{ background: Color.BG_CHERRY_500 }}
-								icon={<X size={14} color={Color.BG_INK_500} />}
-							/>
-							<Button
-								onClick={onUpdateQueryHandler}
-								className="action-btn"
-								style={{ background: Color.BG_ROBIN_500 }}
-								icon={<Disc3 size={14} color={Color.BG_INK_500} />}
-							/>
+							<Tooltip title="Clear this view">
+								<Button
+									onClick={handleClearSelect}
+									className="action-btn"
+									style={{ background: Color.BG_CHERRY_500 }}
+									icon={<X size={14} color={Color.BG_INK_500} />}
+								/>
+							</Tooltip>
+							<Tooltip title="Update this View">
+								<Button
+									onClick={onUpdateQueryHandler}
+									className="action-btn"
+									style={{ background: Color.BG_ROBIN_500 }}
+									icon={<Disc3 size={14} color={Color.BG_INK_500} />}
+								/>
+							</Tooltip>
 						</div>
 					)}
 					<Button
