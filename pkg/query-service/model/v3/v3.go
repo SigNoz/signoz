@@ -777,8 +777,8 @@ func (b *BuilderQuery) Validate() error {
 }
 
 type FilterSet struct {
-	Operator string       `json:"op,omitempty"`
-	Items    []FilterItem `json:"items"`
+	Operator string       `json:"op,omitempty" yaml:"op,omitempty"`
+	Items    []FilterItem `json:"items" yaml:"items"`
 }
 
 func (f *FilterSet) Validate() error {

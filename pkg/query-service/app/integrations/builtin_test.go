@@ -14,6 +14,17 @@ func TestBuiltinIntegrations(t *testing.T) {
 
 	builtins, apiErr := repo.list(context.Background())
 	require.Nil(apiErr)
+	require.Greater(
+		len(builtins), 0,
+		"some built in integrations are expected to be bundled.",
+	)
 
-	require.Greater(len(builtins), 0)
+	nginxIntegrationId := "builtin/nginx"
+	res, apiErr := repo.get(context.Background(), []string{
+		nginxIntegrationId,
+	})
+	require.Nil(apiErr)
+
+	_, exists := res[nginxIntegrationId]
+	require.True(exists)
 }

@@ -82,7 +82,7 @@ type IntegrationConnectionTests struct {
 }
 
 type IntegrationDetails struct {
-	IntegrationSummary
+	IntegrationSummary `yaml:",inline"`
 
 	Categories    []string                    `json:"categories" yaml:"categories"`
 	Overview      string                      `json:"overview" yaml:"overview"` // markdown

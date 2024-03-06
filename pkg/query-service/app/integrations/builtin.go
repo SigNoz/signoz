@@ -3,13 +3,13 @@ package integrations
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"path"
 
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"golang.org/x/exp/maps"
-	"gopkg.in/yaml.v3"
 )
 
 type BuiltInIntegrations struct{}
@@ -64,11 +64,19 @@ func readBuiltIns() error {
 	builtInIntegrations = map[string]IntegrationDetails{}
 	for _, d := range builtinDirs {
 		// fmt.Printf("\nDEBUG: %s isDir: %v\n", d.Name(), d.IsDir())
-		ii, err := readBuiltInIntegration(path.Join(rootDirName, d.Name()))
+		i, err := readBuiltInIntegration(path.Join(rootDirName, d.Name()))
 		if err != nil {
 			return fmt.Errorf("couldn't parse integration %s from files: %w", d.Name(), err)
 		}
-		builtInIntegrations[ii.Id] = *ii
+		i.Id = "builtin/" + i.Id
+
+		_, exists := builtInIntegrations[i.Id]
+		if exists {
+			return fmt.Errorf(
+				"duplicate integration for id %s at %s", i.Id, d.Name(),
+			)
+		}
+		builtInIntegrations[i.Id] = *i
 	}
 	return nil
 }
@@ -76,7 +84,7 @@ func readBuiltIns() error {
 func readBuiltInIntegration(dirpath string) (
 	*IntegrationDetails, error,
 ) {
-	integrationYamlPath := path.Join(dirpath, "integration.yaml")
+	integrationYamlPath := path.Join(dirpath, "integration.json")
 
 	iy, err := integrationFiles.ReadFile(integrationYamlPath)
 	if err != nil {
@@ -86,7 +94,7 @@ func readBuiltInIntegration(dirpath string) (
 	}
 
 	var integration IntegrationDetails
-	err = yaml.Unmarshal(iy, &integration)
+	err = json.Unmarshal(iy, &integration)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't parse integration yaml read from %s: %w",
