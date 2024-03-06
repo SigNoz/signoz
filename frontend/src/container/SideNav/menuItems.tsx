@@ -16,7 +16,7 @@ import {
 	ScrollText,
 	Settings,
 	Slack,
-	Unplug,
+	// Unplug,
 	UserPlus,
 } from 'lucide-react';
 
@@ -90,11 +90,11 @@ const menuItems: SidebarItem[] = [
 		label: 'Alerts',
 		icon: <BellDot size={16} />,
 	},
-	{
-		key: ROUTES.INTEGRATIONS_INSTALLED,
-		label: 'Integrations',
-		icon: <Unplug size={16} />,
-	},
+	// {
+	// 	key: ROUTES.INTEGRATIONS_INSTALLED,
+	// 	label: 'Integrations',
+	// 	icon: <Unplug size={16} />,
+	// },
 	{
 		key: ROUTES.ALL_ERROR,
 		label: 'Exceptions',
