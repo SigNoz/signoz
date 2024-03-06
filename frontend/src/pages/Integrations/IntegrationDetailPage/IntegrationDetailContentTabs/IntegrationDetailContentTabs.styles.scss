@@ -21,6 +21,17 @@
 			display: flex;
 			flex-direction: column;
 
+			.heading {
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 11px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 16px; /* 145.455% */
+				letter-spacing: 0.44px;
+				text-transform: uppercase;
+			}
+
 			.category-tabs {
 				display: flex;
 				gap: 6px;
@@ -47,6 +58,17 @@
 		.integration-detail-overview-assets {
 			display: flex;
 			flex-direction: column;
+
+			.heading {
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 11px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 16px; /* 145.455% */
+				letter-spacing: 0.44px;
+				text-transform: uppercase;
+			}
 
 			.assets-list {
 				margin-left: 5px;
@@ -179,6 +201,10 @@
 			line-height: 18px; /* 128.571% */
 		}
 
+		.configure-menu-item:hover {
+			background-color: rgba(255, 255, 255, 0.08);
+		}
+
 		.active {
 			color: rgba(255, 255, 255, 0.85);
 			background-color: rgba(255, 255, 255, 0.08);
@@ -190,5 +216,81 @@
 		padding: 16px 0px 0px 16px;
 		max-height: 600px;
 		overflow-y: auto;
+	}
+}
+
+.lightMode {
+	.integration-detail-overview {
+		.integration-detail-overview-left-container {
+			border-right: 1px solid var(--bg-vanilla-400);
+
+			color: var(--bg-slate-100);
+
+			.integration-detail-overview-category {
+				.heading {
+					color: var(--bg-slate-100);
+				}
+				.category-tabs {
+					.category-tab {
+						border: 1px solid rgba(173, 127, 88, 0.2);
+						background: rgba(173, 127, 88, 0.1);
+						color: var(--bg-sienna-500);
+					}
+				}
+			}
+
+			.integration-detail-overview-assets {
+				.heading {
+					color: var(--bg-slate-100);
+				}
+				.assets-list {
+					color: var(--bg-slate-100);
+				}
+			}
+		}
+	}
+
+	.integration-data-collected {
+		color: var(--bg-vanilla-400);
+
+		.logs-section {
+			.table-row-dark {
+				background: rgba(255, 255, 255, 0.01);
+			}
+
+			.logs-section-table {
+				border: 1px solid var(--bg-vanilla-400);
+				background: var(--bg-vanilla-300);
+			}
+		}
+
+		.metrics-section {
+			.table-row-dark {
+				background: rgba(255, 255, 255, 0.01);
+			}
+
+			.metrics-section-table {
+				border: 1px solid var(--bg-vanilla-400);
+				background: var(--bg-vanilla-300);
+			}
+		}
+	}
+
+	.integration-detail-configure {
+		.configure-menu {
+			border-right: 1px solid var(--bg-vanilla-400);
+
+			.configure-menu-item {
+				color: var(--bg-vanilla-100);
+			}
+			.configure-menu-item:hover {
+				background-color: var(--bg-vanilla-200);
+			}
+
+			.active {
+				color: rgba(255, 255, 255, 0.85);
+				background-color: var(--bg-vanilla-200);
+			}
+		}
 	}
 }

@@ -58,7 +58,7 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 							className="error-state-svg"
 						/>
 						<Typography.Text>
-							Something went wrong :/ Refresh the page or contact support.
+							Something went wrong :/ Please retry or contact support.
 						</Typography.Text>
 						<div className="error-btns">
 							<Button
