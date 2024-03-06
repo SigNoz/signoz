@@ -89,8 +89,6 @@ type IntegrationDetails struct {
 	Assets        IntegrationAssets           `json:"assets"`
 
 	ConnectionTests *IntegrationConnectionTests `json:"connection_tests"`
-	// ConnectionStatus gets derived using `ConnectionTests`
-	ConnectionStatus *IntegrationConnectionStatus `json:"connection_status"`
 }
 
 type IntegrationsListItem struct {

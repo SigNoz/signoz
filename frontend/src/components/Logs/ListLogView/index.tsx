@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useCallback, useMemo, useState } from 'react';
@@ -113,6 +114,8 @@ function ListLogView({
 		onClearActiveLog: handleClearActiveContextLog,
 	} = useActiveLog();
 
+	const isDarkMode = useIsDarkMode();
+
 	const handlerClearActiveContextLog = useCallback(
 		(event: React.MouseEvent | React.KeyboardEvent) => {
 			event.preventDefault();
@@ -162,6 +165,7 @@ function ListLogView({
 		<>
 			<Container
 				$isActiveLog={isHighlighted}
+				$isDarkMode={isDarkMode}
 				onMouseEnter={handleMouseEnter}
 				onMouseLeave={handleMouseLeave}
 				onClick={handleDetailedView}
