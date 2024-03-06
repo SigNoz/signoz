@@ -98,14 +98,15 @@ func readBuiltInIntegration(dirpath string) (
 		)
 	}
 
-	err = hydrateIntegrationFiles(integrationSpec, dirpath)
+	hydrated, err := hydrateFileUris(integrationSpec, dirpath)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't hydrate files referenced in integration %s: %w", integrationJsonPath, err,
 		)
 	}
 
-	hydratedSpecJson, err := koanfJson.Parser().Marshal(integrationSpec)
+	hydratedSpec := hydrated.(map[string]interface{})
+	hydratedSpecJson, err := koanfJson.Parser().Marshal(hydratedSpec)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't serialize hydrated integration spec back to JSON %s: %w", integrationJsonPath, err,
@@ -126,65 +127,59 @@ func readBuiltInIntegration(dirpath string) (
 	return &integration, nil
 }
 
-func hydrateIntegrationFiles(specJson map[string]interface{}, basedir string) error {
-	for k, v := range specJson {
-		if maybeFileUri, ok := v.(string); ok {
-			fileUriPrefix := "file://"
-			if strings.HasPrefix(maybeFileUri, fileUriPrefix) {
-				relativePath := maybeFileUri[len(fileUriPrefix):]
-				fullPath := path.Join(basedir, relativePath)
-
-				fileContents, err := integrationFiles.ReadFile(fullPath)
-				if err != nil {
-					return fmt.Errorf("couldn't read referenced file: %w", err)
-				}
-
-				if strings.HasSuffix(maybeFileUri, ".md") {
-					specJson[k] = fileContents
-
-				} else if strings.HasSuffix(maybeFileUri, ".svg") {
-					base64Svg := base64.StdEncoding.EncodeToString(fileContents)
-					dataUri := fmt.Sprintf("data:image/svg+xml;base64,%s", base64Svg)
-					specJson[k] = dataUri
-
-				} else {
-					return fmt.Errorf("unsupported file type %s", maybeFileUri)
-				}
+func hydrateFileUris(spec interface{}, basedir string) (interface{}, error) {
+	if specMap, ok := spec.(map[string]interface{}); ok {
+		result := map[string]interface{}{}
+		for k, v := range specMap {
+			hydrated, err := hydrateFileUris(v, basedir)
+			if err != nil {
+				return nil, err
 			}
-
-		} else if nestedMap, ok := v.(map[string]interface{}); ok {
-			if err := hydrateIntegrationFiles(nestedMap, basedir); err != nil {
-				return err
-			}
-		} else if nestedSlice, ok := v.([]interface{}); ok {
-			for _, item := range nestedSlice {
-				if mapItem, ok := item.(map[string]interface{}); ok {
-					if err := hydrateIntegrationFiles(mapItem, basedir); err != nil {
-						return err
-					}
-
-				}
-			}
+			result[k] = hydrated
 		}
+		return result, nil
+
+	} else if specSlice, ok := spec.([]interface{}); ok {
+		result := []interface{}{}
+		for _, v := range specSlice {
+			hydrated, err := hydrateFileUris(v, basedir)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, hydrated)
+		}
+		return result, nil
+
+	} else if maybeFileUri, ok := spec.(string); ok {
+		return readFileIfUri(maybeFileUri, basedir)
 	}
-	return nil
+
+	return spec, nil
+
 }
 
-// func readFileIfUri(maybeFileUri string, basedir string) ([]byte, error) {
-// 	fileUriPrefix := "file://"
-// 	if !strings.HasPrefix(maybeFileUri, fileUriPrefix) {
-// 		return maybeFileUri, nil
-// 	}
+func readFileIfUri(maybeFileUri string, basedir string) (interface{}, error) {
+	fileUriPrefix := "file://"
+	if !strings.HasPrefix(maybeFileUri, fileUriPrefix) {
+		return maybeFileUri, nil
+	}
 
-// 	relativePath := maybeFileUri[len(fileUriPrefix):]
-// 	fullPath := path.Join(basedir, relativePath)
+	relativePath := maybeFileUri[len(fileUriPrefix):]
+	fullPath := path.Join(basedir, relativePath)
 
-// 	fileContents, err := integrationFiles.ReadFile(fullPath)
-// 	if err != nil {
-// 		return "", fmt.Errorf(
-// 			"couldn't read file contents from %s: %w", fullPath, err,
-// 		)
-// 	}
-// 	return string(fileContents), nil
+	fileContents, err := integrationFiles.ReadFile(fullPath)
+	if err != nil {
+		return "", fmt.Errorf("couldn't read freferenced file: %w", err)
+	}
+	if strings.HasSuffix(maybeFileUri, ".md") {
+		return fileContents, nil
 
-// }
+	} else if strings.HasSuffix(maybeFileUri, ".svg") {
+		base64Svg := base64.StdEncoding.EncodeToString(fileContents)
+		dataUri := fmt.Sprintf("data:image/svg+xml;base64,%s", base64Svg)
+		return dataUri, nil
+
+	}
+
+	return nil, fmt.Errorf("unsupported file type %s", maybeFileUri)
+}
