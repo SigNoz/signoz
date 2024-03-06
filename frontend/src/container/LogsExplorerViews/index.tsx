@@ -580,11 +580,13 @@ function LogsExplorerViews({
 							</Button>
 						</Button.Group>
 						<div className="logs-actions-container">
-							<Button
-								className="periscope-btn"
-								onClick={handle.enter}
-								icon={<FullscreenIcon size={16} />}
-							/>
+							{!handle.active && (
+								<Button
+									className="periscope-btn"
+									onClick={handle.enter}
+									icon={<FullscreenIcon size={16} />}
+								/>
+							)}
 							{selectedPanelType === PANEL_TYPES.LIST && (
 								<div className="tab-options">
 									<div className="format-options-container" ref={menuRef}>
