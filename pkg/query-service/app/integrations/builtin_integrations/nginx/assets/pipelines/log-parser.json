@@ -11,7 +11,7 @@
         "key": {
           "type": "tag",
           "key": "source",
-          "data_type": "string"
+          "dataType": "string"
         },
         "op": "=",
         "value": "nginx"

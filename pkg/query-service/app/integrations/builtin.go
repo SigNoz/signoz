@@ -14,6 +14,7 @@ import (
 	koanfJson "github.com/knadh/koanf/parsers/json"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 type BuiltInIntegrations struct{}
@@ -23,7 +24,11 @@ var builtInIntegrations map[string]IntegrationDetails
 func (bi *BuiltInIntegrations) list(ctx context.Context) (
 	[]IntegrationDetails, *model.ApiError,
 ) {
-	return maps.Values(builtInIntegrations), nil
+	integrations := maps.Values(builtInIntegrations)
+	slices.SortFunc(integrations, func(i1, i2 IntegrationDetails) bool {
+		return i1.Id < i2.Id
+	})
+	return integrations, nil
 }
 
 func (bi *BuiltInIntegrations) get(
@@ -122,7 +127,7 @@ func readBuiltInIntegration(dirpath string) (
 		)
 	}
 
-	integration.Id = "builtin/" + integration.Id
+	integration.Id = "builtin::" + integration.Id
 
 	return &integration, nil
 }
