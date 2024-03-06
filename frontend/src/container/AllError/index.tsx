@@ -86,11 +86,11 @@ const exceptionTypeOptions: SelectProps['options'] = [
 ];
 
 const issueStatusOptions: SelectProps['options'] = [
-	{ value: '0', label: '未修复' },
-	{ value: '1', label: '修复中' },
-	{ value: '2', label: '已修复' },
-	{ value: '3', label: '已忽略' },
-	{ value: '4', label: '重复出现' },
+	{ value: '0', label: 'Not fix' },
+	{ value: '1', label: 'Fixing' },
+	{ value: '2', label: 'Fixed' },
+	{ value: '3', label: 'Ignored' },
+	{ value: '4', label: 'Repeat' },
 ];
 
 type SearchParamType = {
@@ -485,7 +485,7 @@ function AllErrors(): JSX.Element {
 			// ),
 		},
 		{
-			title: 'issueStatus',
+			title: 'Issue Status',
 			dataIndex: 'issueStatus',
 			width: 100,
 			key: 'issueStatus',
@@ -557,12 +557,12 @@ function AllErrors(): JSX.Element {
 		<>
 			{contextHolder}
 			<div>
-				<Form name="search-form" layout="inline" labelCol={{ span: 8 }}>
-					<Form.Item label="type" style={{ marginBottom: 10 }}>
+				<Form name="search-form" layout="inline">
+					<Form.Item label="Exception Type" style={{ marginBottom: 10 }}>
 						<Form.Item name="exceptionType">
 							<Select
 								mode="tags"
-								style={{ width: 140 }}
+								style={{ width: 160 }}
 								allowClear
 								placeholder="Please select"
 								defaultValue={
@@ -575,10 +575,10 @@ function AllErrors(): JSX.Element {
 							/>
 						</Form.Item>
 					</Form.Item>
-					<Form.Item label="message" style={{ marginBottom: 10 }}>
+					<Form.Item label="Error Message" style={{ marginBottom: 10 }}>
 						<Form.Item name="message">
 							<Input
-								style={{ width: 140 }}
+								style={{ width: 160 }}
 								placeholder="Please input"
 								allowClear
 								defaultValue={getUpdatedMessage}
@@ -589,7 +589,7 @@ function AllErrors(): JSX.Element {
 					<Form.Item label="Application" style={{ marginBottom: 10 }}>
 						<Form.Item name="serviceName">
 							<Input
-								style={{ width: 140 }}
+								style={{ width: 160 }}
 								placeholder="Please input"
 								allowClear
 								defaultValue={getUpdatedServiceName}
@@ -597,11 +597,11 @@ function AllErrors(): JSX.Element {
 							/>
 						</Form.Item>
 					</Form.Item>
-					<Form.Item label="issueStatus" style={{ marginBottom: 10 }}>
+					<Form.Item label="Issue Status" style={{ marginBottom: 10 }}>
 						<Form.Item name="issueStatus">
 							<Select
 								mode="tags"
-								style={{ width: 140 }}
+								style={{ width: 160 }}
 								allowClear
 								placeholder="Please select"
 								defaultValue={
