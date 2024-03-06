@@ -37,10 +37,9 @@ function ExplorerOptionsDroppableArea({
 	const style = {
 		backgroundColor: isOver
 			? isDarkMode
-				? Color.BG_SLATE_300
+				? 'rgba(255, 0, 0, 0.20)'
 				: Color.BG_VANILLA_300
 			: undefined,
-		opacity: isOver ? 0.9 : 1,
 	};
 
 	const handleShowExplorerOption = (): void => {
