@@ -19,8 +19,6 @@ function MetricsApplication(): JSX.Element {
 
 	const servicename = decodeURIComponent(encodedServiceName);
 
-	console.log(servicename);
-
 	const activeKey = useMetricsApplicationTabKey();
 
 	const routes = useMemo(
