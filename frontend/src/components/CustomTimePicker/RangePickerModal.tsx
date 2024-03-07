@@ -1,3 +1,5 @@
+import './RangePickerModal.styles.scss';
+
 import { DatePicker } from 'antd';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import { LexicalContext } from 'container/TopNav/DateTimeSelectionV2/config';
@@ -48,15 +50,17 @@ function RangePickerModal(props: RangePickerModalProps): JSX.Element {
 		onCustomDateHandler(date_time, LexicalContext.CUSTOM_DATE_PICKER);
 	};
 	return (
-		<RangePicker
-			disabledDate={disabledDate}
-			allowClear
-			onCalendarChange={onModalOkHandler}
-			// eslint-disable-next-line react/jsx-props-no-spreading
-			{...(selectedTime === 'custom' && {
-				defaultValue: [dayjs(minTime / 1000000), dayjs(maxTime / 1000000)],
-			})}
-		/>
+		<div className="custom-date-picker">
+			<RangePicker
+				disabledDate={disabledDate}
+				allowClear
+				onCalendarChange={onModalOkHandler}
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				{...(selectedTime === 'custom' && {
+					defaultValue: [dayjs(minTime / 1000000), dayjs(maxTime / 1000000)],
+				})}
+			/>
+		</div>
 	);
 }
 
