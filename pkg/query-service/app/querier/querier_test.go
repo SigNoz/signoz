@@ -758,8 +758,8 @@ func TestQueryRangeTimeShift(t *testing.T) {
 func TestQueryRangeTimeShiftWithCache(t *testing.T) {
 	params := []*v3.QueryRangeParamsV3{
 		{
-			Start: 1675115596722 + 60*60*1000 - 86400*1000,  //31, 3:23
-			End:   1675115596722 + 120*60*1000 - 86400*1000, //31, 5:23
+			Start: 1675115596722 + 60*60*1000 - 86400*1000,  //30, 4:23
+			End:   1675115596722 + 120*60*1000 - 86400*1000, //30, 5:23
 			Step:  5 * time.Minute.Milliseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
@@ -856,8 +856,8 @@ func TestQueryRangeTimeShiftWithCache(t *testing.T) {
 func TestQueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 	params := []*v3.QueryRangeParamsV3{
 		{
-			Start: 1675115596722 + 60*60*1000 - 86400*1000,  //31, 3:23
-			End:   1675115596722 + 120*60*1000 - 86400*1000, //31, 5:23
+			Start: 1675115596722 + 60*60*1000 - 86400*1000,  //30, 4:23
+			End:   1675115596722 + 120*60*1000 - 86400*1000, //30, 5:23
 			Step:  5 * time.Minute.Milliseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
