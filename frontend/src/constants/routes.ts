@@ -7,6 +7,11 @@ const ROUTES = {
 	TRACE_DETAIL: '/trace/:id',
 	TRACES_EXPLORER: '/traces-explorer',
 	GET_STARTED: '/get-started',
+	GET_STARTED_APPLICATION_MONITORING: '/get-started/application-monitoring',
+	GET_STARTED_LOGS_MANAGEMENT: '/get-started/logs-management',
+	GET_STARTED_INFRASTRUCTURE_MONITORING:
+		'/get-started/infrastructure-monitoring',
+	GET_STARTED_AWS_MONITORING: '/get-started/aws-monitoring',
 	USAGE_EXPLORER: '/usage-explorer',
 	APPLICATION: '/services',
 	ALL_DASHBOARD: '/dashboard',

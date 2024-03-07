@@ -231,7 +231,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
 	const renderFullScreen =
-		pathname === ROUTES.GET_STARTED || pathname === ROUTES.WORKSPACE_LOCKED;
+		pathname === ROUTES.GET_STARTED ||
+		pathname === ROUTES.WORKSPACE_LOCKED ||
+		pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING ||
+		pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING ||
+		pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT ||
+		pathname === ROUTES.GET_STARTED_AWS_MONITORING;
 
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
 
