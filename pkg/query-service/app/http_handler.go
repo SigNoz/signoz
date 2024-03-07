@@ -3611,7 +3611,7 @@ func applyFunctions(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV
 	for idx, result := range results {
 		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
 
-		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics || builderQueries[result.QueryName].DataSource == v3.DataSourceLogs) {
+		if builderQueries != nil {
 			functions := builderQueries[result.QueryName].Functions
 
 			for _, function := range functions {
