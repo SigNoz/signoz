@@ -1540,7 +1540,9 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 
 func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
 
-	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig)
+	var start, end time.Time
+
+	result, _, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return

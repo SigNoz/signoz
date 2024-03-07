@@ -756,33 +756,47 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 	return &services, nil
 }
 
-func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig) (*map[string][]string, *model.ApiError) {
+func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig, start, end time.Time) (*map[string][]string, *map[string][]string, *model.ApiError) {
 
+	start = start.In(time.UTC)
+
+	// The `top_level_operations` that have `time` >= start
 	operations := map[string][]string{}
-	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName FROM %s.%s`, r.TraceDB, r.topLevelOperationsTable)
+	// All top level operations for a service
+	allOperations := map[string][]string{}
+	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName, time FROM %s.%s`, r.TraceDB, r.topLevelOperationsTable)
 
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
 		zap.S().Error("Error in processing sql query: ", err)
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+		return nil, nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
 	defer rows.Close()
 	for rows.Next() {
 		var name, serviceName string
-		if err := rows.Scan(&name, &serviceName); err != nil {
-			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("Error in reading data")}
+		var t time.Time
+		if err := rows.Scan(&name, &serviceName, &t); err != nil {
+			return nil, nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error in reading data")}
 		}
 		if _, ok := operations[serviceName]; !ok {
 			operations[serviceName] = []string{}
 		}
+		if _, ok := allOperations[serviceName]; !ok {
+			allOperations[serviceName] = []string{}
+		}
 		if skipConfig.ShouldSkip(serviceName, name) {
 			continue
 		}
-		operations[serviceName] = append(operations[serviceName], name)
+		allOperations[serviceName] = append(allOperations[serviceName], name)
+		// We can't use the `end` because the `top_level_operations` table has the most recent instances of the operations
+		// We can only use the `start` time to filter the operations
+		if t.After(start) {
+			operations[serviceName] = append(operations[serviceName], name)
+		}
 	}
-	return &operations, nil
+	return &operations, &allOperations, nil
 }
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
@@ -791,7 +805,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
 	}
 
-	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig)
+	topLevelOps, allTopLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig, *queryParams.Start, *queryParams.End)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -810,6 +824,22 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 			defer func() { <-sem }()
 			var serviceItem model.ServiceItem
 			var numErrors uint64
+
+			// Even if the total number of operations within the time range is less and the all
+			// the top level operations are high, we want to warn to let user know the issue
+			// with the instrumentation
+			serviceItem.DataWarning = model.DataWarning{
+				TopLevelOps: (*allTopLevelOps)[svc],
+			}
+
+			// default max_query_size = 262144
+			// Let's assume the average size of the item in `ops` is 50 bytes
+			// We can have 262144/50 = 5242 items in the `ops` array
+			// Although we have make it as big as 5k, We cap the number of items
+			// in the `ops` array to 1500
+
+			ops = ops[:int(math.Min(1500, float64(len(ops))))]
+
 			query := fmt.Sprintf(
 				`SELECT
 					quantile(0.99)(durationNano) as p99,
@@ -858,6 +888,10 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				return
 			}
 			subQuery, argsSubQuery, errStatus = buildQueryWithTagParams(ctx, tags)
+			if errStatus != nil {
+				zap.S().Error("Error building query with tag params: ", err)
+				return
+			}
 			query += subQuery
 			args = append(args, argsSubQuery...)
 			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
@@ -884,7 +918,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams, skipConfig *model.SkipConfig) (*[]model.ServiceOverviewItem, *model.ApiError) {
 
-	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig)
+	topLevelOps, _, apiErr := r.GetTopLevelOperations(ctx, skipConfig, *queryParams.Start, *queryParams.End)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -1576,7 +1610,7 @@ func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery) (string
 		case model.NotExistsOperator:
 			subQuery, argsSubQuery = addExistsOperator(item, tagMapType, true)
 		default:
-			return "", nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.GetOperator())}
+			return "", nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("filter operator %s not supported", item.GetOperator())}
 		}
 		query += subQuery
 		args = append(args, argsSubQuery...)
