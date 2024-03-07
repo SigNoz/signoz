@@ -67,8 +67,6 @@ describe('Logs Explorer Tests', () => {
 		// check the presence of histogram chart
 		expect(getByText('Histogram Chart')).toBeInTheDocument();
 
-		// check for jest errors
-
 		// toggle the chart and check it gets removed from the DOM
 		const histogramToggle = getByRole('switch');
 		await userEvent.click(histogramToggle);
