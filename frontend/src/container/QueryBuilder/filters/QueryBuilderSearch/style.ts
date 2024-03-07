@@ -18,6 +18,7 @@ export const StyledCheckOutlined = styled(CheckOutlined)`
 
 export const TagContainer = styled(Tag)`
 	&&& {
+		display: inline-block;
 		border-radius: 3px;
 		padding: 0.1rem 0.2rem;
 		font-weight: 300;

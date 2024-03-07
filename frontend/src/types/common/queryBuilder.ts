@@ -211,6 +211,7 @@ export type QueryBuilderContextType = {
 	) => void;
 	addNewBuilderQuery: () => void;
 	addNewFormula: () => void;
+	cloneQuery: (type: string, query: IBuilderQuery) => void;
 	addNewQueryItem: (type: EQueryType.PROM | EQueryType.CLICKHOUSE) => void;
 	redirectWithQueryBuilderData: (
 		query: Query,
