@@ -177,7 +177,7 @@ func readFileIfUri(maybeFileUri string, basedir string) (interface{}, error) {
 		return nil, fmt.Errorf("couldn't read referenced file: %w", err)
 	}
 	if strings.HasSuffix(maybeFileUri, ".md") {
-		return fileContents, nil
+		return string(fileContents), nil
 
 	} else if strings.HasSuffix(maybeFileUri, ".json") {
 		parsed, err := koanfJson.Parser().Unmarshal(fileContents)

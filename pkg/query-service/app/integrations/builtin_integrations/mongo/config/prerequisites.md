@@ -1,4 +1,4 @@
-# Prepare mongo for monitoring
+### Prepare mongo for monitoring
 
 - Have a running mongodb instance
 - Have the monitoring user created

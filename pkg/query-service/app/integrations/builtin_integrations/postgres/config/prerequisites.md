@@ -1,4 +1,4 @@
-# Prepare postgres for monitoring
+### Prepare postgres for monitoring
 
 - Have a running postgresql instance
 - Have the monitoring user created

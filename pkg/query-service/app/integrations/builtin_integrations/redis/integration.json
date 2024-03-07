@@ -1,7 +1,7 @@
 {
   "id": "redis",
   "title": "Redis",
-  "description": "Monitor redis using logs and connection and request metrics.",
+  "description": "Monitor redis using logs and metrics.",
   "author": {
     "name": "SigNoz",
     "email": "integrations@signoz.io",

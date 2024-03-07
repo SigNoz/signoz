@@ -1,3 +1,3 @@
-# Monitor MongoDB with SigNoz
+### Monitor MongoDB with SigNoz
 
 Collect key MongoDB metrics and parse your MongoDB logs

@@ -1,4 +1,4 @@
-# Prepare redis for monitoring
+### Prepare redis for monitoring
 
 - Have a running redis instance
 - Have the monitoring user created

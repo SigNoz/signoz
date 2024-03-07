@@ -1,6 +1,6 @@
-# Configure otel collector
+### Configure otel collector
 
-## Save collector config file
+#### Save collector config file
 
 Save the following collector config in a file named `postgres-collector-config.yaml`
 
@@ -67,6 +67,6 @@ service:
       exporters: [otlp/local]
 ```
 
-## Use collector config file
+#### Use collector config file
 
 Run your collector with the added flag `--config postgres-collector-config.yaml`

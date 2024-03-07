@@ -1,7 +1,7 @@
 {
   "id": "nginx",
   "title": "Nginx",
-  "description": "Monitor nginx using logs and connection and request metrics.",
+  "description": "Monitor nginx using logs and metrics.",
   "author": {
     "name": "SigNoz",
     "email": "integrations@signoz.io",

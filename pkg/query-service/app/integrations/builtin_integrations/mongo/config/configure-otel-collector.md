@@ -1,6 +1,6 @@
-# Configure otel collector
+### Configure otel collector
 
-## Save collector config file
+#### Save collector config file
 
 Save the following collector config in a file named `mongo-collector-config.yaml`
 
@@ -69,6 +69,6 @@ service:
 
 ```
 
-## Use collector config file
+#### Use collector config file
 
 Run your collector with the added flag `--config mongo-collector-config.yaml`
