@@ -59,7 +59,7 @@ const routes: AppRoutes[] = [
 	},
 	{
 		path: ROUTES.GET_STARTED,
-		exact: true,
+		exact: false,
 		component: Onboarding,
 		isPrivate: true,
 		key: 'GET_STARTED',
