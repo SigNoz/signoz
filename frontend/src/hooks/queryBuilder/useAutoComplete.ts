@@ -98,6 +98,11 @@ export const useAutoComplete = (
 		[handleAddTag, handleClearTag, isMulti, isValidTag, searchValue, tags],
 	);
 
+	const handleOnBlur = (event: React.FocusEvent<HTMLInputElement>): void => {
+		event.preventDefault();
+		handleAddTag(searchValue);
+	};
+
 	const options = useOptions(
 		key,
 		keys,
@@ -117,6 +122,7 @@ export const useAutoComplete = (
 		handleClearTag,
 		handleSelect,
 		handleKeyDown,
+		handleOnBlur,
 		options,
 		tags,
 		searchValue,
@@ -133,6 +139,7 @@ interface IAutoComplete {
 	handleClearTag: (value: string) => void;
 	handleSelect: (value: string) => void;
 	handleKeyDown: (event: React.KeyboardEvent) => void;
+	handleOnBlur: (event: React.FocusEvent<HTMLInputElement>) => void;
 	options: Option[];
 	tags: string[];
 	searchValue: string;
