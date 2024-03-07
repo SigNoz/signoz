@@ -69,8 +69,6 @@ function SaveView(): JSX.Element {
 
 	const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
-	console.log(role, user);
-
 	const handleDeleteModelOpen = (uuid: string, name: string): void => {
 		setActiveViewKey(uuid);
 		setActiveViewName(name);
@@ -231,7 +229,6 @@ function SaveView(): JSX.Element {
 				const isEditDeleteSupported =
 					allowedRoles.includes(role as string) || view.createdBy === user?.email;
 
-				console.log(isEditDeleteSupported);
 				return (
 					<div className="column-render">
 						<div className="title-with-action">
