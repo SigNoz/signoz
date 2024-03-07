@@ -48,6 +48,7 @@ import {
 	saveNewViewHandler,
 } from './utils';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function ExplorerOptions({
 	disabled,
 	isLoading,
@@ -347,15 +348,16 @@ function ExplorerOptions({
 					<Button
 						shape="round"
 						onClick={handleSaveViewModalToggle}
+						className={isEditDeleteSupported ? '' : 'hidden'}
 						disabled={viewsIsLoading || isRefetching}
 					>
 						<Disc3 size={16} /> Save this view
 					</Button>
 				</div>
 
-				<hr />
+				<hr className={isEditDeleteSupported ? '' : 'hidden'} />
 
-				<div className="actions">
+				<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
 					<Tooltip title="Create Alerts">
 						<Button
 							disabled={disabled}
