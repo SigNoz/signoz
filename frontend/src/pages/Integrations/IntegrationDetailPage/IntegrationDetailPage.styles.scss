@@ -207,7 +207,6 @@
 		padding: 10px 16px;
 		border: 1px solid var(--bg-slate-500);
 		background: var(--bg-ink-400, #121317);
-		min-height: 300px;
 
 		.integration-tab-btns {
 			display: flex;
@@ -309,7 +308,7 @@
 
 .remove-integration-modal {
 	.ant-modal-content {
-		width: 384px;
+		width: 400px;
 		min-height: 200px;
 		flex-shrink: 0;
 		border-radius: 4px;
@@ -332,7 +331,7 @@
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
-		font-weight: 400;
+		font-weight: 500;
 		line-height: 20px; /* 142.857% */
 		letter-spacing: -0.07px;
 	}
@@ -499,7 +498,7 @@
 		}
 
 		.all-integrations-btn {
-			color: var(--bg-slate-400);
+			color: var(--bg-slate-300);
 		}
 
 		.all-integrations-btn:hover {
@@ -509,28 +508,28 @@
 		}
 
 		.integration-connection-header {
-			border: 1px solid var(--bg-vanilla-400);
-			background: var(--bg-vanilla-300);
+			border: 1px solid rgba(53, 59, 76, 0.2);
+			background: var(--bg-vanilla-100);
 
 			.integration-detail-header {
 				.image-container {
-					border: 1px solid var(--bg-ink-50);
-					background: var(--bg-vanilla-200);
+					border: 1.111px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-100);
 				}
 				.details {
 					.heading {
-						color: var(--bg-slate-400);
+						color: var(--bg-ink-500);
 					}
 
 					.description {
-						color: var(--bg-slate-100);
+						color: var(--bg-slate-200);
 					}
 				}
 			}
 
 			.testingConnection {
-				border: 1px solid rgba(255, 205, 86, 0.1);
-				background: rgba(255, 205, 86, 0.1);
+				border: 1px solid rgba(255, 205, 86, 0.4);
+				background: rgba(255, 205, 86, 0.2);
 				color: var(--bg-amber-600);
 			}
 
@@ -538,12 +537,6 @@
 				border: 1px solid rgba(37, 225, 146, 0.1);
 				background: rgba(37, 225, 146, 0.1);
 				color: var(--bg-forest-600);
-			}
-
-			.connectionFailed {
-				border: 1px solid rgba(218, 85, 101, 0.2);
-				background: rgba(218, 85, 101, 0.06);
-				color: var(--bg-cherry-500);
 			}
 
 			.noDataSinceLong {
@@ -554,33 +547,33 @@
 		}
 
 		.integration-detail-container {
-			border: 1px solid var(--bg-vanilla-400);
-			background: var(--bg-vanilla-300);
+			border: 1px solid rgba(53, 59, 76, 0.2);
+			background: var(--bg-vanilla-100);
 
 			.integration-tab-btns {
 				.typography {
-					color: var(--bg-slate-100);
+					color: var(--bg-ink-500);
 				}
 			}
 		}
 
 		.uninstall-integration-bar {
-			border: 1px solid rgba(218, 85, 101, 0.2);
-			background: rgba(218, 85, 101, 0.06);
+			border: 1px solid rgba(53, 59, 76, 0.2);
+			background: var(--bg-vanilla-100);
 
 			.unintall-integration-bar-text {
 				.heading {
-					color: var(--bg-cherry-500);
+					color: var(--bg-ink-500);
 				}
 
 				.subtitle {
-					color: var(--bg-cherry-400);
+					color: var(--bg-slate-100);
 				}
 			}
 
 			.uninstall-integration-btn {
-				background: var(--Accent---Secondary-Cherry, #da5565);
-				border-color: var(--bg-cherry-300) !important;
+				background: var(--bg-cherry-500, #e5484d);
+				border-color: none !important;
 				color: var(--bg-vanilla-100);
 			}
 
@@ -596,11 +589,11 @@
 		.ant-modal-content {
 			border: 1px solid var(--bg-vanilla-400);
 			box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
-			background: var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
 		}
 
 		.ant-modal-title {
-			color: var(--bg-slate-100);
+			color: var(--bg-ink-500);
 		}
 
 		.remove-integration-text {
@@ -610,8 +603,8 @@
 
 	.test-connection-modal {
 		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-400);
-			background: var(--bg-vanilla-300);
+			border: 1px solid rgba(53, 59, 76, 0.2);
+			background: var(--bg-vanilla-100);
 			box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 
 			.ant-modal-body {
@@ -620,8 +613,8 @@
 
 			.ant-modal-footer {
 				.understandBtn {
-					border: 1px solid var(--bg-vanilla-400);
-					background: var(--bg-vanilla-400);
+					border: 1px solid rgba(53, 59, 76, 0.2);
+					background: var(--bg-vanilla-200);
 					color: var(--bg-slate-400);
 				}
 			}
@@ -638,8 +631,8 @@
 				}
 			}
 			.testingConnection {
-				border: 1px solid rgba(255, 205, 86, 0.1);
-				background: rgba(255, 205, 86, 0.1);
+				border: 1px solid rgba(255, 205, 86, 0.4);
+				background: rgba(255, 205, 86, 0.2);
 				color: var(--bg-amber-600);
 			}
 
@@ -647,12 +640,6 @@
 				border: 1px solid rgba(37, 225, 146, 0.1);
 				background: rgba(37, 225, 146, 0.1);
 				color: var(--bg-forest-600);
-			}
-
-			.connectionFailed {
-				border: 1px solid rgba(218, 85, 101, 0.2);
-				background: rgba(218, 85, 101, 0.06);
-				color: var(--bg-cherry-500);
 			}
 
 			.noDataSinceLong {
