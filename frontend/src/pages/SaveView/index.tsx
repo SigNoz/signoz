@@ -65,7 +65,7 @@ function SaveView(): JSX.Element {
 		setIsDeleteModalOpen(false);
 	};
 
-	const { role, user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
@@ -226,8 +226,7 @@ function SaveView(): JSX.Element {
 				// Combine time and date
 				const formattedDateAndTime = `${formattedTime} ⎯ ${formattedDate}`;
 
-				const isEditDeleteSupported =
-					allowedRoles.includes(role as string) || view.createdBy === user?.email;
+				const isEditDeleteSupported = allowedRoles.includes(role as string);
 
 				return (
 					<div className="column-render">

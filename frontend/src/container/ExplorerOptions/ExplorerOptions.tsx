@@ -77,7 +77,7 @@ function ExplorerOptions({
 		setIsSaveModalOpen(false);
 	};
 
-	const { role, user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
@@ -257,12 +257,7 @@ function ExplorerOptions({
 		[isDarkMode],
 	);
 
-	const currentView = viewsData?.data?.data?.find(
-		(view) => view.uuid === viewKey,
-	);
-	const isEditDeleteSupported =
-		allowedRoles.includes(role as string) ||
-		currentView?.createdBy === user?.email;
+	const isEditDeleteSupported = allowedRoles.includes(role as string);
 
 	return (
 		<>
