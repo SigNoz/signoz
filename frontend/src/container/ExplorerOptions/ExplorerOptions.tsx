@@ -266,7 +266,12 @@ function ExplorerOptions({
 	return (
 		<>
 			{isQueryUpdated && (
-				<div className="explorer-update">
+				<div
+					className={cx(
+						isEditDeleteSupported ? '' : 'hide-update',
+						'explorer-update',
+					)}
+				>
 					<Tooltip title="Clear this view" placement="top">
 						<Button
 							className="action-icon"
@@ -274,7 +279,10 @@ function ExplorerOptions({
 							icon={<X size={14} />}
 						/>
 					</Tooltip>
-					<Divider type="vertical" />
+					<Divider
+						type="vertical"
+						className={isEditDeleteSupported ? '' : 'hidden'}
+					/>
 					<Tooltip title="Update this view" placement="top">
 						<Button
 							className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}
