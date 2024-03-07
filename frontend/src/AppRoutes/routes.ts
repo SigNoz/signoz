@@ -1,6 +1,4 @@
 import ROUTES from 'constants/routes';
-import Shortcuts from 'pages/Shortcuts/Shortcuts';
-import WorkspaceBlocked from 'pages/WorkspaceLocked';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -16,6 +14,8 @@ import {
 	EditRulesPage,
 	ErrorDetails,
 	IngestionSettings,
+	InstalledIntegrations,
+	IntegrationsMarketPlace,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
@@ -35,6 +35,7 @@ import {
 	ServiceMetricsPage,
 	ServicesTablePage,
 	SettingsPage,
+	ShortcutsPage,
 	SignupPage,
 	SomethingWentWrong,
 	StatusPage,
@@ -45,6 +46,7 @@ import {
 	TracesSaveViews,
 	UnAuthorized,
 	UsageExplorerPage,
+	WorkspaceBlocked,
 } from './pageComponents';
 
 const routes: AppRoutes[] = [
@@ -331,9 +333,23 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.SHORTCUTS,
 		exact: true,
-		component: Shortcuts,
+		component: ShortcutsPage,
 		isPrivate: true,
 		key: 'SHORTCUTS',
+	},
+	{
+		path: ROUTES.INTEGRATIONS_INSTALLED,
+		exact: true,
+		component: InstalledIntegrations,
+		isPrivate: true,
+		key: 'INTEGRATIONS_INSTALLED',
+	},
+	{
+		path: ROUTES.INTEGRATIONS_MARKETPLACE,
+		exact: true,
+		component: IntegrationsMarketPlace,
+		isPrivate: true,
+		key: 'INTEGRATIONS_MARKETPLACE',
 	},
 ];
 
