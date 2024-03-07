@@ -1,0 +1,88 @@
+{
+  "id": "postgres",
+  "title": "PostgreSQL",
+  "description": "Monitor postgres using logs and metrics.",
+  "author": {
+    "name": "SigNoz",
+    "email": "integrations@signoz.io",
+    "homepage": "https://signoz.io"
+  },
+  "icon": "file://icon.svg",
+  "categories": [
+    "Database"
+  ],
+  "overview": "file://overview.md",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "file://config/prerequisites.md"
+    },
+    {
+      "title": "Configure Otel Collector",
+      "instructions": "file://config/configure-otel-collector.md"
+    }
+  ],
+  "assets": {
+    "logs": {
+      "pipelines": [
+        "file://assets/pipelines/log-parser.json"
+      ]
+    },
+    "dashboards": [
+        "file://assets/dashboards/overview.json"
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "logs": {
+      "op": "AND",
+      "items": [
+        {
+          "key": {
+            "type": "tag",
+            "key": "source",
+            "dataType": "string"
+          },
+          "op": "=",
+          "value": "postgres"
+        }
+      ]
+    }
+  },
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Request Method",
+        "path": "attributes[\"http.request.method\"]",
+        "type": "string",
+        "description": "HTTP method"
+      },
+      {
+        "name": "Request Path",
+        "path": "attributes[\"url.path\"]",
+        "type": "string",
+        "description": "path requested"
+      },
+      {
+        "name": "Response Status Code",
+        "path": "attributes[\"http.response.status_code\"]",
+        "type": "int",
+        "description": "HTTP response code"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "http.server.request.duration",
+        "type": "Histogram",
+        "unit": "s",
+        "description": "Duration of HTTP server requests"
+      },
+      {
+        "name": "http.server.active_requests",
+        "type": "UpDownCounter",
+        "unit": "{ request }",
+        "description": "Number of active HTTP server requests"
+      }
+    ]
+  }
+}

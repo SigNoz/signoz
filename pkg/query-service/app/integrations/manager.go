@@ -122,8 +122,7 @@ func NewManager(db *sqlx.DB) (*Manager, error) {
 	}
 
 	return &Manager{
-		// TODO(Raj): Hook up a real available integrations provider.
-		availableIntegrationsRepo: &TestAvailableIntegrationsRepo{},
+		availableIntegrationsRepo: &BuiltInIntegrations{},
 		installedIntegrationsRepo: iiRepo,
 	}, nil
 }
