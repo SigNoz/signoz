@@ -49,6 +49,10 @@ import {
 	WorkspaceBlocked,
 } from './pageComponents';
 
+const a = 'fjbwhd';
+
+console.log(a);
+
 const routes: AppRoutes[] = [
 	{
 		component: SignupPage,
