@@ -41,7 +41,7 @@ function IntergrationsUninstallBar(
 
 	const handleOk = (): void => {
 		uninstallIntegration({
-			integrationId,
+			integration_id: integrationId,
 		});
 	};
 
