@@ -86,6 +86,12 @@ type UninstallIntegrationRequest struct {
 func (c *Controller) Uninstall(
 	ctx context.Context, req *UninstallIntegrationRequest,
 ) *model.ApiError {
+	if len(req.IntegrationId) < 1 {
+		return model.BadRequest(fmt.Errorf(
+			"integration_id is required.",
+		))
+	}
+
 	return c.mgr.UninstallIntegration(
 		ctx, req.IntegrationId,
 	)
