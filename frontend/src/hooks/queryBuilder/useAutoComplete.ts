@@ -1,3 +1,4 @@
+import { OPERATORS } from 'constants/queryBuilder';
 import {
 	getRemovePrefixFromKey,
 	getTagToken,
@@ -10,7 +11,7 @@ import { KeyboardEvent, useCallback, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
-import { useOptions } from './useOptions';
+import { useOptions, WHERE_CLAUSE_CUSTOM_SUFFIX } from './useOptions';
 import { useSetCurrentKeyAndOperator } from './useSetCurrentKeyAndOperator';
 import { useTag } from './useTag';
 import { useTagValidation } from './useTagValidation';
@@ -100,7 +101,19 @@ export const useAutoComplete = (
 
 	const handleOnBlur = (event: React.FocusEvent<HTMLInputElement>): void => {
 		event.preventDefault();
-		handleAddTag(searchValue);
+		if (searchValue) {
+			if (
+				key &&
+				!operator &&
+				whereClauseConfig?.customKey === 'body' &&
+				whereClauseConfig.customOp === OPERATORS.CONTAINS
+			) {
+				const value = `${searchValue}${WHERE_CLAUSE_CUSTOM_SUFFIX}`;
+				handleAddTag(value);
+				return;
+			}
+			handleAddTag(searchValue);
+		}
 	};
 
 	const options = useOptions(
