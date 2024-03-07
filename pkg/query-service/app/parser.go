@@ -829,8 +829,10 @@ func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequ
 		limit = 50
 	}
 
-	if err := aggregateOperator.Validate(); err != nil {
-		return nil, err
+	if dataSource != v3.DataSourceMetrics {
+		if err := aggregateOperator.Validate(); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := dataSource.Validate(); err != nil {
@@ -861,8 +863,10 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		return nil, err
 	}
 
-	if err := aggregateOperator.Validate(); err != nil {
-		return nil, err
+	if dataSource != v3.DataSourceMetrics {
+		if err := aggregateOperator.Validate(); err != nil {
+			return nil, err
+		}
 	}
 
 	req = v3.FilterAttributeKeyRequest{
@@ -894,8 +898,10 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 		return nil, err
 	}
 
-	if err := aggregateOperator.Validate(); err != nil {
-		return nil, err
+	if dataSource != v3.DataSourceMetrics {
+		if err := aggregateOperator.Validate(); err != nil {
+			return nil, err
+		}
 	}
 
 	req = v3.FilterAttributeValueRequest{
@@ -1019,32 +1025,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				}
 			}
 
-			if query.Filters != nil && len(query.Filters.Items) != 0 {
-				for idx := range query.Filters.Items {
-					item := &query.Filters.Items[idx]
-					value := item.Value
-					if value != nil {
-						switch x := value.(type) {
-						case string:
-							variableName := strings.Trim(x, "{{ . }}")
-							if _, ok := queryRangeParams.Variables[variableName]; ok {
-								item.Value = queryRangeParams.Variables[variableName]
-							}
-						case []interface{}:
-							if len(x) > 0 {
-								switch x[0].(type) {
-								case string:
-									variableName := strings.Trim(x[0].(string), "{{ . }}")
-									if _, ok := queryRangeParams.Variables[variableName]; ok {
-										item.Value = queryRangeParams.Variables[variableName]
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
 			var timeShiftBy int64
 			if len(query.Functions) > 0 {
 				for idx := range query.Functions {
@@ -1063,6 +1043,33 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				}
 			}
 			query.ShiftBy = timeShiftBy
+
+			if query.Filters == nil || len(query.Filters.Items) == 0 {
+				continue
+			}
+			for idx := range query.Filters.Items {
+				item := &query.Filters.Items[idx]
+				value := item.Value
+				if value != nil {
+					switch x := value.(type) {
+					case string:
+						variableName := strings.Trim(x, "{{ . }}")
+						if _, ok := queryRangeParams.Variables[variableName]; ok {
+							item.Value = queryRangeParams.Variables[variableName]
+						}
+					case []interface{}:
+						if len(x) > 0 {
+							switch x[0].(type) {
+							case string:
+								variableName := strings.Trim(x[0].(string), "{{ . }}")
+								if _, ok := queryRangeParams.Variables[variableName]; ok {
+									item.Value = queryRangeParams.Variables[variableName]
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 	queryRangeParams.Variables = formattedVars

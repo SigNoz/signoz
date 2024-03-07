@@ -39,7 +39,8 @@ export interface BuilderQuerieswithFormulaProps {
 	expressions: string[];
 	legendFormulas: string[];
 	additionalItems: TagFilterItem[][];
-	aggregateOperators: MetricAggregateOperator[];
+	timeAggregateOperators: MetricAggregateOperator[];
+	spaceAggregateOperators: MetricAggregateOperator[];
 	dataSource: DataSource;
 }
 

@@ -40,8 +40,9 @@
 	"LIST_LICENSES": "SigNoz | List of Licenses",
 	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
 	"SUPPORT": "SigNoz | Support",
-	"LOGS_SAVE_VIEWS": "SigNoz | Logs Save Views",
-	"TRACES_SAVE_VIEWS": "SigNoz | Traces Save Views",
+	"LOGS_SAVE_VIEWS": "SigNoz | Logs Saved Views",
+	"TRACES_SAVE_VIEWS": "SigNoz | Traces Saved Views",
 	"DEFAULT": "Open source Observability Platform | SigNoz",
-	"SHORTCUTS": "SigNoz | Shortcuts"
+	"SHORTCUTS": "SigNoz | Shortcuts",
+	"INTEGRATIONS_INSTALLED": "SigNoz | Integrations"
 }

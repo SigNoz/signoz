@@ -1,3 +1,4 @@
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -39,6 +40,7 @@ function GridCardGraph({
 	threshold,
 	variables,
 	fillSpans = false,
+	version,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -132,6 +134,7 @@ function GridCardGraph({
 			globalSelectedInterval,
 			variables: getDashboardVariables(variables),
 		},
+		version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				maxTime,
@@ -234,6 +237,7 @@ function GridCardGraph({
 					errorMessage={errorMessage}
 					isWarning={false}
 					name={name}
+					version={version}
 					onDragSelect={onDragSelect}
 					threshold={threshold}
 					headerMenuList={menuList}
@@ -253,6 +257,7 @@ GridCardGraph.defaultProps = {
 	isQueryEnabled: true,
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
+	version: 'v3',
 };
 
 export default memo(GridCardGraph);

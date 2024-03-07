@@ -23,6 +23,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
@@ -94,6 +95,8 @@ type APIHandler struct {
 	maxOpenConns int
 	dialTimeout  time.Duration
 
+	IntegrationsController *integrations.Controller
+
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
@@ -125,8 +128,12 @@ type APIHandlerOpts struct {
 	// feature flags querier
 	FeatureFlags interfaces.FeatureLookup
 
+	// Integrations
+	IntegrationsController *integrations.Controller
+
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
+
 	// cache
 	Cache cache.Cache
 
@@ -174,6 +181,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		alertManager:                  alertManager,
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
+		IntegrationsController:        opts.IntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
 		querierV2:                     querierv2,
@@ -2390,6 +2398,200 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	resp, _ := marshall(response)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resp)
+}
+
+// Integrations
+func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()
+
+	subRouter.HandleFunc(
+		"/install", am.ViewAccess(ah.InstallIntegration),
+	).Methods(http.MethodPost)
+
+	subRouter.HandleFunc(
+		"/uninstall", am.ViewAccess(ah.UninstallIntegration),
+	).Methods(http.MethodPost)
+
+	// Used for polling for status in v0
+	subRouter.HandleFunc(
+		"/{integrationId}/connection_status", am.ViewAccess(ah.GetIntegrationConnectionStatus),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"/{integrationId}", am.ViewAccess(ah.GetIntegration),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"", am.ViewAccess(ah.ListIntegrations),
+	).Methods(http.MethodGet)
+}
+
+func (ah *APIHandler) ListIntegrations(
+	w http.ResponseWriter, r *http.Request,
+) {
+	params := map[string]string{}
+	for k, values := range r.URL.Query() {
+		params[k] = values[0]
+	}
+
+	resp, apiErr := ah.IntegrationsController.ListIntegrations(
+		r.Context(), params,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integrations")
+		return
+	}
+	ah.Respond(w, resp)
+}
+
+func (ah *APIHandler) GetIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	integration, apiErr := ah.IntegrationsController.GetIntegration(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration details")
+		return
+	}
+
+	ah.Respond(w, integration)
+}
+
+func (ah *APIHandler) GetIntegrationConnectionStatus(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	connectionTests, apiErr := ah.IntegrationsController.GetIntegrationConnectionTests(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration connection tests")
+		return
+	}
+
+	lookbackSecondsStr := r.URL.Query().Get("lookback_seconds")
+	lookbackSeconds, err := strconv.ParseInt(lookbackSecondsStr, 10, 64)
+	if err != nil {
+		lookbackSeconds = 15 * 60
+	}
+
+	connectionStatus, apiErr := ah.calculateConnectionStatus(
+		r.Context(), connectionTests, lookbackSeconds,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to calculate integration connection status")
+		return
+	}
+
+	ah.Respond(w, connectionStatus)
+}
+
+func (ah *APIHandler) calculateConnectionStatus(
+	ctx context.Context,
+	connectionTests *integrations.IntegrationConnectionTests,
+	lookbackSeconds int64,
+) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
+	result := &integrations.IntegrationConnectionStatus{}
+
+	if connectionTests.Logs != nil {
+		qrParams := &v3.QueryRangeParamsV3{
+			Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
+			End:   time.Now().UnixMilli(),
+			CompositeQuery: &v3.CompositeQuery{
+				PanelType: v3.PanelTypeList,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						PageSize:          1,
+						Filters:           connectionTests.Logs,
+						QueryName:         "A",
+						DataSource:        v3.DataSourceLogs,
+						Expression:        "A",
+						AggregateOperator: v3.AggregateOperatorNoOp,
+					},
+				},
+			},
+		}
+		queryRes, err, _ := ah.querier.QueryRange(
+			ctx, qrParams, map[string]v3.AttributeKey{},
+		)
+		if err != nil {
+			return nil, model.InternalError(fmt.Errorf(
+				"could not query for integration connection status: %w", err,
+			))
+		}
+		if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+			lastLog := queryRes[0].List[0]
+
+			resourceSummaryParts := []string{}
+			lastLogResourceAttribs := lastLog.Data["resources_string"]
+			if lastLogResourceAttribs != nil {
+				resourceAttribs, ok := lastLogResourceAttribs.(*map[string]string)
+				if !ok {
+					return nil, model.InternalError(fmt.Errorf(
+						"could not cast log resource attribs",
+					))
+				}
+				for k, v := range *resourceAttribs {
+					resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+						"%s=%s", k, v,
+					))
+				}
+			}
+			lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
+
+			result.Logs = &integrations.SignalConnectionStatus{
+				LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+				LastReceivedFrom:     lastLogResourceSummary,
+			}
+		}
+	}
+
+	return result, nil
+}
+
+func (ah *APIHandler) InstallIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.InstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	integration, apiErr := ah.IntegrationsController.Install(
+		r.Context(), &req,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, integration)
+}
+
+func (ah *APIHandler) UninstallIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.UninstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, map[string]interface{}{})
 }
 
 // logs

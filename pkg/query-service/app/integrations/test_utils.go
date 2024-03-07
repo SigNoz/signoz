@@ -7,9 +7,11 @@ import (
 	"testing"
 
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/rules"
 )
 
 func NewTestSqliteDB(t *testing.T) (
@@ -61,35 +63,70 @@ func (t *TestAvailableIntegrationsRepo) list(
 					Email:    "integrations@signoz.io",
 					HomePage: "https://signoz.io",
 				},
+				Icon: `data:image/svg+xml;utf8,<svg ... > ... </svg>`,
 			},
-			IntegrationAssets: IntegrationAssets{
-				LogPipeline: &logparsingpipeline.PostablePipeline{
-					Name:    "pipeline1",
-					Alias:   "pipeline1",
-					Enabled: true,
-					Filter: &v3.FilterSet{
-						Operator: "AND",
-						Items: []v3.FilterItem{
-							{
-								Key: v3.AttributeKey{
-									Key:      "method",
-									DataType: v3.AttributeKeyDataTypeString,
-									Type:     v3.AttributeKeyTypeTag,
+			Categories: []string{"testcat1", "testcat2"},
+			Overview:   "test integration overview",
+			Configuration: []IntegrationConfigStep{
+				{
+					Title:        "Step 1",
+					Instructions: "Set source attrib on your signals",
+				},
+			},
+			DataCollected: DataCollectedForIntegration{
+				Logs:    []CollectedLogAttribute{},
+				Metrics: []CollectedMetric{},
+			},
+			Assets: IntegrationAssets{
+				Logs: LogsAssets{
+					Pipelines: []logparsingpipeline.PostablePipeline{
+						{
+							Name:    "pipeline1",
+							Alias:   "pipeline1",
+							Enabled: true,
+							Filter: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{
+										Key: v3.AttributeKey{
+											Key:      "source",
+											DataType: v3.AttributeKeyDataTypeString,
+											Type:     v3.AttributeKeyTypeTag,
+										},
+										Operator: "=",
+										Value:    "nginx",
+									},
 								},
-								Operator: "=",
-								Value:    "GET",
+							},
+							Config: []logparsingpipeline.PipelineOperator{
+								{
+									OrderId: 1,
+									ID:      "add",
+									Type:    "add",
+									Field:   "attributes.test",
+									Value:   "val",
+									Enabled: true,
+									Name:    "test add",
+								},
 							},
 						},
 					},
-					Config: []logparsingpipeline.PipelineOperator{
+				},
+				Dashboards: []dashboards.Dashboard{},
+				Alerts:     []rules.PostableRule{},
+			},
+			ConnectionTests: &IntegrationConnectionTests{
+				Logs: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
 						{
-							OrderId: 1,
-							ID:      "add",
-							Type:    "add",
-							Field:   "attributes.test",
-							Value:   "val",
-							Enabled: true,
-							Name:    "test add",
+							Key: v3.AttributeKey{
+								Key:      "source",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: "=",
+							Value:    "nginx",
 						},
 					},
 				},
@@ -104,35 +141,70 @@ func (t *TestAvailableIntegrationsRepo) list(
 					Email:    "integrations@signoz.io",
 					HomePage: "https://signoz.io",
 				},
+				Icon: `data:image/svg+xml;utf8,<svg ... > ... </svg>`,
 			},
-			IntegrationAssets: IntegrationAssets{
-				LogPipeline: &logparsingpipeline.PostablePipeline{
-					Name:    "pipeline2",
-					Alias:   "pipeline2",
-					Enabled: true,
-					Filter: &v3.FilterSet{
-						Operator: "AND",
-						Items: []v3.FilterItem{
-							{
-								Key: v3.AttributeKey{
-									Key:      "method",
-									DataType: v3.AttributeKeyDataTypeString,
-									Type:     v3.AttributeKeyTypeTag,
+			Categories: []string{"testcat1", "testcat2"},
+			Overview:   "test integration overview",
+			Configuration: []IntegrationConfigStep{
+				{
+					Title:        "Step 1",
+					Instructions: "Set source attrib on your signals",
+				},
+			},
+			DataCollected: DataCollectedForIntegration{
+				Logs:    []CollectedLogAttribute{},
+				Metrics: []CollectedMetric{},
+			},
+			Assets: IntegrationAssets{
+				Logs: LogsAssets{
+					Pipelines: []logparsingpipeline.PostablePipeline{
+						{
+							Name:    "pipeline2",
+							Alias:   "pipeline2",
+							Enabled: true,
+							Filter: &v3.FilterSet{
+								Operator: "AND",
+								Items: []v3.FilterItem{
+									{
+										Key: v3.AttributeKey{
+											Key:      "source",
+											DataType: v3.AttributeKeyDataTypeString,
+											Type:     v3.AttributeKeyTypeTag,
+										},
+										Operator: "=",
+										Value:    "redis",
+									},
 								},
-								Operator: "=",
-								Value:    "GET",
+							},
+							Config: []logparsingpipeline.PipelineOperator{
+								{
+									OrderId: 1,
+									ID:      "add",
+									Type:    "add",
+									Field:   "attributes.test",
+									Value:   "val",
+									Enabled: true,
+									Name:    "test add",
+								},
 							},
 						},
 					},
-					Config: []logparsingpipeline.PipelineOperator{
+				},
+				Dashboards: []dashboards.Dashboard{},
+				Alerts:     []rules.PostableRule{},
+			},
+			ConnectionTests: &IntegrationConnectionTests{
+				Logs: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
 						{
-							OrderId: 1,
-							ID:      "add",
-							Type:    "add",
-							Field:   "attributes.test",
-							Value:   "val",
-							Enabled: true,
-							Name:    "test add",
+							Key: v3.AttributeKey{
+								Key:      "source",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: "=",
+							Value:    "nginx",
 						},
 					},
 				},
