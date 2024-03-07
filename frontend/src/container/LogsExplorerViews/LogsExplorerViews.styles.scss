@@ -4,16 +4,11 @@
 	display: flex;
 	flex-direction: column;
 
-	.fullscreen {
-		flex: 1;
-		display: flex;	
-		width: auto;
-	}
-
 	.logs-explorer-views-types {
 		width: -webkit-fill-available;
 		display: flex;
 		flex-direction: column;
+		flex: 1;
 
 		.views-tabs-container {
 			padding: 8px 16px;
