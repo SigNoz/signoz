@@ -713,14 +713,17 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 	zap.S().Debugf("ruleid:", r.ID(), "\t resultmap(potential alerts):", len(resultMap))
 
 	// if the data is missing for `For` duration then we should send alert
-	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(r.Condition().For).Before(time.Now()) {
+	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(r.Condition().AbsentFor).Before(time.Now()) {
 		zap.S().Debugf("ruleid:", r.ID(), "\t msg: no data found for rule condition")
 		lbls := labels.NewBuilder(labels.Labels{})
-		lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format("2006-01-02 15:04:05"))
-
-		resultMap[lbls.Labels().Hash()] = Sample{
-			Metric: lbls.Labels(),
+		if !r.lastTimestampWithDatapoints.IsZero() {
+			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format("2006-01-02 15:04:05"))
 		}
+		result = append(result, Sample{
+			Metric:    lbls.Labels(),
+			IsMissing: true,
+		})
+		return result, nil
 	}
 
 	for _, sample := range resultMap {
@@ -1189,6 +1192,11 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
+			if smpl.IsMissing {
+				if a.Name == labels.AlertDescriptionLabel || a.Name == labels.AlertSummaryLabel {
+					a.Value = labels.AlertMissingData
+				}
+			}
 			annotations = append(annotations, labels.Label{Name: normalizeLabelName(a.Name), Value: expand(a.Value)})
 		}
 

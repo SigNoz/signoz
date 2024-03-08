@@ -33,7 +33,7 @@ export interface RuleCondition {
 	targetUnit?: string;
 	selectedQueryName?: string;
 	alertOnAbsent?: boolean | undefined;
-	for?: number | undefined;
+	absentFor?: number | undefined;
 }
 
 export interface Labels {

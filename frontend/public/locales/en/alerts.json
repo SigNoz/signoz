@@ -111,7 +111,7 @@
 	"exceptions_based_alert": "Exceptions-based Alert",
 	"exceptions_based_alert_desc": "Send a notification when a condition occurs in the exceptions data.",
 	"field_unit": "Threshold unit",
-	"text_alert_on_absent": "Send a notification when the metric is absent for",
+	"text_alert_on_absent": "Send a notification if data is missing for",
 	"text_for": "minutes",
 	"selected_query_placeholder": "Select query"
 }
