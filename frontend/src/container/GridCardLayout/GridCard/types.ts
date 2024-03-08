@@ -1,7 +1,6 @@
 import { ToggleGraphProps } from 'components/Graph/types';
-import { UplotProps } from 'components/Uplot/Uplot';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
+import { MutableRefObject, ReactNode } from 'react';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
@@ -16,34 +15,25 @@ export interface GraphVisibilityLegendEntryProps {
 	legendEntry: LegendEntryProps[];
 }
 
-export interface WidgetGraphComponentProps extends UplotProps {
+export interface WidgetGraphComponentProps {
 	widget: Widgets;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>;
 	errorMessage: string | undefined;
-	name: string;
 	version?: string;
-	onDragSelect: (start: number, end: number) => void;
-	onClickHandler?: OnClickPluginOpts['onClick'];
 	threshold?: ReactNode;
 	headerMenuList: MenuItemKeys[];
 	isWarning: boolean;
-	graphVisibiltyState: boolean[];
-	setGraphVisibility: Dispatch<SetStateAction<boolean[]>>;
 	isFetchingResponse: boolean;
 }
 
 export interface GridCardGraphProps {
 	widget: Widgets;
-	name: string;
-	onDragSelect?: (start: number, end: number) => void;
-	onClickHandler?: OnClickPluginOpts['onClick'];
 	threshold?: ReactNode;
 	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
 	isQueryEnabled: boolean;
 	variables?: Dashboard['data']['variables'];
-	fillSpans?: boolean;
 	version?: string;
 }
 

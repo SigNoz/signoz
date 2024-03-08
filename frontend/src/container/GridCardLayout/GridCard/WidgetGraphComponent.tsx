@@ -6,21 +6,14 @@ import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import GridPanelSwitch from 'container/GridPanelSwitch';
+// import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-} from 'react';
+import { Dispatch, SetStateAction, useCallback, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -32,23 +25,16 @@ import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
-import { getLocalStorageGraphVisibilityState } from './utils';
+// import { getLocalStorageGraphVisibilityState } from './utils';
 
 function WidgetGraphComponent({
 	widget,
 	queryResponse,
 	errorMessage,
-	name,
 	version,
 	threshold,
 	headerMenuList,
 	isWarning,
-	data,
-	options,
-	graphVisibiltyState,
-	onClickHandler,
-	onDragSelect,
-	setGraphVisibility,
 	isFetchingResponse,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -63,14 +49,14 @@ function WidgetGraphComponent({
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		if (!lineChartRef.current) return;
+	// useEffect(() => {
+	// 	if (!lineChartRef.current) return;
 
-		graphVisibiltyState.forEach((state, index) => {
-			lineChartRef.current?.toggleGraph(index, state);
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	// 	graphVisibiltyState.forEach((state, index) => {
+	// 		lineChartRef.current?.toggleGraph(index, state);
+	// 	});
+	// 	// eslint-disable-next-line react-hooks/exhaustive-deps
+	// }, []);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -205,15 +191,15 @@ function WidgetGraphComponent({
 		const existingSearchParams = new URLSearchParams(search);
 		existingSearchParams.delete(QueryParams.expandedWidgetId);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
-		if (queryResponse.data?.payload) {
-			const {
-				graphVisibilityStates: localStoredVisibilityState,
-			} = getLocalStorageGraphVisibilityState({
-				apiResponse: queryResponse.data.payload.data.result,
-				name,
-			});
-			setGraphVisibility(localStoredVisibilityState);
-		}
+		// if (queryResponse.data?.payload) {
+		// 	const {
+		// 		graphVisibilityStates: localStoredVisibilityState,
+		// 	} = getLocalStorageGraphVisibilityState({
+		// 		apiResponse: queryResponse.data.payload.data.result,
+		// 		name,
+		// 	});
+		// 	setGraphVisibility(localStoredVisibilityState);
+		// }
 		history.push({
 			pathname,
 			search: createQueryParams(updatedQueryParams),
@@ -252,7 +238,7 @@ function WidgetGraphComponent({
 			onBlur={(): void => {
 				setHovered(false);
 			}}
-			id={name}
+			id={widget.id}
 		>
 			<Modal
 				destroyOnClose
@@ -278,14 +264,14 @@ function WidgetGraphComponent({
 				className="widget-full-view"
 			>
 				<FullView
-					name={`${name}expanded`}
+					name={`${widget.id}expanded`}
 					version={version}
-					originalName={name}
+					originalName={widget.id}
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
 					parentChartRef={lineChartRef}
-					onDragSelect={onDragSelect}
+					// onDragSelect={onDragSelect}
 				/>
 			</Modal>
 
@@ -311,7 +297,7 @@ function WidgetGraphComponent({
 					className={cx('widget-graph-container', widget.panelTypes)}
 					ref={graphRef}
 				>
-					<GridPanelSwitch
+					{/* <GridPanelSwitch
 						panelType={widget.panelTypes}
 						data={data}
 						name={name}
@@ -325,7 +311,7 @@ function WidgetGraphComponent({
 						selectedLogFields={widget.selectedLogFields}
 						dataSource={widget.query.builder?.queryData[0]?.dataSource}
 						selectedTracesFields={widget.selectedTracesFields}
-					/>
+					/> */}
 				</div>
 			)}
 		</div>
