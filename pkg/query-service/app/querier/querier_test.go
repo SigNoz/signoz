@@ -701,3 +701,253 @@ func TestQueryRangeValueType(t *testing.T) {
 		}
 	}
 }
+
+// test timeshift
+func TestQueryRangeTimeShift(t *testing.T) {
+	params := []*v3.QueryRangeParamsV3{
+		{
+			Start: 1675115596722,               //31, 3:23
+			End:   1675115596722 + 120*60*1000, //31, 5:23
+			Step:  5 * time.Minute.Milliseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						StepInterval:       60,
+						DataSource:         v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{},
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items:    []v3.FilterItem{},
+						},
+						AggregateOperator: v3.AggregateOperatorCount,
+						Expression:        "A",
+						ShiftBy:           86400,
+					},
+				},
+			},
+		},
+	}
+	opts := QuerierOptions{
+		Reader:       nil,
+		FluxInterval: 5 * time.Minute,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		TestingMode:  true,
+	}
+	q := NewQuerier(opts)
+	// logs queries are generates in ns
+	expectedTimeRangeInQueryString := fmt.Sprintf("timestamp >= %d AND timestamp <= %d", (1675115596722-86400*1000)*1000000, ((1675115596722+120*60*1000)-86400*1000)*1000000)
+
+	for i, param := range params {
+		_, err, errByName := q.QueryRange(context.Background(), param, nil)
+		if err != nil {
+			t.Errorf("expected no error, got %s", err)
+		}
+		if len(errByName) > 0 {
+			t.Errorf("expected no error, got %v", errByName)
+		}
+		if !strings.Contains(q.QueriesExecuted()[i], expectedTimeRangeInQueryString) {
+			t.Errorf("expected query to contain %s, got %s", expectedTimeRangeInQueryString, q.QueriesExecuted()[i])
+		}
+	}
+}
+
+// timeshift works with caching
+func TestQueryRangeTimeShiftWithCache(t *testing.T) {
+	params := []*v3.QueryRangeParamsV3{
+		{
+			Start: 1675115596722 + 60*60*1000 - 86400*1000,  //30, 4:23
+			End:   1675115596722 + 120*60*1000 - 86400*1000, //30, 5:23
+			Step:  5 * time.Minute.Milliseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						StepInterval:       60,
+						DataSource:         v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{},
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items:    []v3.FilterItem{},
+						},
+						AggregateOperator: v3.AggregateOperatorCount,
+						Expression:        "A",
+						GroupBy: []v3.AttributeKey{
+							{Key: "service_name", IsColumn: false},
+							{Key: "method", IsColumn: false},
+						},
+					},
+				},
+			},
+		},
+		{
+			Start: 1675115596722,               //31, 3:23
+			End:   1675115596722 + 120*60*1000, //31, 5:23
+			Step:  5 * time.Minute.Milliseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						StepInterval:       60,
+						DataSource:         v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{},
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items:    []v3.FilterItem{},
+						},
+						AggregateOperator: v3.AggregateOperatorCount,
+						Expression:        "A",
+						ShiftBy:           86400,
+						GroupBy: []v3.AttributeKey{
+							{Key: "service_name", IsColumn: false},
+							{Key: "method", IsColumn: false},
+						},
+					},
+				},
+			},
+		},
+	}
+	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	opts := QuerierOptions{
+		Cache:        cache,
+		Reader:       nil,
+		FluxInterval: 5 * time.Minute,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		TestingMode:  true,
+		ReturnedSeries: []*v3.Series{
+			{
+				Labels: map[string]string{},
+				Points: []v3.Point{
+					{Timestamp: 1675115596722 + 60*60*1000 - 86400*1000, Value: 1},
+					{Timestamp: 1675115596722 + 120*60*1000 - 86400*1000 + 60*60*1000, Value: 2},
+				},
+			},
+		},
+	}
+	q := NewQuerier(opts)
+
+	// logs queries are generates in ns
+	expectedTimeRangeInQueryString := []string{
+		fmt.Sprintf("timestamp >= %d AND timestamp <= %d", (1675115596722+60*60*1000-86400*1000)*1000000, (1675115596722+120*60*1000-86400*1000)*1000000),
+		fmt.Sprintf("timestamp >= %d AND timestamp <= %d", (1675115596722-86400*1000)*1000000, ((1675115596722+60*60*1000)-86400*1000-1)*1000000),
+	}
+
+	for i, param := range params {
+		_, err, errByName := q.QueryRange(context.Background(), param, nil)
+		if err != nil {
+			t.Errorf("expected no error, got %s", err)
+		}
+		if len(errByName) > 0 {
+			t.Errorf("expected no error, got %v", errByName)
+		}
+		if !strings.Contains(q.QueriesExecuted()[i], expectedTimeRangeInQueryString[i]) {
+			t.Errorf("expected query to contain %s, got %s", expectedTimeRangeInQueryString[i], q.QueriesExecuted()[i])
+		}
+	}
+}
+
+// timeshift with limit queries
+func TestQueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
+	params := []*v3.QueryRangeParamsV3{
+		{
+			Start: 1675115596722 + 60*60*1000 - 86400*1000,  //30, 4:23
+			End:   1675115596722 + 120*60*1000 - 86400*1000, //30, 5:23
+			Step:  5 * time.Minute.Milliseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						StepInterval:       60,
+						DataSource:         v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{},
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items:    []v3.FilterItem{},
+						},
+						AggregateOperator: v3.AggregateOperatorCount,
+						Expression:        "A",
+						GroupBy: []v3.AttributeKey{
+							{Key: "service_name", IsColumn: false},
+							{Key: "method", IsColumn: false},
+						},
+						Limit: 5,
+					},
+				},
+			},
+		},
+		{
+			Start: 1675115596722,               //31, 3:23
+			End:   1675115596722 + 120*60*1000, //31, 5:23
+			Step:  5 * time.Minute.Milliseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						StepInterval:       60,
+						DataSource:         v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{},
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items:    []v3.FilterItem{},
+						},
+						AggregateOperator: v3.AggregateOperatorCount,
+						Expression:        "A",
+						ShiftBy:           86400,
+						GroupBy: []v3.AttributeKey{
+							{Key: "service_name", IsColumn: false},
+							{Key: "method", IsColumn: false},
+						},
+						Limit: 5,
+					},
+				},
+			},
+		},
+	}
+	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	opts := QuerierOptions{
+		Cache:        cache,
+		Reader:       nil,
+		FluxInterval: 5 * time.Minute,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		TestingMode:  true,
+		ReturnedSeries: []*v3.Series{
+			{
+				Labels: map[string]string{},
+				Points: []v3.Point{
+					{Timestamp: 1675115596722 + 60*60*1000 - 86400*1000, Value: 1},
+					{Timestamp: 1675115596722 + 120*60*1000 - 86400*1000 + 60*60*1000, Value: 2},
+				},
+			},
+		},
+	}
+	q := NewQuerier(opts)
+
+	// logs queries are generates in ns
+	expectedTimeRangeInQueryString := []string{
+		fmt.Sprintf("timestamp >= %d AND timestamp <= %d", (1675115596722+60*60*1000-86400*1000)*1000000, (1675115596722+120*60*1000-86400*1000)*1000000),
+		fmt.Sprintf("timestamp >= %d AND timestamp <= %d", (1675115596722-86400*1000)*1000000, ((1675115596722+60*60*1000)-86400*1000-1)*1000000),
+	}
+
+	for i, param := range params {
+		_, err, errByName := q.QueryRange(context.Background(), param, nil)
+		if err != nil {
+			t.Errorf("expected no error, got %s", err)
+		}
+		if len(errByName) > 0 {
+			t.Errorf("expected no error, got %v", errByName)
+		}
+		if !strings.Contains(q.QueriesExecuted()[i], expectedTimeRangeInQueryString[i]) {
+			t.Errorf("expected query to contain %s, got %s", expectedTimeRangeInQueryString[i], q.QueriesExecuted()[i])
+		}
+	}
+}
