@@ -52,13 +52,11 @@ export interface FullViewProps {
 	name: string;
 	version?: string;
 	originalName: string;
-	options: uPlot.Options;
 	yAxisUnit?: string;
 	onDragSelect: (start: number, end: number) => void;
 	isDependedDataLoaded?: boolean;
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
 	parentChartRef: GraphManagerProps['lineChartRef'];
-	parentGraphVisibilityState: Dispatch<SetStateAction<boolean[]>>;
 }
 
 export interface GraphManagerProps extends UplotProps {

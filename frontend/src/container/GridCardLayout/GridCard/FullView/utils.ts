@@ -1,4 +1,6 @@
 import { LOCALSTORAGE } from 'constants/localStorage';
+import getLabelName from 'lib/getLabelName';
+import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 
 import {
@@ -54,6 +56,20 @@ export const getAbbreviatedLabel = (label: string): string => {
 	}
 	return newLabel;
 };
+
+export const showAllDataSetFromApiResponse = (
+	apiResponse: QueryData[],
+): LegendEntryProps[] =>
+	apiResponse.map(
+		(item): LegendEntryProps => ({
+			label: getLabelName(
+				item.metric || {},
+				item.queryName || '',
+				item.legend || '',
+			),
+			show: true,
+		}),
+	);
 
 export const showAllDataSet = (options: uPlot.Options): LegendEntryProps[] =>
 	options.series

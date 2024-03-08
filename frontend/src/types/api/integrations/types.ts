@@ -97,7 +97,7 @@ export interface InstalledIntegrationsSuccessResponse {
 }
 
 export interface UninstallIntegrationProps {
-	integrationId: string;
+	integration_id: string;
 }
 
 export interface UninstallIntegrationSuccessResponse {
