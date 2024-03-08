@@ -224,7 +224,8 @@ var TimeoutExcludedRoutes = map[string]bool{
 // alert related constants
 const (
 	// AlertHelpPage is used in case default alert repo url is not set
-	AlertHelpPage = "https://signoz.io/docs/userguide/alerts-management/#generator-url"
+	AlertHelpPage   = "https://signoz.io/docs/userguide/alerts-management/#generator-url"
+	AlertTimeFormat = "2006-01-02 15:04:05"
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {

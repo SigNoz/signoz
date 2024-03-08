@@ -558,8 +558,8 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 				if colName == "ts" || colName == "interval" {
 					sample.Point.T = timval.Unix()
 				} else {
-					lbls.Set(colName, timval.Format("2006-01-02 15:04:05"))
-					lblsOrig.Set(columnNames[i], timval.Format("2006-01-02 15:04:05"))
+					lbls.Set(colName, timval.Format(constants.AlertTimeFormat))
+					lblsOrig.Set(columnNames[i], timval.Format(constants.AlertTimeFormat))
 				}
 
 			case *float64:
@@ -717,7 +717,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		zap.S().Debugf("ruleid:", r.ID(), "\t msg: no data found for rule condition")
 		lbls := labels.NewBuilder(labels.Labels{})
 		if !r.lastTimestampWithDatapoints.IsZero() {
-			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format("2006-01-02 15:04:05"))
+			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
 		}
 		result = append(result, Sample{
 			Metric:    lbls.Labels(),
