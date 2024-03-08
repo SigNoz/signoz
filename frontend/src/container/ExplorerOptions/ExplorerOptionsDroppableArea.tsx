@@ -4,7 +4,6 @@ import './ExplorerOptionsDroppableArea.styles.scss';
 import { useDroppable } from '@dnd-kit/core';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tooltip } from 'antd';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Disc3, X } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
@@ -28,19 +27,9 @@ function ExplorerOptionsDroppableArea({
 	handleClearSelect,
 	onUpdateQueryHandler,
 }: DroppableAreaProps): JSX.Element {
-	const { isOver, setNodeRef } = useDroppable({
+	const { setNodeRef } = useDroppable({
 		id: 'explorer-options-droppable',
 	});
-
-	const isDarkMode = useIsDarkMode();
-
-	const style = {
-		backgroundColor: isOver
-			? isDarkMode
-				? 'rgba(255, 0, 0, 0.20)'
-				: Color.BG_VANILLA_300
-			: undefined,
-	};
 
 	const handleShowExplorerOption = (): void => {
 		if (setIsExplorerOptionHidden) {
@@ -50,13 +39,7 @@ function ExplorerOptionsDroppableArea({
 	};
 
 	return (
-		<div
-			ref={setNodeRef}
-			className="explorer-option-droppable-container"
-			style={{
-				...style,
-			}}
-		>
+		<div ref={setNodeRef} className="explorer-option-droppable-container">
 			{isExplorerOptionHidden && (
 				<>
 					{isQueryUpdated && (
