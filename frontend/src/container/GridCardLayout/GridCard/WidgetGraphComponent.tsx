@@ -13,14 +13,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-} from 'react';
+import { Dispatch, SetStateAction, useCallback, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -63,14 +56,14 @@ function WidgetGraphComponent({
 	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		if (!lineChartRef.current) return;
+	// useEffect(() => {
+	// 	if (!lineChartRef.current) return;
 
-		graphVisibility.forEach((state, index) => {
-			lineChartRef.current?.toggleGraph(index, state);
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	// 	graphVisibiltyState.forEach((state, index) => {
+	// 		lineChartRef.current?.toggleGraph(index, state);
+	// 	});
+	// 	// eslint-disable-next-line react-hooks/exhaustive-deps
+	// }, []);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -284,6 +277,7 @@ function WidgetGraphComponent({
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
+					// onDragSelect={onDragSelect}
 				/>
 			</Modal>
 

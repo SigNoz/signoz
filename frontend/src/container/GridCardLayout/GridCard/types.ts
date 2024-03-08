@@ -1,7 +1,7 @@
 import { ToggleGraphProps } from 'components/Graph/types';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
+import { MutableRefObject, ReactNode } from 'react';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
