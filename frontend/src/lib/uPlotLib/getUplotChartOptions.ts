@@ -6,6 +6,7 @@ import './uPlotLib.styles.scss';
 
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
+import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { Dimensions } from 'hooks/useDimensions';
 import { convertValue } from 'lib/getConvertedValue';
@@ -203,6 +204,11 @@ export const getUPlotChartOptions = ({
 											newGraphVisibilityStates.fill(false);
 											newGraphVisibilityStates[index + 1] = true;
 										}
+										saveLegendEntriesToLocalStorage({
+											options: self,
+											graphVisibilityState: newGraphVisibilityStates,
+											name: id || '',
+										});
 										return newGraphVisibilityStates;
 									});
 								}
