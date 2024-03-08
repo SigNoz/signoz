@@ -1,11 +1,12 @@
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
+import { themeColors } from 'constants/theme';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import getLabelName from 'lib/getLabelName';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
-import { colors } from '../../getRandomColor';
 import { placement } from '../placement';
+import { generateColor } from '../utils/generateColor';
 
 dayjs.extend(customParseFormat);
 
@@ -17,6 +18,7 @@ interface UplotTooltipDataProps {
 	value: number;
 	tooltipValue: string;
 	textContent: string;
+	queryName: string;
 }
 
 const generateTooltipContent = (
@@ -34,6 +36,7 @@ const generateTooltipContent = (
 
 	let tooltipTitle = '';
 	const formattedData: Record<string, UplotTooltipDataProps> = {};
+	const duplicatedLegendLabels: Record<string, true> = {};
 
 	function sortTooltipContentBasedOnValue(
 		tooltipDataObj: Record<string, UplotTooltipDataProps>,
@@ -54,23 +57,48 @@ const generateTooltipContent = (
 				const value = data[index][idx];
 				const label = getLabelName(metric, queryName || '', legend || '');
 
+				const color = generateColor(label, themeColors.chartcolors);
+
+				let tooltipItemLabel = label;
+
 				if (Number.isFinite(value)) {
 					const tooltipValue = getToolTipValue(value, yAxisUnit);
+					if (
+						duplicatedLegendLabels[label] ||
+						Object.prototype.hasOwnProperty.call(formattedData, label)
+					) {
+						duplicatedLegendLabels[label] = true;
+						const tempDataObj = formattedData[label];
+
+						if (tempDataObj) {
+							const newLabel = `${tempDataObj.queryName}: ${tempDataObj.label}`;
+
+							tempDataObj.textContent = `${newLabel} : ${tempDataObj.tooltipValue}`;
+
+							formattedData[newLabel] = tempDataObj;
+
+							delete formattedData[label];
+						}
+
+						tooltipItemLabel = `${queryName}: ${label}`;
+					}
 
 					const dataObj = {
 						show: item.show || false,
-						color: colors[(index - 1) % colors.length],
+						color,
 						label,
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore
 						focus: item?._focus || false,
 						value,
 						tooltipValue,
-						textContent: `${label} : ${tooltipValue}`,
+						queryName,
+						textContent: `${tooltipItemLabel} : ${tooltipValue}`,
 					};
 
 					tooltipCount += 1;
-					formattedData[label] = dataObj;
+
+					formattedData[tooltipItemLabel] = dataObj;
 				}
 			}
 		});

@@ -1,6 +1,7 @@
 import { WarningFilled } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
@@ -35,7 +36,7 @@ function ServiceMetricTable({
 	const { data: licenseData, isFetching } = useLicense();
 	const isCloudUserVal = isCloudUser();
 
-	const queries = useGetQueriesRange(queryRangeRequestData, {
+	const queries = useGetQueriesRange(queryRangeRequestData, ENTITY_VERSION_V4, {
 		queryKey: [
 			`GetMetricsQueryRange-${queryRangeRequestData[0].selectedTime}-${globalSelectedInterval}`,
 			maxTime,
@@ -91,6 +92,11 @@ function ServiceMetricTable({
 			<ResourceAttributesFilter />
 
 			<ResizeTable
+				pagination={{
+					defaultPageSize: 10,
+					showTotal: (total: number, range: number[]): string =>
+						`${range[0]}-${range[1]} of ${total} items`,
+				}}
 				columns={tableColumns}
 				loading={isLoading}
 				dataSource={services}

@@ -4,7 +4,9 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './uPlotLib.styles.scss';
 
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
+import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { Dimensions } from 'hooks/useDimensions';
 import { convertValue } from 'lib/getConvertedValue';
@@ -19,11 +21,12 @@ import getSeries from './utils/getSeriesData';
 import { getXAxisScale } from './utils/getXAxisScale';
 import { getYAxisScale } from './utils/getYAxisScale';
 
-interface GetUPlotChartOptions {
+export interface GetUPlotChartOptions {
 	id?: string;
 	apiResponse?: MetricRangePayloadProps;
 	dimensions: Dimensions;
 	isDarkMode: boolean;
+	panelType?: PANEL_TYPES;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	yAxisUnit?: string;
 	onClickHandler?: OnClickPluginOpts['onClick'];
@@ -35,6 +38,8 @@ interface GetUPlotChartOptions {
 	fillSpans?: boolean;
 	minTimeScale?: number;
 	maxTimeScale?: number;
+	softMin: number | null;
+	softMax: number | null;
 }
 
 export const getUPlotChartOptions = ({
@@ -51,6 +56,9 @@ export const getUPlotChartOptions = ({
 	setGraphsVisibilityStates,
 	thresholds,
 	fillSpans,
+	softMax,
+	softMin,
+	panelType,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -87,11 +95,13 @@ export const getUPlotChartOptions = ({
 				...timeScaleProps,
 			},
 			y: {
-				...getYAxisScale(
+				...getYAxisScale({
 					thresholds,
-					apiResponse?.data.newResult.data.result,
+					series: apiResponse?.data.newResult.data.result,
 					yAxisUnit,
-				),
+					softMax,
+					softMin,
+				}),
 			},
 		},
 		plugins: [
@@ -194,6 +204,11 @@ export const getUPlotChartOptions = ({
 											newGraphVisibilityStates.fill(false);
 											newGraphVisibilityStates[index + 1] = true;
 										}
+										saveLegendEntriesToLocalStorage({
+											options: self,
+											graphVisibilityState: newGraphVisibilityStates,
+											name: id || '',
+										});
 										return newGraphVisibilityStates;
 									});
 								}
@@ -203,12 +218,12 @@ export const getUPlotChartOptions = ({
 				},
 			],
 		},
-		series: getSeries(
+		series: getSeries({
 			apiResponse,
-			apiResponse?.data.result,
+			widgetMetaData: apiResponse?.data.result,
 			graphsVisibilityStates,
-			fillSpans,
-		),
+			panelType,
+		}),
 		axes: getAxes(isDarkMode, yAxisUnit),
 	};
 };

@@ -5,6 +5,7 @@ import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
@@ -17,7 +18,6 @@ import {
 	SetStateAction,
 	useCallback,
 	useEffect,
-	useMemo,
 	useRef,
 	useState,
 } from 'react';
@@ -32,20 +32,24 @@ import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
-import { getGraphVisibilityStateOnDataChange } from './utils';
+import { getLocalStorageGraphVisibilityState } from './utils';
 
 function WidgetGraphComponent({
 	widget,
 	queryResponse,
 	errorMessage,
 	name,
-	onClickHandler,
+	version,
 	threshold,
 	headerMenuList,
 	isWarning,
 	data,
 	options,
+	graphVisibiltyState,
+	onClickHandler,
 	onDragSelect,
+	setGraphVisibility,
+	isFetchingResponse,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -59,29 +63,14 @@ function WidgetGraphComponent({
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
 
-	const { graphVisibilityStates: localStoredVisibilityStates } = useMemo(
-		() =>
-			getGraphVisibilityStateOnDataChange({
-				options,
-				isExpandedName: true,
-				name,
-			}),
-		[options, name],
-	);
-
-	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
-		boolean[]
-	>(localStoredVisibilityStates);
-
 	useEffect(() => {
-		setGraphsVisibilityStates(localStoredVisibilityStates);
 		if (!lineChartRef.current) return;
 
-		localStoredVisibilityStates.forEach((state, index) => {
+		graphVisibiltyState.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);
 		});
-		setGraphsVisibilityStates(localStoredVisibilityStates);
-	}, [localStoredVisibilityStates]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -124,6 +113,7 @@ function WidgetGraphComponent({
 				if (setSelectedDashboard && updatedDashboard.payload) {
 					setSelectedDashboard(updatedDashboard.payload);
 				}
+				setDeleteModal(false);
 				featureResponse.refetch();
 			},
 			onError: () => {
@@ -215,13 +205,26 @@ function WidgetGraphComponent({
 		const existingSearchParams = new URLSearchParams(search);
 		existingSearchParams.delete(QueryParams.expandedWidgetId);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
+		if (queryResponse.data?.payload) {
+			const {
+				graphVisibilityStates: localStoredVisibilityState,
+			} = getLocalStorageGraphVisibilityState({
+				apiResponse: queryResponse.data.payload.data.result,
+				name,
+			});
+			setGraphVisibility(localStoredVisibilityState);
+		}
 		history.push({
 			pathname,
 			search: createQueryParams(updatedQueryParams),
 		});
 	};
 
-	if (queryResponse.isLoading || queryResponse.status === 'idle') {
+	const loadingState =
+		(queryResponse.isLoading || queryResponse.status === 'idle') &&
+		widget.panelTypes !== PANEL_TYPES.LIST;
+
+	if (loadingState) {
 		return (
 			<Skeleton
 				style={{
@@ -255,6 +258,7 @@ function WidgetGraphComponent({
 				destroyOnClose
 				onCancel={onDeleteModelHandler}
 				open={deleteModal}
+				confirmLoading={updateDashboardMutation.isLoading}
 				title="Delete"
 				height="10vh"
 				onOk={onDeleteHandler}
@@ -271,16 +275,17 @@ function WidgetGraphComponent({
 				onCancel={onToggleModelHandler}
 				width="85%"
 				destroyOnClose
+				className="widget-full-view"
 			>
 				<FullView
 					name={`${name}expanded`}
+					version={version}
+					originalName={name}
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
 					parentChartRef={lineChartRef}
 					onDragSelect={onDragSelect}
-					setGraphsVisibilityStates={setGraphsVisibilityStates}
-					graphsVisibilityStates={graphsVisibilityStates}
 				/>
 			</Modal>
 
@@ -297,10 +302,11 @@ function WidgetGraphComponent({
 					threshold={threshold}
 					headerMenuList={headerMenuList}
 					isWarning={isWarning}
+					isFetchingResponse={isFetchingResponse}
 				/>
 			</div>
 			{queryResponse.isLoading && <Skeleton />}
-			{queryResponse.isSuccess && (
+			{(queryResponse.isSuccess || widget.panelTypes === PANEL_TYPES.LIST) && (
 				<div
 					className={cx('widget-graph-container', widget.panelTypes)}
 					ref={graphRef}
@@ -316,6 +322,9 @@ function WidgetGraphComponent({
 						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
 						query={widget.query}
 						thresholds={widget.thresholds}
+						selectedLogFields={widget.selectedLogFields}
+						dataSource={widget.query.builder?.queryData[0]?.dataSource}
+						selectedTracesFields={widget.selectedTracesFields}
 					/>
 				</div>
 			)}

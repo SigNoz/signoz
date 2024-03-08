@@ -1,3 +1,4 @@
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
@@ -29,7 +30,8 @@ function ServiceOverview({
 	topLevelOperationsRoute,
 	topLevelOperationsIsLoading,
 }: ServiceOverviewProps): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
 
 	const isSpanMetricEnable = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
 		?.active;
@@ -93,6 +95,7 @@ function ServiceOverview({
 						onClickHandler={handleGraphClick('Service')}
 						isQueryEnabled={isQueryEnabled}
 						fillSpans={false}
+						version={ENTITY_VERSION_V4}
 					/>
 				</GraphContainer>
 			</Card>

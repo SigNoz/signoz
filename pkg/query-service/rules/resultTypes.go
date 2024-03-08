@@ -15,8 +15,11 @@ type Vector []Sample
 type Sample struct {
 	Point
 
-	Metric    labels.Labels
-	IsMissing bool
+	Metric labels.Labels
+
+	// Label keys as-is from the result query.
+	// The original labels are used to prepare the related{logs, traces} link in alert notification
+	MetricOrig labels.Labels
 }
 
 func (s Sample) String() string {

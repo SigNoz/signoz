@@ -1,10 +1,12 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { Card } from 'container/GridCardLayout/styles';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo } from 'react';
+import { getGraphType } from 'utils/getGraphType';
 
 import { WidgetGraphProps } from '../../types';
 import PlotTag from './PlotTag';
@@ -17,6 +19,10 @@ function WidgetGraph({
 	selectedTime,
 	thresholds,
 	fillSpans,
+	softMax,
+	softMin,
+	selectedLogFields,
+	selectedTracesFields,
 }: WidgetGraphProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 	const { selectedDashboard } = useDashboard();
@@ -29,10 +35,13 @@ function WidgetGraph({
 
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
-	const getWidgetQueryRange = useGetWidgetQueryRange({
-		graphType: selectedGraph,
-		selectedTime: selectedTime.enum,
-	});
+	const getWidgetQueryRange = useGetWidgetQueryRange(
+		{
+			graphType: getGraphType(selectedGraph),
+			selectedTime: selectedTime.enum,
+		},
+		selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
+	);
 
 	if (selectedWidget === undefined) {
 		return <Card $panelType={selectedGraph}>Invalid widget</Card>;
@@ -53,6 +62,10 @@ function WidgetGraph({
 				selectedGraph={selectedGraph}
 				yAxisUnit={yAxisUnit}
 				fillSpans={fillSpans}
+				softMax={softMax}
+				softMin={softMin}
+				selectedLogFields={selectedLogFields}
+				selectedTracesFields={selectedTracesFields}
 			/>
 		</Container>
 	);

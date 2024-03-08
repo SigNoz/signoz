@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -41,6 +42,7 @@ function TracesView(): JSX.Element {
 				pagination: paginationQueryData,
 			},
 		},
+		DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,

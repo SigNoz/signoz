@@ -1,18 +1,17 @@
 import { Row } from 'antd';
-import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useNotifications } from 'hooks/useNotifications';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { convertVariablesToDbFormat } from './util';
 import VariableItem from './VariableItem';
 
 function DashboardVariableSelection(): JSX.Element | null {
-	const { selectedDashboard, setSelectedDashboard } = useDashboard();
+	const {
+		selectedDashboard,
+		setSelectedDashboard,
+		updateLocalStorageDashboardVariables,
+	} = useDashboard();
 
 	const { data } = selectedDashboard || {};
 
@@ -22,8 +21,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const [lastUpdatedVar, setLastUpdatedVar] = useState<string>('');
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
-
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	useEffect(() => {
 		if (variables) {
@@ -52,40 +49,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 		setUpdate(!update);
 	};
 
-	const updateMutation = useUpdateDashboard();
-	const { notifications } = useNotifications();
-
-	const updateVariables = (
-		name: string,
-		updatedVariablesData: Dashboard['data']['variables'],
-	): void => {
-		if (!selectedDashboard) {
-			return;
-		}
-
-		updateMutation.mutateAsync(
-			{
-				...selectedDashboard,
-				data: {
-					...selectedDashboard.data,
-					variables: updatedVariablesData,
-				},
-			},
-			{
-				onSuccess: (updatedDashboard) => {
-					if (updatedDashboard.payload) {
-						setSelectedDashboard(updatedDashboard.payload);
-					}
-				},
-				onError: () => {
-					notifications.error({
-						message: `Error updating ${name} variable`,
-					});
-				},
-			},
-		);
-	};
-
 	const onValueUpdate = (
 		name: string,
 		id: string,
@@ -105,12 +68,22 @@ function DashboardVariableSelection(): JSX.Element | null {
 					return variableCopy;
 				},
 			);
+			updateLocalStorageDashboardVariables(name, value, allSelected);
 
 			const variables = convertVariablesToDbFormat(newVariablesArr);
 
-			if (role !== 'VIEWER' && selectedDashboard) {
-				updateVariables(name, variables);
+			if (selectedDashboard) {
+				setSelectedDashboard({
+					...selectedDashboard,
+					data: {
+						...selectedDashboard?.data,
+						variables: {
+							...variables,
+						},
+					},
+				});
 			}
+
 			onVarChanged(name);
 
 			setUpdate(!update);

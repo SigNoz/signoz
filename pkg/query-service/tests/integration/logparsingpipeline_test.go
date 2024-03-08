@@ -803,12 +803,12 @@ func createTestUser() (*model.User, *model.ApiError) {
 		return nil, apiErr
 	}
 
-	group, apiErr := dao.DB().CreateGroup(ctx, &model.Group{
-		Name: "test",
-	})
+	group, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
 	if apiErr != nil {
 		return nil, apiErr
 	}
+
+	auth.InitAuthCache(ctx)
 
 	return dao.DB().CreateUser(
 		ctx,
@@ -843,7 +843,7 @@ func NewAuthenticatedTestRequest(
 		}
 		req = httptest.NewRequest(http.MethodPost, path, &body)
 	} else {
-		req = httptest.NewRequest(http.MethodPost, path, nil)
+		req = httptest.NewRequest(http.MethodGet, path, nil)
 	}
 
 	req.Header.Add("Authorization", "Bearer "+userJwt.AccessJwt)

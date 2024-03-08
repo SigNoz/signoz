@@ -81,6 +81,10 @@ export const routesToSkip = [
 	ROUTES.ALL_CHANNELS,
 	ROUTES.USAGE_EXPLORER,
 	ROUTES.GET_STARTED,
+	ROUTES.GET_STARTED_APPLICATION_MONITORING,
+	ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING,
+	ROUTES.GET_STARTED_LOGS_MANAGEMENT,
+	ROUTES.GET_STARTED_AWS_MONITORING,
 	ROUTES.VERSION,
 	ROUTES.ALL_DASHBOARD,
 	ROUTES.ORG_SETTINGS,
@@ -90,6 +94,19 @@ export const routesToSkip = [
 	ROUTES.BILLING,
 	ROUTES.SUPPORT,
 	ROUTES.WORKSPACE_LOCKED,
+	ROUTES.LOGS,
+	ROUTES.MY_SETTINGS,
+	ROUTES.LIST_LICENSES,
 ];
 
 export const routesToDisable = [ROUTES.LOGS_EXPLORER, ROUTES.LIVE_LOGS];
+
+export interface LocalStorageTimeRange {
+	localstorageStartTime: string | null;
+	localstorageEndTime: string | null;
+}
+
+export interface TimeRange {
+	startTime: string;
+	endTime: string;
+}

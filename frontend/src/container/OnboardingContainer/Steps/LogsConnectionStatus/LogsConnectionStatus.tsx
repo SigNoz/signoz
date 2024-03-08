@@ -5,6 +5,7 @@ import {
 	CloseCircleTwoTone,
 	LoadingOutlined,
 } from '@ant-design/icons';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
@@ -26,7 +27,11 @@ const enum ApplicationLogsType {
 
 export default function LogsConnectionStatus(): JSX.Element {
 	const [loading, setLoading] = useState(true);
-	const { selectedDataSource } = useOnboardingContext();
+	const {
+		selectedDataSource,
+		activeStep,
+		selectedEnvironment,
+	} = useOnboardingContext();
 	const { trackEvent } = useAnalytics();
 	const [isReceivingData, setIsReceivingData] = useState(false);
 	const [pollingInterval, setPollingInterval] = useState<number | false>(15000); // initial Polling interval of 15 secs , Set to false after 5 mins
@@ -68,6 +73,9 @@ export default function LogsConnectionStatus(): JSX.Element {
 					reduceTo: 'sum',
 					offset: 0,
 					pageSize: 100,
+					timeAggregation: '',
+					spaceAggregation: '',
+					functions: [],
 				},
 			],
 			queryFormulas: [],
@@ -80,11 +88,14 @@ export default function LogsConnectionStatus(): JSX.Element {
 	const { data, isFetching, error, isError } = useGetExplorerQueryRange(
 		requestData,
 		PANEL_TYPES.LIST,
+		DEFAULT_ENTITY_VERSION,
 		{
 			keepPreviousData: true,
 			refetchInterval: pollingInterval,
 			enabled: true,
 		},
+		{},
+		false,
 	);
 
 	const verifyLogsData = (
@@ -94,7 +105,10 @@ export default function LogsConnectionStatus(): JSX.Element {
 			setRetryCount(retryCount - 1);
 
 			if (retryCount < 0) {
-				trackEvent('❌ Onboarding: Logs Management: Connection Status', {
+				trackEvent('Onboarding V2: Connection Status', {
+					dataSource: selectedDataSource?.id,
+					environment: selectedEnvironment,
+					module: activeStep?.module?.id,
 					status: 'Failed',
 				});
 
@@ -127,7 +141,10 @@ export default function LogsConnectionStatus(): JSX.Element {
 					setRetryCount(-1);
 					setPollingInterval(false);
 
-					trackEvent('✅ Onboarding: Logs Management: Connection Status', {
+					trackEvent('Onboarding V2: Connection Status', {
+						dataSource: selectedDataSource?.id,
+						environment: selectedEnvironment,
+						module: activeStep?.module?.id,
 						status: 'Successful',
 					});
 

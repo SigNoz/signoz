@@ -1,0 +1,87 @@
+{
+  "id": "nginx",
+  "title": "Nginx",
+  "description": "Monitor nginx using logs and metrics.",
+  "author": {
+    "name": "SigNoz",
+    "email": "integrations@signoz.io",
+    "homepage": "https://signoz.io"
+  },
+  "icon": "file://icon.svg",
+  "categories": [
+    "Ingress",
+    "HTTP"
+  ],
+  "overview": "file://overview.md",
+  "configuration": [
+    {
+      "title": "Prepare Nginx",
+      "instructions": "file://config/prepare-nginx.md"
+    },
+    {
+      "title": "Configure Otel Collector",
+      "instructions": "file://config/configure-otel-collector.md"
+    }
+  ],
+  "assets": {
+    "logs": {
+      "pipelines": [
+        "file://assets/pipelines/log-parser.json"
+      ]
+    },
+    "dashboards": null,
+    "alerts": null
+  },
+  "connection_tests": {
+    "logs": {
+      "op": "AND",
+      "items": [
+        {
+          "key": {
+            "type": "tag",
+            "key": "source",
+            "dataType": "string"
+          },
+          "op": "=",
+          "value": "nginx"
+        }
+      ]
+    }
+  },
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Request Method",
+        "path": "attributes[\"http.request.method\"]",
+        "type": "string",
+        "description": "HTTP method"
+      },
+      {
+        "name": "Request Path",
+        "path": "attributes[\"url.path\"]",
+        "type": "string",
+        "description": "path requested"
+      },
+      {
+        "name": "Response Status Code",
+        "path": "attributes[\"http.response.status_code\"]",
+        "type": "int",
+        "description": "HTTP response code"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "http.server.request.duration",
+        "type": "Histogram",
+        "unit": "s",
+        "description": "Duration of HTTP server requests"
+      },
+      {
+        "name": "http.server.active_requests",
+        "type": "UpDownCounter",
+        "unit": "{ request }",
+        "description": "Number of active HTTP server requests"
+      }
+    ]
+  }
+}

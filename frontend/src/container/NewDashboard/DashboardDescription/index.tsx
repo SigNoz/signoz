@@ -1,11 +1,11 @@
 import './Description.styles.scss';
 
-import { LockFilled, ShareAltOutlined, UnlockFilled } from '@ant-design/icons';
-import { Button, Card, Col, Row, Space, Tag, Tooltip, Typography } from 'antd';
+import { LockFilled, UnlockFilled } from '@ant-design/icons';
+import { Button, Card, Col, Row, Tag, Tooltip, Typography } from 'antd';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { Share2 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DashboardData } from 'types/api/dashboard/getAll';
@@ -29,7 +29,6 @@ function DashboardDescription(): JSX.Element {
 
 	const [openDashboardJSON, setOpenDashboardJSON] = useState<boolean>(false);
 
-	const { t } = useTranslation('common');
 	const { user, role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], role);
 
@@ -48,7 +47,7 @@ function DashboardDescription(): JSX.Element {
 	};
 
 	return (
-		<Card>
+		<Card className="dashboard-description-container">
 			<Row gutter={16}>
 				<Col flex={1} span={9}>
 					<Typography.Title
@@ -80,12 +79,12 @@ function DashboardDescription(): JSX.Element {
 						</div>
 					)}
 				</Col>
-				<Col span={12}>
+				<Col span={14}>
 					<Row justify="end">
 						<DashboardVariableSelection />
 					</Row>
 				</Col>
-				<Col span={3} style={{ textAlign: 'right' }}>
+				<Col span={1} style={{ textAlign: 'right' }}>
 					{selectedData && (
 						<ShareModal
 							isJSONModalVisible={openDashboardJSON}
@@ -94,18 +93,20 @@ function DashboardDescription(): JSX.Element {
 						/>
 					)}
 
-					<Space direction="vertical">
+					<div className="dashboard-actions">
 						{!isDashboardLocked && editDashboard && (
 							<SettingsDrawer drawerTitle={title} />
 						)}
-						<Button
-							style={{ width: '100%' }}
-							type="dashed"
-							onClick={onToggleHandler}
-							icon={<ShareAltOutlined />}
-						>
-							{t('share')}
-						</Button>
+
+						<Tooltip title="Share" placement="left">
+							<Button
+								className="periscope-btn"
+								style={{ width: '100%' }}
+								onClick={onToggleHandler}
+								icon={<Share2 size={16} />}
+							/>
+						</Tooltip>
+
 						{(isAuthor || role === USER_ROLES.ADMIN) && (
 							<Tooltip
 								placement="left"
@@ -113,15 +114,13 @@ function DashboardDescription(): JSX.Element {
 							>
 								<Button
 									style={{ width: '100%' }}
-									type="dashed"
+									className="periscope-btn"
 									onClick={handleLockDashboardToggle}
 									icon={isDashboardLocked ? <LockFilled /> : <UnlockFilled />}
-								>
-									{isDashboardLocked ? 'Unlock' : 'Lock'}
-								</Button>
+								/>
 							</Tooltip>
 						)}
-					</Space>
+					</div>
 				</Col>
 			</Row>
 		</Card>

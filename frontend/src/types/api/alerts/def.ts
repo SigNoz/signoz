@@ -21,6 +21,8 @@ export interface AlertDef {
 	source?: string;
 	disabled?: boolean;
 	preferredChannels?: string[];
+	broadcastToAll?: boolean;
+	version?: string;
 }
 
 export interface RuleCondition {

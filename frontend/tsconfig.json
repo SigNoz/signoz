@@ -19,14 +19,23 @@
 		"isolatedModules": true,
 		"noEmit": true,
 		"baseUrl": "./src",
+		"paths": {
+			"@constants/*": ["/container/OnboardingContainer/constants/*"]
+		},
 		"downlevelIteration": true,
-		"plugins": [{ "name": "typescript-plugin-css-modules" }],
-		"types": ["node", "jest"],
+		"plugins": [
+			{
+				"name": "typescript-plugin-css-modules"
+			}
+		],
+		"types": ["node", "jest"]
 	},
 	"exclude": ["node_modules"],
 	"include": [
 		"./src",
-		"./src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts",
+		"./src/**/*.ts",
+		"src/**/*.tsx",
+		"src/**/*.d.ts",
 		"./babel.config.js",
 		"./jest.config.ts",
 		"./.eslintrc.js",

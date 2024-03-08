@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"text/template"
 	"time"
 
+	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
@@ -23,12 +23,14 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
+	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -78,13 +80,22 @@ type APIHandler struct {
 	featureFlags      interfaces.FeatureLookup
 	ready             func(http.HandlerFunc) http.HandlerFunc
 	querier           interfaces.Querier
+	querierV2         interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
 	preferDelta       bool
 	preferSpanMetrics bool
 
+	// temporalityMap is a map of metric name to temporality
+	// to avoid fetching temporality for the same metric multiple times
+	// querying the v4 table on low cardinal temporality column
+	// should be fast but we can still avoid the query if we have the data in memory
+	temporalityMap map[string]map[v3.Temporality]bool
+
 	maxIdleConns int
 	maxOpenConns int
 	dialTimeout  time.Duration
+
+	IntegrationsController *integrations.Controller
 
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
@@ -117,8 +128,12 @@ type APIHandlerOpts struct {
 	// feature flags querier
 	FeatureFlags interfaces.FeatureLookup
 
+	// Integrations
+	IntegrationsController *integrations.Controller
+
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
+
 	// cache
 	Cache cache.Cache
 
@@ -142,7 +157,16 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		FeatureLookup: opts.FeatureFlags,
 	}
 
+	querierOptsV2 := querierV2.QuerierOptions{
+		Reader:        opts.Reader,
+		Cache:         opts.Cache,
+		KeyGenerator:  queryBuilder.NewKeyGenerator(),
+		FluxInterval:  opts.FluxInterval,
+		FeatureLookup: opts.FeatureFlags,
+	}
+
 	querier := querier.NewQuerier(querierOpts)
+	querierv2 := querierV2.NewQuerier(querierOptsV2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -150,14 +174,17 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		skipConfig:                    opts.SkipConfig,
 		preferDelta:                   opts.PerferDelta,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
+		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		maxIdleConns:                  opts.MaxIdleConns,
 		maxOpenConns:                  opts.MaxOpenConns,
 		dialTimeout:                   opts.DialTimeout,
 		alertManager:                  alertManager,
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
+		IntegrationsController:        opts.IntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
+		querierV2:                     querierv2,
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
@@ -320,6 +347,12 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
 }
 
+func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v4").Subrouter()
+	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV4)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
+}
+
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }
@@ -360,10 +393,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.getSavedViews)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.createSavedViews)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/explorer/views", am.EditAccess(aH.createSavedViews)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.getSavedView)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.updateSavedView)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.updateSavedView)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
@@ -520,7 +553,7 @@ func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParam
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
 		for _, query := range qp.CompositeQuery.BuilderQueries {
-			if query.DataSource == v3.DataSourceMetrics {
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
 				metricNames = append(metricNames, query.AggregateAttribute.Key)
 				if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
 					metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
@@ -542,7 +575,7 @@ func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParam
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
 		for name := range qp.CompositeQuery.BuilderQueries {
 			query := qp.CompositeQuery.BuilderQueries[name]
-			if query.DataSource == v3.DataSourceMetrics {
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
 				if aH.preferDelta && metricNameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
 					query.Temporality = v3.Delta
 				} else if metricNameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
@@ -763,6 +796,58 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	}
 	resp := ResponseFormat{ResultType: "matrix", Result: seriesList}
 	aH.Respond(w, resp)
+}
+
+// populateTemporality same as addTemporality but for v4 and better
+func (aH *APIHandler) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+
+	missingTemporality := make([]string, 0)
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for _, query := range qp.CompositeQuery.BuilderQueries {
+			// if there is no temporality specified in the query but we have it in the map
+			// then use the value from the map
+			if query.Temporality == "" && aH.temporalityMap[query.AggregateAttribute.Key] != nil {
+				// We prefer delta if it is available
+				if aH.temporalityMap[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if aH.temporalityMap[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+			}
+			// we don't have temporality for this metric
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				missingTemporality = append(missingTemporality, query.AggregateAttribute.Key)
+			}
+			if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
+				metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
+			}
+		}
+	}
+
+	nameToTemporality, err := aH.reader.FetchTemporality(ctx, missingTemporality)
+	if err != nil {
+		return err
+	}
+
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for name := range qp.CompositeQuery.BuilderQueries {
+			query := qp.CompositeQuery.BuilderQueries[name]
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				if nameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if nameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+				aH.temporalityMap[query.AggregateAttribute.Key] = nameToTemporality[query.AggregateAttribute.Key]
+			}
+		}
+	}
+	return nil
 }
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
@@ -2315,6 +2400,200 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	w.Write(resp)
 }
 
+// Integrations
+func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()
+
+	subRouter.HandleFunc(
+		"/install", am.ViewAccess(ah.InstallIntegration),
+	).Methods(http.MethodPost)
+
+	subRouter.HandleFunc(
+		"/uninstall", am.ViewAccess(ah.UninstallIntegration),
+	).Methods(http.MethodPost)
+
+	// Used for polling for status in v0
+	subRouter.HandleFunc(
+		"/{integrationId}/connection_status", am.ViewAccess(ah.GetIntegrationConnectionStatus),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"/{integrationId}", am.ViewAccess(ah.GetIntegration),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"", am.ViewAccess(ah.ListIntegrations),
+	).Methods(http.MethodGet)
+}
+
+func (ah *APIHandler) ListIntegrations(
+	w http.ResponseWriter, r *http.Request,
+) {
+	params := map[string]string{}
+	for k, values := range r.URL.Query() {
+		params[k] = values[0]
+	}
+
+	resp, apiErr := ah.IntegrationsController.ListIntegrations(
+		r.Context(), params,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integrations")
+		return
+	}
+	ah.Respond(w, resp)
+}
+
+func (ah *APIHandler) GetIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	integration, apiErr := ah.IntegrationsController.GetIntegration(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration details")
+		return
+	}
+
+	ah.Respond(w, integration)
+}
+
+func (ah *APIHandler) GetIntegrationConnectionStatus(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	connectionTests, apiErr := ah.IntegrationsController.GetIntegrationConnectionTests(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration connection tests")
+		return
+	}
+
+	lookbackSecondsStr := r.URL.Query().Get("lookback_seconds")
+	lookbackSeconds, err := strconv.ParseInt(lookbackSecondsStr, 10, 64)
+	if err != nil {
+		lookbackSeconds = 15 * 60
+	}
+
+	connectionStatus, apiErr := ah.calculateConnectionStatus(
+		r.Context(), connectionTests, lookbackSeconds,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to calculate integration connection status")
+		return
+	}
+
+	ah.Respond(w, connectionStatus)
+}
+
+func (ah *APIHandler) calculateConnectionStatus(
+	ctx context.Context,
+	connectionTests *integrations.IntegrationConnectionTests,
+	lookbackSeconds int64,
+) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
+	result := &integrations.IntegrationConnectionStatus{}
+
+	if connectionTests.Logs != nil {
+		qrParams := &v3.QueryRangeParamsV3{
+			Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
+			End:   time.Now().UnixMilli(),
+			CompositeQuery: &v3.CompositeQuery{
+				PanelType: v3.PanelTypeList,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						PageSize:          1,
+						Filters:           connectionTests.Logs,
+						QueryName:         "A",
+						DataSource:        v3.DataSourceLogs,
+						Expression:        "A",
+						AggregateOperator: v3.AggregateOperatorNoOp,
+					},
+				},
+			},
+		}
+		queryRes, err, _ := ah.querier.QueryRange(
+			ctx, qrParams, map[string]v3.AttributeKey{},
+		)
+		if err != nil {
+			return nil, model.InternalError(fmt.Errorf(
+				"could not query for integration connection status: %w", err,
+			))
+		}
+		if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+			lastLog := queryRes[0].List[0]
+
+			resourceSummaryParts := []string{}
+			lastLogResourceAttribs := lastLog.Data["resources_string"]
+			if lastLogResourceAttribs != nil {
+				resourceAttribs, ok := lastLogResourceAttribs.(*map[string]string)
+				if !ok {
+					return nil, model.InternalError(fmt.Errorf(
+						"could not cast log resource attribs",
+					))
+				}
+				for k, v := range *resourceAttribs {
+					resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+						"%s=%s", k, v,
+					))
+				}
+			}
+			lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
+
+			result.Logs = &integrations.SignalConnectionStatus{
+				LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+				LastReceivedFrom:     lastLogResourceSummary,
+			}
+		}
+	}
+
+	return result, nil
+}
+
+func (ah *APIHandler) InstallIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.InstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	integration, apiErr := ah.IntegrationsController.Install(
+		r.Context(), &req,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, integration)
+}
+
+func (ah *APIHandler) UninstallIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.UninstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, map[string]interface{}{})
+}
+
 // logs
 func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
@@ -3090,78 +3369,6 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
 }
 
-func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
-	// apply limit if any for metrics
-	// use the grouping set points to apply the limit
-
-	for _, result := range results {
-		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
-
-		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics ||
-			result.QueryName != builderQueries[result.QueryName].Expression) {
-			limit := builderQueries[result.QueryName].Limit
-
-			orderByList := builderQueries[result.QueryName].OrderBy
-			if limit >= 0 {
-				if len(orderByList) == 0 {
-					// If no orderBy is specified, sort by value in descending order
-					orderByList = []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "desc"}}
-				}
-				sort.SliceStable(result.Series, func(i, j int) bool {
-					for _, orderBy := range orderByList {
-						if orderBy.ColumnName == constants.SigNozOrderByValue {
-
-							// For table type queries (we rely on the fact that one value for row), sort
-							// based on final aggregation value
-							if len(result.Series[i].Points) == 1 && len(result.Series[j].Points) == 1 {
-								if orderBy.Order == "asc" {
-									return result.Series[i].Points[0].Value < result.Series[j].Points[0].Value
-								} else if orderBy.Order == "desc" {
-									return result.Series[i].Points[0].Value > result.Series[j].Points[0].Value
-								}
-							}
-
-							// For graph type queries, sort based on GroupingSetsPoint
-							if result.Series[i].GroupingSetsPoint == nil || result.Series[j].GroupingSetsPoint == nil {
-								// Handle nil GroupingSetsPoint, if needed
-								// Here, we assume non-nil values are always less than nil values
-								return result.Series[i].GroupingSetsPoint != nil
-							}
-							if orderBy.Order == "asc" {
-								return result.Series[i].GroupingSetsPoint.Value < result.Series[j].GroupingSetsPoint.Value
-							} else if orderBy.Order == "desc" {
-								return result.Series[i].GroupingSetsPoint.Value > result.Series[j].GroupingSetsPoint.Value
-							}
-						} else {
-							// Sort based on Labels map
-							labelI, existsI := result.Series[i].Labels[orderBy.ColumnName]
-							labelJ, existsJ := result.Series[j].Labels[orderBy.ColumnName]
-
-							if !existsI || !existsJ {
-								// Handle missing labels, if needed
-								// Here, we assume non-existent labels are always less than existing ones
-								return existsI
-							}
-
-							if orderBy.Order == "asc" {
-								return strings.Compare(labelI, labelJ) < 0
-							} else if orderBy.Order == "desc" {
-								return strings.Compare(labelI, labelJ) > 0
-							}
-						}
-					}
-					// Preserve original order if no matching orderBy is found
-					return i < j
-				})
-
-				if limit > 0 && len(result.Series) > int(limit) {
-					result.Series = result.Series[:limit]
-				}
-			}
-		}
-	}
-}
-
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 
 	// get the param from url and add it to body
@@ -3234,10 +3441,176 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			zap.S().Debug("done!")
 			return
 		case err := <-client.Error:
-			zap.S().Error("error occured!", err)
+			zap.S().Error("error occurred!", err)
 			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
 			flusher.Flush()
 			return
+		}
+	}
+}
+
+func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
+	metricName := r.URL.Query().Get("metricName")
+	serviceName := r.URL.Query().Get("serviceName")
+	metricMetadata, err := aH.reader.GetMetricMetadata(r.Context(), metricName, serviceName)
+	if err != nil {
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		return
+	}
+
+	aH.WriteJSON(w, r, metricMetadata)
+}
+
+func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
+
+	var result []*v3.Result
+	var err error
+	var errQuriesByName map[string]string
+	var spanKeys map[string]v3.AttributeKey
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(queryRangeParams) {
+			// get the fields if any logs query is present
+			var fields map[string]v3.AttributeKey
+			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			logsv3.Enrich(queryRangeParams, fields)
+		}
+
+		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+		if err != nil {
+			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+			RespondError(w, apiErrObj, errQuriesByName)
+			return
+		}
+	}
+
+	result, err, errQuriesByName = aH.querierV2.QueryRange(ctx, queryRangeParams, spanKeys)
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		result, err = postProcessResult(result, queryRangeParams)
+	}
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+
+	if apiErrorObj != nil {
+		zap.S().Errorf(apiErrorObj.Err.Error())
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	// add temporality for each metric
+	temporalityErr := aH.populateTemporality(r.Context(), queryRangeParams)
+	if temporalityErr != nil {
+		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
+		return
+	}
+
+	aH.queryRangeV4(r.Context(), queryRangeParams, w, r)
+}
+
+// postProcessResult applies having clause, metric limit, reduce function to the result
+// This function is effective for metrics data source for now, but it can be extended to other data sources
+// if needed
+// Much of this work can be done in the ClickHouse query, but we decided to do it here because:
+// 1. Effective use of caching
+// 2. Easier to add new functions
+func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) ([]*v3.Result, error) {
+	// Having clause is not part of the clickhouse query, so we need to apply it here
+	// It's not included in the query because it doesn't work nicely with caching
+	// With this change, if you have a query with a having clause, and then you change the having clause
+	// to something else, the query will still be cached.
+	applyHavingClause(result, queryRangeParams)
+	// We apply the metric limit here because it's not part of the clickhouse query
+	// The limit in the context of the time series query is the number of time series
+	// So for the limit to work, we need to know what series to keep and what to discard
+	// For us to know that, we need to execute the query first, and then apply the limit
+	// which we found expensive, because we are executing the query twice on the same data
+	// So we decided to apply the limit here, after the query is executed
+	// The function is named applyMetricLimit because it only applies to metrics data source
+	// In traces and logs, the limit is achieved using subqueries
+	applyMetricLimit(result, queryRangeParams)
+	// Each series in the result produces N number of points, where N is (end - start) / step
+	// For the panel type table, we need to show one point for each series in the row
+	// We do that by applying a reduce function to each series
+	applyReduceTo(result, queryRangeParams)
+	// We apply the functions here it's easier to add new functions
+	applyFunctions(result, queryRangeParams)
+
+	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+		// The way we distinguish between a formula and a query is by checking if the expression
+		// is the same as the query name
+		// TODO(srikanthccv): Update the UI to send a flag to distinguish between a formula and a query
+		if query.Expression != query.QueryName {
+			expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
+			// This shouldn't happen here, because it should have been caught earlier in validation
+			if err != nil {
+				zap.S().Errorf("error in expression: %s", err.Error())
+				return nil, err
+			}
+			formulaResult, err := processResults(result, expression)
+			if err != nil {
+				zap.S().Errorf("error in expression: %s", err.Error())
+				return nil, err
+			}
+			formulaResult.QueryName = query.QueryName
+			result = append(result, formulaResult)
+		}
+	}
+	// we are done with the formula calculations, only send the results for enabled queries
+	removeDisabledQueries := func(result []*v3.Result) []*v3.Result {
+		var newResult []*v3.Result
+		for _, res := range result {
+			if queryRangeParams.CompositeQuery.BuilderQueries[res.QueryName].Disabled {
+				continue
+			}
+			newResult = append(newResult, res)
+		}
+		return newResult
+	}
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		result = removeDisabledQueries(result)
+	}
+	return result, nil
+}
+
+// applyFunctions applies functions for each query in the composite query
+// The functions can be more than one, and they are applied in the order they are defined
+func applyFunctions(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	for idx, result := range results {
+		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
+
+		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics) {
+			functions := builderQueries[result.QueryName].Functions
+
+			for _, function := range functions {
+				results[idx] = queryBuilder.ApplyFunction(function, result)
+			}
 		}
 	}
 }

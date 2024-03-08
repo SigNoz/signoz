@@ -227,7 +227,7 @@ func prepareRuleGeneratorURL(ruleId string, source string) string {
 	}
 
 	// check if source is a valid url
-	_, err := url.Parse(source)
+	parsedSource, err := url.Parse(source)
 	if err != nil {
 		return ""
 	}
@@ -241,5 +241,12 @@ func prepareRuleGeneratorURL(ruleId string, source string) string {
 		return ruleURL
 	}
 
-	return source
+	// The source contains the encoded query, start and end time
+	// and other parameters. We don't want to include them in the generator URL
+	// mainly to keep the URL short and lower the alert body contents
+	// The generator URL with /alerts/edit?ruleId= is enough
+	if parsedSource.Port() != "" {
+		return fmt.Sprintf("%s://%s:%s/alerts/edit?ruleId=%s", parsedSource.Scheme, parsedSource.Hostname(), parsedSource.Port(), ruleId)
+	}
+	return fmt.Sprintf("%s://%s/alerts/edit?ruleId=%s", parsedSource.Scheme, parsedSource.Hostname(), ruleId)
 }

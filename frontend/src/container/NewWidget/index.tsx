@@ -5,7 +5,9 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
@@ -18,12 +20,13 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
@@ -51,6 +54,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	} = useDashboard();
 
 	const { t } = useTranslation(['dashboard']);
+
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const { currentQuery, stagedQuery } = useQueryBuilder();
 
@@ -103,6 +108,26 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	);
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
+
+	const [softMin, setSoftMin] = useState<number | null>(
+		selectedWidget?.softMin === null || selectedWidget?.softMin === undefined
+			? null
+			: selectedWidget?.softMin || 0,
+	);
+
+	const [selectedLogFields, setSelectedLogFields] = useState<IField[] | null>(
+		selectedWidget?.selectedLogFields || null,
+	);
+
+	const [selectedTracesFields, setSelectedTracesFields] = useState(
+		selectedWidget?.selectedTracesFields || null,
+	);
+
+	const [softMax, setSoftMax] = useState<number | null>(
+		selectedWidget?.softMax === null || selectedWidget?.softMax === undefined
+			? null
+			: selectedWidget?.softMax || 0,
+	);
 
 	const closeModal = (): void => {
 		setSaveModal(false);
@@ -177,8 +202,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						title,
 						yAxisUnit,
 						panelTypes: graphType,
+						query: currentQuery,
 						thresholds,
+						softMin,
+						softMax,
 						fillSpans: isFillSpans,
+						selectedLogFields,
+						selectedTracesFields,
 					},
 					...afterWidgets,
 				],
@@ -212,8 +242,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		title,
 		yAxisUnit,
 		graphType,
+		currentQuery,
 		thresholds,
+		softMin,
+		softMax,
 		isFillSpans,
+		selectedLogFields,
+		selectedTracesFields,
 		afterWidgets,
 		updateDashboardMutation,
 		setSelectedDashboard,
@@ -280,6 +315,17 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		isNewTraceLogsAvailable,
 	]);
 
+	useEffect(() => {
+		registerShortcut(DashboardShortcuts.SaveChanges, onSaveDashboard);
+		registerShortcut(DashboardShortcuts.DiscardChanges, onClickDiscardHandler);
+
+		return (): void => {
+			deregisterShortcut(DashboardShortcuts.SaveChanges);
+			deregisterShortcut(DashboardShortcuts.DiscardChanges);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [onSaveDashboard]);
+
 	return (
 		<Container>
 			<ButtonContainer>
@@ -291,7 +337,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							disabled={isSaveDisabled}
 							onClick={onSaveDashboard}
 						>
-							Save
+							Save Changes
 						</Button>
 					</Tooltip>
 				)}
@@ -300,13 +346,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					<Button
 						type="primary"
 						data-testid="new-widget-save"
+						loading={updateDashboardMutation.isLoading}
 						disabled={isSaveDisabled}
 						onClick={onSaveDashboard}
 					>
-						Save
+						Save Changes
 					</Button>
 				)}
-				<Button onClick={onClickDiscardHandler}>Discard</Button>
+				<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
 			</ButtonContainer>
 
 			<PanelContainer>
@@ -317,6 +364,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						yAxisUnit={yAxisUnit}
 						thresholds={thresholds}
 						fillSpans={isFillSpans}
+						softMax={softMax}
+						softMin={softMin}
+						selectedLogFields={selectedLogFields}
+						setSelectedLogFields={setSelectedLogFields}
+						selectedTracesFields={selectedTracesFields}
+						setSelectedTracesFields={setSelectedTracesFields}
 					/>
 				</LeftContainerWrapper>
 
@@ -343,6 +396,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						selectedWidget={selectedWidget}
 						isFillSpans={isFillSpans}
 						setIsFillSpans={setIsFillSpans}
+						softMin={softMin}
+						setSoftMin={setSoftMin}
+						softMax={softMax}
+						setSoftMax={setSoftMax}
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>
@@ -363,6 +420,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				closable
 				onCancel={closeModal}
 				onOk={onClickSaveHandler}
+				confirmLoading={updateDashboardMutation.isLoading}
 				centered
 				open={saveModal}
 				width={600}
@@ -371,7 +429,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					<Typography>
 						{t('your_graph_build_with')}{' '}
 						<QueryTypeTag queryType={currentQuery.queryType} />
-						{t('dashboar_ok_confirm')}
+						{t('dashboard_ok_confirm')}
 					</Typography>
 				) : (
 					<Typography>{t('dashboard_unsave_changes')} </Typography>

@@ -16,19 +16,13 @@ export const StyledCheckOutlined = styled(CheckOutlined)`
 	float: right;
 `;
 
-export const SelectOptionContainer = styled.div`
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-`;
-
 export const TagContainer = styled(Tag)`
 	&&& {
-		border-radius: 0.25rem;
-		padding: 0.063rem 0.5rem;
-		font-weight: 600;
-		font-size: 0.75rem;
-		line-height: 1.25rem;
+		display: inline-block;
+		border-radius: 3px;
+		padding: 0.1rem 0.2rem;
+		font-weight: 300;
+		font-size: 0.6rem;
 	}
 `;
 
