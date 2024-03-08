@@ -422,7 +422,7 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 			data["queryType"] = postData.CompositeQuery.QueryType
 			data["panelType"] = postData.CompositeQuery.PanelType
 
-			signozLogsUsed, signozMetricsUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
+			signozLogsUsed, signozMetricsUsed, _ = telemetry.GetInstance().CheckSigNozSignals(postData)
 		}
 	}
 
