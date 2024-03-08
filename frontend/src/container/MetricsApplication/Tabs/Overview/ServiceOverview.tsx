@@ -30,7 +30,8 @@ function ServiceOverview({
 	topLevelOperationsRoute,
 	topLevelOperationsIsLoading,
 }: ServiceOverviewProps): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
 
 	const isSpanMetricEnable = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
 		?.active;

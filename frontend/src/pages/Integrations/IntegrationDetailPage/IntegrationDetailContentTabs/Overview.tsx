@@ -18,9 +18,9 @@ interface OverviewProps {
 function Overview(props: OverviewProps): JSX.Element {
 	const { categories, assets, overviewContent } = props;
 	const assetsCount = [
-		assets.logs.pipelines.length,
-		assets.dashboards.length,
-		assets.alerts.length,
+		assets?.logs?.pipelines?.length || 0,
+		assets?.dashboards?.length || 0,
+		assets?.alerts?.length || 0,
 	];
 
 	const assetLabelMap = ['Pipelines', 'Dashboards', 'Alerts'];
