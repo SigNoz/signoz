@@ -295,8 +295,6 @@ func (m *Manager) getInstalledIntegration(
 	return &installation, nil
 }
 
-var INTEGRATION_PIPELINE_PREFIX string = "integration-pipeline"
-
 func (m *Manager) GetPipelinesForInstalledIntegrations(
 	ctx context.Context,
 ) ([]logparsingpipeline.Pipeline, *model.ApiError) {
@@ -320,8 +318,12 @@ func (m *Manager) GetPipelinesForInstalledIntegrations(
 	pipelines := []logparsingpipeline.Pipeline{}
 	for _, ii := range installedIntegrations {
 		for _, p := range ii.Assets.Logs.Pipelines {
-			pipelines = append(pipelines, logparsingpipeline.Pipeline{
-				Id:          fmt.Sprintf("%s::%s", INTEGRATION_PIPELINE_PREFIX, p.Id),
+			pp := logparsingpipeline.Pipeline{
+				// TODO(Raj): Consider using a dedicated field for identifying integration pipelines.
+				Id: strings.Join(
+					[]string{INTEGRATION_PIPELINE_ID_PREFIX, ii.Id, p.Id},
+					INTEGRATION_PIPELINE_ID_SEPARATOR,
+				),
 				OrderId:     p.OrderId,
 				Enabled:     p.Enabled,
 				Name:        p.Name,
@@ -329,7 +331,11 @@ func (m *Manager) GetPipelinesForInstalledIntegrations(
 				Description: &p.Description,
 				Filter:      p.Filter,
 				Config:      p.Config,
-			})
+			}
+			// Alias must be same as Id as the Alias is what gets used when
+			// generating collector config for pipelines today
+			pp.Alias = pp.Id
+			pipelines = append(pipelines, pp)
 		}
 	}
 

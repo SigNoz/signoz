@@ -10,7 +10,7 @@ import (
 // Returns null otherwise.
 func IntegrationIdForPipeline(p logparsingpipeline.Pipeline) *string {
 	if strings.HasPrefix(p.Id, INTEGRATION_PIPELINE_ID_PREFIX) {
-		parts := strings.Split(p.Id, "::")
+		parts := strings.Split(p.Id, INTEGRATION_PIPELINE_ID_SEPARATOR)
 		if len(parts) < 2 {
 			return nil
 		}

@@ -192,7 +192,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	)
 	lastPipeline := getPipelinesResp.Pipelines[len(getPipelinesResp.Pipelines)-1]
 	require.NotNil(integrations.IntegrationIdForPipeline(lastPipeline))
-	require.Equal(testIntegration.Id, integrations.IntegrationIdForPipeline(lastPipeline))
+	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(lastPipeline))
 
 	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
 	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
