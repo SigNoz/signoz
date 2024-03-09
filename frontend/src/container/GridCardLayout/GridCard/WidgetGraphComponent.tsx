@@ -6,6 +6,7 @@ import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 // import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
@@ -312,6 +313,11 @@ function WidgetGraphComponent({
 						dataSource={widget.query.builder?.queryData[0]?.dataSource}
 						selectedTracesFields={widget.selectedTracesFields}
 					/> */}
+					<PanelWrapper
+						widget={widget}
+						queryResponse={queryResponse}
+						name={widget.id}
+					/>
 				</div>
 			)}
 		</div>

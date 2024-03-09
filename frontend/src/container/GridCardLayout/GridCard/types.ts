@@ -1,7 +1,7 @@
 import { ToggleGraphProps } from 'components/Graph/types';
 import { MutableRefObject, ReactNode } from 'react';
 import { UseQueryResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponse } from 'types/api';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
@@ -17,7 +17,8 @@ export interface GraphVisibilityLegendEntryProps {
 export interface WidgetGraphComponentProps {
 	widget: Widgets;
 	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+		SuccessResponse<MetricRangePayloadProps, unknown>,
+		Error
 	>;
 	errorMessage: string | undefined;
 	version?: string;
