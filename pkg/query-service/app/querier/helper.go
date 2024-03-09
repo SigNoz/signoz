@@ -233,7 +233,7 @@ func (q *querier) runBuilderQuery(
 	}
 
 	// What is happening here?
-	// We are only caching the graph panel queries. A non-existant cache key means that the query is not cached.
+	// We are only caching the graph panel queries. A non-existent cache key means that the query is not cached.
 	// If the query is not cached, we execute the query and return the result without caching it.
 	if _, ok := cacheKeys[queryName]; !ok {
 		query, err := metricsV3.PrepareMetricQuery(start, end, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{PreferRPM: preferRPM})

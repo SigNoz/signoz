@@ -3222,7 +3222,7 @@ func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.Q
 				return nil, apiError.Err
 			}
 
-			// top level fields meta will always be present in the frontend. (can be support for that as enchancement)
+			// top level fields meta will always be present in the frontend. (can be support for that as enhancement)
 			getType := func(t string) (v3.AttributeKeyType, bool) {
 				if t == "attributes" {
 					return v3.AttributeKeyTypeTag, false
@@ -3331,7 +3331,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 	applyMetricLimit(result, queryRangeParams)
 
-	// only adding applyFunctions instead of postProcess since experssion are
+	// only adding applyFunctions instead of postProcess since expression are
 	// are executed in clickhouse directly and we wanted to add support for timeshift
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		applyFunctions(result, queryRangeParams)
@@ -3342,7 +3342,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	// This checks if the time for context to complete has exceeded.
-	// it adds flag to notify the user of incomplete respone
+	// it adds flag to notify the user of incomplete response
 	select {
 	case <-ctx.Done():
 		resp.ContextTimeout = true
