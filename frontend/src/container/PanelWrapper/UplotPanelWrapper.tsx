@@ -1,3 +1,5 @@
+import { ToggleGraphProps } from 'components/Graph/types';
+import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
@@ -27,6 +29,7 @@ function UplotPanelWrapper({
 	const dispatch = useDispatch();
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
+	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
@@ -138,13 +141,11 @@ function UplotPanelWrapper({
 		],
 	);
 
-	console.log({
-		queryResponse,
-		options,
-		chartData,
-	});
-
-	return <div>UplotWrapper</div>;
+	return (
+		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
+			<Uplot options={options} data={chartData} ref={lineChartRef} />;
+		</div>
+	);
 }
 
 export default UplotPanelWrapper;
