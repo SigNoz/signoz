@@ -18,6 +18,7 @@ function Controls({
 	handleCountItemsPerPageChange,
 	isLogPanel = false,
 }: ControlsProps): JSX.Element | null {
+	console.log({ isLogPanel });
 	const isNextAndPreviousDisabled = useMemo(
 		() => isLoading || countPerPage < 0 || totalCount === 0,
 		[isLoading, countPerPage, totalCount],
