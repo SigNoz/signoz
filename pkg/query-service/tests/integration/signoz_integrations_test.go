@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"runtime/debug"
+	"slices"
 	"testing"
 
 	"github.com/jmoiron/sqlx"
@@ -14,10 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
@@ -114,7 +117,60 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 		"There should be no pipelines at the start",
 	)
 
-	// Installing an integration should make it visible in pipelines list
+	// Add a dummy user created pipeline
+	postablePipelines := logparsingpipeline.PostablePipelines{
+		Pipelines: []logparsingpipeline.PostablePipeline{
+			{
+				OrderId: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "method",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: "=",
+							Value:    "GET",
+						},
+					},
+				},
+				Config: []logparsingpipeline.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "add",
+						Type:    "add",
+						Field:   "attributes.test",
+						Value:   "val",
+						Enabled: true,
+						Name:    "test add",
+					},
+				},
+			},
+		},
+	}
+
+	createPipelinesResp := pipelinesTB.PostPipelinesToQS(postablePipelines)
+	assertPipelinesResponseMatchesPostedPipelines(
+		t, postablePipelines, createPipelinesResp,
+	)
+	pipelinesTB.assertPipelinesSentToOpampClient(createPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(createPipelinesResp.Pipelines)
+
+	// Should be able to get the configured pipelines.
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(
+		1, len(getPipelinesResp.Pipelines),
+		"There should be no pipelines at the start",
+	)
+
+	// TODO(Raj): Maybe find an integration with non-zero bundled pipelines explicitly
+
+	// Installing an integration should add its pipelines to pipelines list
 	require.False(availableIntegrations[0].IsInstalled)
 	integrationsTB.RequestQSToInstallIntegration(
 		availableIntegrations[0].Id, map[string]interface{}{},
@@ -131,9 +187,36 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
 	require.Equal(
-		len(testIntegrationPipelines), len(getPipelinesResp.Pipelines),
+		1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines),
 		"Pipelines for installed integrations should appear in pipelines list",
 	)
+	lastPipeline := getPipelinesResp.Pipelines[len(getPipelinesResp.Pipelines)-1]
+	require.NotNil(integrations.IntegrationIdForPipeline(lastPipeline))
+	require.Equal(testIntegration.Id, integrations.IntegrationIdForPipeline(lastPipeline))
+
+	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+
+	// Reordering integration pipelines should be possible.
+	postables := postableFromPipelines(getPipelinesResp.Pipelines)
+	slices.Reverse(postables.Pipelines)
+	for i, p := range postables.Pipelines {
+		p.OrderId = i + 1
+	}
+
+	firstPipeline := getPipelinesResp.Pipelines[0]
+	require.NotNil(integrations.IntegrationIdForPipeline(firstPipeline))
+	require.Equal(testIntegration.Id, integrations.IntegrationIdForPipeline(firstPipeline))
+
+	updatePipelinesResponse := pipelinesTB.PostPipelinesToQS(postables)
+	pipelinesTB.assertPipelinesSentToOpampClient(updatePipelinesResponse.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(updatePipelinesResponse.Pipelines)
+
+	// enabling/disabling integration pipelines should be possible.
+
+	// should not be able to edit integrations pipeline.
+
+	// should not be able to delete integrations pipeline
 
 	// Uninstalling an integration should remove its pipelines
 	// from pipelines list in the UI
@@ -142,7 +225,7 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	)
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
 	require.Equal(
-		0, len(getPipelinesResp.Pipelines),
+		1, len(getPipelinesResp.Pipelines),
 		"Pipelines for uninstalled integrations should get removed from pipelines list",
 	)
 }
@@ -197,7 +280,6 @@ func (tb *IntegrationsTestBed) GetIntegrationDetailsFromQS(
 	if err != nil {
 		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
 	}
-	fmt.Printf("\n\n%s\n\n", string(dataJson))
 	var integrationResp integrations.Integration
 	err = json.Unmarshal(dataJson, &integrationResp)
 	if err != nil {
@@ -327,4 +409,31 @@ func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed 
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
 	}
+}
+
+func postableFromPipelines(pipelines []logparsingpipeline.Pipeline) logparsingpipeline.PostablePipelines {
+	result := logparsingpipeline.PostablePipelines{}
+
+	for _, p := range pipelines {
+		postable := logparsingpipeline.PostablePipeline{
+			Id:      p.Id,
+			OrderId: p.OrderId,
+			Name:    p.Name,
+			Alias:   p.Alias,
+			Enabled: p.Enabled,
+			Config:  p.Config,
+		}
+
+		if p.Description != nil {
+			postable.Description = *p.Description
+		}
+
+		if p.Filter != nil {
+			postable.Filter = p.Filter
+		}
+
+		result.Pipelines = append(result.Pipelines, postable)
+	}
+
+	return result
 }
