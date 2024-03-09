@@ -29,20 +29,18 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import { getLogPanelColumnsList } from './utils';
 
 function LogsPanelComponent({
-	selectedLogsFields,
-	query,
+	widget,
 	setRequestData,
 	queryResponse,
 }: LogsPanelComponentProps): JSX.Element {
 	const [pagination, setPagination] = useState<Pagination>({
 		offset: 0,
-		limit: query.builder.queryData[0].limit || 0,
+		limit: widget.query.builder.queryData[0].limit || 0,
 	});
 
 	useEffect(() => {
@@ -76,7 +74,7 @@ function LogsPanelComponent({
 		});
 	};
 
-	const columns = getLogPanelColumnsList(selectedLogsFields);
+	const columns = getLogPanelColumnsList(widget.selectedLogFields);
 
 	const dataLength =
 		queryResponse.data?.payload?.data?.newResult?.data?.result[0]?.list?.length;
@@ -88,7 +86,7 @@ function LogsPanelComponent({
 	const { logs } = useLogsData({
 		result: queryResponse.data?.payload.data.newResult.data.result,
 		panelType: PANEL_TYPES.LIST,
-		stagedQuery: query,
+		stagedQuery: widget.query,
 	});
 
 	useEffect(() => {
@@ -121,8 +119,8 @@ function LogsPanelComponent({
 	);
 
 	const isOrderByTimeStamp =
-		query.builder.queryData[0].orderBy.length > 0 &&
-		query.builder.queryData[0].orderBy[0].columnName === 'timestamp';
+		widget.query.builder.queryData[0].orderBy.length > 0 &&
+		widget.query.builder.queryData[0].orderBy[0].columnName === 'timestamp';
 
 	const handlePreviousPagination = (): void => {
 		if (isOrderByTimeStamp) {
@@ -226,7 +224,7 @@ function LogsPanelComponent({
 						onRow={handleRow}
 					/>
 				</div>
-				{!query.builder.queryData[0].limit && (
+				{!widget.query.builder.queryData[0].limit && (
 					<div className="controller">
 						<Controls
 							totalCount={totalCount}
@@ -255,13 +253,12 @@ function LogsPanelComponent({
 }
 
 export type LogsPanelComponentProps = {
-	selectedLogsFields: Widgets['selectedLogFields'];
-	query: Query;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
+	widget: Widgets;
 };
 
 export default LogsPanelComponent;

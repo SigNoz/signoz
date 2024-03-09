@@ -23,8 +23,7 @@ function ListPanelWrapper({
 	if (dataSource === DataSource.LOGS && setRequestData) {
 		return (
 			<LogsPanelComponent
-				selectedLogsFields={selectedLogFields || []}
-				query={widget.query}
+				widget={widget}
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
 			/>
