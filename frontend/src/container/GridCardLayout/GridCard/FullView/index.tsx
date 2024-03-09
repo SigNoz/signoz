@@ -4,7 +4,6 @@ import { LoadingOutlined, SyncOutlined } from '@ant-design/icons';
 import { Button, Spin } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
-import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
