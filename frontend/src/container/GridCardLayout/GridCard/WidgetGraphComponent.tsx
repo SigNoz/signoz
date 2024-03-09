@@ -37,6 +37,7 @@ function WidgetGraphComponent({
 	headerMenuList,
 	isWarning,
 	isFetchingResponse,
+	setRequestData,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -292,7 +293,9 @@ function WidgetGraphComponent({
 					isFetchingResponse={isFetchingResponse}
 				/>
 			</div>
-			{queryResponse.isLoading && <Skeleton />}
+			{queryResponse.isLoading && widget.panelTypes !== PANEL_TYPES.LIST && (
+				<Skeleton />
+			)}
 			{(queryResponse.isSuccess || widget.panelTypes === PANEL_TYPES.LIST) && (
 				<div
 					className={cx('widget-graph-container', widget.panelTypes)}
@@ -316,7 +319,7 @@ function WidgetGraphComponent({
 					<PanelWrapper
 						widget={widget}
 						queryResponse={queryResponse}
-						name={widget.id}
+						setRequestData={setRequestData}
 					/>
 				</div>
 			)}

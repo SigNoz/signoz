@@ -6,7 +6,7 @@ import { PanelWrapperProps } from './panelWrapper.types';
 function PanelWrapper({
 	widget,
 	queryResponse,
-	name,
+	setRequestData,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		widget.panelTypes
@@ -16,7 +16,13 @@ function PanelWrapper({
 		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
-	return <Component widget={widget} queryResponse={queryResponse} name={name} />;
+	return (
+		<Component
+			widget={widget}
+			queryResponse={queryResponse}
+			setRequestData={setRequestData}
+		/>
+	);
 }
 
 export default PanelWrapper;

@@ -1,5 +1,6 @@
 import { ToggleGraphProps } from 'components/Graph/types';
-import { MutableRefObject, ReactNode } from 'react';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
@@ -26,6 +27,7 @@ export interface WidgetGraphComponentProps {
 	headerMenuList: MenuItemKeys[];
 	isWarning: boolean;
 	isFetchingResponse: boolean;
+	setRequestData?: Dispatch<SetStateAction<GetQueryResultsProps>>;
 }
 
 export interface GridCardGraphProps {

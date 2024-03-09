@@ -6,10 +6,8 @@ import { PanelWrapperProps } from './panelWrapper.types';
 function ValuePanelWrapper({
 	widget,
 	queryResponse,
-	name,
 }: PanelWrapperProps): JSX.Element {
 	const { yAxisUnit, thresholds } = widget;
-	console.log({ widget, queryResponse, name, yAxisUnit, thresholds });
 	const data = getUPlotChartData(queryResponse?.data?.payload);
 	return (
 		<GridValueComponent

@@ -24,7 +24,6 @@ import { PanelWrapperProps } from './panelWrapper.types';
 function UplotPanelWrapper({
 	queryResponse,
 	widget,
-	name,
 }: PanelWrapperProps): JSX.Element {
 	const dispatch = useDispatch();
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
@@ -87,10 +86,10 @@ function UplotPanelWrapper({
 			graphVisibilityStates: localStoredVisibilityState,
 		} = getLocalStorageGraphVisibilityState({
 			apiResponse: queryResponse.data?.payload.data.result || [],
-			name,
+			name: widget.id,
 		});
 		setGraphVisibility(localStoredVisibilityState);
-	}, [name, queryResponse.data?.payload.data.result]);
+	}, [queryResponse.data?.payload.data.result, widget.id]);
 
 	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(

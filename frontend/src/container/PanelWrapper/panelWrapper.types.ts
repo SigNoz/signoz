@@ -1,3 +1,4 @@
+import { WidgetGraphComponentProps } from 'container/GridCardLayout/GridCard/types';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -9,5 +10,5 @@ export type PanelWrapperProps = {
 		Error
 	>;
 	widget: Widgets;
-	name: string;
+	setRequestData?: WidgetGraphComponentProps['setRequestData'];
 };

@@ -6,6 +6,7 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getTimeString from 'lib/getTimeString';
 import isEmpty from 'lodash-es/isEmpty';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -87,20 +88,35 @@ function GridCardGraph({
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
 
-	const queryEnabledCondition =
-		isVisible &&
-		!isEmptyWidget &&
-		isQueryEnabled &&
-		widget.panelTypes !== PANEL_TYPES.LIST;
+	const queryEnabledCondition = isVisible && !isEmptyWidget && isQueryEnabled;
+
+	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
+		if (widget.panelTypes !== PANEL_TYPES.LIST) {
+			return {
+				selectedTime: widget?.timePreferance,
+				graphType: getGraphType(widget.panelTypes),
+				query: updatedQuery,
+				globalSelectedInterval,
+				variables: getDashboardVariables(variables),
+			};
+		}
+		updatedQuery.builder.queryData[0].pageSize = 10;
+		return {
+			query: updatedQuery,
+			graphType: PANEL_TYPES.LIST,
+			selectedTime: 'GLOBAL_TIME',
+			globalSelectedInterval,
+			tableParams: {
+				pagination: {
+					offset: 0,
+					limit: updatedQuery.builder.queryData[0].limit || 0,
+				},
+			},
+		};
+	});
 
 	const queryResponse = useGetQueryRange(
-		{
-			selectedTime: widget?.timePreferance,
-			graphType: getGraphType(widget.panelTypes),
-			query: updatedQuery,
-			globalSelectedInterval,
-			variables: getDashboardVariables(variables),
-		},
+		requestData,
 		version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
@@ -111,6 +127,7 @@ function GridCardGraph({
 				widget?.query,
 				widget?.panelTypes,
 				widget.timePreferance,
+				requestData,
 			],
 			retry(failureCount, error): boolean {
 				if (
@@ -160,6 +177,7 @@ function GridCardGraph({
 					threshold={threshold}
 					headerMenuList={menuList}
 					isFetchingResponse={queryResponse.isFetching}
+					setRequestData={setRequestData}
 				/>
 			)}
 		</div>

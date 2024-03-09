@@ -6,19 +6,10 @@ import { PanelWrapperProps } from './panelWrapper.types';
 function TablePanelWrapper({
 	widget,
 	queryResponse,
-	name,
 }: PanelWrapperProps): JSX.Element {
 	const panelData =
 		queryResponse.data?.payload?.data.newResult.data.result || [];
 	const { thresholds } = widget;
-	console.log({
-		widget,
-		queryResponse,
-		name,
-		thresholds,
-		panelData,
-		config: GRID_TABLE_CONFIG,
-	});
 	return (
 		<GridTableComponent
 			data={panelData}
