@@ -301,21 +301,6 @@ function WidgetGraphComponent({
 					className={cx('widget-graph-container', widget.panelTypes)}
 					ref={graphRef}
 				>
-					{/* <GridPanelSwitch
-						panelType={widget.panelTypes}
-						data={data}
-						name={name}
-						ref={lineChartRef}
-						options={options}
-						yAxisUnit={widget.yAxisUnit}
-						onClickHandler={onClickHandler}
-						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
-						query={widget.query}
-						thresholds={widget.thresholds}
-						selectedLogFields={widget.selectedLogFields}
-						dataSource={widget.query.builder?.queryData[0]?.dataSource}
-						selectedTracesFields={widget.selectedTracesFields}
-					/> */}
 					<PanelWrapper
 						widget={widget}
 						queryResponse={queryResponse}

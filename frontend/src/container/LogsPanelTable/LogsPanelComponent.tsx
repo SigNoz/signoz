@@ -139,7 +139,9 @@ function LogsPanelComponent({
 								filters: {
 									...prev.query.builder.queryData[0].filters,
 									items: [
-										...prev.query.builder.queryData[0].filters.items,
+										...prev.query.builder.queryData[0].filters.items.filter(
+											(_, index, items) => index !== items.length - 1,
+										),
 										{
 											id: uuid(),
 											key: {
@@ -180,7 +182,9 @@ function LogsPanelComponent({
 								filters: {
 									...prev.query.builder.queryData[0].filters,
 									items: [
-										...prev.query.builder.queryData[0].filters.items,
+										...prev.query.builder.queryData[0].filters.items.filter(
+											(_, index, items) => index !== items.length - 1,
+										),
 										{
 											id: uuid(),
 											key: {

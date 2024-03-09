@@ -1,23 +1,23 @@
 import './WidgetFullView.styles.scss';
 
-import { SyncOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { LoadingOutlined, SyncOutlined } from '@ant-design/icons';
+import { Button, Spin } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
-import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import GridPanelSwitch from 'container/GridPanelSwitch';
 import {
 	timeItems,
 	timePreferance,
 } from 'container/NewWidget/RightContainer/timeItems';
+import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -26,6 +26,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
+import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
@@ -38,8 +39,8 @@ import { FullViewProps } from './types';
 function FullView({
 	widget,
 	fullViewOptions = true,
-	onClickHandler,
-	name,
+	// onClickHandler,
+	// name,
 	version,
 	originalName,
 	yAxisUnit,
@@ -74,21 +75,45 @@ function FullView({
 
 	const updatedQuery = useStepInterval(widget?.query);
 
-	const response = useGetQueryRange(
-		{
-			selectedTime: selectedTime.enum,
-			graphType:
-				widget.panelTypes === PANEL_TYPES.BAR
-					? PANEL_TYPES.TIME_SERIES
-					: widget.panelTypes,
+	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
+		if (widget.panelTypes !== PANEL_TYPES.LIST) {
+			return {
+				selectedTime: selectedTime.enum,
+				graphType: getGraphType(widget.panelTypes),
+				query: updatedQuery,
+				globalSelectedInterval: globalSelectedTime,
+				variables: getDashboardVariables(selectedDashboard?.data.variables),
+			};
+		}
+		updatedQuery.builder.queryData[0].pageSize = 10;
+		return {
 			query: updatedQuery,
+			graphType: PANEL_TYPES.LIST,
+			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
-			variables: getDashboardVariables(selectedDashboard?.data.variables),
-		},
+			tableParams: {
+				pagination: {
+					offset: 0,
+					limit: updatedQuery.builder.queryData[0].limit || 0,
+				},
+			},
+		};
+	});
+
+	useEffect(() => {
+		setRequestData((prev) => ({
+			...prev,
+			selectedTime: selectedTime.enum,
+		}));
+	}, [selectedTime]);
+
+	const response = useGetQueryRange(
+		requestData,
 		selectedDashboard?.data?.version || version || DEFAULT_ENTITY_VERSION,
 		{
-			queryKey: `FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
-			enabled: !isDependedDataLoaded && widget.panelTypes !== PANEL_TYPES.LIST, // Internally both the list view panel has it's own query range api call, so we don't need to call it again
+			queryKey: [widget?.query, widget?.panelTypes, requestData, version],
+			enabled: !isDependedDataLoaded,
+			keepPreviousData: true,
 		},
 	);
 
@@ -180,15 +205,18 @@ function FullView({
 
 	const isListView = widget.panelTypes === PANEL_TYPES.LIST;
 
-	if (response.isFetching) {
-		return <Spinner height="100%" size="large" tip="Loading..." />;
-	}
+	// if (response.isFetching) {
+	// 	return <Spinner height="100%" size="large" tip="Loading..." />;
+	// }
 
 	return (
 		<div className="full-view-container">
 			<div className="full-view-header-container">
 				{fullViewOptions && (
 					<TimeContainer $panelType={widget.panelTypes}>
+						{response.isFetching && (
+							<Spin spinning indicator={<LoadingOutlined spin />} />
+						)}
 						<TimePreference
 							selectedTime={selectedTime}
 							setSelectedTime={setSelectedTime}
@@ -221,7 +249,7 @@ function FullView({
 						}}
 						isGraphLegendToggleAvailable={canModifyChart}
 					>
-						<GridPanelSwitch
+						{/* <GridPanelSwitch
 							panelType={widget.panelTypes}
 							data={chartData}
 							options={chartOptions}
@@ -237,6 +265,11 @@ function FullView({
 							dataSource={widget.query.builder.queryData[0].dataSource}
 							selectedTracesFields={widget.selectedTracesFields}
 							selectedTime={selectedTime}
+						/> */}
+						<PanelWrapper
+							queryResponse={response}
+							widget={widget}
+							setRequestData={setRequestData}
 						/>
 					</GraphContainer>
 				)}
