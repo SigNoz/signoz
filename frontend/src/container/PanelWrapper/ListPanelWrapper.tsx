@@ -1,5 +1,6 @@
 // import LogsPanelComponent from 'container/LogsPanelTable/LogsPanelComponent';
 import LogsPanelComponent from 'container/LogsPanelTable/LogsPanelComponent';
+import TracesTableComponent from 'container/TracesTableComponent/TracesTableComponent';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { PanelWrapperProps } from './panelWrapper.types';
@@ -9,18 +10,14 @@ function ListPanelWrapper({
 	queryResponse,
 	setRequestData,
 }: PanelWrapperProps): JSX.Element {
-	const { selectedLogFields, selectedTracesFields } = widget;
 	const dataSource = widget.query.builder?.queryData[0]?.dataSource;
-	console.log({
-		widget,
-		queryResponse,
-		selectedLogFields,
-		selectedTracesFields,
-		dataSource,
-		setRequestData,
-	});
 
-	if (dataSource === DataSource.LOGS && setRequestData) {
+	if (!setRequestData) {
+		// eslint-disable-next-line react/jsx-no-useless-fragment
+		return <></>;
+	}
+
+	if (dataSource === DataSource.LOGS) {
 		return (
 			<LogsPanelComponent
 				widget={widget}
@@ -29,7 +26,13 @@ function ListPanelWrapper({
 			/>
 		);
 	}
-	return <div>ListPanelWrapper</div>;
+	return (
+		<TracesTableComponent
+			widget={widget}
+			queryResponse={queryResponse}
+			setRequestData={setRequestData}
+		/>
+	);
 }
 
 export default ListPanelWrapper;
