@@ -75,7 +75,7 @@ func (r *InstalledIntegrationsSqliteRepo) list(
 
 func (r *InstalledIntegrationsSqliteRepo) get(
 	ctx context.Context, integrationIds []string,
-) (map[string]*InstalledIntegration, *model.ApiError) {
+) (map[string]InstalledIntegration, *model.ApiError) {
 	integrations := []InstalledIntegration{}
 
 	idPlaceholders := []string{}
@@ -103,9 +103,9 @@ func (r *InstalledIntegrationsSqliteRepo) get(
 		))
 	}
 
-	result := map[string]*InstalledIntegration{}
+	result := map[string]InstalledIntegration{}
 	for _, ii := range integrations {
-		result[ii.IntegrationId] = &ii
+		result[ii.IntegrationId] = ii
 	}
 
 	return result, nil
@@ -146,7 +146,9 @@ func (r *InstalledIntegrationsSqliteRepo) upsert(
 		)
 	}
 
-	return res[integrationId], nil
+	installed := res[integrationId]
+
+	return &installed, nil
 }
 
 func (r *InstalledIntegrationsSqliteRepo) delete(

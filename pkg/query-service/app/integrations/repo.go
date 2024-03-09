@@ -31,7 +31,7 @@ type InstalledIntegrationsRepo interface {
 
 	get(
 		ctx context.Context, integrationIds []string,
-	) (map[string]*InstalledIntegration, *model.ApiError)
+	) (map[string]InstalledIntegration, *model.ApiError)
 
 	upsert(
 		ctx context.Context,
