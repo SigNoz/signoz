@@ -86,7 +86,7 @@ func (m *Manager) SubscribeToConfigUpdates(callback func()) (unsubscribe func())
 	}
 }
 
-func (m *Manager) notifyConfigUpdateSubscribers() {
+func (m *Manager) NotifyConfigUpdateSubscribers() {
 	m.configSubscribersLock.Lock()
 	defer m.configSubscribersLock.Unlock()
 	for _, handler := range m.configSubscribers {
@@ -204,9 +204,13 @@ func StartNewVersion(
 		return nil, err
 	}
 
-	m.notifyConfigUpdateSubscribers()
+	m.NotifyConfigUpdateSubscribers()
 
 	return cfg, nil
+}
+
+func NotifyConfigUpdateSubscribers(ctx context.Context) {
+	m.NotifyConfigUpdateSubscribers()
 }
 
 func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiError {

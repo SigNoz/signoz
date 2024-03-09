@@ -10,7 +10,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 )
 
@@ -206,21 +205,21 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	apiErr *model.ApiError,
 ) {
 
-	pipelines, errs := pc.getPipelinesByVersion(
+	pipelinesResp, apiErr := pc.GetPipelinesByVersion(
 		context.Background(), configVersion.Version,
 	)
-	if len(errs) > 0 {
-		return nil, "", model.InternalError(multierr.Combine(errs...))
+	if apiErr != nil {
+		return nil, "", apiErr
 	}
 
 	updatedConf, apiErr := GenerateCollectorConfigWithPipelines(
-		currentConfYaml, pipelines,
+		currentConfYaml, pipelinesResp.Pipelines,
 	)
 	if apiErr != nil {
 		return nil, "", model.WrapApiError(apiErr, "could not marshal yaml for updated conf")
 	}
 
-	rawPipelineData, err := json.Marshal(pipelines)
+	rawPipelineData, err := json.Marshal(pipelinesResp.Pipelines)
 	if err != nil {
 		return nil, "", model.BadRequest(errors.Wrap(err, "could not serialize pipelines to JSON"))
 	}
