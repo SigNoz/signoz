@@ -11,21 +11,19 @@ import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import _noop from 'lodash-es/noop';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { UseQueryResult } from 'react-query';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
-import { SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
-function UplotWrapper({
+import { PanelWrapperProps } from './panelWrapper.types';
+
+function UplotPanelWrapper({
 	queryResponse,
 	widget,
 	name,
-}: UplotWrapperProps): JSX.Element {
+}: PanelWrapperProps): JSX.Element {
 	const dispatch = useDispatch();
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
@@ -95,6 +93,7 @@ function UplotWrapper({
 		const sortedSeriesData = getSortedSeriesData(
 			queryResponse.data?.payload.data.result,
 		);
+		// eslint-disable-next-line no-param-reassign
 		queryResponse.data.payload.data.result = sortedSeriesData;
 	}
 
@@ -139,18 +138,13 @@ function UplotWrapper({
 		],
 	);
 
-	console.log({ queryResponse, options });
+	console.log({
+		queryResponse,
+		options,
+		chartData,
+	});
 
 	return <div>UplotWrapper</div>;
 }
 
-type UplotWrapperProps = {
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
-	widget: Widgets;
-	name: string;
-};
-
-export default UplotWrapper;
+export default UplotPanelWrapper;
