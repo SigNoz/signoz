@@ -143,7 +143,7 @@ function UplotPanelWrapper({
 
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
-			<Uplot options={options} data={chartData} ref={lineChartRef} />;
+			<Uplot options={options} data={chartData} ref={lineChartRef} />
 		</div>
 	);
 }

@@ -1,3 +1,4 @@
+import GridTableComponent from 'container/GridTableComponent';
 import { GRID_TABLE_CONFIG } from 'container/GridTableComponent/config';
 
 import { PanelWrapperProps } from './panelWrapper.types';
@@ -18,7 +19,15 @@ function TablePanelWrapper({
 		panelData,
 		config: GRID_TABLE_CONFIG,
 	});
-	return <div>TablePanelWrapper</div>;
+	return (
+		<GridTableComponent
+			data={panelData}
+			query={widget.query}
+			thresholds={thresholds}
+			// eslint-disable-next-line react/jsx-props-no-spreading
+			{...GRID_TABLE_CONFIG}
+		/>
+	);
 }
 
 export default TablePanelWrapper;
