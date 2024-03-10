@@ -143,22 +143,23 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 	})
 
 	// Add installed integration pipelines to the list of pipelines saved by user.
+	// Users are allowed to enable/disable and reorder integration pipelines while
+	// saving the pipeline list.
 	for _, ip := range integrationPipelines {
 		userPipelineIdx := slices.IndexFunc(result, func(p Pipeline) bool {
 			return p.Alias == ip.Alias
 		})
 		if userPipelineIdx >= 0 {
-			// Return integration pipelines in user defined order if they were included
-			// in pipelines saved by the user (potentially after reordering pipelines).
-			//
-			// Users are allowed to enable/disable integration pipelines and reorder them.
 			ip.Enabled = result[userPipelineIdx].Enabled
-			ip.OrderId = userPipelineIdx + 1
 			result[userPipelineIdx] = ip
 		} else {
 			// installed integration pipelines get added to the end of the list by default.
 			result = append(result, ip)
 		}
+	}
+
+	for idx := range result {
+		result[idx].OrderId = idx + 1
 	}
 
 	return result, nil

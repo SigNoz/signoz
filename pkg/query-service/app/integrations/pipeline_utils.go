@@ -7,7 +7,18 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 )
 
-// Returns integration_id if `p` is a pipeline for an installed integration.
+const IntegrationPipelineIdSeparator string = "--"
+
+func AliasForIntegrationPipeline(
+	integrationId string, pipelineName string,
+) string {
+	return strings.Join(
+		[]string{constants.IntegrationPipelineIdPrefix, integrationId, pipelineName},
+		IntegrationPipelineIdSeparator,
+	)
+}
+
+// Returns ptr to integration_id string if `p` is a pipeline for an installed integration.
 // Returns null otherwise.
 func IntegrationIdForPipeline(p logparsingpipeline.Pipeline) *string {
 	if strings.HasPrefix(p.Alias, constants.IntegrationPipelineIdPrefix) {

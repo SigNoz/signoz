@@ -13,9 +13,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-// TODO(Raj): Maybe move this to project level utils
-// and use the same helper in integration tests too
-
 func NewTestIntegrationsManager(t *testing.T) *Manager {
 	testDB := utils.NewQueryServiceDBForTests(t)
 

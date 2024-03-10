@@ -7,13 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
-	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/rules"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 type IntegrationAuthor struct {
@@ -304,14 +305,10 @@ func (m *Manager) GetPipelinesForInstalledIntegrations(
 		return nil, apiErr
 	}
 
-	installedIntegrationIds := []string{}
-	for _, ii := range installations {
-		installedIntegrationIds = append(installedIntegrationIds, ii.IntegrationId)
-	}
-
-	installedIntegrations, apiErr := m.availableIntegrationsRepo.get(
-		ctx, installedIntegrationIds,
-	)
+	installedIds := utils.MapSlice(installations, func(i InstalledIntegration) string {
+		return i.IntegrationId
+	})
+	installedIntegrations, apiErr := m.availableIntegrationsRepo.get(ctx, installedIds)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -319,15 +316,11 @@ func (m *Manager) GetPipelinesForInstalledIntegrations(
 	pipelines := []logparsingpipeline.Pipeline{}
 	for _, ii := range installedIntegrations {
 		for _, p := range ii.Assets.Logs.Pipelines {
-			ipId := strings.Join(
-				[]string{constants.IntegrationPipelineIdPrefix, ii.Id, p.Id},
-				IntegrationPipelineIdSeparator,
-			)
 			pp := logparsingpipeline.Pipeline{
-				Id: ipId,
-				// Alias is the primary identifier for detetcing integration pipelines
-				// as the current config versioning requires new pipeline ids for each version
-				Alias:       ipId,
+				Id: uuid.NewString(),
+				// Alias is used for detetcing integration pipelines since current config
+				// versioning requires new pipeline ids for each version to avoid altering history
+				Alias:       AliasForIntegrationPipeline(ii.Id, p.Alias),
 				OrderId:     p.OrderId,
 				Enabled:     p.Enabled,
 				Name:        p.Name,

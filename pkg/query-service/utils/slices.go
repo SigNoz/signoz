@@ -1,9 +1,10 @@
 package utils
 
 // Map as in map-reduce.
-// func SliceMap()
-func MapSlice[S ~[]E, E any, O any](slice S, mapper func(E) O) []O {
-	result := []O{}
+func MapSlice[Slice ~[]Elem, Elem any, Output any](
+	slice Slice, mapper func(Elem) Output,
+) []Output {
+	result := []Output{}
 
 	for _, item := range slice {
 		mapped := mapper(item)
@@ -13,8 +14,10 @@ func MapSlice[S ~[]E, E any, O any](slice S, mapper func(E) O) []O {
 	return result
 }
 
-func FilterSlice[S ~[]E, E any](slice S, filterFn func(E) bool) S {
-	result := S{}
+func FilterSlice[Slice ~[]Elem, Elem any](
+	slice Slice, filterFn func(Elem) bool,
+) Slice {
+	result := Slice{}
 
 	for _, item := range slice {
 		if filterFn(item) {
