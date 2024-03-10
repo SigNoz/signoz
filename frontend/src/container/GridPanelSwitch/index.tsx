@@ -42,19 +42,6 @@ const GridPanelSwitch = forwardRef<
 					thresholds,
 				},
 				[PANEL_TYPES.LIST]: null,
-				// dataSource === DataSource.LOGS
-				// 	? {
-				// 			selectedLogsFields: selectedLogFields || [],
-				// 			query,
-				// 			version: DEFAULT_ENTITY_VERSION, // As we don't support for Metrics, defaulting to v3
-				// 			selectedTime,
-				// 	  }
-				// 	: {
-				// 			selectedTracesFields: selectedTracesFields || [],
-				// 			query,
-				// 			version: DEFAULT_ENTITY_VERSION, // As we don't support for Metrics, defaulting to v3
-				// 			selectedTime,
-				// 	  },
 				[PANEL_TYPES.TRACE]: null,
 				[PANEL_TYPES.BAR]: {
 					data,

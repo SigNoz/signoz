@@ -7,7 +7,6 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
-// import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
