@@ -64,10 +64,10 @@ function WidgetGraph({
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 
-			// 		const { maxTime, minTime } = GetMinMax('custom', [
-			// 			startTimestamp,
-			// 			endTimestamp,
-			// 		]);
+			const { maxTime, minTime } = GetMinMax('custom', [
+				startTimestamp,
+				endTimestamp,
+			]);
 
 			urlQuery.set(QueryParams.startTime, minTime.toString());
 			urlQuery.set(QueryParams.endTime, maxTime.toString());
