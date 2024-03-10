@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
@@ -55,29 +57,23 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	var pipelines []Pipeline
 
 	// scan through postable pipelines, to select the existing pipelines or insert missing ones
-	for _, r := range postable {
+	for idx, r := range postable {
 
 		// note: we process only new and changed pipelines here, deleted pipelines are not expected
 		// from client. if user deletes a pipelines, the client should not send that pipelines in the update.
 		// in effect, the new config version will not have that pipelines.
 
-		if r.Id == "" {
-			// looks like a new or changed pipeline, store it first
-			inserted, err := ic.insertPipeline(ctx, &r)
-			if err != nil {
-				zap.S().Errorf("failed to insert edited pipeline %s", err.Error())
-				return nil, model.WrapApiError(err, "failed to insert edited pipeline")
-			} else {
-				pipelines = append(pipelines, *inserted)
-			}
-		} else {
-			selected, err := ic.GetPipeline(ctx, r.Id)
-			if err != nil {
-				zap.S().Errorf("failed to find edited pipeline %s", err.Error())
-				return nil, model.WrapApiError(err, "failed to find edited pipeline")
-			}
-			pipelines = append(pipelines, *selected)
+		// Given the schema right now, all calls to apply Pipeline are expected to provide
+		// fresh pipelines with unique ids.
+		// This is required since agentConf versions include element ids in them and updating
+		// pipelines while preserving ids would alter history
+		r.Id = uuid.NewString()
+		r.OrderId = idx + 1
+		pipeline, apiErr := ic.insertPipeline(ctx, &r)
+		if apiErr != nil {
+			return nil, model.WrapApiError(apiErr, "failed to insert pipeline")
 		}
+		pipelines = append(pipelines, *pipeline)
 
 	}
 
@@ -129,8 +125,19 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 			apiErr, "could not get pipelines for installed integrations",
 		)
 	}
+
 	for _, ip := range integrationPipelines {
-		pipelines = append(pipelines, ip)
+		// Return in user defined order if the user included an integration pipeline
+		// when saving pipelines (potentially after reordering pipelines).
+		userPipelineIdx := slices.IndexFunc(pipelines, func(p Pipeline) bool {
+			return p.Alias == ip.Alias
+		})
+		if userPipelineIdx >= 0 {
+			pipelines[userPipelineIdx] = ip
+			pipelines[userPipelineIdx].OrderId = userPipelineIdx + 1
+		} else {
+			pipelines = append(pipelines, ip)
+		}
 	}
 
 	return pipelines, nil
@@ -225,5 +232,4 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	}
 
 	return updatedConf, string(rawPipelineData), nil
-
 }

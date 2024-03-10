@@ -198,19 +198,21 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
 
 	// Reordering integration pipelines should be possible.
-	postables := postableFromPipelines(getPipelinesResp.Pipelines)
-	slices.Reverse(postables.Pipelines)
-	for i, p := range postables.Pipelines {
-		p.OrderId = i + 1
+	postable := postableFromPipelines(getPipelinesResp.Pipelines)
+	slices.Reverse(postable.Pipelines)
+	for i, _ := range postable.Pipelines {
+		postable.Pipelines[i].OrderId = i + 1
 	}
 
-	firstPipeline := getPipelinesResp.Pipelines[0]
-	require.NotNil(integrations.IntegrationIdForPipeline(firstPipeline))
-	require.Equal(testIntegration.Id, integrations.IntegrationIdForPipeline(firstPipeline))
-
-	updatePipelinesResponse := pipelinesTB.PostPipelinesToQS(postables)
+	updatePipelinesResponse := pipelinesTB.PostPipelinesToQS(postable)
 	pipelinesTB.assertPipelinesSentToOpampClient(updatePipelinesResponse.Pipelines)
 	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(updatePipelinesResponse.Pipelines)
+
+	panic("test break")
+
+	firstPipeline := updatePipelinesResponse.Pipelines[0]
+	require.NotNil(integrations.IntegrationIdForPipeline(firstPipeline))
+	require.Equal(testIntegration.Id, integrations.IntegrationIdForPipeline(firstPipeline))
 
 	// enabling/disabling integration pipelines should be possible.
 

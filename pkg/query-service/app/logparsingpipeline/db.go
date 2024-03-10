@@ -65,8 +65,12 @@ func (r *Repo) insertPipeline(
 		return nil, model.UnauthorizedError(err)
 	}
 
+	if postable.Id == "" {
+		postable.Id = uuid.New().String()
+	}
+
 	insertRow := &Pipeline{
-		Id:          uuid.New().String(),
+		Id:          postable.Id,
 		OrderId:     postable.OrderId,
 		Enabled:     postable.Enabled,
 		Name:        postable.Name,

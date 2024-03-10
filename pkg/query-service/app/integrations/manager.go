@@ -318,23 +318,22 @@ func (m *Manager) GetPipelinesForInstalledIntegrations(
 	pipelines := []logparsingpipeline.Pipeline{}
 	for _, ii := range installedIntegrations {
 		for _, p := range ii.Assets.Logs.Pipelines {
+			ipId := strings.Join(
+				[]string{INTEGRATION_PIPELINE_ID_PREFIX, ii.Id, p.Id},
+				INTEGRATION_PIPELINE_ID_SEPARATOR,
+			)
 			pp := logparsingpipeline.Pipeline{
-				// TODO(Raj): Consider using a dedicated field for identifying integration pipelines.
-				Id: strings.Join(
-					[]string{INTEGRATION_PIPELINE_ID_PREFIX, ii.Id, p.Id},
-					INTEGRATION_PIPELINE_ID_SEPARATOR,
-				),
+				Id: ipId,
+				// Alias is the primary identifier for detetcing integration pipelines
+				// as the current config versioning requires new pipeline ids for each version
+				Alias:       ipId,
 				OrderId:     p.OrderId,
 				Enabled:     p.Enabled,
 				Name:        p.Name,
-				Alias:       p.Alias,
 				Description: &p.Description,
 				Filter:      p.Filter,
 				Config:      p.Config,
 			}
-			// Alias must be same as Id as the Alias is what gets used when
-			// generating collector config for pipelines today
-			pp.Alias = pp.Id
 			pipelines = append(pipelines, pp)
 		}
 	}
