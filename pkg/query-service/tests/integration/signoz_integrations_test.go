@@ -213,10 +213,39 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(firstPipeline))
 
 	// enabling/disabling integration pipelines should be possible.
+	require.True(firstPipeline.Enabled)
+
+	postable.Pipelines[0].Enabled = false
+	updatePipelinesResponse = pipelinesTB.PostPipelinesToQS(postable)
+
+	require.Equal(2, len(updatePipelinesResponse.Pipelines))
+	firstPipeline = updatePipelinesResponse.Pipelines[0]
+	require.NotNil(integrations.IntegrationIdForPipeline(firstPipeline))
+	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(firstPipeline))
+	require.False(firstPipeline.Enabled)
+
+	pipelinesTB.assertPipelinesSentToOpampClient(updatePipelinesResponse.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(updatePipelinesResponse.Pipelines)
 
 	// should not be able to edit integrations pipeline.
+	require.Greater(len(postable.Pipelines[0].Config), 0)
+	postable.Pipelines[0].Config = []logparsingpipeline.PipelineOperator{}
+	updatePipelinesResponse = pipelinesTB.PostPipelinesToQS(postable)
+	require.Equal(2, len(updatePipelinesResponse.Pipelines))
+	firstPipeline = updatePipelinesResponse.Pipelines[0]
+	require.NotNil(integrations.IntegrationIdForPipeline(firstPipeline))
+	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(firstPipeline))
+	require.False(firstPipeline.Enabled)
+	require.Greater(len(firstPipeline.Config), 0)
 
 	// should not be able to delete integrations pipeline
+	postable.Pipelines = []logparsingpipeline.PostablePipeline{postable.Pipelines[1]}
+	updatePipelinesResponse = pipelinesTB.PostPipelinesToQS(postable)
+	require.Equal(2, len(updatePipelinesResponse.Pipelines))
+
+	lastPipeline = updatePipelinesResponse.Pipelines[1]
+	require.NotNil(integrations.IntegrationIdForPipeline(lastPipeline))
+	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(lastPipeline))
 
 	// Uninstalling an integration should remove its pipelines
 	// from pipelines list in the UI

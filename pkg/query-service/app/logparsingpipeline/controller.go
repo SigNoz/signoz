@@ -92,18 +92,18 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 		return nil, err
 	}
 
-	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeLogPipelines, 10)
-	insertedCfg, _ := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeLogPipelines, cfg.Version)
-
-	response := &PipelinesResponse{
-		ConfigVersion: insertedCfg,
-		Pipelines:     pipelines,
-		History:       history,
-	}
-
+	response, err := ic.GetPipelinesByVersion(ctx, cfg.Version)
 	if err != nil {
-		return response, model.WrapApiError(err, "failed to apply pipelines")
+		return nil, model.WrapApiError(err, "couldn't fetch pipelines after update")
 	}
+
+	// ApplyPipelines response is expected to have config history right now
+	history, err := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeLogPipelines, 10)
+	if err != nil {
+		return nil, model.WrapApiError(err, "couldn't fetch pipelines history")
+	}
+	response.History = history
+
 	return response, nil
 }
 
@@ -148,8 +148,10 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 			return p.Alias == ip.Alias
 		})
 		if userPipelineIdx >= 0 {
+			// Enabling/disabling of integration pipelines is allowed.
+			ip.Enabled = pipelines[userPipelineIdx].Enabled
+			ip.OrderId = userPipelineIdx + 1
 			pipelines[userPipelineIdx] = ip
-			pipelines[userPipelineIdx].OrderId = userPipelineIdx + 1
 		} else {
 			pipelines = append(pipelines, ip)
 		}
