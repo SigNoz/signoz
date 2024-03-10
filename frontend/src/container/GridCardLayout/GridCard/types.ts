@@ -1,5 +1,6 @@
 import { ToggleGraphProps } from 'components/Graph/types';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
@@ -28,15 +29,19 @@ export interface WidgetGraphComponentProps {
 	isWarning: boolean;
 	isFetchingResponse: boolean;
 	setRequestData?: Dispatch<SetStateAction<GetQueryResultsProps>>;
+	onClickHandler?: OnClickPluginOpts['onClick'];
+	onDragSelect: (start: number, end: number) => void;
 }
 
 export interface GridCardGraphProps {
 	widget: Widgets;
 	threshold?: ReactNode;
 	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
+	onClickHandler?: OnClickPluginOpts['onClick'];
 	isQueryEnabled: boolean;
 	variables?: Dashboard['data']['variables'];
 	version?: string;
+	onDragSelect: (start: number, end: number) => void;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

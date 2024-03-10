@@ -70,6 +70,7 @@ function DBCall(): JSX.Element {
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'reqps',
 				id: SERVICE_CHART_ID.dbCallsRPS,
+				fillSpans: false,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -89,7 +90,8 @@ function DBCall(): JSX.Element {
 				title: GraphTitle.DATABASE_CALLS_AVG_DURATION,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'ms',
-				id: SERVICE_CHART_ID.dbCallsAvgDuration,
+				id: GraphTitle.DATABASE_CALLS_AVG_DURATION,
+				fillSpans: true,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -112,8 +114,6 @@ function DBCall(): JSX.Element {
 				<Card data-testid="database_call_rps">
 					<GraphContainer>
 						<Graph
-							fillSpans={false}
-							name="database_call_rps"
 							widget={databaseCallsRPSWidget}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
@@ -147,8 +147,6 @@ function DBCall(): JSX.Element {
 				<Card data-testid="database_call_avg_duration">
 					<GraphContainer>
 						<Graph
-							fillSpans
-							name="database_call_avg_duration"
 							widget={databaseCallsAverageDurationWidget}
 							headerMenuList={MENU_ITEMS}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {

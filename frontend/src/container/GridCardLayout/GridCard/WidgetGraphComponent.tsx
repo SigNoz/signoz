@@ -45,6 +45,8 @@ function WidgetGraphComponent({
 	isWarning,
 	isFetchingResponse,
 	setRequestData,
+	onClickHandler,
+	onDragSelect,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -315,6 +317,8 @@ function WidgetGraphComponent({
 						setRequestData={setRequestData}
 						setGraphVisibility={setGraphVisibility}
 						graphVisibility={graphVisibility}
+						onClickHandler={onClickHandler}
+						onDragSelect={onDragSelect}
 					/>
 				</div>
 			)}

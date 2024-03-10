@@ -11,6 +11,8 @@ function PanelWrapper({
 	setGraphVisibility,
 	graphVisibility,
 	onToggleModelHandler,
+	onClickHandler,
+	onDragSelect,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		widget.panelTypes
@@ -29,6 +31,8 @@ function PanelWrapper({
 			setGraphVisibility={setGraphVisibility}
 			graphVisibility={graphVisibility}
 			onToggleModelHandler={onToggleModelHandler}
+			onClickHandler={onClickHandler}
+			onDragSelect={onDragSelect}
 		/>
 	);
 }

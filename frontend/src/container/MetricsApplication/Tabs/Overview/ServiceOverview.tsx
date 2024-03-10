@@ -89,12 +89,10 @@ function ServiceOverview({
 			<Card data-testid="service_latency">
 				<GraphContainer>
 					<Graph
-						name="service_latency"
 						onDragSelect={onDragSelect}
 						widget={latencyWidget}
 						onClickHandler={handleGraphClick('Service')}
 						isQueryEnabled={isQueryEnabled}
-						fillSpans={false}
 						version={ENTITY_VERSION_V4}
 					/>
 				</GraphContainer>

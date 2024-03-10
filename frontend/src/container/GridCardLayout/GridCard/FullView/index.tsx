@@ -7,6 +7,7 @@ import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	timeItems,
@@ -16,11 +17,16 @@ import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useChartMutable } from 'hooks/useChartMutable';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import GetMinMax from 'lib/getMinMax';
+import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
@@ -43,6 +49,9 @@ function FullView({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+	const dispatch = useDispatch();
+	const urlQuery = useUrlQuery();
+	const location = useLocation();
 
 	const fullViewRef = useRef<HTMLDivElement>(null);
 
@@ -103,6 +112,28 @@ function FullView({
 			enabled: !isDependedDataLoaded,
 			keepPreviousData: true,
 		},
+	);
+
+	const onDragSelect = useCallback(
+		(start: number, end: number): void => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+
+			const { maxTime, minTime } = GetMinMax('custom', [
+				startTimestamp,
+				endTimestamp,
+			]);
+
+			urlQuery.set(QueryParams.startTime, minTime.toString());
+			urlQuery.set(QueryParams.endTime, maxTime.toString());
+			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			history.push(generatedUrl);
+		},
+		[dispatch, location.pathname, urlQuery],
 	);
 
 	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
@@ -190,6 +221,7 @@ function FullView({
 						onToggleModelHandler={onToggleModelHandler}
 						setGraphVisibility={setGraphsVisibilityStates}
 						graphVisibility={graphsVisibilityStates}
+						onDragSelect={onDragSelect}
 					/>
 				</GraphContainer>
 			</div>
