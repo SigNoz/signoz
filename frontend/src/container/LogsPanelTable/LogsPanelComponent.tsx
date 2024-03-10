@@ -230,7 +230,7 @@ function LogsPanelComponent({
 							handleNavigatePrevious={handlePreviousPagination}
 							handleNavigateNext={handleNextPagination}
 							handleCountItemsPerPageChange={handleChangePageSize}
-							isLogPanel={false}
+							isLogPanel={isOrderByTimeStamp}
 						/>
 					</div>
 				)}
