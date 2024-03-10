@@ -251,6 +251,8 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 		1, len(getPipelinesResp.Pipelines),
 		"Pipelines for uninstalled integrations should get removed from pipelines list",
 	)
+	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
 }
 
 type IntegrationsTestBed struct {

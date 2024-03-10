@@ -2792,7 +2792,8 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (
 	if err != nil && err.Type() != model.ErrorNotFound {
 		return nil, model.WrapApiError(err, "failed to get latest agent config version")
 	}
-	if err == nil {
+
+	if lastestConfig != nil {
 		latestVersion = lastestConfig.Version
 	}
 

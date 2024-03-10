@@ -105,7 +105,7 @@ func (c *Controller) Uninstall(
 	if apiErr != nil {
 		return apiErr
 	}
-	// agentConf.NotifyConfigUpdateSubscribers()
+	agentConf.NotifyConfigUpdate(ctx)
 	return nil
 }
 
