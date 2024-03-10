@@ -4,7 +4,7 @@ import { Table } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import Controls from 'container/Controls';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
@@ -28,10 +28,8 @@ import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { v4 as uuid } from 'uuid';
 
-import { getLogPanelColumnsList } from './utils';
+import { getLogPanelColumnsList, getNextOrPreviousItems } from './utils';
 
 function LogsPanelComponent({
 	widget,
@@ -139,33 +137,28 @@ function LogsPanelComponent({
 								filters: {
 									...prev.query.builder.queryData[0].filters,
 									items: [
-										...prev.query.builder.queryData[0].filters.items.filter(
-											(_, index, items) => index !== items.length - 1,
+										...getNextOrPreviousItems(
+											prev.query.builder.queryData[0].filters.items,
+											'PREV',
+											firstLog,
 										),
-										{
-											id: uuid(),
-											key: {
-												key: 'id',
-												type: '',
-												dataType: DataTypes.String,
-												isColumn: true,
-											},
-											op: OPERATORS['>'],
-											value: firstLog?.id || '',
-										},
 									],
 								},
+								limit: 0,
+								offset: 0,
 							},
 						],
 					},
 				},
 			}));
 		}
-		setPagination({
-			...pagination,
-			limit: 0,
-			offset: pagination.offset - pageSize,
-		});
+		if (!isOrderByTimeStamp) {
+			setPagination({
+				...pagination,
+				limit: 0,
+				offset: pagination.offset - pageSize,
+			});
+		}
 	};
 
 	const handleNextPagination = (): void => {
@@ -182,33 +175,28 @@ function LogsPanelComponent({
 								filters: {
 									...prev.query.builder.queryData[0].filters,
 									items: [
-										...prev.query.builder.queryData[0].filters.items.filter(
-											(_, index, items) => index !== items.length - 1,
+										...getNextOrPreviousItems(
+											prev.query.builder.queryData[0].filters.items,
+											'NEXT',
+											lastLog,
 										),
-										{
-											id: uuid(),
-											key: {
-												key: 'id',
-												type: '',
-												dataType: DataTypes.String,
-												isColumn: true,
-											},
-											op: OPERATORS['<'],
-											value: lastLog?.id || '',
-										},
 									],
 								},
+								limit: 0,
+								offset: 0,
 							},
 						],
 					},
 				},
 			}));
 		}
-		setPagination({
-			...pagination,
-			limit: 0,
-			offset: pagination.offset + pageSize,
-		});
+		if (!isOrderByTimeStamp) {
+			setPagination({
+				...pagination,
+				limit: 0,
+				offset: pagination.offset + pageSize,
+			});
+		}
 	};
 
 	if (queryResponse.isError) {
@@ -242,7 +230,7 @@ function LogsPanelComponent({
 							handleNavigatePrevious={handlePreviousPagination}
 							handleNavigateNext={handleNextPagination}
 							handleCountItemsPerPageChange={handleChangePageSize}
-							isLogPanel={false}
+							isLogPanel={isOrderByTimeStamp}
 						/>
 					</div>
 				)}

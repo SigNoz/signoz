@@ -1,12 +1,9 @@
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { WidgetGraphProps } from 'container/NewWidget/types';
-import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { getGraphType } from 'utils/getGraphType';
+import { WidgetGraphContainerProps } from 'container/NewWidget/types';
+// import useUrlQuery from 'hooks/useUrlQuery';
+// import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
 import { NotFoundContainer } from './styles';
@@ -22,50 +19,44 @@ function WidgetGraphContainer({
 	softMin,
 	selectedLogFields,
 	selectedTracesFields,
-}: WidgetGraphProps): JSX.Element {
-	const { selectedDashboard } = useDashboard();
+	queryResponse,
+	setRequestData,
+	selectedWidget,
+}: WidgetGraphContainerProps): JSX.Element {
+	// const getWidgetQueryRange = useGetWidgetQueryRange(
+	// 	{
+	// 		graphType: getGraphType(selectedGraph),
+	// 		selectedTime: selectedTime.enum,
+	// 	},
+	// 	selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
+	// );
 
-	const { widgets = [] } = selectedDashboard?.data || {};
-
-	const params = useUrlQuery();
-
-	const widgetId = params.get('widgetId');
-
-	const selectedWidget = widgets.find((e) => e.id === widgetId);
-
-	const getWidgetQueryRange = useGetWidgetQueryRange(
-		{
-			graphType: getGraphType(selectedGraph),
-			selectedTime: selectedTime.enum,
-		},
-		selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
-	);
-
-	if (getWidgetQueryRange.data && selectedGraph === PANEL_TYPES.BAR) {
+	if (queryResponse.data && selectedGraph === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
-			getWidgetQueryRange.data?.payload.data.result,
+			queryResponse.data?.payload.data.result,
 		);
-		getWidgetQueryRange.data.payload.data.result = sortedSeriesData;
+		// eslint-disable-next-line no-param-reassign
+		queryResponse.data.payload.data.result = sortedSeriesData;
 	}
 
 	if (selectedWidget === undefined) {
 		return <Card>Invalid widget</Card>;
 	}
 
-	if (getWidgetQueryRange.error) {
+	if (queryResponse?.error) {
 		return (
 			<NotFoundContainer>
-				<Typography>{getWidgetQueryRange.error.message}</Typography>
+				<Typography>{queryResponse.error.message}</Typography>
 			</NotFoundContainer>
 		);
 	}
-	if (getWidgetQueryRange.isLoading) {
+	if (queryResponse.isLoading && selectedGraph !== PANEL_TYPES.LIST) {
 		return <Spinner size="large" tip="Loading..." />;
 	}
 
 	if (
 		selectedGraph !== PANEL_TYPES.LIST &&
-		getWidgetQueryRange.data?.payload.data.result.length === 0
+		queryResponse.data?.payload.data.result.length === 0
 	) {
 		return (
 			<NotFoundContainer>
@@ -75,7 +66,7 @@ function WidgetGraphContainer({
 	}
 	if (
 		selectedGraph === PANEL_TYPES.LIST &&
-		getWidgetQueryRange.data?.payload.data.newResult.data.result.length === 0
+		queryResponse.data?.payload.data.newResult.data.result.length === 0
 	) {
 		return (
 			<NotFoundContainer>
@@ -87,7 +78,6 @@ function WidgetGraphContainer({
 	return (
 		<WidgetGraph
 			yAxisUnit={yAxisUnit || ''}
-			getWidgetQueryRange={getWidgetQueryRange}
 			selectedWidget={selectedWidget}
 			thresholds={thresholds}
 			fillSpans={fillSpans}
@@ -97,6 +87,8 @@ function WidgetGraphContainer({
 			selectedTracesFields={selectedTracesFields}
 			selectedTime={selectedTime}
 			selectedGraph={selectedGraph}
+			queryResponse={queryResponse}
+			setRequestData={setRequestData}
 		/>
 	);
 }
