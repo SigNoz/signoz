@@ -147,12 +147,13 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	testbed.assertPipelinesSentToOpampClient(updatePipelinesResp.Pipelines)
 	testbed.assertNewAgentGetsPipelinesOnConnection(updatePipelinesResp.Pipelines)
 
+	getPipelinesResp = testbed.GetPipelinesFromQS()
 	require.Equal(
-		2, len(updatePipelinesResp.History),
+		2, len(getPipelinesResp.History),
 		"there should be 2 history entries after posting pipelines config for the 2nd time",
 	)
 	require.Equal(
-		agentConf.DeployInitiated, updatePipelinesResp.History[0].DeployStatus,
+		agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
 		"deployment should be in progress for latest pipeline config",
 	)
 

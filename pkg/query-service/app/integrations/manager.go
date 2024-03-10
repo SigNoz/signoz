@@ -317,10 +317,11 @@ func (m *Manager) GetPipelinesForInstalledIntegrations(
 	for _, ii := range installedIntegrations {
 		for _, p := range ii.Assets.Logs.Pipelines {
 			pp := logparsingpipeline.Pipeline{
-				Id: uuid.NewString(),
-				// Alias is used for detetcing integration pipelines since current config
-				// versioning requires new pipeline ids for each version to avoid altering history
+				// Alias is used for identifying integration pipelines. Id can't be used for this
+				// since versioning while saving pipelines requires a new id for each version
+				// to avoid altering history when pipelines are edited/reordered etc
 				Alias:       AliasForIntegrationPipeline(ii.Id, p.Alias),
+				Id:          uuid.NewString(),
 				OrderId:     p.OrderId,
 				Enabled:     p.Enabled,
 				Name:        p.Name,

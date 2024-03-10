@@ -66,10 +66,9 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 		// from client. if user deletes a pipelines, the client should not send that pipelines in the update.
 		// in effect, the new config version will not have that pipelines.
 
-		// Given the schema right now, all calls to apply Pipeline are expected to provide
-		// fresh pipelines with unique ids.
-		// This is required since agentConf versions include element ids in them and updating
-		// pipelines while preserving ids would alter history
+		// For versioning, pipelines get stored with unique ids each time they are saved.
+		// This ensures updating a pipeline doesn't alter historical versions that referenced
+		// the same pipeline id.
 		r.Id = uuid.NewString()
 		r.OrderId = idx + 1
 		pipeline, apiErr := ic.insertPipeline(ctx, &r)
@@ -92,19 +91,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 		return nil, err
 	}
 
-	response, err := ic.GetPipelinesByVersion(ctx, cfg.Version)
-	if err != nil {
-		return nil, model.WrapApiError(err, "couldn't fetch pipelines after update")
-	}
-
-	// ApplyPipelines response is expected to have config history right now
-	history, err := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeLogPipelines, 10)
-	if err != nil {
-		return nil, model.WrapApiError(err, "couldn't fetch pipelines history")
-	}
-	response.History = history
-
-	return response, nil
+	return ic.GetPipelinesByVersion(ctx, cfg.Version)
 }
 
 // Returns effective list of pipelines including user created

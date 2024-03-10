@@ -117,16 +117,25 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 		"There should be no pipelines at the start",
 	)
 
-	// TODO(Raj): Maybe find an integration with non-zero bundled pipelines explicitly
+	// Find an available integration that contains a log pipeline
+	var testAvailableIntegration *integrations.IntegrationsListItem
+	for _, ai := range availableIntegrations {
+		details := integrationsTB.GetIntegrationDetailsFromQS(ai.Id)
+		require.NotNil(details)
+		if len(details.Assets.Logs.Pipelines) > 0 {
+			testAvailableIntegration = &ai
+			break
+		}
+	}
+	require.NotNil(testAvailableIntegration)
 
 	// Installing an integration should add its pipelines to pipelines list
-	require.False(availableIntegrations[0].IsInstalled)
+	require.False(testAvailableIntegration.IsInstalled)
 	integrationsTB.RequestQSToInstallIntegration(
-		availableIntegrations[0].Id, map[string]interface{}{},
+		testAvailableIntegration.Id, map[string]interface{}{},
 	)
 
-	testIntegration := integrationsTB.GetIntegrationDetailsFromQS(availableIntegrations[0].Id)
-	require.Equal(testIntegration.Id, availableIntegrations[0].Id)
+	testIntegration := integrationsTB.GetIntegrationDetailsFromQS(testAvailableIntegration.Id)
 	require.NotNil(testIntegration.Installation)
 	testIntegrationPipelines := testIntegration.Assets.Logs.Pipelines
 	require.Greater(
@@ -146,7 +155,8 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
 	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
 
-	// Add a dummy user created pipeline
+	// After saving a user created pipeline, pipelines response should include
+	// both user created pipelines and pipelines for installed integrations.
 	postablePipelines := logparsingpipeline.PostablePipelines{
 		Pipelines: []logparsingpipeline.PostablePipeline{
 			{
@@ -183,61 +193,71 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 		},
 	}
 
-	createPipelinesResp := pipelinesTB.PostPipelinesToQS(postablePipelines)
-	pipelinesTB.assertPipelinesSentToOpampClient(createPipelinesResp.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(createPipelinesResp.Pipelines)
+	pipelinesTB.PostPipelinesToQS(postablePipelines)
 
-	// Should be able to get the configured pipelines.
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
 	require.Equal(1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines))
+	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
 
 	// Reordering integration pipelines should be possible.
 	postable := postableFromPipelines(getPipelinesResp.Pipelines)
 	slices.Reverse(postable.Pipelines)
-	for i, _ := range postable.Pipelines {
+	for i := range postable.Pipelines {
 		postable.Pipelines[i].OrderId = i + 1
 	}
 
-	updatePipelinesResponse := pipelinesTB.PostPipelinesToQS(postable)
-	pipelinesTB.assertPipelinesSentToOpampClient(updatePipelinesResponse.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(updatePipelinesResponse.Pipelines)
+	pipelinesTB.PostPipelinesToQS(postable)
 
-	firstPipeline := updatePipelinesResponse.Pipelines[0]
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	firstPipeline := getPipelinesResp.Pipelines[0]
 	require.NotNil(integrations.IntegrationIdForPipeline(firstPipeline))
 	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(firstPipeline))
+
+	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
 
 	// enabling/disabling integration pipelines should be possible.
 	require.True(firstPipeline.Enabled)
 
 	postable.Pipelines[0].Enabled = false
-	updatePipelinesResponse = pipelinesTB.PostPipelinesToQS(postable)
+	pipelinesTB.PostPipelinesToQS(postable)
 
-	require.Equal(2, len(updatePipelinesResponse.Pipelines))
-	firstPipeline = updatePipelinesResponse.Pipelines[0]
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines))
+
+	firstPipeline = getPipelinesResp.Pipelines[0]
 	require.NotNil(integrations.IntegrationIdForPipeline(firstPipeline))
 	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(firstPipeline))
+
 	require.False(firstPipeline.Enabled)
 
-	pipelinesTB.assertPipelinesSentToOpampClient(updatePipelinesResponse.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(updatePipelinesResponse.Pipelines)
+	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
 
 	// should not be able to edit integrations pipeline.
 	require.Greater(len(postable.Pipelines[0].Config), 0)
 	postable.Pipelines[0].Config = []logparsingpipeline.PipelineOperator{}
-	updatePipelinesResponse = pipelinesTB.PostPipelinesToQS(postable)
-	require.Equal(2, len(updatePipelinesResponse.Pipelines))
-	firstPipeline = updatePipelinesResponse.Pipelines[0]
+	pipelinesTB.PostPipelinesToQS(postable)
+
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines))
+
+	firstPipeline = getPipelinesResp.Pipelines[0]
 	require.NotNil(integrations.IntegrationIdForPipeline(firstPipeline))
 	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(firstPipeline))
+
 	require.False(firstPipeline.Enabled)
 	require.Greater(len(firstPipeline.Config), 0)
 
 	// should not be able to delete integrations pipeline
 	postable.Pipelines = []logparsingpipeline.PostablePipeline{postable.Pipelines[1]}
-	updatePipelinesResponse = pipelinesTB.PostPipelinesToQS(postable)
-	require.Equal(2, len(updatePipelinesResponse.Pipelines))
+	pipelinesTB.PostPipelinesToQS(postable)
 
-	lastPipeline = updatePipelinesResponse.Pipelines[1]
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines))
+
+	lastPipeline = getPipelinesResp.Pipelines[1]
 	require.NotNil(integrations.IntegrationIdForPipeline(lastPipeline))
 	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(lastPipeline))
 
