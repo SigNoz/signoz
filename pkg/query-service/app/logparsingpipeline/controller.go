@@ -5,13 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
 
@@ -125,6 +128,18 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 			apiErr, "could not get pipelines for installed integrations",
 		)
 	}
+
+	// Filter out any integration pipelines included in user pipelines if the
+	// integration is no longer installed.
+	ipAliases := utils.MapSlice(integrationPipelines, func(p Pipeline) string {
+		return p.Alias
+	})
+	pipelines = utils.FilterSlice(pipelines, func(p Pipeline) bool {
+		if !strings.HasPrefix(p.Alias, constants.IntegrationPipelineIdPrefix) {
+			return true
+		}
+		return slices.Contains(ipAliases, p.Alias)
+	})
 
 	for _, ip := range integrationPipelines {
 		// Return in user defined order if the user included an integration pipeline

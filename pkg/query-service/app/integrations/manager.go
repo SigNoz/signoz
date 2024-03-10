@@ -10,6 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/rules"
@@ -319,8 +320,8 @@ func (m *Manager) GetPipelinesForInstalledIntegrations(
 	for _, ii := range installedIntegrations {
 		for _, p := range ii.Assets.Logs.Pipelines {
 			ipId := strings.Join(
-				[]string{INTEGRATION_PIPELINE_ID_PREFIX, ii.Id, p.Id},
-				INTEGRATION_PIPELINE_ID_SEPARATOR,
+				[]string{constants.IntegrationPipelineIdPrefix, ii.Id, p.Id},
+				IntegrationPipelineIdSeparator,
 			)
 			pp := logparsingpipeline.Pipeline{
 				Id: ipId,

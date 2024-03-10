@@ -208,11 +208,9 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	pipelinesTB.assertPipelinesSentToOpampClient(updatePipelinesResponse.Pipelines)
 	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(updatePipelinesResponse.Pipelines)
 
-	panic("test break")
-
 	firstPipeline := updatePipelinesResponse.Pipelines[0]
 	require.NotNil(integrations.IntegrationIdForPipeline(firstPipeline))
-	require.Equal(testIntegration.Id, integrations.IntegrationIdForPipeline(firstPipeline))
+	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(firstPipeline))
 
 	// enabling/disabling integration pipelines should be possible.
 
