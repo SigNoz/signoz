@@ -11,7 +11,6 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { Atom, Play, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -19,13 +18,7 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-} from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -42,7 +35,6 @@ import PromQLQueryContainer from './QueryBuilder/promQL';
 
 function QuerySection({
 	selectedGraph,
-	setRequestData,
 	queryResponse,
 }: QueryProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
@@ -107,10 +99,6 @@ function QuerySection({
 				},
 			});
 			redirectWithQueryBuilderData(updatedQuery);
-			setRequestData((prev) => ({
-				...prev,
-				query: updatedQuery,
-			}));
 		},
 		[
 			selectedDashboard,
@@ -119,7 +107,6 @@ function QuerySection({
 			selectedWidget,
 			setSelectedDashboard,
 			redirectWithQueryBuilderData,
-			setRequestData,
 		],
 	);
 
@@ -256,7 +243,6 @@ function QuerySection({
 
 interface QueryProps {
 	selectedGraph: PANEL_TYPES;
-	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error

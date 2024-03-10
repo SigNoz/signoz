@@ -6,7 +6,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { memo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -26,7 +26,7 @@ function LeftContainer({
 	setSelectedTracesFields,
 	selectedWidget,
 }: WidgetGraphProps): JSX.Element {
-	const { stagedQuery } = useQueryBuilder();
+	const { stagedQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const { selectedDashboard } = useDashboard();
 
 	const { selectedTime: globalSelectedInterval } = useSelector<
@@ -46,6 +46,7 @@ function LeftContainer({
 		}
 		const updatedQuery = { ...(stagedQuery || initialQueriesMap.metrics) };
 		updatedQuery.builder.queryData[0].pageSize = 10;
+		redirectWithQueryBuilderData(updatedQuery);
 		return {
 			query: updatedQuery,
 			graphType: PANEL_TYPES.LIST,
@@ -59,6 +60,16 @@ function LeftContainer({
 			},
 		};
 	});
+
+	useEffect(() => {
+		if (stagedQuery) {
+			setRequestData((prev) => ({
+				...prev,
+				query: stagedQuery,
+			}));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [stagedQuery]);
 
 	const queryResponse = useGetQueryRange(
 		requestData,
@@ -83,11 +94,7 @@ function LeftContainer({
 				selectedWidget={selectedWidget}
 			/>
 			<QueryContainer>
-				<QuerySection
-					selectedGraph={selectedGraph}
-					queryResponse={queryResponse}
-					setRequestData={setRequestData}
-				/>
+				<QuerySection selectedGraph={selectedGraph} queryResponse={queryResponse} />
 				{selectedGraph === PANEL_TYPES.LIST && (
 					<ExplorerColumnsRenderer
 						selectedLogFields={selectedLogFields}
