@@ -2,6 +2,7 @@ import { ToggleGraphProps } from 'components/Graph/types';
 import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import GraphManager from 'container/GridCardLayout/GridCard/FullView/GraphManager';
 import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -24,6 +25,10 @@ import { PanelWrapperProps } from './panelWrapper.types';
 function UplotPanelWrapper({
 	queryResponse,
 	widget,
+	isFullViewMode,
+	setGraphVisibility,
+	graphVisibility,
+	onToggleModelHandler,
 }: PanelWrapperProps): JSX.Element {
 	const dispatch = useDispatch();
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
@@ -77,9 +82,9 @@ function UplotPanelWrapper({
 		[dispatch, location.pathname, urlQuery],
 	);
 
-	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
-		Array(queryResponse.data?.payload?.data.result.length || 0).fill(true),
-	);
+	// const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
+	// 	Array(queryResponse.data?.payload?.data.result.length || 0).fill(true),
+	// );
 
 	useEffect(() => {
 		const {
@@ -88,8 +93,10 @@ function UplotPanelWrapper({
 			apiResponse: queryResponse.data?.payload.data.result || [],
 			name: widget.id,
 		});
-		setGraphVisibility(localStoredVisibilityState);
-	}, [queryResponse.data?.payload.data.result, widget.id]);
+		if (setGraphVisibility) {
+			setGraphVisibility(localStoredVisibilityState);
+		}
+	}, [queryResponse.data?.payload.data.result, setGraphVisibility, widget.id]);
 
 	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
@@ -137,12 +144,25 @@ function UplotPanelWrapper({
 			minTimeScale,
 			maxTimeScale,
 			graphVisibility,
+			setGraphVisibility,
 		],
 	);
 
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			<Uplot options={options} data={chartData} ref={lineChartRef} />
+			{isFullViewMode && setGraphVisibility && (
+				<GraphManager
+					data={chartData}
+					name={widget.id}
+					options={options}
+					yAxisUnit={widget.yAxisUnit}
+					onToggleModelHandler={onToggleModelHandler}
+					setGraphsVisibilityStates={setGraphVisibility}
+					graphsVisibilityStates={graphVisibility}
+					lineChartRef={lineChartRef}
+				/>
+			)}
 		</div>
 	);
 }

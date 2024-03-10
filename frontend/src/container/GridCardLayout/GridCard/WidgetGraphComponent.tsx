@@ -14,7 +14,14 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { Dispatch, SetStateAction, useCallback, useRef, useState } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -26,6 +33,7 @@ import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
+import { getLocalStorageGraphVisibilityState } from './utils';
 // import { getLocalStorageGraphVisibilityState } from './utils';
 
 function WidgetGraphComponent({
@@ -49,16 +57,19 @@ function WidgetGraphComponent({
 	const isFullViewOpen = params.get(QueryParams.expandedWidgetId) === widget.id;
 
 	const lineChartRef = useRef<ToggleGraphProps>();
+	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
+		Array(queryResponse.data?.payload?.data.result.length || 0).fill(true),
+	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
-	// useEffect(() => {
-	// 	if (!lineChartRef.current) return;
+	useEffect(() => {
+		if (!lineChartRef.current) return;
 
-	// 	graphVisibiltyState.forEach((state, index) => {
-	// 		lineChartRef.current?.toggleGraph(index, state);
-	// 	});
-	// 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	// }, []);
+		graphVisibility.forEach((state, index) => {
+			lineChartRef.current?.toggleGraph(index, state);
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -193,15 +204,15 @@ function WidgetGraphComponent({
 		const existingSearchParams = new URLSearchParams(search);
 		existingSearchParams.delete(QueryParams.expandedWidgetId);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
-		// if (queryResponse.data?.payload) {
-		// 	const {
-		// 		graphVisibilityStates: localStoredVisibilityState,
-		// 	} = getLocalStorageGraphVisibilityState({
-		// 		apiResponse: queryResponse.data.payload.data.result,
-		// 		name,
-		// 	});
-		// 	setGraphVisibility(localStoredVisibilityState);
-		// }
+		if (queryResponse.data?.payload) {
+			const {
+				graphVisibilityStates: localStoredVisibilityState,
+			} = getLocalStorageGraphVisibilityState({
+				apiResponse: queryResponse.data.payload.data.result,
+				name: widget.id,
+			});
+			setGraphVisibility(localStoredVisibilityState);
+		}
 		history.push({
 			pathname,
 			search: createQueryParams(updatedQueryParams),
@@ -272,8 +283,6 @@ function WidgetGraphComponent({
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
-					parentChartRef={lineChartRef}
-					// onDragSelect={onDragSelect}
 				/>
 			</Modal>
 
@@ -305,6 +314,8 @@ function WidgetGraphComponent({
 						widget={widget}
 						queryResponse={queryResponse}
 						setRequestData={setRequestData}
+						setGraphVisibility={setGraphVisibility}
+						graphVisibility={graphVisibility}
 					/>
 				</div>
 			)}

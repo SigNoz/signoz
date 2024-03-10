@@ -1,4 +1,5 @@
 import { WidgetGraphComponentProps } from 'container/GridCardLayout/GridCard/types';
+import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -11,4 +12,8 @@ export type PanelWrapperProps = {
 	>;
 	widget: Widgets;
 	setRequestData?: WidgetGraphComponentProps['setRequestData'];
+	isFullViewMode?: boolean;
+	onToggleModelHandler?: () => void;
+	graphVisibility?: boolean[];
+	setGraphVisibility?: Dispatch<SetStateAction<boolean[]>>;
 };
