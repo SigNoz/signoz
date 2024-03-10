@@ -112,14 +112,15 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 	ctx context.Context, version int,
 ) ([]Pipeline, *model.ApiError) {
-	pipelines := []Pipeline{}
+	result := []Pipeline{}
+
 	if version >= 0 {
-		pvs, errors := ic.getPipelinesByVersion(ctx, version)
+		savedPipelines, errors := ic.getPipelinesByVersion(ctx, version)
 		if errors != nil {
 			zap.S().Errorf("failed to get pipelines for version %d, %w", version, errors)
 			return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version"))
 		}
-		pipelines = pvs
+		result = savedPipelines
 	}
 
 	integrationPipelines, apiErr := ic.GetIntegrationPipelines(ctx)
@@ -129,35 +130,38 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 		)
 	}
 
-	// Filter out any integration pipelines included in user pipelines if the
-	// integration is no longer installed.
+	// Filter out any integration pipelines included in pipelines saved by user
+	// if the corresponding integration is no longer installed.
 	ipAliases := utils.MapSlice(integrationPipelines, func(p Pipeline) string {
 		return p.Alias
 	})
-	pipelines = utils.FilterSlice(pipelines, func(p Pipeline) bool {
+	result = utils.FilterSlice(result, func(p Pipeline) bool {
 		if !strings.HasPrefix(p.Alias, constants.IntegrationPipelineIdPrefix) {
 			return true
 		}
 		return slices.Contains(ipAliases, p.Alias)
 	})
 
+	// Add installed integration pipelines to the list of pipelines saved by user.
 	for _, ip := range integrationPipelines {
-		// Return in user defined order if the user included an integration pipeline
-		// when saving pipelines (potentially after reordering pipelines).
-		userPipelineIdx := slices.IndexFunc(pipelines, func(p Pipeline) bool {
+		userPipelineIdx := slices.IndexFunc(result, func(p Pipeline) bool {
 			return p.Alias == ip.Alias
 		})
 		if userPipelineIdx >= 0 {
-			// Enabling/disabling of integration pipelines is allowed.
-			ip.Enabled = pipelines[userPipelineIdx].Enabled
+			// Return integration pipelines in user defined order if they were included
+			// in pipelines saved by the user (potentially after reordering pipelines).
+			//
+			// Users are allowed to enable/disable integration pipelines and reorder them.
+			ip.Enabled = result[userPipelineIdx].Enabled
 			ip.OrderId = userPipelineIdx + 1
-			pipelines[userPipelineIdx] = ip
+			result[userPipelineIdx] = ip
 		} else {
-			pipelines = append(pipelines, ip)
+			// installed integration pipelines get added to the end of the list by default.
+			result = append(result, ip)
 		}
 	}
 
-	return pipelines, nil
+	return result, nil
 }
 
 // GetPipelinesByVersion responds with version info and associated pipelines
