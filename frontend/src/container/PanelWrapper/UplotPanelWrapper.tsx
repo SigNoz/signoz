@@ -82,10 +82,6 @@ function UplotPanelWrapper({
 		[dispatch, location.pathname, urlQuery],
 	);
 
-	// const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
-	// 	Array(queryResponse.data?.payload?.data.result.length || 0).fill(true),
-	// );
-
 	useEffect(() => {
 		const {
 			graphVisibilityStates: localStoredVisibilityState,

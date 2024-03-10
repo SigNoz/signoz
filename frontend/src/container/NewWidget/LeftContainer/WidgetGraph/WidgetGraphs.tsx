@@ -19,27 +19,6 @@ function WidgetGraph({
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dispatch = useDispatch();
 
-	// const onDragSelect = useCallback(
-	// 	(start: number, end: number): void => {
-	// 		const startTimestamp = Math.trunc(start);
-	// 		const endTimestamp = Math.trunc(end);
-	// 		if (startTimestamp !== endTimestamp) {
-	// 			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
-	// 		}
-
-	// 		const { maxTime, minTime } = GetMinMax('custom', [
-	// 			startTimestamp,
-	// 			endTimestamp,
-	// 		]);
-
-	// 		params.set(QueryParams.startTime, minTime.toString());
-	// 		params.set(QueryParams.endTime, maxTime.toString());
-	// 		const generatedUrl = `${location.pathname}?${params.toString()}`;
-	// 		history.push(generatedUrl);
-	// 	},
-	// 	[dispatch, location.pathname, params],
-	// );
-
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
 		const startTime = searchParams.get(QueryParams.startTime);

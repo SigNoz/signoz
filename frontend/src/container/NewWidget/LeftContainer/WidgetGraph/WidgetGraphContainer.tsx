@@ -15,14 +15,6 @@ function WidgetGraphContainer({
 	setRequestData,
 	selectedWidget,
 }: WidgetGraphContainerProps): JSX.Element {
-	// const getWidgetQueryRange = useGetWidgetQueryRange(
-	// 	{
-	// 		graphType: getGraphType(selectedGraph),
-	// 		selectedTime: selectedTime.enum,
-	// 	},
-	// 	selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
-	// );
-
 	if (queryResponse.data && selectedGraph === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
 			queryResponse.data?.payload.data.result,
