@@ -11,14 +11,6 @@ import WidgetGraph from './WidgetGraphs';
 
 function WidgetGraphContainer({
 	selectedGraph,
-	yAxisUnit,
-	selectedTime,
-	thresholds,
-	fillSpans = false,
-	softMax,
-	softMin,
-	selectedLogFields,
-	selectedTracesFields,
 	queryResponse,
 	setRequestData,
 	selectedWidget,
@@ -77,16 +69,7 @@ function WidgetGraphContainer({
 
 	return (
 		<WidgetGraph
-			yAxisUnit={yAxisUnit || ''}
 			selectedWidget={selectedWidget}
-			thresholds={thresholds}
-			fillSpans={fillSpans}
-			softMax={softMax}
-			softMin={softMin}
-			selectedLogFields={selectedLogFields}
-			selectedTracesFields={selectedTracesFields}
-			selectedTime={selectedTime}
-			selectedGraph={selectedGraph}
 			queryResponse={queryResponse}
 			setRequestData={setRequestData}
 		/>

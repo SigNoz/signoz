@@ -386,13 +386,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				<LeftContainerWrapper flex={5}>
 					{selectedWidget && (
 						<LeftContainer
-							selectedTime={selectedTime}
 							selectedGraph={graphType}
-							yAxisUnit={yAxisUnit}
-							thresholds={thresholds}
-							fillSpans={isFillSpans}
-							softMax={softMax}
-							softMin={softMin}
 							selectedLogFields={selectedLogFields}
 							setSelectedLogFields={setSelectedLogFields}
 							selectedTracesFields={selectedTracesFields}

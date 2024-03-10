@@ -20,12 +20,6 @@ import WidgetGraph from './WidgetGraph';
 
 function LeftContainer({
 	selectedGraph,
-	yAxisUnit,
-	selectedTime,
-	thresholds,
-	fillSpans,
-	softMax,
-	softMin,
 	selectedLogFields,
 	setSelectedLogFields,
 	selectedTracesFields,
@@ -74,7 +68,6 @@ function LeftContainer({
 			retry: false,
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				selectedTime,
 				globalSelectedInterval,
 				requestData,
 			],
@@ -84,15 +77,7 @@ function LeftContainer({
 	return (
 		<>
 			<WidgetGraph
-				thresholds={thresholds}
-				selectedTime={selectedTime}
 				selectedGraph={selectedGraph}
-				yAxisUnit={yAxisUnit}
-				fillSpans={fillSpans}
-				softMax={softMax}
-				softMin={softMin}
-				selectedLogFields={selectedLogFields}
-				selectedTracesFields={selectedTracesFields}
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
 				selectedWidget={selectedWidget}

@@ -10,14 +10,6 @@ import WidgetGraphComponent from './WidgetGraphContainer';
 
 function WidgetGraph({
 	selectedGraph,
-	yAxisUnit,
-	selectedTime,
-	thresholds,
-	fillSpans,
-	softMax,
-	softMin,
-	selectedLogFields,
-	selectedTracesFields,
 	queryResponse,
 	setRequestData,
 	selectedWidget,
@@ -38,15 +30,7 @@ function WidgetGraph({
 			)}
 
 			<WidgetGraphComponent
-				thresholds={thresholds}
-				selectedTime={selectedTime}
 				selectedGraph={selectedGraph}
-				yAxisUnit={yAxisUnit}
-				fillSpans={fillSpans}
-				softMax={softMax}
-				softMin={softMin}
-				selectedLogFields={selectedLogFields}
-				selectedTracesFields={selectedTracesFields}
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
 				selectedWidget={selectedWidget}
