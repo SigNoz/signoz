@@ -127,7 +127,7 @@ func readBuiltInIntegration(dirpath string) (
 		)
 	}
 
-	integration.Id = "builtin::" + integration.Id
+	integration.Id = "builtin-" + integration.Id
 
 	return &integration, nil
 }
