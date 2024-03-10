@@ -86,7 +86,7 @@ func (m *Manager) SubscribeToConfigUpdates(callback func()) (unsubscribe func())
 	}
 }
 
-func (m *Manager) NotifyConfigUpdateSubscribers() {
+func (m *Manager) notifyConfigUpdateSubscribers() {
 	m.configSubscribersLock.Lock()
 	defer m.configSubscribersLock.Unlock()
 	for _, handler := range m.configSubscribers {
@@ -111,10 +111,6 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 			return nil, "", errors.Wrap(apiErr.ToError(), "failed to get latest agent config version")
 		}
 
-		if latestConfig == nil {
-			continue
-		}
-
 		updatedConf, serializedSettingsUsed, apiErr := feature.RecommendAgentConfig(
 			recommendation, latestConfig,
 		)
@@ -124,13 +120,24 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 			))
 		}
 		recommendation = updatedConf
-		configId := fmt.Sprintf("%s:%d", featureType, latestConfig.Version)
+
+		// It is possible for a feature to recommend collector config
+		// before any user created config versions exist.
+		//
+		// For example, log pipeline config for installed integrations will
+		// have to be recommended even if the user hasn't created any pipelines yet
+		configVersion := -1
+		if latestConfig != nil {
+			configVersion = latestConfig.Version
+		}
+		configId := fmt.Sprintf("%s:%d", featureType, configVersion)
+
 		settingVersionsUsed = append(settingVersionsUsed, configId)
 
 		m.updateDeployStatus(
 			context.Background(),
 			featureType,
-			latestConfig.Version,
+			configVersion,
 			string(DeployInitiated),
 			"Deployment has started",
 			configId,
@@ -204,13 +211,13 @@ func StartNewVersion(
 		return nil, err
 	}
 
-	m.NotifyConfigUpdateSubscribers()
+	m.notifyConfigUpdateSubscribers()
 
 	return cfg, nil
 }
 
-func NotifyConfigUpdateSubscribers(ctx context.Context) {
-	m.NotifyConfigUpdateSubscribers()
+func NotifyConfigUpdate(ctx context.Context) {
+	m.notifyConfigUpdateSubscribers()
 }
 
 func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiError {

@@ -117,6 +117,35 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 		"There should be no pipelines at the start",
 	)
 
+	// TODO(Raj): Maybe find an integration with non-zero bundled pipelines explicitly
+
+	// Installing an integration should add its pipelines to pipelines list
+	require.False(availableIntegrations[0].IsInstalled)
+	integrationsTB.RequestQSToInstallIntegration(
+		availableIntegrations[0].Id, map[string]interface{}{},
+	)
+
+	testIntegration := integrationsTB.GetIntegrationDetailsFromQS(availableIntegrations[0].Id)
+	require.Equal(testIntegration.Id, availableIntegrations[0].Id)
+	require.NotNil(testIntegration.Installation)
+	testIntegrationPipelines := testIntegration.Assets.Logs.Pipelines
+	require.Greater(
+		len(testIntegrationPipelines), 0,
+		"test integration expected to have a pipeline",
+	)
+
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(
+		len(testIntegrationPipelines), len(getPipelinesResp.Pipelines),
+		"Pipelines for installed integrations should appear in pipelines list",
+	)
+	lastPipeline := getPipelinesResp.Pipelines[len(getPipelinesResp.Pipelines)-1]
+	require.NotNil(integrations.IntegrationIdForPipeline(lastPipeline))
+	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(lastPipeline))
+
+	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+
 	// Add a dummy user created pipeline
 	postablePipelines := logparsingpipeline.PostablePipelines{
 		Pipelines: []logparsingpipeline.PostablePipeline{
@@ -155,47 +184,12 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	}
 
 	createPipelinesResp := pipelinesTB.PostPipelinesToQS(postablePipelines)
-	assertPipelinesResponseMatchesPostedPipelines(
-		t, postablePipelines, createPipelinesResp,
-	)
 	pipelinesTB.assertPipelinesSentToOpampClient(createPipelinesResp.Pipelines)
 	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(createPipelinesResp.Pipelines)
 
 	// Should be able to get the configured pipelines.
 	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
-	require.Equal(
-		1, len(getPipelinesResp.Pipelines),
-		"There should be no pipelines at the start",
-	)
-
-	// TODO(Raj): Maybe find an integration with non-zero bundled pipelines explicitly
-
-	// Installing an integration should add its pipelines to pipelines list
-	require.False(availableIntegrations[0].IsInstalled)
-	integrationsTB.RequestQSToInstallIntegration(
-		availableIntegrations[0].Id, map[string]interface{}{},
-	)
-
-	testIntegration := integrationsTB.GetIntegrationDetailsFromQS(availableIntegrations[0].Id)
-	require.Equal(testIntegration.Id, availableIntegrations[0].Id)
-	require.NotNil(testIntegration.Installation)
-	testIntegrationPipelines := testIntegration.Assets.Logs.Pipelines
-	require.Greater(
-		len(testIntegrationPipelines), 0,
-		"test integration expected to have a pipeline",
-	)
-
-	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
-	require.Equal(
-		1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines),
-		"Pipelines for installed integrations should appear in pipelines list",
-	)
-	lastPipeline := getPipelinesResp.Pipelines[len(getPipelinesResp.Pipelines)-1]
-	require.NotNil(integrations.IntegrationIdForPipeline(lastPipeline))
-	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(lastPipeline))
-
-	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
-	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+	require.Equal(1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines))
 
 	// Reordering integration pipelines should be possible.
 	postable := postableFromPipelines(getPipelinesResp.Pipelines)

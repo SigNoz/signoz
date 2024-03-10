@@ -82,7 +82,7 @@ func (c *Controller) Install(
 	if apiErr != nil {
 		return nil, apiErr
 	}
-	agentConf.NotifyConfigUpdateSubscribers(ctx)
+	agentConf.NotifyConfigUpdate(ctx)
 	return res, nil
 }
 

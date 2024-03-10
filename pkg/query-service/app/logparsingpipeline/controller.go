@@ -228,9 +228,13 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	serializedSettingsUsed string,
 	apiErr *model.ApiError,
 ) {
+	pipelinesVersion := -1
+	if configVersion != nil {
+		pipelinesVersion = configVersion.Version
+	}
 
 	pipelinesResp, apiErr := pc.GetPipelinesByVersion(
-		context.Background(), configVersion.Version,
+		context.Background(), pipelinesVersion,
 	)
 	if apiErr != nil {
 		return nil, "", apiErr
