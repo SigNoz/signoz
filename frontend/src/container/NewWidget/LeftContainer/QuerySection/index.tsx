@@ -11,6 +11,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { Atom, Play, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -99,6 +100,10 @@ function QuerySection({
 				},
 			});
 			redirectWithQueryBuilderData(updatedQuery);
+			setRequestData((prev) => ({
+				...prev,
+				query: updatedQuery,
+			}));
 		},
 		[
 			selectedDashboard,
@@ -107,6 +112,7 @@ function QuerySection({
 			selectedWidget,
 			setSelectedDashboard,
 			redirectWithQueryBuilderData,
+			setRequestData,
 		],
 	);
 
