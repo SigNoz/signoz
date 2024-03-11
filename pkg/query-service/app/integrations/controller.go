@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/query-service/agentConf"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -74,9 +76,14 @@ type InstallIntegrationRequest struct {
 func (c *Controller) Install(
 	ctx context.Context, req *InstallIntegrationRequest,
 ) (*IntegrationsListItem, *model.ApiError) {
-	return c.mgr.InstallIntegration(
+	res, apiErr := c.mgr.InstallIntegration(
 		ctx, req.IntegrationId, req.Config,
 	)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+	agentConf.NotifyConfigUpdate(ctx)
+	return res, nil
 }
 
 type UninstallIntegrationRequest struct {
@@ -92,7 +99,18 @@ func (c *Controller) Uninstall(
 		))
 	}
 
-	return c.mgr.UninstallIntegration(
+	apiErr := c.mgr.UninstallIntegration(
 		ctx, req.IntegrationId,
 	)
+	if apiErr != nil {
+		return apiErr
+	}
+	agentConf.NotifyConfigUpdate(ctx)
+	return nil
+}
+
+func (c *Controller) GetPipelinesForInstalledIntegrations(
+	ctx context.Context,
+) ([]logparsingpipeline.Pipeline, *model.ApiError) {
+	return c.mgr.GetPipelinesForInstalledIntegrations(ctx)
 }
