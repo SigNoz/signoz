@@ -1,0 +1,27 @@
+name: Smoke Tests
+on:
+  schedule:
+    - cron: "0 0 * * *" # we can pass this via variables ?
+
+jobs:
+  playwright:
+    defaults:
+      run:
+        working-directory: e2e
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "16.x"
+      - name: Install dependencies
+        run: yarn install
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        run: yarn test
+        env:
+          PLAYWRIGHT_TEST_BASE_URL: ${{ secrets.PLAYWRIGHT_TEST_BASE_URL }}
+          PLAYWRIGHT_TEST_USERNAME: ${{ secrets.PLAYWRIGHT_TEST_USERNAME }}
+          PLAYWRIGHT_TEST_PASSWORD: ${{ secrets.PLAYWRIGHT_TEST_PASSWORD }}
