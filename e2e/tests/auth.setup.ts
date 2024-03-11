@@ -31,7 +31,7 @@ test("E2E Login Test", async ({ page }) => {
 
   await page.locator('button[data-attr="signup"]').click();
 
-  await expect(page).toHaveURL(ROUTES.APPLICATION);
+  await expect(page).toHaveURL(new RegExp(ROUTES.APPLICATION));
 
   await page.context().storageState({ path: authFile });
 });
