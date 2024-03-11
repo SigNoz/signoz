@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import ROUTES from "../../frontend/src/constants/routes";
-import { DATA_TEST_IDS, SERVICE_TABLE_HEADERS } from "./contants";
+import { DATA_TEST_IDS } from "./contants";
 
 test("Check for the dashboard page and individual dashboard to load within 5s", async ({
   page,
@@ -46,4 +46,7 @@ test("Check for the dashboard page and individual dashboard to load within 5s", 
     await variablesQuery,
     await queryRangeAPI,
   ]);
+
+  // wait for all the API calls to succeed on first load
+  await page.waitForLoadState("networkidle", { timeout: 5000 });
 });
