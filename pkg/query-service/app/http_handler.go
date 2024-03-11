@@ -3332,7 +3332,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 	applyMetricLimit(result, queryRangeParams)
 
-	sendEvents(r, result, queryRangeParams)
+	sendQueryResultEvents(r, result, queryRangeParams)
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
@@ -3350,7 +3350,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	aH.Respond(w, resp)
 }
 
-func sendEvents(r *http.Request, result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
 	referrer := r.Header.Get("Referer")
 
 	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
@@ -3552,7 +3552,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
-	sendEvents(r, result, queryRangeParams)
+	sendQueryResultEvents(r, result, queryRangeParams)
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
