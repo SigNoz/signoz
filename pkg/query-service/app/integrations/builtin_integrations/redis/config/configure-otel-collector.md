@@ -4,7 +4,7 @@
 
 Save the following collector config in a file named `redis-collector-config.yaml`
 
-```
+```bash
 receivers:
   redis:
     # The hostname and port of the Redis instance, separated by a colon.
