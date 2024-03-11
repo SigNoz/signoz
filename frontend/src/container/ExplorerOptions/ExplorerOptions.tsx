@@ -13,6 +13,7 @@ import {
 	Typography,
 } from 'antd';
 import axios from 'axios';
+import cx from 'classnames';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -31,10 +32,14 @@ import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { Check, ConciergeBell, Disc3, Plus, X, XCircle } from 'lucide-react';
 import { CSSProperties, useCallback, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
+import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import AppReducer from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
 
 import {
 	DATASOURCE_VS_ROUTES,
@@ -43,6 +48,9 @@ import {
 	saveNewViewHandler,
 } from './utils';
 
+const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
+
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function ExplorerOptions({
 	disabled,
 	isLoading,
@@ -70,6 +78,8 @@ function ExplorerOptions({
 	const hideSaveViewModal = (): void => {
 		setIsSaveModalOpen(false);
 	};
+
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const onCreateAlertsHandler = useCallback(() => {
 		history.push(
@@ -247,10 +257,17 @@ function ExplorerOptions({
 		[isDarkMode],
 	);
 
+	const isEditDeleteSupported = allowedRoles.includes(role as string);
+
 	return (
 		<>
 			{isQueryUpdated && (
-				<div className="explorer-update">
+				<div
+					className={cx(
+						isEditDeleteSupported ? '' : 'hide-update',
+						'explorer-update',
+					)}
+				>
 					<Tooltip title="Clear this view" placement="top">
 						<Button
 							className="action-icon"
@@ -258,10 +275,13 @@ function ExplorerOptions({
 							icon={<X size={14} />}
 						/>
 					</Tooltip>
-					<Divider type="vertical" />
+					<Divider
+						type="vertical"
+						className={isEditDeleteSupported ? '' : 'hidden'}
+					/>
 					<Tooltip title="Update this view" placement="top">
 						<Button
-							className="action-icon"
+							className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}
 							disabled={isViewUpdating}
 							onClick={onUpdateQueryHandler}
 							icon={<Disc3 size={14} />}
@@ -323,15 +343,16 @@ function ExplorerOptions({
 					<Button
 						shape="round"
 						onClick={handleSaveViewModalToggle}
+						className={isEditDeleteSupported ? '' : 'hidden'}
 						disabled={viewsIsLoading || isRefetching}
 					>
 						<Disc3 size={16} /> Save this view
 					</Button>
 				</div>
 
-				<hr />
+				<hr className={isEditDeleteSupported ? '' : 'hidden'} />
 
-				<div className="actions">
+				<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
 					<Tooltip title="Create Alerts">
 						<Button
 							disabled={disabled}

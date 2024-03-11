@@ -2788,16 +2788,17 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	// get lateset agent config
+	latestVersion := -1
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
-	if err != nil {
-		if err.Type() != model.ErrorNotFound {
-			return nil, model.WrapApiError(err, "failed to get latest agent config version")
-		} else {
-			return nil, nil
-		}
+	if err != nil && err.Type() != model.ErrorNotFound {
+		return nil, model.WrapApiError(err, "failed to get latest agent config version")
 	}
 
-	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, lastestConfig.Version)
+	if lastestConfig != nil {
+		latestVersion = lastestConfig.Version
+	}
+
+	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, latestVersion)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get pipelines")
 	}
@@ -3333,6 +3334,12 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	applyMetricLimit(result, queryRangeParams)
 
 	sendQueryResultEvents(r, result, queryRangeParams)
+	// only adding applyFunctions instead of postProcess since experssion are
+	// are executed in clickhouse directly and we wanted to add support for timeshift
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		applyFunctions(result, queryRangeParams)
+	}
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
@@ -3651,7 +3658,7 @@ func applyFunctions(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV
 	for idx, result := range results {
 		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
 
-		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics) {
+		if builderQueries != nil {
 			functions := builderQueries[result.QueryName].Functions
 
 			for _, function := range functions {

@@ -7,12 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/rules"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 type IntegrationAuthor struct {
@@ -293,4 +295,43 @@ func (m *Manager) getInstalledIntegration(
 		return nil, nil
 	}
 	return &installation, nil
+}
+
+func (m *Manager) GetPipelinesForInstalledIntegrations(
+	ctx context.Context,
+) ([]logparsingpipeline.Pipeline, *model.ApiError) {
+	installations, apiErr := m.installedIntegrationsRepo.list(ctx)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	installedIds := utils.MapSlice(installations, func(i InstalledIntegration) string {
+		return i.IntegrationId
+	})
+	installedIntegrations, apiErr := m.availableIntegrationsRepo.get(ctx, installedIds)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	pipelines := []logparsingpipeline.Pipeline{}
+	for _, ii := range installedIntegrations {
+		for _, p := range ii.Assets.Logs.Pipelines {
+			pp := logparsingpipeline.Pipeline{
+				// Alias is used for identifying integration pipelines. Id can't be used for this
+				// since versioning while saving pipelines requires a new id for each version
+				// to avoid altering history when pipelines are edited/reordered etc
+				Alias:       AliasForIntegrationPipeline(ii.Id, p.Alias),
+				Id:          uuid.NewString(),
+				OrderId:     p.OrderId,
+				Enabled:     p.Enabled,
+				Name:        p.Name,
+				Description: &p.Description,
+				Filter:      p.Filter,
+				Config:      p.Config,
+			}
+			pipelines = append(pipelines, pp)
+		}
+	}
+
+	return pipelines, nil
 }
