@@ -17,7 +17,7 @@ test("E2E Login Test", async ({ page }) => {
 
   await page
     .locator("id=loginEmail")
-    .type(
+    .fill(
       process.env.PLAYWRIGHT_USERNAME ? process.env.PLAYWRIGHT_USERNAME : ""
     );
 

@@ -7,7 +7,9 @@
     "@playwright/test": "^1.22.0",
     "@types/node": "^20.9.2"
   },
-  "scripts": {},
+  "scripts": {
+    "test": "playwright test --headed"
+  },
   "dependencies": {
     "dotenv": "8.2.0"
   }
