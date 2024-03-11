@@ -1,3 +1,6 @@
+.hide-update {
+	left: calc(50% - 41px) !important;
+}
 .explorer-update {
 	position: fixed;
 	bottom: 16px;
@@ -21,6 +24,10 @@
 		border: 1px solid var(--bg-slate-400);
 		background: var(--bg-slate-500);
 		cursor: pointer;
+	}
+
+	.hidden {
+		display: none;
 	}
 
 	.ant-divider {
@@ -55,6 +62,10 @@
 
 	.view-options,
 	.actions {
+		.hidden {
+			display: none;
+		}
+
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -101,6 +112,9 @@
 				margin-left: 12px;
 			}
 		}
+	}
+	.hidden {
+		display: none;
 	}
 }
 
