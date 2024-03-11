@@ -33,8 +33,8 @@ type IntegrationSummary struct {
 }
 
 type IntegrationAssets struct {
-	Logs       LogsAssets             `json:"logs"`
-	Dashboards []dashboards.Dashboard `json:"dashboards"`
+	Logs       LogsAssets        `json:"logs"`
+	Dashboards []dashboards.Data `json:"dashboards"`
 
 	Alerts []rules.PostableRule `json:"alerts"`
 }
@@ -248,6 +248,120 @@ func (m *Manager) UninstallIntegration(
 	return m.installedIntegrationsRepo.delete(ctx, integrationId)
 }
 
+func (m *Manager) GetPipelinesForInstalledIntegrations(
+	ctx context.Context,
+) ([]logparsingpipeline.Pipeline, *model.ApiError) {
+	installedIntegrations, apiErr := m.getDetailsForInstalledIntegrations(ctx)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	pipelines := []logparsingpipeline.Pipeline{}
+	for _, ii := range installedIntegrations {
+		for _, p := range ii.Assets.Logs.Pipelines {
+			pp := logparsingpipeline.Pipeline{
+				// Alias is used for identifying integration pipelines. Id can't be used for this
+				// since versioning while saving pipelines requires a new id for each version
+				// to avoid altering history when pipelines are edited/reordered etc
+				Alias:       AliasForIntegrationPipeline(ii.Id, p.Alias),
+				Id:          uuid.NewString(),
+				OrderId:     p.OrderId,
+				Enabled:     p.Enabled,
+				Name:        p.Name,
+				Description: &p.Description,
+				Filter:      p.Filter,
+				Config:      p.Config,
+			}
+			pipelines = append(pipelines, pp)
+		}
+	}
+
+	return pipelines, nil
+}
+
+func (m *Manager) dashboardUuid(integrationId string, dashboardId string) string {
+	return strings.Join([]string{"integration", integrationId, dashboardId}, "--")
+}
+
+func (m *Manager) parseDashboardUuid(dashboardUuid string) (
+	integrationId string, dashboardId string, err *model.ApiError,
+) {
+	parts := strings.SplitN(dashboardUuid, "--", 3)
+	if len(parts) != 3 || parts[0] != "integration" {
+		return "", "", model.BadRequest(fmt.Errorf(
+			"invalid installed integration dashboard id",
+		))
+	}
+
+	return parts[1], parts[2], nil
+}
+
+func (m *Manager) GetInstalledIntegrationDashboardById(
+	ctx context.Context,
+	dashboardUuid string,
+) (*dashboards.Dashboard, *model.ApiError) {
+	integrationId, dashboardId, apiErr := m.parseDashboardUuid(dashboardUuid)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	integration, apiErr := m.GetIntegration(ctx, integrationId)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	if integration.Installation == nil {
+		return nil, model.BadRequest(fmt.Errorf(
+			"integration with id %s is not installed", integrationId,
+		))
+	}
+
+	for _, dd := range integration.IntegrationDetails.Assets.Dashboards {
+		if dId, exists := dd["id"]; exists {
+			if id, ok := dId.(string); ok && id == dashboardId {
+				isLocked := 1
+				return &dashboards.Dashboard{
+					Uuid:   m.dashboardUuid(integrationId, string(dashboardId)),
+					Locked: &isLocked,
+					Data:   dd,
+				}, nil
+			}
+		}
+	}
+
+	return nil, model.NotFoundError(fmt.Errorf(
+		"integration dashboard with id %s not found", dashboardUuid,
+	))
+}
+
+func (m *Manager) GetDashboardsForInstalledIntegrations(
+	ctx context.Context,
+) ([]dashboards.Dashboard, *model.ApiError) {
+	installedIntegrations, apiErr := m.getDetailsForInstalledIntegrations(ctx)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	result := []dashboards.Dashboard{}
+
+	for _, ii := range installedIntegrations {
+		for _, dd := range ii.Assets.Dashboards {
+			if dId, exists := dd["id"]; exists {
+				if dashboardId, ok := dId.(string); ok {
+					isLocked := 1
+					result = append(result, dashboards.Dashboard{
+						Uuid:   m.dashboardUuid(ii.IntegrationSummary.Id, dashboardId),
+						Locked: &isLocked,
+						Data:   dd,
+					})
+				}
+			}
+		}
+	}
+
+	return result, nil
+}
+
 // Helpers.
 func (m *Manager) getIntegrationDetails(
 	ctx context.Context,
@@ -297,9 +411,11 @@ func (m *Manager) getInstalledIntegration(
 	return &installation, nil
 }
 
-func (m *Manager) GetPipelinesForInstalledIntegrations(
+func (m *Manager) getDetailsForInstalledIntegrations(
 	ctx context.Context,
-) ([]logparsingpipeline.Pipeline, *model.ApiError) {
+) (
+	map[string]IntegrationDetails, *model.ApiError,
+) {
 	installations, apiErr := m.installedIntegrationsRepo.list(ctx)
 	if apiErr != nil {
 		return nil, apiErr
@@ -308,30 +424,5 @@ func (m *Manager) GetPipelinesForInstalledIntegrations(
 	installedIds := utils.MapSlice(installations, func(i InstalledIntegration) string {
 		return i.IntegrationId
 	})
-	installedIntegrations, apiErr := m.availableIntegrationsRepo.get(ctx, installedIds)
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	pipelines := []logparsingpipeline.Pipeline{}
-	for _, ii := range installedIntegrations {
-		for _, p := range ii.Assets.Logs.Pipelines {
-			pp := logparsingpipeline.Pipeline{
-				// Alias is used for identifying integration pipelines. Id can't be used for this
-				// since versioning while saving pipelines requires a new id for each version
-				// to avoid altering history when pipelines are edited/reordered etc
-				Alias:       AliasForIntegrationPipeline(ii.Id, p.Alias),
-				Id:          uuid.NewString(),
-				OrderId:     p.OrderId,
-				Enabled:     p.Enabled,
-				Name:        p.Name,
-				Description: &p.Description,
-				Filter:      p.Filter,
-				Config:      p.Config,
-			}
-			pipelines = append(pipelines, pp)
-		}
-	}
-
-	return pipelines, nil
+	return m.availableIntegrationsRepo.get(ctx, installedIds)
 }
