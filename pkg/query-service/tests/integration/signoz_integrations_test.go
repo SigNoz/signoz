@@ -14,6 +14,7 @@ import (
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -275,6 +276,72 @@ func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
 	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
 }
 
+func TestDashboardsForInstalledIntegrationDashboards(t *testing.T) {
+	require := require.New(t)
+
+	testDB := utils.NewQueryServiceDBForTests(t)
+	integrationsTB := NewIntegrationsTestBed(t, testDB)
+
+	availableIntegrationsResp := integrationsTB.GetAvailableIntegrationsFromQS()
+	availableIntegrations := availableIntegrationsResp.Integrations
+	require.Greater(
+		len(availableIntegrations), 0,
+		"some integrations should come bundled with SigNoz",
+	)
+
+	dashboards := integrationsTB.GetDashboardsFromQS()
+	require.Equal(
+		0, len(dashboards),
+		"There should be no dashboards at the start",
+	)
+
+	// Find an available integration that contains dashboards
+	var testAvailableIntegration *integrations.IntegrationsListItem
+	for _, ai := range availableIntegrations {
+		details := integrationsTB.GetIntegrationDetailsFromQS(ai.Id)
+		require.NotNil(details)
+		if len(details.Assets.Dashboards) > 0 {
+			testAvailableIntegration = &ai
+			break
+		}
+	}
+	require.NotNil(testAvailableIntegration)
+
+	// Installing an integration should make its dashboards appear in the dashboard list
+	require.False(testAvailableIntegration.IsInstalled)
+	integrationsTB.RequestQSToInstallIntegration(
+		testAvailableIntegration.Id, map[string]interface{}{},
+	)
+
+	testIntegration := integrationsTB.GetIntegrationDetailsFromQS(testAvailableIntegration.Id)
+	require.NotNil(testIntegration.Installation)
+	testIntegrationDashboards := testIntegration.Assets.Dashboards
+	require.Greater(
+		len(testIntegrationDashboards), 0,
+		"test integration is expected to have dashboards",
+	)
+
+	dashboards = integrationsTB.GetDashboardsFromQS()
+	require.Equal(
+		len(testIntegrationDashboards), len(dashboards),
+		"dashboards for installed integrations should appear in dashboards list",
+	)
+
+	// Should be able to get installed integrations dashboard by id
+	dd := integrationsTB.GetDashboardByIdFromQS(dashboards[0].Uuid)
+	require.Equal(*dd, dashboards[0])
+
+	// Integration dashboards should not longer appear in dashboard list after uninstallation
+	integrationsTB.RequestQSToUninstallIntegration(
+		testIntegration.Id,
+	)
+	dashboards = integrationsTB.GetDashboardsFromQS()
+	require.Equal(
+		0, len(dashboards),
+		"dashboards for uninstalled integrations should not appear in dashboards list",
+	)
+}
+
 type IntegrationsTestBed struct {
 	t              *testing.T
 	testUser       *model.User
@@ -373,6 +440,40 @@ func (tb *IntegrationsTestBed) RequestQSToUninstallIntegration(
 	tb.RequestQS("/api/v1/integrations/uninstall", request)
 }
 
+func (tb *IntegrationsTestBed) GetDashboardsFromQS() []dashboards.Dashboard {
+	result := tb.RequestQS("/api/v1/dashboards", nil)
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+
+	dashboards := []dashboards.Dashboard{}
+	err = json.Unmarshal(dataJson, &dashboards)
+	if err != nil {
+		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into dashboards")
+	}
+
+	return dashboards
+}
+
+func (tb *IntegrationsTestBed) GetDashboardByIdFromQS(dashboardUuid string) *dashboards.Dashboard {
+	result := tb.RequestQS(fmt.Sprintf("/api/v1/dashboards/%s", dashboardUuid), nil)
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+
+	dashboard := dashboards.Dashboard{}
+	err = json.Unmarshal(dataJson, &dashboard)
+	if err != nil {
+		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into dashboards")
+	}
+
+	return &dashboard
+}
+
 func (tb *IntegrationsTestBed) RequestQS(
 	path string,
 	postData interface{},
@@ -441,6 +542,7 @@ func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed 
 
 	router := app.NewRouter()
 	am := app.NewAuthMiddleware(auth.GetUserFromRequest)
+	apiHandler.RegisterRoutes(router, am)
 	apiHandler.RegisterIntegrationRoutes(router, am)
 
 	user, apiErr := createTestUser()
