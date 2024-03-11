@@ -327,6 +327,10 @@ func TestDashboardsForInstalledIntegrationDashboards(t *testing.T) {
 		"dashboards for installed integrations should appear in dashboards list",
 	)
 
+	// Should be able to get installed integrations dashboard by id
+	dd := integrationsTB.GetDashboardByIdFromQS(dashboards[0].Uuid)
+	require.Equal(*dd, dashboards[0])
+
 	// Integration dashboards should not longer appear in dashboard list after uninstallation
 	integrationsTB.RequestQSToUninstallIntegration(
 		testIntegration.Id,
@@ -336,7 +340,6 @@ func TestDashboardsForInstalledIntegrationDashboards(t *testing.T) {
 		0, len(dashboards),
 		"dashboards for uninstalled integrations should not appear in dashboards list",
 	)
-
 }
 
 type IntegrationsTestBed struct {
@@ -452,6 +455,23 @@ func (tb *IntegrationsTestBed) GetDashboardsFromQS() []dashboards.Dashboard {
 	}
 
 	return dashboards
+}
+
+func (tb *IntegrationsTestBed) GetDashboardByIdFromQS(dashboardUuid string) *dashboards.Dashboard {
+	result := tb.RequestQS(fmt.Sprintf("/api/v1/dashboards/%s", dashboardUuid), nil)
+
+	dataJson, err := json.Marshal(result.Data)
+	if err != nil {
+		tb.t.Fatalf("could not marshal apiResponse.Data: %v", err)
+	}
+
+	dashboard := dashboards.Dashboard{}
+	err = json.Unmarshal(dataJson, &dashboard)
+	if err != nil {
+		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into dashboards")
+	}
+
+	return &dashboard
 }
 
 func (tb *IntegrationsTestBed) RequestQS(
