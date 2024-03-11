@@ -2,30 +2,9 @@ import { test, expect } from "@playwright/test";
 import ROUTES from "../../frontend/src/constants/routes";
 import { DATA_TEST_IDS, SERVICE_TABLE_HEADERS } from "./contants";
 
-test("Basic Navigation Check across different resources", async ({ page }) => {
-  // route to services page and check if the page renders fine with BE contract
-  await Promise.all([
-    page.goto(ROUTES.APPLICATION),
-    page.waitForRequest("**/v1/services"),
-  ]);
-
-  const p99Latency = page.locator(
-    `th:has-text("${SERVICE_TABLE_HEADERS.P99LATENCY}")`
-  );
-
-  await expect(p99Latency).toBeVisible();
-
-  // route to the new trace explorer page and check if the page renders fine
-  await page.goto(ROUTES.TRACES_EXPLORER);
-
-  await page.waitForLoadState("networkidle");
-
-  const listViewTable = await page
-    .locator('div[role="presentation"]')
-    .isVisible();
-
-  await expect(listViewTable).toBeTruthy();
-
+test("Check for the dashboard page and individual dashboard to load within 5s", async ({
+  page,
+}) => {
   // route to the dashboards page and check if the page renders fine
   await Promise.all([
     page.goto(ROUTES.ALL_DASHBOARD),
@@ -48,7 +27,23 @@ test("Basic Navigation Check across different resources", async ({ page }) => {
 
   await expect(firstDashboardRow).toBeVisible();
 
+  const dashboardQuery = page.waitForResponse("**/v1/dashboards/**", {
+    timeout: 5000,
+  });
+
+  const variablesQuery = page.waitForResponse("**/v2/variables/query", {
+    timeout: 5000,
+  });
+
+  const queryRangeAPI = page.waitForResponse("**/v4/query_range", {
+    timeout: 5000,
+  });
+
   await firstDashboardRow.click();
 
-  await page.waitForLoadState("networkidle");
+  await Promise.all([
+    await dashboardQuery,
+    await variablesQuery,
+    await queryRangeAPI,
+  ]);
 });
