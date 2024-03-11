@@ -116,49 +116,41 @@ function Application(): JSX.Element {
 		[servicename, topLevelOperations],
 	);
 
-	const operationPerSecWidget = useMemo(
-		() =>
-			getWidgetQueryBuilder({
-				query: {
-					queryType: EQueryType.QUERY_BUILDER,
-					promql: [],
-					builder: operationPerSec({
-						servicename,
-						tagFilterItems,
-						topLevelOperations: topLevelOperationsRoute,
-					}),
-					clickhouse_sql: [],
-					id: uuid(),
-				},
-				title: GraphTitle.RATE_PER_OPS,
-				panelTypes: PANEL_TYPES.TIME_SERIES,
-				yAxisUnit: 'ops',
-				id: SERVICE_CHART_ID.rps,
+	const operationPerSecWidget = getWidgetQueryBuilder({
+		query: {
+			queryType: EQueryType.QUERY_BUILDER,
+			promql: [],
+			builder: operationPerSec({
+				servicename,
+				tagFilterItems,
+				topLevelOperations: topLevelOperationsRoute,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
-	);
+			clickhouse_sql: [],
+			id: uuid(),
+		},
+		title: GraphTitle.RATE_PER_OPS,
+		panelTypes: PANEL_TYPES.TIME_SERIES,
+		yAxisUnit: 'ops',
+		id: SERVICE_CHART_ID.rps,
+	});
 
-	const errorPercentageWidget = useMemo(
-		() =>
-			getWidgetQueryBuilder({
-				query: {
-					queryType: EQueryType.QUERY_BUILDER,
-					promql: [],
-					builder: errorPercentage({
-						servicename,
-						tagFilterItems,
-						topLevelOperations: topLevelOperationsRoute,
-					}),
-					clickhouse_sql: [],
-					id: uuid(),
-				},
-				title: GraphTitle.ERROR_PERCENTAGE,
-				panelTypes: PANEL_TYPES.TIME_SERIES,
-				yAxisUnit: '%',
-				id: SERVICE_CHART_ID.errorPercentage,
+	const errorPercentageWidget = getWidgetQueryBuilder({
+		query: {
+			queryType: EQueryType.QUERY_BUILDER,
+			promql: [],
+			builder: errorPercentage({
+				servicename,
+				tagFilterItems,
+				topLevelOperations: topLevelOperationsRoute,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
-	);
+			clickhouse_sql: [],
+			id: uuid(),
+		},
+		title: GraphTitle.ERROR_PERCENTAGE,
+		panelTypes: PANEL_TYPES.TIME_SERIES,
+		yAxisUnit: '%',
+		id: SERVICE_CHART_ID.errorPercentage,
+	});
 
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {
