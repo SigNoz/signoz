@@ -31,6 +31,10 @@ cd $OTEL_COLLECTOR_DIR || {
 }
 make build
 
+# 构建query-service
+cd "/home/ubuntu/ec-web-signoz"
+make build-query-service-static-amd64
+
 # 关闭运行的前端与收集器容器
 echo "Stopping running containers..."
 docker stop signoz-otel-collector signoz-frontend || {
