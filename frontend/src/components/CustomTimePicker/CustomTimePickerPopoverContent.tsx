@@ -80,7 +80,9 @@ function CustomTimePickerPopoverContent({
 						}}
 						className={cx(
 							'date-time-options-btn',
-							selectedTime === option.value && 'active',
+							customDateTimeVisible
+								? option.value === 'custom' && 'active'
+								: selectedTime === option.value && 'active',
 						)}
 					>
 						{option.label}

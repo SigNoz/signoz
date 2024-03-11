@@ -115,6 +115,9 @@ function CustomTimePicker({
 
 	const handleOpenChange = (newOpen: boolean): void => {
 		setOpen(newOpen);
+		if (!newOpen) {
+			setCustomDTPickerVisible?.(false);
+		}
 	};
 
 	const debouncedHandleInputChange = debounce((inputValue): void => {
@@ -260,7 +263,7 @@ function CustomTimePicker({
 					)
 				}
 				arrow={false}
-				trigger="click"
+				trigger="hover"
 				open={open}
 				onOpenChange={handleOpenChange}
 				style={{
