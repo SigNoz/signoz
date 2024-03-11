@@ -1044,8 +1044,19 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 	dashboard, apiError := dashboards.GetDashboard(r.Context(), uuid)
 
 	if apiError != nil {
-		RespondError(w, apiError, nil)
-		return
+		if apiError.Type() != model.ErrorNotFound {
+			RespondError(w, apiError, nil)
+			return
+		}
+
+		dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
+			r.Context(), uuid,
+		)
+		if apiError != nil {
+			RespondError(w, apiError, nil)
+			return
+		}
+
 	}
 
 	aH.Respond(w, dashboard)

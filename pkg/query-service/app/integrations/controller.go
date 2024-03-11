@@ -121,3 +121,9 @@ func (c *Controller) GetDashboardsForInstalledIntegrations(
 ) ([]dashboards.Dashboard, *model.ApiError) {
 	return c.mgr.GetDashboardsForInstalledIntegrations(ctx)
 }
+
+func (c *Controller) GetInstalledIntegrationDashboardById(
+	ctx context.Context, dashboardUuid string,
+) (*dashboards.Dashboard, *model.ApiError) {
+	return c.mgr.GetInstalledIntegrationDashboardById(ctx, dashboardUuid)
+}

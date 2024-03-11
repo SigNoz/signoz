@@ -33,8 +33,8 @@ type IntegrationSummary struct {
 }
 
 type IntegrationAssets struct {
-	Logs       LogsAssets             `json:"logs"`
-	Dashboards []dashboards.Dashboard `json:"dashboards"`
+	Logs       LogsAssets        `json:"logs"`
+	Dashboards []dashboards.Data `json:"dashboards"`
 
 	Alerts []rules.PostableRule `json:"alerts"`
 }
@@ -279,6 +279,61 @@ func (m *Manager) GetPipelinesForInstalledIntegrations(
 	return pipelines, nil
 }
 
+func (m *Manager) dashboardUuid(integrationId string, dashboardId string) string {
+	return strings.Join([]string{"integration", integrationId, dashboardId}, "--")
+}
+
+func (m *Manager) parseDashboardUuid(dashboardUuid string) (
+	integrationId string, dashboardId string, err *model.ApiError,
+) {
+	parts := strings.SplitN(dashboardUuid, "--", 3)
+	if len(parts) != 3 || parts[0] != "integration" {
+		return "", "", model.BadRequest(fmt.Errorf(
+			"invalid installed integration dashboard id",
+		))
+	}
+
+	return parts[1], parts[2], nil
+}
+
+func (m *Manager) GetInstalledIntegrationDashboardById(
+	ctx context.Context,
+	dashboardUuid string,
+) (*dashboards.Dashboard, *model.ApiError) {
+	integrationId, dashboardId, apiErr := m.parseDashboardUuid(dashboardUuid)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	integration, apiErr := m.GetIntegration(ctx, integrationId)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	if integration.Installation == nil {
+		return nil, model.BadRequest(fmt.Errorf(
+			"integration with id %s is not installed", integrationId,
+		))
+	}
+
+	for _, dd := range integration.IntegrationDetails.Assets.Dashboards {
+		if dId, exists := dd["id"]; exists {
+			if id, ok := dId.(string); ok && id == dashboardId {
+				isLocked := 1
+				return &dashboards.Dashboard{
+					Uuid:   m.dashboardUuid(integrationId, string(dashboardId)),
+					Locked: &isLocked,
+					Data:   dd,
+				}, nil
+			}
+		}
+	}
+
+	return nil, model.NotFoundError(fmt.Errorf(
+		"integration dashboard with id %s not found", dashboardUuid,
+	))
+}
+
 func (m *Manager) GetDashboardsForInstalledIntegrations(
 	ctx context.Context,
 ) ([]dashboards.Dashboard, *model.ApiError) {
@@ -290,7 +345,18 @@ func (m *Manager) GetDashboardsForInstalledIntegrations(
 	result := []dashboards.Dashboard{}
 
 	for _, ii := range installedIntegrations {
-		result = append(result, ii.Assets.Dashboards...)
+		for _, dd := range ii.Assets.Dashboards {
+			if dId, exists := dd["id"]; exists {
+				if dashboardId, ok := dId.(string); ok {
+					isLocked := 1
+					result = append(result, dashboards.Dashboard{
+						Uuid:   m.dashboardUuid(ii.IntegrationSummary.Id, dashboardId),
+						Locked: &isLocked,
+						Data:   dd,
+					})
+				}
+			}
+		}
 	}
 
 	return result, nil

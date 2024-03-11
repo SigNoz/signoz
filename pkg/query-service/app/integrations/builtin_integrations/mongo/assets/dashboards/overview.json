@@ -1,4 +1,5 @@
 {
+    "id": "mongo-overview",
     "description": "This dashboard provides a high-level overview of your MongoDB. It includes read/write performance, most-used replicas, collection metrics etc...",
     "layout": [
         {
