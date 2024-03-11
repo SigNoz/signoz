@@ -167,7 +167,7 @@ func buildPipeline(signal Signal, current []interface{}) ([]interface{}, error) 
 				inserts++
 
 				// we use last matched to insert new item.  This means, we keep inserting missing processors
-				// right after last matched processsor (e.g. insert filters after tail_sampling for existing list of [batch, tail_sampling])
+				// right after last matched processor (e.g. insert filters after tail_sampling for existing list of [batch, tail_sampling])
 
 				if lastMatched <= 0 {
 					zap.S().Debugf("build_pipeline: found a new item to be inserted, inserting at position 0:", m.Name)
