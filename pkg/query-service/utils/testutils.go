@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 )
 
@@ -24,6 +25,7 @@ func NewQueryServiceDBForTests(t *testing.T) *sqlx.DB {
 
 	// TODO(Raj): This should not require passing in the DB file path
 	dao.InitDao("sqlite", testDBFilePath)
+	dashboards.InitDB(testDBFilePath)
 
 	return testDB
 }
