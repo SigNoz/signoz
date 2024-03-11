@@ -7,4 +7,5 @@ export const SERVICE_TABLE_HEADERS = {
 
 export const DATA_TEST_IDS = {
   NEW_DASHBOARD_BTN: "create-new-dashboard",
+  DASHBOARD_LIST_TABLE: "dashboard-list-table",
 };

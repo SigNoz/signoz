@@ -19,7 +19,7 @@ function Name(name: Data['name'], data: Data): JSX.Element {
 	};
 
 	return (
-		<TableLinkText onClick={onClickHandler}>
+		<TableLinkText onClick={onClickHandler} className="dashbord-row-item">
 			{isLocked && <LockFilled />} {name}
 		</TableLinkText>
 	);

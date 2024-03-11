@@ -362,7 +362,7 @@ function DashboardsList(): JSX.Element {
 		<Card style={{ margin: '16px 0' }}>
 			{GetHeader}
 
-			<TableContainer>
+			<TableContainer data-testid="dashboard-list-table">
 				<ImportJSON
 					isImportJSONModalVisible={isImportJSONModalVisible}
 					uploadedGrafana={uploadedGrafana}

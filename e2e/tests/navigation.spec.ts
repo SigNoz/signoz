@@ -24,7 +24,7 @@ test("Basic Navigation Check across different resources", async ({ page }) => {
     .locator('div[role="presentation"]')
     .isVisible();
 
-  expect(listViewTable).toBeTruthy();
+  await expect(listViewTable).toBeTruthy();
 
   // route to the dashboards page and check if the page renders fine
   await Promise.all([
@@ -36,5 +36,19 @@ test("Basic Navigation Check across different resources", async ({ page }) => {
     .locator(`data-testid=${DATA_TEST_IDS.NEW_DASHBOARD_BTN}`)
     .isVisible();
 
-  expect(newDashboardBtn).toBeTruthy();
+  await expect(newDashboardBtn).toBeTruthy();
+
+  const dashboardListTable = await page
+    .locator(`data-testid=${DATA_TEST_IDS.DASHBOARD_LIST_TABLE}`)
+    .isVisible();
+
+  await expect(dashboardListTable).toBeTruthy();
+
+  const firstDashboardRow = await page.locator(".dashbord-row-item").first();
+
+  await expect(firstDashboardRow).toBeVisible();
+
+  await firstDashboardRow.click();
+
+  await page.waitForLoadState("networkidle");
 });
