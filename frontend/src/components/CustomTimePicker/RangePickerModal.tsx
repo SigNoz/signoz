@@ -54,7 +54,8 @@ function RangePickerModal(props: RangePickerModalProps): JSX.Element {
 			<RangePicker
 				disabledDate={disabledDate}
 				allowClear
-				onCalendarChange={onModalOkHandler}
+				showTime
+				onOk={onModalOkHandler}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...(selectedTime === 'custom' && {
 					defaultValue: [dayjs(minTime / 1000000), dayjs(maxTime / 1000000)],
