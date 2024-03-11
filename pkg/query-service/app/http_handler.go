@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -3332,6 +3333,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 	applyMetricLimit(result, queryRangeParams)
 
+	sendQueryResultEvents(r, result, queryRangeParams)
 	// only adding applyFunctions instead of postProcess since experssion are
 	// are executed in clickhouse directly and we wanted to add support for timeshift
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
@@ -3343,7 +3345,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	// This checks if the time for context to complete has exceeded.
-	// it adds flag to notify the user of incomplete respone
+	// it adds flag to notify the user of incomplete response
 	select {
 	case <-ctx.Done():
 		resp.ContextTimeout = true
@@ -3353,6 +3355,50 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	aH.Respond(w, resp)
+}
+
+func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	referrer := r.Header.Get("Referer")
+
+	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.S().Errorf("error while matching the referrer: %v", err)
+	}
+	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.S().Errorf("error while matching the referrer: %v", err)
+	}
+
+	if alertMatched || dashboardMatched {
+
+		if len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0) {
+
+			userEmail, err := auth.GetEmailFromJwt(r.Context())
+			if err == nil {
+				signozLogsUsed, signozMetricsUsed, signozTracesUsed := telemetry.GetInstance().CheckSigNozSignals(queryRangeParams)
+				if signozLogsUsed || signozMetricsUsed || signozTracesUsed {
+					if dashboardMatched {
+						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY, map[string]interface{}{
+							"queryType":   queryRangeParams.CompositeQuery.QueryType,
+							"panelType":   queryRangeParams.CompositeQuery.PanelType,
+							"tracesUsed":  signozTracesUsed,
+							"logsUsed":    signozLogsUsed,
+							"metricsUsed": signozMetricsUsed,
+						}, userEmail)
+					}
+					if alertMatched {
+						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY, map[string]interface{}{
+							"queryType":   queryRangeParams.CompositeQuery.QueryType,
+							"panelType":   queryRangeParams.CompositeQuery.PanelType,
+							"tracesUsed":  signozTracesUsed,
+							"logsUsed":    signozLogsUsed,
+							"metricsUsed": signozMetricsUsed,
+						}, userEmail)
+					}
+				}
+			}
+		}
+	}
 }
 
 func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
@@ -3513,7 +3559,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
-
+	sendQueryResultEvents(r, result, queryRangeParams)
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
