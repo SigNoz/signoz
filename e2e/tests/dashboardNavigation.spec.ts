@@ -6,6 +6,23 @@ test("Check for the dashboard page and individual dashboard to load within 5s", 
   page,
 }) => {
   // route to the dashboards page and check if the page renders fine
+  let requestCount = 0;
+  let finishedRequestsCount = 0;
+  const dashboardAPIEndpoints = [
+    "v4/query_range",
+    "v2/variables/query",
+    "v1/dashboards/",
+  ];
+
+  page.on("request", (r) => {
+    if (dashboardAPIEndpoints.some((api) => r.url().includes(api)))
+      requestCount++;
+  });
+
+  page.on("requestfinished", (r) => {
+    if (dashboardAPIEndpoints.some((api) => r.url().includes(api)))
+      finishedRequestsCount++;
+  });
   await Promise.all([
     page.goto(ROUTES.ALL_DASHBOARD),
     page.waitForRequest("**/v1/dashboards"),
@@ -27,6 +44,17 @@ test("Check for the dashboard page and individual dashboard to load within 5s", 
 
   await expect(firstDashboardRow).toBeVisible();
 
-  // wait for all the API calls to succeed on first load
-  await page.waitForLoadState("networkidle", { timeout: 5000 });
+  const timeoutPromise = new Promise((resolve, reject) => {
+    setTimeout(() => {
+      console.log(finishedRequestsCount, requestCount, "timeout");
+      if (finishedRequestsCount < requestCount) {
+        reject(new Error("Not all requests completed within 5 seconds."));
+      } else {
+        resolve("All requests completed within 5 seconds.");
+      }
+    }, 5000);
+  });
+  await firstDashboardRow.click();
+
+  await timeoutPromise;
 });
