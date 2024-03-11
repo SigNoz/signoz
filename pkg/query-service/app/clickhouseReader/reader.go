@@ -161,8 +161,10 @@ func NewReaderFromClickhouseConnection(
 		os.Exit(1)
 	}
 
+	wrap := clickhouseConnWrapper{conn: db}
+
 	return &ClickHouseReader{
-		db:                      db,
+		db:                      wrap,
 		localDB:                 localDB,
 		TraceDB:                 options.primary.TraceDB,
 		alertManager:            alertManager,
@@ -4645,10 +4647,26 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 	return seriesList, nil
 }
 
+func logComment(ctx context.Context) string {
+	// Get the key-value pairs from context for log comment
+	kv := ctx.Value("log_comment")
+	if kv == nil {
+		return ""
+	}
+
+	logCommentKVs, ok := kv.(map[string]string)
+	if !ok {
+		return ""
+	}
+
+	x, _ := json.Marshal(logCommentKVs)
+	return string(x)
+}
+
 // GetTimeSeriesResultV3 runs the query and returns list of time series
 func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
 
-	defer utils.Elapsed("GetTimeSeriesResultV3", query)()
+	defer utils.Elapsed("GetTimeSeriesResultV3", query, fmt.Sprintf("logComment: %s", logComment(ctx)))()
 
 	rows, err := r.db.Query(ctx, query)
 
@@ -4673,7 +4691,7 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 // GetListResultV3 runs the query and returns list of rows
 func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
 
-	defer utils.Elapsed("GetListResultV3", query)()
+	defer utils.Elapsed("GetListResultV3", query, fmt.Sprintf("logComment: %s", logComment(ctx)))()
 
 	rows, err := r.db.Query(ctx, query)
 
