@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
@@ -113,4 +114,16 @@ func (c *Controller) GetPipelinesForInstalledIntegrations(
 	ctx context.Context,
 ) ([]logparsingpipeline.Pipeline, *model.ApiError) {
 	return c.mgr.GetPipelinesForInstalledIntegrations(ctx)
+}
+
+func (c *Controller) GetDashboardsForInstalledIntegrations(
+	ctx context.Context,
+) ([]dashboards.Dashboard, *model.ApiError) {
+	return c.mgr.GetDashboardsForInstalledIntegrations(ctx)
+}
+
+func (c *Controller) GetInstalledIntegrationDashboardById(
+	ctx context.Context, dashboardUuid string,
+) (*dashboards.Dashboard, *model.ApiError) {
+	return c.mgr.GetInstalledIntegrationDashboardById(ctx, dashboardUuid)
 }

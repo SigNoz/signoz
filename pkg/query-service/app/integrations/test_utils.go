@@ -92,7 +92,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []dashboards.Dashboard{},
+				Dashboards: []dashboards.Data{},
 				Alerts:     []rules.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{
@@ -170,7 +170,7 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []dashboards.Dashboard{},
+				Dashboards: []dashboards.Data{},
 				Alerts:     []rules.PostableRule{},
 			},
 			ConnectionTests: &IntegrationConnectionTests{

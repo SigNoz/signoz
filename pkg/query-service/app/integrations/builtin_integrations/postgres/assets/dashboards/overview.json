@@ -1,4 +1,5 @@
 {
+    "id": "postgres-overview",
     "description": "This dashboard provides a high-level overview of your PostgreSQL databases. It includes replication, locks, and throughput etc...",
     "layout": [
         {
