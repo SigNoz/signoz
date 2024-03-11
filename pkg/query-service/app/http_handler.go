@@ -461,6 +461,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	// 自定义服务接口
 	router.HandleFunc("/api/v1/changeIssueStatus", am.ViewAccess(aH.changeIssueStatus)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/searchAllServices", am.ViewAccess(aH.searchAllServices)).Methods(http.MethodGet)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -3432,6 +3433,15 @@ func (aH *APIHandler) changeIssueStatus(w http.ResponseWriter, r *http.Request) 
 	fmt.Println(query)
 	result, apiErr := aH.reader.ChangeIssueStatus(r.Context(), query)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
+}
+
+func (aH *APIHandler) searchAllServices(w http.ResponseWriter, r *http.Request) {
+	result, err := aH.reader.SearchAllServices(r.Context())
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 

@@ -5133,3 +5133,28 @@ func (r *ClickHouseReader) ChangeIssueStatus(ctx context.Context, queryParams *m
 	}
 	return true, nil
 }
+
+func (r *ClickHouseReader) SearchAllServices(ctx context.Context) (*[]string, error) {
+
+	services := []string{}
+	query := fmt.Sprintf(`SELECT DISTINCT serviceName FROM %s.%s order by serviceName ASC`, r.TraceDB, r.indexTable)
+
+	rows, err := r.db.Query(ctx, query)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var serviceName string
+		if err := rows.Scan(&serviceName); err != nil {
+			return &services, err
+		}
+		services = append(services, serviceName)
+	}
+	return &services, nil
+}

@@ -106,6 +106,7 @@ type Reader interface {
 
 	// 自定义服务
 	ChangeIssueStatus(ctx context.Context, params *model.ChangeIssueStatusParams) (bool, *model.ApiError)
+	SearchAllServices(ctx context.Context) (*[]string, error)
 }
 
 type Querier interface {
