@@ -867,11 +867,15 @@ func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 	allDashboards, err := dashboards.GetDashboards(r.Context())
-
 	if err != nil {
 		RespondError(w, err, nil)
 		return
 	}
+
+	ic := aH.IntegrationsController
+	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context())
+	allDashboards = append(allDashboards, installedIntegrationDashboards...)
+
 	tagsFromReq, ok := r.URL.Query()["tags"]
 	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
 		aH.Respond(w, allDashboards)
