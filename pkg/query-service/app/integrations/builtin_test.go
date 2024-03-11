@@ -20,7 +20,7 @@ func TestBuiltinIntegrations(t *testing.T) {
 		"some built in integrations are expected to be bundled.",
 	)
 
-	nginxIntegrationId := "builtin::nginx"
+	nginxIntegrationId := "builtin-nginx"
 	res, apiErr := repo.get(context.Background(), []string{
 		nginxIntegrationId,
 	})

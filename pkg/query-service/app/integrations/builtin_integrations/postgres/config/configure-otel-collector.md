@@ -4,7 +4,7 @@
 
 Save the following collector config in a file named `postgres-collector-config.yaml`
 
-```
+```bash
 receivers:
   postgresql:
     # The endpoint of the postgresql server. Whether using TCP or Unix sockets, this value should be host:port. If transport is set to unix, the endpoint will internally be translated from host:port to /host.s.PGSQL.port

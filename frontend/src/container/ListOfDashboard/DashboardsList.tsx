@@ -309,49 +309,52 @@ function DashboardsList(): JSX.Element {
 					/>
 				</Col>
 
-				<Col
-					span={6}
-					style={{
-						display: 'flex',
-						justifyContent: 'flex-end',
-					}}
-				>
-					<ButtonContainer>
-						<TextToolTip
-							{...{
-								text: `More details on how to create dashboards`,
-								url: 'https://signoz.io/docs/userguide/dashboards',
-							}}
-						/>
-					</ButtonContainer>
-
-					<Dropdown
-						menu={{ items: getMenuItems }}
-						disabled={isDashboardListLoading}
-						placement="bottomRight"
+				{createNewDashboard && (
+					<Col
+						span={6}
+						style={{
+							display: 'flex',
+							justifyContent: 'flex-end',
+						}}
 					>
-						<NewDashboardButton
-							icon={<PlusOutlined />}
-							type="primary"
-							data-testid="create-new-dashboard"
-							loading={newDashboardState.loading}
-							danger={newDashboardState.error}
+						<ButtonContainer>
+							<TextToolTip
+								{...{
+									text: `More details on how to create dashboards`,
+									url: 'https://signoz.io/docs/userguide/dashboards',
+								}}
+							/>
+						</ButtonContainer>
+
+						<Dropdown
+							menu={{ items: getMenuItems }}
+							disabled={isDashboardListLoading}
+							placement="bottomRight"
 						>
-							{getText()}
-						</NewDashboardButton>
-					</Dropdown>
-				</Col>
+							<NewDashboardButton
+								icon={<PlusOutlined />}
+								type="primary"
+								data-testid="create-new-dashboard"
+								loading={newDashboardState.loading}
+								danger={newDashboardState.error}
+							>
+								{getText()}
+							</NewDashboardButton>
+						</Dropdown>
+					</Col>
+				)}
 			</Row>
 		),
 		[
 			isDashboardListLoading,
 			handleSearch,
 			isFilteringDashboards,
+			searchString,
+			createNewDashboard,
 			getMenuItems,
 			newDashboardState.loading,
 			newDashboardState.error,
 			getText,
-			searchString,
 		],
 	);
 

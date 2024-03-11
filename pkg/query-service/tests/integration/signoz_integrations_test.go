@@ -7,23 +7,28 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"runtime/debug"
+	"slices"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/integrations"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 // Higher level tests for UI facing APIs
 
 func TestSignozIntegrationLifeCycle(t *testing.T) {
 	require := require.New(t)
-	testbed := NewIntegrationsTestBed(t)
+	testbed := NewIntegrationsTestBed(t, nil)
 
 	installedResp := testbed.GetInstalledIntegrationsFromQS()
 	require.Equal(
@@ -92,6 +97,184 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 	require.False(availableIntegrations[0].IsInstalled)
 }
 
+func TestLogPipelinesForInstalledSignozIntegrations(t *testing.T) {
+	require := require.New(t)
+
+	testDB := utils.NewQueryServiceDBForTests(t)
+	integrationsTB := NewIntegrationsTestBed(t, testDB)
+	pipelinesTB := NewLogPipelinesTestBed(t, testDB)
+
+	availableIntegrationsResp := integrationsTB.GetAvailableIntegrationsFromQS()
+	availableIntegrations := availableIntegrationsResp.Integrations
+	require.Greater(
+		len(availableIntegrations), 0,
+		"some integrations should come bundled with SigNoz",
+	)
+
+	getPipelinesResp := pipelinesTB.GetPipelinesFromQS()
+	require.Equal(
+		0, len(getPipelinesResp.Pipelines),
+		"There should be no pipelines at the start",
+	)
+
+	// Find an available integration that contains a log pipeline
+	var testAvailableIntegration *integrations.IntegrationsListItem
+	for _, ai := range availableIntegrations {
+		details := integrationsTB.GetIntegrationDetailsFromQS(ai.Id)
+		require.NotNil(details)
+		if len(details.Assets.Logs.Pipelines) > 0 {
+			testAvailableIntegration = &ai
+			break
+		}
+	}
+	require.NotNil(testAvailableIntegration)
+
+	// Installing an integration should add its pipelines to pipelines list
+	require.False(testAvailableIntegration.IsInstalled)
+	integrationsTB.RequestQSToInstallIntegration(
+		testAvailableIntegration.Id, map[string]interface{}{},
+	)
+
+	testIntegration := integrationsTB.GetIntegrationDetailsFromQS(testAvailableIntegration.Id)
+	require.NotNil(testIntegration.Installation)
+	testIntegrationPipelines := testIntegration.Assets.Logs.Pipelines
+	require.Greater(
+		len(testIntegrationPipelines), 0,
+		"test integration expected to have a pipeline",
+	)
+
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(
+		len(testIntegrationPipelines), len(getPipelinesResp.Pipelines),
+		"Pipelines for installed integrations should appear in pipelines list",
+	)
+	lastPipeline := getPipelinesResp.Pipelines[len(getPipelinesResp.Pipelines)-1]
+	require.NotNil(integrations.IntegrationIdForPipeline(lastPipeline))
+	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(lastPipeline))
+
+	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+
+	// After saving a user created pipeline, pipelines response should include
+	// both user created pipelines and pipelines for installed integrations.
+	postablePipelines := logparsingpipeline.PostablePipelines{
+		Pipelines: []logparsingpipeline.PostablePipeline{
+			{
+				OrderId: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "method",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: "=",
+							Value:    "GET",
+						},
+					},
+				},
+				Config: []logparsingpipeline.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "add",
+						Type:    "add",
+						Field:   "attributes.test",
+						Value:   "val",
+						Enabled: true,
+						Name:    "test add",
+					},
+				},
+			},
+		},
+	}
+
+	pipelinesTB.PostPipelinesToQS(postablePipelines)
+
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines))
+	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+
+	// Reordering integration pipelines should be possible.
+	postable := postableFromPipelines(getPipelinesResp.Pipelines)
+	slices.Reverse(postable.Pipelines)
+	for i := range postable.Pipelines {
+		postable.Pipelines[i].OrderId = i + 1
+	}
+
+	pipelinesTB.PostPipelinesToQS(postable)
+
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	firstPipeline := getPipelinesResp.Pipelines[0]
+	require.NotNil(integrations.IntegrationIdForPipeline(firstPipeline))
+	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(firstPipeline))
+
+	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+
+	// enabling/disabling integration pipelines should be possible.
+	require.True(firstPipeline.Enabled)
+
+	postable.Pipelines[0].Enabled = false
+	pipelinesTB.PostPipelinesToQS(postable)
+
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines))
+
+	firstPipeline = getPipelinesResp.Pipelines[0]
+	require.NotNil(integrations.IntegrationIdForPipeline(firstPipeline))
+	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(firstPipeline))
+
+	require.False(firstPipeline.Enabled)
+
+	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+
+	// should not be able to edit integrations pipeline.
+	require.Greater(len(postable.Pipelines[0].Config), 0)
+	postable.Pipelines[0].Config = []logparsingpipeline.PipelineOperator{}
+	pipelinesTB.PostPipelinesToQS(postable)
+
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines))
+
+	firstPipeline = getPipelinesResp.Pipelines[0]
+	require.NotNil(integrations.IntegrationIdForPipeline(firstPipeline))
+	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(firstPipeline))
+
+	require.False(firstPipeline.Enabled)
+	require.Greater(len(firstPipeline.Config), 0)
+
+	// should not be able to delete integrations pipeline
+	postable.Pipelines = []logparsingpipeline.PostablePipeline{postable.Pipelines[1]}
+	pipelinesTB.PostPipelinesToQS(postable)
+
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(1+len(testIntegrationPipelines), len(getPipelinesResp.Pipelines))
+
+	lastPipeline = getPipelinesResp.Pipelines[1]
+	require.NotNil(integrations.IntegrationIdForPipeline(lastPipeline))
+	require.Equal(testIntegration.Id, *integrations.IntegrationIdForPipeline(lastPipeline))
+
+	// Uninstalling an integration should remove its pipelines
+	// from pipelines list in the UI
+	integrationsTB.RequestQSToUninstallIntegration(
+		testIntegration.Id,
+	)
+	getPipelinesResp = pipelinesTB.GetPipelinesFromQS()
+	require.Equal(
+		1, len(getPipelinesResp.Pipelines),
+		"Pipelines for uninstalled integrations should get removed from pipelines list",
+	)
+	pipelinesTB.assertPipelinesSentToOpampClient(getPipelinesResp.Pipelines)
+	pipelinesTB.assertNewAgentGetsPipelinesOnConnection(getPipelinesResp.Pipelines)
+}
+
 type IntegrationsTestBed struct {
 	t              *testing.T
 	testUser       *model.User
@@ -125,7 +308,7 @@ func (tb *IntegrationsTestBed) GetInstalledIntegrationsFromQS() *integrations.In
 	var integrationsResp integrations.IntegrationsListResponse
 	err = json.Unmarshal(dataJson, &integrationsResp)
 	if err != nil {
-		tb.t.Fatalf("could not unmarshal apiResponse.Data json into PipelinesResponse")
+		tb.t.Fatalf(" could not unmarshal apiResponse.Data json into PipelinesResponse")
 	}
 
 	return &integrationsResp
@@ -232,11 +415,11 @@ func (tb *IntegrationsTestBed) mockLogQueryResponse(logsInResponse []model.Signo
 	addLogsQueryExpectation(tb.mockClickhouse, logsInResponse)
 }
 
-func NewIntegrationsTestBed(t *testing.T) *IntegrationsTestBed {
-	testDB, testDBFilePath := integrations.NewTestSqliteDB(t)
-
-	// TODO(Raj): This should not require passing in the DB file path
-	dao.InitDao("sqlite", testDBFilePath)
+// testDB can be injected for sharing a DB across multiple integration testbeds.
+func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed {
+	if testDB == nil {
+		testDB = utils.NewQueryServiceDBForTests(t)
+	}
 
 	controller, err := integrations.NewController(testDB)
 	if err != nil {
@@ -271,4 +454,31 @@ func NewIntegrationsTestBed(t *testing.T) *IntegrationsTestBed {
 		qsHttpHandler:  router,
 		mockClickhouse: mockClickhouse,
 	}
+}
+
+func postableFromPipelines(pipelines []logparsingpipeline.Pipeline) logparsingpipeline.PostablePipelines {
+	result := logparsingpipeline.PostablePipelines{}
+
+	for _, p := range pipelines {
+		postable := logparsingpipeline.PostablePipeline{
+			Id:      p.Id,
+			OrderId: p.OrderId,
+			Name:    p.Name,
+			Alias:   p.Alias,
+			Enabled: p.Enabled,
+			Config:  p.Config,
+		}
+
+		if p.Description != nil {
+			postable.Description = *p.Description
+		}
+
+		if p.Filter != nil {
+			postable.Filter = p.Filter
+		}
+
+		result.Pipelines = append(result.Pipelines, postable)
+	}
+
+	return result
 }
