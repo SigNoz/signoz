@@ -48,6 +48,8 @@ import {
 	saveNewViewHandler,
 } from './utils';
 
+const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function ExplorerOptions({
 	disabled,
@@ -78,8 +80,6 @@ function ExplorerOptions({
 	};
 
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-
-	const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
 	const onCreateAlertsHandler = useCallback(() => {
 		history.push(
