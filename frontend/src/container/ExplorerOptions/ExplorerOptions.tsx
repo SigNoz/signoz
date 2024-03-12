@@ -295,7 +295,7 @@ function ExplorerOptions({
 
 	return (
 		<>
-			{isQueryUpdated && !isExplorerOptionDrop && !isDragging && (
+			{isQueryUpdated && !isExplorerOptionHidden && !isDragging && (
 				<div
 					className={cx(
 						isEditDeleteSupported ? '' : 'hide-update',
