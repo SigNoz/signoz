@@ -25,6 +25,7 @@ jobs:
           PLAYWRIGHT_TEST_BASE_URL: ${{ secrets.PLAYWRIGHT_TEST_BASE_URL }}
           PLAYWRIGHT_TEST_USERNAME: ${{ secrets.PLAYWRIGHT_TEST_USERNAME }}
           PLAYWRIGHT_TEST_PASSWORD: ${{ secrets.PLAYWRIGHT_TEST_PASSWORD }}
+          PLAYWRIGHT_DASHBOARD_NAME: ${{ secrets.PLAYWRIGHT_DASHBOARD_NAME }}
       - name: Slack notification on failure
         if: failure()
         uses: rtCamp/action-slack-notify@v2

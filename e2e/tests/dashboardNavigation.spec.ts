@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 import ROUTES from "../../frontend/src/constants/routes";
 import { DATA_TEST_IDS } from "./contants";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 test("Check for the dashboard page and individual dashboard to load within 5s", async ({
   page,
@@ -23,10 +26,18 @@ test("Check for the dashboard page and individual dashboard to load within 5s", 
     if (dashboardAPIEndpoints.some((api) => r.url().includes(api)))
       finishedRequestsCount++;
   });
-  await Promise.all([
-    page.goto(ROUTES.ALL_DASHBOARD),
-    page.waitForRequest("**/v1/dashboards"),
-  ]);
+
+  const dashboardListRequest = page.waitForRequest("**/v1/dashboards");
+  const dashboardListResponse = page.waitForResponse("**/v1/dashboards");
+  await Promise.all([page.goto(ROUTES.ALL_DASHBOARD), dashboardListRequest]);
+
+  const dashboardResponse = await dashboardListResponse;
+
+  const dashboardListJSON = await dashboardResponse.json();
+
+  const id = dashboardListJSON.data.find((dashboard) => {
+    return dashboard.data.title === process.env.PLAYWRIGHT_DASHBOARD_NAME;
+  })?.uuid;
 
   const newDashboardBtn = await page
     .locator(`data-testid=${DATA_TEST_IDS.NEW_DASHBOARD_BTN}`)
@@ -40,9 +51,9 @@ test("Check for the dashboard page and individual dashboard to load within 5s", 
 
   await expect(dashboardListTable).toBeTruthy();
 
-  const firstDashboardRow = await page.locator(".dashbord-row-item").first();
-
-  await expect(firstDashboardRow).toBeVisible();
+  if (!id) {
+    throw new Error("Dashboard not found");
+  }
 
   const timeoutPromise = new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -54,7 +65,8 @@ test("Check for the dashboard page and individual dashboard to load within 5s", 
       }
     }, 5000);
   });
-  await firstDashboardRow.click();
+
+  await page.goto(`${ROUTES.ALL_DASHBOARD}/${id}`);
 
   await timeoutPromise;
 });
