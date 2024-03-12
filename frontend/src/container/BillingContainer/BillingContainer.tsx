@@ -36,7 +36,6 @@ import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
-import billingPageRes from './billingResponse.json';
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
 
 interface DataType {
@@ -135,14 +134,12 @@ export default function BillingContainer(): JSX.Element {
 	const handleError = useAxiosError();
 
 	const processUsageData = useCallback(
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		(_data: any): void => {
-			const { data } = billingPageRes;
+		(data: any): void => {
 			const {
 				details: { breakdown = [], billTotal },
 				billingPeriodStart,
 				billingPeriodEnd,
-			} = data || {}; // todo - inserting mock data
+			} = data?.payload || {};
 			const formattedUsageData: any[] = [];
 
 			if (breakdown && Array.isArray(breakdown)) {
@@ -180,8 +177,7 @@ export default function BillingContainer(): JSX.Element {
 				setBillAmount(billTotal);
 			}
 
-			// setApiResponse(data?.payload || {});
-			setApiResponse(billingPageRes.data || {}); // todo - inserting mock data
+			setApiResponse(data?.payload || {});
 		},
 		[licensesData?.payload?.onTrial],
 	);
