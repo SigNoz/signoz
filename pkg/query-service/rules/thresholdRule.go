@@ -890,8 +890,8 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	q := r.prepareQueryRange(ts)
 	// Traces list view expects time in nanoseconds
 	tr := timeRange{
-		Start:    q.Start * time.Minute.Microseconds(),
-		End:      q.End * time.Minute.Microseconds(),
+		Start:    q.Start * time.Second.Microseconds(),
+		End:      q.End * time.Second.Microseconds(),
 		PageSize: 100,
 	}
 
