@@ -823,10 +823,11 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 		return ""
 	}
 
+	q := r.prepareQueryRange(ts)
 	// Logs list view expects time in milliseconds
 	tr := timeRange{
-		Start:    ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
-		End:      ts.UnixMilli(),
+		Start:    q.Start,
+		End:      q.End,
 		PageSize: 100,
 	}
 
@@ -886,10 +887,11 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 		return ""
 	}
 
+	q := r.prepareQueryRange(ts)
 	// Traces list view expects time in nanoseconds
 	tr := timeRange{
-		Start:    ts.Add(-time.Duration(r.evalWindow)).UnixNano(),
-		End:      ts.UnixNano(),
+		Start:    q.Start * time.Minute.Microseconds(),
+		End:      q.End * time.Minute.Microseconds(),
 		PageSize: 100,
 	}
 
