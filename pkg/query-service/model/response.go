@@ -171,16 +171,21 @@ type AlertingRuleResponse struct {
 	// Value       float64       `json:"value"`
 }
 
+type DataWarning struct {
+	TopLevelOps []string `json:"topLevelOps"`
+}
+
 type ServiceItem struct {
-	ServiceName  string  `json:"serviceName" ch:"serviceName"`
-	Percentile99 float64 `json:"p99" ch:"p99"`
-	AvgDuration  float64 `json:"avgDuration" ch:"avgDuration"`
-	NumCalls     uint64  `json:"numCalls" ch:"numCalls"`
-	CallRate     float64 `json:"callRate" ch:"callRate"`
-	NumErrors    uint64  `json:"numErrors" ch:"numErrors"`
-	ErrorRate    float64 `json:"errorRate" ch:"errorRate"`
-	Num4XX       uint64  `json:"num4XX" ch:"num4xx"`
-	FourXXRate   float64 `json:"fourXXRate" ch:"fourXXRate"`
+	ServiceName  string      `json:"serviceName" ch:"serviceName"`
+	Percentile99 float64     `json:"p99" ch:"p99"`
+	AvgDuration  float64     `json:"avgDuration" ch:"avgDuration"`
+	NumCalls     uint64      `json:"numCalls" ch:"numCalls"`
+	CallRate     float64     `json:"callRate" ch:"callRate"`
+	NumErrors    uint64      `json:"numErrors" ch:"numErrors"`
+	ErrorRate    float64     `json:"errorRate" ch:"errorRate"`
+	Num4XX       uint64      `json:"num4XX" ch:"num4xx"`
+	FourXXRate   float64     `json:"fourXXRate" ch:"fourXXRate"`
+	DataWarning  DataWarning `json:"dataWarning"`
 }
 type ServiceErrorItem struct {
 	Time      time.Time `json:"time" ch:"time"`
