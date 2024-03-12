@@ -44,7 +44,6 @@ import { DateTimeRangeType } from '../CustomDateTimeModal';
 import {
 	getDefaultOption,
 	getOptions,
-	LexicalContext,
 	LocalStorageTimeRange,
 	Time,
 	TimeRange,
@@ -319,22 +318,12 @@ function DateTimeSelection({
 		onLastRefreshHandler();
 	};
 
-	const onCustomDateHandler = (
-		dateTimeRange: DateTimeRangeType,
-		lexicalContext?: LexicalContext,
-	): void => {
+	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
-				let startTime = startTimeMoment;
-				let endTime = endTimeMoment;
-				if (
-					lexicalContext &&
-					lexicalContext === LexicalContext.CUSTOM_DATE_PICKER
-				) {
-					startTime = startTime.startOf('day');
-					endTime = endTime.endOf('day');
-				}
+				const startTime = startTimeMoment;
+				const endTime = endTimeMoment;
 				setCustomDTPickerVisible(false);
 				updateTimeInterval('custom', [
 					startTime.toDate().getTime(),

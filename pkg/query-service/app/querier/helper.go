@@ -90,11 +90,18 @@ func (q *querier) runBuilderQuery(
 		preferRPM = q.featureLookUp.CheckFeature(constants.PreferRPM) == nil
 	}
 
+	start := params.Start
+	end := params.End
+	if builderQuery.ShiftBy != 0 {
+		start = start - builderQuery.ShiftBy*1000
+		end = end - builderQuery.ShiftBy*1000
+	}
+
 	if builderQuery.DataSource == v3.DataSourceLogs {
 		var query string
 		var err error
 		if _, ok := cacheKeys[queryName]; !ok {
-			query, err = prepareLogsQuery(ctx, params.Start, params.End, builderQuery, params, preferRPM)
+			query, err = prepareLogsQuery(ctx, start, end, builderQuery, params, preferRPM)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
@@ -114,7 +121,7 @@ func (q *querier) runBuilderQuery(
 				cachedData = data
 			}
 		}
-		misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
+		misses := q.findMissingTimeRanges(start, end, params.Step, cachedData)
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
@@ -152,7 +159,7 @@ func (q *querier) runBuilderQuery(
 		}
 
 		// response doesn't need everything
-		filterCachedPoints(mergedSeries, params.Start, params.End)
+		filterCachedPoints(mergedSeries, start, end)
 
 		ch <- channelResult{
 			Err:    nil,
@@ -181,8 +188,8 @@ func (q *querier) runBuilderQuery(
 		// for ts query with group by and limit form two queries
 		if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
 			limitQuery, err := tracesV3.PrepareTracesQuery(
-				params.Start,
-				params.End,
+				start,
+				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
 				keys,
@@ -193,8 +200,8 @@ func (q *querier) runBuilderQuery(
 				return
 			}
 			placeholderQuery, err := tracesV3.PrepareTracesQuery(
-				params.Start,
-				params.End,
+				start,
+				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
 				keys,
@@ -207,8 +214,8 @@ func (q *querier) runBuilderQuery(
 			query = fmt.Sprintf(placeholderQuery, limitQuery)
 		} else {
 			query, err = tracesV3.PrepareTracesQuery(
-				params.Start,
-				params.End,
+				start,
+				end,
 				params.CompositeQuery.PanelType,
 				builderQuery,
 				keys,
@@ -229,7 +236,7 @@ func (q *querier) runBuilderQuery(
 	// We are only caching the graph panel queries. A non-existant cache key means that the query is not cached.
 	// If the query is not cached, we execute the query and return the result without caching it.
 	if _, ok := cacheKeys[queryName]; !ok {
-		query, err := metricsV3.PrepareMetricQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{PreferRPM: preferRPM})
+		query, err := metricsV3.PrepareMetricQuery(start, end, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{PreferRPM: preferRPM})
 		if err != nil {
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 			return
@@ -249,7 +256,7 @@ func (q *querier) runBuilderQuery(
 			cachedData = data
 		}
 	}
-	misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
+	misses := q.findMissingTimeRanges(start, end, params.Step, cachedData)
 	missedSeries := make([]*v3.Series, 0)
 	cachedSeries := make([]*v3.Series, 0)
 	for _, miss := range misses {
@@ -298,7 +305,7 @@ func (q *querier) runBuilderQuery(
 	}
 
 	// response doesn't need everything
-	filterCachedPoints(mergedSeries, params.Start, params.End)
+	filterCachedPoints(mergedSeries, start, end)
 	ch <- channelResult{
 		Err:    nil,
 		Name:   queryName,

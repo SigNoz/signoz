@@ -62,6 +62,7 @@ func (r *InstalledIntegrationsSqliteRepo) list(
 				config_json,
 				installed_at
 			from integrations_installed
+			order by installed_at
 		`,
 	)
 	if err != nil {

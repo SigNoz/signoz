@@ -115,6 +115,9 @@ function CustomTimePicker({
 
 	const handleOpenChange = (newOpen: boolean): void => {
 		setOpen(newOpen);
+		if (!newOpen) {
+			setCustomDTPickerVisible?.(false);
+		}
 	};
 
 	const debouncedHandleInputChange = debounce((inputValue): void => {

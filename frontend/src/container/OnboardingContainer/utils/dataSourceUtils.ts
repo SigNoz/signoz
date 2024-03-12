@@ -223,7 +223,7 @@ const supportedInfraMetrics = [
 ];
 
 export const defaultAwsServices = {
-	name: 'EC2 - Application Logs',
+	name: 'EC2 - App/Server Logs',
 	id: 'awsEc2ApplicationLogs',
 	imgURL: `/Logos/ec2.svg`,
 };
