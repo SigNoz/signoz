@@ -3514,14 +3514,37 @@ func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.Dashbo
 		zap.S().Debug("Error in processing sql query: ", err)
 		return &dashboardsInfo, err
 	}
+	totalDashboardsWithPanelAndName := 0
 	for _, dashboard := range dashboardsData {
+		if isDashboardWithPanelAndName(dashboard.Data) {
+			totalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName + 1
+		}
 		dashboardsInfo = countPanelsInDashboard(dashboard.Data)
 	}
 	dashboardsInfo.TotalDashboards = len(dashboardsData)
-
+	dashboardsInfo.TotalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName
 	return &dashboardsInfo, nil
 }
 
+func isDashboardWithPanelAndName(data map[string]interface{}) bool {
+	isDashboardName := false
+	isDashboardWithPanelAndName := false
+	if data != nil && data["title"] != nil && data["widgets"] != nil {
+		title, ok := data["title"].(string)
+		if ok && title != "Sample Title" {
+			isDashboardName = true
+		}
+		widgets, ok := data["widgets"].(interface{})
+		if ok && isDashboardName {
+			data, ok := widgets.([]interface{})
+			if ok && len(data) > 0 {
+				isDashboardWithPanelAndName = true
+			}
+		}
+	}
+
+	return isDashboardWithPanelAndName
+}
 func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
 	var logsPanelCount, tracesPanelCount, metricsPanelCount int
 	// totalPanels := 0

@@ -8,7 +8,7 @@ Mongodb recommends to set up a least privilege user (LPU) with a `clusterMonitor
 
 Run the following command to create a user with the necessary permissions.
 
-```
+```bash
 use admin
 db.createUser(
   {
