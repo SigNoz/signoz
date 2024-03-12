@@ -127,9 +127,37 @@ func readBuiltInIntegration(dirpath string) (
 		)
 	}
 
-	integration.Id = "builtin::" + integration.Id
+	err = validateIntegration(integration)
+	if err != nil {
+		return nil, fmt.Errorf("invalid integration spec %s: %w", integration.Id, err)
+	}
+
+	integration.Id = "builtin-" + integration.Id
 
 	return &integration, nil
+}
+
+func validateIntegration(i IntegrationDetails) error {
+	// Validate dashboard data
+	seenDashboardIds := map[string]interface{}{}
+	for _, dd := range i.Assets.Dashboards {
+		did, exists := dd["id"]
+		if !exists {
+			return fmt.Errorf("id is required. not specified in dashboard titled %v", dd["title"])
+		}
+		dashboardId, ok := did.(string)
+		if !ok {
+			return fmt.Errorf("id must be string in dashboard titled %v", dd["title"])
+		}
+		if _, seen := seenDashboardIds[dashboardId]; seen {
+			return fmt.Errorf("multiple dashboards found with id %s", dashboardId)
+		}
+		seenDashboardIds[dashboardId] = nil
+	}
+
+	// TODO(Raj): Validate all parts of plugged in integrations
+
+	return nil
 }
 
 func hydrateFileUris(spec interface{}, basedir string) (interface{}, error) {

@@ -172,7 +172,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate opamp
-	_, err = opAmpModel.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
+	_, err = opAmpModel.InitDB(localDB)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +185,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// ingestion pipelines manager
-	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
+		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +424,7 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 			data["queryType"] = postData.CompositeQuery.QueryType
 			data["panelType"] = postData.CompositeQuery.PanelType
 
-			signozLogsUsed, signozMetricsUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
+			signozLogsUsed, signozMetricsUsed, _ = telemetry.GetInstance().CheckSigNozSignals(postData)
 		}
 	}
 
