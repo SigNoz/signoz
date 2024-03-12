@@ -4,7 +4,7 @@
 
 Save the following collector config in a file named `mongo-collector-config.yaml`
 
-```
+```bash
 receivers:
   mongodb:
     # - For standalone MongoDB deployments this is the hostname and port of the mongod instance

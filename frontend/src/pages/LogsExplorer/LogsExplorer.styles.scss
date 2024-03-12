@@ -1,0 +1,11 @@
+.log-explorer-query-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+
+    .logs-explorer-views {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+}

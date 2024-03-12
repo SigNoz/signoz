@@ -159,12 +159,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	integrationsController, err := integrations.NewController(localDB)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't create integrations controller: %w", err,
-		)
+		return nil, fmt.Errorf("couldn't create integrations controller: %w", err)
 	}
 
-	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
+		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
-	_, err = opAmpModel.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	_, err = opAmpModel.InitDB(localDB)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +371,7 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 			data["queryType"] = postData.CompositeQuery.QueryType
 			data["panelType"] = postData.CompositeQuery.PanelType
 
-			signozLogsUsed, signozMetricsUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
+			signozLogsUsed, signozMetricsUsed, _ = telemetry.GetInstance().CheckSigNozSignals(postData)
 		}
 	}
 
