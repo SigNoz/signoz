@@ -77,7 +77,10 @@ function FullView({
 	const response = useGetQueryRange(
 		{
 			selectedTime: selectedTime.enum,
-			graphType: widget.panelTypes,
+			graphType:
+				widget.panelTypes === PANEL_TYPES.BAR
+					? PANEL_TYPES.TIME_SERIES
+					: widget.panelTypes,
 			query: updatedQuery,
 			globalSelectedInterval: globalSelectedTime,
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
