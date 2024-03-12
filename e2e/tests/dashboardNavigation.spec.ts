@@ -57,7 +57,6 @@ test("Check for the dashboard page and individual dashboard to load within 5s", 
 
   const timeoutPromise = new Promise((resolve, reject) => {
     setTimeout(() => {
-      console.log(finishedRequestsCount, requestCount, "timeout");
       if (finishedRequestsCount < requestCount) {
         reject(new Error("Not all requests completed within 5 seconds."));
       } else {
