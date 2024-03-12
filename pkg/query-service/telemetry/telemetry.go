@@ -288,14 +288,15 @@ func createTelemetry() {
 					dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
 					if err == nil {
 						dashboardsAlertsData := map[string]interface{}{
-							"totalDashboards":   dashboardsInfo.TotalDashboards,
-							"logsBasedPanels":   dashboardsInfo.LogsBasedPanels,
-							"metricBasedPanels": dashboardsInfo.MetricBasedPanels,
-							"tracesBasedPanels": dashboardsInfo.TracesBasedPanels,
-							"totalAlerts":       alertsInfo.TotalAlerts,
-							"logsBasedAlerts":   alertsInfo.LogsBasedAlerts,
-							"metricBasedAlerts": alertsInfo.MetricBasedAlerts,
-							"tracesBasedAlerts": alertsInfo.TracesBasedAlerts,
+							"totalDashboards":                 dashboardsInfo.TotalDashboards,
+							"totalDashboardsWithPanelAndName": dashboardsInfo.TotalDashboardsWithPanelAndName,
+							"logsBasedPanels":                 dashboardsInfo.LogsBasedPanels,
+							"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
+							"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
+							"totalAlerts":                     alertsInfo.TotalAlerts,
+							"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
+							"metricBasedAlerts":               alertsInfo.MetricBasedAlerts,
+							"tracesBasedAlerts":               alertsInfo.TracesBasedAlerts,
 						}
 						// send event only if there are dashboards or alerts
 						if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 {
