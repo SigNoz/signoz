@@ -308,6 +308,8 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 // logsPPLPfx is a short constant for logsPipelinePrefix
 const LogsPPLPfx = "logstransform/pipeline_"
 
+const IntegrationPipelineIdPrefix = "integration"
+
 // The datatype present here doesn't represent the actual datatype of column in the logs table.
 
 var StaticFieldsLogsV3 = map[string]v3.AttributeKey{

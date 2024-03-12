@@ -48,7 +48,7 @@ require (
 	github.com/smartystreets/assertions v1.13.1
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/soheilhy/cmux v0.1.5
-	github.com/srikanthccv/ClickHouse-go-mock v0.6.0
+	github.com/srikanthccv/ClickHouse-go-mock v0.7.0
 	github.com/stretchr/testify v1.8.4
 	go.opentelemetry.io/collector/component v0.88.0
 	go.opentelemetry.io/collector/confmap v0.88.0
@@ -203,4 +203,4 @@ require (
 	k8s.io/utils v0.0.0-20230711102312-30195339c3c7 // indirect
 )
 
-replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.79
+replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.79-0.1

@@ -134,6 +134,9 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			<>
 				<TableVirtuoso
 					ref={ref}
+					initialTopMostItemIndex={
+						tableViewProps.activeLogIndex !== -1 ? tableViewProps.activeLogIndex : 0
+					}
 					style={infinityDefaultStyles}
 					data={dataSource}
 					components={{

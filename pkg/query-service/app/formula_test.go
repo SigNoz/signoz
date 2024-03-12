@@ -235,7 +235,39 @@ func TestProcessResults(t *testing.T) {
 				},
 			},
 			want: &v3.Result{
-				Series: []*v3.Series{},
+				Series: []*v3.Series{
+					{
+						Labels: map[string]string{
+							"service_name": "frontend",
+							"operation":    "GET /api",
+						},
+						Points: []v3.Point{
+							{
+								Timestamp: 1,
+								Value:     10,
+							},
+							{
+								Timestamp: 2,
+								Value:     20,
+							},
+						},
+					},
+					{
+						Labels: map[string]string{
+							"service_name": "redis",
+						},
+						Points: []v3.Point{
+							{
+								Timestamp: 1,
+								Value:     30,
+							},
+							{
+								Timestamp: 3,
+								Value:     40,
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -352,6 +384,21 @@ func TestProcessResultsErrorRate(t *testing.T) {
 				Series: []*v3.Series{
 					{
 						Labels: map[string]string{
+							"service_name": "frontend",
+						},
+						Points: []v3.Point{
+							{
+								Timestamp: 1,
+								Value:     0,
+							},
+							{
+								Timestamp: 2,
+								Value:     0,
+							},
+						},
+					},
+					{
+						Labels: map[string]string{
 							"service_name": "redis",
 						},
 						Points: []v3.Point{
@@ -362,6 +409,21 @@ func TestProcessResultsErrorRate(t *testing.T) {
 							{
 								Timestamp: 2,
 								Value:     0.2,
+							},
+						},
+					},
+					{
+						Labels: map[string]string{
+							"service_name": "route",
+						},
+						Points: []v3.Point{
+							{
+								Timestamp: 1,
+								Value:     0,
+							},
+							{
+								Timestamp: 2,
+								Value:     0,
 							},
 						},
 					},
@@ -906,132 +968,118 @@ func TestFormula(t *testing.T) {
 					},
 				},
 			},
-			want: &v3.Result{},
-		},
-		{
-			name:       "Group keys on both sides are overlapping but do not match exactly",
-			expression: "A/B",
-			results: []*v3.Result{
-				{
-					QueryName: "A",
-					Series: []*v3.Series{
-						{
-							Labels: map[string]string{
-								"host_name": "ip-10-420-69-1",
-								"state":     "running",
-							},
-							Points: []v3.Point{
-								{
-									Timestamp: 1,
-									Value:     10,
-								},
-								{
-									Timestamp: 2,
-									Value:     20,
-								},
-								{
-									Timestamp: 4,
-									Value:     40,
-								},
-								{
-									Timestamp: 5,
-									Value:     50,
-								},
-								{
-									Timestamp: 7,
-									Value:     70,
-								},
-							},
+			want: &v3.Result{
+				Series: []*v3.Series{
+					{
+						Labels: map[string]string{
+							"host_name": "ip-10-420-69-1",
+							"state":     "running",
 						},
-						{
-							Labels: map[string]string{
-								"host_name": "ip-10-420-69-2",
-								"state":     "idle",
+						Points: []v3.Point{
+							{
+								Timestamp: 1,
+								Value:     math.Inf(0),
 							},
-							Points: []v3.Point{
-								{
-									Timestamp: 1,
-									Value:     12,
-								},
-								{
-									Timestamp: 2,
-									Value:     45,
-								},
-								{
-									Timestamp: 3,
-									Value:     30,
-								},
-								{
-									Timestamp: 4,
-									Value:     40,
-								},
-								{
-									Timestamp: 5,
-									Value:     50,
-								},
+							{
+								Timestamp: 2,
+								Value:     math.Inf(0),
+							},
+							{
+								Timestamp: 4,
+								Value:     math.Inf(0),
+							},
+							{
+								Timestamp: 5,
+								Value:     math.Inf(0),
+							},
+							{
+								Timestamp: 7,
+								Value:     math.Inf(0),
 							},
 						},
 					},
-				},
-				{
-					QueryName: "B",
-					Series: []*v3.Series{
-						{
-							Labels: map[string]string{
-								"os.type": "linux",
-								"state":   "running",
+					{
+						Labels: map[string]string{
+							"host_name": "ip-10-420-69-2",
+							"state":     "idle",
+						},
+						Points: []v3.Point{
+							{
+								Timestamp: 1,
+								Value:     math.Inf(0),
 							},
-							Points: []v3.Point{
-								{
-									Timestamp: 1,
-									Value:     22,
-								},
-								{
-									Timestamp: 2,
-									Value:     65,
-								},
-								{
-									Timestamp: 3,
-									Value:     30,
-								},
-								{
-									Timestamp: 4,
-									Value:     40,
-								},
-								{
-									Timestamp: 5,
-									Value:     50,
-								},
+							{
+								Timestamp: 2,
+								Value:     math.Inf(0),
+							},
+							{
+								Timestamp: 3,
+								Value:     math.Inf(0),
+							},
+							{
+								Timestamp: 4,
+								Value:     math.Inf(0),
+							},
+							{
+								Timestamp: 5,
+								Value:     math.Inf(0),
 							},
 						},
-						{
-							Labels: map[string]string{
-								"os.type": "windows",
-								"state":   "busy",
+					},
+					{
+						Labels: map[string]string{
+							"host_name": "ip-10-420-69-1",
+							"state":     "not_running_chalamet",
+						},
+						Points: []v3.Point{
+							{
+								Timestamp: 1,
+								Value:     0,
 							},
-							Points: []v3.Point{
-								{
-									Timestamp: 1,
-									Value:     22,
-								},
-								{
-									Timestamp: 2,
-									Value:     65,
-								},
-								{
-									Timestamp: 4,
-									Value:     40,
-								},
-								{
-									Timestamp: 5,
-									Value:     50,
-								},
+							{
+								Timestamp: 2,
+								Value:     0,
+							},
+							{
+								Timestamp: 3,
+								Value:     0,
+							},
+							{
+								Timestamp: 4,
+								Value:     0,
+							},
+							{
+								Timestamp: 5,
+								Value:     0,
+							},
+						},
+					},
+					{
+						Labels: map[string]string{
+							"host_name": "ip-10-420-69-2",
+							"state":     "busy",
+						},
+						Points: []v3.Point{
+							{
+								Timestamp: 1,
+								Value:     0,
+							},
+							{
+								Timestamp: 2,
+								Value:     0,
+							},
+							{
+								Timestamp: 4,
+								Value:     0,
+							},
+							{
+								Timestamp: 5,
+								Value:     0,
 							},
 						},
 					},
 				},
 			},
-			want: &v3.Result{},
 		},
 		{
 			name:       "Group keys on the left side are a superset of the right side",
@@ -1190,6 +1238,59 @@ func TestFormula(t *testing.T) {
 							{
 								Timestamp: 7,
 								Value:     math.Inf(1),
+							},
+						},
+					},
+					{
+						Labels: map[string]string{
+							"host_name": "ip-10-420-69-2",
+							"state":     "idle",
+							"os.type":   "linux",
+						},
+						Points: []v3.Point{
+							{
+								Timestamp: 1,
+								Value:     math.Inf(0),
+							},
+							{
+								Timestamp: 2,
+								Value:     math.Inf(0),
+							},
+							{
+								Timestamp: 3,
+								Value:     math.Inf(0),
+							},
+							{
+								Timestamp: 4,
+								Value:     math.Inf(0),
+							},
+							{
+								Timestamp: 5,
+								Value:     math.Inf(0),
+							},
+						},
+					},
+					{
+						Labels: map[string]string{
+							"state":   "busy",
+							"os.type": "linux",
+						},
+						Points: []v3.Point{
+							{
+								Timestamp: 1,
+								Value:     0,
+							},
+							{
+								Timestamp: 2,
+								Value:     0,
+							},
+							{
+								Timestamp: 4,
+								Value:     0,
+							},
+							{
+								Timestamp: 5,
+								Value:     0,
 							},
 						},
 					},
@@ -1454,18 +1555,22 @@ func TestFormula(t *testing.T) {
 			expression, err := govaluate.NewEvaluableExpression(tt.expression)
 			if err != nil {
 				t.Errorf("Error parsing expression: %v", err)
+				return
 			}
 			got, err := processResults(tt.results, expression)
 			if err != nil {
 				t.Errorf("Error processing results: %v", err)
+				return
 			}
 			if len(got.Series) != len(tt.want.Series) {
 				t.Errorf("processResults(): number of series - got = %v, want %v", len(got.Series), len(tt.want.Series))
+				return
 			}
 
 			for i := range got.Series {
 				if len(got.Series[i].Points) != len(tt.want.Series[i].Points) {
 					t.Errorf("processResults(): number of points - got = %v, want %v", len(got.Series[i].Points), len(tt.want.Series[i].Points))
+					return
 				}
 				for j := range got.Series[i].Points {
 					if got.Series[i].Points[j].Value != tt.want.Series[i].Points[j].Value {

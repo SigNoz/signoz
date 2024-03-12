@@ -2,38 +2,19 @@ package integrations
 
 import (
 	"context"
-	"os"
 	"slices"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/rules"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-func NewTestSqliteDB(t *testing.T) (
-	db *sqlx.DB, dbFilePath string,
-) {
-	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
-	if err != nil {
-		t.Fatalf("could not create temp file for test db: %v", err)
-	}
-	testDBFilePath := testDBFile.Name()
-	t.Cleanup(func() { os.Remove(testDBFilePath) })
-	testDBFile.Close()
-
-	testDB, err := sqlx.Open("sqlite3", testDBFilePath)
-	if err != nil {
-		t.Fatalf("could not open test db sqlite file: %v", err)
-	}
-
-	return testDB, testDBFilePath
-}
-
 func NewTestIntegrationsManager(t *testing.T) *Manager {
-	testDB, _ := NewTestSqliteDB(t)
+	testDB := utils.NewQueryServiceDBForTests(t)
 
 	installedIntegrationsRepo, err := NewInstalledIntegrationsSqliteRepo(testDB)
 	if err != nil {
@@ -88,12 +69,12 @@ func (t *TestAvailableIntegrationsRepo) list(
 								Items: []v3.FilterItem{
 									{
 										Key: v3.AttributeKey{
-											Key:      "method",
+											Key:      "source",
 											DataType: v3.AttributeKeyDataTypeString,
 											Type:     v3.AttributeKeyTypeTag,
 										},
 										Operator: "=",
-										Value:    "GET",
+										Value:    "nginx",
 									},
 								},
 							},
@@ -111,8 +92,24 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []dashboards.Dashboard{},
-				Alerts:     []map[string]interface{}{},
+				Dashboards: []dashboards.Data{},
+				Alerts:     []rules.PostableRule{},
+			},
+			ConnectionTests: &IntegrationConnectionTests{
+				Logs: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "source",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: "=",
+							Value:    "nginx",
+						},
+					},
+				},
 			},
 		}, {
 			IntegrationSummary: IntegrationSummary{
@@ -150,12 +147,12 @@ func (t *TestAvailableIntegrationsRepo) list(
 								Items: []v3.FilterItem{
 									{
 										Key: v3.AttributeKey{
-											Key:      "method",
+											Key:      "source",
 											DataType: v3.AttributeKeyDataTypeString,
 											Type:     v3.AttributeKeyTypeTag,
 										},
 										Operator: "=",
-										Value:    "GET",
+										Value:    "redis",
 									},
 								},
 							},
@@ -173,8 +170,24 @@ func (t *TestAvailableIntegrationsRepo) list(
 						},
 					},
 				},
-				Dashboards: []dashboards.Dashboard{},
-				Alerts:     []map[string]interface{}{},
+				Dashboards: []dashboards.Data{},
+				Alerts:     []rules.PostableRule{},
+			},
+			ConnectionTests: &IntegrationConnectionTests{
+				Logs: &v3.FilterSet{
+					Operator: "AND",
+					Items: []v3.FilterItem{
+						{
+							Key: v3.AttributeKey{
+								Key:      "source",
+								DataType: v3.AttributeKeyDataTypeString,
+								Type:     v3.AttributeKeyTypeTag,
+							},
+							Operator: "=",
+							Value:    "nginx",
+						},
+					},
+				},
 			},
 		},
 	}, nil
