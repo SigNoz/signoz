@@ -27,6 +27,7 @@ const generateTooltipContent = (
 	idx: number,
 	yAxisUnit?: string,
 	series?: uPlot.Options['series'],
+	isBillingUsageGraphs?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -51,10 +52,16 @@ const generateTooltipContent = (
 			if (index === 0) {
 				tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY HH:mm:ss');
 			} else if (item.show) {
-				const { metric = {}, queryName = '', legend = '' } =
-					seriesList[index - 1] || {};
+				const {
+					metric = {},
+					queryName = '',
+					legend = '',
+					quantity = [],
+					unit = '',
+				} = seriesList[index - 1] || {};
 
 				const value = data[index][idx];
+				const dataIngested = quantity[idx];
 				const label = getLabelName(metric, queryName || '', legend || '');
 
 				const color = generateColor(label, themeColors.chartcolors);
@@ -63,6 +70,7 @@ const generateTooltipContent = (
 
 				if (Number.isFinite(value)) {
 					const tooltipValue = getToolTipValue(value, yAxisUnit);
+					const dataIngestedFormated = getToolTipValue(dataIngested);
 					if (
 						duplicatedLegendLabels[label] ||
 						Object.prototype.hasOwnProperty.call(formattedData, label)
@@ -93,7 +101,9 @@ const generateTooltipContent = (
 						value,
 						tooltipValue,
 						queryName,
-						textContent: `${tooltipItemLabel} : ${tooltipValue}`,
+						textContent: isBillingUsageGraphs
+							? `${tooltipItemLabel} : ${tooltipValue} USD - ${dataIngestedFormated} ${unit}`
+							: `${tooltipItemLabel} : ${tooltipValue}`,
 					};
 
 					tooltipCount += 1;
@@ -168,6 +178,7 @@ const generateTooltipContent = (
 const tooltipPlugin = (
 	apiResponse: MetricRangePayloadProps | undefined,
 	yAxisUnit?: string,
+	isBillingUsageGraphs?: boolean,
 ): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
@@ -228,6 +239,7 @@ const tooltipPlugin = (
 							idx,
 							yAxisUnit,
 							u.series,
+							isBillingUsageGraphs,
 						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });
