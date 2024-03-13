@@ -139,8 +139,7 @@ func NewReader(
 	db, err := initialize(options)
 
 	if err != nil {
-		zap.S().Error("failed to initialize ClickHouse: ", err)
-		os.Exit(1)
+		zap.L().Fatal("failed to initialize ClickHouse", zap.Error(err))
 	}
 
 	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster)
@@ -156,8 +155,8 @@ func NewReaderFromClickhouseConnection(
 ) *ClickHouseReader {
 	alertManager, err := am.New("")
 	if err != nil {
-		zap.S().Errorf("msg: failed to initialize alert manager: ", "/t error:", err)
-		zap.S().Errorf("msg: check if the alert manager URL is correctly set and valid")
+		zap.L().Error("failed to initialize alert manager", zap.Error(err))
+		zap.L().Error("check if the alert manager URL is correctly set and valid")
 		os.Exit(1)
 	}
 
@@ -345,20 +344,6 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 
 				reloadReady.Close()
 
-				// ! commented the alert manager can now
-				// call query service to do this
-				// channels, apiErrorObj := r.GetChannels()
-
-				// if apiErrorObj != nil {
-				//	zap.S().Errorf("Not able to read channels from DB")
-				// }
-				// for _, channel := range *channels {
-				// apiErrorObj = r.LoadChannel(&channel)
-				// if apiErrorObj != nil {
-				//	zap.S().Errorf("Not able to load channel with id=%d loaded from DB", channel.Id, channel.Data)
-				// }
-				// }
-
 				<-cancel
 
 				return nil
@@ -442,14 +427,14 @@ func (r *ClickHouseReader) LoadChannel(channel *model.ChannelItem) *model.ApiErr
 	response, err := http.Post(constants.GetAlertManagerApiPrefix()+"v1/receivers", "application/json", bytes.NewBuffer([]byte(channel.Data)))
 
 	if err != nil {
-		zap.S().Errorf("Error in getting response of API call to alertmanager/v1/receivers\n", err)
+		zap.L().Error("Error in getting response of API call to alertmanager/v1/receivers", zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	if response.StatusCode > 299 {
 		responseData, _ := io.ReadAll(response.Body)
 
-		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers\n Status: %s \n Data: %s", response.Status, string(responseData))
-		zap.S().Error(err)
+		err := fmt.Errorf("Error in getting 2xx response in API call to alertmanager/v1/receivers")
+		zap.L().Error("Error in getting 2xx response in API call to alertmanager/v1/receivers", zap.String("Status", response.Status), zap.String("Data", string(responseData)))
 
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
@@ -466,17 +451,15 @@ func (r *ClickHouseReader) GetChannel(id string) (*model.ChannelItem, *model.Api
 
 	stmt, err := r.localDB.Preparex(query)
 
-	zap.S().Info(query, idInt)
-
 	if err != nil {
-		zap.S().Debug("Error in preparing sql query for GetChannel : ", err)
+		zap.L().Error("Error in preparing sql query for GetChannel", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	err = stmt.Get(&channel, idInt)
 
 	if err != nil {
-		zap.S().Debug(fmt.Sprintf("Error in getting channel with id=%d : ", idInt), err)
+		zap.L().Error("Error in getting channel with id", zap.Int("id", idInt), zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -502,14 +485,14 @@ func (r *ClickHouseReader) DeleteChannel(id string) *model.ApiError {
 	{
 		stmt, err := tx.Prepare(`DELETE FROM notification_channels WHERE id=$1;`)
 		if err != nil {
-			zap.S().Errorf("Error in preparing statement for INSERT to notification_channels\n", err)
+			zap.L().Error("Error in preparing statement for INSERT to notification_channels", zap.Error(err))
 			tx.Rollback()
 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
 		defer stmt.Close()
 
 		if _, err := stmt.Exec(idInt); err != nil {
-			zap.S().Errorf("Error in Executing prepared statement for INSERT to notification_channels\n", err)
+			zap.L().Error("Error in Executing prepared statement for INSERT to notification_channels", zap.Error(err))
 			tx.Rollback() // return an error too, we may want to wrap them
 			return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
@@ -523,7 +506,7 @@ func (r *ClickHouseReader) DeleteChannel(id string) *model.ApiError {
 
 	err = tx.Commit()
 	if err != nil {
-		zap.S().Errorf("Error in committing transaction for DELETE command to notification_channels\n", err)
+		zap.L().Error("Error in committing transaction for DELETE command to notification_channels", zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -539,10 +522,10 @@ func (r *ClickHouseReader) GetChannels() (*[]model.ChannelItem, *model.ApiError)
 
 	err := r.localDB.Select(&channels, query)
 
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -607,7 +590,7 @@ func (r *ClickHouseReader) EditChannel(receiver *am.Receiver, id string) (*am.Re
 
 	// check if channel type is supported in the current user plan
 	if err := r.featureFlags.CheckFeature(fmt.Sprintf("ALERT_CHANNEL_%s", strings.ToUpper(channel_type))); err != nil {
-		zap.S().Warn("an unsupported feature was blocked", err)
+		zap.L().Warn("an unsupported feature was blocked", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unsupported feature. please upgrade your plan to access this feature")}
 	}
 
@@ -617,14 +600,14 @@ func (r *ClickHouseReader) EditChannel(receiver *am.Receiver, id string) (*am.Re
 		stmt, err := tx.Prepare(`UPDATE notification_channels SET updated_at=$1, type=$2, data=$3 WHERE id=$4;`)
 
 		if err != nil {
-			zap.S().Errorf("Error in preparing statement for UPDATE to notification_channels\n", err)
+			zap.L().Error("Error in preparing statement for UPDATE to notification_channels", zap.Error(err))
 			tx.Rollback()
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
 		defer stmt.Close()
 
 		if _, err := stmt.Exec(time.Now(), channel_type, string(receiverString), idInt); err != nil {
-			zap.S().Errorf("Error in Executing prepared statement for UPDATE to notification_channels\n", err)
+			zap.L().Error("Error in Executing prepared statement for UPDATE to notification_channels", zap.Error(err))
 			tx.Rollback() // return an error too, we may want to wrap them
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
@@ -638,7 +621,7 @@ func (r *ClickHouseReader) EditChannel(receiver *am.Receiver, id string) (*am.Re
 
 	err = tx.Commit()
 	if err != nil {
-		zap.S().Errorf("Error in committing transaction for INSERT to notification_channels\n", err)
+		zap.L().Error("Error in committing transaction for INSERT to notification_channels", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -652,7 +635,7 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 
 	// check if channel type is supported in the current user plan
 	if err := r.featureFlags.CheckFeature(fmt.Sprintf("ALERT_CHANNEL_%s", strings.ToUpper(channel_type))); err != nil {
-		zap.S().Warn("an unsupported feature was blocked", err)
+		zap.L().Warn("an unsupported feature was blocked", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unsupported feature. please upgrade your plan to access this feature")}
 	}
 
@@ -666,14 +649,14 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 	{
 		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
 		if err != nil {
-			zap.S().Errorf("Error in preparing statement for INSERT to notification_channels\n", err)
+			zap.L().Error("Error in preparing statement for INSERT to notification_channels", zap.Error(err))
 			tx.Rollback()
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
 		defer stmt.Close()
 
 		if _, err := stmt.Exec(time.Now(), time.Now(), receiver.Name, channel_type, string(receiverString)); err != nil {
-			zap.S().Errorf("Error in Executing prepared statement for INSERT to notification_channels\n", err)
+			zap.L().Error("Error in Executing prepared statement for INSERT to notification_channels", zap.Error(err))
 			tx.Rollback() // return an error too, we may want to wrap them
 			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 		}
@@ -687,7 +670,7 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 
 	err = tx.Commit()
 	if err != nil {
-		zap.S().Errorf("Error in committing transaction for INSERT to notification_channels\n", err)
+		zap.L().Error("Error in committing transaction for INSERT to notification_channels", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -740,10 +723,10 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 
 	rows, err := r.db.Query(ctx, query)
 
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, fmt.Errorf("Error in processing sql query")
 	}
 
@@ -771,7 +754,7 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
-		zap.S().Error("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
@@ -872,7 +855,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 			query += subQuery
 			args = append(args, argsSubQuery...)
 			if errStatus != nil {
-				zap.S().Error("Error in processing sql query: ", errStatus)
+				zap.L().Error("Error in processing sql query", zap.Error(errStatus))
 				return
 			}
 			err := r.db.QueryRow(
@@ -886,19 +869,19 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 			}
 
 			if err != nil {
-				zap.S().Error("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return
 			}
 			subQuery, argsSubQuery, errStatus = buildQueryWithTagParams(ctx, tags)
 			if errStatus != nil {
-				zap.S().Error("Error building query with tag params: ", err)
+				zap.L().Error("Error building query with tag params", zap.Error(errStatus))
 				return
 			}
 			query += subQuery
 			args = append(args, argsSubQuery...)
 			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
 			if err != nil {
-				zap.S().Error("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return
 			}
 
@@ -964,11 +947,11 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 	query += " GROUP BY time ORDER BY time DESC"
 	err := r.db.Select(ctx, &serviceOverviewItems, query, args...)
 
-	zap.S().Debug(query)
+	zap.L().Debug("running query", zap.String("query", query))
 
 	if err != nil {
-		zap.S().Error("Error in processing sql query: ", err)
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
 	serviceErrorItems := []model.ServiceErrorItem{}
@@ -992,10 +975,8 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 	query += " GROUP BY time ORDER BY time DESC"
 	err = r.db.Select(ctx, &serviceErrorItems, query, args...)
 
-	zap.S().Debug(query)
-
 	if err != nil {
-		zap.S().Error("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
@@ -1131,10 +1112,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY serviceName"
 			var dBResponse []model.DBResponseServiceName
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			zap.L().Info(finalQuery)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
@@ -1148,10 +1129,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpCode"
 			var dBResponse []model.DBResponseHttpCode
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			zap.L().Info(finalQuery)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
@@ -1165,10 +1146,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpRoute"
 			var dBResponse []model.DBResponseHttpRoute
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			zap.L().Info(finalQuery)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
@@ -1182,10 +1163,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpUrl"
 			var dBResponse []model.DBResponseHttpUrl
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			zap.L().Info(finalQuery)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
@@ -1199,10 +1180,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpMethod"
 			var dBResponse []model.DBResponseHttpMethod
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			zap.L().Info(finalQuery)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
@@ -1216,10 +1197,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY httpHost"
 			var dBResponse []model.DBResponseHttpHost
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			zap.L().Info(finalQuery)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
@@ -1233,10 +1214,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY name"
 			var dBResponse []model.DBResponseOperation
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			zap.L().Info(finalQuery)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
@@ -1250,10 +1231,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY component"
 			var dBResponse []model.DBResponseComponent
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			zap.L().Info(finalQuery)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
@@ -1266,10 +1247,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += query
 			var dBResponse []model.DBResponseTotal
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			zap.L().Info(finalQuery)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 
@@ -1277,10 +1258,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery2 += query
 			var dBResponse2 []model.DBResponseTotal
 			err = r.db.Select(ctx, &dBResponse2, finalQuery2, args...)
-			zap.S().Info(finalQuery2)
+			zap.L().Info(finalQuery2)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 			}
 			if len(dBResponse) > 0 && len(dBResponse2) > 0 {
@@ -1302,9 +1283,9 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				finalQuery += query
 				var dBResponse []model.DBResponseMinMax
 				err = r.db.Select(ctx, &dBResponse, finalQuery, args...)
-				zap.S().Info(finalQuery)
+				zap.L().Info(finalQuery)
 				if err != nil {
-					zap.S().Debug("Error in processing sql query: ", err)
+					zap.L().Error("Error in processing sql query", zap.Error(err))
 					return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 				}
 				if len(dBResponse) > 0 {
@@ -1317,10 +1298,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				finalQuery += " ORDER BY durationNano LIMIT 1"
 				var dBResponse []model.DBResponseTotal
 				err = r.db.Select(ctx, &dBResponse, finalQuery, args...)
-				zap.S().Info(finalQuery)
+				zap.L().Info(finalQuery)
 
 				if err != nil {
-					zap.S().Debug("Error in processing sql query: ", err)
+					zap.L().Error("Error in processing sql query", zap.Error(err))
 					return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 				}
 
@@ -1329,10 +1310,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 				finalQuery += " ORDER BY durationNano DESC LIMIT 1"
 				var dBResponse2 []model.DBResponseTotal
 				err = r.db.Select(ctx, &dBResponse2, finalQuery, args...)
-				zap.S().Info(finalQuery)
+				zap.L().Info(finalQuery)
 
 				if err != nil {
-					zap.S().Debug("Error in processing sql query: ", err)
+					zap.L().Error("Error in processing sql query", zap.Error(err))
 					return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
 				}
 				if len(dBResponse) > 0 {
@@ -1348,10 +1329,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY rpcMethod"
 			var dBResponse []model.DBResponseRPCMethod
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			zap.L().Info(finalQuery)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
@@ -1366,10 +1347,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			finalQuery += " GROUP BY responseStatusCode"
 			var dBResponse []model.DBResponseStatusCodeMethod
 			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.S().Info(finalQuery)
+			zap.L().Info(finalQuery)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query: %s", err)}
 			}
 			for _, service := range dBResponse {
@@ -1494,10 +1475,10 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 			projectionOptQuery := "SET allow_experimental_projection_optimization = 1"
 			err := r.db.Exec(ctx, projectionOptQuery)
 
-			zap.S().Info(projectionOptQuery)
+			zap.L().Info(projectionOptQuery)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 			}
 			if queryParams.Order == constants.Descending {
@@ -1532,10 +1513,10 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 		}
 	}
 
-	zap.S().Info(baseQuery)
+	zap.L().Info(baseQuery)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
@@ -1772,10 +1753,10 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	finalQuery += query
 	err := r.db.Select(ctx, &tagFilters, finalQuery, args...)
 
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 	tagFiltersResult := model.TagFilters{
@@ -1894,10 +1875,10 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 	args = append(args, clickhouse.Named("limit", queryParams.Limit))
 	err := r.db.Select(ctx, &tagValues, finalQuery, args...)
 
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
@@ -1956,10 +1937,8 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 	}
 	err := r.db.Select(ctx, &topOperationsItems, query, args...)
 
-	zap.S().Debug(query)
-
 	if err != nil {
-		zap.S().Error("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
@@ -1988,10 +1967,10 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 
 	err := r.db.Select(ctx, &usageItems, query, namedArgs...)
 
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, fmt.Errorf("Error in processing sql query")
 	}
 
@@ -2016,14 +1995,14 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 
 	err := r.db.Select(ctx, &searchScanResponses, query, traceId)
 
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, fmt.Errorf("error in processing sql query")
 	}
 	end := time.Now()
-	zap.S().Debug("getTraceSQLQuery took: ", end.Sub(start))
+	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
 	searchSpansResult := []model.SearchSpansResult{{
 		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
 		Events:  make([][]interface{}, len(searchScanResponses)),
@@ -2039,7 +2018,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 		searchSpanResponses = append(searchSpanResponses, jsonItem)
 	}
 	end = time.Now()
-	zap.S().Debug("getTraceSQLQuery unmarshal took: ", end.Sub(start))
+	zap.L().Debug("getTraceSQLQuery unmarshal took: ", zap.Duration("duration", end.Sub(start)))
 
 	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
 	smartAlgoEnabled := err == nil
@@ -2050,7 +2029,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 			return nil, err
 		}
 		end = time.Now()
-		zap.S().Debug("smartTraceAlgo took: ", end.Sub(start))
+		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
 	} else {
 		for i, item := range searchSpanResponses {
 			spanEvents := item.GetValues()
@@ -2097,12 +2076,12 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 	query += filterQuery + " GROUP BY src, dest;"
 	args = append(args, filterArgs...)
 
-	zap.S().Debug(query, args)
+	zap.L().Debug("GetDependencyGraph query", zap.String("query", query), zap.Any("args", args))
 
 	err := r.db.Select(ctx, &response, query, args...)
 
 	if err != nil {
-		zap.S().Error("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, fmt.Errorf("error in processing sql query %w", err)
 	}
 
@@ -2250,10 +2229,10 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 
 	err := r.db.Select(ctx, &SpanAggregatesDBResponseItems, query, args...)
 
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
@@ -2336,7 +2315,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			go func(tableName string) {
 				_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
 				if dbErr != nil {
-					zap.S().Error(fmt.Errorf("Error in inserting to ttl_status table: %s", dbErr.Error()))
+					zap.L().Error("Error in inserting to ttl_status table", zap.Error(dbErr))
 					return
 				}
 				req := fmt.Sprintf(
@@ -2348,32 +2327,32 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				}
 				err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 				if err != nil {
-					zap.S().Error(fmt.Errorf("Error in setting cold storage: %s", err.Err.Error()))
+					zap.L().Error("Error in setting cold storage", zap.Error(err))
 					statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 					if err == nil {
 						_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
 						if dbErr != nil {
-							zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+							zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 							return
 						}
 					}
 					return
 				}
 				req += fmt.Sprint(" SETTINGS distributed_ddl_task_timeout = -1;")
-				zap.S().Debugf("Executing TTL request: %s\n", req)
+				zap.L().Error("Executing TTL request: ", zap.String("request", req))
 				statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 				if err := r.db.Exec(context.Background(), req); err != nil {
-					zap.S().Error(fmt.Errorf("Error in executing set TTL query: %s", err.Error()))
+					zap.L().Error("Error in executing set TTL query", zap.Error(err))
 					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
 					if dbErr != nil {
-						zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 						return
 					}
 					return
 				}
 				_, dbErr = r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusSuccess, statusItem.Id)
 				if dbErr != nil {
-					zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 					return
 				}
 			}(tableName)
@@ -2391,7 +2370,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		go func(tableName string) {
 			_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
 			if dbErr != nil {
-				zap.S().Error(fmt.Errorf("Error in inserting to ttl_status table: %s", dbErr.Error()))
+				zap.L().Error("Error in inserting to ttl_status table", zap.Error(dbErr))
 				return
 			}
 			req := fmt.Sprintf(
@@ -2404,32 +2383,32 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			}
 			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 			if err != nil {
-				zap.S().Error(fmt.Errorf("Error in setting cold storage: %s", err.Err.Error()))
+				zap.L().Error("Error in setting cold storage", zap.Error(err))
 				statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 				if err == nil {
 					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
 					if dbErr != nil {
-						zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 						return
 					}
 				}
 				return
 			}
 			req += fmt.Sprint(" SETTINGS distributed_ddl_task_timeout = -1")
-			zap.S().Debugf("Executing TTL request: %s\n", req)
+			zap.L().Info("Executing TTL request: ", zap.String("request", req))
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
-				zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
+				zap.L().Error("error while setting ttl.", zap.Error(err))
 				_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
 				if dbErr != nil {
-					zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 					return
 				}
 				return
 			}
 			_, dbErr = r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusSuccess, statusItem.Id)
 			if dbErr != nil {
-				zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 				return
 			}
 		}(tableName)
@@ -2445,7 +2424,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		go func(tableName string) {
 			_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
 			if dbErr != nil {
-				zap.S().Error(fmt.Errorf("error in inserting to ttl_status table: %s", dbErr.Error()))
+				zap.L().Error("error in inserting to ttl_status table", zap.Error(dbErr))
 				return
 			}
 			req := fmt.Sprintf(
@@ -2458,32 +2437,32 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 			}
 			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 			if err != nil {
-				zap.S().Error(fmt.Errorf("error in setting cold storage: %s", err.Err.Error()))
+				zap.L().Error("error in setting cold storage", zap.Error(err))
 				statusItem, err := r.checkTTLStatusItem(ctx, tableName)
 				if err == nil {
 					_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
 					if dbErr != nil {
-						zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+						zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 						return
 					}
 				}
 				return
 			}
 			req += fmt.Sprint(" SETTINGS distributed_ddl_task_timeout = -1")
-			zap.S().Debugf("Executing TTL request: %s\n", req)
+			zap.L().Info("Executing TTL request: ", zap.String("request", req))
 			statusItem, _ := r.checkTTLStatusItem(ctx, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
-				zap.S().Error(fmt.Errorf("error while setting ttl. Err=%v", err))
+				zap.L().Error("error while setting ttl", zap.Error(err))
 				_, dbErr := r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusFailed, statusItem.Id)
 				if dbErr != nil {
-					zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+					zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 					return
 				}
 				return
 			}
 			_, dbErr = r.localDB.Exec("UPDATE ttl_status SET updated_at = ?, status = ? WHERE id = ?", time.Now(), constants.StatusSuccess, statusItem.Id)
 			if dbErr != nil {
-				zap.S().Debug("Error in processing ttl_status update sql query: ", dbErr)
+				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 				return
 			}
 		}(tableName)
@@ -2499,7 +2478,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTransactionsStore int) {
 	_, err := r.localDB.Exec("DELETE FROM ttl_status WHERE transaction_id NOT IN (SELECT distinct transaction_id FROM ttl_status ORDER BY created_at DESC LIMIT ?)", numberOfTransactionsStore)
 	if err != nil {
-		zap.S().Debug("Error in processing ttl_status delete sql query: ", err)
+		zap.L().Error("Error in processing ttl_status delete sql query", zap.Error(err))
 	}
 }
 
@@ -2509,12 +2488,12 @@ func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName str
 
 	query := `SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = ? ORDER BY created_at DESC`
 
-	zap.S().Info(query, tableName)
+	zap.L().Info("checkTTLStatusItem query", zap.String("query", query), zap.String("tableName", tableName))
 
 	stmt, err := r.localDB.Preparex(query)
 
 	if err != nil {
-		zap.S().Debug("Error preparing query for checkTTLStatusItem: ", err)
+		zap.L().Error("Error preparing query for checkTTLStatusItem", zap.Error(err))
 		return model.TTLStatusItem{}, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -2524,7 +2503,7 @@ func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName str
 		return model.TTLStatusItem{}, nil
 	}
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return model.TTLStatusItem{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
 	}
 	return statusItem[0], nil
@@ -2565,9 +2544,9 @@ func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string,
 	if len(coldStorageVolume) > 0 {
 		policyReq := fmt.Sprintf("ALTER TABLE %s ON CLUSTER %s MODIFY SETTING storage_policy='tiered'", tableName, r.cluster)
 
-		zap.S().Debugf("Executing Storage policy request: %s\n", policyReq)
+		zap.L().Info("Executing Storage policy request: ", zap.String("request", policyReq))
 		if err := r.db.Exec(ctx, policyReq); err != nil {
-			zap.S().Error(fmt.Errorf("error while setting storage policy. Err=%v", err))
+			zap.L().Error("error while setting storage policy", zap.Error(err))
 			return &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting storage policy. Err=%v", err)}
 		}
 	}
@@ -2580,11 +2559,9 @@ func (r *ClickHouseReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *mo
 
 	query := "SELECT name,type FROM system.disks"
 	if err := r.db.Select(ctx, &diskItems, query); err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting disks. Err=%v", err)}
 	}
-
-	zap.S().Infof("Got response: %+v\n", diskItems)
 
 	return &diskItems, nil
 }
@@ -2603,7 +2580,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 
 	parseTTL := func(queryResp string) (int, int) {
 
-		zap.S().Debugf("Parsing TTL from: %s", queryResp)
+		zap.L().Info("Parsing TTL from: ", zap.String("queryResp", queryResp))
 		deleteTTLExp := regexp.MustCompile(`toIntervalSecond\(([0-9]*)\)`)
 		moveTTLExp := regexp.MustCompile(`toIntervalSecond\(([0-9]*)\) TO VOLUME`)
 
@@ -2638,7 +2615,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		err := r.db.Select(ctx, &dbResp, query)
 
 		if err != nil {
-			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
+			zap.L().Error("error while getting ttl", zap.Error(err))
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. Err=%v", err)}
 		}
 		if len(dbResp) == 0 {
@@ -2656,7 +2633,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		err := r.db.Select(ctx, &dbResp, query)
 
 		if err != nil {
-			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
+			zap.L().Error("error while getting ttl", zap.Error(err))
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. Err=%v", err)}
 		}
 		if len(dbResp) == 0 {
@@ -2674,7 +2651,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, ttlParams *model.GetTTLPa
 		err := r.db.Select(ctx, &dbResp, query)
 
 		if err != nil {
-			zap.S().Error(fmt.Errorf("error while getting ttl. Err=%v", err))
+			zap.L().Error("error while getting ttl", zap.Error(err))
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. Err=%v", err)}
 		}
 		if len(dbResp) == 0 {
@@ -2796,7 +2773,7 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 	args = append(args, argsSubQuery...)
 
 	if errStatus != nil {
-		zap.S().Error("Error in processing tags: ", errStatus)
+		zap.L().Error("Error in processing tags", zap.Error(errStatus))
 		return nil, errStatus
 	}
 	query = query + " GROUP BY groupID"
@@ -2824,10 +2801,10 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 	}
 
 	err := r.db.Select(ctx, &getErrorResponses, query, args...)
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
@@ -2856,15 +2833,15 @@ func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.C
 	args = append(args, argsSubQuery...)
 
 	if errStatus != nil {
-		zap.S().Error("Error in processing tags: ", errStatus)
+		zap.L().Error("Error in processing tags", zap.Error(errStatus))
 		return 0, errStatus
 	}
 
 	err := r.db.QueryRow(ctx, query, args...).Scan(&errorCount)
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return 0, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
@@ -2874,7 +2851,7 @@ func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.C
 func (r *ClickHouseReader) GetErrorFromErrorID(ctx context.Context, queryParams *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {
 
 	if queryParams.ErrorID == "" {
-		zap.S().Debug("errorId missing from params")
+		zap.L().Error("errorId missing from params")
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("ErrorID missing from params")}
 	}
 	var getErrorWithSpanReponse []model.ErrorWithSpan
@@ -2883,10 +2860,10 @@ func (r *ClickHouseReader) GetErrorFromErrorID(ctx context.Context, queryParams 
 	args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
@@ -2907,10 +2884,10 @@ func (r *ClickHouseReader) GetErrorFromGroupID(ctx context.Context, queryParams 
 
 	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
 
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
@@ -2925,7 +2902,7 @@ func (r *ClickHouseReader) GetErrorFromGroupID(ctx context.Context, queryParams 
 func (r *ClickHouseReader) GetNextPrevErrorIDs(ctx context.Context, queryParams *model.GetErrorParams) (*model.NextPrevErrorIDs, *model.ApiError) {
 
 	if queryParams.ErrorID == "" {
-		zap.S().Debug("errorId missing from params")
+		zap.L().Error("errorId missing from params")
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("ErrorID missing from params")}
 	}
 	var err *model.ApiError
@@ -2934,12 +2911,12 @@ func (r *ClickHouseReader) GetNextPrevErrorIDs(ctx context.Context, queryParams 
 	}
 	getNextPrevErrorIDsResponse.NextErrorID, getNextPrevErrorIDsResponse.NextTimestamp, err = r.getNextErrorID(ctx, queryParams)
 	if err != nil {
-		zap.S().Debug("Unable to get next error ID due to err: ", err)
+		zap.L().Error("Unable to get next error ID due to err: ", zap.Error(err))
 		return nil, err
 	}
 	getNextPrevErrorIDsResponse.PrevErrorID, getNextPrevErrorIDsResponse.PrevTimestamp, err = r.getPrevErrorID(ctx, queryParams)
 	if err != nil {
-		zap.S().Debug("Unable to get prev error ID due to err: ", err)
+		zap.L().Error("Unable to get prev error ID due to err: ", zap.Error(err))
 		return nil, err
 	}
 	return &getNextPrevErrorIDsResponse, nil
@@ -2955,17 +2932,17 @@ func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *mode
 
 	err := r.db.Select(ctx, &getNextErrorIDReponse, query, args...)
 
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 	if len(getNextErrorIDReponse) == 0 {
-		zap.S().Info("NextErrorID not found")
+		zap.L().Info("NextErrorID not found")
 		return "", time.Time{}, nil
 	} else if len(getNextErrorIDReponse) == 1 {
-		zap.S().Info("NextErrorID found")
+		zap.L().Info("NextErrorID found")
 		return getNextErrorIDReponse[0].NextErrorID, getNextErrorIDReponse[0].NextTimestamp, nil
 	} else {
 		if getNextErrorIDReponse[0].Timestamp.UnixNano() == getNextErrorIDReponse[1].Timestamp.UnixNano() {
@@ -2976,10 +2953,10 @@ func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *mode
 
 			err := r.db.Select(ctx, &getNextErrorIDReponse, query, args...)
 
-			zap.S().Info(query)
+			zap.L().Info(query)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 			}
 			if len(getNextErrorIDReponse) == 0 {
@@ -2990,26 +2967,26 @@ func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *mode
 
 				err := r.db.Select(ctx, &getNextErrorIDReponse, query, args...)
 
-				zap.S().Info(query)
+				zap.L().Info(query)
 
 				if err != nil {
-					zap.S().Debug("Error in processing sql query: ", err)
+					zap.L().Error("Error in processing sql query", zap.Error(err))
 					return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 				}
 
 				if len(getNextErrorIDReponse) == 0 {
-					zap.S().Info("NextErrorID not found")
+					zap.L().Info("NextErrorID not found")
 					return "", time.Time{}, nil
 				} else {
-					zap.S().Info("NextErrorID found")
+					zap.L().Info("NextErrorID found")
 					return getNextErrorIDReponse[0].NextErrorID, getNextErrorIDReponse[0].NextTimestamp, nil
 				}
 			} else {
-				zap.S().Info("NextErrorID found")
+				zap.L().Info("NextErrorID found")
 				return getNextErrorIDReponse[0].NextErrorID, getNextErrorIDReponse[0].NextTimestamp, nil
 			}
 		} else {
-			zap.S().Info("NextErrorID found")
+			zap.L().Info("NextErrorID found")
 			return getNextErrorIDReponse[0].NextErrorID, getNextErrorIDReponse[0].NextTimestamp, nil
 		}
 	}
@@ -3024,17 +3001,17 @@ func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *mode
 
 	err := r.db.Select(ctx, &getPrevErrorIDReponse, query, args...)
 
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 	if len(getPrevErrorIDReponse) == 0 {
-		zap.S().Info("PrevErrorID not found")
+		zap.L().Info("PrevErrorID not found")
 		return "", time.Time{}, nil
 	} else if len(getPrevErrorIDReponse) == 1 {
-		zap.S().Info("PrevErrorID found")
+		zap.L().Info("PrevErrorID found")
 		return getPrevErrorIDReponse[0].PrevErrorID, getPrevErrorIDReponse[0].PrevTimestamp, nil
 	} else {
 		if getPrevErrorIDReponse[0].Timestamp.UnixNano() == getPrevErrorIDReponse[1].Timestamp.UnixNano() {
@@ -3045,10 +3022,10 @@ func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *mode
 
 			err := r.db.Select(ctx, &getPrevErrorIDReponse, query, args...)
 
-			zap.S().Info(query)
+			zap.L().Info(query)
 
 			if err != nil {
-				zap.S().Debug("Error in processing sql query: ", err)
+				zap.L().Error("Error in processing sql query", zap.Error(err))
 				return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 			}
 			if len(getPrevErrorIDReponse) == 0 {
@@ -3059,26 +3036,26 @@ func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *mode
 
 				err := r.db.Select(ctx, &getPrevErrorIDReponse, query, args...)
 
-				zap.S().Info(query)
+				zap.L().Info(query)
 
 				if err != nil {
-					zap.S().Debug("Error in processing sql query: ", err)
+					zap.L().Error("Error in processing sql query", zap.Error(err))
 					return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 				}
 
 				if len(getPrevErrorIDReponse) == 0 {
-					zap.S().Info("PrevErrorID not found")
+					zap.L().Info("PrevErrorID not found")
 					return "", time.Time{}, nil
 				} else {
-					zap.S().Info("PrevErrorID found")
+					zap.L().Info("PrevErrorID found")
 					return getPrevErrorIDReponse[0].PrevErrorID, getPrevErrorIDReponse[0].PrevTimestamp, nil
 				}
 			} else {
-				zap.S().Info("PrevErrorID found")
+				zap.L().Info("PrevErrorID found")
 				return getPrevErrorIDReponse[0].PrevErrorID, getPrevErrorIDReponse[0].PrevTimestamp, nil
 			}
 		} else {
-			zap.S().Info("PrevErrorID found")
+			zap.L().Info("PrevErrorID found")
 			return getPrevErrorIDReponse[0].PrevErrorID, getPrevErrorIDReponse[0].PrevTimestamp, nil
 		}
 	}
@@ -3109,7 +3086,7 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagKey(ctx context.Context, para
 	}
 
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
@@ -3148,7 +3125,7 @@ func (r *ClickHouseReader) GetMetricAutocompleteTagValue(ctx context.Context, pa
 	}
 
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
@@ -3178,7 +3155,7 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", matchText))
 
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
@@ -3196,7 +3173,7 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 }
 
 func (r *ClickHouseReader) GetMetricResultEE(ctx context.Context, query string) ([]*model.Series, string, error) {
-	zap.S().Error("GetMetricResultEE is not implemented for opensource version")
+	zap.L().Error("GetMetricResultEE is not implemented for opensource version")
 	return nil, "", fmt.Errorf("GetMetricResultEE is not implemented for opensource version")
 }
 
@@ -3205,12 +3182,12 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 
 	defer utils.Elapsed("GetMetricResult")()
 
-	zap.S().Infof("Executing metric result query: %s", query)
+	zap.L().Info("Executing metric result query: ", zap.String("query", query))
 
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing query: ", err)
+		zap.L().Error("Error in processing query", zap.Error(err))
 		return nil, err
 	}
 
@@ -3287,7 +3264,7 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 					groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
 				}
 			default:
-				zap.S().Errorf("invalid var found in metric builder query result", v, colName)
+				zap.L().Error("invalid var found in metric builder query result", zap.Any("v", v), zap.String("colName", colName))
 			}
 		}
 		sort.Strings(groupBy)
@@ -3455,8 +3432,7 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 	err := r.db.Select(ctx, &tagTelemetryDataList, queryStr)
 
 	if err != nil {
-		zap.S().Info(queryStr)
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query: ", zap.Error(err))
 		return nil, err
 	}
 
@@ -3513,7 +3489,7 @@ func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.Dashbo
 	var dashboardsData []dashboards.Dashboard
 	err := r.localDB.Select(&dashboardsData, query)
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return &dashboardsInfo, err
 	}
 	totalDashboardsWithPanelAndName := 0
@@ -3599,14 +3575,14 @@ func (r *ClickHouseReader) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo
 	var alertsData []string
 	err := r.localDB.Select(&alertsData, query)
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return &alertsInfo, err
 	}
 	for _, alert := range alertsData {
 		var rule rules.GettableRule
 		err = json.Unmarshal([]byte(alert), &rule)
 		if err != nil {
-			zap.S().Errorf("msg:", "invalid rule data", "\t err:", err)
+			zap.L().Error("invalid rule data", zap.Error(err))
 			continue
 		}
 		if rule.AlertType == "LOGS_BASED_ALERT" {
@@ -3817,7 +3793,6 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 	}
 
 	query = fmt.Sprintf("%s order by %s %s limit %d", query, params.OrderBy, params.Order, params.Limit)
-	zap.S().Debug(query)
 	err = r.db.Select(ctx, &response, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
@@ -3877,7 +3852,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		case <-ctx.Done():
 			done := true
 			client.Done <- &done
-			zap.S().Debug("closing go routine : " + client.Name)
+			zap.L().Debug("closing go routine : " + client.Name)
 			return
 		case <-ticker.C:
 			// get the new 100 logs as anything more older won't make sense
@@ -3889,11 +3864,10 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 				tmpQuery = fmt.Sprintf("%s and id > '%s'", tmpQuery, idStart)
 			}
 			tmpQuery = fmt.Sprintf("%s order by timestamp desc, id desc limit 100", tmpQuery)
-			zap.S().Debug(tmpQuery)
 			response := []model.SignozLog{}
 			err := r.db.Select(ctx, &response, tmpQuery)
 			if err != nil {
-				zap.S().Error(err)
+				zap.L().Error("Error while getting logs", zap.Error(err))
 				client.Error <- err
 				return
 			}
@@ -3902,7 +3876,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 				case <-ctx.Done():
 					done := true
 					client.Done <- &done
-					zap.S().Debug("closing go routine while sending logs : " + client.Name)
+					zap.L().Debug("closing go routine while sending logs : " + client.Name)
 					return
 				default:
 					client.Logs <- &response[i]
@@ -3967,7 +3941,6 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 		query = fmt.Sprintf("%s GROUP BY ts_start_interval ORDER BY ts_start_interval", query)
 	}
 
-	zap.S().Debug(query)
 	err = r.db.Select(ctx, &logAggregatesDBResponseItems, query)
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
@@ -4006,10 +3979,10 @@ func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string)
 	var result model.DashboardVar
 	rows, err := r.db.Query(ctx, query)
 
-	zap.S().Info(query)
+	zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, err
 	}
 
@@ -4052,7 +4025,7 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
 
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4101,7 +4074,7 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 	}
 	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, common.PastDayRoundOff(), fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4137,7 +4110,7 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
 
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4159,7 +4132,7 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 	query := fmt.Sprintf("SELECT DISTINCT(temporality) from %s.%s WHERE metric_name='%s' AND JSONExtractString(labels, 'service_name') = '%s'", signozMetricDBName, signozTSTableName, metricName, serviceName)
 	rows, err := r.db.Query(ctx, query, metricName)
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4178,7 +4151,7 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, 'le')) as le from %s.%s WHERE metric_name='%s' AND JSONExtractString(labels, 'service_name') = '%s' ORDER BY le", signozMetricDBName, signozTSTableName, metricName, serviceName)
 	rows, err = r.db.Query(ctx, query, metricName)
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4194,7 +4167,7 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 		// ideally this should not happen but we have seen ClickHouse
 		// returning empty string for some values
 		if err != nil {
-			zap.S().Error("error while parsing le value: ", err)
+			zap.L().Error("error while parsing le value", zap.Error(err))
 			continue
 		}
 		if math.IsInf(le, 0) {
@@ -4216,7 +4189,7 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 	query := fmt.Sprintf("SELECT DISTINCT temporality, description, type, unit, is_monotonic from %s.%s WHERE metric_name=$1", signozMetricDBName, signozTSTableNameV41Day)
 	rows, err := r.db.Query(ctx, query, metricName)
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while fetching metric metadata", zap.Error(err))
 		return nil, fmt.Errorf("error while fetching metric metadata: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4235,7 +4208,7 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, 'le')) as le from %s.%s WHERE metric_name=$1 AND type = 'Histogram' AND JSONExtractString(labels, 'service_name') = $2 ORDER BY le", signozMetricDBName, signozTSTableNameV41Day)
 	rows, err = r.db.Query(ctx, query, metricName, serviceName)
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4251,7 +4224,7 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 		// ideally this should not happen but we have seen ClickHouse
 		// returning empty string for some values
 		if err != nil {
-			zap.S().Error("error while parsing le value: ", err)
+			zap.L().Error("error while parsing le value", zap.Error(err))
 			continue
 		}
 		if math.IsInf(le, 0) {
@@ -4324,7 +4297,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, tagDataType from %s.%s WHERE %s limit $2", r.logsDB, r.logsTagAttributeTable, where)
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4378,7 +4351,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	}
 
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4490,7 +4463,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	}
 
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4551,7 +4524,7 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 				var metric map[string]string
 				err := json.Unmarshal([]byte(*v), &metric)
 				if err != nil {
-					zap.S().Errorf("unexpected error encountered %v", err)
+					zap.L().Error("unexpected error encountered", zap.Error(err))
 				}
 				for key, val := range metric {
 					groupBy = append(groupBy, val)
@@ -4607,7 +4580,7 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 			groupAttributes[colName] = fmt.Sprintf("%v", *v)
 
 		default:
-			zap.S().Errorf("unsupported var type %v found in query builder query result for column %s", v, colName)
+			zap.L().Error("unsupported var type found in query builder query result", zap.Any("v", v), zap.String("colName", colName))
 		}
 	}
 	return groupBy, groupAttributes, groupAttributesArray, point
@@ -4705,7 +4678,7 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
-		zap.S().Errorf("error while reading time series result %v", err)
+		zap.L().Error("error while reading time series result", zap.Error(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -4730,7 +4703,7 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
-		zap.S().Errorf("error while reading time series result %v", err)
+		zap.L().Error("error while reading time series result", zap.Error(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -4873,7 +4846,7 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
 
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4914,7 +4887,7 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
 
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4968,7 +4941,7 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 		query = fmt.Sprintf("SELECT DISTINCT stringTagValue from %s.%s WHERE tagKey = $1 AND stringTagValue ILIKE $2 AND tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
 		if err != nil {
-			zap.S().Error(err)
+			zap.L().Error("Error while executing query", zap.Error(err))
 			return nil, fmt.Errorf("error while executing query: %s", err.Error())
 		}
 		defer rows.Close()
@@ -4984,7 +4957,7 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 		query = fmt.Sprintf("SELECT DISTINCT float64TagValue from %s.%s where tagKey = $1 AND toString(float64TagValue) ILIKE $2 AND tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
 		if err != nil {
-			zap.S().Error(err)
+			zap.L().Error("Error while executing query", zap.Error(err))
 			return nil, fmt.Errorf("error while executing query: %s", err.Error())
 		}
 		defer rows.Close()
@@ -5018,7 +4991,7 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 	rows, err = r.db.Query(ctx, query)
 
 	if err != nil {
-		zap.S().Error(err)
+		zap.L().Error("Error while executing query", zap.Error(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -5056,7 +5029,7 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 		case <-ctx.Done():
 			done := true
 			client.Done <- &done
-			zap.S().Debug("closing go routine : " + client.Name)
+			zap.L().Debug("closing go routine : " + client.Name)
 			return
 		case <-ticker.C:
 			// get the new 100 logs as anything more older won't make sense
@@ -5071,7 +5044,7 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 			response := []model.SignozLog{}
 			err := r.db.Select(ctx, &response, tmpQuery)
 			if err != nil {
-				zap.S().Error(err)
+				zap.L().Error("Error while getting logs", zap.Error(err))
 				client.Error <- err
 				return
 			}

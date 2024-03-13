@@ -15,7 +15,7 @@ import (
 func (ah *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 
 	if !ah.CheckFeature(basemodel.SmartTraceDetail) {
-		zap.S().Info("SmartTraceDetail feature is not enabled in this plan")
+		zap.L().Info("SmartTraceDetail feature is not enabled in this plan")
 		ah.APIHandler.SearchTraces(w, r)
 		return
 	}
@@ -26,7 +26,7 @@ func (ah *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 	}
 	spanLimit, err := strconv.Atoi(constants.SpanLimitStr)
 	if err != nil {
-		zap.S().Error("Error during strconv.Atoi() on SPAN_LIMIT env variable: ", err)
+		zap.L().Error("Error during strconv.Atoi() on SPAN_LIMIT env variable", zap.Error(err))
 		return
 	}
 	result, err := ah.opts.DataConnector.SearchTraces(r.Context(), traceId, spanId, levelUpInt, levelDownInt, spanLimit, db.SmartTraceAlgorithm)

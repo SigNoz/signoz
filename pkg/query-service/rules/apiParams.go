@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
@@ -74,18 +73,15 @@ func parseIntoRule(initRule PostableRule, content []byte, kind string) (*Postabl
 	var err error
 	if kind == "json" {
 		if err = json.Unmarshal(content, rule); err != nil {
-			zap.S().Debugf("postable rule content", string(content), "\t kind:", kind)
 			return nil, []error{fmt.Errorf("failed to load json")}
 		}
 	} else if kind == "yaml" {
 		if err = yaml.Unmarshal(content, rule); err != nil {
-			zap.S().Debugf("postable rule content", string(content), "\t kind:", kind)
 			return nil, []error{fmt.Errorf("failed to load yaml")}
 		}
 	} else {
 		return nil, []error{fmt.Errorf("invalid data type")}
 	}
-	zap.S().Debugf("postable rule(parsed):", rule)
 
 	if rule.RuleCondition == nil && rule.Expr != "" {
 		// account for legacy rules
@@ -125,8 +121,6 @@ func parseIntoRule(initRule PostableRule, content []byte, kind string) (*Postabl
 			}
 		}
 	}
-
-	zap.S().Debugf("postable rule:", rule, "\t condition", rule.RuleCondition.String())
 
 	if errs := rule.Validate(); len(errs) > 0 {
 		return nil, errs

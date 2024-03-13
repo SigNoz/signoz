@@ -40,7 +40,7 @@ type InviteEmailData struct {
 
 // The root user should be able to invite people to create account on SigNoz cluster.
 func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteResponse, error) {
-	zap.S().Debugf("Got an invite request for email: %s\n", req.Email)
+	zap.L().Debug("Got an invite request for email", zap.String("email", req.Email))
 
 	token, err := utils.RandomHex(opaqueTokenSize)
 	if err != nil {
@@ -110,13 +110,13 @@ func inviteEmail(req *model.InviteRequest, au *model.UserPayload, token string) 
 
 	tmpl, err := template.ParseFiles(constants.InviteEmailTemplate)
 	if err != nil {
-		zap.S().Errorf("failed to send email", err)
+		zap.L().Error("failed to send email", zap.Error(err))
 		return
 	}
 
 	var body bytes.Buffer
 	if err := tmpl.Execute(&body, data); err != nil {
-		zap.S().Errorf("failed to send email", err)
+		zap.L().Error("failed to send email", zap.Error(err))
 		return
 	}
 
@@ -126,7 +126,7 @@ func inviteEmail(req *model.InviteRequest, au *model.UserPayload, token string) 
 		body.String(),
 	)
 	if err != nil {
-		zap.S().Errorf("failed to send email", err)
+		zap.L().Error("failed to send email", zap.Error(err))
 		return
 	}
 	return
@@ -134,7 +134,7 @@ func inviteEmail(req *model.InviteRequest, au *model.UserPayload, token string) 
 
 // RevokeInvite is used to revoke the invitation for the given email.
 func RevokeInvite(ctx context.Context, email string) error {
-	zap.S().Debugf("RevokeInvite method invoked for email: %s\n", email)
+	zap.L().Debug("RevokeInvite method invoked for email", zap.String("email", email))
 
 	if !isValidEmail(email) {
 		return ErrorInvalidInviteToken
@@ -148,7 +148,7 @@ func RevokeInvite(ctx context.Context, email string) error {
 
 // GetInvite returns an invitation object for the given token.
 func GetInvite(ctx context.Context, token string) (*model.InvitationResponseObject, error) {
-	zap.S().Debugf("GetInvite method invoked for token: %s\n", token)
+	zap.L().Debug("GetInvite method invoked for token", zap.String("token", token))
 
 	inv, apiErr := dao.DB().GetInviteFromToken(ctx, token)
 	if apiErr != nil {
@@ -283,13 +283,13 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 	org, apierr := dao.DB().CreateOrg(ctx,
 		&model.Organization{Name: req.OrgName})
 	if apierr != nil {
-		zap.S().Debugf("CreateOrg failed, err: %v\n", zap.Error(apierr.ToError()))
+		zap.L().Error("CreateOrg failed", zap.Error(apierr.ToError()))
 		return nil, apierr
 	}
 
 	group, apiErr := dao.DB().GetGroupByName(ctx, groupName)
 	if apiErr != nil {
-		zap.S().Debugf("GetGroupByName failed, err: %v\n", apiErr.Err)
+		zap.L().Error("GetGroupByName failed", zap.Error(apiErr.Err))
 		return nil, apiErr
 	}
 
@@ -298,7 +298,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 
 	hash, err = PasswordHash(req.Password)
 	if err != nil {
-		zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
+		zap.L().Error("failed to generate password hash when registering a user", zap.Error(err))
 		return nil, model.InternalError(model.ErrSignupFailed{})
 	}
 
@@ -329,7 +329,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 
 	invite, err := ValidateInvite(ctx, req)
 	if err != nil {
-		zap.S().Errorf("failed to validate invite token", err)
+		zap.L().Error("failed to validate invite token", zap.Error(err))
 		return nil, model.BadRequest(model.ErrSignupFailed{})
 	}
 
@@ -338,7 +338,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	// in the same transaction at the end of this function
 	userPayload, apierr := dao.DB().GetUserByEmail(ctx, invite.Email)
 	if apierr != nil {
-		zap.S().Debugf("failed to get user by email", apierr.Err)
+		zap.L().Error("failed to get user by email", zap.Error(apierr.Err))
 		return nil, apierr
 	}
 
@@ -348,7 +348,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	}
 
 	if invite.OrgId == "" {
-		zap.S().Errorf("failed to find org in the invite")
+		zap.L().Error("failed to find org in the invite")
 		return nil, model.InternalError(fmt.Errorf("invalid invite, org not found"))
 	}
 
@@ -359,7 +359,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 
 	group, apiErr := dao.DB().GetGroupByName(ctx, invite.Role)
 	if apiErr != nil {
-		zap.S().Debugf("GetGroupByName failed, err: %v\n", apiErr.Err)
+		zap.L().Error("GetGroupByName failed", zap.Error(apiErr.Err))
 		return nil, model.InternalError(model.ErrSignupFailed{})
 	}
 
@@ -369,13 +369,13 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	if req.Password != "" {
 		hash, err = PasswordHash(req.Password)
 		if err != nil {
-			zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
+			zap.L().Error("failed to generate password hash when registering a user", zap.Error(err))
 			return nil, model.InternalError(model.ErrSignupFailed{})
 		}
 	} else {
 		hash, err = PasswordHash(utils.GeneratePassowrd())
 		if err != nil {
-			zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
+			zap.L().Error("failed to generate password hash when registering a user", zap.Error(err))
 			return nil, model.InternalError(model.ErrSignupFailed{})
 		}
 	}
@@ -394,13 +394,13 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	// TODO(Ahsan): Ideally create user and delete invitation should happen in a txn.
 	user, apiErr = dao.DB().CreateUser(ctx, user, false)
 	if apiErr != nil {
-		zap.S().Debugf("CreateUser failed, err: %v\n", apiErr.Err)
+		zap.L().Error("CreateUser failed", zap.Error(apiErr.Err))
 		return nil, apiErr
 	}
 
 	apiErr = dao.DB().DeleteInvitation(ctx, user.Email)
 	if apiErr != nil {
-		zap.S().Debugf("delete invitation failed, err: %v\n", apiErr.Err)
+		zap.L().Error("delete invitation failed", zap.Error(apiErr.Err))
 		return nil, apiErr
 	}
 
@@ -429,17 +429,17 @@ func Register(ctx context.Context, req *RegisterRequest) (*model.User, *model.Ap
 
 // Login method returns access and refresh tokens on successful login, else it errors out.
 func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginResponse, error) {
-	zap.S().Debugf("Login method called for user: %s\n", request.Email)
+	zap.L().Debug("Login method called for user", zap.String("email", request.Email))
 
 	user, err := authenticateLogin(ctx, request)
 	if err != nil {
-		zap.S().Debugf("Failed to authenticate login request, %v", err)
+		zap.L().Error("Failed to authenticate login request", zap.Error(err))
 		return nil, err
 	}
 
 	userjwt, err := GenerateJWTForUser(&user.User)
 	if err != nil {
-		zap.S().Debugf("Failed to generate JWT against login creds, %v", err)
+		zap.L().Error("Failed to generate JWT against login creds", zap.Error(err))
 		return nil, err
 	}
 

@@ -457,7 +457,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 		}
 	}
 
-	// zap.S().Info(data)
+	// zap.L().Info(data)
 	properties := analytics.NewProperties()
 	properties.Set("version", version.GetVersion())
 	properties.Set("deploymentType", getDeploymentType())
