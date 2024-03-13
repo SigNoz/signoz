@@ -19,6 +19,7 @@ import { ColumnsType } from 'antd/es/table';
 import updateCreditCardApi from 'api/billing/checkout';
 import getUsage from 'api/billing/getUsage';
 import manageCreditCardApi from 'api/billing/manage';
+import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAnalytics from 'hooks/analytics/useAnalytics';
@@ -327,8 +328,15 @@ export default function BillingContainer(): JSX.Element {
 	]);
 
 	const BillingUsageGraphCallback = useCallback(
-		() => <BillingUsageGraph data={apiResponse} billAmount={billAmount} />,
-		[apiResponse, billAmount],
+		() =>
+			!isLoading ? (
+				<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
+			) : (
+				<Card className="empty-graph-card" bordered={false}>
+					<Spinner size="large" tip="Loading..." height="35vh" />
+				</Card>
+			),
+		[apiResponse, billAmount, isLoading],
 	);
 
 	return (
@@ -361,6 +369,7 @@ export default function BillingContainer(): JSX.Element {
 						type="primary"
 						size="middle"
 						loading={isLoadingBilling || isLoadingManageBilling}
+						disabled={isLoading}
 						onClick={handleBilling}
 					>
 						{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription
@@ -380,14 +389,14 @@ export default function BillingContainer(): JSX.Element {
 						</Typography.Text>
 					)}
 				<Alert
-					message={headerText}
+					message={!isLoading ? headerText : 'Loading...'}
 					type="info"
 					showIcon
 					style={{ marginTop: 12 }}
 				/>
 			</Card>
 
-			{!isLoading ? <BillingUsageGraphCallback /> : null}
+			<BillingUsageGraphCallback />
 
 			<div className="billing-details">
 				{!isLoading && (
