@@ -102,7 +102,7 @@ const generateTooltipContent = (
 						tooltipValue,
 						queryName,
 						textContent: isBillingUsageGraphs
-							? `${tooltipItemLabel} : ${tooltipValue} USD - ${dataIngestedFormated} ${unit}`
+							? `${tooltipItemLabel} : $${tooltipValue} - ${dataIngestedFormated} ${unit}`
 							: `${tooltipItemLabel} : ${tooltipValue}`,
 					};
 
