@@ -1,5 +1,3 @@
-import 'uplot';
-
 import { billingSuccessResponse } from 'mocks-server/__mockdata__/billing';
 import {
 	notOfTrailResponse,
