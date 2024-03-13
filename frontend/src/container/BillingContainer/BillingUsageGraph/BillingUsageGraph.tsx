@@ -2,8 +2,7 @@ import './BillingUsageGraph.styles.scss';
 import '../../../lib/uPlotLib/uPlotLib.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Card, Flex, Select, Typography } from 'antd';
-import { SelectProps } from 'antd/lib';
+import { Card, Flex, Typography } from 'antd';
 import { getComponentForPanelType } from 'constants/panelTypes';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PropsTypePropsMap } from 'container/GridPanelSwitch/types';
@@ -15,10 +14,15 @@ import getRenderer from 'lib/uPlotLib/utils/getRenderer';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getXAxisScale } from 'lib/uPlotLib/utils/getXAxisScale';
 import { getYAxisScale } from 'lib/uPlotLib/utils/getYAxisScale';
-import { chunk, isEmpty, isNull } from 'lodash-es';
-import { FC, useRef, useState } from 'react';
+import { isEmpty, isNull } from 'lodash-es';
+import { FC, useRef } from 'react';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
+
+interface BillingUsageGraphProps {
+	data: any;
+	billAmount: number;
+}
 
 const paths = (
 	u: any,
@@ -37,7 +41,9 @@ const paths = (
 	return renderer(u, seriesIdx, idx0, idx1, extendGap, buildClip);
 };
 
-const makeDataCompatible = (data: any): MetricRangePayloadProps => {
+const convertDataToMetricRangePayload = (
+	data: any,
+): MetricRangePayloadProps => {
 	const emptyStateData = {
 		data: {
 			newResult: { data: { result: [], resultType: '' } },
@@ -56,19 +62,24 @@ const makeDataCompatible = (data: any): MetricRangePayloadProps => {
 		return emptyStateData;
 	}
 
-	const payload = breakdown.map((info: any) => {
-		const metric = info.type;
-		const values = (
-			info?.dayWiseBreakdown?.breakdown || []
-		).map((categoryInfo: any) => [categoryInfo.timestamp, categoryInfo.total]);
-		const queryName = info.type;
-		const legend = info.type;
-		const { unit } = info;
-		const quantity = (info?.dayWiseBreakdown?.breakdown || []).map(
-			(categoryInfo: any) => categoryInfo.quantity,
-		);
-		return { metric, values, queryName, legend, quantity, unit };
-	});
+	const payload = breakdown
+		.sort((a: any, b: any) => a.timestamp - b.timestamp)
+		.map((info: any) => {
+			const metric = info.type;
+			const sortedBreakdownData = (info?.dayWiseBreakdown?.breakdown || []).sort(
+				(a: any, b: any) => a.timestamp - b.timestamp,
+			);
+			const values = (sortedBreakdownData || [])
+				.sort((a: any, b: any) => a.timestamp - b.timestamp)
+				.map((categoryInfo: any) => [categoryInfo.timestamp, categoryInfo.total]);
+			const queryName = info.type;
+			const legend = info.type;
+			const { unit } = info;
+			const quantity = sortedBreakdownData.map(
+				(categoryInfo: any) => categoryInfo.quantity,
+			);
+			return { metric, values, queryName, legend, quantity, unit };
+		});
 
 	const sortedData = payload.sort((a: any, b: any) => {
 		const sumA = a.values.reduce((acc: any, val: any) => acc + val[1], 0);
@@ -91,66 +102,40 @@ const makeDataCompatible = (data: any): MetricRangePayloadProps => {
 	};
 };
 
-enum BillingUsageGraphOptions {
-	DAILY = 'Daily',
-	WEEKLY = 'Weekly',
+function fillMissingValuesForQuantities(
+	data: any,
+	timestampArray: number[],
+): MetricRangePayloadProps {
+	const { result } = data.data;
+
+	const transformedResultArr: any[] = [];
+	result.forEach((item: any) => {
+		const timestampToQuantityMap: { [timestamp: number]: number } = {};
+		item.values.forEach((val: number[], index: number) => {
+			timestampToQuantityMap[val[0]] = item.quantity[index];
+		});
+
+		const quantityArray = timestampArray.map(
+			(timestamp: number) => timestampToQuantityMap[timestamp] ?? null,
+		);
+		transformedResultArr.push({ ...item, quantity: quantityArray });
+	});
+
+	return {
+		data: {
+			newResult: { data: { result: transformedResultArr, resultType: '' } },
+			result: transformedResultArr,
+			resultType: '',
+		},
+	};
 }
 
-const convertDailyToWeekly = (
-	data: number[][],
-	startTime: number,
-): number[][] => {
-	const numberOfChunks = data[0].length;
-	const xAxisWeekly = chunk(data[0], 7).map((item) => item[item.length - 1]);
-	const timeGapXAxis = xAxisWeekly[0] - startTime;
-
-	// populate xAxis data if required
-	const currentXAxisSize = xAxisWeekly.length;
-	if (currentXAxisSize < numberOfChunks) {
-		const count = numberOfChunks - currentXAxisSize;
-		const lastValue = xAxisWeekly[xAxisWeekly.length - 1] || 0; // Get the last available value or default to 0
-		xAxisWeekly.push(
-			...Array(count)
-				.fill(null)
-				.map((_, index) => lastValue + (index + 1) * timeGapXAxis),
-		);
-	}
-
-	const yAxisWeekly = data
-		.slice(1)
-		.map((item) =>
-			chunk(item, 7).map((value) => value.reduce((acc, curr) => acc + curr, 0)),
-		);
-	// populate data with null if required
-	const currentSize = yAxisWeekly[0]?.length;
-	if (currentSize < numberOfChunks) {
-		yAxisWeekly.forEach((item) =>
-			item.push(...Array(numberOfChunks - currentSize).fill(null)),
-		);
-	}
-	return [xAxisWeekly, ...yAxisWeekly];
-};
-
-interface BillingUsageGraphProps {
-	data: any;
-	billAmount: number;
-}
 export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 	const { data, billAmount } = props;
-	const graphCompatibleData = makeDataCompatible(data);
-	const [
-		billingUsageOption,
-		setBillingUsageOption,
-	] = useState<BillingUsageGraphOptions>(BillingUsageGraphOptions.DAILY);
-
-	const dailyChartData = getUPlotChartData(graphCompatibleData);
-	console.log(graphCompatibleData, dailyChartData);
-
-	const [chartData, setChartData] = useState(dailyChartData);
-
+	const graphCompatibleData = convertDataToMetricRangePayload(data);
+	const chartData = getUPlotChartData(graphCompatibleData);
 	const graphRef = useRef<HTMLDivElement>(null);
 	const isDarkMode = useIsDarkMode();
-
 	const containerDimensions = useResizeObserver(graphRef);
 
 	const { billingPeriodStart: startTime, billingPeriodEnd: endTime } = data;
@@ -205,17 +190,17 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 				grid: {
 					...axesOptions.grid,
 					show: false,
-					stroke: isDarkMode ? Color.BG_VANILLA_400 : 'black',
+					stroke: isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400,
 				},
 			},
 			{
 				...axesOptions[1],
-				stroke: isDarkMode ? Color.BG_SLATE_200 : 'black',
+				stroke: isDarkMode ? Color.BG_SLATE_200 : Color.BG_INK_400,
 			},
 		],
 		scales: {
 			x: {
-				...getXAxisScale(startTime, endTime),
+				...getXAxisScale(startTime - 86400, endTime), // Minus 86400 from startTime to decrease a day to have a buffer start
 			},
 			y: {
 				...getYAxisScale({
@@ -231,23 +216,27 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 			live: false,
 			isolate: true,
 		},
+		cursor: {
+			lock: false,
+			focus: {
+				prox: 1e6,
+				bias: 1,
+			},
+		},
 		focus: {
 			alpha: 0.3,
 		},
 		padding: [32, 32, 16, 16],
-		plugins: [tooltipPlugin(graphCompatibleData, '', true)],
+		plugins: [
+			tooltipPlugin(
+				fillMissingValuesForQuantities(graphCompatibleData, chartData[0]),
+				'',
+				true,
+			),
+		],
 	};
 
 	const numberFormatter = new Intl.NumberFormat('en-US');
-
-	const onSelectChange: SelectProps['onChange'] = (value): void => {
-		if (value === BillingUsageGraphOptions.WEEKLY) {
-			setChartData(convertDailyToWeekly(dailyChartData, startTime));
-		} else {
-			setChartData(dailyChartData);
-		}
-		setBillingUsageOption(value);
-	};
 
 	return (
 		<Card bordered={false} className="billing-graph-card">
@@ -260,24 +249,6 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 						${numberFormatter.format(billAmount)}
 					</Typography.Text>
 				</Flex>
-				<Select
-					value={billingUsageOption}
-					className="selectStyles"
-					onChange={onSelectChange}
-				>
-					<Select.Option
-						value={BillingUsageGraphOptions.DAILY}
-						key={BillingUsageGraphOptions.DAILY}
-					>
-						Daily
-					</Select.Option>
-					<Select.Option
-						value={BillingUsageGraphOptions.WEEKLY}
-						key={BillingUsageGraphOptions.WEEKLY}
-					>
-						Weekly
-					</Select.Option>
-				</Select>
 			</Flex>
 			<div ref={graphRef} style={{ height: '100%', paddingBottom: 48 }}>
 				<Component data={chartData} options={getOptionsForChart} />
