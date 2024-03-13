@@ -22,6 +22,7 @@ export interface AlertDef {
 	disabled?: boolean;
 	preferredChannels?: string[];
 	broadcastToAll?: boolean;
+	version?: string;
 }
 
 export interface RuleCondition {
@@ -31,6 +32,8 @@ export interface RuleCondition {
 	matchType?: string;
 	targetUnit?: string;
 	selectedQueryName?: string;
+	alertOnAbsent?: boolean | undefined;
+	absentFor?: number | undefined;
 }
 
 export interface Labels {

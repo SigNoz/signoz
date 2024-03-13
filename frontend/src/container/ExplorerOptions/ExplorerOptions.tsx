@@ -1,5 +1,7 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import './ExplorerOptions.styles.scss';
 
+import { useDraggable } from '@dnd-kit/core';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -13,6 +15,7 @@ import {
 	Typography,
 } from 'antd';
 import axios from 'axios';
+import cx from 'classnames';
 import { getViewDetailsUsingViewKey } from 'components/ExplorerCard/utils';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -30,12 +33,25 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { Check, ConciergeBell, Disc3, Plus, X, XCircle } from 'lucide-react';
-import { CSSProperties, useCallback, useMemo, useRef, useState } from 'react';
+import {
+	CSSProperties,
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
+import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import AppReducer from 'types/reducer/app';
+import { USER_ROLES } from 'types/roles';
 
+import ExplorerOptionsDroppableArea from './ExplorerOptionsDroppableArea';
 import {
 	DATASOURCE_VS_ROUTES,
 	generateRGBAFromHex,
@@ -43,12 +59,17 @@ import {
 	saveNewViewHandler,
 } from './utils';
 
+const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
+
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function ExplorerOptions({
 	disabled,
 	isLoading,
 	onExport,
 	query,
 	sourcepage,
+	isExplorerOptionHidden = false,
+	setIsExplorerOptionHidden,
 }: ExplorerOptionsProps): JSX.Element {
 	const [isExport, setIsExport] = useState<boolean>(false);
 	const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -58,6 +79,7 @@ function ExplorerOptions({
 	const history = useHistory();
 	const ref = useRef<RefSelectProps>(null);
 	const isDarkMode = useIsDarkMode();
+	const [isDragEnabled, setIsDragEnabled] = useState(false);
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
@@ -70,6 +92,8 @@ function ExplorerOptions({
 	const hideSaveViewModal = (): void => {
 		setIsSaveModalOpen(false);
 	};
+
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const onCreateAlertsHandler = useCallback(() => {
 		history.push(
@@ -247,10 +271,37 @@ function ExplorerOptions({
 		[isDarkMode],
 	);
 
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		isDragging,
+	} = useDraggable({
+		id: 'explorer-options-draggable',
+		disabled: isDragEnabled,
+	});
+
+	const isEditDeleteSupported = allowedRoles.includes(role as string);
+
+	const style: React.CSSProperties | undefined = transform
+		? {
+				transform: `translate3d(${transform.x - 338}px, ${transform.y}px, 0)`,
+				width: `${400 - transform.y * 6}px`,
+				maxWidth: '440px', // initial width of the explorer options
+				overflow: 'hidden',
+		  }
+		: undefined;
+
 	return (
 		<>
-			{isQueryUpdated && (
-				<div className="explorer-update">
+			{isQueryUpdated && !isExplorerOptionHidden && !isDragging && (
+				<div
+					className={cx(
+						isEditDeleteSupported ? '' : 'hide-update',
+						'explorer-update',
+					)}
+				>
 					<Tooltip title="Clear this view" placement="top">
 						<Button
 							className="action-icon"
@@ -258,10 +309,13 @@ function ExplorerOptions({
 							icon={<X size={14} />}
 						/>
 					</Tooltip>
-					<Divider type="vertical" />
+					<Divider
+						type="vertical"
+						className={isEditDeleteSupported ? '' : 'hidden'}
+					/>
 					<Tooltip title="Update this view" placement="top">
 						<Button
-							className="action-icon"
+							className={cx('action-icon', isEditDeleteSupported ? ' ' : 'hidden')}
 							disabled={isViewUpdating}
 							onClick={onUpdateQueryHandler}
 							icon={<Disc3 size={14} />}
@@ -269,86 +323,105 @@ function ExplorerOptions({
 					</Tooltip>
 				</div>
 			)}
-			<div
-				className="explorer-options"
-				style={{
-					background: extraData
-						? `linear-gradient(90deg, rgba(0,0,0,0) -5%, ${rgbaColor} 9%, rgba(0,0,0,0) 30%)`
-						: 'transparent',
-					backdropFilter: 'blur(20px)',
-				}}
-			>
-				<div className="view-options">
-					<Select<string, { key: string; value: string }>
-						showSearch
-						placeholder="Select a view"
-						loading={viewsIsLoading || isRefetching}
-						value={viewName || undefined}
-						onSelect={handleSelect}
-						style={{
-							minWidth: 170,
-						}}
-						dropdownStyle={dropdownStyle}
-						className="views-dropdown"
-						allowClear={{
-							clearIcon: <XCircle size={16} style={{ marginTop: '-3px' }} />,
-						}}
-						onClear={handleClearSelect}
-						ref={ref}
-					>
-						{viewsData?.data?.data?.map((view) => {
-							const extraData =
-								view.extraData !== '' ? JSON.parse(view.extraData) : '';
-							let bgColor = getRandomColor();
-							if (extraData !== '') {
-								bgColor = extraData.color;
-							}
-							return (
-								<Select.Option key={view.uuid} value={view.name}>
-									<div className="render-options">
-										<span
-											className="dot"
-											style={{
-												background: bgColor,
-												boxShadow: `0px 0px 6px 0px ${bgColor}`,
-											}}
-										/>{' '}
-										{view.name}
-									</div>
-								</Select.Option>
-							);
-						})}
-					</Select>
-
-					<Button
-						shape="round"
-						onClick={handleSaveViewModalToggle}
-						disabled={viewsIsLoading || isRefetching}
-					>
-						<Disc3 size={16} /> Save this view
-					</Button>
-				</div>
-
-				<hr />
-
-				<div className="actions">
-					<Tooltip title="Create Alerts">
-						<Button
-							disabled={disabled}
-							shape="circle"
-							onClick={onCreateAlertsHandler}
+			{!isExplorerOptionHidden && (
+				<div
+					className="explorer-options"
+					style={{
+						background: extraData
+							? `linear-gradient(90deg, rgba(0,0,0,0) -5%, ${rgbaColor} 9%, rgba(0,0,0,0) 30%)`
+							: 'transparent',
+						backdropFilter: 'blur(20px)',
+						...style,
+					}}
+					ref={setNodeRef}
+					{...listeners}
+					{...attributes}
+				>
+					<div className="view-options">
+						<Select<string, { key: string; value: string }>
+							showSearch
+							placeholder="Select a view"
+							loading={viewsIsLoading || isRefetching}
+							value={viewName || undefined}
+							onSelect={handleSelect}
+							style={{
+								minWidth: 170,
+							}}
+							dropdownStyle={dropdownStyle}
+							className="views-dropdown"
+							allowClear={{
+								clearIcon: <XCircle size={16} style={{ marginTop: '-3px' }} />,
+							}}
+							onDropdownVisibleChange={(open): void => {
+								setIsDragEnabled(open);
+							}}
+							onClear={handleClearSelect}
+							ref={ref}
 						>
-							<ConciergeBell size={16} />
-						</Button>
-					</Tooltip>
+							{viewsData?.data?.data?.map((view) => {
+								const extraData =
+									view.extraData !== '' ? JSON.parse(view.extraData) : '';
+								let bgColor = getRandomColor();
+								if (extraData !== '') {
+									bgColor = extraData.color;
+								}
+								return (
+									<Select.Option key={view.uuid} value={view.name}>
+										<div className="render-options">
+											<span
+												className="dot"
+												style={{
+													background: bgColor,
+													boxShadow: `0px 0px 6px 0px ${bgColor}`,
+												}}
+											/>{' '}
+											{view.name}
+										</div>
+									</Select.Option>
+								);
+							})}
+						</Select>
 
-					<Tooltip title="Add to Dashboard">
-						<Button disabled={disabled} shape="circle" onClick={onAddToDashboard}>
-							<Plus size={16} />
+						<Button
+							shape="round"
+							onClick={handleSaveViewModalToggle}
+							className={isEditDeleteSupported ? '' : 'hidden'}
+							disabled={viewsIsLoading || isRefetching}
+						>
+							<Disc3 size={16} /> Save this view
 						</Button>
-					</Tooltip>
+					</div>
+
+					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
+
+					<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
+						<Tooltip title="Create Alerts">
+							<Button
+								disabled={disabled}
+								shape="circle"
+								onClick={onCreateAlertsHandler}
+							>
+								<ConciergeBell size={16} />
+							</Button>
+						</Tooltip>
+
+						<Tooltip title="Add to Dashboard">
+							<Button disabled={disabled} shape="circle" onClick={onAddToDashboard}>
+								<Plus size={16} />
+							</Button>
+						</Tooltip>
+					</div>
 				</div>
-			</div>
+			)}
+
+			<ExplorerOptionsDroppableArea
+				isExplorerOptionHidden={isExplorerOptionHidden}
+				setIsExplorerOptionHidden={setIsExplorerOptionHidden}
+				sourcepage={sourcepage}
+				isQueryUpdated={isQueryUpdated}
+				handleClearSelect={handleClearSelect}
+				onUpdateQueryHandler={onUpdateQueryHandler}
+			/>
 
 			<Modal
 				className="save-view-modal"
@@ -406,8 +479,14 @@ export interface ExplorerOptionsProps {
 	query: Query | null;
 	disabled: boolean;
 	sourcepage: DataSource;
+	isExplorerOptionHidden?: boolean;
+	setIsExplorerOptionHidden?: Dispatch<SetStateAction<boolean>>;
 }
 
-ExplorerOptions.defaultProps = { isLoading: false };
+ExplorerOptions.defaultProps = {
+	isLoading: false,
+	isExplorerOptionHidden: false,
+	setIsExplorerOptionHidden: undefined,
+};
 
 export default ExplorerOptions;

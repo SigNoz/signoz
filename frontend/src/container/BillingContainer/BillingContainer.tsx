@@ -2,11 +2,24 @@
 import './BillingContainer.styles.scss';
 
 import { CheckCircleOutlined } from '@ant-design/icons';
-import { Button, Col, Row, Skeleton, Table, Tag, Typography } from 'antd';
+import { Color } from '@signozhq/design-tokens';
+import {
+	Alert,
+	Button,
+	Card,
+	Col,
+	Flex,
+	Row,
+	Skeleton,
+	Table,
+	Tag,
+	Typography,
+} from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import updateCreditCardApi from 'api/billing/checkout';
 import getUsage from 'api/billing/getUsage';
 import manageCreditCardApi from 'api/billing/manage';
+import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAnalytics from 'hooks/analytics/useAnalytics';
@@ -22,7 +35,10 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
+import { isCloudUser } from 'utils/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
+
+import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
 
 interface DataType {
 	key: string;
@@ -104,12 +120,11 @@ export default function BillingContainer(): JSX.Element {
 	const daysRemainingStr = 'days remaining in your billing period.';
 	const [headerText, setHeaderText] = useState('');
 	const [billAmount, setBillAmount] = useState(0);
-	const [totalBillAmount, setTotalBillAmount] = useState(0);
 	const [activeLicense, setActiveLicense] = useState<License | null>(null);
 	const [daysRemaining, setDaysRemaining] = useState(0);
 	const [isFreeTrial, setIsFreeTrial] = useState(false);
 	const [data, setData] = useState<any[]>([]);
-	const billCurrency = '$';
+	const [apiResponse, setApiResponse] = useState<any>({});
 
 	const { trackEvent } = useAnalytics();
 
@@ -120,10 +135,12 @@ export default function BillingContainer(): JSX.Element {
 
 	const handleError = useAxiosError();
 
+	const isCloudUserVal = isCloudUser();
+
 	const processUsageData = useCallback(
 		(data: any): void => {
 			const {
-				details: { breakdown = [], total, billTotal },
+				details: { breakdown = [], billTotal },
 				billingPeriodStart,
 				billingPeriodEnd,
 			} = data?.payload || {};
@@ -141,8 +158,7 @@ export default function BillingContainer(): JSX.Element {
 							formattedUsageData.push({
 								key: `${index}${i}`,
 								name: i === 0 ? element?.type : '',
-								unit: element?.unit,
-								dataIngested: tier.quantity,
+								dataIngested: `${tier.quantity} ${element?.unit}`,
 								pricePerUnit: tier.unitPrice,
 								cost: `$ ${tier.tierCost}`,
 							});
@@ -152,7 +168,6 @@ export default function BillingContainer(): JSX.Element {
 			}
 
 			setData(formattedUsageData);
-			setTotalBillAmount(total);
 
 			if (!licensesData?.payload?.onTrial) {
 				const remainingDays = getRemainingDays(billingPeriodEnd) - 1;
@@ -165,11 +180,13 @@ export default function BillingContainer(): JSX.Element {
 				setDaysRemaining(remainingDays > 0 ? remainingDays : 0);
 				setBillAmount(billTotal);
 			}
+
+			setApiResponse(data?.payload || {});
 		},
 		[licensesData?.payload?.onTrial],
 	);
 
-	const { isLoading } = useQuery(
+	const { isLoading, isFetching: isFetchingBillingData } = useQuery(
 		[REACT_QUERY_KEY.GET_BILLING_USAGE, user?.userId],
 		{
 			queryFn: () => getUsage(activeLicense?.key || ''),
@@ -209,11 +226,6 @@ export default function BillingContainer(): JSX.Element {
 			render: (text): JSX.Element => <div>{text}</div>,
 		},
 		{
-			title: 'Unit',
-			dataIndex: 'unit',
-			key: 'unit',
-		},
-		{
 			title: 'Data Ingested',
 			dataIndex: 'dataIngested',
 			key: 'dataIngested',
@@ -229,24 +241,6 @@ export default function BillingContainer(): JSX.Element {
 			key: 'cost',
 		},
 	];
-
-	const renderSummary = (): JSX.Element => (
-		<Table.Summary.Row>
-			<Table.Summary.Cell index={0}>
-				<Typography.Title level={3} style={{ fontWeight: 500, margin: ' 0px' }}>
-					Total
-				</Typography.Title>
-			</Table.Summary.Cell>
-			<Table.Summary.Cell index={1}> &nbsp; </Table.Summary.Cell>
-			<Table.Summary.Cell index={2}> &nbsp;</Table.Summary.Cell>
-			<Table.Summary.Cell index={3}> &nbsp; </Table.Summary.Cell>
-			<Table.Summary.Cell index={4}>
-				<Typography.Title level={3} style={{ fontWeight: 500, margin: ' 0px' }}>
-					${totalBillAmount}
-				</Typography.Title>
-			</Table.Summary.Cell>
-		</Table.Summary.Row>
-	);
 
 	const renderTableSkeleton = (): JSX.Element => (
 		<Table
@@ -336,78 +330,95 @@ export default function BillingContainer(): JSX.Element {
 		updateCreditCard,
 	]);
 
+	const BillingUsageGraphCallback = useCallback(
+		() =>
+			!isLoading && !isFetchingBillingData ? (
+				<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
+			) : (
+				<Card className="empty-graph-card" bordered={false}>
+					<Spinner size="large" tip="Loading..." height="35vh" />
+				</Card>
+			),
+		[apiResponse, billAmount, isLoading, isFetchingBillingData],
+	);
+
 	return (
 		<div className="billing-container">
-			<Row
-				justify="space-between"
-				align="middle"
-				gutter={[16, 16]}
-				style={{
-					margin: 0,
-				}}
+			<Flex vertical style={{ marginBottom: 16 }}>
+				<Typography.Text style={{ fontWeight: 500, fontSize: 18 }}>
+					Billing
+				</Typography.Text>
+				<Typography.Text color={Color.BG_VANILLA_400}>
+					Manage your billing information, invoices, and monitor costs.
+				</Typography.Text>
+			</Flex>
+
+			<Card
+				bordered={false}
+				style={{ minHeight: 150, marginBottom: 16 }}
+				className="page-info"
 			>
-				<Col span={20}>
-					<Typography.Title level={4} ellipsis style={{ fontWeight: '300' }}>
-						{headerText}
-					</Typography.Title>
-
-					{licensesData?.payload?.onTrial &&
-						licensesData?.payload?.trialConvertedToSubscription && (
-							<Typography.Title
-								level={5}
-								ellipsis
-								style={{ fontWeight: '300', color: '#49aa19' }}
-							>
-								We have received your card details, your billing will only start after
-								the end of your free trial period.
-							</Typography.Title>
-						)}
-				</Col>
-
-				<Col span={4} style={{ display: 'flex', justifyContent: 'flex-end' }}>
+				<Flex justify="space-between" align="center">
+					<Flex vertical>
+						<Typography.Title level={5} style={{ marginTop: 2, fontWeight: 500 }}>
+							{isCloudUserVal ? 'Enterprise Cloud' : 'Enterprise'}{' '}
+							{isFreeTrial ? <Tag color="success"> Free Trial </Tag> : ''}
+						</Typography.Title>
+						{!isLoading && !isFetchingBillingData ? (
+							<Typography.Text style={{ fontSize: 12, color: Color.BG_VANILLA_400 }}>
+								{daysRemaining} {daysRemainingStr}
+							</Typography.Text>
+						) : null}
+					</Flex>
 					<Button
 						type="primary"
 						size="middle"
 						loading={isLoadingBilling || isLoadingManageBilling}
+						disabled={isLoading}
 						onClick={handleBilling}
 					>
 						{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription
 							? 'Upgrade Plan'
 							: 'Manage Billing'}
 					</Button>
-				</Col>
-			</Row>
+				</Flex>
 
-			<div className="billing-summary">
-				<Typography.Title level={4} style={{ margin: '16px 0' }}>
-					Current bill total
-				</Typography.Title>
+				{licensesData?.payload?.onTrial &&
+					licensesData?.payload?.trialConvertedToSubscription && (
+						<Typography.Text
+							ellipsis
+							style={{ fontWeight: '300', color: '#49aa19', fontSize: 12 }}
+						>
+							We have received your card details, your billing will only start after
+							the end of your free trial period.
+						</Typography.Text>
+					)}
 
-				<Typography.Title
-					level={3}
-					style={{ margin: '16px 0', display: 'flex', alignItems: 'center' }}
-				>
-					{billCurrency}
-					{billAmount} &nbsp;
-					{isFreeTrial ? <Tag color="success"> Free Trial </Tag> : ''}
-				</Typography.Title>
+				{!isLoading && !isFetchingBillingData ? (
+					<Alert
+						message={headerText}
+						type="info"
+						showIcon
+						style={{ marginTop: 12 }}
+					/>
+				) : (
+					<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
+				)}
+			</Card>
 
-				<Typography.Paragraph style={{ margin: '16px 0' }}>
-					{daysRemaining} {daysRemainingStr}
-				</Typography.Paragraph>
-			</div>
+			<BillingUsageGraphCallback />
 
 			<div className="billing-details">
-				{!isLoading && (
+				{!isLoading && !isFetchingBillingData && (
 					<Table
 						columns={columns}
 						dataSource={data}
 						pagination={false}
-						summary={renderSummary}
+						bordered={false}
 					/>
 				)}
 
-				{isLoading && renderTableSkeleton()}
+				{(isLoading || isFetchingBillingData) && renderTableSkeleton()}
 			</div>
 
 			{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription && (

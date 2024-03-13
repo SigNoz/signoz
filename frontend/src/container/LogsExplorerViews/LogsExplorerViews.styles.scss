@@ -1,7 +1,15 @@
 .logs-explorer-views-container {
 	margin-bottom: 24px;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
 
 	.logs-explorer-views-types {
+		width: -webkit-fill-available;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+
 		.views-tabs-container {
 			padding: 8px 16px;
 			border: 1px solid var(--text-slate-400);
@@ -85,6 +93,10 @@
 		}
 
 		.logs-explorer-views-type-content {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+
 			.ant-card {
 				border: none !important;
 			}

@@ -213,6 +213,7 @@ const (
 	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME      = "time_series_v4"
 	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME = "time_series_v4_6hrs"
 	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME = "time_series_v4_1day"
+	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME       = "distributed_time_series_v4_1day"
 )
 
 var TimeoutExcludedRoutes = map[string]bool{
@@ -223,7 +224,8 @@ var TimeoutExcludedRoutes = map[string]bool{
 // alert related constants
 const (
 	// AlertHelpPage is used in case default alert repo url is not set
-	AlertHelpPage = "https://signoz.io/docs/userguide/alerts-management/#generator-url"
+	AlertHelpPage   = "https://signoz.io/docs/userguide/alerts-management/#generator-url"
+	AlertTimeFormat = "2006-01-02 15:04:05"
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {
@@ -306,6 +308,8 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 
 // logsPPLPfx is a short constant for logsPipelinePrefix
 const LogsPPLPfx = "logstransform/pipeline_"
+
+const IntegrationPipelineIdPrefix = "integration"
 
 // The datatype present here doesn't represent the actual datatype of column in the logs table.
 

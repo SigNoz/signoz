@@ -12,6 +12,20 @@ import (
 	"go.uber.org/zap"
 )
 
+type DayWiseBreakdown struct {
+	Type      string        `json:"type"`
+	Breakdown []DayWiseData `json:"breakdown"`
+}
+
+type DayWiseData struct {
+	Timestamp int64   `json:"timestamp"`
+	Count     float64 `json:"count"`
+	Size      float64 `json:"size"`
+	UnitPrice float64 `json:"unitPrice"`
+	Quantity  float64 `json:"quantity"`
+	Total     float64 `json:"total"`
+}
+
 type tierBreakdown struct {
 	UnitPrice float64 `json:"unitPrice"`
 	Quantity  float64 `json:"quantity"`
@@ -21,9 +35,10 @@ type tierBreakdown struct {
 }
 
 type usageResponse struct {
-	Type  string          `json:"type"`
-	Unit  string          `json:"unit"`
-	Tiers []tierBreakdown `json:"tiers"`
+	Type             string           `json:"type"`
+	Unit             string           `json:"unit"`
+	Tiers            []tierBreakdown  `json:"tiers"`
+	DayWiseBreakdown DayWiseBreakdown `json:"dayWiseBreakdown"`
 }
 
 type details struct {

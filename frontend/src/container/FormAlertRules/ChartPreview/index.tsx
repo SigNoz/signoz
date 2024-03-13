@@ -1,5 +1,6 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import Spinner from 'components/Spinner';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
@@ -39,6 +40,7 @@ export interface ChartPreviewProps {
 	yAxisUnit: string;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function ChartPreview({
 	name,
 	query,
@@ -94,6 +96,7 @@ function ChartPreview({
 				allowSelectedIntervalForStepGen,
 			},
 		},
+		alertDef?.version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				'chartPreview',

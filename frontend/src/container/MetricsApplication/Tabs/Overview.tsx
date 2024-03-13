@@ -52,7 +52,8 @@ function Application(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { search, pathname } = useLocation();
 	const { queries } = useResourceAttribute();

@@ -3,6 +3,7 @@ import './LogsExplorerViews.styles.scss';
 
 import { Button } from 'antd';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
@@ -13,7 +14,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
+import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
@@ -189,13 +190,19 @@ function LogsExplorerViews({
 		data: listChartData,
 		isFetching: isFetchingListChartData,
 		isLoading: isLoadingListChartData,
-	} = useGetExplorerQueryRange(listChartQuery, PANEL_TYPES.TIME_SERIES, {
-		enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
-	});
+	} = useGetExplorerQueryRange(
+		listChartQuery,
+		PANEL_TYPES.TIME_SERIES,
+		DEFAULT_ENTITY_VERSION,
+		{
+			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
+		},
+	);
 
 	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
 		requestData,
 		panelType,
+		DEFAULT_ENTITY_VERSION,
 		{
 			keepPreviousData: true,
 			enabled: !isLimit && !!requestData,
@@ -627,7 +634,7 @@ function LogsExplorerViews({
 
 			<GoToTop />
 
-			<ExplorerOptions
+			<ExplorerOptionWrapper
 				disabled={!stagedQuery}
 				query={exportDefaultQuery}
 				isLoading={isUpdateDashboardLoading}

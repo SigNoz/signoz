@@ -182,26 +182,6 @@ func (r *PromRule) Annotations() qslabels.BaseLabels {
 	return r.annotations
 }
 
-func (r *PromRule) sample(alert *Alert, ts time.Time) pql.Sample {
-	lb := plabels.NewBuilder(r.labels)
-
-	alertLabels := alert.Labels.(plabels.Labels)
-	for _, l := range alertLabels {
-		lb.Set(l.Name, l.Value)
-	}
-
-	lb.Set(qslabels.MetricNameLabel, alertMetricName)
-	lb.Set(qslabels.AlertNameLabel, r.name)
-	lb.Set(qslabels.AlertStateLabel, alert.State.String())
-
-	s := pql.Sample{
-		Metric: lb.Labels(),
-		T:      timestamp.FromTime(ts),
-		F:      1,
-	}
-	return s
-}
-
 // GetEvaluationDuration returns the time in seconds it took to evaluate the alerting rule.
 func (r *PromRule) GetEvaluationDuration() time.Duration {
 	r.mtx.Lock()
@@ -388,6 +368,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		if !shouldAlert {
 			continue
 		}
+		zap.S().Debugf("rule: %s, alerting for series: %v", r.Name(), series)
 
 		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
 		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
@@ -454,6 +435,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		}
 	}
 
+	zap.S().Debugf("For rule: %s, found %d alerts", r.Name(), len(alerts))
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.

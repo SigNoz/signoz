@@ -1,8 +1,8 @@
-import { Col, Row } from 'antd';
+import './LogsExplorer.styles.scss';
+
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
-// import LogsTopNav from 'container/LogsTopNav';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
@@ -87,19 +87,19 @@ function LogsExplorer(): JSX.Element {
 			/>
 
 			<WrapperStyled>
-				<Row gutter={[0, 0]}>
-					<Col xs={24}>
+				<div className="log-explorer-query-container">
+					<div>
 						<ExplorerCard sourcepage={DataSource.LOGS}>
 							<LogExplorerQuerySection selectedView={selectedView} />
 						</ExplorerCard>
-					</Col>
-					<Col xs={24}>
+					</div>
+					<div className="logs-explorer-views">
 						<LogsExplorerViews
 							selectedView={selectedView}
 							showHistogram={showHistogram}
 						/>
-					</Col>
-				</Row>
+					</div>
+				</div>
 			</WrapperStyled>
 		</ErrorBoundary>
 	);

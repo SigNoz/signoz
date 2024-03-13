@@ -25,6 +25,8 @@ export const QueryBuilder = memo(function QueryBuilder({
 	filterConfigs = {},
 	queryComponents,
 	isListViewPanel = false,
+	showFunctions = false,
+	version,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
@@ -46,7 +48,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 
 	useEffect(() => {
 		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
-			if (panelType === PANEL_TYPES.BAR) {
+			if (newPanelType === PANEL_TYPES.BAR) {
 				handleSetConfig(PANEL_TYPES.BAR, DataSource.METRICS);
 				return;
 			}
@@ -170,6 +172,8 @@ export const QueryBuilder = memo(function QueryBuilder({
 											: listViewLogFilterConfigs
 									}
 									queryComponents={queryComponents}
+									showFunctions={showFunctions}
+									version={version}
 									isListViewPanel
 								/>
 							)}
@@ -188,6 +192,8 @@ export const QueryBuilder = memo(function QueryBuilder({
 											query={query}
 											filterConfigs={filterConfigs}
 											queryComponents={queryComponents}
+											showFunctions={showFunctions}
+											version={version}
 										/>
 									</Col>
 								))}

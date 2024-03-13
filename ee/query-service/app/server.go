@@ -35,6 +35,7 @@ import (
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
@@ -171,13 +172,22 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// initiate opamp
-	_, err = opAmpModel.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
+	_, err = opAmpModel.InitDB(localDB)
 	if err != nil {
 		return nil, err
 	}
 
+	integrationsController, err := integrations.NewController(localDB)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"couldn't create integrations controller: %w", err,
+		)
+	}
+
 	// ingestion pipelines manager
-	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
+		localDB, "sqlite", integrationsController.GetPipelinesForInstalledIntegrations,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -233,6 +243,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		UsageManager:                  usageManager,
 		FeatureFlags:                  lm,
 		LicenseManager:                lm,
+		IntegrationsController:        integrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
@@ -278,6 +289,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 
 	r := mux.NewRouter()
 
+	r.Use(baseapp.LogCommentEnricher)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddlewarePrivate)
@@ -310,6 +322,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	}
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 
+	r.Use(baseapp.LogCommentEnricher)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
@@ -317,6 +330,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterMetricsRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
+	apiHandler.RegisterIntegrationRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
 	apiHandler.RegisterQueryRangeV4Routes(r, am)
 
@@ -412,7 +426,7 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 			data["queryType"] = postData.CompositeQuery.QueryType
 			data["panelType"] = postData.CompositeQuery.PanelType
 
-			signozLogsUsed, signozMetricsUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
+			signozLogsUsed, signozMetricsUsed, _ = telemetry.GetInstance().CheckSigNozSignals(postData)
 		}
 	}
 
