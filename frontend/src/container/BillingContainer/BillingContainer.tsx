@@ -186,7 +186,7 @@ export default function BillingContainer(): JSX.Element {
 		[licensesData?.payload?.onTrial],
 	);
 
-	const { isLoading } = useQuery(
+	const { isLoading, isFetching: isFetchingBillingData } = useQuery(
 		[REACT_QUERY_KEY.GET_BILLING_USAGE, user?.userId],
 		{
 			queryFn: () => getUsage(activeLicense?.key || ''),
@@ -332,14 +332,14 @@ export default function BillingContainer(): JSX.Element {
 
 	const BillingUsageGraphCallback = useCallback(
 		() =>
-			!isLoading ? (
+			!isLoading && !isFetchingBillingData ? (
 				<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
 			) : (
 				<Card className="empty-graph-card" bordered={false}>
 					<Spinner size="large" tip="Loading..." height="35vh" />
 				</Card>
 			),
-		[apiResponse, billAmount, isLoading],
+		[apiResponse, billAmount, isLoading, isFetchingBillingData],
 	);
 
 	return (
@@ -364,9 +364,11 @@ export default function BillingContainer(): JSX.Element {
 							{isCloudUserVal ? 'Enterprise Cloud' : 'Enterprise'}{' '}
 							{isFreeTrial ? <Tag color="success"> Free Trial </Tag> : ''}
 						</Typography.Title>
-						<Typography.Text style={{ fontSize: 12, color: Color.BG_VANILLA_400 }}>
-							{daysRemaining} {daysRemainingStr}
-						</Typography.Text>
+						{!isLoading && !isFetchingBillingData ? (
+							<Typography.Text style={{ fontSize: 12, color: Color.BG_VANILLA_400 }}>
+								{daysRemaining} {daysRemainingStr}
+							</Typography.Text>
+						) : null}
 					</Flex>
 					<Button
 						type="primary"
@@ -392,7 +394,7 @@ export default function BillingContainer(): JSX.Element {
 						</Typography.Text>
 					)}
 
-				{!isLoading ? (
+				{!isLoading && !isFetchingBillingData ? (
 					<Alert
 						message={headerText}
 						type="info"
@@ -407,7 +409,7 @@ export default function BillingContainer(): JSX.Element {
 			<BillingUsageGraphCallback />
 
 			<div className="billing-details">
-				{!isLoading && (
+				{!isLoading && !isFetchingBillingData && (
 					<Table
 						columns={columns}
 						dataSource={data}
@@ -416,7 +418,7 @@ export default function BillingContainer(): JSX.Element {
 					/>
 				)}
 
-				{isLoading && renderTableSkeleton()}
+				{(isLoading || isFetchingBillingData) && renderTableSkeleton()}
 			</div>
 
 			{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription && (
