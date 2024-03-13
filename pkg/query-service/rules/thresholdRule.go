@@ -71,7 +71,9 @@ type ThresholdRule struct {
 	temporalityMap map[string]map[v3.Temporality]bool
 
 	opts ThresholdRuleOpts
-	typ  string
+
+	lastTimestampWithDatapoints time.Time
+	typ                         string
 }
 
 type ThresholdRuleOpts struct {
@@ -531,6 +533,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		if err := rows.Scan(vars...); err != nil {
 			return nil, err
 		}
+		r.lastTimestampWithDatapoints = time.Now()
 
 		sample := Sample{}
 		// Why do we maintain two labels sets? Alertmanager requires
@@ -555,8 +558,8 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 				if colName == "ts" || colName == "interval" {
 					sample.Point.T = timval.Unix()
 				} else {
-					lbls.Set(colName, timval.Format("2006-01-02 15:04:05"))
-					lblsOrig.Set(columnNames[i], timval.Format("2006-01-02 15:04:05"))
+					lbls.Set(colName, timval.Format(constants.AlertTimeFormat))
+					lblsOrig.Set(columnNames[i], timval.Format(constants.AlertTimeFormat))
 				}
 
 			case *float64:
@@ -708,6 +711,20 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 	}
 
 	zap.S().Debugf("ruleid:", r.ID(), "\t resultmap(potential alerts):", len(resultMap))
+
+	// if the data is missing for `For` duration then we should send alert
+	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(r.Condition().AbsentFor).Before(time.Now()) {
+		zap.S().Debugf("ruleid:", r.ID(), "\t msg: no data found for rule condition")
+		lbls := labels.NewBuilder(labels.Labels{})
+		if !r.lastTimestampWithDatapoints.IsZero() {
+			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
+		}
+		result = append(result, Sample{
+			Metric:    lbls.Labels(),
+			IsMissing: true,
+		})
+		return result, nil
+	}
 
 	for _, sample := range resultMap {
 		// check alert rule condition before dumping results, if sendUnmatchedResults
@@ -1177,6 +1194,11 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
+			if smpl.IsMissing {
+				if a.Name == labels.AlertDescriptionLabel || a.Name == labels.AlertSummaryLabel {
+					a.Value = labels.AlertMissingData
+				}
+			}
 			annotations = append(annotations, labels.Label{Name: normalizeLabelName(a.Name), Value: expand(a.Value)})
 		}
 

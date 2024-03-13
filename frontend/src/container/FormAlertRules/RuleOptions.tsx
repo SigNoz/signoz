@@ -1,4 +1,5 @@
 import {
+	Checkbox,
 	Form,
 	InputNumber,
 	InputNumberProps,
@@ -213,28 +214,66 @@ function RuleOptions({
 					? renderPromRuleOptions()
 					: renderThresholdRuleOpts()}
 
-				<Space direction="horizontal" align="center">
-					<Form.Item noStyle name={['condition', 'target']}>
-						<InputNumber
-							addonBefore={t('field_threshold')}
-							value={alertDef?.condition?.target}
-							onChange={onChange}
-							type="number"
-							onWheel={(e): void => e.currentTarget.blur()}
-						/>
-					</Form.Item>
+				<Space direction="vertical" size="large">
+					<Space direction="horizontal" align="center">
+						<Form.Item noStyle name={['condition', 'target']}>
+							<InputNumber
+								addonBefore={t('field_threshold')}
+								value={alertDef?.condition?.target}
+								onChange={onChange}
+								type="number"
+								onWheel={(e): void => e.currentTarget.blur()}
+							/>
+						</Form.Item>
 
-					<Form.Item noStyle>
-						<Select
-							getPopupContainer={popupContainer}
-							allowClear
-							showSearch
-							options={categorySelectOptions}
-							placeholder={t('field_unit')}
-							value={alertDef.condition.targetUnit}
-							onChange={onChangeAlertUnit}
-						/>
-					</Form.Item>
+						<Form.Item noStyle>
+							<Select
+								getPopupContainer={popupContainer}
+								allowClear
+								showSearch
+								options={categorySelectOptions}
+								placeholder={t('field_unit')}
+								value={alertDef.condition.targetUnit}
+								onChange={onChangeAlertUnit}
+							/>
+						</Form.Item>
+					</Space>
+					<Space direction="horizontal" align="center">
+						<Form.Item noStyle name={['condition', 'alertOnAbsent']}>
+							<Checkbox
+								checked={alertDef?.condition?.alertOnAbsent}
+								onChange={(e): void => {
+									setAlertDef({
+										...alertDef,
+										condition: {
+											...alertDef.condition,
+											alertOnAbsent: e.target.checked,
+										},
+									});
+								}}
+							/>
+						</Form.Item>
+						<Typography.Text>{t('text_alert_on_absent')}</Typography.Text>
+
+						<Form.Item noStyle name={['condition', 'absentFor']}>
+							<InputNumber
+								min={1}
+								value={alertDef?.condition?.absentFor}
+								onChange={(value): void => {
+									setAlertDef({
+										...alertDef,
+										condition: {
+											...alertDef.condition,
+											absentFor: Number(value) || 0,
+										},
+									});
+								}}
+								type="number"
+								onWheel={(e): void => e.currentTarget.blur()}
+							/>
+						</Form.Item>
+						<Typography.Text>{t('text_for')}</Typography.Text>
+					</Space>
 				</Space>
 			</FormContainer>
 		</>

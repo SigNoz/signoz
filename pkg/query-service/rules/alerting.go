@@ -142,9 +142,11 @@ type RuleCondition struct {
 	CompositeQuery *v3.CompositeQuery `json:"compositeQuery,omitempty" yaml:"compositeQuery,omitempty"`
 	CompareOp      CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
 	Target         *float64           `yaml:"target,omitempty" json:"target,omitempty"`
-	MatchType      `json:"matchType,omitempty"`
-	TargetUnit     string `json:"targetUnit,omitempty"`
-	SelectedQuery  string `json:"selectedQueryName,omitempty"`
+	AlertOnAbsent  bool               `yaml:"alertOnAbsent,omitempty" json:"alertOnAbsent,omitempty"`
+	AbsentFor      time.Duration      `yaml:"absentFor,omitempty" json:"absentFor,omitempty"`
+	MatchType      MatchType          `json:"matchType,omitempty"`
+	TargetUnit     string             `json:"targetUnit,omitempty"`
+	SelectedQuery  string             `json:"selectedQueryName,omitempty"`
 }
 
 func (rc *RuleCondition) IsValid() bool {

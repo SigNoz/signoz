@@ -32,6 +32,8 @@ export interface RuleCondition {
 	matchType?: string;
 	targetUnit?: string;
 	selectedQueryName?: string;
+	alertOnAbsent?: boolean | undefined;
+	absentFor?: number | undefined;
 }
 
 export interface Labels {
