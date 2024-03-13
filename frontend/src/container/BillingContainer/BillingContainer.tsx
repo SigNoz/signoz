@@ -35,6 +35,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { License } from 'types/api/licenses/def';
 import AppReducer from 'types/reducer/app';
+import { isCloudUser } from 'utils/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
@@ -133,6 +134,8 @@ export default function BillingContainer(): JSX.Element {
 	const { notifications } = useNotifications();
 
 	const handleError = useAxiosError();
+
+	const isCloudUserVal = isCloudUser();
 
 	const processUsageData = useCallback(
 		(data: any): void => {
@@ -358,7 +361,7 @@ export default function BillingContainer(): JSX.Element {
 				<Flex justify="space-between" align="center">
 					<Flex vertical>
 						<Typography.Title level={5} style={{ marginTop: 2, fontWeight: 500 }}>
-							Enterprise Cloud{' '}
+							{isCloudUserVal ? 'Enterprise Cloud' : 'Enterprise'}{' '}
 							{isFreeTrial ? <Tag color="success"> Free Trial </Tag> : ''}
 						</Typography.Title>
 						<Typography.Text style={{ fontSize: 12, color: Color.BG_VANILLA_400 }}>
