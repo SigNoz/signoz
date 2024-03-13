@@ -5,12 +5,13 @@
 		.ant-table-row:hover {
 			.ant-table-cell {
 				.value-field {
-					display: flex;
-					justify-content: space-between;
-					align-items: center;
 					.action-btn {
 						display: flex;
-						gap: 4px;
+						position: absolute;
+						top: 50%;
+						right: 16px;
+						transform: translateY(-50%);
+						gap: 8px;
 					}
 				}
 			}
@@ -24,6 +25,22 @@
 			.ant-btn {
 				&:hover {
 					background-color: none !important;
+				}
+			}
+		}
+
+		.attribute-pin {
+			cursor: pointer;
+
+			.log-attribute-pin {
+				padding: 8px;
+
+				.pin-attribute-icon {
+					border: none;
+
+					&.pinned svg {
+						fill: #7190f9;
+					}
 				}
 			}
 		}

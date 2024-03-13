@@ -1,22 +1,28 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './TableView.styles.scss';
 
 import { LinkOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Space, Spin, Tooltip, Tree, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
+import cx from 'classnames';
 import AddToQueryHOC, {
 	AddToQueryHOCProps,
 } from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
 import { isEmpty } from 'lodash-es';
-import { ArrowDownToDot, ArrowUpFromDot } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ArrowDownToDot, ArrowUpFromDot, Star } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { Dispatch } from 'redux';
@@ -58,6 +64,22 @@ function TableView({
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
 	const [isfilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
 
+	const [pinnedAttributes, setPinnedAttributes] = useState<
+		Record<string, boolean>
+	>({});
+
+	useEffect(() => {
+		const pinnedAttributesFromLocalStorage = getLocalStorageApi(
+			LOCALSTORAGE.PINNED_ATTRIBUTES,
+		);
+
+		if (pinnedAttributesFromLocalStorage) {
+			setPinnedAttributes(JSON.parse(pinnedAttributesFromLocalStorage));
+		} else {
+			setPinnedAttributes({});
+		}
+	}, []);
+
 	const flattenLogData: Record<string, string> | null = useMemo(
 		() => (logData ? flattenObject(logData) : null),
 		[logData],
@@ -72,6 +94,17 @@ function TableView({
 		if (onClickActionItem) {
 			onClickActionItem(fieldKey, validatedFieldValue, operator);
 		}
+	};
+
+	const togglePinAttribute = (record: DataType): void => {
+		const newPinnedAttributes = { ...pinnedAttributes };
+		newPinnedAttributes[record.key] = !newPinnedAttributes[record.key];
+		setPinnedAttributes(newPinnedAttributes);
+
+		setLocalStorageApi(
+			LOCALSTORAGE.PINNED_ATTRIBUTES,
+			JSON.stringify(newPinnedAttributes),
+		);
 	};
 
 	const onClickHandler = (
@@ -138,6 +171,32 @@ function TableView({
 	}
 
 	const columns: ColumnsType<DataType> = [
+		{
+			title: '',
+			dataIndex: 'pin',
+			key: 'pin',
+			width: 5,
+			align: 'left',
+			className: 'attribute-pin',
+			render: (record): JSX.Element => (
+				<Space size="middle" className="log-attribute-pin">
+					<div
+						className={cx(
+							'pin-attribute-icon',
+							pinnedAttributes[record.key] ? 'pinned' : '',
+						)}
+						onClick={(): void => {
+							togglePinAttribute(record);
+						}}
+					>
+						<Star
+							size={16}
+							color={pinnedAttributes[record.key] ? '#7190f9' : 'white'}
+						/>
+					</div>
+				</Space>
+			),
+		},
 		{
 			title: 'Field',
 			dataIndex: 'field',
@@ -265,11 +324,39 @@ function TableView({
 		},
 	];
 
+	const dataWithoutBodyAttr = dataSource.filter((data) => data.key !== 'body');
+
+	function sortPinnedAttributes(
+		data: Record<string, string>[],
+		sortingObj: Record<string, boolean>,
+	): Record<string, string>[] {
+		const sortingKeys = Object.keys(sortingObj);
+		return data.sort((a, b) => {
+			const aKey = a.key;
+			const bKey = b.key;
+			const aSortIndex = sortingKeys.indexOf(aKey);
+			const bSortIndex = sortingKeys.indexOf(bKey);
+
+			if (sortingObj[aKey] && !sortingObj[bKey]) {
+				return -1;
+			}
+			if (!sortingObj[aKey] && sortingObj[bKey]) {
+				return 1;
+			}
+			return aSortIndex - bSortIndex;
+		});
+	}
+
+	const sortedAttributes = sortPinnedAttributes(
+		dataWithoutBodyAttr,
+		pinnedAttributes,
+	);
+
 	return (
 		<ResizeTable
 			columns={columns}
 			tableLayout="fixed"
-			dataSource={dataSource}
+			dataSource={sortedAttributes}
 			pagination={false}
 			showHeader={false}
 			className="attribute-table-container"
