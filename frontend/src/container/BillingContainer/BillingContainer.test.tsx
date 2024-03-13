@@ -12,19 +12,19 @@ import BillingContainer from './BillingContainer';
 
 const lisenceUrl = 'http://localhost/api/v2/licenses';
 
-jest.mock('uPlot', () => {
+jest.mock('uplot', () => {
 	const paths = {
 		spline: jest.fn(),
 		bars: jest.fn(),
 	};
 
-	const uPlotMock = jest.fn(() => ({
+	const uplotMock = jest.fn(() => ({
 		paths,
 	}));
 
 	return {
 		paths,
-		default: uPlotMock,
+		default: uplotMock,
 	};
 });
 
