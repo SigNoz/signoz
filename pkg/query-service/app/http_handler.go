@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -866,11 +867,15 @@ func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 	allDashboards, err := dashboards.GetDashboards(r.Context())
-
 	if err != nil {
 		RespondError(w, err, nil)
 		return
 	}
+
+	ic := aH.IntegrationsController
+	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context())
+	allDashboards = append(allDashboards, installedIntegrationDashboards...)
+
 	tagsFromReq, ok := r.URL.Query()["tags"]
 	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
 		aH.Respond(w, allDashboards)
@@ -1039,8 +1044,19 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 	dashboard, apiError := dashboards.GetDashboard(r.Context(), uuid)
 
 	if apiError != nil {
-		RespondError(w, apiError, nil)
-		return
+		if apiError.Type() != model.ErrorNotFound {
+			RespondError(w, apiError, nil)
+			return
+		}
+
+		dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
+			r.Context(), uuid,
+		)
+		if apiError != nil {
+			RespondError(w, apiError, nil)
+			return
+		}
+
 	}
 
 	aH.Respond(w, dashboard)
@@ -1540,7 +1556,9 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 
 func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
 
-	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig)
+	var start, end time.Time
+
+	result, _, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -2456,16 +2474,6 @@ func (ah *APIHandler) GetIntegration(
 		return
 	}
 
-	// Add connection status details.
-	connectionStatus, apiErr := ah.calculateConnectionStatus(
-		r.Context(), integration.ConnectionTests,
-	)
-	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to calculate integration connection status")
-		return
-	}
-	integration.ConnectionStatus = connectionStatus
-
 	ah.Respond(w, integration)
 }
 
@@ -2481,8 +2489,14 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 		return
 	}
 
+	lookbackSecondsStr := r.URL.Query().Get("lookback_seconds")
+	lookbackSeconds, err := strconv.ParseInt(lookbackSecondsStr, 10, 64)
+	if err != nil {
+		lookbackSeconds = 15 * 60
+	}
+
 	connectionStatus, apiErr := ah.calculateConnectionStatus(
-		r.Context(), connectionTests,
+		r.Context(), connectionTests, lookbackSeconds,
 	)
 	if apiErr != nil {
 		RespondError(w, apiErr, "Failed to calculate integration connection status")
@@ -2495,13 +2509,13 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 func (ah *APIHandler) calculateConnectionStatus(
 	ctx context.Context,
 	connectionTests *integrations.IntegrationConnectionTests,
+	lookbackSeconds int64,
 ) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
 	result := &integrations.IntegrationConnectionStatus{}
 
 	if connectionTests.Logs != nil {
 		qrParams := &v3.QueryRangeParamsV3{
-			// Look back up to 7 days for integration logs
-			Start: time.Now().UnixMilli() - (7 * 86400000),
+			Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
 			End:   time.Now().UnixMilli(),
 			CompositeQuery: &v3.CompositeQuery{
 				PanelType: v3.PanelTypeList,
@@ -2791,16 +2805,17 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	// get lateset agent config
+	latestVersion := -1
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
-	if err != nil {
-		if err.Type() != model.ErrorNotFound {
-			return nil, model.WrapApiError(err, "failed to get latest agent config version")
-		} else {
-			return nil, nil
-		}
+	if err != nil && err.Type() != model.ErrorNotFound {
+		return nil, model.WrapApiError(err, "failed to get latest agent config version")
 	}
 
-	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, lastestConfig.Version)
+	if lastestConfig != nil {
+		latestVersion = lastestConfig.Version
+	}
+
+	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, latestVersion)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get pipelines")
 	}
@@ -3335,12 +3350,19 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 	applyMetricLimit(result, queryRangeParams)
 
+	sendQueryResultEvents(r, result, queryRangeParams)
+	// only adding applyFunctions instead of postProcess since experssion are
+	// are executed in clickhouse directly and we wanted to add support for timeshift
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		applyFunctions(result, queryRangeParams)
+	}
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
 
 	// This checks if the time for context to complete has exceeded.
-	// it adds flag to notify the user of incomplete respone
+	// it adds flag to notify the user of incomplete response
 	select {
 	case <-ctx.Done():
 		resp.ContextTimeout = true
@@ -3350,6 +3372,50 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	aH.Respond(w, resp)
+}
+
+func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	referrer := r.Header.Get("Referer")
+
+	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.S().Errorf("error while matching the referrer: %v", err)
+	}
+	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.S().Errorf("error while matching the referrer: %v", err)
+	}
+
+	if alertMatched || dashboardMatched {
+
+		if len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0) {
+
+			userEmail, err := auth.GetEmailFromJwt(r.Context())
+			if err == nil {
+				signozLogsUsed, signozMetricsUsed, signozTracesUsed := telemetry.GetInstance().CheckSigNozSignals(queryRangeParams)
+				if signozLogsUsed || signozMetricsUsed || signozTracesUsed {
+					if dashboardMatched {
+						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY, map[string]interface{}{
+							"queryType":   queryRangeParams.CompositeQuery.QueryType,
+							"panelType":   queryRangeParams.CompositeQuery.PanelType,
+							"tracesUsed":  signozTracesUsed,
+							"logsUsed":    signozLogsUsed,
+							"metricsUsed": signozMetricsUsed,
+						}, userEmail)
+					}
+					if alertMatched {
+						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY, map[string]interface{}{
+							"queryType":   queryRangeParams.CompositeQuery.QueryType,
+							"panelType":   queryRangeParams.CompositeQuery.PanelType,
+							"tracesUsed":  signozTracesUsed,
+							"logsUsed":    signozLogsUsed,
+							"metricsUsed": signozMetricsUsed,
+						}, userEmail)
+					}
+				}
+			}
+		}
+	}
 }
 
 func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
@@ -3510,7 +3576,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
-
+	sendQueryResultEvents(r, result, queryRangeParams)
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
@@ -3609,7 +3675,7 @@ func applyFunctions(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV
 	for idx, result := range results {
 		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
 
-		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics) {
+		if builderQueries != nil {
 			functions := builderQueries[result.QueryName].Functions
 
 			for _, function := range functions {

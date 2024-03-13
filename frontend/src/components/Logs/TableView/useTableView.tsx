@@ -7,12 +7,10 @@ import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { defaultTo } from 'lodash-es';
 import { useMemo } from 'react';
 
-import LogStateIndicator, {
-	LogType,
-} from '../LogStateIndicator/LogStateIndicator';
+import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
+import { getLogIndicatorTypeForTable } from '../LogStateIndicator/utils';
 import {
 	defaultListViewPanelStyle,
 	defaultTableStyle,
@@ -84,7 +82,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 						children: (
 							<div className="table-timestamp">
 								<LogStateIndicator
-									type={defaultTo(item.log_level, LogType.INFO) as string}
+									type={getLogIndicatorTypeForTable(item)}
 									isActive={
 										activeLog?.id === item.id || activeContextLog?.id === item.id
 									}

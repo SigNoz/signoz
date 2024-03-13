@@ -59,6 +59,7 @@ function QueryBuilderSearch({
 		updateTag,
 		handleClearTag,
 		handleKeyDown,
+		handleOnBlur,
 		handleSearch,
 		handleSelect,
 		tags,
@@ -260,6 +261,7 @@ function QueryBuilderSearch({
 				notFoundContent={isFetching ? <Spin size="small" /> : null}
 				suffixIcon={suffixIcon}
 				showAction={['focus']}
+				onBlur={handleOnBlur}
 			>
 				{options.map((option) => (
 					<Select.Option key={option.label} value={option.value}>
