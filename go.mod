@@ -4,8 +4,9 @@ go 1.21.3
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.20.0
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
-	github.com/SigNoz/signoz-otel-collector v0.88.12
+	github.com/SigNoz/signoz-otel-collector v0.88.14
 	github.com/SigNoz/zap_otlp/zap_otlp_encoder v0.0.0-20230822164844-1b861a431974
 	github.com/SigNoz/zap_otlp/zap_otlp_sync v0.0.0-20230822164844-1b861a431974
 	github.com/antonmedv/expr v1.15.3
@@ -84,7 +85,6 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.0.0 // indirect
 	github.com/ClickHouse/ch-go v0.61.3 // indirect
-	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/aws/aws-sdk-go v1.45.26 // indirect
