@@ -14,7 +14,7 @@ import getRenderer from 'lib/uPlotLib/utils/getRenderer';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getXAxisScale } from 'lib/uPlotLib/utils/getXAxisScale';
 import { getYAxisScale } from 'lib/uPlotLib/utils/getYAxisScale';
-import { FC, useRef } from 'react';
+import { FC, useMemo, useRef } from 'react';
 import uPlot from 'uplot';
 
 import {
@@ -45,7 +45,10 @@ const paths = (
 
 export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 	const { data, billAmount } = props;
-	const graphCompatibleData = convertDataToMetricRangePayload(data);
+	const graphCompatibleData = useMemo(
+		() => convertDataToMetricRangePayload(data),
+		[data],
+	);
 	const chartData = getUPlotChartData(graphCompatibleData);
 	const graphRef = useRef<HTMLDivElement>(null);
 	const isDarkMode = useIsDarkMode();
@@ -74,80 +77,96 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 		},
 	});
 
-	const uPlotSeries: any = [
-		{ label: 'Timestamp', stroke: 'purple' },
-		getGraphSeries(
-			'#DECCBC',
-			graphCompatibleData.data.result[0]?.legend as string,
-		),
-		getGraphSeries(
-			'#4E74F8',
-			graphCompatibleData.data.result[1]?.legend as string,
-		),
-		getGraphSeries(
-			'#F24769',
-			graphCompatibleData.data.result[2]?.legend as string,
-		),
-	];
+	const uPlotSeries: any = useMemo(
+		() => [
+			{ label: 'Timestamp', stroke: 'purple' },
+			getGraphSeries(
+				'#DECCBC',
+				graphCompatibleData.data.result[0]?.legend as string,
+			),
+			getGraphSeries(
+				'#4E74F8',
+				graphCompatibleData.data.result[1]?.legend as string,
+			),
+			getGraphSeries(
+				'#F24769',
+				graphCompatibleData.data.result[2]?.legend as string,
+			),
+		],
+		[graphCompatibleData.data.result],
+	);
 
 	const axesOptions = getAxes(isDarkMode, '');
 
-	const getOptionsForChart: uPlot.Options = {
-		id: 'billing-usage-breakdown',
-		series: uPlotSeries,
-		width: containerDimensions.width,
-		height: containerDimensions.height - 30,
-		axes: [
-			{
-				...axesOptions[0],
-				grid: {
-					...axesOptions.grid,
-					show: false,
-					stroke: isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400,
+	const optionsForChart: uPlot.Options = useMemo(
+		() => ({
+			id: 'billing-usage-breakdown',
+			series: uPlotSeries,
+			width: containerDimensions.width,
+			height: containerDimensions.height - 30,
+			axes: [
+				{
+					...axesOptions[0],
+					grid: {
+						...axesOptions.grid,
+						show: false,
+						stroke: isDarkMode ? Color.BG_VANILLA_400 : Color.BG_INK_400,
+					},
+				},
+				{
+					...axesOptions[1],
+					stroke: isDarkMode ? Color.BG_SLATE_200 : Color.BG_INK_400,
+				},
+			],
+			scales: {
+				x: {
+					...getXAxisScale(startTime - 86400, endTime), // Minus 86400 from startTime to decrease a day to have a buffer start
+				},
+				y: {
+					...getYAxisScale({
+						series: graphCompatibleData?.data.newResult.data.result,
+						yAxisUnit: '',
+						softMax: null,
+						softMin: null,
+					}),
 				},
 			},
-			{
-				...axesOptions[1],
-				stroke: isDarkMode ? Color.BG_SLATE_200 : Color.BG_INK_400,
+			legend: {
+				show: true,
+				live: false,
+				isolate: true,
 			},
-		],
-		scales: {
-			x: {
-				...getXAxisScale(startTime - 86400, endTime), // Minus 86400 from startTime to decrease a day to have a buffer start
+			cursor: {
+				lock: false,
+				focus: {
+					prox: 1e6,
+					bias: 1,
+				},
 			},
-			y: {
-				...getYAxisScale({
-					series: graphCompatibleData?.data.newResult.data.result,
-					yAxisUnit: '',
-					softMax: null,
-					softMin: null,
-				}),
-			},
-		},
-		legend: {
-			show: true,
-			live: false,
-			isolate: true,
-		},
-		cursor: {
-			lock: false,
 			focus: {
-				prox: 1e6,
-				bias: 1,
+				alpha: 0.3,
 			},
-		},
-		focus: {
-			alpha: 0.3,
-		},
-		padding: [32, 32, 16, 16],
-		plugins: [
-			tooltipPlugin(
-				fillMissingValuesForQuantities(graphCompatibleData, chartData[0]),
-				'',
-				true,
-			),
+			padding: [32, 32, 16, 16],
+			plugins: [
+				tooltipPlugin(
+					fillMissingValuesForQuantities(graphCompatibleData, chartData[0]),
+					'',
+					true,
+				),
+			],
+		}),
+		[
+			axesOptions,
+			chartData,
+			containerDimensions.height,
+			containerDimensions.width,
+			endTime,
+			graphCompatibleData,
+			isDarkMode,
+			startTime,
+			uPlotSeries,
 		],
-	};
+	);
 
 	const numberFormatter = new Intl.NumberFormat('en-US');
 
@@ -164,7 +183,7 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 				</Flex>
 			</Flex>
 			<div ref={graphRef} style={{ height: '100%', paddingBottom: 48 }}>
-				<Component data={chartData} options={getOptionsForChart} />
+				<Component data={chartData} options={optionsForChart} />
 			</div>
 		</Card>
 	);
