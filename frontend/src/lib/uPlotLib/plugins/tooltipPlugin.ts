@@ -50,7 +50,11 @@ const generateTooltipContent = (
 	if (Array.isArray(series) && series.length > 0) {
 		series.forEach((item, index) => {
 			if (index === 0) {
-				tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY HH:mm:ss');
+				if (isBillingUsageGraphs) {
+					tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY');
+				} else {
+					tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY HH:mm:ss');
+				}
 			} else if (item.show) {
 				const {
 					metric = {},

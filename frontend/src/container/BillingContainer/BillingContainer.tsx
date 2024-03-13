@@ -391,12 +391,17 @@ export default function BillingContainer(): JSX.Element {
 							the end of your free trial period.
 						</Typography.Text>
 					)}
-				<Alert
-					message={!isLoading ? headerText : 'Loading...'}
-					type="info"
-					showIcon
-					style={{ marginTop: 12 }}
-				/>
+
+				{!isLoading ? (
+					<Alert
+						message={headerText}
+						type="info"
+						showIcon
+						style={{ marginTop: 12 }}
+					/>
+				) : (
+					<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
+				)}
 			</Card>
 
 			<BillingUsageGraphCallback />
