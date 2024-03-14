@@ -1155,7 +1155,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		value := valueFormatter.Format(smpl.V, r.Unit())
 		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
 		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
-		zap.L().Debug("Alert template data for rule", zap.String("ruleid", r.Name()), zap.String("formatter", valueFormatter.Name()), zap.String("value", value), zap.String("threshold", threshold))
+		zap.L().Debug("Alert template data for rule", zap.String("name", r.Name()), zap.String("formatter", valueFormatter.Name()), zap.String("value", value), zap.String("threshold", threshold))
 
 		tmplData := AlertTemplateData(l, value, threshold)
 		// Inject some convenience variables that are easier to remember for users
@@ -1241,7 +1241,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 	}
 
-	zap.L().Info("alerts found", zap.String("ruleid", r.Name()), zap.Int("count", len(alerts)))
+	zap.L().Info("alerts found", zap.String("name", r.Name()), zap.Int("count", len(alerts)))
 
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {

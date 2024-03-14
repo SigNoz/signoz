@@ -339,7 +339,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 	if err != nil {
 		return nil, err
 	}
-	zap.L().Info("evaluating promql query", zap.String("ruleid", r.Name()), zap.String("query", q))
+	zap.L().Info("evaluating promql query", zap.String("name", r.Name()), zap.String("query", q))
 	res, err := queriers.PqlEngine.RunAlertQuery(ctx, q, start, end, interval)
 	if err != nil {
 		r.SetHealth(HealthBad)
@@ -368,7 +368,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		if !shouldAlert {
 			continue
 		}
-		zap.L().Debug("alerting for series", zap.String("ruleid", r.Name()), zap.Any("series", series))
+		zap.L().Debug("alerting for series", zap.String("name", r.Name()), zap.Any("series", series))
 
 		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
 		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
