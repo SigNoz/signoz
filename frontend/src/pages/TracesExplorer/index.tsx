@@ -5,7 +5,7 @@ import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
+import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
 import ExportPanel from 'container/ExportPanel';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
@@ -208,12 +208,12 @@ function TracesExplorer(): JSX.Element {
 						onChange={handleExplorerTabChange}
 					/>
 				</Container>
-				<ExplorerOptionWrapper
+				<ExplorerOptions
 					disabled={!stagedQuery}
 					query={exportDefaultQuery}
 					isLoading={isLoading}
-					sourcepage={DataSource.TRACES}
 					onExport={handleExport}
+					sourcepage={DataSource.TRACES}
 				/>
 			</>
 		</ErrorBoundary>
