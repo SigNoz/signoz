@@ -3,7 +3,7 @@
 }
 .explorer-update {
 	position: fixed;
-	bottom: 24px;
+	bottom: 16px;
 	left: calc(50% - 225px);
 	display: flex;
 	align-items: center;
@@ -47,7 +47,7 @@
 	box-shadow: 4px 4px 16px 4px rgba(0, 0, 0, 0.25);
 	backdrop-filter: blur(20px);
 	position: fixed;
-	bottom: 24px;
+	bottom: 16px;
 	left: calc(50% + 240px);
 	transform: translate(calc(-50% - 120px), 0);
 	transition: left 0.2s linear;
