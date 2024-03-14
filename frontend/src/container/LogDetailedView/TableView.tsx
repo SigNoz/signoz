@@ -97,14 +97,16 @@ function TableView({
 	};
 
 	const togglePinAttribute = (record: DataType): void => {
-		const newPinnedAttributes = { ...pinnedAttributes };
-		newPinnedAttributes[record.key] = !newPinnedAttributes[record.key];
-		setPinnedAttributes(newPinnedAttributes);
+		if (record) {
+			const newPinnedAttributes = { ...pinnedAttributes };
+			newPinnedAttributes[record.key] = !newPinnedAttributes[record.key];
+			setPinnedAttributes(newPinnedAttributes);
 
-		setLocalStorageApi(
-			LOCALSTORAGE.PINNED_ATTRIBUTES,
-			JSON.stringify(newPinnedAttributes),
-		);
+			setLocalStorageApi(
+				LOCALSTORAGE.PINNED_ATTRIBUTES,
+				JSON.stringify(newPinnedAttributes),
+			);
+		}
 	};
 
 	const onClickHandler = (
@@ -183,7 +185,7 @@ function TableView({
 					<div
 						className={cx(
 							'pin-attribute-icon',
-							pinnedAttributes[record.key] ? 'pinned' : '',
+							pinnedAttributes[record?.key] ? 'pinned' : '',
 						)}
 						onClick={(): void => {
 							togglePinAttribute(record);
@@ -191,7 +193,7 @@ function TableView({
 					>
 						<Star
 							size={16}
-							color={pinnedAttributes[record.key] ? '#7190f9' : 'white'}
+							color={pinnedAttributes[record?.key] ? '#7190f9' : 'white'}
 						/>
 					</div>
 				</Space>
