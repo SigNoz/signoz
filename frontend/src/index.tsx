@@ -3,6 +3,7 @@ import 'styles.scss';
 
 import * as Sentry from '@sentry/react';
 import AppRoutes from 'AppRoutes';
+import { AxiosError } from 'axios';
 import { ThemeProvider } from 'hooks/useDarkMode';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { createRoot } from 'react-dom/client';
@@ -18,8 +19,10 @@ const queryClient = new QueryClient({
 			refetchOnWindowFocus: false,
 			retry(failureCount, error): boolean {
 				if (
-					error instanceof Error &&
-					error.message.includes('API responded with 400')
+					// in case of manually throwing errors please make sure to send error.response.status
+					error instanceof AxiosError &&
+					error.response?.status &&
+					(error.response?.status >= 400 || error.response?.status <= 499)
 				) {
 					return false;
 				}
