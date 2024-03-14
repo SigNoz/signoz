@@ -29,7 +29,7 @@
       ]
     },
     "dashboards": [
-        "file://assets/dashboards/overview.json"
+      "file://assets/dashboards/overview.json"
     ],
     "alerts": []
   },
@@ -72,16 +72,166 @@
     ],
     "metrics": [
       {
-        "name": "http.server.request.duration",
-        "type": "Histogram",
-        "unit": "s",
-        "description": "Duration of HTTP server requests"
+        "name": "postgresql.backends",
+        "type": "sum",
+        "unit": 1,
+        "description": "The number of backends."
       },
       {
-        "name": "http.server.active_requests",
-        "type": "UpDownCounter",
-        "unit": "{ request }",
-        "description": "Number of active HTTP server requests"
+        "name": "postgresql.bgwriter.buffers.allocated",
+        "type": "sum",
+        "unit": "{buffers}",
+        "description": "Number of buffers allocated."
+      },
+      {
+        "name": "postgresql.bgwriter.buffers.writes",
+        "type": "sum",
+        "unit": "{buffers}",
+        "description": "Number of buffers written."
+      },
+      {
+        "name": "postgresql.bgwriter.checkpoint.count",
+        "type": "sum",
+        "unit": "{checkpoints}",
+        "description": "The number of checkpoints performed."
+      },
+      {
+        "name": "postgresql.bgwriter.duration",
+        "type": "sum",
+        "unit": "ms",
+        "description": "Total time spent writing and syncing files to disk by checkpoints."
+      },
+      {
+        "name": "postgresql.bgwriter.maxwritten",
+        "type": "sum",
+        "unit": 1,
+        "description": "Number of times the background writer stopped a cleaning scan because it had written too many buffers."
+      },
+      {
+        "name": "postgresql.blocks_read",
+        "type": "sum",
+        "unit": 1,
+        "description": "The number of blocks read."
+      },
+      {
+        "name": "postgresql.commits",
+        "type": "sum",
+        "unit": 1,
+        "description": "The number of commits."
+      },
+      {
+        "name": "postgresql.connection.max",
+        "type": "gauge",
+        "unit": "{connections}",
+        "description": "Configured maximum number of client connections allowed"
+      },
+      {
+        "name": "postgresql.database.count",
+        "type": "sum",
+        "unit": "{databases}",
+        "description": "Number of user databases."
+      },
+      {
+        "name": "postgresql.database.locks",
+        "type": "gauge",
+        "unit": "{lock}",
+        "description": "The number of database locks."
+      },
+      {
+        "name": "postgresql.db_size",
+        "type": "sum",
+        "unit": "By",
+        "description": "The database disk usage."
+      },
+      {
+        "name": "postgresql.deadlocks",
+        "type": "sum",
+        "unit": "{deadlock}",
+        "description": "The number of deadlocks."
+      },
+      {
+        "name": "postgresql.index.scans",
+        "type": "sum",
+        "unit": "{scans}",
+        "description": "The number of index scans on a table."
+      },
+      {
+        "name": "postgresql.index.size",
+        "type": "gauge",
+        "unit": "By",
+        "description": "The size of the index on disk."
+      },
+      {
+        "name": "postgresql.operations",
+        "type": "sum",
+        "unit": 1,
+        "description": "The number of db row operations."
+      },
+      {
+        "name": "postgresql.replication.data_delay",
+        "type": "gauge",
+        "unit": "By",
+        "description": "The amount of data delayed in replication."
+      },
+      {
+        "name": "postgresql.rollbacks",
+        "type": "sum",
+        "unit": 1,
+        "description": "The number of rollbacks."
+      },
+      {
+        "name": "postgresql.rows",
+        "type": "sum",
+        "unit": 1,
+        "description": "The number of rows in the database."
+      },
+      {
+        "name": "postgresql.sequential_scans",
+        "type": "sum",
+        "unit": "{sequential_scan}",
+        "description": "The number of sequential scans."
+      },
+      {
+        "name": "postgresql.table.count",
+        "type": "sum",
+        "unit": "{table}",
+        "description": "Number of user tables in a database."
+      },
+      {
+        "name": "postgresql.table.size",
+        "type": "sum",
+        "unit": "By",
+        "description": "Disk space used by a table."
+      },
+      {
+        "name": "postgresql.table.vacuum.count",
+        "type": "sum",
+        "unit": "{vacuums}",
+        "description": "Number of times a table has manually been vacuumed."
+      },
+      {
+        "name": "postgresql.temp_files",
+        "type": "sum",
+        "unit": "{temp_file}",
+        "description": "The number of temp files."
+      },
+      {
+        "name": "postgresql.wal.age",
+        "type": "gauge",
+        "unit": "s",
+        "description": "Age of the oldest WAL file."
+      },
+      {
+        "name": "postgresql.wal.delay",
+        "type": "gauge",
+        "unit": "s",
+        "description": "Time between flushing recent WAL locally and receiving notification that the standby server has completed an operation with it."
+      },
+      {
+        "name": "postgresql.wal.lag",
+        "type": "gauge",
+        "unit": "s",
+        "description": "Time between flushing recent WAL locally and receiving notification that the standby server has completed an operation with it."
       }
     ]
   }
