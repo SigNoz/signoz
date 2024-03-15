@@ -81,7 +81,7 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 		() => [
 			{ label: 'Timestamp', stroke: 'purple' },
 			getGraphSeries(
-				'#DECCBC',
+				'#7CEDBE',
 				graphCompatibleData.data.result[0]?.legend as string,
 			),
 			getGraphSeries(
