@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -2599,6 +2600,42 @@ func (ah *APIHandler) calculateConnectionStatus(
 			errors = append(errors, apiErr)
 		} else {
 			result.Logs = logsConnStatus
+		}
+	}()
+
+	// Calculate metrics connection status
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		if connectionTests.Metrics == nil || len(connectionTests.Metrics) < 1 {
+			return
+		}
+
+		statusForLastReceivedMetric, apiErr := ah.reader.GetMetricReceivedLatest(
+			ctx, connectionTests.Metrics,
+		)
+
+		resultLock.Lock()
+		defer resultLock.Unlock()
+
+		if apiErr != nil {
+			errors = append(errors, apiErr)
+
+		} else if statusForLastReceivedMetric != nil {
+			resourceSummaryParts := []string{}
+			interestingLabels := []string{"job_name", "service_name"}
+			for k, v := range statusForLastReceivedMetric.LastReceivedLabels {
+				slices.Contains(interestingLabels, k)
+				resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+					"%s=%s", k, v,
+				))
+			}
+
+			result.Metrics = &integrations.SignalConnectionStatus{
+				LastReceivedFrom:     strings.Join(resourceSummaryParts, ", "),
+				LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
+			}
 		}
 	}()
 

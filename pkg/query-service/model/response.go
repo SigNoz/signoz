@@ -511,6 +511,12 @@ type MetricPoint struct {
 	Value     float64
 }
 
+type MetricStatus struct {
+	MetricName           string
+	LastReceivedTsMillis int64
+	LastReceivedLabels   map[string]string
+}
+
 // MarshalJSON implements json.Marshaler.
 func (p *MetricPoint) MarshalJSON() ([]byte, error) {
 	v := strconv.FormatFloat(p.Value, 'f', -1, 64)

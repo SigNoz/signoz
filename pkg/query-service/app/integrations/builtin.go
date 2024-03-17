@@ -133,6 +133,13 @@ func readBuiltInIntegration(dirpath string) (
 	}
 
 	integration.Id = "builtin-" + integration.Id
+	if len(integration.DataCollected.Metrics) > 0 {
+		metricsForConnTest := []string{}
+		for _, collectedMetric := range integration.DataCollected.Metrics {
+			metricsForConnTest = append(metricsForConnTest, collectedMetric.Name)
+		}
+		integration.ConnectionTests.Metrics = metricsForConnTest
+	}
 
 	return &integration, nil
 }
