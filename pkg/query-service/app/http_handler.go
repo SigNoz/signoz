@@ -2521,6 +2521,83 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 	ah.Respond(w, connectionStatus)
 }
 
+func (ah *APIHandler) calculateConnectionStatus(
+	ctx context.Context,
+	connectionTests *integrations.IntegrationConnectionTests,
+	lookbackSeconds int64,
+) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
+	// Calculate connection status for signals in parallel
+
+	result := &integrations.IntegrationConnectionStatus{}
+	errors := []*model.ApiError{}
+	var resultLock sync.Mutex
+
+	var wg sync.WaitGroup
+
+	// Calculate logs connection status
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		logsConnStatus, apiErr := ah.calculateLogsConnectionStatus(
+			ctx, connectionTests.Logs, lookbackSeconds,
+		)
+
+		resultLock.Lock()
+		defer resultLock.Unlock()
+
+		if apiErr != nil {
+			errors = append(errors, apiErr)
+		} else {
+			result.Logs = logsConnStatus
+		}
+	}()
+
+	// Calculate metrics connection status
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		if connectionTests.Metrics == nil || len(connectionTests.Metrics) < 1 {
+			return
+		}
+
+		statusForLastReceivedMetric, apiErr := ah.reader.GetLatestReceivedMetric(
+			ctx, connectionTests.Metrics,
+		)
+
+		resultLock.Lock()
+		defer resultLock.Unlock()
+
+		if apiErr != nil {
+			errors = append(errors, apiErr)
+
+		} else if statusForLastReceivedMetric != nil {
+			resourceSummaryParts := []string{}
+			interestingLabels := []string{"job_name", "service_name"}
+			for k, v := range statusForLastReceivedMetric.LastReceivedLabels {
+				slices.Contains(interestingLabels, k)
+				resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+					"%s=%s", k, v,
+				))
+			}
+
+			result.Metrics = &integrations.SignalConnectionStatus{
+				LastReceivedFrom:     strings.Join(resourceSummaryParts, ", "),
+				LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
+			}
+		}
+	}()
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return nil, errors[0]
+	}
+
+	return result, nil
+}
+
 func (ah *APIHandler) calculateLogsConnectionStatus(
 	ctx context.Context,
 	logsConnectionTest *v3.FilterSet,
@@ -2583,83 +2660,6 @@ func (ah *APIHandler) calculateLogsConnectionStatus(
 	}
 
 	return nil, nil
-}
-
-func (ah *APIHandler) calculateConnectionStatus(
-	ctx context.Context,
-	connectionTests *integrations.IntegrationConnectionTests,
-	lookbackSeconds int64,
-) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
-	// Calculate connection status for signals in parallel
-
-	result := &integrations.IntegrationConnectionStatus{}
-	errors := []*model.ApiError{}
-	var resultLock sync.Mutex
-
-	var wg sync.WaitGroup
-
-	// Calculate logs connection status
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		logsConnStatus, apiErr := ah.calculateLogsConnectionStatus(
-			ctx, connectionTests.Logs, lookbackSeconds,
-		)
-
-		resultLock.Lock()
-		defer resultLock.Unlock()
-
-		if apiErr != nil {
-			errors = append(errors, apiErr)
-		} else {
-			result.Logs = logsConnStatus
-		}
-	}()
-
-	// Calculate metrics connection status
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		if connectionTests.Metrics == nil || len(connectionTests.Metrics) < 1 {
-			return
-		}
-
-		statusForLastReceivedMetric, apiErr := ah.reader.GetMetricReceivedLatest(
-			ctx, connectionTests.Metrics,
-		)
-
-		resultLock.Lock()
-		defer resultLock.Unlock()
-
-		if apiErr != nil {
-			errors = append(errors, apiErr)
-
-		} else if statusForLastReceivedMetric != nil {
-			resourceSummaryParts := []string{}
-			interestingLabels := []string{"job_name", "service_name"}
-			for k, v := range statusForLastReceivedMetric.LastReceivedLabels {
-				slices.Contains(interestingLabels, k)
-				resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
-					"%s=%s", k, v,
-				))
-			}
-
-			result.Metrics = &integrations.SignalConnectionStatus{
-				LastReceivedFrom:     strings.Join(resourceSummaryParts, ", "),
-				LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
-			}
-		}
-	}()
-
-	wg.Wait()
-
-	if len(errors) > 0 {
-		return nil, errors[0]
-	}
-
-	return result, nil
 }
 
 func (ah *APIHandler) InstallIntegration(

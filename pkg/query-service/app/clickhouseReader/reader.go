@@ -4272,15 +4272,12 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 	}, nil
 }
 
-func (r *ClickHouseReader) GetMetricReceivedLatest(
+func (r *ClickHouseReader) GetLatestReceivedMetric(
 	ctx context.Context, metricNames []string,
 ) (*model.MetricStatus, *model.ApiError) {
 	if len(metricNames) < 1 {
 		return nil, nil
 	}
-
-	// log time taken in function
-	defer utils.Elapsed("GetMetricReceivedLatest", metricNames[:min(len(metricNames), 5)])
 
 	quotedMetricNames := []string{}
 	for _, m := range metricNames {
@@ -4289,8 +4286,7 @@ func (r *ClickHouseReader) GetMetricReceivedLatest(
 	commaSeparatedMetricNames := strings.Join(quotedMetricNames, ", ")
 
 	query := fmt.Sprintf(`
-		SELECT
-				metric_name, labels, unix_milli
+		SELECT metric_name, labels, unix_milli
 		from %s.%s
 		where metric_name in (
 			%s
