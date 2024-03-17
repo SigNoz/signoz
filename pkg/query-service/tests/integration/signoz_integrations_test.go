@@ -68,15 +68,19 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 	connectionStatus := testbed.GetIntegrationConnectionStatus(ii.Id)
 	require.NotNil(connectionStatus)
 	require.Nil(connectionStatus.Logs)
+	require.Nil(connectionStatus.Metrics)
 
 	testLog := makeTestSignozLog("test log body", map[string]interface{}{
 		"source": "nginx",
 	})
 	testbed.mockLogQueryResponse([]model.SignozLog{testLog})
+
 	connectionStatus = testbed.GetIntegrationConnectionStatus(ii.Id)
 	require.NotNil(connectionStatus)
 	require.NotNil(connectionStatus.Logs)
 	require.Equal(connectionStatus.Logs.LastReceivedTsMillis, int64(testLog.Timestamp/1000000))
+	require.NotNil(connectionStatus.Metrics)
+	require.Equal(connectionStatus.Metrics.LastReceivedTsMillis, int64(testLog.Timestamp/1000000))
 
 	// Should be able to uninstall integration
 	require.True(availableIntegrations[0].IsInstalled)
