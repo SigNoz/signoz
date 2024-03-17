@@ -2,7 +2,7 @@ import { useMachine } from '@xstate/react';
 import ROUTES from 'constants/routes';
 import { encode } from 'js-base64';
 import history from 'lib/history';
-import { ReactNode, useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { whilelistedKeys } from './config';
@@ -52,22 +52,30 @@ function ResourceProvider({ children }: Props): JSX.Element {
 						? `?resourceAttribute=${encode(JSON.stringify(queries))}`
 						: '',
 			});
+
+			console.log('queries', queries, pathname);
 			setQueries(queries);
 		},
 		[pathname],
 	);
+
+	console.log('pathname', pathname);
 
 	const [state, send] = useMachine(ResourceAttributesFilterMachine, {
 		actions: {
 			onSelectTagKey: () => {
 				handleLoading(true);
 				GetTagKeys()
-					.then((tagKeys) =>
+					.then((tagKeys) => {
+						const options = mappingWithRoutesAndKeys(pathname, tagKeys);
+
+						console.log('options', options);
+
 						setOptionsData({
-							options: mappingWithRoutesAndKeys(pathname, tagKeys),
+							options,
 							mode: undefined,
-						}),
-					)
+						});
+					})
 					.finally(() => {
 						handleLoading(false);
 					});
@@ -87,15 +95,22 @@ function ResourceProvider({ children }: Props): JSX.Element {
 					});
 			},
 			onBlurPurge: () => {
+				console.log('on blur purge');
 				setSelectedQueries([]);
 				setStaging([]);
 			},
 			onValidateQuery: (): void => {
+				console.log('validate Query');
+
 				if (staging.length < 2 || selectedQuery.length === 0) {
 					return;
 				}
 
+				console.log('staging', staging, selectedQuery);
+
 				const generatedQuery = createQuery([...staging, selectedQuery]);
+
+				console.log('generatedQuery', generatedQuery);
 				if (generatedQuery) {
 					dispatchQueries([...queries, generatedQuery]);
 				}
@@ -104,8 +119,17 @@ function ResourceProvider({ children }: Props): JSX.Element {
 	});
 
 	const handleFocus = useCallback((): void => {
+		console.log('handleFocus, state.value', state.value);
 		if (state.value === 'Idle') {
 			send('NEXT');
+		}
+	}, [send, state.value]);
+
+	const handleEnvironmentSelectorFocus = useCallback((): void => {
+		console.log('handleEnvironmentSelectorFocus - state.value', state.value);
+
+		if (state.value === 'Idle') {
+			send('ENV_SELECT');
 		}
 	}, [send, state.value]);
 
@@ -115,24 +139,64 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 	const handleChange = useCallback(
 		(value: string): void => {
+			console.log('value', staging, value);
+
 			if (!optionsData.mode) {
-				setStaging((prevStaging) => [...prevStaging, value]);
+				setStaging((prevStaging) => {
+					console.log('prevStaging', prevStaging);
+
+					return [...prevStaging, value];
+				});
 				setSelectedQueries([]);
 				send('NEXT');
 				return;
 			}
+
+			console.log('optionsData.mode', optionsData.mode);
 
 			setSelectedQueries([...value]);
 		},
 		[optionsData.mode, send],
 	);
 
+	const handleEnvironmentChange = useCallback(
+		(value: string): void => {
+			const staging = ['resource_deployment_environment', 'IN'];
+
+			console.log('handleEnvironmentChange', value, queries);
+
+			console.log('staging', staging, selectedQuery);
+
+			const queriesCopy = queries.filter(
+				(query) => query.tagKey !== 'resource_deployment_environment',
+			);
+
+			if (value && Array.isArray(value) && value.length > 0) {
+				const generatedQuery = createQuery([...staging, value]);
+
+				console.log('generatedQuery', generatedQuery);
+				if (generatedQuery) {
+					dispatchQueries([...queriesCopy, generatedQuery]);
+				}
+			} else {
+				dispatchQueries([...queriesCopy]);
+			}
+
+			send('RESET');
+		},
+		[dispatchQueries, queries, selectedQuery, send],
+	);
+
 	const handleClose = useCallback(
 		(id: string): void => {
+			console.log('handle close', id);
+
 			dispatchQueries(queries.filter((queryData) => queryData.id !== id));
 		},
 		[dispatchQueries, queries],
 	);
+
+	console.log('queries', queries);
 
 	const handleClearAll = useCallback(() => {
 		send('RESET');
@@ -159,12 +223,16 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			handleFocus,
 			loading,
 			handleChange,
+			handleEnvironmentChange,
+			handleEnvironmentSelectorFocus,
 			selectedQuery,
 			optionsData,
 		}),
 		[
 			handleBlur,
 			handleChange,
+			handleEnvironmentChange,
+			handleEnvironmentSelectorFocus,
 			handleClearAll,
 			handleClose,
 			handleFocus,
