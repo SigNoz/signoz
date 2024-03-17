@@ -4305,13 +4305,33 @@ func (r *ClickHouseReader) GetMetricReceivedLatest(
 	}
 	defer rows.Close()
 
-	var metricStatus *model.MetricStatus
-	for rows.Next() {
-		metricStatus = &model.MetricStatus{}
-		rows.ScanStruct(metricStatus)
+	var result *model.MetricStatus
+
+	if rows.Next() {
+
+		result = &model.MetricStatus{}
+		var labelsJson string
+
+		err := rows.Scan(
+			&result.MetricName,
+			&labelsJson,
+			&result.LastReceivedTsMillis,
+		)
+		if err != nil {
+			return nil, model.InternalError(fmt.Errorf(
+				"couldn't scan metric status row: %w", err,
+			))
+		}
+
+		err = json.Unmarshal([]byte(labelsJson), &result.LastReceivedLabels)
+		if err != nil {
+			return nil, model.InternalError(fmt.Errorf(
+				"couldn't unmarshal metric labels json: %w", err,
+			))
+		}
 	}
 
-	return metricStatus, nil
+	return result, nil
 }
 
 func isColumn(tableStatement, attrType, field, datType string) bool {

@@ -572,12 +572,30 @@ func (tb *IntegrationsTestBed) mockLogQueryResponse(logsInResponse []model.Signo
 	addLogsQueryExpectation(tb.mockClickhouse, logsInResponse)
 }
 
-func (tb *IntegrationsTestBed) mockMetricStatusQueryResponse(ms *model.MetricStatus) {
-	rows := mockhouse.NewRows([]mockhouse.ColumnType{}, [][]any{})
+func (tb *IntegrationsTestBed) mockMetricStatusQueryResponse(expectation *model.MetricStatus) {
+	cols := []mockhouse.ColumnType{}
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "metric_name"})
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "labels"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Int64", Name: "unix_milli"})
+
+	values := [][]any{}
+	if expectation != nil {
+		rowValues := []any{}
+
+		rowValues = append(rowValues, expectation.MetricName)
+
+		labelsJson, err := json.Marshal(expectation.LastReceivedLabels)
+		require.Nil(tb.t, err)
+		rowValues = append(rowValues, labelsJson)
+
+		rowValues = append(rowValues, expectation.LastReceivedTsMillis)
+
+		values = append(values, rowValues)
+	}
 
 	tb.mockClickhouse.ExpectQuery(
 		`SELECT.*metric_name, labels, unix_milli.*from.*signoz_metrics.*where metric_name in.*limit 1.*`,
-	).WillReturnRows(rows)
+	).WillReturnRows(mockhouse.NewRows(cols, values))
 }
 
 func postableFromPipelines(pipelines []logparsingpipeline.Pipeline) logparsingpipeline.PostablePipelines {
