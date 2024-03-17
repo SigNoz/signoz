@@ -20,7 +20,3 @@ For PostgreSQL versions >= 9.6 and <10, run:
 create user monitoring with password '<PASSWORD>';
 grant SELECT ON pg_stat_database to monitoring;
 ```
-
-Set the following environment variables:
-
-- POSTGRESQL_PASSWORD
