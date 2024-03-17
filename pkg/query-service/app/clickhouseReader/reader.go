@@ -4279,6 +4279,9 @@ func (r *ClickHouseReader) GetMetricReceivedLatest(
 		return nil, nil
 	}
 
+	// log time taken in function
+	defer utils.Elapsed("GetMetricReceivedLatest", metricNames[:min(len(metricNames), 5)])
+
 	quotedMetricNames := []string{}
 	for _, m := range metricNames {
 		quotedMetricNames = append(quotedMetricNames, fmt.Sprintf(`'%s'`, m))

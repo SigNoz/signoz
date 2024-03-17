@@ -2482,11 +2482,25 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
+	isInstalled, apiErr := ah.IntegrationsController.IsIntegrationInstalled(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to check if integration is installed")
+		return
+	}
+
+	// Do not spend resources calculating connection status unless installed.
+	if !isInstalled {
+		ah.Respond(w, &integrations.IntegrationConnectionStatus{})
+		return
+	}
+
 	connectionTests, apiErr := ah.IntegrationsController.GetIntegrationConnectionTests(
 		r.Context(), integrationId,
 	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch integration connection tests")
+		RespondError(w, apiErr, "failed to fetch integration connection tests")
 		return
 	}
 
