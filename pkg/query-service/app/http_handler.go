@@ -2506,65 +2506,106 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 	ah.Respond(w, connectionStatus)
 }
 
+func (ah *APIHandler) calculateLogsConnectionStatus(
+	ctx context.Context,
+	logsConnectionTest *v3.FilterSet,
+	lookbackSeconds int64,
+) (*integrations.SignalConnectionStatus, *model.ApiError) {
+	if logsConnectionTest == nil {
+		return nil, nil
+	}
+
+	qrParams := &v3.QueryRangeParamsV3{
+		Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
+		End:   time.Now().UnixMilli(),
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelTypeList,
+			QueryType: v3.QueryTypeBuilder,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					PageSize:          1,
+					Filters:           logsConnectionTest,
+					QueryName:         "A",
+					DataSource:        v3.DataSourceLogs,
+					Expression:        "A",
+					AggregateOperator: v3.AggregateOperatorNoOp,
+				},
+			},
+		},
+	}
+	queryRes, err, _ := ah.querier.QueryRange(
+		ctx, qrParams, map[string]v3.AttributeKey{},
+	)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query for integration connection status: %w", err,
+		))
+	}
+	if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+		lastLog := queryRes[0].List[0]
+
+		resourceSummaryParts := []string{}
+		lastLogResourceAttribs := lastLog.Data["resources_string"]
+		if lastLogResourceAttribs != nil {
+			resourceAttribs, ok := lastLogResourceAttribs.(*map[string]string)
+			if !ok {
+				return nil, model.InternalError(fmt.Errorf(
+					"could not cast log resource attribs",
+				))
+			}
+			for k, v := range *resourceAttribs {
+				resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+					"%s=%s", k, v,
+				))
+			}
+		}
+		lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
+
+		return &integrations.SignalConnectionStatus{
+			LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+			LastReceivedFrom:     lastLogResourceSummary,
+		}, nil
+	}
+
+	return nil, nil
+}
+
 func (ah *APIHandler) calculateConnectionStatus(
 	ctx context.Context,
 	connectionTests *integrations.IntegrationConnectionTests,
 	lookbackSeconds int64,
 ) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
+	// Calculate connection status for signals in parallel
+
 	result := &integrations.IntegrationConnectionStatus{}
+	errors := []*model.ApiError{}
+	var resultLock sync.Mutex
 
-	if connectionTests.Logs != nil {
-		qrParams := &v3.QueryRangeParamsV3{
-			Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
-			End:   time.Now().UnixMilli(),
-			CompositeQuery: &v3.CompositeQuery{
-				PanelType: v3.PanelTypeList,
-				QueryType: v3.QueryTypeBuilder,
-				BuilderQueries: map[string]*v3.BuilderQuery{
-					"A": {
-						PageSize:          1,
-						Filters:           connectionTests.Logs,
-						QueryName:         "A",
-						DataSource:        v3.DataSourceLogs,
-						Expression:        "A",
-						AggregateOperator: v3.AggregateOperatorNoOp,
-					},
-				},
-			},
-		}
-		queryRes, err, _ := ah.querier.QueryRange(
-			ctx, qrParams, map[string]v3.AttributeKey{},
+	var wg sync.WaitGroup
+
+	// Calculate logs connection status
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		logsConnStatus, apiErr := ah.calculateLogsConnectionStatus(
+			ctx, connectionTests.Logs, lookbackSeconds,
 		)
-		if err != nil {
-			return nil, model.InternalError(fmt.Errorf(
-				"could not query for integration connection status: %w", err,
-			))
-		}
-		if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
-			lastLog := queryRes[0].List[0]
 
-			resourceSummaryParts := []string{}
-			lastLogResourceAttribs := lastLog.Data["resources_string"]
-			if lastLogResourceAttribs != nil {
-				resourceAttribs, ok := lastLogResourceAttribs.(*map[string]string)
-				if !ok {
-					return nil, model.InternalError(fmt.Errorf(
-						"could not cast log resource attribs",
-					))
-				}
-				for k, v := range *resourceAttribs {
-					resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
-						"%s=%s", k, v,
-					))
-				}
-			}
-			lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
+		resultLock.Lock()
+		defer resultLock.Unlock()
 
-			result.Logs = &integrations.SignalConnectionStatus{
-				LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
-				LastReceivedFrom:     lastLogResourceSummary,
-			}
+		if apiErr != nil {
+			errors = append(errors, apiErr)
+		} else {
+			result.Logs = logsConnStatus
 		}
+	}()
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return nil, errors[0]
 	}
 
 	return result, nil
