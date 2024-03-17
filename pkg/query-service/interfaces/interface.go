@@ -67,6 +67,9 @@ type Reader interface {
 	GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error)
 	GetMetricAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error)
 
+	// `lastTsByMetricName` is only expected to contain entries for `metricNames` that were found in the DB
+	GetMetricLastReceivedTsMillis(ctx context.Context, metricNames []string) (lastTsByMetricName map[string]int64, err *model.ApiError)
+
 	// QB V3 metrics/traces/logs
 	GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error)
 	GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error)

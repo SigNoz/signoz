@@ -4271,6 +4271,14 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 	}, nil
 }
 
+func (r *ClickHouseReader) GetMetricLastReceivedTsMillis(
+	ctx context.Context, metricNames []string,
+) (map[string]int64, *model.ApiError) {
+	result := map[string]int64{}
+
+	return result, nil
+}
+
 func isColumn(tableStatement, attrType, field, datType string) bool {
 	// value of attrType will be `resource` or `tag`, if `tag` change it to `attribute`
 	name := utils.GetClickhouseColumnName(attrType, datType, field)
