@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
@@ -65,6 +66,7 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 
 	// Integration connection status should get updated after signal data has been received.
 	testbed.mockLogQueryResponse([]model.SignozLog{})
+	testbed.mockMetricStatusQueryResponse(nil)
 	connectionStatus := testbed.GetIntegrationConnectionStatus(ii.Id)
 	require.NotNil(connectionStatus)
 	require.Nil(connectionStatus.Logs)
@@ -75,12 +77,19 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 	})
 	testbed.mockLogQueryResponse([]model.SignozLog{testLog})
 
+	testMetricName := ii.ConnectionTests.Metrics[0]
+	testMetricLastReceivedTs := time.Now().UnixMilli()
+	testbed.mockMetricStatusQueryResponse(&model.MetricStatus{
+		MetricName:           testMetricName,
+		LastReceivedTsMillis: testMetricLastReceivedTs,
+	})
+
 	connectionStatus = testbed.GetIntegrationConnectionStatus(ii.Id)
 	require.NotNil(connectionStatus)
 	require.NotNil(connectionStatus.Logs)
 	require.Equal(connectionStatus.Logs.LastReceivedTsMillis, int64(testLog.Timestamp/1000000))
 	require.NotNil(connectionStatus.Metrics)
-	require.Equal(connectionStatus.Metrics.LastReceivedTsMillis, int64(testLog.Timestamp/1000000))
+	require.Equal(connectionStatus.Metrics.LastReceivedTsMillis, testMetricLastReceivedTs)
 
 	// Should be able to uninstall integration
 	require.True(availableIntegrations[0].IsInstalled)
@@ -353,6 +362,49 @@ type IntegrationsTestBed struct {
 	mockClickhouse mockhouse.ClickConnMockCommon
 }
 
+// testDB can be injected for sharing a DB across multiple integration testbeds.
+func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed {
+	if testDB == nil {
+		testDB = utils.NewQueryServiceDBForTests(t)
+	}
+
+	controller, err := integrations.NewController(testDB)
+	if err != nil {
+		t.Fatalf("could not create integrations controller: %v", err)
+	}
+
+	fm := featureManager.StartManager()
+	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
+	mockClickhouse.MatchExpectationsInOrder(false)
+
+	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
+		Reader:                 reader,
+		AppDao:                 dao.DB(),
+		IntegrationsController: controller,
+		FeatureFlags:           fm,
+	})
+	if err != nil {
+		t.Fatalf("could not create a new ApiHandler: %v", err)
+	}
+
+	router := app.NewRouter()
+	am := app.NewAuthMiddleware(auth.GetUserFromRequest)
+	apiHandler.RegisterRoutes(router, am)
+	apiHandler.RegisterIntegrationRoutes(router, am)
+
+	user, apiErr := createTestUser()
+	if apiErr != nil {
+		t.Fatalf("could not create a test user: %v", apiErr)
+	}
+
+	return &IntegrationsTestBed{
+		t:              t,
+		testUser:       user,
+		qsHttpHandler:  router,
+		mockClickhouse: mockClickhouse,
+	}
+}
+
 func (tb *IntegrationsTestBed) GetAvailableIntegrationsFromQS() *integrations.IntegrationsListResponse {
 	result := tb.RequestQS("/api/v1/integrations", nil)
 
@@ -520,46 +572,12 @@ func (tb *IntegrationsTestBed) mockLogQueryResponse(logsInResponse []model.Signo
 	addLogsQueryExpectation(tb.mockClickhouse, logsInResponse)
 }
 
-// testDB can be injected for sharing a DB across multiple integration testbeds.
-func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed {
-	if testDB == nil {
-		testDB = utils.NewQueryServiceDBForTests(t)
-	}
+func (tb *IntegrationsTestBed) mockMetricStatusQueryResponse(ms *model.MetricStatus) {
+	rows := mockhouse.NewRows([]mockhouse.ColumnType{}, [][]any{})
 
-	controller, err := integrations.NewController(testDB)
-	if err != nil {
-		t.Fatalf("could not create integrations controller: %v", err)
-	}
-
-	fm := featureManager.StartManager()
-	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
-
-	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
-		Reader:                 reader,
-		AppDao:                 dao.DB(),
-		IntegrationsController: controller,
-		FeatureFlags:           fm,
-	})
-	if err != nil {
-		t.Fatalf("could not create a new ApiHandler: %v", err)
-	}
-
-	router := app.NewRouter()
-	am := app.NewAuthMiddleware(auth.GetUserFromRequest)
-	apiHandler.RegisterRoutes(router, am)
-	apiHandler.RegisterIntegrationRoutes(router, am)
-
-	user, apiErr := createTestUser()
-	if apiErr != nil {
-		t.Fatalf("could not create a test user: %v", apiErr)
-	}
-
-	return &IntegrationsTestBed{
-		t:              t,
-		testUser:       user,
-		qsHttpHandler:  router,
-		mockClickhouse: mockClickhouse,
-	}
+	tb.mockClickhouse.ExpectQuery(
+		`SELECT.*metric_name, labels, unix_milli.*from.*signoz_metrics.*where metric_name in.*limit 1.*`,
+	).WillReturnRows(rows)
 }
 
 func postableFromPipelines(pipelines []logparsingpipeline.Pipeline) logparsingpipeline.PostablePipelines {
