@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -2574,9 +2575,19 @@ func (ah *APIHandler) calculateConnectionStatus(
 		} else if statusForLastReceivedMetric != nil {
 			resourceSummaryParts := []string{}
 			for k, v := range statusForLastReceivedMetric.LastReceivedLabels {
-				resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
-					"%s=%s", k, v,
-				))
+				interestingLabels := []string{
+					"container_name", "host_name", "node_name",
+					"pod_name", "deployment_name", "cluster_name",
+					"namespace_name", "job_name", "service_name",
+				}
+				isInterestingKey := !strings.HasPrefix(k, "_") && slices.ContainsFunc(
+					interestingLabels, func(l string) bool { return strings.Contains(k, l) },
+				)
+				if isInterestingKey {
+					resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+						"%s=%s", k, v,
+					))
+				}
 			}
 
 			result.Metrics = &integrations.SignalConnectionStatus{
