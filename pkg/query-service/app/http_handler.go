@@ -2481,11 +2481,25 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
+	isInstalled, apiErr := ah.IntegrationsController.IsIntegrationInstalled(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to check if integration is installed")
+		return
+	}
+
+	// Do not spend resources calculating connection status unless installed.
+	if !isInstalled {
+		ah.Respond(w, &integrations.IntegrationConnectionStatus{})
+		return
+	}
+
 	connectionTests, apiErr := ah.IntegrationsController.GetIntegrationConnectionTests(
 		r.Context(), integrationId,
 	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch integration connection tests")
+		RespondError(w, apiErr, "failed to fetch integration connection tests")
 		return
 	}
 
@@ -2511,63 +2525,138 @@ func (ah *APIHandler) calculateConnectionStatus(
 	connectionTests *integrations.IntegrationConnectionTests,
 	lookbackSeconds int64,
 ) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
+	// Calculate connection status for signals in parallel
+
 	result := &integrations.IntegrationConnectionStatus{}
+	errors := []*model.ApiError{}
+	var resultLock sync.Mutex
 
-	if connectionTests.Logs != nil {
-		qrParams := &v3.QueryRangeParamsV3{
-			Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
-			End:   time.Now().UnixMilli(),
-			CompositeQuery: &v3.CompositeQuery{
-				PanelType: v3.PanelTypeList,
-				QueryType: v3.QueryTypeBuilder,
-				BuilderQueries: map[string]*v3.BuilderQuery{
-					"A": {
-						PageSize:          1,
-						Filters:           connectionTests.Logs,
-						QueryName:         "A",
-						DataSource:        v3.DataSourceLogs,
-						Expression:        "A",
-						AggregateOperator: v3.AggregateOperatorNoOp,
-					},
-				},
-			},
-		}
-		queryRes, err, _ := ah.querier.QueryRange(
-			ctx, qrParams, map[string]v3.AttributeKey{},
+	var wg sync.WaitGroup
+
+	// Calculate logs connection status
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		logsConnStatus, apiErr := ah.calculateLogsConnectionStatus(
+			ctx, connectionTests.Logs, lookbackSeconds,
 		)
-		if err != nil {
-			return nil, model.InternalError(fmt.Errorf(
-				"could not query for integration connection status: %w", err,
-			))
-		}
-		if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
-			lastLog := queryRes[0].List[0]
 
+		resultLock.Lock()
+		defer resultLock.Unlock()
+
+		if apiErr != nil {
+			errors = append(errors, apiErr)
+		} else {
+			result.Logs = logsConnStatus
+		}
+	}()
+
+	// Calculate metrics connection status
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		if connectionTests.Metrics == nil || len(connectionTests.Metrics) < 1 {
+			return
+		}
+
+		statusForLastReceivedMetric, apiErr := ah.reader.GetLatestReceivedMetric(
+			ctx, connectionTests.Metrics,
+		)
+
+		resultLock.Lock()
+		defer resultLock.Unlock()
+
+		if apiErr != nil {
+			errors = append(errors, apiErr)
+
+		} else if statusForLastReceivedMetric != nil {
 			resourceSummaryParts := []string{}
-			lastLogResourceAttribs := lastLog.Data["resources_string"]
-			if lastLogResourceAttribs != nil {
-				resourceAttribs, ok := lastLogResourceAttribs.(*map[string]string)
-				if !ok {
-					return nil, model.InternalError(fmt.Errorf(
-						"could not cast log resource attribs",
-					))
-				}
-				for k, v := range *resourceAttribs {
-					resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
-						"%s=%s", k, v,
-					))
-				}
+			for k, v := range statusForLastReceivedMetric.LastReceivedLabels {
+				resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+					"%s=%s", k, v,
+				))
 			}
-			lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
 
-			result.Logs = &integrations.SignalConnectionStatus{
-				LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
-				LastReceivedFrom:     lastLogResourceSummary,
+			result.Metrics = &integrations.SignalConnectionStatus{
+				LastReceivedFrom:     strings.Join(resourceSummaryParts, ", "),
+				LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
 			}
 		}
+	}()
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return nil, errors[0]
 	}
 
 	return result, nil
+}
+
+func (ah *APIHandler) calculateLogsConnectionStatus(
+	ctx context.Context,
+	logsConnectionTest *v3.FilterSet,
+	lookbackSeconds int64,
+) (*integrations.SignalConnectionStatus, *model.ApiError) {
+	if logsConnectionTest == nil {
+		return nil, nil
+	}
+
+	qrParams := &v3.QueryRangeParamsV3{
+		Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
+		End:   time.Now().UnixMilli(),
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelTypeList,
+			QueryType: v3.QueryTypeBuilder,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					PageSize:          1,
+					Filters:           logsConnectionTest,
+					QueryName:         "A",
+					DataSource:        v3.DataSourceLogs,
+					Expression:        "A",
+					AggregateOperator: v3.AggregateOperatorNoOp,
+				},
+			},
+		},
+	}
+	queryRes, err, _ := ah.querier.QueryRange(
+		ctx, qrParams, map[string]v3.AttributeKey{},
+	)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query for integration connection status: %w", err,
+		))
+	}
+	if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+		lastLog := queryRes[0].List[0]
+
+		resourceSummaryParts := []string{}
+		lastLogResourceAttribs := lastLog.Data["resources_string"]
+		if lastLogResourceAttribs != nil {
+			resourceAttribs, ok := lastLogResourceAttribs.(*map[string]string)
+			if !ok {
+				return nil, model.InternalError(fmt.Errorf(
+					"could not cast log resource attribs",
+				))
+			}
+			for k, v := range *resourceAttribs {
+				resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+					"%s=%s", k, v,
+				))
+			}
+		}
+		lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
+
+		return &integrations.SignalConnectionStatus{
+			LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+			LastReceivedFrom:     lastLogResourceSummary,
+		}, nil
+	}
+
+	return nil, nil
 }
 
 func (ah *APIHandler) InstallIntegration(
