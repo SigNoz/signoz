@@ -43,18 +43,6 @@ export const DashboardSearchAndFilter = createMachine({
 					description: 'Select Category',
 					target: 'Category',
 				},
-				ENV_SELECT: {
-					actions: ['onValidateQuery', 'onBlurPurge'],
-					target: 'EnvironmentSelect',
-				},
-			},
-		},
-		EnvironmentSelect: {
-			on: {
-				NEXT: {
-					actions: ['onValidateQuery', 'onBlurPurge'],
-					target: 'Idle',
-				},
 			},
 		},
 	},

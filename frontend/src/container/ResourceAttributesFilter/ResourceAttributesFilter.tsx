@@ -30,7 +30,6 @@ function ResourceAttributesFilter({
 		handleFocus,
 		handleChange,
 		handleEnvironmentChange,
-		handleEnvironmentSelectorFocus,
 		selectedQuery,
 		optionsData,
 		loading,
@@ -83,15 +82,15 @@ function ResourceAttributesFilter({
 		<div className="resourceAttributesFilter-container">
 			<div className="environment-selector">
 				<Select
+					getPopupContainer={popupContainer}
 					key={selectedEnvironments.join('')}
 					showSearch
 					mode="multiple"
-					style={{ minWidth: 200 }}
-					placeholder="Select Environment/s"
 					value={selectedEnvironments}
+					placeholder="Select Environment/s"
+					style={{ minWidth: 200 }}
 					onChange={handleEnvironmentChange}
 					onBlur={handleBlur}
-					onFocus={handleEnvironmentSelectorFocus}
 				>
 					{environments.map((opt) => (
 						<Select.Option key={opt.value} value={opt.value}>

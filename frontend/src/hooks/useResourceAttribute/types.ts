@@ -28,6 +28,5 @@ export interface IResourceAttributeProps {
 	handleChange: (value: string) => void;
 	selectedQuery: string[];
 	optionsData: OptionsData;
-	handleEnvironmentChange: (value: string) => void;
-	handleEnvironmentSelectorFocus: VoidFunction;
+	handleEnvironmentChange: (environments: string[]) => void;
 }

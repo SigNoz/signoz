@@ -53,13 +53,10 @@ function ResourceProvider({ children }: Props): JSX.Element {
 						: '',
 			});
 
-			console.log('queries', queries, pathname);
 			setQueries(queries);
 		},
 		[pathname],
 	);
-
-	console.log('pathname', pathname);
 
 	const [state, send] = useMachine(ResourceAttributesFilterMachine, {
 		actions: {
@@ -68,8 +65,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 				GetTagKeys()
 					.then((tagKeys) => {
 						const options = mappingWithRoutesAndKeys(pathname, tagKeys);
-
-						console.log('options', options);
 
 						setOptionsData({
 							options,
@@ -95,22 +90,16 @@ function ResourceProvider({ children }: Props): JSX.Element {
 					});
 			},
 			onBlurPurge: () => {
-				console.log('on blur purge');
 				setSelectedQueries([]);
 				setStaging([]);
 			},
 			onValidateQuery: (): void => {
-				console.log('validate Query');
-
 				if (staging.length < 2 || selectedQuery.length === 0) {
 					return;
 				}
 
-				console.log('staging', staging, selectedQuery);
-
 				const generatedQuery = createQuery([...staging, selectedQuery]);
 
-				console.log('generatedQuery', generatedQuery);
 				if (generatedQuery) {
 					dispatchQueries([...queries, generatedQuery]);
 				}
@@ -119,17 +108,8 @@ function ResourceProvider({ children }: Props): JSX.Element {
 	});
 
 	const handleFocus = useCallback((): void => {
-		console.log('handleFocus, state.value', state.value);
 		if (state.value === 'Idle') {
 			send('NEXT');
-		}
-	}, [send, state.value]);
-
-	const handleEnvironmentSelectorFocus = useCallback((): void => {
-		console.log('handleEnvironmentSelectorFocus - state.value', state.value);
-
-		if (state.value === 'Idle') {
-			send('ENV_SELECT');
 		}
 	}, [send, state.value]);
 
@@ -146,23 +126,23 @@ function ResourceProvider({ children }: Props): JSX.Element {
 				return;
 			}
 
-			console.log('optionsData.mode', optionsData.mode);
-
 			setSelectedQueries([...value]);
 		},
 		[optionsData.mode, send],
 	);
 
 	const handleEnvironmentChange = useCallback(
-		(value: string): void => {
+		(environments: string[]): void => {
 			const staging = ['resource_deployment_environment', 'IN'];
+
+			console.log('value', environments);
 
 			const queriesCopy = queries.filter(
 				(query) => query.tagKey !== 'resource_deployment_environment',
 			);
 
-			if (value && Array.isArray(value) && value.length > 0) {
-				const generatedQuery = createQuery([...staging, value]);
+			if (environments && Array.isArray(environments) && environments.length > 0) {
+				const generatedQuery = createQuery([...staging, environments]);
 
 				if (generatedQuery) {
 					dispatchQueries([...queriesCopy, generatedQuery]);
@@ -178,14 +158,10 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 	const handleClose = useCallback(
 		(id: string): void => {
-			console.log('handle close', id);
-
 			dispatchQueries(queries.filter((queryData) => queryData.id !== id));
 		},
 		[dispatchQueries, queries],
 	);
-
-	console.log('queries', queries);
 
 	const handleClearAll = useCallback(() => {
 		send('RESET');
@@ -213,7 +189,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			loading,
 			handleChange,
 			handleEnvironmentChange,
-			handleEnvironmentSelectorFocus,
 			selectedQuery,
 			optionsData,
 		}),
@@ -221,7 +196,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			handleBlur,
 			handleChange,
 			handleEnvironmentChange,
-			handleEnvironmentSelectorFocus,
 			handleClearAll,
 			handleClose,
 			handleFocus,
