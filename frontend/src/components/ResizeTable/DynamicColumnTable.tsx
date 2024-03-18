@@ -1,7 +1,8 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './DynamicColumnTable.syles.scss';
 
-import { Button, Dropdown, MenuProps, Switch } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import { Button, Dropdown, MenuProps, Popconfirm, Switch } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { SlidersHorizontal } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
@@ -20,11 +21,23 @@ function DynamicColumnTable({
 	columns,
 	dynamicColumns,
 	onDragColumn,
+	multiRowActionsEnabled,
+	multiRowActions,
 	...restProps
 }: DynamicColumnTableProps): JSX.Element {
 	const [columnsData, setColumnsData] = useState<ColumnsType | undefined>(
 		columns,
 	);
+	const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+
+	const onSelectChange = (newSelectedRowKeys: React.Key[]): void => {
+		setSelectedRowKeys(newSelectedRowKeys);
+	};
+
+	const rowSelection = {
+		selectedRowKeys,
+		onChange: onSelectChange,
+	};
 
 	useEffect(() => {
 		setColumnsData(columns);
@@ -81,23 +94,61 @@ function DynamicColumnTable({
 			type: 'checkbox',
 		})) || [];
 
+	const hasSelected = selectedRowKeys.length > 0;
+
+	const cancel = (
+		e?: React.MouseEvent<HTMLElement, MouseEvent> | undefined,
+	): void => {
+		console.log(e);
+	};
+
 	return (
-		<div className="DynamicColumnTable">
-			{dynamicColumns && (
-				<Dropdown
-					getPopupContainer={popupContainer}
-					menu={{ items }}
-					trigger={['click']}
-				>
-					<Button
-						className="dynamicColumnTable-button filter-btn"
-						size="middle"
-						icon={<SlidersHorizontal size={14} />}
-					/>
-				</Dropdown>
-			)}
+		<div className="dynamicColumnTable">
+			<div className="dynamicColumeTableHeader">
+				{multiRowActionsEnabled && hasSelected && (
+					<div className="selectedRowActions">
+						<span style={{ marginLeft: 8 }}>
+							Selected {selectedRowKeys.length} alerts
+						</span>
+
+						{multiRowActionsEnabled &&
+							multiRowActions &&
+							multiRowActions.map((action) => (
+								<Popconfirm
+									key={action.key}
+									title={action.title}
+									description={action.description}
+									icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+									placement="topRight"
+									onConfirm={action.onConfirm}
+									onCancel={cancel}
+									okText="Yes"
+								>
+									<Button className="periscope-btn" size="middle" icon={action.btnIcon}>
+										{action.btnText}
+									</Button>
+								</Popconfirm>
+							))}
+					</div>
+				)}
+
+				{dynamicColumns && (
+					<Dropdown
+						getPopupContainer={popupContainer}
+						menu={{ items }}
+						trigger={['click']}
+					>
+						<Button
+							className="dynamicColumnTable-button filter-btn"
+							size="middle"
+							icon={<SlidersHorizontal size={14} />}
+						/>
+					</Dropdown>
+				)}
+			</div>
 
 			<ResizeTable
+				rowSelection={rowSelection}
 				columns={columnsData}
 				onDragColumn={onDragColumn}
 				{...restProps}
@@ -108,6 +159,7 @@ function DynamicColumnTable({
 
 DynamicColumnTable.defaultProps = {
 	onDragColumn: undefined,
+	multiRowActionsEnabled: false,
 };
 
 export default memo(DynamicColumnTable);

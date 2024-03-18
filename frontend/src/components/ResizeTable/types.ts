@@ -2,16 +2,29 @@
 import { TableProps } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { ColumnGroupType, ColumnType } from 'antd/lib/table';
+import React from 'react';
 
 import { TableDataSource } from './contants';
 
 export interface ResizeTableProps extends TableProps<any> {
 	onDragColumn?: (fromIndex: number, toIndex: number) => void;
 }
+
+export interface MultiRowActionsProps {
+	key: string;
+	title: string;
+	description: string;
+	onConfirm: VoidFunction;
+	btnIcon: React.ReactElement;
+	btnText: string;
+}
+
 export interface DynamicColumnTableProps extends TableProps<any> {
 	tablesource: typeof TableDataSource[keyof typeof TableDataSource];
 	dynamicColumns: TableProps<any>['columns'];
 	onDragColumn?: (fromIndex: number, toIndex: number) => void;
+	multiRowActions?: MultiRowActionsProps[];
+	multiRowActionsEnabled?: boolean;
 }
 
 export type GetVisibleColumnsFunction = (

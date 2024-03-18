@@ -1,7 +1,20 @@
-.DynamicColumnTable {
+.dynamicColumnTable {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
+
+	.dynamicColumeTableHeader {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 1rem;
+
+		.selectedRowActions {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+		}
+	}
 
 	.dynamicColumnTable-button {
 		align-self: flex-end;

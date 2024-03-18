@@ -22,6 +22,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import { Megaphone, MegaphoneOff, Trash2 } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
@@ -325,6 +326,43 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		});
 	}
 
+	const handleEnableAll = (): void => {
+		console.log('Enable all the selected alerts');
+	};
+	const handleDisableAll = (): void => {
+		console.log('Disable all the selected alerts');
+	};
+	const handleDeleteAll = (): void => {
+		console.log('Delete all the selected alerts');
+	};
+
+	const multiRowActions = [
+		{
+			key: 'enableSelected',
+			title: 'Enable all the selected alerts',
+			description: 'Are you sure to enable all the selected alerts?',
+			onConfirm: handleEnableAll,
+			btnIcon: <Megaphone size={14} />,
+			btnText: 'Enable',
+		},
+		{
+			key: 'disableSelected',
+			title: 'Disable all the selected alerts',
+			description: ' Are you sure to disable all the selected alerts?',
+			onConfirm: handleDisableAll,
+			btnIcon: <MegaphoneOff size={14} />,
+			btnText: 'Disable',
+		},
+		{
+			key: 'deleteSelected',
+			title: 'Delete all the selected alerts',
+			description: ' Are you sure to delete all the selected alerts?',
+			onConfirm: handleDeleteAll,
+			btnIcon: <Trash2 size={14} />,
+			btnText: 'Delete',
+		},
+	];
+
 	return (
 		<>
 			<SearchContainer>
@@ -354,6 +392,8 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				rowKey="id"
 				dataSource={data}
 				dynamicColumns={dynamicColumns}
+				multiRowActionsEnabled
+				multiRowActions={multiRowActions}
 				onChange={handleChange}
 				pagination={{
 					defaultCurrent: Number(paginationParam) || 1,
