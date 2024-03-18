@@ -24,9 +24,7 @@
   ],
   "assets": {
     "logs": {
-      "pipelines": [
-        "file://assets/pipelines/log-parser.json"
-      ]
+      "pipelines": []
     },
     "dashboards": [
       "file://assets/dashboards/overview.json"
@@ -50,26 +48,7 @@
     }
   },
   "data_collected": {
-    "logs": [
-      {
-        "name": "Request Method",
-        "path": "attributes[\"http.request.method\"]",
-        "type": "string",
-        "description": "HTTP method"
-      },
-      {
-        "name": "Request Path",
-        "path": "attributes[\"url.path\"]",
-        "type": "string",
-        "description": "path requested"
-      },
-      {
-        "name": "Response Status Code",
-        "path": "attributes[\"http.response.status_code\"]",
-        "type": "int",
-        "description": "HTTP response code"
-      }
-    ],
+    "logs": [],
     "metrics": [
       {
         "name": "postgresql.backends",
