@@ -40,12 +40,32 @@ function ResourceAttributesFilter({
 		SelectOption<string, string>[]
 	>([]);
 
-	const [selectedEnvironments, setSelectedEnvironments] = useState([]);
+	const [selectedEnvironments, setSelectedEnvironments] = useState<string[]>([]);
+
+	const queriesExcludingEnvironment = useMemo(
+		() =>
+			queries.filter(
+				(query) => query.tagKey !== 'resource_deployment_environment',
+			),
+		[queries],
+	);
 
 	const isEmpty = useMemo(
-		() => isResourceEmpty(queries, staging, selectedQuery),
-		[queries, selectedQuery, staging],
+		() => isResourceEmpty(queriesExcludingEnvironment, staging, selectedQuery),
+		[queriesExcludingEnvironment, selectedQuery, staging],
 	);
+
+	useEffect(() => {
+		const resourceDeploymentEnvironmentQuery = queries.filter(
+			(query) => query.tagKey === 'resource_deployment_environment',
+		);
+
+		if (resourceDeploymentEnvironmentQuery?.length > 0) {
+			setSelectedEnvironments(resourceDeploymentEnvironmentQuery[0].tagValue);
+		} else {
+			setSelectedEnvironments([]);
+		}
+	}, [queries]);
 
 	useEffect(() => {
 		getEnvironmentTagKeys()
@@ -63,25 +83,28 @@ function ResourceAttributesFilter({
 		<div className="resourceAttributesFilter-container">
 			<div className="environment-selector">
 				<Select
+					key={selectedEnvironments.join('')}
 					showSearch
 					mode="multiple"
 					style={{ minWidth: 200 }}
 					placeholder="Select Environment/s"
-					options={environments}
+					value={selectedEnvironments}
 					onChange={handleEnvironmentChange}
 					onBlur={handleBlur}
 					onFocus={handleEnvironmentSelectorFocus}
-				/>
+				>
+					{environments.map((opt) => (
+						<Select.Option key={opt.value} value={opt.value}>
+							{opt.label}
+						</Select.Option>
+					))}
+				</Select>
 			</div>
 
 			<div className="resource-attributes-selector">
 				<SearchContainer>
 					<div>
-						{queries.map((query) => (
-							// if (query.tagKey === 'resource_deployment_environment') {
-							// 	return null;
-							// }
-
+						{queriesExcludingEnvironment.map((query) => (
 							<QueryChip key={query.id} queryData={query} onClose={handleClose} />
 						))}
 						{staging.map((query, idx) => (

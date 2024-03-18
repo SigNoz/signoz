@@ -2,7 +2,7 @@ import { useMachine } from '@xstate/react';
 import ROUTES from 'constants/routes';
 import { encode } from 'js-base64';
 import history from 'lib/history';
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { whilelistedKeys } from './config';
@@ -139,14 +139,8 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 	const handleChange = useCallback(
 		(value: string): void => {
-			console.log('value', staging, value);
-
 			if (!optionsData.mode) {
-				setStaging((prevStaging) => {
-					console.log('prevStaging', prevStaging);
-
-					return [...prevStaging, value];
-				});
+				setStaging((prevStaging) => [...prevStaging, value]);
 				setSelectedQueries([]);
 				send('NEXT');
 				return;
@@ -163,10 +157,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		(value: string): void => {
 			const staging = ['resource_deployment_environment', 'IN'];
 
-			console.log('handleEnvironmentChange', value, queries);
-
-			console.log('staging', staging, selectedQuery);
-
 			const queriesCopy = queries.filter(
 				(query) => query.tagKey !== 'resource_deployment_environment',
 			);
@@ -174,7 +164,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			if (value && Array.isArray(value) && value.length > 0) {
 				const generatedQuery = createQuery([...staging, value]);
 
-				console.log('generatedQuery', generatedQuery);
 				if (generatedQuery) {
 					dispatchQueries([...queriesCopy, generatedQuery]);
 				}
@@ -184,7 +173,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 			send('RESET');
 		},
-		[dispatchQueries, queries, selectedQuery, send],
+		[dispatchQueries, queries, send],
 	);
 
 	const handleClose = useCallback(
