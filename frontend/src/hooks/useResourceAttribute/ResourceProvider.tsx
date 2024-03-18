@@ -135,8 +135,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		(environments: string[]): void => {
 			const staging = ['resource_deployment_environment', 'IN'];
 
-			console.log('value', environments);
-
 			const queriesCopy = queries.filter(
 				(query) => query.tagKey !== 'resource_deployment_environment',
 			);

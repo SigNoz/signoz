@@ -67,15 +67,13 @@ function ResourceAttributesFilter({
 	}, [queries]);
 
 	useEffect(() => {
-		getEnvironmentTagKeys()
-			.then((tagKeys) => {
-				if (tagKeys && Array.isArray(tagKeys) && tagKeys.length > 0) {
-					getEnvironmentTagValues().then((tagValues) => {
-						setEnvironments(tagValues);
-					});
-				}
-			})
-			.finally(() => {});
+		getEnvironmentTagKeys().then((tagKeys) => {
+			if (tagKeys && Array.isArray(tagKeys) && tagKeys.length > 0) {
+				getEnvironmentTagValues().then((tagValues) => {
+					setEnvironments(tagValues);
+				});
+			}
+		});
 	}, []);
 
 	return (
