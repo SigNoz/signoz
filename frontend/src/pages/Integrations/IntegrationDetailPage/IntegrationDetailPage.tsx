@@ -9,7 +9,6 @@ import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
 import { defaultTo } from 'lodash-es';
 import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
-import { useEffect } from 'react';
 import { isCloudUser } from 'utils/app';
 
 import { handleContactSupport } from '../utils';
@@ -41,11 +40,9 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 
 	const {
 		data: integrationStatus,
-		refetch: refetchStatus,
 		isLoading: isStatusLoading,
 	} = useGetIntegrationStatus({
 		integrationId: selectedIntegration,
-		enabled: false,
 	});
 
 	const loading = isLoading || isFetching || isRefetching || isStatusLoading;
@@ -54,22 +51,10 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 	const connectionStatus = getConnectionStatesFromConnectionStatus(
 		integrationData?.installation,
 		defaultTo(
-			integrationStatus?.data.data.connection_status,
+			integrationStatus?.data.data,
 			defaultTo(integrationData?.connection_status, { logs: null, metrics: null }),
 		),
 	);
-
-	useEffect(() => {
-		// we should once get data on load and then keep polling every 5 seconds
-		refetchStatus();
-		const timer = setInterval(() => {
-			refetchStatus();
-		}, 5000);
-
-		return (): void => {
-			clearInterval(timer);
-		};
-	}, [refetchStatus]);
 
 	return (
 		<div className="integration-detail-content">
@@ -128,10 +113,10 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							description={defaultTo(integrationData?.description, '')}
 							icon={defaultTo(integrationData?.icon, '')}
 							connectionState={connectionStatus}
-							connectionData={defaultTo(
-								integrationStatus?.data.data.connection_status,
-								{ logs: null, metrics: null },
-							)}
+							connectionData={defaultTo(integrationStatus?.data.data, {
+								logs: null,
+								metrics: null,
+							})}
 							refetchIntegrationDetails={refetch}
 						/>
 						<IntegrationDetailContent

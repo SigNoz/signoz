@@ -9,7 +9,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { ArrowLeftRight, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useMutation } from 'react-query';
-import { IntegrationStatusProps } from 'types/api/integrations/types';
+import { IntegrationConnectionStatus } from 'types/api/integrations/types';
 
 import TestConnection, { ConnectionStates } from './TestConnection';
 
@@ -20,7 +20,7 @@ interface IntegrationDetailHeaderProps {
 	icon: string;
 	refetchIntegrationDetails: () => void;
 	connectionState: ConnectionStates;
-	connectionData: IntegrationStatusProps['connection_status'];
+	connectionData: IntegrationConnectionStatus;
 }
 function IntegrationDetailHeader(
 	props: IntegrationDetailHeaderProps,
