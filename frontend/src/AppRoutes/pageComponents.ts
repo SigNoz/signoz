@@ -190,3 +190,7 @@ export const WorkspaceBlocked = Loadable(
 export const ShortcutsPage = Loadable(
 	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
 );
+
+export const ProjectManager = Loadable(
+	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/ProjectManager'),
+);

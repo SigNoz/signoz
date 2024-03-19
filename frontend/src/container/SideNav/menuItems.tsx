@@ -94,6 +94,11 @@ const menuItems: SidebarItem[] = [
 		label: 'Exceptions',
 		icon: <BugIcon size={16} />,
 	},
+	{
+		key: ROUTES.PROJECT_MANAGER,
+		label: 'Project Manager',
+		icon: <Settings size={16} />,
+	},
 	// {
 	// 	key: ROUTES.SERVICE_MAP,
 	// 	label: 'Service Map',

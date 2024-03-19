@@ -47,6 +47,7 @@ const ROUTES = {
 	TRACES_SAVE_VIEWS: '/traces-save-views',
 	WORKSPACE_LOCKED: '/workspace-locked',
 	SHORTCUTS: '/shortcuts',
+	PROJECT_MANAGER: '/project-manager',
 } as const;
 
 export default ROUTES;

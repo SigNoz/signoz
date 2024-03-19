@@ -31,6 +31,7 @@ import {
 	OrganizationSettings,
 	PasswordReset,
 	PipelinePage,
+	ProjectManager,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -334,6 +335,13 @@ const routes: AppRoutes[] = [
 		component: Shortcuts,
 		isPrivate: true,
 		key: 'SHORTCUTS',
+	},
+	{
+		path: ROUTES.PROJECT_MANAGER,
+		exact: true,
+		component: ProjectManager,
+		isPrivate: true,
+		key: 'PROJECT_MANAGER',
 	},
 ];
 

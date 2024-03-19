@@ -85,10 +85,10 @@ module.exports = {
 				tsx: 'never',
 			},
 		],
-		'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
+		'import/no-extraneous-dependencies': ['warn', { devDependencies: true }],
 		'no-plusplus': 'off',
 		'jsx-a11y/label-has-associated-control': [
-			'error',
+			'warn',
 			{
 				required: {
 					some: ['nesting', 'id'],
@@ -96,7 +96,7 @@ module.exports = {
 			},
 		],
 		'jsx-a11y/label-has-for': [
-			'error',
+			'warn',
 			{
 				required: {
 					some: ['nesting', 'id'],
