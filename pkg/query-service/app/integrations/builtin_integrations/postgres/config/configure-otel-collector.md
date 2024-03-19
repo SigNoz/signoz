@@ -1,14 +1,14 @@
 ### Configure otel collector
 
-#### Save collector config file
+#### Create collector config file
 
 Save the following collector config in a file named `postgres-collector-config.yaml`
 
-```bash
+```yaml
 receivers:
   postgresql:
     # The endpoint of the postgresql server. Whether using TCP or Unix sockets, this value should be host:port. If transport is set to unix, the endpoint will internally be translated from host:port to /host.s.PGSQL.port
-    endpoint: "localhost:5432"
+    endpoint: ${env:POSTGRESQL_ENDPOINT}
     # The frequency at which to collect metrics from the Postgres instance.
     collection_interval: 60s
     # The username used to access the postgres instance
@@ -17,8 +17,6 @@ receivers:
     password: ${env:POSTGRESQL_PASSWORD}
     # The list of databases for which the receiver will attempt to collect statistics. If an empty list is provided, the receiver will attempt to collect statistics for all non-template databases
     databases: []
-    # List of databases which will be excluded when collecting statistics.
-    exclude_databases: []
     # # Defines the network to use for connecting to the server. Valid Values are `tcp` or `unix`
     # transport: tcp
     tls:
@@ -45,18 +43,13 @@ processors:
       hostname_sources: ["os"]
 
 exporters:
-  # export to local collector
-  otlp/local:
-    endpoint: "localhost:4317"
-    tls:
-      insecure: true
   # export to SigNoz cloud
   otlp/signoz:
-    endpoint: "ingest.{region}.signoz.cloud:443"
+    endpoint: "ingest.${env:SIGNOZ_REGION}.signoz.cloud:443"
     tls:
       insecure: false
     headers:
-      "signoz-access-token": "<SIGNOZ_INGESTION_KEY>"
+      "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
 
 service:
   pipelines:
@@ -64,9 +57,31 @@ service:
       receivers: [postgresql]
       # note: remove this processor if the collector host is not running on the same host as the postgres instance
       processors: [resourcedetection/system]
-      exporters: [otlp/local]
+      exporters: [otlp/signoz]
+```
+
+
+#### Set Environment Variables
+
+Set the following environment variables in your otel-collector environment:
+
+```bash
+
+# password for postgres monitoring user"
+export POSTGRESQL_PASSWORD="password"
+
+# postgres endpoint reachable from the otel collector"
+export POSTGRESQL_ENDPOINT="host:port"
+
+# your signoz ingestion key"
+export SIGNOZ_INGESTION_KEY="key"
+
+# your signoz region (Eg: us, eu, in ...)
+export SIGNOZ_REGION="us"
+
 ```
 
 #### Use collector config file
 
-Run your collector with the added flag `--config postgres-collector-config.yaml`
+Make the `postgres-collector-config.yaml` file available to your otel collector and add the flag `--config postgres-collector-config.yaml` to the command for running your otel collector.    
+Note: the collector can use multiple config files, specified by multiple occurances of the --config flag.
