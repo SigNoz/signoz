@@ -133,6 +133,7 @@ function WidgetGraph({
 				softMax,
 				softMin,
 				panelType: selectedGraph,
+				currentQuery,
 			}),
 		[
 			widgetId,
@@ -148,6 +149,7 @@ function WidgetGraph({
 			softMax,
 			softMin,
 			selectedGraph,
+			currentQuery,
 		],
 	);
 
