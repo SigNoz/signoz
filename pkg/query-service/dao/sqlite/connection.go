@@ -86,6 +86,17 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			ingestion_url TEXT NOT NULL,
 			data_region TEXT NOT NULL
 		);
+		CREATE TABLE IF NOT EXISTS ignore_rules (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			sample_rate  REAL,
+			filter_name  VARCHAR,
+			opearation_type INTEGER,
+			filter_values  VARCHAR,
+			service_name  VARCHAR,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+			created_by   VARCHAR,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+			updated_by   VARCHAR, error_type INTEGER DEFAULT (1));
 	`
 
 	_, err = db.Exec(table_schema)
