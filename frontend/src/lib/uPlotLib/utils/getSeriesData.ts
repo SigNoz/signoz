@@ -44,12 +44,10 @@ const getSeries = ({
 	for (let i = 0; i < seriesList?.length; i += 1) {
 		const { metric = {}, queryName = '', legend: lgd } = widgetMetaData[i] || {};
 
-		let newLegend;
-		if (currentQuery?.builder.queryData.length) {
-			newLegend = currentQuery?.builder.queryData.find(
-				(i) => i.queryName === queryName,
-			)?.legend;
-		}
+		const newLegend =
+			currentQuery?.builder.queryData.find((item) => item.queryName === queryName)
+				?.legend || '';
+
 		const legend = newLegend || lgd || '';
 
 		const label = getLabelName(metric, queryName || '', legend);
