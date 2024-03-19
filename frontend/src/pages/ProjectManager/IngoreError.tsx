@@ -325,7 +325,7 @@ function IngoreError(): JSX.Element {
 
 	useEffect(() => {
 		getAllProject();
-	}, [getAllProject]);
+	}, []);
 
 	return (
 		<>

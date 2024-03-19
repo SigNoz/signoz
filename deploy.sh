@@ -17,6 +17,11 @@ npm install --force || {
     exit 1
 }
 
+# 生成客户端代码
+cd /home/ubuntu/application-performance-monitor/server/src
+npx prisma generate
+
+cd ..
 # 构建前端
 echo "Building the frontend..."
 npm run build || {
@@ -37,7 +42,7 @@ make build-query-service-static-amd64
 
 # 关闭运行的前端与收集器容器
 echo "Stopping running containers..."
-docker stop signoz-otel-collector signoz-frontend || {
+docker stop signoz-otel-collector signoz-frontend signoz-query-service || {
     echo "Failed to stop the containers."
     exit 1
 }
