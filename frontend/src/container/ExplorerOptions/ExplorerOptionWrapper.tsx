@@ -46,7 +46,7 @@ function ExplorerOptionWrapper({
 	};
 
 	const mouseSensor = useSensor(MouseSensor, {
-		// Require the mouse to move by 10 pixels before activating
+		// Require the mouse to move by 5 pixels before activating
 		activationConstraint: {
 			distance: 5,
 		},
