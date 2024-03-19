@@ -325,7 +325,7 @@ function ExplorerOptions({
 			)}
 			{!isExplorerOptionHidden && (
 				<div
-					className="explorer-options"
+					className="explorer-container"
 					style={{
 						background: extraData
 							? `linear-gradient(90deg, rgba(0,0,0,0) -5%, ${rgbaColor} 9%, rgba(0,0,0,0) 30%)`
@@ -337,79 +337,81 @@ function ExplorerOptions({
 					{...listeners}
 					{...attributes}
 				>
-					<div className="view-options">
-						<Select<string, { key: string; value: string }>
-							showSearch
-							placeholder="Select a view"
-							loading={viewsIsLoading || isRefetching}
-							value={viewName || undefined}
-							onSelect={handleSelect}
-							style={{
-								minWidth: 170,
-							}}
-							dropdownStyle={dropdownStyle}
-							className="views-dropdown"
-							allowClear={{
-								clearIcon: <XCircle size={16} style={{ marginTop: '-3px' }} />,
-							}}
-							onDropdownVisibleChange={(open): void => {
-								setIsDragEnabled(open);
-							}}
-							onClear={handleClearSelect}
-							ref={ref}
-						>
-							{viewsData?.data?.data?.map((view) => {
-								const extraData =
-									view.extraData !== '' ? JSON.parse(view.extraData) : '';
-								let bgColor = getRandomColor();
-								if (extraData !== '') {
-									bgColor = extraData.color;
-								}
-								return (
-									<Select.Option key={view.uuid} value={view.name}>
-										<div className="render-options">
-											<span
-												className="dot"
-												style={{
-													background: bgColor,
-													boxShadow: `0px 0px 6px 0px ${bgColor}`,
-												}}
-											/>{' '}
-											{view.name}
-										</div>
-									</Select.Option>
-								);
-							})}
-						</Select>
-
-						<Button
-							shape="round"
-							onClick={handleSaveViewModalToggle}
-							className={isEditDeleteSupported ? '' : 'hidden'}
-							disabled={viewsIsLoading || isRefetching}
-						>
-							<Disc3 size={16} /> Save this view
-						</Button>
-					</div>
-
-					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
-
-					<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
-						<Tooltip title="Create Alerts">
-							<Button
-								disabled={disabled}
-								shape="circle"
-								onClick={onCreateAlertsHandler}
+					<div className="explorer-options" data-no-dnd="true">
+						<div className="view-options">
+							<Select<string, { key: string; value: string }>
+								showSearch
+								placeholder="Select a view"
+								loading={viewsIsLoading || isRefetching}
+								value={viewName || undefined}
+								onSelect={handleSelect}
+								style={{
+									minWidth: 170,
+								}}
+								dropdownStyle={dropdownStyle}
+								className="views-dropdown"
+								allowClear={{
+									clearIcon: <XCircle size={16} style={{ marginTop: '-3px' }} />,
+								}}
+								onDropdownVisibleChange={(open): void => {
+									setIsDragEnabled(open);
+								}}
+								onClear={handleClearSelect}
+								ref={ref}
 							>
-								<ConciergeBell size={16} />
-							</Button>
-						</Tooltip>
+								{viewsData?.data?.data?.map((view) => {
+									const extraData =
+										view.extraData !== '' ? JSON.parse(view.extraData) : '';
+									let bgColor = getRandomColor();
+									if (extraData !== '') {
+										bgColor = extraData.color;
+									}
+									return (
+										<Select.Option key={view.uuid} value={view.name}>
+											<div className="render-options">
+												<span
+													className="dot"
+													style={{
+														background: bgColor,
+														boxShadow: `0px 0px 6px 0px ${bgColor}`,
+													}}
+												/>{' '}
+												{view.name}
+											</div>
+										</Select.Option>
+									);
+								})}
+							</Select>
 
-						<Tooltip title="Add to Dashboard">
-							<Button disabled={disabled} shape="circle" onClick={onAddToDashboard}>
-								<Plus size={16} />
+							<Button
+								shape="round"
+								onClick={handleSaveViewModalToggle}
+								className={isEditDeleteSupported ? '' : 'hidden'}
+								disabled={viewsIsLoading || isRefetching}
+							>
+								<Disc3 size={16} /> Save this view
 							</Button>
-						</Tooltip>
+						</div>
+
+						<hr className={isEditDeleteSupported ? '' : 'hidden'} />
+
+						<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
+							<Tooltip title="Create Alerts">
+								<Button
+									disabled={disabled}
+									shape="circle"
+									onClick={onCreateAlertsHandler}
+								>
+									<ConciergeBell size={16} />
+								</Button>
+							</Tooltip>
+
+							<Tooltip title="Add to Dashboard">
+								<Button disabled={disabled} shape="circle" onClick={onAddToDashboard}>
+									<Plus size={16} />
+								</Button>
+							</Tooltip>
+						</div>
 					</div>
 				</div>
 			)}
