@@ -337,7 +337,7 @@ function ExplorerOptions({
 					{...listeners}
 					{...attributes}
 				>
-					<div className="explorer-options" data-no-dnd="true">
+					<div className="explorer-options">
 						<div className="view-options">
 							<Select<string, { key: string; value: string }>
 								showSearch

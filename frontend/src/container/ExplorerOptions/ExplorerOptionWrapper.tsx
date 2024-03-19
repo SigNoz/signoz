@@ -1,4 +1,10 @@
-import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import {
+	DndContext,
+	DragEndEvent,
+	MouseSensor,
+	useSensor,
+	useSensors,
+} from '@dnd-kit/core';
 import { useEffect, useState } from 'react';
 
 import ExplorerOptions, { ExplorerOptionsProps } from './ExplorerOptions';
@@ -38,8 +44,18 @@ function ExplorerOptionWrapper({
 			setExplorerToolBarVisibility(false, sourcepage);
 		}
 	};
+
+	const mouseSensor = useSensor(MouseSensor, {
+		// Require the mouse to move by 10 pixels before activating
+		activationConstraint: {
+			distance: 5,
+		},
+	});
+
+	const sensors = useSensors(mouseSensor);
+
 	return (
-		<DndContext onDragEnd={handleDragEnd}>
+		<DndContext onDragEnd={handleDragEnd} sensors={sensors}>
 			<ExplorerOptions
 				disabled={disabled}
 				query={query}

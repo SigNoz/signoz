@@ -50,11 +50,9 @@
 	box-shadow: 4px 4px 16px 4px rgba(0, 0, 0, 0.25);
 	backdrop-filter: blur(20px);
 	cursor: grab;
-	background: red !important;
 
 	.explorer-options {
-		background-color: white;
-		cursor: unset;
+		cursor: default;
 		display: flex;
 		gap: 16px;
 		z-index: 1;
