@@ -8,7 +8,9 @@ export const SearchContainer = styled.div`
 	align-items: center;
 	gap: 0.2rem;
 	padding: 0 0.2rem;
-	border: 1px solid #ccc5;
+	border: 1px solid #454c58;
+	box-sizing: border-box;
+	border-radius: 3px;
 `;
 
 export const QueryChipContainer = styled.span`

@@ -87,7 +87,7 @@ function ResourceAttributesFilter({
 					value={selectedEnvironments}
 					placeholder="Select Environment/s"
 					data-testId="resource-environment-filter"
-					style={{ minWidth: 200 }}
+					style={{ minWidth: 200, height: 34 }}
 					onChange={handleEnvironmentChange}
 					onBlur={handleBlur}
 				>
