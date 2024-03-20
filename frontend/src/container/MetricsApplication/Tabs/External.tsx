@@ -18,7 +18,7 @@ import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { GraphTitle, legend, MENU_ITEMS, SERVICE_CHART_ID } from '../constant';
+import { GraphTitle, legend, MENU_ITEMS } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
@@ -60,7 +60,7 @@ function External(): JSX.Element {
 				title: GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: '%',
-				id: SERVICE_CHART_ID.externalCallErrorPercentage,
+				id: GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -86,7 +86,8 @@ function External(): JSX.Element {
 				title: GraphTitle.EXTERNAL_CALL_DURATION,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'ms',
-				id: SERVICE_CHART_ID.externalCallDuration,
+				id: GraphTitle.EXTERNAL_CALL_DURATION,
+				fillSpans: true,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -108,7 +109,8 @@ function External(): JSX.Element {
 				title: GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'reqps',
-				id: SERVICE_CHART_ID.externalCallRPSByAddress,
+				id: GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
+				fillSpans: true,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -130,7 +132,8 @@ function External(): JSX.Element {
 				title: GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 				yAxisUnit: 'ms',
-				id: SERVICE_CHART_ID.externalCallDurationByAddress,
+				id: GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
+				fillSpans: true,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -155,9 +158,7 @@ function External(): JSX.Element {
 					<Card data-testid="external_call_error_percentage">
 						<GraphContainer>
 							<Graph
-								fillSpans={false}
 								headerMenuList={MENU_ITEMS}
-								name="external_call_error_percentage"
 								widget={externalCallErrorWidget}
 								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
@@ -192,8 +193,6 @@ function External(): JSX.Element {
 					<Card data-testid="external_call_duration">
 						<GraphContainer>
 							<Graph
-								fillSpans
-								name="external_call_duration"
 								headerMenuList={MENU_ITEMS}
 								widget={externalCallDurationWidget}
 								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
@@ -230,8 +229,6 @@ function External(): JSX.Element {
 					<Card data-testid="external_call_rps_by_address">
 						<GraphContainer>
 							<Graph
-								fillSpans
-								name="external_call_rps_by_address"
 								widget={externalCallRPSWidget}
 								headerMenuList={MENU_ITEMS}
 								onClickHandler={(xValue, yValue, mouseX, mouseY): Promise<void> =>
@@ -267,10 +264,8 @@ function External(): JSX.Element {
 					<Card data-testid="external_call_duration_by_address">
 						<GraphContainer>
 							<Graph
-								name="external_call_duration_by_address"
 								widget={externalCallDurationAddressWidget}
 								headerMenuList={MENU_ITEMS}
-								fillSpans
 								onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										xValue,

@@ -13,7 +13,7 @@ export const Card = styled(CardComponent)`
 	}
 
 	.ant-card-body {
-		height: calc(100% - 40px);
+		height: 100%;
 		padding: 0;
 	}
 `;
@@ -40,7 +40,7 @@ export const ColErrorContainer = styled(ColComponent)`
 
 export const GraphContainer = styled.div`
 	min-height: calc(40vh - 40px);
-	height: calc(100% - 40px);
+	height: 100%;
 `;
 
 export const GraphTitle = styled(Typography)`

@@ -3,20 +3,25 @@ import './GridCardLayout.styles.scss';
 import { PlusOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
+import history from 'lib/history';
 import isEqual from 'lodash-es/isEqual';
 import { FullscreenIcon } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
@@ -45,6 +50,8 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	} = useDashboard();
 	const { data } = selectedDashboard || {};
 	const handle = useFullScreenHandle();
+	const { pathname } = useLocation();
+	const dispatch = useDispatch();
 
 	const { widgets, variables } = data || {};
 
@@ -61,6 +68,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	const updateDashboardMutation = useUpdateDashboard();
 
 	const { notifications } = useNotifications();
+	const urlQuery = useUrlQuery();
 
 	let permissions: ComponentTypes[] = ['save_layout', 'add_panel'];
 
@@ -125,6 +133,23 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 			setDashboardLayout(layout);
 		}
 	};
+
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			history.replace(generatedUrl);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch, pathname, urlQuery],
+	);
 
 	useEffect(() => {
 		if (
@@ -200,11 +225,10 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 								>
 									<GridCard
 										widget={currentWidget || ({ id, query: {} } as Widgets)}
-										name={currentWidget?.id || ''}
 										headerMenuList={widgetActions}
 										variables={variables}
-										fillSpans={currentWidget?.fillSpans}
 										version={selectedDashboard?.data?.version}
+										onDragSelect={onDragSelect}
 									/>
 								</Card>
 							</CardContainer>

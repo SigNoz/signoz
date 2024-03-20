@@ -2,14 +2,11 @@ import './QuerySection.styles.scss';
 
 import { Button, Tabs, Tooltip, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
-import { WidgetGraphProps } from 'container/NewWidget/types';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -22,9 +19,12 @@ import {
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useMemo } from 'react';
+import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import AppReducer from 'types/reducer/app';
@@ -35,7 +35,7 @@ import PromQLQueryContainer from './QueryBuilder/promQL';
 
 function QuerySection({
 	selectedGraph,
-	selectedTime,
+	queryResponse,
 }: QueryProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const urlQuery = useUrlQuery();
@@ -50,14 +50,6 @@ function QuerySection({
 	);
 
 	const { selectedDashboard, setSelectedDashboard } = useDashboard();
-
-	const getWidgetQueryRange = useGetWidgetQueryRange(
-		{
-			graphType: selectedGraph,
-			selectedTime: selectedTime.enum,
-		},
-		selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
-	);
 
 	const { widgets } = selectedDashboard?.data || {};
 
@@ -233,7 +225,7 @@ function QuerySection({
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
 						<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
 						<Button
-							loading={getWidgetQueryRange.isFetching}
+							loading={queryResponse.isFetching}
 							type="primary"
 							onClick={handleRunQuery}
 							className="stage-run-query"
@@ -251,7 +243,10 @@ function QuerySection({
 
 interface QueryProps {
 	selectedGraph: PANEL_TYPES;
-	selectedTime: WidgetGraphProps['selectedTime'];
+	queryResponse: UseQueryResult<
+		SuccessResponse<MetricRangePayloadProps, unknown>,
+		Error
+	>;
 }
 
 export default QuerySection;
