@@ -17,7 +17,7 @@ import {
 } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import updateCreditCardApi from 'api/billing/checkout';
-import getUsage from 'api/billing/getUsage';
+import getUsage, { UsageResponsePayloadProps } from 'api/billing/getUsage';
 import manageCreditCardApi from 'api/billing/manage';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -116,6 +116,7 @@ const dummyColumns: ColumnsType<DataType> = [
 	},
 ];
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function BillingContainer(): JSX.Element {
 	const daysRemainingStr = 'days remaining in your billing period.';
 	const [headerText, setHeaderText] = useState('');
@@ -124,7 +125,9 @@ export default function BillingContainer(): JSX.Element {
 	const [daysRemaining, setDaysRemaining] = useState(0);
 	const [isFreeTrial, setIsFreeTrial] = useState(false);
 	const [data, setData] = useState<any[]>([]);
-	const [apiResponse, setApiResponse] = useState<any>({});
+	const [apiResponse, setApiResponse] = useState<
+		Partial<UsageResponsePayloadProps>
+	>({});
 
 	const { trackEvent } = useAnalytics();
 
@@ -185,6 +188,8 @@ export default function BillingContainer(): JSX.Element {
 		},
 		[licensesData?.payload?.onTrial],
 	);
+
+	const isSubscriptionPastDue = apiResponse.subscriptionStatus === 'past_due';
 
 	const { isLoading, isFetching: isFetchingBillingData } = useQuery(
 		[REACT_QUERY_KEY.GET_BILLING_USAGE, user?.userId],
@@ -404,6 +409,18 @@ export default function BillingContainer(): JSX.Element {
 				) : (
 					<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
 				)}
+
+				{isSubscriptionPastDue &&
+					(!isLoading && !isFetchingBillingData ? (
+						<Alert
+							message="Your subscription status is past due"
+							type="error"
+							showIcon
+							style={{ marginTop: 12 }}
+						/>
+					) : (
+						<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
+					))}
 			</Card>
 
 			<BillingUsageGraphCallback />
