@@ -76,10 +76,9 @@ function AddDomain({ refetch }: Props): JSX.Element {
 				destroyOnClose
 				onCancel={(): void => setIsDomain(false)}
 			>
-				<Form form={form} onFinish={onCreateHandler}>
+				<Form form={form} onFinish={onCreateHandler} requiredMark>
 					<Form.Item
 						required
-						requiredMark
 						name={['domain']}
 						rules={[
 							{

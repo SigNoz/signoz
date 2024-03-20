@@ -1,6 +1,7 @@
 import { Select, SelectProps, Space } from 'antd';
 import { getCategorySelectOptionByName } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { categoryToSupport } from './config';
 import { DefaultLabel, selectStyles } from './styles';
@@ -9,10 +10,11 @@ import { filterOption } from './utils';
 
 function BuilderUnitsFilter({
 	onChange,
+	yAxisUnit,
 }: IBuilderUnitsFilterProps): JSX.Element {
 	const { currentQuery, handleOnUnitsChange } = useQueryBuilder();
 
-	const selectedValue = currentQuery?.unit;
+	const selectedValue = yAxisUnit || currentQuery?.unit;
 
 	const allOptions = categoryToSupport.map((category) => ({
 		label: category,
@@ -31,6 +33,7 @@ function BuilderUnitsFilter({
 		<Space>
 			<DefaultLabel>Y-axis unit</DefaultLabel>
 			<Select
+				getPopupContainer={popupContainer}
 				style={selectStyles}
 				onChange={onChangeHandler}
 				value={selectedValue}

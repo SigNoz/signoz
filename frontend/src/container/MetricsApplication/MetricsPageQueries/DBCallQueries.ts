@@ -113,7 +113,11 @@ export const databaseCallsAvgDuration = ({
 	const disabled = [true, true];
 	const legendFormulas = ['Average Duration'];
 	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
-	const aggregateOperators = [
+	const timeAggregateOperators = [
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+	];
+	const spaceAggregateOperators = [
 		MetricAggregateOperator.SUM,
 		MetricAggregateOperator.SUM,
 	];
@@ -126,7 +130,8 @@ export const databaseCallsAvgDuration = ({
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 		dataSource,
 	});
 };

@@ -59,8 +59,8 @@ export const StepHeading = styled.p`
 export const InlineSelect = styled(Select)`
 	display: inline-block;
 	width: 10% !important;
-	margin-left: 0.2em;
-	margin-right: 0.2em;
+	margin-left: 0.3em;
+	margin-right: 0.3em;
 `;
 
 export const SeveritySelect = styled(Select)`
@@ -76,6 +76,10 @@ export const FormContainer = styled(Card)`
 	display: flex;
 	flex-direction: column;
 	border-radius: 4px;
+
+	.ant-card-body {
+		padding: 12px;
+	}
 `;
 
 export const TextareaMedium = styled(TextArea)`

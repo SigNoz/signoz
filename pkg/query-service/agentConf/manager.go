@@ -111,10 +111,6 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 			return nil, "", errors.Wrap(apiErr.ToError(), "failed to get latest agent config version")
 		}
 
-		if latestConfig == nil {
-			continue
-		}
-
 		updatedConf, serializedSettingsUsed, apiErr := feature.RecommendAgentConfig(
 			recommendation, latestConfig,
 		)
@@ -124,13 +120,24 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 			))
 		}
 		recommendation = updatedConf
-		configId := fmt.Sprintf("%s:%d", featureType, latestConfig.Version)
+
+		// It is possible for a feature to recommend collector config
+		// before any user created config versions exist.
+		//
+		// For example, log pipeline config for installed integrations will
+		// have to be recommended even if the user hasn't created any pipelines yet
+		configVersion := -1
+		if latestConfig != nil {
+			configVersion = latestConfig.Version
+		}
+		configId := fmt.Sprintf("%s:%d", featureType, configVersion)
+
 		settingVersionsUsed = append(settingVersionsUsed, configId)
 
 		m.updateDeployStatus(
 			context.Background(),
 			featureType,
-			latestConfig.Version,
+			configVersion,
 			string(DeployInitiated),
 			"Deployment has started",
 			configId,
@@ -172,21 +179,6 @@ func (m *Manager) ReportConfigDeploymentStatus(
 	}
 }
 
-// Ready indicates if Manager can accept new config update requests
-func (mgr *Manager) Ready() bool {
-	if atomic.LoadUint32(&mgr.lock) != 0 {
-		return false
-	}
-	return opamp.Ready()
-}
-
-// Static methods for working with default manager instance in this module.
-
-// Ready indicates if Manager can accept new config update requests
-func Ready() bool {
-	return m.Ready()
-}
-
 func GetLatestVersion(
 	ctx context.Context, elementType ElementTypeDef,
 ) (*ConfigVersion, *model.ApiError) {
@@ -210,11 +202,6 @@ func StartNewVersion(
 	ctx context.Context, userId string, eleType ElementTypeDef, elementIds []string,
 ) (*ConfigVersion, *model.ApiError) {
 
-	if !m.Ready() {
-		// agent is already being updated, ask caller to wait and re-try after sometime
-		return nil, model.UnavailableError(fmt.Errorf("agent updater is busy"))
-	}
-
 	// create a new version
 	cfg := NewConfigversion(eleType)
 
@@ -227,6 +214,10 @@ func StartNewVersion(
 	m.notifyConfigUpdateSubscribers()
 
 	return cfg, nil
+}
+
+func NotifyConfigUpdate(ctx context.Context) {
+	m.notifyConfigUpdateSubscribers()
 }
 
 func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiError {

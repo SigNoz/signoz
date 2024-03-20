@@ -1,8 +1,12 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { ReactNode } from 'react';
 import { Layout } from 'react-grid-layout';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+
+import { IField } from '../logs/fields';
+import { BaseAutocompleteData } from '../queryBuilder/queryAutocompleteResponse';
 
 export type PayloadProps = Dashboard[];
 
@@ -13,6 +17,8 @@ export const VariableSortTypeArr = ['DISABLED', 'ASC', 'DESC'] as const;
 export type TSortVariableValuesType = typeof VariableSortTypeArr[number];
 
 export interface IDashboardVariable {
+	id: string;
+	order?: any;
 	name?: string; // key will be the source of truth
 	description: string;
 	type: TVariableQueryType;
@@ -45,6 +51,7 @@ export interface Dashboard {
 	created_by: string;
 	updated_by: string;
 	data: DashboardData;
+	isLocked?: boolean;
 }
 
 export interface DashboardData {
@@ -56,6 +63,7 @@ export interface DashboardData {
 	title: string;
 	layout?: Layout[];
 	variables: Record<string, IDashboardVariable>;
+	version?: string;
 }
 
 export interface IBaseWidget {
@@ -69,6 +77,12 @@ export interface IBaseWidget {
 	timePreferance: timePreferenceType;
 	stepSize?: number;
 	yAxisUnit?: string;
+	thresholds?: ThresholdProps[];
+	softMin: number | null;
+	softMax: number | null;
+	fillSpans?: boolean;
+	selectedLogFields: IField[] | null;
+	selectedTracesFields: BaseAutocompleteData[] | null;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

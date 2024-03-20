@@ -15,9 +15,20 @@ export const ServiceMapPage = Loadable(
 	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
 );
 
+export const LogsSaveViews = Loadable(
+	() => import(/* webpackChunkName: "LogsSaveViews" */ 'pages/LogsModulePage'), // TODO: Add a wrapper so that the same component can be used in traces
+);
+
 export const TracesExplorer = Loadable(
 	() =>
-		import(/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesExplorer'),
+		import(
+			/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesModulePage'
+		),
+);
+
+export const TracesSaveViews = Loadable(
+	() =>
+		import(/* webpackChunkName: "Traces Save Views" */ 'pages/TracesModulePage'),
 );
 
 export const TraceFilter = Loadable(
@@ -49,7 +60,8 @@ export const Onboarding = Loadable(
 );
 
 export const DashboardPage = Loadable(
-	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/Dashboard'),
+	() =>
+		import(/* webpackChunkName: "DashboardPage" */ 'pages/DashboardsListPage'),
 );
 
 export const NewDashboardPage = Loadable(
@@ -106,20 +118,32 @@ export const IngestionSettings = Loadable(
 	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
 );
 
+export const APIKeys = Loadable(
+	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
+);
+
 export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
 );
 
 export const Logs = Loadable(
-	() => import(/* webpackChunkName: "Logs" */ 'pages/Logs'),
+	() => import(/* webpackChunkName: "Logs" */ 'pages/LogsModulePage'),
 );
 
 export const LogsExplorer = Loadable(
-	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsExplorer'),
+	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsModulePage'),
+);
+
+export const OldLogsExplorer = Loadable(
+	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/Logs'),
 );
 
 export const LiveLogs = Loadable(
 	() => import(/* webpackChunkName: "Live Logs" */ 'pages/LiveLogs'),
+);
+
+export const PipelinePage = Loadable(
+	() => import(/* webpackChunkName: "Pipelines" */ 'pages/LogsModulePage'),
 );
 
 export const Login = Loadable(
@@ -150,10 +174,6 @@ export const LogsIndexToFields = Loadable(
 		import(/* webpackChunkName: "LogsIndexToFields Page" */ 'pages/LogsSettings'),
 );
 
-export const PipelinePage = Loadable(
-	() => import(/* webpackChunkName: "Pipelines" */ 'pages/Pipelines'),
-);
-
 export const BillingPage = Loadable(
 	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Billing'),
 );
@@ -165,4 +185,23 @@ export const SupportPage = Loadable(
 export const WorkspaceBlocked = Loadable(
 	() =>
 		import(/* webpackChunkName: "WorkspaceLocked" */ 'pages/WorkspaceLocked'),
+);
+
+export const ShortcutsPage = Loadable(
+	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
+);
+
+export const InstalledIntegrations = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
+		),
+);
+
+export const IntegrationsMarketPlace = Loadable(
+	// eslint-disable-next-line sonarjs/no-identical-functions
+	() =>
+		import(
+			/* webpackChunkName: "IntegrationsMarketPlace" */ 'pages/IntegrationsModulePage'
+		),
 );

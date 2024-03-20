@@ -10,7 +10,7 @@ interface IPlotTagProps {
 }
 
 function PlotTag({ queryType, panelType }: IPlotTagProps): JSX.Element | null {
-	if (queryType === undefined) {
+	if (queryType === undefined || panelType === PANEL_TYPES.LIST) {
 		return null;
 	}
 

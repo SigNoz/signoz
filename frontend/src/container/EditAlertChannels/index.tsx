@@ -1,9 +1,11 @@
 import { Form } from 'antd';
+import editEmail from 'api/channels/editEmail';
 import editMsTeamsApi from 'api/channels/editMsTeams';
 import editOpsgenie from 'api/channels/editOpsgenie';
 import editPagerApi from 'api/channels/editPager';
 import editSlackApi from 'api/channels/editSlack';
 import editWebhookApi from 'api/channels/editWebhook';
+import testEmail from 'api/channels/testEmail';
 import testMsTeamsApi from 'api/channels/testMsTeams';
 import testOpsgenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
@@ -12,6 +14,7 @@ import testWebhookApi from 'api/channels/testWebhook';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
+	EmailChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -22,7 +25,7 @@ import {
 import FormAlertChannels from 'container/FormAlertChannels';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
@@ -39,7 +42,8 @@ function EditAlertChannels({
 				WebhookChannel &
 				PagerChannel &
 				MsTeamsChannel &
-				OpsgenieChannel
+				OpsgenieChannel &
+				EmailChannel
 		>
 	>({
 		...initialValue,
@@ -56,6 +60,12 @@ function EditAlertChannels({
 	const onTypeChangeHandler = useCallback((value: string) => {
 		setType(value as ChannelType);
 	}, []);
+
+	useEffect(() => {
+		formInstance.setFieldsValue({
+			...initialValue,
+		});
+	}, [formInstance, initialValue]);
 
 	const prepareSlackRequest = useCallback(
 		() => ({
@@ -149,6 +159,36 @@ function EditAlertChannels({
 		}
 		setSavingState(false);
 	}, [prepareWebhookRequest, t, notifications, selectedConfig]);
+
+	const prepareEmailRequest = useCallback(
+		() => ({
+			name: selectedConfig?.name || '',
+			to: selectedConfig.to || '',
+			html: selectedConfig.html || '',
+			headers: selectedConfig.headers || {},
+			id,
+		}),
+		[id, selectedConfig],
+	);
+
+	const onEmailEditHandler = useCallback(async () => {
+		setSavingState(true);
+		const request = prepareEmailRequest();
+		const response = await editEmail(request);
+		if (response.statusCode === 200) {
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+			history.replace(ROUTES.ALL_CHANNELS);
+		} else {
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_edit_failed'),
+			});
+		}
+		setSavingState(false);
+	}, [prepareEmailRequest, t, notifications]);
 
 	const preparePagerRequest = useCallback(
 		() => ({
@@ -294,6 +334,8 @@ function EditAlertChannels({
 				onMsTeamsEditHandler();
 			} else if (value === ChannelType.Opsgenie) {
 				onOpsgenieEditHandler();
+			} else if (value === ChannelType.Email) {
+				onEmailEditHandler();
 			}
 		},
 		[
@@ -302,6 +344,7 @@ function EditAlertChannels({
 			onPagerEditHandler,
 			onMsTeamsEditHandler,
 			onOpsgenieEditHandler,
+			onEmailEditHandler,
 		],
 	);
 
@@ -331,6 +374,10 @@ function EditAlertChannels({
 					case ChannelType.Opsgenie:
 						request = prepareOpsgenieRequest();
 						if (request) response = await testOpsgenie(request);
+						break;
+					case ChannelType.Email:
+						request = prepareEmailRequest();
+						if (request) response = await testEmail(request);
 						break;
 					default:
 						notifications.error({
@@ -367,6 +414,7 @@ function EditAlertChannels({
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
 			prepareOpsgenieRequest,
+			prepareEmailRequest,
 			notifications,
 		],
 	);

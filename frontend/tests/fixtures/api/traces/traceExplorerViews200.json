@@ -1,0 +1,52 @@
+{
+	"status": "success",
+	"data": [
+		{
+			"uuid": "8402eda3-2be3-4e07-930b-9ff69c3da34f",
+			"name": "PlayWright",
+			"category": "",
+			"createdAt": "2023-11-16T19:24:49.875396768Z",
+			"createdBy": "contributors@signoz.io",
+			"updatedAt": "2023-11-16T19:24:49.875396872Z",
+			"updatedBy": "contributors@signoz.io",
+			"sourcePage": "traces",
+			"tags": [""],
+			"compositeQuery": {
+				"builderQueries": {
+					"A": {
+						"queryName": "A",
+						"stepInterval": 60,
+						"dataSource": "traces",
+						"aggregateOperator": "count",
+						"aggregateAttribute": {
+							"key": "",
+							"dataType": "",
+							"type": "",
+							"isColumn": false,
+							"isJSON": false
+						},
+						"filters": {
+							"op": "AND",
+							"items": []
+						},
+						"expression": "A",
+						"disabled": false,
+						"limit": 0,
+						"offset": 0,
+						"pageSize": 0,
+						"orderBy": [
+							{
+								"columnName": "timestamp",
+								"order": "desc"
+							}
+						],
+						"reduceTo": "avg"
+					}
+				},
+				"panelType": "table",
+				"queryType": "builder"
+			},
+			"extraData": ""
+		}
+	]
+}

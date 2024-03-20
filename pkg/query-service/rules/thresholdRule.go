@@ -3,18 +3,22 @@ package rules
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
+	"net/url"
 	"reflect"
+	"regexp"
 	"sort"
-	"strconv"
 	"sync"
 	"text/template"
 	"time"
+	"unicode"
 
 	"go.uber.org/zap"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"go.signoz.io/signoz/pkg/query-service/converter"
 
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
@@ -28,6 +32,7 @@ import (
 
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/formatter"
 
@@ -56,9 +61,19 @@ type ThresholdRule struct {
 	// map of active alerts
 	active map[uint64]*Alert
 
-	queryBuilder *queryBuilder.QueryBuilder
+	queryBuilder   *queryBuilder.QueryBuilder
+	version        string
+	queryBuilderV4 *queryBuilder.QueryBuilder
+	// temporalityMap is a map of metric name to temporality
+	// to avoid fetching temporality for the same metric multiple times
+	// querying the v4 table on low cardinal temporality column
+	// should be fast but we can still avoid the query if we have the data in memory
+	temporalityMap map[string]map[v3.Temporality]bool
 
 	opts ThresholdRuleOpts
+
+	lastTimestampWithDatapoints time.Time
+	typ                         string
 }
 
 type ThresholdRuleOpts struct {
@@ -97,6 +112,9 @@ func NewThresholdRule(
 		health:            HealthUnknown,
 		active:            map[uint64]*Alert{},
 		opts:              opts,
+		typ:               p.AlertType,
+		version:           p.Version,
+		temporalityMap:    make(map[string]map[v3.Temporality]bool),
 	}
 
 	if int64(t.evalWindow) == 0 {
@@ -109,6 +127,13 @@ func NewThresholdRule(
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
 	t.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, featureFlags)
+
+	builderOptsV4 := queryBuilder.QueryBuilderOptions{
+		BuildMetricQuery: metricsV4.PrepareMetricQuery,
+		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
+		BuildLogQuery:    logsv3.PrepareLogsQuery,
+	}
+	t.queryBuilderV4 = queryBuilder.NewQueryBuilder(builderOptsV4, featureFlags)
 
 	zap.S().Info("msg:", "creating new alerting rule", "\t name:", t.name, "\t condition:", t.ruleCondition.String(), "\t generatorURL:", t.GeneratorURL())
 
@@ -133,13 +158,6 @@ func (r *ThresholdRule) GeneratorURL() string {
 
 func (r *ThresholdRule) PreferredChannels() []string {
 	return r.preferredChannels
-}
-
-func (r *ThresholdRule) target() *float64 {
-	if r.ruleCondition == nil {
-		return nil
-	}
-	return r.ruleCondition.Target
 }
 
 func (r *ThresholdRule) targetVal() float64 {
@@ -217,26 +235,6 @@ func (r *ThresholdRule) Annotations() labels.BaseLabels {
 	return r.annotations
 }
 
-func (r *ThresholdRule) sample(alert *Alert, ts time.Time) Sample {
-	lb := labels.NewBuilder(r.labels)
-	alertLabels := alert.Labels.(labels.Labels)
-	for _, l := range alertLabels {
-		lb.Set(l.Name, l.Value)
-	}
-
-	lb.Set(labels.MetricNameLabel, alertMetricName)
-	lb.Set(labels.AlertNameLabel, r.name)
-	lb.Set(labels.AlertRuleIdLabel, r.ID())
-	lb.Set(labels.AlertStateLabel, alert.State.String())
-
-	s := Sample{
-		Metric: lb.Labels(),
-		Point:  Point{T: timestamp.FromTime(ts), V: 1},
-	}
-
-	return s
-}
-
 // GetEvaluationDuration returns the time in seconds it took to evaluate the alerting rule.
 func (r *ThresholdRule) GetEvaluationDuration() time.Duration {
 	r.mtx.Lock()
@@ -294,6 +292,84 @@ func (r *ThresholdRule) ActiveAlerts() []*Alert {
 		}
 	}
 	return res
+}
+
+func (r *ThresholdRule) FetchTemporality(ctx context.Context, metricNames []string, ch driver.Conn) (map[string]map[v3.Temporality]bool, error) {
+
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+
+	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME)
+
+	rows, err := ch.Query(ctx, query, metricNames)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var metricName, temporality string
+		err := rows.Scan(&metricName, &temporality)
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := metricNameToTemporality[metricName]; !ok {
+			metricNameToTemporality[metricName] = make(map[v3.Temporality]bool)
+		}
+		metricNameToTemporality[metricName][v3.Temporality(temporality)] = true
+	}
+	return metricNameToTemporality, nil
+}
+
+// populateTemporality same as addTemporality but for v4 and better
+func (r *ThresholdRule) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3, ch driver.Conn) error {
+
+	missingTemporality := make([]string, 0)
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for _, query := range qp.CompositeQuery.BuilderQueries {
+			// if there is no temporality specified in the query but we have it in the map
+			// then use the value from the map
+			if query.Temporality == "" && r.temporalityMap[query.AggregateAttribute.Key] != nil {
+				// We prefer delta if it is available
+				if r.temporalityMap[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if r.temporalityMap[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+			}
+			// we don't have temporality for this metric
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				missingTemporality = append(missingTemporality, query.AggregateAttribute.Key)
+			}
+			if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
+				metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
+			}
+		}
+	}
+
+	nameToTemporality, err := r.FetchTemporality(ctx, missingTemporality, ch)
+	if err != nil {
+		return err
+	}
+
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for name := range qp.CompositeQuery.BuilderQueries {
+			query := qp.CompositeQuery.BuilderQueries[name]
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				if nameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if nameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+				r.temporalityMap[query.AggregateAttribute.Key] = nameToTemporality[query.AggregateAttribute.Key]
+			}
+		}
+	}
+	return nil
 }
 
 // ForEachActiveAlert runs the given function on each alert.
@@ -457,24 +533,33 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		if err := rows.Scan(vars...); err != nil {
 			return nil, err
 		}
+		r.lastTimestampWithDatapoints = time.Now()
 
 		sample := Sample{}
+		// Why do we maintain two labels sets? Alertmanager requires
+		// label keys to follow the model https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+		// However, our traces and logs explorers support label keys with dot and other namespace characters
+		// Using normalized label keys results in invalid filter criteria.
+		// The original labels are used to prepare the related{logs, traces} link in alert notification
 		lbls := labels.NewBuilder(labels.Labels{})
+		lblsOrig := labels.NewBuilder(labels.Labels{})
 
 		for i, v := range vars {
 
-			colName := columnNames[i]
+			colName := normalizeLabelName(columnNames[i])
 
 			switch v := v.(type) {
 			case *string:
 				lbls.Set(colName, *v)
+				lblsOrig.Set(columnNames[i], *v)
 			case *time.Time:
 				timval := *v
 
 				if colName == "ts" || colName == "interval" {
 					sample.Point.T = timval.Unix()
 				} else {
-					lbls.Set(colName, timval.Format("2006-01-02 15:04:05"))
+					lbls.Set(colName, timval.Format(constants.AlertTimeFormat))
+					lblsOrig.Set(columnNames[i], timval.Format(constants.AlertTimeFormat))
 				}
 
 			case *float64:
@@ -482,6 +567,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.V = *v
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%f", *v))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", *v))
 				}
 			case **float64:
 				// ch seems to return this type when column is derived from
@@ -492,6 +578,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 						sample.Point.V = *floatVal
 					} else {
 						lbls.Set(colName, fmt.Sprintf("%f", *floatVal))
+						lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", *floatVal))
 					}
 				}
 			case *float32:
@@ -500,18 +587,21 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					sample.Point.V = float64(float32Val)
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%f", float32Val))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", float32Val))
 				}
 			case *uint8, *uint64, *uint16, *uint32:
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
 					sample.Point.V = float64(reflect.ValueOf(v).Elem().Uint())
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
 				}
 			case *int8, *int16, *int32, *int64:
 				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
 					sample.Point.V = float64(reflect.ValueOf(v).Elem().Int())
 				} else {
 					lbls.Set(colName, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
+					lblsOrig.Set(columnNames[i], fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
 				}
 			default:
 				zap.S().Errorf("ruleId:", r.ID(), "\t error: invalid var found in query result", v, columnNames[i])
@@ -525,6 +615,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 		// capture lables in result
 		sample.Metric = lbls.Labels()
+		sample.MetricOrig = lblsOrig.Labels()
 
 		labelHash := lbls.Labels().Hash()
 
@@ -621,6 +712,20 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 	zap.S().Debugf("ruleid:", r.ID(), "\t resultmap(potential alerts):", len(resultMap))
 
+	// if the data is missing for `For` duration then we should send alert
+	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(r.Condition().AbsentFor).Before(time.Now()) {
+		zap.S().Debugf("ruleid:", r.ID(), "\t msg: no data found for rule condition")
+		lbls := labels.NewBuilder(labels.Labels{})
+		if !r.lastTimestampWithDatapoints.IsZero() {
+			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
+		}
+		result = append(result, Sample{
+			Metric:    lbls.Labels(),
+			IsMissing: true,
+		})
+		return result, nil
+	}
+
 	for _, sample := range resultMap {
 		// check alert rule condition before dumping results, if sendUnmatchedResults
 		// is set then add results irrespective of condition
@@ -634,11 +739,236 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 	return result, nil
 }
 
-func (r *ThresholdRule) prepareBuilderQueries(ts time.Time) (map[string]string, error) {
+func (r *ThresholdRule) prepareBuilderQueries(ts time.Time, ch driver.Conn) (map[string]string, error) {
 	params := r.prepareQueryRange(ts)
-	runQueries, err := r.queryBuilder.PrepareQueries(params)
+	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(params) {
+			// Note: Sending empty fields key because enrichment is only needed for json
+			// TODO: Add support for attribute enrichment later
+			logsv3.Enrich(params, map[string]v3.AttributeKey{})
+		}
+
+	}
+
+	var runQueries map[string]string
+	var err error
+
+	if r.version == "v4" {
+		if ch != nil {
+			r.populateTemporality(context.Background(), params, ch)
+		}
+		runQueries, err = r.queryBuilderV4.PrepareQueries(params)
+	} else {
+		runQueries, err = r.queryBuilder.PrepareQueries(params)
+	}
 
 	return runQueries, err
+}
+
+// The following function is used to prepare the where clause for the query
+// `lbls` contains the key value pairs of the labels from the result of the query
+// We iterate over the where clause and replace the labels with the actual values
+// There are two cases:
+// 1. The label is present in the where clause
+// 2. The label is not present in the where clause
+//
+// Example for case 2:
+// Latency by serviceName without any filter
+// In this case, for each service with latency > threshold we send a notification
+// The expectation will be that clicking on the related traces for service A, will
+// take us to the traces page with the filter serviceName=A
+// So for all the missing labels in the where clause, we add them as key = value
+//
+// Example for case 1:
+// Severity text IN (WARN, ERROR)
+// In this case, the Severity text will appear in the `lbls` if it were part of the group
+// by clause, in which case we replace it with the actual value for the notification
+// i.e Severity text = WARN
+// If the Severity text is not part of the group by clause, then we add it as it is
+func (r *ThresholdRule) fetchFilters(selectedQuery string, lbls labels.Labels) []v3.FilterItem {
+	var filterItems []v3.FilterItem
+
+	added := make(map[string]struct{})
+
+	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder &&
+		r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+		r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters != nil {
+
+		for _, item := range r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery].Filters.Items {
+			exists := false
+			for _, label := range lbls {
+				if item.Key.Key == label.Name {
+					// if the label is present in the where clause, replace it with key = value
+					filterItems = append(filterItems, v3.FilterItem{
+						Key:      item.Key,
+						Operator: v3.FilterOperatorEqual,
+						Value:    label.Value,
+					})
+					exists = true
+					added[label.Name] = struct{}{}
+					break
+				}
+			}
+
+			if !exists {
+				// if the label is not present in the where clause, add it as it is
+				filterItems = append(filterItems, item)
+			}
+		}
+	}
+
+	// add the labels which are not present in the where clause
+	for _, label := range lbls {
+		if _, ok := added[label.Name]; !ok {
+			filterItems = append(filterItems, v3.FilterItem{
+				Key:      v3.AttributeKey{Key: label.Name},
+				Operator: v3.FilterOperatorEqual,
+				Value:    label.Value,
+			})
+		}
+	}
+
+	return filterItems
+}
+
+func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) string {
+	selectedQuery := r.GetSelectedQuery()
+
+	// TODO(srikanthccv): handle formula queries
+	if selectedQuery < "A" || selectedQuery > "Z" {
+		return ""
+	}
+
+	q := r.prepareQueryRange(ts)
+	// Logs list view expects time in milliseconds
+	tr := timeRange{
+		Start:    q.Start,
+		End:      q.End,
+		PageSize: 100,
+	}
+
+	options := Options{
+		MaxLines:      2,
+		Format:        "list",
+		SelectColumns: []v3.AttributeKey{},
+	}
+
+	period, _ := json.Marshal(tr)
+	urlEncodedTimeRange := url.QueryEscape(string(period))
+
+	filterItems := r.fetchFilters(selectedQuery, lbls)
+	urlData := urlShareableCompositeQuery{
+		QueryType: string(v3.QueryTypeBuilder),
+		Builder: builderQuery{
+			QueryData: []v3.BuilderQuery{
+				{
+					DataSource:         v3.DataSourceLogs,
+					QueryName:          "A",
+					AggregateOperator:  v3.AggregateOperatorNoOp,
+					AggregateAttribute: v3.AttributeKey{},
+					Filters: &v3.FilterSet{
+						Items:    filterItems,
+						Operator: "AND",
+					},
+					Expression:   "A",
+					Disabled:     false,
+					Having:       []v3.Having{},
+					StepInterval: 60,
+					OrderBy: []v3.OrderBy{
+						{
+							ColumnName: "timestamp",
+							Order:      "desc",
+						},
+					},
+				},
+			},
+			QueryFormulas: make([]string, 0),
+		},
+	}
+
+	data, _ := json.Marshal(urlData)
+	compositeQuery := url.QueryEscape(string(data))
+
+	optionsData, _ := json.Marshal(options)
+	urlEncodedOptions := url.QueryEscape(string(optionsData))
+
+	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+}
+
+func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) string {
+	selectedQuery := r.GetSelectedQuery()
+
+	// TODO(srikanthccv): handle formula queries
+	if selectedQuery < "A" || selectedQuery > "Z" {
+		return ""
+	}
+
+	q := r.prepareQueryRange(ts)
+	// Traces list view expects time in nanoseconds
+	tr := timeRange{
+		Start:    q.Start * time.Second.Microseconds(),
+		End:      q.End * time.Second.Microseconds(),
+		PageSize: 100,
+	}
+
+	options := Options{
+		MaxLines:      2,
+		Format:        "list",
+		SelectColumns: constants.TracesListViewDefaultSelectedColumns,
+	}
+
+	period, _ := json.Marshal(tr)
+	urlEncodedTimeRange := url.QueryEscape(string(period))
+
+	filterItems := r.fetchFilters(selectedQuery, lbls)
+	urlData := urlShareableCompositeQuery{
+		QueryType: string(v3.QueryTypeBuilder),
+		Builder: builderQuery{
+			QueryData: []v3.BuilderQuery{
+				{
+					DataSource:         v3.DataSourceTraces,
+					QueryName:          "A",
+					AggregateOperator:  v3.AggregateOperatorNoOp,
+					AggregateAttribute: v3.AttributeKey{},
+					Filters: &v3.FilterSet{
+						Items:    filterItems,
+						Operator: "AND",
+					},
+					Expression:   "A",
+					Disabled:     false,
+					Having:       []v3.Having{},
+					StepInterval: 60,
+					OrderBy: []v3.OrderBy{
+						{
+							ColumnName: "timestamp",
+							Order:      "desc",
+						},
+					},
+				},
+			},
+			QueryFormulas: make([]string, 0),
+		},
+	}
+
+	data, _ := json.Marshal(urlData)
+	compositeQuery := url.QueryEscape(string(data))
+
+	optionsData, _ := json.Marshal(options)
+	urlEncodedOptions := url.QueryEscape(string(optionsData))
+
+	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+}
+
+func (r *ThresholdRule) hostFromSource() string {
+	parsedUrl, err := url.Parse(r.source)
+	if err != nil {
+		return ""
+	}
+	if parsedUrl.Port() != "" {
+		return fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Hostname(), parsedUrl.Port())
+	}
+	return fmt.Sprintf("%s://%s", parsedUrl.Scheme, parsedUrl.Hostname())
 }
 
 func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]string, error) {
@@ -682,6 +1012,54 @@ func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]strin
 	return queries, nil
 }
 
+func (r *ThresholdRule) GetSelectedQuery() string {
+
+	// The actual query string is not relevant here
+	// we just need to know the selected query
+
+	var queries map[string]string
+	var err error
+
+	if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
+		queries, err = r.prepareBuilderQueries(time.Now(), nil)
+		if err != nil {
+			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare metric queries", zap.Error(err))
+			return ""
+		}
+	} else if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
+		queries, err = r.prepareClickhouseQueries(time.Now())
+		if err != nil {
+			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare clickhouse queries", zap.Error(err))
+			return ""
+		}
+	}
+
+	if r.ruleCondition != nil {
+		if r.ruleCondition.SelectedQuery != "" {
+			return r.ruleCondition.SelectedQuery
+		}
+
+		// The following logic exists for backward compatibility
+		// If there is no selected query, then
+		// - check if F1 is present, if yes, return F1
+		// - else return the query with max ascii value
+		// this logic is not really correct. we should be considering
+		// whether the query is enabled or not. but this is a temporary
+		// fix to support backward compatibility
+		if _, ok := queries["F1"]; ok {
+			return "F1"
+		}
+		keys := make([]string, 0, len(queries))
+		for k := range queries {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		return keys[len(keys)-1]
+	}
+	// This should never happen
+	return ""
+}
+
 // query looks if alert condition is being
 // satisfied and returns the signals
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch clickhouse.Conn) (Vector, error) {
@@ -691,13 +1069,13 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	}
 
 	// var to hold target query to be executed
-	queries := make(map[string]string)
+	var queries map[string]string
 	var err error
 
 	// fetch the target query based on query type
 	if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
 
-		queries, err = r.prepareBuilderQueries(ts)
+		queries, err = r.prepareBuilderQueries(ts, ch)
 
 		if err != nil {
 			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare metric queries", zap.Error(err))
@@ -723,22 +1101,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 
 	zap.S().Debugf("ruleid:", r.ID(), "\t runQueries:", queries)
 
-	// find target query label
-	if query, ok := queries["F1"]; ok {
-		// found a formula query, run with it
-		return r.runChQuery(ctx, ch, query)
-	}
-
-	// no formula in rule condition, now look for
-	// query label with max ascii val
-	keys := make([]string, 0, len(queries))
-	for k := range queries {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	queryLabel := keys[len(keys)-1]
-
+	queryLabel := r.GetSelectedQuery()
 	zap.S().Debugf("ruleId: ", r.ID(), "\t result query label:", queryLabel)
 
 	if queryString, ok := queries[queryLabel]; ok {
@@ -747,6 +1110,23 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 
 	zap.S().Errorf("ruleId: ", r.ID(), "\t invalid query label:", queryLabel, "\t queries:", queries)
 	return nil, fmt.Errorf("this is unexpected, invalid query label")
+}
+
+func normalizeLabelName(name string) string {
+	// See https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
+
+	// Regular expression to match non-alphanumeric characters except underscores
+	reg := regexp.MustCompile(`[^a-zA-Z0-9_]`)
+
+	// Replace all non-alphanumeric characters except underscores with underscores
+	normalized := reg.ReplaceAllString(name, "_")
+
+	// If the first character is not a letter or an underscore, prepend an underscore
+	if len(normalized) > 0 && !unicode.IsLetter(rune(normalized[0])) && normalized[0] != '_' {
+		normalized = "_" + normalized
+	}
+
+	return normalized
 }
 
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
@@ -774,7 +1154,8 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
-		threshold := strconv.FormatFloat(r.targetVal(), 'f', 2, 64) + converter.UnitToName(r.ruleCondition.TargetUnit)
+		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
+		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
 		zap.S().Debugf("Alert template data for rule %s: Formatter=%s, Value=%s, Threshold=%s", r.Name(), valueFormatter.Name(), value, threshold)
 
 		tmplData := AlertTemplateData(l, value, threshold)
@@ -782,7 +1163,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 
-		// utility function to apply go template on labels and annots
+		// utility function to apply go template on labels and annotations
 		expand := func(text string) string {
 
 			tmpl := NewTemplateExpander(
@@ -813,7 +1194,27 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 		annotations := make(labels.Labels, 0, len(r.annotations))
 		for _, a := range r.annotations {
-			annotations = append(annotations, labels.Label{Name: a.Name, Value: expand(a.Value)})
+			if smpl.IsMissing {
+				if a.Name == labels.AlertDescriptionLabel || a.Name == labels.AlertSummaryLabel {
+					a.Value = labels.AlertMissingData
+				}
+			}
+			annotations = append(annotations, labels.Label{Name: normalizeLabelName(a.Name), Value: expand(a.Value)})
+		}
+
+		// Links with timestamps should go in annotations since labels
+		// is used alert grouping, and we want to group alerts with the same
+		// label set, but different timestamps, together.
+		if r.typ == "TRACES_BASED_ALERT" {
+			link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
+			if link != "" && r.hostFromSource() != "" {
+				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
+			}
+		} else if r.typ == "LOGS_BASED_ALERT" {
+			link := r.prepareLinksToLogs(ts, smpl.MetricOrig)
+			if link != "" && r.hostFromSource() != "" {
+				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
+			}
 		}
 
 		lbs := lb.Labels()

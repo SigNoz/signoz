@@ -1,8 +1,18 @@
+import './FormAlertRules.styles.scss';
+
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
-import { Col, FormInstance, Modal, Tooltip, Typography } from 'antd';
+import {
+	Col,
+	FormInstance,
+	Modal,
+	SelectProps,
+	Tooltip,
+	Typography,
+} from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import { FeatureKeys } from 'constants/features';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
@@ -13,6 +23,7 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
@@ -44,8 +55,9 @@ import {
 	StyledLeftContainer,
 } from './styles';
 import UserGuide from './UserGuide';
-import { getUpdatedStepInterval, toChartInterval } from './utils';
+import { getSelectedQueryOptions } from './utils';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function FormAlertRules({
 	alertType,
 	formInstance,
@@ -55,38 +67,86 @@ function FormAlertRules({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
+	const urlQuery = useUrlQuery();
+
+	const panelType = urlQuery.get(QueryParams.panelTypes) as PANEL_TYPES | null;
 
 	const {
 		currentQuery,
-		panelType,
 		stagedQuery,
 		handleRunQuery,
+		handleSetConfig,
+		initialDataSource,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
+	useEffect(() => {
+		handleSetConfig(panelType || PANEL_TYPES.TIME_SERIES, initialDataSource);
+	}, [handleSetConfig, initialDataSource, panelType]);
+
 	// use query client
 	const ruleCache = useQueryClient();
+
+	const isNewRule = ruleId === 0;
 
 	const [loading, setLoading] = useState(false);
 
 	// alertDef holds the form values to be posted
 	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
+	const [yAxisUnit, setYAxisUnit] = useState<string>(currentQuery.unit || '');
 
 	// initQuery contains initial query when component was mounted
 	const initQuery = useMemo(() => initialValue.condition.compositeQuery, [
 		initialValue,
 	]);
 
+	const queryOptions = useMemo(() => {
+		const queryConfig: Record<EQueryType, () => SelectProps['options']> = {
+			[EQueryType.QUERY_BUILDER]: () => [
+				...(getSelectedQueryOptions(currentQuery.builder.queryData) || []),
+				...(getSelectedQueryOptions(currentQuery.builder.queryFormulas) || []),
+			],
+			[EQueryType.PROM]: () => getSelectedQueryOptions(currentQuery.promql),
+			[EQueryType.CLICKHOUSE]: () =>
+				getSelectedQueryOptions(currentQuery.clickhouse_sql),
+		};
+
+		return queryConfig[currentQuery.queryType]?.() || [];
+	}, [currentQuery]);
+
 	const sq = useMemo(() => mapQueryDataFromApi(initQuery), [initQuery]);
 
 	useShareBuilderUrl(sq);
 
 	useEffect(() => {
-		setAlertDef(initialValue);
-	}, [initialValue]);
+		const broadcastToSpecificChannels =
+			(initialValue &&
+				initialValue.preferredChannels &&
+				initialValue.preferredChannels.length > 0) ||
+			isNewRule;
+
+		setAlertDef({
+			...initialValue,
+			broadcastToAll: !broadcastToSpecificChannels,
+		});
+	}, [initialValue, isNewRule]);
+
+	useEffect(() => {
+		// Set selectedQueryName based on the length of queryOptions
+		setAlertDef((def) => ({
+			...def,
+			condition: {
+				...def.condition,
+				selectedQueryName:
+					queryOptions.length > 0 ? String(queryOptions[0].value) : undefined,
+			},
+		}));
+	}, [currentQuery?.queryType, queryOptions]);
 
 	const onCancelHandler = useCallback(() => {
 		history.replace(ROUTES.LIST_ALL_ALERT);
@@ -95,6 +155,10 @@ function FormAlertRules({
 	// onQueryCategoryChange handles changes to query category
 	// in state as well as sets additional defaults
 	const onQueryCategoryChange = (val: EQueryType): void => {
+		const element = document.getElementById('top');
+		if (element) {
+			element.scrollIntoView({ behavior: 'smooth' });
+		}
 		if (val === EQueryType.PROM) {
 			setAlertDef({
 				...alertDef,
@@ -208,6 +272,7 @@ function FormAlertRules({
 	const preparePostData = (): AlertDef => {
 		const postableAlert: AlertDef = {
 			...alertDef,
+			preferredChannels: alertDef.broadcastToAll ? [] : alertDef.preferredChannels,
 			alertType,
 			source: window?.location.toString(),
 			ruleType:
@@ -225,7 +290,7 @@ function FormAlertRules({
 					promQueries: mapQueryDataToApi(currentQuery.promql, 'name').data,
 					chQueries: mapQueryDataToApi(currentQuery.clickhouse_sql, 'name').data,
 					queryType: currentQuery.queryType,
-					panelType: initQuery.panelType,
+					panelType: panelType || initQuery.panelType,
 					unit: currentQuery.unit,
 				},
 			},
@@ -238,9 +303,10 @@ function FormAlertRules({
 		alertDef,
 		alertType,
 		initQuery,
+		panelType,
 	]);
 
-	const isAlertAvialable = useIsFeatureDisabled(
+	const isAlertAvailable = useIsFeatureDisabled(
 		FeatureKeys.QUERY_BUILDER_ALERTS,
 	);
 
@@ -309,6 +375,7 @@ function FormAlertRules({
 			centered: true,
 			content,
 			onOk: saveRule,
+			className: 'create-alert-modal',
 		});
 	}, [t, saveRule, currentQuery]);
 
@@ -351,18 +418,12 @@ function FormAlertRules({
 	}, [t, isFormValid, memoizedPreparePostData, notifications]);
 
 	const renderBasicInfo = (): JSX.Element => (
-		<BasicInfo alertDef={alertDef} setAlertDef={setAlertDef} />
+		<BasicInfo
+			alertDef={alertDef}
+			setAlertDef={setAlertDef}
+			isNewRule={isNewRule}
+		/>
 	);
-
-	const updatedStagedQuery = useMemo((): Query | null => {
-		const newQuery: Query | null = stagedQuery;
-		if (newQuery) {
-			newQuery.builder.queryData[0].stepInterval = getUpdatedStepInterval(
-				alertDef.evalWindow,
-			);
-		}
-		return newQuery;
-	}, [alertDef.evalWindow, stagedQuery]);
 
 	const renderQBChartPreview = (): JSX.Element => (
 		<ChartPreview
@@ -373,14 +434,15 @@ function FormAlertRules({
 				/>
 			}
 			name=""
-			query={updatedStagedQuery}
-			selectedInterval={toChartInterval(alertDef.evalWindow)}
+			query={stagedQuery}
+			selectedInterval={globalSelectedInterval}
 			alertDef={alertDef}
-			allowSelectedIntervalForStepGen
+			yAxisUnit={yAxisUnit || ''}
+			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 		/>
 	);
 
-	const renderPromChartPreview = (): JSX.Element => (
+	const renderPromAndChQueryChartPreview = (): JSX.Element => (
 		<ChartPreview
 			headline={
 				<PlotTag
@@ -391,34 +453,21 @@ function FormAlertRules({
 			name="Chart Preview"
 			query={stagedQuery}
 			alertDef={alertDef}
+			selectedInterval={globalSelectedInterval}
+			yAxisUnit={yAxisUnit || ''}
+			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 		/>
 	);
-
-	const renderChQueryChartPreview = (): JSX.Element => (
-		<ChartPreview
-			headline={
-				<PlotTag
-					queryType={currentQuery.queryType}
-					panelType={panelType || PANEL_TYPES.TIME_SERIES}
-				/>
-			}
-			name="Chart Preview"
-			query={stagedQuery}
-			alertDef={alertDef}
-			selectedInterval={toChartInterval(alertDef.evalWindow)}
-		/>
-	);
-
-	const isNewRule = ruleId === 0;
 
 	const isAlertNameMissing = !formInstance.getFieldValue('alert');
 
-	const isAlertAvialableToSave =
-		isAlertAvialable &&
+	const isAlertAvailableToSave =
+		isAlertAvailable &&
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 		alertType !== AlertTypes.METRICS_BASED_ALERT;
 
-	const onUnitChangeHandler = (): void => {
+	const onUnitChangeHandler = (value: string): void => {
+		setYAxisUnit(value);
 		// reset target unit
 		setAlertDef((def) => ({
 			...def,
@@ -429,11 +478,15 @@ function FormAlertRules({
 		}));
 	};
 
+	const isChannelConfigurationValid =
+		alertDef?.broadcastToAll ||
+		(alertDef.preferredChannels && alertDef.preferredChannels.length > 0);
+
 	return (
 		<>
 			{Element}
 
-			<PanelContainer>
+			<PanelContainer id="top">
 				<StyledLeftContainer flex="5 1 600px" md={18}>
 					<MainFormContainer
 						initialValues={initialValue}
@@ -442,12 +495,16 @@ function FormAlertRules({
 					>
 						{currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 							renderQBChartPreview()}
-						{currentQuery.queryType === EQueryType.PROM && renderPromChartPreview()}
+						{currentQuery.queryType === EQueryType.PROM &&
+							renderPromAndChQueryChartPreview()}
 						{currentQuery.queryType === EQueryType.CLICKHOUSE &&
-							renderChQueryChartPreview()}
+							renderPromAndChQueryChartPreview()}
 
 						<StepContainer>
-							<BuilderUnitsFilter onChange={onUnitChangeHandler} />
+							<BuilderUnitsFilter
+								onChange={onUnitChangeHandler}
+								yAxisUnit={yAxisUnit}
+							/>
 						</StepContainer>
 
 						<QuerySection
@@ -455,23 +512,30 @@ function FormAlertRules({
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
 							runQuery={handleRunQuery}
+							alertDef={alertDef}
+							panelType={panelType || PANEL_TYPES.TIME_SERIES}
 						/>
 
 						<RuleOptions
 							queryCategory={currentQuery.queryType}
 							alertDef={alertDef}
 							setAlertDef={setAlertDef}
+							queryOptions={queryOptions}
 						/>
 
 						{renderBasicInfo()}
 						<ButtonContainer>
-							<Tooltip title={isAlertAvialableToSave ? MESSAGE.ALERT : ''}>
+							<Tooltip title={isAlertAvailableToSave ? MESSAGE.ALERT : ''}>
 								<ActionButton
 									loading={loading || false}
 									type="primary"
 									onClick={onSaveHandler}
 									icon={<SaveOutlined />}
-									disabled={isAlertNameMissing || isAlertAvialableToSave}
+									disabled={
+										isAlertNameMissing ||
+										isAlertAvailableToSave ||
+										!isChannelConfigurationValid
+									}
 								>
 									{isNewRule ? t('button_createrule') : t('button_savechanges')}
 								</ActionButton>
@@ -479,6 +543,7 @@ function FormAlertRules({
 
 							<ActionButton
 								loading={loading || false}
+								disabled={isAlertNameMissing || !isChannelConfigurationValid}
 								type="default"
 								onClick={onTestRuleHandler}
 							>

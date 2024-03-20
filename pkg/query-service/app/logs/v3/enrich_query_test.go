@@ -279,6 +279,68 @@ var testEnrichParamsData = []struct {
 			},
 		},
 	},
+	{
+		Name: "Enriching query range v3 params with dot support",
+		Params: v3.QueryRangeParamsV3{
+			CompositeQuery: &v3.CompositeQuery{
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"test": {
+						QueryName:  "test",
+						Expression: "test",
+						DataSource: v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "method.name",
+						},
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "service.name"}, Value: "test", Operator: "="},
+						}},
+						GroupBy: []v3.AttributeKey{{Key: "host.name"}},
+						OrderBy: []v3.OrderBy{{ColumnName: "host.name"}},
+					},
+				},
+			},
+		},
+		Fields: map[string]v3.AttributeKey{
+			"method.name": {
+				Key:      "method.name",
+				Type:     v3.AttributeKeyTypeTag,
+				DataType: v3.AttributeKeyDataTypeString,
+				IsColumn: true,
+			},
+			"service.name": {
+				Key:      "service.name",
+				Type:     v3.AttributeKeyTypeTag,
+				DataType: v3.AttributeKeyDataTypeString,
+			},
+			"host.name": {
+				Key:      "host.name",
+				Type:     v3.AttributeKeyTypeTag,
+				DataType: v3.AttributeKeyDataTypeString,
+			},
+		},
+		Result: v3.QueryRangeParamsV3{
+			CompositeQuery: &v3.CompositeQuery{
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"test": {
+						QueryName:  "test",
+						Expression: "test",
+						DataSource: v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{
+							Key:      "method.name",
+							Type:     v3.AttributeKeyTypeTag,
+							DataType: v3.AttributeKeyDataTypeString,
+							IsColumn: true,
+						},
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "service.name", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString}, Value: "test", Operator: "="},
+						}},
+						GroupBy: []v3.AttributeKey{{Key: "host.name", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString}},
+						OrderBy: []v3.OrderBy{{ColumnName: "host.name", Key: "host.name", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString}},
+					},
+				},
+			},
+		},
+	},
 }
 
 func TestEnrichParams(t *testing.T) {
@@ -389,6 +451,128 @@ func TestJsonEnrich(t *testing.T) {
 	for _, tt := range testJSONFilterEnrichData {
 		Convey(tt.Name, t, func() {
 			res := jsonFilterEnrich(tt.Filter)
+			So(res, ShouldResemble, tt.Result)
+		})
+	}
+}
+
+func TestJsonReplaceField(t *testing.T) {
+	fields := map[string]v3.AttributeKey{
+		"method.name": {
+			Key:      "method.name",
+			DataType: v3.AttributeKeyDataTypeString,
+			Type:     v3.AttributeKeyTypeTag,
+		},
+		"status": {
+			Key:      "status",
+			DataType: v3.AttributeKeyDataTypeInt64,
+			Type:     v3.AttributeKeyTypeTag,
+		},
+		"data.error": {
+			Key:      "data.error",
+			DataType: v3.AttributeKeyDataTypeString,
+			Type:     v3.AttributeKeyTypeTag,
+			IsColumn: true,
+		},
+	}
+	var TestJsonReplaceFieldData = []struct {
+		Name   string
+		Filter v3.FilterItem
+		Result v3.FilterItem
+	}{
+		{
+			Name: "key in nested json",
+			Filter: v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key:      "body.method.name",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeUnspecified,
+				},
+				Operator: "has",
+				Value:    "index_service",
+			},
+			Result: v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key:      "method.name",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+					IsJSON:   false,
+				},
+				Operator: "has",
+				Value:    "index_service",
+			},
+		},
+		{
+			Name: "key at top level",
+			Filter: v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key:      "body.status",
+					DataType: v3.AttributeKeyDataTypeInt64,
+					Type:     v3.AttributeKeyTypeUnspecified,
+				},
+				Operator: "=",
+				Value:    10,
+			},
+			Result: v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key:      "status",
+					DataType: v3.AttributeKeyDataTypeInt64,
+					Type:     v3.AttributeKeyTypeTag,
+					IsJSON:   false,
+				},
+				Operator: "=",
+				Value:    10,
+			},
+		},
+		{
+			Name: "key not present",
+			Filter: v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key:      "body.status.code",
+					DataType: v3.AttributeKeyDataTypeInt64,
+					Type:     v3.AttributeKeyTypeUnspecified,
+				},
+				Operator: "=",
+				Value:    10,
+			},
+			Result: v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key:      "body.status.code",
+					DataType: v3.AttributeKeyDataTypeInt64,
+					Type:     v3.AttributeKeyTypeUnspecified,
+					IsJSON:   false,
+				},
+				Operator: "=",
+				Value:    10,
+			},
+		},
+		{
+			Name: "key materialized",
+			Filter: v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key:      "body.data.error",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeUnspecified,
+				},
+				Operator: "=",
+				Value:    10,
+			},
+			Result: v3.FilterItem{
+				Key: v3.AttributeKey{
+					Key:      "data.error",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+					IsJSON:   false,
+					IsColumn: true,
+				},
+				Operator: "=",
+				Value:    10,
+			},
+		},
+	}
+	for _, tt := range TestJsonReplaceFieldData {
+		Convey(tt.Name, t, func() {
+			res := jsonReplaceField(tt.Filter, fields)
 			So(res, ShouldResemble, tt.Result)
 		})
 	}

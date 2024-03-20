@@ -9,6 +9,7 @@ type SixHour = '6hr';
 type OneHour = '1hr';
 type FourHour = '4hr';
 type OneDay = '1day';
+type ThreeDay = '3days';
 type OneWeek = '1week';
 type Custom = 'custom';
 
@@ -23,7 +24,8 @@ export type Time =
 	| OneHour
 	| Custom
 	| OneWeek
-	| OneDay;
+	| OneDay
+	| ThreeDay;
 
 export const Options: Option[] = [
 	{ value: '5min', label: 'Last 5 min' },
@@ -32,6 +34,7 @@ export const Options: Option[] = [
 	{ value: '1hr', label: 'Last 1 hour' },
 	{ value: '6hr', label: 'Last 6 hour' },
 	{ value: '1day', label: 'Last 1 day' },
+	{ value: '3days', label: 'Last 3 days' },
 	{ value: '1week', label: 'Last 1 week' },
 	{ value: 'custom', label: 'Custom' },
 ];
@@ -48,6 +51,7 @@ export const RelativeDurationOptions: Option[] = [
 	{ value: '1hr', label: 'Last 1 hour' },
 	{ value: '6hr', label: 'Last 6 hour' },
 	{ value: '1day', label: 'Last 1 day' },
+	{ value: '3days', label: 'Last 3 days' },
 	{ value: '1week', label: 'Last 1 week' },
 ];
 
@@ -68,6 +72,8 @@ export const getOptions = (routes: string): Option[] => {
 	return Options;
 };
 
+export const routesToHideBreadCrumbs = [ROUTES.SUPPORT, ROUTES.ALL_DASHBOARD];
+
 export const routesToSkip = [
 	ROUTES.SETTINGS,
 	ROUTES.LIST_ALL_ALERT,
@@ -75,18 +81,32 @@ export const routesToSkip = [
 	ROUTES.ALL_CHANNELS,
 	ROUTES.USAGE_EXPLORER,
 	ROUTES.GET_STARTED,
+	ROUTES.GET_STARTED_APPLICATION_MONITORING,
+	ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING,
+	ROUTES.GET_STARTED_LOGS_MANAGEMENT,
+	ROUTES.GET_STARTED_AWS_MONITORING,
 	ROUTES.VERSION,
 	ROUTES.ALL_DASHBOARD,
 	ROUTES.ORG_SETTINGS,
 	ROUTES.INGESTION_SETTINGS,
 	ROUTES.ERROR_DETAIL,
-	ROUTES.ALERTS_NEW,
-	ROUTES.EDIT_ALERTS,
-	ROUTES.LIST_ALL_ALERT,
-	ROUTES.PIPELINES,
+	ROUTES.LOGS_PIPELINES,
 	ROUTES.BILLING,
 	ROUTES.SUPPORT,
 	ROUTES.WORKSPACE_LOCKED,
+	ROUTES.LOGS,
+	ROUTES.MY_SETTINGS,
+	ROUTES.LIST_LICENSES,
 ];
 
 export const routesToDisable = [ROUTES.LOGS_EXPLORER, ROUTES.LIVE_LOGS];
+
+export interface LocalStorageTimeRange {
+	localstorageStartTime: string | null;
+	localstorageEndTime: string | null;
+}
+
+export interface TimeRange {
+	startTime: string;
+	endTime: string;
+}

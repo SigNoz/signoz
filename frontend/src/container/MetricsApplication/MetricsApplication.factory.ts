@@ -8,9 +8,10 @@ export const getWidgetQueryBuilder = ({
 	title = '',
 	panelTypes,
 	yAxisUnit = '',
+	id,
 }: GetWidgetQueryBuilderProps): Widgets => ({
 	description: '',
-	id: v4(),
+	id: id || v4(),
 	isStacked: false,
 	nullZeroValues: '',
 	opacity: '0',
@@ -19,4 +20,8 @@ export const getWidgetQueryBuilder = ({
 	timePreferance: 'GLOBAL_TIME',
 	title,
 	yAxisUnit,
+	softMax: null,
+	softMin: null,
+	selectedLogFields: [],
+	selectedTracesFields: [],
 });

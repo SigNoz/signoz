@@ -1,0 +1,14 @@
+{
+	"status": "success",
+	"data": {
+		"attributeKeys": [
+			{
+				"key": "responseStatusCode",
+				"dataType": "string",
+				"type": "tag",
+				"isColumn": true,
+				"isJSON": false
+			}
+		]
+	}
+}

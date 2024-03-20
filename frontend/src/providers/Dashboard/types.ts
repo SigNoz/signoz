@@ -5,7 +5,9 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 
 export interface IDashboardContext {
 	isDashboardSliderOpen: boolean;
+	isDashboardLocked: boolean;
 	handleToggleDashboardSlider: (value: boolean) => void;
+	handleDashboardLockToggle: (value: boolean) => void;
 	dashboardResponse: UseQueryResult<Dashboard, unknown>;
 	selectedDashboard: Dashboard | undefined;
 	dashboardId: string;
@@ -15,4 +17,17 @@ export interface IDashboardContext {
 		React.SetStateAction<Dashboard | undefined>
 	>;
 	updatedTimeRef: React.MutableRefObject<dayjs.Dayjs | null>;
+	toScrollWidgetId: string;
+	setToScrollWidgetId: React.Dispatch<React.SetStateAction<string>>;
+	updateLocalStorageDashboardVariables: (
+		id: string,
+		selectedValue:
+			| string
+			| number
+			| boolean
+			| (string | number | boolean)[]
+			| null
+			| undefined,
+		allSelected: boolean,
+	) => void;
 }

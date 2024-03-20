@@ -1,3 +1,5 @@
+import './QueryHeader.styles.scss';
+
 import {
 	DeleteOutlined,
 	DownOutlined,
@@ -29,25 +31,33 @@ function QueryHeader({
 }: IQueryHeaderProps): JSX.Element {
 	const [collapse, setCollapse] = useState(false);
 	return (
-		<QueryWrapper>
-			<Row style={{ justifyContent: 'space-between' }}>
+		<QueryWrapper className="query-header-container">
+			<Row style={{ justifyContent: 'space-between', marginBottom: '0.4rem' }}>
 				<Row>
 					<Button
-						type="ghost"
+						type="default"
 						icon={disabled ? <EyeInvisibleFilled /> : <EyeFilled />}
 						onClick={onDisable}
+						className="action-btn"
 					>
 						{name}
 					</Button>
 					<Button
-						type="ghost"
+						type="default"
 						icon={collapse ? <RightOutlined /> : <DownOutlined />}
 						onClick={(): void => setCollapse(!collapse)}
+						className="action-btn"
 					/>
 				</Row>
 
 				{deletable && (
-					<Button type="ghost" danger icon={<DeleteOutlined />} onClick={onDelete} />
+					<Button
+						type="default"
+						danger
+						icon={<DeleteOutlined />}
+						onClick={onDelete}
+						className="action-btn"
+					/>
 				)}
 			</Row>
 			{!collapse && children}

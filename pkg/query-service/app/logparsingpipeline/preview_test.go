@@ -3,6 +3,7 @@ package logparsingpipeline
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -91,20 +92,20 @@ func TestPipelinePreview(t *testing.T) {
 		},
 	}
 
-	matchingLog := makeTestLogEntry(
+	matchingLog := makeTestSignozLog(
 		"test log body",
-		map[string]string{
+		map[string]interface{}{
 			"method": "GET",
 		},
 	)
-	nonMatchingLog := makeTestLogEntry(
+	nonMatchingLog := makeTestSignozLog(
 		"test log body",
-		map[string]string{
+		map[string]interface{}{
 			"method": "POST",
 		},
 	)
 
-	result, err := SimulatePipelinesProcessing(
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 		context.Background(),
 		testPipelines,
 		[]model.SignozLog{
@@ -114,6 +115,7 @@ func TestPipelinePreview(t *testing.T) {
 	)
 
 	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs))
 	require.Equal(2, len(result))
 
 	// matching log should have been modified as expected.
@@ -144,7 +146,7 @@ func TestPipelinePreview(t *testing.T) {
 
 }
 
-func TestGrokParsingPreview(t *testing.T) {
+func TestGrokParsingProcessor(t *testing.T) {
 	require := require.New(t)
 
 	testPipelines := []Pipeline{
@@ -183,13 +185,13 @@ func TestGrokParsingPreview(t *testing.T) {
 		},
 	}
 
-	testLog := makeTestLogEntry(
+	testLog := makeTestSignozLog(
 		"2023-10-26T04:38:00.602Z INFO route/server.go:71 HTTP request received",
-		map[string]string{
+		map[string]interface{}{
 			"method": "GET",
 		},
 	)
-	result, err := SimulatePipelinesProcessing(
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 		context.Background(),
 		testPipelines,
 		[]model.SignozLog{
@@ -198,6 +200,7 @@ func TestGrokParsingPreview(t *testing.T) {
 	)
 
 	require.Nil(err)
+	require.Equal(0, len(collectorWarnAndErrorLogs))
 	require.Equal(1, len(result))
 	processed := result[0]
 
@@ -205,7 +208,7 @@ func TestGrokParsingPreview(t *testing.T) {
 	require.Equal("route/server.go:71", processed.Attributes_string["location"])
 }
 
-func TestTraceParsingPreview(t *testing.T) {
+func TestTraceParsingProcessor(t *testing.T) {
 	require := require.New(t)
 
 	testPipelines := []Pipeline{
@@ -278,7 +281,7 @@ func TestTraceParsingPreview(t *testing.T) {
 		TraceFlags: 0,
 	}
 
-	result, err := SimulatePipelinesProcessing(
+	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 		context.Background(),
 		testPipelines,
 		[]model.SignozLog{
@@ -287,6 +290,7 @@ func TestTraceParsingPreview(t *testing.T) {
 	)
 	require.Nil(err)
 	require.Equal(1, len(result))
+	require.Equal(0, len(collectorWarnAndErrorLogs))
 	processed := result[0]
 
 	require.Equal(testTraceId, processed.TraceID)
@@ -298,7 +302,7 @@ func TestTraceParsingPreview(t *testing.T) {
 
 	// trace parser should work even if parse_from value is empty
 	testPipelines[0].Config[0].SpanId.ParseFrom = ""
-	result, err = SimulatePipelinesProcessing(
+	result, collectorWarnAndErrorLogs, err = SimulatePipelinesProcessing(
 		context.Background(),
 		testPipelines,
 		[]model.SignozLog{
@@ -307,21 +311,43 @@ func TestTraceParsingPreview(t *testing.T) {
 	)
 	require.Nil(err)
 	require.Equal(1, len(result))
+	require.Equal(0, len(collectorWarnAndErrorLogs))
 	require.Equal("", result[0].SpanID)
 }
 
-func makeTestLogEntry(
+func makeTestSignozLog(
 	body string,
-	attributes map[string]string,
+	attributes map[string]interface{},
 ) model.SignozLog {
-	return model.SignozLog{
-		Timestamp:         uint64(time.Now().UnixNano()),
-		Body:              body,
-		Attributes_string: attributes,
-		Resources_string:  map[string]string{},
-		SeverityText:      entry.Info.String(),
-		SeverityNumber:    uint8(entry.Info),
-		SpanID:            uuid.New().String(),
-		TraceID:           uuid.New().String(),
+
+	testLog := model.SignozLog{
+		Timestamp:          uint64(time.Now().UnixNano()),
+		Body:               body,
+		Attributes_bool:    map[string]bool{},
+		Attributes_string:  map[string]string{},
+		Attributes_int64:   map[string]int64{},
+		Attributes_float64: map[string]float64{},
+		Resources_string:   map[string]string{},
+		SeverityText:       entry.Info.String(),
+		SeverityNumber:     uint8(entry.Info),
+		SpanID:             uuid.New().String(),
+		TraceID:            uuid.New().String(),
 	}
+
+	for k, v := range attributes {
+		switch v.(type) {
+		case bool:
+			testLog.Attributes_bool[k] = v.(bool)
+		case string:
+			testLog.Attributes_string[k] = v.(string)
+		case int:
+			testLog.Attributes_int64[k] = int64(v.(int))
+		case float64:
+			testLog.Attributes_float64[k] = v.(float64)
+		default:
+			panic(fmt.Sprintf("found attribute value of unsupported type %T in test log", v))
+		}
+	}
+
+	return testLog
 }

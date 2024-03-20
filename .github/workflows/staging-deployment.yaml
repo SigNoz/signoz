@@ -11,7 +11,7 @@ jobs:
     environment: staging
     steps:
       - name: Executing remote ssh commands using ssh key
-        uses: appleboy/ssh-action@v0.1.8
+        uses: appleboy/ssh-action@v1.0.3
         env:
           GITHUB_BRANCH: develop
           GITHUB_SHA: ${{ github.sha }}
@@ -29,6 +29,7 @@ jobs:
             export PATH="/usr/local/go/bin/:$PATH" # needed for Golang to work
             docker system prune --force
             docker pull signoz/signoz-otel-collector:main
+            docker pull signoz/signoz-schema-migrator:main
             cd ~/signoz
             git status
             git add .

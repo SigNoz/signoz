@@ -20,13 +20,13 @@ jobs:
         with:
           go-version: "1.21"
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           version: latest
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -34,7 +34,7 @@ jobs:
         id: short-sha
       - name: Get branch name
         id: branch-name
-        uses: tj-actions/branch-names@v5.1
+        uses: tj-actions/branch-names@v7.0.7
       - name: Set docker tag environment
         run: |
           if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
@@ -64,13 +64,13 @@ jobs:
         with:
           go-version: "1.21"
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           version: latest
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -78,7 +78,7 @@ jobs:
         id: short-sha
       - name: Get branch name
         id: branch-name
-        uses: tj-actions/branch-names@v5.1
+        uses: tj-actions/branch-names@v7.0.7
       - name: Set docker tag environment
         run: |
           if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
@@ -115,11 +115,11 @@ jobs:
         run: npm run lint
         continue-on-error: true
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           version: latest
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -127,7 +127,7 @@ jobs:
         id: short-sha
       - name: Get branch name
         id: branch-name
-        uses: tj-actions/branch-names@v5.1
+        uses: tj-actions/branch-names@v7.0.7
       - name: Set docker tag environment
         run: |
           if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
@@ -152,6 +152,12 @@ jobs:
           echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > frontend/.env
           echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> frontend/.env
           echo 'CLARITY_PROJECT_ID="${{ secrets.CLARITY_PROJECT_ID }}"' >> frontend/.env
+          echo 'SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> frontend/.env
+          echo 'SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> frontend/.env
+          echo 'SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> frontend/.env
+          echo 'SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> frontend/.env
+          echo 'TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> frontend/.env
+          echo 'TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> frontend/.env
       - name: Install dependencies
         working-directory: frontend
         run: yarn install
@@ -164,11 +170,11 @@ jobs:
         run: npm run lint
         continue-on-error: true
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           version: latest
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -176,7 +182,7 @@ jobs:
         id: short-sha
       - name: Get branch name
         id: branch-name
-        uses: tj-actions/branch-names@v5.1
+        uses: tj-actions/branch-names@v7.0.7
       - name: Set docker tag environment
         run: |
           if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then

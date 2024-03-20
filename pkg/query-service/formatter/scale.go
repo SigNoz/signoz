@@ -81,10 +81,9 @@ func toFixed(value float64, decimals DecimalCount) string {
 	precision := 0
 	if decimalPos != -1 {
 		precision = len(formatted) - decimalPos - 1
-	}
-
-	if precision < *decimals {
-		return formatted + strings.Repeat("0", *decimals-precision)
+		if precision < *decimals {
+			return formatted + strings.Repeat("0", *decimals-precision)
+		}
 	}
 
 	return formatted

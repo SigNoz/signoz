@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/anchor-is-valid */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Header.styles.scss';
 
 import {
@@ -48,7 +51,7 @@ function HeaderContainer(): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { toggleTheme } = useThemeMode();
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
-	const [homeRoute, setHomeRoute] = useState(ROUTES.APPLICATION);
+	const [homeRoute, setHomeRoute] = useState<string>(ROUTES.APPLICATION);
 
 	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>(false);
 
@@ -104,7 +107,7 @@ function HeaderContainer(): JSX.Element {
 		);
 	};
 
-	const { data: licenseData, isFetching } = useLicense();
+	const { data: licenseData, isFetching, status: licenseStatus } = useLicense();
 
 	const isLicenseActive =
 		licenseData?.payload?.licenses?.find((e) => e.isCurrent)?.status ===
@@ -143,9 +146,9 @@ function HeaderContainer(): JSX.Element {
 						<span>
 							{' '}
 							Please{' '}
-							<Button className="upgrade-link" type="link" onClick={handleUpgrade}>
+							<a className="upgrade-link" onClick={handleUpgrade}>
 								upgrade
-							</Button>
+							</a>
 							to continue using SigNoz features.
 						</span>
 					) : (
@@ -169,7 +172,7 @@ function HeaderContainer(): JSX.Element {
 					</NavLink>
 
 					<Space size="middle" align="center">
-						{!isLicenseActive && (
+						{licenseStatus === 'success' && !isLicenseActive && (
 							<Button onClick={onClickSignozCloud} type="primary">
 								Try Signoz Cloud
 							</Button>

@@ -40,8 +40,6 @@ describe('ServicesUsingMetrics', () => {
 			),
 		);
 		render(<ServicesUsingMetrics />);
-		const loading = screen.getByText(/Loading.../i);
-		expect(loading).toBeInTheDocument();
 		const sampleAppText = await screen.findByText(/SampleApp/i);
 		expect(sampleAppText).toBeInTheDocument();
 		const testAppText = await screen.findByText(/TestApp/i);

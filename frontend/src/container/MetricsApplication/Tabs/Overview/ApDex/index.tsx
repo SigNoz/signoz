@@ -15,7 +15,9 @@ function ApDexApplication({
 	topLevelOperationsRoute,
 	tagFilterItems,
 }: ApDexApplicationProps): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
+
 	const { data, isLoading, error, isRefetching } = useGetApDexSettings(
 		servicename,
 	);
@@ -30,7 +32,7 @@ function ApDexApplication({
 	}
 
 	return (
-		<Card>
+		<Card data-testid="apdex">
 			<GraphContainer>
 				<ApDexMetricsApplication
 					handleGraphClick={handleGraphClick}

@@ -2,7 +2,7 @@ import { Button as ButtonComponent, Card as CardComponent, Space } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { StyledCSS } from 'container/GantChart/Trace/styles';
 import RGL, { WidthProvider } from 'react-grid-layout';
-import styled, { css, FlattenSimpleInterpolation } from 'styled-components';
+import styled, { css } from 'styled-components';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);
 
@@ -13,17 +13,12 @@ interface CardProps {
 export const Card = styled(CardComponent)<CardProps>`
 	&&& {
 		height: 100%;
+		overflow: hidden;
 	}
 
 	.ant-card-body {
-		height: 95%;
+		height: calc(100% - 30px);
 		padding: 0;
-		${({ $panelType }): FlattenSimpleInterpolation =>
-			$panelType === PANEL_TYPES.TABLE
-				? css`
-						padding-top: 1.8rem;
-				  `
-				: css``}
 	}
 `;
 
@@ -34,29 +29,31 @@ interface Props {
 export const CardContainer = styled.div<Props>`
 	overflow: auto;
 
-	:hover {
-		.react-resizable-handle {
-			position: absolute;
-			width: 20px;
-			height: 20px;
-			bottom: 0;
-			right: 0;
-			background-position: bottom right;
-			padding: 0 3px 3px 0;
-			background-repeat: no-repeat;
-			background-origin: content-box;
-			box-sizing: border-box;
-			cursor: se-resize;
+	&.enable-resize {
+		:hover {
+			.react-resizable-handle {
+				position: absolute;
+				width: 20px;
+				height: 20px;
+				bottom: 0;
+				right: 0;
+				background-position: bottom right;
+				padding: 0 3px 3px 0;
+				background-repeat: no-repeat;
+				background-origin: content-box;
+				box-sizing: border-box;
+				cursor: se-resize;
 
-			${({ isDarkMode }): StyledCSS => {
-				const uri = `data:image/svg+xml,%3Csvg viewBox='0 0 6 6' style='background-color:%23ffffff00' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' xml:space='preserve' x='0px' y='0px' width='6px' height='6px'%0A%3E%3Cg opacity='0.302'%3E%3Cpath d='M 6 6 L 0 6 L 0 4.2 L 4 4.2 L 4.2 4.2 L 4.2 0 L 6 0 L 6 6 L 6 6 Z' fill='${
-					isDarkMode ? 'white' : 'grey'
-				}'/%3E%3C/g%3E%3C/svg%3E`;
+				${({ isDarkMode }): StyledCSS => {
+					const uri = `data:image/svg+xml,%3Csvg viewBox='0 0 6 6' style='background-color:%23ffffff00' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' xml:space='preserve' x='0px' y='0px' width='6px' height='6px'%0A%3E%3Cg opacity='0.302'%3E%3Cpath d='M 6 6 L 0 6 L 0 4.2 L 4 4.2 L 4.2 4.2 L 4.2 0 L 6 0 L 6 6 L 6 6 Z' fill='${
+						isDarkMode ? 'white' : 'grey'
+					}'/%3E%3C/g%3E%3C/svg%3E`;
 
-				return css`
-					background-image: ${(): string => `url("${uri}")`};
-				`;
-			}}
+					return css`
+						background-image: ${(): string => `url("${uri}")`};
+					`;
+				}}
+			}
 		}
 	}
 `;
@@ -83,7 +80,6 @@ export const ReactGridLayout = styled(ReactGridLayoutComponent)`
 export const ButtonContainer = styled(Space)`
 	display: flex;
 	justify-content: end;
-	margin-top: 1rem;
 `;
 
 export const Button = styled(ButtonComponent)`

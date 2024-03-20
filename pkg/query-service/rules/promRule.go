@@ -3,7 +3,7 @@ package rules
 import (
 	"context"
 	"fmt"
-	"strconv"
+	"math"
 	"sync"
 	"time"
 
@@ -116,7 +116,9 @@ func (r *PromRule) targetVal() float64 {
 		return 0
 	}
 
-	return *r.ruleCondition.Target
+	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
+	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
+	return value.F
 }
 
 func (r *PromRule) Type() RuleType {
@@ -178,26 +180,6 @@ func (r *PromRule) Labels() qslabels.BaseLabels {
 // Annotations returns the annotations of the alerting rule.
 func (r *PromRule) Annotations() qslabels.BaseLabels {
 	return r.annotations
-}
-
-func (r *PromRule) sample(alert *Alert, ts time.Time) pql.Sample {
-	lb := plabels.NewBuilder(r.labels)
-
-	alertLabels := alert.Labels.(plabels.Labels)
-	for _, l := range alertLabels {
-		lb.Set(l.Name, l.Value)
-	}
-
-	lb.Set(qslabels.MetricNameLabel, alertMetricName)
-	lb.Set(qslabels.AlertNameLabel, r.name)
-	lb.Set(qslabels.AlertStateLabel, alert.State.String())
-
-	s := pql.Sample{
-		Metric: lb.Labels(),
-		T:      timestamp.FromTime(ts),
-		F:      1,
-	}
-	return s
 }
 
 // GetEvaluationDuration returns the time in seconds it took to evaluate the alerting rule.
@@ -297,23 +279,33 @@ func (r *PromRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 	notifyFunc(ctx, "", alerts...)
 }
 
+func (r *PromRule) GetSelectedQuery() string {
+	if r.ruleCondition != nil {
+		// If the user has explicitly set the selected query, we return that.
+		if r.ruleCondition.SelectedQuery != "" {
+			return r.ruleCondition.SelectedQuery
+		}
+		// Historically, we used to have only one query in the alerts for promql.
+		// So, if there is only one query, we return that.
+		// This is to maintain backward compatibility.
+		// For new rules, we will have to explicitly set the selected query.
+		return "A"
+	}
+	// This should never happen.
+	return ""
+}
+
 func (r *PromRule) getPqlQuery() (string, error) {
 
 	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
 		if len(r.ruleCondition.CompositeQuery.PromQueries) > 0 {
-			if promQuery, ok := r.ruleCondition.CompositeQuery.PromQueries["A"]; ok {
+			selectedQuery := r.GetSelectedQuery()
+			if promQuery, ok := r.ruleCondition.CompositeQuery.PromQueries[selectedQuery]; ok {
 				query := promQuery.Query
 				if query == "" {
 					return query, fmt.Errorf("a promquery needs to be set for this rule to function")
 				}
-				if r.ruleCondition.Target != nil && r.ruleCondition.CompareOp != CompareOpNone {
-					unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
-					value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
-					query = fmt.Sprintf("(%s) %s %f", query, ResolveCompareOp(r.ruleCondition.CompareOp), value.F)
-					return query, nil
-				} else {
-					return query, nil
-				}
+				return query, nil
 			}
 		}
 	}
@@ -321,7 +313,25 @@ func (r *PromRule) getPqlQuery() (string, error) {
 	return "", fmt.Errorf("invalid promql rule query")
 }
 
+func (r *PromRule) matchType() MatchType {
+	if r.ruleCondition == nil {
+		return AtleastOnce
+	}
+	return r.ruleCondition.MatchType
+}
+
+func (r *PromRule) compareOp() CompareOp {
+	if r.ruleCondition == nil {
+		return ValueIsEq
+	}
+	return r.ruleCondition.CompareOp
+}
+
 func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
+
+	start := ts.Add(-r.evalWindow)
+	end := ts
+	interval := 60 * time.Second // TODO(srikanthccv): this should be configurable
 
 	valueFormatter := formatter.FromUnit(r.Unit())
 
@@ -330,7 +340,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		return nil, err
 	}
 	zap.S().Info("rule:", r.Name(), "\t evaluating promql query: ", q)
-	res, err := queriers.PqlEngine.RunAlertQuery(ctx, q, ts)
+	res, err := queriers.PqlEngine.RunAlertQuery(ctx, q, start, end, interval)
 	if err != nil {
 		r.SetHealth(HealthBad)
 		r.SetLastError(err)
@@ -344,13 +354,26 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 
 	var alerts = make(map[uint64]*Alert, len(res))
 
-	for _, smpl := range res {
-		l := make(map[string]string, len(smpl.Metric))
-		for _, lbl := range smpl.Metric {
+	for _, series := range res {
+		l := make(map[string]string, len(series.Metric))
+		for _, lbl := range series.Metric {
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.F, r.Unit()), strconv.FormatFloat(r.targetVal(), 'f', 2, 64)+converter.UnitToName(r.ruleCondition.TargetUnit))
+		if len(series.Floats) == 0 {
+			continue
+		}
+
+		alertSmpl, shouldAlert := r.shouldAlert(series)
+		if !shouldAlert {
+			continue
+		}
+		zap.S().Debugf("rule: %s, alerting for series: %v", r.Name(), series)
+
+		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
+		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
+
+		tmplData := AlertTemplateData(l, valueFormatter.Format(alertSmpl.F, r.Unit()), threshold)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
@@ -373,7 +396,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			return result
 		}
 
-		lb := plabels.NewBuilder(smpl.Metric).Del(plabels.MetricName)
+		lb := plabels.NewBuilder(alertSmpl.Metric).Del(plabels.MetricName)
 
 		for _, l := range r.labels {
 			lb.Set(l.Name, expand(l.Value))
@@ -406,12 +429,13 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			Annotations:  annotations,
 			ActiveAt:     ts,
 			State:        StatePending,
-			Value:        smpl.F,
+			Value:        alertSmpl.F,
 			GeneratorURL: r.GeneratorURL(),
 			Receivers:    r.preferredChannels,
 		}
 	}
 
+	zap.S().Debugf("For rule: %s, found %d alerts", r.Name(), len(alerts))
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
@@ -452,6 +476,137 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 	r.lastError = err
 
 	return len(r.active), nil
+}
+
+func (r *PromRule) shouldAlert(series pql.Series) (pql.Sample, bool) {
+	var alertSmpl pql.Sample
+	var shouldAlert bool
+	switch r.matchType() {
+	case AtleastOnce:
+		// If any sample matches the condition, the rule is firing.
+		if r.compareOp() == ValueIsAbove {
+			for _, smpl := range series.Floats {
+				if smpl.F > r.targetVal() {
+					alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
+					shouldAlert = true
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			for _, smpl := range series.Floats {
+				if smpl.F < r.targetVal() {
+					alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
+					shouldAlert = true
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsEq {
+			for _, smpl := range series.Floats {
+				if smpl.F == r.targetVal() {
+					alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
+					shouldAlert = true
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			for _, smpl := range series.Floats {
+				if smpl.F != r.targetVal() {
+					alertSmpl = pql.Sample{F: smpl.F, T: smpl.T, Metric: series.Metric}
+					shouldAlert = true
+					break
+				}
+			}
+		}
+	case AllTheTimes:
+		// If all samples match the condition, the rule is firing.
+		shouldAlert = true
+		alertSmpl = pql.Sample{F: r.targetVal(), Metric: series.Metric}
+		if r.compareOp() == ValueIsAbove {
+			for _, smpl := range series.Floats {
+				if smpl.F <= r.targetVal() {
+					shouldAlert = false
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			for _, smpl := range series.Floats {
+				if smpl.F >= r.targetVal() {
+					shouldAlert = false
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsEq {
+			for _, smpl := range series.Floats {
+				if smpl.F != r.targetVal() {
+					shouldAlert = false
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			for _, smpl := range series.Floats {
+				if smpl.F == r.targetVal() {
+					shouldAlert = false
+					break
+				}
+			}
+		}
+	case OnAverage:
+		// If the average of all samples matches the condition, the rule is firing.
+		var sum float64
+		for _, smpl := range series.Floats {
+			if math.IsNaN(smpl.F) {
+				continue
+			}
+			sum += smpl.F
+		}
+		avg := sum / float64(len(series.Floats))
+		alertSmpl = pql.Sample{F: avg, Metric: series.Metric}
+		if r.compareOp() == ValueIsAbove {
+			if avg > r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			if avg < r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsEq {
+			if avg == r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			if avg != r.targetVal() {
+				shouldAlert = true
+			}
+		}
+	case InTotal:
+		// If the sum of all samples matches the condition, the rule is firing.
+		var sum float64
+		for _, smpl := range series.Floats {
+			if math.IsNaN(smpl.F) {
+				continue
+			}
+			sum += smpl.F
+		}
+		alertSmpl = pql.Sample{F: sum, Metric: series.Metric}
+		if r.compareOp() == ValueIsAbove {
+			if sum > r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			if sum < r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsEq {
+			if sum == r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			if sum != r.targetVal() {
+				shouldAlert = true
+			}
+		}
+	}
+	return alertSmpl, shouldAlert
 }
 
 func (r *PromRule) String() string {

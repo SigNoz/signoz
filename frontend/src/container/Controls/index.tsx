@@ -16,16 +16,21 @@ function Controls({
 	handleNavigatePrevious,
 	handleNavigateNext,
 	handleCountItemsPerPageChange,
+	isLogPanel = false,
 }: ControlsProps): JSX.Element | null {
 	const isNextAndPreviousDisabled = useMemo(
 		() => isLoading || countPerPage < 0 || totalCount === 0,
 		[isLoading, countPerPage, totalCount],
 	);
-	const isPreviousDisabled = useMemo(() => offset <= 0, [offset]);
-	const isNextDisabled = useMemo(() => totalCount < countPerPage, [
-		countPerPage,
-		totalCount,
-	]);
+	const isPreviousDisabled = useMemo(
+		() => (isLogPanel ? false : offset <= 0 || isNextAndPreviousDisabled),
+		[isLogPanel, isNextAndPreviousDisabled, offset],
+	);
+	const isNextDisabled = useMemo(
+		() =>
+			isLogPanel ? false : totalCount < countPerPage || isNextAndPreviousDisabled,
+		[countPerPage, isLogPanel, isNextAndPreviousDisabled, totalCount],
+	);
 
 	return (
 		<Container>
@@ -33,7 +38,7 @@ function Controls({
 				loading={isLoading}
 				size="small"
 				type="link"
-				disabled={isPreviousDisabled || isNextAndPreviousDisabled}
+				disabled={isPreviousDisabled}
 				onClick={handleNavigatePrevious}
 			>
 				<LeftOutlined /> Previous
@@ -42,7 +47,7 @@ function Controls({
 				loading={isLoading}
 				size="small"
 				type="link"
-				disabled={isNextDisabled || isNextAndPreviousDisabled}
+				disabled={isNextDisabled}
 				onClick={handleNavigateNext}
 			>
 				Next <RightOutlined />
@@ -68,6 +73,7 @@ function Controls({
 Controls.defaultProps = {
 	offset: 0,
 	perPageOptions: DEFAULT_PER_PAGE_OPTIONS,
+	isLogPanel: false,
 };
 
 export interface ControlsProps {
@@ -79,6 +85,7 @@ export interface ControlsProps {
 	handleNavigatePrevious: () => void;
 	handleNavigateNext: () => void;
 	handleCountItemsPerPageChange: (value: Pagination['limit']) => void;
+	isLogPanel?: boolean;
 }
 
 export default memo(Controls);

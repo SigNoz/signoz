@@ -1,11 +1,14 @@
 import { ResizeTable } from 'components/ResizeTable';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import TraceExplorerControls from 'container/TracesExplorer/Controls';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Pagination, URL_PAGINATION } from 'hooks/queryPagination';
+import { Pagination } from 'hooks/queryPagination';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
@@ -17,7 +20,6 @@ import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import TraceExplorerControls from '../Controls';
 import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
 import { Container, ErrorText, tableStyles } from './styles';
 import { getListColumns, getTraceLink, transformDataWithDate } from './utils';
@@ -44,7 +46,7 @@ function ListView(): JSX.Element {
 	);
 
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
-		URL_PAGINATION,
+		QueryParams.pagination,
 	);
 
 	const { data, isFetching, isError } = useGetQueryRange(
@@ -61,6 +63,7 @@ function ListView(): JSX.Element {
 				selectColumns: options?.selectColumns,
 			},
 		},
+		DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,

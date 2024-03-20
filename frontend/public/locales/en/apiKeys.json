@@ -1,0 +1,3 @@
+{
+	"delete_confirm_message": "Are you sure you want to delete {{keyName}} token? Deleting a token is irreversible and cannot be undone."
+}

@@ -41,6 +41,7 @@ type PipelineOperator struct {
 	ID      string `json:"id,omitempty" yaml:"id,omitempty"`
 	Output  string `json:"output,omitempty" yaml:"output,omitempty"`
 	OnError string `json:"on_error,omitempty" yaml:"on_error,omitempty"`
+	If      string `json:"if,omitempty" yaml:"if,omitempty"`
 
 	// don't need the following in the final config
 	OrderId int    `json:"orderId" yaml:"-"`
@@ -48,11 +49,10 @@ type PipelineOperator struct {
 	Name    string `json:"name,omitempty" yaml:"-"`
 
 	// optional keys depending on the type
-	ParseTo      string           `json:"parse_to,omitempty" yaml:"parse_to,omitempty"`
-	Pattern      string           `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	Regex        string           `json:"regex,omitempty" yaml:"regex,omitempty"`
-	ParseFrom    string           `json:"parse_from,omitempty" yaml:"parse_from,omitempty"`
-	Timestamp    *TimestampParser `json:"timestamp,omitempty" yaml:"timestamp,omitempty"`
+	ParseTo      string `json:"parse_to,omitempty" yaml:"parse_to,omitempty"`
+	Pattern      string `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	Regex        string `json:"regex,omitempty" yaml:"regex,omitempty"`
+	ParseFrom    string `json:"parse_from,omitempty" yaml:"parse_from,omitempty"`
 	*TraceParser `yaml:",inline,omitempty"`
 	Field        string   `json:"field,omitempty" yaml:"field,omitempty"`
 	Value        string   `json:"value,omitempty" yaml:"value,omitempty"`
@@ -62,6 +62,14 @@ type PipelineOperator struct {
 	Routes       *[]Route `json:"routes,omitempty" yaml:"routes,omitempty"`
 	Fields       []string `json:"fields,omitempty" yaml:"fields,omitempty"`
 	Default      string   `json:"default,omitempty" yaml:"default,omitempty"`
+
+	// time_parser fields.
+	Layout     string `json:"layout,omitempty" yaml:"layout,omitempty"`
+	LayoutType string `json:"layout_type,omitempty" yaml:"layout_type,omitempty"`
+
+	// severity parser fields
+	SeverityMapping       map[string][]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	OverwriteSeverityText bool                `json:"overwrite_text,omitempty" yaml:"overwrite_text,omitempty"`
 }
 
 type TimestampParser struct {

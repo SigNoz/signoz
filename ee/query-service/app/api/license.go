@@ -12,6 +12,20 @@ import (
 	"go.uber.org/zap"
 )
 
+type DayWiseBreakdown struct {
+	Type      string        `json:"type"`
+	Breakdown []DayWiseData `json:"breakdown"`
+}
+
+type DayWiseData struct {
+	Timestamp int64   `json:"timestamp"`
+	Count     float64 `json:"count"`
+	Size      float64 `json:"size"`
+	UnitPrice float64 `json:"unitPrice"`
+	Quantity  float64 `json:"quantity"`
+	Total     float64 `json:"total"`
+}
+
 type tierBreakdown struct {
 	UnitPrice float64 `json:"unitPrice"`
 	Quantity  float64 `json:"quantity"`
@@ -21,9 +35,10 @@ type tierBreakdown struct {
 }
 
 type usageResponse struct {
-	Type  string          `json:"type"`
-	Unit  string          `json:"unit"`
-	Tiers []tierBreakdown `json:"tiers"`
+	Type             string           `json:"type"`
+	Unit             string           `json:"unit"`
+	Tiers            []tierBreakdown  `json:"tiers"`
+	DayWiseBreakdown DayWiseBreakdown `json:"dayWiseBreakdown"`
 }
 
 type details struct {
@@ -40,6 +55,7 @@ type billingDetails struct {
 		BillingPeriodEnd   int64   `json:"billingPeriodEnd"`
 		Details            details `json:"details"`
 		Discount           float64 `json:"discount"`
+		SubscriptionStatus string  `json:"subscriptionStatus"`
 	} `json:"data"`
 }
 
@@ -52,7 +68,6 @@ func (ah *APIHandler) listLicenses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
 	var l model.License
 
 	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
@@ -64,8 +79,7 @@ func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
 		return
 	}
-
-	license, apiError := ah.LM().Activate(ctx, l.Key)
+	license, apiError := ah.LM().Activate(r.Context(), l.Key)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return

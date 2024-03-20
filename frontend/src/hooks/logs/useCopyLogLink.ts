@@ -3,6 +3,7 @@ import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import history from 'lib/history';
 import {
 	MouseEventHandler,
 	useCallback,
@@ -22,14 +23,25 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
 
-	const {
-		queryData: timeRange,
-		redirectWithQuery: onTimeRangeChange,
-	} = useUrlQueryData<LogTimeRange | null>(QueryParams.timeRange, null);
+	const { queryData: timeRange } = useUrlQueryData<LogTimeRange | null>(
+		QueryParams.timeRange,
+		null,
+	);
 
 	const { queryData: activeLogId } = useUrlQueryData<string | null>(
 		QueryParams.activeLogId,
 		null,
+	);
+
+	const onTimeRangeChange = useCallback(
+		(newTimeRange: LogTimeRange | null): void => {
+			urlQuery.set(QueryParams.timeRange, JSON.stringify(newTimeRange));
+			urlQuery.set(QueryParams.startTime, newTimeRange?.start.toString() || '');
+			urlQuery.set(QueryParams.endTime, newTimeRange?.end.toString() || '');
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			history.replace(generatedUrl);
+		},
+		[pathname, urlQuery],
 	);
 
 	const isActiveLog = useMemo(() => activeLogId === logId, [activeLogId, logId]);
@@ -52,6 +64,8 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 			urlQuery.delete(QueryParams.timeRange);
 			urlQuery.set(QueryParams.activeLogId, `"${logId}"`);
 			urlQuery.set(QueryParams.timeRange, range);
+			urlQuery.set(QueryParams.startTime, timeRange?.start.toString() || '');
+			urlQuery.set(QueryParams.endTime, timeRange?.end.toString() || '');
 
 			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
 
@@ -60,7 +74,7 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 				message: 'Copied to clipboard',
 			});
 		},
-		[logId, notifications, timeRange, urlQuery, pathname, setCopy],
+		[logId, timeRange, urlQuery, pathname, setCopy, notifications],
 	);
 
 	useEffect(() => {

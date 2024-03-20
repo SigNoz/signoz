@@ -18,7 +18,9 @@ export type ComponentTypes =
 	| 'new_alert_action'
 	| 'edit_widget'
 	| 'add_panel'
-	| 'page_pipelines';
+	| 'page_pipelines'
+	| 'edit_locked_dashboard'
+	| 'add_panel_locked_dashboard';
 
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
@@ -30,14 +32,16 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	add_new_channel: ['ADMIN'],
 	set_retention_period: ['ADMIN'],
 	action: ['ADMIN', 'EDITOR'],
-	save_layout: ['ADMIN', 'EDITOR'],
-	edit_dashboard: ['ADMIN', 'EDITOR'],
-	delete_widget: ['ADMIN', 'EDITOR'],
+	save_layout: ['ADMIN', 'EDITOR', 'AUTHOR'],
+	edit_dashboard: ['ADMIN', 'EDITOR', 'AUTHOR'],
+	delete_widget: ['ADMIN', 'EDITOR', 'AUTHOR'],
 	new_dashboard: ['ADMIN', 'EDITOR'],
 	new_alert_action: ['ADMIN'],
 	edit_widget: ['ADMIN', 'EDITOR'],
-	add_panel: ['ADMIN', 'EDITOR'],
+	add_panel: ['ADMIN', 'EDITOR', 'AUTHOR'],
 	page_pipelines: ['ADMIN', 'EDITOR'],
+	edit_locked_dashboard: ['ADMIN', 'AUTHOR'],
+	add_panel_locked_dashboard: ['ADMIN', 'AUTHOR'],
 };
 
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
@@ -75,12 +79,24 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	LIVE_LOGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LIST_LICENSES: ['ADMIN'],
 	LOGS_INDEX_FIELDS: ['ADMIN', 'EDITOR', 'VIEWER'],
-	LOGS_PIPELINE: ['ADMIN', 'EDITOR', 'VIEWER'],
+	LOGS_PIPELINES: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACE_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
-	PIPELINES: ['ADMIN', 'EDITOR', 'VIEWER'],
 	GET_STARTED: ['ADMIN', 'EDITOR', 'VIEWER'],
+	GET_STARTED_APPLICATION_MONITORING: ['ADMIN', 'EDITOR', 'VIEWER'],
+	GET_STARTED_INFRASTRUCTURE_MONITORING: ['ADMIN', 'EDITOR', 'VIEWER'],
+	GET_STARTED_LOGS_MANAGEMENT: ['ADMIN', 'EDITOR', 'VIEWER'],
+	GET_STARTED_AWS_MONITORING: ['ADMIN', 'EDITOR', 'VIEWER'],
 	WORKSPACE_LOCKED: ['ADMIN', 'EDITOR', 'VIEWER'],
 	BILLING: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SUPPORT: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SOMETHING_WENT_WRONG: ['ADMIN', 'EDITOR', 'VIEWER'],
+	LOGS_SAVE_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
+	TRACES_SAVE_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
+	API_KEYS: ['ADMIN'],
+	LOGS_BASE: [],
+	OLD_LOGS_EXPLORER: [],
+	SHORTCUTS: ['ADMIN', 'EDITOR', 'VIEWER'],
+	INTEGRATIONS_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
+	INTEGRATIONS_INSTALLED: ['ADMIN', 'EDITOR', 'VIEWER'],
+	INTEGRATIONS_MARKETPLACE: ['ADMIN', 'EDITOR', 'VIEWER'],
 };

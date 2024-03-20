@@ -10,6 +10,6 @@ export type Props = {
 	variables: PayloadVariables;
 };
 
-export type PayloadProps = {
+export type VariableResponseProps = {
 	variableValues: string[] | number[];
 };

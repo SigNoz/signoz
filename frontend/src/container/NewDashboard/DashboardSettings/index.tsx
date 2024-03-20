@@ -3,13 +3,17 @@ import { Tabs } from 'antd';
 import GeneralDashboardSettings from './General';
 import VariablesSetting from './Variables';
 
-const items = [
-	{ label: 'General', key: 'general', children: <GeneralDashboardSettings /> },
-	{ label: 'Variables', key: 'variables', children: <VariablesSetting /> },
-];
-
 function DashboardSettingsContent(): JSX.Element {
-	return <Tabs items={items} />;
+	const items = [
+		{
+			label: 'General',
+			key: 'general',
+			children: <GeneralDashboardSettings />,
+		},
+		{ label: 'Variables', key: 'variables', children: <VariablesSetting /> },
+	];
+
+	return <Tabs items={items} animated />;
 }
 
 export default DashboardSettingsContent;

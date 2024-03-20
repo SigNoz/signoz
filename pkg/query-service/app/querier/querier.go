@@ -91,7 +91,26 @@ func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.
 	if q.testingMode && q.reader == nil {
 		return q.returnedSeries, q.returnedErr
 	}
-	return q.reader.GetTimeSeriesResultV3(ctx, query)
+	result, err := q.reader.GetTimeSeriesResultV3(ctx, query)
+	var pointsWithNegativeTimestamps int
+	// Filter out the points with negative or zero timestamps
+	for idx := range result {
+		series := result[idx]
+		points := make([]v3.Point, 0)
+		for pointIdx := range series.Points {
+			point := series.Points[pointIdx]
+			if point.Timestamp > 0 {
+				points = append(points, point)
+			} else {
+				pointsWithNegativeTimestamps++
+			}
+		}
+		series.Points = points
+	}
+	if pointsWithNegativeTimestamps > 0 {
+		zap.S().Errorf("found points with negative timestamps for query %s", query)
+	}
+	return result, err
 }
 
 func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangeParams) ([]*v3.Series, error) {
@@ -126,7 +145,7 @@ func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangePar
 //
 // The [End - fluxInterval, End] is always added to the list of misses, because
 // the data might still be in flux and not yet available in the database.
-func findMissingTimeRanges(start, end int64, seriesList []*v3.Series, fluxInterval time.Duration) (misses []missInterval) {
+func findMissingTimeRanges(start, end, step int64, seriesList []*v3.Series, fluxInterval time.Duration) (misses []missInterval) {
 	var cachedStart, cachedEnd int64
 	for idx := range seriesList {
 		series := seriesList[idx]
@@ -141,11 +160,17 @@ func findMissingTimeRanges(start, end int64, seriesList []*v3.Series, fluxInterv
 		}
 	}
 
+	// time.Now is used because here we are considering the case where data might not
+	// be fully ingested for last (fluxInterval) minutes
+	endMillis := time.Now().UnixMilli()
+	adjustStep := int64(math.Min(float64(step), 60))
+	roundedMillis := endMillis - (endMillis % (adjustStep * 1000))
+
 	// Exclude the flux interval from the cached end time
 	cachedEnd = int64(
 		math.Min(
 			float64(cachedEnd),
-			float64(time.Now().UnixMilli()-fluxInterval.Milliseconds()),
+			float64(roundedMillis-fluxInterval.Milliseconds()),
 		),
 	)
 
@@ -196,7 +221,7 @@ func (q *querier) findMissingTimeRanges(start, end, step int64, cachedData []byt
 		// In case of error, we return the entire range as a miss
 		return []missInterval{{start: start, end: end}}
 	}
-	return findMissingTimeRanges(start, end, cachedSeriesList, q.fluxInterval)
+	return findMissingTimeRanges(start, end, step, cachedSeriesList, q.fluxInterval)
 }
 
 func labelsToString(labels map[string]string) string {
@@ -216,6 +241,19 @@ func labelsToString(labels map[string]string) string {
 		labelKVs[idx] = labelsList[idx].Key + "=" + labelsList[idx].Value
 	}
 	return fmt.Sprintf("{%s}", strings.Join(labelKVs, ","))
+}
+
+func filterCachedPoints(cachedSeries []*v3.Series, start, end int64) {
+	for _, c := range cachedSeries {
+		points := []v3.Point{}
+		for _, p := range c.Points {
+			if p.Timestamp < start || p.Timestamp > end {
+				continue
+			}
+			points = append(points, p)
+		}
+		c.Points = points
+	}
 }
 
 func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
@@ -239,6 +277,7 @@ func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 	for idx := range seriesesByLabels {
 		series := seriesesByLabels[idx]
 		series.SortPoints()
+		series.RemoveDuplicatePoints()
 		mergedSeries = append(mergedSeries, series)
 	}
 	return mergedSeries
@@ -307,7 +346,7 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 			// Ensure NoCache is not set and cache is not nil
 			if !params.NoCache && q.cache != nil {
 				data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
-				zap.S().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
+				zap.S().Infof("cache retrieve status: %s", retrieveStatus.String())
 				if err == nil {
 					cachedData = data
 				}
@@ -483,6 +522,16 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 			err = fmt.Errorf("invalid query type")
 		}
 	}
+
+	// return error if the number of series is more than one for value type panel
+	if params.CompositeQuery.PanelType == v3.PanelTypeValue {
+		if len(results) > 1 {
+			err = fmt.Errorf("there can be only one active query for value type panel")
+		} else if len(results) == 1 && len(results[0].Series) > 1 {
+			err = fmt.Errorf("there can be only one result series for value type panel but got %d", len(results[0].Series))
+		}
+	}
+
 	return results, err, errQueriesByName
 }
 

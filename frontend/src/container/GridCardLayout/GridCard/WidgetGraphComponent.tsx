@@ -1,9 +1,15 @@
-import { Typography } from 'antd';
+import '../GridCardLayout.styles.scss';
+
+import { Skeleton, Typography } from 'antd';
+import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -12,7 +18,6 @@ import {
 	SetStateAction,
 	useCallback,
 	useEffect,
-	useMemo,
 	useRef,
 	useState,
 } from 'react';
@@ -25,57 +30,54 @@ import { v4 } from 'uuid';
 
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
-import { FullViewContainer, Modal } from './styles';
+import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
-import { getGraphVisibilityStateOnDataChange } from './utils';
+import { getLocalStorageGraphVisibilityState } from './utils';
 
 function WidgetGraphComponent({
-	data,
 	widget,
 	queryResponse,
 	errorMessage,
 	name,
-	onDragSelect,
-	onClickHandler,
+	version,
 	threshold,
 	headerMenuList,
 	isWarning,
+	data,
+	options,
+	graphVisibiltyState,
+	onClickHandler,
+	onDragSelect,
+	setGraphVisibility,
+	isFetchingResponse,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
-	const [modal, setModal] = useState<boolean>(false);
 	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
+
+	const params = useUrlQuery();
+
+	const isFullViewOpen = params.get(QueryParams.expandedWidgetId) === widget.id;
 
 	const lineChartRef = useRef<ToggleGraphProps>();
-
-	const { graphVisibilityStates: localStoredVisibilityStates } = useMemo(
-		() =>
-			getGraphVisibilityStateOnDataChange({
-				data,
-				isExpandedName: true,
-				name,
-			}),
-		[data, name],
-	);
+	const graphRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		if (!lineChartRef.current) return;
 
-		localStoredVisibilityStates.forEach((state, index) => {
+		graphVisibiltyState.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);
 		});
-	}, [localStoredVisibilityStates]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
-	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
-		boolean[]
-	>(localStoredVisibilityStates);
-
-	const { featureResponse } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
+	const featureResponse = useSelector<AppState, AppReducer['featureResponse']>(
+		(state) => state.app.featureResponse,
 	);
+
 	const onToggleModal = useCallback(
 		(func: Dispatch<SetStateAction<boolean>>) => {
 			func((value) => !value);
@@ -111,6 +113,7 @@ function WidgetGraphComponent({
 				if (setSelectedDashboard && updatedDashboard.payload) {
 					setSelectedDashboard(updatedDashboard.payload);
 				}
+				setDeleteModal(false);
 				featureResponse.refetch();
 			},
 			onError: () => {
@@ -132,7 +135,7 @@ function WidgetGraphComponent({
 				i: uuid,
 				w: 6,
 				x: 0,
-				h: 2,
+				h: 3,
 				y: 0,
 			},
 		];
@@ -170,7 +173,24 @@ function WidgetGraphComponent({
 	};
 
 	const handleOnView = (): void => {
-		onToggleModal(setModal);
+		const queryParams = {
+			[QueryParams.expandedWidgetId]: widget.id,
+		};
+		const updatedSearch = createQueryParams(queryParams);
+		const existingSearch = new URLSearchParams(search);
+		const isExpandedWidgetIdPresent = existingSearch.has(
+			QueryParams.expandedWidgetId,
+		);
+		if (isExpandedWidgetIdPresent) {
+			existingSearch.delete(QueryParams.expandedWidgetId);
+		}
+		const separator = existingSearch.toString() ? '&' : '';
+		const newSearch = `${existingSearch}${separator}${updatedSearch}`;
+
+		history.push({
+			pathname,
+			search: newSearch,
+		});
 	};
 
 	const handleOnDelete = (): void => {
@@ -182,11 +202,44 @@ function WidgetGraphComponent({
 	};
 
 	const onToggleModelHandler = (): void => {
-		onToggleModal(setModal);
+		const existingSearchParams = new URLSearchParams(search);
+		existingSearchParams.delete(QueryParams.expandedWidgetId);
+		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
+		if (queryResponse.data?.payload) {
+			const {
+				graphVisibilityStates: localStoredVisibilityState,
+			} = getLocalStorageGraphVisibilityState({
+				apiResponse: queryResponse.data.payload.data.result,
+				name,
+			});
+			setGraphVisibility(localStoredVisibilityState);
+		}
+		history.push({
+			pathname,
+			search: createQueryParams(updatedQueryParams),
+		});
 	};
 
+	const loadingState =
+		(queryResponse.isLoading || queryResponse.status === 'idle') &&
+		widget.panelTypes !== PANEL_TYPES.LIST;
+
+	if (loadingState) {
+		return (
+			<Skeleton
+				style={{
+					height: '100%',
+					padding: '16px',
+				}}
+			/>
+		);
+	}
+
 	return (
-		<span
+		<div
+			style={{
+				height: '100%',
+			}}
 			onMouseOver={(): void => {
 				setHovered(true);
 			}}
@@ -199,11 +252,13 @@ function WidgetGraphComponent({
 			onBlur={(): void => {
 				setHovered(false);
 			}}
+			id={name}
 		>
 			<Modal
 				destroyOnClose
 				onCancel={onDeleteModelHandler}
 				open={deleteModal}
+				confirmLoading={updateDashboardMutation.isLoading}
 				title="Delete"
 				height="10vh"
 				onOk={onDeleteHandler}
@@ -213,25 +268,25 @@ function WidgetGraphComponent({
 			</Modal>
 
 			<Modal
-				title="View"
+				title={widget?.title || 'View'}
 				footer={[]}
 				centered
-				open={modal}
+				open={isFullViewOpen}
 				onCancel={onToggleModelHandler}
 				width="85%"
 				destroyOnClose
+				className="widget-full-view"
 			>
-				<FullViewContainer>
-					<FullView
-						name={`${name}expanded`}
-						widget={widget}
-						yAxisUnit={widget.yAxisUnit}
-						graphsVisibilityStates={graphsVisibilityStates}
-						onToggleModelHandler={onToggleModelHandler}
-						setGraphsVisibilityStates={setGraphsVisibilityStates}
-						parentChartRef={lineChartRef}
-					/>
-				</FullViewContainer>
+				<FullView
+					name={`${name}expanded`}
+					version={version}
+					originalName={name}
+					widget={widget}
+					yAxisUnit={widget.yAxisUnit}
+					onToggleModelHandler={onToggleModelHandler}
+					parentChartRef={lineChartRef}
+					onDragSelect={onDragSelect}
+				/>
 			</Modal>
 
 			<div className="drag-handle">
@@ -247,30 +302,39 @@ function WidgetGraphComponent({
 					threshold={threshold}
 					headerMenuList={headerMenuList}
 					isWarning={isWarning}
+					isFetchingResponse={isFetchingResponse}
 				/>
 			</div>
-			<GridPanelSwitch
-				panelType={widget.panelTypes}
-				data={data}
-				isStacked={widget.isStacked}
-				opacity={widget.opacity}
-				title={' '}
-				name={name}
-				yAxisUnit={widget.yAxisUnit}
-				onClickHandler={onClickHandler}
-				onDragSelect={onDragSelect}
-				panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
-				query={widget.query}
-				ref={lineChartRef}
-			/>
-		</span>
+			{queryResponse.isLoading && <Skeleton />}
+			{(queryResponse.isSuccess || widget.panelTypes === PANEL_TYPES.LIST) && (
+				<div
+					className={cx('widget-graph-container', widget.panelTypes)}
+					ref={graphRef}
+				>
+					<GridPanelSwitch
+						panelType={widget.panelTypes}
+						data={data}
+						name={name}
+						ref={lineChartRef}
+						options={options}
+						yAxisUnit={widget.yAxisUnit}
+						onClickHandler={onClickHandler}
+						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
+						query={widget.query}
+						thresholds={widget.thresholds}
+						selectedLogFields={widget.selectedLogFields}
+						dataSource={widget.query.builder?.queryData[0]?.dataSource}
+						selectedTracesFields={widget.selectedTracesFields}
+					/>
+				</div>
+			)}
+		</div>
 	);
 }
 
 WidgetGraphComponent.defaultProps = {
 	yAxisUnit: undefined,
 	setLayout: undefined,
-	onDragSelect: undefined,
 	onClickHandler: undefined,
 };
 

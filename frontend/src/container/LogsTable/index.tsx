@@ -1,6 +1,8 @@
 import './logsTable.styles.scss';
 
 import { Card, Typography } from 'antd';
+import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
@@ -8,7 +10,6 @@ import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
-import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';
@@ -29,20 +30,12 @@ type LogsTableProps = {
 function LogsTable(props: LogsTableProps): JSX.Element {
 	const { viewMode, linesPerRow } = props;
 
-	const { onSetActiveLog } = useActiveLog();
-
-	useFontFaceObserver(
-		[
-			{
-				family: 'Fira Code',
-				weight: '300',
-			},
-		],
-		viewMode === 'raw',
-		{
-			timeout: 5000,
-		},
-	);
+	const {
+		activeLog,
+		onClearActiveLog,
+		onAddToQuery,
+		onSetActiveLog,
+	} = useActiveLog();
 
 	const {
 		logs,
@@ -66,12 +59,27 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 			const log = logs[index];
 
 			if (viewMode === 'raw') {
-				return <RawLogView key={log.id} data={log} linesPerRow={linesPerRow} />;
+				return (
+					<RawLogView
+						key={log.id}
+						data={log}
+						linesPerRow={linesPerRow}
+						selectedFields={selected}
+					/>
+				);
 			}
 
-			return <ListLogView key={log.id} logData={log} selectedFields={selected} />;
+			return (
+				<ListLogView
+					key={log.id}
+					logData={log}
+					selectedFields={selected}
+					onAddToQuery={onAddToQuery}
+					onSetActiveLog={onSetActiveLog}
+				/>
+			);
 		},
-		[logs, viewMode, selected, linesPerRow],
+		[logs, viewMode, selected, onAddToQuery, onSetActiveLog, linesPerRow],
 	);
 
 	const renderContent = useMemo(() => {
@@ -110,6 +118,13 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 			{isNoLogs && <Typography>No logs lines found</Typography>}
 
 			{renderContent}
+			<LogDetail
+				selectedTab={VIEW_TYPES.OVERVIEW}
+				log={activeLog}
+				onClose={onClearActiveLog}
+				onAddToQuery={onAddToQuery}
+				onClickActionItem={onAddToQuery}
+			/>
 		</Container>
 	);
 }

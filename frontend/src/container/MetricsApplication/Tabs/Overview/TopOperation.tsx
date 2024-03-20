@@ -1,5 +1,4 @@
 import getTopOperations from 'api/metrics/getTopOperations';
-import Spinner from 'components/Spinner';
 import TopOperationsTable from 'container/MetricsApplication/TopOperationsTable';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
@@ -16,7 +15,11 @@ function TopOperation(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { servicename } = useParams<{ servicename?: string }>();
+	const { servicename: encodedServiceName } = useParams<{
+		servicename?: string;
+	}>();
+	const servicename = decodeURIComponent(encodedServiceName || '');
+
 	const { queries } = useResourceAttribute();
 	const selectedTags = useMemo(
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
@@ -36,12 +39,7 @@ function TopOperation(): JSX.Element {
 
 	const topOperationData = data || [];
 
-	return (
-		<>
-			{isLoading && <Spinner size="large" tip="Loading..." height="40vh" />}
-			{!isLoading && <TopOperationsTable data={topOperationData} />}
-		</>
-	);
+	return <TopOperationsTable data={topOperationData} isLoading={isLoading} />;
 }
 
 export default TopOperation;

@@ -64,6 +64,16 @@ export interface OpsgenieChannel extends Channel {
 	priority?: string;
 }
 
+export interface EmailChannel extends Channel {
+	// comma separated list of email addresses to send alerts to
+	to: string;
+	//  HTML body of the email notification.
+	html: string;
+	// Further headers email header key/value pairs.
+	// [ headers: { <string>: <tmpl_string>, ... } ]
+	headers: Record<string, string>;
+}
+
 export const ValidatePagerChannel = (p: PagerChannel): string => {
 	if (!p) {
 		return 'Received unexpected input for this channel, please contact your administrator ';

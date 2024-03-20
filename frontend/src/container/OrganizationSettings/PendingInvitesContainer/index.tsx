@@ -201,6 +201,7 @@ function PendingInvitesContainer(): JSX.Element {
 							email: member.email,
 							name: member.name,
 							role: member.role,
+							frontendBaseUrl: window.location.origin,
 						});
 
 						if (statusCode !== 200) {
@@ -270,16 +271,24 @@ function PendingInvitesContainer(): JSX.Element {
 
 			<Space direction="vertical" size="middle">
 				<TitleWrapper>
-					<Typography.Title level={3}>{t('pending_invites')}</Typography.Title>
-					<Button
-						icon={<PlusOutlined />}
-						type="primary"
-						onClick={(): void => {
-							toggleModal(true);
-						}}
-					>
-						{t('invite_members')}
-					</Button>
+					<Typography.Title level={3}>
+						{t('pending_invites')}
+						{getPendingInvitesResponse.status !== 'loading' && dataSource && (
+							<div className="members-count"> ({dataSource.length})</div>
+						)}
+					</Typography.Title>
+
+					<Space>
+						<Button
+							icon={<PlusOutlined />}
+							type="primary"
+							onClick={(): void => {
+								toggleModal(true);
+							}}
+						>
+							{t('invite_members')}
+						</Button>
+					</Space>
 				</TitleWrapper>
 				<ResizeTable
 					columns={columns}
@@ -287,6 +296,7 @@ function PendingInvitesContainer(): JSX.Element {
 					dataSource={dataSource}
 					pagination={false}
 					loading={getPendingInvitesResponse.status === 'loading'}
+					bordered
 				/>
 			</Space>
 		</div>

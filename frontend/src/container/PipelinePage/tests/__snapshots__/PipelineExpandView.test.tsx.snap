@@ -36,10 +36,10 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
 }
 
 <div
-    class="ant-table-wrapper c0 css-dev-only-do-not-override-1i536d8"
+    class="ant-table-wrapper c0 css-dev-only-do-not-override-2i2tap"
   >
     <div
-      class="ant-spin-nested-loading css-dev-only-do-not-override-1i536d8"
+      class="ant-spin-nested-loading css-dev-only-do-not-override-2i2tap"
     >
       <div
         class="ant-spin-container"
@@ -66,7 +66,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                 >
                   <tr
                     class="ant-table-row ant-table-row-level-0"
-                    data-row-key="grok use common asd"
+                    data-row-key="grokusecommon"
                     draggable="true"
                   >
                     <td
@@ -74,7 +74,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-1i536d8"
+                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-2i2tap"
                       >
                         <span
                           class="ant-avatar-string"
@@ -97,7 +97,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                   </tr>
                   <tr
                     class="ant-table-row ant-table-row-level-0"
-                    data-row-key="rename auth"
+                    data-row-key="renameauth"
                     draggable="true"
                   >
                     <td
@@ -105,7 +105,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-1i536d8"
+                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-2i2tap"
                       >
                         <span
                           class="ant-avatar-string"

@@ -121,7 +121,7 @@ func expressionToQuery(
 		groupTags = append(groupTags, "ts")
 		if joinUsing == "" {
 			for _, tag := range groupTags {
-				joinUsing += fmt.Sprintf("%s.%s as %s, ", variable, tag, tag)
+				joinUsing += fmt.Sprintf("%s.`%s` as `%s`, ", variable, tag, tag)
 			}
 			joinUsing = strings.TrimSuffix(joinUsing, ", ")
 		}
@@ -129,7 +129,7 @@ func expressionToQuery(
 		if idx > 0 {
 			formulaSubQuery += " ON "
 			for _, tag := range groupTags {
-				formulaSubQuery += fmt.Sprintf("%s.%s = %s.%s AND ", prevVar, tag, variable, tag)
+				formulaSubQuery += fmt.Sprintf("%s.`%s` = %s.`%s` AND ", prevVar, tag, variable, tag)
 			}
 			formulaSubQuery = strings.TrimSuffix(formulaSubQuery, " AND ")
 		}
@@ -183,6 +183,13 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 		PreferRPMFeatureEnabled := err == nil
 		// Build queries for each builder query
 		for queryName, query := range compositeQuery.BuilderQueries {
+			// making a local clone since we should not update the global params if there is sift by
+			start := params.Start
+			end := params.End
+			if query.ShiftBy != 0 {
+				start = start - query.ShiftBy*1000
+				end = end - query.ShiftBy*1000
+			}
 			if query.Expression == queryName {
 				switch query.DataSource {
 				case v3.DataSourceTraces:
@@ -192,12 +199,12 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 					}
 					// for ts query with group by and limit form two queries
 					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
-						limitQuery, err := qb.options.BuildTraceQuery(params.Start, params.End, compositeQuery.PanelType, query,
+						limitQuery, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType, query,
 							keys, tracesV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: PreferRPMFeatureEnabled})
 						if err != nil {
 							return nil, err
 						}
-						placeholderQuery, err := qb.options.BuildTraceQuery(params.Start, params.End, compositeQuery.PanelType,
+						placeholderQuery, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType,
 							query, keys, tracesV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: PreferRPMFeatureEnabled})
 						if err != nil {
 							return nil, err
@@ -205,7 +212,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 						query := fmt.Sprintf(placeholderQuery, limitQuery)
 						queries[queryName] = query
 					} else {
-						queryString, err := qb.options.BuildTraceQuery(params.Start, params.End, compositeQuery.PanelType,
+						queryString, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType,
 							query, keys, tracesV3.Options{PreferRPM: PreferRPMFeatureEnabled, GraphLimitQtype: ""})
 						if err != nil {
 							return nil, err
@@ -215,25 +222,25 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 				case v3.DataSourceLogs:
 					// for ts query with limit replace it as it is already formed
 					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
-						limitQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: PreferRPMFeatureEnabled})
+						limitQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: PreferRPMFeatureEnabled})
 						if err != nil {
 							return nil, err
 						}
-						placeholderQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: PreferRPMFeatureEnabled})
+						placeholderQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: PreferRPMFeatureEnabled})
 						if err != nil {
 							return nil, err
 						}
 						query := fmt.Sprintf(placeholderQuery, limitQuery)
 						queries[queryName] = query
 					} else {
-						queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, logsV3.Options{PreferRPM: PreferRPMFeatureEnabled, GraphLimitQtype: ""})
+						queryString, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, logsV3.Options{PreferRPM: PreferRPMFeatureEnabled, GraphLimitQtype: ""})
 						if err != nil {
 							return nil, err
 						}
 						queries[queryName] = queryString
 					}
 				case v3.DataSourceMetrics:
-					queryString, err := qb.options.BuildMetricQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, metricsV3.Options{PreferRPM: PreferRPMFeatureEnabled})
+					queryString, err := qb.options.BuildMetricQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, metricsV3.Options{PreferRPM: PreferRPMFeatureEnabled})
 					if err != nil {
 						return nil, err
 					}
@@ -302,6 +309,16 @@ func isMetricExpression(expression *govaluate.EvaluableExpression, params *v3.Qu
 	return true
 }
 
+func isLogExpression(expression *govaluate.EvaluableExpression, params *v3.QueryRangeParamsV3) bool {
+	variables := unique(expression.Vars())
+	for _, variable := range variables {
+		if params.CompositeQuery.BuilderQueries[variable].DataSource != v3.DataSourceLogs {
+			return false
+		}
+	}
+	return true
+}
+
 func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[string]string {
 	keys := make(map[string]string)
 
@@ -320,7 +337,46 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 
 	// Build keys for each builder query
 	for queryName, query := range params.CompositeQuery.BuilderQueries {
-		if query.Expression == queryName && query.DataSource == v3.DataSourceMetrics {
+		if query.Expression == queryName && query.DataSource == v3.DataSourceLogs {
+			var parts []string
+
+			// We need to build uniqe cache query for BuilderQuery
+			parts = append(parts, fmt.Sprintf("source=%s", query.DataSource))
+			parts = append(parts, fmt.Sprintf("step=%d", query.StepInterval))
+			parts = append(parts, fmt.Sprintf("aggregate=%s", query.AggregateOperator))
+			parts = append(parts, fmt.Sprintf("limit=%d", query.Limit))
+
+			if query.AggregateAttribute.Key != "" {
+				parts = append(parts, fmt.Sprintf("aggregateAttribute=%s", query.AggregateAttribute.CacheKey()))
+			}
+
+			if query.Filters != nil && len(query.Filters.Items) > 0 {
+				for idx, filter := range query.Filters.Items {
+					parts = append(parts, fmt.Sprintf("filter-%d=%s", idx, filter.CacheKey()))
+				}
+			}
+
+			if len(query.GroupBy) > 0 {
+				for idx, groupBy := range query.GroupBy {
+					parts = append(parts, fmt.Sprintf("groupBy-%d=%s", idx, groupBy.CacheKey()))
+				}
+			}
+
+			if len(query.OrderBy) > 0 {
+				for idx, orderBy := range query.OrderBy {
+					parts = append(parts, fmt.Sprintf("orderBy-%d=%s", idx, orderBy.CacheKey()))
+				}
+			}
+
+			if len(query.Having) > 0 {
+				for idx, having := range query.Having {
+					parts = append(parts, fmt.Sprintf("having-%d=%s", idx, having.CacheKey()))
+				}
+			}
+
+			key := strings.Join(parts, "&")
+			keys[queryName] = key
+		} else if query.Expression == queryName && query.DataSource == v3.DataSourceMetrics {
 			var parts []string
 
 			// We need to build uniqe cache query for BuilderQuery
@@ -361,7 +417,7 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 		if query.Expression != query.QueryName {
 			expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
 
-			if !isMetricExpression(expression, params) {
+			if !isMetricExpression(expression, params) && !isLogExpression(expression, params) {
 				continue
 			}
 

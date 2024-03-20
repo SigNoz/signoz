@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import { Input, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import DropDown from 'components/DropDown/DropDown';
 import {
@@ -9,14 +9,17 @@ import {
 	TableDataSource,
 } from 'components/ResizeTable/contants';
 import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
-import DateComponent from 'components/ResizeTable/TableComponent/Date';
+import DateComponent from 'components/ResizeTable/TableComponent/DateComponent';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import useSortableTable from 'hooks/ResizeTable/useSortableTable';
 import useComponentPermission from 'hooks/useComponentPermission';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useInterval from 'hooks/useInterval';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useCallback, useState } from 'react';
@@ -29,12 +32,19 @@ import { GettableAlert } from 'types/api/alerts/get';
 import AppReducer from 'types/reducer/app';
 
 import DeleteAlert from './DeleteAlert';
-import { Button, ButtonContainer, ColumnButton } from './styles';
+import {
+	Button,
+	ButtonContainer,
+	ColumnButton,
+	SearchContainer,
+} from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
+import { filterAlerts } from './utils';
+
+const { Search } = Input;
 
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
-	const [data, setData] = useState<GettableAlert[]>(allAlertRules || []);
 	const { t } = useTranslation('common');
 	const { role, featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -44,13 +54,39 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		role,
 	);
 
+	const params = useUrlQuery();
+	const orderColumnParam = params.get('columnKey');
+	const orderQueryParam = params.get('order');
+	const paginationParam = params.get('page');
+	const searchParams = params.get('search');
+	const [searchString, setSearchString] = useState<string>(searchParams || '');
+	const [data, setData] = useState<GettableAlert[]>(() => {
+		const value = searchString.toLowerCase();
+		const filteredData = filterAlerts(allAlertRules, value);
+		return filteredData || [];
+	});
+
+	// Type asuring
+	const sortingOrder: 'ascend' | 'descend' | null =
+		orderQueryParam === 'ascend' || orderQueryParam === 'descend'
+			? orderQueryParam
+			: null;
+
+	const { sortedInfo, handleChange } = useSortableTable<GettableAlert>(
+		sortingOrder,
+		orderColumnParam || '',
+		searchString,
+	);
+
 	const { notifications: notificationsApi } = useNotifications();
 
 	useInterval(() => {
 		(async (): Promise<void> => {
 			const { data: refetchData, status } = await refetch();
 			if (status === 'success') {
-				setData(refetchData?.payload || []);
+				const value = searchString.toLowerCase();
+				const filteredData = filterAlerts(refetchData.payload || [], value);
+				setData(filteredData || []);
 			}
 			if (status === 'error') {
 				notificationsApi.error({
@@ -84,7 +120,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				history.push(
 					`${ROUTES.EDIT_ALERTS}?ruleId=${record.id.toString()}&${
 						QueryParams.compositeQuery
-					}=${encodeURIComponent(JSON.stringify(compositeQuery))}`,
+					}=${encodeURIComponent(JSON.stringify(compositeQuery))}&panelTypes=${
+						record.condition.compositeQuery.panelType
+					}`,
 				);
 			})
 			.catch(handleError);
@@ -128,6 +166,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		}
 	};
 
+	const handleSearch = useDebouncedFn((e: unknown) => {
+		const value = (e as React.BaseSyntheticEvent).target.value.toLowerCase();
+		setSearchString(value);
+		const filteredData = filterAlerts(allAlertRules, value);
+		setData(filteredData);
+	});
+
 	const dynamicColumns: ColumnsType<GettableAlert> = [
 		{
 			title: 'Created At',
@@ -142,6 +187,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				return prev - next;
 			},
 			render: DateComponent,
+			sortOrder:
+				sortedInfo.columnKey === DynamicColumnsKey.CreatedAt
+					? sortedInfo.order
+					: null,
 		},
 		{
 			title: 'Created By',
@@ -149,7 +198,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 80,
 			key: DynamicColumnsKey.CreatedBy,
 			align: 'center',
-			render: (value): JSX.Element => <div>{value}</div>,
 		},
 		{
 			title: 'Updated At',
@@ -164,6 +212,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				return prev - next;
 			},
 			render: DateComponent,
+			sortOrder:
+				sortedInfo.columnKey === DynamicColumnsKey.UpdatedAt
+					? sortedInfo.order
+					: null,
 		},
 		{
 			title: 'Updated By',
@@ -171,7 +223,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 80,
 			key: DynamicColumnsKey.UpdatedBy,
 			align: 'center',
-			render: (value): JSX.Element => <div>{value}</div>,
 		},
 	];
 
@@ -185,6 +236,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				(b.state ? b.state.charCodeAt(0) : 1000) -
 				(a.state ? a.state.charCodeAt(0) : 1000),
 			render: (value): JSX.Element => <Status status={value} />,
+			sortOrder: sortedInfo.columnKey === 'state' ? sortedInfo.order : null,
 		},
 		{
 			title: 'Alert Name',
@@ -200,6 +252,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			render: (value, record): JSX.Element => (
 				<Typography.Link onClick={onEditHandler(record)}>{value}</Typography.Link>
 			),
+			sortOrder: sortedInfo.columnKey === 'name' ? sortedInfo.order : null,
 		},
 		{
 			title: 'Severity',
@@ -216,6 +269,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 				return <Typography>{severityValue}</Typography>;
 			},
+			sortOrder: sortedInfo.columnKey === 'severity' ? sortedInfo.order : null,
 		},
 		{
 			title: 'Labels',
@@ -273,26 +327,37 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 	return (
 		<>
-			<ButtonContainer>
-				<TextToolTip
-					{...{
-						text: `More details on how to create alerts`,
-						url: 'https://signoz.io/docs/userguide/alerts-management/',
-					}}
+			<SearchContainer>
+				<Search
+					placeholder="Search by Alert Name, Severity and Labels"
+					onChange={handleSearch}
+					defaultValue={searchString}
 				/>
+				<ButtonContainer>
+					<TextToolTip
+						{...{
+							text: `More details on how to create alerts`,
+							url: 'https://signoz.io/docs/userguide/alerts-management/',
+						}}
+					/>
 
-				{addNewAlert && (
-					<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
-						New Alert
-					</Button>
-				)}
-			</ButtonContainer>
+					{addNewAlert && (
+						<Button onClick={onClickNewAlertHandler} icon={<PlusOutlined />}>
+							New Alert
+						</Button>
+					)}
+				</ButtonContainer>
+			</SearchContainer>
 			<DynamicColumnTable
 				tablesource={TableDataSource.Alert}
 				columns={columns}
 				rowKey="id"
 				dataSource={data}
 				dynamicColumns={dynamicColumns}
+				onChange={handleChange}
+				pagination={{
+					defaultCurrent: Number(paginationParam) || 1,
+				}}
 			/>
 		</>
 	);

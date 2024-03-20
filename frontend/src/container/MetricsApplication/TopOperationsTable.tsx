@@ -1,16 +1,34 @@
-import { Tooltip, Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import './TopOperationsTable.styles.scss';
+
+import { SearchOutlined } from '@ant-design/icons';
+import { InputRef, Tooltip, Typography } from 'antd';
+import { ColumnsType, ColumnType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
+import Download from 'container/Download/Download';
+import { filterDropdown } from 'container/ServiceApplication/Filter/FilterDropdown';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { getErrorRate, navigateToTrace } from './utils';
+import { IServiceName } from './Tabs/types';
+import {
+	convertedTracesToDownloadData,
+	getErrorRate,
+	navigateToTrace,
+} from './utils';
 
-function TopOperationsTable({ data }: TopOperationsTableProps): JSX.Element {
+function TopOperationsTable({
+	data,
+	isLoading,
+}: TopOperationsTableProps): JSX.Element {
+	const searchInput = useRef<InputRef>(null);
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+
+	const servicename = decodeURIComponent(encodedServiceName);
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -23,7 +41,8 @@ function TopOperationsTable({ data }: TopOperationsTableProps): JSX.Element {
 	const params = useParams<{ servicename: string }>();
 
 	const handleOnClick = (operation: string): void => {
-		const { servicename } = params;
+		const { servicename: encodedServiceName } = params;
+		const servicename = decodeURIComponent(encodedServiceName);
 
 		navigateToTrace({
 			servicename,
@@ -34,19 +53,35 @@ function TopOperationsTable({ data }: TopOperationsTableProps): JSX.Element {
 		});
 	};
 
+	const getSearchOption = (): ColumnType<TopOperationList> => ({
+		filterDropdown,
+		filterIcon: <SearchOutlined />,
+		onFilter: (value, record): boolean =>
+			record.name
+				.toString()
+				.toLowerCase()
+				.includes((value as string).toLowerCase()),
+		onFilterDropdownOpenChange: (visible): void => {
+			if (visible) {
+				setTimeout(() => searchInput.current?.select(), 100);
+			}
+		},
+		render: (text: string): JSX.Element => (
+			<Tooltip placement="topLeft" title={text}>
+				<Typography.Link onClick={(): void => handleOnClick(text)}>
+					{text}
+				</Typography.Link>
+			</Tooltip>
+		),
+	});
+
 	const columns: ColumnsType<TopOperationList> = [
 		{
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
 			width: 100,
-			render: (text: string): JSX.Element => (
-				<Tooltip placement="topLeft" title={text}>
-					<Typography.Link onClick={(): void => handleOnClick(text)}>
-						{text}
-					</Typography.Link>
-				</Tooltip>
-			),
+			...getSearchOption(),
 		},
 		{
 			title: 'P50  (in ms)',
@@ -92,15 +127,27 @@ function TopOperationsTable({ data }: TopOperationsTableProps): JSX.Element {
 		},
 	];
 
+	const downloadableData = convertedTracesToDownloadData(data);
+
 	return (
-		<ResizeTable
-			columns={columns}
-			showHeader
-			title={(): string => 'Key Operations'}
-			tableLayout="fixed"
-			dataSource={data}
-			rowKey="name"
-		/>
+		<div className="top-operation">
+			<div className="top-operation--download">
+				<Download
+					data={downloadableData}
+					isLoading={isLoading}
+					fileName={`top-operations-${servicename}`}
+				/>
+			</div>
+			<ResizeTable
+				columns={columns}
+				loading={isLoading}
+				showHeader
+				title={(): string => 'Key Operations'}
+				tableLayout="fixed"
+				dataSource={data}
+				rowKey="name"
+			/>
+		</div>
 	);
 }
 
@@ -115,6 +162,7 @@ export interface TopOperationList {
 
 interface TopOperationsTableProps {
 	data: TopOperationList[];
+	isLoading: boolean;
 }
 
 export default TopOperationsTable;

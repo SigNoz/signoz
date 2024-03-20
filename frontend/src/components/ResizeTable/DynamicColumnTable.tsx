@@ -1,15 +1,19 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './DynamicColumnTable.syles.scss';
 
-import { SettingOutlined } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps, Switch } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import { SlidersHorizontal } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import ResizeTable from './ResizeTable';
 import { DynamicColumnTableProps } from './types';
-import { getVisibleColumns, setVisibleColumns } from './unit';
+import {
+	getNewColumnData,
+	getVisibleColumns,
+	setVisibleColumns,
+} from './utils';
 
 function DynamicColumnTable({
 	tablesource,
@@ -23,6 +27,7 @@ function DynamicColumnTable({
 	);
 
 	useEffect(() => {
+		setColumnsData(columns);
 		const visibleColumns = getVisibleColumns({
 			tablesource,
 			columnsData: columns,
@@ -38,7 +43,7 @@ function DynamicColumnTable({
 				: undefined,
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [columns, dynamicColumns]);
 
 	const onToggleHandler = (index: number) => (
 		checked: boolean,
@@ -51,22 +56,14 @@ function DynamicColumnTable({
 			index,
 			checked,
 		});
-		setColumnsData((prevColumns) => {
-			if (checked && dynamicColumns) {
-				return prevColumns
-					? [
-							...prevColumns.slice(0, prevColumns.length - 1),
-							dynamicColumns[index],
-							prevColumns[prevColumns.length - 1],
-					  ]
-					: undefined;
-			}
-			return prevColumns && dynamicColumns
-				? prevColumns.filter(
-						(column) => dynamicColumns[index].title !== column.title,
-				  )
-				: undefined;
-		});
+		setColumnsData((prevColumns) =>
+			getNewColumnData({
+				checked,
+				index,
+				prevColumns,
+				dynamicColumns,
+			}),
+		);
 	};
 
 	const items: MenuProps['items'] =
@@ -93,9 +90,9 @@ function DynamicColumnTable({
 					trigger={['click']}
 				>
 					<Button
-						className="dynamicColumnTable-button"
+						className="dynamicColumnTable-button filter-btn"
 						size="middle"
-						icon={<SettingOutlined />}
+						icon={<SlidersHorizontal size={14} />}
 					/>
 				</Dropdown>
 			)}

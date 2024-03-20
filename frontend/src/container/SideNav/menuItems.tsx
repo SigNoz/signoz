@@ -1,83 +1,133 @@
-import {
-	AlertOutlined,
-	AlignLeftOutlined,
-	BarChartOutlined,
-	BugOutlined,
-	DashboardFilled,
-	DeploymentUnitOutlined,
-	FileDoneOutlined,
-	LineChartOutlined,
-	MenuOutlined,
-	RocketOutlined,
-	SettingOutlined,
-} from '@ant-design/icons';
+import { RocketOutlined } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
+import {
+	AreaChart,
+	BarChart2,
+	BellDot,
+	BugIcon,
+	Cloudy,
+	DraftingCompass,
+	FileKey2,
+	Layers2,
+	LayoutGrid,
+	MessageSquare,
+	Receipt,
+	Route,
+	ScrollText,
+	Settings,
+	Slack,
+	// Unplug,
+	UserPlus,
+} from 'lucide-react';
 
-import { SidebarMenu } from './sideNav.types';
+import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
 
-const menuItems: SidebarMenu[] = [
-	{
-		key: ROUTES.GET_STARTED,
-		label: 'Get Started',
-		icon: <RocketOutlined rotate={45} />,
-	},
+export const getStartedMenuItem = {
+	key: ROUTES.GET_STARTED,
+	label: 'Get Started',
+	icon: <RocketOutlined rotate={45} />,
+};
+
+export const inviteMemberMenuItem = {
+	key: `${ROUTES.ORG_SETTINGS}#invite-team-members`,
+	label: 'Invite Team Member',
+	icon: <UserPlus size={16} />,
+};
+
+export const manageLicenseMenuItem = {
+	key: ROUTES.LIST_LICENSES,
+	label: 'Manage Licenses',
+	icon: <FileKey2 size={16} />,
+};
+
+export const helpSupportMenuItem = {
+	key: ROUTES.SUPPORT,
+	label: 'Help & Support',
+	icon: <MessageSquare size={16} />,
+};
+
+export const shortcutMenuItem = {
+	key: ROUTES.SHORTCUTS,
+	label: 'Keyboard Shortcuts',
+	icon: <Layers2 size={16} />,
+};
+
+export const slackSupportMenuItem = {
+	key: SecondaryMenuItemKey.Slack,
+	label: 'Slack Support',
+	icon: <Slack size={16} />,
+};
+
+export const trySignozCloudMenuItem: SidebarItem = {
+	key: 'trySignozCloud',
+	label: 'Try Signoz Cloud',
+	icon: <Cloudy size={16} />,
+};
+
+const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',
-		icon: <BarChartOutlined />,
+		icon: <BarChart2 size={16} />,
 	},
 	{
 		key: ROUTES.TRACE,
 		label: 'Traces',
-		icon: <MenuOutlined />,
+		icon: <DraftingCompass size={16} />,
 	},
 	{
-		key: ROUTES.LOGS_EXPLORER,
+		key: ROUTES.LOGS,
 		label: 'Logs',
-		icon: <AlignLeftOutlined />,
+		icon: <ScrollText size={16} />,
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,
 		label: 'Dashboards',
-		icon: <DashboardFilled />,
+		icon: <LayoutGrid size={16} />,
 	},
 	{
 		key: ROUTES.LIST_ALL_ALERT,
 		label: 'Alerts',
-		icon: <AlertOutlined />,
+		icon: <BellDot size={16} />,
 	},
+	// {
+	// 	key: ROUTES.INTEGRATIONS_INSTALLED,
+	// 	label: 'Integrations',
+	// 	icon: <Unplug size={16} />,
+	// },
 	{
 		key: ROUTES.ALL_ERROR,
 		label: 'Exceptions',
-		icon: <BugOutlined />,
+		icon: <BugIcon size={16} />,
 	},
 	{
 		key: ROUTES.SERVICE_MAP,
 		label: 'Service Map',
-		icon: <DeploymentUnitOutlined />,
+		icon: <Route size={16} />,
 	},
 	{
 		key: ROUTES.USAGE_EXPLORER,
 		label: 'Usage Explorer',
-		icon: <LineChartOutlined />,
+		icon: <AreaChart size={16} />,
 	},
 	{
 		key: ROUTES.BILLING,
 		label: 'Billing',
-		icon: <FileDoneOutlined />,
+		icon: <Receipt size={16} />,
 	},
 	{
 		key: ROUTES.SETTINGS,
 		label: 'Settings',
-		icon: <SettingOutlined />,
+		icon: <Settings size={16} />,
 	},
 ];
 
 /** Mapping of some newly added routes and their corresponding active sidebar menu key */
-export const NEW_ROUTES_MENU_ITEM_KEY_MAP = {
+export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 	[ROUTES.TRACES_EXPLORER]: ROUTES.TRACE,
 	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACE,
-	[ROUTES.LOGS_EXPLORER]: ROUTES.LOGS_EXPLORER,
+	[ROUTES.LOGS_BASE]: ROUTES.LOGS_EXPLORER,
+	[ROUTES.INTEGRATIONS_BASE]: ROUTES.INTEGRATIONS_INSTALLED,
 };
 
 export default menuItems;

@@ -1,4 +1,5 @@
 import {
+	Checkbox,
 	Form,
 	InputNumber,
 	InputNumberProps,
@@ -7,6 +8,7 @@ import {
 	Space,
 	Typography,
 } from 'antd';
+import { DefaultOptionType } from 'antd/es/select';
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
@@ -20,6 +22,7 @@ import {
 	defaultMatchType,
 } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import { FormContainer, InlineSelect, StepHeading } from './styles';
 
@@ -27,6 +30,7 @@ function RuleOptions({
 	alertDef,
 	setAlertDef,
 	queryCategory,
+	queryOptions,
 }: RuleOptionsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -43,8 +47,21 @@ function RuleOptions({
 		});
 	};
 
+	const onChangeSelectedQueryName = (value: string | unknown): void => {
+		if (typeof value !== 'string') return;
+
+		setAlertDef({
+			...alertDef,
+			condition: {
+				...alertDef.condition,
+				selectedQueryName: value,
+			},
+		});
+	};
+
 	const renderCompareOps = (): JSX.Element => (
 		<InlineSelect
+			getPopupContainer={popupContainer}
 			defaultValue={defaultCompareOp}
 			value={alertDef.condition?.op}
 			style={{ minWidth: '120px' }}
@@ -67,8 +84,9 @@ function RuleOptions({
 		</InlineSelect>
 	);
 
-	const renderThresholdMatchOpts = (): JSX.Element => (
+	const renderMatchOpts = (): JSX.Element => (
 		<InlineSelect
+			getPopupContainer={popupContainer}
 			defaultValue={defaultMatchType}
 			style={{ minWidth: '130px' }}
 			value={alertDef.condition?.matchType}
@@ -81,29 +99,21 @@ function RuleOptions({
 		</InlineSelect>
 	);
 
-	const renderPromMatchOpts = (): JSX.Element => (
-		<InlineSelect
-			defaultValue={defaultMatchType}
-			style={{ minWidth: '130px' }}
-			value={alertDef.condition?.matchType}
-			onChange={(value: string | unknown): void => handleMatchOptChange(value)}
-		>
-			<Select.Option value="1">{t('option_atleastonce')}</Select.Option>
-		</InlineSelect>
-	);
+	const onChangeEvalWindow = (value: string | unknown): void => {
+		const ew = (value as string) || alertDef.evalWindow;
+		setAlertDef({
+			...alertDef,
+			evalWindow: ew,
+		});
+	};
 
 	const renderEvalWindows = (): JSX.Element => (
 		<InlineSelect
+			getPopupContainer={popupContainer}
 			defaultValue={defaultEvalWindow}
 			style={{ minWidth: '120px' }}
 			value={alertDef.evalWindow}
-			onChange={(value: string | unknown): void => {
-				const ew = (value as string) || alertDef.evalWindow;
-				setAlertDef({
-					...alertDef,
-					evalWindow: ew,
-				});
-			}}
+			onChange={onChangeEvalWindow}
 		>
 			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
 			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
@@ -114,19 +124,56 @@ function RuleOptions({
 		</InlineSelect>
 	);
 
+	const renderPromEvalWindows = (): JSX.Element => (
+		<InlineSelect
+			getPopupContainer={popupContainer}
+			defaultValue={defaultEvalWindow}
+			style={{ minWidth: '120px' }}
+			value={alertDef.evalWindow}
+			onChange={onChangeEvalWindow}
+		>
+			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
+			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
+			<Select.Option value="15m0s">{t('option_15min')}</Select.Option>
+		</InlineSelect>
+	);
+
 	const renderThresholdRuleOpts = (): JSX.Element => (
 		<Form.Item>
 			<Typography.Text>
-				{t('text_condition1')} {renderCompareOps()} {t('text_condition2')}{' '}
-				{renderThresholdMatchOpts()} {t('text_condition3')} {renderEvalWindows()}
+				{t('text_condition1')}
+				<InlineSelect
+					getPopupContainer={popupContainer}
+					allowClear
+					showSearch
+					options={queryOptions}
+					placeholder={t('selected_query_placeholder')}
+					value={alertDef.condition.selectedQueryName}
+					onChange={onChangeSelectedQueryName}
+				/>
+				<Typography.Text>is</Typography.Text>
+				{renderCompareOps()} {t('text_condition2')} {renderMatchOpts()}{' '}
+				{t('text_condition3')} {renderEvalWindows()}
 			</Typography.Text>
 		</Form.Item>
 	);
+
 	const renderPromRuleOptions = (): JSX.Element => (
 		<Form.Item>
 			<Typography.Text>
-				{t('text_condition1')} {renderCompareOps()} {t('text_condition2')}{' '}
-				{renderPromMatchOpts()}
+				{t('text_condition1')}
+				<InlineSelect
+					getPopupContainer={popupContainer}
+					allowClear
+					showSearch
+					options={queryOptions}
+					placeholder={t('selected_query_placeholder')}
+					value={alertDef.condition.selectedQueryName}
+					onChange={onChangeSelectedQueryName}
+				/>
+				<Typography.Text>is</Typography.Text>
+				{renderCompareOps()} {t('text_condition2')} {renderMatchOpts()}
+				{t('text_condition3')} {renderPromEvalWindows()}
 			</Typography.Text>
 		</Form.Item>
 	);
@@ -167,27 +214,66 @@ function RuleOptions({
 					? renderPromRuleOptions()
 					: renderThresholdRuleOpts()}
 
-				<Space align="start">
-					<Form.Item noStyle name={['condition', 'target']}>
-						<InputNumber
-							addonBefore={t('field_threshold')}
-							value={alertDef?.condition?.target}
-							onChange={onChange}
-							type="number"
-							onWheel={(e): void => e.currentTarget.blur()}
-						/>
-					</Form.Item>
+				<Space direction="vertical" size="large">
+					<Space direction="horizontal" align="center">
+						<Form.Item noStyle name={['condition', 'target']}>
+							<InputNumber
+								addonBefore={t('field_threshold')}
+								value={alertDef?.condition?.target}
+								onChange={onChange}
+								type="number"
+								onWheel={(e): void => e.currentTarget.blur()}
+							/>
+						</Form.Item>
 
-					<Form.Item>
-						<Select
-							allowClear
-							showSearch
-							options={categorySelectOptions}
-							placeholder={t('field_unit')}
-							value={alertDef.condition.targetUnit}
-							onChange={onChangeAlertUnit}
-						/>
-					</Form.Item>
+						<Form.Item noStyle>
+							<Select
+								getPopupContainer={popupContainer}
+								allowClear
+								showSearch
+								options={categorySelectOptions}
+								placeholder={t('field_unit')}
+								value={alertDef.condition.targetUnit}
+								onChange={onChangeAlertUnit}
+							/>
+						</Form.Item>
+					</Space>
+					<Space direction="horizontal" align="center">
+						<Form.Item noStyle name={['condition', 'alertOnAbsent']}>
+							<Checkbox
+								checked={alertDef?.condition?.alertOnAbsent}
+								onChange={(e): void => {
+									setAlertDef({
+										...alertDef,
+										condition: {
+											...alertDef.condition,
+											alertOnAbsent: e.target.checked,
+										},
+									});
+								}}
+							/>
+						</Form.Item>
+						<Typography.Text>{t('text_alert_on_absent')}</Typography.Text>
+
+						<Form.Item noStyle name={['condition', 'absentFor']}>
+							<InputNumber
+								min={1}
+								value={alertDef?.condition?.absentFor}
+								onChange={(value): void => {
+									setAlertDef({
+										...alertDef,
+										condition: {
+											...alertDef.condition,
+											absentFor: Number(value) || 0,
+										},
+									});
+								}}
+								type="number"
+								onWheel={(e): void => e.currentTarget.blur()}
+							/>
+						</Form.Item>
+						<Typography.Text>{t('text_for')}</Typography.Text>
+					</Space>
 				</Space>
 			</FormContainer>
 		</>
@@ -198,5 +284,6 @@ interface RuleOptionsProps {
 	alertDef: AlertDef;
 	setAlertDef: (a: AlertDef) => void;
 	queryCategory: EQueryType;
+	queryOptions: DefaultOptionType[];
 }
 export default RuleOptions;

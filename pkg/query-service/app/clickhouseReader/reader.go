@@ -43,13 +43,18 @@ import (
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/zap"
 
+	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
+	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
@@ -68,6 +73,8 @@ const (
 	signozSampleLocalTableName = "samples_v2"
 	signozSampleTableName      = "distributed_samples_v2"
 	signozTSTableName          = "distributed_time_series_v2"
+	signozTSTableNameV4        = "distributed_time_series_v4"
+	signozTSTableNameV41Day    = "distributed_time_series_v4_1day"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -138,6 +145,17 @@ func NewReader(
 		os.Exit(1)
 	}
 
+	return NewReaderFromClickhouseConnection(db, options, localDB, configFile, featureFlag, cluster)
+}
+
+func NewReaderFromClickhouseConnection(
+	db driver.Conn,
+	options *Options,
+	localDB *sqlx.DB,
+	configFile string,
+	featureFlag interfaces.FeatureLookup,
+	cluster string,
+) *ClickHouseReader {
 	alertManager, err := am.New("")
 	if err != nil {
 		zap.S().Errorf("msg: failed to initialize alert manager: ", "/t error:", err)
@@ -145,8 +163,10 @@ func NewReader(
 		os.Exit(1)
 	}
 
+	wrap := clickhouseConnWrapper{conn: db}
+
 	return &ClickHouseReader{
-		db:                      db,
+		db:                      wrap,
 		localDB:                 localDB,
 		TraceDB:                 options.primary.TraceDB,
 		alertManager:            alertManager,
@@ -740,33 +760,47 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 	return &services, nil
 }
 
-func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig) (*map[string][]string, *model.ApiError) {
+func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig, start, end time.Time) (*map[string][]string, *map[string][]string, *model.ApiError) {
 
+	start = start.In(time.UTC)
+
+	// The `top_level_operations` that have `time` >= start
 	operations := map[string][]string{}
-	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName FROM %s.%s`, r.TraceDB, r.topLevelOperationsTable)
+	// All top level operations for a service
+	allOperations := map[string][]string{}
+	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName, time FROM %s.%s`, r.TraceDB, r.topLevelOperationsTable)
 
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
 		zap.S().Error("Error in processing sql query: ", err)
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+		return nil, nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
 	defer rows.Close()
 	for rows.Next() {
 		var name, serviceName string
-		if err := rows.Scan(&name, &serviceName); err != nil {
-			return nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("Error in reading data")}
+		var t time.Time
+		if err := rows.Scan(&name, &serviceName, &t); err != nil {
+			return nil, nil, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error in reading data")}
 		}
 		if _, ok := operations[serviceName]; !ok {
 			operations[serviceName] = []string{}
 		}
+		if _, ok := allOperations[serviceName]; !ok {
+			allOperations[serviceName] = []string{}
+		}
 		if skipConfig.ShouldSkip(serviceName, name) {
 			continue
 		}
-		operations[serviceName] = append(operations[serviceName], name)
+		allOperations[serviceName] = append(allOperations[serviceName], name)
+		// We can't use the `end` because the `top_level_operations` table has the most recent instances of the operations
+		// We can only use the `start` time to filter the operations
+		if t.After(start) {
+			operations[serviceName] = append(operations[serviceName], name)
+		}
 	}
-	return &operations, nil
+	return &operations, &allOperations, nil
 }
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
@@ -775,7 +809,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
 	}
 
-	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig)
+	topLevelOps, allTopLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig, *queryParams.Start, *queryParams.End)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -794,6 +828,22 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 			defer func() { <-sem }()
 			var serviceItem model.ServiceItem
 			var numErrors uint64
+
+			// Even if the total number of operations within the time range is less and the all
+			// the top level operations are high, we want to warn to let user know the issue
+			// with the instrumentation
+			serviceItem.DataWarning = model.DataWarning{
+				TopLevelOps: (*allTopLevelOps)[svc],
+			}
+
+			// default max_query_size = 262144
+			// Let's assume the average size of the item in `ops` is 50 bytes
+			// We can have 262144/50 = 5242 items in the `ops` array
+			// Although we have make it as big as 5k, We cap the number of items
+			// in the `ops` array to 1500
+
+			ops = ops[:int(math.Min(1500, float64(len(ops))))]
+
 			query := fmt.Sprintf(
 				`SELECT
 					quantile(0.99)(durationNano) as p99,
@@ -842,6 +892,10 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				return
 			}
 			subQuery, argsSubQuery, errStatus = buildQueryWithTagParams(ctx, tags)
+			if errStatus != nil {
+				zap.S().Error("Error building query with tag params: ", err)
+				return
+			}
 			query += subQuery
 			args = append(args, argsSubQuery...)
 			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
@@ -868,7 +922,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams, skipConfig *model.SkipConfig) (*[]model.ServiceOverviewItem, *model.ApiError) {
 
-	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig)
+	topLevelOps, _, apiErr := r.GetTopLevelOperations(ctx, skipConfig, *queryParams.Start, *queryParams.End)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -1560,7 +1614,7 @@ func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery) (string
 		case model.NotExistsOperator:
 			subQuery, argsSubQuery = addExistsOperator(item, tagMapType, true)
 		default:
-			return "", nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.GetOperator())}
+			return "", nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("filter operator %s not supported", item.GetOperator())}
 		}
 		query += subQuery
 		args = append(args, argsSubQuery...)
@@ -2455,11 +2509,18 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, numberOfTr
 func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, tableName string) (model.TTLStatusItem, *model.ApiError) {
 	statusItem := []model.TTLStatusItem{}
 
-	query := fmt.Sprintf("SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = '%s' ORDER BY created_at DESC", tableName)
+	query := `SELECT id, status, ttl, cold_storage_ttl FROM ttl_status WHERE table_name = ? ORDER BY created_at DESC`
 
-	err := r.localDB.Select(&statusItem, query)
+	zap.S().Info(query, tableName)
 
-	zap.S().Info(query)
+	stmt, err := r.localDB.Preparex(query)
+
+	if err != nil {
+		zap.S().Debug("Error preparing query for checkTTLStatusItem: ", err)
+		return model.TTLStatusItem{}, &model.ApiError{Typ: model.ErrorInternal, Err: err}
+	}
+
+	err = stmt.Select(&statusItem, tableName)
 
 	if len(statusItem) == 0 {
 		return model.TTLStatusItem{}, nil
@@ -3262,22 +3323,32 @@ func (r *ClickHouseReader) GetTotalSpans(ctx context.Context) (uint64, error) {
 	return totalSpans, nil
 }
 
-func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var spansInLastHeartBeatInterval uint64
 
-	queryStr := fmt.Sprintf("SELECT count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, signozSpansTable, 30)
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", signozTraceDBName, signozSpansTable, int(interval.Minutes()))
 
 	r.db.QueryRow(ctx, queryStr).Scan(&spansInLastHeartBeatInterval)
 
 	return spansInLastHeartBeatInterval, nil
 }
 
+func (r *ClickHouseReader) GetTotalLogs(ctx context.Context) (uint64, error) {
+
+	var totalLogs uint64
+
+	queryStr := fmt.Sprintf("SELECT count() from %s.%s;", r.logsDB, r.logsTable)
+	r.db.QueryRow(ctx, queryStr).Scan(&totalLogs)
+
+	return totalLogs, nil
+}
+
 func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error) {
 
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 
-	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, signozMetricDBName, signozTSTableName)
+	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, signozMetricDBName, signozTSTableNameV41Day)
 
 	rows, err := r.db.Query(ctx, query, metricNames)
 	if err != nil {
@@ -3299,20 +3370,9 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []s
 	return metricNameToTemporality, nil
 }
 
-// func sum(array []tsByMetricName) uint64 {
-// 	var result uint64
-// 	result = 0
-// 	for _, v := range array {
-// 		result += v.count
-// 	}
-// 	return result
-// }
-
 func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error) {
 
-	queryStr := fmt.Sprintf("SELECT count() as count from %s.%s group by metric_name order by count desc;", signozMetricDBName, signozTSTableName)
-
-	// r.db.Select(ctx, &tsByMetricName, queryStr)
+	queryStr := fmt.Sprintf("SELECT count() as count from %s.%s where metric_name not like 'signoz_%%' group by metric_name order by count desc;", signozMetricDBName, signozTSTableName)
 
 	rows, _ := r.db.Query(ctx, queryStr)
 
@@ -3341,11 +3401,21 @@ func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]in
 	return timeSeriesData, nil
 }
 
-func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+func (r *ClickHouseReader) GetSamplesInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var totalSamples uint64
 
-	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp_ms > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, 30)
+	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%' and timestamp_ms > toUnixTimestamp(now()-toIntervalMinute(%d))*1000;", signozMetricDBName, signozSampleTableName, int(interval.Minutes()))
+
+	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
+
+	return totalSamples, nil
+}
+
+func (r *ClickHouseReader) GetTotalSamples(ctx context.Context) (uint64, error) {
+	var totalSamples uint64
+
+	queryStr := fmt.Sprintf("select count() from %s.%s where metric_name not like 'signoz_%%';", signozMetricDBName, signozSampleTableName)
 
 	r.db.QueryRow(ctx, queryStr).Scan(&totalSamples)
 
@@ -3365,20 +3435,23 @@ func (r *ClickHouseReader) GetDistributedInfoInLastHeartBeatInterval(ctx context
 	return nil, nil
 }
 
-func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error) {
+func (r *ClickHouseReader) GetLogsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error) {
 
 	var totalLogLines uint64
 
-	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))*1000000000;", r.logsDB, r.logsTable, 30)
+	queryStr := fmt.Sprintf("select count() from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))*1000000000;", r.logsDB, r.logsTable, int(interval.Minutes()))
 
-	r.db.QueryRow(ctx, queryStr).Scan(&totalLogLines)
+	err := r.db.QueryRow(ctx, queryStr).Scan(&totalLogLines)
 
-	return totalLogLines, nil
+	return totalLogLines, err
 }
 
-func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context) (*model.TagsInfo, error) {
+func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (*model.TagsInfo, error) {
 
-	queryStr := fmt.Sprintf("select tagMap['service.name'] as serviceName, tagMap['deployment.environment'] as env, tagMap['telemetry.sdk.language'] as language from %s.%s where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d));", r.TraceDB, r.indexTable, 1)
+	queryStr := fmt.Sprintf(`select serviceName, stringTagMap['deployment.environment'] as env, 
+	stringTagMap['telemetry.sdk.language'] as language from %s.%s 
+	where timestamp > toUnixTimestamp(now()-toIntervalMinute(%d))
+	group by serviceName, env, language;`, r.TraceDB, r.indexTable, int(interval.Minutes()))
 
 	tagTelemetryDataList := []model.TagTelemetryData{}
 	err := r.db.Select(ctx, &tagTelemetryDataList, queryStr)
@@ -3391,6 +3464,7 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 
 	tagsInfo := model.TagsInfo{
 		Languages: make(map[string]interface{}),
+		Services:  make(map[string]interface{}),
 	}
 
 	for _, tagTelemetryData := range tagTelemetryDataList {
@@ -3404,10 +3478,168 @@ func (r *ClickHouseReader) GetTagsInfoInLastHeartBeatInterval(ctx context.Contex
 		if len(tagTelemetryData.Language) != 0 {
 			tagsInfo.Languages[tagTelemetryData.Language] = struct{}{}
 		}
+		if len(tagTelemetryData.ServiceName) != 0 {
+			tagsInfo.Services[tagTelemetryData.ServiceName] = struct{}{}
+		}
 
 	}
 
 	return &tagsInfo, nil
+}
+
+// remove this after sometime
+func removeUnderscoreDuplicateFields(fields []model.LogField) []model.LogField {
+	lookup := map[string]model.LogField{}
+	for _, v := range fields {
+		lookup[v.Name+v.DataType] = v
+	}
+
+	for k := range lookup {
+		if strings.Contains(k, ".") {
+			delete(lookup, strings.ReplaceAll(k, ".", "_"))
+		}
+	}
+
+	updatedFields := []model.LogField{}
+	for _, v := range lookup {
+		updatedFields = append(updatedFields, v)
+	}
+	return updatedFields
+}
+
+// GetDashboardsInfo returns analytics data for dashboards
+func (r *ClickHouseReader) GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error) {
+	dashboardsInfo := model.DashboardsInfo{}
+	// fetch dashboards from dashboard db
+	query := "SELECT data FROM dashboards"
+	var dashboardsData []dashboards.Dashboard
+	err := r.localDB.Select(&dashboardsData, query)
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return &dashboardsInfo, err
+	}
+	totalDashboardsWithPanelAndName := 0
+	for _, dashboard := range dashboardsData {
+		if isDashboardWithPanelAndName(dashboard.Data) {
+			totalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName + 1
+		}
+		dashboardsInfo = countPanelsInDashboard(dashboard.Data)
+	}
+	dashboardsInfo.TotalDashboards = len(dashboardsData)
+	dashboardsInfo.TotalDashboardsWithPanelAndName = totalDashboardsWithPanelAndName
+	return &dashboardsInfo, nil
+}
+
+func isDashboardWithPanelAndName(data map[string]interface{}) bool {
+	isDashboardName := false
+	isDashboardWithPanelAndName := false
+	if data != nil && data["title"] != nil && data["widgets"] != nil {
+		title, ok := data["title"].(string)
+		if ok && title != "Sample Title" {
+			isDashboardName = true
+		}
+		widgets, ok := data["widgets"].(interface{})
+		if ok && isDashboardName {
+			data, ok := widgets.([]interface{})
+			if ok && len(data) > 0 {
+				isDashboardWithPanelAndName = true
+			}
+		}
+	}
+
+	return isDashboardWithPanelAndName
+}
+func countPanelsInDashboard(data map[string]interface{}) model.DashboardsInfo {
+	var logsPanelCount, tracesPanelCount, metricsPanelCount int
+	// totalPanels := 0
+	if data != nil && data["widgets"] != nil {
+		widgets, ok := data["widgets"].(interface{})
+		if ok {
+			data, ok := widgets.([]interface{})
+			if ok {
+				for _, widget := range data {
+					sData, ok := widget.(map[string]interface{})
+					if ok && sData["query"] != nil {
+						// totalPanels++
+						query, ok := sData["query"].(interface{}).(map[string]interface{})
+						if ok && query["queryType"] == "builder" && query["builder"] != nil {
+							builderData, ok := query["builder"].(interface{}).(map[string]interface{})
+							if ok && builderData["queryData"] != nil {
+								builderQueryData, ok := builderData["queryData"].([]interface{})
+								if ok {
+									for _, queryData := range builderQueryData {
+										data, ok := queryData.(map[string]interface{})
+										if ok {
+											if data["dataSource"] == "traces" {
+												tracesPanelCount++
+											} else if data["dataSource"] == "metrics" {
+												metricsPanelCount++
+											} else if data["dataSource"] == "logs" {
+												logsPanelCount++
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return model.DashboardsInfo{
+		LogsBasedPanels:   logsPanelCount,
+		TracesBasedPanels: tracesPanelCount,
+		MetricBasedPanels: metricsPanelCount,
+	}
+}
+
+func (r *ClickHouseReader) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error) {
+	alertsInfo := model.AlertsInfo{}
+	// fetch alerts from rules db
+	query := "SELECT data FROM rules"
+	var alertsData []string
+	err := r.localDB.Select(&alertsData, query)
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return &alertsInfo, err
+	}
+	for _, alert := range alertsData {
+		var rule rules.GettableRule
+		err = json.Unmarshal([]byte(alert), &rule)
+		if err != nil {
+			zap.S().Errorf("msg:", "invalid rule data", "\t err:", err)
+			continue
+		}
+		if rule.AlertType == "LOGS_BASED_ALERT" {
+			alertsInfo.LogsBasedAlerts = alertsInfo.LogsBasedAlerts + 1
+		} else if rule.AlertType == "METRIC_BASED_ALERT" {
+			alertsInfo.MetricBasedAlerts = alertsInfo.MetricBasedAlerts + 1
+		} else if rule.AlertType == "TRACES_BASED_ALERT" {
+			alertsInfo.TracesBasedAlerts = alertsInfo.TracesBasedAlerts + 1
+		}
+		alertsInfo.TotalAlerts = alertsInfo.TotalAlerts + 1
+	}
+
+	return &alertsInfo, nil
+}
+
+func (r *ClickHouseReader) GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error) {
+	savedViewsInfo := model.SavedViewsInfo{}
+	savedViews, err := explorer.GetViews()
+	if err != nil {
+		zap.S().Debug("Error in fetching saved views info: ", err)
+		return &savedViewsInfo, err
+	}
+	savedViewsInfo.TotalSavedViews = len(savedViews)
+	for _, view := range savedViews {
+		if view.SourcePage == "traces" {
+			savedViewsInfo.TracesSavedViews += 1
+		} else if view.SourcePage == "logs" {
+			savedViewsInfo.LogsSavedViews += 1
+		}
+	}
+	return &savedViewsInfo, nil
 }
 
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
@@ -3432,6 +3664,10 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 	if err != nil {
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
+
+	//remove this code after sometime
+	attributes = removeUnderscoreDuplicateFields(attributes)
+	resources = removeUnderscoreDuplicateFields(resources)
 
 	statements := []model.ShowCreateTableStatement{}
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTable)
@@ -3480,66 +3716,48 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		valueColName := fmt.Sprintf("%s_%s_value", field.Type, strings.ToLower(field.DataType))
 
 		// create materialized column
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s[indexOf(%s, '%s')] CODEC(ZSTD(1))",
-			r.logsDB, r.logsLocalTable,
-			r.cluster,
-			colname, field.DataType,
-			valueColName,
-			keyColName,
-			field.Name,
-		)
-		err := r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-		}
 
-		defaultValueDistributed := "-1"
-		if strings.ToLower(field.DataType) == "bool" {
-			defaultValueDistributed = "false"
-			field.IndexType = "set(2)"
-		}
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s",
-			r.logsDB, r.logsTable,
-			r.cluster,
-			colname, field.DataType,
-			defaultValueDistributed,
-		)
-		err = r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-		}
+		for _, table := range []string{r.logsLocalTable, r.logsTable} {
+			q := "ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s DEFAULT %s[indexOf(%s, '%s')] CODEC(ZSTD(1))"
+			query := fmt.Sprintf(q,
+				r.logsDB, table,
+				r.cluster,
+				colname, field.DataType,
+				valueColName,
+				keyColName,
+				field.Name,
+			)
+			err := r.db.Exec(ctx, query)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
 
-		// create exists column
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
-			r.logsDB, r.logsLocalTable,
-			r.cluster,
-			colname,
-			keyColName,
-			field.Name,
-		)
-		err = r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-		}
-
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED false",
-			r.logsDB, r.logsTable,
-			r.cluster,
-			colname,
-		)
-		err = r.db.Exec(ctx, query)
-		if err != nil {
-			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool DEFAULT if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
+				r.logsDB, table,
+				r.cluster,
+				colname,
+				keyColName,
+				field.Name,
+			)
+			err = r.db.Exec(ctx, query)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
 		}
 
 		// create the index
+		if strings.ToLower(field.DataType) == "bool" {
+			// there is no point in creating index for bool attributes as the cardinality is just 2
+			return nil
+		}
+
 		if field.IndexType == "" {
 			field.IndexType = constants.DefaultLogSkipIndexType
 		}
 		if field.IndexGranularity == 0 {
 			field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
 		}
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d",
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d",
 			r.logsDB, r.logsLocalTable,
 			r.cluster,
 			colname,
@@ -3547,7 +3765,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			field.IndexType,
 			field.IndexGranularity,
 		)
-		err = r.db.Exec(ctx, query)
+		err := r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
@@ -3560,7 +3778,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
-		for _, table := range []string{r.logsLocalTable, r.logsTable} {
+		for _, table := range []string{r.logsTable, r.logsLocalTable} {
 			// drop materialized column from logs table
 			query := "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s "
 			err := r.db.Exec(ctx, fmt.Sprintf(query,
@@ -3606,7 +3824,10 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail)
+		}
 	}
 
 	query := fmt.Sprintf("%s from %s.%s", constants.LogsSQLSelect, r.logsDB, r.logsTable)
@@ -3646,7 +3867,10 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail)
+		}
 	}
 
 	if err != nil {
@@ -3736,7 +3960,10 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 		"lenFilters": lenFilters,
 	}
 	if lenFilters != 0 {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data)
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail)
+		}
 	}
 
 	query := ""
@@ -3838,7 +4065,7 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 	var rows driver.Rows
 	var response v3.AggregateAttributeResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT(metric_name) from %s.%s WHERE metric_name ILIKE $1", signozMetricDBName, signozTSTableName)
+	query = fmt.Sprintf("SELECT metric_name, type, is_monotonic, temporality FROM %s.%s WHERE metric_name ILIKE $1 GROUP BY metric_name, type, is_monotonic, temporality", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
@@ -3850,17 +4077,30 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 	}
 	defer rows.Close()
 
-	var metricName string
+	seen := make(map[string]struct{})
+
+	var metricName, typ, temporality string
+	var isMonotonic bool
 	for rows.Next() {
-		if err := rows.Scan(&metricName); err != nil {
+		if err := rows.Scan(&metricName, &typ, &isMonotonic, &temporality); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+		// Non-monotonic cumulative sums are treated as gauges
+		if typ == "Sum" && !isMonotonic && temporality == string(v3.Cumulative) {
+			typ = "Gauge"
+		}
+		// unlike traces/logs `tag`/`resource` type, the `Type` will be metric type
 		key := v3.AttributeKey{
 			Key:      metricName,
 			DataType: v3.AttributeKeyDataTypeFloat64,
-			Type:     v3.AttributeKeyTypeUnspecified,
+			Type:     v3.AttributeKeyType(typ),
 			IsColumn: true,
 		}
+		// remove duplicates
+		if _, ok := seen[metricName+typ]; ok {
+			continue
+		}
+		seen[metricName+typ] = struct{}{}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 
@@ -3875,11 +4115,11 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 	var response v3.FilterAttributeKeyResponse
 
 	// skips the internal attributes i.e attributes starting with __
-	query = fmt.Sprintf("SELECT DISTINCT arrayJoin(tagKeys) as distinctTagKey from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1) WHERE distinctTagKey ILIKE $2 AND distinctTagKey NOT LIKE '\\_\\_%%'", signozMetricDBName, signozTSTableName)
+	query = fmt.Sprintf("SELECT arrayJoin(tagKeys) AS distinctTagKey FROM (SELECT JSONExtractKeys(labels) AS tagKeys FROM %s.%s WHERE metric_name=$1 AND unix_milli >= $2 GROUP BY tagKeys) WHERE distinctTagKey ILIKE $3 AND distinctTagKey NOT LIKE '\\_\\_%%' GROUP BY distinctTagKey", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
+	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, common.PastDayRoundOff(), fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
 		zap.S().Error(err)
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
@@ -3910,11 +4150,11 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, $1)) from %s.%s WHERE metric_name=$2 AND JSONExtractString(labels, $3) ILIKE $4", signozMetricDBName, signozTSTableName)
+	query = fmt.Sprintf("SELECT JSONExtractString(labels, $1) AS tagValue FROM %s.%s WHERE metric_name=$2 AND JSONExtractString(labels, $3) ILIKE $4 AND unix_milli >= $5 GROUP BY tagValue", signozMetricDBName, signozTSTableNameV41Day)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText))
+	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff())
 
 	if err != nil {
 		zap.S().Error(err)
@@ -3935,8 +4175,8 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	return &attributeValues, nil
 }
 
-func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricName string, preferDelta bool) (*v3.LatencyMetricMetadataResponse, error) {
-	query := fmt.Sprintf("SELECT DISTINCT(temporality) from %s.%s WHERE metric_name='%s'", signozMetricDBName, signozTSTableName, metricName)
+func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricName, serviceName string, preferDelta bool) (*v3.LatencyMetricMetadataResponse, error) {
+	query := fmt.Sprintf("SELECT DISTINCT(temporality) from %s.%s WHERE metric_name='%s' AND JSONExtractString(labels, 'service_name') = '%s'", signozMetricDBName, signozTSTableName, metricName, serviceName)
 	rows, err := r.db.Query(ctx, query, metricName)
 	if err != nil {
 		zap.S().Error(err)
@@ -3955,7 +4195,7 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 		}
 	}
 
-	query = fmt.Sprintf("SELECT DISTINCT(toFloat64(JSONExtractString(labels, 'le'))) as le from %s.%s WHERE metric_name='%s' ORDER BY le", signozMetricDBName, signozTSTableName, metricName)
+	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, 'le')) as le from %s.%s WHERE metric_name='%s' AND JSONExtractString(labels, 'service_name') = '%s' ORDER BY le", signozMetricDBName, signozTSTableName, metricName, serviceName)
 	rows, err = r.db.Query(ctx, query, metricName)
 	if err != nil {
 		zap.S().Error(err)
@@ -3965,9 +4205,17 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 
 	var leFloat64 []float64
 	for rows.Next() {
-		var le float64
-		if err := rows.Scan(&le); err != nil {
+		var leStr string
+		if err := rows.Scan(&leStr); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		le, err := strconv.ParseFloat(leStr, 64)
+		// ignore the error and continue if the value is not a float
+		// ideally this should not happen but we have seen ClickHouse
+		// returning empty string for some values
+		if err != nil {
+			zap.S().Error("error while parsing le value: ", err)
+			continue
 		}
 		if math.IsInf(le, 0) {
 			continue
@@ -3979,6 +4227,129 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 		Delta: deltaExists && preferDelta,
 		Le:    leFloat64,
 	}, nil
+}
+
+func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, serviceName string) (*v3.MetricMetadataResponse, error) {
+	// Note: metric metadata should be accessible regardless of the time range selection
+	// our standard retention period is 30 days, so we are querying the table v4_1_day to reduce the
+	// amount of data scanned
+	query := fmt.Sprintf("SELECT DISTINCT temporality, description, type, unit, is_monotonic from %s.%s WHERE metric_name=$1", signozMetricDBName, signozTSTableNameV41Day)
+	rows, err := r.db.Query(ctx, query, metricName)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while fetching metric metadata: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var deltaExists, isMonotonic bool
+	var temporality, description, metricType, unit string
+	for rows.Next() {
+		if err := rows.Scan(&temporality, &description, &metricType, &unit, &isMonotonic); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		if temporality == string(v3.Delta) {
+			deltaExists = true
+		}
+	}
+
+	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, 'le')) as le from %s.%s WHERE metric_name=$1 AND type = 'Histogram' AND JSONExtractString(labels, 'service_name') = $2 ORDER BY le", signozMetricDBName, signozTSTableNameV41Day)
+	rows, err = r.db.Query(ctx, query, metricName, serviceName)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var leFloat64 []float64
+	for rows.Next() {
+		var leStr string
+		if err := rows.Scan(&leStr); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		le, err := strconv.ParseFloat(leStr, 64)
+		// ignore the error and continue if the value is not a float
+		// ideally this should not happen but we have seen ClickHouse
+		// returning empty string for some values
+		if err != nil {
+			zap.S().Error("error while parsing le value: ", err)
+			continue
+		}
+		if math.IsInf(le, 0) {
+			continue
+		}
+		leFloat64 = append(leFloat64, le)
+	}
+
+	return &v3.MetricMetadataResponse{
+		Delta:       deltaExists,
+		Le:          leFloat64,
+		Description: description,
+		Unit:        unit,
+		Type:        metricType,
+		IsMonotonic: isMonotonic,
+		Temporality: temporality,
+	}, nil
+}
+
+func (r *ClickHouseReader) GetLatestReceivedMetric(
+	ctx context.Context, metricNames []string,
+) (*model.MetricStatus, *model.ApiError) {
+	if len(metricNames) < 1 {
+		return nil, nil
+	}
+
+	quotedMetricNames := []string{}
+	for _, m := range metricNames {
+		quotedMetricNames = append(quotedMetricNames, fmt.Sprintf(`'%s'`, m))
+	}
+	commaSeparatedMetricNames := strings.Join(quotedMetricNames, ", ")
+
+	query := fmt.Sprintf(`
+		SELECT metric_name, labels, unix_milli
+		from %s.%s
+		where metric_name in (
+			%s
+		)
+		order by unix_milli desc
+		limit 1
+		`, signozMetricDBName, signozTSTableNameV4, commaSeparatedMetricNames,
+	)
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't query clickhouse for received metrics status: %w", err,
+		))
+	}
+	defer rows.Close()
+
+	var result *model.MetricStatus
+
+	if rows.Next() {
+
+		result = &model.MetricStatus{}
+		var labelsJson string
+
+		err := rows.Scan(
+			&result.MetricName,
+			&labelsJson,
+			&result.LastReceivedTsMillis,
+		)
+		if err != nil {
+			return nil, model.InternalError(fmt.Errorf(
+				"couldn't scan metric status row: %w", err,
+			))
+		}
+
+		err = json.Unmarshal([]byte(labelsJson), &result.LastReceivedLabels)
+		if err != nil {
+			return nil, model.InternalError(fmt.Errorf(
+				"couldn't unmarshal metric labels json: %w", err,
+			))
+		}
+	}
+
+	return result, nil
 }
 
 func isColumn(tableStatement, attrType, field, datType string) bool {
@@ -4391,10 +4762,26 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 	return seriesList, nil
 }
 
+func logComment(ctx context.Context) string {
+	// Get the key-value pairs from context for log comment
+	kv := ctx.Value("log_comment")
+	if kv == nil {
+		return ""
+	}
+
+	logCommentKVs, ok := kv.(map[string]string)
+	if !ok {
+		return ""
+	}
+
+	x, _ := json.Marshal(logCommentKVs)
+	return string(x)
+}
+
 // GetTimeSeriesResultV3 runs the query and returns list of time series
 func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
 
-	defer utils.Elapsed("GetTimeSeriesResultV3", query)()
+	defer utils.Elapsed("GetTimeSeriesResultV3", query, fmt.Sprintf("logComment: %s", logComment(ctx)))()
 
 	rows, err := r.db.Query(ctx, query)
 
@@ -4419,7 +4806,7 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 // GetListResultV3 runs the query and returns list of rows
 func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
 
-	defer utils.Elapsed("GetListResultV3", query)()
+	defer utils.Elapsed("GetListResultV3", query, fmt.Sprintf("logComment: %s", logComment(ctx)))()
 
 	rows, err := r.db.Query(ctx, query)
 
@@ -4455,11 +4842,63 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 				row[columnNames[idx]] = v
 			}
 		}
+
+		// remove duplicate _ attributes for logs.
+		// remove this function after a month
+		removeDuplicateUnderscoreAttributes(row)
+
 		rowList = append(rowList, &v3.Row{Timestamp: t, Data: row})
 	}
 
 	return rowList, nil
 
+}
+
+func removeDuplicateUnderscoreAttributes(row map[string]interface{}) {
+	if val, ok := row["attributes_int64"]; ok {
+		attributes := val.(*map[string]int64)
+		for key := range *attributes {
+			if strings.Contains(key, ".") {
+				uKey := strings.ReplaceAll(key, ".", "_")
+				delete(*attributes, uKey)
+			}
+		}
+
+	}
+
+	if val, ok := row["attributes_float64"]; ok {
+		attributes := val.(*map[string]float64)
+		for key := range *attributes {
+			if strings.Contains(key, ".") {
+				uKey := strings.ReplaceAll(key, ".", "_")
+				delete(*attributes, uKey)
+			}
+		}
+
+	}
+
+	if val, ok := row["attributes_bool"]; ok {
+		attributes := val.(*map[string]bool)
+		for key := range *attributes {
+			if strings.Contains(key, ".") {
+				uKey := strings.ReplaceAll(key, ".", "_")
+				delete(*attributes, uKey)
+			}
+		}
+
+	}
+	for _, k := range []string{"attributes_string", "resources_string"} {
+		if val, ok := row[k]; ok {
+			attributes := val.(*map[string]string)
+			for key := range *attributes {
+				if strings.Contains(key, ".") {
+					uKey := strings.ReplaceAll(key, ".", "_")
+					delete(*attributes, uKey)
+				}
+			}
+
+		}
+	}
 }
 func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	rows, err := r.db.Query(ctx, "SELECT 1")
