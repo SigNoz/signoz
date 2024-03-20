@@ -332,7 +332,7 @@ function IngoreError(): JSX.Element {
 			{contextHolder}
 			<h1>Ingore Setting</h1>
 			<Form form={form} labelCol={{ span: 2 }}>
-				<Form.Item label="类型">
+				<Form.Item label="Error Type">
 					{/* <Tabs defaultActiveKey="1" items={items} onChange={onChange} /> */}
 					<Radio.Group
 						// defaultValue={1}
@@ -345,7 +345,7 @@ function IngoreError(): JSX.Element {
 						<Radio.Button value={3}>RESOURCE</Radio.Button>
 					</Radio.Group>
 				</Form.Item>
-				<Form.Item label="项目">
+				<Form.Item label="Project">
 					<Select
 						// defaultValue={projectList?.[0]}
 						value={currentProject}
@@ -359,7 +359,7 @@ function IngoreError(): JSX.Element {
 						}))}
 					/>
 				</Form.Item>
-				<Form.Item label="规则配置">
+				<Form.Item label="Rules Setting">
 					<Button
 						style={{ marginBottom: 10 }}
 						type="primary"
@@ -371,6 +371,7 @@ function IngoreError(): JSX.Element {
 						columns={columns}
 						dataSource={tableDataSource}
 						loading={searchLoading}
+						pagination={false}
 					/>
 				</Form.Item>
 				<Form.Item label=" " colon={false}>
