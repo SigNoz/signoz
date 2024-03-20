@@ -6,32 +6,38 @@
 
 **Building image**
 
-``docker-compose up`
-/ This will also run
+Use Docker Compose to start all containers:
 
-or
-`docker build . -t tagname`
-
-**Tag to remote url- Introduce versinoing later on**
-
+```sh
+docker-compose up
 ```
+
+or individually build the container image specifying a tag:
+
+```sh
+docker build . -t tagname
+```
+
+**Tag to remote url: introduce versioning later on**
+
+```sh
 docker tag signoz/frontend:latest 7296823551/signoz:latest
 ```
 
-```
+```sh
 docker-compose up
 ```
 
 ## Without Docker
+
 Follow the steps below
 
-1. ```git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend```
-1. change baseURL to ```<test environment URL>``` in file ```src/constants/env.ts```
+- Clone the repository locally with: `git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend`
+- Change `baseURL` to `<test environment URL>` in file `src/constants/env.ts`
+- Install all 3rd-party package dependencies: `yarn install`
+- Start the local frontend: `yarn dev`
 
-1. ```yarn install```
-1. ```yarn dev```
-
-```Note: Please ping us in #contributing channel in our slack community and we will DM you with <test environment URL>```
+> Note: Please ping us in #contributing channel in our slack community and we will DM you with <test environment URL>
 
 # Getting Started with Create React App
 
@@ -43,7 +49,7 @@ In the project directory, you can run:
 
 ### `yarn start`
 
-Runs the app in the development mode.\
+Runs the app in the development mode.
 Open [http://localhost:3301](http://localhost:3301) to view it in the browser.
 
 The page will reload if you make edits.\
@@ -66,7 +72,7 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 
 ### `yarn eject`
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+> Note: this is a one-way operation. Once you `eject`, you can’t go back!**
 
 If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
