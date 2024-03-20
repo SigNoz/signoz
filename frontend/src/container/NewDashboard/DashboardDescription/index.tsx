@@ -23,7 +23,12 @@ function DashboardDescription(): JSX.Element {
 		handleDashboardLockToggle,
 	} = useDashboard();
 
-	const selectedData = selectedDashboard?.data || ({} as DashboardData);
+	const selectedData = selectedDashboard
+		? {
+				...selectedDashboard.data,
+				uuid: selectedDashboard.uuid,
+		  }
+		: ({} as DashboardData);
 
 	const { title = '', tags, description } = selectedData || {};
 
