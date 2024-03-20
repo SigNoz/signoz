@@ -19,7 +19,6 @@ function Integrations(): JSX.Element {
 
 	const setSelectedIntegration = useCallback(
 		(integration: string | null) => {
-			console.log(integration);
 			if (integration) {
 				urlQuery.set('integration', integration);
 			} else {
@@ -31,7 +30,9 @@ function Integrations(): JSX.Element {
 		[history, location.pathname, urlQuery],
 	);
 
-	const [activeDetailTab, setActiveDetailTab] = useState<string | null>(null);
+	const [activeDetailTab, setActiveDetailTab] = useState<string | null>(
+		'overview',
+	);
 
 	const [searchTerm, setSearchTerm] = useState<string>('');
 	return (

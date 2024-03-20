@@ -53,9 +53,17 @@
 
 	.loading-integration-details {
 		display: flex;
-		height: 400px;
-		justify-content: center;
-		align-items: center;
+		flex-direction: column;
+		gap: 16px;
+
+		.skeleton-1 {
+			height: 125px;
+			width: 100%;
+		}
+		.skeleton-2 {
+			height: 250px;
+			width: 100%;
+		}
 	}
 
 	.all-integrations-btn {
@@ -264,7 +272,7 @@
 		border-radius: 4px;
 		border: 1px solid rgba(218, 85, 101, 0.2);
 		background: rgba(218, 85, 101, 0.06);
-		gap: 16px;
+		gap: 32px;
 
 		.unintall-integration-bar-text {
 			display: flex;
