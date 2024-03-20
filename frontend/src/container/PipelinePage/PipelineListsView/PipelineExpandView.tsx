@@ -32,7 +32,6 @@ function PipelineExpandView({
 	setActionType,
 	processorEditAction,
 	isActionMode,
-	setShowSaveButton,
 	expandedPipelineData,
 	setExpandedPipelineData,
 	prevPipelineData,
@@ -44,7 +43,6 @@ function PipelineExpandView({
 
 	const deleteProcessorHandler = useCallback(
 		(record: ProcessorData) => (): void => {
-			setShowSaveButton(ActionMode.Editing);
 			if (expandedPipelineData && expandedPipelineData?.config) {
 				const filteredData = expandedPipelineData?.config.filter(
 					(item: ProcessorData) => item.id !== record.id,
@@ -62,7 +60,7 @@ function PipelineExpandView({
 				setExpandedPipelineData(pipelineData);
 			}
 		},
-		[expandedPipelineData, setShowSaveButton, setExpandedPipelineData],
+		[expandedPipelineData, setExpandedPipelineData],
 	);
 
 	const processorDeleteAction = useCallback(
@@ -80,7 +78,6 @@ function PipelineExpandView({
 	const onSwitchProcessorChange = useCallback(
 		(checked: boolean, record: ProcessorData): void => {
 			if (expandedPipelineData && expandedPipelineData?.config) {
-				setShowSaveButton(ActionMode.Editing);
 				const findRecordIndex = getRecordIndex(
 					expandedPipelineData?.config,
 					record,
@@ -102,7 +99,7 @@ function PipelineExpandView({
 				setExpandedPipelineData(modifiedProcessorData);
 			}
 		},
-		[expandedPipelineData, setExpandedPipelineData, setShowSaveButton],
+		[expandedPipelineData, setExpandedPipelineData],
 	);
 
 	const columns = useMemo(() => {
@@ -145,14 +142,13 @@ function PipelineExpandView({
 
 	const reorderProcessorRow = useCallback(
 		(updatedRow: ProcessorData[]) => (): void => {
-			setShowSaveButton(ActionMode.Editing);
 			if (expandedPipelineData) {
 				const modifiedProcessorData = { ...expandedPipelineData };
 				modifiedProcessorData.config = updatedRow;
 				setExpandedPipelineData(modifiedProcessorData);
 			}
 		},
-		[expandedPipelineData, setShowSaveButton, setExpandedPipelineData],
+		[expandedPipelineData, setExpandedPipelineData],
 	);
 
 	const onCancelReorderProcessorRow = useCallback(
@@ -267,7 +263,6 @@ interface PipelineExpandViewProps {
 	setActionType: (actionType?: ActionType) => void;
 	processorEditAction: (record: ProcessorData) => () => void;
 	isActionMode: string;
-	setShowSaveButton: (actionMode: ActionMode) => void;
 	expandedPipelineData?: PipelineData;
 	setExpandedPipelineData: (data: PipelineData) => void;
 	prevPipelineData: Array<PipelineData>;

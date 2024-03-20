@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
 
-import CreatePipelineButton from '../Layouts/Pipeline/CreatePipelineButton';
+import PipelinesActions from '../Layouts/Pipeline/PipelinesActions';
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
 
 describe('PipelinePage container test', () => {
@@ -14,7 +14,7 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<CreatePipelineButton
+						<PipelinesActions
 							setActionType={jest.fn()}
 							isActionMode="viewing-mode"
 							setActionMode={jest.fn()}

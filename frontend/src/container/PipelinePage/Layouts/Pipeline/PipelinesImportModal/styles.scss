@@ -1,0 +1,10 @@
+.pipelines-import-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pipelines-import-modal-error {
+  flex-grow: 1;
+  text-align: left;
+}
