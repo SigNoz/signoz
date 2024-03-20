@@ -61,7 +61,7 @@ var SAAS_EVENTS_LIST = map[string]struct{}{
 	TELEMETRY_EVENT_DASHBOARDS_ALERTS:                {},
 	TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY: {},
 	TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY:           {},
-	TELEMETRY_EVENT_QUERY_RANGE_API:                  {},
+	// TELEMETRY_EVENT_QUERY_RANGE_API:                  {}, // this event is not part of SAAS_EVENTS_LIST as it may cause too many events to be sent
 }
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
