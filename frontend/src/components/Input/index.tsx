@@ -23,8 +23,13 @@ function InputComponent({
 	...props
 }: InputComponentProps): JSX.Element {
 	return (
-		<Form.Item labelCol={{ span: labelOnTop ? 24 : 4 }} label={label}>
+		<Form.Item
+			labelCol={{ span: labelOnTop ? 24 : 4 }}
+			label={label}
+			htmlFor={`input-${label?.toLocaleLowerCase()}`}
+		>
 			<Input
+				id={`input-${label?.toLocaleLowerCase()}`}
 				placeholder={placeholder}
 				type={type}
 				onChange={onChangeHandler}
