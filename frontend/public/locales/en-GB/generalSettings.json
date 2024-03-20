@@ -1,11 +1,11 @@
 {
 	"total_retention_period": "Total Retention Period",
-	"move_to_s3": "Move to S3\n(should be lower than total retention period)",
+	"move_to_s3": "Move to S3 after\n(should be lower than total retention period)",
 	"status_message": {
 		"success": "Your last call to change retention period to {{total_retention}} {{s3_part}} was successful.",
 		"failed": "Your last call to change retention period to {{total_retention}} {{s3_part}} failed. Please try again.",
 		"pending": "Your last call to change retention period to {{total_retention}} {{s3_part}} is pending. This may take some time.",
-		"s3_part": "and  S3 to {{s3_retention}}"
+		"s3_part": "and S3 to {{s3_retention}}"
 	},
 	"retention_save_button": {
 		"pending": "Updating {{name}} retention period",
