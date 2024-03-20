@@ -214,6 +214,16 @@
 			justify-content: center;
 			padding: 8px 8px 18px 8px !important;
 
+			.configure-icon {
+				height: 14px;
+				width: 14px;
+			}
+
+			.group-icon {
+				height: 14px;
+				width: 14px;
+			}
+
 			.typography {
 				color: var(--bg-vanilla-100);
 				font-family: Inter;
@@ -254,6 +264,7 @@
 		border-radius: 4px;
 		border: 1px solid rgba(218, 85, 101, 0.2);
 		background: rgba(218, 85, 101, 0.06);
+		gap: 16px;
 
 		.unintall-integration-bar-text {
 			display: flex;
@@ -447,6 +458,7 @@
 				font-style: normal;
 				font-weight: 400;
 				line-height: 18px; /* 150% */
+				max-width: 320px;
 			}
 		}
 		.testingConnection {

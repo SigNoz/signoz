@@ -1,7 +1,7 @@
 import './IntegrationDetailPage.styles.scss';
 
 import { Button, Tabs, TabsProps, Typography } from 'antd';
-import { Drum, Hammer, Table2 } from 'lucide-react';
+import { Drum } from 'lucide-react';
 import { IntegrationDetailedProps } from 'types/api/integrations/types';
 
 import Configure from './IntegrationDetailContentTabs/Configure';
@@ -43,7 +43,13 @@ function IntegrationDetailContent(
 				<Button
 					type="text"
 					className="integration-tab-btns"
-					icon={<Hammer size={14} />}
+					icon={
+						<img
+							src="/Icons/configure.svg"
+							alt="configure-tab"
+							className="configure-icon"
+						/>
+					}
 				>
 					<Typography.Text className="typography">Configure</Typography.Text>
 				</Button>
@@ -56,7 +62,7 @@ function IntegrationDetailContent(
 				<Button
 					type="text"
 					className="integration-tab-btns"
-					icon={<Table2 size={14} />}
+					icon={<img src="/Icons/group.svg" alt="data-tab" className="group-icon" />}
 				>
 					<Typography.Text className="typography">Data Collected</Typography.Text>
 				</Button>
