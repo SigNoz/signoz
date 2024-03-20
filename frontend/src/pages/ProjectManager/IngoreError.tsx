@@ -395,7 +395,7 @@ function IngoreError(): JSX.Element {
 			>
 				<Form labelCol={{ span: 4 }}>
 					<Form.Item<FieldType>
-						label="采样率"
+						label="Sample rate"
 						name="sample_rate"
 						rules={[{ required: true, message: 'Please input sample rate' }]}
 					>
@@ -411,7 +411,7 @@ function IngoreError(): JSX.Element {
 						</div>
 					</Form.Item>
 					<Form.Item<FieldType>
-						label="选择过滤条件"
+						label="Set ignore rule"
 						name="rule"
 						rules={[{ required: true, message: 'Please set rules first' }]}
 					>
