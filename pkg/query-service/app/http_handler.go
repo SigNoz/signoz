@@ -3479,11 +3479,11 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 
 	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
 	if err != nil {
-		zap.S().Errorf("error while matching the referrer: %v", err)
+		zap.S().Errorf("error while matching the dashboard: %v", err)
 	}
 	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
 	if err != nil {
-		zap.S().Errorf("error while matching the referrer: %v", err)
+		zap.S().Errorf("error while matching the alert: %v", err)
 	}
 
 	if alertMatched || dashboardMatched {
@@ -3494,22 +3494,60 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 			if err == nil {
 				signozLogsUsed, signozMetricsUsed, signozTracesUsed := telemetry.GetInstance().CheckSigNozSignals(queryRangeParams)
 				if signozLogsUsed || signozMetricsUsed || signozTracesUsed {
+
 					if dashboardMatched {
+						var dashboardID, widgetID string
+						var dashboardIDMatch, widgetIDMatch []string
+						dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`)
+						if err == nil {
+							dashboardIDMatch = dashboardIDRegex.FindStringSubmatch(referrer)
+						} else {
+							zap.S().Errorf("error while matching the dashboardIDRegex: %v", err)
+						}
+						widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`)
+						if err == nil {
+							widgetIDMatch = widgetIDRegex.FindStringSubmatch(referrer)
+						} else {
+							zap.S().Errorf("error while matching the widgetIDRegex: %v", err)
+						}
+
+						if len(dashboardIDMatch) > 1 {
+							dashboardID = dashboardIDMatch[1]
+						}
+
+						if len(widgetIDMatch) > 1 {
+							widgetID = widgetIDMatch[1]
+						}
 						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY, map[string]interface{}{
 							"queryType":   queryRangeParams.CompositeQuery.QueryType,
 							"panelType":   queryRangeParams.CompositeQuery.PanelType,
 							"tracesUsed":  signozTracesUsed,
 							"logsUsed":    signozLogsUsed,
 							"metricsUsed": signozMetricsUsed,
+							"dashboardId": dashboardID,
+							"widgetId":    widgetID,
 						}, userEmail)
 					}
 					if alertMatched {
+						var alertID string
+						var alertIDMatch []string
+						alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`)
+						if err != nil {
+							zap.S().Errorf("error while matching the alertIDRegex: %v", err)
+						} else {
+							alertIDMatch = alertIDRegex.FindStringSubmatch(referrer)
+						}
+
+						if len(alertIDMatch) > 1 {
+							alertID = alertIDMatch[1]
+						}
 						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY, map[string]interface{}{
 							"queryType":   queryRangeParams.CompositeQuery.QueryType,
 							"panelType":   queryRangeParams.CompositeQuery.PanelType,
 							"tracesUsed":  signozTracesUsed,
 							"logsUsed":    signozLogsUsed,
 							"metricsUsed": signozMetricsUsed,
+							"alertId":     alertID,
 						}, userEmail)
 					}
 				}

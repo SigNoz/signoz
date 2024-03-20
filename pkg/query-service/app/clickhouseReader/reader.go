@@ -44,6 +44,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -3621,6 +3622,24 @@ func (r *ClickHouseReader) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo
 	}
 
 	return &alertsInfo, nil
+}
+
+func (r *ClickHouseReader) GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error) {
+	savedViewsInfo := model.SavedViewsInfo{}
+	savedViews, err := explorer.GetViews()
+	if err != nil {
+		zap.S().Debug("Error in fetching saved views info: ", err)
+		return &savedViewsInfo, err
+	}
+	savedViewsInfo.TotalSavedViews = len(savedViews)
+	for _, view := range savedViews {
+		if view.SourcePage == "traces" {
+			savedViewsInfo.TracesSavedViews += 1
+		} else if view.SourcePage == "logs" {
+			savedViewsInfo.LogsSavedViews += 1
+		}
+	}
+	return &savedViewsInfo, nil
 }
 
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {

@@ -77,6 +77,7 @@ type Reader interface {
 
 	GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error)
 	GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error)
+	GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error)
 	GetTotalSpans(ctx context.Context) (uint64, error)
 	GetTotalLogs(ctx context.Context) (uint64, error)
 	GetTotalSamples(ctx context.Context) (uint64, error)
