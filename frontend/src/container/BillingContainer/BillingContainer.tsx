@@ -28,6 +28,7 @@ import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { pick } from 'lodash-es';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -130,6 +131,7 @@ export default function BillingContainer(): JSX.Element {
 	>({});
 
 	const { trackEvent } = useAnalytics();
+	const { t } = useTranslation(['billings']);
 
 	const { isFetching, data: licensesData, error: licenseError } = useLicense();
 
@@ -413,7 +415,7 @@ export default function BillingContainer(): JSX.Element {
 				{isSubscriptionPastDue &&
 					(!isLoading && !isFetchingBillingData ? (
 						<Alert
-							message="Your subscription status is past due"
+							message={t('subscription_past_due')}
 							type="error"
 							showIcon
 							style={{ marginTop: 12 }}
