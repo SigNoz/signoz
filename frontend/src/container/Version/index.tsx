@@ -94,7 +94,7 @@ function Version(): JSX.Element {
 
 			{!isError && !isLatestVersion && (
 				<Button
-					href="https://signoz.io/docs/operate/docker-standalone/#upgrade"
+					href="https://signoz.io/docs/operate/docker-standalone/#upgrade-signoz-cluster"
 					target="_blank"
 				>
 					{t('read_how_to_upgrade')}
