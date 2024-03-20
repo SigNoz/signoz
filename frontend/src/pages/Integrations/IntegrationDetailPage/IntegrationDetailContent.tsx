@@ -1,7 +1,6 @@
 import './IntegrationDetailPage.styles.scss';
 
 import { Button, Tabs, TabsProps, Typography } from 'antd';
-import { Drum } from 'lucide-react';
 import { IntegrationDetailedProps } from 'types/api/integrations/types';
 
 import Configure from './IntegrationDetailContentTabs/Configure';
@@ -24,7 +23,13 @@ function IntegrationDetailContent(
 				<Button
 					type="text"
 					className="integration-tab-btns"
-					icon={<Drum size={14} />}
+					icon={
+						<img
+							src="/Icons/cable-car.svg"
+							alt="overview-tab"
+							className="configure-icon"
+						/>
+					}
 				>
 					<Typography.Text className="typography">Overview</Typography.Text>
 				</Button>
