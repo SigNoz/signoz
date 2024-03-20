@@ -15,6 +15,7 @@ import {
 } from 'antd';
 import getAllProjectList from 'api/projectManager/ignoreError';
 import axios from 'axios';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { cloneDeep } from 'lodash-es';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -75,6 +76,7 @@ function IngoreError(): JSX.Element {
 	const [currentRadio, setCurrentRadio] = useState<number>(1);
 	const [curRecordRule, setCurRecordRule] = useState<RuleItem>();
 	const [searchLoading, setSearchLoading] = useState<boolean>(false);
+	const isDarkMode = useIsDarkMode();
 
 	const handleModalShow = (isShow: boolean) => {
 		setIsModalOpen(isShow);
@@ -330,7 +332,9 @@ function IngoreError(): JSX.Element {
 	return (
 		<>
 			{contextHolder}
-			<h1>Ingore Setting</h1>
+			<h1 style={isDarkMode ? { color: 'white' } : { color: 'black' }}>
+				Ingore Setting
+			</h1>
 			<Form form={form} labelCol={{ span: 2 }}>
 				<Form.Item label="Error Type">
 					{/* <Tabs defaultActiveKey="1" items={items} onChange={onChange} /> */}
