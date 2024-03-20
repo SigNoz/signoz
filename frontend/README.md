@@ -1,4 +1,5 @@
 # Configuring Over Local
+
 1. Docker
 1. Without Docker
 
@@ -23,15 +24,19 @@ docker-compose up
 ```
 
 ## Without Docker
+
 Follow the steps below
 
-1. ```git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend```
-1. change baseURL to ```<test environment URL>``` in file ```src/constants/env.ts```
+1. `git clone https://github.com/SigNoz/signoz.git && cd signoz/frontend`
+1. change baseURL to `<test environment URL>` in file `src/constants/env.ts`
 
-1. ```yarn install```
-1. ```yarn dev```
+1. `yarn install`
+1. `yarn dev`
 
-```Note: Please ping us in #contributing channel in our slack community and we will DM you with <test environment URL>```
+**Note:**
+
+- Please ping us in `#contributing` channel in our [slack community](https://signoz.io/slack) and we will DM you with `<test environment URL>`
+- Please make sure to have classic version of yarn - `v1.22.19` installed in your system
 
 # Getting Started with Create React App
 
