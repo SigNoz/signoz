@@ -440,6 +440,14 @@
 		.data-info {
 			display: flex;
 			justify-content: space-between;
+			align-items: center;
+
+			.connection-line {
+				border: 1px dashed var(--bg-slate-200);
+				min-width: 20px;
+				height: 0px;
+				flex-grow: 1;
+			}
 
 			.last-data {
 				color: var(--bg-vanilla-400);
@@ -634,6 +642,9 @@
 
 		.connection-content {
 			.data-info {
+				.connection-line {
+					border: 1px dashed var(--bg-vanilla-400);
+				}
 				.last-data {
 					color: var(--bg-slate-400);
 				}

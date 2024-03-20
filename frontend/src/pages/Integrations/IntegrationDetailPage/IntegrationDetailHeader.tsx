@@ -155,6 +155,7 @@ function IntegrationDetailHeader(
 								<Typography.Text className="last-data">
 									Last recieved from
 								</Typography.Text>
+								<div className="connection-line" />
 								<Tooltip
 									title={latestData.last_received_from}
 									key={latestData.last_received_from}
@@ -169,6 +170,7 @@ function IntegrationDetailHeader(
 								<Typography.Text className="last-data">
 									Last recieved at
 								</Typography.Text>
+								<div className="connection-line" />
 								<Tooltip
 									title={
 										latestData.last_received_ts_ms
