@@ -37,7 +37,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { defaultTo, isEmpty } from 'lodash-es';
+import { defaultTo, isEmpty, omit } from 'lodash-es';
 import { Sliders } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -535,8 +535,9 @@ function LogsExplorerViews({
 						: dayjs(log.timestamp / 1e6).format();
 
 				return FlatLogData({
-					...log,
 					timestamp,
+					body: log.body,
+					...omit(log, 'timestamp', 'body'),
 				});
 			}),
 		[logs],
