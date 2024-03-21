@@ -430,7 +430,7 @@ export default function BillingContainer(): JSX.Element {
 					<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
 				)}
 
-				{!isSubscriptionPastDue &&
+				{isSubscriptionPastDue &&
 					(!isLoading && !isFetchingBillingData ? (
 						<Alert
 							message={subscriptionPastDueMessage()}
