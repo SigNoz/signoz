@@ -1,4 +1,4 @@
-### Configure otel collector
+### Collect Postgres Metrics
 
 #### Create collector config file
 

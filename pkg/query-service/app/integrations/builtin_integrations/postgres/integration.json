@@ -18,8 +18,8 @@
       "instructions": "file://config/prerequisites.md"
     },
     {
-      "title": "Configure Otel Collector",
-      "instructions": "file://config/configure-otel-collector.md"
+      "title": "Collect Metrics",
+      "instructions": "file://config/configure-metrics-collection.md"
     }
   ],
   "assets": {
