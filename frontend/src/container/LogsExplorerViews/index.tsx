@@ -599,7 +599,7 @@ function LogsExplorerViews({
 							<div className="tab-options">
 								<Download
 									data={flattenLogData}
-									isLoading={isLoading || isFetching}
+									isLoading={isFetching}
 									fileName="log_data"
 								/>
 								<div className="format-options-container" ref={menuRef}>
