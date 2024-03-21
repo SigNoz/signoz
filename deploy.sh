@@ -17,14 +17,10 @@ npm install --force || {
     exit 1
 }
 
-# 生成客户端代码
-cd /home/ubuntu/application-performance-monitor/server/src
-npx prisma generate
-
-cd ..
-# 构建前端
+# 构建前端，tb1环境执行npm run build:tb1
 echo "Building the frontend..."
-npm run build || {
+# npm run build || {
+npm run build:tb1 || {
     echo "Failed to build the frontend."
     exit 1
 }
