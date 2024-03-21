@@ -355,6 +355,19 @@ export default function BillingContainer(): JSX.Element {
 		[apiResponse, billAmount, isLoading, isFetchingBillingData],
 	);
 
+	const { Text } = Typography;
+	const subscriptionPastDueMessage = (): JSX.Element => (
+		<Typography>
+			{`We were not able to process payments for your account. Please update your card details `}
+			<Text type="danger" onClick={handleBilling} style={{ cursor: 'pointer' }}>
+				{t('here')}
+			</Text>
+			{` if your payment information has changed. Email us at `}
+			<Text type="secondary">cloud-support@signoz.io</Text>
+			{` otherwise. Be sure to provide this information immediately to avoid interruption to your service.`}
+		</Typography>
+	);
+
 	return (
 		<div className="billing-container">
 			<Flex vertical style={{ marginBottom: 16 }}>
@@ -417,10 +430,11 @@ export default function BillingContainer(): JSX.Element {
 					<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
 				)}
 
-				{isSubscriptionPastDue &&
+				{!isSubscriptionPastDue &&
 					(!isLoading && !isFetchingBillingData ? (
 						<Alert
-							message={t('subscription_past_due')}
+							// message={t('subscription_past_due')}
+							message={subscriptionPastDueMessage()}
 							type="error"
 							showIcon
 							style={{ marginTop: 12 }}
