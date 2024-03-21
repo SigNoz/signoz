@@ -50,6 +50,11 @@ interface DataType {
 	cost: string;
 }
 
+enum SubscriptionStatus {
+	PastDue = 'past_due',
+	Active = 'active',
+}
+
 const renderSkeletonInput = (): JSX.Element => (
 	<Skeleton.Input
 		style={{ marginTop: '10px', height: '40px', width: '100%' }}
@@ -119,7 +124,8 @@ const dummyColumns: ColumnsType<DataType> = [
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function BillingContainer(): JSX.Element {
-	const daysRemainingStr = 'days remaining in your billing period.';
+	const { t } = useTranslation(['billings']);
+	const daysRemainingStr = t('days_remaining');
 	const [headerText, setHeaderText] = useState('');
 	const [billAmount, setBillAmount] = useState(0);
 	const [activeLicense, setActiveLicense] = useState<License | null>(null);
@@ -131,7 +137,6 @@ export default function BillingContainer(): JSX.Element {
 	>({});
 
 	const { trackEvent } = useAnalytics();
-	const { t } = useTranslation(['billings']);
 
 	const { isFetching, data: licensesData, error: licenseError } = useLicense();
 
@@ -191,7 +196,8 @@ export default function BillingContainer(): JSX.Element {
 		[licensesData?.payload?.onTrial],
 	);
 
-	const isSubscriptionPastDue = apiResponse.subscriptionStatus === 'past_due';
+	const isSubscriptionPastDue =
+		apiResponse.subscriptionStatus === SubscriptionStatus.PastDue;
 
 	const { isLoading, isFetching: isFetchingBillingData } = useQuery(
 		[REACT_QUERY_KEY.GET_BILLING_USAGE, user?.userId],
@@ -353,10 +359,10 @@ export default function BillingContainer(): JSX.Element {
 		<div className="billing-container">
 			<Flex vertical style={{ marginBottom: 16 }}>
 				<Typography.Text style={{ fontWeight: 500, fontSize: 18 }}>
-					Billing
+					{t('billing')}
 				</Typography.Text>
 				<Typography.Text color={Color.BG_VANILLA_400}>
-					Manage your billing information, invoices, and monitor costs.
+					{t('manage_billing_and_costs')}
 				</Typography.Text>
 			</Flex>
 
@@ -368,7 +374,7 @@ export default function BillingContainer(): JSX.Element {
 				<Flex justify="space-between" align="center">
 					<Flex vertical>
 						<Typography.Title level={5} style={{ marginTop: 2, fontWeight: 500 }}>
-							{isCloudUserVal ? 'Enterprise Cloud' : 'Enterprise'}{' '}
+							{isCloudUserVal ? t('enterprise_cloud') : t('enterprise')}{' '}
 							{isFreeTrial ? <Tag color="success"> Free Trial </Tag> : ''}
 						</Typography.Title>
 						{!isLoading && !isFetchingBillingData ? (
@@ -385,8 +391,8 @@ export default function BillingContainer(): JSX.Element {
 						onClick={handleBilling}
 					>
 						{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription
-							? 'Upgrade Plan'
-							: 'Manage Billing'}
+							? t('upgrade_plan')
+							: t('manage_billing')}
 					</Button>
 				</Flex>
 
@@ -396,8 +402,7 @@ export default function BillingContainer(): JSX.Element {
 							ellipsis
 							style={{ fontWeight: '300', color: '#49aa19', fontSize: 12 }}
 						>
-							We have received your card details, your billing will only start after
-							the end of your free trial period.
+							{t('card_details_recieved_and_billing_info')}
 						</Typography.Text>
 					)}
 
@@ -453,16 +458,16 @@ export default function BillingContainer(): JSX.Element {
 						<Col span={20} className="plan-benefits">
 							<Typography.Text className="plan-benefit">
 								<CheckCircleOutlined />
-								Upgrade now to have uninterrupted access
+								{t('upgrade_now_text')}
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
 								<CheckCircleOutlined />
-								Your billing will start only after the trial period
+								{t('Your billing will start only after the trial period')}
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
 								<CheckCircleOutlined />
 								<span>
-									Check out features in paid plans &nbsp;
+									{t('checkout_plans')} &nbsp;
 									<a
 										href="https://signoz.io/pricing/"
 										style={{
@@ -471,7 +476,7 @@ export default function BillingContainer(): JSX.Element {
 										target="_blank"
 										rel="noreferrer"
 									>
-										here
+										{t('here')}
 									</a>
 								</span>
 							</Typography.Text>
@@ -483,7 +488,7 @@ export default function BillingContainer(): JSX.Element {
 								loading={isLoadingBilling || isLoadingManageBilling}
 								onClick={handleBilling}
 							>
-								Upgrade Plan
+								{t('upgrade_plan')}
 							</Button>
 						</Col>
 					</Row>
