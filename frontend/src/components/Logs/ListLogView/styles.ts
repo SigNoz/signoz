@@ -2,6 +2,10 @@ import { Color } from '@signozhq/design-tokens';
 import { Card, Typography } from 'antd';
 import styled from 'styled-components';
 
+interface LogTextProps {
+	linesPerRow?: number;
+}
+
 export const Container = styled(Card)<{
 	$isActiveLog: boolean;
 	$isDarkMode: boolean;
@@ -23,7 +27,7 @@ export const Container = styled(Card)<{
 
 export const Text = styled(Typography.Text)`
 	&&& {
-		min-width: 1.5rem;
+		min-width: 2.5rem;
 		white-space: nowrap;
 	}
 `;
@@ -41,11 +45,17 @@ export const LogContainer = styled.div`
 	gap: 6px;
 `;
 
-export const LogText = styled.div`
+export const LogText = styled.div<LogTextProps>`
 	display: inline-block;
 	text-overflow: ellipsis;
 	overflow: hidden;
-	white-space: nowrap;
+	${({ linesPerRow }): string =>
+		linesPerRow
+			? `-webkit-line-clamp: ${linesPerRow};
+		line-clamp: ${linesPerRow};
+		white-space: normal; `
+			: 'white-space: nowrap;'};
+	};
 `;
 
 export const SelectedLog = styled.div`

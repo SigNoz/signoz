@@ -120,7 +120,7 @@ export default function LogsFormatOptionsMenu({
 
 			{selectedItem && (
 				<>
-					{selectedItem === 'raw' && (
+					{selectedItem !== 'table' && (
 						<>
 							<div className="horizontal-line" />
 							<div className="max-lines-per-row">
