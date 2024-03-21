@@ -112,6 +112,13 @@ func UnavailableError(err error) *ApiError {
 	}
 }
 
+func ForbiddenError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorForbidden,
+		Err: err,
+	}
+}
+
 func WrapApiError(err *ApiError, msg string) *ApiError {
 	return &ApiError{
 		Typ: err.Type(),
