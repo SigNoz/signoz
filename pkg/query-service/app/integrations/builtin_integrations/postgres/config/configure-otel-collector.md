@@ -2,9 +2,7 @@
 
 #### Create collector config file
 
-Save the collector config for monitoring postgres in a file named `postgres-collector-config.yaml`
-
-Use the following configuration for SigNoz cloud. See further below for configuration for self hosted SigNoz 
+Save the following collector config for monitoring postgres in a file named `postgres-collector-config.yaml`
 
 ```yaml
 receivers:
@@ -49,63 +47,15 @@ exporters:
   otlp/postgres:
     endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
     tls:
-      insecure: ${env:OTLP_DESTINATION_TLS_INSECURE}
+      insecure: false
     headers:
       "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
 
-service:
-  pipelines:
-    metrics/postgresql:
-      receivers: [postgresql]
-      # note: remove this processor if the collector host is not running on the same host as the postgres instance
-      processors: [resourcedetection/system]
-      exporters: [otlp/postgres]
-```
-
-Use the following config if using self-hosted SigNoz. See the config above if using SigNoz cloud
-```yaml
-receivers:
-  postgresql:
-    # The endpoint of the postgresql server. Whether using TCP or Unix sockets, this value should be host:port. If transport is set to unix, the endpoint will internally be translated from host:port to /host.s.PGSQL.port
-    endpoint: ${env:POSTGRESQL_ENDPOINT}
-    # The frequency at which to collect metrics from the Postgres instance.
-    collection_interval: 60s
-    # The username used to access the postgres instance
-    username: monitoring
-    # The password used to access the postgres instance
-    password: ${env:POSTGRESQL_PASSWORD}
-    # The list of databases for which the receiver will attempt to collect statistics. If an empty list is provided, the receiver will attempt to collect statistics for all non-template databases
-    databases: []
-    # # Defines the network to use for connecting to the server. Valid Values are `tcp` or `unix`
-    # transport: tcp
-    tls:
-      # set to false if SSL is enabled on the server
-      insecure: true
-    #   ca_file: /etc/ssl/certs/ca-certificates.crt
-    #   cert_file: /etc/ssl/certs/postgres.crt
-    #   key_file: /etc/ssl/certs/postgres.key
-    metrics:
-      postgresql.database.locks:
-        enabled: true
-      postgresql.deadlocks:
-        enabled: true
-      postgresql.sequential_scans:
-        enabled: true
-
-processors:
-  # enriches the data with additional host information
-  # see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/resourcedetectionprocessor#resource-detection-processor
-  resourcedetection/system:
-    # add additional detectors if needed
-    detectors: ["system"]
-    system:
-      hostname_sources: ["os"]
-
-exporters:
-  otlp/postgres:
-    endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
-    tls:
-      insecure: ${env:OTLP_DESTINATION_TLS_INSECURE}
+  # export to local collector
+  # otlp/local:
+  #   endpoint: "localhost:4317"
+  #   tls:
+  #     insecure: true
 
 service:
   pipelines:
@@ -115,7 +65,6 @@ service:
       processors: [resourcedetection/system]
       exporters: [otlp/postgres]
 ```
-
 
 #### Set Environment Variables
 
@@ -129,13 +78,10 @@ export POSTGRESQL_PASSWORD="password"
 # postgres endpoint reachable from the otel collector"
 export POSTGRESQL_ENDPOINT="host:port"
 
-# A reachable OTLP destination for collected metrics. Eg: localhost:4317 or signoz cloud ingestion endpoint
+# region specific signoz cloud ingestion endpoint
 export OTLP_DESTINATION_ENDPOINT="ingest.us.signoz.cloud:443"
 
-# Set to true if using an endpoint without TLS
-export OTLP_DESTINATION_TLS_INSECURE="false"
-
-# your signoz ingestion key if using SigNoz cloud
+# your signoz ingestion key
 export SIGNOZ_INGESTION_KEY="key"
 
 ```
