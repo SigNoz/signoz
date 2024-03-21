@@ -53,6 +53,8 @@ export const LogText = styled.div<LogTextProps>`
 		linesPerRow
 			? `-webkit-line-clamp: ${linesPerRow};
 		line-clamp: ${linesPerRow};
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
 		white-space: normal; `
 			: 'white-space: nowrap;'};
 	};
