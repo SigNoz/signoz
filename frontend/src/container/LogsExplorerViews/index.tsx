@@ -14,6 +14,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
+import Download from 'container/DownloadV2/DownloadV2';
 import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
@@ -21,6 +22,7 @@ import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
+import dayjs from 'dayjs';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { LogTimeRange } from 'hooks/logs/types';
@@ -33,6 +35,7 @@ import useClickOutside from 'hooks/useClickOutside';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { FlatLogData } from 'lib/logs/flatLogData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { defaultTo, isEmpty } from 'lodash-es';
 import { Sliders } from 'lucide-react';
@@ -523,6 +526,22 @@ function LogsExplorerViews({
 		},
 	});
 
+	const flattenLogData = useMemo(
+		() =>
+			logs.map((log) => {
+				const timestamp =
+					typeof log.timestamp === 'string'
+						? dayjs(log.timestamp).format()
+						: dayjs(log.timestamp / 1e6).format();
+
+				return FlatLogData({
+					...log,
+					timestamp,
+				});
+			}),
+		[logs],
+	);
+
 	return (
 		<div className="logs-explorer-views-container">
 			{showHistogram && (
@@ -578,6 +597,11 @@ function LogsExplorerViews({
 					<div className="logs-actions-container">
 						{selectedPanelType === PANEL_TYPES.LIST && (
 							<div className="tab-options">
+								<Download
+									data={flattenLogData}
+									isLoading={isLoading || isFetching}
+									fileName="log_data"
+								/>
 								<div className="format-options-container" ref={menuRef}>
 									<Button
 										className="periscope-btn"
