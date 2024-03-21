@@ -2364,7 +2364,7 @@ func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := auth.ChangePassword(context.Background(), req); err != nil {
-		if aH.HandleError(w, err, http.StatusInternalServerError) {
+		if aH.HandleError(w, err, http.StatusForbidden) {
 			return
 		}
 
