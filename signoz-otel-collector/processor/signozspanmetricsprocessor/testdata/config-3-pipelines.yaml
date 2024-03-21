@@ -1,0 +1,65 @@
+# This example demonstrates a 3-pipeline configuration for the use case
+# where a user wishes to perform further processing of aggregated span metrics
+# prior to exporting; that is:
+#   traces -> metrics-proxy-pipeline -> metrics
+#
+# The reason for requiring a proxy pipeline is because only exporters are
+# capable of directly consuming data.
+receivers:
+  jaeger:
+    protocols:
+      thrift_http:
+        endpoint: "0.0.0.0:14278"
+
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "localhost:55677"
+
+  # Dummy receiver that's never used, because a pipeline is required to have one.
+  otlp/spanmetrics:
+    protocols:
+      grpc:
+        endpoint: "localhost:12345"
+
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+
+  jaeger:
+    endpoint: "localhost:14250"
+    tls:
+      insecure: true
+
+  otlp/spanmetrics:
+    endpoint: "localhost: 55677"
+    tls:
+      insecure: true
+
+processors:
+  batch:
+  signozspanmetrics:
+    metrics_exporter: otlp/spanmetrics
+    aggregation_temporality: "AGGREGATION_TEMPORALITY_CUMULATIVE"
+
+service:
+  pipelines:
+    traces:
+      receivers: [jaeger]
+      # spanmetrics will pass on span data untouched to next processor
+      # while also accumulating metrics to be sent to the configured 'otlp/spanmetrics' exporter.
+      processors: [signozspanmetrics, batch]
+      exporters: [jaeger]
+
+    # This pipeline acts as a proxy to the 'metrics' pipeline below,
+    # allowing for further metrics processing if required.
+    metrics/spanmetrics:
+      # This receiver is just a dummy and never used.
+      # Added to pass validation requiring at least one receiver in a pipeline.
+      receivers: [otlp/spanmetrics]
+      exporters: [otlp/spanmetrics]
+
+    metrics:
+      receivers: [otlp]
+      # The metrics_exporter must be present in this list.
+      exporters: [prometheus]

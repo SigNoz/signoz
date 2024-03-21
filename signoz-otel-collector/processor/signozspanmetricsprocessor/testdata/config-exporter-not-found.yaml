@@ -1,0 +1,47 @@
+# This config demonstrates the case where the configured 'metrics_exporter'
+# within spanprocessor, cannot be found in any pipeline, leading to a config validation error.
+receivers:
+  jaeger:
+    protocols:
+      thrift_http:
+        endpoint: "0.0.0.0:14278"
+
+  # Dummy receiver that's never used, because a pipeline is required to have one.
+  otlp/spanmetrics:
+    protocols:
+      grpc:
+        endpoint: "localhost:12345"
+
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+
+  jaeger:
+    endpoint: "localhost:14250"
+    tls:
+      insecure: true
+
+  otlp:
+    endpoint: "localhost:12345"
+
+processors:
+  batch:
+  signozspanmetrics:
+    metrics_exporter: prometheus
+
+service:
+  pipelines:
+    traces:
+      receivers: [jaeger]
+      # spanmetrics will pass on span data untouched to next processor
+      # while also accumulating metrics to be sent to the configured 'prometheus' exporter.
+      processors: [signozspanmetrics, batch]
+      exporters: [jaeger]
+
+    metrics:
+      # This receiver is just a dummy and never used.
+      # Added to pass validation requiring at least one receiver in a pipeline.
+      receivers: [otlp/spanmetrics]
+      # The metrics_exporter must be present in this list, which is not the case here
+      # ('prometheus' is missing).
+      exporters: [otlp]

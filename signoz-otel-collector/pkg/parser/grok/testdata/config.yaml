@@ -1,0 +1,47 @@
+cache:
+  type: grok_parser
+  cache:
+    size: 50
+default:
+  type: grok_parser
+on_error_drop:
+  type: grok_parser
+  on_error: "drop"
+parse_from_simple:
+  type: grok_parser
+  parse_from: "body.from"
+parse_to_attributes:
+  type: grok_parser
+  parse_to: attributes
+parse_to_body:
+  type: grok_parser
+  parse_to: body
+parse_to_resource:
+  type: grok_parser
+  parse_to: resource
+parse_to_simple:
+  type: grok_parser
+  parse_to: "body.log"
+pattern:
+  type: grok_parser
+  pattern: "a=%{NOTSPACE:data}"
+scope_name:
+  type: grok_parser
+  pattern: "a=%{NOTSPACE:data}"
+  scope_name:
+    parse_from: body.logger_name_field
+severity:
+  type: grok_parser
+  severity:
+    parse_from: body.severity_field
+    mapping:
+      critical: 5xx
+      error: 4xx
+      info: 3xx
+      debug: 2xx
+timestamp:
+  type: grok_parser
+  timestamp:
+    parse_from: body.timestamp_field
+    layout_type: strptime
+    layout: "%Y-%m-%d"

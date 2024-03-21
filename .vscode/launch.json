@@ -1,0 +1,22 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Package",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/pkg/query-service/main.go",
+            "env": {
+                // "ClickHouseUrl": "tcp://localhost:9000",
+                "ClickHouseUrl": "tcp://18.219.28.108:9000",
+                "STORAGE": "clickhouse"
+            },
+            "args": [
+            ]
+        }
+    ]
+}

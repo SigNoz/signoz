@@ -14,7 +14,7 @@ interface OnboardingContextData {
 	ingestionData: any;
 	serviceName: string;
 	selectedEnvironment: string;
-	selectedFramework: string;
+	selectedFramework: string | null;
 	selectedModule: ModuleProps | null;
 	selectedMethod: any;
 	selectedDataSource: DataSourceType | null;
@@ -51,10 +51,12 @@ function OnboardingContextProvider({
 
 	const [errorDetails, setErrorDetails] = useState(null);
 	const [selectedEnvironment, setSelectedEnvironment] = useState<string>('');
-	const [selectedFramework, setSelectedFramework] = useState<string>('');
+	const [selectedFramework, setSelectedFramework] = useState<string | null>(
+		null,
+	);
 
 	const [selectedMethod, setSelectedMethod] = useState(
-		OnboardingMethods.RECOMMENDED_STEPS,
+		OnboardingMethods.QUICK_START,
 	);
 
 	const [
@@ -104,7 +106,7 @@ function OnboardingContextProvider({
 		setSelectedDataSource(defaultApplicationDataSource);
 		setSelectedEnvironment('');
 		setSelectedFramework('');
-		setSelectedMethod(OnboardingMethods.RECOMMENDED_STEPS);
+		setSelectedMethod(OnboardingMethods.QUICK_START);
 		updateActiveStep(null);
 	};
 

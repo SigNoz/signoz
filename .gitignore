@@ -31,7 +31,7 @@ frontend/src/constants/env.ts
 
 .idea
 
-**/.vscode
+# **/.vscode
 **/build
 **/storage
 **/locust-scripts/__pycache__/

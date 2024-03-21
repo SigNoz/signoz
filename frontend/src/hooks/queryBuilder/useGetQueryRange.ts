@@ -15,14 +15,19 @@ type UseGetQueryRange = (
 
 export const useGetQueryRange: UseGetQueryRange = (requestData, options) => {
 	const queryKey = useMemo(() => {
-		if (options?.queryKey) {
+		if (options?.queryKey && Array.isArray(options.queryKey)) {
 			return [...options.queryKey];
 		}
+
+		if (options?.queryKey && typeof options.queryKey === 'string') {
+			return options.queryKey;
+		}
+
 		return [REACT_QUERY_KEY.GET_QUERY_RANGE, requestData];
 	}, [options?.queryKey, requestData]);
 
 	return useQuery<SuccessResponse<MetricRangePayloadProps>, Error>({
-		queryFn: async () => GetMetricQueryRange(requestData),
+		queryFn: async ({ signal }) => GetMetricQueryRange(requestData, signal),
 		...options,
 		queryKey,
 	});

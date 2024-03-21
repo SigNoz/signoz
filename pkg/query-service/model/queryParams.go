@@ -492,27 +492,33 @@ type GetTTLParams struct {
 }
 
 type ListErrorsParams struct {
-	StartStr      string `json:"start"`
-	EndStr        string `json:"end"`
-	Start         *time.Time
-	End           *time.Time
-	Limit         int64           `json:"limit"`
-	OrderParam    string          `json:"orderParam"`
-	Order         string          `json:"order"`
-	Offset        int64           `json:"offset"`
-	ServiceName   string          `json:"serviceName"`
-	ExceptionType string          `json:"exceptionType"`
+	StartStr    string `json:"start"`
+	EndStr      string `json:"end"`
+	Start       *time.Time
+	End         *time.Time
+	Limit       int64  `json:"limit"`
+	OrderParam  string `json:"orderParam"`
+	Order       string `json:"order"`
+	Offset      int64  `json:"offset"`
+	ServiceName string `json:"serviceName"`
+	// ExceptionType string          `json:"exceptionType"`
 	Tags          []TagQueryParam `json:"tags"`
+	ExceptionType []string        `json:"exceptionType"`
+	IssueStatus   []string        `json:"issueStatus"`
+	Message       string          `json:"message"`
 }
 
 type CountErrorsParams struct {
-	StartStr      string `json:"start"`
-	EndStr        string `json:"end"`
-	Start         *time.Time
-	End           *time.Time
-	ServiceName   string          `json:"serviceName"`
-	ExceptionType string          `json:"exceptionType"`
+	StartStr    string `json:"start"`
+	EndStr      string `json:"end"`
+	Start       *time.Time
+	End         *time.Time
+	ServiceName string `json:"serviceName"`
+	// ExceptionType string          `json:"exceptionType"`
 	Tags          []TagQueryParam `json:"tags"`
+	ExceptionType []string        `json:"exceptionType"`
+	IssueStatus   []string        `json:"issueStatus"`
+	Message       string          `json:"message"`
 }
 
 type GetErrorParams struct {
@@ -559,4 +565,9 @@ type LogsAggregateParams struct {
 	GroupBy        string `json:"groupBy"`
 	Function       string `json:"function"`
 	StepSeconds    int    `json:"step"`
+}
+
+type ChangeIssueStatusParams struct {
+	GroupID     string `json:"groupID"`
+	IssueStatus int8   `json:"issueStatus"`
 }

@@ -8,6 +8,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import useAnalytics from 'hooks/analytics/useAnalytics';
+import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
 import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
@@ -28,7 +29,11 @@ import AppReducer, { User } from 'types/reducer/app';
 import { extractDomain, isCloudUser, isEECloudUser } from 'utils/app';
 
 import PrivateRoute from './Private';
-import defaultRoutes, { AppRoutes, SUPPORT_ROUTE } from './routes';
+import defaultRoutes, {
+	AppRoutes,
+	LIST_LICENSES,
+	SUPPORT_ROUTE,
+} from './routes';
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
@@ -151,6 +156,10 @@ function App(): JSX.Element {
 			const newRoutes = [...routes, SUPPORT_ROUTE];
 
 			setRoutes(newRoutes);
+		} else {
+			const newRoutes = [...routes, LIST_LICENSES];
+
+			setRoutes(newRoutes);
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -169,22 +178,24 @@ function App(): JSX.Element {
 						<ResourceProvider>
 							<QueryBuilderProvider>
 								<DashboardProvider>
-									<AppLayout>
-										<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-											<Switch>
-												{routes.map(({ path, component, exact }) => (
-													<Route
-														key={`${path}`}
-														exact={exact}
-														path={path}
-														component={component}
-													/>
-												))}
+									<KeyboardHotkeysProvider>
+										<AppLayout>
+											<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+												<Switch>
+													{routes.map(({ path, component, exact }) => (
+														<Route
+															key={`${path}`}
+															exact={exact}
+															path={path}
+															component={component}
+														/>
+													))}
 
-												<Route path="*" component={NotFound} />
-											</Switch>
-										</Suspense>
-									</AppLayout>
+													<Route path="*" component={NotFound} />
+												</Switch>
+											</Suspense>
+										</AppLayout>
+									</KeyboardHotkeysProvider>
 								</DashboardProvider>
 							</QueryBuilderProvider>
 						</ResourceProvider>

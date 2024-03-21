@@ -1,0 +1,1 @@
+ALTER TABLE signoz_traces.signoz_index ON CLUSTER {{.SIGNOZ_CLUSTER}}  ADD COLUMN IF NOT EXISTS events Array(String);

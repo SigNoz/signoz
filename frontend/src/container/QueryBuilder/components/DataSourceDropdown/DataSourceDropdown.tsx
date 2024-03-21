@@ -10,18 +10,22 @@ import { QueryLabelProps } from './DataSourceDropdown.interfaces';
 
 const dataSourceMap = [DataSource.LOGS, DataSource.METRICS, DataSource.TRACES];
 
+const exploreDataSourceMap = [DataSource.LOGS, DataSource.TRACES];
+
 export const DataSourceDropdown = memo(function DataSourceDropdown(
 	props: QueryLabelProps,
 ): JSX.Element {
-	const { onChange, value, style } = props;
+	const { onChange, value, style, isListViewPanel = false } = props;
 
-	const dataSourceOptions: SelectOption<
-		DataSource,
-		string
-	>[] = dataSourceMap.map((source) => ({
-		label: transformToUpperCase(source),
-		value: source,
-	}));
+	const dataSourceOptions: SelectOption<DataSource, string>[] = isListViewPanel
+		? exploreDataSourceMap.map((source) => ({
+				label: transformToUpperCase(source),
+				value: source,
+		  }))
+		: dataSourceMap.map((source) => ({
+				label: transformToUpperCase(source),
+				value: source,
+		  }));
 
 	return (
 		<Select

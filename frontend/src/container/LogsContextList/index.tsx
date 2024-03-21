@@ -1,3 +1,5 @@
+import './LogsContextList.styles.scss';
+
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -21,6 +23,7 @@ import { EmptyText, ListContainer } from './styles';
 import { getRequestData } from './utils';
 
 interface LogsContextListProps {
+	className?: string;
 	isEdit: boolean;
 	query: Query;
 	log: ILog;
@@ -29,6 +32,7 @@ interface LogsContextListProps {
 }
 
 function LogsContextList({
+	className,
 	isEdit,
 	query,
 	log,
@@ -166,7 +170,7 @@ function LogsContextList({
 	);
 
 	return (
-		<>
+		<div className={`context-logs-list ${className}`}>
 			{order === ORDERBY_FILTERS.ASC && (
 				<ShowButton
 					isLoading={isFetching}
@@ -183,6 +187,7 @@ function LogsContextList({
 				{isFetching && <Spinner size="large" height="10rem" />}
 
 				<Virtuoso
+					className="virtuoso-list"
 					initialTopMostItemIndex={0}
 					data={logs}
 					itemContent={getItemContent}
@@ -198,8 +203,12 @@ function LogsContextList({
 					onClick={handleShowNextLines}
 				/>
 			)}
-		</>
+		</div>
 	);
 }
+
+LogsContextList.defaultProps = {
+	className: '',
+};
 
 export default memo(LogsContextList);

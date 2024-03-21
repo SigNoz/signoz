@@ -30,7 +30,7 @@ import { useSelectedLogView } from './hooks';
 import PopoverContent from './PopoverContent';
 import SpaceContainer from './styles';
 
-function Logs(): JSX.Element {
+function OldLogsExplorer(): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const { order } = useSelector<AppState, ILogsReducer>((store) => store.logs);
 	const location = useLocation();
@@ -148,4 +148,4 @@ function Logs(): JSX.Element {
 	);
 }
 
-export default Logs;
+export default OldLogsExplorer;

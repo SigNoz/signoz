@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  otel-collector:
+    image: signoz/otel-collector:latest
+    container_name: otel
+    user: root # required for reading docker container logs
+    command:
+      - "--config=/etc/otel-collector-config.yml"
+      - "--set=service.telemetry.logs.level=DEBUG"
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+    # required to read logs from /var/lib/docker/containers/
+    ports:
+      - "1888:1888" # pprof extension
+      - "8888:8888" # Prometheus metrics exposed by the collector
+      - "13133:13133" # health_check extension
+      - "55679:55679" # zpages extension

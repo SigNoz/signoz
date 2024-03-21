@@ -458,6 +458,7 @@ type Error struct {
 	FirstSeen      time.Time `json:"firstSeen" ch:"firstSeen"`
 	ServiceName    string    `json:"serviceName" ch:"serviceName"`
 	GroupID        string    `json:"groupID" ch:"groupID"`
+	IssueStatus    int8      `json:"issueStatus" ch:"issueStatus"`
 }
 
 type ErrorWithSpan struct {
@@ -613,6 +614,21 @@ type DashboardVar struct {
 type TagsInfo struct {
 	Languages map[string]interface{} `json:"languages"`
 	Env       string                 `json:"env"`
+	Services  map[string]interface{} `json:"services"`
+}
+
+type AlertsInfo struct {
+	TotalAlerts       int `json:"totalAlerts"`
+	LogsBasedAlerts   int `json:"logsBasedAlerts"`
+	MetricBasedAlerts int `json:"metricBasedAlerts"`
+	TracesBasedAlerts int `json:"tracesBasedAlerts"`
+}
+
+type DashboardsInfo struct {
+	TotalDashboards   int `json:"totalDashboards"`
+	LogsBasedPanels   int `json:"logsBasedPanels"`
+	MetricBasedPanels int `json:"metricBasedPanels"`
+	TracesBasedPanels int `json:"tracesBasedPanels"`
 }
 
 type TagTelemetryData struct {

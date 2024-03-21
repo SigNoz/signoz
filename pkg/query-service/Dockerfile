@@ -8,16 +8,18 @@ LABEL maintainer="signoz"
 ARG TARGETOS TARGETARCH
 
 # add ca-certificates in case you need them
-RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
+# RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 
 # set working directory
 WORKDIR /root
 
 # copy the query-service binary
-COPY pkg/query-service/bin/query-service-${TARGETOS}-${TARGETARCH} /root/query-service
+# COPY pkg/query-service/bin/query-service-${TARGETOS}-${TARGETARCH} /root/query-service
+COPY bin/query-service-${TARGETOS}-${TARGETARCH} /root/query-service
 
 # copy prometheus YAML config
-COPY pkg/query-service/config/prometheus.yml /root/config/prometheus.yml
+COPY config/prometheus.yml /root/config/prometheus.yml
+COPY templates /root/templates
 
 # Make query-service executable for non-root users
 RUN chmod 755 /root /root/query-service

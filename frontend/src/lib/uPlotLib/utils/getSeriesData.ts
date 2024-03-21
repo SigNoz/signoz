@@ -1,8 +1,9 @@
+import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
-import { colors } from 'lib/getRandomColor';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 
+import { generateColor } from './generateColor';
 import getRenderer, { drawStyles, lineInterpolations } from './getRenderer';
 
 const paths = (
@@ -36,8 +37,6 @@ const getSeries = (
 	const newGraphVisibilityStates = graphsVisibilityStates?.slice(1);
 
 	for (let i = 0; i < seriesList?.length; i += 1) {
-		const color = colors[i % colors.length]; // Use modulo to loop through colors if there are more series than colors
-
 		const { metric = {}, queryName = '', legend = '' } = widgetMetaData[i] || {};
 
 		const label = getLabelName(
@@ -46,17 +45,24 @@ const getSeries = (
 			legend || '',
 		);
 
+		const color = generateColor(label, themeColors.chartcolors);
+
+		const pointSize = seriesList[i].values.length > 1 ? 5 : 10;
+		const showPoints = !(seriesList[i].values.length > 1);
+
 		const seriesObj: any = {
-			width: 1.4,
 			paths,
 			drawStyle: drawStyles.line,
 			lineInterpolation: lineInterpolations.spline,
 			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
 			label,
 			stroke: color,
+			width: 2,
 			spanGaps: true,
 			points: {
-				show: false,
+				size: pointSize,
+				show: showPoints,
+				stroke: color,
 			},
 		};
 

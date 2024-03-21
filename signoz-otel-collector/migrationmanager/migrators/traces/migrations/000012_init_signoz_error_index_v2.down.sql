@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS signoz_traces.signoz_error_index_v2 ON CLUSTER {{.SIGNOZ_CLUSTER}};

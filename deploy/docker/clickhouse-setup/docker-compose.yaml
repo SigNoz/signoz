@@ -3,7 +3,7 @@ version: "2.4"
 x-clickhouse-defaults: &clickhouse-defaults
   restart: on-failure
   # addding non LTS version due to this fix https://github.com/ClickHouse/ClickHouse/commit/32caf8716352f45c1b617274c7508c86b7d1afab
-  image: clickhouse/clickhouse-server:23.7.3-alpine
+  image: clickhouse/clickhouse-server:24.1.2-alpine
   tty: true
   depends_on:
     - zookeeper-1
@@ -56,6 +56,7 @@ services:
       - "3888:3888"
     volumes:
       - /home/ubuntu/signoz-data/data/zookeeper-1:/bitnami/zookeeper
+      # - ./data/zookeeper-1:/bitnami/zookeeper
     environment:
       - ZOO_SERVER_ID=1
       # - ZOO_SERVERS=0.0.0.0:2888:3888,zookeeper-2:2888:3888,zookeeper-3:2888:3888
@@ -111,7 +112,9 @@ services:
       - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
       # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
       - /home/ubuntu/signoz-data/data/clickhouse/:/var/lib/clickhouse/
+      # - ./data/clickhouse/:/var/lib/clickhouse/
       - /home/ubuntu/signoz-data/user_scripts:/var/lib/clickhouse/user_scripts/
+      # - ./user_scripts:/var/lib/clickhouse/user_scripts/
 
   # clickhouse-2:
   #   <<: *clickhouse-defaults
@@ -153,6 +156,11 @@ services:
     container_name: signoz-alertmanager
     volumes:
       - /home/ubuntu/signoz-data/data/alertmanager:/data
+      # - ./data/alertmanager:/data
+    # expose:
+    #   - "9093"
+    # ports:
+    #   - "8080:9093"
     depends_on:
       query-service:
         condition: service_healthy
@@ -164,12 +172,15 @@ services:
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
-    image: signoz/query-service:${DOCKER_TAG:-0.35.0}
+    # image: signoz/query-service:${DOCKER_TAG:-0.39.1}
+    build:
+      context: "../../../pkg/query-service"
+      dockerfile: "./Dockerfile"
     container_name: signoz-query-service
     command:
       [
         "-config=/root/config/prometheus.yml",
-        "--prefer-delta=true"
+        # "--prefer-delta=true"
       ]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -177,7 +188,9 @@ services:
     volumes:
       - ./prometheus.yml:/root/config/prometheus.yml
       - /home/ubuntu/signoz-data/dashboards:/root/config/dashboards
+      # - ./dashboards:/root/config/dashboards
       - /home/ubuntu/signoz-data/data/signoz/:/var/lib/signoz/
+      # - ./data/signoz/:/var/lib/signoz/
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
       - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
@@ -203,8 +216,7 @@ services:
     <<: *db-depend
 
   # frontend:
-  #   # image: signoz/frontend:${DOCKER_TAG:-0.35.0}
-  #   image: signoz/frontend:PEP-1074
+  #   image: signoz/frontend:${DOCKER_TAG:-0.39.1}
   #   container_name: signoz-frontend
   #   restart: on-failure
   #   depends_on:
@@ -235,7 +247,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector-migrator:
-    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.88.1}
+    image: signoz/signoz-schema-migrator:${OTELCOL_TAG:-0.88.13}
     container_name: otel-migrator
     command:
       - "--dsn=tcp://clickhouse:9000"
@@ -249,7 +261,10 @@ services:
 
 
   otel-collector:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.88.1}
+    # image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.88.13}
+    build:
+      context: "../../../signoz-otel-collector"
+      dockerfile: "cmd/signozcollector/Dockerfile"
     container_name: signoz-otel-collector
     command:
       [
@@ -264,6 +279,7 @@ services:
       - ./otel-collector-opamp-config.yaml:/etc/manager-config.yaml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /home/ubuntu/templogs/:/tmp/
+      # - ./templogs/:/tmp/
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
       - DOCKER_MULTI_NODE_CLUSTER=false
@@ -288,24 +304,6 @@ services:
         condition: service_completed_successfully
       query-service:
         condition: service_healthy
-
-  otel-collector-metrics:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.88.1}
-    container_name: signoz-otel-collector-metrics
-    command:
-      [
-        "--config=/etc/otel-collector-metrics-config.yaml",
-        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
-      ]
-    volumes:
-      - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
-    # ports:
-    #   - "1777:1777"     # pprof extension
-    #   - "8888:8888"     # OtelCollector internal metrics
-    #   - "13133:13133"   # Health check extension
-    #   - "55679:55679"   # zPages extension
-    restart: on-failure
-    <<: *db-depend
 
   logspout:
     image: "gliderlabs/logspout:v3.2.14"

@@ -1,10 +1,15 @@
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import GetMinMax from 'lib/getMinMax';
+import getTimeString from 'lib/getTimeString';
+import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import isEmpty from 'lodash-es/isEmpty';
@@ -12,9 +17,11 @@ import _noop from 'lodash-es/noop';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getTimeRange } from 'utils/getTimeRange';
 
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
@@ -34,6 +41,14 @@ function GridCardGraph({
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
+	const [minTimeScale, setMinTimeScale] = useState<number>();
+	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+	const urlQuery = useUrlQuery();
+	const location = useLocation();
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const onDragSelect = useCallback(
 		(start: number, end: number): void => {
@@ -43,9 +58,43 @@ function GridCardGraph({
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
+
+			const { maxTime, minTime } = GetMinMax('custom', [
+				startTimestamp,
+				endTimestamp,
+			]);
+
+			urlQuery.set(QueryParams.startTime, minTime.toString());
+			urlQuery.set(QueryParams.endTime, maxTime.toString());
+			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			history.push(generatedUrl);
 		},
-		[dispatch],
+		[dispatch, location.pathname, urlQuery],
 	);
+
+	const handleBackNavigation = (): void => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const startTime = searchParams.get(QueryParams.startTime);
+		const endTime = searchParams.get(QueryParams.endTime);
+
+		if (startTime && endTime && startTime !== endTime) {
+			dispatch(
+				UpdateTimeInterval('custom', [
+					parseInt(getTimeString(startTime), 10),
+					parseInt(getTimeString(endTime), 10),
+				]),
+			);
+		}
+	};
+
+	useEffect(() => {
+		window.addEventListener('popstate', handleBackNavigation);
+
+		return (): void => {
+			window.removeEventListener('popstate', handleBackNavigation);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -62,15 +111,16 @@ function GridCardGraph({
 		}
 	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
-
 	const updatedQuery = useStepInterval(widget?.query);
 
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
+
+	const queryEnabledCondition =
+		isVisible &&
+		!isEmptyWidget &&
+		isQueryEnabled &&
+		widget.panelTypes !== PANEL_TYPES.LIST;
 
 	const queryResponse = useGetQueryRange(
 		{
@@ -91,7 +141,7 @@ function GridCardGraph({
 				widget.timePreferance,
 			],
 			keepPreviousData: true,
-			enabled: isVisible && !isEmptyWidget && isQueryEnabled,
+			enabled: queryEnabledCondition,
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
@@ -103,14 +153,26 @@ function GridCardGraph({
 
 	const containerDimensions = useResizeObserver(graphRef);
 
+	useEffect((): void => {
+		const { startTime, endTime } = getTimeRange(queryResponse);
+
+		setMinTimeScale(startTime);
+		setMaxTimeScale(endTime);
+	}, [maxTime, minTime, globalSelectedInterval, queryResponse]);
+
 	const chartData = getUPlotChartData(queryResponse?.data?.payload, fillSpans);
 
 	const isDarkMode = useIsDarkMode();
 
 	const menuList =
-		widget.panelTypes === PANEL_TYPES.TABLE
+		widget.panelTypes === PANEL_TYPES.TABLE ||
+		widget.panelTypes === PANEL_TYPES.LIST
 			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
 			: headerMenuList;
+
+	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
+		Array(queryResponse.data?.payload?.data.result.length || 0).fill(true),
+	);
 
 	const options = useMemo(
 		() =>
@@ -123,16 +185,28 @@ function GridCardGraph({
 				yAxisUnit: widget?.yAxisUnit,
 				onClickHandler,
 				thresholds: widget.thresholds,
+				minTimeScale,
+				maxTimeScale,
+				softMax: widget.softMax === undefined ? null : widget.softMax,
+				softMin: widget.softMin === undefined ? null : widget.softMin,
+				graphsVisibilityStates: graphVisibility,
+				setGraphsVisibilityStates: setGraphVisibility,
 			}),
 		[
 			widget?.id,
 			widget?.yAxisUnit,
 			widget.thresholds,
+			widget.softMax,
+			widget.softMin,
 			queryResponse.data?.payload,
 			containerDimensions,
 			isDarkMode,
 			onDragSelect,
 			onClickHandler,
+			minTimeScale,
+			maxTimeScale,
+			graphVisibility,
+			setGraphVisibility,
 		],
 	);
 
@@ -153,6 +227,9 @@ function GridCardGraph({
 					threshold={threshold}
 					headerMenuList={menuList}
 					onClickHandler={onClickHandler}
+					graphVisibiltyState={graphVisibility}
+					setGraphVisibility={setGraphVisibility}
+					isFetchingResponse={queryResponse.isFetching}
 				/>
 			)}
 		</div>

@@ -5,6 +5,11 @@
 	height: 30px;
 	width: 100%;
 	padding: 0.5rem;
+	box-sizing: border-box;
+	font-size: 14px;
+	font-weight: 600;
+
+	cursor: move;
 }
 
 .widget-header-title {
@@ -19,6 +24,10 @@
 	visibility: hidden;
 	border: none;
 	box-shadow: none;
+	cursor: pointer;
+	font: 14px;
+	font-weight: 600;
+	padding: 8px;
 }
 
 .widget-header-hover {

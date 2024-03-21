@@ -18,6 +18,8 @@ export const urlKey = {
 	pageSize: 'pageSize',
 	exceptionType: 'exceptionType',
 	serviceName: 'serviceName',
+	message: 'message',
+	issueStatus: 'issueStatus',
 };
 
 export const isOrderParams = (orderBy: string | null): orderBy is OrderBy =>
@@ -33,7 +35,8 @@ export const getOrder = (order: string | null): Order => {
 	if (isOrder(order)) {
 		return order;
 	}
-	return 'ascending';
+	// return 'ascending';
+	return 'descending';
 };
 
 export const getLimit = (limit: string | null): number => {
@@ -54,7 +57,8 @@ export const getOrderParams = (order: string | null): OrderBy => {
 	if (isOrderParams(order)) {
 		return order;
 	}
-	return 'serviceName';
+	// return 'serviceName';
+	return 'lastSeen';
 };
 
 export const getDefaultOrder = (

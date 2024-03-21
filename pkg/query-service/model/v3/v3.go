@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -447,6 +448,171 @@ const (
 	Cumulative  Temporality = "Cumulative"
 )
 
+type TimeAggregation string
+
+const (
+	TimeAggregationUnspecified   TimeAggregation = ""
+	TimeAggregationAnyLast       TimeAggregation = "latest"
+	TimeAggregationSum           TimeAggregation = "sum"
+	TimeAggregationAvg           TimeAggregation = "avg"
+	TimeAggregationMin           TimeAggregation = "min"
+	TimeAggregationMax           TimeAggregation = "max"
+	TimeAggregationCount         TimeAggregation = "count"
+	TimeAggregationCountDistinct TimeAggregation = "count_distinct"
+	TimeAggregationRate          TimeAggregation = "rate"
+	TimeAggregationIncrease      TimeAggregation = "increase"
+)
+
+func (t TimeAggregation) Validate() error {
+	switch t {
+	case TimeAggregationAnyLast,
+		TimeAggregationSum,
+		TimeAggregationAvg,
+		TimeAggregationMin,
+		TimeAggregationMax,
+		TimeAggregationCount,
+		TimeAggregationCountDistinct,
+		TimeAggregationRate,
+		TimeAggregationIncrease:
+		return nil
+	default:
+		return fmt.Errorf("invalid time aggregation: %s", t)
+	}
+}
+
+func (t TimeAggregation) IsRateOperator() bool {
+	switch t {
+	case TimeAggregationRate, TimeAggregationIncrease:
+		return true
+	default:
+		return false
+	}
+}
+
+type MetricType string
+
+const (
+	MetricTypeUnspecified          MetricType = ""
+	MetricTypeSum                  MetricType = "Sum"
+	MetricTypeGauge                MetricType = "Gauge"
+	MetricTypeHistogram            MetricType = "Histogram"
+	MetricTypeSummary              MetricType = "Summary"
+	MetricTypeExponentialHistogram MetricType = "ExponentialHistogram"
+)
+
+type SpaceAggregation string
+
+const (
+	SpaceAggregationUnspecified  SpaceAggregation = ""
+	SpaceAggregationSum          SpaceAggregation = "sum"
+	SpaceAggregationAvg          SpaceAggregation = "avg"
+	SpaceAggregationMin          SpaceAggregation = "min"
+	SpaceAggregationMax          SpaceAggregation = "max"
+	SpaceAggregationCount        SpaceAggregation = "count"
+	SpaceAggregationPercentile50 SpaceAggregation = "percentile_50"
+	SpaceAggregationPercentile75 SpaceAggregation = "percentile_75"
+	SpaceAggregationPercentile90 SpaceAggregation = "percentile_90"
+	SpaceAggregationPercentile95 SpaceAggregation = "percentile_95"
+	SpaceAggregationPercentile99 SpaceAggregation = "percentile_99"
+)
+
+func (s SpaceAggregation) Validate() error {
+	switch s {
+	case SpaceAggregationSum,
+		SpaceAggregationAvg,
+		SpaceAggregationMin,
+		SpaceAggregationMax,
+		SpaceAggregationCount,
+		SpaceAggregationPercentile50,
+		SpaceAggregationPercentile75,
+		SpaceAggregationPercentile90,
+		SpaceAggregationPercentile95,
+		SpaceAggregationPercentile99:
+		return nil
+	default:
+		return fmt.Errorf("invalid space aggregation: %s", s)
+	}
+}
+
+func IsPercentileOperator(operator SpaceAggregation) bool {
+	switch operator {
+	case SpaceAggregationPercentile50,
+		SpaceAggregationPercentile75,
+		SpaceAggregationPercentile90,
+		SpaceAggregationPercentile95,
+		SpaceAggregationPercentile99:
+		return true
+	default:
+		return false
+	}
+}
+
+func GetPercentileFromOperator(operator SpaceAggregation) float64 {
+	// This could be done with a map, but it's just easier to read this way
+	switch operator {
+	case SpaceAggregationPercentile50:
+		return 0.5
+	case SpaceAggregationPercentile75:
+		return 0.75
+	case SpaceAggregationPercentile90:
+		return 0.9
+	case SpaceAggregationPercentile95:
+		return 0.95
+	case SpaceAggregationPercentile99:
+		return 0.99
+	default:
+		return 0
+	}
+}
+
+type FunctionName string
+
+const (
+	FunctionNameCutOffMin FunctionName = "cutOffMin"
+	FunctionNameCutOffMax FunctionName = "cutOffMax"
+	FunctionNameClampMin  FunctionName = "clampMin"
+	FunctionNameClampMax  FunctionName = "clampMax"
+	FunctionNameAbsolute  FunctionName = "absolute"
+	FunctionNameLog2      FunctionName = "log2"
+	FunctionNameLog10     FunctionName = "log10"
+	FunctionNameCumSum    FunctionName = "cumSum"
+	FunctionNameEWMA3     FunctionName = "ewma3"
+	FunctionNameEWMA5     FunctionName = "ewma5"
+	FunctionNameEWMA7     FunctionName = "ewma7"
+	FunctionNameMedian3   FunctionName = "median3"
+	FunctionNameMedian5   FunctionName = "median5"
+	FunctionNameMedian7   FunctionName = "median7"
+	FunctionNameTimeShift FunctionName = "timeShift"
+)
+
+func (f FunctionName) Validate() error {
+	switch f {
+	case FunctionNameCutOffMin,
+		FunctionNameCutOffMax,
+		FunctionNameClampMin,
+		FunctionNameClampMax,
+		FunctionNameAbsolute,
+		FunctionNameLog2,
+		FunctionNameLog10,
+		FunctionNameCumSum,
+		FunctionNameEWMA3,
+		FunctionNameEWMA5,
+		FunctionNameEWMA7,
+		FunctionNameMedian3,
+		FunctionNameMedian5,
+		FunctionNameMedian7,
+		FunctionNameTimeShift:
+		return nil
+	default:
+		return fmt.Errorf("invalid function name: %s", f)
+	}
+}
+
+type Function struct {
+	Name FunctionName  `json:"name"`
+	Args []interface{} `json:"args,omitempty"`
+}
+
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
 	StepInterval       int64             `json:"stepInterval"`
@@ -466,6 +632,10 @@ type BuilderQuery struct {
 	OrderBy            []OrderBy         `json:"orderBy,omitempty"`
 	ReduceTo           ReduceToOperator  `json:"reduceTo,omitempty"`
 	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
+	TimeAggregation    TimeAggregation   `json:"timeAggregation,omitempty"`
+	SpaceAggregation   SpaceAggregation  `json:"spaceAggregation,omitempty"`
+	Functions          []Function        `json:"functions,omitempty"`
+	ShiftBy            int64
 }
 
 func (b *BuilderQuery) Validate() error {
@@ -482,8 +652,25 @@ func (b *BuilderQuery) Validate() error {
 		if err := b.DataSource.Validate(); err != nil {
 			return fmt.Errorf("data source is invalid: %w", err)
 		}
-		if err := b.AggregateOperator.Validate(); err != nil {
-			return fmt.Errorf("aggregate operator is invalid: %w", err)
+		if b.DataSource == DataSourceMetrics {
+			// if AggregateOperator is specified, then the request is using v3 payload
+			if b.AggregateOperator != "" {
+				if err := b.AggregateOperator.Validate(); err != nil {
+					return fmt.Errorf("aggregate operator is invalid: %w", err)
+				}
+			} else {
+				if err := b.TimeAggregation.Validate(); err != nil {
+					return fmt.Errorf("time aggregation is invalid: %w", err)
+				}
+
+				if err := b.SpaceAggregation.Validate(); err != nil {
+					return fmt.Errorf("space aggregation is invalid: %w", err)
+				}
+			}
+		} else {
+			if err := b.AggregateOperator.Validate(); err != nil {
+				return fmt.Errorf("aggregate operator is invalid: %w", err)
+			}
 		}
 		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute(b.DataSource) {
 			return fmt.Errorf("aggregate attribute is required")
@@ -509,6 +696,14 @@ func (b *BuilderQuery) Validate() error {
 		}
 	}
 
+	if b.Having != nil {
+		for _, having := range b.Having {
+			if err := having.Operator.Validate(); err != nil {
+				return fmt.Errorf("having operator is invalid: %w", err)
+			}
+		}
+	}
+
 	for _, selectColumn := range b.SelectColumns {
 		if err := selectColumn.Validate(); err != nil {
 			return fmt.Errorf("select column is invalid %w", err)
@@ -518,6 +713,37 @@ func (b *BuilderQuery) Validate() error {
 	if b.Expression == "" {
 		return fmt.Errorf("expression is required")
 	}
+
+	if len(b.Functions) > 0 {
+		for _, function := range b.Functions {
+			if err := function.Name.Validate(); err != nil {
+				return fmt.Errorf("function name is invalid: %w", err)
+			}
+			if function.Name == FunctionNameTimeShift {
+				if len(function.Args) == 0 {
+					return fmt.Errorf("timeShiftBy param missing in query")
+				}
+			} else if function.Name == FunctionNameEWMA3 ||
+				function.Name == FunctionNameEWMA5 ||
+				function.Name == FunctionNameEWMA7 {
+				if len(function.Args) == 0 {
+					return fmt.Errorf("alpha param missing in query")
+				}
+				alpha := function.Args[0].(float64)
+				if alpha < 0 || alpha > 1 {
+					return fmt.Errorf("alpha param should be between 0 and 1")
+				}
+			} else if function.Name == FunctionNameCutOffMax ||
+				function.Name == FunctionNameCutOffMin ||
+				function.Name == FunctionNameClampMax ||
+				function.Name == FunctionNameClampMin {
+				if len(function.Args) == 0 {
+					return fmt.Errorf("threshold param missing in query")
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -602,10 +828,47 @@ type OrderBy struct {
 	IsColumn   bool                 `json:"-"`
 }
 
+func (o OrderBy) CacheKey() string {
+	return fmt.Sprintf("%s-%s", o.ColumnName, o.Order)
+}
+
+// See HAVING_OPERATORS in queryBuilder.ts
+
+type HavingOperator string
+
+const (
+	HavingOperatorEqual           HavingOperator = "="
+	HavingOperatorNotEqual        HavingOperator = "!="
+	HavingOperatorGreaterThan     HavingOperator = ">"
+	HavingOperatorGreaterThanOrEq HavingOperator = ">="
+	HavingOperatorLessThan        HavingOperator = "<"
+	HavingOperatorLessThanOrEq    HavingOperator = "<="
+	HavingOperatorIn              HavingOperator = "IN"
+	HavingOperatorNotIn           HavingOperator = "NOT_IN"
+)
+
+func (h HavingOperator) Validate() error {
+	switch h {
+	case HavingOperatorEqual,
+		HavingOperatorNotEqual,
+		HavingOperatorGreaterThan,
+		HavingOperatorGreaterThanOrEq,
+		HavingOperatorLessThan,
+		HavingOperatorLessThanOrEq,
+		HavingOperatorIn,
+		HavingOperatorNotIn,
+		HavingOperator(strings.ToLower(string(HavingOperatorIn))),
+		HavingOperator(strings.ToLower(string(HavingOperatorNotIn))):
+		return nil
+	default:
+		return fmt.Errorf("invalid having operator: %s", h)
+	}
+}
+
 type Having struct {
-	ColumnName string      `json:"columnName"`
-	Operator   string      `json:"op"`
-	Value      interface{} `json:"value"`
+	ColumnName string         `json:"columnName"`
+	Operator   HavingOperator `json:"op"`
+	Value      interface{}    `json:"value"`
 }
 
 func (h *Having) CacheKey() string {
@@ -643,6 +906,35 @@ func (s *Series) SortPoints() {
 	sort.Slice(s.Points, func(i, j int) bool {
 		return s.Points[i].Timestamp < s.Points[j].Timestamp
 	})
+}
+
+func (s *Series) RemoveDuplicatePoints() {
+	if len(s.Points) == 0 {
+		return
+	}
+
+	// priortize the last point
+	// this is to handle the case where the same point is sent twice
+	// the last point is the most recent point adjusted for the flux interval
+
+	newPoints := make([]Point, 0)
+	for i := len(s.Points) - 1; i >= 0; i-- {
+		if len(newPoints) == 0 {
+			newPoints = append(newPoints, s.Points[i])
+			continue
+		}
+		if newPoints[len(newPoints)-1].Timestamp != s.Points[i].Timestamp {
+			newPoints = append(newPoints, s.Points[i])
+		}
+	}
+
+	// reverse the points
+	for i := len(newPoints)/2 - 1; i >= 0; i-- {
+		opp := len(newPoints) - 1 - i
+		newPoints[i], newPoints[opp] = newPoints[opp], newPoints[i]
+	}
+
+	s.Points = newPoints
 }
 
 type Row struct {
@@ -710,4 +1002,14 @@ func (eq *SavedView) Validate() error {
 type LatencyMetricMetadataResponse struct {
 	Delta bool      `json:"delta"`
 	Le    []float64 `json:"le"`
+}
+
+type MetricMetadataResponse struct {
+	Delta       bool      `json:"delta"`
+	Le          []float64 `json:"le"`
+	Description string    `json:"description"`
+	Unit        string    `json:"unit"`
+	Type        string    `json:"type"`
+	IsMonotonic bool      `json:"isMonotonic"`
+	Temporality string    `json:"temporality"`
 }

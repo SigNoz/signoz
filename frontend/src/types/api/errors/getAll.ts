@@ -16,9 +16,11 @@ export interface Props {
 	orderParam?: OrderBy;
 	limit?: number;
 	offset?: number;
-	exceptionType?: string;
+	exceptionType: string[];
 	serviceName?: string;
 	tags?: Tags[];
+	issueStatus: string[];
+	message: string;
 }
 
 export interface Exception {
@@ -29,6 +31,7 @@ export interface Exception {
 	firstSeen: string;
 	serviceName: string;
 	groupID: string;
+	issueStatus?: string[];
 }
 
 export type PayloadProps = Exception[];

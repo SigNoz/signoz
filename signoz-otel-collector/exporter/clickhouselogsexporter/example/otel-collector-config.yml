@@ -1,0 +1,90 @@
+receivers:
+  filelog/containers:
+    include: [  "/var/lib/docker/containers/*/*.log" ]
+    start_at: end
+    include_file_path: true
+    include_file_name: false
+    operators:
+      # Find out which format is used by docker
+      - type: router
+        id: get-format
+        routes:
+          - output: parser-docker
+            expr: 'body matches "^\\{"'
+      # Parse Docker format
+      - type: json_parser
+        id: parser-docker
+        output: extract_metadata_from_filepath
+        timestamp:
+          parse_from: attributes.time
+          layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+
+      # Extract metadata from file path
+      - type: regex_parser
+        id: extract_metadata_from_filepath
+        regex: '^.*containers/(?P<container_id>[^_]+)/.*log$'
+        parse_from: attributes["log.file.path"]
+        output: parse_body
+      - type: move
+        id: parse_body
+        from: attributes.log
+        to: body
+        output: add_source
+      - type: add
+        id: add_source
+        field: resource["source"]
+        value: "docker"
+
+  filelog/syslog:
+    include: [  "/var/log/*log" ]
+    start_at: end
+    include_file_path: true
+    include_file_name: false
+    operators:
+      # Extract metadata from file path
+      - type: regex_parser
+        regex: '^.*(?P<time>[A-Za-z]{3} [0-9: ]{11}) ip-(?P<ip>[0-9-]+).*$'
+        parse_from: body
+        timestamp:
+          parse_from: attributes.time
+          layout_type: gotime
+          layout: 'Jan 02 15:04:05'
+      - type: add
+        field: resource["source"]
+        value: "syslog"
+
+processors:
+  batch:
+    send_batch_size: 100000
+    timeout: 10s
+  memory_limiter:
+    check_interval: 2s
+    limit_mib: 1800
+    spike_limit_mib: 500
+  
+
+exporters:
+  clickhouselogsexporter:
+    dsn: tcp://host.docker.internal:9000
+    timeout: 10s
+    sending_queue:
+      queue_size: 150
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+extensions:
+  health_check:
+  pprof:
+  zpages:
+  memory_ballast:
+    size_mib: 1000
+
+service:
+  extensions: [pprof, zpages, health_check]
+  pipelines:
+    logs:
+      receivers: [ "filelog/containers", "filelog/syslog"]
+      processors: [  batch ]
+      exporters: [ clickhouselogsexporter ]

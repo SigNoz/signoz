@@ -935,11 +935,10 @@ func validateExpressions(expressions []string, funcs map[string]govaluate.Expres
 	for _, exp := range expressions {
 		evalExp, err := govaluate.NewEvaluableExpressionWithFunctions(exp, funcs)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, fmt.Errorf("invalid expression %s: %v", exp, err))
 			continue
 		}
-		variables := evalExp.Vars()
-		for _, v := range variables {
+		for _, v := range evalExp.Vars() {
 			var hasVariable bool
 			for _, q := range cq.BuilderQueries {
 				if q.Expression == v {
@@ -961,7 +960,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 
 	// parse the request body
 	if err := json.NewDecoder(r.Body).Decode(&queryRangeParams); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 
 	// validate the request body
@@ -969,7 +968,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
-	// prepare the variables for the corrspnding query type
+	// prepare the variables for the corresponding query type
 	formattedVars := make(map[string]interface{})
 	for name, value := range queryRangeParams.Variables {
 		if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
@@ -985,6 +984,41 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			// Formula query
+			if query.QueryName != query.Expression {
+				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
+				if err != nil {
+					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+				}
+
+				// get the group keys for the vars
+				groupKeys := make(map[string][]string)
+				for _, v := range expression.Vars() {
+					if varQuery, ok := queryRangeParams.CompositeQuery.BuilderQueries[v]; ok {
+						groupKeys[v] = []string{}
+						for _, key := range varQuery.GroupBy {
+							groupKeys[v] = append(groupKeys[v], key.Key)
+						}
+					} else {
+						return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unknown variable %s", v)}
+					}
+				}
+
+				params := make(map[string]interface{})
+				for k, v := range groupKeys {
+					params[k] = v
+				}
+
+				can, _, err := expression.CanJoin(params)
+				if err != nil {
+					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+				}
+
+				if !can {
+					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot join the given group keys")}
+				}
+			}
+
 			if query.Filters == nil || len(query.Filters.Items) == 0 {
 				continue
 			}
@@ -1011,6 +1045,25 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 					}
 				}
 			}
+
+			var timeShiftBy int64
+			if len(query.Functions) > 0 {
+				for idx := range query.Functions {
+					function := &query.Functions[idx]
+					if function.Name == v3.FunctionNameTimeShift {
+						// move the function to the beginning of the list
+						// so any other function can use the shifted time
+						var fns []v3.Function
+						fns = append(fns, *function)
+						fns = append(fns, query.Functions[:idx]...)
+						fns = append(fns, query.Functions[idx+1:]...)
+						query.Functions = fns
+						timeShiftBy = int64(function.Args[0].(float64))
+						break
+					}
+				}
+			}
+			query.ShiftBy = timeShiftBy
 		}
 	}
 	queryRangeParams.Variables = formattedVars
@@ -1019,13 +1072,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeValue &&
 		queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
 		queryRangeParams.Start = queryRangeParams.End
-	}
-
-	// round up the end to neaerest multiple
-	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		end := (queryRangeParams.End) / 1000
-		step := queryRangeParams.Step
-		queryRangeParams.End = (end / step * step) * 1000
 	}
 
 	// replace go template variables in clickhouse query
@@ -1077,4 +1123,15 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 	}
 
 	return queryRangeParams, nil
+}
+
+func parseChangeIssueStatusRequest(r *http.Request) (*model.ChangeIssueStatusParams, error) {
+	var postData *model.ChangeIssueStatusParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return postData, nil
 }

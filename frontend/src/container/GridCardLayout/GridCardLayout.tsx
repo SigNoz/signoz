@@ -1,15 +1,19 @@
 import './GridCardLayout.styles.scss';
 
-import { PlusOutlined, SaveFilled } from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { themeColors } from 'constants/theme';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import isEqual from 'lodash-es/isEqual';
 import { FullscreenIcon } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useEffect, useState } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
+import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -28,6 +32,7 @@ import {
 	ReactGridLayout,
 } from './styles';
 import { GraphLayoutProps } from './types';
+import { removeUndefinedValuesFromLayout } from './utils';
 
 function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	const {
@@ -50,6 +55,8 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 
+	const [dashboardLayout, setDashboardLayout] = useState<Layout[]>([]);
+
 	const updateDashboardMutation = useUpdateDashboard();
 
 	const { notifications } = useNotifications();
@@ -70,6 +77,10 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 		userRole,
 	);
 
+	useEffect(() => {
+		setDashboardLayout(layouts);
+	}, [layouts]);
+
 	const onSaveHandler = (): void => {
 		if (!selectedDashboard) return;
 
@@ -77,7 +88,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 			...selectedDashboard,
 			data: {
 				...selectedDashboard.data,
-				layout: layouts.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
+				layout: dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
 			},
 			uuid: selectedDashboard.uuid,
 		};
@@ -89,9 +100,6 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 						setLayouts(updatedDashboard.payload.data.layout);
 					setSelectedDashboard(updatedDashboard.payload);
 				}
-				notifications.success({
-					message: t('dashboard:layout_saved_successfully'),
-				});
 
 				featureResponse.refetch();
 			},
@@ -107,6 +115,32 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 		? [...ViewMenuAction, ...EditMenuAction]
 		: [...ViewMenuAction];
 
+	const handleLayoutChange = (layout: Layout[]): void => {
+		const filterLayout = removeUndefinedValuesFromLayout(layout);
+		const filterDashboardLayout = removeUndefinedValuesFromLayout(
+			dashboardLayout,
+		);
+		if (!isEqual(filterLayout, filterDashboardLayout)) {
+			setDashboardLayout(layout);
+		}
+	};
+
+	useEffect(() => {
+		if (
+			dashboardLayout &&
+			Array.isArray(dashboardLayout) &&
+			dashboardLayout.length > 0 &&
+			!isEqual(layouts, dashboardLayout) &&
+			!isDashboardLocked &&
+			saveLayoutPermission &&
+			!updateDashboardMutation.isLoading
+		) {
+			onSaveHandler();
+		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [dashboardLayout]);
+
 	return (
 		<>
 			<ButtonContainer>
@@ -118,17 +152,6 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 				>
 					{t('dashboard:full_view')}
 				</Button>
-
-				{!isDashboardLocked && saveLayoutPermission && (
-					<Button
-						loading={updateDashboardMutation.isLoading}
-						onClick={onSaveHandler}
-						icon={<SaveFilled />}
-						disabled={updateDashboardMutation.isLoading}
-					>
-						{t('dashboard:save_layout')}
-					</Button>
-				)}
 
 				{!isDashboardLocked && addPanelPermission && (
 					<Button
@@ -152,11 +175,12 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					isDroppable={!isDashboardLocked && addPanelPermission}
 					isResizable={!isDashboardLocked && addPanelPermission}
 					allowOverlap={false}
-					onLayoutChange={setLayouts}
+					onLayoutChange={handleLayoutChange}
 					draggableHandle=".drag-handle"
-					layout={layouts}
+					layout={dashboardLayout}
+					style={{ backgroundColor: isDarkMode ? '' : themeColors.snowWhite }}
 				>
-					{layouts.map((layout) => {
+					{dashboardLayout.map((layout) => {
 						const { i: id } = layout;
 						const currentWidget = (widgets || [])?.find((e) => e.id === id);
 
@@ -176,6 +200,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 										name={currentWidget?.id || ''}
 										headerMenuList={widgetActions}
 										variables={variables}
+										fillSpans={currentWidget?.fillSpans}
 									/>
 								</Card>
 							</CardContainer>

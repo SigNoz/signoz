@@ -1,18 +1,27 @@
+import { QueryParams } from 'constants/query';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
+import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
+import GetMinMax from 'lib/getMinMax';
+import getTimeString from 'lib/getTimeString';
+import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
+import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { getTimeRange } from 'utils/getTimeRange';
 
 function WidgetGraph({
 	getWidgetQueryRange,
@@ -20,8 +29,29 @@ function WidgetGraph({
 	yAxisUnit,
 	thresholds,
 	fillSpans,
+	softMax,
+	softMin,
+	selectedLogFields,
+	selectedTracesFields,
+	selectedTime,
 }: WidgetGraphProps): JSX.Element {
-	const { stagedQuery } = useQueryBuilder();
+	const { stagedQuery, currentQuery } = useQueryBuilder();
+
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
+	const [minTimeScale, setMinTimeScale] = useState<number>();
+	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+	const location = useLocation();
+
+	useEffect((): void => {
+		const { startTime, endTime } = getTimeRange(getWidgetQueryRange);
+
+		setMinTimeScale(startTime);
+		setMaxTimeScale(endTime);
+	}, [getWidgetQueryRange, maxTime, minTime, globalSelectedInterval]);
 
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -44,13 +74,46 @@ function WidgetGraph({
 		(start: number, end: number): void => {
 			const startTimestamp = Math.trunc(start);
 			const endTimestamp = Math.trunc(end);
-
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
+
+			const { maxTime, minTime } = GetMinMax('custom', [
+				startTimestamp,
+				endTimestamp,
+			]);
+
+			params.set(QueryParams.startTime, minTime.toString());
+			params.set(QueryParams.endTime, maxTime.toString());
+			const generatedUrl = `${location.pathname}?${params.toString()}`;
+			history.push(generatedUrl);
 		},
-		[dispatch],
+		[dispatch, location.pathname, params],
 	);
+
+	const handleBackNavigation = (): void => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const startTime = searchParams.get(QueryParams.startTime);
+		const endTime = searchParams.get(QueryParams.endTime);
+
+		if (startTime && endTime && startTime !== endTime) {
+			dispatch(
+				UpdateTimeInterval('custom', [
+					parseInt(getTimeString(startTime), 10),
+					parseInt(getTimeString(endTime), 10),
+				]),
+			);
+		}
+	};
+
+	useEffect(() => {
+		window.addEventListener('popstate', handleBackNavigation);
+
+		return (): void => {
+			window.removeEventListener('popstate', handleBackNavigation);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const options = useMemo(
 		() =>
@@ -63,6 +126,10 @@ function WidgetGraph({
 				onDragSelect,
 				thresholds,
 				fillSpans,
+				minTimeScale,
+				maxTimeScale,
+				softMax,
+				softMin,
 			}),
 		[
 			widgetId,
@@ -73,6 +140,10 @@ function WidgetGraph({
 			onDragSelect,
 			thresholds,
 			fillSpans,
+			minTimeScale,
+			maxTimeScale,
+			softMax,
+			softMin,
 		],
 	);
 
@@ -89,6 +160,10 @@ function WidgetGraph({
 				}
 				query={stagedQuery || selectedWidget.query}
 				thresholds={thresholds}
+				selectedLogFields={selectedLogFields}
+				selectedTracesFields={selectedTracesFields}
+				dataSource={currentQuery.builder.queryData[0].dataSource}
+				selectedTime={selectedTime}
 			/>
 		</div>
 	);
@@ -103,6 +178,11 @@ interface WidgetGraphProps {
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error
 	>;
+	softMax: number | null;
+	softMin: number | null;
+	selectedLogFields: Widgets['selectedLogFields'];
+	selectedTracesFields: Widgets['selectedTracesFields'];
+	selectedTime: timePreferance;
 }
 
 export default WidgetGraph;

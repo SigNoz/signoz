@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/prometheus/prometheus/promql"
@@ -71,12 +72,16 @@ type Reader interface {
 	GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error)
 	LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClient)
 
+	GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error)
+	GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error)
 	GetTotalSpans(ctx context.Context) (uint64, error)
-	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)
+	GetTotalLogs(ctx context.Context) (uint64, error)
+	GetTotalSamples(ctx context.Context) (uint64, error)
+	GetSpansInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error)
 	GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error)
-	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
-	GetLogsInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
-	GetTagsInfoInLastHeartBeatInterval(ctx context.Context) (*model.TagsInfo, error)
+	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error)
+	GetLogsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error)
+	GetTagsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (*model.TagsInfo, error)
 	GetDistributedInfoInLastHeartBeatInterval(ctx context.Context) (map[string]interface{}, error)
 	// Logs
 	GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
@@ -96,7 +101,12 @@ type Reader interface {
 	QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error)
 	CheckClickHouse(ctx context.Context) error
 
-	GetLatencyMetricMetadata(context.Context, string, bool) (*v3.LatencyMetricMetadataResponse, error)
+	GetLatencyMetricMetadata(context.Context, string, string, bool) (*v3.LatencyMetricMetadataResponse, error)
+	GetMetricMetadata(context.Context, string, string) (*v3.MetricMetadataResponse, error)
+
+	// 自定义服务
+	ChangeIssueStatus(ctx context.Context, params *model.ChangeIssueStatusParams) (bool, *model.ApiError)
+	SearchAllServices(ctx context.Context) (*[]string, error)
 }
 
 type Querier interface {

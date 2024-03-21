@@ -20,4 +20,8 @@ export const getWidgetQueryBuilder = ({
 	timePreferance: 'GLOBAL_TIME',
 	title,
 	yAxisUnit,
+	softMax: null,
+	softMin: null,
+	selectedLogFields: [],
+	selectedTracesFields: [],
 });

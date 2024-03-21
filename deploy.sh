@@ -2,6 +2,8 @@
 
 # 服务器步骤
 FRONTEND_DIR="/home/ubuntu/ec-web-signoz/frontend" # 前端目录
+OTEL_COLLECTOR_DIR="/home/ubuntu/ec-web-signoz/signoz-otel-collector"
+
 # 进入前端目录
 cd $FRONTEND_DIR || {
     echo "Failed to enter the frontend directory."
@@ -15,16 +17,28 @@ npm install --force || {
     exit 1
 }
 
-# 构建前端
+# 构建前端，tb1环境执行npm run build:tb1
 echo "Building the frontend..."
-npm run build || {
+# npm run build || {
+npm run build:tb1 || {
     echo "Failed to build the frontend."
     exit 1
 }
 
+# 构建otel-collector
+cd $OTEL_COLLECTOR_DIR || {
+    echo "Failed to enter the signoz-otel-collector directory."
+    exit 1
+}
+make build
+
+# 构建query-service
+cd "/home/ubuntu/ec-web-signoz"
+make build-query-service-static-amd64
+
 # 关闭运行的前端与收集器容器
 echo "Stopping running containers..."
-docker stop signoz-otel-collector signoz-frontend || {
+docker stop signoz-otel-collector signoz-frontend signoz-query-service || {
     echo "Failed to stop the containers."
     exit 1
 }

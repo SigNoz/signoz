@@ -1,0 +1,36 @@
+exporters:
+    logging: null
+    prometheus:
+        endpoint: 0.0.0.0:8889
+extensions:
+    zpages: {}
+processors:
+    batch:
+        send_batch_size: 100000 # changed
+        timeout: 10s
+receivers:
+    otlp:
+        protocols:
+            grpc: null
+            http: null
+service:
+    extensions:
+        - zpages
+    pipelines:
+        metrics:
+            exporters:
+                - logging
+            processors:
+                - batch
+            receivers:
+                - otlp
+        traces:
+            exporters:
+                - logging
+            processors:
+                - batch
+            receivers:
+                - otlp
+    telemetry:
+        resource:
+            service.instance.id: opamp/testdata/coll-config-path.yaml

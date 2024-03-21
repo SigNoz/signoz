@@ -10,11 +10,11 @@ import {
 	MoreOutlined,
 	WarningOutlined,
 } from '@ant-design/icons';
-import { Button, Dropdown, MenuProps, Tooltip, Typography } from 'antd';
+import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
+import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { ReactNode, useCallback, useMemo } from 'react';
@@ -45,6 +45,7 @@ interface IWidgetHeaderProps {
 	threshold?: ReactNode;
 	headerMenuList?: MenuItemKeys[];
 	isWarning: boolean;
+	isFetchingResponse: boolean;
 }
 
 function WidgetHeader({
@@ -59,6 +60,7 @@ function WidgetHeader({
 	threshold,
 	headerMenuList,
 	isWarning,
+	isFetchingResponse,
 }: IWidgetHeaderProps): JSX.Element | null {
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
@@ -71,13 +73,7 @@ function WidgetHeader({
 		);
 	}, [widget.id, widget.panelTypes, widget.query]);
 
-	const onCreateAlertsHandler = useCallback(() => {
-		history.push(
-			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-				JSON.stringify(widget.query),
-			)}`,
-		);
-	}, [widget]);
+	const onCreateAlertsHandler = useCreateAlerts(widget);
 
 	const keyMethodMapping = useMemo(
 		() => ({
@@ -176,7 +172,7 @@ function WidgetHeader({
 			</Typography.Text>
 			<div className="widget-header-actions">
 				<div className="widget-api-actions">{threshold}</div>
-				{queryResponse.isFetching && !queryResponse.isError && (
+				{isFetchingResponse && !queryResponse.isError && (
 					<Spinner style={{ paddingRight: '0.25rem' }} />
 				)}
 				{queryResponse.isError && (
@@ -199,9 +195,7 @@ function WidgetHeader({
 					</Tooltip>
 				)}
 				<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
-					<Button
-						type="default"
-						icon={<MoreOutlined />}
+					<MoreOutlined
 						className={`widget-header-more-options ${
 							parentHover ? 'widget-header-hover' : ''
 						}`}

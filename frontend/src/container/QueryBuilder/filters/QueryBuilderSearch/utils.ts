@@ -1,4 +1,5 @@
 import { OPERATORS } from 'constants/queryBuilder';
+import { MetricsType } from 'container/MetricsApplication/constant';
 import { parse } from 'papaparse';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
@@ -121,8 +122,17 @@ export function replaceStringWithMaxLength(
 	if (lastSearchValue === '') {
 		return `${mainString}${replacementString},`;
 	}
+	/**
+	 * We need to escape the special characters in the lastSearchValue else the
+	 * new RegExp fails with error range out of order in char class
+	 */
+	const escapedLastSearchValue = lastSearchValue.replace(
+		/[-/\\^$*+?.()|[\]{}]/g,
+		'\\$&',
+	);
+
 	const updatedString = mainString.replace(
-		new RegExp(`${lastSearchValue}(?=[^${lastSearchValue}]*$)`),
+		new RegExp(`${escapedLastSearchValue}(?=[^${escapedLastSearchValue}]*$)`),
 		replacementString,
 	);
 	return `${updatedString},`;
@@ -139,4 +149,16 @@ export function getRemoveOrderFromValue(tag: string): string {
 		return key;
 	}
 	return tag;
+}
+
+export function getOptionType(label: string): MetricsType | undefined {
+	let optionType;
+
+	if (label.startsWith('tag_')) {
+		optionType = MetricsType.Tag;
+	} else if (label.startsWith('resource_')) {
+		optionType = MetricsType.Resource;
+	}
+
+	return optionType;
 }

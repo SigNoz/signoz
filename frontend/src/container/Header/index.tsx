@@ -51,7 +51,7 @@ function HeaderContainer(): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { toggleTheme } = useThemeMode();
 	const [showTrialExpiryBanner, setShowTrialExpiryBanner] = useState(false);
-	const [homeRoute, setHomeRoute] = useState(ROUTES.APPLICATION);
+	const [homeRoute, setHomeRoute] = useState<string>(ROUTES.APPLICATION);
 
 	const [isUserDropDownOpen, setIsUserDropDownOpen] = useState<boolean>(false);
 

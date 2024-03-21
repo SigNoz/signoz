@@ -13,8 +13,10 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import { defaultTo } from 'lodash-es';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
@@ -32,19 +34,13 @@ import {
 	errorPercentage,
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
-import {
-	Card,
-	Col,
-	ColApDexContainer,
-	ColErrorContainer,
-	Row,
-} from '../styles';
+import { Col, ColApDexContainer, ColErrorContainer, Row } from '../styles';
 import ApDex from './Overview/ApDex';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
 import TopOperationMetrics from './Overview/TopOperationMetrics';
-import { Button } from './styles';
+import { Button, Card } from './styles';
 import { IServiceName } from './types';
 import {
 	handleNonInQueryRange,
@@ -58,8 +54,10 @@ function Application(): JSX.Element {
 	);
 	const { servicename } = useParams<IServiceName>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
-	const { search } = useLocation();
+	const { search, pathname } = useLocation();
 	const { queries } = useResourceAttribute();
+	const urlQuery = useUrlQuery();
+
 	const selectedTags = useMemo(
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
 		[queries],
@@ -110,7 +108,10 @@ function Application(): JSX.Element {
 	);
 
 	const topLevelOperationsRoute = useMemo(
-		() => (topLevelOperations ? topLevelOperations[servicename || ''] : []),
+		() =>
+			topLevelOperations
+				? defaultTo(topLevelOperations[servicename || ''], [])
+				: [],
 		[servicename, topLevelOperations],
 	);
 
@@ -163,11 +164,16 @@ function Application(): JSX.Element {
 			const startTimestamp = Math.trunc(start);
 			const endTimestamp = Math.trunc(end);
 
+			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
+			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			history.replace(generatedUrl);
+
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch],
+		[dispatch, pathname, urlQuery],
 	);
 
 	const onErrorTrackHandler = (timestamp: number): (() => void) => (): void => {
@@ -276,7 +282,7 @@ function Application(): JSX.Element {
 
 				<Col span={12}>
 					<Card>
-						{isSpanMetricEnabled ? <TopOperationMetrics /> : <TopOperation />}
+						{isSpanMetricEnabled ? <TopOperationMetrics /> : <TopOperation />}{' '}
 					</Card>
 				</Col>
 			</Row>

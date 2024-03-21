@@ -1,5 +1,5 @@
 const createQueryParams = (params: {
-	[x: string]: string | number | undefined;
+	[x: string]: string | number | undefined | string[];
 }): string =>
 	Object.keys(params)
 		.map(

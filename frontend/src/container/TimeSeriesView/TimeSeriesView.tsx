@@ -1,19 +1,30 @@
-import Spinner from 'components/Spinner';
+import './TimeSeriesView.styles.scss';
+
 import Uplot from 'components/Uplot';
+import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
+import LogsError from 'container/LogsError/LogsError';
+import { LogsLoading } from 'container/LogsLoading/LogsLoading';
+import NoLogs from 'container/NoLogs/NoLogs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useMemo, useRef } from 'react';
+import { isEmpty } from 'lodash-es';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { getTimeRange } from 'utils/getTimeRange';
 
-import { Container, ErrorText } from './styles';
+import { Container } from './styles';
 
 function TimeSeriesView({
 	data,
 	isLoading,
 	isError,
 	yAxisUnit,
+	isFilterApplied,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -31,6 +42,21 @@ function TimeSeriesView({
 		? graphRef.current.clientHeight
 		: 300;
 
+	const [minTimeScale, setMinTimeScale] = useState<number>();
+	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+
+	useEffect((): void => {
+		const { startTime, endTime } = getTimeRange();
+
+		setMinTimeScale(startTime);
+		setMaxTimeScale(endTime);
+	}, [maxTime, minTime, globalSelectedInterval, data]);
+
 	const chartOptions = getUPlotChartOptions({
 		yAxisUnit: yAxisUnit || '',
 		apiResponse: data?.payload,
@@ -39,20 +65,41 @@ function TimeSeriesView({
 			height,
 		},
 		isDarkMode,
+		minTimeScale,
+		maxTimeScale,
+		softMax: null,
+		softMin: null,
 	});
 
 	return (
 		<Container>
-			{isLoading && <Spinner height="50vh" size="small" tip="Loading..." />}
-			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
+			{isError && <LogsError />}
 			<div
 				className="graph-container"
 				style={{ height: '100%', width: '100%' }}
 				ref={graphRef}
 			>
-				{!isLoading && !isError && chartData && chartOptions && (
-					<Uplot data={chartData} options={chartOptions} />
-				)}
+				{isLoading && <LogsLoading />}
+
+				{chartData &&
+					chartData[0] &&
+					chartData[0]?.length === 0 &&
+					!isLoading &&
+					!isError &&
+					isFilterApplied && <EmptyLogsSearch />}
+
+				{chartData &&
+					chartData[0] &&
+					chartData[0]?.length === 0 &&
+					!isLoading &&
+					!isError &&
+					!isFilterApplied && <NoLogs />}
+
+				{!isLoading &&
+					!isError &&
+					chartData &&
+					!isEmpty(chartData?.[0]) &&
+					chartOptions && <Uplot data={chartData} options={chartOptions} />}
 			</div>
 		</Container>
 	);
@@ -63,6 +110,7 @@ interface TimeSeriesViewProps {
 	yAxisUnit?: string;
 	isLoading: boolean;
 	isError: boolean;
+	isFilterApplied: boolean;
 }
 
 TimeSeriesView.defaultProps = {

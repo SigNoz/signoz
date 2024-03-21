@@ -1,0 +1,26 @@
+signozkafkaexporter:
+  topic: spans
+  brokers:
+    - "foo:123"
+    - "bar:456"
+  metadata:
+    full: false
+    retry:
+      max: 15
+  producer:
+    max_message_bytes: 10000000
+    required_acks: -1 # WaitForAll
+  timeout: 10s
+  auth:
+    plain_text:
+      username: jdoe
+      password: pass
+  sending_queue:
+    enabled: true
+    num_consumers: 2
+    queue_size: 10
+  retry_on_failure:
+    enabled: true
+    initial_interval: 10s
+    max_interval: 60s
+    max_elapsed_time: 10m

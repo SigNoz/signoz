@@ -1,0 +1,28 @@
+receivers:
+  nop:
+
+processors:
+  nop:
+
+exporters:
+  clickhouselogsexporter:
+    dsn: tcp://127.0.0.1:9000/?dial_timeout=5s
+  clickhouselogsexporter/full:
+    dsn: tcp://127.0.0.1:9000/?dial_timeout=5s
+    timeout: 5s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+      randomization_factor: 0.7
+      multiplier: 1.3
+    sending_queue:
+      queue_size: 100
+
+service:
+  pipelines:
+    logs:
+      receivers: [nop]
+      processors: [nop]
+      exporters: [clickhouselogsexporter]

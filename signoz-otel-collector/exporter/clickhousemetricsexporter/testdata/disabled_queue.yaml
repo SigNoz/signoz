@@ -1,0 +1,21 @@
+receivers:
+    nop:
+  
+processors:
+    nop:
+ 
+exporters:
+    clickhousemetricswrite:
+        endpoint: "localhost:8888"
+        remote_write_queue:
+            enabled: false
+            num_consumers: 10
+
+service:
+    pipelines:
+        metrics:
+            receivers: [nop]
+            processors: [nop]
+            exporters: [clickhousemetricswrite]
+    
+    

@@ -7,6 +7,72 @@
 /// ////// JavaScript Done
 /// ///// Go Start
 // Go-Kubernetes
+/// /// ROR Done
+/// /// .NET Start
+// dotnet-Kubernetes
+import APM_dotnet_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Dotnet/md-docs/Kubernetes/dotnet-kubernetes-installOtelCollector.md';
+import APM_dotnet_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Dotnet/md-docs/Kubernetes/dotnet-kubernetes-instrumentApplication.md';
+import APM_dotnet_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Dotnet/md-docs/Kubernetes/dotnet-kubernetes-runApplication.md';
+// dotnet-LinuxAMD64-quickstart
+import APM_dotnet_linuxAMD64_quickStart_instrumentApplication from '../Modules/APM/Dotnet/md-docs/LinuxAMD64/QuickStart/dotnet-linuxamd64-quickStart-instrumentApplication.md';
+import APM_dotnet_linuxAMD64_quickStart_runApplication from '../Modules/APM/Dotnet/md-docs/LinuxAMD64/QuickStart/dotnet-linuxamd64-quickStart-runApplication.md';
+// dotnet-LinuxAMD64-recommended
+import APM_dotnet_linuxAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Dotnet/md-docs/LinuxAMD64/Recommended/dotnet-linuxamd64-recommended-installOtelCollector.md';
+import APM_dotnet_linuxAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Dotnet/md-docs/LinuxAMD64/Recommended/dotnet-linuxamd64-recommended-instrumentApplication.md';
+import APM_dotnet_linuxAMD64_recommendedSteps_runApplication from '../Modules/APM/Dotnet/md-docs/LinuxAMD64/Recommended/dotnet-linuxamd64-recommended-runApplication.md';
+// dotnet-LinuxARM64-quickstart
+import APM_dotnet_linuxARM64_quickStart_instrumentApplication from '../Modules/APM/Dotnet/md-docs/LinuxARM64/QuickStart/dotnet-linuxarm64-quickStart-instrumentApplication.md';
+import APM_dotnet_linuxARM64_quickStart_runApplication from '../Modules/APM/Dotnet/md-docs/LinuxARM64/QuickStart/dotnet-linuxarm64-quickStart-runApplication.md';
+// dotnet-LinuxARM64-recommended
+import APM_dotnet_linuxARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Dotnet/md-docs/LinuxARM64/Recommended/dotnet-linuxarm64-recommended-installOtelCollector.md';
+import APM_dotnet_linuxARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Dotnet/md-docs/LinuxARM64/Recommended/dotnet-linuxarm64-recommended-instrumentApplication.md';
+import APM_dotnet_linuxARM64_recommendedSteps_runApplication from '../Modules/APM/Dotnet/md-docs/LinuxARM64/Recommended/dotnet-linuxarm64-recommended-runApplication.md';
+// dotnet-MacOsAMD64-quickstart
+import APM_dotnet_macOsAMD64_quickStart_instrumentApplication from '../Modules/APM/Dotnet/md-docs/MacOsAMD64/QuickStart/dotnet-macosamd64-quickStart-instrumentApplication.md';
+import APM_dotnet_macOsAMD64_quickStart_runApplication from '../Modules/APM/Dotnet/md-docs/MacOsAMD64/QuickStart/dotnet-macosamd64-quickStart-runApplication.md';
+// dotnet-MacOsAMD64-recommended
+import APM_dotnet_macOsAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Dotnet/md-docs/MacOsAMD64/Recommended/dotnet-macosamd64-recommended-installOtelCollector.md';
+import APM_dotnet_macOsAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Dotnet/md-docs/MacOsAMD64/Recommended/dotnet-macosamd64-recommended-instrumentApplication.md';
+import APM_dotnet_macOsAMD64_recommendedSteps_runApplication from '../Modules/APM/Dotnet/md-docs/MacOsAMD64/Recommended/dotnet-macosamd64-recommended-runApplication.md';
+// dotnet-MacOsARM64-quickstart
+import APM_dotnet_macOsARM64_quickStart_instrumentApplication from '../Modules/APM/Dotnet/md-docs/MacOsARM64/QuickStart/dotnet-macosarm64-quickStart-instrumentApplication.md';
+import APM_dotnet_macOsARM64_quickStart_runApplication from '../Modules/APM/Dotnet/md-docs/MacOsARM64/QuickStart/dotnet-macosarm64-quickStart-runApplication.md';
+// dotnet-MacOsARM64-recommended
+import APM_dotnet_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Dotnet/md-docs/MacOsARM64/Recommended/dotnet-macosarm64-recommended-installOtelCollector.md';
+import APM_dotnet_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Dotnet/md-docs/MacOsARM64/Recommended/dotnet-macosarm64-recommended-instrumentApplication.md';
+import APM_dotnet_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Dotnet/md-docs/MacOsARM64/Recommended/dotnet-macosarm64-recommended-runApplication.md';
+// Elixir-Kubernetes
+import APM_elixir_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Elixir/md-docs/Kubernetes/elixir-kubernetes-installOtelCollector.md';
+import APM_elixir_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Elixir/md-docs/Kubernetes/elixir-kubernetes-instrumentApplication.md';
+import APM_elixir_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Elixir/md-docs/Kubernetes/elixir-kubernetes-runApplication.md';
+// Elixir-LinuxAMD64-quickstart
+import APM_elixir_linuxAMD64_quickStart_instrumentApplication from '../Modules/APM/Elixir/md-docs/LinuxAMD64/QuickStart/elixir-linuxamd64-quickStart-instrumentApplication.md';
+import APM_elixir_linuxAMD64_quickStart_runApplication from '../Modules/APM/Elixir/md-docs/LinuxAMD64/QuickStart/elixir-linuxamd64-quickStart-runApplication.md';
+// Elixir-LinuxAMD64-recommended
+import APM_elixir_linuxAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Elixir/md-docs/LinuxAMD64/Recommended/elixir-linuxamd64-recommended-installOtelCollector.md';
+import APM_elixir_linuxAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Elixir/md-docs/LinuxAMD64/Recommended/elixir-linuxamd64-recommended-instrumentApplication.md';
+import APM_elixir_linuxAMD64_recommendedSteps_runApplication from '../Modules/APM/Elixir/md-docs/LinuxAMD64/Recommended/elixir-linuxamd64-recommended-runApplication.md';
+// Elixir-LinuxARM64-quickstart
+import APM_elixir_linuxARM64_quickStart_instrumentApplication from '../Modules/APM/Elixir/md-docs/LinuxARM64/QuickStart/elixir-linuxarm64-quickStart-instrumentApplication.md';
+import APM_elixir_linuxARM64_quickStart_runApplication from '../Modules/APM/Elixir/md-docs/LinuxARM64/QuickStart/elixir-linuxarm64-quickStart-runApplication.md';
+// Elixir-LinuxARM64-recommended
+import APM_elixir_linuxARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Elixir/md-docs/LinuxARM64/Recommended/elixir-linuxarm64-recommended-installOtelCollector.md';
+import APM_elixir_linuxARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Elixir/md-docs/LinuxARM64/Recommended/elixir-linuxarm64-recommended-instrumentApplication.md';
+import APM_elixir_linuxARM64_recommendedSteps_runApplication from '../Modules/APM/Elixir/md-docs/LinuxARM64/Recommended/elixir-linuxarm64-recommended-runApplication.md';
+// Elixir-MacOsAMD64-quickstart
+import APM_elixir_macOsAMD64_quickStart_instrumentApplication from '../Modules/APM/Elixir/md-docs/MacOsAMD64/QuickStart/elixir-macosamd64-quickStart-instrumentApplication.md';
+import APM_elixir_macOsAMD64_quickStart_runApplication from '../Modules/APM/Elixir/md-docs/MacOsAMD64/QuickStart/elixir-macosamd64-quickStart-runApplication.md';
+// Elixir-MacOsAMD64-recommended
+import APM_elixir_macOsAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Elixir/md-docs/MacOsAMD64/Recommended/elixir-macosamd64-recommended-installOtelCollector.md';
+import APM_elixir_macOsAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Elixir/md-docs/MacOsAMD64/Recommended/elixir-macosamd64-recommended-instrumentApplication.md';
+import APM_elixir_macOsAMD64_recommendedSteps_runApplication from '../Modules/APM/Elixir/md-docs/MacOsAMD64/Recommended/elixir-macosamd64-recommended-runApplication.md';
+// Elixir-MacOsARM64-quickstart
+import APM_elixir_macOsARM64_quickStart_instrumentApplication from '../Modules/APM/Elixir/md-docs/MacOsARM64/QuickStart/elixir-macosarm64-quickStart-instrumentApplication.md';
+import APM_elixir_macOsARM64_quickStart_runApplication from '../Modules/APM/Elixir/md-docs/MacOsARM64/QuickStart/elixir-macosarm64-quickStart-runApplication.md';
+// Elixir-MacOsARM64-recommended
+import APM_elixir_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Elixir/md-docs/MacOsARM64/Recommended/elixir-macosarm64-recommended-installOtelCollector.md';
+import APM_elixir_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Elixir/md-docs/MacOsARM64/Recommended/elixir-macosarm64-recommended-instrumentApplication.md';
+import APM_elixir_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Elixir/md-docs/MacOsARM64/Recommended/elixir-macosarm64-recommended-runApplication.md';
 import APM_go_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/GoLang/md-docs/Kubernetes/golang-kubernetes-installOtelCollector.md';
 import APM_go_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/GoLang/md-docs/Kubernetes/golang-kubernetes-instrumentApplication.md';
 import APM_go_kubernetes_recommendedSteps_runApplication from '../Modules/APM/GoLang/md-docs/Kubernetes/golang-kubernetes-runApplication.md';
@@ -272,8 +338,72 @@ import APM_javascript_nodejs_macOsARM64_quickStart_runApplication from '../Modul
 import APM_javascript_nodejs_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/NodeJS/MacOsARM64/Recommended/nodejs-macosarm64-recommended-installOtelCollector.md';
 import APM_javascript_nodejs_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/NodeJS/MacOsARM64/Recommended/nodejs-macosarm64-recommended-instrumentApplication.md';
 import APM_javascript_nodejs_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/NodeJS/MacOsARM64/Recommended/nodejs-macosarm64-recommended-runApplication.md';
+/// // JavaScript Others
+import APM_javascript_others_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Others/Kubernetes/others-kubernetes-installOtelCollector.md';
+import APM_javascript_others_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/Kubernetes/others-kubernetes-instrumentApplication.md';
+import APM_javascript_others_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Others/Kubernetes/others-kubernetes-runApplication.md';
+// Others-JavaScript-LinuxAMD64-quickstart
+import APM_javascript_others_linuxAMD64_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/LinuxAMD64/QuickStart/others-linuxamd64-quickStart-instrumentApplication.md';
+import APM_javascript_others_linuxAMD64_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Others/LinuxAMD64/QuickStart/others-linuxamd64-quickStart-runApplication.md';
+// // Others-JavaScript-LinuxAMD64-recommended
+import APM_javascript_others_linuxAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Others/LinuxAMD64/Recommended/others-linuxamd64-recommended-installOtelCollector.md';
+import APM_javascript_others_linuxAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/LinuxAMD64/Recommended/others-linuxamd64-recommended-instrumentApplication.md';
+import APM_javascript_others_linuxAMD64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Others/LinuxAMD64/Recommended/others-linuxamd64-recommended-runApplication.md';
+// Others-JavaScript-LinuxARM64-quiOthers
+import APM_javascript_others_linuxARM64_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/LinuxARM64/QuickStart/others-linuxarm64-quickStart-instrumentApplication.md';
+import APM_javascript_others_linuxARM64_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Others/LinuxARM64/QuickStart/others-linuxarm64-quickStart-runApplication.md';
+// Others-JavaScript-LinuxARM64-recommended
+import APM_javascript_others_linuxARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Others/LinuxARM64/Recommended/others-linuxarm64-recommended-installOtelCollector.md';
+import APM_javascript_others_linuxARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/LinuxARM64/Recommended/others-linuxarm64-recommended-instrumentApplication.md';
+import APM_javascript_others_linuxARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Others/LinuxARM64/Recommended/others-linuxarm64-recommended-runApplication.md';
+// Others-JavaScript-MacOsAMD64-quickstart
+import APM_javascript_others_macOsAMD64_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/MacOsAMD64/QuickStart/others-macosamd64-quickStart-instrumentApplication.md';
+import APM_javascript_others_macOsAMD64_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Others/MacOsAMD64/QuickStart/others-macosamd64-quickStart-runApplication.md';
+// Others-JavaScript-MacOsAMD64-recommended
+import APM_javascript_others_macOsAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Others/MacOsAMD64/Recommended/others-macosamd64-recommended-installOtelCollector.md';
+import APM_javascript_others_macOsAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/MacOsAMD64/Recommended/others-macosamd64-recommended-instrumentApplication.md';
+import APM_javascript_others_macOsAMD64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Others/MacOsAMD64/Recommended/others-macosamd64-recommended-runApplication.md';
+// Others-JavaScript-MacOsARM64-quickstart
+import APM_javascript_others_macOsARM64_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/MacOsARM64/QuickStart/others-macosarm64-quickStart-instrumentApplication.md';
+import APM_javascript_others_macOsARM64_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Others/MacOsARM64/QuickStart/others-macosarm64-quickStart-runApplication.md';
+// Others-JavaScript-MacOsARM64-recommended
+import APM_javascript_others_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-installOtelCollector.md';
+import APM_javascript_others_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-instrumentApplication.md';
+import APM_javascript_others_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
-/// ////// Java Done
+// ReactJS-Kubernetes
+import APM_javascript_reactjs_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/ReactJS/Kubernetes/reactjs-kubernetes-installOtelCollector.md';
+import APM_javascript_reactjs_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/Kubernetes/reactjs-kubernetes-instrumentApplication.md';
+import APM_javascript_reactjs_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/Kubernetes/reactjs-kubernetes-runApplication.md';
+// ReactJS-LinuxAMD64-quickstart
+import APM_javascript_reactjs_linuxAMD64_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/LinuxAMD64/QuickStart/reactjs-linuxamd64-quickStart-instrumentApplication.md';
+import APM_javascript_reactjs_linuxAMD64_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/LinuxAMD64/QuickStart/reactjs-linuxamd64-quickStart-runApplication.md';
+// // ReactJS-LinuxAMD64-recommended
+import APM_javascript_reactjs_linuxAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/ReactJS/LinuxAMD64/Recommended/reactjs-linuxamd64-recommended-installOtelCollector.md';
+import APM_javascript_reactjs_linuxAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/LinuxAMD64/Recommended/reactjs-linuxamd64-recommended-instrumentApplication.md';
+import APM_javascript_reactjs_linuxAMD64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/LinuxAMD64/Recommended/reactjs-linuxamd64-recommended-runApplication.md';
+// ReactJS-LinuxARM64-quickstart
+import APM_javascript_reactjs_linuxARM64_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/LinuxARM64/QuickStart/reactjs-linuxarm64-quickStart-instrumentApplication.md';
+import APM_javascript_reactjs_linuxARM64_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/LinuxARM64/QuickStart/reactjs-linuxarm64-quickStart-runApplication.md';
+// ReactJS-LinuxARM64-recommended
+import APM_javascript_reactjs_linuxARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/ReactJS/LinuxARM64/Recommended/reactjs-linuxarm64-recommended-installOtelCollector.md';
+import APM_javascript_reactjs_linuxARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/LinuxARM64/Recommended/reactjs-linuxarm64-recommended-instrumentApplication.md';
+import APM_javascript_reactjs_linuxARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/LinuxARM64/Recommended/reactjs-linuxarm64-recommended-runApplication.md';
+// ReactJS-MacOsAMD64-quickstart
+import APM_javascript_reactjs_macOsAMD64_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsAMD64/QuickStart/reactjs-macosamd64-quickStart-instrumentApplication.md';
+import APM_javascript_reactjs_macOsAMD64_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsAMD64/QuickStart/reactjs-macosamd64-quickStart-runApplication.md';
+// ReactJS-MacOsAMD64-recommended
+import APM_javascript_reactjs_macOsAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsAMD64/Recommended/reactjs-macosamd64-recommended-installOtelCollector.md';
+import APM_javascript_reactjs_macOsAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsAMD64/Recommended/reactjs-macosamd64-recommended-instrumentApplication.md';
+import APM_javascript_reactjs_macOsAMD64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsAMD64/Recommended/reactjs-macosamd64-recommended-runApplication.md';
+// ReactJS-MacOsARM64-quickstart
+import APM_javascript_reactjs_macOsARM64_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/QuickStart/reactjs-macosarm64-quickStart-instrumentApplication.md';
+import APM_javascript_reactjs_macOsARM64_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/QuickStart/reactjs-macosarm64-quickStart-runApplication.md';
+// ReactJS-MacOsARM64-recommended
+import APM_javascript_reactjs_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-installOtelCollector.md';
+import APM_javascript_reactjs_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-instrumentApplication.md';
+import APM_javascript_reactjs_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-runApplication.md';
+/// ////// Javascript Done
 /// ///// Python Start
 // Django
 // Django-Kubernetes
@@ -479,9 +609,73 @@ import APM_rails_macOsARM64_quickStart_runApplication from '../Modules/APM/RubyO
 import APM_rails_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/RubyOnRails/md-docs/MacOsARM64/Recommended/ror-macosarm64-recommended-installOtelCollector.md';
 import APM_rails_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/RubyOnRails/md-docs/MacOsARM64/Recommended/ror-macosarm64-recommended-instrumentApplication.md';
 import APM_rails_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/RubyOnRails/md-docs/MacOsARM64/Recommended/ror-macosarm64-recommended-runApplication.md';
+// Rust-Kubernetes
+import APM_rust_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Rust/md-docs/Kubernetes/rust-kubernetes-installOtelCollector.md';
+import APM_rust_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Rust/md-docs/Kubernetes/rust-kubernetes-instrumentApplication.md';
+import APM_rust_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Rust/md-docs/Kubernetes/rust-kubernetes-runApplication.md';
+// Rust-LinuxAMD64-quickstart
+import APM_rust_linuxAMD64_quickStart_instrumentApplication from '../Modules/APM/Rust/md-docs/LinuxAMD64/QuickStart/rust-linuxamd64-quickStart-instrumentApplication.md';
+import APM_rust_linuxAMD64_quickStart_runApplication from '../Modules/APM/Rust/md-docs/LinuxAMD64/QuickStart/rust-linuxamd64-quickStart-runApplication.md';
+// Rust-LinuxAMD64-recommended
+import APM_rust_linuxAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Rust/md-docs/LinuxAMD64/Recommended/rust-linuxamd64-recommended-installOtelCollector.md';
+import APM_rust_linuxAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Rust/md-docs/LinuxAMD64/Recommended/rust-linuxamd64-recommended-instrumentApplication.md';
+import APM_rust_linuxAMD64_recommendedSteps_runApplication from '../Modules/APM/Rust/md-docs/LinuxAMD64/Recommended/rust-linuxamd64-recommended-runApplication.md';
+// Rust-LinuxARM64-quickstart
+import APM_rust_linuxARM64_quickStart_instrumentApplication from '../Modules/APM/Rust/md-docs/LinuxARM64/QuickStart/rust-linuxarm64-quickStart-instrumentApplication.md';
+import APM_rust_linuxARM64_quickStart_runApplication from '../Modules/APM/Rust/md-docs/LinuxARM64/QuickStart/rust-linuxarm64-quickStart-runApplication.md';
+// Rust-LinuxARM64-recommended
+import APM_rust_linuxARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Rust/md-docs/LinuxARM64/Recommended/rust-linuxarm64-recommended-installOtelCollector.md';
+import APM_rust_linuxARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Rust/md-docs/LinuxARM64/Recommended/rust-linuxarm64-recommended-instrumentApplication.md';
+import APM_rust_linuxARM64_recommendedSteps_runApplication from '../Modules/APM/Rust/md-docs/LinuxARM64/Recommended/rust-linuxarm64-recommended-runApplication.md';
+// Rust-MacOsAMD64-quickstart
+import APM_rust_macOsAMD64_quickStart_instrumentApplication from '../Modules/APM/Rust/md-docs/MacOsAMD64/QuickStart/rust-macosamd64-quickStart-instrumentApplication.md';
+import APM_rust_macOsAMD64_quickStart_runApplication from '../Modules/APM/Rust/md-docs/MacOsAMD64/QuickStart/rust-macosamd64-quickStart-runApplication.md';
+// Rust-MacOsAMD64-recommended
+import APM_rust_macOsAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Rust/md-docs/MacOsAMD64/Recommended/rust-macosamd64-recommended-installOtelCollector.md';
+import APM_rust_macOsAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Rust/md-docs/MacOsAMD64/Recommended/rust-macosamd64-recommended-instrumentApplication.md';
+import APM_rust_macOsAMD64_recommendedSteps_runApplication from '../Modules/APM/Rust/md-docs/MacOsAMD64/Recommended/rust-macosamd64-recommended-runApplication.md';
+// Rust-MacOsARM64-quickstart
+import APM_rust_macOsARM64_quickStart_instrumentApplication from '../Modules/APM/Rust/md-docs/MacOsARM64/QuickStart/rust-macosarm64-quickStart-instrumentApplication.md';
+import APM_rust_macOsARM64_quickStart_runApplication from '../Modules/APM/Rust/md-docs/MacOsARM64/QuickStart/rust-macosarm64-quickStart-runApplication.md';
+// Rust-MacOsARM64-recommended
+import APM_rust_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Rust/md-docs/MacOsARM64/Recommended/rust-macosarm64-recommended-installOtelCollector.md';
+import APM_rust_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Rust/md-docs/MacOsARM64/Recommended/rust-macosarm64-recommended-instrumentApplication.md';
+import APM_rust_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Rust/md-docs/MacOsARM64/Recommended/rust-macosarm64-recommended-runApplication.md';
+// Swift-Kubernetes
+import APM_swift_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Swift/md-docs/Kubernetes/swift-kubernetes-installOtelCollector.md';
+import APM_swift_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Swift/md-docs/Kubernetes/swift-kubernetes-instrumentApplication.md';
+import APM_swift_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Swift/md-docs/Kubernetes/swift-kubernetes-runApplication.md';
+// Swift-LinuxAMD64-quickstart
+import APM_swift_linuxAMD64_quickStart_instrumentApplication from '../Modules/APM/Swift/md-docs/LinuxAMD64/QuickStart/swift-linuxamd64-quickStart-instrumentApplication.md';
+import APM_swift_linuxAMD64_quickStart_runApplication from '../Modules/APM/Swift/md-docs/LinuxAMD64/QuickStart/swift-linuxamd64-quickStart-runApplication.md';
+// Swift-LinuxAMD64-recommended
+import APM_swift_linuxAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Swift/md-docs/LinuxAMD64/Recommended/swift-linuxamd64-recommended-installOtelCollector.md';
+import APM_swift_linuxAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Swift/md-docs/LinuxAMD64/Recommended/swift-linuxamd64-recommended-instrumentApplication.md';
+import APM_swift_linuxAMD64_recommendedSteps_runApplication from '../Modules/APM/Swift/md-docs/LinuxAMD64/Recommended/swift-linuxamd64-recommended-runApplication.md';
+// Swift-LinuxARM64-quickstart
+import APM_swift_linuxARM64_quickStart_instrumentApplication from '../Modules/APM/Swift/md-docs/LinuxARM64/QuickStart/swift-linuxarm64-quickStart-instrumentApplication.md';
+import APM_swift_linuxARM64_quickStart_runApplication from '../Modules/APM/Swift/md-docs/LinuxARM64/QuickStart/swift-linuxarm64-quickStart-runApplication.md';
+// Swift-LinuxARM64-recommended
+import APM_swift_linuxARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Swift/md-docs/LinuxARM64/Recommended/swift-linuxarm64-recommended-installOtelCollector.md';
+import APM_swift_linuxARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Swift/md-docs/LinuxARM64/Recommended/swift-linuxarm64-recommended-instrumentApplication.md';
+import APM_swift_linuxARM64_recommendedSteps_runApplication from '../Modules/APM/Swift/md-docs/LinuxARM64/Recommended/swift-linuxarm64-recommended-runApplication.md';
+// Swift-MacOsAMD64-quickstart
+import APM_swift_macOsAMD64_quickStart_instrumentApplication from '../Modules/APM/Swift/md-docs/MacOsAMD64/QuickStart/swift-macosamd64-quickStart-instrumentApplication.md';
+import APM_swift_macOsAMD64_quickStart_runApplication from '../Modules/APM/Swift/md-docs/MacOsAMD64/QuickStart/swift-macosamd64-quickStart-runApplication.md';
+// Swift-MacOsAMD64-recommended
+import APM_swift_macOsAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Swift/md-docs/MacOsAMD64/Recommended/swift-macosamd64-recommended-installOtelCollector.md';
+import APM_swift_macOsAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Swift/md-docs/MacOsAMD64/Recommended/swift-macosamd64-recommended-instrumentApplication.md';
+import APM_swift_macOsAMD64_recommendedSteps_runApplication from '../Modules/APM/Swift/md-docs/MacOsAMD64/Recommended/swift-macosamd64-recommended-runApplication.md';
+// Swift-MacOsARM64-quickstart
+import APM_swift_macOsARM64_quickStart_instrumentApplication from '../Modules/APM/Swift/md-docs/MacOsARM64/QuickStart/swift-macosarm64-quickStart-instrumentApplication.md';
+import APM_swift_macOsARM64_quickStart_runApplication from '../Modules/APM/Swift/md-docs/MacOsARM64/QuickStart/swift-macosarm64-quickStart-runApplication.md';
+// Swift-MacOsARM64-recommended
+import APM_swift_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Swift/md-docs/MacOsARM64/Recommended/swift-macosarm64-recommended-installOtelCollector.md';
+import APM_swift_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Swift/md-docs/MacOsARM64/Recommended/swift-macosarm64-recommended-instrumentApplication.md';
+import APM_swift_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Swift/md-docs/MacOsARM64/Recommended/swift-macosarm64-recommended-runApplication.md';
 
 export const ApmDocFilePaths = {
-	// APM
+	// Aust
 
 	/// //// Java Start
 
@@ -1028,6 +1222,91 @@ export const ApmDocFilePaths = {
 	APM_javascript_nodejs_macOsARM64_quickStart_instrumentApplication,
 	APM_javascript_nodejs_macOsARM64_quickStart_runApplication,
 
+	/// React JS
+
+	// ReeactJS-Kubernetes
+	APM_javascript_reactjs_kubernetes_recommendedSteps_setupOtelCollector,
+	APM_javascript_reactjs_kubernetes_recommendedSteps_instrumentApplication,
+	APM_javascript_reactjs_kubernetes_recommendedSteps_runApplication,
+
+	// ReactJS-LinuxAMD64-quickstart
+	APM_javascript_reactjs_linuxAMD64_quickStart_instrumentApplication,
+	APM_javascript_reactjs_linuxAMD64_quickStart_runApplication,
+
+	// // ReactJS-LinuxAMD64-recommended
+	APM_javascript_reactjs_linuxAMD64_recommendedSteps_setupOtelCollector,
+	APM_javascript_reactjs_linuxAMD64_recommendedSteps_instrumentApplication,
+	APM_javascript_reactjs_linuxAMD64_recommendedSteps_runApplication,
+
+	// ReactJS-LinuxARM64-quickstart
+	APM_javascript_reactjs_linuxARM64_quickStart_instrumentApplication,
+	APM_javascript_reactjs_linuxARM64_quickStart_runApplication,
+
+	// ReactJS-LinuxARM64-recommended
+	APM_javascript_reactjs_linuxARM64_recommendedSteps_setupOtelCollector,
+	APM_javascript_reactjs_linuxARM64_recommendedSteps_instrumentApplication,
+	APM_javascript_reactjs_linuxARM64_recommendedSteps_runApplication,
+
+	// ReactJS-MacOsAMD64-quickstart
+	APM_javascript_reactjs_macOsAMD64_quickStart_instrumentApplication,
+	APM_javascript_reactjs_macOsAMD64_quickStart_runApplication,
+
+	// ReactJS-MacOsAMD64-recommended
+	APM_javascript_reactjs_macOsAMD64_recommendedSteps_setupOtelCollector,
+	APM_javascript_reactjs_macOsAMD64_recommendedSteps_instrumentApplication,
+	APM_javascript_reactjs_macOsAMD64_recommendedSteps_runApplication,
+
+	// ReactJS-MacOsARM64-quickstart
+	APM_javascript_reactjs_macOsARM64_quickStart_instrumentApplication,
+	APM_javascript_reactjs_macOsARM64_quickStart_runApplication,
+
+	// ReactJS-MacOsARM64-recommended
+	APM_javascript_reactjs_macOsARM64_recommendedSteps_setupOtelCollector,
+	APM_javascript_reactjs_macOsARM64_recommendedSteps_instrumentApplication,
+	APM_javascript_reactjs_macOsARM64_recommendedSteps_runApplication,
+
+	/// // JavaScript Others
+
+	APM_javascript_others_kubernetes_recommendedSteps_setupOtelCollector,
+	APM_javascript_others_kubernetes_recommendedSteps_instrumentApplication,
+	APM_javascript_others_kubernetes_recommendedSteps_runApplication,
+
+	// Others-JavaScript-LinuxAMD64-quickstart
+	APM_javascript_others_linuxAMD64_quickStart_instrumentApplication,
+	APM_javascript_others_linuxAMD64_quickStart_runApplication,
+
+	// // Others-JavaScript-LinuxAMD64-recommended
+	APM_javascript_others_linuxAMD64_recommendedSteps_setupOtelCollector,
+	APM_javascript_others_linuxAMD64_recommendedSteps_instrumentApplication,
+	APM_javascript_others_linuxAMD64_recommendedSteps_runApplication,
+
+	// Others-JavaScript-LinuxARM64-quiOthers
+	APM_javascript_others_linuxARM64_quickStart_instrumentApplication,
+	APM_javascript_others_linuxARM64_quickStart_runApplication,
+
+	// Others-JavaScript-LinuxARM64-recommended
+	APM_javascript_others_linuxARM64_recommendedSteps_setupOtelCollector,
+	APM_javascript_others_linuxARM64_recommendedSteps_instrumentApplication,
+	APM_javascript_others_linuxARM64_recommendedSteps_runApplication,
+
+	// Others-JavaScript-MacOsAMD64-quickstart
+	APM_javascript_others_macOsAMD64_quickStart_instrumentApplication,
+	APM_javascript_others_macOsAMD64_quickStart_runApplication,
+
+	// Others-JavaScript-MacOsAMD64-recommended
+	APM_javascript_others_macOsAMD64_recommendedSteps_setupOtelCollector,
+	APM_javascript_others_macOsAMD64_recommendedSteps_instrumentApplication,
+	APM_javascript_others_macOsAMD64_recommendedSteps_runApplication,
+
+	// Others-JavaScript-MacOsARM64-quickstart
+	APM_javascript_others_macOsARM64_quickStart_instrumentApplication,
+	APM_javascript_others_macOsARM64_quickStart_runApplication,
+
+	// Others-JavaScript-MacOsARM64-recommended
+	APM_javascript_others_macOsARM64_recommendedSteps_setupOtelCollector,
+	APM_javascript_others_macOsARM64_recommendedSteps_instrumentApplication,
+	APM_javascript_others_macOsARM64_recommendedSteps_runApplication,
+
 	// ------------------------------------------------------------------------------------------------
 
 	/// //// JavaScript Done
@@ -1100,7 +1379,7 @@ export const ApmDocFilePaths = {
 	APM_rails_linuxARM64_recommendedSteps_instrumentApplication,
 	APM_rails_linuxARM64_recommendedSteps_runApplication,
 
-	// ROR-LinuxARM64-quinestjs
+	// ROR-LinuxARM64-quickstart
 	APM_rails_linuxARM64_quickStart_instrumentApplication,
 	APM_rails_linuxARM64_quickStart_runApplication,
 
@@ -1121,4 +1400,150 @@ export const ApmDocFilePaths = {
 	// ROR-MacOsARM64-quickstart
 	APM_rails_macOsARM64_quickStart_instrumentApplication,
 	APM_rails_macOsARM64_quickStart_runApplication,
+
+	// ------------------------------------------------------------------------------------------------
+
+	/// //// ROR Done
+
+	/// //// .NET Start
+
+	// dotnet-Kubernetes
+	APM_dotnet_kubernetes_recommendedSteps_setupOtelCollector,
+	APM_dotnet_kubernetes_recommendedSteps_instrumentApplication,
+	APM_dotnet_kubernetes_recommendedSteps_runApplication,
+
+	// dotnet-LinuxAMD64-quickstart
+	APM_dotnet_linuxAMD64_quickStart_instrumentApplication,
+	APM_dotnet_linuxAMD64_quickStart_runApplication,
+
+	// dotnet-LinuxAMD64-recommended
+	APM_dotnet_linuxAMD64_recommendedSteps_setupOtelCollector,
+	APM_dotnet_linuxAMD64_recommendedSteps_instrumentApplication,
+	APM_dotnet_linuxAMD64_recommendedSteps_runApplication,
+
+	// dotnet-LinuxARM64-quickstart
+	APM_dotnet_linuxARM64_quickStart_instrumentApplication,
+	APM_dotnet_linuxARM64_quickStart_runApplication,
+
+	// dotnet-LinuxARM64-recommended
+	APM_dotnet_linuxARM64_recommendedSteps_setupOtelCollector,
+	APM_dotnet_linuxARM64_recommendedSteps_instrumentApplication,
+	APM_dotnet_linuxARM64_recommendedSteps_runApplication,
+
+	// dotnet-MacOsAMD64-quickstart
+	APM_dotnet_macOsAMD64_quickStart_instrumentApplication,
+	APM_dotnet_macOsAMD64_quickStart_runApplication,
+
+	// dotnet-MacOsAMD64-recommended
+	APM_dotnet_macOsAMD64_recommendedSteps_setupOtelCollector,
+	APM_dotnet_macOsAMD64_recommendedSteps_instrumentApplication,
+	APM_dotnet_macOsAMD64_recommendedSteps_runApplication,
+
+	// dotnet-MacOsARM64-quickstart
+	APM_dotnet_macOsARM64_quickStart_instrumentApplication,
+	APM_dotnet_macOsARM64_quickStart_runApplication,
+
+	// dotnet-MacOsARM64-recommended
+	APM_dotnet_macOsARM64_recommendedSteps_setupOtelCollector,
+	APM_dotnet_macOsARM64_recommendedSteps_instrumentApplication,
+	APM_dotnet_macOsARM64_recommendedSteps_runApplication,
+
+	// Rust
+	APM_rust_kubernetes_recommendedSteps_setupOtelCollector,
+	APM_rust_kubernetes_recommendedSteps_instrumentApplication,
+	APM_rust_kubernetes_recommendedSteps_runApplication,
+
+	APM_rust_linuxAMD64_quickStart_instrumentApplication,
+	APM_rust_linuxAMD64_quickStart_runApplication,
+
+	APM_rust_linuxAMD64_recommendedSteps_setupOtelCollector,
+	APM_rust_linuxAMD64_recommendedSteps_instrumentApplication,
+	APM_rust_linuxAMD64_recommendedSteps_runApplication,
+
+	APM_rust_linuxARM64_quickStart_instrumentApplication,
+	APM_rust_linuxARM64_quickStart_runApplication,
+
+	APM_rust_linuxARM64_recommendedSteps_setupOtelCollector,
+	APM_rust_linuxARM64_recommendedSteps_instrumentApplication,
+	APM_rust_linuxARM64_recommendedSteps_runApplication,
+
+	APM_rust_macOsAMD64_quickStart_instrumentApplication,
+	APM_rust_macOsAMD64_quickStart_runApplication,
+
+	APM_rust_macOsAMD64_recommendedSteps_setupOtelCollector,
+	APM_rust_macOsAMD64_recommendedSteps_instrumentApplication,
+	APM_rust_macOsAMD64_recommendedSteps_runApplication,
+
+	APM_rust_macOsARM64_quickStart_instrumentApplication,
+	APM_rust_macOsARM64_quickStart_runApplication,
+
+	APM_rust_macOsARM64_recommendedSteps_setupOtelCollector,
+	APM_rust_macOsARM64_recommendedSteps_instrumentApplication,
+	APM_rust_macOsARM64_recommendedSteps_runApplication,
+
+	// Elixir
+	APM_elixir_kubernetes_recommendedSteps_setupOtelCollector,
+	APM_elixir_kubernetes_recommendedSteps_instrumentApplication,
+	APM_elixir_kubernetes_recommendedSteps_runApplication,
+
+	APM_elixir_linuxAMD64_quickStart_instrumentApplication,
+	APM_elixir_linuxAMD64_quickStart_runApplication,
+
+	APM_elixir_linuxAMD64_recommendedSteps_setupOtelCollector,
+	APM_elixir_linuxAMD64_recommendedSteps_instrumentApplication,
+	APM_elixir_linuxAMD64_recommendedSteps_runApplication,
+
+	APM_elixir_linuxARM64_quickStart_instrumentApplication,
+	APM_elixir_linuxARM64_quickStart_runApplication,
+
+	APM_elixir_linuxARM64_recommendedSteps_setupOtelCollector,
+	APM_elixir_linuxARM64_recommendedSteps_instrumentApplication,
+	APM_elixir_linuxARM64_recommendedSteps_runApplication,
+
+	APM_elixir_macOsAMD64_quickStart_instrumentApplication,
+	APM_elixir_macOsAMD64_quickStart_runApplication,
+
+	APM_elixir_macOsAMD64_recommendedSteps_setupOtelCollector,
+	APM_elixir_macOsAMD64_recommendedSteps_instrumentApplication,
+	APM_elixir_macOsAMD64_recommendedSteps_runApplication,
+
+	APM_elixir_macOsARM64_quickStart_instrumentApplication,
+	APM_elixir_macOsARM64_quickStart_runApplication,
+
+	APM_elixir_macOsARM64_recommendedSteps_setupOtelCollector,
+	APM_elixir_macOsARM64_recommendedSteps_instrumentApplication,
+	APM_elixir_macOsARM64_recommendedSteps_runApplication,
+
+	// Swift
+	APM_swift_kubernetes_recommendedSteps_setupOtelCollector,
+	APM_swift_kubernetes_recommendedSteps_instrumentApplication,
+	APM_swift_kubernetes_recommendedSteps_runApplication,
+
+	APM_swift_linuxAMD64_quickStart_instrumentApplication,
+	APM_swift_linuxAMD64_quickStart_runApplication,
+
+	APM_swift_linuxAMD64_recommendedSteps_setupOtelCollector,
+	APM_swift_linuxAMD64_recommendedSteps_instrumentApplication,
+	APM_swift_linuxAMD64_recommendedSteps_runApplication,
+
+	APM_swift_linuxARM64_quickStart_instrumentApplication,
+	APM_swift_linuxARM64_quickStart_runApplication,
+
+	APM_swift_linuxARM64_recommendedSteps_setupOtelCollector,
+	APM_swift_linuxARM64_recommendedSteps_instrumentApplication,
+	APM_swift_linuxARM64_recommendedSteps_runApplication,
+
+	APM_swift_macOsAMD64_quickStart_instrumentApplication,
+	APM_swift_macOsAMD64_quickStart_runApplication,
+
+	APM_swift_macOsAMD64_recommendedSteps_setupOtelCollector,
+	APM_swift_macOsAMD64_recommendedSteps_instrumentApplication,
+	APM_swift_macOsAMD64_recommendedSteps_runApplication,
+
+	APM_swift_macOsARM64_quickStart_instrumentApplication,
+	APM_swift_macOsARM64_quickStart_runApplication,
+
+	APM_swift_macOsARM64_recommendedSteps_setupOtelCollector,
+	APM_swift_macOsARM64_recommendedSteps_instrumentApplication,
+	APM_swift_macOsARM64_recommendedSteps_runApplication,
 };

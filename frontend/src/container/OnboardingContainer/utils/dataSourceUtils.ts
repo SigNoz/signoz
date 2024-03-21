@@ -34,6 +34,14 @@ export const frameworksMap = {
 				value: 'nodejs',
 				label: 'Nodejs',
 			},
+			{
+				value: 'reactjs',
+				label: 'React JS',
+			},
+			{
+				value: 'others',
+				label: 'Other Web Instrumentation',
+			},
 		],
 		python: [
 			{
@@ -94,6 +102,26 @@ const supportedLanguages = [
 		id: 'rails',
 		imgURL: `Logos/rails.png`,
 	},
+	{
+		name: '.NET',
+		id: 'dotnet',
+		imgURL: `Logos/dotnet.png`,
+	},
+	{
+		name: 'rust',
+		id: 'rust',
+		imgURL: `Logos/rust.png`,
+	},
+	{
+		name: 'elixir',
+		id: 'elixir',
+		imgURL: `Logos/elixir.png`,
+	},
+	{
+		name: 'swift',
+		id: 'swift',
+		imgURL: `Logos/swift.png`,
+	},
 ];
 
 export const defaultLogsType = {
@@ -137,6 +165,26 @@ const supportedLogsTypes = [
 		name: 'LogStash',
 		id: 'logStash',
 		imgURL: `Logos/logstash.svg`,
+	},
+	{
+		name: 'Heroku',
+		id: 'heroku',
+		imgURL: `Logos/heroku.png`,
+	},
+	{
+		name: 'Vercel',
+		id: 'vercel',
+		imgURL: `Logos/vercel.png`,
+	},
+	{
+		name: 'HTTP',
+		id: 'http',
+		imgURL: `Logos/http.png`,
+	},
+	{
+		name: 'Cloudwatch',
+		id: 'cloudwatch',
+		imgURL: `Logos/cloudwatch.png`,
 	},
 ];
 
@@ -188,7 +236,11 @@ export const getSupportedFrameworks = ({
 
 	if (
 		(moduleID === ModulesMap.APM && dataSourceName === 'go') ||
-		(moduleID === ModulesMap.APM && dataSourceName === 'rails')
+		(moduleID === ModulesMap.APM && dataSourceName === 'rails') ||
+		(moduleID === ModulesMap.APM && dataSourceName === '.NET') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'rust') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'elixir') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'swift')
 	) {
 		return [];
 	}
@@ -213,7 +265,11 @@ export const hasFrameworks = ({
 		moduleID === ModulesMap.LogsManagement ||
 		moduleID === ModulesMap.InfrastructureMonitoring ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'go') ||
-		(moduleID === ModulesMap.APM && dataSourceName === 'rails')
+		(moduleID === ModulesMap.APM && dataSourceName === 'rails') ||
+		(moduleID === ModulesMap.APM && dataSourceName === '.NET') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'rust') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'elixir') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'swift')
 	) {
 		return false;
 	}

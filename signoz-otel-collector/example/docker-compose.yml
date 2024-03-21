@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  schema-migrator:
+    image: signoz/signoz-schema-migrator:templatize-migrations
+    extra_hosts:
+      - signoz-host:host-gateway
+    command:
+      - "--dsn=tcp://signoz-host:9000"
+
+  otel-collector:
+    image: signoz/signoz-otel-collector:templatize-migrations
+    deploy:
+      replicas: 3
+    user: root # required for reading docker container logs
+    extra_hosts:
+      - signoz-host:host-gateway
+    command:
+      - "--config=/etc/otel-collector-config.yml"
+      # - "--set=service.telemetry.logs.level=DEBUG"
+    volumes:
+      - ./example-config.yaml:/etc/otel-collector-config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+    # required to read logs from /var/lib/docker/containers/
+    ports:
+      - "1888" # pprof extension
+      - "8888" # Prometheus metrics exposed by the collector
+      - "13133" # health_check extension
+      - "55679" # zpages extension
+    depends_on:
+      schema-migrator:
+        condition: service_completed_successfully

@@ -54,7 +54,7 @@ module.exports = {
 			},
 		],
 		'react/prop-types': 'off',
-		'@typescript-eslint/explicit-function-return-type': 'error',
+		'@typescript-eslint/explicit-function-return-type': 'warn',
 		'@typescript-eslint/no-var-requires': 'error',
 		'react/no-array-index-key': 'error',
 		'linebreak-style': [
@@ -85,9 +85,10 @@ module.exports = {
 				tsx: 'never',
 			},
 		],
-		'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
+		'import/no-extraneous-dependencies': ['warn', { devDependencies: true }],
+		'no-plusplus': 'off',
 		'jsx-a11y/label-has-associated-control': [
-			'error',
+			'warn',
 			{
 				required: {
 					some: ['nesting', 'id'],
@@ -95,7 +96,7 @@ module.exports = {
 			},
 		],
 		'jsx-a11y/label-has-for': [
-			'error',
+			'warn',
 			{
 				required: {
 					some: ['nesting', 'id'],
@@ -110,7 +111,6 @@ module.exports = {
 		// eslint rules need to remove
 		'@typescript-eslint/no-shadow': 'off',
 		'import/no-cycle': 'off',
-
 		'prettier/prettier': [
 			'error',
 			{},

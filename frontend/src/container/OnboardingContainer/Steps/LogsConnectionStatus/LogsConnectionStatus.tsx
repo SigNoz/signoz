@@ -26,7 +26,11 @@ const enum ApplicationLogsType {
 
 export default function LogsConnectionStatus(): JSX.Element {
 	const [loading, setLoading] = useState(true);
-	const { selectedDataSource } = useOnboardingContext();
+	const {
+		selectedDataSource,
+		activeStep,
+		selectedEnvironment,
+	} = useOnboardingContext();
 	const { trackEvent } = useAnalytics();
 	const [isReceivingData, setIsReceivingData] = useState(false);
 	const [pollingInterval, setPollingInterval] = useState<number | false>(15000); // initial Polling interval of 15 secs , Set to false after 5 mins
@@ -85,6 +89,8 @@ export default function LogsConnectionStatus(): JSX.Element {
 			refetchInterval: pollingInterval,
 			enabled: true,
 		},
+		{},
+		false,
 	);
 
 	const verifyLogsData = (
@@ -94,7 +100,10 @@ export default function LogsConnectionStatus(): JSX.Element {
 			setRetryCount(retryCount - 1);
 
 			if (retryCount < 0) {
-				trackEvent('❌ Onboarding: Logs Management: Connection Status', {
+				trackEvent('Onboarding V2: Connection Status', {
+					dataSource: selectedDataSource?.id,
+					environment: selectedEnvironment,
+					module: activeStep?.module?.id,
 					status: 'Failed',
 				});
 
@@ -127,7 +136,10 @@ export default function LogsConnectionStatus(): JSX.Element {
 					setRetryCount(-1);
 					setPollingInterval(false);
 
-					trackEvent('✅ Onboarding: Logs Management: Connection Status', {
+					trackEvent('Onboarding V2: Connection Status', {
+						dataSource: selectedDataSource?.id,
+						environment: selectedEnvironment,
+						module: activeStep?.module?.id,
 						status: 'Successful',
 					});
 
