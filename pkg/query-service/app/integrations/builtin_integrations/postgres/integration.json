@@ -19,7 +19,11 @@
     },
     {
       "title": "Collect Metrics",
-      "instructions": "file://config/configure-metrics-collection.md"
+      "instructions": "file://config/collect-metrics.md"
+    },
+    {
+      "title": "Collect Logs",
+      "instructions": "file://config/collect-logs.md"
     }
   ],
   "assets": {

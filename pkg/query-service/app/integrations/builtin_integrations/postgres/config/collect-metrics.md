@@ -2,7 +2,7 @@
 
 #### Create collector config file
 
-Save the following collector config for monitoring postgres in a file named `postgres-collector-config.yaml`
+Save the following config for collecting postgres metrics in a file named `postgres-metrics-collection-config.yaml`
 
 ```yaml
 receivers:
@@ -88,5 +88,5 @@ export SIGNOZ_INGESTION_KEY="key"
 
 #### Use collector config file
 
-Make the `postgres-collector-config.yaml` file available to your otel collector and add the flag `--config postgres-collector-config.yaml` to the command for running your otel collector.    
+Make the `postgres-metrics-collection-config.yaml` file available to your otel collector and add the flag `--config postgres-metrics-collection-config.yaml` to the command for running your otel collector.    
 Note: the collector can use multiple config files, specified by multiple occurrences of the --config flag.
