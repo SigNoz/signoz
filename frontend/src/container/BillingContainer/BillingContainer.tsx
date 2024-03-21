@@ -433,7 +433,6 @@ export default function BillingContainer(): JSX.Element {
 				{!isSubscriptionPastDue &&
 					(!isLoading && !isFetchingBillingData ? (
 						<Alert
-							// message={t('subscription_past_due')}
 							message={subscriptionPastDueMessage()}
 							type="error"
 							showIcon
