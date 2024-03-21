@@ -634,6 +634,12 @@ type AlertsInfo struct {
 	TracesBasedAlerts int `json:"tracesBasedAlerts"`
 }
 
+type SavedViewsInfo struct {
+	TotalSavedViews  int `json:"totalSavedViews"`
+	TracesSavedViews int `json:"tracesSavedViews"`
+	LogsSavedViews   int `json:"logsSavedViews"`
+}
+
 type DashboardsInfo struct {
 	TotalDashboards                 int `json:"totalDashboards"`
 	TotalDashboardsWithPanelAndName int `json:"totalDashboardsWithPanelAndName"` // dashboards with panel and name without sample title
