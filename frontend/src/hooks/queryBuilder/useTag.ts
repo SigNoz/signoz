@@ -74,7 +74,11 @@ export const useTag = (
 	const handleAddTag = useCallback(
 		(value: string): void => {
 			const { tagKey } = getTagToken(value);
-			const [key, id] = tagKey.split('-');
+			const parts = tagKey.split('-');
+
+			// this is done to ensure that `hello-world` also gets converted to `body CONTAINS hello-world`
+			const id = parts[parts.length - 1];
+			const key = parts.slice(0, -1).join('-');
 
 			if (id === 'custom') {
 				const customValue = whereClauseConfig
