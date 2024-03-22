@@ -120,38 +120,36 @@ export default function LogsFormatOptionsMenu({
 
 			{selectedItem && (
 				<>
-					{selectedItem === 'raw' && (
-						<>
-							<div className="horizontal-line" />
-							<div className="max-lines-per-row">
-								<div className="title"> max lines per row </div>
-								<div className="raw-format max-lines-per-row-input">
-									<button
-										type="button"
-										className="periscope-btn"
-										onClick={decrementMaxLinesPerRow}
-									>
-										{' '}
-										<Minus size={12} />{' '}
-									</button>
-									<InputNumber
-										min={1}
-										max={10}
-										value={maxLinesPerRow}
-										onChange={handleLinesPerRowChange}
-									/>
-									<button
-										type="button"
-										className="periscope-btn"
-										onClick={incrementMaxLinesPerRow}
-									>
-										{' '}
-										<Plus size={12} />{' '}
-									</button>
-								</div>
+					<>
+						<div className="horizontal-line" />
+						<div className="max-lines-per-row">
+							<div className="title"> max lines per row </div>
+							<div className="raw-format max-lines-per-row-input">
+								<button
+									type="button"
+									className="periscope-btn"
+									onClick={decrementMaxLinesPerRow}
+								>
+									{' '}
+									<Minus size={12} />{' '}
+								</button>
+								<InputNumber
+									min={1}
+									max={10}
+									value={maxLinesPerRow}
+									onChange={handleLinesPerRowChange}
+								/>
+								<button
+									type="button"
+									className="periscope-btn"
+									onClick={incrementMaxLinesPerRow}
+								>
+									{' '}
+									<Plus size={12} />{' '}
+								</button>
 							</div>
-						</>
-					)}
+						</div>
+					</>
 
 					<div className="selected-item-content-container active">
 						{!addNewColumn && <div className="horizontal-line" />}

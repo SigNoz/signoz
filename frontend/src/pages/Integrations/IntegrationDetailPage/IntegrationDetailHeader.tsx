@@ -1,7 +1,7 @@
 /* eslint-disable no-nested-ternary */
 import './IntegrationDetailPage.styles.scss';
 
-import { Button, Modal, Typography } from 'antd';
+import { Button, Modal, Tooltip, Typography } from 'antd';
 import installIntegration from 'api/Integrations/installIntegration';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs from 'dayjs';
@@ -9,7 +9,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { ArrowLeftRight, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useMutation } from 'react-query';
-import { IntegrationStatusProps } from 'types/api/integrations/types';
+import { IntegrationConnectionStatus } from 'types/api/integrations/types';
 
 import TestConnection, { ConnectionStates } from './TestConnection';
 
@@ -20,8 +20,9 @@ interface IntegrationDetailHeaderProps {
 	icon: string;
 	refetchIntegrationDetails: () => void;
 	connectionState: ConnectionStates;
-	connectionData: IntegrationStatusProps['connection_status'];
+	connectionData: IntegrationConnectionStatus;
 }
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function IntegrationDetailHeader(
 	props: IntegrationDetailHeaderProps,
 ): JSX.Element {
@@ -154,19 +155,42 @@ function IntegrationDetailHeader(
 								<Typography.Text className="last-data">
 									Last recieved from
 								</Typography.Text>
-								<Typography.Text className="last-value">
-									{latestData.last_received_from}
-								</Typography.Text>
+								<div className="connection-line" />
+								<Tooltip
+									title={latestData.last_received_from}
+									key={latestData.last_received_from}
+									placement="right"
+								>
+									<Typography.Text className="last-value" ellipsis>
+										{latestData.last_received_from}
+									</Typography.Text>
+								</Tooltip>
 							</div>
 							<div className="data-info">
 								<Typography.Text className="last-data">
 									Last recieved at
 								</Typography.Text>
-								<Typography.Text className="last-value">
-									{latestData.last_received_ts_ms
-										? dayjs(latestData.last_received_ts_ms).format('DD MMM YYYY HH:mm')
-										: ''}
-								</Typography.Text>
+								<div className="connection-line" />
+								<Tooltip
+									title={
+										latestData.last_received_ts_ms
+											? // eslint-disable-next-line sonarjs/no-duplicate-string
+											  dayjs(latestData.last_received_ts_ms).format('DD MMM YYYY HH:mm')
+											: ''
+									}
+									key={
+										latestData.last_received_ts_ms
+											? dayjs(latestData.last_received_ts_ms).format('DD MMM YYYY HH:mm')
+											: ''
+									}
+									placement="right"
+								>
+									<Typography.Text className="last-value" ellipsis>
+										{latestData.last_received_ts_ms
+											? dayjs(latestData.last_received_ts_ms).format('DD MMM YYYY HH:mm')
+											: ''}
+									</Typography.Text>
+								</Tooltip>
 							</div>
 						</>
 					) : connectionState === ConnectionStates.TestingConnection ? (

@@ -38,7 +38,7 @@ const (
 	TELEMETRY_EVENT_SERVICE                          = "ServiceName"
 	TELEMETRY_EVENT_LOGS_FILTERS                     = "Logs Filters"
 	TELEMETRY_EVENT_DISTRIBUTED                      = "Distributed"
-	TELEMETRY_EVENT_QUERY_RANGE_V3                   = "Query Range V3 Metadata"
+	TELEMETRY_EVENT_QUERY_RANGE_API                  = "Query Range API"
 	TELEMETRY_EVENT_DASHBOARDS_ALERTS                = "Dashboards/Alerts Info"
 	TELEMETRY_EVENT_ACTIVE_USER                      = "Active User"
 	TELEMETRY_EVENT_ACTIVE_USER_PH                   = "Active User V2"
@@ -61,6 +61,7 @@ var SAAS_EVENTS_LIST = map[string]struct{}{
 	TELEMETRY_EVENT_DASHBOARDS_ALERTS:                {},
 	TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY: {},
 	TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY:           {},
+	// TELEMETRY_EVENT_QUERY_RANGE_API:                  {}, // this event is not part of SAAS_EVENTS_LIST as it may cause too many events to be sent
 }
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -282,29 +283,38 @@ func createTelemetry() {
 				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
 
 				alertsInfo, err := telemetry.reader.GetAlertsInfo(context.Background())
-				if err != nil {
-					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
-				} else {
+				if err == nil {
 					dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
 					if err == nil {
-						dashboardsAlertsData := map[string]interface{}{
-							"totalDashboards":                 dashboardsInfo.TotalDashboards,
-							"totalDashboardsWithPanelAndName": dashboardsInfo.TotalDashboardsWithPanelAndName,
-							"logsBasedPanels":                 dashboardsInfo.LogsBasedPanels,
-							"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
-							"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
-							"totalAlerts":                     alertsInfo.TotalAlerts,
-							"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
-							"metricBasedAlerts":               alertsInfo.MetricBasedAlerts,
-							"tracesBasedAlerts":               alertsInfo.TracesBasedAlerts,
+						channels, err := telemetry.reader.GetChannels()
+						if err == nil {
+							savedViewsInfo, err := telemetry.reader.GetSavedViewsInfo(context.Background())
+							if err == nil {
+								dashboardsAlertsData := map[string]interface{}{
+									"totalDashboards":                 dashboardsInfo.TotalDashboards,
+									"totalDashboardsWithPanelAndName": dashboardsInfo.TotalDashboardsWithPanelAndName,
+									"logsBasedPanels":                 dashboardsInfo.LogsBasedPanels,
+									"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
+									"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
+									"totalAlerts":                     alertsInfo.TotalAlerts,
+									"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
+									"metricBasedAlerts":               alertsInfo.MetricBasedAlerts,
+									"tracesBasedAlerts":               alertsInfo.TracesBasedAlerts,
+									"totalChannels":                   len(*channels),
+									"totalSavedViews":                 savedViewsInfo.TotalSavedViews,
+									"logsSavedViews":                  savedViewsInfo.LogsSavedViews,
+									"tracesSavedViews":                savedViewsInfo.TracesSavedViews,
+								}
+								// send event only if there are dashboards or alerts or channels
+								if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0 {
+									telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
+								}
+							}
 						}
-						// send event only if there are dashboards or alerts
-						if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 {
-							telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
-						}
-					} else {
-						telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
 					}
+				}
+				if err != nil {
+					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
 				}
 
 				getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(context.Background())
@@ -419,7 +429,7 @@ func (a *Telemetry) checkEvents(event string) bool {
 func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, opts ...bool) {
 
 	// ignore telemetry for default user
-	if userEmail == DEFAULT_CLOUD_EMAIL {
+	if userEmail == DEFAULT_CLOUD_EMAIL || a.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
 		return
 	}
 

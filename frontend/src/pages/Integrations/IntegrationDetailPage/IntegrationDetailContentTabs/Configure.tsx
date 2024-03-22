@@ -1,6 +1,6 @@
 import './IntegrationDetailContentTabs.styles.scss';
 
-import { Button, Tooltip, Typography } from 'antd';
+import { Button, Typography } from 'antd';
 import cx from 'classnames';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { useState } from 'react';
@@ -21,18 +21,18 @@ function Configure(props: ConfigurationProps): JSX.Element {
 		<div className="integration-detail-configure">
 			<div className="configure-menu">
 				{configuration.map((config, index) => (
-					<Tooltip title={config.title} key={config.title} placement="left">
-						<Button
-							key={config.title}
-							type="text"
-							className={cx('configure-menu-item', {
-								active: selectedConfigStep === index,
-							})}
-							onClick={(): void => handleMenuClick(index)}
-						>
-							<Typography.Text ellipsis>{config.title}</Typography.Text>
-						</Button>
-					</Tooltip>
+					<Button
+						key={config.title}
+						type="text"
+						className={cx('configure-menu-item', {
+							active: selectedConfigStep === index,
+						})}
+						onClick={(): void => handleMenuClick(index)}
+					>
+						<Typography.Text className="configure-text">
+							{config.title}
+						</Typography.Text>
+					</Button>
 				))}
 			</div>
 			<div className="markdown-container">

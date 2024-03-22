@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -2481,11 +2482,25 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 	w http.ResponseWriter, r *http.Request,
 ) {
 	integrationId := mux.Vars(r)["integrationId"]
+	isInstalled, apiErr := ah.IntegrationsController.IsIntegrationInstalled(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to check if integration is installed")
+		return
+	}
+
+	// Do not spend resources calculating connection status unless installed.
+	if !isInstalled {
+		ah.Respond(w, &integrations.IntegrationConnectionStatus{})
+		return
+	}
+
 	connectionTests, apiErr := ah.IntegrationsController.GetIntegrationConnectionTests(
 		r.Context(), integrationId,
 	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch integration connection tests")
+		RespondError(w, apiErr, "failed to fetch integration connection tests")
 		return
 	}
 
@@ -2511,63 +2526,148 @@ func (ah *APIHandler) calculateConnectionStatus(
 	connectionTests *integrations.IntegrationConnectionTests,
 	lookbackSeconds int64,
 ) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
+	// Calculate connection status for signals in parallel
+
 	result := &integrations.IntegrationConnectionStatus{}
+	errors := []*model.ApiError{}
+	var resultLock sync.Mutex
 
-	if connectionTests.Logs != nil {
-		qrParams := &v3.QueryRangeParamsV3{
-			Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
-			End:   time.Now().UnixMilli(),
-			CompositeQuery: &v3.CompositeQuery{
-				PanelType: v3.PanelTypeList,
-				QueryType: v3.QueryTypeBuilder,
-				BuilderQueries: map[string]*v3.BuilderQuery{
-					"A": {
-						PageSize:          1,
-						Filters:           connectionTests.Logs,
-						QueryName:         "A",
-						DataSource:        v3.DataSourceLogs,
-						Expression:        "A",
-						AggregateOperator: v3.AggregateOperatorNoOp,
-					},
-				},
-			},
-		}
-		queryRes, err, _ := ah.querier.QueryRange(
-			ctx, qrParams, map[string]v3.AttributeKey{},
+	var wg sync.WaitGroup
+
+	// Calculate logs connection status
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		logsConnStatus, apiErr := ah.calculateLogsConnectionStatus(
+			ctx, connectionTests.Logs, lookbackSeconds,
 		)
-		if err != nil {
-			return nil, model.InternalError(fmt.Errorf(
-				"could not query for integration connection status: %w", err,
-			))
-		}
-		if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
-			lastLog := queryRes[0].List[0]
 
+		resultLock.Lock()
+		defer resultLock.Unlock()
+
+		if apiErr != nil {
+			errors = append(errors, apiErr)
+		} else {
+			result.Logs = logsConnStatus
+		}
+	}()
+
+	// Calculate metrics connection status
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		if connectionTests.Metrics == nil || len(connectionTests.Metrics) < 1 {
+			return
+		}
+
+		statusForLastReceivedMetric, apiErr := ah.reader.GetLatestReceivedMetric(
+			ctx, connectionTests.Metrics,
+		)
+
+		resultLock.Lock()
+		defer resultLock.Unlock()
+
+		if apiErr != nil {
+			errors = append(errors, apiErr)
+
+		} else if statusForLastReceivedMetric != nil {
 			resourceSummaryParts := []string{}
-			lastLogResourceAttribs := lastLog.Data["resources_string"]
-			if lastLogResourceAttribs != nil {
-				resourceAttribs, ok := lastLogResourceAttribs.(*map[string]string)
-				if !ok {
-					return nil, model.InternalError(fmt.Errorf(
-						"could not cast log resource attribs",
-					))
+			for k, v := range statusForLastReceivedMetric.LastReceivedLabels {
+				interestingLabels := []string{
+					"container_name", "host_name", "node_name",
+					"pod_name", "deployment_name", "cluster_name",
+					"namespace_name", "job_name", "service_name",
 				}
-				for k, v := range *resourceAttribs {
+				isInterestingKey := !strings.HasPrefix(k, "_") && slices.ContainsFunc(
+					interestingLabels, func(l string) bool { return strings.Contains(k, l) },
+				)
+				if isInterestingKey {
 					resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
 						"%s=%s", k, v,
 					))
 				}
 			}
-			lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
 
-			result.Logs = &integrations.SignalConnectionStatus{
-				LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
-				LastReceivedFrom:     lastLogResourceSummary,
+			result.Metrics = &integrations.SignalConnectionStatus{
+				LastReceivedFrom:     strings.Join(resourceSummaryParts, ", "),
+				LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
 			}
 		}
+	}()
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return nil, errors[0]
 	}
 
 	return result, nil
+}
+
+func (ah *APIHandler) calculateLogsConnectionStatus(
+	ctx context.Context,
+	logsConnectionTest *v3.FilterSet,
+	lookbackSeconds int64,
+) (*integrations.SignalConnectionStatus, *model.ApiError) {
+	if logsConnectionTest == nil {
+		return nil, nil
+	}
+
+	qrParams := &v3.QueryRangeParamsV3{
+		Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
+		End:   time.Now().UnixMilli(),
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelTypeList,
+			QueryType: v3.QueryTypeBuilder,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					PageSize:          1,
+					Filters:           logsConnectionTest,
+					QueryName:         "A",
+					DataSource:        v3.DataSourceLogs,
+					Expression:        "A",
+					AggregateOperator: v3.AggregateOperatorNoOp,
+				},
+			},
+		},
+	}
+	queryRes, err, _ := ah.querier.QueryRange(
+		ctx, qrParams, map[string]v3.AttributeKey{},
+	)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query for integration connection status: %w", err,
+		))
+	}
+	if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+		lastLog := queryRes[0].List[0]
+
+		resourceSummaryParts := []string{}
+		lastLogResourceAttribs := lastLog.Data["resources_string"]
+		if lastLogResourceAttribs != nil {
+			resourceAttribs, ok := lastLogResourceAttribs.(*map[string]string)
+			if !ok {
+				return nil, model.InternalError(fmt.Errorf(
+					"could not cast log resource attribs",
+				))
+			}
+			for k, v := range *resourceAttribs {
+				resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+					"%s=%s", k, v,
+				))
+			}
+		}
+		lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
+
+		return &integrations.SignalConnectionStatus{
+			LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+			LastReceivedFrom:     lastLogResourceSummary,
+		}, nil
+	}
+
+	return nil, nil
 }
 
 func (ah *APIHandler) InstallIntegration(
@@ -3383,7 +3483,7 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 	}
 	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
 	if err != nil {
-		zap.L().Error("error while matching the referrer", zap.Error(err))
+		zap.L().Error("error while matching the alert: ", zap.Error(err))
 	}
 
 	if alertMatched || dashboardMatched {
@@ -3394,22 +3494,60 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 			if err == nil {
 				signozLogsUsed, signozMetricsUsed, signozTracesUsed := telemetry.GetInstance().CheckSigNozSignals(queryRangeParams)
 				if signozLogsUsed || signozMetricsUsed || signozTracesUsed {
+
 					if dashboardMatched {
+						var dashboardID, widgetID string
+						var dashboardIDMatch, widgetIDMatch []string
+						dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`)
+						if err == nil {
+							dashboardIDMatch = dashboardIDRegex.FindStringSubmatch(referrer)
+						} else {
+							zap.S().Errorf("error while matching the dashboardIDRegex: %v", err)
+						}
+						widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`)
+						if err == nil {
+							widgetIDMatch = widgetIDRegex.FindStringSubmatch(referrer)
+						} else {
+							zap.S().Errorf("error while matching the widgetIDRegex: %v", err)
+						}
+
+						if len(dashboardIDMatch) > 1 {
+							dashboardID = dashboardIDMatch[1]
+						}
+
+						if len(widgetIDMatch) > 1 {
+							widgetID = widgetIDMatch[1]
+						}
 						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY, map[string]interface{}{
 							"queryType":   queryRangeParams.CompositeQuery.QueryType,
 							"panelType":   queryRangeParams.CompositeQuery.PanelType,
 							"tracesUsed":  signozTracesUsed,
 							"logsUsed":    signozLogsUsed,
 							"metricsUsed": signozMetricsUsed,
+							"dashboardId": dashboardID,
+							"widgetId":    widgetID,
 						}, userEmail)
 					}
 					if alertMatched {
+						var alertID string
+						var alertIDMatch []string
+						alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`)
+						if err != nil {
+							zap.S().Errorf("error while matching the alertIDRegex: %v", err)
+						} else {
+							alertIDMatch = alertIDRegex.FindStringSubmatch(referrer)
+						}
+
+						if len(alertIDMatch) > 1 {
+							alertID = alertIDMatch[1]
+						}
 						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY, map[string]interface{}{
 							"queryType":   queryRangeParams.CompositeQuery.QueryType,
 							"panelType":   queryRangeParams.CompositeQuery.PanelType,
 							"tracesUsed":  signozTracesUsed,
 							"logsUsed":    signozLogsUsed,
 							"metricsUsed": signozMetricsUsed,
+							"alertId":     alertID,
 						}, userEmail)
 					}
 				}

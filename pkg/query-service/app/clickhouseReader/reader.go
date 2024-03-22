@@ -44,6 +44,7 @@ import (
 	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -72,6 +73,7 @@ const (
 	signozSampleLocalTableName = "samples_v2"
 	signozSampleTableName      = "distributed_samples_v2"
 	signozTSTableName          = "distributed_time_series_v2"
+	signozTSTableNameV4        = "distributed_time_series_v4"
 	signozTSTableNameV41Day    = "distributed_time_series_v4_1day"
 
 	minTimespanForProgressiveSearch       = time.Hour
@@ -3598,6 +3600,24 @@ func (r *ClickHouseReader) GetAlertsInfo(ctx context.Context) (*model.AlertsInfo
 	return &alertsInfo, nil
 }
 
+func (r *ClickHouseReader) GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error) {
+	savedViewsInfo := model.SavedViewsInfo{}
+	savedViews, err := explorer.GetViews()
+	if err != nil {
+		zap.S().Debug("Error in fetching saved views info: ", err)
+		return &savedViewsInfo, err
+	}
+	savedViewsInfo.TotalSavedViews = len(savedViews)
+	for _, view := range savedViews {
+		if view.SourcePage == "traces" {
+			savedViewsInfo.TracesSavedViews += 1
+		} else if view.SourcePage == "logs" {
+			savedViewsInfo.LogsSavedViews += 1
+		}
+	}
+	return &savedViewsInfo, nil
+}
+
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
 	// response will contain top level fields from the otel log model
 	response := model.GetFieldsResponse{
@@ -4242,6 +4262,67 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, metricName, se
 		IsMonotonic: isMonotonic,
 		Temporality: temporality,
 	}, nil
+}
+
+func (r *ClickHouseReader) GetLatestReceivedMetric(
+	ctx context.Context, metricNames []string,
+) (*model.MetricStatus, *model.ApiError) {
+	if len(metricNames) < 1 {
+		return nil, nil
+	}
+
+	quotedMetricNames := []string{}
+	for _, m := range metricNames {
+		quotedMetricNames = append(quotedMetricNames, fmt.Sprintf(`'%s'`, m))
+	}
+	commaSeparatedMetricNames := strings.Join(quotedMetricNames, ", ")
+
+	query := fmt.Sprintf(`
+		SELECT metric_name, labels, unix_milli
+		from %s.%s
+		where metric_name in (
+			%s
+		)
+		order by unix_milli desc
+		limit 1
+		`, signozMetricDBName, signozTSTableNameV4, commaSeparatedMetricNames,
+	)
+
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"couldn't query clickhouse for received metrics status: %w", err,
+		))
+	}
+	defer rows.Close()
+
+	var result *model.MetricStatus
+
+	if rows.Next() {
+
+		result = &model.MetricStatus{}
+		var labelsJson string
+
+		err := rows.Scan(
+			&result.MetricName,
+			&labelsJson,
+			&result.LastReceivedTsMillis,
+		)
+		if err != nil {
+			return nil, model.InternalError(fmt.Errorf(
+				"couldn't scan metric status row: %w", err,
+			))
+		}
+
+		err = json.Unmarshal([]byte(labelsJson), &result.LastReceivedLabels)
+		if err != nil {
+			return nil, model.InternalError(fmt.Errorf(
+				"couldn't unmarshal metric labels json: %w", err,
+			))
+		}
+	}
+
+	return result, nil
 }
 
 func isColumn(tableStatement, attrType, field, datType string) bool {

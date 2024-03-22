@@ -426,30 +426,33 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 
 	signozMetricsUsed := false
 	signozLogsUsed := false
-	dataSources := []string{}
+	signozTracesUsed := false
 	if postData != nil {
 
 		if postData.CompositeQuery != nil {
 			data["queryType"] = postData.CompositeQuery.QueryType
 			data["panelType"] = postData.CompositeQuery.PanelType
 
-			signozLogsUsed, signozMetricsUsed, _ = telemetry.GetInstance().CheckSigNozSignals(postData)
+			signozLogsUsed, signozMetricsUsed, signozTracesUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
 		}
 	}
 
-	if signozMetricsUsed || signozLogsUsed {
+	if signozMetricsUsed || signozLogsUsed || signozTracesUsed {
 		if signozMetricsUsed {
-			dataSources = append(dataSources, "metrics")
 			telemetry.GetInstance().AddActiveMetricsUser()
 		}
 		if signozLogsUsed {
-			dataSources = append(dataSources, "logs")
 			telemetry.GetInstance().AddActiveLogsUser()
 		}
-		data["dataSources"] = dataSources
+		if signozTracesUsed {
+			telemetry.GetInstance().AddActiveTracesUser()
+		}
+		data["metricsUsed"] = signozMetricsUsed
+		data["logsUsed"] = signozLogsUsed
+		data["tracesUsed"] = signozTracesUsed
 		userEmail, err := auth.GetEmailFromJwt(r.Context())
 		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_V3, data, userEmail, true)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail)
 		}
 	}
 	return data, true

@@ -65,21 +65,19 @@ export interface GetIntegrationProps {
 	data: IntegrationDetailedProps;
 }
 
-export interface IntegrationStatusProps {
-	connection_status: {
-		logs: {
-			last_received_ts_ms: number;
-			last_received_from: string;
-		} | null;
-		metrics: {
-			last_received_ts_ms: number;
-			last_received_from: string;
-		} | null;
-	};
+export interface IntegrationConnectionStatus {
+	logs: {
+		last_received_ts_ms: number;
+		last_received_from: string;
+	} | null;
+	metrics: {
+		last_received_ts_ms: number;
+		last_received_from: string;
+	} | null;
 }
 
 export interface GetIntegrationStatusProps {
-	data: IntegrationStatusProps;
+	data: IntegrationConnectionStatus;
 }
 
 export interface GetIntegrationPayloadProps {
