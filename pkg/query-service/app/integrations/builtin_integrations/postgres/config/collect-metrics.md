@@ -1,5 +1,7 @@
 ### Collect Postgres Metrics
 
+You can configure Postgres metrics collection by providing the required collector config to your collector.
+
 #### Create collector config file
 
 Save the following config for collecting postgres metrics in a file named `postgres-metrics-collection-config.yaml`
@@ -12,7 +14,7 @@ receivers:
     # The frequency at which to collect metrics from the Postgres instance.
     collection_interval: 60s
     # The username used to access the postgres instance
-    username: monitoring
+    username: ${env:POSTGRESQL_USERNAME}
     # The password used to access the postgres instance
     password: ${env:POSTGRESQL_PASSWORD}
     # The list of databases for which the receiver will attempt to collect statistics. If an empty list is provided, the receiver will attempt to collect statistics for all non-template databases
@@ -72,21 +74,28 @@ Set the following environment variables in your otel-collector environment:
 
 ```bash
 
-# password for postgres monitoring user"
-export POSTGRESQL_PASSWORD="password"
+# password for Postgres monitoring user"
+export POSTGRESQL_USERNAME="monitoring"
 
-# postgres endpoint reachable from the otel collector"
+# password for Postgres monitoring user"
+export POSTGRESQL_PASSWORD="<PASSWORD>"
+
+# Postgres endpoint reachable from the otel collector"
 export POSTGRESQL_ENDPOINT="host:port"
 
-# region specific signoz cloud ingestion endpoint
+
+# region specific SigNoz cloud ingestion endpoint
 export OTLP_DESTINATION_ENDPOINT="ingest.us.signoz.cloud:443"
 
-# your signoz ingestion key
-export SIGNOZ_INGESTION_KEY="key"
+# your SigNoz ingestion key
+export SIGNOZ_INGESTION_KEY="signoz-ingestion-key"
 
 ```
 
 #### Use collector config file
 
-Make the `postgres-metrics-collection-config.yaml` file available to your otel collector and add the flag `--config postgres-metrics-collection-config.yaml` to the command for running your otel collector.    
+Make the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  
+```bash
+--config postgres-metrics-collection-config.yaml
+```  
 Note: the collector can use multiple config files, specified by multiple occurrences of the --config flag.

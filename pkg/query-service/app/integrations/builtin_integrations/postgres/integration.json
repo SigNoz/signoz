@@ -1,7 +1,7 @@
 {
   "id": "postgres",
   "title": "PostgreSQL",
-  "description": "Monitor postgres using logs and metrics.",
+  "description": "Monitor Postgres with metrics and logs",
   "author": {
     "name": "SigNoz",
     "email": "integrations@signoz.io",
@@ -54,17 +54,21 @@
   "data_collected": {
     "logs": [
       {
-        "name": "pid",
+        "name": "Process ID",
         "path": "attributes.pid",
         "type": "string"
       }, {
-        "name": "timestamp",
+        "name": "Timestamp",
         "path": "timestamp",
         "type": "timestamp"
       }, {
-        "name": "severity",
-        "path": "severity",
-        "type": "severity"
+        "name": "Severity Text",
+        "path": "severity_text",
+        "type": "string"
+      }, {
+        "name": "Severity Number",
+        "path": "severity_number",
+        "type": "number"
       }
     ],
     "metrics": [
@@ -77,19 +81,19 @@
       {
         "name": "postgresql.bgwriter.buffers.allocated",
         "type": "sum",
-        "unit": "{buffers}",
+        "unit": "number",
         "description": "Number of buffers allocated."
       },
       {
         "name": "postgresql.bgwriter.buffers.writes",
         "type": "sum",
-        "unit": "{buffers}",
+        "unit": "number",
         "description": "Number of buffers written."
       },
       {
         "name": "postgresql.bgwriter.checkpoint.count",
         "type": "sum",
-        "unit": "{checkpoints}",
+        "unit": "number",
         "description": "The number of checkpoints performed."
       },
       {
@@ -119,43 +123,43 @@
       {
         "name": "postgresql.connection.max",
         "type": "gauge",
-        "unit": "{connections}",
+        "unit": "number",
         "description": "Configured maximum number of client connections allowed"
       },
       {
         "name": "postgresql.database.count",
         "type": "sum",
-        "unit": "{databases}",
+        "unit": "number",
         "description": "Number of user databases."
       },
       {
         "name": "postgresql.database.locks",
         "type": "gauge",
-        "unit": "{lock}",
+        "unit": "number",
         "description": "The number of database locks."
       },
       {
         "name": "postgresql.db_size",
         "type": "sum",
-        "unit": "By",
+        "unit": "Bytes",
         "description": "The database disk usage."
       },
       {
         "name": "postgresql.deadlocks",
         "type": "sum",
-        "unit": "{deadlock}",
+        "unit": "number",
         "description": "The number of deadlocks."
       },
       {
         "name": "postgresql.index.scans",
         "type": "sum",
-        "unit": "{scans}",
+        "unit": "number",
         "description": "The number of index scans on a table."
       },
       {
         "name": "postgresql.index.size",
         "type": "gauge",
-        "unit": "By",
+        "unit": "Bytes",
         "description": "The size of the index on disk."
       },
       {
@@ -167,7 +171,7 @@
       {
         "name": "postgresql.replication.data_delay",
         "type": "gauge",
-        "unit": "By",
+        "unit": "Bytes",
         "description": "The amount of data delayed in replication."
       },
       {
@@ -185,49 +189,49 @@
       {
         "name": "postgresql.sequential_scans",
         "type": "sum",
-        "unit": "{sequential_scan}",
+        "unit": "number",
         "description": "The number of sequential scans."
       },
       {
         "name": "postgresql.table.count",
         "type": "sum",
-        "unit": "{table}",
+        "unit": "number",
         "description": "Number of user tables in a database."
       },
       {
         "name": "postgresql.table.size",
         "type": "sum",
-        "unit": "By",
+        "unit": "Bytes",
         "description": "Disk space used by a table."
       },
       {
         "name": "postgresql.table.vacuum.count",
         "type": "sum",
-        "unit": "{vacuums}",
+        "unit": "number",
         "description": "Number of times a table has manually been vacuumed."
       },
       {
         "name": "postgresql.temp_files",
         "type": "sum",
-        "unit": "{temp_file}",
+        "unit": "number",
         "description": "The number of temp files."
       },
       {
         "name": "postgresql.wal.age",
         "type": "gauge",
-        "unit": "s",
+        "unit": "seconds",
         "description": "Age of the oldest WAL file."
       },
       {
         "name": "postgresql.wal.delay",
         "type": "gauge",
-        "unit": "s",
+        "unit": "seconds",
         "description": "Time between flushing recent WAL locally and receiving notification that the standby server has completed an operation with it."
       },
       {
         "name": "postgresql.wal.lag",
         "type": "gauge",
-        "unit": "s",
+        "unit": "seconds",
         "description": "Time between flushing recent WAL locally and receiving notification that the standby server has completed an operation with it."
       }
     ]

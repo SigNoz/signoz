@@ -68,6 +68,12 @@ exporters:
     headers:
       "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
 
+  # export to local collector
+  # otlp/local:
+  #   endpoint: "localhost:4317"
+  #   tls:
+  #     insecure: true
+
 service:
   pipelines:
     postgresql:
@@ -82,19 +88,22 @@ Set the following environment variables in your otel-collector environment:
 
 ```bash
 
-# path of postgresql log file
+# path of Postgres server log file. must be accessible by the otel collector
 export POSTGRESQL_LOG_FILE=/usr/local/var/log/postgres.log
 
-# region specific signoz cloud ingestion endpoint
+# region specific SigNoz cloud ingestion endpoint
 export OTLP_DESTINATION_ENDPOINT="ingest.us.signoz.cloud:443"
 
-# your signoz ingestion key
-export SIGNOZ_INGESTION_KEY="key"
+# your SigNoz ingestion key
+export SIGNOZ_INGESTION_KEY="signoz-ingestion-key"
 
 ```
 
 #### Use collector config file
 
-Make the `postgres-logs-collection-config.yaml` file available to your otel collector and add the flag `--config postgres-logs-collection-config.yaml` to the command for running your otel collector.    
+Make the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  
+```bash
+--config postgres-logs-collection-config.yaml
+```  
 Note: the collector can use multiple config files, specified by multiple occurrences of the --config flag.
 
