@@ -26,12 +26,15 @@ To configure metrics and logs collection for a Postgres server, you need the fol
   ```
     
 
-### Ensure that an OTEL Collector is running with access to the Postgres server
+### Ensure OTEL Collector is running with access to the Postgres server
 
 - **Ensure that an OTEL collector is running in your deployment environment**  
   If needed, please [install an OTEL Collector](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/)  
-  If already installed, ensure that you can provide config to the collector with environment variables and command line flags.  
+  If already installed, ensure that the collector version is v0.88.0 or newer.  
+
+  Also ensure that you can provide config files to the collector and that you can set environment variables and command line flags used for running it.  
 
 - **Ensure that the OTEL collector can access the Postgres server**  
   In order to collect metrics, the collector must be able to access the Postgres server as a client using the monitoring user.  
-  In order to collect logs, The collector must be able to read the Postgres server log file.
+
+  In order to collect logs, the collector must be able to read the Postgres server log file.
