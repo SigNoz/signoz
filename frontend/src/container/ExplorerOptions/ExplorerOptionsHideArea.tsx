@@ -1,7 +1,6 @@
 /* eslint-disable no-nested-ternary */
-import './ExplorerOptionsDroppableArea.styles.scss';
+import './ExplorerOptionsHideArea.styles.scss';
 
-import { useDroppable } from '@dnd-kit/core';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tooltip } from 'antd';
 import { Disc3, X } from 'lucide-react';
@@ -19,7 +18,7 @@ interface DroppableAreaProps {
 	onUpdateQueryHandler: () => void;
 }
 
-function ExplorerOptionsDroppableArea({
+function ExplorerOptionsHideArea({
 	isQueryUpdated,
 	isExplorerOptionHidden,
 	sourcepage,
@@ -27,10 +26,6 @@ function ExplorerOptionsDroppableArea({
 	handleClearSelect,
 	onUpdateQueryHandler,
 }: DroppableAreaProps): JSX.Element {
-	const { setNodeRef } = useDroppable({
-		id: 'explorer-options-droppable',
-	});
-
 	const handleShowExplorerOption = (): void => {
 		if (setIsExplorerOptionHidden) {
 			setIsExplorerOptionHidden(false);
@@ -39,7 +34,7 @@ function ExplorerOptionsDroppableArea({
 	};
 
 	return (
-		<div ref={setNodeRef} className="explorer-option-droppable-container">
+		<div className="explorer-option-droppable-container">
 			{isExplorerOptionHidden && (
 				<>
 					{isQueryUpdated && (
@@ -75,9 +70,9 @@ function ExplorerOptionsDroppableArea({
 	);
 }
 
-ExplorerOptionsDroppableArea.defaultProps = {
+ExplorerOptionsHideArea.defaultProps = {
 	isExplorerOptionHidden: undefined,
 	setIsExplorerOptionHidden: undefined,
 };
 
-export default ExplorerOptionsDroppableArea;
+export default ExplorerOptionsHideArea;
