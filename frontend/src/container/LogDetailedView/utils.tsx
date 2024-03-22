@@ -188,6 +188,7 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 		attributes: {},
 		resources: {},
 		severity_text: logData.severity_text,
+		severity_number: logData.severity_number
 	};
 
 	Object.keys(logData).forEach((key) => {
