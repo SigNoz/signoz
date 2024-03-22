@@ -8,8 +8,10 @@ Save the following config for collecting postgres logs in a file named `postgres
 receivers:
   filelog/postgresql:
     include: ["${env:POSTGRESQL_LOG_FILE}"]
-    start_at: beginning
     operators:
+      # Parse default postgresql text log format.
+      # `log_line_prefix` postgres setting defaults to '%m [%p] ' which logs the timestamp and the process ID
+      # See https://www.postgresql.org/docs/current/runtime-config-logging.html#GUC-LOG-LINE-PREFIX for more details
       - type: regex_parser
         if: body matches '^(?P<ts>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}.?[0-9]*? [A-Z]*) \\[(?P<pid>[0-9]+)\\] (?P<log_level>[A-Z]*). (?P<message>.*)$'
         parse_from: body

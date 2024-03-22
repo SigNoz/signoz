@@ -54,6 +54,10 @@
   "data_collected": {
     "logs": [
       {
+        "name": "pid",
+        "path": "attributes.pid",
+        "type": "string"
+      }, {
         "name": "timestamp",
         "path": "timestamp",
         "type": "timestamp"
