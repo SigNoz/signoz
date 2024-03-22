@@ -76,9 +76,11 @@ type IntegrationConnectionStatus struct {
 }
 
 type IntegrationConnectionTests struct {
+	// Filter to use for finding logs for the integration.
 	Logs *v3.FilterSet `json:"logs"`
 
-	// TODO(Raj): Add connection tests for other signals.
+	// Metric names expected to have been received for the integration.
+	Metrics []string `json:"metrics"`
 }
 
 type IntegrationDetails struct {

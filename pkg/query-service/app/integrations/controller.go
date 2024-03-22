@@ -63,6 +63,18 @@ func (c *Controller) GetIntegration(
 	return c.mgr.GetIntegration(ctx, integrationId)
 }
 
+func (c *Controller) IsIntegrationInstalled(
+	ctx context.Context,
+	integrationId string,
+) (bool, *model.ApiError) {
+	installation, apiErr := c.mgr.getInstalledIntegration(ctx, integrationId)
+	if apiErr != nil {
+		return false, apiErr
+	}
+	isInstalled := installation != nil
+	return isInstalled, nil
+}
+
 func (c *Controller) GetIntegrationConnectionTests(
 	ctx context.Context, integrationId string,
 ) (*IntegrationConnectionTests, *model.ApiError) {

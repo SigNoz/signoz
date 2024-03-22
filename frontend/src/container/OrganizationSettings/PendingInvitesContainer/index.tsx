@@ -279,9 +279,6 @@ function PendingInvitesContainer(): JSX.Element {
 					</Typography.Title>
 
 					<Space>
-						<Typography.Text type="warning">
-							{t('invite_link_share_manually')}
-						</Typography.Text>
 						<Button
 							icon={<PlusOutlined />}
 							type="primary"
