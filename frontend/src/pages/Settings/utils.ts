@@ -20,35 +20,34 @@ export const getRoutes = (
 	t: TFunction,
 ): RouteTabProps['routes'] => {
 	const settings = [];
-	settings.push(...generalSettings(t));
-	// settings.push({
-	// 	Component: GeneralSettings,
-	// 	name: 'General',
-	// 	// name: `<div className="periscope-tab">
-	// 	// 		<Backpack size={16} /> {t('routes:general').toString()}
-	// 	// 	</div>`,
-	// 	route: ROUTES.SETTINGS,
-	// 	key: ROUTES.SETTINGS,
-	// });
-	console.log('getRoutes', settings);
+	// settings.push(...generalSettings(t));
+	settings.push({
+		Component: GeneralSettings,
+		name: 'General',
+		// name: `<div className="periscope-tab">
+		// 		<Backpack size={16} /> {t('routes:general').toString()}
+		// 	</div>`,
+		route: ROUTES.SETTINGS,
+		key: ROUTES.SETTINGS,
+	});
 
 	if (isCurrentOrgSettings) {
 		settings.push(...organizationSettings(t));
 	}
 
-	if (isCloudUser()) {
-		settings.push(...ingestionSettings(t));
-		settings.push(...alertChannels(t));
-	} else {
-		settings.push(...alertChannels(t));
-	}
+	// if (isCloudUser()) {
+	// 	settings.push(...ingestionSettings(t));
+	// 	settings.push(...alertChannels(t));
+	// } else {
+	// 	settings.push(...alertChannels(t));
+	// }
 
-	// settings.push({
-	// 	Component: AlertChannels,
-	// 	name: 'Alert Channels',
-	// 	route: ROUTES.ALL_CHANNELS,
-	// 	key: ROUTES.ALL_CHANNELS,
-	// });
+	settings.push({
+		Component: AlertChannels,
+		name: 'Alert Channels',
+		route: ROUTES.ALL_CHANNELS,
+		key: ROUTES.ALL_CHANNELS,
+	});
 
 	if ((isCloudUser() || isEECloudUser()) && userRole === USER_ROLES.ADMIN) {
 		settings.push(...apiKeys(t));

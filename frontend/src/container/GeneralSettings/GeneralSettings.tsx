@@ -43,7 +43,6 @@ function GeneralSettings({
 	logsTtlValuesRefetch,
 }: GeneralSettingsProps): JSX.Element {
 	const { t } = useTranslation(['generalSettings']);
-	console.log('GeneralSettings', t);
 	const [modalMetrics, setModalMetrics] = useState<boolean>(false);
 	const [modalTraces, setModalTraces] = useState<boolean>(false);
 	const [modalLogs, setModalLogs] = useState<boolean>(false);
