@@ -52,12 +52,22 @@
     }
   },
   "data_collected": {
-    "logs": [],
+    "logs": [
+      {
+        "name": "timestamp",
+        "path": "timestamp",
+        "type": "timestamp"
+      }, {
+        "name": "severity",
+        "path": "severity",
+        "type": "severity"
+      }
+    ],
     "metrics": [
       {
         "name": "postgresql.backends",
         "type": "sum",
-        "unit": "1",
+        "unit": "number",
         "description": "The number of backends."
       },
       {
@@ -87,19 +97,19 @@
       {
         "name": "postgresql.bgwriter.maxwritten",
         "type": "sum",
-        "unit": "1",
+        "unit": "number",
         "description": "Number of times the background writer stopped a cleaning scan because it had written too many buffers."
       },
       {
         "name": "postgresql.blocks_read",
         "type": "sum",
-        "unit": "1",
+        "unit": "number",
         "description": "The number of blocks read."
       },
       {
         "name": "postgresql.commits",
         "type": "sum",
-        "unit": "1",
+        "unit": "number",
         "description": "The number of commits."
       },
       {
@@ -147,7 +157,7 @@
       {
         "name": "postgresql.operations",
         "type": "sum",
-        "unit": "1",
+        "unit": "number",
         "description": "The number of db row operations."
       },
       {
@@ -159,13 +169,13 @@
       {
         "name": "postgresql.rollbacks",
         "type": "sum",
-        "unit": "1",
+        "unit": "number",
         "description": "The number of rollbacks."
       },
       {
         "name": "postgresql.rows",
         "type": "sum",
-        "unit": "1",
+        "unit": "number",
         "description": "The number of rows in the database."
       },
       {
