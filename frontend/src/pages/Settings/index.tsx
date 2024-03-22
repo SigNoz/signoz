@@ -24,6 +24,7 @@ function SettingsPage(): JSX.Element {
 		isCurrentOrgSettings,
 		t,
 	]);
+	console.log('routes', routes, isCurrentOrgSettings, t);
 
 	return <RouteTab routes={routes} activeKey={pathname} history={history} />;
 }

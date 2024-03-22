@@ -53,7 +53,8 @@ export const generalSettings = (t: TFunction): RouteTabProps['routes'] => [
 		Component: GeneralSettings,
 		name: (
 			<div className="periscope-tab">
-				<Backpack size={16} /> {t('routes:general').toString()}
+				{/* <Backpack size={16} /> {t('routes:general').toString()} */}
+				<Backpack size={16} /> General
 			</div>
 		),
 		route: ROUTES.SETTINGS,

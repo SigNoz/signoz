@@ -13,6 +13,7 @@ function StatusMessage({
 	status,
 }: StatusMessageProps): JSX.Element | null {
 	const { t } = useTranslation(['generalSettings']);
+	console.log('StatusMessage', t);
 
 	const messageColor = useMemo((): string => {
 		if (status === 'success') return green[6];

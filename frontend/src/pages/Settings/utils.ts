@@ -17,7 +17,7 @@ export const getRoutes = (
 	t: TFunction,
 ): RouteTabProps['routes'] => {
 	const settings = [];
-
+	console.log('getRoutes', generalSettings(t));
 	settings.push(...generalSettings(t));
 
 	if (isCurrentOrgSettings) {
