@@ -182,27 +182,27 @@ const config = {
 		innerGraph: true, // tells webpack whether to conduct inner graph analysis for unused exports.
 		mangleWasmImports: true,
 		mergeDuplicateChunks: true,
-		minimize: true,
+		minimize: false,
 		nodeEnv: 'production',
 		runtimeChunk: {
 			name: (entrypoint) => `runtime~${entrypoint.name}`,
 		},
-		minimizer: [
-			new TerserPlugin({
-				parallel: true,
-				terserOptions: {
-					compress: true,
-					keep_classnames: true,
-					keep_fnames: false,
-					sourceMap: false,
-					safari10: true,
-					parse: {
-						html5_comments: false,
-					},
-				},
-			}),
-			new CssMinimizerPlugin(),
-		],
+		// minimizer: [
+		// 	new TerserPlugin({
+		// 		parallel: true,
+		// 		terserOptions: {
+		// 			compress: true,
+		// 			keep_classnames: true,
+		// 			keep_fnames: false,
+		// 			sourceMap: false,
+		// 			safari10: true,
+		// 			parse: {
+		// 				html5_comments: false,
+		// 			},
+		// 		},
+		// 	}),
+		// 	new CssMinimizerPlugin(),
+		// ],
 	},
 	performance: {
 		hints: 'warning',
