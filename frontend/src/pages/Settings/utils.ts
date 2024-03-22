@@ -1,4 +1,6 @@
 import { RouteTabProps } from 'components/RouteTab/types';
+import ROUTES from 'constants/routes';
+import GeneralSettings from 'container/GeneralSettings';
 import { TFunction } from 'i18next';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { isCloudUser, isEECloudUser } from 'utils/app';
@@ -17,8 +19,17 @@ export const getRoutes = (
 	t: TFunction,
 ): RouteTabProps['routes'] => {
 	const settings = [];
-	console.log('getRoutes', generalSettings(t));
-	settings.push(...generalSettings(t));
+	// settings.push(...generalSettings(t));
+	settings.push({
+		Component: GeneralSettings,
+		name: 'General',
+		// name: `<div className="periscope-tab">
+		// 		<Backpack size={16} /> {t('routes:general').toString()}
+		// 	</div>`,
+		route: ROUTES.SETTINGS,
+		key: ROUTES.SETTINGS,
+	});
+	console.log('getRoutes', settings);
 
 	if (isCurrentOrgSettings) {
 		settings.push(...organizationSettings(t));
