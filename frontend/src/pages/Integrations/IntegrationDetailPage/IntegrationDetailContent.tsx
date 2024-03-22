@@ -1,6 +1,8 @@
 import './IntegrationDetailPage.styles.scss';
 
 import { Button, Tabs, TabsProps, Typography } from 'antd';
+import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
+import { CableCar, Group } from 'lucide-react';
 import { IntegrationDetailedProps } from 'types/api/integrations/types';
 
 import Configure from './IntegrationDetailContentTabs/Configure';
@@ -23,13 +25,7 @@ function IntegrationDetailContent(
 				<Button
 					type="text"
 					className="integration-tab-btns"
-					icon={
-						<img
-							src="/Icons/cable-car.svg"
-							alt="overview-tab"
-							className="configure-icon"
-						/>
-					}
+					icon={<CableCar size={14} />}
 				>
 					<Typography.Text className="typography">Overview</Typography.Text>
 				</Button>
@@ -48,13 +44,7 @@ function IntegrationDetailContent(
 				<Button
 					type="text"
 					className="integration-tab-btns"
-					icon={
-						<img
-							src="/Icons/configure.svg"
-							alt="configure-tab"
-							className="configure-icon"
-						/>
-					}
+					icon={<ConfigureIcon />}
 				>
 					<Typography.Text className="typography">Configure</Typography.Text>
 				</Button>
@@ -67,7 +57,7 @@ function IntegrationDetailContent(
 				<Button
 					type="text"
 					className="integration-tab-btns"
-					icon={<img src="/Icons/group.svg" alt="data-tab" className="group-icon" />}
+					icon={<Group size={14} />}
 				>
 					<Typography.Text className="typography">Data Collected</Typography.Text>
 				</Button>
