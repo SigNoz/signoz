@@ -1,5 +1,6 @@
 import { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
+import AlertChannels from 'container/AllAlertChannels';
 import GeneralSettings from 'container/GeneralSettings';
 import { TFunction } from 'i18next';
 import { ROLES, USER_ROLES } from 'types/roles';
@@ -35,12 +36,19 @@ export const getRoutes = (
 		settings.push(...organizationSettings(t));
 	}
 
-	if (isCloudUser()) {
-		settings.push(...ingestionSettings(t));
-		settings.push(...alertChannels(t));
-	} else {
-		settings.push(...alertChannels(t));
-	}
+	// if (isCloudUser()) {
+	// 	settings.push(...ingestionSettings(t));
+	// 	settings.push(...alertChannels(t));
+	// } else {
+	// 	settings.push(...alertChannels(t));
+	// }
+
+	settings.push({
+		Component: AlertChannels,
+		name: 'Alert Channels',
+		route: ROUTES.ALL_CHANNELS,
+		key: ROUTES.ALL_CHANNELS,
+	});
 
 	if ((isCloudUser() || isEECloudUser()) && userRole === USER_ROLES.ADMIN) {
 		settings.push(...apiKeys(t));
