@@ -26,11 +26,7 @@ export const useOperators = (
 			? QUERY_BUILDER_OPERATORS_BY_TYPES[
 					currentKey.dataType as keyof typeof QUERY_BUILDER_OPERATORS_BY_TYPES
 			  ]
-			: strippedKey.endsWith('[*]')
-			? [
-					OPERATORS.HAS,
-					OPERATORS.NHAS,
-					...QUERY_BUILDER_OPERATORS_BY_TYPES.universal,
-			  ]
+			: strippedKey.endsWith('[*]') && strippedKey.startsWith('body.')
+			? [OPERATORS.HAS, OPERATORS.NHAS]
 			: QUERY_BUILDER_OPERATORS_BY_TYPES.universal;
 	}, [keys, key]);
