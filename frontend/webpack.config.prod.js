@@ -193,9 +193,11 @@ const config = {
 			new TerserPlugin({
 				parallel: true,
 				terserOptions: {
-					compress: true,
+					// compress: true,
+					compress: false,
 					keep_classnames: true,
-					keep_fnames: false,
+					// keep_fnames: false,
+					keep_fnames: true,
 					sourceMap: true,
 					safari10: true,
 					parse: {
