@@ -279,7 +279,7 @@ function ExplorerOptions({
 	);
 
 	const hideToolbar = (): void => {
-		setExplorerToolBarVisibility(true, sourcepage);
+		setExplorerToolBarVisibility(false, sourcepage);
 		if (setIsExplorerOptionHidden) {
 			setIsExplorerOptionHidden(true);
 		}
