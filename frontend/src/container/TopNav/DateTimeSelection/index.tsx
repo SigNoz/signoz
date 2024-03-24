@@ -358,7 +358,7 @@ function DateTimeSelection({
 						}}
 						selectedTime={selectedTime}
 						onValidCustomDateChange={(dateTime): void =>
-							onCustomDateHandler(dateTime as DateTimeRangeType)
+							onCustomDateHandler(dateTime.time as DateTimeRangeType)
 						}
 						selectedValue={getInputLabel(
 							dayjs(minTime / 1000000),

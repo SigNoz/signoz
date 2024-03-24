@@ -54,7 +54,51 @@
 			}
 		}
 	}
+
+	.shareable-link-popover {
+		margin-left: 8px;
+	}
 }
+
+.share-modal-content {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 8px 0 16px;
+	width: 420px;
+
+
+	.absolute-relative-time-toggler-container {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+	}
+
+	.absolute-relative-time-toggler {
+		display: flex;
+		gap: 4px;
+		align-items: center;
+	}
+
+	.share-link {
+		display: flex;
+    	align-items: center;
+
+		.share-url {
+			flex: 1;
+			border: 1px solid var(--bg-slate-400);
+			border-radius: 2px;
+			background: var(--bg-ink-300);
+			height: 32px;
+			padding: 6px 8px;
+		}
+
+		.copy-url-btn {
+			width: 32px;
+		}
+	}
+
+} 
 
 .date-time-root {
 	.ant-popover-inner {

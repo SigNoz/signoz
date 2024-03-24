@@ -1,8 +1,28 @@
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { Time as TimeV2 } from 'container/TopNav/DateTimeSelectionV2/config';
+import { isString } from 'lodash-es';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import getMinAgo from './getStartAndEndTime/getMinAgo';
+
+const validCustomTimeRegex = /^(\d+)([mhdw])$/;
+
+export const isValidTimeFormat = (time: string): boolean =>
+	validCustomTimeRegex.test(time);
+
+const extractTimeAndUnit = (time: string): { time: number; unit: string } => {
+	// Match the pattern
+	const match = /^(\d+)([mhdw])$/.exec(time);
+
+	if (match) {
+		return { time: parseInt(match[1], 10), unit: match[2] };
+	}
+
+	return {
+		time: 30,
+		unit: 'm',
+	};
+};
 
 const GetMinMax = (
 	interval: Time | TimeV2,
@@ -72,6 +92,28 @@ const GetMinMax = (
 	} else if (interval === 'custom') {
 		maxTime = (dateTimeRange || [])[1] || 0;
 		minTime = (dateTimeRange || [])[0] || 0;
+	} else if (isString(interval) && isValidTimeFormat(interval)) {
+		const { time, unit } = extractTimeAndUnit(interval);
+
+		switch (unit) {
+			case 'm':
+				minTime = getMinAgo({ minutes: 1 * time }).getTime();
+				break;
+			case 'h':
+				minTime = getMinAgo({ minutes: 60 * time }).getTime();
+				break;
+			case 'd':
+				minTime = getMinAgo({ minutes: 24 * 60 * time }).getTime();
+				break;
+			case 'w':
+				minTime = getMinAgo({ minutes: 24 * 60 * 7 * time }).getTime();
+				break;
+			default:
+				minTime = getMinAgo({ minutes: 1 }).getTime();
+				break;
+		}
+
+		console.log('is Custom - startTime', minTime);
 	} else {
 		throw new Error('invalid time type');
 	}

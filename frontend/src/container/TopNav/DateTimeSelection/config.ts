@@ -39,6 +39,29 @@ export const Options: Option[] = [
 	{ value: 'custom', label: 'Custom' },
 ];
 
+type TimeFrame = {
+	'5min': string;
+	'15min': string;
+	'30min': string;
+	'1hr': string;
+	'6hr': string;
+	'1day': string;
+	'3days': string;
+	'1week': string;
+	[key: string]: string; // Index signature to allow any string as index
+};
+
+export const RelativeTimeMap: TimeFrame = {
+	'5min': '5m',
+	'15min': '15m',
+	'30min': '30m',
+	'1hr': '1h',
+	'6hr': '6h',
+	'1day': '1d',
+	'3days': '3d',
+	'1week': '1w',
+};
+
 export interface Option {
 	value: Time;
 	label: string;
