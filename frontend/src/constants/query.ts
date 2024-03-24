@@ -29,4 +29,5 @@ export enum QueryParams {
 	expandedWidgetId = 'expandedWidgetId',
 	integration = 'integration',
 	pagination = 'pagination',
+	relativeTime = 'relativeTime'
 }
