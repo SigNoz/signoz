@@ -26,7 +26,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
-import { defaultTo, isObject } from 'lodash-es';
+import { isObject } from 'lodash-es';
 import { Check, Copy, Info, Send } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
@@ -44,7 +44,6 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../AutoRefreshV2';
 import { DateTimeRangeType } from '../CustomDateTimeModal';
-import { RelativeTimeMap } from '../DateTimeSelection/config';
 import {
 	getDefaultOption,
 	getOptions,
@@ -518,18 +517,6 @@ function DateTimeSelection({
 		history.replace(generatedUrl);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
-
-	const getRelativeTime = (time: string, format: string): string => {
-		if (format === 'custom') {
-			return time;
-		}
-
-		if (Object.prototype.hasOwnProperty.call(RelativeTimeMap, time)) {
-			return RelativeTimeMap[time];
-		}
-
-		return '';
-	};
 
 	const shareModalContent = (): JSX.Element => {
 		let currentUrl = window.location.href;
