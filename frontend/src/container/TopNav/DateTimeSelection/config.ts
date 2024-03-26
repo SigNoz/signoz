@@ -1,16 +1,16 @@
 import ROUTES from 'constants/routes';
 
-type FiveMin = '5min';
-type TenMin = '10min';
-type FifteenMin = '15min';
-type ThirtyMin = '30min';
-type OneMin = '1min';
-type SixHour = '6hr';
-type OneHour = '1hr';
-type FourHour = '4hr';
-type OneDay = '1day';
-type ThreeDay = '3days';
-type OneWeek = '1week';
+type FiveMin = '5m';
+type TenMin = '10m';
+type FifteenMin = '15m';
+type ThirtyMin = '30m';
+type OneMin = '1m';
+type SixHour = '6h';
+type OneHour = '1h';
+type FourHour = '4h';
+type OneDay = '1d';
+type ThreeDay = '3d';
+type OneWeek = '1w';
 type Custom = 'custom';
 
 export type Time =
@@ -28,14 +28,14 @@ export type Time =
 	| ThreeDay;
 
 export const Options: Option[] = [
-	{ value: '5min', label: 'Last 5 min' },
-	{ value: '15min', label: 'Last 15 min' },
-	{ value: '30min', label: 'Last 30 min' },
-	{ value: '1hr', label: 'Last 1 hour' },
-	{ value: '6hr', label: 'Last 6 hour' },
-	{ value: '1day', label: 'Last 1 day' },
-	{ value: '3days', label: 'Last 3 days' },
-	{ value: '1week', label: 'Last 1 week' },
+	{ value: '5m', label: 'Last 5 min' },
+	{ value: '15m', label: 'Last 15 min' },
+	{ value: '30m', label: 'Last 30 min' },
+	{ value: '1h', label: 'Last 1 hour' },
+	{ value: '6h', label: 'Last 6 hour' },
+	{ value: '1d', label: 'Last 1 day' },
+	{ value: '3d', label: 'Last 3 days' },
+	{ value: '1w', label: 'Last 1 week' },
 	{ value: 'custom', label: 'Custom' },
 ];
 
@@ -68,14 +68,14 @@ export interface Option {
 }
 
 export const RelativeDurationOptions: Option[] = [
-	{ value: '5min', label: 'Last 5 min' },
-	{ value: '15min', label: 'Last 15 min' },
-	{ value: '30min', label: 'Last 30 min' },
-	{ value: '1hr', label: 'Last 1 hour' },
-	{ value: '6hr', label: 'Last 6 hour' },
-	{ value: '1day', label: 'Last 1 day' },
-	{ value: '3days', label: 'Last 3 days' },
-	{ value: '1week', label: 'Last 1 week' },
+	{ value: '5m', label: 'Last 5 min' },
+	{ value: '15m', label: 'Last 15 min' },
+	{ value: '30m', label: 'Last 30 min' },
+	{ value: '1h', label: 'Last 1 hour' },
+	{ value: '6h', label: 'Last 6 hour' },
+	{ value: '1d', label: 'Last 1 day' },
+	{ value: '3d', label: 'Last 3 days' },
+	{ value: '1w', label: 'Last 1 week' },
 ];
 
 export const getDefaultOption = (route: string): Time => {

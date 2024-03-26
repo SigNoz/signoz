@@ -2,6 +2,7 @@ import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { themeColors } from 'constants/theme';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getChartData, { GetChartDataProps } from 'lib/getChartData';
 import GetMinMax from 'lib/getMinMax';
@@ -65,8 +66,13 @@ function LogsExplorerChart({
 		const searchParams = new URLSearchParams(window.location.search);
 		const startTime = searchParams.get(QueryParams.startTime);
 		const endTime = searchParams.get(QueryParams.endTime);
+		const relativeTime = searchParams.get(
+			QueryParams.relativeTime,
+		) as CustomTimeType;
 
-		if (startTime && endTime && startTime !== endTime) {
+		if (relativeTime) {
+			dispatch(UpdateTimeInterval(relativeTime));
+		} else if (startTime && endTime && startTime !== endTime) {
 			dispatch(
 				UpdateTimeInterval('custom', [
 					parseInt(getTimeString(startTime), 10),

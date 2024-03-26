@@ -2,7 +2,7 @@ import './DateTimeSelectionV2.styles.scss';
 
 import { SyncOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Popover, Switch, Tooltip, Typography } from 'antd';
+import { Button, Popover, Switch, Typography } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import CustomTimePicker from 'components/CustomTimePicker/CustomTimePicker';
@@ -45,9 +45,12 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import AutoRefresh from '../AutoRefreshV2';
 import { DateTimeRangeType } from '../CustomDateTimeModal';
 import {
+	convertOldTimeToNewValidCustomTimeFormat,
+	CustomTimeType,
 	getDefaultOption,
 	getOptions,
 	LocalStorageTimeRange,
+	OLD_RELATIVE_TIME_VALUES,
 	Time,
 	TimeRange,
 } from './config';
@@ -68,13 +71,11 @@ function DateTimeSelection({
 	const urlQuery = useUrlQuery();
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
-	const searchRelativeTime = urlQuery.get('relativeTime');
 	const queryClient = useQueryClient();
-	const [enableAbsoluteTime, setEnableAbsoluteTime] = useState(false);
-	const [isValidteRelativeTime, setIsValidteRelativeTime] = useState(false);
-	const [validCustomTime, setValidCustomTime] = useState<string | undefined>(
-		undefined,
+	const [enableAbsoluteTime, setEnableAbsoluteTime] = useState(
+		!!(searchStartTime && searchEndTime),
 	);
+	const [isValidteRelativeTime, setIsValidteRelativeTime] = useState(false);
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 	const [isURLCopied, setIsURLCopied] = useState(false);
 
@@ -189,7 +190,7 @@ function DateTimeSelection({
 	const getInputLabel = (
 		startTime?: Dayjs,
 		endTime?: Dayjs,
-		timeInterval: Time = '15min',
+		timeInterval: Time | CustomTimeType = '15m',
 	): string | Time => {
 		if (startTime && endTime && timeInterval === 'custom') {
 			const format = 'DD/MM/YYYY HH:mm';
@@ -295,7 +296,7 @@ function DateTimeSelection({
 		[location.pathname],
 	);
 
-	const onSelectHandler = (value: Time): void => {
+	const onSelectHandler = (value: Time | CustomTimeType): void => {
 		if (value !== 'custom') {
 			setIsOpen(false);
 			updateTimeInterval(value);
@@ -316,9 +317,6 @@ function DateTimeSelection({
 		const { maxTime, minTime } = GetMinMax(value, getTime());
 
 		if (!isLogsExplorerPage) {
-			// urlQuery.set(QueryParams.startTime, minTime.toString());
-			// urlQuery.set(QueryParams.endTime, maxTime.toString());
-
 			urlQuery.delete('startTime');
 			urlQuery.delete('endTime');
 
@@ -327,6 +325,8 @@ function DateTimeSelection({
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 			history.replace(generatedUrl);
 		}
+
+		// For logs explorer - time range handling is managed in useCopyLogLink.ts:52
 
 		if (!stagedQuery) {
 			return;
@@ -373,11 +373,7 @@ function DateTimeSelection({
 		}
 	};
 
-	const onValidCustomDateHandler = (
-		dateTimeStr: string,
-		dateTimeRange: DateTimeRangeType,
-	): void => {
-		console.log('dateTimeRange', dateTimeStr, dateTimeRange);
+	const onValidCustomDateHandler = (dateTimeStr: CustomTimeType): void => {
 		setIsOpen(false);
 		updateTimeInterval(dateTimeStr);
 		updateLocalStorageForRoutes(dateTimeStr);
@@ -389,12 +385,7 @@ function DateTimeSelection({
 
 		const { maxTime, minTime } = GetMinMax(dateTimeStr, getTime());
 
-		console.log({ maxTime, minTime });
-
 		if (!isLogsExplorerPage) {
-			// urlQuery.set(QueryParams.startTime, minTime.toString());
-			// urlQuery.set(QueryParams.endTime, maxTime.toString());
-
 			urlQuery.delete('startTime');
 			urlQuery.delete('endTime');
 
@@ -412,7 +403,10 @@ function DateTimeSelection({
 		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime), true);
 	};
 
-	const getCustomOrIntervalTime = (time: Time, currentRoute: string): Time => {
+	const getCustomOrIntervalTime = (
+		time: Time,
+		currentRoute: string,
+	): Time | CustomTimeType => {
 		if (searchEndTime !== null && searchStartTime !== null) {
 			return 'custom';
 		}
@@ -421,6 +415,10 @@ function DateTimeSelection({
 			time === 'custom'
 		) {
 			return getDefaultOption(currentRoute);
+		}
+
+		if (OLD_RELATIVE_TIME_VALUES.indexOf(time) > -1) {
+			return convertOldTimeToNewValidCustomTimeFormat(time);
 		}
 
 		return time;
@@ -455,54 +453,12 @@ function DateTimeSelection({
 
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
 
-		console.log('updatedTime', updatedTime);
-
 		if (updatedTime !== 'custom') {
-			// const { minTime, maxTime } = GetMinMax(updatedTime);
-			// urlQuery.set(QueryParams.startTime, minTime.toString());
-			// urlQuery.set(QueryParams.endTime, maxTime.toString());
-
 			urlQuery.delete('startTime');
 			urlQuery.delete('endTime');
 
 			urlQuery.set(QueryParams.relativeTime, updatedTime);
 		} else {
-			// if (searchRelativeTime && isValidTimeFormat(searchRelativeTime)) {
-			// 	const endTime = dayjs();
-			// 	let startTime = null;
-
-			// 	const { time, unit } = extractTimeAndUnit(searchRelativeTime);
-
-			// 	setenableAbsoluteTime(true);
-
-			// 	switch (unit) {
-			// 		case 'm':
-			// 			startTime = endTime.subtract(time, 'minute');
-			// 			break;
-
-			// 		case 'h':
-			// 			startTime = endTime.subtract(time, 'hour');
-			// 			break;
-			// 		case 'd':
-			// 			startTime = endTime.subtract(time, 'day');
-			// 			break;
-			// 		case 'w':
-			// 			startTime = endTime.subtract(time, 'week');
-			// 			break;
-			// 		default:
-			// 			startTime = endTime;
-			// 			break;
-			// 	}
-
-			// 	const startTimeEpoch = startTime.toDate().getTime().toString();
-			// 	const endTimeEpoch = endTime.toDate().getTime().toString();
-
-			// 	urlQuery.set(QueryParams.startTime, startTimeEpoch);
-			// 	urlQuery.set(QueryParams.endTime, endTimeEpoch);
-
-			// 	return;
-			// }
-
 			const startTime = preStartTime.toString();
 			const endTime = preEndTime.toString();
 
@@ -512,8 +468,6 @@ function DateTimeSelection({
 
 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
 
-		console.log('generatedUrl', generatedUrl);
-
 		history.replace(generatedUrl);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
@@ -521,20 +475,25 @@ function DateTimeSelection({
 	const shareModalContent = (): JSX.Element => {
 		let currentUrl = window.location.href;
 
-		console.log('selectedTime', selectedTime, validCustomTime);
-
 		if (enableAbsoluteTime) {
-			const time = selectedTime === 'custom' ? validCustomTime : selectedTime;
-			const { minTime, maxTime } = GetMinMax(time);
+			if (selectedTime === 'custom') {
+				if (searchStartTime && searchEndTime) {
+					urlQuery.set(QueryParams.startTime, searchStartTime.toString());
+					urlQuery.set(QueryParams.endTime, searchEndTime.toString());
+				}
+			} else {
+				const { minTime, maxTime } = GetMinMax(selectedTime);
 
-			urlQuery.set(QueryParams.startTime, minTime.toString());
-			urlQuery.set(QueryParams.endTime, maxTime.toString());
+				urlQuery.set(QueryParams.startTime, minTime.toString());
+				urlQuery.set(QueryParams.endTime, maxTime.toString());
+			}
+
 			urlQuery.delete(QueryParams.relativeTime);
 
 			currentUrl = `${window.location.host}${
 				location.pathname
 			}?${urlQuery.toString()}`;
-		} else if (!enableAbsoluteTime) {
+		} else {
 			urlQuery.delete(QueryParams.startTime);
 			urlQuery.delete(QueryParams.endTime);
 
@@ -547,36 +506,28 @@ function DateTimeSelection({
 		return (
 			<div className="share-modal-content">
 				<div className="absolute-relative-time-toggler-container">
-					<Tooltip
-						title={
-							!searchRelativeTime && !isValidteRelativeTime ? (
-								<Typography.Text color="#FFD778">
-									Please select / enter relative time format to enable
-								</Typography.Text>
-							) : (
-								''
-							)
-						}
-						placement="left"
-					>
-						<div className="absolute-relative-time-toggler">
-							{!searchRelativeTime && !isValidteRelativeTime && (
-								<Info size={14} color="#FFD778" />
-							)}
-
-							<Switch
-								checked={enableAbsoluteTime}
-								disabled={!isValidteRelativeTime && !searchRelativeTime}
-								size="small"
-								onChange={(): void => {
-									setEnableAbsoluteTime(!enableAbsoluteTime);
-								}}
-							/>
-						</div>
-					</Tooltip>
+					<div className="absolute-relative-time-toggler">
+						{(selectedTime === 'custom' || !isValidteRelativeTime) && (
+							<Info size={14} color={Color.BG_AMBER_400} />
+						)}
+						<Switch
+							checked={enableAbsoluteTime}
+							disabled={selectedTime === 'custom' || !isValidteRelativeTime}
+							size="small"
+							onChange={(): void => {
+								setEnableAbsoluteTime(!enableAbsoluteTime);
+							}}
+						/>
+					</div>
 
 					<Typography.Text>Enable Absolute Time</Typography.Text>
 				</div>
+
+				{(selectedTime === 'custom' || !isValidteRelativeTime) && (
+					<div className="absolute-relative-time-error">
+						Please select / enter valid relative time to toggle.
+					</div>
+				)}
 
 				<div className="share-link">
 					<Typography.Text ellipsis className="share-url">
@@ -605,8 +556,6 @@ function DateTimeSelection({
 		);
 	};
 
-	console.log('selectedTime', selectedTime);
-
 	return (
 		<div className="date-time-selector">
 			{!hasSelectedTimeError && !refreshButtonHidden && (
@@ -634,11 +583,7 @@ function DateTimeSelection({
 						}}
 						selectedTime={selectedTime}
 						onValidCustomDateChange={(dateTime): void => {
-							onValidCustomDateHandler(
-								dateTime.timeStr,
-								dateTime.time as DateTimeRangeType,
-							);
-							setValidCustomTime(dateTime.timeStr);
+							onValidCustomDateHandler(dateTime.timeStr as CustomTimeType);
 						}}
 						onCustomTimeStatusUpdate={(isValid: boolean): void => {
 							setIsValidteRelativeTime(isValid);
@@ -695,7 +640,7 @@ interface DateTimeSelectionV2Props {
 }
 interface DispatchProps {
 	updateTimeInterval: (
-		interval: Time,
+		interval: Time | CustomTimeType,
 		dateTimeRange?: [number, number],
 	) => (dispatch: Dispatch<AppActions>) => void;
 	globalTimeLoading: () => void;

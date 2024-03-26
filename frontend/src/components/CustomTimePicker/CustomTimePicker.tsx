@@ -5,9 +5,9 @@ import './CustomTimePicker.styles.scss';
 import { Input, Popover, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
-import { Options } from 'container/TopNav/DateTimeSelection/config';
 import {
 	FixedDurationSuggestionOptions,
+	Options,
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
@@ -85,7 +85,6 @@ function CustomTimePicker({
 		selectedTime: string,
 		selectedTimeValue: string,
 	): string => {
-		console.log('get SelectedTime Range Lable', selectedTime, selectedTimeValue);
 		if (selectedTime === 'custom') {
 			return selectedTimeValue;
 		}
@@ -191,7 +190,7 @@ function CustomTimePicker({
 			onError(true);
 			setInputErrorMessage(null);
 			if (isFunction(onCustomTimeStatusUpdate)) {
-				onCustomTimeStatusUpdate(true);
+				onCustomTimeStatusUpdate(false);
 			}
 		}
 	}, 300);
