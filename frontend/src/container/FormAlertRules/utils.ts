@@ -13,21 +13,21 @@ import {
 export const toChartInterval = (evalWindow: string | undefined): Time => {
 	switch (evalWindow) {
 		case '5m0s':
-			return '5min';
+			return '5m';
 		case '10m0s':
-			return '10min';
+			return '10m';
 		case '15m0s':
-			return '15min';
+			return '15m';
 		case '30m0s':
-			return '30min';
+			return '30m';
 		case '1h0m0s':
-			return '1hr';
+			return '1h';
 		case '4h0m0s':
-			return '4hr';
+			return '4h';
 		case '24h0m0s':
-			return '1day';
+			return '1d';
 		default:
-			return '5min';
+			return '5m';
 	}
 };
 
