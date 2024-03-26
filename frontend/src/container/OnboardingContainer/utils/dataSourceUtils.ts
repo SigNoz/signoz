@@ -132,6 +132,11 @@ const supportedLanguages = [
 		id: 'swift',
 		imgURL: `/Logos/swift.png`,
 	},
+	{
+		name: 'php',
+		id: 'php',
+		imgURL: `/Logos/php.png`,
+	},
 ];
 
 export const defaultLogsType = {
@@ -293,7 +298,8 @@ export const getSupportedFrameworks = ({
 		(moduleID === ModulesMap.APM && dataSourceName === '.NET') ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'rust') ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'elixir') ||
-		(moduleID === ModulesMap.APM && dataSourceName === 'swift')
+		(moduleID === ModulesMap.APM && dataSourceName === 'swift') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'php')
 	) {
 		return [];
 	}
@@ -322,7 +328,8 @@ export const hasFrameworks = ({
 		(moduleID === ModulesMap.APM && dataSourceName === '.NET') ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'rust') ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'elixir') ||
-		(moduleID === ModulesMap.APM && dataSourceName === 'swift')
+		(moduleID === ModulesMap.APM && dataSourceName === 'swift') ||
+		(moduleID === ModulesMap.APM && dataSourceName === 'php')
 	) {
 		return false;
 	}

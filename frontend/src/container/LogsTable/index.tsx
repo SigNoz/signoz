@@ -74,6 +74,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 					key={log.id}
 					logData={log}
 					selectedFields={selected}
+					linesPerRow={linesPerRow}
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
 				/>
