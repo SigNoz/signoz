@@ -27,10 +27,10 @@ func UpsertControlProcessors(
 	// AddToTracePipeline() or RemoveFromTracesPipeline() prior to calling
 	// this method
 
-	zap.S().Debug("initiating ingestion rules deployment config", signal, processors)
+	zap.L().Debug("initiating ingestion rules deployment config", zap.String("signal", signal), zap.Any("processors", processors))
 
 	if signal != string(Metrics) && signal != string(Traces) {
-		zap.S().Error("received invalid signal int UpsertControlProcessors", signal)
+		zap.L().Error("received invalid signal int UpsertControlProcessors", zap.String("signal", signal))
 		fnerr = coreModel.BadRequest(fmt.Errorf(
 			"signal not supported in ingestion rules: %s", signal,
 		))
@@ -51,7 +51,7 @@ func UpsertControlProcessors(
 	}
 
 	if len(agents) > 1 && signal == string(Traces) {
-		zap.S().Debug("found multiple agents. this feature is not supported for traces pipeline (sampling rules)")
+		zap.L().Debug("found multiple agents. this feature is not supported for traces pipeline (sampling rules)")
 		fnerr = coreModel.BadRequest(fmt.Errorf("multiple agents not supported in sampling rules"))
 		return
 	}
@@ -60,7 +60,7 @@ func UpsertControlProcessors(
 
 		agenthash, err := addIngestionControlToAgent(agent, signal, processors, false)
 		if err != nil {
-			zap.S().Error("failed to push ingestion rules config to agent", agent.ID, err)
+			zap.L().Error("failed to push ingestion rules config to agent", zap.String("agentID", agent.ID), zap.Error(err))
 			continue
 		}
 
@@ -89,7 +89,7 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 	// add ingestion control spec
 	err = makeIngestionControlSpec(agentConf, Signal(signal), processors)
 	if err != nil {
-		zap.S().Error("failed to prepare ingestion control processors for agent ", agent.ID, err)
+		zap.L().Error("failed to prepare ingestion control processors for agent", zap.String("agentID", agent.ID), zap.Error(err))
 		return confHash, err
 	}
 
@@ -99,7 +99,7 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 		return confHash, err
 	}
 
-	zap.S().Debugf("sending new config", string(configR))
+	zap.L().Debug("sending new config", zap.String("config", string(configR)))
 	hash := sha256.New()
 	_, err = hash.Write(configR)
 	if err != nil {
@@ -140,7 +140,7 @@ func makeIngestionControlSpec(agentConf *confmap.Conf, signal Signal, processors
 	// merge tracesPipelinePlan with current pipeline
 	mergedPipeline, err := buildPipeline(signal, currentPipeline)
 	if err != nil {
-		zap.S().Error("failed to build pipeline", signal, err)
+		zap.L().Error("failed to build pipeline", zap.String("signal", string(signal)), zap.Error(err))
 		return err
 	}
 

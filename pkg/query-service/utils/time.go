@@ -15,6 +15,6 @@ func Elapsed(funcName string, args ...interface{}) func() {
 	}
 	argsStr = argsStr[:len(argsStr)-2]
 	return func() {
-		zap.S().Infof("func %s took %v with args %v", funcName, time.Since(start), string(argsStr))
+		zap.L().Info("Elapsed time", zap.String("func_name", funcName), zap.Duration("duration", time.Since(start)), zap.String("args", argsStr))
 	}
 }

@@ -83,13 +83,12 @@ func (m *manager) AddRoute(receiver *Receiver) *model.ApiError {
 	response, err := http.Post(amURL, contentType, bytes.NewBuffer(receiverString))
 
 	if err != nil {
-		zap.S().Errorf(fmt.Sprintf("Error in getting response of API call to alertmanager(POST %s)\n", amURL), err)
+		zap.L().Error("Error in getting response of API call to alertmanager", zap.String("url", amURL), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if response.StatusCode > 299 {
-		err := fmt.Errorf(fmt.Sprintf("Error in getting 2xx response in API call to alertmanager(POST %s)\n", amURL), response.Status)
-		zap.S().Error(err)
+		zap.L().Error("Error in getting 2xx response in API call to alertmanager", zap.String("url", amURL), zap.String("status", response.Status))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -102,7 +101,7 @@ func (m *manager) EditRoute(receiver *Receiver) *model.ApiError {
 	req, err := http.NewRequest(http.MethodPut, amURL, bytes.NewBuffer(receiverString))
 
 	if err != nil {
-		zap.S().Errorf(fmt.Sprintf("Error creating new update request for API call to alertmanager(PUT %s)\n", amURL), err)
+		zap.L().Error("Error creating new update request for API call to alertmanager", zap.String("url", amURL), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -112,13 +111,12 @@ func (m *manager) EditRoute(receiver *Receiver) *model.ApiError {
 	response, err := client.Do(req)
 
 	if err != nil {
-		zap.S().Errorf(fmt.Sprintf("Error in getting response of API call to alertmanager(PUT %s)\n", amURL), err)
+		zap.L().Error("Error in getting response of API call to alertmanager", zap.String("url", amURL), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if response.StatusCode > 299 {
-		err := fmt.Errorf(fmt.Sprintf("Error in getting 2xx response in PUT API call to alertmanager(PUT %s)\n", amURL), response.Status)
-		zap.S().Error(err)
+		zap.L().Error("Error in getting 2xx response in PUT API call to alertmanager", zap.String("url", amURL), zap.String("status", response.Status))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -132,7 +130,7 @@ func (m *manager) DeleteRoute(name string) *model.ApiError {
 	req, err := http.NewRequest(http.MethodDelete, amURL, bytes.NewBuffer(requestData))
 
 	if err != nil {
-		zap.S().Errorf("Error in creating new delete request to alertmanager/v1/receivers\n", err)
+		zap.L().Error("Error in creating new delete request to alertmanager/v1/receivers", zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
@@ -142,13 +140,13 @@ func (m *manager) DeleteRoute(name string) *model.ApiError {
 	response, err := client.Do(req)
 
 	if err != nil {
-		zap.S().Errorf(fmt.Sprintf("Error in getting response of API call to alertmanager(DELETE %s)\n", amURL), err)
+		zap.L().Error("Error in getting response of API call to alertmanager", zap.String("url", amURL), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if response.StatusCode > 299 {
 		err := fmt.Errorf(fmt.Sprintf("Error in getting 2xx response in PUT API call to alertmanager(DELETE %s)\n", amURL), response.Status)
-		zap.S().Error(err)
+		zap.L().Error("Error in getting 2xx response in PUT API call to alertmanager", zap.String("url", amURL), zap.String("status", response.Status))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return nil
@@ -162,19 +160,19 @@ func (m *manager) TestReceiver(receiver *Receiver) *model.ApiError {
 	response, err := http.Post(amTestURL, contentType, bytes.NewBuffer(receiverBytes))
 
 	if err != nil {
-		zap.S().Errorf(fmt.Sprintf("Error in getting response of API call to alertmanager(POST %s)\n", amTestURL), err)
+		zap.L().Error("Error in getting response of API call to alertmanager", zap.String("url", amTestURL), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if response.StatusCode > 201 && response.StatusCode < 400 {
 		err := fmt.Errorf(fmt.Sprintf("Invalid parameters in test alert api for alertmanager(POST %s)\n", amTestURL), response.Status)
-		zap.S().Error(err)
+		zap.L().Error("Invalid parameters in test alert api for alertmanager", zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	if response.StatusCode > 400 {
 		err := fmt.Errorf(fmt.Sprintf("Received Server Error response for API call to alertmanager(POST %s)\n", amTestURL), response.Status)
-		zap.S().Error(err)
+		zap.L().Error("Received Server Error response for API call to alertmanager", zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 

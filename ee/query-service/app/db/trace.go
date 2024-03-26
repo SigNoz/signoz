@@ -49,7 +49,7 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 			break
 		}
 		if err != nil {
-			zap.S().Error("Error during BreadthFirstSearch(): ", err)
+			zap.L().Error("Error during BreadthFirstSearch()", zap.Error(err))
 			return nil, err
 		}
 	}
@@ -186,7 +186,7 @@ func buildSpanTrees(spansPtr *[]*model.SpanForTraceDetails) ([]*model.SpanForTra
 
 		// If the parent span is not found, add current span to list of roots
 		if parent == nil {
-			// zap.S().Debug("Parent Span not found parent_id: ", span.ParentID)
+			// zap.L().Debug("Parent Span not found parent_id: ", span.ParentID)
 			roots = append(roots, span)
 			span.ParentID = ""
 			continue
