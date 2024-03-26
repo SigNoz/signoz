@@ -1,7 +1,7 @@
 {
   "id": "redis",
   "title": "Redis",
-  "description": "Monitor redis using logs and metrics.",
+  "description": "Monitor redis with metrics and logs",
   "author": {
     "name": "SigNoz",
     "email": "integrations@signoz.io",
@@ -18,8 +18,12 @@
       "instructions": "file://config/prerequisites.md"
     },
     {
-      "title": "Configure Otel Collector",
-      "instructions": "file://config/configure-otel-collector.md"
+      "title": "Collect Metrics",
+      "instructions": "file://config/collect-metrics.md"
+    },
+    {
+      "title": "Collect Logs",
+      "instructions": "file://config/collect-logs.md"
     }
   ],
   "assets": {
