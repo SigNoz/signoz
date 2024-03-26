@@ -1,24 +1,24 @@
-### Configure otel collector
+### Collect Postgres Metrics
 
-#### Save collector config file
+You can configure Postgres metrics collection by providing the required collector config to your collector.
 
-Save the following collector config in a file named `postgres-collector-config.yaml`
+#### Create collector config file
 
-```bash
+Save the following config for collecting postgres metrics in a file named `postgres-metrics-collection-config.yaml`
+
+```yaml
 receivers:
   postgresql:
     # The endpoint of the postgresql server. Whether using TCP or Unix sockets, this value should be host:port. If transport is set to unix, the endpoint will internally be translated from host:port to /host.s.PGSQL.port
-    endpoint: "localhost:5432"
+    endpoint: ${env:POSTGRESQL_ENDPOINT}
     # The frequency at which to collect metrics from the Postgres instance.
     collection_interval: 60s
     # The username used to access the postgres instance
-    username: monitoring
+    username: ${env:POSTGRESQL_USERNAME}
     # The password used to access the postgres instance
     password: ${env:POSTGRESQL_PASSWORD}
     # The list of databases for which the receiver will attempt to collect statistics. If an empty list is provided, the receiver will attempt to collect statistics for all non-template databases
     databases: []
-    # List of databases which will be excluded when collecting statistics.
-    exclude_databases: []
     # # Defines the network to use for connecting to the server. Valid Values are `tcp` or `unix`
     # transport: tcp
     tls:
@@ -45,18 +45,19 @@ processors:
       hostname_sources: ["os"]
 
 exporters:
-  # export to local collector
-  otlp/local:
-    endpoint: "localhost:4317"
-    tls:
-      insecure: true
   # export to SigNoz cloud
-  otlp/signoz:
-    endpoint: "ingest.{region}.signoz.cloud:443"
+  otlp/postgres:
+    endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
     tls:
       insecure: false
     headers:
-      "signoz-access-token": "<SIGNOZ_INGESTION_KEY>"
+      "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
+
+  # export to local collector
+  # otlp/local:
+  #   endpoint: "localhost:4317"
+  #   tls:
+  #     insecure: true
 
 service:
   pipelines:
@@ -64,9 +65,37 @@ service:
       receivers: [postgresql]
       # note: remove this processor if the collector host is not running on the same host as the postgres instance
       processors: [resourcedetection/system]
-      exporters: [otlp/local]
+      exporters: [otlp/postgres]
+```
+
+#### Set Environment Variables
+
+Set the following environment variables in your otel-collector environment:
+
+```bash
+
+# password for Postgres monitoring user"
+export POSTGRESQL_USERNAME="monitoring"
+
+# password for Postgres monitoring user"
+export POSTGRESQL_PASSWORD="<PASSWORD>"
+
+# Postgres endpoint reachable from the otel collector"
+export POSTGRESQL_ENDPOINT="host:port"
+
+
+# region specific SigNoz cloud ingestion endpoint
+export OTLP_DESTINATION_ENDPOINT="ingest.us.signoz.cloud:443"
+
+# your SigNoz ingestion key
+export SIGNOZ_INGESTION_KEY="signoz-ingestion-key"
+
 ```
 
 #### Use collector config file
 
-Run your collector with the added flag `--config postgres-collector-config.yaml`
+Make the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  
+```bash
+--config postgres-metrics-collection-config.yaml
+```  
+Note: the collector can use multiple config files, specified by multiple occurrences of the --config flag.

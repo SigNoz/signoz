@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"strings"
+	"unicode"
 
 	"encoding/base64"
 	"encoding/json"
@@ -133,6 +134,14 @@ func readBuiltInIntegration(dirpath string) (
 	}
 
 	integration.Id = "builtin-" + integration.Id
+	if len(integration.DataCollected.Metrics) > 0 {
+		metricsForConnTest := []string{}
+		for _, collectedMetric := range integration.DataCollected.Metrics {
+			promName := toPromMetricName(collectedMetric.Name)
+			metricsForConnTest = append(metricsForConnTest, promName)
+		}
+		integration.ConnectionTests.Metrics = metricsForConnTest
+	}
 
 	return &integration, nil
 }
@@ -222,4 +231,35 @@ func readFileIfUri(maybeFileUri string, basedir string) (interface{}, error) {
 	}
 
 	return nil, fmt.Errorf("unsupported file type %s", maybeFileUri)
+}
+
+// copied from signoz clickhouse exporter's `sanitize` which
+// in turn is copied from prometheus-go-metric-exporter
+//
+// replaces non-alphanumeric characters with underscores in s.
+func toPromMetricName(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+
+	// Note: No length limit for label keys because Prometheus doesn't
+	// define a length limit, thus we should NOT be truncating label keys.
+	// See https://github.com/orijtech/prometheus-go-metrics-exporter/issues/4.
+
+	s = strings.Map(func(r rune) rune {
+		// sanitizeRune converts anything that is not a letter or digit to an underscore
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			return r
+		}
+		// Everything else turns into an underscore
+		return '_'
+	}, s)
+
+	if unicode.IsDigit(rune(s[0])) {
+		s = "key" + "_" + s
+	}
+	if s[0] == '_' {
+		s = "key" + s
+	}
+	return s
 }

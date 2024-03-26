@@ -4,7 +4,7 @@
 	.integration-detail-overview-left-container {
 		display: flex;
 		flex-direction: column;
-		width: 25%;
+		width: 30%;
 		gap: 26px;
 		border-right: 1px solid var(--bg-slate-500);
 		padding: 16px 0;
@@ -185,13 +185,14 @@
 	.configure-menu {
 		display: flex;
 		flex-direction: column;
-		width: 25%;
+		width: 30%;
 		padding: 16px 16px 0px 0px;
 		border-right: 1px solid var(--bg-slate-500);
 		gap: 8px;
 
 		.configure-menu-item {
 			padding: 4px 8px;
+			height: auto;
 			text-align: start;
 			color: var(--bg-vanilla-100);
 			font-family: Inter;
@@ -199,6 +200,10 @@
 			font-style: normal;
 			font-weight: 400;
 			line-height: 18px; /* 128.571% */
+
+			.configure-text {
+				text-wrap: pretty;
+			}
 		}
 
 		.configure-menu-item:hover {
