@@ -234,24 +234,23 @@ func ResetPassword(ctx context.Context, req *model.ResetPasswordRequest) error {
 	return nil
 }
 
-func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) error {
-
+func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) *model.ApiError {
 	user, apiErr := dao.DB().GetUser(ctx, req.UserId)
 	if apiErr != nil {
-		return errors.Wrap(apiErr.Err, "failed to query user from the DB")
+		return apiErr
 	}
 
 	if user == nil || !passwordMatch(user.Password, req.OldPassword) {
-		return ErrorInvalidCreds
+		return model.ForbiddenError(ErrorInvalidCreds)
 	}
 
 	hash, err := PasswordHash(req.NewPassword)
 	if err != nil {
-		return errors.Wrap(err, "Failed to generate password hash")
+		return model.InternalError(errors.New("Failed to generate password hash"))
 	}
 
 	if apiErr := dao.DB().UpdateUserPassword(ctx, hash, user.Id); apiErr != nil {
-		return apiErr.Err
+		return apiErr
 	}
 
 	return nil
