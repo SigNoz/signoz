@@ -1,40 +1,15 @@
+import './PiePanelWrapper.styles.scss';
+
 import { Group } from '@visx/group';
 import { Pie } from '@visx/shape';
-import { defaultStyles, useTooltip, useTooltipInPortal } from '@visx/tooltip';
+import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { useRef, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { PanelWrapperProps } from './panelWrapper.types';
-
-type TooltipData = {
-	label: string;
-	key: string;
-	value: string;
-	color: string;
-};
-
-const tooltipStyles = {
-	...defaultStyles,
-	minWidth: 60,
-	backgroundColor: 'rgba(0,0,0,0.9)',
-	color: 'white',
-	zIndex: 9999,
-};
-
-const getLabel = (label: string, query: Query, queryName: string): string => {
-	const finalQuery = query.builder.queryData.find(
-		(q) => q.queryName === queryName,
-	);
-	if (finalQuery) {
-		if (finalQuery.legend) {
-			return finalQuery.legend;
-		}
-		return label;
-	}
-	return label;
-};
+import { PanelWrapperProps, TooltipData } from './panelWrapper.types';
+import { getLabel, tooltipStyles } from './utils';
 
 function PiePanelWrapper({
 	queryResponse,
@@ -62,22 +37,29 @@ function PiePanelWrapper({
 	const panelData =
 		queryResponse.data?.payload?.data.newResult.data.result || [];
 
-	const data = panelData.map((d) =>
-		d.series?.map((s) => ({
-			label: getLabel(Object.values(s.labels)[0], widget.query, d.queryName),
-			value: s.values[0].value,
-			color: generateColor(
-				getLabel(Object.values(s.labels)[0], widget.query, d.queryName),
-				themeColors.chartcolors,
-			),
-		})),
-	);
-
 	const pieChartData: {
 		label: string;
 		value: string;
 		color: string;
-	}[] = [].concat(...(data as never[]));
+	}[] = [].concat(
+		...(panelData
+			.map((d) =>
+				d.series?.map((s) => ({
+					label:
+						d.series?.length === 1
+							? getLabel(Object.values(s.labels)[0], widget.query, d.queryName)
+							: getLabel(Object.values(s.labels)[0], {} as Query, d.queryName, true),
+					value: s.values[0].value,
+					color: generateColor(
+						d.series?.length === 1
+							? getLabel(Object.values(s.labels)[0], widget.query, d.queryName)
+							: getLabel(Object.values(s.labels)[0], {} as Query, d.queryName, true),
+						themeColors.chartcolors,
+					),
+				})),
+			)
+			.filter((d) => d !== undefined) as never[]),
+	);
 
 	let size = 0;
 	let width = 0;
@@ -101,127 +83,119 @@ function PiePanelWrapper({
 
 	return (
 		<>
-			<div style={{ height: '90%', width: '100%' }} ref={chartRef}>
-				<svg width={width} height={height} ref={containerRef}>
-					<Group top={height / 2} left={width / 2}>
-						<Pie
-							data={pieChartData}
-							pieValue={(data: {
-								label: string;
-								value: string;
-								color: string;
-							}): number => parseFloat(data.value)}
-							outerRadius={({ data }): number => {
-								if (!active) return half - 3;
-								return data.label === active.label ? half : half - 3;
-							}}
-							padAngle={0.02}
-							width={size}
-							height={size}
-						>
-							{
-								// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-								(pie) =>
-									pie.arcs.map((arc, index) => {
-										const { label } = arc.data;
-										const [centroidX, centroidY] = pie.path.centroid(arc);
-										const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.6;
-										const arcPath = pie.path(arc);
-										const arcFill = arc.data.color;
-										return (
-											<g
-												// eslint-disable-next-line react/no-array-index-key
-												key={`arc-${label}-${index}`}
-												onMouseEnter={(): void => {
-													showTooltip({
-														tooltipData: {
-															label,
-															value: arc.data.value,
-															color: arc.data.color,
-															key: label,
-														},
-														tooltipTop: centroidY + height / 2,
-														tooltipLeft: centroidX + width / 2,
-													});
-													setActive(arc.data);
-												}}
-												onMouseLeave={(): void => {
-													hideTooltip();
-													setActive(null);
-												}}
-											>
-												<path d={arcPath || ''} fill={getFillColor(arcFill)} />
-												{hasSpaceForLabel && (
-													<text
-														x={centroidX}
-														y={centroidY}
-														dy=".33em"
-														fill="#000"
-														fontSize={10}
-														textAnchor="middle"
-														pointerEvents="none"
+			{!pieChartData.length && <div className="piechart-no-data">No data</div>}
+			{pieChartData.length > 0 && (
+				<>
+					<div className="piechart-container" ref={chartRef}>
+						<svg width={width} height={height} ref={containerRef}>
+							<Group top={height / 2} left={width / 2}>
+								<Pie
+									data={pieChartData}
+									pieValue={(data: {
+										label: string;
+										value: string;
+										color: string;
+									}): number => parseFloat(data.value)}
+									outerRadius={({ data }): number => {
+										if (!active) return half - 3;
+										return data.label === active.label ? half : half - 3;
+									}}
+									padAngle={0.02}
+									width={size}
+									height={size}
+								>
+									{
+										// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+										(pie) =>
+											pie.arcs.map((arc, index) => {
+												const { label } = arc.data;
+												const [centroidX, centroidY] = pie.path.centroid(arc);
+												const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.6;
+												const arcPath = pie.path(arc);
+												const arcFill = arc.data.color;
+												return (
+													<g
+														// eslint-disable-next-line react/no-array-index-key
+														key={`arc-${label}-${index}`}
+														onMouseEnter={(): void => {
+															showTooltip({
+																tooltipData: {
+																	label,
+																	value: arc.data.value,
+																	color: arc.data.color,
+																	key: label,
+																},
+																tooltipTop: centroidY + height / 2,
+																tooltipLeft: centroidX + width / 2,
+															});
+															setActive(arc.data);
+														}}
+														onMouseLeave={(): void => {
+															hideTooltip();
+															setActive(null);
+														}}
 													>
-														{arc.data.label}
-													</text>
-												)}
-											</g>
-										);
-									})
-							}
-						</Pie>
-					</Group>
-				</svg>
-				{tooltipOpen && tooltipData && (
-					<TooltipInPortal top={tooltipTop} left={tooltipLeft} style={tooltipStyles}>
-						<div style={{ color: tooltipData.color }}>
-							<strong>{tooltipData.key}</strong>
-						</div>
-						<div>
-							<small>{tooltipData.value}</small>
-						</div>
-					</TooltipInPortal>
-				)}
-			</div>
-			<div
-				style={{
-					width: '100%',
-					height: '40px',
-					overflowY: 'scroll',
-					display: 'flex',
-					gap: '10px',
-					justifyContent: 'center',
-					alignItems: 'center',
-					flexWrap: 'wrap',
-				}}
-			>
-				{pieChartData.map((data) => (
-					<div
-						key={data.label}
-						style={{
-							display: 'flex',
-							justifyContent: 'center',
-							alignItems: 'center',
-							gap: '5px',
-						}}
-						onMouseEnter={(): void => {
-							setActive(data);
-						}}
-						onMouseLeave={(): void => {
-							setActive(null);
-						}}
-					>
-						<div
-							style={{
-								backgroundColor: getFillColor(data.color),
-								width: '10px',
-								height: '10px',
-								borderRadius: '50%',
-							}}
-						/>
-						{data.label}
+														<path d={arcPath || ''} fill={getFillColor(arcFill)} />
+														{hasSpaceForLabel && (
+															<text
+																x={centroidX}
+																y={centroidY}
+																dy=".33em"
+																fill="#000"
+																fontSize={10}
+																textAnchor="middle"
+																pointerEvents="none"
+															>
+																{arc.data.label}
+															</text>
+														)}
+													</g>
+												);
+											})
+									}
+								</Pie>
+							</Group>
+						</svg>
+						{tooltipOpen && tooltipData && (
+							<TooltipInPortal
+								top={tooltipTop}
+								left={tooltipLeft}
+								style={tooltipStyles}
+							>
+								<div style={{ color: tooltipData.color }}>
+									<strong>{tooltipData.key}</strong>
+								</div>
+								<div>
+									<small>{tooltipData.value}</small>
+								</div>
+							</TooltipInPortal>
+						)}
 					</div>
-				))}
-			</div>
+					<div className="piechart-legend">
+						{pieChartData.length > 0 &&
+							pieChartData.map((data) => (
+								<div
+									key={data.label}
+									className="piechart-legend-item"
+									onMouseEnter={(): void => {
+										setActive(data);
+									}}
+									onMouseLeave={(): void => {
+										setActive(null);
+									}}
+								>
+									<div
+										style={{
+											backgroundColor: getFillColor(data.color),
+										}}
+										className="piechart-legend-label"
+									/>
+									{data.label}
+								</div>
+							))}
+					</div>
+				</>
+			)}
 		</>
 	);
 }
