@@ -10,6 +10,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 func readCurrentDir(dir string, fm interfaces.FeatureLookup) error {
@@ -43,20 +44,34 @@ func readCurrentDir(dir string, fm interfaces.FeatureLookup) error {
 			continue
 		}
 
-		_, apiErr := GetDashboard(context.Background(), data["uuid"].(string))
-		if apiErr == nil {
-			zap.S().Infof("Creating Dashboards: Error in file: %s\t%s", filename, "Dashboard already present in database")
+		id := data["uuid"]
+		if id == nil {
+			_, apiErr := CreateDashboard(context.Background(), data, fm)
+			if apiErr != nil {
+				zap.S().Errorf("Creating Dashboards: Error in file: %s\t%s", filename, apiErr.Err)
+			}
 			continue
 		}
 
-		_, apiErr = CreateDashboard(context.Background(), data, fm)
+		apiErr := upsertDashboard(id.(string), data, filename, fm)
 		if apiErr != nil {
-			zap.S().Errorf("Creating Dashboards: Error in file: %s\t%s", filename, apiErr.Err)
-			continue
+			zap.S().Errorf("Creating Dashboards: Error upserting dashboard: %s\t%s", filename, apiErr.Err)
 		}
-
 	}
 	return nil
+}
+
+func upsertDashboard(uuid string, data map[string]interface{}, filename string, fm interfaces.FeatureLookup) *model.ApiError {
+	_, apiErr := GetDashboard(context.Background(), uuid)
+	if apiErr == nil {
+		zap.S().Infof("Creating Dashboards: Already exists: %s\t%s", filename, "Dashboard already present in database, Updating dashboard")
+		_, apiErr := UpdateDashboard(context.Background(), uuid, data, fm)
+		return apiErr
+	}
+
+	zap.S().Infof("Creating Dashboards: UUID not found: %s\t%s", filename, "Dashboard not present in database, Creating dashboard")
+	_, apiErr = CreateDashboard(context.Background(), data, fm)
+	return apiErr
 }
 
 func LoadDashboardFiles(fm interfaces.FeatureLookup) error {
