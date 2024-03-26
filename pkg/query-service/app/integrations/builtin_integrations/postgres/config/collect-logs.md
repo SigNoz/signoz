@@ -71,14 +71,14 @@ exporters:
       "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
 
   # export to local collector
-  # otlp/local:
+  # otlp/postgres-logs:
   #   endpoint: "localhost:4317"
   #   tls:
   #     insecure: true
 
 service:
   pipelines:
-    postgresql:
+    logs/postgresql:
       receivers: [filelog/postgresql]
       processors: [batch]
       exporters: [otlp/postgresql-logs]
