@@ -1,5 +1,6 @@
 import {
 	Checkbox,
+	Collapse,
 	Form,
 	InputNumber,
 	InputNumberProps,
@@ -24,7 +25,12 @@ import {
 import { EQueryType } from 'types/common/dashboard';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { FormContainer, InlineSelect, StepHeading } from './styles';
+import {
+	FormContainer,
+	InlineSelect,
+	StepHeading,
+	VerticalLine,
+} from './styles';
 
 function RuleOptions({
 	alertDef,
@@ -238,42 +244,72 @@ function RuleOptions({
 							/>
 						</Form.Item>
 					</Space>
-					<Space direction="horizontal" align="center">
-						<Form.Item noStyle name={['condition', 'alertOnAbsent']}>
-							<Checkbox
-								checked={alertDef?.condition?.alertOnAbsent}
-								onChange={(e): void => {
-									setAlertDef({
-										...alertDef,
-										condition: {
-											...alertDef.condition,
-											alertOnAbsent: e.target.checked,
-										},
-									});
-								}}
-							/>
-						</Form.Item>
-						<Typography.Text>{t('text_alert_on_absent')}</Typography.Text>
+					<Collapse>
+						<Collapse.Panel header={t('More options')} key="1">
+							<Space direction="vertical" size="large">
+								<VerticalLine>
+									<Space direction="horizontal" align="center">
+										<Typography.Text>{t('text_alert_frequency')}</Typography.Text>
+										<Form.Item noStyle name={['condition', 'frequency']}>
+											<InputNumber
+												defaultValue={1}
+												min={1}
+												value={alertDef?.frequency}
+												onChange={(value): void => {
+													setAlertDef({
+														...alertDef,
+														frequency: Number(value) || 0,
+													});
+												}}
+												type="number"
+												onWheel={(e): void => e.currentTarget.blur()}
+											/>
+										</Form.Item>
+										<Typography.Text>{t('text_for')}</Typography.Text>
+									</Space>
+								</VerticalLine>
 
-						<Form.Item noStyle name={['condition', 'absentFor']}>
-							<InputNumber
-								min={1}
-								value={alertDef?.condition?.absentFor}
-								onChange={(value): void => {
-									setAlertDef({
-										...alertDef,
-										condition: {
-											...alertDef.condition,
-											absentFor: Number(value) || 0,
-										},
-									});
-								}}
-								type="number"
-								onWheel={(e): void => e.currentTarget.blur()}
-							/>
-						</Form.Item>
-						<Typography.Text>{t('text_for')}</Typography.Text>
-					</Space>
+								<VerticalLine>
+									<Space direction="horizontal" align="center">
+										<Form.Item noStyle name={['condition', 'alertOnAbsent']}>
+											<Checkbox
+												checked={alertDef?.condition?.alertOnAbsent}
+												onChange={(e): void => {
+													setAlertDef({
+														...alertDef,
+														condition: {
+															...alertDef.condition,
+															alertOnAbsent: e.target.checked,
+														},
+													});
+												}}
+											/>
+										</Form.Item>
+										<Typography.Text>{t('text_alert_on_absent')}</Typography.Text>
+
+										<Form.Item noStyle name={['condition', 'absentFor']}>
+											<InputNumber
+												min={1}
+												value={alertDef?.condition?.absentFor}
+												onChange={(value): void => {
+													setAlertDef({
+														...alertDef,
+														condition: {
+															...alertDef.condition,
+															absentFor: Number(value) || 0,
+														},
+													});
+												}}
+												type="number"
+												onWheel={(e): void => e.currentTarget.blur()}
+											/>
+										</Form.Item>
+										<Typography.Text>{t('text_for')}</Typography.Text>
+									</Space>
+								</VerticalLine>
+							</Space>
+						</Collapse.Panel>
+					</Collapse>
 				</Space>
 			</FormContainer>
 		</>
