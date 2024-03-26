@@ -3,8 +3,8 @@
 }
 .explorer-update {
 	position: fixed;
-	bottom: 16px;
-	left: calc(50% - 225px);
+	bottom: 24px;
+	left: calc(50% - 250px);
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -37,21 +37,24 @@
 	}
 }
 
+	
 .explorer-options {
-	display: flex;
-	gap: 16px;
+	position: fixed;
+	bottom: 24px;
+	left: calc(50% + 240px);
 	padding: 10px 12px;
-	border-radius: 50px;
+	transform: translate(calc(-50% - 120px), 0);
+	transition: left 0.2s linear;
 	border: 1px solid var(--bg-slate-400);
+	border-radius: 50px;
 	background: rgba(22, 24, 29, 0.6);
 	box-shadow: 4px 4px 16px 4px rgba(0, 0, 0, 0.25);
 	backdrop-filter: blur(20px);
-	position: fixed;
-	bottom: 16px;
-	left: calc(50% + 240px);
-	transform: translate(calc(-50% - 120px), 0);
-	transition: left 0.2s linear;
 
+	cursor: default;
+	display: flex;
+	gap: 16px;
+	z-index: 1;
 	.ant-select-selector {
 		padding: 0 !important;
 	}
@@ -236,9 +239,9 @@
 
 .lightMode {
 	.explorer-options {
+		background: transparent;
+		box-shadow: none;
 		border: 1px solid var(--bg-vanilla-300);
-		background: rgba(255, 255, 255, 0.8);
-		box-shadow: 4px 4px 16px 4px rgba(255, 255, 255, 0.55);
 		backdrop-filter: blur(20px);
 
 		hr {
