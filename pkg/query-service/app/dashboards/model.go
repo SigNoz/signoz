@@ -25,12 +25,14 @@ import (
 var db *sqlx.DB
 
 // User for mapping job,instance from grafana
-var instanceEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.instance}}\\\"")
-var nodeEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.node}}\\\"")
-var jobEQRE = regexp.MustCompile("job(?s)=(?s)\\\"{{.job}}\\\"")
-var instanceRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.instance}}\\\"")
-var nodeRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.node}}\\\"")
-var jobRERE = regexp.MustCompile("job(?s)=~(?s)\\\"{{.job}}\\\"")
+var (
+	instanceEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.instance}}\\\"")
+	nodeEQRE     = regexp.MustCompile("instance(?s)=(?s)\\\"{{.node}}\\\"")
+	jobEQRE      = regexp.MustCompile("job(?s)=(?s)\\\"{{.job}}\\\"")
+	instanceRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.instance}}\\\"")
+	nodeRERE     = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.node}}\\\"")
+	jobRERE      = regexp.MustCompile("job(?s)=~(?s)\\\"{{.job}}\\\"")
+)
 
 // InitDB sets up setting up the connection pool global variable.
 func InitDB(dataSourceName string) (*sqlx.DB, error) {
@@ -188,6 +190,9 @@ func CreateDashboard(ctx context.Context, data map[string]interface{}, fm interf
 	dash.UpdateBy = &userEmail
 	dash.UpdateSlug()
 	dash.Uuid = uuid.New().String()
+	if data["uuid"] != nil {
+		dash.Uuid = data["uuid"].(string)
+	}
 
 	mapData, err := json.Marshal(dash.Data)
 	if err != nil {
@@ -211,7 +216,6 @@ func CreateDashboard(ctx context.Context, data map[string]interface{}, fm interf
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 	lastInsertId, err := result.LastInsertId()
-
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
@@ -255,7 +259,6 @@ func DeleteDashboard(ctx context.Context, uuid string, fm interfaces.FeatureLook
 	query := `DELETE FROM dashboards WHERE uuid=?`
 
 	result, err := db.Exec(query, uuid)
-
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
@@ -419,7 +422,6 @@ func (d *Dashboard) UpdateSlug() {
 }
 
 func IsPostDataSane(data *map[string]interface{}) error {
-
 	val, ok := (*data)["title"]
 	if !ok || val == nil {
 		return fmt.Errorf("title not found in post data")
