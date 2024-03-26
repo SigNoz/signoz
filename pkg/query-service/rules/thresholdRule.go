@@ -102,7 +102,7 @@ func NewThresholdRule(
 
 	t := ThresholdRule{
 		id:                id,
-		name:              p.Alert,
+		name:              p.AlertName,
 		source:            p.Source,
 		ruleCondition:     p.RuleCondition,
 		evalWindow:        time.Duration(p.EvalWindow),
@@ -713,7 +713,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 	zap.L().Debug("resultmap(potential alerts)", zap.String("ruleid", r.ID()), zap.Int("count", len(resultMap)))
 
 	// if the data is missing for `For` duration then we should send alert
-	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(r.Condition().AbsentFor*time.Minute).Before(time.Now()) {
+	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
 		zap.L().Info("no data found for rule condition", zap.String("ruleid", r.ID()))
 		lbls := labels.NewBuilder(labels.Labels{})
 		if !r.lastTimestampWithDatapoints.IsZero() {
@@ -1289,7 +1289,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 func (r *ThresholdRule) String() string {
 
 	ar := PostableRule{
-		Alert:             r.name,
+		AlertName:         r.name,
 		RuleCondition:     r.ruleCondition,
 		EvalWindow:        Duration(r.evalWindow),
 		Labels:            r.labels.Map(),

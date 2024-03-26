@@ -137,7 +137,7 @@ type RuleCondition struct {
 	CompareOp      CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
 	Target         *float64           `yaml:"target,omitempty" json:"target,omitempty"`
 	AlertOnAbsent  bool               `yaml:"alertOnAbsent,omitempty" json:"alertOnAbsent,omitempty"`
-	AbsentFor      time.Duration      `yaml:"absentFor,omitempty" json:"absentFor,omitempty"`
+	AbsentFor      uint64             `yaml:"absentFor,omitempty" json:"absentFor,omitempty"`
 	MatchType      MatchType          `json:"matchType,omitempty"`
 	TargetUnit     string             `json:"targetUnit,omitempty"`
 	SelectedQuery  string             `json:"selectedQueryName,omitempty"`

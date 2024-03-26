@@ -40,6 +40,7 @@ func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
 	}
+	fmt.Println(frequency)
 	zap.L().Info("initiating a new rule task", zap.String("name", name), zap.Duration("frequency", frequency))
 
 	return &RuleTask{
