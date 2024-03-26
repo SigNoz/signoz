@@ -1,12 +1,15 @@
 import { Time } from 'container/TopNav/DateTimeSelection/config';
-import { Time as TimeV2 } from 'container/TopNav/DateTimeSelectionV2/config';
+import {
+	CustomTimeType,
+	Time as TimeV2,
+} from 'container/TopNav/DateTimeSelectionV2/config';
 import GetMinMax from 'lib/getMinMax';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 
 export const UpdateTimeInterval = (
-	interval: Time | TimeV2,
+	interval: Time | TimeV2 | CustomTimeType,
 	dateTimeRange: [number, number] = [0, 0],
 ): ((dispatch: Dispatch<AppActions>) => void) => (
 	dispatch: Dispatch<AppActions>,

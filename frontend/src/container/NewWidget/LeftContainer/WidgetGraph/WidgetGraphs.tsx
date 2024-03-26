@@ -3,6 +3,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -97,8 +98,13 @@ function WidgetGraph({
 		const searchParams = new URLSearchParams(window.location.search);
 		const startTime = searchParams.get(QueryParams.startTime);
 		const endTime = searchParams.get(QueryParams.endTime);
+		const relativeTime = searchParams.get(
+			QueryParams.relativeTime,
+		) as CustomTimeType;
 
-		if (startTime && endTime && startTime !== endTime) {
+		if (relativeTime) {
+			dispatch(UpdateTimeInterval(relativeTime));
+		} else if (startTime && endTime && startTime !== endTime) {
 			dispatch(
 				UpdateTimeInterval('custom', [
 					parseInt(getTimeString(startTime), 10),
