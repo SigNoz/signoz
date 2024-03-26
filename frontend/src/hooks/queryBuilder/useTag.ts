@@ -83,8 +83,6 @@ export const useTag = (
 				[key] = parts;
 			}
 
-			console.log({ key, id, tagKey });
-
 			if (id === 'custom') {
 				const customValue = whereClauseConfig
 					? `${whereClauseConfig.customKey} ${whereClauseConfig.customOp} ${key}`
