@@ -45,9 +45,9 @@ const calculateStartEndTime = (
 	data: any,
 ): { startTime: number; endTime: number } => {
 	const timestamps: number[] = [];
-	data?.details?.breakdown.forEach((breakdown: any) => {
-		breakdown.dayWiseBreakdown.breakdown.forEach((entry: any) => {
-			timestamps.push(entry.timestamp);
+	data?.details?.breakdown?.forEach((breakdown: any) => {
+		breakdown?.dayWiseBreakdown?.breakdown.forEach((entry: any) => {
+			timestamps.push(entry?.timestamp);
 		});
 	});
 	const billingTime = [data?.billingPeriodStart, data?.billingPeriodEnd];
