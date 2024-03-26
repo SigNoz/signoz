@@ -3,21 +3,25 @@ import { ILog } from 'types/api/logs/log';
 import { LogType, SEVERITY_TEXT_TYPE } from './LogStateIndicator';
 
 const getSeverityType = (severityNumber: number): string => {
-	if(severityNumber >= 1 && severityNumber <= 4) {
-		return SEVERITY_TEXT_TYPE.TRACE; 
-	} else if(severityNumber >= 5 && severityNumber <= 8) {
-		return SEVERITY_TEXT_TYPE.DEBUG; 
-	} else if(severityNumber >= 9 && severityNumber <= 12) {
-		return SEVERITY_TEXT_TYPE.INFO; 
-	} else if(severityNumber >= 13 && severityNumber <= 16) {
-		return SEVERITY_TEXT_TYPE.WARN; 
-	} else if(severityNumber >= 17 && severityNumber <= 20) {
-		return SEVERITY_TEXT_TYPE.ERROR; 
-	} else if(severityNumber >= 21 && severityNumber <= 24) {
-		return SEVERITY_TEXT_TYPE.FATAL; 
+	if (severityNumber >= 1 && severityNumber <= 4) {
+		return SEVERITY_TEXT_TYPE.TRACE;
 	}
-	
-	return SEVERITY_TEXT_TYPE.INFO;	
+	if (severityNumber >= 5 && severityNumber <= 8) {
+		return SEVERITY_TEXT_TYPE.DEBUG;
+	}
+	if (severityNumber >= 9 && severityNumber <= 12) {
+		return SEVERITY_TEXT_TYPE.INFO;
+	}
+	if (severityNumber >= 13 && severityNumber <= 16) {
+		return SEVERITY_TEXT_TYPE.WARN;
+	}
+	if (severityNumber >= 17 && severityNumber <= 20) {
+		return SEVERITY_TEXT_TYPE.ERROR;
+	}
+	if (severityNumber >= 21 && severityNumber <= 24) {
+		return SEVERITY_TEXT_TYPE.FATAL;
+	}
+	return SEVERITY_TEXT_TYPE.INFO;
 };
 
 export const getLogIndicatorType = (logData: ILog): string => {
