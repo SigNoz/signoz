@@ -75,10 +75,15 @@ export const useTag = (
 		(value: string): void => {
 			const { tagKey } = getTagToken(value);
 			const parts = tagKey.split('-');
-
 			// this is done to ensure that `hello-world` also gets converted to `body CONTAINS hello-world`
-			const id = parts[parts.length - 1];
-			const key = parts.slice(0, -1).join('-');
+			let id = parts[parts.length - 1];
+			let key = parts.slice(0, -1).join('-');
+			if (parts.length === 1) {
+				id = '';
+				[key] = parts;
+			}
+
+			console.log({ key, id, tagKey });
 
 			if (id === 'custom') {
 				const customValue = whereClauseConfig
