@@ -2363,10 +2363,9 @@ func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := auth.ChangePassword(context.Background(), req); err != nil {
-		if aH.HandleError(w, err, http.StatusInternalServerError) {
-			return
-		}
+	if apiErr := auth.ChangePassword(context.Background(), req); apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
 
 	}
 	aH.WriteJSON(w, r, map[string]string{"data": "password changed successfully"})
