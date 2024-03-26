@@ -26,7 +26,7 @@ import useAnalytics from 'hooks/analytics/useAnalytics';
 import useAxiosError from 'hooks/useAxiosError';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
-import { pick } from 'lodash-es';
+import { isEmpty, pick } from 'lodash-es';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
@@ -149,6 +149,9 @@ export default function BillingContainer(): JSX.Element {
 
 	const processUsageData = useCallback(
 		(data: any): void => {
+			if (isEmpty(data?.payload)) {
+				return;
+			}
 			const {
 				details: { breakdown = [], billTotal },
 				billingPeriodStart,
@@ -420,12 +423,14 @@ export default function BillingContainer(): JSX.Element {
 					)}
 
 				{!isLoading && !isFetchingBillingData ? (
-					<Alert
-						message={headerText}
-						type="info"
-						showIcon
-						style={{ marginTop: 12 }}
-					/>
+					headerText && (
+						<Alert
+							message={headerText}
+							type="info"
+							showIcon
+							style={{ marginTop: 12 }}
+						/>
+					)
 				) : (
 					<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
 				)}
