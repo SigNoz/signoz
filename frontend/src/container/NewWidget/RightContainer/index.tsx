@@ -95,7 +95,6 @@ function RightContainer({
 			<Select
 				onChange={setGraphHandler}
 				value={selectedGraph}
-				disabled
 				style={{ width: '100%', marginBottom: 24 }}
 			>
 				{GraphTypes.map((item) => (
