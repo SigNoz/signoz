@@ -1,5 +1,7 @@
 ### Collect Postgres Logs
 
+You can configure Postgres logs collection by providing the required collector config to your collector.
+
 #### Create collector config file
 
 Save the following config for collecting postgres logs in a file named `postgres-logs-collection-config.yaml`
