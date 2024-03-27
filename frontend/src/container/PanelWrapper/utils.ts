@@ -13,17 +13,27 @@ export const getLabel = (
 	label: string,
 	query: Query,
 	queryName: string,
-	haveMultipleResult = false,
+	isQueryContentMultipleResult = false, // If there are more than one aggregation return by the query, this should be set to true. Default is false.
 ): string => {
 	let finalQuery;
-	if (!haveMultipleResult) {
+	if (!isQueryContentMultipleResult) {
 		finalQuery = query.builder.queryData.find((q) => q.queryName === queryName);
+		if (!finalQuery) {
+			// If the query is not found in queryData, then check in queryFormulas
+			finalQuery = query.builder.queryFormulas.find(
+				(q) => q.queryName === queryName,
+			);
+		}
 	}
 	if (finalQuery) {
-		if (finalQuery.legend) {
+		if (finalQuery.legend !== '') {
 			return finalQuery.legend;
 		}
-		return label;
+		if (label !== undefined) {
+			return label;
+		}
+		return queryName;
 	}
-	return label;
+	// If the query is not found in queryData and queryFormulas, then return queryName i.e. (A, B, C...., F1, F2...etc.)
+	return queryName;
 };
