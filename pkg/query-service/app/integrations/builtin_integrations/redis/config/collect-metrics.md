@@ -71,7 +71,9 @@ Set the following environment variables in your otel-collector environment:
 # redis endpoint reachable from the otel collector"
 export REDIS_ENDPOINT="localhost:6379"
 
-# The password used to access the Redis instance; must match the password specified in the requirepass server configuration option.
+# password used to access the Redis instance.
+# must match the password specified in the requirepass server configuration option.
+# can be left empty if the redis server is not configured to require a password.
 export REDIS_PASSWORD=""
 
 # region specific SigNoz cloud ingestion endpoint
