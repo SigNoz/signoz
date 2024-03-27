@@ -54,7 +54,7 @@ exporters:
       "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
 
   # export to local collector
-  # otlp/local:
+  # otlp/postgres:
   #   endpoint: "localhost:4317"
   #   tls:
   #     insecure: true
