@@ -1,15 +1,17 @@
 import './PiePanelWrapper.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Group } from '@visx/group';
 import { Pie } from '@visx/shape';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { themeColors } from 'constants/theme';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { useRef, useState } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { PanelWrapperProps, TooltipData } from './panelWrapper.types';
-import { getLabel, tooltipStyles } from './utils';
+import { getLabel, lightenColor, tooltipStyles } from './utils';
 
 function PiePanelWrapper({
 	queryResponse,
@@ -37,6 +39,8 @@ function PiePanelWrapper({
 
 	const panelData =
 		queryResponse.data?.payload?.data.newResult.data.result || [];
+
+	const isDarkMode = useIsDarkMode();
 
 	const pieChartData: {
 		label: string;
@@ -79,7 +83,8 @@ function PiePanelWrapper({
 		if (active === null) {
 			return color;
 		}
-		return active.color === color ? color : `${color}40`;
+		const lightenedColor = lightenColor(color, 0.4); // Adjust the opacity value (0.7 in this case)
+		return active.color === color ? color : lightenedColor;
 	};
 
 	return (
@@ -102,6 +107,7 @@ function PiePanelWrapper({
 										return data.label === active.label ? half : half - 3;
 									}}
 									padAngle={0.02}
+									cornerRadius={3}
 									width={size}
 									height={size}
 								>
@@ -161,13 +167,23 @@ function PiePanelWrapper({
 							<TooltipInPortal
 								top={tooltipTop}
 								left={tooltipLeft}
-								style={tooltipStyles}
+								style={{
+									...tooltipStyles,
+									background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
+									color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400,
+								}}
 							>
-								<div style={{ color: tooltipData.color }}>
-									<strong>{tooltipData.key}</strong>
-								</div>
+								<div
+									style={{
+										background: tooltipData.color,
+										width: '15px',
+										height: '3px',
+										borderRadius: '2px',
+									}}
+								/>
+								{tooltipData.key}
 								<div>
-									<small>{tooltipData.value}</small>
+									<strong>{tooltipData.value}</strong>
 								</div>
 							</TooltipInPortal>
 						)}
