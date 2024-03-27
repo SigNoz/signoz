@@ -15,7 +15,7 @@ import {
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import Download from 'container/DownloadV2/DownloadV2';
-import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
+import ExplorerOptions from 'container/ExplorerOptions/ExplorerOptions';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
@@ -659,7 +659,7 @@ function LogsExplorerViews({
 
 			<GoToTop />
 
-			<ExplorerOptionWrapper
+			<ExplorerOptions
 				disabled={!stagedQuery}
 				query={exportDefaultQuery}
 				isLoading={isUpdateDashboardLoading}
