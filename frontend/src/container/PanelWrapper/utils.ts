@@ -34,6 +34,5 @@ export const getLabel = (
 		}
 		return queryName;
 	}
-	// If the query is not found in queryData and queryFormulas, then return queryName i.e. (A, B, C...., F1, F2...etc.)
-	return queryName;
+	return label;
 };
