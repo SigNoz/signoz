@@ -32,6 +32,7 @@ function PiePanelWrapper({
 
 	const { containerRef, TooltipInPortal } = useTooltipInPortal({
 		scroll: true,
+		detectBounds: true,
 	});
 
 	const panelData =
