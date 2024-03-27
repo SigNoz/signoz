@@ -12,7 +12,10 @@ function QueryChip({ queryData, onClose }: IQueryChipProps): JSX.Element {
 		<QueryChipContainer>
 			<QueryChipItem>{convertMetricKeyToTrace(queryData.tagKey)}</QueryChipItem>
 			<QueryChipItem>{queryData.operator}</QueryChipItem>
-			<QueryChipItem closable onClose={onCloseHandler}>
+			<QueryChipItem
+				closable={queryData.tagKey !== 'resource_deployment_environment'}
+				onClose={onCloseHandler}
+			>
 				{queryData.tagValue.join(', ')}
 			</QueryChipItem>
 		</QueryChipContainer>
