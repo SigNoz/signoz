@@ -1,0 +1,20 @@
+.resourceAttributesFilter-container {
+	display: flex;
+	align-items: center;
+	justify-content: stretch;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 16px;
+
+	.resource-attributes-selector {
+		flex: 1;
+	}
+
+	.environment-selector {
+		min-width: 200px;
+	}
+
+	.ant-form-item {
+		margin-bottom: 0;
+	}
+}

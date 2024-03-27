@@ -12,6 +12,11 @@ function AllAlertList(): JSX.Element {
 			children: <TriggeredAlerts />,
 		},
 		// {
+		// 	label: 'Planned Downtime',
+		// 	key: 'Planned Downtime',
+		// 	// children: <PlannedDowntime />,
+		// },
+		// {
 		// 	label: 'Map Alert Channels',
 		// 	key = 'Map Alert Channels',
 		// 	children: <MapAlertChannels />,

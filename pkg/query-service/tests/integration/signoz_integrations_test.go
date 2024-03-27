@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	mockhouse "github.com/srikanthccv/ClickHouse-go-mock"
@@ -65,18 +66,30 @@ func TestSignozIntegrationLifeCycle(t *testing.T) {
 
 	// Integration connection status should get updated after signal data has been received.
 	testbed.mockLogQueryResponse([]model.SignozLog{})
+	testbed.mockMetricStatusQueryResponse(nil)
 	connectionStatus := testbed.GetIntegrationConnectionStatus(ii.Id)
 	require.NotNil(connectionStatus)
 	require.Nil(connectionStatus.Logs)
+	require.Nil(connectionStatus.Metrics)
 
 	testLog := makeTestSignozLog("test log body", map[string]interface{}{
 		"source": "nginx",
 	})
 	testbed.mockLogQueryResponse([]model.SignozLog{testLog})
+
+	testMetricName := ii.ConnectionTests.Metrics[0]
+	testMetricLastReceivedTs := time.Now().UnixMilli()
+	testbed.mockMetricStatusQueryResponse(&model.MetricStatus{
+		MetricName:           testMetricName,
+		LastReceivedTsMillis: testMetricLastReceivedTs,
+	})
+
 	connectionStatus = testbed.GetIntegrationConnectionStatus(ii.Id)
 	require.NotNil(connectionStatus)
 	require.NotNil(connectionStatus.Logs)
 	require.Equal(connectionStatus.Logs.LastReceivedTsMillis, int64(testLog.Timestamp/1000000))
+	require.NotNil(connectionStatus.Metrics)
+	require.Equal(connectionStatus.Metrics.LastReceivedTsMillis, testMetricLastReceivedTs)
 
 	// Should be able to uninstall integration
 	require.True(availableIntegrations[0].IsInstalled)
@@ -516,6 +529,32 @@ func (tb *IntegrationsTestBed) mockLogQueryResponse(logsInResponse []model.Signo
 	addLogsQueryExpectation(tb.mockClickhouse, logsInResponse)
 }
 
+func (tb *IntegrationsTestBed) mockMetricStatusQueryResponse(expectation *model.MetricStatus) {
+	cols := []mockhouse.ColumnType{}
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "metric_name"})
+	cols = append(cols, mockhouse.ColumnType{Type: "String", Name: "labels"})
+	cols = append(cols, mockhouse.ColumnType{Type: "Int64", Name: "unix_milli"})
+
+	values := [][]any{}
+	if expectation != nil {
+		rowValues := []any{}
+
+		rowValues = append(rowValues, expectation.MetricName)
+
+		labelsJson, err := json.Marshal(expectation.LastReceivedLabels)
+		require.Nil(tb.t, err)
+		rowValues = append(rowValues, labelsJson)
+
+		rowValues = append(rowValues, expectation.LastReceivedTsMillis)
+
+		values = append(values, rowValues)
+	}
+
+	tb.mockClickhouse.ExpectQuery(
+		`SELECT.*metric_name, labels, unix_milli.*from.*signoz_metrics.*where metric_name in.*limit 1.*`,
+	).WillReturnRows(mockhouse.NewRows(cols, values))
+}
+
 // testDB can be injected for sharing a DB across multiple integration testbeds.
 func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed {
 	if testDB == nil {
@@ -529,6 +568,7 @@ func NewIntegrationsTestBed(t *testing.T, testDB *sqlx.DB) *IntegrationsTestBed 
 
 	fm := featureManager.StartManager()
 	reader, mockClickhouse := NewMockClickhouseReader(t, testDB, fm)
+	mockClickhouse.MatchExpectationsInOrder(false)
 
 	apiHandler, err := app.NewAPIHandler(app.APIHandlerOpts{
 		Reader:                 reader,
