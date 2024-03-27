@@ -10,15 +10,27 @@
 		background-color: transparent;
 
 		&.INFO {
-			background-color: #1d212d;
+			background-color: var(--bg-slate-400);
 		}
 
-		&.WARNING {
-			background-color: #ffcd56;
+		&.WARNING, &.WARN {
+			background-color: var(--bg-amber-500);
 		}
 
 		&.ERROR {
-			background-color: #e5484d;
+			background-color: var(--bg-cherry-500);
+		}
+
+		&.TRACE {
+			background-color: var(--bg-robin-300);
+		}
+
+		&.DEBUG {
+			background-color: var(--bg-forest-500);
+		}
+
+		&.FATAL {
+			background-color: var(--bg-sakura-500);
 		}
 	}
 

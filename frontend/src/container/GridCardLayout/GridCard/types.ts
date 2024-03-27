@@ -23,6 +23,7 @@ export interface WidgetGraphComponentProps extends UplotProps {
 	>;
 	errorMessage: string | undefined;
 	name: string;
+	version?: string;
 	onDragSelect: (start: number, end: number) => void;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	threshold?: ReactNode;
@@ -43,6 +44,7 @@ export interface GridCardGraphProps {
 	isQueryEnabled: boolean;
 	variables?: Dashboard['data']['variables'];
 	fillSpans?: boolean;
+	version?: string;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

@@ -32,13 +32,14 @@ import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
-import { getGraphVisibilityStateOnDataChange } from './utils';
+import { getLocalStorageGraphVisibilityState } from './utils';
 
 function WidgetGraphComponent({
 	widget,
 	queryResponse,
 	errorMessage,
 	name,
+	version,
 	threshold,
 	headerMenuList,
 	isWarning,
@@ -61,20 +62,6 @@ function WidgetGraphComponent({
 
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (queryResponse.isSuccess) {
-			const {
-				graphVisibilityStates: localStoredVisibilityState,
-			} = getGraphVisibilityStateOnDataChange({
-				options,
-				isExpandedName: false,
-				name,
-			});
-			setGraphVisibility(localStoredVisibilityState);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [queryResponse.isSuccess]);
 
 	useEffect(() => {
 		if (!lineChartRef.current) return;
@@ -218,6 +205,15 @@ function WidgetGraphComponent({
 		const existingSearchParams = new URLSearchParams(search);
 		existingSearchParams.delete(QueryParams.expandedWidgetId);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
+		if (queryResponse.data?.payload) {
+			const {
+				graphVisibilityStates: localStoredVisibilityState,
+			} = getLocalStorageGraphVisibilityState({
+				apiResponse: queryResponse.data.payload.data.result,
+				name,
+			});
+			setGraphVisibility(localStoredVisibilityState);
+		}
 		history.push({
 			pathname,
 			search: createQueryParams(updatedQueryParams),
@@ -283,14 +279,13 @@ function WidgetGraphComponent({
 			>
 				<FullView
 					name={`${name}expanded`}
+					version={version}
 					originalName={name}
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
 					parentChartRef={lineChartRef}
-					parentGraphVisibilityState={setGraphVisibility}
 					onDragSelect={onDragSelect}
-					options={options}
 				/>
 			</Modal>
 

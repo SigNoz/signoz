@@ -14,7 +14,7 @@ import (
 
 func TestThresholdRuleCombinations(t *testing.T) {
 	postableRule := PostableRule{
-		Alert:      "Tricky Condition Tests",
+		AlertName:  "Tricky Condition Tests",
 		AlertType:  "METRIC_BASED_ALERT",
 		RuleType:   RuleTypeThreshold,
 		EvalWindow: Duration(5 * time.Minute),
@@ -339,7 +339,7 @@ func TestNormalizeLabelName(t *testing.T) {
 
 func TestPrepareLinksToLogs(t *testing.T) {
 	postableRule := PostableRule{
-		Alert:      "Tricky Condition Tests",
+		AlertName:  "Tricky Condition Tests",
 		AlertType:  "LOGS_BASED_ALERT",
 		RuleType:   RuleTypeThreshold,
 		EvalWindow: Duration(5 * time.Minute),
@@ -376,12 +376,12 @@ func TestPrepareLinksToLogs(t *testing.T) {
 	ts := time.UnixMilli(1705469040000)
 
 	link := rule.prepareLinksToLogs(ts, labels.Labels{})
-	assert.Contains(t, link, "&timeRange=%7B%22start%22%3A1705468740000%2C%22end%22%3A1705469040000%2C%22pageSize%22%3A100%7D&startTime=1705468740000&endTime=1705469040000")
+	assert.Contains(t, link, "&timeRange=%7B%22start%22%3A1705468620000%2C%22end%22%3A1705468920000%2C%22pageSize%22%3A100%7D&startTime=1705468620000&endTime=1705468920000")
 }
 
 func TestPrepareLinksToTraces(t *testing.T) {
 	postableRule := PostableRule{
-		Alert:      "Links to traces test",
+		AlertName:  "Links to traces test",
 		AlertType:  "TRACES_BASED_ALERT",
 		RuleType:   RuleTypeThreshold,
 		EvalWindow: Duration(5 * time.Minute),
@@ -418,5 +418,5 @@ func TestPrepareLinksToTraces(t *testing.T) {
 	ts := time.UnixMilli(1705469040000)
 
 	link := rule.prepareLinksToTraces(ts, labels.Labels{})
-	assert.Contains(t, link, "&timeRange=%7B%22start%22%3A1705468740000000000%2C%22end%22%3A1705469040000000000%2C%22pageSize%22%3A100%7D&startTime=1705468740000000000&endTime=1705469040000000000")
+	assert.Contains(t, link, "&timeRange=%7B%22start%22%3A1705468620000000000%2C%22end%22%3A1705468920000000000%2C%22pageSize%22%3A100%7D&startTime=1705468620000000000&endTime=1705468920000000000")
 }

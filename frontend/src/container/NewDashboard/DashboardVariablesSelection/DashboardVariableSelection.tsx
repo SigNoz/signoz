@@ -1,5 +1,4 @@
 import { Row } from 'antd';
-import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -11,12 +10,8 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const {
 		selectedDashboard,
 		setSelectedDashboard,
-		dashboardId,
-	} = useDashboard();
-
-	const {
 		updateLocalStorageDashboardVariables,
-	} = useDashboardVariablesFromLocalStorage(dashboardId);
+	} = useDashboard();
 
 	const { data } = selectedDashboard || {};
 

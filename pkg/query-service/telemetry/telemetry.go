@@ -22,41 +22,46 @@ import (
 )
 
 const (
-	TELEMETRY_EVENT_PATH                     = "API Call"
-	TELEMETRY_EVENT_USER                     = "User"
-	TELEMETRY_EVENT_INPRODUCT_FEEDBACK       = "InProduct Feedback Submitted"
-	TELEMETRY_EVENT_NUMBER_OF_SERVICES       = "Number of Services"
-	TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH    = "Number of Services V2"
-	TELEMETRY_EVENT_HEART_BEAT               = "Heart Beat"
-	TELEMETRY_EVENT_ORG_SETTINGS             = "Org Settings"
-	DEFAULT_SAMPLING                         = 0.1
-	TELEMETRY_LICENSE_CHECK_FAILED           = "License Check Failed"
-	TELEMETRY_LICENSE_UPDATED                = "License Updated"
-	TELEMETRY_LICENSE_ACT_FAILED             = "License Activation Failed"
-	TELEMETRY_EVENT_ENVIRONMENT              = "Environment"
-	TELEMETRY_EVENT_LANGUAGE                 = "Language"
-	TELEMETRY_EVENT_SERVICE                  = "ServiceName"
-	TELEMETRY_EVENT_LOGS_FILTERS             = "Logs Filters"
-	TELEMETRY_EVENT_DISTRIBUTED              = "Distributed"
-	TELEMETRY_EVENT_QUERY_RANGE_V3           = "Query Range V3 Metadata"
-	TELEMETRY_EVENT_DASHBOARDS_ALERTS        = "Dashboards/Alerts Info"
-	TELEMETRY_EVENT_ACTIVE_USER              = "Active User"
-	TELEMETRY_EVENT_ACTIVE_USER_PH           = "Active User V2"
-	TELEMETRY_EVENT_USER_INVITATION_SENT     = "User Invitation Sent"
-	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED = "User Invitation Accepted"
-	DEFAULT_CLOUD_EMAIL                      = "admin@signoz.cloud"
+	TELEMETRY_EVENT_PATH                             = "API Call"
+	TELEMETRY_EVENT_USER                             = "User"
+	TELEMETRY_EVENT_INPRODUCT_FEEDBACK               = "InProduct Feedback Submitted"
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES               = "Number of Services"
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH            = "Number of Services V2"
+	TELEMETRY_EVENT_HEART_BEAT                       = "Heart Beat"
+	TELEMETRY_EVENT_ORG_SETTINGS                     = "Org Settings"
+	DEFAULT_SAMPLING                                 = 0.1
+	TELEMETRY_LICENSE_CHECK_FAILED                   = "License Check Failed"
+	TELEMETRY_LICENSE_UPDATED                        = "License Updated"
+	TELEMETRY_LICENSE_ACT_FAILED                     = "License Activation Failed"
+	TELEMETRY_EVENT_ENVIRONMENT                      = "Environment"
+	TELEMETRY_EVENT_LANGUAGE                         = "Language"
+	TELEMETRY_EVENT_SERVICE                          = "ServiceName"
+	TELEMETRY_EVENT_LOGS_FILTERS                     = "Logs Filters"
+	TELEMETRY_EVENT_DISTRIBUTED                      = "Distributed"
+	TELEMETRY_EVENT_QUERY_RANGE_API                  = "Query Range API"
+	TELEMETRY_EVENT_DASHBOARDS_ALERTS                = "Dashboards/Alerts Info"
+	TELEMETRY_EVENT_ACTIVE_USER                      = "Active User"
+	TELEMETRY_EVENT_ACTIVE_USER_PH                   = "Active User V2"
+	TELEMETRY_EVENT_USER_INVITATION_SENT             = "User Invitation Sent"
+	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED         = "User Invitation Accepted"
+	TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY = "Successful Dashboard Panel Query"
+	TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY           = "Successful Alert Query"
+	DEFAULT_CLOUD_EMAIL                              = "admin@signoz.cloud"
 )
 
 var SAAS_EVENTS_LIST = map[string]struct{}{
-	TELEMETRY_EVENT_NUMBER_OF_SERVICES:       {},
-	TELEMETRY_EVENT_ACTIVE_USER:              {},
-	TELEMETRY_EVENT_HEART_BEAT:               {},
-	TELEMETRY_EVENT_LANGUAGE:                 {},
-	TELEMETRY_EVENT_SERVICE:                  {},
-	TELEMETRY_EVENT_ENVIRONMENT:              {},
-	TELEMETRY_EVENT_USER_INVITATION_SENT:     {},
-	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED: {},
-	TELEMETRY_EVENT_DASHBOARDS_ALERTS:        {},
+	TELEMETRY_EVENT_NUMBER_OF_SERVICES:               {},
+	TELEMETRY_EVENT_ACTIVE_USER:                      {},
+	TELEMETRY_EVENT_HEART_BEAT:                       {},
+	TELEMETRY_EVENT_LANGUAGE:                         {},
+	TELEMETRY_EVENT_SERVICE:                          {},
+	TELEMETRY_EVENT_ENVIRONMENT:                      {},
+	TELEMETRY_EVENT_USER_INVITATION_SENT:             {},
+	TELEMETRY_EVENT_USER_INVITATION_ACCEPTED:         {},
+	TELEMETRY_EVENT_DASHBOARDS_ALERTS:                {},
+	TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY: {},
+	TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY:           {},
+	// TELEMETRY_EVENT_QUERY_RANGE_API:                  {}, // this event is not part of SAAS_EVENTS_LIST as it may cause too many events to be sent
 }
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -93,9 +98,10 @@ func (a *Telemetry) IsSampled() bool {
 
 }
 
-func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) (bool, bool) {
+func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) (bool, bool, bool) {
 	signozLogsUsed := false
 	signozMetricsUsed := false
+	signozTracesUsed := false
 
 	if postData.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		for _, query := range postData.CompositeQuery.BuilderQueries {
@@ -105,6 +111,8 @@ func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) 
 				!strings.Contains(query.AggregateAttribute.Key, "signoz_") &&
 				len(query.AggregateAttribute.Key) > 0 {
 				signozMetricsUsed = true
+			} else if query.DataSource == v3.DataSourceTraces && len(query.Filters.Items) > 0 {
+				signozTracesUsed = true
 			}
 		}
 	} else if postData.CompositeQuery.QueryType == v3.QueryTypePromQL {
@@ -118,9 +126,15 @@ func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) 
 			if strings.Contains(query.Query, "signoz_metrics") && len(query.Query) > 0 {
 				signozMetricsUsed = true
 			}
+			if strings.Contains(query.Query, "signoz_logs") && len(query.Query) > 0 {
+				signozLogsUsed = true
+			}
+			if strings.Contains(query.Query, "signoz_traces") && len(query.Query) > 0 {
+				signozTracesUsed = true
+			}
 		}
 	}
-	return signozLogsUsed, signozMetricsUsed
+	return signozLogsUsed, signozMetricsUsed, signozTracesUsed
 }
 
 func (telemetry *Telemetry) AddActiveTracesUser() {
@@ -269,28 +283,38 @@ func createTelemetry() {
 				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
 
 				alertsInfo, err := telemetry.reader.GetAlertsInfo(context.Background())
-				if err != nil {
-					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
-				} else {
+				if err == nil {
 					dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
 					if err == nil {
-						dashboardsAlertsData := map[string]interface{}{
-							"totalDashboards":   dashboardsInfo.TotalDashboards,
-							"logsBasedPanels":   dashboardsInfo.LogsBasedPanels,
-							"metricBasedPanels": dashboardsInfo.MetricBasedPanels,
-							"tracesBasedPanels": dashboardsInfo.TracesBasedPanels,
-							"totalAlerts":       alertsInfo.TotalAlerts,
-							"logsBasedAlerts":   alertsInfo.LogsBasedAlerts,
-							"metricBasedAlerts": alertsInfo.MetricBasedAlerts,
-							"tracesBasedAlerts": alertsInfo.TracesBasedAlerts,
+						channels, err := telemetry.reader.GetChannels()
+						if err == nil {
+							savedViewsInfo, err := telemetry.reader.GetSavedViewsInfo(context.Background())
+							if err == nil {
+								dashboardsAlertsData := map[string]interface{}{
+									"totalDashboards":                 dashboardsInfo.TotalDashboards,
+									"totalDashboardsWithPanelAndName": dashboardsInfo.TotalDashboardsWithPanelAndName,
+									"logsBasedPanels":                 dashboardsInfo.LogsBasedPanels,
+									"metricBasedPanels":               dashboardsInfo.MetricBasedPanels,
+									"tracesBasedPanels":               dashboardsInfo.TracesBasedPanels,
+									"totalAlerts":                     alertsInfo.TotalAlerts,
+									"logsBasedAlerts":                 alertsInfo.LogsBasedAlerts,
+									"metricBasedAlerts":               alertsInfo.MetricBasedAlerts,
+									"tracesBasedAlerts":               alertsInfo.TracesBasedAlerts,
+									"totalChannels":                   len(*channels),
+									"totalSavedViews":                 savedViewsInfo.TotalSavedViews,
+									"logsSavedViews":                  savedViewsInfo.LogsSavedViews,
+									"tracesSavedViews":                savedViewsInfo.TracesSavedViews,
+								}
+								// send event only if there are dashboards or alerts or channels
+								if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0 {
+									telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
+								}
+							}
 						}
-						// send event only if there are dashboards or alerts
-						if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 {
-							telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
-						}
-					} else {
-						telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
 					}
+				}
+				if err != nil {
+					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
 				}
 
 				getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(context.Background())
@@ -405,7 +429,7 @@ func (a *Telemetry) checkEvents(event string) bool {
 func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, opts ...bool) {
 
 	// ignore telemetry for default user
-	if userEmail == DEFAULT_CLOUD_EMAIL {
+	if userEmail == DEFAULT_CLOUD_EMAIL || a.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
 		return
 	}
 
@@ -443,7 +467,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 		}
 	}
 
-	// zap.S().Info(data)
+	// zap.L().Info(data)
 	properties := analytics.NewProperties()
 	properties.Set("version", version.GetVersion())
 	properties.Set("deploymentType", getDeploymentType())

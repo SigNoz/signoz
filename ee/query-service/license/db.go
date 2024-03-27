@@ -97,7 +97,7 @@ func (r *Repo) InsertLicense(ctx context.Context, l *model.License) error {
 		l.ValidationMessage)
 
 	if err != nil {
-		zap.S().Errorf("error in inserting license data: ", zap.Error(err))
+		zap.L().Error("error in inserting license data: ", zap.Error(err))
 		return fmt.Errorf("failed to insert license in db: %v", err)
 	}
 
@@ -121,7 +121,7 @@ func (r *Repo) UpdatePlanDetails(ctx context.Context,
 	_, err := r.db.ExecContext(ctx, query, planDetails, time.Now(), key)
 
 	if err != nil {
-		zap.S().Errorf("error in updating license: ", zap.Error(err))
+		zap.L().Error("error in updating license: ", zap.Error(err))
 		return fmt.Errorf("failed to update license in db: %v", err)
 	}
 

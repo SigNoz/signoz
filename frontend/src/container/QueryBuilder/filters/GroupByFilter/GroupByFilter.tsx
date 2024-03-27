@@ -1,11 +1,7 @@
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
-import {
-	idDivider,
-	QueryBuilderKeys,
-	selectValueDivider,
-} from 'constants/queryBuilder';
+import { idDivider, QueryBuilderKeys } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import useDebounce from 'hooks/useDebounce';
@@ -83,11 +79,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 								dataType={item.dataType || ''}
 							/>
 						),
-						value: `${transformStringWithPrefix({
-							str: item.key,
-							prefix: item.type || '',
-							condition: !item.isColumn,
-						})}${selectValueDivider}${item.id}`,
+						value: `${item.id}`,
 					})) || [];
 
 				setOptionsData(options);
@@ -135,7 +127,8 @@ export const GroupByFilter = memo(function GroupByFilter({
 			const keys = await getAttributeKeys();
 
 			const groupByValues: BaseAutocompleteData[] = values.map((item) => {
-				const [currentValue, id] = item.value.split(selectValueDivider);
+				const id = item.value;
+				const currentValue = item.value.split(idDivider)[0];
 
 				if (id && id.includes(idDivider)) {
 					const attribute = keys.find((item) => item.id === id);
@@ -174,11 +167,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 						condition: !item.isColumn,
 					}),
 				)}`,
-				value: `${transformStringWithPrefix({
-					str: item.key,
-					prefix: item.type || '',
-					condition: !item.isColumn,
-				})}${selectValueDivider}${item.id}`,
+				value: `${item.id}`,
 			}),
 		);
 

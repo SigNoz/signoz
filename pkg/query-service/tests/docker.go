@@ -13,7 +13,6 @@ import (
 	"log"
 
 	minio "github.com/minio/minio-go/v6"
-	"go.uber.org/zap"
 )
 
 const (
@@ -36,7 +35,7 @@ func init() {
 	} else if goArch == "amd64" {
 		composeFile = "./test-deploy/docker-compose.yaml"
 	} else {
-		zap.S().Fatalf("Unsupported architecture: %s", goArch)
+		log.Fatalf("Unsupported architecture: %s", goArch)
 	}
 }
 

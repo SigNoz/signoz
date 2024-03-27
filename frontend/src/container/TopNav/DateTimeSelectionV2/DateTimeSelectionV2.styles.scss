@@ -58,8 +58,6 @@
 
 .date-time-root {
 	.ant-popover-inner {
-		width: 532px;
-		min-height: 334px;
 		border-radius: 4px !important;
 		border: 1px solid var(--bg-slate-400);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2) !important;
@@ -129,11 +127,19 @@
 	}
 
 	.relative-date-time {
-		width: 307px;
 		display: flex;
 		flex-direction: column;
 		gap: 35px;
 		padding: 13px 14px;
+
+		&.date-picker {
+			width: 480px;
+			height: 430px;
+		}
+
+		&.relative-times {
+			width: 320px;
+		}
 
 		.relative-date-time-section {
 			display: flex;

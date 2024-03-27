@@ -6,11 +6,13 @@ import './uPlotLib.styles.scss';
 
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
+import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { Dimensions } from 'hooks/useDimensions';
 import { convertValue } from 'lib/getConvertedValue';
 import _noop from 'lodash-es/noop';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import uPlot from 'uplot';
 
 import onClickPlugin, { OnClickPluginOpts } from './plugins/onClickPlugin';
@@ -39,6 +41,7 @@ export interface GetUPlotChartOptions {
 	maxTimeScale?: number;
 	softMin: number | null;
 	softMax: number | null;
+	currentQuery?: Query;
 }
 
 export const getUPlotChartOptions = ({
@@ -58,6 +61,7 @@ export const getUPlotChartOptions = ({
 	softMax,
 	softMin,
 	panelType,
+	currentQuery,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -203,6 +207,11 @@ export const getUPlotChartOptions = ({
 											newGraphVisibilityStates.fill(false);
 											newGraphVisibilityStates[index + 1] = true;
 										}
+										saveLegendEntriesToLocalStorage({
+											options: self,
+											graphVisibilityState: newGraphVisibilityStates,
+											name: id || '',
+										});
 										return newGraphVisibilityStates;
 									});
 								}
@@ -217,6 +226,7 @@ export const getUPlotChartOptions = ({
 			widgetMetaData: apiResponse?.data.result,
 			graphsVisibilityStates,
 			panelType,
+			currentQuery,
 		}),
 		axes: getAxes(isDarkMode, yAxisUnit),
 	};

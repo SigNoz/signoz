@@ -23,9 +23,8 @@ import {
 } from 'react';
 
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
-import LogStateIndicator, {
-	LogType,
-} from '../LogStateIndicator/LogStateIndicator';
+import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
+import { getLogIndicatorType } from '../LogStateIndicator/utils';
 // styles
 import { RawLogContent, RawLogViewContainer } from './styles';
 import { RawLogViewProps } from './types';
@@ -64,7 +63,7 @@ function RawLogView({
 
 	const severityText = data.severity_text ? `${data.severity_text} |` : '';
 
-	const logType = data?.attributes_string?.log_level || LogType.INFO;
+	const logType = getLogIndicatorType(data);
 
 	const updatedSelecedFields = useMemo(
 		() => selectedFields.filter((e) => e.name !== 'id'),
@@ -164,7 +163,11 @@ function RawLogView({
 		>
 			<LogStateIndicator
 				type={logType}
-				isActive={activeLog?.id === data.id || activeContextLog?.id === data.id}
+				isActive={
+					activeLog?.id === data.id ||
+					activeContextLog?.id === data.id ||
+					isActiveLog
+				}
 			/>
 
 			<RawLogContent

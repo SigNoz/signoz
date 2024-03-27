@@ -67,7 +67,9 @@ const config = {
 	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	devServer: {
-		historyApiFallback: true,
+		historyApiFallback: {
+			disableDotRule: true,
+		},
 		open: true,
 		hot: true,
 		liveReload: true,

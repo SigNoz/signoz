@@ -3,6 +3,7 @@ import { themeColors } from 'constants/theme';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import getLabelName from 'lib/getLabelName';
+import { get } from 'lodash-es';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { placement } from '../placement';
@@ -18,6 +19,7 @@ interface UplotTooltipDataProps {
 	value: number;
 	tooltipValue: string;
 	textContent: string;
+	queryName: string;
 }
 
 const generateTooltipContent = (
@@ -26,6 +28,7 @@ const generateTooltipContent = (
 	idx: number,
 	yAxisUnit?: string,
 	series?: uPlot.Options['series'],
+	isBillingUsageGraphs?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -35,6 +38,7 @@ const generateTooltipContent = (
 
 	let tooltipTitle = '';
 	const formattedData: Record<string, UplotTooltipDataProps> = {};
+	const duplicatedLegendLabels: Record<string, true> = {};
 
 	function sortTooltipContentBasedOnValue(
 		tooltipDataObj: Record<string, UplotTooltipDataProps>,
@@ -47,18 +51,61 @@ const generateTooltipContent = (
 	if (Array.isArray(series) && series.length > 0) {
 		series.forEach((item, index) => {
 			if (index === 0) {
-				tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY HH:mm:ss');
+				if (isBillingUsageGraphs) {
+					tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY');
+				} else {
+					tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY HH:mm:ss');
+				}
 			} else if (item.show) {
-				const { metric = {}, queryName = '', legend = '' } =
-					seriesList[index - 1] || {};
+				const {
+					metric = {},
+					queryName = '',
+					legend = '',
+					quantity = [],
+					unit = '',
+				} = seriesList[index - 1] || {};
 
 				const value = data[index][idx];
+				const dataIngested = quantity[idx];
 				const label = getLabelName(metric, queryName || '', legend || '');
 
-				const color = generateColor(label, themeColors.chartcolors);
+				let color = generateColor(label, themeColors.chartcolors);
+
+				// in case of billing graph pick colors from the series options
+				if (isBillingUsageGraphs) {
+					let clr;
+					series.forEach((item) => {
+						if (item.label === label) {
+							clr = get(item, '_fill');
+						}
+					});
+					color = clr ?? color;
+				}
+
+				let tooltipItemLabel = label;
 
 				if (Number.isFinite(value)) {
 					const tooltipValue = getToolTipValue(value, yAxisUnit);
+					const dataIngestedFormated = getToolTipValue(dataIngested);
+					if (
+						duplicatedLegendLabels[label] ||
+						Object.prototype.hasOwnProperty.call(formattedData, label)
+					) {
+						duplicatedLegendLabels[label] = true;
+						const tempDataObj = formattedData[label];
+
+						if (tempDataObj) {
+							const newLabel = `${tempDataObj.queryName}: ${tempDataObj.label}`;
+
+							tempDataObj.textContent = `${newLabel} : ${tempDataObj.tooltipValue}`;
+
+							formattedData[newLabel] = tempDataObj;
+
+							delete formattedData[label];
+						}
+
+						tooltipItemLabel = `${queryName}: ${label}`;
+					}
 
 					const dataObj = {
 						show: item.show || false,
@@ -69,11 +116,15 @@ const generateTooltipContent = (
 						focus: item?._focus || false,
 						value,
 						tooltipValue,
-						textContent: `${label} : ${tooltipValue}`,
+						queryName,
+						textContent: isBillingUsageGraphs
+							? `${tooltipItemLabel} : $${tooltipValue} - ${dataIngestedFormated} ${unit}`
+							: `${tooltipItemLabel} : ${tooltipValue}`,
 					};
 
 					tooltipCount += 1;
-					formattedData[label] = dataObj;
+
+					formattedData[tooltipItemLabel] = dataObj;
 				}
 			}
 		});
@@ -143,6 +194,7 @@ const generateTooltipContent = (
 const tooltipPlugin = (
 	apiResponse: MetricRangePayloadProps | undefined,
 	yAxisUnit?: string,
+	isBillingUsageGraphs?: boolean,
 ): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
@@ -203,6 +255,7 @@ const tooltipPlugin = (
 							idx,
 							yAxisUnit,
 							u.series,
+							isBillingUsageGraphs,
 						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });

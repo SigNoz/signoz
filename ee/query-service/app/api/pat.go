@@ -43,8 +43,8 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pat := model.PAT{
-		Name: 	req.Name,
-		Role: 	req.Role,
+		Name:      req.Name,
+		Role:      req.Role,
 		ExpiresAt: req.ExpiresInDays,
 	}
 	err = validatePATRequest(pat)
@@ -65,7 +65,7 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		pat.ExpiresAt = time.Now().Unix() + (pat.ExpiresAt * 24 * 60 * 60)
 	}
 
-	zap.S().Debugf("Got Create PAT request: %+v", pat)
+	zap.L().Info("Got Create PAT request", zap.Any("pat", pat))
 	var apierr basemodel.BaseApiError
 	if pat, apierr = ah.AppDao().CreatePAT(ctx, pat); apierr != nil {
 		RespondError(w, apierr, nil)
@@ -115,7 +115,7 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 	req.UpdatedByUserID = user.Id
 	id := mux.Vars(r)["id"]
 	req.UpdatedAt = time.Now().Unix()
-	zap.S().Debugf("Got Update PAT request: %+v", req)
+	zap.L().Info("Got Update PAT request", zap.Any("pat", req))
 	var apierr basemodel.BaseApiError
 	if apierr = ah.AppDao().UpdatePAT(ctx, req, id); apierr != nil {
 		RespondError(w, apierr, nil)
@@ -135,7 +135,7 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	zap.S().Infof("Get PATs for user: %+v", user.Id)
+	zap.L().Info("Get PATs for user", zap.String("user_id", user.Id))
 	pats, apierr := ah.AppDao().ListPATs(ctx)
 	if apierr != nil {
 		RespondError(w, apierr, nil)
@@ -156,7 +156,7 @@ func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	zap.S().Debugf("Revoke PAT with id: %+v", id)
+	zap.L().Info("Revoke PAT with id", zap.String("id", id))
 	if apierr := ah.AppDao().RevokePAT(ctx, id, user.Id); apierr != nil {
 		RespondError(w, apierr, nil)
 		return

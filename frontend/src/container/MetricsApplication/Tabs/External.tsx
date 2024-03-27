@@ -1,4 +1,5 @@
 import { Col } from 'antd';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import {
@@ -31,7 +32,9 @@ import {
 function External(): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+
+	const servicename = decodeURIComponent(encodedServiceName);
 	const { queries } = useResourceAttribute();
 
 	const tagFilterItems = useMemo(
@@ -165,6 +168,7 @@ function External(): JSX.Element {
 										'external_call_error_percentage',
 									);
 								}}
+								version={ENTITY_VERSION_V4}
 							/>
 						</GraphContainer>
 					</Card>
@@ -201,6 +205,7 @@ function External(): JSX.Element {
 										'external_call_duration',
 									);
 								}}
+								version={ENTITY_VERSION_V4}
 							/>
 						</GraphContainer>
 					</Card>
@@ -238,6 +243,7 @@ function External(): JSX.Element {
 										'external_call_rps_by_address',
 									)
 								}
+								version={ENTITY_VERSION_V4}
 							/>
 						</GraphContainer>
 					</Card>
@@ -274,6 +280,7 @@ function External(): JSX.Element {
 										'external_call_duration_by_address',
 									);
 								}}
+								version={ENTITY_VERSION_V4}
 							/>
 						</GraphContainer>
 					</Card>

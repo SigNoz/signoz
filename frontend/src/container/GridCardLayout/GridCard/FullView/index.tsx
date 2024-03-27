@@ -6,6 +6,7 @@ import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import {
@@ -20,7 +21,7 @@ import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariab
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -28,7 +29,7 @@ import uPlot from 'uplot';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
-import { getGraphVisibilityStateOnDataChange } from '../utils';
+import { getLocalStorageGraphVisibilityState } from '../utils';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
@@ -39,14 +40,13 @@ function FullView({
 	fullViewOptions = true,
 	onClickHandler,
 	name,
+	version,
 	originalName,
 	yAxisUnit,
-	options,
 	onDragSelect,
 	isDependedDataLoaded = false,
 	onToggleModelHandler,
 	parentChartRef,
-	parentGraphVisibilityState,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -58,20 +58,6 @@ function FullView({
 	const [chartOptions, setChartOptions] = useState<uPlot.Options>();
 
 	const { selectedDashboard, isDashboardLocked } = useDashboard();
-
-	const { graphVisibilityStates: localStoredVisibilityStates } = useMemo(
-		() =>
-			getGraphVisibilityStateOnDataChange({
-				options,
-				isExpandedName: false,
-				name: originalName,
-			}),
-		[options, originalName],
-	);
-
-	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState(
-		localStoredVisibilityStates,
-	);
 
 	const getSelectedTime = useCallback(
 		() =>
@@ -91,16 +77,34 @@ function FullView({
 	const response = useGetQueryRange(
 		{
 			selectedTime: selectedTime.enum,
-			graphType: widget.panelTypes,
+			graphType:
+				widget.panelTypes === PANEL_TYPES.BAR
+					? PANEL_TYPES.TIME_SERIES
+					: widget.panelTypes,
 			query: updatedQuery,
 			globalSelectedInterval: globalSelectedTime,
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		},
+		selectedDashboard?.data?.version || version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: `FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
 			enabled: !isDependedDataLoaded && widget.panelTypes !== PANEL_TYPES.LIST, // Internally both the list view panel has it's own query range api call, so we don't need to call it again
 		},
 	);
+
+	const [graphsVisibilityStates, setGraphsVisibilityStates] = useState<
+		boolean[]
+	>(Array(response.data?.payload.data.result.length).fill(true));
+
+	useEffect(() => {
+		const {
+			graphVisibilityStates: localStoredVisibilityState,
+		} = getLocalStorageGraphVisibilityState({
+			apiResponse: response.data?.payload.data.result || [],
+			name: originalName,
+		});
+		setGraphsVisibilityStates(localStoredVisibilityState);
+	}, [originalName, response.data?.payload.data.result]);
 
 	const canModifyChart = useChartMutable({
 		panelType: widget.panelTypes,
@@ -144,6 +148,7 @@ function FullView({
 				: 300;
 
 			const newChartOptions = getUPlotChartOptions({
+				id: originalName,
 				yAxisUnit: yAxisUnit || '',
 				apiResponse: response.data?.payload,
 				dimensions: {
@@ -171,8 +176,7 @@ function FullView({
 		graphsVisibilityStates?.forEach((e, i) => {
 			fullViewChartRef?.current?.toggleGraph(i, e);
 		});
-		parentGraphVisibilityState(graphsVisibilityStates);
-	}, [graphsVisibilityStates, parentGraphVisibilityState]);
+	}, [graphsVisibilityStates]);
 
 	const isListView = widget.panelTypes === PANEL_TYPES.LIST;
 
