@@ -246,7 +246,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 					}
 					queries[queryName] = queryString
 				default:
-					zap.S().Errorf("Unknown data source %s", query.DataSource)
+					zap.L().Error("Unknown data source", zap.String("dataSource", string(query.DataSource)))
 				}
 			}
 		}

@@ -18,14 +18,14 @@ import (
 
 func (ah *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
 	if !ah.CheckFeature(basemodel.CustomMetricsFunction) {
-		zap.S().Info("CustomMetricsFunction feature is not enabled in this plan")
+		zap.L().Info("CustomMetricsFunction feature is not enabled in this plan")
 		ah.APIHandler.QueryRangeMetricsV2(w, r)
 		return
 	}
 	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
+		zap.L().Error("Error in parsing metric query params", zap.Error(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}

@@ -3,9 +3,7 @@ import '../../../lib/uPlotLib/uPlotLib.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
 import { Card, Flex, Typography } from 'antd';
-import { getComponentForPanelType } from 'constants/panelTypes';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { PropsTypePropsMap } from 'container/GridPanelSwitch/types';
+import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import tooltipPlugin from 'lib/uPlotLib/plugins/tooltipPlugin';
@@ -14,7 +12,7 @@ import getRenderer from 'lib/uPlotLib/utils/getRenderer';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getXAxisScale } from 'lib/uPlotLib/utils/getXAxisScale';
 import { getYAxisScale } from 'lib/uPlotLib/utils/getYAxisScale';
-import { FC, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import uPlot from 'uplot';
 
 import {
@@ -43,6 +41,21 @@ const paths = (
 	return renderer(u, seriesIdx, idx0, idx1, extendGap, buildClip);
 };
 
+const calculateStartEndTime = (
+	data: any,
+): { startTime: number; endTime: number } => {
+	const timestamps: number[] = [];
+	data?.details?.breakdown?.forEach((breakdown: any) => {
+		breakdown?.dayWiseBreakdown?.breakdown.forEach((entry: any) => {
+			timestamps.push(entry?.timestamp);
+		});
+	});
+	const billingTime = [data?.billingPeriodStart, data?.billingPeriodEnd];
+	const startTime: number = Math.min(...timestamps, ...billingTime);
+	const endTime: number = Math.max(...timestamps, ...billingTime);
+	return { startTime, endTime };
+};
+
 export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 	const { data, billAmount } = props;
 	const graphCompatibleData = useMemo(
@@ -54,11 +67,9 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const containerDimensions = useResizeObserver(graphRef);
 
-	const { billingPeriodStart: startTime, billingPeriodEnd: endTime } = data;
-
-	const Component = getComponentForPanelType(PANEL_TYPES.BAR) as FC<
-		PropsTypePropsMap[PANEL_TYPES]
-	>;
+	const { startTime, endTime } = useMemo(() => calculateStartEndTime(data), [
+		data,
+	]);
 
 	const getGraphSeries = (color: string, label: string): any => ({
 		drawStyle: 'bars',
@@ -183,7 +194,7 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 				</Flex>
 			</Flex>
 			<div ref={graphRef} style={{ height: '100%', paddingBottom: 48 }}>
-				<Component data={chartData} options={optionsForChart} />
+				<Uplot data={chartData} options={optionsForChart} />
 			</div>
 		</Card>
 	);

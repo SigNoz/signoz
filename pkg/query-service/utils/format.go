@@ -183,11 +183,11 @@ func ClickHouseFormattedValue(v interface{}) string {
 		case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64, float32, float64, bool:
 			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
 		default:
-			zap.S().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
+			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
 			return ""
 		}
 	default:
-		zap.S().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
+		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
 		return ""
 	}
 }

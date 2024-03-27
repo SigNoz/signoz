@@ -17,25 +17,25 @@ import (
 func GetUserFromRequest(r *http.Request, apiHandler *api.APIHandler) (*basemodel.UserPayload, error) {
 	patToken := r.Header.Get("SIGNOZ-API-KEY")
 	if len(patToken) > 0 {
-		zap.S().Debugf("Received a non-zero length PAT token")
+		zap.L().Debug("Received a non-zero length PAT token")
 		ctx := context.Background()
 		dao := apiHandler.AppDao()
 
 		pat, err := dao.GetPAT(ctx, patToken)
 		if err == nil && pat != nil {
-			zap.S().Debugf("Found valid PAT: %+v", pat)
+			zap.L().Debug("Found valid PAT: ", zap.Any("pat", pat))
 			if pat.ExpiresAt < time.Now().Unix() && pat.ExpiresAt != 0 {
-				zap.S().Debugf("PAT has expired: %+v", pat)
+				zap.L().Info("PAT has expired: ", zap.Any("pat", pat))
 				return nil, fmt.Errorf("PAT has expired")
 			}
 			group, apiErr := dao.GetGroupByName(ctx, pat.Role)
 			if apiErr != nil {
-				zap.S().Debugf("Error while getting group for PAT: %+v", apiErr)
+				zap.L().Error("Error while getting group for PAT: ", zap.Any("apiErr", apiErr))
 				return nil, apiErr
 			}
 			user, err := dao.GetUser(ctx, pat.UserID)
 			if err != nil {
-				zap.S().Debugf("Error while getting user for PAT: %+v", err)
+				zap.L().Error("Error while getting user for PAT: ", zap.Error(err))
 				return nil, err
 			}
 			telemetry.GetInstance().SetPatTokenUser()
@@ -48,7 +48,7 @@ func GetUserFromRequest(r *http.Request, apiHandler *api.APIHandler) (*basemodel
 			}, nil
 		}
 		if err != nil {
-			zap.S().Debugf("Error while getting user for PAT: %+v", err)
+			zap.L().Error("Error while getting user for PAT: ", zap.Error(err))
 			return nil, err
 		}
 	}
