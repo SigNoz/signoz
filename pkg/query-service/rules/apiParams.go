@@ -31,7 +31,7 @@ func newApiErrorBadData(err error) *model.ApiError {
 
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
-	Alert       string   `yaml:"alert,omitempty" json:"alert,omitempty"`
+	AlertName   string   `yaml:"alert,omitempty" json:"alert,omitempty"`
 	AlertType   string   `yaml:"alertType,omitempty" json:"alertType,omitempty"`
 	Description string   `yaml:"description,omitempty" json:"description,omitempty"`
 	RuleType    RuleType `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
@@ -188,7 +188,7 @@ func (r *PostableRule) Validate() (errs []error) {
 }
 
 func testTemplateParsing(rl *PostableRule) (errs []error) {
-	if rl.Alert == "" {
+	if rl.AlertName == "" {
 		// Not an alerting rule.
 		return errs
 	}
@@ -200,7 +200,7 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 		tmpl := NewTemplateExpander(
 			context.TODO(),
 			defs+text,
-			"__alert_"+rl.Alert,
+			"__alert_"+rl.AlertName,
 			tmplData,
 			times.Time(timestamp.FromTime(time.Now())),
 			nil,

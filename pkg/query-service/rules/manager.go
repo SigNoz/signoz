@@ -503,7 +503,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 	rules := make([]Rule, 0)
 	var task Task
 
-	if r.Alert == "" {
+	if r.AlertName == "" {
 		zap.L().Error("task load failed, at least one rule must be set", zap.String("name", taskName))
 		return task, fmt.Errorf("task load failed, at least one rule must be set")
 	}
@@ -525,7 +525,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		rules = append(rules, tr)
 
 		// create ch rule task for evalution
-		task = newTask(TaskTypeCh, taskName, taskNamesuffix, time.Duration(r.Frequency*Duration(time.Minute)), rules, m.opts, m.prepareNotifyFunc())
+		task = newTask(TaskTypeCh, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
 
 		// add rule to memory
 		m.rules[ruleId] = tr
@@ -536,7 +536,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		pr, err := NewPromRule(
 			ruleId,
 			r,
-			log.With(m.logger, "alert", r.Alert),
+			log.With(m.logger, "alert", r.AlertName),
 			PromRuleOpts{},
 		)
 
@@ -547,7 +547,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		rules = append(rules, pr)
 
 		// create promql rule task for evalution
-		task = newTask(TaskTypeProm, taskName, taskNamesuffix, time.Duration(r.Frequency*Duration(time.Minute)), rules, m.opts, m.prepareNotifyFunc())
+		task = newTask(TaskTypeProm, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
 
 		// add rule to memory
 		m.rules[ruleId] = pr
@@ -850,7 +850,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 		return 0, newApiErrorBadData(errs[0])
 	}
 
-	var alertname = parsedRule.Alert
+	var alertname = parsedRule.AlertName
 	if alertname == "" {
 		// alertname is not mandatory for testing, so picking
 		// a random string here
@@ -858,7 +858,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 	}
 
 	// append name to indicate this is test alert
-	parsedRule.Alert = fmt.Sprintf("%s%s", alertname, TestAlertPostFix)
+	parsedRule.AlertName = fmt.Sprintf("%s%s", alertname, TestAlertPostFix)
 
 	var rule Rule
 	var err error

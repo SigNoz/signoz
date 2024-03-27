@@ -71,7 +71,7 @@ func NewPromRule(
 
 	p := PromRule{
 		id:                id,
-		name:              postableRule.Alert,
+		name:              postableRule.AlertName,
 		source:            postableRule.Source,
 		ruleCondition:     postableRule.RuleCondition,
 		evalWindow:        time.Duration(postableRule.EvalWindow),
@@ -612,7 +612,7 @@ func (r *PromRule) shouldAlert(series pql.Series) (pql.Sample, bool) {
 func (r *PromRule) String() string {
 
 	ar := PostableRule{
-		Alert:             r.name,
+		AlertName:         r.name,
 		RuleCondition:     r.ruleCondition,
 		EvalWindow:        Duration(r.evalWindow),
 		Labels:            r.labels.Map(),
