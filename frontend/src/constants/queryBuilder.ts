@@ -285,6 +285,7 @@ export enum PANEL_TYPES {
 	LIST = 'list',
 	TRACE = 'trace',
 	BAR = 'bar',
+	PIE = 'pie',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
 

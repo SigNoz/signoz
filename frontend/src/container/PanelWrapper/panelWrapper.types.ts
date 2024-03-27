@@ -20,3 +20,10 @@ export type PanelWrapperProps = {
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	onDragSelect: (start: number, end: number) => void;
 };
+
+export type TooltipData = {
+	label: string;
+	key: string;
+	value: string;
+	color: string;
+};
