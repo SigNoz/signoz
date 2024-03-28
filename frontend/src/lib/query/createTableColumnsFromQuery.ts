@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import { ColumnsType } from 'antd/es/table';
 import { ColumnType } from 'antd/lib/table';
 import {
@@ -364,6 +363,7 @@ const fillDataFromSeries = (
 					seria,
 					equalQueriesByLabels,
 				);
+
 				return;
 			}
 
