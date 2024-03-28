@@ -25,9 +25,7 @@
   ],
   "assets": {
     "logs": {
-      "pipelines": [
-        "file://assets/pipelines/log-parser.json"
-      ]
+      "pipelines": []
     },
     "dashboards": null,
     "alerts": null
