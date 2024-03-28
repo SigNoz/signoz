@@ -16,7 +16,11 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { defaultOptionsQuery, URL_OPTIONS } from './constants';
+import {
+	defaultOptionsQuery,
+	defaultTraceSelectedColumns,
+	URL_OPTIONS,
+} from './constants';
 import { InitialOptions, OptionsMenuConfig, OptionsQuery } from './types';
 import { getOptionsFromKeys } from './utils';
 
@@ -124,20 +128,29 @@ const useOptionsMenu = ({
 		{ queryKey: [debouncedSearchText, isFocused], enabled: isFocused },
 	);
 
-	const searchedAttributeKeys = useMemo(
-		() => searchedAttributesData?.payload?.attributeKeys || [],
-		[searchedAttributesData?.payload?.attributeKeys],
-	);
+	const searchedAttributeKeys = useMemo(() => {
+		if (searchedAttributesData?.payload?.attributeKeys?.length) {
+			return searchedAttributesData.payload.attributeKeys;
+		}
+		if (dataSource === DataSource.TRACES) {
+			return defaultTraceSelectedColumns;
+		}
+
+		return [];
+	}, [dataSource, searchedAttributesData?.payload?.attributeKeys]);
 
 	const initialOptionsQuery: OptionsQuery = useMemo(
 		() => ({
 			...defaultOptionsQuery,
 			...initialOptions,
+			// eslint-disable-next-line no-nested-ternary
 			selectColumns: initialOptions?.selectColumns
 				? initialSelectedColumns
+				: dataSource === DataSource.TRACES
+				? defaultTraceSelectedColumns
 				: defaultOptionsQuery.selectColumns,
 		}),
-		[initialOptions, initialSelectedColumns],
+		[dataSource, initialOptions, initialSelectedColumns],
 	);
 
 	const selectedColumnKeys = useMemo(
