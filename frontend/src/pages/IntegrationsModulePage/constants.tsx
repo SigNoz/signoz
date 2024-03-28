@@ -10,6 +10,6 @@ export const installedIntegrations: TabRoutes = {
 			<Compass size={16} /> Integrations
 		</div>
 	),
-	route: ROUTES.INTEGRATIONS_INSTALLED,
-	key: ROUTES.INTEGRATIONS_INSTALLED,
+	route: ROUTES.INTEGRATIONS,
+	key: ROUTES.INTEGRATIONS,
 };

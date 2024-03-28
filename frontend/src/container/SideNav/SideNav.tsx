@@ -275,7 +275,7 @@ function SideNav({
 		if (!isCloudUserVal) {
 			let updatedMenuItems = [...menuItems];
 			updatedMenuItems = updatedMenuItems.filter(
-				(item) => item.key !== ROUTES.INTEGRATIONS_INSTALLED,
+				(item) => item.key !== ROUTES.INTEGRATIONS,
 			);
 			setMenuItems(updatedMenuItems);
 		}
