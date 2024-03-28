@@ -245,30 +245,6 @@ const fillEmptyRowCells = (
 	});
 };
 
-// const findSeriaValueFromAnotherQuery = (
-// 	currentLabels: Record<string, string>,
-// 	nextQuery: QueryDataV3 | null,
-// ): SeriesItem | null => {
-// 	if (!nextQuery || !nextQuery.series) return null;
-
-// 	let value = null;
-
-// 	const labelEntries = Object.entries(currentLabels);
-
-// 	nextQuery.series.forEach((seria) => {
-// 		const localLabelEntries = Object.entries(seria.labels);
-// 		if (localLabelEntries.length !== labelEntries.length) return;
-
-// 		const isExistLabels = isEqual(localLabelEntries, labelEntries);
-
-// 		if (isExistLabels) {
-// 			value = seria;
-// 		}
-// 	});
-
-// 	return value;
-// };
-
 const isEqualQueriesByLabel = (
 	equalQueries: string[],
 	queryName: string,
