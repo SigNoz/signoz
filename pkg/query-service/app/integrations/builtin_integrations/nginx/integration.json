@@ -15,12 +15,12 @@
   "overview": "file://overview.md",
   "configuration": [
     {
-      "title": "Prepare Nginx",
-      "instructions": "file://config/prepare-nginx.md"
+      "title": "Prerequisites",
+      "instructions": "file://config/prerequisites.md"
     },
     {
-      "title": "Configure Otel Collector",
-      "instructions": "file://config/configure-otel-collector.md"
+      "title": "Collect Logs",
+      "instructions": "file://config/collect-logs.md"
     }
   ],
   "assets": {
@@ -67,19 +67,6 @@
         "description": "HTTP response code"
       }
     ],
-    "metrics": [
-      {
-        "name": "http.server.request.duration",
-        "type": "Histogram",
-        "unit": "s",
-        "description": "Duration of HTTP server requests"
-      },
-      {
-        "name": "http.server.active_requests",
-        "type": "UpDownCounter",
-        "unit": "{ request }",
-        "description": "Number of active HTTP server requests"
-      }
-    ]
+    "metrics": []
   }
 }

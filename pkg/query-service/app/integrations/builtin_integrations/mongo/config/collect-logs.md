@@ -32,7 +32,7 @@ receivers:
               - D4
               - D5
             info: I
-            warning: W
+            warn: W
             error: E
             fatal: F
       - type: flatten
