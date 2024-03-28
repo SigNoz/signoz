@@ -236,7 +236,7 @@ function GridCardGraph({
 	);
 
 	return (
-		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
+		<div style={{ height: '90%', width: '100%' }} ref={graphRef}>
 			{isEmptyLayout ? (
 				<EmptyWidget />
 			) : (
