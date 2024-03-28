@@ -78,7 +78,7 @@ receivers:
         to: body
       - type: add
         field: attributes.source
-        value: nginx-error
+        value: nginx
 
 processors:
   batch:
