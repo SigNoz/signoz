@@ -1,7 +1,10 @@
 import getService from 'api/metrics/getService';
 import { AxiosError } from 'axios';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
-import { Time as TimeV2 } from 'container/TopNav/DateTimeSelectionV2/config';
+import {
+	CustomTimeType,
+	Time as TimeV2,
+} from 'container/TopNav/DateTimeSelectionV2/config';
 import {
 	QueryKey,
 	useQuery,
@@ -27,7 +30,7 @@ export const useQueryService = ({
 interface UseQueryServiceProps {
 	minTime: number;
 	maxTime: number;
-	selectedTime: Time | TimeV2;
+	selectedTime: Time | TimeV2 | CustomTimeType;
 	selectedTags: Tags[];
 	options?: UseQueryOptions<PayloadProps, AxiosError, PayloadProps, QueryKey>;
 }

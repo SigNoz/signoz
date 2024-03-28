@@ -5,13 +5,14 @@ import './CustomTimePicker.styles.scss';
 import { Input, Popover, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
-import { Options } from 'container/TopNav/DateTimeSelection/config';
 import {
 	FixedDurationSuggestionOptions,
+	Options,
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
-import { defaultTo, noop } from 'lodash-es';
+import { isValidTimeFormat } from 'lib/getMinMax';
+import { defaultTo, isFunction, noop } from 'lodash-es';
 import debounce from 'lodash-es/debounce';
 import { CheckCircle, ChevronDown, Clock } from 'lucide-react';
 import {
@@ -33,7 +34,14 @@ interface CustomTimePickerProps {
 	onError: (value: boolean) => void;
 	selectedValue: string;
 	selectedTime: string;
-	onValidCustomDateChange: ([t1, t2]: any[]) => void;
+	onValidCustomDateChange: ({
+		time: [t1, t2],
+		timeStr,
+	}: {
+		time: [dayjs.Dayjs | null, dayjs.Dayjs | null];
+		timeStr: string;
+	}) => void;
+	onCustomTimeStatusUpdate?: (isValid: boolean) => void;
 	open: boolean;
 	setOpen: Dispatch<SetStateAction<boolean>>;
 	items: any[];
@@ -53,6 +61,7 @@ function CustomTimePicker({
 	open,
 	setOpen,
 	onValidCustomDateChange,
+	onCustomTimeStatusUpdate,
 	newPopover,
 	customDateTimeVisible,
 	setCustomDTPickerVisible,
@@ -85,6 +94,7 @@ function CustomTimePicker({
 				return Options[index].label;
 			}
 		}
+
 		for (
 			let index = 0;
 			index < RelativeDurationSuggestionOptions.length;
@@ -94,10 +104,15 @@ function CustomTimePicker({
 				return RelativeDurationSuggestionOptions[index].label;
 			}
 		}
+
 		for (let index = 0; index < FixedDurationSuggestionOptions.length; index++) {
 			if (FixedDurationSuggestionOptions[index].value === selectedTime) {
 				return FixedDurationSuggestionOptions[index].label;
 			}
+		}
+
+		if (isValidTimeFormat(selectedTime)) {
+			return selectedTime;
 		}
 
 		return '';
@@ -161,13 +176,22 @@ function CustomTimePicker({
 				setInputStatus('error');
 				onError(true);
 				setInputErrorMessage('Please enter time less than 6 months');
+				if (isFunction(onCustomTimeStatusUpdate)) {
+					onCustomTimeStatusUpdate(true);
+				}
 			} else {
-				onValidCustomDateChange([minTime, currentTime]);
+				onValidCustomDateChange({
+					time: [minTime, currentTime],
+					timeStr: inputValue,
+				});
 			}
 		} else {
 			setInputStatus('error');
 			onError(true);
 			setInputErrorMessage(null);
+			if (isFunction(onCustomTimeStatusUpdate)) {
+				onCustomTimeStatusUpdate(false);
+			}
 		}
 	}, 300);
 
@@ -320,4 +344,5 @@ CustomTimePicker.defaultProps = {
 	setCustomDTPickerVisible: noop,
 	onCustomDateHandler: noop,
 	handleGoLive: noop,
+	onCustomTimeStatusUpdate: noop,
 };
