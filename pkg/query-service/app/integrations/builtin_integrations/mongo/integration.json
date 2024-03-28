@@ -18,18 +18,16 @@
       "instructions": "file://config/prerequisites.md"
     },
     {
-      "title": "Configure Otel Collector",
-      "instructions": "file://config/configure-otel-collector.md"
+      "title": "Collect Metrics",
+      "instructions": "file://config/collect-metrics.md"
     }
   ],
   "assets": {
     "logs": {
-      "pipelines": [
-        "file://assets/pipelines/log-parser.json"
-      ]
+      "pipelines": []
     },
     "dashboards": [
-        "file://assets/dashboards/overview.json"
+      "file://assets/dashboards/overview.json"
     ],
     "alerts": []
   },
