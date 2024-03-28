@@ -245,6 +245,35 @@ const fillEmptyRowCells = (
 	});
 };
 
+const findSeriaValueFromAnotherQuery = (
+	currentLabels: Record<string, string>,
+	nextQuery: QueryDataV3 | null,
+): SeriesItem | null => {
+	if (!nextQuery || !nextQuery.series) return null;
+
+	let value = null;
+
+	const labelEntries = Object.entries(currentLabels);
+
+	nextQuery.series.forEach((seria) => {
+		const localLabelEntries = Object.entries(seria.labels);
+		if (localLabelEntries.length !== labelEntries.length) return;
+
+		const isExistLabels = localLabelEntries.find(([key, value]) =>
+			labelEntries.find(
+				([currentKey, currentValue]) =>
+					currentKey === key && currentValue === value,
+			),
+		);
+
+		if (isExistLabels) {
+			value = seria;
+		}
+	});
+
+	return value;
+};
+
 const isEqualQueriesByLabel = (
 	equalQueries: string[],
 	queryName: string,
@@ -257,6 +286,30 @@ const fillAggregationData = (
 ): void => {
 	column.data.push(parseFloat(value).toFixed(2));
 	unusedColumnsKeys.delete(column.field);
+};
+
+const fillRestAggregationData = (
+	column: DynamicColumn,
+	queryTableData: QueryDataV3[],
+	seria: SeriesItem,
+	equalQueriesByLabels: string[],
+): void => {
+	const nextQueryData =
+		queryTableData.find((q) => q.queryName === column.field) || null;
+
+	const targetSeria = findSeriaValueFromAnotherQuery(
+		seria.labels,
+		nextQueryData,
+	);
+
+	if (targetSeria) {
+		const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
+		if (!isEqual) {
+			equalQueriesByLabels.push(column.field);
+		}
+	} else {
+		column.data.push('N/A');
+	}
 };
 
 const fillLabelsData = (
@@ -303,10 +356,12 @@ const fillDataFromSeries = (
 			}
 
 			if (column.type !== 'field' && column.field !== queryName) {
-				const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
-				if (!isEqual) {
-					equalQueriesByLabels.push(column.field);
-				}
+				fillRestAggregationData(
+					column,
+					queryTableData,
+					seria,
+					equalQueriesByLabels,
+				);
 				return;
 			}
 
