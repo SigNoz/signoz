@@ -76,7 +76,12 @@ function TableView({
 		);
 
 		if (pinnedAttributesFromLocalStorage) {
-			setPinnedAttributes(JSON.parse(pinnedAttributesFromLocalStorage));
+			try {
+				const parsedPinnedAttributes = JSON.parse(pinnedAttributesFromLocalStorage);
+				setPinnedAttributes(parsedPinnedAttributes);
+			} catch (e) {
+				console.error('Error parsing pinned attributes from local storgage');
+			}
 		} else {
 			setPinnedAttributes({});
 		}
