@@ -89,7 +89,7 @@ func Invite(ctx context.Context, req *model.InviteRequest) (*model.InviteRespons
 
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_SENT, map[string]interface{}{
 		"invited user email": req.Email,
-	}, au.Email)
+	}, au.Email, true, false)
 
 	// send email if SMTP is enabled
 	if os.Getenv("SMTP_ENABLED") == "true" && req.FrontendBaseUrl != "" {
@@ -404,7 +404,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	}
 
 	telemetry.GetInstance().IdentifyUser(user)
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_ACCEPTED, nil, req.Email)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_USER_INVITATION_ACCEPTED, nil, req.Email, true, false)
 
 	return user, nil
 }

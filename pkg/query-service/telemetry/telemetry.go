@@ -197,7 +197,7 @@ func createTelemetry() {
 	data := map[string]interface{}{}
 
 	telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
-	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
+	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "", true, false)
 
 	ticker := time.NewTicker(HEART_BEAT_DURATION)
 	activeUserTicker := time.NewTicker(ACTIVE_USER_DURATION)
@@ -231,7 +231,12 @@ func createTelemetry() {
 				if (telemetry.activeUser["traces"] != 0) || (telemetry.activeUser["metrics"] != 0) || (telemetry.activeUser["logs"] != 0) {
 					telemetry.activeUser["any"] = 1
 				}
-				telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{"traces": telemetry.activeUser["traces"], "metrics": telemetry.activeUser["metrics"], "logs": telemetry.activeUser["logs"], "any": telemetry.activeUser["any"]}, "")
+				telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{
+					"traces":  telemetry.activeUser["traces"],
+					"metrics": telemetry.activeUser["metrics"],
+					"logs":    telemetry.activeUser["logs"],
+					"any":     telemetry.activeUser["any"]},
+					"", true, false)
 				telemetry.activeUser = map[string]int8{"traces": 0, "metrics": 0, "logs": 0, "any": 0}
 
 			case <-ticker.C:
@@ -239,7 +244,7 @@ func createTelemetry() {
 				tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
 
 				if len(tagsInfo.Env) != 0 {
-					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "")
+					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "", true, false)
 				}
 
 				languages := []string{}
@@ -247,14 +252,14 @@ func createTelemetry() {
 					languages = append(languages, language)
 				}
 				if len(languages) > 0 {
-					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": languages}, "")
+					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": languages}, "", true, false)
 				}
 				services := []string{}
 				for service := range tagsInfo.Services {
 					services = append(services, service)
 				}
 				if len(services) > 0 {
-					telemetry.SendEvent(TELEMETRY_EVENT_SERVICE, map[string]interface{}{"serviceName": services}, "")
+					telemetry.SendEvent(TELEMETRY_EVENT_SERVICE, map[string]interface{}{"serviceName": services}, "", true, false)
 				}
 				totalSpans, _ := telemetry.reader.GetTotalSpans(context.Background())
 				totalLogs, _ := telemetry.reader.GetTotalLogs(context.Background())
@@ -286,7 +291,7 @@ func createTelemetry() {
 				for key, value := range tsInfo {
 					data[key] = value
 				}
-				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
+				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "", true, false)
 
 				alertsInfo, err := telemetry.reader.GetAlertsInfo(context.Background())
 				if err == nil {
@@ -313,18 +318,18 @@ func createTelemetry() {
 								}
 								// send event only if there are dashboards or alerts or channels
 								if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0 {
-									telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
+									telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "", true, false)
 								}
 							}
 						}
 					}
 				}
 				if err != nil {
-					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
+					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
 				}
 
 				getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(context.Background())
-				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval, "")
+				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval, "", true, false)
 			}
 		}
 	}()
@@ -432,7 +437,7 @@ func (a *Telemetry) checkEvents(event string) bool {
 	return sendEvent
 }
 
-func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, opts ...bool) {
+func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, rateLimitFlag bool, viaEventsAPI bool) {
 
 	// ignore telemetry for default user
 	if userEmail == DEFAULT_CLOUD_EMAIL || a.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
@@ -441,10 +446,6 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	if userEmail != "" {
 		a.SetUserEmail(userEmail)
-	}
-	rateLimitFlag := true
-	if len(opts) > 0 {
-		rateLimitFlag = opts[0]
 	}
 
 	if !a.isTelemetryEnabled() {
@@ -491,7 +492,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 	// check if event is part of SAAS_EVENTS_LIST
 	_, isSaaSEvent := SAAS_EVENTS_LIST[event]
 
-	if a.saasOperator != nil && a.GetUserEmail() != "" && isSaaSEvent {
+	if a.saasOperator != nil && a.GetUserEmail() != "" && (isSaaSEvent || viaEventsAPI) {
 		a.saasOperator.Enqueue(analytics.Track{
 			Event:      event,
 			UserId:     a.GetUserEmail(),
