@@ -401,6 +401,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/events", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
+
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
@@ -1502,7 +1504,22 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
 	if err == nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail, true, false)
+	}
+}
+
+func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
+
+	request, err := parseRegisterEventRequest(r)
+	if aH.HandleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	userEmail, err := auth.GetEmailFromJwt(r.Context())
+	if err == nil {
+		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, userEmail, true, true)
+		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
+	} else {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 	}
 }
 
@@ -1585,7 +1602,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
 	if err == nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail, true, false)
 	}
 
 	if (data["number"] != 0) && (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
@@ -2310,7 +2327,7 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		"organizationName": req.Name,
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail, true, false)
 
 	aH.WriteJSON(w, r, map[string]string{"data": "org updated successfully"})
 }
@@ -3525,7 +3542,7 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 							"metricsUsed": signozMetricsUsed,
 							"dashboardId": dashboardID,
 							"widgetId":    widgetID,
-						}, userEmail)
+						}, userEmail, true, false)
 					}
 					if alertMatched {
 						var alertID string
@@ -3547,7 +3564,7 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 							"logsUsed":    signozLogsUsed,
 							"metricsUsed": signozMetricsUsed,
 							"alertId":     alertID,
-						}, userEmail)
+						}, userEmail, true, false)
 					}
 				}
 			}

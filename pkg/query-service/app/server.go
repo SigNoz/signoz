@@ -452,7 +452,7 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 		data["tracesUsed"] = signozTracesUsed
 		userEmail, err := auth.GetEmailFromJwt(r.Context())
 		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail, true, false)
 		}
 	}
 	return data, true
@@ -496,7 +496,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		if _, ok := telemetry.EnabledPaths()[path]; ok {
 			userEmail, err := auth.GetEmailFromJwt(r.Context())
 			if err == nil {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail)
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail, true, false)
 			}
 		}
 		// }
