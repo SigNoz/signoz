@@ -1,7 +1,14 @@
 import { omitIdFromQuery } from 'components/ExplorerCard/utils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { isEqual } from 'lodash-es';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	initialQueryBuilderFormValuesMap,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
+import { isEqual, set } from 'lodash-es';
+import {
+	IBuilderQuery,
+	Query,
+	QueryState,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 export const getIsQueryModified = (
@@ -205,3 +212,26 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		},
 	},
 };
+
+export function handleQueryChange(
+	newPanelType: keyof PartialPanelTypes,
+	supersetQuery: QueryState,
+): QueryState {
+	const updatedQuery = { ...supersetQuery };
+
+	// eslint-disable-next-line sonarjs/no-ignored-return
+	updatedQuery.builder.queryData.map((query, index) => {
+		const tempQuery = initialQueryBuilderFormValuesMap[query.dataSource];
+
+		console.log(tempQuery, query.dataSource);
+		const fieldsToSelect =
+			panelTypeDataSourceFormValuesMap[newPanelType][query.dataSource].builder
+				.queryData;
+
+		fieldsToSelect.forEach((field: keyof IBuilderQuery) => {
+			set(tempQuery, field, supersetQuery.builder.queryData[index][field]);
+		});
+		return tempQuery;
+	});
+	return updatedQuery;
+}
