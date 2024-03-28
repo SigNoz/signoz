@@ -17,6 +17,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
@@ -63,6 +64,7 @@ function TableView({
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
 	const [isfilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
+	const isDarkMode = useIsDarkMode();
 
 	const [pinnedAttributes, setPinnedAttributes] = useState<
 		Record<string, boolean>
@@ -180,24 +182,29 @@ function TableView({
 			width: 5,
 			align: 'left',
 			className: 'attribute-pin value-field-container',
-			render: (fieldData: Record<string, string>, record): JSX.Element => (
-				<div className="log-attribute-pin value-field">
-					<div
-						className={cx(
-							'pin-attribute-icon',
-							pinnedAttributes[record?.key] ? 'pinned' : '',
-						)}
-						onClick={(): void => {
-							togglePinAttribute(record);
-						}}
-					>
-						<Pin
-							size={14}
-							color={pinnedAttributes[record?.key] ? '#7190f9' : 'white'}
-						/>
+			render: (fieldData: Record<string, string>, record): JSX.Element => {
+				let pinColor = isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500;
+
+				if (pinnedAttributes[record?.key]) {
+					pinColor = Color.BG_ROBIN_500;
+				}
+
+				return (
+					<div className="log-attribute-pin value-field">
+						<div
+							className={cx(
+								'pin-attribute-icon',
+								pinnedAttributes[record?.key] ? 'pinned' : '',
+							)}
+							onClick={(): void => {
+								togglePinAttribute(record);
+							}}
+						>
+							<Pin size={14} color={pinColor} />
+						</div>
 					</div>
-				</div>
-			),
+				);
+			},
 		},
 		{
 			title: 'Field',

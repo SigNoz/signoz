@@ -47,7 +47,7 @@
 					border: none;
 
 					&.pinned svg {
-						fill: #7190f9;
+						fill: var(--bg-robin-500);
 					}
 				}
 			}
@@ -94,6 +94,10 @@
 
 		.value-field-container {
 			background: var(--bg-vanilla-300);
+
+			&.attribute-pin {
+				background: var(--bg-vanilla-100);
+			}
 
 			.action-btn {
 				.filter-btn {
