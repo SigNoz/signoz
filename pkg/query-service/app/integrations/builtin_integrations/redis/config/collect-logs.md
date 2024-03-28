@@ -29,7 +29,7 @@ receivers:
             info:
               - '-'
               - '*'
-            warning: '#'
+            warn: '#'
         on_error: send
       - type: move
         if: attributes.message != nil
