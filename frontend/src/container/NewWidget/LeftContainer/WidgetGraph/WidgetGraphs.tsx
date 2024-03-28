@@ -117,6 +117,8 @@ function WidgetGraph({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	console.log('selectedGraph', selectedGraph);
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
@@ -158,7 +160,7 @@ function WidgetGraph({
 			<GridPanelSwitch
 				data={chartData}
 				options={options}
-				panelType={selectedWidget.panelTypes}
+				panelType={selectedGraph}
 				name={widgetId || 'legend_widget'}
 				yAxisUnit={yAxisUnit}
 				panelData={

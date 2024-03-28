@@ -44,7 +44,10 @@ import {
 	RightContainerWrapper,
 } from './styles';
 import { NewWidgetProps } from './types';
-import { getIsQueryModified } from './utils';
+import {
+	getIsQueryModified,
+	handleQueryChangesForGraphTypeChange,
+} from './utils';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const {
@@ -57,7 +60,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const { currentQuery, stagedQuery } = useQueryBuilder();
+	const { currentQuery, stagedQuery, handleSetQueryData } = useQueryBuilder();
 
 	const isQueryModified = useMemo(
 		() => getIsQueryModified(currentQuery, stagedQuery),
@@ -135,6 +138,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	};
 
 	const [graphType, setGraphType] = useState(selectedGraph);
+
+	console.log(graphType);
 
 	const getSelectedTime = useCallback(
 		() =>
@@ -273,6 +278,15 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const setGraphHandler = (type: PANEL_TYPES): void => {
 		const params = new URLSearchParams(search);
 		params.set('graphType', type);
+		handleQueryChangesForGraphTypeChange({
+			oldGraphType: graphType,
+			newGraphType: type,
+			params,
+			currentQuery,
+			handleSetQueryData,
+		});
+		// const generatedUrl = `${pathname}?${params.toString()}`;
+		// history.push(generatedUrl);
 		setGraphType(type);
 	};
 
