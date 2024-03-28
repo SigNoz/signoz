@@ -164,6 +164,11 @@ type GetTopOperationsParams struct {
 	Limit       int             `json:"limit"`
 }
 
+type RegisterEventParams struct {
+	EventName  string                 `json:"eventName"`
+	Attributes map[string]interface{} `json:"attributes"`
+}
+
 type GetUsageParams struct {
 	StartTime   string
 	EndTime     string

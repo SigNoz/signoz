@@ -3802,7 +3802,7 @@ func (r *ClickHouseReader) GetLogs(ctx context.Context, params *model.LogsFilter
 	if lenFilters != 0 {
 		userEmail, err := auth.GetEmailFromJwt(ctx)
 		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail, true, false)
 		}
 	}
 
@@ -3844,7 +3844,7 @@ func (r *ClickHouseReader) TailLogs(ctx context.Context, client *model.LogsTailC
 	if lenFilters != 0 {
 		userEmail, err := auth.GetEmailFromJwt(ctx)
 		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail, true, false)
 		}
 	}
 
@@ -3936,7 +3936,7 @@ func (r *ClickHouseReader) AggregateLogs(ctx context.Context, params *model.Logs
 	if lenFilters != 0 {
 		userEmail, err := auth.GetEmailFromJwt(ctx)
 		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail)
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LOGS_FILTERS, data, userEmail, true, false)
 		}
 	}
 
