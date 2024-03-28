@@ -1,6 +1,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { Format } from 'container/NewWidget/RightContainer/types';
+import { Dispatch, SetStateAction } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -187,6 +188,8 @@ export type QueryBuilderData = {
 export type QueryBuilderContextType = {
 	currentQuery: Query;
 	stagedQuery: Query | null;
+	supersetQuery: Query;
+	setSupersetQuery: Dispatch<SetStateAction<QueryState>>;
 	initialDataSource: DataSource | null;
 	panelType: PANEL_TYPES | null;
 	isEnabledQuery: boolean;

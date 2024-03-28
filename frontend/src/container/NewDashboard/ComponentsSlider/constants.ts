@@ -3,6 +3,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
+// check this for cases we can't handle TODO
 export const PANEL_TYPES_INITIAL_QUERY = {
 	[PANEL_TYPES.TIME_SERIES]: initialQueriesMap.metrics,
 	[PANEL_TYPES.VALUE]: initialQueriesMap.metrics,
