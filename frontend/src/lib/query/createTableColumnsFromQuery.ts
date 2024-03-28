@@ -306,8 +306,6 @@ const fillRestAggregationData = (
 		if (!isEqual) {
 			equalQueriesByLabels.push(column.field);
 		}
-
-		column.data.push(parseFloat(targetSeria.values[0].value).toFixed(2));
 	} else {
 		column.data.push('N/A');
 	}
