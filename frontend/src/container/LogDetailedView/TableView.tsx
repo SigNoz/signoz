@@ -1,22 +1,29 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './TableView.styles.scss';
 
 import { LinkOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Space, Spin, Tooltip, Tree, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
+import cx from 'classnames';
 import AddToQueryHOC, {
 	AddToQueryHOCProps,
 } from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
 import { isEmpty } from 'lodash-es';
-import { ArrowDownToDot, ArrowUpFromDot } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ArrowDownToDot, ArrowUpFromDot, Pin } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { Dispatch } from 'redux';
@@ -57,6 +64,28 @@ function TableView({
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const [isfilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
 	const [isfilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
+	const isDarkMode = useIsDarkMode();
+
+	const [pinnedAttributes, setPinnedAttributes] = useState<
+		Record<string, boolean>
+	>({});
+
+	useEffect(() => {
+		const pinnedAttributesFromLocalStorage = getLocalStorageApi(
+			LOCALSTORAGE.PINNED_ATTRIBUTES,
+		);
+
+		if (pinnedAttributesFromLocalStorage) {
+			try {
+				const parsedPinnedAttributes = JSON.parse(pinnedAttributesFromLocalStorage);
+				setPinnedAttributes(parsedPinnedAttributes);
+			} catch (e) {
+				console.error('Error parsing pinned attributes from local storgage');
+			}
+		} else {
+			setPinnedAttributes({});
+		}
+	}, []);
 
 	const flattenLogData: Record<string, string> | null = useMemo(
 		() => (logData ? flattenObject(logData) : null),
@@ -71,6 +100,19 @@ function TableView({
 		const validatedFieldValue = removeJSONStringifyQuotes(fieldValue);
 		if (onClickActionItem) {
 			onClickActionItem(fieldKey, validatedFieldValue, operator);
+		}
+	};
+
+	const togglePinAttribute = (record: DataType): void => {
+		if (record) {
+			const newPinnedAttributes = { ...pinnedAttributes };
+			newPinnedAttributes[record.key] = !newPinnedAttributes[record.key];
+			setPinnedAttributes(newPinnedAttributes);
+
+			setLocalStorageApi(
+				LOCALSTORAGE.PINNED_ATTRIBUTES,
+				JSON.stringify(newPinnedAttributes),
+			);
 		}
 	};
 
@@ -138,6 +180,37 @@ function TableView({
 	}
 
 	const columns: ColumnsType<DataType> = [
+		{
+			title: '',
+			dataIndex: 'pin',
+			key: 'pin',
+			width: 5,
+			align: 'left',
+			className: 'attribute-pin value-field-container',
+			render: (fieldData: Record<string, string>, record): JSX.Element => {
+				let pinColor = isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500;
+
+				if (pinnedAttributes[record?.key]) {
+					pinColor = Color.BG_ROBIN_500;
+				}
+
+				return (
+					<div className="log-attribute-pin value-field">
+						<div
+							className={cx(
+								'pin-attribute-icon',
+								pinnedAttributes[record?.key] ? 'pinned' : '',
+							)}
+							onClick={(): void => {
+								togglePinAttribute(record);
+							}}
+						>
+							<Pin size={14} color={pinColor} />
+						</div>
+					</div>
+				);
+			},
+		},
 		{
 			title: 'Field',
 			dataIndex: 'field',
@@ -264,12 +337,34 @@ function TableView({
 			},
 		},
 	];
+	function sortPinnedAttributes(
+		data: Record<string, string>[],
+		sortingObj: Record<string, boolean>,
+	): Record<string, string>[] {
+		const sortingKeys = Object.keys(sortingObj);
+		return data.sort((a, b) => {
+			const aKey = a.key;
+			const bKey = b.key;
+			const aSortIndex = sortingKeys.indexOf(aKey);
+			const bSortIndex = sortingKeys.indexOf(bKey);
+
+			if (sortingObj[aKey] && !sortingObj[bKey]) {
+				return -1;
+			}
+			if (!sortingObj[aKey] && sortingObj[bKey]) {
+				return 1;
+			}
+			return aSortIndex - bSortIndex;
+		});
+	}
+
+	const sortedAttributes = sortPinnedAttributes(dataSource, pinnedAttributes);
 
 	return (
 		<ResizeTable
 			columns={columns}
 			tableLayout="fixed"
-			dataSource={dataSource}
+			dataSource={sortedAttributes}
 			pagination={false}
 			showHeader={false}
 			className="attribute-table-container"

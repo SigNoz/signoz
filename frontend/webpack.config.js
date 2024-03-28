@@ -64,7 +64,7 @@ if (process.env.BUNDLE_ANALYSER === 'true') {
  */
 const config = {
 	mode: 'development',
-	devtool: 'source-map',
+	devtool: 'eval-source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	devServer: {
 		historyApiFallback: {
