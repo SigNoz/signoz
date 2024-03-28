@@ -16,6 +16,7 @@ import {
 	ScrollText,
 	Settings,
 	Slack,
+	Unplug,
 	// Unplug,
 	UserPlus,
 } from 'lucide-react';
@@ -90,11 +91,11 @@ const menuItems: SidebarItem[] = [
 		label: 'Alerts',
 		icon: <BellDot size={16} />,
 	},
-	// {
-	// 	key: ROUTES.INTEGRATIONS_INSTALLED,
-	// 	label: 'Integrations',
-	// 	icon: <Unplug size={16} />,
-	// },
+	{
+		key: ROUTES.INTEGRATIONS,
+		label: 'Integrations',
+		icon: <Unplug size={16} />,
+	},
 	{
 		key: ROUTES.ALL_ERROR,
 		label: 'Exceptions',
@@ -127,7 +128,6 @@ export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 	[ROUTES.TRACES_EXPLORER]: ROUTES.TRACE,
 	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACE,
 	[ROUTES.LOGS_BASE]: ROUTES.LOGS_EXPLORER,
-	[ROUTES.INTEGRATIONS_BASE]: ROUTES.INTEGRATIONS_INSTALLED,
 };
 
 export default menuItems;

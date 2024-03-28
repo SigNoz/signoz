@@ -260,7 +260,7 @@
 
 		.logs-section {
 			.table-row-dark {
-				background: rgba(255, 255, 255, 0.01);
+				background: var(--bg-vanilla-300);
 			}
 
 			.logs-section-table {
@@ -271,7 +271,7 @@
 
 		.metrics-section {
 			.table-row-dark {
-				background: rgba(255, 255, 255, 0.01);
+				background: var(--bg-vanilla-300);
 			}
 
 			.metrics-section-table {

@@ -48,5 +48,5 @@
 	"TRACES_SAVE_VIEWS": "SigNoz | Traces Saved Views",
 	"DEFAULT": "Open source Observability Platform | SigNoz",
 	"SHORTCUTS": "SigNoz | Shortcuts",
-	"INTEGRATIONS_INSTALLED": "SigNoz | Integrations"
+	"INTEGRATIONS": "SigNoz | Integrations"
 }
