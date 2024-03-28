@@ -53,6 +53,8 @@ export const handleQueryChangesForGraphTypeChange = ({
 			/**  for time series to value type we cannot have group by operator as it will
 			 * result in multiple values hence removing them from the current query
 			 * */
+
+			// shall we remove multiple queries and keep the first one here ?
 			currentQuery.builder.queryData.forEach((queryData, index) => {
 				handleSetQueryData(index, { ...queryData, groupBy: [] });
 			});
@@ -61,7 +63,21 @@ export const handleQueryChangesForGraphTypeChange = ({
 			// this needs to be discussed TODO
 		}
 		if (newGraphType === PANEL_TYPES.LIST) {
-			// this needs to be discussed TODO
+			// in case of list type if the time series is for metrics then we auto shift to logs?
+			// same list view has only single query so do we remove the remaining queries
+			currentQuery.builder.queryData.forEach((queryData, index) => {
+				handleSetQueryData(index, {
+					...queryData,
+					aggregateOperator: 'noop',
+					groupBy: [],
+					orderBy: [
+						{
+							columnName: 'timestamp',
+							order: 'desc',
+						},
+					],
+				});
+			});
 		}
 	}
 };
