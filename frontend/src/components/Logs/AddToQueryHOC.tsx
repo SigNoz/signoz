@@ -2,7 +2,7 @@ import './AddToQueryHOC.styles.scss';
 
 import { Popover } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
-import { memo, ReactNode, useCallback, useMemo } from 'react';
+import { memo, MouseEvent, ReactNode, useMemo } from 'react';
 
 function AddToQueryHOC({
 	fieldKey,
@@ -10,9 +10,10 @@ function AddToQueryHOC({
 	onAddToQuery,
 	children,
 }: AddToQueryHOCProps): JSX.Element {
-	const handleQueryAdd = useCallback(() => {
+	const handleQueryAdd = (event: MouseEvent<HTMLDivElement>): void => {
+		event.stopPropagation();
 		onAddToQuery(fieldKey, fieldValue, OPERATORS.IN);
-	}, [fieldKey, fieldValue, onAddToQuery]);
+	};
 
 	const popOverContent = useMemo(() => <span>Add to query: {fieldKey}</span>, [
 		fieldKey,
