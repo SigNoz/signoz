@@ -57,6 +57,8 @@ import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	currentQuery: initialQueriesMap.metrics,
+	supersetQuery: initialQueriesMap.metrics,
+	setSupersetQuery: () => {},
 	stagedQuery: initialQueriesMap.metrics,
 	initialDataSource: null,
 	panelType: PANEL_TYPES.TIME_SERIES,
@@ -110,6 +112,7 @@ export function QueryBuilderProvider({
 	);
 
 	const [currentQuery, setCurrentQuery] = useState<QueryState>(queryState);
+	const [supersetQuery, setSupersetQuery] = useState<QueryState>(queryState);
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
 
 	const [queryType, setQueryType] = useState<EQueryType>(queryTypeParam);
@@ -669,6 +672,14 @@ export function QueryBuilderProvider({
 		[currentQuery, queryType],
 	);
 
+	const superQuery: Query = useMemo(
+		() => ({
+			...supersetQuery,
+			queryType,
+		}),
+		[supersetQuery, queryType],
+	);
+
 	const isEnabledQuery = useMemo(() => !!stagedQuery && !!panelType, [
 		stagedQuery,
 		panelType,
@@ -677,6 +688,8 @@ export function QueryBuilderProvider({
 	const contextValues: QueryBuilderContextType = useMemo(
 		() => ({
 			currentQuery: query,
+			supersetQuery: superQuery,
+			setSupersetQuery,
 			stagedQuery,
 			initialDataSource,
 			panelType,
@@ -702,6 +715,7 @@ export function QueryBuilderProvider({
 		}),
 		[
 			query,
+			superQuery,
 			stagedQuery,
 			initialDataSource,
 			panelType,

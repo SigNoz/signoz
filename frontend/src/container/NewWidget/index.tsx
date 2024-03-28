@@ -44,7 +44,7 @@ import {
 	RightContainerWrapper,
 } from './styles';
 import { NewWidgetProps } from './types';
-import { getIsQueryModified } from './utils';
+import { getIsQueryModified, handleQueryChange } from './utils';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const {
@@ -57,7 +57,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const { currentQuery, stagedQuery } = useQueryBuilder();
+	const {
+		currentQuery,
+		stagedQuery,
+		supersetQuery,
+		initQueryBuilderData,
+	} = useQueryBuilder();
 
 	const isQueryModified = useMemo(
 		() => getIsQueryModified(currentQuery, stagedQuery),
@@ -270,9 +275,16 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 	}, [dashboardId]);
 
+	console.log(currentQuery, supersetQuery);
+
 	const setGraphHandler = (type: PANEL_TYPES): void => {
 		const params = new URLSearchParams(search);
 		params.set('graphType', type);
+		const updatedQuery = handleQueryChange(type as any, supersetQuery);
+		initQueryBuilderData({
+			...updatedQuery,
+			queryType: EQueryType.QUERY_BUILDER,
+		});
 		setGraphType(type);
 	};
 
