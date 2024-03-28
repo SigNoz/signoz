@@ -20,7 +20,7 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 			limit := builderQueries[result.QueryName].Limit
 
 			orderByList := builderQueries[result.QueryName].OrderBy
-			if limit > 0 {
+			{
 				if len(orderByList) == 0 {
 					// If no orderBy is specified, sort by value in descending order
 					orderByList = []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "desc"}}

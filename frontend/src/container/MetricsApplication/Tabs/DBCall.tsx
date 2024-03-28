@@ -1,4 +1,5 @@
 import { Col } from 'antd';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridCardLayout/GridCard';
 import {
@@ -29,7 +30,9 @@ import {
 } from './util';
 
 function DBCall(): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+
+	const servicename = decodeURIComponent(encodedServiceName);
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
 
@@ -121,6 +124,7 @@ function DBCall(): JSX.Element {
 									'database_call_rps',
 								);
 							}}
+							version={ENTITY_VERSION_V4}
 						/>
 					</GraphContainer>
 				</Card>
@@ -156,6 +160,7 @@ function DBCall(): JSX.Element {
 									'database_call_avg_duration',
 								);
 							}}
+							version={ENTITY_VERSION_V4}
 						/>
 					</GraphContainer>
 				</Card>

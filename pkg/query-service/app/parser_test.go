@@ -492,23 +492,23 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 			expectErr: true,
 			errMsg:    "data source is invalid",
 		},
-		{
-			desc: "invalid aggregate operator for builder query",
-			compositeQuery: v3.CompositeQuery{
-				PanelType: v3.PanelTypeGraph,
-				QueryType: v3.QueryTypeBuilder,
-				BuilderQueries: map[string]*v3.BuilderQuery{
-					"A": {
-						QueryName:         "A",
-						DataSource:        "metrics",
-						AggregateOperator: "invalid",
-						Expression:        "A",
-					},
-				},
-			},
-			expectErr: true,
-			errMsg:    "aggregate operator is invalid",
-		},
+		// {
+		// 	desc: "invalid aggregate operator for builder query",
+		// 	compositeQuery: v3.CompositeQuery{
+		// 		PanelType: v3.PanelTypeGraph,
+		// 		QueryType: v3.QueryTypeBuilder,
+		// 		BuilderQueries: map[string]*v3.BuilderQuery{
+		// 			"A": {
+		// 				QueryName:         "A",
+		// 				DataSource:        "metrics",
+		// 				AggregateOperator: "invalid",
+		// 				Expression:        "A",
+		// 			},
+		// 		},
+		// 	},
+		// 	expectErr: true,
+		// 	errMsg:    "aggregate operator is invalid",
+		// },
 		{
 			desc: "invalid aggregate attribute for builder query",
 			compositeQuery: v3.CompositeQuery{

@@ -71,6 +71,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 					key={log.id}
 					logData={log}
 					selectedFields={selectedFields}
+					linesPerRow={options.maxLines}
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
 				/>
@@ -122,12 +123,14 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 								fields: selectedFields,
 								linesPerRow: options.maxLines,
 								appendTo: 'end',
+								activeLogIndex,
 							}}
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
 							<Virtuoso
 								ref={ref}
+								initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
 								data={logs}
 								totalCount={logs.length}
 								itemContent={getItemContent}

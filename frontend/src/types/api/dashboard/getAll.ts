@@ -55,6 +55,7 @@ export interface Dashboard {
 }
 
 export interface DashboardData {
+	uuid?: string;
 	description?: string;
 	tags?: string[];
 	name?: string;
@@ -62,6 +63,7 @@ export interface DashboardData {
 	title: string;
 	layout?: Layout[];
 	variables: Record<string, IDashboardVariable>;
+	version?: string;
 }
 
 export interface IBaseWidget {

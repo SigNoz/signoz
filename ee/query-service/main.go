@@ -14,10 +14,10 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.signoz.io/signoz/ee/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/version"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	zapotlpencoder "github.com/SigNoz/zap_otlp/zap_otlp_encoder"
 	zapotlpsync "github.com/SigNoz/zap_otlp/zap_otlp_sync"
@@ -27,17 +27,18 @@ import (
 )
 
 func initZapLog(enableQueryServiceLogOTLPExport bool) *zap.Logger {
-	config := zap.NewDevelopmentConfig()
+	config := zap.NewProductionConfig()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	config.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
-	otlpEncoder := zapotlpencoder.NewOTLPEncoder(config.EncoderConfig)
-	consoleEncoder := zapcore.NewConsoleEncoder(config.EncoderConfig)
-	defaultLogLevel := zapcore.DebugLevel
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	config.EncoderConfig.EncodeDuration = zapcore.MillisDurationEncoder
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	otlpEncoder := zapotlpencoder.NewOTLPEncoder(config.EncoderConfig)
+	consoleEncoder := zapcore.NewJSONEncoder(config.EncoderConfig)
+	defaultLogLevel := zapcore.InfoLevel
 
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
@@ -48,14 +49,15 @@ func initZapLog(enableQueryServiceLogOTLPExport bool) *zap.Logger {
 		zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
 	)
 
-	if enableQueryServiceLogOTLPExport == true {
-		conn, err := grpc.DialContext(ctx, constants.OTLPTarget, grpc.WithBlock(), grpc.WithInsecure(), grpc.WithTimeout(time.Second*30))
+	if enableQueryServiceLogOTLPExport {
+		ctx, _ := context.WithTimeout(ctx, time.Second*30)
+		conn, err := grpc.DialContext(ctx, baseconst.OTLPTarget, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Println("failed to connect to otlp collector to export query service logs with error:", err)
+			log.Fatalf("failed to establish connection: %v", err)
 		} else {
 			logExportBatchSizeInt, err := strconv.Atoi(baseconst.LogExportBatchSize)
 			if err != nil {
-				logExportBatchSizeInt = 1000
+				logExportBatchSizeInt = 512
 			}
 			ws := zapcore.AddSync(zapotlpsync.NewOtlpSyncer(conn, zapotlpsync.Options{
 				BatchSize:      logExportBatchSizeInt,
@@ -113,7 +115,6 @@ func main() {
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
 
-	logger := loggerMgr.Sugar()
 	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
@@ -137,22 +138,22 @@ func main() {
 	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
 
 	if len(auth.JwtSecret) == 0 {
-		zap.S().Warn("No JWT secret key is specified.")
+		zap.L().Warn("No JWT secret key is specified.")
 	} else {
-		zap.S().Info("No JWT secret key set successfully.")
+		zap.L().Info("JWT secret key set successfully.")
 	}
 
 	server, err := app.NewServer(serverOptions)
 	if err != nil {
-		logger.Fatal("Failed to create server", zap.Error(err))
+		zap.L().Fatal("Failed to create server", zap.Error(err))
 	}
 
 	if err := server.Start(); err != nil {
-		logger.Fatal("Could not start servers", zap.Error(err))
+		zap.L().Fatal("Could not start server", zap.Error(err))
 	}
 
 	if err := auth.InitAuthCache(context.Background()); err != nil {
-		logger.Fatal("Failed to initialize auth cache", zap.Error(err))
+		zap.L().Fatal("Failed to initialize auth cache", zap.Error(err))
 	}
 
 	signalsChannel := make(chan os.Signal, 1)
@@ -161,9 +162,9 @@ func main() {
 	for {
 		select {
 		case status := <-server.HealthCheckStatus():
-			logger.Info("Received HealthCheck status: ", zap.Int("status", int(status)))
+			zap.L().Info("Received HealthCheck status: ", zap.Int("status", int(status)))
 		case <-signalsChannel:
-			logger.Fatal("Received OS Interrupt Signal ... ")
+			zap.L().Fatal("Received OS Interrupt Signal ... ")
 			server.Stop()
 		}
 	}

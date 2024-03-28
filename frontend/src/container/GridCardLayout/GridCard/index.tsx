@@ -1,3 +1,4 @@
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -28,6 +29,7 @@ import { getTimeRange } from 'utils/getTimeRange';
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
 import { GridCardGraphProps } from './types';
+import { getLocalStorageGraphVisibilityState } from './utils';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
 function GridCardGraph({
@@ -39,6 +41,7 @@ function GridCardGraph({
 	threshold,
 	variables,
 	fillSpans = false,
+	version,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
@@ -132,6 +135,7 @@ function GridCardGraph({
 			globalSelectedInterval,
 			variables: getDashboardVariables(variables),
 		},
+		version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				maxTime,
@@ -182,6 +186,16 @@ function GridCardGraph({
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
 		Array(queryResponse.data?.payload?.data.result.length || 0).fill(true),
 	);
+
+	useEffect(() => {
+		const {
+			graphVisibilityStates: localStoredVisibilityState,
+		} = getLocalStorageGraphVisibilityState({
+			apiResponse: queryResponse.data?.payload.data.result || [],
+			name,
+		});
+		setGraphVisibility(localStoredVisibilityState);
+	}, [name, queryResponse.data?.payload.data.result]);
 
 	const options = useMemo(
 		() =>
@@ -234,6 +248,7 @@ function GridCardGraph({
 					errorMessage={errorMessage}
 					isWarning={false}
 					name={name}
+					version={version}
 					onDragSelect={onDragSelect}
 					threshold={threshold}
 					headerMenuList={menuList}
@@ -253,6 +268,7 @@ GridCardGraph.defaultProps = {
 	isQueryEnabled: true,
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
+	version: 'v3',
 };
 
 export default memo(GridCardGraph);

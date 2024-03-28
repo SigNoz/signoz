@@ -4,6 +4,10 @@
 	"SERVICE_METRICS": "SigNoz | Service Metrics",
 	"SERVICE_MAP": "SigNoz | Service Map",
 	"GET_STARTED": "SigNoz | Get Started",
+	"GET_STARTED_APPLICATION_MONITORING": "SigNoz | Get Started | APM",
+	"GET_STARTED_LOGS_MANAGEMENT": "SigNoz | Get Started | Logs",
+	"GET_STARTED_INFRASTRUCTURE_MONITORING": "SigNoz | Get Started | Infrastructure",
+	"GET_STARTED_AWS_MONITORING": "SigNoz | Get Started | AWS",
 	"TRACE": "SigNoz | Trace",
 	"TRACE_DETAIL": "SigNoz | Trace Detail",
 	"TRACES_EXPLORER": "SigNoz | Traces Explorer",
@@ -40,8 +44,9 @@
 	"LIST_LICENSES": "SigNoz | List of Licenses",
 	"WORKSPACE_LOCKED": "SigNoz | Workspace Locked",
 	"SUPPORT": "SigNoz | Support",
-	"LOGS_SAVE_VIEWS": "SigNoz | Logs Save Views",
-	"TRACES_SAVE_VIEWS": "SigNoz | Traces Save Views",
+	"LOGS_SAVE_VIEWS": "SigNoz | Logs Saved Views",
+	"TRACES_SAVE_VIEWS": "SigNoz | Traces Saved Views",
 	"DEFAULT": "Open source Observability Platform | SigNoz",
-	"SHORTCUTS": "SigNoz | Shortcuts"
+	"SHORTCUTS": "SigNoz | Shortcuts",
+	"INTEGRATIONS_INSTALLED": "SigNoz | Integrations"
 }

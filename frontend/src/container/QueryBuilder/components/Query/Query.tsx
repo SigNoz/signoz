@@ -2,8 +2,9 @@
 import './Query.styles.scss';
 
 import { Col, Input, Row } from 'antd';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 // ** Constants
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 // ** Components
 import {
@@ -38,9 +39,11 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
+import SpaceAggregationOptions from '../SpaceAggregationOptions/SpaceAggregationOptions';
 // ** Types
 import { QueryProps } from './Query.interfaces';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export const Query = memo(function Query({
 	index,
 	queryVariant,
@@ -48,14 +51,17 @@ export const Query = memo(function Query({
 	filterConfigs,
 	queryComponents,
 	isListViewPanel = false,
+	showFunctions = false,
+	version,
 }: QueryProps): JSX.Element {
-	const { panelType, currentQuery } = useQueryBuilder();
+	const { panelType, currentQuery, cloneQuery } = useQueryBuilder();
 	const { pathname } = useLocation();
 
 	const [isCollapse, setIsCollapsed] = useState(false);
 
 	const {
 		operators,
+		spaceAggregationOptions,
 		isMetricsDataSource,
 		isTracePanelType,
 		listOfAdditionalFilters,
@@ -63,8 +69,16 @@ export const Query = memo(function Query({
 		handleChangeQueryData,
 		handleChangeDataSource,
 		handleChangeOperator,
+		handleSpaceAggregationChange,
 		handleDeleteQuery,
-	} = useQueryOperations({ index, query, filterConfigs, isListViewPanel });
+		handleQueryFunctionsUpdates,
+	} = useQueryOperations({
+		index,
+		query,
+		filterConfigs,
+		isListViewPanel,
+		entityVersion: version,
+	});
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -192,13 +206,17 @@ export const Query = memo(function Query({
 								</Col>
 							</Row>
 						</Col>
-						<Col span={11}>
+						<Col span={24}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
 									<FilterLabel label="HAVING" />
 								</Col>
 								<Col flex="1 1 12.5rem">
-									<HavingFilter onChange={handleChangeHavingFilter} query={query} />
+									<HavingFilter
+										entityVersion={version}
+										onChange={handleChangeHavingFilter}
+										query={query}
+									/>
 								</Col>
 							</Row>
 						</Col>
@@ -225,7 +243,11 @@ export const Query = memo(function Query({
 									<FilterLabel label="HAVING" />
 								</Col>
 								<Col flex="1 1 12.5rem">
-									<HavingFilter onChange={handleChangeHavingFilter} query={query} />
+									<HavingFilter
+										onChange={handleChangeHavingFilter}
+										entityVersion={version}
+										query={query}
+									/>
 								</Col>
 							</Row>
 						</Col>
@@ -257,7 +279,11 @@ export const Query = memo(function Query({
 										<FilterLabel label="HAVING" />
 									</Col>
 									<Col flex="1 1 12.5rem">
-										<HavingFilter onChange={handleChangeHavingFilter} query={query} />
+										<HavingFilter
+											entityVersion={version}
+											onChange={handleChangeHavingFilter}
+											query={query}
+										/>
 									</Col>
 								</Row>
 							</Col>
@@ -279,23 +305,36 @@ export const Query = memo(function Query({
 	}, [
 		panelType,
 		query,
-		filterConfigs?.limit?.isHidden,
-		filterConfigs?.having?.isHidden,
 		handleChangeLimit,
+		version,
 		handleChangeHavingFilter,
 		renderOrderByFilter,
 		renderAggregateEveryFilter,
+		filterConfigs?.limit?.isHidden,
+		filterConfigs?.having?.isHidden,
 	]);
+
+	const disableOperatorSelector =
+		!query?.aggregateAttribute.key || query?.aggregateAttribute.key === '';
+
+	const isVersionV4 = version && version === ENTITY_VERSION_V4;
 
 	return (
 		<Row gutter={[0, 12]}>
 			<QBEntityOptions
+				isMetricsDataSource={isMetricsDataSource}
+				showFunctions={
+					(version && version === ENTITY_VERSION_V4) || showFunctions || false
+				}
 				isCollapsed={isCollapse}
 				entityType="query"
 				entityData={query}
 				onToggleVisibility={handleToggleDisableQuery}
 				onDelete={handleDeleteQuery}
+				onCloneQuery={cloneQuery}
 				onCollapseEntity={handleToggleCollapsQuery}
+				query={query}
+				onQueryFunctionsUpdates={handleQueryFunctionsUpdates}
 				showDeleteButton={currentQuery.builder.queryData.length > 1}
 				isListViewPanel={isListViewPanel}
 			/>
@@ -322,23 +361,42 @@ export const Query = memo(function Query({
 							{isMetricsDataSource && (
 								<Col span={12}>
 									<Row gutter={[11, 5]}>
-										<Col flex="5.93rem">
-											<OperatorsSelect
-												value={query.aggregateOperator}
-												onChange={handleChangeOperator}
-												operators={operators}
-											/>
-										</Col>
+										{version && version === 'v3' && (
+											<Col flex="5.93rem">
+												<OperatorsSelect
+													value={query.aggregateOperator}
+													onChange={handleChangeOperator}
+													operators={operators}
+												/>
+											</Col>
+										)}
+
 										<Col flex="auto">
 											<AggregatorFilter
 												onChange={handleChangeAggregatorAttribute}
 												query={query}
 											/>
 										</Col>
+
+										{version &&
+											version === ENTITY_VERSION_V4 &&
+											operators &&
+											Array.isArray(operators) &&
+											operators.length > 0 && (
+												<Col flex="5.93rem">
+													<OperatorsSelect
+														value={query.aggregateOperator}
+														onChange={handleChangeOperator}
+														operators={operators}
+														disabled={disableOperatorSelector}
+													/>
+												</Col>
+											)}
 									</Row>
 								</Col>
 							)}
-							<Col flex="1 1 20rem">
+
+							<Col flex="1 1 40rem">
 								<Row gutter={[11, 5]}>
 									{isMetricsDataSource && (
 										<Col>
@@ -379,16 +437,40 @@ export const Query = memo(function Query({
 						</Col>
 					)}
 					{!isListViewPanel && (
-						<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
+						<Col span={24}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
-									<FilterLabel
-										label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
-									/>
+									{isVersionV4 && isMetricsDataSource ? (
+										<SpaceAggregationOptions
+											panelType={panelType}
+											key={`${panelType}${query.spaceAggregation}${query.timeAggregation}`}
+											aggregatorAttributeType={
+												query?.aggregateAttribute.type as ATTRIBUTE_TYPES
+											}
+											selectedValue={query.spaceAggregation}
+											disabled={disableOperatorSelector}
+											onSelect={handleSpaceAggregationChange}
+											operators={spaceAggregationOptions}
+										/>
+									) : (
+										<FilterLabel
+											label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
+										/>
+									)}
 								</Col>
+
 								<Col flex="1 1 12.5rem">
 									{panelType === PANEL_TYPES.VALUE ? (
-										<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+										<Row>
+											{isVersionV4 && isMetricsDataSource && (
+												<Col span={4}>
+													<FilterLabel label="Reduce to" />
+												</Col>
+											)}
+											<Col span={isVersionV4 && isMetricsDataSource ? 20 : 24}>
+												<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+											</Col>
+										</Row>
 									) : (
 										<GroupByFilter
 											disabled={isMetricsDataSource && !query.aggregateAttribute.key}
@@ -397,6 +479,20 @@ export const Query = memo(function Query({
 										/>
 									)}
 								</Col>
+
+								{isVersionV4 && isMetricsDataSource && panelType === PANEL_TYPES.TABLE && (
+									<Col flex="1 1 12.5rem">
+										<Row>
+											<Col span={6}>
+												<FilterLabel label="Reduce to" />
+											</Col>
+
+											<Col span={18}>
+												<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+											</Col>
+										</Row>
+									</Col>
+								)}
 							</Row>
 						</Col>
 					)}

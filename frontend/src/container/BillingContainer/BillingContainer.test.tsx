@@ -12,13 +12,36 @@ import BillingContainer from './BillingContainer';
 
 const lisenceUrl = 'http://localhost/api/v2/licenses';
 
+jest.mock('uplot', () => {
+	const paths = {
+		spline: jest.fn(),
+		bars: jest.fn(),
+	};
+
+	const uplotMock = jest.fn(() => ({
+		paths,
+	}));
+
+	return {
+		paths,
+		default: uplotMock,
+	};
+});
+
+window.ResizeObserver =
+	window.ResizeObserver ||
+	jest.fn().mockImplementation(() => ({
+		disconnect: jest.fn(),
+		observe: jest.fn(),
+		unobserve: jest.fn(),
+	}));
+
 describe('BillingContainer', () => {
 	test('Component should render', async () => {
 		act(() => {
 			render(<BillingContainer />);
 		});
-		const unit = screen.getAllByText(/unit/i);
-		expect(unit[1]).toBeInTheDocument();
+
 		const dataInjection = screen.getByRole('columnheader', {
 			name: /data ingested/i,
 		});
@@ -32,24 +55,15 @@ describe('BillingContainer', () => {
 		});
 		expect(cost).toBeInTheDocument();
 
-		const total = screen.getByRole('cell', {
-			name: /total/i,
-		});
-		expect(total).toBeInTheDocument();
-
 		const manageBilling = screen.getByRole('button', {
-			name: /manage billing/i,
+			name: 'manage_billing',
 		});
 		expect(manageBilling).toBeInTheDocument();
 
-		const dollar = screen.getByRole('cell', {
-			name: /\$0/i,
-		});
+		const dollar = screen.getByText(/\$0/i);
 		expect(dollar).toBeInTheDocument();
 
-		const currentBill = screen.getByRole('heading', {
-			name: /current bill total/i,
-		});
+		const currentBill = screen.getByText('billing');
 		expect(currentBill).toBeInTheDocument();
 	});
 
@@ -61,9 +75,7 @@ describe('BillingContainer', () => {
 		const freeTrailText = await screen.findByText('Free Trial');
 		expect(freeTrailText).toBeInTheDocument();
 
-		const currentBill = await screen.findByRole('heading', {
-			name: /current bill total/i,
-		});
+		const currentBill = screen.getByText('billing');
 		expect(currentBill).toBeInTheDocument();
 
 		const dollar0 = await screen.findByText(/\$0/i);
@@ -73,18 +85,14 @@ describe('BillingContainer', () => {
 		);
 		expect(onTrail).toBeInTheDocument();
 
-		const numberOfDayRemaining = await screen.findByText(
-			/1 days remaining in your billing period./i,
-		);
+		const numberOfDayRemaining = await screen.findByText(/1 days_remaining/i);
 		expect(numberOfDayRemaining).toBeInTheDocument();
 		const upgradeButton = await screen.findAllByRole('button', {
-			name: /upgrade/i,
+			name: /upgrade_plan/i,
 		});
 		expect(upgradeButton[1]).toBeInTheDocument();
 		expect(upgradeButton.length).toBe(2);
-		const checkPaidPlan = await screen.findByText(
-			/Check out features in paid plans/i,
-		);
+		const checkPaidPlan = await screen.findByText(/checkout_plans/i);
 		expect(checkPaidPlan).toBeInTheDocument();
 
 		const link = screen.getByRole('link', { name: /here/i });
@@ -102,9 +110,7 @@ describe('BillingContainer', () => {
 			render(<BillingContainer />);
 		});
 
-		const currentBill = await screen.findByRole('heading', {
-			name: /current bill total/i,
-		});
+		const currentBill = screen.getByText('billing');
 		expect(currentBill).toBeInTheDocument();
 
 		const dollar0 = await screen.findByText(/\$0/i);
@@ -116,17 +122,17 @@ describe('BillingContainer', () => {
 		expect(onTrail).toBeInTheDocument();
 
 		const receivedCardDetails = await screen.findByText(
-			/We have received your card details, your billing will only start after the end of your free trial period./i,
+			/card_details_recieved_and_billing_info/i,
 		);
 		expect(receivedCardDetails).toBeInTheDocument();
 
 		const manageBillingButton = await screen.findByRole('button', {
-			name: /manage billing/i,
+			name: /manage_billing/i,
 		});
 		expect(manageBillingButton).toBeInTheDocument();
 
 		const dayRemainingInBillingPeriod = await screen.findByText(
-			/1 days remaining in your billing period./i,
+			/1 days_remaining/i,
 		);
 		expect(dayRemainingInBillingPeriod).toBeInTheDocument();
 	});
@@ -137,45 +143,30 @@ describe('BillingContainer', () => {
 				res(ctx.status(200), ctx.json(notOfTrailResponse)),
 			),
 		);
-		render(<BillingContainer />);
+		const { findByText } = render(<BillingContainer />);
 
 		const billingPeriodText = `Your current billing period is from ${getFormattedDate(
 			billingSuccessResponse.data.billingPeriodStart,
 		)} to ${getFormattedDate(billingSuccessResponse.data.billingPeriodEnd)}`;
 
-		const billingPeriod = await screen.findByRole('heading', {
-			name: new RegExp(billingPeriodText, 'i'),
-		});
+		const billingPeriod = await findByText(billingPeriodText);
 		expect(billingPeriod).toBeInTheDocument();
 
-		const currentBill = await screen.findByRole('heading', {
-			name: /current bill total/i,
-		});
+		const currentBill = screen.getByText('billing');
 		expect(currentBill).toBeInTheDocument();
 
-		const dollar0 = await screen.findAllByText(/\$1278.3/i);
-		expect(dollar0[0]).toBeInTheDocument();
-		expect(dollar0.length).toBe(2);
+		const dollar0 = await screen.findByText(/\$1,278.3/i);
+		expect(dollar0).toBeInTheDocument();
 
 		const metricsRow = await screen.findByRole('row', {
-			name: /metrics Million 4012 0.1 \$ 401.2/i,
+			name: /metrics 4012 Million 0.1 \$ 401.2/i,
 		});
 		expect(metricsRow).toBeInTheDocument();
 
 		const logRow = await screen.findByRole('row', {
-			name: /Logs GB 497 0.4 \$ 198.8/i,
+			name: /Logs 497 GB 0.4 \$ 198.8/i,
 		});
 		expect(logRow).toBeInTheDocument();
-
-		const totalBill = await screen.findByRole('cell', {
-			name: /\$1278/i,
-		});
-		expect(totalBill).toBeInTheDocument();
-
-		const totalBillRow = await screen.findByRole('row', {
-			name: /total \$1278/i,
-		});
-		expect(totalBillRow).toBeInTheDocument();
 	});
 
 	test('Should render corrent day remaining in billing period', async () => {
@@ -186,7 +177,7 @@ describe('BillingContainer', () => {
 		);
 		render(<BillingContainer />);
 		const dayRemainingInBillingPeriod = await screen.findByText(
-			/11 days remaining in your billing period./i,
+			/11 days_remaining/i,
 		);
 		expect(dayRemainingInBillingPeriod).toBeInTheDocument();
 	});

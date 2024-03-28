@@ -23,7 +23,7 @@ type Reader interface {
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams, skipConfig *model.SkipConfig) (*[]model.ServiceOverviewItem, *model.ApiError)
-	GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig) (*map[string][]string, *model.ApiError)
+	GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig, start, end time.Time) (*map[string][]string, *map[string][]string, *model.ApiError)
 	GetServices(ctx context.Context, query *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError)
 	GetTopOperations(ctx context.Context, query *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError)
 	GetUsage(ctx context.Context, query *model.GetUsageParams) (*[]model.UsageItem, error)
@@ -67,6 +67,9 @@ type Reader interface {
 	GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error)
 	GetMetricAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error)
 
+	// Returns `MetricStatus` for latest received metric among `metricNames`. Useful for status calculations
+	GetLatestReceivedMetric(ctx context.Context, metricNames []string) (*model.MetricStatus, *model.ApiError)
+
 	// QB V3 metrics/traces/logs
 	GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error)
 	GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error)
@@ -74,6 +77,7 @@ type Reader interface {
 
 	GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error)
 	GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error)
+	GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error)
 	GetTotalSpans(ctx context.Context) (uint64, error)
 	GetTotalLogs(ctx context.Context) (uint64, error)
 	GetTotalSamples(ctx context.Context) (uint64, error)
