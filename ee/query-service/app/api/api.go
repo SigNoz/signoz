@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/dao"
+	"go.signoz.io/signoz/ee/query-service/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
@@ -35,8 +36,11 @@ type APIHandlerOptions struct {
 	IntegrationsController        *integrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	Cache                         cache.Cache
+	Gateway                       gateway.Gateway
 	// Querier Influx Interval
 	FluxInterval time.Duration
+	// Name of current tenant
+	Name string
 }
 
 type APIHandler struct {
@@ -93,6 +97,10 @@ func (ah *APIHandler) UM() *usage.Manager {
 
 func (ah *APIHandler) AppDao() dao.ModelDao {
 	return ah.opts.AppDao
+}
+
+func (ah *APIHandler) Gateway() gateway.Gateway {
+	return ah.opts.Gateway
 }
 
 func (ah *APIHandler) CheckFeature(f string) bool {
@@ -169,6 +177,11 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v2/licenses",
 		am.ViewAccess(ah.listLicensesV2)).
 		Methods(http.MethodGet)
+
+	// Ingestion Key APIs
+	router.HandleFunc("/api/v1/keys", am.AdminAccess(ah.getKeys)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/keys/{id}", am.AdminAccess(ah.deleteKey)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/keys", am.AdminAccess(ah.createKey)).Methods(http.MethodPost)
 
 	ah.APIHandler.RegisterRoutes(router, am)
 

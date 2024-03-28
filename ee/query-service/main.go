@@ -95,6 +95,11 @@ func main() {
 	var maxIdleConns int
 	var maxOpenConns int
 	var dialTimeout time.Duration
+	var gatewayUrl string
+	// Name of the tenant
+	var name string
+	// Name of the region deployed in
+	var region string
 
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
@@ -109,6 +114,9 @@ func main() {
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
 	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
+	flag.StringVar(&gatewayUrl, "gateway-url", "localhost:8001", "(url to the gateway)")
+	flag.StringVar(&name, "name", "", "(name of the tenant)")
+	flag.StringVar(&region, "region", "", "(region of the tenant)")
 
 	flag.Parse()
 
@@ -134,6 +142,7 @@ func main() {
 		CacheConfigPath:   cacheConfigPath,
 		FluxInterval:      fluxInterval,
 		Cluster:           cluster,
+		GatewayUrl:        gatewayUrl,
 	}
 
 	// Read the jwt secret key
