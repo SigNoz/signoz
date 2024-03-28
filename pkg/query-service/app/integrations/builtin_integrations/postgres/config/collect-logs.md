@@ -35,7 +35,7 @@ receivers:
               - LOG
               - NOTICE
               - DETAIL
-            warning: WARNING
+            warn: WARNING
             error: ERROR
             fatal:
               - FATAL

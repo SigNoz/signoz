@@ -1,1 +1,0 @@
-### Configure otel collector
