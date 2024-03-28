@@ -102,7 +102,7 @@ func NewThresholdRule(
 
 	t := ThresholdRule{
 		id:                id,
-		name:              p.Alert,
+		name:              p.AlertName,
 		source:            p.Source,
 		ruleCondition:     p.RuleCondition,
 		evalWindow:        time.Duration(p.EvalWindow),
@@ -135,7 +135,7 @@ func NewThresholdRule(
 	}
 	t.queryBuilderV4 = queryBuilder.NewQueryBuilder(builderOptsV4, featureFlags)
 
-	zap.S().Info("msg:", "creating new alerting rule", "\t name:", t.name, "\t condition:", t.ruleCondition.String(), "\t generatorURL:", t.GeneratorURL())
+	zap.L().Info("creating new ThresholdRule", zap.String("name", t.name), zap.String("id", t.id))
 
 	return &t, nil
 }
@@ -386,7 +386,7 @@ func (r *ThresholdRule) ForEachActiveAlert(f func(*Alert)) {
 }
 
 func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
-	zap.S().Info("msg:", "sending alerts", "\t rule:", r.Name())
+	zap.L().Info("sending alerts", zap.String("rule", r.Name()))
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
 		if r.opts.SendAlways || alert.needsSending(ts, resendDelay) {
@@ -400,7 +400,7 @@ func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDela
 			anew := *alert
 			alerts = append(alerts, &anew)
 		} else {
-			zap.S().Debugf("msg: skipping send alert due to resend delay", "\t rule: ", r.Name(), "\t alert:", alert.Labels)
+			zap.L().Debug("skipping send alert due to resend delay", zap.String("rule", r.Name()), zap.Any("alert", alert.Labels))
 		}
 	})
 	notifyFunc(ctx, "", alerts...)
@@ -416,12 +416,12 @@ func (r *ThresholdRule) Unit() string {
 func (r *ThresholdRule) CheckCondition(v float64) bool {
 
 	if math.IsNaN(v) {
-		zap.S().Debugf("msg:", "found NaN in rule condition", "\t rule name:", r.Name())
+		zap.L().Debug("found NaN in rule condition", zap.String("rule", r.Name()))
 		return false
 	}
 
 	if r.ruleCondition.Target == nil {
-		zap.S().Debugf("msg:", "found null target in rule condition", "\t rulename:", r.Name())
+		zap.L().Debug("found null target in rule condition", zap.String("rule", r.Name()))
 		return false
 	}
 
@@ -429,7 +429,7 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 
 	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
 
-	zap.S().Debugf("Checking condition for rule: %s, Converter=%s, Value=%f, Target=%f, CompareOp=%s", r.Name(), unitConverter.Name(), v, value.F, r.ruleCondition.CompareOp)
+	zap.L().Info("Checking condition for rule", zap.String("rule", r.Name()), zap.String("converter", unitConverter.Name()), zap.Float64("value", v), zap.Float64("target", value.F), zap.String("compareOp", string(r.ruleCondition.CompareOp)))
 	switch r.ruleCondition.CompareOp {
 	case ValueIsEq:
 		return v == value.F
@@ -496,7 +496,7 @@ func (r *ThresholdRule) shouldSkipFirstRecord() bool {
 func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, query string) (Vector, error) {
 	rows, err := db.Query(ctx, query)
 	if err != nil {
-		zap.S().Errorf("rule:", r.Name(), "\t failed to get alert query result")
+		zap.L().Error("failed to get alert query result", zap.String("rule", r.Name()), zap.Error(err))
 		return nil, err
 	}
 
@@ -604,7 +604,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					lblsOrig.Set(columnNames[i], fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
 				}
 			default:
-				zap.S().Errorf("ruleId:", r.ID(), "\t error: invalid var found in query result", v, columnNames[i])
+				zap.L().Error("invalid var found in query result", zap.String("ruleId", r.ID()), zap.Any("value", v), zap.Any("column", columnNames[i]))
 			}
 		}
 
@@ -710,11 +710,11 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		}
 	}
 
-	zap.S().Debugf("ruleid:", r.ID(), "\t resultmap(potential alerts):", len(resultMap))
+	zap.L().Debug("resultmap(potential alerts)", zap.String("ruleid", r.ID()), zap.Int("count", len(resultMap)))
 
 	// if the data is missing for `For` duration then we should send alert
-	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(r.Condition().AbsentFor*time.Minute).Before(time.Now()) {
-		zap.S().Debugf("ruleid:", r.ID(), "\t msg: no data found for rule condition")
+	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
+		zap.L().Info("no data found for rule condition", zap.String("ruleid", r.ID()))
 		lbls := labels.NewBuilder(labels.Labels{})
 		if !r.lastTimestampWithDatapoints.IsZero() {
 			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
@@ -734,7 +734,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		}
 	}
 	if len(result) != 0 {
-		zap.S().Infof("For rule %s, with ClickHouseQuery %s, found %d alerts", r.ID(), query, len(result))
+		zap.L().Info("found alerts", zap.String("ruleid", r.ID()), zap.String("query", query), zap.Int("count", len(result)))
 	}
 	return result, nil
 }
@@ -979,7 +979,7 @@ func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]strin
 	}
 
 	if r.ruleCondition.QueryType() != v3.QueryTypeClickHouseSQL {
-		zap.S().Debugf("ruleid:", r.ID(), "\t msg: unsupported query type in prepareClickhouseQueries()")
+		zap.L().Error("unsupported query type in prepareClickhouseQueries", zap.String("ruleid", r.ID()))
 		return nil, fmt.Errorf("failed to prepare clickhouse queries")
 	}
 
@@ -995,18 +995,17 @@ func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]strin
 		tmpl := template.New("clickhouse-query")
 		tmpl, err := tmpl.Parse(chQuery.Query)
 		if err != nil {
-			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to parse clickhouse query to populate vars", err)
+			zap.L().Error("failed to parse clickhouse query to populate vars", zap.String("ruleid", r.ID()), zap.Error(err))
 			r.SetHealth(HealthBad)
 			return nil, err
 		}
 		var query bytes.Buffer
 		err = tmpl.Execute(&query, params.Variables)
 		if err != nil {
-			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to populate clickhouse query", err)
+			zap.L().Error("failed to populate clickhouse query", zap.String("ruleid", r.ID()), zap.Error(err))
 			r.SetHealth(HealthBad)
 			return nil, err
 		}
-		zap.S().Debugf("ruleid:", r.ID(), "\t query:", query.String())
 		queries[name] = query.String()
 	}
 	return queries, nil
@@ -1023,13 +1022,13 @@ func (r *ThresholdRule) GetSelectedQuery() string {
 	if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
 		queries, err = r.prepareBuilderQueries(time.Now(), nil)
 		if err != nil {
-			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare metric queries", zap.Error(err))
+			zap.L().Error("failed to prepare metric queries", zap.String("ruleid", r.ID()), zap.Error(err))
 			return ""
 		}
 	} else if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
 		queries, err = r.prepareClickhouseQueries(time.Now())
 		if err != nil {
-			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare clickhouse queries", zap.Error(err))
+			zap.L().Error("failed to prepare clickhouse queries", zap.String("ruleid", r.ID()), zap.Error(err))
 			return ""
 		}
 	}
@@ -1078,7 +1077,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 		queries, err = r.prepareBuilderQueries(ts, ch)
 
 		if err != nil {
-			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare metric queries", zap.Error(err))
+			zap.L().Error("failed to prepare metric queries", zap.String("ruleid", r.ID()), zap.Error(err))
 			return nil, fmt.Errorf("failed to prepare metric queries")
 		}
 
@@ -1087,7 +1086,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 		queries, err = r.prepareClickhouseQueries(ts)
 
 		if err != nil {
-			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare clickhouse queries", zap.Error(err))
+			zap.L().Error("failed to prepare clickhouse queries", zap.String("ruleid", r.ID()), zap.Error(err))
 			return nil, fmt.Errorf("failed to prepare clickhouse queries")
 		}
 
@@ -1099,16 +1098,16 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 		return nil, fmt.Errorf("no queries could be built with the rule config")
 	}
 
-	zap.S().Debugf("ruleid:", r.ID(), "\t runQueries:", queries)
+	zap.L().Info("prepared queries", zap.String("ruleid", r.ID()), zap.Any("queries", queries))
 
 	queryLabel := r.GetSelectedQuery()
-	zap.S().Debugf("ruleId: ", r.ID(), "\t result query label:", queryLabel)
+	zap.L().Debug("Selected query lable for rule", zap.String("ruleid", r.ID()), zap.String("label", queryLabel))
 
 	if queryString, ok := queries[queryLabel]; ok {
 		return r.runChQuery(ctx, ch, queryString)
 	}
 
-	zap.S().Errorf("ruleId: ", r.ID(), "\t invalid query label:", queryLabel, "\t queries:", queries)
+	zap.L().Error("invalid query label", zap.String("ruleid", r.ID()), zap.String("label", queryLabel), zap.Any("queries", queries))
 	return nil, fmt.Errorf("this is unexpected, invalid query label")
 }
 
@@ -1137,7 +1136,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 	if err != nil {
 		r.SetHealth(HealthBad)
 		r.SetLastError(err)
-		zap.S().Debugf("ruleid:", r.ID(), "\t failure in buildAndRunQuery:", err)
+		zap.L().Error("failure in buildAndRunQuery", zap.String("ruleid", r.ID()), zap.Error(err))
 		return nil, err
 	}
 
@@ -1156,7 +1155,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		value := valueFormatter.Format(smpl.V, r.Unit())
 		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
 		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
-		zap.S().Debugf("Alert template data for rule %s: Formatter=%s, Value=%s, Threshold=%s", r.Name(), valueFormatter.Name(), value, threshold)
+		zap.L().Debug("Alert template data for rule", zap.String("name", r.Name()), zap.String("formatter", valueFormatter.Name()), zap.String("value", value), zap.String("threshold", threshold))
 
 		tmplData := AlertTemplateData(l, value, threshold)
 		// Inject some convenience variables that are easier to remember for users
@@ -1177,7 +1176,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				zap.S().Errorf("msg:", "Expanding alert template failed", "\t err", err, "\t data", tmplData)
+				zap.L().Error("Expanding alert template failed", zap.Error(err), zap.Any("data", tmplData))
 			}
 			return result
 		}
@@ -1222,7 +1221,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		resultFPs[h] = struct{}{}
 
 		if _, ok := alerts[h]; ok {
-			zap.S().Errorf("ruleId: ", r.ID(), "\t msg:", "the alert query returns duplicate records:", alerts[h])
+			zap.L().Error("the alert query returns duplicate records", zap.String("ruleid", r.ID()), zap.Any("alert", alerts[h]))
 			err = fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
 			// We have already acquired the lock above hence using SetHealth and
 			// SetLastError will deadlock.
@@ -1242,7 +1241,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 	}
 
-	zap.S().Info("rule:", r.Name(), "\t alerts found: ", len(alerts))
+	zap.L().Info("alerts found", zap.String("name", r.Name()), zap.Int("count", len(alerts)))
 
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
@@ -1290,7 +1289,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 func (r *ThresholdRule) String() string {
 
 	ar := PostableRule{
-		Alert:             r.name,
+		AlertName:         r.name,
 		RuleCondition:     r.ruleCondition,
 		EvalWindow:        Duration(r.evalWindow),
 		Labels:            r.labels.Map(),

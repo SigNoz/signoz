@@ -48,7 +48,6 @@ function LogGeneralField({
 	fieldValue,
 	linesPerRow = 1,
 }: LogFieldProps): JSX.Element {
-	console.log('fieldKey:', fieldKey, linesPerRow);
 	const html = useMemo(
 		() => ({
 			__html: convert.toHtml(dompurify.sanitize(fieldValue)),

@@ -56,14 +56,14 @@ describe('BillingContainer', () => {
 		expect(cost).toBeInTheDocument();
 
 		const manageBilling = screen.getByRole('button', {
-			name: /manage billing/i,
+			name: 'manage_billing',
 		});
 		expect(manageBilling).toBeInTheDocument();
 
 		const dollar = screen.getByText(/\$0/i);
 		expect(dollar).toBeInTheDocument();
 
-		const currentBill = screen.getByText('Billing');
+		const currentBill = screen.getByText('billing');
 		expect(currentBill).toBeInTheDocument();
 	});
 
@@ -75,7 +75,7 @@ describe('BillingContainer', () => {
 		const freeTrailText = await screen.findByText('Free Trial');
 		expect(freeTrailText).toBeInTheDocument();
 
-		const currentBill = screen.getByText('Billing');
+		const currentBill = screen.getByText('billing');
 		expect(currentBill).toBeInTheDocument();
 
 		const dollar0 = await screen.findByText(/\$0/i);
@@ -85,18 +85,14 @@ describe('BillingContainer', () => {
 		);
 		expect(onTrail).toBeInTheDocument();
 
-		const numberOfDayRemaining = await screen.findByText(
-			/1 days remaining in your billing period./i,
-		);
+		const numberOfDayRemaining = await screen.findByText(/1 days_remaining/i);
 		expect(numberOfDayRemaining).toBeInTheDocument();
 		const upgradeButton = await screen.findAllByRole('button', {
-			name: /upgrade/i,
+			name: /upgrade_plan/i,
 		});
 		expect(upgradeButton[1]).toBeInTheDocument();
 		expect(upgradeButton.length).toBe(2);
-		const checkPaidPlan = await screen.findByText(
-			/Check out features in paid plans/i,
-		);
+		const checkPaidPlan = await screen.findByText(/checkout_plans/i);
 		expect(checkPaidPlan).toBeInTheDocument();
 
 		const link = screen.getByRole('link', { name: /here/i });
@@ -114,7 +110,7 @@ describe('BillingContainer', () => {
 			render(<BillingContainer />);
 		});
 
-		const currentBill = screen.getByText('Billing');
+		const currentBill = screen.getByText('billing');
 		expect(currentBill).toBeInTheDocument();
 
 		const dollar0 = await screen.findByText(/\$0/i);
@@ -126,17 +122,17 @@ describe('BillingContainer', () => {
 		expect(onTrail).toBeInTheDocument();
 
 		const receivedCardDetails = await screen.findByText(
-			/We have received your card details, your billing will only start after the end of your free trial period./i,
+			/card_details_recieved_and_billing_info/i,
 		);
 		expect(receivedCardDetails).toBeInTheDocument();
 
 		const manageBillingButton = await screen.findByRole('button', {
-			name: /manage billing/i,
+			name: /manage_billing/i,
 		});
 		expect(manageBillingButton).toBeInTheDocument();
 
 		const dayRemainingInBillingPeriod = await screen.findByText(
-			/1 days remaining in your billing period./i,
+			/1 days_remaining/i,
 		);
 		expect(dayRemainingInBillingPeriod).toBeInTheDocument();
 	});
@@ -156,7 +152,7 @@ describe('BillingContainer', () => {
 		const billingPeriod = await findByText(billingPeriodText);
 		expect(billingPeriod).toBeInTheDocument();
 
-		const currentBill = screen.getByText('Billing');
+		const currentBill = screen.getByText('billing');
 		expect(currentBill).toBeInTheDocument();
 
 		const dollar0 = await screen.findByText(/\$1,278.3/i);
@@ -181,7 +177,7 @@ describe('BillingContainer', () => {
 		);
 		render(<BillingContainer />);
 		const dayRemainingInBillingPeriod = await screen.findByText(
-			/11 days remaining in your billing period./i,
+			/11 days_remaining/i,
 		);
 		expect(dayRemainingInBillingPeriod).toBeInTheDocument();
 	});

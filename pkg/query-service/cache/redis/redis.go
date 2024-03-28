@@ -59,7 +59,7 @@ func (c *cache) Retrieve(cacheKey string, allowExpired bool) ([]byte, status.Ret
 func (c *cache) SetTTL(cacheKey string, ttl time.Duration) {
 	err := c.client.Expire(context.Background(), cacheKey, ttl).Err()
 	if err != nil {
-		zap.S().Error("error setting TTL for cache key", zap.String("cacheKey", cacheKey), zap.Duration("ttl", ttl), zap.Error(err))
+		zap.L().Error("error setting TTL for cache key", zap.String("cacheKey", cacheKey), zap.Duration("ttl", ttl), zap.Error(err))
 	}
 }
 
@@ -67,7 +67,7 @@ func (c *cache) SetTTL(cacheKey string, ttl time.Duration) {
 func (c *cache) Remove(cacheKey string) {
 	err := c.client.Del(context.Background(), cacheKey).Err()
 	if err != nil {
-		zap.S().Error("error deleting cache key", zap.String("cacheKey", cacheKey), zap.Error(err))
+		zap.L().Error("error deleting cache key", zap.String("cacheKey", cacheKey), zap.Error(err))
 	}
 }
 
@@ -102,7 +102,7 @@ func (c *cache) GetOptions() *Options {
 func (c *cache) GetTTL(cacheKey string) time.Duration {
 	ttl, err := c.client.TTL(context.Background(), cacheKey).Result()
 	if err != nil {
-		zap.S().Error("error getting TTL for cache key", zap.String("cacheKey", cacheKey), zap.Error(err))
+		zap.L().Error("error getting TTL for cache key", zap.String("cacheKey", cacheKey), zap.Error(err))
 	}
 	return ttl
 }
