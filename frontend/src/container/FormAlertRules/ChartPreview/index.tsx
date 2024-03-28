@@ -1,6 +1,7 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import Spinner from 'components/Spinner';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
@@ -10,11 +11,17 @@ import { Time as TimeV2 } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
+import useUrlQuery from 'hooks/useUrlQuery';
+import GetMinMax from 'lib/getMinMax';
+import getTimeString from 'lib/getTimeString';
+import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -54,6 +61,7 @@ function ChartPreview({
 	yAxisUnit,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
+	const dispatch = useDispatch();
 	const threshold = alertDef?.condition.target || 0;
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
@@ -62,6 +70,30 @@ function ChartPreview({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const handleBackNavigation = (): void => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const startTime = searchParams.get(QueryParams.startTime);
+		const endTime = searchParams.get(QueryParams.endTime);
+
+		if (startTime && endTime && startTime !== endTime) {
+			dispatch(
+				UpdateTimeInterval('custom', [
+					parseInt(getTimeString(startTime), 10),
+					parseInt(getTimeString(endTime), 10),
+				]),
+			);
+		}
+	};
+
+	useEffect(() => {
+		window.addEventListener('popstate', handleBackNavigation);
+
+		return (): void => {
+			window.removeEventListener('popstate', handleBackNavigation);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const canQuery = useMemo((): boolean => {
 		if (!query || query == null) {
@@ -131,9 +163,33 @@ function ChartPreview({
 	const containerDimensions = useResizeObserver(graphRef);
 
 	const isDarkMode = useIsDarkMode();
+	const urlQuery = useUrlQuery();
+	const location = useLocation();
 
 	const optionName =
 		getFormatNameByOptionId(alertDef?.condition.targetUnit || '') || '';
+
+	const onDragSelect = useCallback(
+		(start: number, end: number): void => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+
+			const { maxTime, minTime } = GetMinMax('custom', [
+				startTimestamp,
+				endTimestamp,
+			]);
+
+			urlQuery.set(QueryParams.startTime, minTime.toString());
+			urlQuery.set(QueryParams.endTime, maxTime.toString());
+			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			history.push(generatedUrl);
+		},
+		[dispatch, location.pathname, urlQuery],
+	);
 
 	const options = useMemo(
 		() =>
@@ -145,6 +201,7 @@ function ChartPreview({
 				minTimeScale,
 				maxTimeScale,
 				isDarkMode,
+				onDragSelect,
 				thresholds: [
 					{
 						index: '0', // no impact
@@ -174,6 +231,7 @@ function ChartPreview({
 			minTimeScale,
 			maxTimeScale,
 			isDarkMode,
+			onDragSelect,
 			threshold,
 			t,
 			optionName,
