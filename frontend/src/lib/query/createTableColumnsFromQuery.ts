@@ -7,7 +7,7 @@ import {
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { isObject } from 'lodash-es';
+import { isEqual, isObject } from 'lodash-es';
 import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
@@ -258,12 +258,7 @@ const findSeriaValueFromAnotherQuery = (
 		const localLabelEntries = Object.entries(seria.labels);
 		if (localLabelEntries.length !== labelEntries.length) return;
 
-		const isExistLabels = localLabelEntries.find(([key, value]) =>
-			labelEntries.find(
-				([currentKey, currentValue]) =>
-					currentKey === key && currentValue === value,
-			),
-		);
+		const isExistLabels = isEqual(localLabelEntries, labelEntries);
 
 		if (isExistLabels) {
 			value = seria;
@@ -306,7 +301,6 @@ const fillRestAggregationData = (
 		if (!isEqual) {
 			equalQueriesByLabels.push(column.field);
 		}
-
 		column.data.push(parseFloat(targetSeria.values[0].value).toFixed(2));
 	} else {
 		column.data.push('N/A');
