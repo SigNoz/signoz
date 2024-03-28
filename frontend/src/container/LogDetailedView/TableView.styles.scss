@@ -32,8 +32,16 @@
 		.attribute-pin {
 			cursor: pointer;
 
+			padding: 0;
+			vertical-align: middle;
+			text-align: center;
+
 			.log-attribute-pin {
 				padding: 8px;
+
+				display: flex;
+				justify-content: center;
+				align-items: center;
 
 				.pin-attribute-icon {
 					border: none;

@@ -21,7 +21,7 @@ import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
 import { isEmpty } from 'lodash-es';
-import { ArrowDownToDot, ArrowUpFromDot, Star } from 'lucide-react';
+import { ArrowDownToDot, ArrowUpFromDot, Pin } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
@@ -179,9 +179,9 @@ function TableView({
 			key: 'pin',
 			width: 5,
 			align: 'left',
-			className: 'attribute-pin',
-			render: (record): JSX.Element => (
-				<Space size="middle" className="log-attribute-pin">
+			className: 'attribute-pin value-field-container',
+			render: (fieldData: Record<string, string>, record): JSX.Element => (
+				<div className="log-attribute-pin value-field">
 					<div
 						className={cx(
 							'pin-attribute-icon',
@@ -191,12 +191,12 @@ function TableView({
 							togglePinAttribute(record);
 						}}
 					>
-						<Star
-							size={16}
+						<Pin
+							size={14}
 							color={pinnedAttributes[record?.key] ? '#7190f9' : 'white'}
 						/>
 					</div>
-				</Space>
+				</div>
 			),
 		},
 		{
@@ -325,9 +325,6 @@ function TableView({
 			},
 		},
 	];
-
-	const dataWithoutBodyAttr = dataSource.filter((data) => data.key !== 'body');
-
 	function sortPinnedAttributes(
 		data: Record<string, string>[],
 		sortingObj: Record<string, boolean>,
@@ -349,10 +346,7 @@ function TableView({
 		});
 	}
 
-	const sortedAttributes = sortPinnedAttributes(
-		dataWithoutBodyAttr,
-		pinnedAttributes,
-	);
+	const sortedAttributes = sortPinnedAttributes(dataSource, pinnedAttributes);
 
 	return (
 		<ResizeTable
