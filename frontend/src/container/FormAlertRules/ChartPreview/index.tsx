@@ -13,6 +13,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
+import getTimeString from 'lib/getTimeString';
 import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
@@ -69,6 +70,30 @@ function ChartPreview({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const handleBackNavigation = (): void => {
+		const searchParams = new URLSearchParams(window.location.search);
+		const startTime = searchParams.get(QueryParams.startTime);
+		const endTime = searchParams.get(QueryParams.endTime);
+
+		if (startTime && endTime && startTime !== endTime) {
+			dispatch(
+				UpdateTimeInterval('custom', [
+					parseInt(getTimeString(startTime), 10),
+					parseInt(getTimeString(endTime), 10),
+				]),
+			);
+		}
+	};
+
+	useEffect(() => {
+		window.addEventListener('popstate', handleBackNavigation);
+
+		return (): void => {
+			window.removeEventListener('popstate', handleBackNavigation);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const canQuery = useMemo((): boolean => {
 		if (!query || query == null) {
