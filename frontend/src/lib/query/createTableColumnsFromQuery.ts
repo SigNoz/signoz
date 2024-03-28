@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { ColumnsType } from 'antd/es/table';
 import { ColumnType } from 'antd/lib/table';
 import {
@@ -7,7 +8,7 @@ import {
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { isEqual, isObject } from 'lodash-es';
+import { isObject } from 'lodash-es';
 import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
@@ -244,29 +245,29 @@ const fillEmptyRowCells = (
 	});
 };
 
-const findSeriaValueFromAnotherQuery = (
-	currentLabels: Record<string, string>,
-	nextQuery: QueryDataV3 | null,
-): SeriesItem | null => {
-	if (!nextQuery || !nextQuery.series) return null;
+// const findSeriaValueFromAnotherQuery = (
+// 	currentLabels: Record<string, string>,
+// 	nextQuery: QueryDataV3 | null,
+// ): SeriesItem | null => {
+// 	if (!nextQuery || !nextQuery.series) return null;
 
-	let value = null;
+// 	let value = null;
 
-	const labelEntries = Object.entries(currentLabels);
+// 	const labelEntries = Object.entries(currentLabels);
 
-	nextQuery.series.forEach((seria) => {
-		const localLabelEntries = Object.entries(seria.labels);
-		if (localLabelEntries.length !== labelEntries.length) return;
+// 	nextQuery.series.forEach((seria) => {
+// 		const localLabelEntries = Object.entries(seria.labels);
+// 		if (localLabelEntries.length !== labelEntries.length) return;
 
-		const isExistLabels = isEqual(localLabelEntries, labelEntries);
+// 		const isExistLabels = isEqual(localLabelEntries, labelEntries);
 
-		if (isExistLabels) {
-			value = seria;
-		}
-	});
+// 		if (isExistLabels) {
+// 			value = seria;
+// 		}
+// 	});
 
-	return value;
-};
+// 	return value;
+// };
 
 const isEqualQueriesByLabel = (
 	equalQueries: string[],
