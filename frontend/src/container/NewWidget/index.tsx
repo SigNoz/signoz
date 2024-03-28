@@ -57,7 +57,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const { currentQuery, stagedQuery, supersetQuery } = useQueryBuilder();
+	const {
+		currentQuery,
+		stagedQuery,
+		supersetQuery,
+		initQueryBuilderData,
+	} = useQueryBuilder();
 
 	const isQueryModified = useMemo(
 		() => getIsQueryModified(currentQuery, stagedQuery),
@@ -302,7 +307,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		const params = new URLSearchParams(search);
 		params.set('graphType', type);
 		const updatedQuery = handleQueryChange(type as any, supersetQuery);
-		console.log(updatedQuery);
+		initQueryBuilderData({
+			...updatedQuery,
+			queryType: EQueryType.QUERY_BUILDER,
+		});
 		setGraphType(type);
 	};
 

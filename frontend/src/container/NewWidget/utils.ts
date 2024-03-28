@@ -219,6 +219,7 @@ export function handleQueryChange(
 ): QueryState {
 	const updatedQuery = { ...supersetQuery };
 
+	// handle builder here
 	// eslint-disable-next-line sonarjs/no-ignored-return
 	updatedQuery.builder.queryData.map((query, index) => {
 		const tempQuery = initialQueryBuilderFormValuesMap[query.dataSource];
@@ -233,5 +234,7 @@ export function handleQueryChange(
 		});
 		return tempQuery;
 	});
+
+	// handle promQL and clickhouse here
 	return updatedQuery;
 }
