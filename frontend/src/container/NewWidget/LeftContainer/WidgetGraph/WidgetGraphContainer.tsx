@@ -39,6 +39,9 @@ function WidgetGraphContainer({
 			selectedTime: selectedTime.enum,
 		},
 		selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
+		{
+			enabled: selectedGraph !== PANEL_TYPES.LIST,
+		},
 	);
 
 	if (getWidgetQueryRange.data && selectedGraph === PANEL_TYPES.BAR) {
@@ -59,7 +62,7 @@ function WidgetGraphContainer({
 			</NotFoundContainer>
 		);
 	}
-	if (getWidgetQueryRange.isLoading) {
+	if (getWidgetQueryRange.isLoading && selectedGraph !== PANEL_TYPES.LIST) {
 		return <Spinner size="large" tip="Loading..." />;
 	}
 

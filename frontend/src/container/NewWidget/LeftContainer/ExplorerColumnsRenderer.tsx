@@ -2,6 +2,12 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './ExplorerColumnsRenderer.styles.scss';
 
+import { closestCenter, DndContext, DragEndEvent } from '@dnd-kit/core';
+import {
+	arrayMove,
+	horizontalListSortingStrategy,
+	SortableContext,
+} from '@dnd-kit/sortable';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -18,23 +24,14 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import {
-	AlertCircle,
-	GripVertical,
-	PlusCircle,
-	Search,
-	Trash2,
-} from 'lucide-react';
+import { AlertCircle, PlusCircle, Search } from 'lucide-react';
 import { useState } from 'react';
-import {
-	DragDropContext,
-	Draggable,
-	Droppable,
-	DropResult,
-} from 'react-beautiful-dnd';
+import { BaseAutocompleteDataWithId } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
+import { v4 as uuid } from 'uuid';
 
 import { WidgetGraphProps } from '../types';
+import ExplorerCard from './ExplorerCard';
 
 type LogColumnsRendererProps = {
 	setSelectedLogFields: WidgetGraphProps['setSelectedLogFields'];
@@ -94,11 +91,13 @@ function ExplorerColumnsRenderer({
 				} else {
 					setSelectedLogFields([
 						...selectedLogFields,
-						{ dataType: 'string', name: key, type: '' },
+						{ id: uuid(), dataType: 'string', name: key, type: '' },
 					]);
 				}
 			} else {
-				setSelectedLogFields([{ dataType: 'string', name: key, type: '' }]);
+				setSelectedLogFields([
+					{ id: uuid(), dataType: 'string', name: key, type: '' },
+				]);
 			}
 		} else if (
 			initialDataSource === DataSource.TRACES &&
@@ -106,7 +105,10 @@ function ExplorerColumnsRenderer({
 		) {
 			const selectedField = data?.payload?.attributeKeys?.find(
 				(attributeKey) => attributeKey.key === key,
-			);
+			) as BaseAutocompleteDataWithId | undefined;
+			if (selectedField && !selectedField?.id) {
+				selectedField.id = uuid();
+			}
 			if (selectedTracesFields) {
 				if (isAttributeKeySelected(key)) {
 					setSelectedTracesFields(
@@ -161,7 +163,7 @@ function ExplorerColumnsRenderer({
 		},
 	];
 
-	const removeSelectedLogField = (name: string): void => {
+	const removeExplorerCard = (name: string): void => {
 		if (
 			initialDataSource === DataSource.LOGS &&
 			setSelectedLogFields &&
@@ -182,32 +184,41 @@ function ExplorerColumnsRenderer({
 		}
 	};
 
-	const onDragEnd = (result: DropResult): void => {
-		if (!result.destination) {
-			return;
-		}
+	const handleDragEnd = (event: DragEndEvent): void => {
+		const { active, over } = event;
 
 		if (
 			initialDataSource === DataSource.LOGS &&
 			selectedLogFields &&
 			setSelectedLogFields
 		) {
-			const items = [...selectedLogFields];
-			const [reorderedItem] = items.splice(result.source.index, 1);
-			items.splice(result.destination.index, 0, reorderedItem);
-
-			setSelectedLogFields(items);
+			if (!over) return;
+			if (active.id === over.id) return;
+			setSelectedLogFields((items) => {
+				if (items) {
+					const originIndex = items?.findIndex((item) => item.id === active.id);
+					const targetIndex = items?.findIndex((item) => item.id === over.id);
+					return arrayMove(items, originIndex, targetIndex);
+				}
+				return [];
+			});
 		}
+
 		if (
 			initialDataSource === DataSource.TRACES &&
 			selectedTracesFields &&
 			setSelectedTracesFields
 		) {
-			const items = [...selectedTracesFields];
-			const [reorderedItem] = items.splice(result.source.index, 1);
-			items.splice(result.destination.index, 0, reorderedItem);
-
-			setSelectedTracesFields(items);
+			if (!over) return;
+			if (active.id === over.id) return;
+			setSelectedTracesFields((items) => {
+				if (items) {
+					const originPos = items?.findIndex((item) => item.id === active.id);
+					const targetPos = items?.findIndex((item) => item.id === over.id);
+					return arrayMove(items, originPos, targetPos);
+				}
+				return [];
+			});
 		}
 	};
 
@@ -237,68 +248,38 @@ function ExplorerColumnsRenderer({
 			<Divider />
 			{!isError && (
 				<div className="explorer-columns-contents">
-					<DragDropContext onDragEnd={onDragEnd}>
-						<Droppable droppableId="drag-drop-list" direction="horizontal">
-							{(provided): JSX.Element => (
-								<div
-									className="explorer-columns"
-									{...provided.droppableProps}
-									ref={provided.innerRef}
+					<div className="explorer-columns">
+						<DndContext onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
+							{initialDataSource === DataSource.LOGS && selectedLogFields && (
+								<SortableContext
+									items={selectedLogFields}
+									strategy={horizontalListSortingStrategy}
 								>
-									{initialDataSource === DataSource.LOGS &&
-										selectedLogFields &&
-										selectedLogFields.map((field, index) => (
-											// eslint-disable-next-line react/no-array-index-key
-											<Draggable key={index} draggableId={index.toString()} index={index}>
-												{(dragProvided): JSX.Element => (
-													<div
-														className="explorer-column-card"
-														ref={dragProvided.innerRef}
-														{...dragProvided.draggableProps}
-														{...dragProvided.dragHandleProps}
-													>
-														<div className="explorer-column-title">
-															<GripVertical size={12} color="#5A5A5A" />
-															{field.name}
-														</div>
-														<Trash2
-															size={12}
-															color="red"
-															onClick={(): void => removeSelectedLogField(field.name)}
-														/>
-													</div>
-												)}
-											</Draggable>
-										))}
-									{initialDataSource === DataSource.TRACES &&
-										selectedTracesFields &&
-										selectedTracesFields.map((field, index) => (
-											// eslint-disable-next-line react/no-array-index-key
-											<Draggable key={index} draggableId={index.toString()} index={index}>
-												{(dragProvided): JSX.Element => (
-													<div
-														className="explorer-column-card"
-														ref={dragProvided.innerRef}
-														{...dragProvided.draggableProps}
-														{...dragProvided.dragHandleProps}
-													>
-														<div className="explorer-column-title">
-															<GripVertical size={12} color="#5A5A5A" />
-															{field.key}
-														</div>
-														<Trash2
-															size={12}
-															color="red"
-															onClick={(): void => removeSelectedLogField(field.key)}
-														/>
-													</div>
-												)}
-											</Draggable>
-										))}
-								</div>
+									{selectedLogFields.map((field) => (
+										<ExplorerCard
+											field={field}
+											removeExplorerCard={removeExplorerCard}
+											key={field.id}
+										/>
+									))}
+								</SortableContext>
 							)}
-						</Droppable>
-					</DragDropContext>
+							{initialDataSource === DataSource.TRACES && selectedTracesFields && (
+								<SortableContext
+									items={selectedTracesFields}
+									strategy={horizontalListSortingStrategy}
+								>
+									{selectedTracesFields.map((field) => (
+										<ExplorerCard
+											field={field}
+											removeExplorerCard={removeExplorerCard}
+											key={field.key}
+										/>
+									))}
+								</SortableContext>
+							)}
+						</DndContext>
+					</div>
 					<div>
 						<Dropdown
 							menu={{ items }}

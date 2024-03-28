@@ -6,6 +6,7 @@ import ExplorerColumnsRenderer from './ExplorerColumnsRenderer';
 import QuerySection from './QuerySection';
 import { QueryContainer } from './styles';
 import WidgetGraph from './WidgetGraph';
+// import WidgetListView from './WidgetListView/WidgetListView';
 
 function LeftContainer({
 	selectedGraph,

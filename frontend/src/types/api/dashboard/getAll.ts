@@ -6,7 +6,10 @@ import { Layout } from 'react-grid-layout';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { IField } from '../logs/fields';
-import { BaseAutocompleteData } from '../queryBuilder/queryAutocompleteResponse';
+import {
+	AutocompleteType,
+	DataTypes,
+} from '../queryBuilder/queryAutocompleteResponse';
 
 export type PayloadProps = Dashboard[];
 
@@ -66,6 +69,15 @@ export interface DashboardData {
 	version?: string;
 }
 
+export interface BaseAutocompleteDataWithId {
+	id: string;
+	dataType: DataTypes;
+	isColumn: boolean;
+	key: string;
+	type: AutocompleteType | string | null;
+	isJSON?: boolean;
+}
+
 export interface IBaseWidget {
 	isStacked: boolean;
 	id: string;
@@ -81,8 +93,8 @@ export interface IBaseWidget {
 	softMin: number | null;
 	softMax: number | null;
 	fillSpans?: boolean;
-	selectedLogFields: IField[] | null;
-	selectedTracesFields: BaseAutocompleteData[] | null;
+	selectedLogFields: (IField & { id: string })[] | null;
+	selectedTracesFields: BaseAutocompleteDataWithId[] | null;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

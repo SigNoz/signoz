@@ -1,5 +1,6 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Card } from 'container/GridCardLayout/styles';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -41,6 +42,9 @@ function WidgetGraph({
 			selectedTime: selectedTime.enum,
 		},
 		selectedDashboard?.data?.version || DEFAULT_ENTITY_VERSION,
+		{
+			enabled: selectedGraph !== PANEL_TYPES.LIST,
+		},
 	);
 
 	if (selectedWidget === undefined) {
