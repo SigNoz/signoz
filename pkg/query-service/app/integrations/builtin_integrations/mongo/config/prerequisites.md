@@ -5,7 +5,7 @@ To configure metrics and logs collection for MongoDB, you need the following.
 ### Ensure MongoDB server is prepared for monitoring
 
 - **Ensure that the MongoDB server is running a supported version**  
-  MongoDB versions 4.0+ are supported.  
+  MongoDB versions 4.4+ are supported.  
   You can use the following statement to determine server version  
   ```js
   db.version()
