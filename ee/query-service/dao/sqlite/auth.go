@@ -150,8 +150,6 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 
 	if ssoAvailable {
 
-		resp.IsUser = true
-
 		// find domain from email
 		orgDomain, apierr := m.GetDomainByEmail(ctx, email)
 		if apierr != nil {
@@ -180,7 +178,7 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 				return resp, model.InternalError(fmt.Errorf("failed to generate login request"))
 			}
 
-			// build Idp URL that will authenticat the user
+			// build Idp URL that will authenticate the user
 			// the front-end will redirect user to this url
 			resp.SsoUrl, err = orgDomain.BuildSsoUrl(siteUrl)
 
@@ -189,6 +187,8 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 				return resp, model.InternalError(err)
 			}
 
+			// set IsUser to true, as the user is valid
+			resp.IsUser = true
 			// set SSO to true, as the url is generated correctly
 			resp.SSO = true
 		}
