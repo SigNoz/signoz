@@ -158,7 +158,7 @@ function WidgetGraph({
 			<GridPanelSwitch
 				data={chartData}
 				options={options}
-				panelType={selectedWidget.panelTypes}
+				panelType={selectedGraph}
 				name={widgetId || 'legend_widget'}
 				yAxisUnit={yAxisUnit}
 				panelData={
