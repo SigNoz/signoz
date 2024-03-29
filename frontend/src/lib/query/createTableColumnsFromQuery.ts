@@ -7,7 +7,7 @@ import {
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { isObject } from 'lodash-es';
+import { isEqual, isObject } from 'lodash-es';
 import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
@@ -258,12 +258,7 @@ const findSeriaValueFromAnotherQuery = (
 		const localLabelEntries = Object.entries(seria.labels);
 		if (localLabelEntries.length !== labelEntries.length) return;
 
-		const isExistLabels = localLabelEntries.find(([key, value]) =>
-			labelEntries.find(
-				([currentKey, currentValue]) =>
-					currentKey === key && currentValue === value,
-			),
-		);
+		const isExistLabels = isEqual(localLabelEntries, labelEntries);
 
 		if (isExistLabels) {
 			value = seria;
@@ -304,10 +299,9 @@ const fillRestAggregationData = (
 	if (targetSeria) {
 		const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
 		if (!isEqual) {
+			// This line is crucial. It ensures that no additional rows are added to the table for similar labels across all formulas here is how this check is applied: signoz/frontend/src/lib/query/createTableColumnsFromQuery.ts line number 370
 			equalQueriesByLabels.push(column.field);
 		}
-
-		column.data.push(parseFloat(targetSeria.values[0].value).toFixed(2));
 	} else {
 		column.data.push('N/A');
 	}
@@ -357,6 +351,7 @@ const fillDataFromSeries = (
 			}
 
 			if (column.type !== 'field' && column.field !== queryName) {
+				// This code is executed only when there are multiple formulas. It checks if there are similar labels present in other formulas and, if found, adds them to the corresponding column data in the table.
 				fillRestAggregationData(
 					column,
 					queryTableData,
