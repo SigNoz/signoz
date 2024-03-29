@@ -299,6 +299,7 @@ const fillRestAggregationData = (
 	if (targetSeria) {
 		const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
 		if (!isEqual) {
+			// This line is crucial. It ensures that no additional rows are added to the table for similar labels across all formulas here is how this check is applied: signoz/frontend/src/lib/query/createTableColumnsFromQuery.ts line number 370
 			equalQueriesByLabels.push(column.field);
 		}
 	} else {
@@ -350,6 +351,7 @@ const fillDataFromSeries = (
 			}
 
 			if (column.type !== 'field' && column.field !== queryName) {
+				// This code is executed only when there are multiple formulas. It checks if there are similar labels present in other formulas and, if found, adds them to the corresponding column data in the table.
 				fillRestAggregationData(
 					column,
 					queryTableData,
