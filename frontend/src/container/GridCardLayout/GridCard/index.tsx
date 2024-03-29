@@ -146,6 +146,17 @@ function GridCardGraph({
 				widget?.panelTypes,
 				widget.timePreferance,
 			],
+			retry(failureCount, error): boolean {
+				if (
+					typeof error.cause === 'string' &&
+					error.cause.includes('status: error') &&
+					error.cause.includes('i/o timeout')
+				) {
+					return false;
+				}
+
+				return failureCount < 2;
+			},
 			keepPreviousData: true,
 			enabled: queryEnabledCondition,
 			refetchOnMount: false,

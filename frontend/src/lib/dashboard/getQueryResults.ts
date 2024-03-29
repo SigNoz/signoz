@@ -32,6 +32,9 @@ export async function GetMetricQueryRange(
 	if (response.statusCode >= 400) {
 		throw new Error(
 			`API responded with ${response.statusCode} -  ${response.error}`,
+			{
+				cause: `status: ${response.message}, errors: ${response?.body}`,
+			},
 		);
 	}
 

@@ -30,7 +30,8 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 				statusCode,
 				payload: null,
 				error: errorMessage,
-				message: null,
+				message: (response.data as any)?.status,
+				body: JSON.stringify(response.data),
 			};
 		}
 
