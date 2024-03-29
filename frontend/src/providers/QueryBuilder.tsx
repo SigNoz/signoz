@@ -274,6 +274,21 @@ export function QueryBuilderProvider({
 					},
 				};
 			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				const currentArray: (IBuilderQuery | IBuilderFormula)[] =
+					prevState.builder[type];
+
+				const filteredArray = currentArray.filter((_, i) => index !== i);
+
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						[type]: filteredArray,
+					},
+				};
+			});
 		},
 		[],
 	);
@@ -281,6 +296,14 @@ export function QueryBuilderProvider({
 	const removeQueryTypeItemByIndex = useCallback(
 		(type: EQueryType.PROM | EQueryType.CLICKHOUSE, index: number) => {
 			setCurrentQuery((prevState) => {
+				const targetArray: (IPromQLQuery | IClickHouseQuery)[] = prevState[type];
+				return {
+					...prevState,
+					[type]: targetArray.filter((_, i) => index !== i),
+				};
+			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
 				const targetArray: (IPromQLQuery | IClickHouseQuery)[] = prevState[type];
 				return {
 					...prevState,
@@ -374,12 +397,37 @@ export function QueryBuilderProvider({
 					[type]: [...prevState[type], newQuery],
 				};
 			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				if (prevState[type].length >= MAX_QUERIES) return prevState;
+
+				const newQuery = createNewQueryTypeItem(prevState[type], type);
+
+				return {
+					...prevState,
+					[type]: [...prevState[type], newQuery],
+				};
+			});
 		},
 		[createNewQueryTypeItem],
 	);
 
 	const addNewBuilderQuery = useCallback(() => {
 		setCurrentQuery((prevState) => {
+			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
+
+			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
+
+			return {
+				...prevState,
+				builder: {
+					...prevState.builder,
+					queryData: [...prevState.builder.queryData, newQuery],
+				},
+			};
+		});
+		// eslint-disable-next-line sonarjs/no-identical-functions
+		setSupersetQuery((prevState) => {
 			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
 
 			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
@@ -412,12 +460,43 @@ export function QueryBuilderProvider({
 					},
 				};
 			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
+
+				const clonedQuery = cloneNewBuilderQuery(
+					prevState.builder.queryData,
+					query,
+				);
+
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						queryData: [...prevState.builder.queryData, clonedQuery],
+					},
+				};
+			});
 		},
 		[cloneNewBuilderQuery],
 	);
 
 	const addNewFormula = useCallback(() => {
 		setCurrentQuery((prevState) => {
+			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) return prevState;
+
+			const newFormula = createNewBuilderFormula(prevState.builder.queryFormulas);
+
+			return {
+				...prevState,
+				builder: {
+					...prevState.builder,
+					queryFormulas: [...prevState.builder.queryFormulas, newFormula],
+				},
+			};
+		});
+		// eslint-disable-next-line sonarjs/no-identical-functions
+		setSupersetQuery((prevState) => {
 			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) return prevState;
 
 			const newFormula = createNewBuilderFormula(prevState.builder.queryFormulas);
@@ -460,6 +539,19 @@ export function QueryBuilderProvider({
 					[type]: updatedQueryBuilderData,
 				};
 			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				const updatedQueryBuilderData = updateQueryBuilderData(
+					prevState[type],
+					index,
+					newQueryData,
+				);
+
+				return {
+					...prevState,
+					[type]: updatedQueryBuilderData,
+				};
+			});
 		},
 		[updateQueryBuilderData],
 	);
@@ -481,12 +573,44 @@ export function QueryBuilderProvider({
 					},
 				};
 			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				const updatedQueryBuilderData = updateQueryBuilderData(
+					prevState.builder.queryData,
+					index,
+					newQueryData,
+				);
+
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						queryData: updatedQueryBuilderData,
+					},
+				};
+			});
 		},
 		[updateQueryBuilderData],
 	);
 	const handleSetFormulaData = useCallback(
 		(index: number, formulaData: IBuilderFormula): void => {
 			setCurrentQuery((prevState) => {
+				const updatedFormulasBuilderData = updateQueryBuilderData(
+					prevState.builder.queryFormulas,
+					index,
+					formulaData,
+				);
+
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						queryFormulas: updatedFormulasBuilderData,
+					},
+				};
+			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
 				const updatedFormulasBuilderData = updateQueryBuilderData(
 					prevState.builder.queryFormulas,
 					index,
@@ -657,6 +781,10 @@ export function QueryBuilderProvider({
 	const handleOnUnitsChange = useCallback(
 		(unit: string) => {
 			setCurrentQuery((prevState) => ({
+				...prevState,
+				unit,
+			}));
+			setSupersetQuery((prevState) => ({
 				...prevState,
 				unit,
 			}));

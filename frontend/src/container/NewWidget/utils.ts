@@ -4,11 +4,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { isEqual, set } from 'lodash-es';
-import {
-	IBuilderQuery,
-	Query,
-	QueryState,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 export const getIsQueryModified = (
@@ -215,11 +211,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 
 export function handleQueryChange(
 	newPanelType: keyof PartialPanelTypes,
-	supersetQuery: QueryState,
-): QueryState {
+	supersetQuery: Query,
+): Query {
 	const updatedQuery = { ...supersetQuery };
-
-	// handle builder here
 	// eslint-disable-next-line sonarjs/no-ignored-return
 	updatedQuery.builder.queryData.map((query, index) => {
 		const tempQuery = initialQueryBuilderFormValuesMap[query.dataSource];
@@ -235,6 +229,5 @@ export function handleQueryChange(
 		return tempQuery;
 	});
 
-	// handle promQL and clickhouse here
 	return updatedQuery;
 }

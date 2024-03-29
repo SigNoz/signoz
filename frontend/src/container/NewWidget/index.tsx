@@ -60,8 +60,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const {
 		currentQuery,
 		stagedQuery,
-		supersetQuery,
 		initQueryBuilderData,
+		supersetQuery,
 	} = useQueryBuilder();
 
 	const isQueryModified = useMemo(
@@ -301,16 +301,11 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 	}, [dashboardId]);
 
-	console.log(currentQuery, supersetQuery);
-
 	const setGraphHandler = (type: PANEL_TYPES): void => {
 		const params = new URLSearchParams(search);
 		params.set('graphType', type);
 		const updatedQuery = handleQueryChange(type as any, supersetQuery);
-		initQueryBuilderData({
-			...updatedQuery,
-			queryType: EQueryType.QUERY_BUILDER,
-		});
+		initQueryBuilderData(updatedQuery);
 		setGraphType(type);
 	};
 
