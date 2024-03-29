@@ -6,4 +6,4 @@ import { DataSource } from 'types/common/queryBuilder';
 export const getAllViews = (
 	sourcepage: DataSource,
 ): Promise<AxiosResponse<AllViewsProps>> =>
-	axios.get(`explorer/views?sourcePage=${sourcepage}`);
+	axios.get(`/explorer/views?sourcePage=${sourcepage}`);

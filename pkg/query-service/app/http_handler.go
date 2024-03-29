@@ -207,7 +207,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	hasUsers, err := aH.appDao.GetUsersWithOpts(context.Background(), 1)
 	if err.Error() != "" {
 		// raise warning but no panic as this is a recoverable condition
-		zap.S().Warnf("unexpected error while fetch user count while initializing base api handler", err.Error())
+		zap.L().Warn("unexpected error while fetch user count while initializing base api handler", zap.Error(err))
 	}
 	if len(hasUsers) != 0 {
 		// first user is already created, we can mark the app ready for general use.
@@ -273,7 +273,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 		Data:      data,
 	})
 	if err != nil {
-		zap.S().Error("msg", "error marshalling json response", "err", err)
+		zap.L().Error("error marshalling json response", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -303,7 +303,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	if n, err := w.Write(b); err != nil {
-		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
+		zap.L().Error("error writing response", zap.Int("bytesWritten", n), zap.Error(err))
 	}
 }
 
@@ -314,7 +314,7 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 		Data:   data,
 	})
 	if err != nil {
-		zap.S().Error("msg", "error marshalling json response", "err", err)
+		zap.L().Error("error marshalling json response", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -322,7 +322,7 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if n, err := w.Write(b); err != nil {
-		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
+		zap.L().Error("error writing response", zap.Int("bytesWritten", n), zap.Error(err))
 	}
 }
 
@@ -401,6 +401,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/events", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
+
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
@@ -567,7 +569,7 @@ func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParam
 	var err error
 
 	if aH.preferDelta {
-		zap.S().Debug("fetching metric temporality")
+		zap.L().Debug("fetching metric temporality")
 		metricNameToTemporality, err = aH.reader.FetchTemporality(ctx, metricNames)
 		if err != nil {
 			return err
@@ -595,7 +597,7 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
+		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -1130,7 +1132,7 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body in test rule API\n", err)
+		zap.L().Error("Error in getting req body in test rule API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1173,7 +1175,7 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("msg: error in getting req body of patch rule API\n", "\t error:", err)
+		zap.L().Error("error in getting req body of patch rule API\n", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1194,7 +1196,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("msg: error in getting req body of edit rule API\n", "\t error:", err)
+		zap.L().Error("error in getting req body of edit rule API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1245,14 +1247,14 @@ func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body of testChannel API\n", err)
+		zap.L().Error("Error in getting req body of testChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.S().Errorf("Error in parsing req body of testChannel API\n", err)
+		zap.L().Error("Error in parsing req body of testChannel API\n", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1272,14 +1274,14 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body of editChannel API\n", err)
+		zap.L().Error("Error in getting req body of editChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.S().Errorf("Error in parsing req body of editChannel API\n", err)
+		zap.L().Error("Error in parsing req body of editChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1300,14 +1302,14 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body of createChannel API\n", err)
+		zap.L().Error("Error in getting req body of createChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.S().Errorf("Error in parsing req body of createChannel API\n", err)
+		zap.L().Error("Error in parsing req body of createChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1347,7 +1349,7 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body for create rule API\n", err)
+		zap.L().Error("Error in getting req body for create rule API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1374,7 +1376,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// zap.S().Info(query, apiError)
+	// zap.L().Info(query, apiError)
 
 	ctx := r.Context()
 	if to := r.FormValue("timeout"); to != "" {
@@ -1396,7 +1398,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if res.Err != nil {
-		zap.S().Error(res.Err)
+		zap.L().Error("error in query range metrics", zap.Error(res.Err))
 	}
 
 	if res.Err != nil {
@@ -1429,7 +1431,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// zap.S().Info(query, apiError)
+	// zap.L().Info(query, apiError)
 
 	ctx := r.Context()
 	if to := r.FormValue("timeout"); to != "" {
@@ -1451,7 +1453,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if res.Err != nil {
-		zap.S().Error(res.Err)
+		zap.L().Error("error in query range metrics", zap.Error(res.Err))
 	}
 
 	if res.Err != nil {
@@ -1502,7 +1504,22 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
 	if err == nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail, true, false)
+	}
+}
+
+func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
+
+	request, err := parseRegisterEventRequest(r)
+	if aH.HandleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	userEmail, err := auth.GetEmailFromJwt(r.Context())
+	if err == nil {
+		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, userEmail, true, true)
+		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
+	} else {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 	}
 }
 
@@ -1585,7 +1602,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
 	if err == nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail, true, false)
 	}
 
 	if (data["number"] != 0) && (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
@@ -2045,7 +2062,7 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := dao.DB().GetUsers(context.Background())
 	if err != nil {
-		zap.S().Debugf("[listUsers] Failed to query list of users, err: %v", err)
+		zap.L().Error("[listUsers] Failed to query list of users", zap.Error(err))
 		RespondError(w, err, nil)
 		return
 	}
@@ -2062,7 +2079,7 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	user, err := dao.DB().GetUser(ctx, id)
 	if err != nil {
-		zap.S().Debugf("[getUser] Failed to query user, err: %v", err)
+		zap.L().Error("[getUser] Failed to query user", zap.Error(err))
 		RespondError(w, err, "Failed to get user")
 		return
 	}
@@ -2092,7 +2109,7 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	old, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
-		zap.S().Debugf("[editUser] Failed to query user, err: %v", err)
+		zap.L().Error("[editUser] Failed to query user", zap.Error(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2176,7 +2193,7 @@ func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("failed read user flags from http request for userId ", userId, "with error: ", err)
+		zap.L().Error("failed read user flags from http request for userId ", zap.String("userId", userId), zap.Error(err))
 		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
 		return
 	}
@@ -2184,7 +2201,7 @@ func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(b, &flags)
 	if err != nil {
-		zap.S().Errorf("failed parsing user flags for userId ", userId, "with error: ", err)
+		zap.L().Error("failed parsing user flags for userId ", zap.String("userId", userId), zap.Error(err))
 		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
 		return
 	}
@@ -2310,7 +2327,7 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		"organizationName": req.Name,
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail, true, false)
 
 	aH.WriteJSON(w, r, map[string]string{"data": "org updated successfully"})
 }
@@ -2348,7 +2365,7 @@ func (aH *APIHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := auth.ResetPassword(context.Background(), req); err != nil {
-		zap.S().Debugf("resetPassword failed, err: %v\n", err)
+		zap.L().Error("resetPassword failed", zap.Error(err))
 		if aH.HandleError(w, err, http.StatusInternalServerError) {
 			return
 		}
@@ -2391,7 +2408,7 @@ func (aH *APIHandler) HandleError(w http.ResponseWriter, err error, statusCode i
 		return false
 	}
 	if statusCode == http.StatusInternalServerError {
-		zap.S().Error("HTTP handler, Internal Server Error", zap.Error(err))
+		zap.L().Error("HTTP handler, Internal Server Error", zap.Error(err))
 	}
 	structuredResp := structuredResponse{
 		Errors: []structuredError{
@@ -2809,10 +2826,10 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "data: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
-			zap.S().Debug("done!")
+			zap.L().Debug("done!")
 			return
 		case err := <-client.Error:
-			zap.S().Error("error occured!", err)
+			zap.L().Error("error occured", zap.Error(err))
 			return
 		}
 	}
@@ -2963,7 +2980,7 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		postable []logparsingpipeline.PostablePipeline,
 	) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 		if len(postable) == 0 {
-			zap.S().Warnf("found no pipelines in the http request, this will delete all the pipelines")
+			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")
 		}
 
 		for _, p := range postable {
@@ -3403,7 +3420,7 @@ func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request)
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
+		zap.L().Error(apiErrorObj.Err.Error())
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -3478,11 +3495,11 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 
 	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
 	if err != nil {
-		zap.S().Errorf("error while matching the dashboard: %v", err)
+		zap.L().Error("error while matching the referrer", zap.Error(err))
 	}
 	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
 	if err != nil {
-		zap.S().Errorf("error while matching the alert: %v", err)
+		zap.L().Error("error while matching the alert: ", zap.Error(err))
 	}
 
 	if alertMatched || dashboardMatched {
@@ -3525,7 +3542,7 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 							"metricsUsed": signozMetricsUsed,
 							"dashboardId": dashboardID,
 							"widgetId":    widgetID,
-						}, userEmail)
+						}, userEmail, true, false)
 					}
 					if alertMatched {
 						var alertID string
@@ -3547,7 +3564,7 @@ func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParam
 							"logsUsed":    signozLogsUsed,
 							"metricsUsed": signozMetricsUsed,
 							"alertId":     alertID,
-						}, userEmail)
+						}, userEmail, true, false)
 					}
 				}
 			}
@@ -3559,7 +3576,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
+		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -3568,7 +3585,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 
 	temporalityErr := aH.addTemporality(r.Context(), queryRangeParams)
 	if temporalityErr != nil {
-		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
+		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
 		return
 	}
@@ -3584,7 +3601,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
+		zap.L().Error(apiErrorObj.Err.Error())
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -3645,10 +3662,10 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "data: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
-			zap.S().Debug("done!")
+			zap.L().Debug("done!")
 			return
 		case err := <-client.Error:
-			zap.S().Error("error occurred!", err)
+			zap.L().Error("error occurred", zap.Error(err))
 			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
 			flusher.Flush()
 			return
@@ -3725,7 +3742,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
+		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -3733,7 +3750,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	// add temporality for each metric
 	temporalityErr := aH.populateTemporality(r.Context(), queryRangeParams)
 	if temporalityErr != nil {
-		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
+		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
 		return
 	}
@@ -3777,12 +3794,12 @@ func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 			expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
 			// This shouldn't happen here, because it should have been caught earlier in validation
 			if err != nil {
-				zap.S().Errorf("error in expression: %s", err.Error())
+				zap.L().Error("error in expression", zap.Error(err))
 				return nil, err
 			}
 			formulaResult, err := processResults(result, expression)
 			if err != nil {
-				zap.S().Errorf("error in expression: %s", err.Error())
+				zap.L().Error("error in expression", zap.Error(err))
 				return nil, err
 			}
 			formulaResult.QueryName = query.QueryName

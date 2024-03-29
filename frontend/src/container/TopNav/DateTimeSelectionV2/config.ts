@@ -1,24 +1,24 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import ROUTES from 'constants/routes';
 
-type FiveMin = '5min';
-type TenMin = '10min';
-type FifteenMin = '15min';
-type ThirtyMin = '30min';
-type FortyFiveMin = '45min';
-type OneMin = '1min';
-type ThreeHour = '3hr';
-type SixHour = '6hr';
-type OneHour = '1hr';
-type FourHour = '4hr';
-type TwelveHour = '12hr';
-type OneDay = '1day';
-type ThreeDay = '3days';
-type FourDay = '4days';
-type TenDay = '10days';
-type OneWeek = '1week';
-type TwoWeek = '2weeks';
-type SixWeek = '6weeks';
+type FiveMin = '5m';
+type TenMin = '10m';
+type FifteenMin = '15m';
+type ThirtyMin = '30m';
+type FortyFiveMin = '45m';
+type OneMin = '1m';
+type ThreeHour = '3h';
+type SixHour = '6h';
+type OneHour = '1h';
+type FourHour = '4h';
+type TwelveHour = '12h';
+type OneDay = '1d';
+type ThreeDay = '3d';
+type FourDay = '4d';
+type TenDay = '10d';
+type OneWeek = '1w';
+type TwoWeek = '2w';
+type SixWeek = '6w';
 type TwoMonths = '2months';
 type Custom = 'custom';
 
@@ -44,15 +44,19 @@ export type Time =
 	| TwoWeek
 	| TwoMonths;
 
+export type TimeUnit = 'm' | 'h' | 'd' | 'w';
+
+export type CustomTimeType = `${string}${TimeUnit}`;
+
 export const Options: Option[] = [
-	{ value: '5min', label: 'Last 5 minutes' },
-	{ value: '15min', label: 'Last 15 minutes' },
-	{ value: '30min', label: 'Last 30 minutes' },
-	{ value: '1hr', label: 'Last 1 hour' },
-	{ value: '6hr', label: 'Last 6 hours' },
-	{ value: '1day', label: 'Last 1 day' },
-	{ value: '3days', label: 'Last 3 days' },
-	{ value: '1week', label: 'Last 1 week' },
+	{ value: '5m', label: 'Last 5 minutes' },
+	{ value: '15m', label: 'Last 15 minutes' },
+	{ value: '30m', label: 'Last 30 minutes' },
+	{ value: '1h', label: 'Last 1 hour' },
+	{ value: '6h', label: 'Last 6 hours' },
+	{ value: '1d', label: 'Last 1 day' },
+	{ value: '3d', label: 'Last 3 days' },
+	{ value: '1w', label: 'Last 1 week' },
 	{ value: 'custom', label: 'Custom' },
 ];
 
@@ -61,35 +65,91 @@ export interface Option {
 	label: string;
 }
 
+export const OLD_RELATIVE_TIME_VALUES = [
+	'1min',
+	'10min',
+	'15min',
+	'1hr',
+	'30min',
+	'45min',
+	'5min',
+	'1day',
+	'3days',
+	'4days',
+	'10days',
+	'1week',
+	'2weeks',
+	'6weeks',
+	'3hr',
+	'4hr',
+	'6hr',
+	'12hr',
+];
+
 export const RelativeDurationOptions: Option[] = [
-	{ value: '5min', label: 'Last 5 minutes' },
-	{ value: '15min', label: 'Last 15 minutes' },
-	{ value: '30min', label: 'Last 30 minutes' },
-	{ value: '1hr', label: 'Last 1 hour' },
-	{ value: '6hr', label: 'Last 6 hour' },
-	{ value: '1day', label: 'Last 1 day' },
-	{ value: '3days', label: 'Last 3 days' },
-	{ value: '1week', label: 'Last 1 week' },
+	{ value: '5m', label: 'Last 5 minutes' },
+	{ value: '15m', label: 'Last 15 minutes' },
+	{ value: '30m', label: 'Last 30 minutes' },
+	{ value: '1h', label: 'Last 1 hour' },
+	{ value: '6h', label: 'Last 6 hour' },
+	{ value: '1d', label: 'Last 1 day' },
+	{ value: '3d', label: 'Last 3 days' },
+	{ value: '1w', label: 'Last 1 week' },
 ];
 
 export const RelativeDurationSuggestionOptions: Option[] = [
-	{ value: '3hr', label: '3h' },
-	{ value: '4days', label: '4d' },
-	{ value: '6weeks', label: '6w' },
-	{ value: '12hr', label: '12 hours' },
-	{ value: '10days', label: '10d' },
-	{ value: '2weeks', label: '2 weeks' },
+	{ value: '3h', label: 'Last 3 hours' },
+	{ value: '4d', label: 'Last 4 days' },
+	{ value: '6w', label: 'Last 6 weeks' },
+	{ value: '12h', label: 'Last 12 hours' },
+	{ value: '10d', label: 'Last 10 days' },
+	{ value: '2w', label: 'Last 2 weeks' },
 	{ value: '2months', label: 'Last 2 months' },
-	{ value: '1day', label: 'today' },
+	{ value: '1d', label: 'today' },
 ];
 export const FixedDurationSuggestionOptions: Option[] = [
-	{ value: '45min', label: '45m' },
-	{ value: '12hr', label: '12 hours' },
-	{ value: '10days', label: '10d' },
-	{ value: '2weeks', label: '2 weeks' },
+	{ value: '45m', label: 'Last 45 mins' },
+	{ value: '12h', label: 'Last 12 hours' },
+	{ value: '10d', label: 'Last 10 days' },
+	{ value: '2w', label: 'Last 2 weeks' },
 	{ value: '2months', label: 'Last 2 months' },
-	{ value: '1day', label: 'today' },
+	{ value: '1d', label: 'today' },
 ];
+
+export const convertOldTimeToNewValidCustomTimeFormat = (
+	time: string,
+): CustomTimeType => {
+	const regex = /^(\d+)([a-zA-Z]+)/;
+	const match = regex.exec(time);
+
+	if (match) {
+		let unit = 'm';
+
+		switch (match[2]) {
+			case 'min':
+				unit = 'm';
+				break;
+			case 'hr':
+				unit = 'h';
+				break;
+			case 'day':
+			case 'days':
+				unit = 'd';
+				break;
+			case 'week':
+			case 'weeks':
+				unit = 'w';
+				break;
+
+			default:
+				break;
+		}
+
+		return `${match[1]}${unit}` as CustomTimeType;
+	}
+
+	return '30m';
+};
 
 export const getDefaultOption = (route: string): Time => {
 	if (route === ROUTES.SERVICE_MAP) {

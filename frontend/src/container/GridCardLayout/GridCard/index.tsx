@@ -1,6 +1,7 @@
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -81,8 +82,13 @@ function GridCardGraph({
 		const searchParams = new URLSearchParams(window.location.search);
 		const startTime = searchParams.get(QueryParams.startTime);
 		const endTime = searchParams.get(QueryParams.endTime);
+		const relativeTime = searchParams.get(
+			QueryParams.relativeTime,
+		) as CustomTimeType;
 
-		if (startTime && endTime && startTime !== endTime) {
+		if (relativeTime) {
+			dispatch(UpdateTimeInterval(relativeTime));
+		} else if (startTime && endTime && startTime !== endTime) {
 			dispatch(
 				UpdateTimeInterval('custom', [
 					parseInt(getTimeString(startTime), 10),
@@ -146,6 +152,16 @@ function GridCardGraph({
 				widget?.panelTypes,
 				widget.timePreferance,
 			],
+			retry(failureCount, error): boolean {
+				if (
+					String(error).includes('status: error') &&
+					String(error).includes('i/o timeout')
+				) {
+					return false;
+				}
+
+				return failureCount < 2;
+			},
 			keepPreviousData: true,
 			enabled: queryEnabledCondition,
 			refetchOnMount: false,

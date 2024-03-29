@@ -104,7 +104,7 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 	if version >= 0 {
 		savedPipelines, errors := ic.getPipelinesByVersion(ctx, version)
 		if errors != nil {
-			zap.S().Errorf("failed to get pipelines for version %d, %w", version, errors)
+			zap.L().Error("failed to get pipelines for version", zap.Int("version", version), zap.Errors("errors", errors))
 			return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version"))
 		}
 		result = savedPipelines
@@ -158,7 +158,7 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 ) (*PipelinesResponse, *model.ApiError) {
 	pipelines, errors := ic.getEffectivePipelinesByVersion(ctx, version)
 	if errors != nil {
-		zap.S().Errorf("failed to get pipelines for version %d, %w", version, errors)
+		zap.L().Error("failed to get pipelines for version", zap.Int("version", version), zap.Error(errors))
 		return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version"))
 	}
 
@@ -166,7 +166,7 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 	if version >= 0 {
 		cv, err := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeLogPipelines, version)
 		if err != nil {
-			zap.S().Errorf("failed to get config for version %d, %s", version, err.Error())
+			zap.L().Error("failed to get config for version", zap.Int("version", version), zap.Error(err))
 			return nil, model.WrapApiError(err, "failed to get config for given version")
 		}
 		configVersion = cv
