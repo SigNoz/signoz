@@ -7,7 +7,10 @@ import GridPanelSwitch from 'container/GridPanelSwitch';
 import { getFormatNameByOptionId } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
-import { Time as TimeV2 } from 'container/TopNav/DateTimeSelectionV2/config';
+import {
+	CustomTimeType,
+	Time as TimeV2,
+} from 'container/TopNav/DateTimeSelectionV2/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -39,7 +42,7 @@ export interface ChartPreviewProps {
 	query: Query | null;
 	graphType?: PANEL_TYPES;
 	selectedTime?: timePreferenceType;
-	selectedInterval?: Time | TimeV2;
+	selectedInterval?: Time | TimeV2 | CustomTimeType;
 	headline?: JSX.Element;
 	alertDef?: AlertDef;
 	userQueryKey?: string;
@@ -53,7 +56,7 @@ function ChartPreview({
 	query,
 	graphType = PANEL_TYPES.TIME_SERIES,
 	selectedTime = 'GLOBAL_TIME',
-	selectedInterval = '5min',
+	selectedInterval = '5m',
 	headline,
 	userQueryKey,
 	allowSelectedIntervalForStepGen = false,
