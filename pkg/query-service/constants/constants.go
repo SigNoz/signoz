@@ -45,6 +45,8 @@ const LogsTTL = "logs"
 const DurationSort = "DurationSort"
 const TimestampSort = "TimestampSort"
 const PreferRPM = "PreferRPM"
+const AlertChannelSlack = "ALERT_CHANNEL_SLACK"
+const AlertChannelWebhook = "ALERT_CHANNEL_WEBHOOK"
 
 func GetAlertManagerApiPrefix() string {
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
@@ -61,9 +63,9 @@ var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/rout
 var OTLPTarget = GetOrDefaultEnv("OTLP_TARGET", "")
 var LogExportBatchSize = GetOrDefaultEnv("LOG_EXPORT_BATCH_SIZE", "1000")
 
-var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
+// var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
-// var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "./signoz.db")
+var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "./signoz.db")
 
 var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
 
@@ -122,6 +124,20 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 	model.Feature{
 		Name:       PreferRPM,
 		Active:     IsPreferRPMFeatureEnabled(),
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	model.Feature{
+		Name:       AlertChannelSlack,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	model.Feature{
+		Name:       AlertChannelWebhook,
+		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
