@@ -31,7 +31,7 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 				payload: null,
 				error: errorMessage,
 				message: (response.data as any)?.status,
-				body: JSON.stringify(response.data),
+				body: JSON.stringify((response.data as any).data),
 			};
 		}
 

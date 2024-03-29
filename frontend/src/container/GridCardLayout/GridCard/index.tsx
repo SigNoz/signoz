@@ -148,9 +148,8 @@ function GridCardGraph({
 			],
 			retry(failureCount, error): boolean {
 				if (
-					typeof error.cause === 'string' &&
-					error.cause.includes('status: error') &&
-					error.cause.includes('i/o timeout')
+					String(error).includes('status: error') &&
+					String(error).includes('i/o timeout')
 				) {
 					return false;
 				}
