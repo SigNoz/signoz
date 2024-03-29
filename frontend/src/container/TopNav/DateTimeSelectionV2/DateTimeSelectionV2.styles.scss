@@ -67,7 +67,6 @@
 	padding: 8px 0 16px;
 	width: 420px;
 
-
 	.absolute-relative-time-toggler-container {
 		display: flex;
 		gap: 8px;
@@ -87,7 +86,7 @@
 
 	.share-link {
 		display: flex;
-    	align-items: center;
+		align-items: center;
 
 		.share-url {
 			flex: 1;
@@ -102,8 +101,7 @@
 			width: 32px;
 		}
 	}
-
-} 
+}
 
 .date-time-root {
 	.ant-popover-inner {
@@ -280,6 +278,15 @@
 			.time-btns {
 				background-color: var(--bg-vanilla-300);
 				color: var(--bg-slate-400);
+			}
+		}
+	}
+
+	.share-modal-content {
+		.share-link {
+			.share-url {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
 			}
 		}
 	}

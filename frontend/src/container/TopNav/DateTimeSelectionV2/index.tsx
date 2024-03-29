@@ -72,9 +72,7 @@ function DateTimeSelection({
 	const searchStartTime = urlQuery.get('startTime');
 	const searchEndTime = urlQuery.get('endTime');
 	const queryClient = useQueryClient();
-	const [enableAbsoluteTime, setEnableAbsoluteTime] = useState(
-		!!(searchStartTime && searchEndTime),
-	);
+	const [enableAbsoluteTime, setEnableAbsoluteTime] = useState(false);
 	const [isValidteRelativeTime, setIsValidteRelativeTime] = useState(false);
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 	const [isURLCopied, setIsURLCopied] = useState(false);
@@ -472,10 +470,15 @@ function DateTimeSelection({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.pathname, updateTimeInterval, globalTimeLoading]);
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const shareModalContent = (): JSX.Element => {
 		let currentUrl = window.location.href;
 
-		if (enableAbsoluteTime) {
+		const startTime = urlQuery.get(QueryParams.startTime);
+		const endTime = urlQuery.get(QueryParams.endTime);
+		const isCustomTime = !!(startTime && endTime && selectedTime === 'custom');
+
+		if (enableAbsoluteTime || isCustomTime) {
 			if (selectedTime === 'custom') {
 				if (searchStartTime && searchEndTime) {
 					urlQuery.set(QueryParams.startTime, searchStartTime.toString());
@@ -511,7 +514,7 @@ function DateTimeSelection({
 							<Info size={14} color={Color.BG_AMBER_400} />
 						)}
 						<Switch
-							checked={enableAbsoluteTime}
+							checked={enableAbsoluteTime || isCustomTime}
 							disabled={selectedTime === 'custom' || !isValidteRelativeTime}
 							size="small"
 							onChange={(): void => {
@@ -623,7 +626,7 @@ function DateTimeSelection({
 						title="Shareable Link"
 						content={shareModalContent}
 						arrow={false}
-						trigger={['click']}
+						trigger={['hover']}
 					>
 						<Button className="periscope-btn" icon={<Send size={14} />}>
 							Share
