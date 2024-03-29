@@ -8,6 +8,8 @@ type OneMin = '1m';
 type SixHour = '6h';
 type OneHour = '1h';
 type FourHour = '4h';
+type ThreeHour = '3h';
+type TwelveHour = '12h';
 type OneDay = '1d';
 type ThreeDay = '3d';
 type OneWeek = '1w';
@@ -22,9 +24,11 @@ export type Time =
 	| FourHour
 	| SixHour
 	| OneHour
+	| ThreeHour
 	| Custom
 	| OneWeek
 	| OneDay
+	| TwelveHour
 	| ThreeDay;
 
 export const Options: Option[] = [

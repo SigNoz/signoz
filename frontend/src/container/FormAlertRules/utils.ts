@@ -12,6 +12,8 @@ import {
 // toChartInterval converts eval window to chart selection time interval
 export const toChartInterval = (evalWindow: string | undefined): Time => {
 	switch (evalWindow) {
+		case '1m0s':
+			return '1m';
 		case '5m0s':
 			return '5m';
 		case '10m0s':
@@ -22,8 +24,14 @@ export const toChartInterval = (evalWindow: string | undefined): Time => {
 			return '30m';
 		case '1h0m0s':
 			return '1h';
+		case '3h0m0s':
+			return '3h';
 		case '4h0m0s':
 			return '4h';
+		case '6h0m0s':
+			return '6h';
+		case '12h0m0s':
+			return '12h';
 		case '24h0m0s':
 			return '1d';
 		default:
