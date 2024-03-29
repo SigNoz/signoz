@@ -112,6 +112,7 @@
 	"exceptions_based_alert_desc": "Send a notification when a condition occurs in the exceptions data.",
 	"field_unit": "Threshold unit",
 	"text_alert_on_absent": "Send a notification if data is missing for",
+	"text_alert_frequency": "Run alert every",
 	"text_for": "minutes",
 	"selected_query_placeholder": "Select query"
 }

@@ -14,6 +14,7 @@ export interface AlertDef {
 	alertType?: string;
 	alert?: string;
 	ruleType?: string;
+	frequency?: number | undefined;
 	condition: RuleCondition;
 	labels?: Labels;
 	annotations?: Labels;
