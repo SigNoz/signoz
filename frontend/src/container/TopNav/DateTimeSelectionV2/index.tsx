@@ -493,7 +493,7 @@ function DateTimeSelection({
 
 			urlQuery.delete(QueryParams.relativeTime);
 
-			currentUrl = `${window.location.host}${
+			currentUrl = `${window.location.origin}${
 				location.pathname
 			}?${urlQuery.toString()}`;
 		} else {
@@ -501,7 +501,7 @@ function DateTimeSelection({
 			urlQuery.delete(QueryParams.endTime);
 
 			urlQuery.set(QueryParams.relativeTime, selectedTime);
-			currentUrl = `${window.location.host}${
+			currentUrl = `${window.location.origin}${
 				location.pathname
 			}?${urlQuery.toString()}`;
 		}
