@@ -55,6 +55,10 @@
 		}
 	}
 
+	.share-link-btn {
+		height: 34px;
+	}
+
 	.shareable-link-popover {
 		margin-left: 8px;
 	}
@@ -64,7 +68,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	padding: 8px 0 16px;
+	padding: 16px;
 	width: 420px;
 
 	.absolute-relative-time-toggler-container {
@@ -81,7 +85,7 @@
 
 	.absolute-relative-time-error {
 		font-size: 12px;
-		color: var(--bg-amber-400);
+		color: var(--bg-amber-600);
 	}
 
 	.share-link {
@@ -103,7 +107,8 @@
 	}
 }
 
-.date-time-root {
+.date-time-root,
+.shareable-link-popover-root {
 	.ant-popover-inner {
 		border-radius: 4px !important;
 		border: 1px solid var(--bg-slate-400);
@@ -232,7 +237,8 @@
 		}
 	}
 
-	.date-time-root {
+	.date-time-root,
+	.shareable-link-popover-root {
 		.ant-popover-inner {
 			border: 1px solid var(--bg-vanilla-400);
 			background: var(--bg-vanilla-100) !important;

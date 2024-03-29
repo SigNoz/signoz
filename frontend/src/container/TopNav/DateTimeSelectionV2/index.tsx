@@ -511,7 +511,7 @@ function DateTimeSelection({
 				<div className="absolute-relative-time-toggler-container">
 					<div className="absolute-relative-time-toggler">
 						{(selectedTime === 'custom' || !isValidteRelativeTime) && (
-							<Info size={14} color={Color.BG_AMBER_400} />
+							<Info size={14} color={Color.BG_AMBER_600} />
 						)}
 						<Switch
 							checked={enableAbsoluteTime || isCustomTime}
@@ -621,14 +621,17 @@ function DateTimeSelection({
 					)}
 
 					<Popover
+						rootClassName="shareable-link-popover-root"
 						className="shareable-link-popover"
 						placement="bottomRight"
-						title="Shareable Link"
 						content={shareModalContent}
 						arrow={false}
 						trigger={['hover']}
 					>
-						<Button className="periscope-btn" icon={<Send size={14} />}>
+						<Button
+							className="share-link-btn periscope-btn"
+							icon={<Send size={14} />}
+						>
 							Share
 						</Button>
 					</Popover>
