@@ -4835,6 +4835,9 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 }
 
 func getPersonalisedError(err error) error {
+	if err == nil {
+		return nil
+	}
 	if strings.Contains(err.Error(), "code: 307") {
 		return errors.New("query is consuming too much resources, please reach out to the team")
 	}
