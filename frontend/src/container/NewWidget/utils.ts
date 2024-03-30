@@ -218,7 +218,6 @@ export function handleQueryChange(
 	updatedQuery.builder.queryData.map((query, index) => {
 		const tempQuery = initialQueryBuilderFormValuesMap[query.dataSource];
 
-		console.log(tempQuery, query.dataSource);
 		const fieldsToSelect =
 			panelTypeDataSourceFormValuesMap[newPanelType][query.dataSource].builder
 				.queryData;
