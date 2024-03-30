@@ -162,7 +162,14 @@ func NewReaderFromClickhouseConnection(
 		os.Exit(1)
 	}
 
-	wrap := clickhouseConnWrapper{conn: db}
+	wrap := clickhouseConnWrapper{
+		conn: db,
+		settings: ClickhouseQuerySettings{
+			MaxExecutionTimeLeaf:                os.Getenv("ClickHouseMaxExecutionTimeLeaf"),
+			TimeoutBeforeCheckingExecutionSpeed: os.Getenv("ClickHouseTimeoutBeforeCheckingExecutionSpeed"),
+			MaxBytesToRead:                      os.Getenv("ClickHouseMaxBytesToRead"),
+		},
+	}
 
 	return &ClickHouseReader{
 		db:                      wrap,
@@ -4732,7 +4739,7 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 		series := v3.Series{Labels: seriesToAttrs[key], Points: points, GroupingSetsPoint: groupingSetsPoint, LabelsArray: labelsArray[key]}
 		seriesList = append(seriesList, &series)
 	}
-	return seriesList, nil
+	return seriesList, getPersonalisedError(rows.Err())
 }
 
 func logComment(ctx context.Context) string {
@@ -4823,8 +4830,19 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 		rowList = append(rowList, &v3.Row{Timestamp: t, Data: row})
 	}
 
-	return rowList, nil
+	return rowList, getPersonalisedError(rows.Err())
 
+}
+
+func getPersonalisedError(err error) error {
+	if strings.Contains(err.Error(), "code: 307") {
+		return errors.New("query is consuming too much resources, please reach out to the team")
+	}
+
+	if strings.Contains(err.Error(), "code: 159") {
+		return errors.New("Query is taking too long to run, please reach out to the team")
+	}
+	return err
 }
 
 func removeDuplicateUnderscoreAttributes(row map[string]interface{}) {
