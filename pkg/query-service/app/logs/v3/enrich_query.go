@@ -74,6 +74,12 @@ func isEnriched(field v3.AttributeKey) bool {
 	if field.Type == v3.AttributeKeyTypeUnspecified || field.DataType == v3.AttributeKeyDataTypeUnspecified {
 		return false
 	}
+
+	// try to enrich all attributes which doesn't have isColumn = true
+	if !field.IsColumn {
+		return false
+	}
+
 	return true
 }
 

@@ -30,7 +30,7 @@ var testEnrichmentRequiredData = []struct {
 				},
 			},
 		},
-		EnrichmentRequired: false,
+		EnrichmentRequired: true,
 	},
 	{
 		Name: "attribute enrichment required",
@@ -66,7 +66,7 @@ var testEnrichmentRequiredData = []struct {
 				},
 			},
 		},
-		EnrichmentRequired: false,
+		EnrichmentRequired: true,
 	},
 	{
 		Name: "filter enrichment required",
@@ -118,7 +118,7 @@ var testEnrichmentRequiredData = []struct {
 				},
 			},
 		},
-		EnrichmentRequired: false,
+		EnrichmentRequired: true,
 	},
 	{
 		Name: "groupBy enrichment required",
@@ -151,7 +151,7 @@ var testEnrichmentRequiredData = []struct {
 				},
 			},
 		},
-		EnrichmentRequired: false,
+		EnrichmentRequired: true,
 	},
 	{
 		Name: "orderBy enrichment required",
@@ -200,7 +200,7 @@ var testEnrichmentRequiredData = []struct {
 				},
 			},
 		},
-		EnrichmentRequired: false,
+		EnrichmentRequired: true,
 	},
 }
 
@@ -255,6 +255,7 @@ var testEnrichParamsData = []struct {
 				Key:      "response_time",
 				Type:     v3.AttributeKeyTypeTag,
 				DataType: v3.AttributeKeyDataTypeInt64,
+				IsColumn: true,
 			},
 		},
 		Result: v3.QueryRangeParamsV3{
@@ -273,7 +274,7 @@ var testEnrichParamsData = []struct {
 							{Key: v3.AttributeKey{Key: "user_name", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString}, Value: "john", Operator: "="},
 						}},
 						GroupBy: []v3.AttributeKey{{Key: "trace_id", Type: v3.AttributeKeyTypeUnspecified, DataType: v3.AttributeKeyDataTypeString, IsColumn: true}},
-						OrderBy: []v3.OrderBy{{ColumnName: "response_time", Key: "response_time", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeInt64}},
+						OrderBy: []v3.OrderBy{{ColumnName: "response_time", Key: "response_time", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeInt64, IsColumn: true}},
 					},
 				},
 			},
