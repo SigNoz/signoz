@@ -82,7 +82,9 @@ Set the following environment variables in your otel-collector environment:
 ```bash
 
 # path of Redis server log file. must be accessible by the otel collector
-export REDIS_LOG_FILE=/var/log/redis.log
+# typically found in /usr/local/var/log/redis on macOS
+# log file location can also be found in the output of `redis-cli CONFIG GET : *`
+export REDIS_LOG_FILE=/var/log/redis/redis-server.log
 
 # region specific SigNoz cloud ingestion endpoint
 export OTLP_DESTINATION_ENDPOINT="ingest.us.signoz.cloud:443"

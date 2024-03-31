@@ -117,9 +117,11 @@ Set the following environment variables in your otel-collector environment:
 ```bash
 
 # path of Nginx access log file. must be accessible by the otel collector
-export NGINX_ACCESS_LOG_FILE=/var/log/nginx/access.log;
+# typically found at /usr/local/var/log/nginx/access.log on macOS
+export NGINX_ACCESS_LOG_FILE=/var/log/nginx/access.log
 
 # path of Nginx error log file. must be accessible by the otel collector
+# typically found at /usr/local/var/log/nginx/error.log on macOS
 export NGINX_ERROR_LOG_FILE=/var/log/nginx/error.log
 
 # region specific SigNoz cloud ingestion endpoint

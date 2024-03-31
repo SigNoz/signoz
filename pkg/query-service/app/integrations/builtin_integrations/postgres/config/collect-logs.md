@@ -91,7 +91,9 @@ Set the following environment variables in your otel-collector environment:
 ```bash
 
 # path of Postgres server log file. must be accessible by the otel collector
-export POSTGRESQL_LOG_FILE=/usr/local/var/log/postgres.log
+# typically found in /usr/local/var/log/postgresql on macOS
+# running `SELECT pg_current_logfile();` can also give you the location of postgresql log file
+export POSTGRESQL_LOG_FILE=/var/log/postgresql/postgresql.log
 
 # region specific SigNoz cloud ingestion endpoint
 export OTLP_DESTINATION_ENDPOINT="ingest.us.signoz.cloud:443"
