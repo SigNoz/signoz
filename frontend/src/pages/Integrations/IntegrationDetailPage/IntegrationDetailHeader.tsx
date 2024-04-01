@@ -5,12 +5,14 @@ import { Button, Modal, Tooltip, Typography } from 'antd';
 import installIntegration from 'api/Integrations/installIntegration';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs from 'dayjs';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowLeftRight, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useMutation } from 'react-query';
 import { IntegrationConnectionStatus } from 'types/api/integrations/types';
 
+import { INTEGRATION_TELEMETRY_EVENTS } from '../utils';
 import TestConnection, { ConnectionStates } from './TestConnection';
 
 interface IntegrationDetailHeaderProps {
@@ -36,6 +38,8 @@ function IntegrationDetailHeader(
 		refetchIntegrationDetails,
 	} = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
+
+	const { trackEvent } = useAnalytics();
 
 	const { notifications } = useNotifications();
 
@@ -120,8 +124,18 @@ function IntegrationDetailHeader(
 					disabled={isInstallLoading}
 					onClick={(): void => {
 						if (connectionState === ConnectionStates.NotInstalled) {
+							trackEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_DETAIL_CONNECT, {
+								integration: id,
+							});
 							mutate({ integration_id: id, config: {} });
 						} else {
+							trackEvent(
+								INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_DETAIL_TEST_CONNECTION,
+								{
+									integration: id,
+									connectionStatus: connectionState,
+								},
+							);
 							showModal();
 						}
 					}}
