@@ -153,9 +153,12 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 		return field
 	}
 
-	// enrich with default values if metadata is not found
-	field.Type = v3.AttributeKeyTypeTag
-	field.DataType = v3.AttributeKeyDataTypeString
+	if field.Type == "" {
+		field.Type = v3.AttributeKeyTypeTag
+	}
+	if field.DataType == "" {
+		field.DataType = v3.AttributeKeyDataTypeString
+	}
 	return field
 }
 
