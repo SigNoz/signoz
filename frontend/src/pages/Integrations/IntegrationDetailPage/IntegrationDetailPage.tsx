@@ -123,6 +123,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 						<IntegrationDetailContent
 							activeDetailTab={activeDetailTab}
 							integrationData={integrationData}
+							integrationId={selectedIntegration}
 						/>
 
 						{connectionStatus !== ConnectionStates.NotInstalled && (
@@ -130,6 +131,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 								integrationTitle={defaultTo(integrationData?.title, '')}
 								integrationId={selectedIntegration}
 								refetchIntegrationDetails={refetch}
+								connectionStatus={connectionStatus}
 							/>
 						)}
 					</>
