@@ -164,92 +164,94 @@ export default function DataSource(): JSX.Element {
 				))}
 			</div>
 
-			{selectedModule?.id === useCases.APM.id && (
-				<div className="form-container">
-					<div className="service-name-container">
-						<Form
-							initialValues={{
-								serviceName,
-								selectFramework: selectedFramework,
-							}}
-							form={form}
-							onValuesChange={(): void => {
-								const serviceName = form.getFieldValue('serviceName');
+			<div className="form-container">
+				<div className="service-name-container">
+					<Form
+						initialValues={{
+							serviceName,
+							selectFramework: selectedFramework,
+						}}
+						form={form}
+						onValuesChange={(): void => {
+							const serviceName = form.getFieldValue('serviceName');
 
-								updateServiceName(serviceName);
-							}}
-							name="data-source-form"
-							layout="vertical"
-							validateTrigger="onBlur"
-						>
-							<Form.Item
-								name="serviceName"
-								label="Service Name"
-								style={{ width: 300 }}
-								rules={[{ required: true, message: 'Please enter service name' }]}
-								validateTrigger="onBlur"
-							>
-								<Input autoFocus />
-							</Form.Item>
+							updateServiceName(serviceName);
+						}}
+						name="data-source-form"
+						layout="vertical"
+						validateTrigger="onBlur"
+					>
+						{selectedModule?.id === useCases.APM.id && (
+							<>
+								<Form.Item
+									name="serviceName"
+									label="Service Name"
+									style={{ width: 300 }}
+									rules={[{ required: true, message: 'Please enter service name' }]}
+									validateTrigger="onBlur"
+								>
+									<Input autoFocus />
+								</Form.Item>
 
-							{enableFrameworks && (
-								<div className="framework-selector">
-									<Form.Item
-										label="Select Framework"
-										name="selectFramework"
-										rules={[{ required: true, message: 'Please select framework' }]}
-									>
-										<Select
-											value={selectedFramework}
-											getPopupContainer={popupContainer}
-											style={{ width: 300 }}
-											placeholder="Select Framework"
-											onChange={(value): void => updateSelectedFramework(value)}
-											options={supportedframeworks}
-										/>
-									</Form.Item>
-								</div>
-							)}
-
-							<div className="request-entity-container">
-								<Typography.Text>
-									Cannot find what you’re looking for? Request a data source
-								</Typography.Text>
-
-								<div className="form-section">
-									<Space.Compact style={{ width: '100%' }}>
+								{enableFrameworks && (
+									<div className="framework-selector">
 										<Form.Item
-											name="requestedDataSourceName"
-											style={{ width: 300, marginBottom: 0 }}
+											label="Select Framework"
+											name="selectFramework"
+											rules={[{ required: true, message: 'Please select framework' }]}
 										>
-											<Input placeholder="Enter data source name..." />
+											<Select
+												value={selectedFramework}
+												getPopupContainer={popupContainer}
+												style={{ width: 300 }}
+												placeholder="Select Framework"
+												onChange={(value): void => updateSelectedFramework(value)}
+												options={supportedframeworks}
+											/>
 										</Form.Item>
-										<Button
-											className="periscope-btn primary"
-											icon={
-												isSubmittingRequestForDataSource ? (
-													<LoadingOutlined />
-												) : (
-													<Check size={12} />
-												)
-											}
-											type="primary"
-											onClick={handleRequestDataSourceSubmit}
-											disabled={
-												isSubmittingRequestForDataSource ||
-												!requestedDataSourceName ||
-												requestedDataSourceName?.trim().length === 0
-											}
-										>
-											Submit
-										</Button>
-									</Space.Compact>
-								</div>
+									</div>
+								)}
+							</>
+						)}
+
+						<div className="request-entity-container">
+							<Typography.Text>
+								Cannot find what you’re looking for? Request a data source
+							</Typography.Text>
+
+							<div className="form-section">
+								<Space.Compact style={{ width: '100%' }}>
+									<Form.Item
+										name="requestedDataSourceName"
+										style={{ width: 300, marginBottom: 0 }}
+									>
+										<Input placeholder="Enter data source name..." />
+									</Form.Item>
+									<Button
+										className="periscope-btn primary"
+										icon={
+											isSubmittingRequestForDataSource ? (
+												<LoadingOutlined />
+											) : (
+												<Check size={12} />
+											)
+										}
+										type="primary"
+										onClick={handleRequestDataSourceSubmit}
+										disabled={
+											isSubmittingRequestForDataSource ||
+											!requestedDataSourceName ||
+											requestedDataSourceName?.trim().length === 0
+										}
+									>
+										Submit
+									</Button>
+								</Space.Compact>
 							</div>
-						</Form>
-					</div>
+						</div>
+					</Form>
 				</div>
-			)}
+			</div>
 		</div>
 	);
 }
