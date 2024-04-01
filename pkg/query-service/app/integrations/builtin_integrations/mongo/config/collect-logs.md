@@ -97,7 +97,9 @@ Set the following environment variables in your otel-collector environment:
 ```bash
 
 # path of MongoDB server log file. must be accessible by the otel collector
-export MONGODB_LOG_FILE=/var/log/mongodb.log
+# typically found in /usr/local/var/log/mongodb on macOS
+# mongod.conf file can also be checked for finding log file location
+export MONGODB_LOG_FILE=/var/log/mongodb/mongodb.log
 
 # region specific SigNoz cloud ingestion endpoint
 export OTLP_DESTINATION_ENDPOINT="ingest.us.signoz.cloud:443"

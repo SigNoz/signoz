@@ -271,6 +271,17 @@ function SideNav({
 		}
 	}, [isCloudUserVal, isEnterprise, isFetching]);
 
+	useEffect(() => {
+		if (!isCloudUserVal) {
+			let updatedMenuItems = [...menuItems];
+			updatedMenuItems = updatedMenuItems.filter(
+				(item) => item.key !== ROUTES.INTEGRATIONS,
+			);
+			setMenuItems(updatedMenuItems);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
 		role,

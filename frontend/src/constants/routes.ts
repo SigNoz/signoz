@@ -51,9 +51,7 @@ const ROUTES = {
 	TRACES_SAVE_VIEWS: '/traces/saved-views',
 	WORKSPACE_LOCKED: '/workspace-locked',
 	SHORTCUTS: '/shortcuts',
-	INTEGRATIONS_BASE: '/integrations',
-	INTEGRATIONS_INSTALLED: '/integrations/installed',
-	INTEGRATIONS_MARKETPLACE: '/integrations/marketplace',
+	INTEGRATIONS: '/integrations',
 } as const;
 
 export default ROUTES;

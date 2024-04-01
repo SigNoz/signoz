@@ -16,7 +16,7 @@ import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/D
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import history from 'lib/history';
-import { isEmpty } from 'lodash-es';
+import { isEmpty, isNull } from 'lodash-es';
 import { useState } from 'react';
 
 import { useOnboardingContext } from '../../context/OnboardingContext';
@@ -91,7 +91,10 @@ export default function ModuleStepsContainer({
 			name: selectedDataSourceName = '',
 		} = selectedDataSource as DataSourceType;
 
-		if (step.id === environmentDetailsStep && selectedEnvironment === '') {
+		if (
+			step.id === environmentDetailsStep &&
+			(selectedEnvironment === '' || isNull(selectedEnvironment))
+		) {
 			updateErrorDetails('Please select environment');
 			return false;
 		}
