@@ -3,6 +3,7 @@ import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES_INITIAL_QUERY } from 'container/NewDashboard/ComponentsSlider/constants';
 import { isEqual, set } from 'lodash-es';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -213,20 +214,28 @@ export function handleQueryChange(
 	newPanelType: keyof PartialPanelTypes,
 	supersetQuery: Query,
 ): Query {
-	const updatedQuery = { ...supersetQuery };
-	// eslint-disable-next-line sonarjs/no-ignored-return
-	updatedQuery.builder.queryData.map((query, index) => {
-		const tempQuery = initialQueryBuilderFormValuesMap[query.dataSource];
+	if (newPanelType === PANEL_TYPES.LIST) {
+		return PANEL_TYPES_INITIAL_QUERY[PANEL_TYPES.LIST];
+	}
 
-		const fieldsToSelect =
-			panelTypeDataSourceFormValuesMap[newPanelType][query.dataSource].builder
-				.queryData;
+	return {
+		...supersetQuery,
+		builder: {
+			...supersetQuery.builder,
+			queryData: supersetQuery.builder.queryData.map((query, index) => {
+				const { dataSource } = query;
+				const tempQuery = { ...initialQueryBuilderFormValuesMap[dataSource] };
 
-		fieldsToSelect.forEach((field: keyof IBuilderQuery) => {
-			set(tempQuery, field, supersetQuery.builder.queryData[index][field]);
-		});
-		return tempQuery;
-	});
+				const fieldsToSelect =
+					panelTypeDataSourceFormValuesMap[newPanelType][dataSource].builder
+						.queryData;
 
-	return updatedQuery;
+				fieldsToSelect.forEach((field: keyof IBuilderQuery) => {
+					set(tempQuery, field, supersetQuery.builder.queryData[index][field]);
+				});
+
+				return tempQuery;
+			}),
+		},
+	};
 }
