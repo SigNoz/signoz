@@ -143,7 +143,7 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.%", Operator: "like"},
 		}},
-		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] ILIKE '102.%'",
+		ExpectedFilter: "lower(attributes_string_value[indexOf(attributes_string_key, 'host')]) LIKE '102.%'",
 	},
 	{
 		Name: "Test IN",
@@ -185,14 +185,14 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "contains"},
 		}},
-		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] ILIKE '%102.%'",
+		ExpectedFilter: "lower(attributes_string_value[indexOf(attributes_string_key, 'host')]) LIKE lower('%102.%')",
 	},
 	{
 		Name: "Test not contains",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
-		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
+		ExpectedFilter: "lower(attributes_string_value[indexOf(attributes_string_key, 'host')]) NOT LIKE lower('%102.%')",
 	},
 	{
 		Name: "Test regex",
@@ -214,7 +214,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
 		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND has(attributes_string_key, 'host')",
+		ExpectedFilter: "lower(attributes_string_value[indexOf(attributes_string_key, 'host')]) NOT LIKE lower('%102.%') AND has(attributes_string_key, 'host')",
 	},
 	{
 		Name: "Test groupBy isColumn",
@@ -222,7 +222,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
 		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
-		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND `attribute_string_host_exists`=true",
+		ExpectedFilter: "lower(attributes_string_value[indexOf(attributes_string_key, 'host')]) NOT LIKE lower('%102.%') AND `attribute_string_host_exists`=true",
 	},
 	{
 		Name: "Wrong data",
@@ -236,7 +236,7 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "%test%", Operator: "like"},
 		}},
-		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'body')] ILIKE '%test%'",
+		ExpectedFilter: "lower(attributes_string_value[indexOf(attributes_string_key, 'body')]) LIKE '%test%'",
 	},
 	{
 		Name: "Test exists on top level field",
@@ -845,7 +845,7 @@ var testBuildLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND body ILIKE '%test%' AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND lower(body) LIKE '%test%' AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
 	},
 	{
 		Name:      "Test attribute with same name as top level key",
@@ -871,7 +871,7 @@ var testBuildLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'body')] ILIKE '%test%' AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND lower(attributes_string_value[indexOf(attributes_string_key, 'body')]) LIKE '%test%' AND has(attributes_string_key, 'name') group by ts having value > 10 order by value DESC",
 	},
 
 	// Tests for table panel type
@@ -958,7 +958,7 @@ var testBuildLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%' AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND lower(body) like '%message%' AND JSON_EXISTS(body, '$.\"message\"') AND JSON_VALUE(body, '$.\"message\"') ILIKE '%a%' AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
 	},
 	{
 		Name:      "TABLE: Test count with JSON Filter Array, groupBy, orderBy",
@@ -992,7 +992,7 @@ var testBuildLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service') AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND lower(body) like '%requestor_list%' AND lower(body) like '%index_service%' AND has(JSONExtract(JSON_QUERY(body, '$.\"requestor_list\"[*]'), 'Array(String)'), 'index_service') AND has(attributes_string_key, 'name') group by `name` order by `name` DESC",
 	},
 }
 
@@ -1305,7 +1305,7 @@ var testPrepLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where attributes_string_value[indexOf(attributes_string_key, 'method')] ILIKE '%GET%' AND ",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((attributes_bool_key, attributes_bool_value), 'Map(String, Bool)') as  attributes_bool,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where lower(attributes_string_value[indexOf(attributes_string_key, 'method')]) LIKE lower('%GET%') AND ",
 		Options:       Options{IsLivetailQuery: true},
 	},
 	{

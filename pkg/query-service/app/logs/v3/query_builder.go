@@ -39,10 +39,10 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorLessThanOrEq:    "<=",
 	v3.FilterOperatorGreaterThan:     ">",
 	v3.FilterOperatorGreaterThanOrEq: ">=",
-	v3.FilterOperatorLike:            "ILIKE",
-	v3.FilterOperatorNotLike:         "NOT ILIKE",
-	v3.FilterOperatorContains:        "ILIKE",
-	v3.FilterOperatorNotContains:     "NOT ILIKE",
+	v3.FilterOperatorLike:            "LIKE",
+	v3.FilterOperatorNotLike:         "NOT LIKE",
+	v3.FilterOperatorContains:        "LIKE",
+	v3.FilterOperatorNotContains:     "NOT LIKE",
 	v3.FilterOperatorRegex:           "match(%s, %s)",
 	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorIn:              "IN",
@@ -192,10 +192,17 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					conditions = append(conditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					columnName := getClickhouseColumnName(item.Key)
-					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, item.Value))
+					conditions = append(conditions, fmt.Sprintf("lower(%s) %s lower('%%%s%%')", columnName, logsOp, item.Value))
 				default:
 					columnName := getClickhouseColumnName(item.Key)
 					fmtVal := utils.ClickHouseFormattedValue(value)
+
+					// for use lower for like and ilike
+					if op == v3.FilterOperatorLike || op == v3.FilterOperatorNotLike {
+						columnName = fmt.Sprintf("lower(%s)", columnName)
+						fmtVal = strings.ToLower(fmtVal)
+					}
+
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 				}
 			} else {
