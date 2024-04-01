@@ -165,8 +165,9 @@ type GetTopOperationsParams struct {
 }
 
 type RegisterEventParams struct {
-	EventName  string                 `json:"eventName"`
-	Attributes map[string]interface{} `json:"attributes"`
+	EventName   string                 `json:"eventName"`
+	Attributes  map[string]interface{} `json:"attributes"`
+	RateLimited bool                   `json:"rateLimited"`
 }
 
 type GetUsageParams struct {
