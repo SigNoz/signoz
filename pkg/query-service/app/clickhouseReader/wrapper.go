@@ -40,8 +40,8 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 		settings["log_comment"] = logComment
 	}
 
-	// don't add resource restrictions for metrics and traces
-	if !strings.Contains(query, "signoz_logs") {
+	// don't add resource restrictions traces
+	if strings.Contains(query, "signoz_traces") {
 		ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 		return ctx
 	}
