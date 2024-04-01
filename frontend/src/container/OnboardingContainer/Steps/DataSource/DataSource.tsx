@@ -2,7 +2,9 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './DataSource.styles.scss';
 
-import { Card, Form, Input, Select, Typography } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Input, Select, Space, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
 import { useCases } from 'container/OnboardingContainer/OnboardingContainer';
@@ -11,7 +13,10 @@ import {
 	getSupportedFrameworks,
 	hasFrameworks,
 } from 'container/OnboardingContainer/utils/dataSourceUtils';
+import { useNotifications } from 'hooks/useNotifications';
+import { Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 export interface DataSourceType {
@@ -23,6 +28,7 @@ export interface DataSourceType {
 
 export default function DataSource(): JSX.Element {
 	const [form] = Form.useForm();
+	const { t } = useTranslation(['common']);
 
 	const {
 		serviceName,
@@ -41,6 +47,15 @@ export default function DataSource(): JSX.Element {
 	const [supportedframeworks, setSupportedframeworks] = useState<
 		DataSourceType[]
 	>([]);
+
+	const requestedDataSourceName = Form.useWatch('requestedDataSourceName', form);
+
+	const [
+		isSubmittingRequestForDataSource,
+		setIsSubmittingRequestForDataSource,
+	] = useState(false);
+
+	const { notifications } = useNotifications();
 
 	const [enableFrameworks, setEnableFrameworks] = useState(false);
 
@@ -74,12 +89,49 @@ export default function DataSource(): JSX.Element {
 		}
 	}, [selectedModule, selectedDataSource]);
 
+	const handleRequestDataSourceSubmit = async (): Promise<void> => {
+		try {
+			setIsSubmittingRequestForDataSource(true);
+			const response = await logEvent('Onboarding V2: Data Source Requested', {
+				module: selectedModule?.id,
+				dataSource: requestedDataSourceName,
+			});
+
+			if (response.statusCode === 200) {
+				notifications.success({
+					message: 'Data Source Request Submitted',
+				});
+
+				form.setFieldValue('requestedDataSourceName', '');
+
+				setIsSubmittingRequestForDataSource(false);
+			} else {
+				notifications.error({
+					message:
+						response.error ||
+						t('something_went_wrong', {
+							ns: 'common',
+						}),
+				});
+
+				setIsSubmittingRequestForDataSource(false);
+			}
+		} catch (error) {
+			notifications.error({
+				message: t('something_went_wrong', {
+					ns: 'common',
+				}),
+			});
+
+			setIsSubmittingRequestForDataSource(false);
+		}
+	};
+
 	return (
 		<div className="module-container">
 			<Typography.Text className="data-source-title">
 				<span className="required-symbol">*</span> Select Data Source
 			</Typography.Text>
-
 			<div className="supported-languages-container">
 				{supportedDataSources?.map((dataSource) => (
 					<Card
@@ -127,13 +179,13 @@ export default function DataSource(): JSX.Element {
 								updateServiceName(serviceName);
 							}}
 							name="data-source-form"
-							style={{ minWidth: '300px' }}
 							layout="vertical"
 							validateTrigger="onBlur"
 						>
 							<Form.Item
 								name="serviceName"
 								label="Service Name"
+								style={{ width: 300 }}
 								rules={[{ required: true, message: 'Please enter service name' }]}
 								validateTrigger="onBlur"
 							>
@@ -150,7 +202,7 @@ export default function DataSource(): JSX.Element {
 										<Select
 											value={selectedFramework}
 											getPopupContainer={popupContainer}
-											style={{ minWidth: 120 }}
+											style={{ width: 300 }}
 											placeholder="Select Framework"
 											onChange={(value): void => updateSelectedFramework(value)}
 											options={supportedframeworks}
@@ -158,6 +210,42 @@ export default function DataSource(): JSX.Element {
 									</Form.Item>
 								</div>
 							)}
+
+							<div className="request-entity-container">
+								<Typography.Text>
+									Cannot find what you’re looking for? Request a data source
+								</Typography.Text>
+
+								<div className="form-section">
+									<Space.Compact style={{ width: '100%' }}>
+										<Form.Item
+											name="requestedDataSourceName"
+											style={{ width: 300, marginBottom: 0 }}
+										>
+											<Input placeholder="Enter data source name..." />
+										</Form.Item>
+										<Button
+											className="periscope-btn primary"
+											icon={
+												isSubmittingRequestForDataSource ? (
+													<LoadingOutlined />
+												) : (
+													<Check size={12} />
+												)
+											}
+											type="primary"
+											onClick={handleRequestDataSourceSubmit}
+											disabled={
+												isSubmittingRequestForDataSource ||
+												!requestedDataSourceName ||
+												requestedDataSourceName?.trim().length === 0
+											}
+										>
+											Submit
+										</Button>
+									</Space.Compact>
+								</div>
+							</div>
 						</Form>
 					</div>
 				</div>
