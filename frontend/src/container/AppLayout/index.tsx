@@ -311,7 +311,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				</div>
 			)}
 
-			<Flex className={cx('app-layout', isDarkMode ? 'darkMode' : 'lightMode')}>
+			<Flex
+				className={cx(
+					'app-layout',
+					isDarkMode ? 'darkMode' : 'lightMode',
+					!collapsed ? 'docked' : '',
+				)}
+			>
 				{isToDisplayLayout && !renderFullScreen && (
 					<SideNav
 						licenseData={licenseData}
