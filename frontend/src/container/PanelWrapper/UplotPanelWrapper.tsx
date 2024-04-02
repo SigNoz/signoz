@@ -32,13 +32,10 @@ function UplotPanelWrapper({
 	onClickHandler,
 	onDragSelect,
 }: PanelWrapperProps): JSX.Element {
-	// const dispatch = useDispatch();
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
-	// const urlQuery = useUrlQuery();
-	// const location = useLocation();
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 
@@ -61,28 +58,6 @@ function UplotPanelWrapper({
 	}, [queryResponse]);
 
 	const containerDimensions = useResizeObserver(graphRef);
-
-	// const onDragSelect = useCallback(
-	// 	(start: number, end: number): void => {
-	// 		const startTimestamp = Math.trunc(start);
-	// 		const endTimestamp = Math.trunc(end);
-
-	// 		if (startTimestamp !== endTimestamp) {
-	// 			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
-	// 		}
-
-	// 		const { maxTime, minTime } = GetMinMax('custom', [
-	// 			startTimestamp,
-	// 			endTimestamp,
-	// 		]);
-
-	// 		urlQuery.set(QueryParams.startTime, minTime.toString());
-	// 		urlQuery.set(QueryParams.endTime, maxTime.toString());
-	// 		const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-	// 		history.push(generatedUrl);
-	// 	},
-	// 	[dispatch, location.pathname, urlQuery],
-	// );
 
 	useEffect(() => {
 		const {
