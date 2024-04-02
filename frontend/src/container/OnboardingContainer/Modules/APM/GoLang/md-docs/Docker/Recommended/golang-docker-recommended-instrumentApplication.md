@@ -1,3 +1,7 @@
+After setting up the Otel collector agent, follow the steps below to instrument your Go Application
+&nbsp;
+&nbsp;
+
 ### Step 1: Install OpenTelemetry Dependencies
 Dependencies related to OpenTelemetry exporter and SDK have to be installed first.
 
@@ -117,4 +121,17 @@ func main() {
 }
 ```
 
+&nbsp;
 
+### Step 6: Dockerize your application
+
+Set the environment variables in your Dockerfile.
+
+```bash
+...
+# Set environment variables
+ENV SERVICE_NAME={{MYAPP}} \
+    INSECURE_MODE=true \
+    OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317
+...
+```

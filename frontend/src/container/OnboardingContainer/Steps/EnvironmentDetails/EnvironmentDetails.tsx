@@ -30,6 +30,10 @@ const supportedEnvironments: SupportedEnvironmentsProps[] = [
 		name: 'MacOS ARM64',
 		id: 'macOsARM64',
 	},
+	{
+		name: 'Docker',
+		id: 'docker',
+	},
 ];
 
 export default function EnvironmentDetails(): JSX.Element {
@@ -52,6 +56,18 @@ export default function EnvironmentDetails(): JSX.Element {
 					if (
 						selectedModule?.id !== useCases.APM.id &&
 						environment.id === 'kubernetes'
+					) {
+						return null;
+					}
+					if (
+						selectedModule?.id !== useCases.APM.id &&
+						environment.id === 'docker'
+					) {
+						return null;
+					}
+					if (
+						selectedModule?.id !== useCases.APM.id &&
+						environment.id === 'docker'
 					) {
 						return null;
 					}

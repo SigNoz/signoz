@@ -403,6 +403,11 @@ import APM_javascript_reactjs_macOsARM64_quickStart_runApplication from '../Modu
 import APM_javascript_reactjs_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-installOtelCollector.md';
 import APM_javascript_reactjs_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-instrumentApplication.md';
 import APM_javascript_reactjs_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-runApplication.md';
+import APM_python_django_docker_quickStart_instrumentApplication from '../Modules/APM/Python/md-docs/Django/Docker/QuickStart/django-docker-quickStart-instrumentApplication.md';
+import APM_python_django_docker_quickStart_runApplication from '../Modules/APM/Python/md-docs/Django/Docker/QuickStart/django-docker-quickStart-runApplication.md';
+import APM_python_django_docker_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/Django/Docker/Recommended/django-docker-recommended-installOtelCollector.md';
+import APM_python_django_docker_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Django/Docker/Recommended/django-docker-recommended-instrumentApplication.md';
+import APM_python_django_docker_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Django/Docker/Recommended/django-docker-recommended-runApplication.md';
 /// ////// Javascript Done
 /// ///// Python Start
 // Django
@@ -902,6 +907,14 @@ export const ApmDocFilePaths = {
 	// Django-MacOsARM64-quickstart
 	APM_python_django_macOsARM64_quickStart_instrumentApplication,
 	APM_python_django_macOsARM64_quickStart_runApplication,
+
+	// Django Docker
+	APM_python_django_docker_quickStart_instrumentApplication,
+	APM_python_django_docker_quickStart_runApplication,
+
+	APM_python_django_docker_recommendedSteps_setupOtelCollector,
+	APM_python_django_docker_recommendedSteps_instrumentApplication,
+	APM_python_django_docker_recommendedSteps_runApplication,
 
 	// ------------------------------------------------------------------------------------------------
 
