@@ -10,7 +10,7 @@ Build your docker image
 docker build -t <your-image-name> .
 ```
 
-- `<<your-image-name>` is the name of your Docker Image
+- `<your-image-name>` is the name of your Docker Image
 
 &nbsp;
 
