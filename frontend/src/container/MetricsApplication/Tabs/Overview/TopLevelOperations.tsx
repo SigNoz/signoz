@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Skeleton, Typography } from 'antd';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -27,15 +27,23 @@ function TopLevelOperation({
 				</Typography>
 			) : (
 				<GraphContainer>
-					<Graph
-						fillSpans={false}
-						name={name}
-						widget={widget}
-						onClickHandler={handleGraphClick(opName)}
-						onDragSelect={onDragSelect}
-						isQueryEnabled={!topLevelOperationsIsLoading}
-						version={ENTITY_VERSION_V4}
-					/>
+					{topLevelOperationsIsLoading && (
+						<Skeleton
+							style={{
+								height: '100%',
+								padding: '16px',
+							}}
+						/>
+					)}
+					{!topLevelOperationsIsLoading && (
+						<Graph
+							widget={widget}
+							onClickHandler={handleGraphClick(opName)}
+							onDragSelect={onDragSelect}
+							isQueryEnabled={!topLevelOperationsIsLoading}
+							version={ENTITY_VERSION_V4}
+						/>
+					)}
 				</GraphContainer>
 			)}
 		</Card>

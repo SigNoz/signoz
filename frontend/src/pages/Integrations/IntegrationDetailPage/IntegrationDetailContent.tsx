@@ -12,12 +12,13 @@ import Overview from './IntegrationDetailContentTabs/Overview';
 interface IntegrationDetailContentProps {
 	activeDetailTab: string;
 	integrationData: IntegrationDetailedProps;
+	integrationId: string;
 }
 
 function IntegrationDetailContent(
 	props: IntegrationDetailContentProps,
 ): JSX.Element {
-	const { activeDetailTab, integrationData } = props;
+	const { activeDetailTab, integrationData, integrationId } = props;
 	const items: TabsProps['items'] = [
 		{
 			key: 'overview',
@@ -49,7 +50,12 @@ function IntegrationDetailContent(
 					<Typography.Text className="typography">Configure</Typography.Text>
 				</Button>
 			),
-			children: <Configure configuration={integrationData.configuration} />,
+			children: (
+				<Configure
+					configuration={integrationData.configuration}
+					integrationId={integrationId}
+				/>
+			),
 		},
 		{
 			key: 'dataCollected',

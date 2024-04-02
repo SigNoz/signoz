@@ -3674,7 +3674,7 @@ func isSelectedField(tableStatement string, field model.LogField) bool {
 	// in case of attributes and resources, if there is a materialized column present then it is selected
 	// TODO: handle partial change complete eg:- index is removed but materialized column is still present
 	name := utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
-	return strings.Contains(tableStatement, fmt.Sprintf("`%s`", name))
+	return strings.Contains(tableStatement, fmt.Sprintf("%s", name))
 }
 
 func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError {
@@ -3708,10 +3708,10 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 			}
 
-			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool DEFAULT if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
+			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists` bool DEFAULT if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
 				r.logsDB, table,
 				r.cluster,
-				colname,
+				strings.TrimSuffix(colname, "`"),
 				keyColName,
 				field.Name,
 			)
@@ -3733,10 +3733,10 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		if field.IndexGranularity == 0 {
 			field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
 		}
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d",
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx` (%s) TYPE %s  GRANULARITY %d",
 			r.logsDB, r.logsLocalTable,
 			r.cluster,
-			colname,
+			strings.TrimSuffix(colname, "`"),
 			colname,
 			field.IndexType,
 			field.IndexGranularity,
@@ -3748,7 +3748,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 
 	} else {
 		// Delete the index first
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsLocalTable, r.cluster, colname)
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx`", r.logsDB, r.logsLocalTable, r.cluster, strings.TrimSuffix(colname, "`"))
 		err := r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
@@ -3768,11 +3768,11 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			}
 
 			// drop exists column on logs table
-			query = "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s_exists "
+			query = "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s_exists` "
 			err = r.db.Exec(ctx, fmt.Sprintf(query,
 				r.logsDB, table,
 				r.cluster,
-				colname,
+				strings.TrimSuffix(colname, "`"),
 			),
 			)
 			if err != nil {
@@ -4329,7 +4329,7 @@ func isColumn(tableStatement, attrType, field, datType string) bool {
 	// value of attrType will be `resource` or `tag`, if `tag` change it to `attribute`
 	name := utils.GetClickhouseColumnName(attrType, datType, field)
 
-	return strings.Contains(tableStatement, fmt.Sprintf("`%s` ", name))
+	return strings.Contains(tableStatement, fmt.Sprintf("%s ", name))
 }
 
 func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
