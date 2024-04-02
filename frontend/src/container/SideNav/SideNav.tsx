@@ -2,6 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './SideNav.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
@@ -225,9 +226,9 @@ function SideNav({
 				key: SecondaryMenuItemKey.Version,
 				label: !isCurrentVersionError ? currentVersion : t('n_a'),
 				icon: !isLatestVersion ? (
-					<AlertTriangle color="#E87040" size={16} />
+					<AlertTriangle color={Color.BG_CHERRY_600} size={16} />
 				) : (
-					<CheckSquare color="#D5F2BB" size={16} />
+					<CheckSquare color={Color.BG_FOREST_500} size={16} />
 				),
 				onClick: onClickVersionHandler,
 			};
