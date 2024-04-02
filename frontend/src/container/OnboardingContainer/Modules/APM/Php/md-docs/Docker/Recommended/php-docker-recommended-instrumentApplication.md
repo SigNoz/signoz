@@ -80,3 +80,5 @@ ENV OTEL_PHP_AUTOLOAD_ENABLED=true \
     OTEL_PROPAGATORS=baggage,tracecontext
 ...
 ```
+
+- <COLLECTOR_ENDPOINT> - Endpoint at which the collector is running. Ex. -> `http://localhost:4317`

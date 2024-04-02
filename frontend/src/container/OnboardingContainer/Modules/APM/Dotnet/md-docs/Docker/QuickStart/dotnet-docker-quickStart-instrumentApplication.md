@@ -73,7 +73,7 @@ This is done by configuring an OpenTelemetry [TracerProvider](https://github.com
 
 ### Step 3: Dockerize your application
 
-Since the crucial environment variables like SIGNOZ_INGESTION_KEY, Ingestion Endpoint and Service name are set in the `program.cs` file, you don't need to add any additional steps in your Dockerfile.
+Since the environment variables like SIGNOZ_INGESTION_KEY, Ingestion Endpoint and Service name are set in the `program.cs` file, you don't need to add any additional steps in your Dockerfile.
 
 An **example** of a Dockerfile could look like this:
 
