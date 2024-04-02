@@ -58,8 +58,6 @@ export default function QBEntityOptions({
 		}
 	};
 
-	console.log('query', query, showFunctions);
-
 	const isLogsDataSource = query?.dataSource === DataSource.LOGS;
 
 	return (
