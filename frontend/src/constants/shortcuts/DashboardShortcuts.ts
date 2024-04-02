@@ -9,9 +9,10 @@ export const DashboardShortcuts = {
 
 export const DashboardShortcutsName = {
 	SaveChanges: `${userOS === UserOperatingSystem.MACOS ? 'cmd' : 'ctrl'}+s`,
+	DiscardChanges: `${userOS === UserOperatingSystem.MACOS ? 'cmd' : 'ctrl'}+d`,
 };
 
 export const DashboardShortcutsDescription = {
-	SaveChanges: 'Save Changes',
-	DiscardChanges: 'Discard Changes',
+	SaveChanges: 'Save Changes for panel',
+	DiscardChanges: 'Discard Changes for panel',
 };
