@@ -14,6 +14,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const Critters = require('critters-webpack-plugin');
+const { RetryChunkLoadPlugin } = require('webpack-retry-chunk-load-plugin');
 
 dotenv.config();
 
@@ -70,6 +71,9 @@ const plugins = [
 		authToken: process.env.SENTRY_AUTH_TOKEN,
 		org: process.env.SENTRY_ORG,
 		project: process.env.SENTRY_PROJECT_ID,
+	}),
+	new RetryChunkLoadPlugin({
+		maxRetries: 2,
 	}),
 ];
 
