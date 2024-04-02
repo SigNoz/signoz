@@ -53,10 +53,8 @@ export interface FullViewProps {
 	version?: string;
 	originalName: string;
 	yAxisUnit?: string;
-	onDragSelect: (start: number, end: number) => void;
 	isDependedDataLoaded?: boolean;
 	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
-	parentChartRef: GraphManagerProps['lineChartRef'];
 }
 
 export interface GraphManagerProps extends UplotProps {
