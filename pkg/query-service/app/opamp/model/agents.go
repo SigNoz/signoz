@@ -131,8 +131,8 @@ func (agents *Agents) RecommendLatestConfigToAll(
 
 		// Recommendation is same as current config
 		if string(newConfig) == agent.EffectiveConfig {
-			zap.S().Infof(
-				"Recommended config same as current effective config for agent %s", agent.ID,
+			zap.L().Info(
+				"Recommended config same as current effective config for agent", zap.String("agentID", agent.ID),
 			)
 			return nil
 		}

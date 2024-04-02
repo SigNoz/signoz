@@ -89,8 +89,6 @@ function ApDexMetrics({
 
 	return (
 		<Graph
-			name="apdex"
-			fillSpans={false}
 			widget={apDexMetricsWidget}
 			onDragSelect={onDragSelect}
 			onClickHandler={handleGraphClick('ApDex')}

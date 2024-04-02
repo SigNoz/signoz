@@ -6,6 +6,8 @@ export const defaultMatchType = '1';
 // default eval window
 export const defaultEvalWindow = '5m0s';
 
+export const defaultFrequency = '1m0s';
+
 // default compare op: above
 export const defaultCompareOp = '1';
 
@@ -14,6 +16,7 @@ export interface AlertDef {
 	alertType?: string;
 	alert?: string;
 	ruleType?: string;
+	frequency?: string;
 	condition: RuleCondition;
 	labels?: Labels;
 	annotations?: Labels;

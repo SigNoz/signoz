@@ -17,7 +17,7 @@ import {
 } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import updateCreditCardApi from 'api/billing/checkout';
-import getUsage from 'api/billing/getUsage';
+import getUsage, { UsageResponsePayloadProps } from 'api/billing/getUsage';
 import manageCreditCardApi from 'api/billing/manage';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -26,8 +26,9 @@ import useAnalytics from 'hooks/analytics/useAnalytics';
 import useAxiosError from 'hooks/useAxiosError';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
-import { pick } from 'lodash-es';
+import { isEmpty, pick } from 'lodash-es';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -47,6 +48,11 @@ interface DataType {
 	dataIngested: string;
 	pricePerUnit: string;
 	cost: string;
+}
+
+enum SubscriptionStatus {
+	PastDue = 'past_due',
+	Active = 'active',
 }
 
 const renderSkeletonInput = (): JSX.Element => (
@@ -116,15 +122,19 @@ const dummyColumns: ColumnsType<DataType> = [
 	},
 ];
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export default function BillingContainer(): JSX.Element {
-	const daysRemainingStr = 'days remaining in your billing period.';
+	const { t } = useTranslation(['billings']);
+	const daysRemainingStr = t('days_remaining');
 	const [headerText, setHeaderText] = useState('');
 	const [billAmount, setBillAmount] = useState(0);
 	const [activeLicense, setActiveLicense] = useState<License | null>(null);
 	const [daysRemaining, setDaysRemaining] = useState(0);
 	const [isFreeTrial, setIsFreeTrial] = useState(false);
 	const [data, setData] = useState<any[]>([]);
-	const [apiResponse, setApiResponse] = useState<any>({});
+	const [apiResponse, setApiResponse] = useState<
+		Partial<UsageResponsePayloadProps>
+	>({});
 
 	const { trackEvent } = useAnalytics();
 
@@ -139,6 +149,9 @@ export default function BillingContainer(): JSX.Element {
 
 	const processUsageData = useCallback(
 		(data: any): void => {
+			if (isEmpty(data?.payload)) {
+				return;
+			}
 			const {
 				details: { breakdown = [], billTotal },
 				billingPeriodStart,
@@ -185,6 +198,9 @@ export default function BillingContainer(): JSX.Element {
 		},
 		[licensesData?.payload?.onTrial],
 	);
+
+	const isSubscriptionPastDue =
+		apiResponse.subscriptionStatus === SubscriptionStatus.PastDue;
 
 	const { isLoading, isFetching: isFetchingBillingData } = useQuery(
 		[REACT_QUERY_KEY.GET_BILLING_USAGE, user?.userId],
@@ -342,14 +358,27 @@ export default function BillingContainer(): JSX.Element {
 		[apiResponse, billAmount, isLoading, isFetchingBillingData],
 	);
 
+	const { Text } = Typography;
+	const subscriptionPastDueMessage = (): JSX.Element => (
+		<Typography>
+			{`We were not able to process payments for your account. Please update your card details `}
+			<Text type="danger" onClick={handleBilling} style={{ cursor: 'pointer' }}>
+				{t('here')}
+			</Text>
+			{` if your payment information has changed. Email us at `}
+			<Text type="secondary">cloud-support@signoz.io</Text>
+			{` otherwise. Be sure to provide this information immediately to avoid interruption to your service.`}
+		</Typography>
+	);
+
 	return (
 		<div className="billing-container">
 			<Flex vertical style={{ marginBottom: 16 }}>
 				<Typography.Text style={{ fontWeight: 500, fontSize: 18 }}>
-					Billing
+					{t('billing')}
 				</Typography.Text>
 				<Typography.Text color={Color.BG_VANILLA_400}>
-					Manage your billing information, invoices, and monitor costs.
+					{t('manage_billing_and_costs')}
 				</Typography.Text>
 			</Flex>
 
@@ -361,7 +390,7 @@ export default function BillingContainer(): JSX.Element {
 				<Flex justify="space-between" align="center">
 					<Flex vertical>
 						<Typography.Title level={5} style={{ marginTop: 2, fontWeight: 500 }}>
-							{isCloudUserVal ? 'Enterprise Cloud' : 'Enterprise'}{' '}
+							{isCloudUserVal ? t('enterprise_cloud') : t('enterprise')}{' '}
 							{isFreeTrial ? <Tag color="success"> Free Trial </Tag> : ''}
 						</Typography.Title>
 						{!isLoading && !isFetchingBillingData ? (
@@ -378,8 +407,8 @@ export default function BillingContainer(): JSX.Element {
 						onClick={handleBilling}
 					>
 						{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription
-							? 'Upgrade Plan'
-							: 'Manage Billing'}
+							? t('upgrade_plan')
+							: t('manage_billing')}
 					</Button>
 				</Flex>
 
@@ -389,21 +418,34 @@ export default function BillingContainer(): JSX.Element {
 							ellipsis
 							style={{ fontWeight: '300', color: '#49aa19', fontSize: 12 }}
 						>
-							We have received your card details, your billing will only start after
-							the end of your free trial period.
+							{t('card_details_recieved_and_billing_info')}
 						</Typography.Text>
 					)}
 
 				{!isLoading && !isFetchingBillingData ? (
-					<Alert
-						message={headerText}
-						type="info"
-						showIcon
-						style={{ marginTop: 12 }}
-					/>
+					headerText && (
+						<Alert
+							message={headerText}
+							type="info"
+							showIcon
+							style={{ marginTop: 12 }}
+						/>
+					)
 				) : (
 					<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
 				)}
+
+				{isSubscriptionPastDue &&
+					(!isLoading && !isFetchingBillingData ? (
+						<Alert
+							message={subscriptionPastDueMessage()}
+							type="error"
+							showIcon
+							style={{ marginTop: 12 }}
+						/>
+					) : (
+						<Skeleton.Input active style={{ height: 20, marginTop: 20 }} />
+					))}
 			</Card>
 
 			<BillingUsageGraphCallback />
@@ -434,16 +476,16 @@ export default function BillingContainer(): JSX.Element {
 						<Col span={20} className="plan-benefits">
 							<Typography.Text className="plan-benefit">
 								<CheckCircleOutlined />
-								Upgrade now to have uninterrupted access
+								{t('upgrade_now_text')}
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
 								<CheckCircleOutlined />
-								Your billing will start only after the trial period
+								{t('Your billing will start only after the trial period')}
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
 								<CheckCircleOutlined />
 								<span>
-									Check out features in paid plans &nbsp;
+									{t('checkout_plans')} &nbsp;
 									<a
 										href="https://signoz.io/pricing/"
 										style={{
@@ -452,7 +494,7 @@ export default function BillingContainer(): JSX.Element {
 										target="_blank"
 										rel="noreferrer"
 									>
-										here
+										{t('here')}
 									</a>
 								</span>
 							</Typography.Text>
@@ -464,7 +506,7 @@ export default function BillingContainer(): JSX.Element {
 								loading={isLoadingBilling || isLoadingManageBilling}
 								onClick={handleBilling}
 							>
-								Upgrade Plan
+								{t('upgrade_plan')}
 							</Button>
 						</Col>
 					</Row>

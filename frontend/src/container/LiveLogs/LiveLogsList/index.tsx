@@ -71,6 +71,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 					key={log.id}
 					logData={log}
 					selectedFields={selectedFields}
+					linesPerRow={options.maxLines}
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
 				/>

@@ -15,7 +15,6 @@ import {
 	ErrorDetails,
 	IngestionSettings,
 	InstalledIntegrations,
-	IntegrationsMarketPlace,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
@@ -338,18 +337,11 @@ const routes: AppRoutes[] = [
 		key: 'SHORTCUTS',
 	},
 	{
-		path: ROUTES.INTEGRATIONS_INSTALLED,
+		path: ROUTES.INTEGRATIONS,
 		exact: true,
 		component: InstalledIntegrations,
 		isPrivate: true,
-		key: 'INTEGRATIONS_INSTALLED',
-	},
-	{
-		path: ROUTES.INTEGRATIONS_MARKETPLACE,
-		exact: true,
-		component: IntegrationsMarketPlace,
-		isPrivate: true,
-		key: 'INTEGRATIONS_MARKETPLACE',
+		key: 'INTEGRATIONS',
 	},
 ];
 

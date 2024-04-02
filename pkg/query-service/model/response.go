@@ -112,6 +112,13 @@ func UnavailableError(err error) *ApiError {
 	}
 }
 
+func ForbiddenError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorForbidden,
+		Err: err,
+	}
+}
+
 func WrapApiError(err *ApiError, msg string) *ApiError {
 	return &ApiError{
 		Typ: err.Type(),
@@ -632,6 +639,12 @@ type AlertsInfo struct {
 	LogsBasedAlerts   int `json:"logsBasedAlerts"`
 	MetricBasedAlerts int `json:"metricBasedAlerts"`
 	TracesBasedAlerts int `json:"tracesBasedAlerts"`
+}
+
+type SavedViewsInfo struct {
+	TotalSavedViews  int `json:"totalSavedViews"`
+	TracesSavedViews int `json:"tracesSavedViews"`
+	LogsSavedViews   int `json:"logsSavedViews"`
 }
 
 type DashboardsInfo struct {

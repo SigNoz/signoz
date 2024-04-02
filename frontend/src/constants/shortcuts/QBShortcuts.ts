@@ -13,5 +13,5 @@ export const QBShortcutsName = {
 };
 
 export const QBShortcutsDescription = {
-	StageAndRunQuery: 'Stage and Run the query',
+	StageAndRunQuery: 'Stage and Run the current query',
 };

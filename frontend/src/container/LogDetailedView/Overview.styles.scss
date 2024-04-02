@@ -53,6 +53,19 @@
 			background: rgba(171, 189, 255, 0.04);
 
 			padding: 8px;
+
+			.ant-collapse-extra {
+				display: flex;
+				align-items: center;
+
+				.action-btn {
+					display: flex;
+
+					.ant-btn {
+						background: rgba(113, 144, 249, 0.08);
+					}
+				}
+			}
 		}
 
 		.ant-collapse-content {

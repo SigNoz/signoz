@@ -14,7 +14,7 @@ import (
 
 func TestThresholdRuleCombinations(t *testing.T) {
 	postableRule := PostableRule{
-		Alert:      "Tricky Condition Tests",
+		AlertName:  "Tricky Condition Tests",
 		AlertType:  "METRIC_BASED_ALERT",
 		RuleType:   RuleTypeThreshold,
 		EvalWindow: Duration(5 * time.Minute),
@@ -339,7 +339,7 @@ func TestNormalizeLabelName(t *testing.T) {
 
 func TestPrepareLinksToLogs(t *testing.T) {
 	postableRule := PostableRule{
-		Alert:      "Tricky Condition Tests",
+		AlertName:  "Tricky Condition Tests",
 		AlertType:  "LOGS_BASED_ALERT",
 		RuleType:   RuleTypeThreshold,
 		EvalWindow: Duration(5 * time.Minute),
@@ -381,7 +381,7 @@ func TestPrepareLinksToLogs(t *testing.T) {
 
 func TestPrepareLinksToTraces(t *testing.T) {
 	postableRule := PostableRule{
-		Alert:      "Links to traces test",
+		AlertName:  "Links to traces test",
 		AlertType:  "TRACES_BASED_ALERT",
 		RuleType:   RuleTypeThreshold,
 		EvalWindow: Duration(5 * time.Minute),

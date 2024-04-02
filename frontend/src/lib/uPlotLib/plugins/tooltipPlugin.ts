@@ -3,6 +3,7 @@ import { themeColors } from 'constants/theme';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import getLabelName from 'lib/getLabelName';
+import { get } from 'lodash-es';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { placement } from '../placement';
@@ -68,7 +69,18 @@ const generateTooltipContent = (
 				const dataIngested = quantity[idx];
 				const label = getLabelName(metric, queryName || '', legend || '');
 
-				const color = generateColor(label, themeColors.chartcolors);
+				let color = generateColor(label, themeColors.chartcolors);
+
+				// in case of billing graph pick colors from the series options
+				if (isBillingUsageGraphs) {
+					let clr;
+					series.forEach((item) => {
+						if (item.label === label) {
+							clr = get(item, '_fill');
+						}
+					});
+					color = clr ?? color;
+				}
 
 				let tooltipItemLabel = label;
 

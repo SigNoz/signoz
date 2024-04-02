@@ -3,6 +3,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 import { drawStyles, lineInterpolations } from './constants';
@@ -31,6 +32,7 @@ const getSeries = ({
 	widgetMetaData,
 	graphsVisibilityStates,
 	panelType,
+	currentQuery,
 }: GetSeriesProps): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
@@ -40,13 +42,15 @@ const getSeries = ({
 	const newGraphVisibilityStates = graphsVisibilityStates?.slice(1);
 
 	for (let i = 0; i < seriesList?.length; i += 1) {
-		const { metric = {}, queryName = '', legend = '' } = widgetMetaData[i] || {};
+		const { metric = {}, queryName = '', legend: lgd } = widgetMetaData[i] || {};
 
-		const label = getLabelName(
-			metric,
-			queryName || '', // query
-			legend || '',
-		);
+		const newLegend =
+			currentQuery?.builder.queryData.find((item) => item.queryName === queryName)
+				?.legend || '';
+
+		const legend = newLegend || lgd || '';
+
+		const label = getLabelName(metric, queryName || '', legend);
 
 		const color = generateColor(label, themeColors.chartcolors);
 
@@ -87,6 +91,7 @@ export type GetSeriesProps = {
 	widgetMetaData: QueryData[];
 	graphsVisibilityStates?: boolean[];
 	panelType?: PANEL_TYPES;
+	currentQuery?: Query;
 };
 
 export default getSeries;

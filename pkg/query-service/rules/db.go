@@ -73,7 +73,7 @@ func (r *ruleDB) CreateRuleTx(ctx context.Context, rule string) (int64, Tx, erro
 
 	stmt, err := tx.Prepare(`INSERT into rules (created_at, created_by, updated_at, updated_by, data) VALUES($1,$2,$3,$4,$5);`)
 	if err != nil {
-		zap.S().Errorf("Error in preparing statement for INSERT to rules\n", err)
+		zap.L().Error("Error in preparing statement for INSERT to rules", zap.Error(err))
 		tx.Rollback()
 		return lastInsertId, nil, err
 	}
@@ -82,14 +82,14 @@ func (r *ruleDB) CreateRuleTx(ctx context.Context, rule string) (int64, Tx, erro
 
 	result, err := stmt.Exec(createdAt, userEmail, updatedAt, userEmail, rule)
 	if err != nil {
-		zap.S().Errorf("Error in Executing prepared statement for INSERT to rules\n", err)
+		zap.L().Error("Error in Executing prepared statement for INSERT to rules", zap.Error(err))
 		tx.Rollback() // return an error too, we may want to wrap them
 		return lastInsertId, nil, err
 	}
 
 	lastInsertId, err = result.LastInsertId()
 	if err != nil {
-		zap.S().Errorf("Error in getting last insert id for INSERT to rules\n", err)
+		zap.L().Error("Error in getting last insert id for INSERT to rules\n", zap.Error(err))
 		tx.Rollback() // return an error too, we may want to wrap them
 		return lastInsertId, nil, err
 	}
@@ -122,14 +122,14 @@ func (r *ruleDB) EditRuleTx(ctx context.Context, rule string, id string) (string
 	//}
 	stmt, err := r.Prepare(`UPDATE rules SET updated_by=$1, updated_at=$2, data=$3 WHERE id=$4;`)
 	if err != nil {
-		zap.S().Errorf("Error in preparing statement for UPDATE to rules\n", err)
+		zap.L().Error("Error in preparing statement for UPDATE to rules", zap.Error(err))
 		// tx.Rollback()
 		return groupName, nil, err
 	}
 	defer stmt.Close()
 
 	if _, err := stmt.Exec(userEmail, updatedAt, rule, idInt); err != nil {
-		zap.S().Errorf("Error in Executing prepared statement for UPDATE to rules\n", err)
+		zap.L().Error("Error in Executing prepared statement for UPDATE to rules", zap.Error(err))
 		// tx.Rollback() // return an error too, we may want to wrap them
 		return groupName, nil, err
 	}
@@ -158,7 +158,7 @@ func (r *ruleDB) DeleteRuleTx(ctx context.Context, id string) (string, Tx, error
 	defer stmt.Close()
 
 	if _, err := stmt.Exec(idInt); err != nil {
-		zap.S().Errorf("Error in Executing prepared statement for DELETE to rules\n", err)
+		zap.L().Error("Error in Executing prepared statement for DELETE to rules", zap.Error(err))
 		// tx.Rollback()
 		return groupName, nil, err
 	}
@@ -175,7 +175,7 @@ func (r *ruleDB) GetStoredRules(ctx context.Context) ([]StoredRule, error) {
 	err := r.Select(&rules, query)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, err
 	}
 
@@ -193,10 +193,10 @@ func (r *ruleDB) GetStoredRule(ctx context.Context, id string) (*StoredRule, err
 	query := fmt.Sprintf("SELECT id, created_at, created_by, updated_at, updated_by, data FROM rules WHERE id=%d", intId)
 	err = r.Get(rule, query)
 
-	// zap.S().Info(query)
+	// zap.L().Info(query)
 
 	if err != nil {
-		zap.S().Error("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return nil, err
 	}
 

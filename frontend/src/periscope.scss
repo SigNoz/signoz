@@ -30,6 +30,11 @@
 		background-color: #4566d6;
 		box-shadow: 0 2px 0 rgba(62, 86, 245, 0.09);
 	}
+
+
+	&:disabled {
+		opacity: 0.5;
+	}
 }
 
 .periscope-tab {

@@ -4,7 +4,7 @@
 import './IntegrationDetailPage.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Typography } from 'antd';
+import { Button, Skeleton, Typography } from 'antd';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
 import { defaultTo } from 'lodash-es';
@@ -71,7 +71,8 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 
 			{loading ? (
 				<div className="loading-integration-details">
-					Please wait.. While we load the integration details
+					<Skeleton.Input active size="large" className="skeleton-1" />
+					<Skeleton.Input active size="large" className="skeleton-2" />
 				</div>
 			) : isError ? (
 				<div className="error-container">
@@ -122,6 +123,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 						<IntegrationDetailContent
 							activeDetailTab={activeDetailTab}
 							integrationData={integrationData}
+							integrationId={selectedIntegration}
 						/>
 
 						{connectionStatus !== ConnectionStates.NotInstalled && (
@@ -129,6 +131,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 								integrationTitle={defaultTo(integrationData?.title, '')}
 								integrationId={selectedIntegration}
 								refetchIntegrationDetails={refetch}
+								connectionStatus={connectionStatus}
 							/>
 						)}
 					</>

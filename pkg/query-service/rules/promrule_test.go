@@ -20,7 +20,7 @@ func (l testLogger) Log(args ...interface{}) error {
 
 func TestPromRuleShouldAlert(t *testing.T) {
 	postableRule := PostableRule{
-		Alert:      "Test Rule",
+		AlertName:  "Test Rule",
 		AlertType:  "METRIC_BASED_ALERT",
 		RuleType:   RuleTypeProm,
 		EvalWindow: Duration(5 * time.Minute),

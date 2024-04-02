@@ -3,22 +3,34 @@ import './IntegrationDetailPage.styles.scss';
 import { Button, Modal, Typography } from 'antd';
 import unInstallIntegration from 'api/Integrations/uninstallIntegration';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useNotifications } from 'hooks/useNotifications';
 import { X } from 'lucide-react';
 import { useState } from 'react';
 import { useMutation } from 'react-query';
 
+import { INTEGRATION_TELEMETRY_EVENTS } from '../utils';
+import { ConnectionStates } from './TestConnection';
+
 interface IntergrationsUninstallBarProps {
 	integrationTitle: string;
 	integrationId: string;
 	refetchIntegrationDetails: () => void;
+	connectionStatus: ConnectionStates;
 }
 function IntergrationsUninstallBar(
 	props: IntergrationsUninstallBarProps,
 ): JSX.Element {
-	const { integrationTitle, integrationId, refetchIntegrationDetails } = props;
+	const {
+		integrationTitle,
+		integrationId,
+		refetchIntegrationDetails,
+		connectionStatus,
+	} = props;
 	const { notifications } = useNotifications();
 	const [isModalOpen, setIsModalOpen] = useState(false);
+
+	const { trackEvent } = useAnalytics();
 
 	const {
 		mutate: uninstallIntegration,
@@ -40,6 +52,13 @@ function IntergrationsUninstallBar(
 	};
 
 	const handleOk = (): void => {
+		trackEvent(
+			INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_DETAIL_REMOVE_INTEGRATION,
+			{
+				integration: integrationId,
+				integrationStatus: connectionStatus,
+			},
+		);
 		uninstallIntegration({
 			integration_id: integrationId,
 		});

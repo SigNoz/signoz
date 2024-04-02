@@ -88,4 +88,7 @@ export const getFilter = (data: GetFilterPayload): TraceReducer['filter'] => {
 };
 
 export const stripTimestampsFromQuery = (query: string): string =>
-	query.replace(/(\?|&)startTime=\d+/, '').replace(/&endTime=\d+/, '');
+	query
+		.replace(/(\?|&)startTime=\d+/, '')
+		.replace(/&endTime=\d+/, '')
+		.replace(/[?&]relativeTime=[^&]+/g, '');

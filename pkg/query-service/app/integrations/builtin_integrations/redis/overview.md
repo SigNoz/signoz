@@ -1,3 +1,5 @@
 ### Monitor Redis with SigNoz
 
-Parse your Redis logs and collect key metrics.
+Collect key Redis metrics and view them with an out of the box dashboard.
+
+Collect and parse Redis logs to populate timestamp, severity, and other log attributes for better querying and aggregation.

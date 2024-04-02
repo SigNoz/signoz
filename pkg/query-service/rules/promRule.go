@@ -71,7 +71,7 @@ func NewPromRule(
 
 	p := PromRule{
 		id:                id,
-		name:              postableRule.Alert,
+		name:              postableRule.AlertName,
 		source:            postableRule.Source,
 		ruleCondition:     postableRule.RuleCondition,
 		evalWindow:        time.Duration(postableRule.EvalWindow),
@@ -94,7 +94,7 @@ func NewPromRule(
 		return nil, err
 	}
 
-	zap.S().Info("msg:", "creating new alerting rule", "\t name:", p.name, "\t condition:", p.ruleCondition.String(), "\t query:", query)
+	zap.L().Info("creating new alerting rule", zap.String("name", p.name), zap.String("condition", p.ruleCondition.String()), zap.String("query", query))
 
 	return &p, nil
 }
@@ -339,7 +339,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 	if err != nil {
 		return nil, err
 	}
-	zap.S().Info("rule:", r.Name(), "\t evaluating promql query: ", q)
+	zap.L().Info("evaluating promql query", zap.String("name", r.Name()), zap.String("query", q))
 	res, err := queriers.PqlEngine.RunAlertQuery(ctx, q, start, end, interval)
 	if err != nil {
 		r.SetHealth(HealthBad)
@@ -368,7 +368,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		if !shouldAlert {
 			continue
 		}
-		zap.S().Debugf("rule: %s, alerting for series: %v", r.Name(), series)
+		zap.L().Debug("alerting for series", zap.String("name", r.Name()), zap.Any("series", series))
 
 		thresholdFormatter := formatter.FromUnit(r.ruleCondition.TargetUnit)
 		threshold := thresholdFormatter.Format(r.targetVal(), r.ruleCondition.TargetUnit)
@@ -435,7 +435,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 		}
 	}
 
-	zap.S().Debugf("For rule: %s, found %d alerts", r.Name(), len(alerts))
+	zap.L().Debug("found alerts for rule", zap.Int("count", len(alerts)), zap.String("name", r.Name()))
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
@@ -612,7 +612,7 @@ func (r *PromRule) shouldAlert(series pql.Series) (pql.Sample, bool) {
 func (r *PromRule) String() string {
 
 	ar := PostableRule{
-		Alert:             r.name,
+		AlertName:         r.name,
 		RuleCondition:     r.ruleCondition,
 		EvalWindow:        Duration(r.evalWindow),
 		Labels:            r.labels.Map(),

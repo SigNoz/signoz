@@ -109,9 +109,40 @@ export const GetTagKeys = async (): Promise<IOption[]> => {
 	if (!payload || !payload?.data) {
 		return [];
 	}
+	return payload.data
+		.filter((tagKey: string) => tagKey !== 'resource_deployment_environment')
+		.map((tagKey: string) => ({
+			label: convertMetricKeyToTrace(tagKey),
+			value: tagKey,
+		}));
+};
+
+export const getEnvironmentTagKeys = async (): Promise<IOption[]> => {
+	const { payload } = await getResourceAttributesTagKeys({
+		metricName: 'signoz_calls_total',
+		match: 'resource_deployment_environment',
+	});
+	if (!payload || !payload?.data) {
+		return [];
+	}
 	return payload.data.map((tagKey: string) => ({
 		label: convertMetricKeyToTrace(tagKey),
 		value: tagKey,
+	}));
+};
+
+export const getEnvironmentTagValues = async (): Promise<IOption[]> => {
+	const { payload } = await getResourceAttributesTagValues({
+		tagKey: 'resource_deployment_environment',
+		metricName: 'signoz_calls_total',
+	});
+
+	if (!payload || !payload?.data) {
+		return [];
+	}
+	return payload.data.map((tagValue: string) => ({
+		label: tagValue,
+		value: tagValue,
 	}));
 };
 
@@ -131,6 +162,23 @@ export const GetTagValues = async (tagKey: string): Promise<IOption[]> => {
 };
 
 export const createQuery = (
+	selectedItems: Array<string | string[]> = [],
+): IResourceAttribute | null => {
+	console.log('selectedItems', selectedItems);
+
+	if (selectedItems.length === 3) {
+		return {
+			id: uuid().slice(0, 8),
+			tagKey: selectedItems[0] as string,
+			operator: selectedItems[1] as string,
+			tagValue: selectedItems[2] as string[],
+		};
+	}
+	return null;
+};
+
+export const updateQuery = (
+	queryKey: string,
 	selectedItems: Array<string | string[]> = [],
 ): IResourceAttribute | null => {
 	if (selectedItems.length === 3) {

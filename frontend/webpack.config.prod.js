@@ -14,6 +14,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const Critters = require('critters-webpack-plugin');
+const { RetryChunkLoadPlugin } = require('webpack-retry-chunk-load-plugin');
 
 dotenv.config();
 
@@ -71,6 +72,9 @@ const plugins = [
 		org: process.env.SENTRY_ORG,
 		project: process.env.SENTRY_PROJECT_ID,
 	}),
+	new RetryChunkLoadPlugin({
+		maxRetries: 2,
+	}),
 ];
 
 if (process.env.BUNDLE_ANALYSER === 'true') {
@@ -79,7 +83,7 @@ if (process.env.BUNDLE_ANALYSER === 'true') {
 
 const config = {
 	mode: 'production',
-	devtool: 'source-map',
+	devtool: 'eval-source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	output: {
 		path: resolve(__dirname, './build'),

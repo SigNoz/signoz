@@ -90,6 +90,7 @@ function LogsExplorerList({
 					onAddToQuery={onAddToQuery}
 					onSetActiveLog={onSetActiveLog}
 					activeLog={activeLog}
+					linesPerRow={options.maxLines}
 				/>
 			);
 		},

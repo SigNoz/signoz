@@ -18,7 +18,7 @@ import (
 )
 
 func initZapLog() *zap.Logger {
-	config := zap.NewDevelopmentConfig()
+	config := zap.NewProductionConfig()
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -85,9 +85,9 @@ func main() {
 	auth.JwtSecret = os.Getenv("SIGNOZ_JWT_SECRET")
 
 	if len(auth.JwtSecret) == 0 {
-		zap.S().Warn("No JWT secret key is specified.")
+		zap.L().Warn("No JWT secret key is specified.")
 	} else {
-		zap.S().Info("No JWT secret key set successfully.")
+		zap.L().Info("No JWT secret key set successfully.")
 	}
 
 	server, err := app.NewServer(serverOptions)

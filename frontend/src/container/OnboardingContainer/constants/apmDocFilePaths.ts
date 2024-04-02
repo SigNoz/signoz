@@ -403,11 +403,38 @@ import APM_javascript_reactjs_macOsARM64_quickStart_runApplication from '../Modu
 import APM_javascript_reactjs_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-installOtelCollector.md';
 import APM_javascript_reactjs_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-instrumentApplication.md';
 import APM_javascript_reactjs_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-runApplication.md';
-import APM_python_django_docker_quickStart_instrumentApplication from '../Modules/APM/Python/md-docs/Django/Docker/QuickStart/django-docker-quickStart-instrumentApplication.md';
-import APM_python_django_docker_quickStart_runApplication from '../Modules/APM/Python/md-docs/Django/Docker/QuickStart/django-docker-quickStart-runApplication.md';
-import APM_python_django_docker_recommendedSteps_setupOtelCollector from '../Modules/APM/Python/md-docs/Django/Docker/Recommended/django-docker-recommended-installOtelCollector.md';
-import APM_python_django_docker_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Django/Docker/Recommended/django-docker-recommended-instrumentApplication.md';
-import APM_python_django_docker_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Django/Docker/Recommended/django-docker-recommended-runApplication.md';
+// PHP-Kubernetes
+import APM_php_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Php/md-docs/Kubernetes/php-kubernetes-installOtelCollector.md';
+import APM_php_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Php/md-docs/Kubernetes/php-kubernetes-instrumentApplication.md';
+import APM_php_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Php/md-docs/Kubernetes/php-kubernetes-runApplication.md';
+// PHP-LinuxAMD64-quickstart
+import APM_php_linuxAMD64_quickStart_instrumentApplication from '../Modules/APM/Php/md-docs/LinuxAMD64/QuickStart/php-linuxamd64-quickStart-instrumentApplication.md';
+import APM_php_linuxAMD64_quickStart_runApplication from '../Modules/APM/Php/md-docs/LinuxAMD64/QuickStart/php-linuxamd64-quickStart-runApplication.md';
+// PHP-LinuxAMD64-recommended
+import APM_php_linuxAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Php/md-docs/LinuxAMD64/Recommended/php-linuxamd64-recommended-installOtelCollector.md';
+import APM_php_linuxAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Php/md-docs/LinuxAMD64/Recommended/php-linuxamd64-recommended-instrumentApplication.md';
+import APM_php_linuxAMD64_recommendedSteps_runApplication from '../Modules/APM/Php/md-docs/LinuxAMD64/Recommended/php-linuxamd64-recommended-runApplication.md';
+// PHP-LinuxARM64-quickstart
+import APM_php_linuxARM64_quickStart_instrumentApplication from '../Modules/APM/Php/md-docs/LinuxARM64/QuickStart/php-linuxarm64-quickStart-instrumentApplication.md';
+import APM_php_linuxARM64_quickStart_runApplication from '../Modules/APM/Php/md-docs/LinuxARM64/QuickStart/php-linuxarm64-quickStart-runApplication.md';
+// PHP-LinuxARM64-recommended
+import APM_php_linuxARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Php/md-docs/LinuxARM64/Recommended/php-linuxarm64-recommended-installOtelCollector.md';
+import APM_php_linuxARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Php/md-docs/LinuxARM64/Recommended/php-linuxarm64-recommended-instrumentApplication.md';
+import APM_php_linuxARM64_recommendedSteps_runApplication from '../Modules/APM/Php/md-docs/LinuxARM64/Recommended/php-linuxarm64-recommended-runApplication.md';
+// PHP-MacOsAMD64-quickstart
+import APM_php_macOsAMD64_quickStart_instrumentApplication from '../Modules/APM/Php/md-docs/MacOsAMD64/QuickStart/php-macosamd64-quickStart-instrumentApplication.md';
+import APM_php_macOsAMD64_quickStart_runApplication from '../Modules/APM/Php/md-docs/MacOsAMD64/QuickStart/php-macosamd64-quickStart-runApplication.md';
+// PHP-MacOsAMD64-recommended
+import APM_php_macOsAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Php/md-docs/MacOsAMD64/Recommended/php-macosamd64-recommended-installOtelCollector.md';
+import APM_php_macOsAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Php/md-docs/MacOsAMD64/Recommended/php-macosamd64-recommended-instrumentApplication.md';
+import APM_php_macOsAMD64_recommendedSteps_runApplication from '../Modules/APM/Php/md-docs/MacOsAMD64/Recommended/php-macosamd64-recommended-runApplication.md';
+// PHP-MacOsARM64-quickstart
+import APM_php_macOsARM64_quickStart_instrumentApplication from '../Modules/APM/Php/md-docs/MacOsARM64/QuickStart/php-macosarm64-quickStart-instrumentApplication.md';
+import APM_php_macOsARM64_quickStart_runApplication from '../Modules/APM/Php/md-docs/MacOsARM64/QuickStart/php-macosarm64-quickStart-runApplication.md';
+// PHP-MacOsARM64-recommended
+import APM_php_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Php/md-docs/MacOsARM64/Recommended/php-macosarm64-recommended-installOtelCollector.md';
+import APM_php_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Php/md-docs/MacOsARM64/Recommended/php-macosarm64-recommended-instrumentApplication.md';
+import APM_php_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Php/md-docs/MacOsARM64/Recommended/php-macosarm64-recommended-runApplication.md';
 /// ////// Javascript Done
 /// ///// Python Start
 // Django
@@ -580,7 +607,6 @@ import APM_python_other_macOsARM64_recommendedSteps_setupOtelCollector from '../
 import APM_python_other_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Python/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-instrumentApplication.md';
 import APM_python_other_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Python/md-docs/Others/MacOsARM64/Recommended/others-macosarm64-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
-/// ////// Go Done
 /// ///// ROR Start
 // ROR-Kubernetes
 import APM_rails_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/RubyOnRails/md-docs/Kubernetes/ror-kubernetes-installOtelCollector.md';
@@ -907,14 +933,6 @@ export const ApmDocFilePaths = {
 	// Django-MacOsARM64-quickstart
 	APM_python_django_macOsARM64_quickStart_instrumentApplication,
 	APM_python_django_macOsARM64_quickStart_runApplication,
-
-	// Django Docker
-	APM_python_django_docker_quickStart_instrumentApplication,
-	APM_python_django_docker_quickStart_runApplication,
-
-	APM_python_django_docker_recommendedSteps_setupOtelCollector,
-	APM_python_django_docker_recommendedSteps_instrumentApplication,
-	APM_python_django_docker_recommendedSteps_runApplication,
 
 	// ------------------------------------------------------------------------------------------------
 
@@ -1559,4 +1577,36 @@ export const ApmDocFilePaths = {
 	APM_swift_macOsARM64_recommendedSteps_setupOtelCollector,
 	APM_swift_macOsARM64_recommendedSteps_instrumentApplication,
 	APM_swift_macOsARM64_recommendedSteps_runApplication,
+
+	APM_php_kubernetes_recommendedSteps_setupOtelCollector,
+	APM_php_kubernetes_recommendedSteps_instrumentApplication,
+	APM_php_kubernetes_recommendedSteps_runApplication,
+
+	APM_php_linuxAMD64_quickStart_instrumentApplication,
+	APM_php_linuxAMD64_quickStart_runApplication,
+
+	APM_php_linuxAMD64_recommendedSteps_setupOtelCollector,
+	APM_php_linuxAMD64_recommendedSteps_instrumentApplication,
+	APM_php_linuxAMD64_recommendedSteps_runApplication,
+
+	APM_php_linuxARM64_quickStart_instrumentApplication,
+	APM_php_linuxARM64_quickStart_runApplication,
+
+	APM_php_linuxARM64_recommendedSteps_setupOtelCollector,
+	APM_php_linuxARM64_recommendedSteps_instrumentApplication,
+	APM_php_linuxARM64_recommendedSteps_runApplication,
+
+	APM_php_macOsAMD64_quickStart_instrumentApplication,
+	APM_php_macOsAMD64_quickStart_runApplication,
+
+	APM_php_macOsAMD64_recommendedSteps_setupOtelCollector,
+	APM_php_macOsAMD64_recommendedSteps_instrumentApplication,
+	APM_php_macOsAMD64_recommendedSteps_runApplication,
+
+	APM_php_macOsARM64_quickStart_instrumentApplication,
+	APM_php_macOsARM64_quickStart_runApplication,
+
+	APM_php_macOsARM64_recommendedSteps_setupOtelCollector,
+	APM_php_macOsARM64_recommendedSteps_instrumentApplication,
+	APM_php_macOsARM64_recommendedSteps_runApplication,
 };

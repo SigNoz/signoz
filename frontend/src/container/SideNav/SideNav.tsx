@@ -271,6 +271,17 @@ function SideNav({
 		}
 	}, [isCloudUserVal, isEnterprise, isFetching]);
 
+	useEffect(() => {
+		if (!isCloudUserVal) {
+			let updatedMenuItems = [...menuItems];
+			updatedMenuItems = updatedMenuItems.filter(
+				(item) => item.key !== ROUTES.INTEGRATIONS,
+			);
+			setMenuItems(updatedMenuItems);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	const [isCurrentOrgSettings] = useComponentPermission(
 		['current_org_settings'],
 		role,
@@ -364,90 +375,92 @@ function SideNav({
 				</div>
 			)}
 
-			<div className="primary-nav-items">
-				{menuItems.map((item, index) => (
-					<NavItem
-						isCollapsed={collapsed}
-						key={item.key || index}
-						item={item}
-						isActive={activeMenuKey === item.key}
-						onClick={(event): void => {
-							handleMenuItemClick(event, item);
-						}}
-					/>
-				))}
-			</div>
-
-			<div className="secondary-nav-items">
-				<NavItem
-					isCollapsed={collapsed}
-					key="keyboardShortcuts"
-					item={shortcutMenuItem}
-					isActive={false}
-					onClick={onClickShortcuts}
-				/>
-
-				{licenseData && !isLicenseActive && (
-					<NavItem
-						isCollapsed={collapsed}
-						key="trySignozCloud"
-						item={trySignozCloudMenuItem}
-						isActive={false}
-						onClick={onClickSignozCloud}
-					/>
-				)}
-
-				{userManagementMenuItems.map(
-					(item, index): JSX.Element => (
+			<div className={cx(`nav-wrapper`, isCloudUserVal && 'nav-wrapper-cloud')}>
+				<div className="primary-nav-items">
+					{menuItems.map((item, index) => (
 						<NavItem
 							isCollapsed={collapsed}
-							key={item?.key || index}
+							key={item.key || index}
 							item={item}
-							isActive={activeMenuKey === item?.key}
-							onClick={(event: MouseEvent): void => {
-								handleUserManagentMenuItemClick(item?.key as string, event);
+							isActive={activeMenuKey === item.key}
+							onClick={(event): void => {
+								handleMenuItemClick(event, item);
 							}}
 						/>
-					),
-				)}
+					))}
+				</div>
 
-				{inviteMembers && (
+				<div className="secondary-nav-items">
 					<NavItem
 						isCollapsed={collapsed}
-						key={inviteMemberMenuItem.key}
-						item={inviteMemberMenuItem}
-						isActive={activeMenuKey === inviteMemberMenuItem?.key}
-						onClick={(event: React.MouseEvent): void => {
-							if (isCtrlMetaKey(event)) {
-								openInNewTab(`${inviteMemberMenuItem.key}`);
-							} else {
-								history.push(`${inviteMemberMenuItem.key}`);
-							}
-						}}
+						key="keyboardShortcuts"
+						item={shortcutMenuItem}
+						isActive={false}
+						onClick={onClickShortcuts}
 					/>
-				)}
 
-				{user && (
-					<NavItem
-						isCollapsed={collapsed}
-						key={ROUTES.MY_SETTINGS}
-						item={userSettingsMenuItem}
-						isActive={activeMenuKey === userSettingsMenuItem?.key}
-						onClick={(event: MouseEvent): void => {
-							handleUserManagentMenuItemClick(
-								userSettingsMenuItem?.key as string,
-								event,
-							);
-						}}
-					/>
-				)}
-
-				<div className="collapse-expand-handlers" onClick={onCollapse}>
-					{collapsed ? (
-						<ChevronRightCircle size={18} />
-					) : (
-						<ChevronLeftCircle size={18} />
+					{licenseData && !isLicenseActive && (
+						<NavItem
+							isCollapsed={collapsed}
+							key="trySignozCloud"
+							item={trySignozCloudMenuItem}
+							isActive={false}
+							onClick={onClickSignozCloud}
+						/>
 					)}
+
+					{userManagementMenuItems.map(
+						(item, index): JSX.Element => (
+							<NavItem
+								isCollapsed={collapsed}
+								key={item?.key || index}
+								item={item}
+								isActive={activeMenuKey === item?.key}
+								onClick={(event: MouseEvent): void => {
+									handleUserManagentMenuItemClick(item?.key as string, event);
+								}}
+							/>
+						),
+					)}
+
+					{inviteMembers && (
+						<NavItem
+							isCollapsed={collapsed}
+							key={inviteMemberMenuItem.key}
+							item={inviteMemberMenuItem}
+							isActive={activeMenuKey === inviteMemberMenuItem?.key}
+							onClick={(event: React.MouseEvent): void => {
+								if (isCtrlMetaKey(event)) {
+									openInNewTab(`${inviteMemberMenuItem.key}`);
+								} else {
+									history.push(`${inviteMemberMenuItem.key}`);
+								}
+							}}
+						/>
+					)}
+
+					{user && (
+						<NavItem
+							isCollapsed={collapsed}
+							key={ROUTES.MY_SETTINGS}
+							item={userSettingsMenuItem}
+							isActive={activeMenuKey === userSettingsMenuItem?.key}
+							onClick={(event: MouseEvent): void => {
+								handleUserManagentMenuItemClick(
+									userSettingsMenuItem?.key as string,
+									event,
+								);
+							}}
+						/>
+					)}
+
+					<div className="collapse-expand-handlers" onClick={onCollapse}>
+						{collapsed ? (
+							<ChevronRightCircle size={18} />
+						) : (
+							<ChevronLeftCircle size={18} />
+						)}
+					</div>
 				</div>
 			</div>
 		</div>
