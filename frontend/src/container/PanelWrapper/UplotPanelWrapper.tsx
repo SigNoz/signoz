@@ -1,22 +1,16 @@
 import { ToggleGraphProps } from 'components/Graph/types';
 import Uplot from 'components/Uplot';
-// import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import GraphManager from 'container/GridCardLayout/GridCard/FullView/GraphManager';
 import { getLocalStorageGraphVisibilityState } from 'container/GridCardLayout/GridCard/utils';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-// import useUrlQuery from 'hooks/useUrlQuery';
-// import GetMinMax from 'lib/getMinMax';
-// import history from 'lib/history';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import _noop from 'lodash-es/noop';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
-// import { useDispatch } from 'react-redux';
-// import { useLocation } from 'react-router-dom';
-// import { UpdateTimeInterval } from 'store/actions';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
@@ -38,6 +32,7 @@ function UplotPanelWrapper({
 	const graphRef = useRef<HTMLDivElement>(null);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
+	const { currentQuery } = useQueryBuilder();
 
 	useEffect(() => {
 		if (toScrollWidgetId === widget.id) {
@@ -102,6 +97,7 @@ function UplotPanelWrapper({
 				graphsVisibilityStates: graphVisibility,
 				setGraphsVisibilityStates: setGraphVisibility,
 				panelType: widget.panelTypes,
+				currentQuery,
 			}),
 		[
 			widget?.id,
@@ -119,6 +115,7 @@ function UplotPanelWrapper({
 			maxTimeScale,
 			graphVisibility,
 			setGraphVisibility,
+			currentQuery,
 		],
 	);
 
