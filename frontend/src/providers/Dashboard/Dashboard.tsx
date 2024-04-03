@@ -98,7 +98,9 @@ export function DashboardProvider({
 
 	const [layouts, setLayouts] = useState<Layout[]>([]);
 
-	const [panelMap, setPanelMap] = useState<Record<string, any>>({});
+	const [panelMap, setPanelMap] = useState<
+		Record<string, { wigets: Layout[]; collapsed: boolean }>
+	>({});
 
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 

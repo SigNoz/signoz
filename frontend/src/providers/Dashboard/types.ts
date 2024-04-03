@@ -12,7 +12,7 @@ export interface IDashboardContext {
 	selectedDashboard: Dashboard | undefined;
 	dashboardId: string;
 	layouts: Layout[];
-	panelMap: Record<string, any>;
+	panelMap: Record<string, { widgets: Layout[]; collapsed: boolean }>;
 	setPanelMap: React.Dispatch<React.SetStateAction<Record<string, any>>>;
 	setLayouts: React.Dispatch<React.SetStateAction<Layout[]>>;
 	setSelectedDashboard: React.Dispatch<
