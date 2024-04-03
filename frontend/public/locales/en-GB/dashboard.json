@@ -16,6 +16,7 @@
 	"new_dashboard_title": "Sample Title",
 	"layout_saved_successfully": "Layout saved successfully",
 	"add_panel": "Add Panel",
+	"add_row": "Add Row",
 	"save_layout": "Save Layout",
 	"variable_updated_successfully": "Variable updated successfully",
 	"error_while_updating_variable": "Error while updating variable",

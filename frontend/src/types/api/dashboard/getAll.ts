@@ -62,6 +62,7 @@ export interface DashboardData {
 	widgets?: Widgets[];
 	title: string;
 	layout?: Layout[];
+	panelMap?: Record<string, any>;
 	variables: Record<string, IDashboardVariable>;
 	version?: string;
 }

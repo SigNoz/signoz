@@ -12,6 +12,8 @@ export interface IDashboardContext {
 	selectedDashboard: Dashboard | undefined;
 	dashboardId: string;
 	layouts: Layout[];
+	panelMap: Record<string, any>;
+	setPanelMap: React.Dispatch<React.SetStateAction<Record<string, any>>>;
 	setLayouts: React.Dispatch<React.SetStateAction<Layout[]>>;
 	setSelectedDashboard: React.Dispatch<
 		React.SetStateAction<Dashboard | undefined>

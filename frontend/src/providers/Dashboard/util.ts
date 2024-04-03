@@ -1,3 +1,4 @@
+import { Layout } from 'react-grid-layout';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 
 export const getPreviousWidgets = (
@@ -20,3 +21,11 @@ export const getSelectedWidgetIndex = (
 	widgetId: string | null,
 ): number =>
 	selectedDashboard.data.widgets?.findIndex((e) => e.id === widgetId) || 0;
+
+export const sortLayout = (layout: Layout[]): Layout[] =>
+	[...layout].sort((a, b) => {
+		if (a.y === b.y) {
+			return a.x - b.x;
+		}
+		return a.y - b.y;
+	});
