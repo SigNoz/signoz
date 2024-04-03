@@ -879,7 +879,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				zap.L().Error("Error building query with tag params", zap.Error(errStatus))
 				return
 			}
-			query += subQuery
+			errorQuery += subQuery
 			args = append(args, argsSubQuery...)
 			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
 			if err != nil {
