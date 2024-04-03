@@ -1,7 +1,9 @@
 import './GridCardLayout.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Flex, Tooltip, Typography } from 'antd';
+import { Flex, Form, Input, Modal, Tooltip, Typography } from 'antd';
+import { useForm } from 'antd/es/form/Form';
+import cx from 'classnames';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -13,6 +15,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
+import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import { FullscreenIcon, MoveDown, MoveUp, Settings } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -69,6 +72,16 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const [dashboardLayout, setDashboardLayout] = useState<Layout[]>([]);
+
+	const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
+
+	const [currentSelectRowId, setCurrentSelectRowId] = useState<string | null>(
+		null,
+	);
+
+	const [form] = useForm<{
+		title: string;
+	}>();
 
 	const updateDashboardMutation = useUpdateDashboard();
 
@@ -216,7 +229,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					...(selectedDashboard.data.widgets || []),
 					{
 						id,
-						title: '',
+						title: 'Sample Row',
 						description: '',
 						panelTypes: PANEL_TYPES.ROW,
 					},
@@ -245,6 +258,18 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 			},
 		});
 	}
+
+	const handleRowSettingsClick = (id: string): void => {
+		setIsSettingsModalOpen(true);
+		setCurrentSelectRowId(id);
+	};
+
+	const onSettingsModalSubmit = (): void => {
+		// handle update of the title here
+		console.log(form.getFieldValue('title'));
+		form.setFieldValue('title', '');
+		setIsSettingsModalOpen(false);
+	};
 	return (
 		<>
 			<Flex justify="flex-end" gap={8} align="center">
@@ -320,7 +345,7 @@ Thanks`}
 						const currentWidget = (widgets || [])?.find((e) => e.id === id);
 
 						if (currentWidget?.panelTypes === PANEL_TYPES.ROW) {
-							const rowWidgetProperties = panelMap[currentWidget.id] || {};
+							const rowWidgetProperties = panelMap[id] || {};
 							return (
 								<CardContainer
 									className={isDashboardLocked ? '' : 'enable-resize'}
@@ -328,7 +353,12 @@ Thanks`}
 									key={id}
 									data-grid={JSON.stringify(currentWidget)}
 								>
-									<div className="row-panel">
+									<div
+										className={cx(
+											'row-panel',
+											rowWidgetProperties.collapsed ? '.drag-handle' : '',
+										)}
+									>
 										<Button
 											icon={
 												rowWidgetProperties.collapsed ? (
@@ -346,9 +376,7 @@ Thanks`}
 										<Button
 											icon={<Settings size={14} />}
 											type="text"
-											onClick={(): void => {
-												console.log('settings row click');
-											}}
+											onClick={(): void => handleRowSettingsClick(id)}
 										/>
 									</div>
 								</CardContainer>
@@ -378,6 +406,34 @@ Thanks`}
 						);
 					})}
 				</ReactGridLayout>
+				<Modal
+					open={isSettingsModalOpen}
+					title="Row Options"
+					destroyOnClose
+					footer={null}
+					onCancel={(): void => {
+						setIsSettingsModalOpen(false);
+						setCurrentSelectRowId(null);
+					}}
+				>
+					<Form form={form} onFinish={onSettingsModalSubmit} requiredMark>
+						<Form.Item required name={['title']}>
+							<Input
+								placeholder="Enter row name here..."
+								defaultValue={defaultTo(
+									widgets?.find((widget) => widget.id === currentSelectRowId)
+										?.title as string,
+									'Sample Title',
+								)}
+							/>
+						</Form.Item>
+						<Form.Item>
+							<Button type="primary" htmlType="submit">
+								Apply Changes
+							</Button>
+						</Form.Item>
+					</Form>
+				</Modal>
 			</FullScreen>
 		</>
 	);
