@@ -30,6 +30,14 @@ export const CardContainer = styled.div<Props>`
 	overflow: auto;
 
 	&.enable-resize {
+		.row-panel {
+			height: 100%;
+			display: flex;
+			gap: 10px;
+			background: var(--bg-ink-400);
+			align-items: center;
+			overflow: hidden;
+		}
 		:hover {
 			.react-resizable-handle {
 				position: absolute;

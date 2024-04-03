@@ -1,7 +1,7 @@
 import './GridCardLayout.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Flex, Tooltip } from 'antd';
+import { Flex, Tooltip, Typography } from 'antd';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -14,7 +14,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import isEqual from 'lodash-es/isEqual';
-import { FullscreenIcon } from 'lucide-react';
+import { FullscreenIcon, MoveDown, MoveUp, Settings } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useState } from 'react';
@@ -181,7 +181,10 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 		if (!selectedDashboard) return;
 		const id = uuid();
 
-		const newRowWidgetMap: { widgets: string[] } = { widgets: [] };
+		const newRowWidgetMap: { widgets: string[]; collapsed: boolean } = {
+			widgets: [],
+			collapsed: false,
+		};
 		const currentRowIdx = 0;
 		for (let j = currentRowIdx; j < dashboardLayout.length; j++) {
 			if (!panelMap[dashboardLayout[j].i]) {
@@ -199,8 +202,11 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					{
 						i: id,
 						w: 12,
+						minW: 12,
+						minH: 0.3,
+						maxH: 0.3,
 						x: 0,
-						h: 3,
+						h: 0.3,
 						y: 0,
 					},
 					...dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
@@ -312,6 +318,42 @@ Thanks`}
 					{dashboardLayout.map((layout) => {
 						const { i: id } = layout;
 						const currentWidget = (widgets || [])?.find((e) => e.id === id);
+
+						if (currentWidget?.panelTypes === PANEL_TYPES.ROW) {
+							const rowWidgetProperties = panelMap[currentWidget.id] || {};
+							return (
+								<CardContainer
+									className={isDashboardLocked ? '' : 'enable-resize'}
+									isDarkMode={isDarkMode}
+									key={id}
+									data-grid={JSON.stringify(currentWidget)}
+								>
+									<div className="row-panel">
+										<Button
+											icon={
+												rowWidgetProperties.collapsed ? (
+													<MoveDown size={14} />
+												) : (
+													<MoveUp size={14} />
+												)
+											}
+											type="text"
+											onClick={(): void => {
+												console.log('row collapse handle');
+											}}
+										/>
+										<Typography.Text>Row Title</Typography.Text>
+										<Button
+											icon={<Settings size={14} />}
+											type="text"
+											onClick={(): void => {
+												console.log('settings row click');
+											}}
+										/>
+									</div>
+								</CardContainer>
+							);
+						}
 
 						return (
 							<CardContainer
