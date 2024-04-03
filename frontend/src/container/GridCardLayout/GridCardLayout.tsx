@@ -29,6 +29,7 @@ import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
+import { v4 as uuid } from 'uuid';
 
 import { EditMenuAction, ViewMenuAction } from './config';
 import GridCard from './GridCard';
@@ -46,8 +47,9 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	const {
 		selectedDashboard,
 		layouts,
-		panelMap,
 		setLayouts,
+		panelMap,
+		setPanelMap,
 		setSelectedDashboard,
 		isDashboardLocked,
 	} = useDashboard();
@@ -171,11 +173,14 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	}, [dashboardLayout]);
 
 	function handleAddRow(): void {
-		/**
-		 * handleAddRow takes care of generating the panelMap for the newly added row
-		 * by populating the widgets under the current row and deleting them from the
-		 * dashboard layout
-		 */
+		// /**
+		//  * handleAddRow takes care of generating the panelMap for the newly added row
+		//  * by populating the widgets under the current row and deleting them from the
+		//  * dashboard layout
+		//  */
+		if (!selectedDashboard) return;
+		const id = uuid();
+
 		const newRowWidgetMap: { widgets: string[] } = { widgets: [] };
 		const currentRowIdx = 0;
 		for (let j = currentRowIdx; j < dashboardLayout.length; j++) {
@@ -186,7 +191,53 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 			}
 		}
 
-		console.log(newRowWidgetMap, 'newRowWidgetMap');
+		const updatedDashboard: Dashboard = {
+			...selectedDashboard,
+			data: {
+				...selectedDashboard.data,
+				layout: [
+					{
+						i: id,
+						w: 12,
+						x: 0,
+						h: 3,
+						y: 0,
+					},
+					...dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
+				],
+				panelMap: { ...panelMap, [id]: newRowWidgetMap },
+				widgets: [
+					...(selectedDashboard.data.widgets || []),
+					{
+						id,
+						title: '',
+						description: '',
+						panelTypes: PANEL_TYPES.ROW,
+					},
+				],
+			},
+			uuid: selectedDashboard.uuid,
+		};
+
+		updateDashboardMutation.mutate(updatedDashboard, {
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			onSuccess: (updatedDashboard) => {
+				if (updatedDashboard.payload) {
+					if (updatedDashboard.payload.data.layout)
+						setLayouts(sortLayout(updatedDashboard.payload.data.layout));
+					setSelectedDashboard(updatedDashboard.payload);
+					setPanelMap(updatedDashboard.payload.data.panelMap || {});
+				}
+
+				featureResponse.refetch();
+			},
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			onError: () => {
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				});
+			},
+		});
 	}
 	return (
 		<>
@@ -274,7 +325,7 @@ Thanks`}
 									$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
 								>
 									<GridCard
-										widget={currentWidget || ({ id, query: {} } as Widgets)}
+										widget={(currentWidget as Widgets) || ({ id, query: {} } as Widgets)}
 										headerMenuList={widgetActions}
 										variables={variables}
 										version={selectedDashboard?.data?.version}

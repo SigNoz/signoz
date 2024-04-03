@@ -59,12 +59,19 @@ export interface DashboardData {
 	description?: string;
 	tags?: string[];
 	name?: string;
-	widgets?: Widgets[];
+	widgets?: Array<WidgetRow | Widgets>;
 	title: string;
 	layout?: Layout[];
 	panelMap?: Record<string, any>;
 	variables: Record<string, IDashboardVariable>;
 	version?: string;
+}
+
+export interface WidgetRow {
+	id: string;
+	panelTypes: PANEL_TYPES;
+	title: ReactNode;
+	description: string;
 }
 
 export interface IBaseWidget {
@@ -76,17 +83,17 @@ export interface IBaseWidget {
 	opacity: string;
 	nullZeroValues: string;
 	timePreferance: timePreferenceType;
-	stepSize?: number;
-	yAxisUnit?: string;
-	thresholds?: ThresholdProps[];
+	stepSize: number;
+	yAxisUnit: string;
+	thresholds: ThresholdProps[];
 	softMin: number | null;
 	softMax: number | null;
-	fillSpans?: boolean;
+	fillSpans: boolean;
 	selectedLogFields: IField[] | null;
 	selectedTracesFields: BaseAutocompleteData[] | null;
 }
 export interface Widgets extends IBaseWidget {
-	query: Query;
+	query?: Query;
 }
 
 export interface PromQLWidgets extends IBaseWidget {
