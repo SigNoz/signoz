@@ -17,8 +17,10 @@ export const lazyRetry = (componentImport: ComponentImport): Promise<any> =>
 			.catch((error: Error) => {
 				if (!hasRefreshed) {
 					window.sessionStorage.setItem(SESSIONSTORAGE.RETRY_LAZY_REFRESHED, 'true');
-					return window.location.reload();
+
+					window.location.reload();
 				}
+
 				reject(error);
 			});
 	});
