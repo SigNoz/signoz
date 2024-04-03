@@ -13,6 +13,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { PanelWrapperProps, TooltipData } from './panelWrapper.types';
 import { getLabel, lightenColor, tooltipStyles } from './utils';
 
+// refernce: https://www.youtube.com/watch?v=bL3P9CqQkKw
 function PiePanelWrapper({
 	queryResponse,
 	widget,
@@ -172,19 +173,16 @@ function PiePanelWrapper({
 									background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
 									color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400,
 								}}
+								className="piechart-tooltip"
 							>
 								<div
 									style={{
 										background: tooltipData.color,
-										width: '15px',
-										height: '3px',
-										borderRadius: '2px',
 									}}
+									className="piechart-indicator"
 								/>
 								{tooltipData.key}
-								<div>
-									<strong>{tooltipData.value}</strong>
-								</div>
+								<div className="tooltip-value">{tooltipData.value}</div>
 							</TooltipInPortal>
 						)}
 					</div>

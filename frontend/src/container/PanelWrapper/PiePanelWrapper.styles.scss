@@ -11,6 +11,20 @@
     width: 100%;
 }
 
+.piechart-tooltip {
+
+    .piechart-indicator {
+        width: 15px;
+        height: 3px;
+        border-radius: 2px;
+    }
+
+    .tooltip-value {
+        font-size: 12px;
+        font-weight: 600;
+    }
+}
+
 .piechart-legend {
     width: 100%;
     height: 40px;
