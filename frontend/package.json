@@ -41,7 +41,7 @@
 		"@radix-ui/react-tabs": "1.0.4",
 		"@radix-ui/react-tooltip": "1.0.7",
 		"@sentry/react": "7.102.1",
-		"@sentry/webpack-plugin": "2.14.2",
+		"@sentry/webpack-plugin": "2.16.0",
 		"@signozhq/design-tokens": "0.0.8",
 		"@uiw/react-md-editor": "3.23.5",
 		"@xstate/react": "^3.0.0",
