@@ -9,6 +9,7 @@ export const handleContactSupport = (isCloudUser: boolean): void => {
 };
 
 export const INTEGRATION_TELEMETRY_EVENTS = {
+	INTEGRATIONS_LIST_VISITED: 'Integrations Page: Visited the list page',
 	INTEGRATIONS_ITEM_LIST_CLICKED: 'Integrations Page: Clicked an integration',
 	INTEGRATIONS_DETAIL_CONNECT:
 		'Integrations Detail Page: Clicked connect integration button',

@@ -15,7 +15,7 @@ function Integrations(): JSX.Element {
 	const history = useHistory();
 	const location = useLocation();
 
-	const { trackPageView, trackEvent } = useAnalytics();
+	const { trackEvent } = useAnalytics();
 
 	const selectedIntegration = useMemo(() => urlQuery.get('integration'), [
 		urlQuery,
@@ -42,7 +42,7 @@ function Integrations(): JSX.Element {
 	);
 
 	useEffect(() => {
-		trackPageView(location.pathname);
+		trackEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_LIST_VISITED);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
