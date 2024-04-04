@@ -23,7 +23,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { generatePath, useLocation, useParams } from 'react-router-dom';
+import { generatePath, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
@@ -75,8 +75,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	);
 
 	const { widgets = [] } = selectedDashboard?.data || {};
-
-	const { search } = useLocation();
 
 	const query = useUrlQuery();
 
@@ -320,9 +318,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	}, [redirectWithQueryBuilderData, setSupersetQuery, supersetQuery]);
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
-		const params = new URLSearchParams(search);
-		params.set('graphType', type);
-
 		if (type === PANEL_TYPES.LIST) {
 			setPanelTypeChangeModal(true);
 		} else {
