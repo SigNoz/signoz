@@ -43,6 +43,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'limit',
 					'having',
 					'orderBy',
+					'functions',
 				],
 			},
 		},
@@ -56,6 +57,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'limit',
 					'having',
 					'orderBy',
+					'functions',
 				],
 			},
 		},
@@ -70,22 +72,6 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'having',
 					'orderBy',
 				],
-			},
-		},
-	},
-	[PANEL_TYPES.LIST]: {
-		[DataSource.LOGS]: {
-			builder: {
-				queryData: ['filters', 'limit', 'orderBy'],
-			},
-		},
-		[DataSource.METRICS]: {
-			// handle the case as list view doesn't have metrics support
-		},
-		[DataSource.TRACES]: {
-			builder: {
-				// check select columns here
-				queryData: ['filters', 'limit', 'orderBy'],
 			},
 		},
 	},
@@ -100,6 +86,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'limit',
 					'having',
 					'orderBy',
+					'functions',
 				],
 			},
 		},
@@ -113,6 +100,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'limit',
 					'having',
 					'orderBy',
+					'functions',
 				],
 			},
 		},
@@ -141,6 +129,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'limit',
 					'having',
 					'orderBy',
+					'functions',
 				],
 			},
 		},
@@ -154,6 +143,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'limit',
 					'having',
 					'orderBy',
+					'functions',
 				],
 			},
 		},
@@ -171,6 +161,11 @@ export const panelTypeDataSourceFormValuesMap: Record<
 			},
 		},
 	},
+	[PANEL_TYPES.LIST]: {
+		[DataSource.LOGS]: {},
+		[DataSource.METRICS]: {},
+		[DataSource.TRACES]: {},
+	},
 	[PANEL_TYPES.VALUE]: {
 		[DataSource.LOGS]: {
 			builder: {
@@ -180,6 +175,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'reduceTo',
 					'having',
+					'functions',
 				],
 			},
 		},
@@ -191,6 +187,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'aggregateAttribute',
 					'having',
 					'reduceTo',
+					'functions',
 				],
 			},
 		},
