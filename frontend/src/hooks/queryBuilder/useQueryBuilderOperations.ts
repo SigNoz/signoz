@@ -294,7 +294,10 @@ export const useQueryOperations: UseQueryOperations = ({
 				...query,
 			};
 
-			if (newQuery.dataSource === DataSource.METRICS) {
+			if (
+				newQuery.dataSource === DataSource.METRICS ||
+				newQuery.dataSource === DataSource.LOGS
+			) {
 				newQuery.functions = functions;
 			}
 
@@ -304,6 +307,7 @@ export const useQueryOperations: UseQueryOperations = ({
 	);
 
 	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
+	const isLogsDataSource = query.dataSource === DataSource.LOGS;
 
 	const isTracePanelType = panelType === PANEL_TYPES.TRACE;
 
@@ -346,6 +350,7 @@ export const useQueryOperations: UseQueryOperations = ({
 	return {
 		isTracePanelType,
 		isMetricsDataSource,
+		isLogsDataSource,
 		operators,
 		spaceAggregationOptions,
 		listOfAdditionalFilters,
