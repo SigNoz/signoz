@@ -18,6 +18,7 @@ export const NotFoundContainer = styled.div`
 export const TimeContainer = styled.div<Props>`
 	display: flex;
 	justify-content: flex-end;
+	align-items: center;
 	${({ $panelType }): FlattenSimpleInterpolation =>
 		$panelType === PANEL_TYPES.TABLE
 			? css`

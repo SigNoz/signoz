@@ -3722,6 +3722,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+
 		result, err = postProcessResult(result, queryRangeParams)
 	}
 
@@ -3786,6 +3787,12 @@ func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	// We apply the functions here it's easier to add new functions
 	applyFunctions(result, queryRangeParams)
 
+	// expressions are executed at query serivce so the value of time.now in the invdividual
+	// queries will be different so for table panel we are making it same.
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable {
+		tablePanelResultProcessor(result)
+	}
+
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
 		// The way we distinguish between a formula and a query is by checking if the expression
 		// is the same as the query name
@@ -3834,6 +3841,21 @@ func applyFunctions(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV
 
 			for _, function := range functions {
 				results[idx] = queryBuilder.ApplyFunction(function, result)
+			}
+		}
+	}
+}
+
+func tablePanelResultProcessor(results []*v3.Result) {
+	var ts int64
+	for ridx := range results {
+		for sidx := range results[ridx].Series {
+			for pidx := range results[ridx].Series[sidx].Points {
+				if ts == 0 {
+					ts = results[ridx].Series[sidx].Points[pidx].Timestamp
+				} else {
+					results[ridx].Series[sidx].Points[pidx].Timestamp = ts
+				}
 			}
 		}
 	}

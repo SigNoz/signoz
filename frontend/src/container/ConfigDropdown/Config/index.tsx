@@ -3,6 +3,7 @@ import Spinner from 'components/Spinner';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { lazy, Suspense, useMemo } from 'react';
 import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
+import { lazyRetry } from 'utils/lazyWithRetries';
 
 import ErrorLink from './ErrorLink';
 import LinkContainer from './Link';
@@ -17,8 +18,9 @@ function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
 
 	const items = sortedConfig.map((item) => {
 		const iconName = `${isDarkMode ? item.darkIcon : item.lightIcon}`;
-		const Component = lazy(
-			() => import(`@ant-design/icons/es/icons/${iconName}.js`),
+
+		const Component = lazy(() =>
+			lazyRetry(() => import(`@ant-design/icons/es/icons/${iconName}.js`)),
 		);
 		return {
 			key: item.text + item.href,

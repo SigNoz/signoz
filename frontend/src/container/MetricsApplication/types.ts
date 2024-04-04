@@ -10,6 +10,7 @@ export interface GetWidgetQueryBuilderProps {
 	panelTypes: Widgets['panelTypes'];
 	yAxisUnit?: Widgets['yAxisUnit'];
 	id?: Widgets['id'];
+	fillSpans?: Widgets['fillSpans'];
 }
 
 export interface NavigateToTraceProps {

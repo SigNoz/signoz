@@ -2,7 +2,8 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './SideNav.styles.scss';
 
-import { Button } from 'antd';
+import { Color } from '@signozhq/design-tokens';
+import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
@@ -16,6 +17,7 @@ import {
 	CheckSquare,
 	ChevronLeftCircle,
 	ChevronRightCircle,
+	PanelRight,
 	RocketIcon,
 	UserCircle,
 } from 'lucide-react';
@@ -224,9 +226,9 @@ function SideNav({
 				key: SecondaryMenuItemKey.Version,
 				label: !isCurrentVersionError ? currentVersion : t('n_a'),
 				icon: !isLatestVersion ? (
-					<AlertTriangle color="#E87040" size={16} />
+					<AlertTriangle color={Color.BG_CHERRY_600} size={16} />
 				) : (
-					<CheckSquare color="#D5F2BB" size={16} />
+					<CheckSquare color={Color.BG_FOREST_500} size={16} />
 				),
 				onClick: onClickVersionHandler,
 			};
@@ -340,126 +342,135 @@ function SideNav({
 	}, [deregisterShortcut, onClickHandler, onCollapse, registerShortcut]);
 
 	return (
-		<div className={cx('sideNav', collapsed ? 'collapsed' : '')}>
-			<div className="brand">
-				<div
-					className="brand-logo"
-					// eslint-disable-next-line react/no-unknown-property
-					onClick={(event: MouseEvent): void => {
-						// Current home page
-						onClickHandler(ROUTES.APPLICATION, event);
-					}}
-				>
-					<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
-
-					{!collapsed && <span className="brand-logo-name"> SigNoz </span>}
-				</div>
-
-				{!collapsed && licenseTag && (
-					<div className="license tag">{licenseTag}</div>
-				)}
-			</div>
-
-			{isCloudUserVal && (
-				<div className="get-started-nav-items">
-					<Button
-						className="get-started-btn"
-						onClick={(event: MouseEvent): void => {
-							onClickGetStarted(event);
-						}}
-					>
-						<RocketIcon size={16} />
-
-						{!collapsed && <> Get Started </>}
-					</Button>
-				</div>
-			)}
-
-			<div className={cx(`nav-wrapper`, isCloudUserVal && 'nav-wrapper-cloud')}>
-				<div className="primary-nav-items">
-					{menuItems.map((item, index) => (
-						<NavItem
-							isCollapsed={collapsed}
-							key={item.key || index}
-							item={item}
-							isActive={activeMenuKey === item.key}
-							onClick={(event): void => {
-								handleMenuItemClick(event, item);
+		<div className={cx('sidenav-container', !collapsed ? 'docked' : '')}>
+			<div className={cx('sideNav', !collapsed ? 'docked' : '')}>
+				<div className="brand">
+					<div className="brand-company-meta">
+						<div
+							className="brand-logo"
+							// eslint-disable-next-line react/no-unknown-property
+							onClick={(event: MouseEvent): void => {
+								// Current home page
+								onClickHandler(ROUTES.APPLICATION, event);
 							}}
+						>
+							<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
+
+							<span className="brand-logo-name nav-item-label"> SigNoz </span>
+						</div>
+
+						{licenseTag && (
+							<div className="license tag nav-item-label">{licenseTag}</div>
+						)}
+					</div>
+
+					<Tooltip
+						title={collapsed ? 'Dock Sidebar' : 'Undock Sidebar'}
+						placement="right"
+					>
+						<Button
+							className="periscope-btn nav-item-label dockBtn"
+							icon={<PanelRight size={16} />}
+							onClick={onCollapse}
 						/>
-					))}
+					</Tooltip>
 				</div>
 
-				<div className="secondary-nav-items">
-					<NavItem
-						isCollapsed={collapsed}
-						key="keyboardShortcuts"
-						item={shortcutMenuItem}
-						isActive={false}
-						onClick={onClickShortcuts}
-					/>
+				{isCloudUserVal && (
+					<div className="get-started-nav-items">
+						<Button
+							className="get-started-btn"
+							onClick={(event: MouseEvent): void => {
+								onClickGetStarted(event);
+							}}
+						>
+							<RocketIcon size={16} />
 
-					{licenseData && !isLicenseActive && (
-						<NavItem
-							isCollapsed={collapsed}
-							key="trySignozCloud"
-							item={trySignozCloudMenuItem}
-							isActive={false}
-							onClick={onClickSignozCloud}
-						/>
-					)}
+							<div className="license tag nav-item-label"> Get Started </div>
+						</Button>
+					</div>
+				)}
 
-					{userManagementMenuItems.map(
-						(item, index): JSX.Element => (
+				<div className={cx(`nav-wrapper`, isCloudUserVal && 'nav-wrapper-cloud')}>
+					<div className="primary-nav-items">
+						{menuItems.map((item, index) => (
 							<NavItem
-								isCollapsed={collapsed}
-								key={item?.key || index}
+								key={item.key || index}
 								item={item}
-								isActive={activeMenuKey === item?.key}
-								onClick={(event: MouseEvent): void => {
-									handleUserManagentMenuItemClick(item?.key as string, event);
+								isActive={activeMenuKey === item.key}
+								onClick={(event): void => {
+									handleMenuItemClick(event, item);
 								}}
 							/>
-						),
-					)}
+						))}
+					</div>
 
-					{inviteMembers && (
+					<div className="secondary-nav-items">
 						<NavItem
-							isCollapsed={collapsed}
-							key={inviteMemberMenuItem.key}
-							item={inviteMemberMenuItem}
-							isActive={activeMenuKey === inviteMemberMenuItem?.key}
-							onClick={(event: React.MouseEvent): void => {
-								if (isCtrlMetaKey(event)) {
-									openInNewTab(`${inviteMemberMenuItem.key}`);
-								} else {
-									history.push(`${inviteMemberMenuItem.key}`);
-								}
-							}}
+							key="keyboardShortcuts"
+							item={shortcutMenuItem}
+							isActive={false}
+							onClick={onClickShortcuts}
 						/>
-					)}
 
-					{user && (
-						<NavItem
-							isCollapsed={collapsed}
-							key={ROUTES.MY_SETTINGS}
-							item={userSettingsMenuItem}
-							isActive={activeMenuKey === userSettingsMenuItem?.key}
-							onClick={(event: MouseEvent): void => {
-								handleUserManagentMenuItemClick(
-									userSettingsMenuItem?.key as string,
-									event,
-								);
-							}}
-						/>
-					)}
-
-					<div className="collapse-expand-handlers" onClick={onCollapse}>
-						{collapsed ? (
-							<ChevronRightCircle size={18} />
-						) : (
-							<ChevronLeftCircle size={18} />
+						{licenseData && !isLicenseActive && (
+							<NavItem
+								key="trySignozCloud"
+								item={trySignozCloudMenuItem}
+								isActive={false}
+								onClick={onClickSignozCloud}
+							/>
 						)}
+
+						{userManagementMenuItems.map(
+							(item, index): JSX.Element => (
+								<NavItem
+									key={item?.key || index}
+									item={item}
+									isActive={activeMenuKey === item?.key}
+									onClick={(event: MouseEvent): void => {
+										handleUserManagentMenuItemClick(item?.key as string, event);
+									}}
+								/>
+							),
+						)}
+
+						{inviteMembers && (
+							<NavItem
+								key={inviteMemberMenuItem.key}
+								item={inviteMemberMenuItem}
+								isActive={activeMenuKey === inviteMemberMenuItem?.key}
+								onClick={(event: React.MouseEvent): void => {
+									if (isCtrlMetaKey(event)) {
+										openInNewTab(`${inviteMemberMenuItem.key}`);
+									} else {
+										history.push(`${inviteMemberMenuItem.key}`);
+									}
+								}}
+							/>
+						)}
+
+						{user && (
+							<NavItem
+								key={ROUTES.MY_SETTINGS}
+								item={userSettingsMenuItem}
+								isActive={activeMenuKey === userSettingsMenuItem?.key}
+								onClick={(event: MouseEvent): void => {
+									handleUserManagentMenuItemClick(
+										userSettingsMenuItem?.key as string,
+										event,
+									);
+								}}
+							/>
+						)}
+
+						<div className="collapse-expand-handlers" onClick={onCollapse}>
+							{collapsed ? (
+								<ChevronRightCircle size={18} />
+							) : (
+								<ChevronLeftCircle size={18} />
+							)}
+						</div>
 					</div>
 				</div>
 			</div>

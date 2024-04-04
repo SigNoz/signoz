@@ -3,14 +3,14 @@
 
 ### Step 1: Download otel-collector tar.gz
 ```bash
-wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v0.79.0/otelcol-contrib_0.79.0_linux_amd64.tar.gz
+wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v{{OTEL_VERSION}}/otelcol-contrib_{{OTEL_VERSION}}_linux_amd64.tar.gz
 ```
 
 &nbsp;
 
 ### Step 2: Extract otel-collector tar.gz to the `otelcol-contrib` folder
 ```bash
-mkdir otelcol-contrib && tar xvzf otelcol-contrib_0.79.0_linux_amd64.tar.gz -C otelcol-contrib
+mkdir otelcol-contrib && tar xvzf otelcol-contrib_{{OTEL_VERSION}}_linux_amd64.tar.gz -C otelcol-contrib
 ```
 
 &nbsp;
