@@ -17,6 +17,7 @@ import {
 	IBuilderQuery,
 	QueryFunctionProps,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import QueryFunctions from '../QueryFunctions/QueryFunctions';
 
@@ -56,6 +57,8 @@ export default function QBEntityOptions({
 			onCloneQuery(entityType, entityData);
 		}
 	};
+
+	const isLogsDataSource = query?.dataSource === DataSource.LOGS;
 
 	return (
 		<Col span={24}>
@@ -97,12 +100,14 @@ export default function QBEntityOptions({
 							</Button>
 
 							{showFunctions &&
-								isMetricsDataSource &&
+								(isMetricsDataSource || isLogsDataSource) &&
 								query &&
 								onQueryFunctionsUpdates && (
 									<QueryFunctions
+										query={query}
 										queryFunctions={query.functions}
 										onChange={onQueryFunctionsUpdates}
+										maxFunctions={isLogsDataSource ? 1 : 3}
 									/>
 								)}
 						</Button.Group>
