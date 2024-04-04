@@ -83,7 +83,7 @@ if (process.env.BUNDLE_ANALYSER === 'true') {
 
 const config = {
 	mode: 'production',
-	devtool: 'eval-source-map',
+	devtool: 'source-map',
 	entry: resolve(__dirname, './src/index.tsx'),
 	output: {
 		path: resolve(__dirname, './build'),
