@@ -401,7 +401,7 @@ func extractQueryRangeData(path string, r *http.Request) (map[string]interface{}
 	data := map[string]interface{}{}
 	var postData *v3.QueryRangeParamsV3
 
-	if (path == pathToExtractBodyFromV3 && (r.Method == "POST")) || (path == pathToExtractBodyFromV4 && (r.Method == "POST")) {
+	if (r.Method == "POST") && ((path == pathToExtractBodyFromV3) || (path == pathToExtractBodyFromV4)) {
 		if r.Body != nil {
 			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
