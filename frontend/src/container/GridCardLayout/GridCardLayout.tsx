@@ -151,32 +151,32 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 		if (!isEqual(filterLayout, filterDashboardLayout)) {
 			// need to calculate the panel map here
 			const updatedLayout = sortLayout(layout);
-			let prevRowIdx = '';
-			let tempWidgets: Layout[] = [];
-			const currentPanelMap = { ...panelMap };
-			for (let i = 0; i < updatedLayout.length; i++) {
-				if (currentPanelMap[updatedLayout[i].i]) {
-					if (prevRowIdx === '') {
-						prevRowIdx = updatedLayout[i].i;
-					} else {
-						currentPanelMap[prevRowIdx] = {
-							...currentPanelMap[prevRowIdx],
-							widgets: tempWidgets,
-						};
-						tempWidgets = [];
-						prevRowIdx = updatedLayout[i].i;
-					}
-				} else {
-					tempWidgets.push(updatedLayout[i]);
-				}
-			}
-			if (prevRowIdx !== '') {
-				currentPanelMap[prevRowIdx] = {
-					...currentPanelMap[prevRowIdx],
-					widgets: tempWidgets,
-				};
-			}
-			setPanelMap(currentPanelMap);
+			// let prevRowIdx = '';
+			// let tempWidgets: Layout[] = [];
+			// const currentPanelMap = { ...panelMap };
+			// for (let i = 0; i < updatedLayout.length; i++) {
+			// 	if (currentPanelMap[updatedLayout[i].i]) {
+			// 		if (prevRowIdx === '') {
+			// 			prevRowIdx = updatedLayout[i].i;
+			// 		} else {
+			// 			currentPanelMap[prevRowIdx] = {
+			// 				...currentPanelMap[prevRowIdx],
+			// 				widgets: tempWidgets,
+			// 			};
+			// 			tempWidgets = [];
+			// 			prevRowIdx = updatedLayout[i].i;
+			// 		}
+			// 	} else if (prevRowIdx !== '') {
+			// 		tempWidgets.push(updatedLayout[i]);
+			// 	}
+			// }
+			// if (prevRowIdx !== '') {
+			// 	currentPanelMap[prevRowIdx] = {
+			// 		...currentPanelMap[prevRowIdx],
+			// 		widgets: tempWidgets,
+			// 	};
+			// }
+			// setPanelMap(currentPanelMap);
 			setDashboardLayout(updatedLayout);
 		}
 	};
@@ -303,7 +303,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	};
 
 	const handleRowCollapse = (id: string): void => {
-		const rowProperties = panelMap[id];
+		const rowProperties = { ...panelMap[id] };
 		if (rowProperties.collapsed === true) {
 			rowProperties.collapsed = false;
 			const widgetsInsideTheRow = rowProperties.widgets;
