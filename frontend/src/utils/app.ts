@@ -14,7 +14,6 @@ export function extractDomain(email: string): string {
 
 export const isCloudUser = (): boolean => {
 	const { hostname } = window.location;
-	return true;
 
 	return hostname?.endsWith('signoz.cloud');
 };

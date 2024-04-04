@@ -132,12 +132,6 @@ export default function EnvironmentDetails(): JSX.Element {
 					) {
 						return null;
 					}
-					if (
-						selectedModule?.id !== useCases.APM.id &&
-						environment.id === 'docker'
-					) {
-						return null;
-					}
 
 					return (
 						<Card
