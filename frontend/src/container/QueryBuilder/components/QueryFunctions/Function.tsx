@@ -2,15 +2,21 @@
 import { Button, Flex, Input, Select } from 'antd';
 import cx from 'classnames';
 import {
-	queryFunctionOptions,
+	logsQueryFunctionOptions,
+	metricQueryFunctionOptions,
 	queryFunctionsTypesConfig,
 } from 'constants/queryFunctionOptions';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { debounce, isNil } from 'lodash-es';
 import { X } from 'lucide-react';
-import { QueryFunctionProps } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	QueryFunctionProps,
+} from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 interface FunctionProps {
+	query: IBuilderQuery;
 	funcData: QueryFunctionProps;
 	index: any;
 	handleUpdateFunctionArgs: any;
@@ -19,6 +25,7 @@ interface FunctionProps {
 }
 
 export default function Function({
+	query,
 	funcData,
 	index,
 	handleUpdateFunctionArgs,
@@ -44,6 +51,12 @@ export default function Function({
 		500,
 	);
 
+	// update the logic when we start supporting functions for traces
+	const functionOptions =
+		query.dataSource === DataSource.LOGS
+			? logsQueryFunctionOptions
+			: metricQueryFunctionOptions;
+
 	return (
 		<Flex className="query-function">
 			<Select
@@ -62,7 +75,7 @@ export default function Function({
 					boxShadow: `4px 10px 16px 2px rgba(0, 0, 0, 0.20)`,
 				}}
 				placement="bottomRight"
-				options={queryFunctionOptions}
+				options={functionOptions}
 			/>
 
 			{showInput && (
