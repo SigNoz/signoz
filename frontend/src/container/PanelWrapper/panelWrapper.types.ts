@@ -20,5 +20,5 @@ export type PanelWrapperProps = {
 	setGraphVisibility?: Dispatch<SetStateAction<boolean[]>>;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	onDragSelect: (start: number, end: number) => void;
-	selectedGraph: PANEL_TYPES;
+	selectedGraph?: PANEL_TYPES;
 };
