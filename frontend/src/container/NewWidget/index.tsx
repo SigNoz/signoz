@@ -104,7 +104,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		return defaultTo(
 			selectedWidget,
 			getDefaultWidgetData(widgetId || '', selectedGraph),
-		);
+		) as Widgets;
 	}, [query, selectedGraph, widgets]);
 
 	const [selectedWidget, setSelectedWidget] = useState(getWidget());

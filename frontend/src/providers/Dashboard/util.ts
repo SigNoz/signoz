@@ -5,16 +5,19 @@ export const getPreviousWidgets = (
 	selectedDashboard: Dashboard,
 	selectedWidgetIndex: number,
 ): Widgets[] =>
-	selectedDashboard.data.widgets?.slice(0, selectedWidgetIndex || 0) || [];
+	(selectedDashboard.data.widgets?.slice(
+		0,
+		selectedWidgetIndex || 0,
+	) as Widgets[]) || [];
 
 export const getNextWidgets = (
 	selectedDashboard: Dashboard,
 	selectedWidgetIndex: number,
 ): Widgets[] =>
-	selectedDashboard.data.widgets?.slice(
+	(selectedDashboard.data.widgets?.slice(
 		(selectedWidgetIndex || 0) + 1, // this is never undefined
 		selectedDashboard.data.widgets?.length,
-	) || [];
+	) as Widgets[]) || [];
 
 export const getSelectedWidgetIndex = (
 	selectedDashboard: Dashboard,

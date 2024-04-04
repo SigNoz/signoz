@@ -287,6 +287,10 @@ export enum PANEL_TYPES {
 	BAR = 'bar',
 	PIE = 'pie',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum PANEL_GROUP_TYPES {
 	ROW = 'row',
 }
 

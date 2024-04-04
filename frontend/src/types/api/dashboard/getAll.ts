@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { ReactNode } from 'react';
@@ -69,7 +69,7 @@ export interface DashboardData {
 
 export interface WidgetRow {
 	id: string;
-	panelTypes: PANEL_TYPES;
+	panelTypes: PANEL_GROUP_TYPES;
 	title: ReactNode;
 	description: string;
 }
@@ -83,17 +83,17 @@ export interface IBaseWidget {
 	opacity: string;
 	nullZeroValues: string;
 	timePreferance: timePreferenceType;
-	stepSize: number;
-	yAxisUnit: string;
-	thresholds: ThresholdProps[];
+	stepSize?: number;
+	yAxisUnit?: string;
+	thresholds?: ThresholdProps[];
 	softMin: number | null;
 	softMax: number | null;
-	fillSpans: boolean;
+	fillSpans?: boolean;
 	selectedLogFields: IField[] | null;
 	selectedTracesFields: BaseAutocompleteData[] | null;
 }
 export interface Widgets extends IBaseWidget {
-	query?: Query;
+	query: Query;
 }
 
 export interface PromQLWidgets extends IBaseWidget {

@@ -7,7 +7,7 @@ import cx from 'classnames';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -241,7 +241,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 						id,
 						title: 'Sample Row',
 						description: '',
-						panelTypes: PANEL_TYPES.ROW,
+						panelTypes: PANEL_GROUP_TYPES.ROW,
 					},
 				],
 			},
@@ -412,7 +412,7 @@ Thanks`}
 						const { i: id } = layout;
 						const currentWidget = (widgets || [])?.find((e) => e.id === id);
 
-						if (currentWidget?.panelTypes === PANEL_TYPES.ROW) {
+						if (currentWidget?.panelTypes === PANEL_GROUP_TYPES.ROW) {
 							const rowWidgetProperties = currentPanelMap[id] || {};
 							return (
 								<CardContainer

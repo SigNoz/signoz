@@ -12,7 +12,6 @@ export const PANEL_TYPES_INITIAL_QUERY = {
 	[PANEL_TYPES.BAR]: initialQueriesMap.metrics,
 	[PANEL_TYPES.PIE]: initialQueriesMap.metrics,
 	[PANEL_TYPES.EMPTY_WIDGET]: initialQueriesMap.metrics,
-	[PANEL_TYPES.ROW]: initialQueriesMap.metrics,
 };
 
 export const listViewInitialLogQuery: Query = {
