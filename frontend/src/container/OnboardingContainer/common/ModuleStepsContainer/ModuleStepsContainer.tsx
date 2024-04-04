@@ -16,7 +16,7 @@ import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/D
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import history from 'lib/history';
-import { isEmpty } from 'lodash-es';
+import { isEmpty, isNull } from 'lodash-es';
 import { useState } from 'react';
 
 import { useOnboardingContext } from '../../context/OnboardingContext';
@@ -91,7 +91,10 @@ export default function ModuleStepsContainer({
 			name: selectedDataSourceName = '',
 		} = selectedDataSource as DataSourceType;
 
-		if (step.id === environmentDetailsStep && selectedEnvironment === '') {
+		if (
+			step.id === environmentDetailsStep &&
+			(selectedEnvironment === '' || isNull(selectedEnvironment))
+		) {
 			updateErrorDetails('Please select environment');
 			return false;
 		}
@@ -150,6 +153,10 @@ export default function ModuleStepsContainer({
 		} else if (selectedModule.id === ModulesMap.LogsManagement) {
 			history.push(ROUTES.LOGS_EXPLORER);
 		} else if (selectedModule.id === ModulesMap.InfrastructureMonitoring) {
+			history.push(ROUTES.APPLICATION);
+		} else if (selectedModule.id === ModulesMap.AwsMonitoring) {
+			history.push(ROUTES.APPLICATION);
+		} else {
 			history.push(ROUTES.APPLICATION);
 		}
 	};
@@ -259,6 +266,69 @@ export default function ModuleStepsContainer({
 						break;
 					case stepsMap.configureAws:
 						trackEvent('Onboarding V2: Configure AWS', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.sendLogsCloudwatch:
+						trackEvent('Onboarding V2: Send Logs Cloudwatch', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.setupDaemonService:
+						trackEvent('Onboarding V2: Setup ECS Daemon Service', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.createOtelConfig:
+						trackEvent('Onboarding V2: Create ECS OTel Config', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.createDaemonService:
+						trackEvent('Onboarding V2: Create ECS Daemon Service', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.ecsSendData:
+						trackEvent('Onboarding V2: ECS send traces data', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.createSidecarCollectorContainer:
+						trackEvent('Onboarding V2: ECS create Sidecar Container', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.deployTaskDefinition:
+						trackEvent('Onboarding V2: ECS deploy task definition', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.ecsSendLogsData:
+						trackEvent('Onboarding V2: ECS Fargate send logs data', {
+							dataSource: selectedDataSource?.id,
+							environment: selectedEnvironment,
+							module: activeStep?.module?.id,
+						});
+						break;
+					case stepsMap.monitorDashboard:
+						trackEvent('Onboarding V2: EKS monitor dashboard', {
 							dataSource: selectedDataSource?.id,
 							environment: selectedEnvironment,
 							module: activeStep?.module?.id,

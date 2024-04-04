@@ -8,6 +8,7 @@ import {
 	Cloudy,
 	DraftingCompass,
 	FileKey2,
+	Layers2,
 	LayoutGrid,
 	MessageSquare,
 	Receipt,
@@ -15,6 +16,8 @@ import {
 	ScrollText,
 	Settings,
 	Slack,
+	Unplug,
+	// Unplug,
 	UserPlus,
 } from 'lucide-react';
 
@@ -42,6 +45,12 @@ export const helpSupportMenuItem = {
 	key: ROUTES.SUPPORT,
 	label: 'Help & Support',
 	icon: <MessageSquare size={16} />,
+};
+
+export const shortcutMenuItem = {
+	key: ROUTES.SHORTCUTS,
+	label: 'Keyboard Shortcuts',
+	icon: <Layers2 size={16} />,
 };
 
 export const slackSupportMenuItem = {
@@ -83,6 +92,11 @@ const menuItems: SidebarItem[] = [
 		icon: <BellDot size={16} />,
 	},
 	{
+		key: ROUTES.INTEGRATIONS,
+		label: 'Integrations',
+		icon: <Unplug size={16} />,
+	},
+	{
 		key: ROUTES.ALL_ERROR,
 		label: 'Exceptions',
 		icon: <BugIcon size={16} />,
@@ -110,7 +124,7 @@ const menuItems: SidebarItem[] = [
 ];
 
 /** Mapping of some newly added routes and their corresponding active sidebar menu key */
-export const NEW_ROUTES_MENU_ITEM_KEY_MAP = {
+export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 	[ROUTES.TRACES_EXPLORER]: ROUTES.TRACE,
 	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACE,
 	[ROUTES.LOGS_BASE]: ROUTES.LOGS_EXPLORER,

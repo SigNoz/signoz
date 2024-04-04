@@ -1,0 +1,23 @@
+.keyboard-shortcuts {
+	display: flex;
+	flex-direction: column;
+	margin-top: 1rem;
+	padding: 1rem;
+	gap: 50px;
+
+	.shortcut-section {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+
+		.shortcut-section-heading {
+			font-weight: 600;
+			font-size: 22px;
+			line-height: 1.3636363636363635;
+		}
+
+		.shortcut-section-table {
+			width: 70%;
+		}
+	}
+}

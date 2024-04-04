@@ -15,7 +15,9 @@ function ApDexMetricsApplication({
 	thresholdValue,
 	topLevelOperationsRoute,
 }: ApDexDataSwitcherProps): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
+
 	const { data, isLoading, error } = useGetMetricMeta(metricMeta, servicename);
 	useErrorNotification(error);
 

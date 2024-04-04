@@ -4,22 +4,52 @@ import './CustomTimePicker.styles.scss';
 
 import { Input, Popover, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
-import { Options } from 'container/TopNav/DateTimeSelection/config';
+import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
+import {
+	FixedDurationSuggestionOptions,
+	Options,
+	RelativeDurationSuggestionOptions,
+} from 'container/TopNav/DateTimeSelectionV2/config';
 import dayjs from 'dayjs';
+import { isValidTimeFormat } from 'lib/getMinMax';
+import { defaultTo, isFunction, noop } from 'lodash-es';
 import debounce from 'lodash-es/debounce';
 import { CheckCircle, ChevronDown, Clock } from 'lucide-react';
-import { ChangeEvent, useEffect, useState } from 'react';
+import {
+	ChangeEvent,
+	Dispatch,
+	SetStateAction,
+	useEffect,
+	useState,
+} from 'react';
+import { useLocation } from 'react-router-dom';
 import { popupContainer } from 'utils/selectPopupContainer';
+
+import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
 
 const maxAllowedMinTimeInMonths = 6;
 
 interface CustomTimePickerProps {
 	onSelect: (value: string) => void;
 	onError: (value: boolean) => void;
-	items: any[];
 	selectedValue: string;
 	selectedTime: string;
-	onValidCustomDateChange: ([t1, t2]: any[]) => void;
+	onValidCustomDateChange: ({
+		time: [t1, t2],
+		timeStr,
+	}: {
+		time: [dayjs.Dayjs | null, dayjs.Dayjs | null];
+		timeStr: string;
+	}) => void;
+	onCustomTimeStatusUpdate?: (isValid: boolean) => void;
+	open: boolean;
+	setOpen: Dispatch<SetStateAction<boolean>>;
+	items: any[];
+	newPopover?: boolean;
+	customDateTimeVisible?: boolean;
+	setCustomDTPickerVisible?: Dispatch<SetStateAction<boolean>>;
+	onCustomDateHandler?: (dateTimeRange: DateTimeRangeType) => void;
+	handleGoLive?: () => void;
 }
 
 function CustomTimePicker({
@@ -28,9 +58,16 @@ function CustomTimePicker({
 	items,
 	selectedValue,
 	selectedTime,
+	open,
+	setOpen,
 	onValidCustomDateChange,
+	onCustomTimeStatusUpdate,
+	newPopover,
+	customDateTimeVisible,
+	setCustomDTPickerVisible,
+	onCustomDateHandler,
+	handleGoLive,
 }: CustomTimePickerProps): JSX.Element {
-	const [open, setOpen] = useState(false);
 	const [
 		selectedTimePlaceholderValue,
 		setSelectedTimePlaceholderValue,
@@ -41,6 +78,7 @@ function CustomTimePicker({
 	const [inputErrorMessage, setInputErrorMessage] = useState<string | null>(
 		null,
 	);
+	const location = useLocation();
 	const [isInputFocused, setIsInputFocused] = useState(false);
 
 	const getSelectedTimeRangeLabel = (
@@ -55,6 +93,26 @@ function CustomTimePicker({
 			if (Options[index].value === selectedTime) {
 				return Options[index].label;
 			}
+		}
+
+		for (
+			let index = 0;
+			index < RelativeDurationSuggestionOptions.length;
+			index++
+		) {
+			if (RelativeDurationSuggestionOptions[index].value === selectedTime) {
+				return RelativeDurationSuggestionOptions[index].label;
+			}
+		}
+
+		for (let index = 0; index < FixedDurationSuggestionOptions.length; index++) {
+			if (FixedDurationSuggestionOptions[index].value === selectedTime) {
+				return FixedDurationSuggestionOptions[index].label;
+			}
+		}
+
+		if (isValidTimeFormat(selectedTime)) {
+			return selectedTime;
 		}
 
 		return '';
@@ -72,6 +130,9 @@ function CustomTimePicker({
 
 	const handleOpenChange = (newOpen: boolean): void => {
 		setOpen(newOpen);
+		if (!newOpen) {
+			setCustomDTPickerVisible?.(false);
+		}
 	};
 
 	const debouncedHandleInputChange = debounce((inputValue): void => {
@@ -111,17 +172,26 @@ function CustomTimePicker({
 					break;
 			}
 
-			if (minTime && minTime < maxAllowedMinTime) {
+			if (minTime && (!minTime.isValid() || minTime < maxAllowedMinTime)) {
 				setInputStatus('error');
 				onError(true);
 				setInputErrorMessage('Please enter time less than 6 months');
+				if (isFunction(onCustomTimeStatusUpdate)) {
+					onCustomTimeStatusUpdate(true);
+				}
 			} else {
-				onValidCustomDateChange([minTime, currentTime]);
+				onValidCustomDateChange({
+					time: [minTime, currentTime],
+					timeStr: inputValue,
+				});
 			}
 		} else {
 			setInputStatus('error');
 			onError(true);
 			setInputErrorMessage(null);
+			if (isFunction(onCustomTimeStatusUpdate)) {
+				onCustomTimeStatusUpdate(false);
+			}
 		}
 	}, 300);
 
@@ -140,19 +210,25 @@ function CustomTimePicker({
 		debouncedHandleInputChange(inputValue);
 	};
 
+	const handleSelect = (label: string, value: string): void => {
+		onSelect(value);
+		setSelectedTimePlaceholderValue(label);
+		setInputStatus('');
+		onError(false);
+		setInputErrorMessage(null);
+		setInputValue('');
+		if (value !== 'custom') {
+			hide();
+		}
+	};
+
 	const content = (
 		<div className="time-selection-dropdown-content">
 			<div className="time-options-container">
-				{items.map(({ value, label }) => (
+				{items?.map(({ value, label }) => (
 					<div
 						onClick={(): void => {
-							onSelect(value);
-							setSelectedTimePlaceholderValue(label);
-							setInputStatus('');
-							onError(false);
-							setInputErrorMessage(null);
-							setInputValue('');
-							hide();
+							handleSelect(label, value);
 						}}
 						key={value}
 						className={cx(
@@ -175,6 +251,15 @@ function CustomTimePicker({
 		setIsInputFocused(false);
 	};
 
+	// this is required as TopNav component wraps the components and we need to clear the state on path change
+	useEffect(() => {
+		setInputStatus('');
+		onError(false);
+		setInputErrorMessage(null);
+		setInputValue('');
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [location.pathname]);
+
 	return (
 		<div className="custom-time-picker">
 			<Popover
@@ -184,11 +269,27 @@ function CustomTimePicker({
 				)}
 				placement="bottomRight"
 				getPopupContainer={popupContainer}
-				content={content}
+				rootClassName="date-time-root"
+				content={
+					newPopover ? (
+						<CustomTimePickerPopoverContent
+							setIsOpen={setOpen}
+							customDateTimeVisible={defaultTo(customDateTimeVisible, false)}
+							setCustomDTPickerVisible={defaultTo(setCustomDTPickerVisible, noop)}
+							onCustomDateHandler={defaultTo(onCustomDateHandler, noop)}
+							onSelectHandler={handleSelect}
+							handleGoLive={defaultTo(handleGoLive, noop)}
+							options={items}
+							selectedTime={selectedTime}
+						/>
+					) : (
+						content
+					)
+				}
 				arrow={false}
+				trigger="hover"
 				open={open}
 				onOpenChange={handleOpenChange}
-				trigger={['click']}
 				style={{
 					padding: 0,
 				}}
@@ -236,3 +337,12 @@ function CustomTimePicker({
 }
 
 export default CustomTimePicker;
+
+CustomTimePicker.defaultProps = {
+	newPopover: false,
+	customDateTimeVisible: false,
+	setCustomDTPickerVisible: noop,
+	onCustomDateHandler: noop,
+	handleGoLive: noop,
+	onCustomTimeStatusUpdate: noop,
+};

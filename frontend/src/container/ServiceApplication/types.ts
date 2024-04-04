@@ -1,5 +1,9 @@
 import { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
+import {
+	CustomTimeType,
+	Time as TimeV2,
+} from 'container/TopNav/DateTimeSelectionV2/config';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
@@ -24,7 +28,7 @@ export interface GetQueryRangeRequestDataProps {
 	topLevelOperations: [keyof ServiceDataProps, string[]][];
 	maxTime: number;
 	minTime: number;
-	globalSelectedInterval: Time;
+	globalSelectedInterval: Time | TimeV2 | CustomTimeType;
 }
 
 export interface GetServiceListFromQueryProps {

@@ -1,16 +1,12 @@
-import { Tag } from 'antd';
+import { Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import Typography from 'antd/es/typography/Typography';
 import ROUTES from 'constants/routes';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { formUrlParams } from 'container/TraceDetail/utils';
-import dayjs from 'dayjs';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ILog } from 'types/api/logs/log';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
-
-import { DateText } from './styles';
 
 export const transformDataWithDate = (
 	data: QueryDataV3[],
@@ -28,28 +24,14 @@ export const getTraceLink = (record: RowData): string =>
 export const getListColumns = (
 	selectedColumns: BaseAutocompleteData[],
 ): ColumnsType<RowData> => {
-	const initialColumns: ColumnsType<RowData> = [
-		{
-			title: 'date',
-			dataIndex: 'date',
-			key: 'date',
-			width: 145,
-			render: (date: string): JSX.Element => {
-				const day = dayjs(date);
-				return (
-					<DateText data-testid="trace-explorer-date">
-						{day.format('YYYY/MM/DD HH:mm:ss')}
-					</DateText>
-				);
-			},
-		},
-	];
+	const initialColumns: ColumnsType<RowData> = [];
 
 	const columns: ColumnsType<RowData> =
 		selectedColumns.map(({ dataType, key, type }) => ({
 			title: key,
 			dataIndex: key,
 			key: `${key}-${dataType}-${type}`,
+			width: 145,
 			render: (value): JSX.Element => {
 				if (value === '') {
 					return <Typography data-testid={key}>N/A</Typography>;
@@ -69,6 +51,7 @@ export const getListColumns = (
 
 				return <Typography data-testid={key}>{value}</Typography>;
 			},
+			responsive: ['md'],
 		})) || [];
 
 	return [...initialColumns, ...columns];

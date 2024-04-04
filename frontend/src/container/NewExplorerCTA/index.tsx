@@ -36,7 +36,6 @@ function NewExplorerCTA(): JSX.Element | null {
 				danger
 				data-testid="newExplorerCTA"
 				type="primary"
-				size="small"
 			>
 				{buttonText[location.pathname]}
 			</Button>

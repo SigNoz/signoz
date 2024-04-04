@@ -35,6 +35,8 @@ export const addEmptyWidgetInDashboardJSONWithQuery = (
 				panelTypes: panelTypes || PANEL_TYPES.TIME_SERIES,
 				softMax: null,
 				softMin: null,
+				selectedLogFields: [],
+				selectedTracesFields: [],
 			},
 		],
 	},

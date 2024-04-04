@@ -1,0 +1,11 @@
+.general-settings-container {
+	margin: 16px 8px;
+
+	.ant-card-body {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		padding: 8px;
+		margin: 16px 0;
+	}
+}

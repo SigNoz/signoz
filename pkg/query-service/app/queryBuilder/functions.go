@@ -281,6 +281,21 @@ func ApplyFunction(fn v3.Function, result *v3.Result) *v3.Result {
 		return funcMedian5(result)
 	case v3.FunctionNameMedian7:
 		return funcMedian7(result)
+	case v3.FunctionNameTimeShift:
+		shift, ok := fn.Args[0].(float64)
+		if !ok {
+			return result
+		}
+		return funcTimeShift(result, shift)
+	}
+	return result
+}
+
+func funcTimeShift(result *v3.Result, shift float64) *v3.Result {
+	for _, series := range result.Series {
+		for idx, point := range series.Points {
+			series.Points[idx].Timestamp = point.Timestamp + int64(shift)*1000
+		}
 	}
 	return result
 }

@@ -7,5 +7,5 @@ export const getActiveMenuKeyFromPath = (pathname: string): string => {
 
 	const baseRoute = `/${basePath}`;
 
-	return NEW_ROUTES_MENU_ITEM_KEY_MAP[baseRoute] || baseRoute;
+	return (NEW_ROUTES_MENU_ITEM_KEY_MAP[baseRoute] as string) || baseRoute;
 };

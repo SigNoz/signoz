@@ -10,7 +10,9 @@ import { Button } from '../styles';
 import ApDexSettings from './ApDexSettings';
 
 function ApDexApplication(): JSX.Element {
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
+
 	const {
 		data,
 		isLoading,

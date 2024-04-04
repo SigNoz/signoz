@@ -15,7 +15,11 @@ function TopOperation(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { servicename } = useParams<{ servicename?: string }>();
+	const { servicename: encodedServiceName } = useParams<{
+		servicename?: string;
+	}>();
+	const servicename = decodeURIComponent(encodedServiceName || '');
+
 	const { queries } = useResourceAttribute();
 	const selectedTags = useMemo(
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],

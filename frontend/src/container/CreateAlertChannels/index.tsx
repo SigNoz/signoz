@@ -1,9 +1,11 @@
 import { Form } from 'antd';
+import createEmail from 'api/channels/createEmail';
 import createMsTeamsApi from 'api/channels/createMsTeams';
 import createOpsgenie from 'api/channels/createOpsgenie';
 import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
+import testEmail from 'api/channels/testEmail';
 import testMsTeamsApi from 'api/channels/testMsTeams';
 import testOpsGenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
@@ -18,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import {
 	ChannelType,
+	EmailChannel,
 	MsTeamsChannel,
 	OpsgenieChannel,
 	PagerChannel,
@@ -25,7 +28,11 @@ import {
 	ValidatePagerChannel,
 	WebhookChannel,
 } from './config';
-import { OpsgenieInitialConfig, PagerInitialConfig } from './defaults';
+import {
+	EmailInitialConfig,
+	OpsgenieInitialConfig,
+	PagerInitialConfig,
+} from './defaults';
 import { isChannelType } from './utils';
 
 function CreateAlertChannels({
@@ -42,7 +49,8 @@ function CreateAlertChannels({
 				WebhookChannel &
 				PagerChannel &
 				MsTeamsChannel &
-				OpsgenieChannel
+				OpsgenieChannel &
+				EmailChannel
 		>
 	>({
 		text: `{{ range .Alerts -}}
@@ -50,6 +58,8 @@ function CreateAlertChannels({
 
      *Summary:* {{ .Annotations.summary }}
      *Description:* {{ .Annotations.description }}
+     *RelatedLogs:* {{ .Annotations.related_logs }}
+     *RelatedTraces:* {{ .Annotations.related_traces }}
 
      *Details:*
        {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
@@ -90,6 +100,14 @@ function CreateAlertChannels({
 				setSelectedConfig((selectedConfig) => ({
 					...selectedConfig,
 					...OpsgenieInitialConfig,
+				}));
+			}
+
+			// reset config to email defaults
+			if (value === ChannelType.Email && currentType !== value) {
+				setSelectedConfig((selectedConfig) => ({
+					...selectedConfig,
+					...EmailInitialConfig,
 				}));
 			}
 		},
@@ -291,6 +309,43 @@ function CreateAlertChannels({
 		setSavingState(false);
 	}, [prepareOpsgenieRequest, t, notifications]);
 
+	const prepareEmailRequest = useCallback(
+		() => ({
+			name: selectedConfig?.name || '',
+			send_resolved: true,
+			to: selectedConfig?.to || '',
+			html: selectedConfig?.html || '',
+			headers: selectedConfig?.headers || {},
+		}),
+		[selectedConfig],
+	);
+
+	const onEmailHandler = useCallback(async () => {
+		setSavingState(true);
+		try {
+			const request = prepareEmailRequest();
+			const response = await createEmail(request);
+			if (response.statusCode === 200) {
+				notifications.success({
+					message: 'Success',
+					description: t('channel_creation_done'),
+				});
+				history.replace(ROUTES.ALL_CHANNELS);
+			} else {
+				notifications.error({
+					message: 'Error',
+					description: response.error || t('channel_creation_failed'),
+				});
+			}
+		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description: t('channel_creation_failed'),
+			});
+		}
+		setSavingState(false);
+	}, [prepareEmailRequest, t, notifications]);
+
 	const prepareMsTeamsRequest = useCallback(
 		() => ({
 			webhook_url: selectedConfig?.webhook_url || '',
@@ -337,6 +392,7 @@ function CreateAlertChannels({
 				[ChannelType.Pagerduty]: onPagerHandler,
 				[ChannelType.Opsgenie]: onOpsgenieHandler,
 				[ChannelType.MsTeams]: onMsTeamsHandler,
+				[ChannelType.Email]: onEmailHandler,
 			};
 
 			if (isChannelType(value)) {
@@ -358,6 +414,7 @@ function CreateAlertChannels({
 			onPagerHandler,
 			onOpsgenieHandler,
 			onMsTeamsHandler,
+			onEmailHandler,
 			notifications,
 			t,
 		],
@@ -389,6 +446,10 @@ function CreateAlertChannels({
 					case ChannelType.Opsgenie:
 						request = prepareOpsgenieRequest();
 						response = await testOpsGenie(request);
+						break;
+					case ChannelType.Email:
+						request = prepareEmailRequest();
+						response = await testEmail(request);
 						break;
 					default:
 						notifications.error({
@@ -425,6 +486,7 @@ function CreateAlertChannels({
 			prepareOpsgenieRequest,
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
+			prepareEmailRequest,
 			notifications,
 		],
 	);
@@ -453,6 +515,7 @@ function CreateAlertChannels({
 					...selectedConfig,
 					...PagerInitialConfig,
 					...OpsgenieInitialConfig,
+					...EmailInitialConfig,
 				},
 			}}
 		/>

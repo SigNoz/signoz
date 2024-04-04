@@ -1,0 +1,23 @@
+.log-context-container {
+    border: 1px solid var(--bg-slate-400);
+    flex: 1;
+    position: relative;
+    overflow: scroll;
+    overflow-x: hidden;
+
+    &::-webkit-scrollbar {
+        width: 0.3rem;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent; 
+    }
+    
+    &::-webkit-scrollbar-thumb {
+        background: var(--bg-slate-300);
+    }
+    
+    &::-webkit-scrollbar-thumb:hover {
+        background: var(--bg-slate-200);
+    }
+}

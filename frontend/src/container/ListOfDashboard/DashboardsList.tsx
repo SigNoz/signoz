@@ -10,6 +10,7 @@ import {
 import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -109,7 +110,6 @@ function DashboardsList(): JSX.Element {
 			width: 30,
 			key: DynamicColumnsKey.CreatedAt,
 			sorter: (a: Data, b: Data): number => {
-				console.log({ a });
 				const prev = new Date(a.createdAt).getTime();
 				const next = new Date(b.createdAt).getTime();
 
@@ -211,6 +211,7 @@ function DashboardsList(): JSX.Element {
 					ns: 'dashboard',
 				}),
 				uploadedGrafana: false,
+				version: ENTITY_VERSION_V4,
 			});
 
 			if (response.statusCode === 200) {
@@ -304,52 +305,56 @@ function DashboardsList(): JSX.Element {
 						loading={isFilteringDashboards}
 						style={{ marginBottom: 16, marginTop: 16 }}
 						defaultValue={searchString}
+						autoFocus
 					/>
 				</Col>
 
-				<Col
-					span={6}
-					style={{
-						display: 'flex',
-						justifyContent: 'flex-end',
-					}}
-				>
-					<ButtonContainer>
-						<TextToolTip
-							{...{
-								text: `More details on how to create dashboards`,
-								url: 'https://signoz.io/docs/userguide/dashboards',
-							}}
-						/>
-					</ButtonContainer>
-
-					<Dropdown
-						menu={{ items: getMenuItems }}
-						disabled={isDashboardListLoading}
-						placement="bottomRight"
+				{createNewDashboard && (
+					<Col
+						span={6}
+						style={{
+							display: 'flex',
+							justifyContent: 'flex-end',
+						}}
 					>
-						<NewDashboardButton
-							icon={<PlusOutlined />}
-							type="primary"
-							data-testid="create-new-dashboard"
-							loading={newDashboardState.loading}
-							danger={newDashboardState.error}
+						<ButtonContainer>
+							<TextToolTip
+								{...{
+									text: `More details on how to create dashboards`,
+									url: 'https://signoz.io/docs/userguide/dashboards',
+								}}
+							/>
+						</ButtonContainer>
+
+						<Dropdown
+							menu={{ items: getMenuItems }}
+							disabled={isDashboardListLoading}
+							placement="bottomRight"
 						>
-							{getText()}
-						</NewDashboardButton>
-					</Dropdown>
-				</Col>
+							<NewDashboardButton
+								icon={<PlusOutlined />}
+								type="primary"
+								data-testid="create-new-dashboard"
+								loading={newDashboardState.loading}
+								danger={newDashboardState.error}
+							>
+								{getText()}
+							</NewDashboardButton>
+						</Dropdown>
+					</Col>
+				)}
 			</Row>
 		),
 		[
 			isDashboardListLoading,
 			handleSearch,
 			isFilteringDashboards,
+			searchString,
+			createNewDashboard,
 			getMenuItems,
 			newDashboardState.loading,
 			newDashboardState.error,
 			getText,
-			searchString,
 		],
 	);
 

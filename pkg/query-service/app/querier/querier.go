@@ -108,7 +108,7 @@ func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.
 		series.Points = points
 	}
 	if pointsWithNegativeTimestamps > 0 {
-		zap.S().Errorf("found points with negative timestamps for query %s", query)
+		zap.L().Error("found points with negative timestamps for query", zap.String("query", query))
 	}
 	return result, err
 }
@@ -160,6 +160,8 @@ func findMissingTimeRanges(start, end, step int64, seriesList []*v3.Series, flux
 		}
 	}
 
+	// time.Now is used because here we are considering the case where data might not
+	// be fully ingested for last (fluxInterval) minutes
 	endMillis := time.Now().UnixMilli()
 	adjustStep := int64(math.Min(float64(step), 60))
 	roundedMillis := endMillis - (endMillis % (adjustStep * 1000))
@@ -239,6 +241,19 @@ func labelsToString(labels map[string]string) string {
 		labelKVs[idx] = labelsList[idx].Key + "=" + labelsList[idx].Value
 	}
 	return fmt.Sprintf("{%s}", strings.Join(labelKVs, ","))
+}
+
+func filterCachedPoints(cachedSeries []*v3.Series, start, end int64) {
+	for _, c := range cachedSeries {
+		points := []v3.Point{}
+		for _, p := range c.Points {
+			if p.Timestamp < start || p.Timestamp > end {
+				continue
+			}
+			points = append(points, p)
+		}
+		c.Points = points
+	}
 }
 
 func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
@@ -331,7 +346,7 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 			// Ensure NoCache is not set and cache is not nil
 			if !params.NoCache && q.cache != nil {
 				data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
-				zap.S().Infof("cache retrieve status: %s", retrieveStatus.String())
+				zap.L().Info("cache retrieve status", zap.String("status", retrieveStatus.String()))
 				if err == nil {
 					cachedData = data
 				}
@@ -350,7 +365,7 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 			}
 			if err := json.Unmarshal(cachedData, &cachedSeries); err != nil && cachedData != nil {
 				// ideally we should not be getting an error here
-				zap.S().Error("error unmarshalling cached data", zap.Error(err))
+				zap.L().Error("error unmarshalling cached data", zap.Error(err))
 			}
 			mergedSeries := mergeSerieses(cachedSeries, missedSeries)
 
@@ -360,12 +375,12 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 			if len(missedSeries) > 0 && !params.NoCache && q.cache != nil {
 				mergedSeriesData, err := json.Marshal(mergedSeries)
 				if err != nil {
-					zap.S().Error("error marshalling merged series", zap.Error(err))
+					zap.L().Error("error marshalling merged series", zap.Error(err))
 					return
 				}
 				err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
 				if err != nil {
-					zap.S().Error("error storing merged series", zap.Error(err))
+					zap.L().Error("error storing merged series", zap.Error(err))
 					return
 				}
 			}

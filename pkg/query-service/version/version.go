@@ -3,8 +3,6 @@ package version
 import (
 	"fmt"
 	"runtime"
-
-	"go.uber.org/zap"
 )
 
 // These fields are set during an official build
@@ -40,7 +38,7 @@ Copyright 2022 SigNoz
 
 // PrintVersion prints version and other helpful information.
 func PrintVersion() {
-	zap.S().Infof("\n%s\n", BuildDetails())
+	fmt.Println(BuildDetails())
 }
 
 func GetVersion() string {

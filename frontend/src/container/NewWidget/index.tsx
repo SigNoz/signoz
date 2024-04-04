@@ -5,7 +5,9 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
@@ -18,12 +20,13 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
@@ -52,6 +55,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const { t } = useTranslation(['dashboard']);
 
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+
 	const { currentQuery, stagedQuery } = useQueryBuilder();
 
 	const isQueryModified = useMemo(
@@ -76,7 +81,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		return widgets?.find((e) => e.id === widgetId);
 	}, [query, widgets]);
 
-	const selectedWidget = getWidget();
+	const [selectedWidget, setSelectedWidget] = useState(getWidget());
 
 	const [title, setTitle] = useState<string>(
 		selectedWidget?.title?.toString() || '',
@@ -110,11 +115,57 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			: selectedWidget?.softMin || 0,
 	);
 
+	const [selectedLogFields, setSelectedLogFields] = useState<IField[] | null>(
+		selectedWidget?.selectedLogFields || null,
+	);
+
+	const [selectedTracesFields, setSelectedTracesFields] = useState(
+		selectedWidget?.selectedTracesFields || null,
+	);
+
 	const [softMax, setSoftMax] = useState<number | null>(
 		selectedWidget?.softMax === null || selectedWidget?.softMax === undefined
 			? null
 			: selectedWidget?.softMax || 0,
 	);
+
+	useEffect(() => {
+		setSelectedWidget((prev) => {
+			if (!prev) {
+				return prev;
+			}
+			return {
+				...prev,
+				query: currentQuery,
+				title,
+				description,
+				isStacked: stacked,
+				opacity,
+				nullZeroValues: selectedNullZeroValue,
+				yAxisUnit,
+				thresholds,
+				softMin,
+				softMax,
+				fillSpans: isFillSpans,
+				selectedLogFields,
+				selectedTracesFields,
+			};
+		});
+	}, [
+		currentQuery,
+		description,
+		isFillSpans,
+		opacity,
+		selectedLogFields,
+		selectedNullZeroValue,
+		selectedTracesFields,
+		softMax,
+		softMin,
+		stacked,
+		thresholds,
+		title,
+		yAxisUnit,
+	]);
 
 	const closeModal = (): void => {
 		setSaveModal(false);
@@ -181,18 +232,21 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					...preWidgets,
 					{
 						...(selectedWidget || ({} as Widgets)),
-						description,
+						description: selectedWidget?.description || '',
 						timePreferance: selectedTime.enum,
-						isStacked: stacked,
-						opacity,
-						nullZeroValues: selectedNullZeroValue,
-						title,
-						yAxisUnit,
+						isStacked: selectedWidget?.isStacked || false,
+						opacity: selectedWidget?.opacity || '1',
+						nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
+						title: selectedWidget?.title,
+						yAxisUnit: selectedWidget?.yAxisUnit,
 						panelTypes: graphType,
-						thresholds,
-						softMin,
-						softMax,
-						fillSpans: isFillSpans,
+						query: currentQuery,
+						thresholds: selectedWidget?.thresholds,
+						softMin: selectedWidget?.softMin || 0,
+						softMax: selectedWidget?.softMax || 0,
+						fillSpans: selectedWidget?.fillSpans,
+						selectedLogFields: selectedWidget?.selectedLogFields || [],
+						selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 					},
 					...afterWidgets,
 				],
@@ -218,18 +272,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedDashboard,
 		preWidgets,
 		selectedWidget,
-		description,
 		selectedTime.enum,
-		stacked,
-		opacity,
-		selectedNullZeroValue,
-		title,
-		yAxisUnit,
 		graphType,
-		thresholds,
-		softMin,
-		softMax,
-		isFillSpans,
+		currentQuery,
 		afterWidgets,
 		updateDashboardMutation,
 		setSelectedDashboard,
@@ -296,6 +341,17 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		isNewTraceLogsAvailable,
 	]);
 
+	useEffect(() => {
+		registerShortcut(DashboardShortcuts.SaveChanges, onSaveDashboard);
+		registerShortcut(DashboardShortcuts.DiscardChanges, onClickDiscardHandler);
+
+		return (): void => {
+			deregisterShortcut(DashboardShortcuts.SaveChanges);
+			deregisterShortcut(DashboardShortcuts.DiscardChanges);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [onSaveDashboard]);
+
 	return (
 		<Container>
 			<ButtonContainer>
@@ -328,15 +384,16 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
-					<LeftContainer
-						selectedTime={selectedTime}
-						selectedGraph={graphType}
-						yAxisUnit={yAxisUnit}
-						thresholds={thresholds}
-						fillSpans={isFillSpans}
-						softMax={softMax}
-						softMin={softMin}
-					/>
+					{selectedWidget && (
+						<LeftContainer
+							selectedGraph={graphType}
+							selectedLogFields={selectedLogFields}
+							setSelectedLogFields={setSelectedLogFields}
+							selectedTracesFields={selectedTracesFields}
+							setSelectedTracesFields={setSelectedTracesFields}
+							selectedWidget={selectedWidget}
+						/>
+					)}
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>
@@ -395,7 +452,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					<Typography>
 						{t('your_graph_build_with')}{' '}
 						<QueryTypeTag queryType={currentQuery.queryType} />
-						{t('dashboar_ok_confirm')}
+						{t('dashboard_ok_confirm')}
 					</Typography>
 				) : (
 					<Typography>{t('dashboard_unsave_changes')} </Typography>

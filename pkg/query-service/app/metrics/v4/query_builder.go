@@ -21,23 +21,31 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 
 	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, mq.TimeAggregation)
 
-	groupBy := helpers.GroupByAttributeKeyTags(mq.GroupBy...)
-	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
-
 	var quantile float64
 
-	if v3.IsPercentileOperator(mq.SpaceAggregation) {
+	if v3.IsPercentileOperator(mq.SpaceAggregation) &&
+		mq.AggregateAttribute.Type != v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
 		quantile = v3.GetPercentileFromOperator(mq.SpaceAggregation)
 		// If quantile is set, we need to group by le
 		// and set the space aggregation to sum
 		// and time aggregation to rate
 		mq.TimeAggregation = v3.TimeAggregationRate
 		mq.SpaceAggregation = v3.SpaceAggregationSum
-		mq.GroupBy = append(mq.GroupBy, v3.AttributeKey{
-			Key:      "le",
-			Type:     v3.AttributeKeyTypeTag,
-			DataType: v3.AttributeKeyDataTypeString,
-		})
+		// If le is not present in group by for quantile, add it
+		leFound := false
+		for _, groupBy := range mq.GroupBy {
+			if groupBy.Key == "le" {
+				leFound = true
+				break
+			}
+		}
+		if !leFound {
+			mq.GroupBy = append(mq.GroupBy, v3.AttributeKey{
+				Key:      "le",
+				Type:     v3.AttributeKeyTypeTag,
+				DataType: v3.AttributeKeyDataTypeString,
+			})
+		}
 	}
 
 	var query string
@@ -60,7 +68,17 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 		return "", err
 	}
 
-	if quantile != 0 {
+	groupByWithoutLe := []v3.AttributeKey{}
+	for _, groupBy := range mq.GroupBy {
+		if groupBy.Key != "le" {
+			groupByWithoutLe = append(groupByWithoutLe, groupBy)
+		}
+	}
+	groupBy := helpers.GroupByAttributeKeyTags(groupByWithoutLe...)
+	orderBy := helpers.OrderByAttributeKeyTags(mq.OrderBy, groupByWithoutLe)
+
+	// fixed-bucket histogram quantiles are calculated with UDF
+	if quantile != 0 && mq.AggregateAttribute.Type != v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
 		query = fmt.Sprintf(`SELECT %s, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s`, groupBy, quantile, query, groupBy, orderBy)
 	}
 

@@ -4,5 +4,5 @@ export const Container = styled.div`
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
-	gap: 0.5rem;
+	gap: 0.3rem;
 `;

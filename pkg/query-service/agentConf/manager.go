@@ -111,10 +111,6 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 			return nil, "", errors.Wrap(apiErr.ToError(), "failed to get latest agent config version")
 		}
 
-		if latestConfig == nil {
-			continue
-		}
-
 		updatedConf, serializedSettingsUsed, apiErr := feature.RecommendAgentConfig(
 			recommendation, latestConfig,
 		)
@@ -124,13 +120,24 @@ func (m *Manager) RecommendAgentConfig(currentConfYaml []byte) (
 			))
 		}
 		recommendation = updatedConf
-		configId := fmt.Sprintf("%s:%d", featureType, latestConfig.Version)
+
+		// It is possible for a feature to recommend collector config
+		// before any user created config versions exist.
+		//
+		// For example, log pipeline config for installed integrations will
+		// have to be recommended even if the user hasn't created any pipelines yet
+		configVersion := -1
+		if latestConfig != nil {
+			configVersion = latestConfig.Version
+		}
+		configId := fmt.Sprintf("%s:%d", featureType, configVersion)
+
 		settingVersionsUsed = append(settingVersionsUsed, configId)
 
 		m.updateDeployStatus(
 			context.Background(),
 			featureType,
-			latestConfig.Version,
+			configVersion,
 			string(DeployInitiated),
 			"Deployment has started",
 			configId,
@@ -196,7 +203,7 @@ func StartNewVersion(
 ) (*ConfigVersion, *model.ApiError) {
 
 	// create a new version
-	cfg := NewConfigversion(eleType)
+	cfg := NewConfigVersion(eleType)
 
 	// insert new config and elements into database
 	err := m.insertConfig(ctx, userId, cfg, elementIds)
@@ -209,23 +216,27 @@ func StartNewVersion(
 	return cfg, nil
 }
 
+func NotifyConfigUpdate(ctx context.Context) {
+	m.notifyConfigUpdateSubscribers()
+}
+
 func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiError {
 
 	configVersion, err := GetConfigVersion(ctx, typ, version)
 	if err != nil {
-		zap.S().Debug("failed to fetch config version during redeploy", err)
+		zap.L().Error("failed to fetch config version during redeploy", zap.Error(err))
 		return model.WrapApiError(err, "failed to fetch details of the config version")
 	}
 
 	if configVersion == nil || (configVersion != nil && configVersion.LastConf == "") {
-		zap.S().Debug("config version has no conf yaml", configVersion)
+		zap.L().Debug("config version has no conf yaml", zap.Any("configVersion", configVersion))
 		return model.BadRequest(fmt.Errorf("the config version can not be redeployed"))
 	}
 	switch typ {
 	case ElementTypeSamplingRules:
 		var config *tsp.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &config); err != nil {
-			zap.S().Error("failed to read last conf correctly", err)
+			zap.L().Debug("failed to read last conf correctly", zap.Error(err))
 			return model.BadRequest(fmt.Errorf("failed to read the stored config correctly"))
 		}
 
@@ -237,7 +248,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiEr
 		opamp.AddToTracePipelineSpec("signoz_tail_sampling")
 		configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
 		if err != nil {
-			zap.S().Error("failed to call agent config update for trace processor:", err)
+			zap.L().Error("failed to call agent config update for trace processor", zap.Error(err))
 			return model.InternalError(fmt.Errorf("failed to deploy the config"))
 		}
 
@@ -245,7 +256,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiEr
 	case ElementTypeDropRules:
 		var filterConfig *filterprocessor.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &filterConfig); err != nil {
-			zap.S().Error("failed to read last conf correctly", err)
+			zap.L().Error("failed to read last conf correctly", zap.Error(err))
 			return model.InternalError(fmt.Errorf("failed to read the stored config correctly"))
 		}
 		processorConf := map[string]interface{}{
@@ -255,7 +266,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiEr
 		opamp.AddToMetricsPipelineSpec("filter")
 		configHash, err := opamp.UpsertControlProcessors(ctx, "metrics", processorConf, m.OnConfigUpdate)
 		if err != nil {
-			zap.S().Error("failed to call agent config update for trace processor:", err)
+			zap.L().Error("failed to call agent config update for trace processor", zap.Error(err))
 			return err
 		}
 
@@ -281,13 +292,13 @@ func UpsertFilterProcessor(ctx context.Context, version int, config *filterproce
 	opamp.AddToMetricsPipelineSpec("filter")
 	configHash, err := opamp.UpsertControlProcessors(ctx, "metrics", processorConf, m.OnConfigUpdate)
 	if err != nil {
-		zap.S().Error("failed to call agent config update for trace processor:", err)
+		zap.L().Error("failed to call agent config update for trace processor", zap.Error(err))
 		return err
 	}
 
 	processorConfYaml, yamlErr := yaml.Marshal(config)
 	if yamlErr != nil {
-		zap.S().Warnf("unexpected error while transforming processor config to yaml", yamlErr)
+		zap.L().Warn("unexpected error while transforming processor config to yaml", zap.Error(yamlErr))
 	}
 
 	m.updateDeployStatus(ctx, ElementTypeDropRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
@@ -306,7 +317,7 @@ func (m *Manager) OnConfigUpdate(agentId string, hash string, err error) {
 	message := "Deployment was successful"
 
 	defer func() {
-		zap.S().Info(status, zap.String("agentId", agentId), zap.String("agentResponse", message))
+		zap.L().Info(status, zap.String("agentId", agentId), zap.String("agentResponse", message))
 	}()
 
 	if err != nil {
@@ -332,13 +343,13 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 	opamp.AddToTracePipelineSpec("signoz_tail_sampling")
 	configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
 	if err != nil {
-		zap.S().Error("failed to call agent config update for trace processor:", err)
+		zap.L().Error("failed to call agent config update for trace processor", zap.Error(err))
 		return err
 	}
 
 	processorConfYaml, yamlErr := yaml.Marshal(config)
 	if yamlErr != nil {
-		zap.S().Warnf("unexpected error while transforming processor config to yaml", yamlErr)
+		zap.L().Warn("unexpected error while transforming processor config to yaml", zap.Error(yamlErr))
 	}
 
 	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))

@@ -11,7 +11,7 @@ export const updateView = ({
 	sourcePage,
 	viewKey,
 }: UpdateViewProps): Promise<UpdateViewPayloadProps> =>
-	axios.put(`explorer/views/${viewKey}`, {
+	axios.put(`/explorer/views/${viewKey}`, {
 		name: viewName,
 		compositeQuery,
 		extraData,

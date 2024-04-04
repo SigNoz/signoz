@@ -1,11 +1,9 @@
-import {
-	ExpandAltOutlined,
-	LinkOutlined,
-	MonitorOutlined,
-} from '@ant-design/icons';
+import './RawLogView.styles.scss';
+
 import Convert from 'ansi-to-html';
-import { Button, DrawerProps, Tooltip } from 'antd';
+import { DrawerProps } from 'antd';
 import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES, VIEWS } from 'components/LogDetail/constants';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
@@ -14,7 +12,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { isEmpty, isUndefined } from 'lodash-es';
+import { isEmpty, isNumber, isUndefined } from 'lodash-es';
 import {
 	KeyboardEvent,
 	MouseEvent,
@@ -24,13 +22,11 @@ import {
 	useState,
 } from 'react';
 
+import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
+import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
+import { getLogIndicatorType } from '../LogStateIndicator/utils';
 // styles
-import {
-	ActionButtonsWrapper,
-	ExpandIconWrapper,
-	RawLogContent,
-	RawLogViewContainer,
-} from './styles';
+import { RawLogContent, RawLogViewContainer } from './styles';
 import { RawLogViewProps } from './types';
 
 const convert = new Convert();
@@ -50,7 +46,6 @@ function RawLogView({
 
 	const {
 		activeLog: activeContextLog,
-		onSetActiveLog: handleSetActiveContextLog,
 		onClearActiveLog: handleClearActiveContextLog,
 	} = useActiveLog();
 	const {
@@ -61,11 +56,14 @@ function RawLogView({
 	} = useActiveLog();
 
 	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
+	const [selectedTab, setSelectedTab] = useState<VIEWS | undefined>();
 
 	const isDarkMode = useIsDarkMode();
 	const isReadOnlyLog = !isLogsExplorerPage || isReadOnly;
 
 	const severityText = data.severity_text ? `${data.severity_text} |` : '';
+
+	const logType = getLogIndicatorType(data);
 
 	const updatedSelecedFields = useMemo(
 		() => selectedFields.filter((e) => e.name !== 'id'),
@@ -74,7 +72,14 @@ function RawLogView({
 
 	const attributesValues = updatedSelecedFields
 		.map((field) => flattenLogData[field.name])
-		.filter((attribute) => !isUndefined(attribute) && !isEmpty(attribute));
+		.filter((attribute) => {
+			// loadash isEmpty doesnot work with numbers
+			if (isNumber(attribute)) {
+				return true;
+			}
+
+			return !isUndefined(attribute) && !isEmpty(attribute);
+		});
 
 	let attributesText = attributesValues.join(' | ');
 
@@ -98,6 +103,7 @@ function RawLogView({
 		if (activeContextLog || isReadOnly) return;
 
 		onSetActiveLog(data);
+		setSelectedTab(VIEW_TYPES.OVERVIEW);
 	}, [activeContextLog, isReadOnly, data, onSetActiveLog]);
 
 	const handleCloseLogDetail: DrawerProps['onClose'] = useCallback(
@@ -108,6 +114,7 @@ function RawLogView({
 			event.stopPropagation();
 
 			onClearActiveLog();
+			setSelectedTab(undefined);
 		},
 		[onClearActiveLog],
 	);
@@ -128,9 +135,11 @@ function RawLogView({
 		(event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			handleSetActiveContextLog(data);
+			// handleSetActiveContextLog(data);
+			setSelectedTab(VIEW_TYPES.CONTEXT);
+			onSetActiveLog(data);
 		},
-		[data, handleSetActiveContextLog],
+		[data, onSetActiveLog],
 	);
 
 	const html = useMemo(
@@ -147,37 +156,34 @@ function RawLogView({
 			align="middle"
 			$isDarkMode={isDarkMode}
 			$isReadOnly={isReadOnly}
-			$isActiveLog={isHighlighted}
+			$isHightlightedLog={isHighlighted}
+			$isActiveLog={isActiveLog}
 			onMouseEnter={handleMouseEnter}
 			onMouseLeave={handleMouseLeave}
 		>
-			{!isReadOnly && (
-				<ExpandIconWrapper flex="30px">
-					<ExpandAltOutlined />
-				</ExpandIconWrapper>
-			)}
+			<LogStateIndicator
+				type={logType}
+				isActive={
+					activeLog?.id === data.id ||
+					activeContextLog?.id === data.id ||
+					isActiveLog
+				}
+			/>
 
 			<RawLogContent
 				$isReadOnly={isReadOnly}
 				$isActiveLog={isActiveLog}
+				$isDarkMode={isDarkMode}
 				$isTextOverflowEllipsisDisabled={isTextOverflowEllipsisDisabled}
 				linesPerRow={linesPerRow}
 				dangerouslySetInnerHTML={html}
 			/>
 
 			{hasActionButtons && (
-				<ActionButtonsWrapper>
-					<Tooltip title="Show Context">
-						<Button
-							size="small"
-							icon={<MonitorOutlined />}
-							onClick={handleShowContext}
-						/>
-					</Tooltip>
-					<Tooltip title="Copy Link">
-						<Button size="small" icon={<LinkOutlined />} onClick={onLogCopy} />
-					</Tooltip>
-				</ActionButtonsWrapper>
+				<LogLinesActionButtons
+					handleShowContext={handleShowContext}
+					onLogCopy={onLogCopy}
+				/>
 			)}
 
 			{activeContextLog && (
@@ -186,12 +192,15 @@ function RawLogView({
 					onClose={handleClearActiveContextLog}
 				/>
 			)}
-			<LogDetail
-				log={activeLog}
-				onClose={handleCloseLogDetail}
-				onAddToQuery={onAddToQuery}
-				onClickActionItem={onAddToQuery}
-			/>
+			{selectedTab && (
+				<LogDetail
+					selectedTab={selectedTab}
+					log={activeLog}
+					onClose={handleCloseLogDetail}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onAddToQuery}
+				/>
+			)}
 		</RawLogViewContainer>
 	);
 }

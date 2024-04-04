@@ -6,6 +6,10 @@ import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
+import {
+	CustomTimeType,
+	Time as TimeV2,
+} from 'container/TopNav/DateTimeSelectionV2/config';
 import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
@@ -17,15 +21,20 @@ import { prepareQueryRangePayload } from './prepareQueryRangePayload';
 
 export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
+	version: string,
 	signal?: AbortSignal,
 ): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const { legendMap, queryPayload } = prepareQueryRangePayload(props);
 
-	const response = await getMetricsQueryRange(queryPayload, signal);
+	const response = await getMetricsQueryRange(
+		queryPayload,
+		version || 'v3',
+		signal,
+	);
 
 	if (response.statusCode >= 400) {
 		throw new Error(
-			`API responded with ${response.statusCode} -  ${response.error}`,
+			`API responded with ${response.statusCode} -  ${response.error} status: ${response.message}, errors: ${response?.body}`,
 		);
 	}
 
@@ -61,7 +70,7 @@ export interface GetQueryResultsProps {
 	query: Query;
 	graphType: PANEL_TYPES;
 	selectedTime: timePreferenceType;
-	globalSelectedInterval: Time;
+	globalSelectedInterval: Time | TimeV2 | CustomTimeType;
 	variables?: Record<string, unknown>;
 	params?: Record<string, unknown>;
 	tableParams?: {

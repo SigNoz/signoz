@@ -1,10 +1,12 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+
 import ReactMarkdown from 'react-markdown';
 import { CodeProps } from 'react-markdown/lib/ast-to-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import rehypeRaw from 'rehype-raw';
 
 import CodeCopyBtn from './CodeCopyBtn/CodeCopyBtn';
 
@@ -74,6 +76,10 @@ const interpolateMarkdown = (
 	return interpolatedContent;
 };
 
+function CustomTag({ color }: { color: string }): JSX.Element {
+	return <h1 style={{ color }}>This is custom element</h1>;
+}
+
 function MarkdownRenderer({
 	markdownContent,
 	variables,
@@ -85,12 +91,14 @@ function MarkdownRenderer({
 
 	return (
 		<ReactMarkdown
+			rehypePlugins={[rehypeRaw as any]}
 			components={{
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
 				a: Link,
 				pre: Pre,
 				code: Code,
+				customtag: CustomTag,
 			}}
 		>
 			{interpolatedMarkdown}

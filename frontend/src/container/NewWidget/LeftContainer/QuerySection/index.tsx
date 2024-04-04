@@ -1,24 +1,30 @@
-import { Button, Tabs, Typography } from 'antd';
+import './QuerySection.styles.scss';
+
+import { Button, Tabs, Tooltip, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { WidgetGraphProps } from 'container/NewWidget/types';
+import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
-import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { Atom, Play, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	getNextWidgets,
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import AppReducer from 'types/reducer/app';
@@ -29,10 +35,11 @@ import PromQLQueryContainer from './QueryBuilder/promQL';
 
 function QuerySection({
 	selectedGraph,
-	selectedTime,
+	queryResponse,
 }: QueryProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const urlQuery = useUrlQuery();
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -43,11 +50,6 @@ function QuerySection({
 	);
 
 	const { selectedDashboard, setSelectedDashboard } = useDashboard();
-
-	const getWidgetQueryRange = useGetWidgetQueryRange({
-		graphType: selectedGraph,
-		selectedTime: selectedTime.enum,
-	});
 
 	const { widgets } = selectedDashboard?.data || {};
 
@@ -96,7 +98,6 @@ function QuerySection({
 					],
 				},
 			});
-
 			redirectWithQueryBuilderData(updatedQuery);
 		},
 		[
@@ -110,10 +111,13 @@ function QuerySection({
 	);
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
-		const currentQueryType = qCategory as EQueryType;
+		const currentQueryType = qCategory;
 
 		featureResponse.refetch().then(() => {
-			handleStageQuery({ ...currentQuery, queryType: currentQueryType });
+			handleStageQuery({
+				...currentQuery,
+				queryType: currentQueryType as EQueryType,
+			});
 		});
 	};
 
@@ -129,56 +133,120 @@ function QuerySection({
 		return config;
 	}, []);
 
+	const listItems = [
+		{
+			key: EQueryType.QUERY_BUILDER,
+			label: (
+				<Tooltip title="Query Builder">
+					<Button className="nav-btns">
+						<Atom size={14} />
+					</Button>
+				</Tooltip>
+			),
+			tab: <Typography>Query Builder</Typography>,
+			children: (
+				<QueryBuilder
+					panelType={PANEL_TYPES.LIST}
+					filterConfigs={filterConfigs}
+					version={selectedDashboard?.data?.version || 'v3'}
+					isListViewPanel
+				/>
+			),
+		},
+	];
+
 	const items = [
 		{
 			key: EQueryType.QUERY_BUILDER,
-			label: 'Query Builder',
+			label: (
+				<Tooltip title="Query Builder">
+					<Button className="nav-btns">
+						<Atom size={14} />
+					</Button>
+				</Tooltip>
+			),
 			tab: <Typography>Query Builder</Typography>,
 			children: (
-				<QueryBuilder panelType={selectedGraph} filterConfigs={filterConfigs} />
+				<QueryBuilder
+					panelType={selectedGraph}
+					filterConfigs={filterConfigs}
+					version={selectedDashboard?.data?.version || 'v3'}
+				/>
 			),
 		},
 		{
 			key: EQueryType.CLICKHOUSE,
-			label: 'ClickHouse Query',
+			label: (
+				<Tooltip title="ClickHouse">
+					<Button className="nav-btns">
+						<Terminal size={14} />
+					</Button>
+				</Tooltip>
+			),
 			tab: <Typography>ClickHouse Query</Typography>,
 			children: <ClickHouseQueryContainer />,
 		},
 		{
 			key: EQueryType.PROM,
-			label: 'PromQL',
+			label: (
+				<Tooltip title="PromQL">
+					<Button className="nav-btns">
+						<img src="/Icons/promQL.svg" alt="Prom Ql" className="prom-ql-icon" />
+					</Button>
+				</Tooltip>
+			),
 			tab: <Typography>PromQL</Typography>,
 			children: <PromQLQueryContainer />,
 		},
 	];
 
+	useEffect(() => {
+		registerShortcut(QBShortcuts.StageAndRunQuery, handleRunQuery);
+
+		return (): void => {
+			deregisterShortcut(QBShortcuts.StageAndRunQuery);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [handleRunQuery]);
+
 	return (
-		<Tabs
-			type="card"
-			style={{ width: '100%' }}
-			defaultActiveKey={currentQuery.queryType}
-			activeKey={currentQuery.queryType}
-			onChange={handleQueryCategoryChange}
-			tabBarExtraContent={
-				<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-					<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
-					<Button
-						loading={getWidgetQueryRange.isFetching}
-						type="primary"
-						onClick={handleRunQuery}
-					>
-						Stage & Run Query
-					</Button>
-				</span>
-			}
-			items={items}
-		/>
+		<div className="dashboard-navigation">
+			<Tabs
+				type="card"
+				style={{ width: '100%' }}
+				defaultActiveKey={
+					selectedGraph !== PANEL_TYPES.EMPTY_WIDGET
+						? currentQuery.queryType
+						: currentQuery.builder.queryData[0].dataSource
+				}
+				activeKey={currentQuery.queryType}
+				onChange={handleQueryCategoryChange}
+				tabBarExtraContent={
+					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+						<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
+						<Button
+							loading={queryResponse.isFetching}
+							type="primary"
+							onClick={handleRunQuery}
+							className="stage-run-query"
+							icon={<Play size={14} />}
+						>
+							Stage & Run Query
+						</Button>
+					</span>
+				}
+				items={selectedGraph === PANEL_TYPES.LIST ? listItems : items}
+			/>
+		</div>
 	);
 }
 
 interface QueryProps {
 	selectedGraph: PANEL_TYPES;
-	selectedTime: WidgetGraphProps['selectedTime'];
+	queryResponse: UseQueryResult<
+		SuccessResponse<MetricRangePayloadProps, unknown>,
+		Error
+	>;
 }
 
 export default QuerySection;

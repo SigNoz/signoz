@@ -22,7 +22,7 @@ import (
 func (r *ClickhouseReader) GetMetricResultEE(ctx context.Context, query string) ([]*basemodel.Series, string, error) {
 
 	defer utils.Elapsed("GetMetricResult")()
-	zap.S().Infof("Executing metric result query: %s", query)
+	zap.L().Info("Executing metric result query: ", zap.String("query", query))
 
 	var hash string
 	// If getSubTreeSpans function is used in the clickhouse query
@@ -38,9 +38,8 @@ func (r *ClickhouseReader) GetMetricResultEE(ctx context.Context, query string) 
 	}
 
 	rows, err := r.conn.Query(ctx, query)
-	zap.S().Debug(query)
 	if err != nil {
-		zap.S().Debug("Error in processing query: ", err)
+		zap.L().Error("Error in processing query", zap.Error(err))
 		return nil, "", fmt.Errorf("error in processing query")
 	}
 
@@ -117,7 +116,7 @@ func (r *ClickhouseReader) GetMetricResultEE(ctx context.Context, query string) 
 					groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
 				}
 			default:
-				zap.S().Errorf("invalid var found in metric builder query result", v, colName)
+				zap.L().Error("invalid var found in metric builder query result", zap.Any("var", v), zap.String("colName", colName))
 			}
 		}
 		sort.Strings(groupBy)
@@ -140,7 +139,7 @@ func (r *ClickhouseReader) GetMetricResultEE(ctx context.Context, query string) 
 	}
 	// err = r.conn.Exec(ctx, "DROP TEMPORARY TABLE IF EXISTS getSubTreeSpans"+hash)
 	// if err != nil {
-	// 	zap.S().Error("Error in dropping temporary table: ", err)
+	// 	zap.L().Error("Error in dropping temporary table: ", err)
 	// 	return nil, err
 	// }
 	if hash == "" {
@@ -152,7 +151,7 @@ func (r *ClickhouseReader) GetMetricResultEE(ctx context.Context, query string) 
 
 func (r *ClickhouseReader) getSubTreeSpansCustomFunction(ctx context.Context, query string, hash string) (string, string, error) {
 
-	zap.S().Debugf("Executing getSubTreeSpans function")
+	zap.L().Debug("Executing getSubTreeSpans function")
 
 	// str1 := `select fromUnixTimestamp64Milli(intDiv( toUnixTimestamp64Milli ( timestamp ), 100) * 100) AS interval, toFloat64(count()) as count from (select timestamp, spanId, parentSpanId, durationNano from getSubTreeSpans(select * from signoz_traces.signoz_index_v2 where serviceName='frontend' and name='/driver.DriverService/FindNearest' and  traceID='00000000000000004b0a863cb5ed7681') where name='FindDriverIDs' group by interval order by interval asc;`
 
@@ -162,28 +161,28 @@ func (r *ClickhouseReader) getSubTreeSpansCustomFunction(ctx context.Context, qu
 
 	err := r.conn.Exec(ctx, "DROP TABLE IF EXISTS getSubTreeSpans"+hash)
 	if err != nil {
-		zap.S().Error("Error in dropping temporary table: ", err)
+		zap.L().Error("Error in dropping temporary table", zap.Error(err))
 		return query, hash, err
 	}
 
 	// Create temporary table to store the getSubTreeSpans() results
-	zap.S().Debugf("Creating temporary table getSubTreeSpans%s", hash)
+	zap.L().Debug("Creating temporary table getSubTreeSpans", zap.String("hash", hash))
 	err = r.conn.Exec(ctx, "CREATE TABLE IF NOT EXISTS "+"getSubTreeSpans"+hash+" (timestamp DateTime64(9) CODEC(DoubleDelta, LZ4), traceID FixedString(32) CODEC(ZSTD(1)), spanID String CODEC(ZSTD(1)), parentSpanID String CODEC(ZSTD(1)), rootSpanID String CODEC(ZSTD(1)), serviceName LowCardinality(String) CODEC(ZSTD(1)), name LowCardinality(String) CODEC(ZSTD(1)), rootName LowCardinality(String) CODEC(ZSTD(1)), durationNano UInt64 CODEC(T64, ZSTD(1)), kind Int8 CODEC(T64, ZSTD(1)), tagMap Map(LowCardinality(String), String) CODEC(ZSTD(1)), events Array(String) CODEC(ZSTD(2))) ENGINE = MergeTree() ORDER BY (timestamp)")
 	if err != nil {
-		zap.S().Error("Error in creating temporary table: ", err)
+		zap.L().Error("Error in creating temporary table", zap.Error(err))
 		return query, hash, err
 	}
 
 	var getSpansSubQueryDBResponses []model.GetSpansSubQueryDBResponse
 	getSpansSubQuery := subtreeInput
 	// Execute the subTree query
-	zap.S().Debugf("Executing subTree query: %s", getSpansSubQuery)
+	zap.L().Debug("Executing subTree query", zap.String("query", getSpansSubQuery))
 	err = r.conn.Select(ctx, &getSpansSubQueryDBResponses, getSpansSubQuery)
 
-	// zap.S().Info(getSpansSubQuery)
+	// zap.L().Info(getSpansSubQuery)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return query, hash, fmt.Errorf("Error in processing sql query")
 	}
 
@@ -196,16 +195,16 @@ func (r *ClickhouseReader) getSubTreeSpansCustomFunction(ctx context.Context, qu
 	if len(getSpansSubQueryDBResponses) == 0 {
 		return query, hash, fmt.Errorf("No spans found for the given query")
 	}
-	zap.S().Debugf("Executing query to fetch all the spans from the same TraceID: %s", modelQuery)
+	zap.L().Debug("Executing query to fetch all the spans from the same TraceID: ", zap.String("modelQuery", modelQuery))
 	err = r.conn.Select(ctx, &searchScanResponses, modelQuery, getSpansSubQueryDBResponses[0].TraceID)
 
 	if err != nil {
-		zap.S().Debug("Error in processing sql query: ", err)
+		zap.L().Error("Error in processing sql query", zap.Error(err))
 		return query, hash, fmt.Errorf("Error in processing sql query")
 	}
 
 	// Process model to fetch the spans
-	zap.S().Debugf("Processing model to fetch the spans")
+	zap.L().Debug("Processing model to fetch the spans")
 	searchSpanResponses := []basemodel.SearchSpanResponseItem{}
 	for _, item := range searchScanResponses {
 		var jsonItem basemodel.SearchSpanResponseItem
@@ -218,17 +217,17 @@ func (r *ClickhouseReader) getSubTreeSpansCustomFunction(ctx context.Context, qu
 	}
 	// Build the subtree and store all the subtree spans in temporary table getSubTreeSpans+hash
 	// Use map to store pointer to the spans to avoid duplicates and save memory
-	zap.S().Debugf("Building the subtree to store all the subtree spans in temporary table getSubTreeSpans%s", hash)
+	zap.L().Debug("Building the subtree to store all the subtree spans in temporary table getSubTreeSpans", zap.String("hash", hash))
 
 	treeSearchResponse, err := getSubTreeAlgorithm(searchSpanResponses, getSpansSubQueryDBResponses)
 	if err != nil {
-		zap.S().Error("Error in getSubTreeAlgorithm function: ", err)
+		zap.L().Error("Error in getSubTreeAlgorithm function", zap.Error(err))
 		return query, hash, err
 	}
-	zap.S().Debugf("Preparing batch to store subtree spans in temporary table getSubTreeSpans%s", hash)
+	zap.L().Debug("Preparing batch to store subtree spans in temporary table getSubTreeSpans", zap.String("hash", hash))
 	statement, err := r.conn.PrepareBatch(context.Background(), fmt.Sprintf("INSERT INTO getSubTreeSpans"+hash))
 	if err != nil {
-		zap.S().Error("Error in preparing batch statement: ", err)
+		zap.L().Error("Error in preparing batch statement", zap.Error(err))
 		return query, hash, err
 	}
 	for _, span := range treeSearchResponse {
@@ -251,14 +250,14 @@ func (r *ClickhouseReader) getSubTreeSpansCustomFunction(ctx context.Context, qu
 			span.Events,
 		)
 		if err != nil {
-			zap.S().Debug("Error in processing sql query: ", err)
+			zap.L().Error("Error in processing sql query", zap.Error(err))
 			return query, hash, err
 		}
 	}
-	zap.S().Debugf("Inserting the subtree spans in temporary table getSubTreeSpans%s", hash)
+	zap.L().Debug("Inserting the subtree spans in temporary table getSubTreeSpans", zap.String("hash", hash))
 	err = statement.Send()
 	if err != nil {
-		zap.S().Error("Error in sending statement: ", err)
+		zap.L().Error("Error in sending statement", zap.Error(err))
 		return query, hash, err
 	}
 	return query, hash, nil
@@ -323,7 +322,7 @@ func getSubTreeAlgorithm(payload []basemodel.SearchSpanResponseItem, getSpansSub
 		spans = append(spans, span)
 	}
 
-	zap.S().Debug("Building Tree")
+	zap.L().Debug("Building Tree")
 	roots, err := buildSpanTrees(&spans)
 	if err != nil {
 		return nil, err
@@ -333,7 +332,7 @@ func getSubTreeAlgorithm(payload []basemodel.SearchSpanResponseItem, getSpansSub
 	// For each root, get the subtree spans
 	for _, getSpansSubQueryDBResponse := range getSpansSubQueryDBResponses {
 		targetSpan := &model.SpanForTraceDetails{}
-		// zap.S().Debug("Building tree for span id: " + getSpansSubQueryDBResponse.SpanID + " " + strconv.Itoa(i+1) + " of " + strconv.Itoa(len(getSpansSubQueryDBResponses)))
+		// zap.L().Debug("Building tree for span id: " + getSpansSubQueryDBResponse.SpanID + " " + strconv.Itoa(i+1) + " of " + strconv.Itoa(len(getSpansSubQueryDBResponses)))
 		// Search target span object in the tree
 		for _, root := range roots {
 			targetSpan, err = breadthFirstSearch(root, getSpansSubQueryDBResponse.SpanID)
@@ -341,7 +340,7 @@ func getSubTreeAlgorithm(payload []basemodel.SearchSpanResponseItem, getSpansSub
 				break
 			}
 			if err != nil {
-				zap.S().Error("Error during BreadthFirstSearch(): ", err)
+				zap.L().Error("Error during BreadthFirstSearch()", zap.Error(err))
 				return nil, err
 			}
 		}

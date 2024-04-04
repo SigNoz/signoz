@@ -91,6 +91,13 @@ var BasicPlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
+		Name:       basemodel.AlertChannelEmail,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
 		Name:       basemodel.AlertChannelMsTeams,
 		Active:     false,
 		Usage:      0,
@@ -172,6 +179,13 @@ var ProPlan = basemodel.FeatureSet{
 	},
 	basemodel.Feature{
 		Name:       basemodel.AlertChannelOpsgenie,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
+		Name:       basemodel.AlertChannelEmail,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
@@ -265,6 +279,13 @@ var EnterprisePlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
+		Name:       basemodel.AlertChannelEmail,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
 		Name:       basemodel.AlertChannelMsTeams,
 		Active:     true,
 		Usage:      0,
@@ -279,17 +300,17 @@ var EnterprisePlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name: Onboarding,
-		Active: true,
-		Usage: 0,
+		Name:       Onboarding,
+		Active:     true,
+		Usage:      0,
 		UsageLimit: -1,
-		Route: "",
+		Route:      "",
 	},
 	basemodel.Feature{
-		Name: ChatSupport,
-		Active: true,
-		Usage: 0,
+		Name:       ChatSupport,
+		Active:     true,
+		Usage:      0,
 		UsageLimit: -1,
-		Route: "",
+		Route:      "",
 	},
 }

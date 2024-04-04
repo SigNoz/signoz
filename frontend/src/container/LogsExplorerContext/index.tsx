@@ -1,6 +1,5 @@
 import { EditFilled } from '@ant-design/icons';
-import { Typography } from 'antd';
-import Modal from 'antd/es/modal/Modal';
+import { Modal, Typography } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import LogsContextList from 'container/LogsContextList';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';

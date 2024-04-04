@@ -18,7 +18,6 @@ export const LayoutContent = styled(LayoutComponent.Content)`
 `;
 
 export const ChildrenContainer = styled.div`
-	margin: 0 1rem;
 	display: flex;
 	flex-direction: column;
 	height: 100%;

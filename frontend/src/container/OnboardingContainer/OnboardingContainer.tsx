@@ -6,9 +6,11 @@ import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
+import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import history from 'lib/history';
 import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
@@ -21,11 +23,15 @@ import {
 } from './context/OnboardingContext';
 import { DataSourceType } from './Steps/DataSource/DataSource';
 import {
+	defaultApplicationDataSource,
+	defaultAwsServices,
 	defaultInfraMetricsType,
 	defaultLogsType,
+	moduleRouteMap,
 } from './utils/dataSourceUtils';
 import {
 	APM_STEPS,
+	AWS_MONITORING_STEPS,
 	getSteps,
 	INFRASTRUCTURE_MONITORING_STEPS,
 	LOGS_MANAGEMENT_STEPS,
@@ -35,6 +41,7 @@ export enum ModulesMap {
 	APM = 'APM',
 	LogsManagement = 'LogsManagement',
 	InfrastructureMonitoring = 'InfrastructureMonitoring',
+	AwsMonitoring = 'AwsMonitoring',
 }
 
 export interface ModuleProps {
@@ -68,6 +75,12 @@ export const useCases = {
 		desc:
 			'Monitor Kubernetes infrastructure metrics, hostmetrics, or metrics of any third-party integration',
 	},
+	AwsMonitoring: {
+		id: ModulesMap.AwsMonitoring,
+		title: 'AWS Monitoring',
+		desc:
+			'Monitor your traces, logs and metrics for AWS services like EC2, ECS, EKS etc.',
+	},
 };
 
 export default function Onboarding(): JSX.Element {
@@ -80,6 +93,7 @@ export default function Onboarding(): JSX.Element {
 	const [current, setCurrent] = useState(0);
 	const isDarkMode = useIsDarkMode();
 	const { trackEvent } = useAnalytics();
+	const { location } = history;
 
 	const {
 		selectedDataSource,
@@ -173,14 +187,25 @@ export default function Onboarding(): JSX.Element {
 				setSelectedModuleSteps(LOGS_MANAGEMENT_STEPS);
 				updateSelectedDataSource(defaultLogsType);
 			}
+		} else if (selectedModule?.id === ModulesMap.AwsMonitoring) {
+			if (selectedDataSource) {
+				setModuleStepsBasedOnSelectedDataSource(selectedDataSource);
+			} else {
+				setSelectedModuleSteps(AWS_MONITORING_STEPS);
+				updateSelectedDataSource(defaultAwsServices);
+			}
 		} else if (selectedModule?.id === ModulesMap.APM) {
 			handleAPMSteps();
+
+			if (!selectedDataSource) {
+				updateSelectedDataSource(defaultApplicationDataSource);
+			}
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedModule, selectedDataSource, selectedEnvironment, selectedMethod]);
 
-	const handleNext = (): void => {
+	const handleNextStep = (): void => {
 		if (activeStep <= 3) {
 			const nextStep = activeStep + 1;
 
@@ -201,11 +226,35 @@ export default function Onboarding(): JSX.Element {
 		}
 	};
 
+	const handleNext = (): void => {
+		if (activeStep <= 3) {
+			handleNextStep();
+			history.replace(moduleRouteMap[selectedModule.id as ModulesMap]);
+		}
+	};
+
 	const handleModuleSelect = (module: ModuleProps): void => {
 		setSelectedModule(module);
 		updateSelectedModule(module);
 		updateSelectedDataSource(null);
 	};
+
+	useEffect(() => {
+		if (location.pathname === ROUTES.GET_STARTED_APPLICATION_MONITORING) {
+			handleModuleSelect(useCases.APM);
+			updateSelectedDataSource(defaultApplicationDataSource);
+			handleNextStep();
+		} else if (
+			location.pathname === ROUTES.GET_STARTED_INFRASTRUCTURE_MONITORING
+		) {
+			handleModuleSelect(useCases.InfrastructureMonitoring);
+			handleNextStep();
+		} else if (location.pathname === ROUTES.GET_STARTED_LOGS_MANAGEMENT) {
+			handleModuleSelect(useCases.LogsManagement);
+			handleNextStep();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	return (
 		<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
@@ -269,6 +318,7 @@ export default function Onboarding(): JSX.Element {
 							setActiveStep(activeStep - 1);
 							setSelectedModule(useCases.APM);
 							resetProgress();
+							history.push(ROUTES.GET_STARTED);
 						}}
 						selectedModule={selectedModule}
 						selectedModuleSteps={selectedModuleSteps}

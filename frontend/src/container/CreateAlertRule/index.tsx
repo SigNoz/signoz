@@ -1,7 +1,9 @@
 import { Form, Row } from 'antd';
+import { ENTITY_VERSION_V4 } from 'constants/app';
 import FormAlertRules from 'container/FormAlertRules';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 
@@ -20,6 +22,10 @@ function CreateRules(): JSX.Element {
 		AlertTypes.METRICS_BASED_ALERT,
 	);
 
+	const location = useLocation();
+	const queryParams = new URLSearchParams(location.search);
+	const version = queryParams.get('version');
+
 	const compositeQuery = useGetCompositeQueryParam();
 
 	const [formInstance] = Form.useForm();
@@ -37,7 +43,10 @@ function CreateRules(): JSX.Element {
 				setInitValues(exceptionAlertDefaults);
 				break;
 			default:
-				setInitValues(alertDefaults);
+				setInitValues({
+					...alertDefaults,
+					version: version || ENTITY_VERSION_V4,
+				});
 		}
 	};
 
@@ -52,6 +61,7 @@ function CreateRules(): JSX.Element {
 		if (alertType) {
 			onSelectType(alertType);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [compositeQuery]);
 
 	if (!initValues) {

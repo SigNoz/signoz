@@ -40,7 +40,7 @@ type PromRuleTask struct {
 // newPromRuleTask holds rules that have promql condition
 // and evalutes the rule at a given frequency
 func newPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *PromRuleTask {
-	zap.S().Info("Initiating a new rule group:", name, "\t frequency:", frequency)
+	zap.L().Info("Initiating a new rule group", zap.String("name", name), zap.Duration("frequency", frequency))
 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
@@ -312,7 +312,7 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
-	zap.S().Info("promql rule task:", g.name, "\t eval started at:", ts)
+	zap.L().Info("promql rule task", zap.String("name", g.name), zap.Time("eval started at", ts))
 	for i, rule := range g.rules {
 		if rule == nil {
 			continue
@@ -340,7 +340,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(HealthBad)
 				rule.SetLastError(err)
 
-				zap.S().Warn("msg", "Evaluating rule failed", "rule", rule, "err", err)
+				zap.L().Warn("Evaluating rule failed", zap.String("ruleid", rule.ID()), zap.Error(err))
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.

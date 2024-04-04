@@ -1,4 +1,6 @@
-@import '@signozhq/design-tokens';
+@import '@signozhq/design-tokens/dist/style.css';
+
+@import './periscope.scss';
 
 #root,
 html,
@@ -135,4 +137,108 @@ body {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+}
+
+// =================================================================
+// AntD style overrides
+.ant-dropdown-menu {
+	margin-top: 2px !important;
+	min-width: 160px;
+
+	border-radius: 4px;
+	padding: 16px;
+	border: 1px solid var(--bg-slate-400, #1d212d);
+	background: linear-gradient(
+		139deg,
+		rgba(18, 19, 23, 0.8) 0%,
+		rgba(18, 19, 23, 0.9) 98.68%
+	);
+	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+	backdrop-filter: blur(20px);
+
+	.ant-dropdown-menu-item-group-title {
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 18px;
+		letter-spacing: 0.08em;
+		text-align: left;
+	}
+
+	.ant-dropdown-menu-item-group {
+		.ant-dropdown-menu-item-group-list {
+			margin: 0 !important;
+
+			.ant-dropdown-menu-item {
+				font-size: 13px;
+				font-weight: 400;
+				line-height: 17px;
+				letter-spacing: 0.01em;
+				text-align: left;
+			}
+		}
+	}
+}
+
+// https://github.com/ant-design/ant-design/issues/41307
+.ant-picker-panels > *:first-child button.ant-picker-header-next-btn {
+	visibility: visible !important;
+}
+
+.ant-picker-panels > *:first-child button.ant-picker-header-super-next-btn {
+	visibility: visible !important;
+}
+
+.ant-picker-panels > *:last-child:not(:only-child) {
+	display: none !important;
+}
+
+.ant-picker-panel-container,
+.ant-picker-footer-extra > div {
+	flex-wrap: wrap !important;
+}
+
+.ant-picker-range-arrow {
+	display: none !important;
+}
+
+.ant-picker-panel-container {
+	background: none !important;
+	box-shadow: none !important;
+}
+
+.ant-tooltip {
+	--antd-arrow-background-color: var(--bg-slate-400, #1d212d);
+
+	.ant-tooltip-inner {
+		background-color: var(--bg-slate-400, #1d212d);
+	}
+	.flexBtn {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+}
+
+.members-count {
+	display: inline-block;
+	margin-left: 8px;
+	margin-right: 8px;
+}
+
+.lightMode {
+	.ant-dropdown-menu {
+		border: 1px solid var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
+		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+	}
+
+	.ant-dropdown-menu-item {
+		&:hover {
+			background-color: var(--bg-vanilla-300) !important;
+
+			&.ant-dropdown-menu-item-danger {
+				background-color: var(--bg-cherry-500) !important;
+			}
+		}
+	}
 }
