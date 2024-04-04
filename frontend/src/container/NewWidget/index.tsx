@@ -309,6 +309,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			(query) => ({
 				...query,
 				aggregateOperator: 'noop',
+				offset: 0,
+				pageSize: 10,
 			}),
 		);
 		redirectWithQueryBuilderData(updatedQuery);

@@ -70,7 +70,7 @@ function LeftContainer({
 			}));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [stagedQuery, selectedGraph]);
+	}, [stagedQuery]);
 
 	const queryResponse = useGetQueryRange(
 		requestData,
