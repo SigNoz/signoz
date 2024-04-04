@@ -310,16 +310,18 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 			const currentIdx = dashboardLayout.findIndex((w) => w.i === id);
 
 			let widgetsInsideTheRow: Layout[] = [];
+			let isPanelMapUpdated = false;
 			for (let j = currentIdx + 1; j < dashboardLayout.length; j++) {
 				if (currentPanelMap[dashboardLayout[j].i]) {
 					rowProperties.widgets = widgetsInsideTheRow;
 					widgetsInsideTheRow = [];
+					isPanelMapUpdated = true;
 					break;
 				} else {
 					widgetsInsideTheRow.push(dashboardLayout[j]);
 				}
 			}
-			if (widgetsInsideTheRow.length) {
+			if (!isPanelMapUpdated) {
 				rowProperties.widgets = widgetsInsideTheRow;
 			}
 
