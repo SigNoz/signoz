@@ -1,6 +1,8 @@
 .sidenav-container {
 	width: 64px;
 	height: 100%;
+	position: relative;
+	z-index: 1;
 
 	&.docked {
 		width: 240px;
@@ -16,8 +18,6 @@
 	border-right: 1px solid var(--bg-slate-400);
 	padding-bottom: 48px;
 	transition: all 0.2s, background 0s, border 0s;
-	position: relative;
-	z-index: 1;
 
 	.brand-company-meta {
 		display: flex;
