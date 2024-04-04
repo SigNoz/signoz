@@ -50,6 +50,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -3616,6 +3617,15 @@ func (r *ClickHouseReader) GetSavedViewsInfo(ctx context.Context) (*model.SavedV
 		}
 	}
 	return &savedViewsInfo, nil
+}
+
+func (r *ClickHouseReader) GetUsers(ctx context.Context) ([]model.UserPayload, error) {
+
+	users, apiErr := dao.DB().GetUsers(ctx)
+	if apiErr != nil {
+		return nil, apiErr.Err
+	}
+	return users, nil
 }
 
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
