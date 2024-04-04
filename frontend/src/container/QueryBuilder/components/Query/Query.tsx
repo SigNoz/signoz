@@ -36,6 +36,7 @@ import {
 } from 'react';
 import { useLocation } from 'react-use';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
@@ -324,7 +325,10 @@ export const Query = memo(function Query({
 			<QBEntityOptions
 				isMetricsDataSource={isMetricsDataSource}
 				showFunctions={
-					(version && version === ENTITY_VERSION_V4) || showFunctions || false
+					(version && version === ENTITY_VERSION_V4) ||
+					query.dataSource === DataSource.LOGS ||
+					showFunctions ||
+					false
 				}
 				isCollapsed={isCollapse}
 				entityType="query"
