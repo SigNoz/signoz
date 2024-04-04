@@ -33,7 +33,7 @@ export const CardContainer = styled.div<Props>`
 		.row-panel {
 			height: 100%;
 			display: flex;
-			gap: 10px;
+			justify-content: space-between;
 			background: var(--bg-ink-400);
 			align-items: center;
 			overflow: hidden;

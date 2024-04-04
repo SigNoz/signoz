@@ -17,7 +17,13 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
-import { FullscreenIcon, MoveDown, MoveUp, Settings } from 'lucide-react';
+import {
+	FullscreenIcon,
+	GripVertical,
+	MoveDown,
+	MoveUp,
+	Settings,
+} from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useState } from 'react';
@@ -421,29 +427,33 @@ Thanks`}
 									key={id}
 									data-grid={JSON.stringify(currentWidget)}
 								>
-									<div
-										className={cx(
-											'row-panel',
-											rowWidgetProperties.collapsed ? '.drag-handle' : '',
+									<div className={cx('row-panel')}>
+										<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+											<Button
+												icon={
+													rowWidgetProperties.collapsed ? (
+														<MoveDown size={14} />
+													) : (
+														<MoveUp size={14} />
+													)
+												}
+												type="text"
+												onClick={(): void => handleRowCollapse(id)}
+											/>
+											<Typography.Text>Row Title</Typography.Text>
+											<Button
+												icon={<Settings size={14} />}
+												type="text"
+												onClick={(): void => handleRowSettingsClick(id)}
+											/>
+										</div>
+										{rowWidgetProperties.collapsed && (
+											<Button
+												type="text"
+												icon={<GripVertical size={14} />}
+												className="drag-handle"
+											/>
 										)}
-									>
-										<Button
-											icon={
-												rowWidgetProperties.collapsed ? (
-													<MoveDown size={14} />
-												) : (
-													<MoveUp size={14} />
-												)
-											}
-											type="text"
-											onClick={(): void => handleRowCollapse(id)}
-										/>
-										<Typography.Text>Row Title</Typography.Text>
-										<Button
-											icon={<Settings size={14} />}
-											type="text"
-											onClick={(): void => handleRowSettingsClick(id)}
-										/>
 									</div>
 								</CardContainer>
 							);
