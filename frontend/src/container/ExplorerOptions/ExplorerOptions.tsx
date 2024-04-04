@@ -381,21 +381,13 @@ function ExplorerOptions({
 					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
 
 					<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
-						<Tooltip title="Create Alerts">
-							<Button
-								disabled={disabled}
-								shape="circle"
-								onClick={onCreateAlertsHandler}
-							>
-								<ConciergeBell size={16} />
-							</Button>
-						</Tooltip>
+						<Button disabled={disabled} shape="round" onClick={onCreateAlertsHandler}>
+							<ConciergeBell size={16} /> Create an Alert
+						</Button>
 
-						<Tooltip title="Add to Dashboard">
-							<Button disabled={disabled} shape="circle" onClick={onAddToDashboard}>
-								<Plus size={16} />
-							</Button>
-						</Tooltip>
+						<Button disabled={disabled} shape="round" onClick={onAddToDashboard}>
+							<Plus size={16} /> Add to Dashboard
+						</Button>
 
 						<Tooltip title="Hide">
 							<Button disabled={disabled} shape="circle" onClick={hideToolbar}>

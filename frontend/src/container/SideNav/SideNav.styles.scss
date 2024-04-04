@@ -87,7 +87,7 @@
 
 	.get-started-nav-items {
 		display: flex;
-		margin: 4px 13px 4px 10px;
+		margin: 4px 8px 4px 10px;
 
 		.get-started-btn {
 			display: flex;
@@ -130,7 +130,7 @@
 			left: 0;
 			width: 64px;
 
-			transition: all 0.3s, background 0s, border 0s;
+			transition: all 0.2s, background 0s, border 0s;
 
 			&::-webkit-scrollbar {
 				width: 0.1rem;

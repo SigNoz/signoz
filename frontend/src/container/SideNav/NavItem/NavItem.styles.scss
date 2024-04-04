@@ -44,8 +44,6 @@
 	.nav-item-data {
 		flex-grow: 1;
 
-		max-width: calc(100% - 24px);
-
 		display: flex;
 		margin: 0px 8px;
 		padding: 4px 12px;
@@ -94,15 +92,14 @@
 			.nav-item-data {
 				color: #121317;
 
-				background: white;
+				background: var(--bg-vanilla-300);
 			}
 		}
 
 		&.active {
 			.nav-item-data {
 				color: #121317;
-				background: white;
-				// color: #4e74f8;
+				background: var(--bg-vanilla-300);
 			}
 		}
 
