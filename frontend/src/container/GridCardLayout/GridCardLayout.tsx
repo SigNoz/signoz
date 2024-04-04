@@ -79,6 +79,14 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 		null,
 	);
 
+	const [currentPanelMap, setCurrentPanelMap] = useState<
+		Record<string, { widgets: Layout[]; collapsed: boolean }>
+	>({});
+
+	useEffect(() => {
+		setCurrentPanelMap(panelMap);
+	}, [panelMap]);
+
 	const [form] = useForm<{
 		title: string;
 	}>();
@@ -115,7 +123,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 			...selectedDashboard,
 			data: {
 				...selectedDashboard.data,
-				panelMap: { ...panelMap },
+				panelMap: { ...currentPanelMap },
 				layout: dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
 			},
 			uuid: selectedDashboard.uuid,
@@ -149,34 +157,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 			dashboardLayout,
 		);
 		if (!isEqual(filterLayout, filterDashboardLayout)) {
-			// need to calculate the panel map here
 			const updatedLayout = sortLayout(layout);
-			// let prevRowIdx = '';
-			// let tempWidgets: Layout[] = [];
-			// const currentPanelMap = { ...panelMap };
-			// for (let i = 0; i < updatedLayout.length; i++) {
-			// 	if (currentPanelMap[updatedLayout[i].i]) {
-			// 		if (prevRowIdx === '') {
-			// 			prevRowIdx = updatedLayout[i].i;
-			// 		} else {
-			// 			currentPanelMap[prevRowIdx] = {
-			// 				...currentPanelMap[prevRowIdx],
-			// 				widgets: tempWidgets,
-			// 			};
-			// 			tempWidgets = [];
-			// 			prevRowIdx = updatedLayout[i].i;
-			// 		}
-			// 	} else if (prevRowIdx !== '') {
-			// 		tempWidgets.push(updatedLayout[i]);
-			// 	}
-			// }
-			// if (prevRowIdx !== '') {
-			// 	currentPanelMap[prevRowIdx] = {
-			// 		...currentPanelMap[prevRowIdx],
-			// 		widgets: tempWidgets,
-			// 	};
-			// }
-			// setPanelMap(currentPanelMap);
 			setDashboardLayout(updatedLayout);
 		}
 	};
@@ -229,7 +210,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 		};
 		const currentRowIdx = 0;
 		for (let j = currentRowIdx; j < dashboardLayout.length; j++) {
-			if (!panelMap[dashboardLayout[j].i]) {
+			if (!currentPanelMap[dashboardLayout[j].i]) {
 				newRowWidgetMap.widgets.push(dashboardLayout[j]);
 			} else {
 				break;
@@ -245,15 +226,15 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 						i: id,
 						w: 12,
 						minW: 12,
-						minH: 0.3,
-						maxH: 0.3,
+						minH: 1,
+						maxH: 1,
 						x: 0,
-						h: 0.3,
+						h: 1,
 						y: 0,
 					},
 					...dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
 				],
-				panelMap: { ...panelMap, [id]: newRowWidgetMap },
+				panelMap: { ...currentPanelMap, [id]: newRowWidgetMap },
 				widgets: [
 					...(selectedDashboard.data.widgets || []),
 					{
@@ -293,53 +274,67 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 		setCurrentSelectRowId(id);
 	};
 
-	console.log(panelMap);
-
 	const onSettingsModalSubmit = (): void => {
 		// handle update of the title here
-		console.log(form.getFieldValue('title'));
 		form.setFieldValue('title', '');
 		setIsSettingsModalOpen(false);
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleRowCollapse = (id: string): void => {
-		const rowProperties = { ...panelMap[id] };
+		if (!selectedDashboard) return;
+		const rowProperties = { ...currentPanelMap[id] };
+
+		let updatedDashboardLayout = [...dashboardLayout];
 		if (rowProperties.collapsed === true) {
 			rowProperties.collapsed = false;
 			const widgetsInsideTheRow = rowProperties.widgets;
 			let maxY = 0;
 			widgetsInsideTheRow.forEach((w) => {
-				maxY = Math.max(maxY, w.y);
+				maxY = Math.max(maxY, w.y + w.h);
 			});
+			const currentRowWidget = dashboardLayout.find((w) => w.i === id);
+			if (currentRowWidget) {
+				maxY -= currentRowWidget.h + currentRowWidget.y;
+			}
+
 			const idxCurrentRow = dashboardLayout.findIndex((w) => w.i === id);
 
-			let updatedDashboardLayout = [...dashboardLayout];
 			for (let j = idxCurrentRow + 1; j < dashboardLayout.length; j++) {
 				updatedDashboardLayout[j].y += maxY;
 			}
 			updatedDashboardLayout = [...updatedDashboardLayout, ...widgetsInsideTheRow];
-			setPanelMap((prev) => ({
-				...prev,
-				[id]: {
-					...rowProperties,
-				},
-			}));
-			setDashboardLayout(sortLayout(updatedDashboardLayout));
 		} else {
 			rowProperties.collapsed = true;
-			const widgetsInsideTheRow = rowProperties.widgets;
-			const updatedDashboardLayout = [...dashboardLayout].filter(
-				(widget) => !widgetsInsideTheRow.some((w: Layout) => w.i === widget.i),
+			// calculate the panel map
+			const currentIdx = dashboardLayout.findIndex((w) => w.i === id);
+
+			let widgetsInsideTheRow: Layout[] = [];
+			for (let j = currentIdx + 1; j < dashboardLayout.length; j++) {
+				if (currentPanelMap[dashboardLayout[j].i]) {
+					rowProperties.widgets = widgetsInsideTheRow;
+					widgetsInsideTheRow = [];
+					break;
+				} else {
+					widgetsInsideTheRow.push(dashboardLayout[j]);
+				}
+			}
+			if (widgetsInsideTheRow.length) {
+				rowProperties.widgets = widgetsInsideTheRow;
+			}
+
+			updatedDashboardLayout = updatedDashboardLayout.filter(
+				(widget) => !rowProperties.widgets.some((w: Layout) => w.i === widget.i),
 			);
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			setPanelMap((prev) => ({
-				...prev,
-				[id]: {
-					...rowProperties,
-				},
-			}));
-			setDashboardLayout(sortLayout(updatedDashboardLayout));
 		}
+		setCurrentPanelMap((prev) => ({
+			...prev,
+			[id]: {
+				...rowProperties,
+			},
+		}));
+
+		setDashboardLayout(sortLayout(updatedDashboardLayout));
 	};
 	return (
 		<>
@@ -416,7 +411,7 @@ Thanks`}
 						const currentWidget = (widgets || [])?.find((e) => e.id === id);
 
 						if (currentWidget?.panelTypes === PANEL_TYPES.ROW) {
-							const rowWidgetProperties = panelMap[id] || {};
+							const rowWidgetProperties = currentPanelMap[id] || {};
 							return (
 								<CardContainer
 									className={isDashboardLocked ? '' : 'enable-resize'}
