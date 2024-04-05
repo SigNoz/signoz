@@ -53,6 +53,7 @@ function CreateAlertChannels({
 				EmailChannel
 		>
 	>({
+		send_resolved: true,
 		text: `{{ range .Alerts -}}
      *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
 
@@ -119,7 +120,7 @@ function CreateAlertChannels({
 			api_url: selectedConfig?.api_url || '',
 			channel: selectedConfig?.channel || '',
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			text: selectedConfig?.text || '',
 			title: selectedConfig?.title || '',
 		}),
@@ -158,7 +159,7 @@ function CreateAlertChannels({
 		let request: WebhookChannel = {
 			api_url: selectedConfig?.api_url || '',
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 		};
 
 		if (selectedConfig?.username !== '' || selectedConfig?.password !== '') {
@@ -226,7 +227,7 @@ function CreateAlertChannels({
 
 		return {
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			routing_key: selectedConfig?.routing_key || '',
 			client: selectedConfig?.client || '',
 			client_url: selectedConfig?.client_url || '',
@@ -274,7 +275,7 @@ function CreateAlertChannels({
 		() => ({
 			api_key: selectedConfig?.api_key || '',
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			description: selectedConfig?.description || '',
 			message: selectedConfig?.message || '',
 			priority: selectedConfig?.priority || '',
@@ -312,7 +313,7 @@ function CreateAlertChannels({
 	const prepareEmailRequest = useCallback(
 		() => ({
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			to: selectedConfig?.to || '',
 			html: selectedConfig?.html || '',
 			headers: selectedConfig?.headers || {},
@@ -350,7 +351,7 @@ function CreateAlertChannels({
 		() => ({
 			webhook_url: selectedConfig?.webhook_url || '',
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			text: selectedConfig?.text || '',
 			title: selectedConfig?.title || '',
 		}),
