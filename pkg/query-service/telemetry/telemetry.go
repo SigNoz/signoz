@@ -294,7 +294,7 @@ func createTelemetry() {
 						if user.Email == DEFAULT_CLOUD_EMAIL {
 							continue
 						}
-						telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, user.Email, true, false)
+						telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, user.Email, false, false)
 					}
 				}
 				alertsInfo, err := telemetry.reader.GetAlertsInfo(context.Background())
@@ -326,7 +326,7 @@ func createTelemetry() {
 										if user.Email == DEFAULT_CLOUD_EMAIL {
 											continue
 										}
-										telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, user.Email, true, false)
+										telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, user.Email, false, false)
 									}
 								}
 							}
