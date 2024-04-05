@@ -28,7 +28,7 @@ import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useState } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
-import { Layout } from 'react-grid-layout';
+import { ItemCallback, Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -202,11 +202,6 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	}, [dashboardLayout]);
 
 	function handleAddRow(): void {
-		// /**
-		//  * handleAddRow takes care of generating the panelMap for the newly added row
-		//  * by populating the widgets under the current row and deleting them from the
-		//  * dashboard layout
-		//  */
 		if (!selectedDashboard) return;
 		const id = uuid();
 
@@ -344,6 +339,23 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 
 		setDashboardLayout(sortLayout(updatedDashboardLayout));
 	};
+
+	const handleDragStop: ItemCallback = (_, oldItem, newItem): void => {
+		if (currentPanelMap[oldItem.i]) {
+			const differenceY = newItem.y - oldItem.y;
+			const widgetsInsideRow = currentPanelMap[oldItem.i].widgets.map((w) => ({
+				...w,
+				y: w.y + differenceY,
+			}));
+			setCurrentPanelMap((prev) => ({
+				...prev,
+				[oldItem.i]: {
+					...prev[oldItem.i],
+					widgets: widgetsInsideRow,
+				},
+			}));
+		}
+	};
 	return (
 		<>
 			<Flex justify="flex-end" gap={8} align="center">
@@ -410,6 +422,7 @@ Thanks`}
 					isResizable={!isDashboardLocked && addPanelPermission}
 					allowOverlap={false}
 					onLayoutChange={handleLayoutChange}
+					onDragStop={handleDragStop}
 					draggableHandle=".drag-handle"
 					layout={dashboardLayout}
 					style={{ backgroundColor: isDarkMode ? '' : themeColors.snowWhite }}
