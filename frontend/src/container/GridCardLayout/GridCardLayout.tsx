@@ -280,9 +280,52 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 
 	const onSettingsModalSubmit = (): void => {
 		// handle update of the title here
-		form.setFieldValue('title', '');
-		setIsSettingsModalOpen(false);
-		setCurrentSelectRowId(null);
+		const newTitle = form.getFieldValue('title');
+		if (!selectedDashboard) return;
+
+		if (!currentSelectRowId) return;
+
+		const currentWidget = selectedDashboard?.data?.widgets?.find(
+			(e) => e.id === currentSelectRowId,
+		);
+
+		if (!currentWidget) return;
+
+		currentWidget.title = newTitle;
+		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
+			(e) => e.id !== currentSelectRowId,
+		);
+
+		updatedWidgets?.push(currentWidget);
+
+		const updatedSelectedDashboard: Dashboard = {
+			...selectedDashboard,
+			data: {
+				...selectedDashboard.data,
+				widgets: updatedWidgets,
+			},
+			uuid: selectedDashboard.uuid,
+		};
+
+		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
+			onSuccess: (updatedDashboard) => {
+				if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
+				if (setSelectedDashboard && updatedDashboard.payload) {
+					setSelectedDashboard(updatedDashboard.payload);
+				}
+				if (setPanelMap) setPanelMap(updatedDashboard.payload?.data.panelMap || {});
+				form.setFieldValue('title', '');
+				setIsSettingsModalOpen(false);
+				setCurrentSelectRowId(null);
+				featureResponse.refetch();
+			},
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			onError: () => {
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				});
+			},
+		});
 	};
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -504,7 +547,7 @@ Thanks`}
 												type="text"
 												onClick={(): void => handleRowCollapse(id)}
 											/>
-											<Typography.Text>Row Title</Typography.Text>
+											<Typography.Text>{currentWidget.title}</Typography.Text>
 											<Button
 												icon={<Settings size={14} />}
 												type="text"
