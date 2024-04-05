@@ -537,6 +537,7 @@ Thanks`}
 									<div className={cx('row-panel')}>
 										<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
 											<Button
+												disabled={updateDashboardMutation.isLoading}
 												icon={
 													rowWidgetProperties.collapsed ? (
 														<MoveDown size={14} />
