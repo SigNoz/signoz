@@ -23,6 +23,7 @@ import {
 	MoveDown,
 	MoveUp,
 	Settings,
+	Trash2,
 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
@@ -80,6 +81,8 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	const [dashboardLayout, setDashboardLayout] = useState<Layout[]>([]);
 
 	const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
+
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
 
 	const [currentSelectRowId, setCurrentSelectRowId] = useState<string | null>(
 		null,
@@ -279,6 +282,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 		// handle update of the title here
 		form.setFieldValue('title', '');
 		setIsSettingsModalOpen(false);
+		setCurrentSelectRowId(null);
 	};
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -355,6 +359,53 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 				},
 			}));
 		}
+	};
+
+	const handleRowDelete = (): void => {
+		if (!selectedDashboard) return;
+
+		if (!currentSelectRowId) return;
+
+		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
+			(e) => e.id !== currentSelectRowId,
+		);
+
+		const updatedLayout =
+			selectedDashboard.data.layout?.filter((e) => e.i !== currentSelectRowId) ||
+			[];
+
+		const updatedPanelMap = { ...currentPanelMap };
+		delete updatedPanelMap[currentSelectRowId];
+
+		const updatedSelectedDashboard: Dashboard = {
+			...selectedDashboard,
+			data: {
+				...selectedDashboard.data,
+				widgets: updatedWidgets,
+				layout: updatedLayout,
+				panelMap: updatedPanelMap,
+			},
+			uuid: selectedDashboard.uuid,
+		};
+
+		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
+			onSuccess: (updatedDashboard) => {
+				if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
+				if (setSelectedDashboard && updatedDashboard.payload) {
+					setSelectedDashboard(updatedDashboard.payload);
+				}
+				if (setPanelMap) setPanelMap(updatedDashboard.payload?.data.panelMap || {});
+				setIsDeleteModalOpen(false);
+				setCurrentSelectRowId(null);
+				featureResponse.refetch();
+			},
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			onError: () => {
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				});
+			},
+		});
 	};
 	return (
 		<>
@@ -467,6 +518,16 @@ Thanks`}
 												className="drag-handle"
 											/>
 										)}
+										{!rowWidgetProperties.collapsed && (
+											<Button
+												type="text"
+												icon={<Trash2 size={14} />}
+												onClick={(): void => {
+													setIsDeleteModalOpen(true);
+													setCurrentSelectRowId(id);
+												}}
+											/>
+										)}
 									</div>
 								</CardContainer>
 							);
@@ -522,6 +583,18 @@ Thanks`}
 							</Button>
 						</Form.Item>
 					</Form>
+				</Modal>
+				<Modal
+					open={isDeleteModalOpen}
+					title="Delete Row"
+					destroyOnClose
+					onCancel={(): void => {
+						setIsDeleteModalOpen(false);
+						setCurrentSelectRowId(null);
+					}}
+					onOk={(): void => handleRowDelete()}
+				>
+					<Typography.Text>Are you sure you want to delete this row</Typography.Text>
 				</Modal>
 			</FullScreen>
 		</>
