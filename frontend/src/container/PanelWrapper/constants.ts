@@ -1,5 +1,6 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
+import HistogramPanelWrapper from './HistogramPanelWrapper';
 import ListPanelWrapper from './ListPanelWrapper';
 import TablePanelWrapper from './TablePanelWrapper';
 import UplotPanelWrapper from './UplotPanelWrapper';
@@ -13,4 +14,5 @@ export const PanelTypeVsPanelWrapper = {
 	[PANEL_TYPES.TRACE]: null,
 	[PANEL_TYPES.EMPTY_WIDGET]: null,
 	[PANEL_TYPES.BAR]: UplotPanelWrapper,
+	[PANEL_TYPES.HISTOGRAM]: HistogramPanelWrapper,
 };

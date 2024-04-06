@@ -27,6 +27,7 @@ export const panelTypeVsThreshold: { [key in PANEL_TYPES]: boolean } = {
 	[PANEL_TYPES.TABLE]: true,
 	[PANEL_TYPES.LIST]: false,
 	[PANEL_TYPES.BAR]: true,
+	[PANEL_TYPES.HISTOGRAM]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
@@ -37,6 +38,7 @@ export const panelTypeVsSoftMinMax: { [key in PANEL_TYPES]: boolean } = {
 	[PANEL_TYPES.TABLE]: false,
 	[PANEL_TYPES.LIST]: false,
 	[PANEL_TYPES.BAR]: true,
+	[PANEL_TYPES.HISTOGRAM]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
@@ -47,6 +49,7 @@ export const panelTypeVsDragAndDrop: { [key in PANEL_TYPES]: boolean } = {
 	[PANEL_TYPES.TABLE]: true,
 	[PANEL_TYPES.LIST]: false,
 	[PANEL_TYPES.BAR]: false,
+	[PANEL_TYPES.HISTOGRAM]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
@@ -57,6 +60,7 @@ export const panelTypeVsFillSpan: { [key in PANEL_TYPES]: boolean } = {
 	[PANEL_TYPES.TABLE]: false,
 	[PANEL_TYPES.LIST]: false,
 	[PANEL_TYPES.BAR]: false,
+	[PANEL_TYPES.HISTOGRAM]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
@@ -67,6 +71,7 @@ export const panelTypeVsYAxisUnit: { [key in PANEL_TYPES]: boolean } = {
 	[PANEL_TYPES.TABLE]: true,
 	[PANEL_TYPES.LIST]: false,
 	[PANEL_TYPES.BAR]: true,
+	[PANEL_TYPES.HISTOGRAM]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
@@ -77,6 +82,7 @@ export const panelTypeVsCreateAlert: { [key in PANEL_TYPES]: boolean } = {
 	[PANEL_TYPES.TABLE]: false,
 	[PANEL_TYPES.LIST]: false,
 	[PANEL_TYPES.BAR]: true,
+	[PANEL_TYPES.HISTOGRAM]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
@@ -89,6 +95,7 @@ export const panelTypeVsPanelTimePreferences: {
 	[PANEL_TYPES.TABLE]: true,
 	[PANEL_TYPES.LIST]: false,
 	[PANEL_TYPES.BAR]: true,
+	[PANEL_TYPES.HISTOGRAM]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
