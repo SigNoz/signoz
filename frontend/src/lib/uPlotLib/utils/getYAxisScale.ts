@@ -124,6 +124,10 @@ GetYAxisScale): { auto?: boolean; range?: uPlot.Scale.Range } => {
 
 	// Situation: thresholds are absent
 	if (!thresholds || thresholds.length === 0) {
+		if (softMax === softMin) {
+			return { auto: true };
+		}
+
 		// Situation: No thresholds data but series data is present
 		if (series && !areAllSeriesEmpty(series)) {
 			// Situation: softMin and softMax are null
