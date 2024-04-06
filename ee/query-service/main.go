@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.signoz.io/signoz/ee/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/clickhouseOptimizeS3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/version"
@@ -142,6 +143,8 @@ func main() {
 	} else {
 		zap.L().Info("JWT secret key set successfully.")
 	}
+
+	clickhouseOptimizeS3.InitChOptimizer()
 
 	server, err := app.NewServer(serverOptions)
 	if err != nil {

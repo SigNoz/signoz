@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/clickhouseOptimizeS3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/version"
@@ -89,6 +90,8 @@ func main() {
 	} else {
 		zap.L().Info("JWT secret key set successfully.")
 	}
+
+	clickhouseOptimizeS3.InitChOptimizer()
 
 	server, err := app.NewServer(serverOptions)
 	if err != nil {

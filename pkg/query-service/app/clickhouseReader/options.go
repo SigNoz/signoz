@@ -85,7 +85,7 @@ type namespaceConfig struct {
 	Connector               Connector
 }
 
-// Connecto defines how to connect to the database
+// Connector defines how to connect to the database
 type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
 
 func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
