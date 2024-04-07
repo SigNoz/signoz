@@ -332,6 +332,7 @@ func (w *SpanWriter) writeErrorBatch(batchSpans []*Span) error {
 			stringToBool(span.ErrorEvent.AttributeMap["exception.escaped"]),
 			span.ResourceTagsMap,
 			span.IssueStatus,
+			span.IssueLink,
 		)
 		if err != nil {
 			w.logger.Error("Could not append span to batch: ", zap.Object("span", span), zap.Error(err))

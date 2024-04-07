@@ -5,4 +5,5 @@ export const urlKey = {
 	lastSeen: 'lastSeen',
 	errorId: 'errorId',
 	timestamp: 'timestamp',
+	issueLink: 'issueLink',
 };

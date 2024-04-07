@@ -14,7 +14,7 @@ import { urlKey } from 'pages/ErrorDetails/utils';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
 
 import { keyToExclude } from './config';
@@ -33,6 +33,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const serviceName = params.get(urlKey.serviceName);
 	const errorType = params.get(urlKey.exceptionType);
 	const timestamp = params.get(urlKey.timestamp);
+	const issueLink = params.get(urlKey.issueLink);
 
 	const { data: nextPrevData, status: nextPrevStatus } = useQuery(
 		[
@@ -219,16 +220,30 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				}}
 			>
 				<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
-				{/* {['Unhandled_Rejection', 'JS_ERROR'].includes(errorDetail.exceptionType) ? ( */}
-				{showCheckBtn ? (
-					<Button
-						onClick={clickCheckSourceDetail}
-						type="primary"
-						loading={sourceCodeLoading}
-					>
-						check source code
-					</Button>
-				) : null}
+				<div
+					style={{
+						display: 'flex',
+						justifyContent: 'flex-start',
+						alignItems: 'center',
+					}}
+				>
+					<div style={{ marginRight: 10 }}>
+						{issueLink ? (
+							<Link to={issueLink}>Issue 链接</Link>
+						) : (
+							<Button type="primary">创建Issue</Button>
+						)}
+					</div>
+					{showCheckBtn ? (
+						<Button
+							onClick={clickCheckSourceDetail}
+							type="primary"
+							loading={sourceCodeLoading}
+						>
+							check source code
+						</Button>
+					) : null}
+				</div>
 			</div>
 
 			<div className="error-container">

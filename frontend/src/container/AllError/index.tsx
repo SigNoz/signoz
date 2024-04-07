@@ -505,6 +505,19 @@ function AllErrors(): JSX.Element {
 				/>
 			),
 		},
+		{
+			title: 'Issue href',
+			dataIndex: 'issueStatus',
+			width: 100,
+			key: 'issueStatus',
+			sorter: false,
+			render: (_, record) => {
+				if (record.issueLink) {
+					return <Link to={record.issueLink}>Issue 链接</Link>;
+				}
+				return <Button type="primary">创建Issue</Button>;
+			},
+		},
 	];
 
 	const onChangeHandler: TableProps<Exception>['onChange'] = useCallback(

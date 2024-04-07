@@ -32,6 +32,7 @@ export interface Exception {
 	serviceName: string;
 	groupID: string;
 	issueStatus?: string[];
+	issueLink?: string;
 }
 
 export type PayloadProps = Exception[];
