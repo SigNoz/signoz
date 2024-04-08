@@ -3,6 +3,7 @@ import { LockFilled, WarningOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Tooltip, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
@@ -302,7 +303,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const setGraphHandler = (type: PANEL_TYPES): void => {
 		const updatedQuery = handleQueryChange(type as any, supersetQuery);
 		setGraphType(type);
-		redirectWithQueryBuilderData(updatedQuery);
+		redirectWithQueryBuilderData(
+			updatedQuery,
+			{ [QueryParams.graphType]: type },
+			undefined,
+			false,
+		);
 	};
 
 	const onSaveDashboard = useCallback((): void => {

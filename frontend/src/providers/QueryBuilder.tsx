@@ -674,6 +674,7 @@ export function QueryBuilderProvider({
 			query: Partial<Query>,
 			searchParams?: Record<string, unknown>,
 			redirectingUrl?: typeof ROUTES[keyof typeof ROUTES],
+			shallStringify?: boolean,
 		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
@@ -725,7 +726,12 @@ export function QueryBuilderProvider({
 
 			if (searchParams) {
 				Object.keys(searchParams).forEach((param) =>
-					urlQuery.set(param, JSON.stringify(searchParams[param])),
+					urlQuery.set(
+						param,
+						shallStringify
+							? JSON.stringify(searchParams[param])
+							: (searchParams[param] as string),
+					),
 				);
 			}
 

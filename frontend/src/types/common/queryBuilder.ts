@@ -220,6 +220,7 @@ export type QueryBuilderContextType = {
 		query: Query,
 		searchParams?: Record<string, unknown>,
 		redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
+		shallStringify?: boolean,
 	) => void;
 	handleRunQuery: () => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;
