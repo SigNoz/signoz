@@ -538,6 +538,7 @@ export function QueryBuilderProvider({
 							queryItem.dataSource
 						].builder.queryData;
 
+					propsRequired.push('dataSource');
 					propsRequired.forEach((p: any) => {
 						set(queryItem, p, get(newQueryItem, p));
 					});
