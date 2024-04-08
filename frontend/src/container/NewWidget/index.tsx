@@ -301,8 +301,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
 		const updatedQuery = handleQueryChange(type as any, supersetQuery);
-		redirectWithQueryBuilderData(updatedQuery);
 		setGraphType(type);
+		redirectWithQueryBuilderData(updatedQuery);
 	};
 
 	const onSaveDashboard = useCallback((): void => {

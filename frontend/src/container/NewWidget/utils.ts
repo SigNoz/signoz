@@ -169,7 +169,11 @@ export const panelTypeDataSourceFormValuesMap: Record<
 				queryData: ['filters', 'limit', 'orderBy'],
 			},
 		},
-		[DataSource.METRICS]: {},
+		[DataSource.METRICS]: {
+			builder: {
+				queryData: [],
+			},
+		},
 		[DataSource.TRACES]: {
 			builder: {
 				queryData: ['filters', 'limit', 'orderBy'],
