@@ -130,6 +130,10 @@ func (m *Manager) Start() {
 	m.run()
 }
 
+func (m *Manager) RuleDB() RuleDB {
+	return m.ruleDB
+}
+
 func (m *Manager) Pause(b bool) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -525,7 +529,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		rules = append(rules, tr)
 
 		// create ch rule task for evalution
-		task = newTask(TaskTypeCh, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
+		task = newTask(TaskTypeCh, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc(), m.ruleDB)
 
 		// add rule to memory
 		m.rules[ruleId] = tr
@@ -547,7 +551,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		rules = append(rules, pr)
 
 		// create promql rule task for evalution
-		task = newTask(TaskTypeProm, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
+		task = newTask(TaskTypeProm, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc(), m.ruleDB)
 
 		// add rule to memory
 		m.rules[ruleId] = pr

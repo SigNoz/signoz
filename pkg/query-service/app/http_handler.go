@@ -385,6 +385,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
 	router.HandleFunc("/api/v1/testRule", am.EditAccess(aH.testRule)).Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/downtime_schedules", am.OpenAccess(aH.listDowntimeSchedules)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.OpenAccess(aH.getDowntimeSchedule)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/downtime_schedules", am.OpenAccess(aH.createDowntimeSchedule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.OpenAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.OpenAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
+
 	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/grafana", am.EditAccess(aH.createDashboardsTransform)).Methods(http.MethodPost)
@@ -852,6 +858,66 @@ func (aH *APIHandler) populateTemporality(ctx context.Context, qp *v3.QueryRange
 		}
 	}
 	return nil
+}
+
+func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Request) {
+	schedules, err := aH.ruleManager.RuleDB().GetAllPlannedMaintenance(r.Context())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, schedules)
+}
+
+func (aH *APIHandler) getDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	schedule, err := aH.ruleManager.RuleDB().GetPlannedMaintenanceByID(r.Context(), id)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, schedule)
+}
+
+func (aH *APIHandler) createDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	var schedule rules.PlannedMaintenance
+	err := json.NewDecoder(r.Body).Decode(&schedule)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	_, err = aH.ruleManager.RuleDB().CreatePlannedMaintenance(r.Context(), schedule)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	var schedule rules.PlannedMaintenance
+	err := json.NewDecoder(r.Body).Decode(&schedule)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	_, err = aH.ruleManager.RuleDB().EditPlannedMaintenance(r.Context(), schedule, id)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	_, err := aH.ruleManager.RuleDB().DeletePlannedMaintenance(r.Context(), id)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, nil)
 }
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
