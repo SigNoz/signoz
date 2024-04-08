@@ -100,9 +100,9 @@ export const getUplotHistogramChartOptions = ({
 	({
 		id,
 		width: dimensions.width,
-		height: dimensions.height,
+		height: dimensions.height - 30,
 		legend: {
-			show: false,
+			show: true,
 			live: false,
 			isolate: true,
 		},
