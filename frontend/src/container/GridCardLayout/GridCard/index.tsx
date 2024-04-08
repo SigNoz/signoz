@@ -106,7 +106,7 @@ function GridCardGraph({
 		return {
 			query: updatedQuery,
 			graphType: PANEL_TYPES.LIST,
-			selectedTime: 'GLOBAL_TIME',
+			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval,
 			tableParams: {
 				pagination: {
@@ -121,7 +121,7 @@ function GridCardGraph({
 		{
 			...requestData,
 			variables: getDashboardVariables(variables),
-			selectedTime: 'GLOBAL_TIME',
+			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval,
 		},
 		version || DEFAULT_ENTITY_VERSION,
