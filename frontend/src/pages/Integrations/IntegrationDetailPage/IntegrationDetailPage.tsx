@@ -22,10 +22,16 @@ interface IntegrationDetailPageProps {
 	selectedIntegration: string;
 	setSelectedIntegration: (id: string | null) => void;
 	activeDetailTab: string;
+	setActiveDetailTab: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
-	const { selectedIntegration, setSelectedIntegration, activeDetailTab } = props;
+	const {
+		selectedIntegration,
+		setSelectedIntegration,
+		activeDetailTab,
+		setActiveDetailTab,
+	} = props;
 
 	const {
 		data,
@@ -119,11 +125,13 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 								metrics: null,
 							})}
 							refetchIntegrationDetails={refetch}
+							setActiveDetailTab={setActiveDetailTab}
 						/>
 						<IntegrationDetailContent
 							activeDetailTab={activeDetailTab}
 							integrationData={integrationData}
 							integrationId={selectedIntegration}
+							setActiveDetailTab={setActiveDetailTab}
 						/>
 
 						{connectionStatus !== ConnectionStates.NotInstalled && (

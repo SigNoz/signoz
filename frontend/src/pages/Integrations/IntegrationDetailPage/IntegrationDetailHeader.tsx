@@ -3,6 +3,8 @@ import './IntegrationDetailPage.styles.scss';
 
 import { Button, Modal, Tooltip, Typography } from 'antd';
 import installIntegration from 'api/Integrations/installIntegration';
+import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
+import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs from 'dayjs';
 import useAnalytics from 'hooks/analytics/useAnalytics';
@@ -23,6 +25,7 @@ interface IntegrationDetailHeaderProps {
 	refetchIntegrationDetails: () => void;
 	connectionState: ConnectionStates;
 	connectionData: IntegrationConnectionStatus;
+	setActiveDetailTab: React.Dispatch<React.SetStateAction<string | null>>;
 }
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function IntegrationDetailHeader(
@@ -35,6 +38,7 @@ function IntegrationDetailHeader(
 		description,
 		connectionState,
 		connectionData,
+		setActiveDetailTab,
 		refetchIntegrationDetails,
 	} = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -106,6 +110,9 @@ function IntegrationDetailHeader(
 			last_received_from: connectionData.metrics.last_received_from,
 		};
 	}
+	const isConnectionStatePending =
+		connectionState === ConnectionStates.NotInstalled ||
+		connectionState === ConnectionStates.TestingConnection;
 	return (
 		<div className="integration-connection-header">
 			<div className="integration-detail-header" key={id}>
@@ -154,11 +161,37 @@ function IntegrationDetailHeader(
 				className="test-connection-modal"
 				open={isModalOpen}
 				title="Test Connection"
-				onOk={handleOk}
 				onCancel={handleCancel}
-				okText="I understand"
-				okButtonProps={{ className: 'understandBtn', icon: <Check size={14} /> }}
-				cancelButtonProps={{ style: { display: 'none' } }}
+				footer={
+					<div
+						className={cx(
+							'connection-footer',
+							!isConnectionStatePending && 'not-pending',
+						)}
+					>
+						<Button
+							type="text"
+							icon={<Check size={14} />}
+							onClick={handleOk}
+							className="understandBtn"
+						>
+							{isConnectionStatePending ? 'I have already configured' : 'I understand'}
+						</Button>
+						{isConnectionStatePending && (
+							<Button
+								type="primary"
+								icon={<ConfigureIcon />}
+								onClick={(): void => {
+									setActiveDetailTab('configuration');
+									handleOk();
+								}}
+								className="configureBtn"
+							>
+								Show Configuration Steps
+							</Button>
+						)}
+					</div>
+				}
 			>
 				<div className="connection-content">
 					<TestConnection connectionState={connectionState} />
@@ -207,7 +240,8 @@ function IntegrationDetailHeader(
 								</Tooltip>
 							</div>
 						</>
-					) : connectionState === ConnectionStates.TestingConnection ? (
+					) : connectionState === ConnectionStates.TestingConnection ||
+					  connectionState === ConnectionStates.NotInstalled ? (
 						<div className="data-test-connection">
 							<div className="last-data">
 								After adding the {title} integration, you need to manually configure
