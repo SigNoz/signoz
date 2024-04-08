@@ -3,8 +3,7 @@ import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { PANEL_TYPES_INITIAL_QUERY } from 'container/NewDashboard/ComponentsSlider/constants';
-import { isEqual, set } from 'lodash-es';
+import { isEqual, set, unset } from 'lodash-es';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -165,9 +164,17 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		},
 	},
 	[PANEL_TYPES.LIST]: {
-		[DataSource.LOGS]: {},
+		[DataSource.LOGS]: {
+			builder: {
+				queryData: ['filters', 'limit', 'orderBy'],
+			},
+		},
 		[DataSource.METRICS]: {},
-		[DataSource.TRACES]: {},
+		[DataSource.TRACES]: {
+			builder: {
+				queryData: ['filters', 'limit', 'orderBy'],
+			},
+		},
 	},
 	[PANEL_TYPES.VALUE]: {
 		[DataSource.LOGS]: {
@@ -215,10 +222,6 @@ export function handleQueryChange(
 	newPanelType: keyof PartialPanelTypes,
 	supersetQuery: Query,
 ): Query {
-	if (newPanelType === PANEL_TYPES.LIST) {
-		return PANEL_TYPES_INITIAL_QUERY[PANEL_TYPES.LIST];
-	}
-
 	return {
 		...supersetQuery,
 		builder: {
@@ -234,6 +237,16 @@ export function handleQueryChange(
 				fieldsToSelect.forEach((field: keyof IBuilderQuery) => {
 					set(tempQuery, field, supersetQuery.builder.queryData[index][field]);
 				});
+
+				if (newPanelType === PANEL_TYPES.LIST) {
+					set(tempQuery, 'aggregateOperator', 'noop');
+					set(tempQuery, 'offset', 0);
+					set(tempQuery, 'pageSize', 10);
+				} else if (tempQuery.aggregateOperator === 'noop') {
+					set(tempQuery, 'aggregateOperator', 'count');
+					unset(tempQuery, 'offset');
+					unset(tempQuery, 'pageSize');
+				}
 
 				return tempQuery;
 			}),

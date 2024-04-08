@@ -62,7 +62,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		stagedQuery,
 		redirectWithQueryBuilderData,
 		supersetQuery,
-		setSupersetQuery,
 	} = useQueryBuilder();
 
 	const isQueryModified = useMemo(
@@ -112,8 +111,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	);
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
-
-	const [panelTypeChangeModal, setPanelTypeChangeModal] = useState(false);
 
 	const [softMin, setSoftMin] = useState<number | null>(
 		selectedWidget?.softMin === null || selectedWidget?.softMin === undefined
@@ -176,7 +173,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const closeModal = (): void => {
 		setSaveModal(false);
 		setDiscardModal(false);
-		setPanelTypeChangeModal(false);
 	};
 
 	const [graphType, setGraphType] = useState(selectedGraph);
@@ -303,30 +299,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 	}, [dashboardId]);
 
-	const handleListPanelTypeChange = useCallback((): void => {
-		const updatedQuery = handleQueryChange(PANEL_TYPES.LIST, supersetQuery);
-		updatedQuery.builder.queryData = updatedQuery.builder.queryData.map(
-			(query) => ({
-				...query,
-				aggregateOperator: 'noop',
-				offset: 0,
-				pageSize: 10,
-			}),
-		);
-		redirectWithQueryBuilderData(updatedQuery);
-		setSupersetQuery(updatedQuery);
-		setGraphType(PANEL_TYPES.LIST);
-		setPanelTypeChangeModal(false);
-	}, [redirectWithQueryBuilderData, setSupersetQuery, supersetQuery]);
-
 	const setGraphHandler = (type: PANEL_TYPES): void => {
-		if (type === PANEL_TYPES.LIST) {
-			setPanelTypeChangeModal(true);
-		} else {
-			const updatedQuery = handleQueryChange(type as any, supersetQuery);
-			redirectWithQueryBuilderData(updatedQuery);
-			setGraphType(type);
-		}
+		const updatedQuery = handleQueryChange(type as any, supersetQuery);
+		redirectWithQueryBuilderData(updatedQuery);
+		setGraphType(type);
 	};
 
 	const onSaveDashboard = useCallback((): void => {
@@ -503,28 +479,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				width={600}
 			>
 				<Typography>{t('dashboard_unsave_changes')}</Typography>
-			</Modal>
-			<Modal
-				title={
-					<Space>
-						<WarningOutlined style={{ fontSize: '16px', color: '#fdd600' }} />
-						Change Panel Type
-					</Space>
-				}
-				focusTriggerAfterClose
-				forceRender
-				destroyOnClose
-				closable
-				onCancel={closeModal}
-				onOk={handleListPanelTypeChange}
-				centered
-				open={panelTypeChangeModal}
-				width={600}
-			>
-				<Typography>
-					Changing to list type will reset the query to the base list query and the
-					current changes will be lost
-				</Typography>
 			</Modal>
 		</Container>
 	);
