@@ -3,6 +3,7 @@ package clickhouseReader
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -75,7 +76,7 @@ func (c clickhouseConnWrapper) getLogComment(ctx context.Context) string {
 
 	logComment, _ := json.Marshal(logCommentKVs)
 
-	return logComment
+	return string(logComment)
 }
 
 func (c clickhouseConnWrapper) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
