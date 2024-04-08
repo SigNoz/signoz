@@ -37,7 +37,6 @@
 	}
 }
 
-	
 .explorer-options {
 	position: fixed;
 	bottom: 24px;
@@ -78,11 +77,9 @@
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			gap: 8px;
+			border: none;
 
 			border: 1px solid #1d2023;
-			color: #c0c1c3;
-			background-color: #161922;
 
 			box-shadow: none !important;
 
