@@ -2,8 +2,7 @@ package clickhouseReader
 
 import (
 	"context"
-	"fmt"
-	"strings"
+	"encoding/json"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -74,11 +73,7 @@ func (c clickhouseConnWrapper) getLogComment(ctx context.Context) string {
 		return ""
 	}
 
-	logComment := ""
-	for k, v := range logCommentKVs {
-		logComment += fmt.Sprintf("%s=%s, ", k, v)
-	}
-	logComment = strings.TrimSuffix(logComment, ", ")
+	logComment, _ := json.Marshal(logCommentKVs)
 
 	return logComment
 }
