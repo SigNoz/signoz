@@ -129,7 +129,10 @@ function IntegrationDetailHeader(
 					</div>
 				</div>
 				<Button
-					className="configure-btn"
+					className={cx(
+						'configure-btn',
+						!isConnectionStateNotInstalled && 'test-connection',
+					)}
 					icon={<ArrowLeftRight size={14} />}
 					disabled={isInstallLoading}
 					onClick={(): void => {

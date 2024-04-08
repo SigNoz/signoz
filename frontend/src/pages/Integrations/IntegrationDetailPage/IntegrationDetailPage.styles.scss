@@ -160,6 +160,14 @@
 				font-weight: 500;
 				line-height: 10px; /* 83.333% */
 				letter-spacing: 0.12px;
+				box-shadow: none;
+
+				&.test-connection {
+					border-radius: 2px;
+					border: 1px solid var(--bg-slate-400);
+					background: var(--bg-ink-300);
+					color: var(--bg-vanilla-400);
+				}
 			}
 		}
 
@@ -572,6 +580,13 @@
 					}
 
 					.description {
+						color: var(--bg-slate-200);
+					}
+				}
+				.configure-btn {
+					&.test-connection {
+						border: 1px solid rgba(53, 59, 76, 0.2);
+						background: var(--bg-vanilla-200);
 						color: var(--bg-slate-200);
 					}
 				}
