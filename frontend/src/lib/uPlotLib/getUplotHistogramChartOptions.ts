@@ -31,7 +31,12 @@ type GetHistogramSeriesProps = {
 
 const { bars } = uPlot.paths;
 
-const paths = (u: any, seriesIdx: number, idx0: number, idx1: number): any => {
+const paths = (
+	u: uPlot,
+	seriesIdx: number,
+	idx0: number,
+	idx1: number,
+): uPlot.Series.Paths | null | undefined => {
 	const renderer = bars && bars({ size: [1], align: -1 });
 
 	return renderer && renderer(u, seriesIdx, idx0, idx1);
@@ -64,7 +69,7 @@ const getHistogramSeries = ({
 		const pointSize = seriesList[i].values.length > 1 ? 5 : 10;
 		const showPoints = !(seriesList[i].values.length > 1);
 
-		const seriesObj: any = {
+		const seriesObj: uPlot.Series = {
 			paths,
 			drawStyle: drawStyles.bars,
 			lineInterpolation: null,
@@ -78,7 +83,7 @@ const getHistogramSeries = ({
 				show: showPoints,
 				stroke: color,
 			},
-		};
+		} as uPlot.Series;
 
 		configurations.push(seriesObj);
 	}
