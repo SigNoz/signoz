@@ -19,7 +19,7 @@ export const getIsQueryModified = (
 	return !isEqual(omitIdFromStageQuery, omitIdFromCurrentQuery);
 };
 
-type PartialPanelTypes = {
+export type PartialPanelTypes = {
 	[PANEL_TYPES.BAR]: 'bar';
 	[PANEL_TYPES.LIST]: 'list';
 	[PANEL_TYPES.TABLE]: 'table';

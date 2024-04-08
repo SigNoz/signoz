@@ -16,6 +16,10 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import {
+	panelTypeDataSourceFormValuesMap,
+	PartialPanelTypes,
+} from 'container/NewWidget/utils';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -23,7 +27,7 @@ import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
-import { merge } from 'lodash-es';
+import { get, merge, set } from 'lodash-es';
 import {
 	createContext,
 	PropsWithChildren,
@@ -521,6 +525,30 @@ export function QueryBuilderProvider({
 		[],
 	);
 
+	const updateSuperSetQueryBuilderData = useCallback(
+		(arr: IBuilderQuery[], index: number, newQueryItem: IBuilderQuery) =>
+			arr.map((item, idx) => {
+				if (index === idx) {
+					if (!panelType) {
+						return newQueryItem;
+					}
+					const queryItem = item as IBuilderQuery;
+					const propsRequired =
+						panelTypeDataSourceFormValuesMap[panelType as keyof PartialPanelTypes][
+							queryItem.dataSource
+						].builder.queryData;
+
+					propsRequired.forEach((p: any) => {
+						set(queryItem, p, get(newQueryItem, p));
+					});
+					return queryItem;
+				}
+
+				return item;
+			}),
+		[panelType],
+	);
+
 	const handleSetQueryItemData = useCallback(
 		(
 			index: number,
@@ -575,7 +603,7 @@ export function QueryBuilderProvider({
 			});
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
-				const updatedQueryBuilderData = updateQueryBuilderData(
+				const updatedQueryBuilderData = updateSuperSetQueryBuilderData(
 					prevState.builder.queryData,
 					index,
 					newQueryData,
@@ -590,7 +618,7 @@ export function QueryBuilderProvider({
 				};
 			});
 		},
-		[updateQueryBuilderData],
+		[updateQueryBuilderData, updateSuperSetQueryBuilderData],
 	);
 	const handleSetFormulaData = useCallback(
 		(index: number, formulaData: IBuilderFormula): void => {
