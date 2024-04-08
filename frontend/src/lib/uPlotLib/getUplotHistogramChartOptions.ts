@@ -73,7 +73,6 @@ const getHistogramSeries = ({
 			fill: `${color}40`,
 			stroke: color,
 			width: 2,
-			spanGaps: true,
 			points: {
 				size: pointSize,
 				show: showPoints,
