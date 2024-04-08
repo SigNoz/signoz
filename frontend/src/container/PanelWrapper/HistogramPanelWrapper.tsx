@@ -14,14 +14,16 @@ function HistogramPanelWrapper({
 	queryResponse,
 	widget,
 }: PanelWrapperProps): JSX.Element {
-	console.log({ queryResponse });
+	const graphRef = useRef<HTMLDivElement>(null);
+	const { currentQuery } = useQueryBuilder();
+	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
+	const isDarkMode = useIsDarkMode();
+	const containerDimensions = useResizeObserver(graphRef);
+
 	const histogramData = buildHistogramData(
 		queryResponse.data?.payload.data.result,
 	);
 
-	const graphRef = useRef<HTMLDivElement>(null);
-	const { currentQuery } = useQueryBuilder();
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	useEffect(() => {
 		if (toScrollWidgetId === widget.id) {
 			graphRef.current?.scrollIntoView({
@@ -34,8 +36,6 @@ function HistogramPanelWrapper({
 	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
 	const lineChartRef = useRef<ToggleGraphProps>();
 
-	const isDarkMode = useIsDarkMode();
-	const containerDimensions = useResizeObserver(graphRef);
 	const histogramOptions = getUplotHistogramChartOptions({
 		id: widget.id,
 		dimensions: containerDimensions,
