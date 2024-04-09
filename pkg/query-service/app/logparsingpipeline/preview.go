@@ -7,8 +7,8 @@ import (
 	"time"
 
 	_ "github.com/SigNoz/signoz-otel-collector/pkg/parser/grok"
+	"github.com/SigNoz/signoz-otel-collector/processor/signoztransformprocessor"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/logstransformprocessor"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
@@ -44,7 +44,7 @@ func SimulatePipelinesProcessing(
 
 	processorFactories, err := processor.MakeFactoryMap(
 		logstransformprocessor.NewFactory(),
-		transformprocessor.NewFactory(),
+		signoztransformprocessor.NewFactory(),
 	)
 	if err != nil {
 		return nil, nil, model.InternalError(errors.Wrap(

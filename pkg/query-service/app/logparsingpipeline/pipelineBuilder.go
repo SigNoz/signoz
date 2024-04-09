@@ -447,7 +447,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 
 	// TODO(Raj): Maybe validate ottl statements
 	if len(ottlStatements) > 0 {
-		pipelinesProcessorName := "transform/logs-pipelines"
+		pipelinesProcessorName := "signoztransform/logs-pipelines"
 		names = append(names, pipelinesProcessorName)
 		processors[pipelinesProcessorName] = map[string]interface{}{
 			"error_mode": "ignore",
