@@ -12,10 +12,20 @@ import {
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
+import GraphTypes, {
+	ItemsProps,
+} from 'container/NewDashboard/ComponentsSlider/menuItems';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
-import { Dispatch, SetStateAction, useCallback } from 'react';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useState,
+} from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	panelTypeVsCreateAlert,
@@ -75,6 +85,24 @@ function RightContainer({
 	const allowPanelTimePreference =
 		panelTypeVsPanelTimePreferences[selectedGraph];
 
+	const { currentQuery } = useQueryBuilder();
+
+	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(GraphTypes);
+
+	useEffect(() => {
+		const queryContainsMetricsDataSource = currentQuery.builder.queryData.some(
+			(query) => query.dataSource === DataSource.METRICS,
+		);
+
+		if (queryContainsMetricsDataSource) {
+			setGraphTypes((prev) =>
+				prev.filter((graph) => graph.name !== PANEL_TYPES.LIST),
+			);
+		} else {
+			setGraphTypes(GraphTypes);
+		}
+	}, [currentQuery]);
+
 	const softMinHandler = useCallback(
 		(value: number | null) => {
 			setSoftMin(value);
@@ -95,10 +123,9 @@ function RightContainer({
 			<Select
 				onChange={setGraphHandler}
 				value={selectedGraph}
-				disabled
 				style={{ width: '100%', marginBottom: 24 }}
 			>
-				{GraphTypes.map((item) => (
+				{graphTypes.map((item) => (
 					<Option key={item.name} value={item.name}>
 						{item.display}
 					</Option>

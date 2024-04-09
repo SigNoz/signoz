@@ -30,7 +30,7 @@ const Items: ItemsProps[] = [
 	},
 ];
 
-interface ItemsProps {
+export interface ItemsProps {
 	name: PANEL_TYPES;
 	icon: JSX.Element;
 	display: string;

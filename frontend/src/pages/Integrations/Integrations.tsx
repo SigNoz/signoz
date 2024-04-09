@@ -55,6 +55,7 @@ function Integrations(): JSX.Element {
 						selectedIntegration={selectedIntegration}
 						setSelectedIntegration={setSelectedIntegration}
 						activeDetailTab={activeDetailTab}
+						setActiveDetailTab={setActiveDetailTab}
 					/>
 				) : (
 					<>
