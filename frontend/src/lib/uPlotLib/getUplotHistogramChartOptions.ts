@@ -90,6 +90,7 @@ const getHistogramSeries = ({
 
 	return configurations;
 };
+
 export const getUplotHistogramChartOptions = ({
 	id,
 	dimensions,
@@ -118,6 +119,13 @@ export const getUplotHistogramChartOptions = ({
 			},
 			y: {
 				auto: true,
+			},
+		},
+		cursor: {
+			drag: {
+				x: false,
+				y: false,
+				setScale: true,
 			},
 		},
 		series: getHistogramSeries({
