@@ -392,6 +392,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							selectedTracesFields={selectedTracesFields}
 							setSelectedTracesFields={setSelectedTracesFields}
 							selectedWidget={selectedWidget}
+							selectedTime={selectedTime}
 						/>
 					)}
 				</LeftContainerWrapper>
