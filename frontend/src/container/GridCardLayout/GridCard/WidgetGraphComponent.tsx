@@ -284,7 +284,6 @@ function WidgetGraphComponent({
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
-					// onDragSelect={onDragSelect}
 				/>
 			</Modal>
 
