@@ -3,6 +3,7 @@ import { LockFilled, WarningOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Tooltip, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
@@ -23,7 +24,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { generatePath, useLocation, useParams } from 'react-router-dom';
+import { generatePath, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
@@ -44,7 +45,7 @@ import {
 	RightContainerWrapper,
 } from './styles';
 import { NewWidgetProps } from './types';
-import { getIsQueryModified } from './utils';
+import { getIsQueryModified, handleQueryChange } from './utils';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const {
@@ -57,7 +58,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const { currentQuery, stagedQuery } = useQueryBuilder();
+	const {
+		currentQuery,
+		stagedQuery,
+		redirectWithQueryBuilderData,
+		supersetQuery,
+	} = useQueryBuilder();
 
 	const isQueryModified = useMemo(
 		() => getIsQueryModified(currentQuery, stagedQuery),
@@ -69,8 +75,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	);
 
 	const { widgets = [] } = selectedDashboard?.data || {};
-
-	const { search } = useLocation();
 
 	const query = useUrlQuery();
 
@@ -297,9 +301,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	}, [dashboardId]);
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
-		const params = new URLSearchParams(search);
-		params.set('graphType', type);
+		const updatedQuery = handleQueryChange(type as any, supersetQuery);
 		setGraphType(type);
+		redirectWithQueryBuilderData(
+			updatedQuery,
+			{ [QueryParams.graphType]: type },
+			undefined,
+			false,
+		);
 	};
 
 	const onSaveDashboard = useCallback((): void => {

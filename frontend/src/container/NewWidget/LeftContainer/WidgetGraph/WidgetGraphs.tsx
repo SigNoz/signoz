@@ -1,4 +1,5 @@
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/config';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -25,6 +26,7 @@ function WidgetGraph({
 	selectedWidget,
 	queryResponse,
 	setRequestData,
+	selectedGraph,
 }: WidgetGraphProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dispatch = useDispatch();
@@ -89,6 +91,7 @@ function WidgetGraph({
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
 				onDragSelect={onDragSelect}
+				selectedGraph={selectedGraph}
 			/>
 		</div>
 	);
@@ -101,6 +104,7 @@ interface WidgetGraphProps {
 		Error
 	>;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
+	selectedGraph: PANEL_TYPES;
 }
 
 export default WidgetGraph;
