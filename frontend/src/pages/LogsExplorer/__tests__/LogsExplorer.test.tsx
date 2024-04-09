@@ -23,7 +23,7 @@ import i18n from 'ReactI18';
 import store from 'store';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import LogsExplorer from '..';
+import LogsExplorer from '../index';
 
 const queryRangeURL = 'http://localhost/api/v3/query_range';
 // mocking the graph components in this test as this should be handled separately
@@ -180,6 +180,8 @@ describe('Logs Explorer Tests', () => {
 											],
 										},
 									},
+									setSupersetQuery: jest.fn(),
+									supersetQuery: initialQueriesMap.metrics,
 									stagedQuery: initialQueriesMap.metrics,
 									initialDataSource: null,
 									panelType: PANEL_TYPES.TIME_SERIES,

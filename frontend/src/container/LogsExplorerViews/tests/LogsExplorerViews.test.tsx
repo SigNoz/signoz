@@ -1,4 +1,4 @@
-import { Matcher, render, RenderResult } from '@testing-library/react';
+import { render, RenderResult } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
@@ -85,12 +85,6 @@ const renderer = (): RenderResult =>
 		</MemoryRouter>,
 	);
 
-const switchToTableView = async (
-	queryByTestId: (id: Matcher) => HTMLElement | null,
-): Promise<void> => {
-	await userEvent.click(queryByTestId('table-view') as HTMLElement);
-};
-
 describe('LogsExplorerViews -', () => {
 	it('render correctly with props - list and table', async () => {
 		lodsQueryServerRequest();
@@ -105,7 +99,8 @@ describe('LogsExplorerViews -', () => {
 		expect(menuItems.length).toBe(3);
 
 		// switch to table view
-		switchToTableView(queryByTestId);
+		// eslint-disable-next-line sonarjs/no-duplicate-string
+		await userEvent.click(queryByTestId('table-view') as HTMLElement);
 
 		expect(
 			queryByText(
@@ -124,7 +119,7 @@ describe('LogsExplorerViews -', () => {
 		const { queryByText, queryByTestId } = renderer();
 
 		// switch to table view
-		switchToTableView(queryByTestId);
+		await userEvent.click(queryByTestId('table-view') as HTMLElement);
 		expect(
 			queryByText(
 				'Just a bit of patience, just a little bit’s enough ⎯ we’re getting your logs!',
@@ -147,7 +142,7 @@ describe('LogsExplorerViews -', () => {
 		);
 
 		// switch to table view
-		switchToTableView(queryByTestId);
+		await userEvent.click(queryByTestId('table-view') as HTMLElement);
 
 		expect(
 			queryByText('Something went wrong. Please try again or contact support.'),
