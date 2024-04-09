@@ -57,7 +57,6 @@ export const getUPlotChartOptions = ({
 	graphsVisibilityStates,
 	setGraphsVisibilityStates,
 	thresholds,
-	fillSpans,
 	softMax,
 	softMin,
 	panelType,
@@ -108,7 +107,7 @@ export const getUPlotChartOptions = ({
 			},
 		},
 		plugins: [
-			tooltipPlugin(apiResponse, yAxisUnit, fillSpans),
+			tooltipPlugin({ apiResponse, yAxisUnit }),
 			onClickPlugin({
 				onClick: onClickHandler,
 			}),
