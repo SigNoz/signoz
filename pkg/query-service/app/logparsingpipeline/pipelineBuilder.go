@@ -429,7 +429,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 							}
 							// TODO(Raj): Also check for trace flags hex regex pattern
 							appendStatement(
-								fmt.Sprintf(`set(flags, Hex2Int(%s))`, ottlPath(operator.TraceFlags.ParseFrom)),
+								fmt.Sprintf(`set(flags, HexToInt(%s))`, ottlPath(operator.TraceFlags.ParseFrom)),
 								toOttlExpr(parseFromNotNilCheck),
 							)
 						}
