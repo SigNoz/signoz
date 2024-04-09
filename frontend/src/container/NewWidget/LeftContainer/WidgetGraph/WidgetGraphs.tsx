@@ -27,8 +27,6 @@ function WidgetGraph({
 	queryResponse,
 	setRequestData,
 	selectedGraph,
-	queryResponse,
-	setRequestData,
 }: WidgetGraphProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dispatch = useDispatch();
@@ -107,11 +105,6 @@ interface WidgetGraphProps {
 	>;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	selectedGraph: PANEL_TYPES;
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps, unknown>,
-		Error
-	>;
-	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 }
 
 export default WidgetGraph;

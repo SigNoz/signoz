@@ -7,6 +7,13 @@ function PanelWrapper({
 	widget,
 	queryResponse,
 	setRequestData,
+	isFullViewMode,
+	setGraphVisibility,
+	graphVisibility,
+	onToggleModelHandler,
+	onClickHandler,
+	onDragSelect,
+	selectedGraph,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		selectedGraph || widget.panelTypes
@@ -21,6 +28,13 @@ function PanelWrapper({
 			widget={widget}
 			queryResponse={queryResponse}
 			setRequestData={setRequestData}
+			isFullViewMode={isFullViewMode}
+			setGraphVisibility={setGraphVisibility}
+			graphVisibility={graphVisibility}
+			onToggleModelHandler={onToggleModelHandler}
+			onClickHandler={onClickHandler}
+			onDragSelect={onDragSelect}
+			selectedGraph={selectedGraph}
 		/>
 	);
 }
