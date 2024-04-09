@@ -23,41 +23,51 @@ func CollectorConfProcessorName(p Pipeline) string {
 	return constants.LogsPPLPfx + p.Alias
 }
 
-// a.b.c -> ["a", "b", "c"]
+// a.b?.c -> ["a", "b", "c"]
 // a.b["c.d"].e -> ["a", "b", "c.d", "e"]
 func pathParts(path string) []string {
-	// Split once from the right to include the rightmost membership op and everything after it.
-	// Eg: `attributes.test["a.b"].value["c.d"].e` would result in `attributes.test["a.b"].value` and `["c.d"].e`
 	path = strings.ReplaceAll(path, "?.", ".")
 
+	// Split once from the right to include the rightmost membership op and everything after it.
+	// Eg: `attributes.test["a.b"].value["c.d"].e` would result in `attributes.test["a.b"].value` and `["c.d"].e`
 	memberOpParts := rSplitAfterN(path, "[", 2)
+
 	if len(memberOpParts) < 2 {
 		// there is no [] access in fieldPath
 		return strings.Split(path, ".")
 	}
 
+	// recursively get parts for path prefix before rightmost membership op (`attributes.test["a.b"].value`)
 	parts := pathParts(memberOpParts[0])
 
-	suffixParts := strings.SplitAfter(memberOpParts[1], "]") // ["c.d"], ".e"
+	suffixParts := strings.SplitAfter(memberOpParts[1], "]") // ["c.d"].e -> `["c.d"]`, `.e`
 
+	// add key used in membership op ("c.d")
 	parts = append(parts, suffixParts[0][2:len(suffixParts[0])-2])
+
+	// add parts for path after the membership op ("e")
 	if len(suffixParts[1]) > 0 {
 		parts = append(parts, strings.Split(suffixParts[1][1:], ".")...)
 	}
+
 	return parts
 }
 
-func ottlPath(path string) string {
+// converts a logtransform path to an equivalent ottl path
+// For details, see https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl/contexts/ottllog#paths
+func logTransformPathToOttlPath(path string) string {
 	if !(strings.HasPrefix(path, "attributes") || strings.HasPrefix(path, "resource")) {
 		return path
 	}
 
 	parts := pathParts(path)
+
 	ottlPathParts := []string{parts[0]}
+
 	if ottlPathParts[0] == "resource" {
-		// https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl/contexts/ottllog#paths
 		ottlPathParts[0] = "resource.attributes"
 	}
+
 	for _, p := range parts[1:] {
 		ottlPathParts = append(ottlPathParts, fmt.Sprintf(`["%s"]`, p))
 	}
@@ -145,7 +155,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 				ottlStatements = append(ottlStatements, statement)
 			}
 			appendDeleteStatement := func(path string) {
-				fieldPath := ottlPath(path)
+				fieldPath := logTransformPathToOttlPath(path)
 				fieldPathParts := rSplitAfterN(fieldPath, "[", 2)
 				target := fieldPathParts[0]
 				key := fieldPathParts[1][1 : len(fieldPathParts[1])-1]
@@ -179,16 +189,16 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 
 				// Set target to a map if not already one.
 				appendStatement(fmt.Sprintf(
-					`set(%s, ParseJSON("{}"))`, ottlPath(target),
+					`set(%s, ParseJSON("{}"))`, logTransformPathToOttlPath(target),
 				), strings.Join([]string{
 					fmt.Sprintf(`cache["%s"] != nil`, cacheKey),
-					fmt.Sprintf("not IsMap(%s)", ottlPath(target)),
+					fmt.Sprintf("not IsMap(%s)", logTransformPathToOttlPath(target)),
 				}, " and "))
 
 				appendStatement(
 					fmt.Sprintf(
 						`merge_maps(%s, cache["%s"], "upsert")`,
-						ottlPath(target), cacheKey,
+						logTransformPathToOttlPath(target), cacheKey,
 					),
 					fmt.Sprintf(`cache["%s"] != nil`, cacheKey),
 				)
@@ -216,7 +226,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 							}
 						}
 						appendStatement(
-							fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.Field), value),
+							fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.Field), value),
 							condition,
 						)
 
@@ -224,10 +234,10 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 						appendDeleteStatement(operator.Field)
 
 					} else if operator.Type == "copy" {
-						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.To), ottlPath(operator.From)), "")
+						appendStatement(fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.To), logTransformPathToOttlPath(operator.From)), "")
 
 					} else if operator.Type == "move" {
-						appendStatement(fmt.Sprintf(`set(%s, %s)`, ottlPath(operator.To), ottlPath(operator.From)), "")
+						appendStatement(fmt.Sprintf(`set(%s, %s)`, logTransformPathToOttlPath(operator.To), logTransformPathToOttlPath(operator.From)), "")
 						appendDeleteStatement(operator.From)
 
 					} else if operator.Type == "regex_parser" {
@@ -240,8 +250,8 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 						appendStatement(
 							fmt.Sprintf(
 								`merge_maps(%s, ExtractPatterns(%s, "%s"), "upsert")`,
-								ottlPath(operator.ParseTo),
-								ottlPath(operator.ParseFrom),
+								logTransformPathToOttlPath(operator.ParseTo),
+								logTransformPathToOttlPath(operator.ParseFrom),
 								escapeDoubleQuotes(operator.Regex),
 							),
 							toOttlExpr(parseFromNotNilCheck),
@@ -257,8 +267,8 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 						appendStatement(
 							fmt.Sprintf(
 								`merge_maps(%s, GrokParse(%s, "%s"), "upsert")`,
-								ottlPath(operator.ParseTo),
-								ottlPath(operator.ParseFrom),
+								logTransformPathToOttlPath(operator.ParseTo),
+								logTransformPathToOttlPath(operator.ParseFrom),
 								escapeDoubleQuotes(operator.Pattern),
 							),
 							toOttlExpr(parseFromNotNilCheck),
@@ -273,21 +283,21 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 						}
 						whereClause := strings.Join([]string{
 							toOttlExpr(parseFromNotNilCheck),
-							fmt.Sprintf(`IsMatch(%s, "^\\s*{.*}\\s*$")`, ottlPath(operator.ParseFrom)),
+							fmt.Sprintf(`IsMatch(%s, "^\\s*{.*}\\s*$")`, logTransformPathToOttlPath(operator.ParseFrom)),
 						}, " and ")
 
 						// appendStatement(
 						// 	fmt.Sprintf(
 						// 		`merge_maps(%s, ParseJSON(%s), "upsert")`,
-						// 		ottlPath(operator.ParseTo),
-						// 		ottlPath(operator.ParseFrom),
+						// 		logTransformPathToOttlPath(operator.ParseTo),
+						// 		logTransformPathToOttlPath(operator.ParseFrom),
 						// 	),
 						// 	whereClause,
 						// )
 						appendMapExtractStatements(
 							whereClause,
-							fmt.Sprintf("ParseJSON(%s)", ottlPath(operator.ParseFrom)),
-							ottlPath(operator.ParseTo),
+							fmt.Sprintf("ParseJSON(%s)", logTransformPathToOttlPath(operator.ParseFrom)),
+							logTransformPathToOttlPath(operator.ParseTo),
 						)
 
 					} else if operator.Type == "time_parser" {
@@ -308,13 +318,13 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 								)
 							}
 							whereClauseParts = append(whereClauseParts,
-								fmt.Sprintf(`IsMatch(%s, "%s")`, ottlPath(operator.ParseFrom), regex),
+								fmt.Sprintf(`IsMatch(%s, "%s")`, logTransformPathToOttlPath(operator.ParseFrom), regex),
 							)
 
 							appendStatement(
 								fmt.Sprintf(
 									`set(time, Time(%s, "%s"))`,
-									ottlPath(operator.ParseFrom),
+									logTransformPathToOttlPath(operator.ParseFrom),
 									operator.Layout,
 								),
 								strings.Join(whereClauseParts, " and "),
@@ -332,7 +342,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 								)),
 							)
 
-							timeValue := fmt.Sprintf("Double(%s)", ottlPath(operator.ParseFrom))
+							timeValue := fmt.Sprintf("Double(%s)", logTransformPathToOttlPath(operator.ParseFrom))
 							if strings.HasPrefix(operator.Layout, "seconds") {
 								timeValue = fmt.Sprintf("%s * 1000000000", timeValue)
 							} else if operator.Layout == "milliseconds" {
@@ -376,11 +386,11 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 										toOttlExpr(parseFromNotNilCheck),
 										fmt.Sprintf(
 											`IsString(%s)`,
-											ottlPath(operator.ParseFrom),
+											logTransformPathToOttlPath(operator.ParseFrom),
 										),
 										fmt.Sprintf(
 											`IsMatch(%s, "^\\s*%s\\s*$")`,
-											ottlPath(operator.ParseFrom), value,
+											logTransformPathToOttlPath(operator.ParseFrom), value,
 										),
 									}, " and ")
 									appendStatement(fmt.Sprintf("set(severity_number, SEVERITY_NUMBER_%s)", strings.ToUpper(severity)), whereClause)
@@ -399,7 +409,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 							}
 							// TODO(Raj): Also check for trace id regex pattern
 							appendStatement(
-								fmt.Sprintf(`set(trace_id.string, %s)`, ottlPath(operator.TraceId.ParseFrom)),
+								fmt.Sprintf(`set(trace_id.string, %s)`, logTransformPathToOttlPath(operator.TraceId.ParseFrom)),
 								toOttlExpr(parseFromNotNilCheck),
 							)
 						}
@@ -413,7 +423,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 							}
 							// TODO(Raj): Also check for span id regex pattern
 							appendStatement(
-								fmt.Sprintf("set(span_id.string, %s)", ottlPath(operator.SpanId.ParseFrom)),
+								fmt.Sprintf("set(span_id.string, %s)", logTransformPathToOttlPath(operator.SpanId.ParseFrom)),
 								toOttlExpr(parseFromNotNilCheck),
 							)
 
@@ -429,7 +439,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 							}
 							// TODO(Raj): Also check for trace flags hex regex pattern
 							appendStatement(
-								fmt.Sprintf(`set(flags, HexToInt(%s))`, ottlPath(operator.TraceFlags.ParseFrom)),
+								fmt.Sprintf(`set(flags, HexToInt(%s))`, logTransformPathToOttlPath(operator.TraceFlags.ParseFrom)),
 								toOttlExpr(parseFromNotNilCheck),
 							)
 						}
