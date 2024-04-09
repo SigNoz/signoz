@@ -1,6 +1,5 @@
 import { ToggleGraphProps } from 'components/Graph/types';
 import Uplot from 'components/Uplot';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUplotHistogramChartOptions } from 'lib/uPlotLib/getUplotHistogramChartOptions';
@@ -15,7 +14,6 @@ function HistogramPanelWrapper({
 	widget,
 }: PanelWrapperProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
-	const { currentQuery } = useQueryBuilder();
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
 	const containerDimensions = useResizeObserver(graphRef);
@@ -43,7 +41,6 @@ function HistogramPanelWrapper({
 		apiResponse: queryResponse.data?.payload,
 		histogramData,
 		panelType: widget.panelTypes,
-		currentQuery,
 	});
 
 	return (
