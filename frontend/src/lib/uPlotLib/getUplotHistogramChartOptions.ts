@@ -110,7 +110,7 @@ export const getUplotHistogramChartOptions = ({
 			alpha: 0.3,
 		},
 		padding: [16, 16, 8, 8],
-		plugins: [tooltipPlugin(apiResponse)],
+		plugins: [tooltipPlugin({ apiResponse, isHistogramGraphs: true })],
 		scales: {
 			x: {
 				time: false,
