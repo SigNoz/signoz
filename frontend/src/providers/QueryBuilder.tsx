@@ -534,12 +534,12 @@ export function QueryBuilderProvider({
 					}
 					const queryItem = item as IBuilderQuery;
 					const propsRequired =
-						panelTypeDataSourceFormValuesMap[panelType as keyof PartialPanelTypes][
+						panelTypeDataSourceFormValuesMap[panelType as keyof PartialPanelTypes]?.[
 							queryItem.dataSource
 						].builder.queryData;
 
-					propsRequired.push('dataSource');
-					propsRequired.forEach((p: any) => {
+					propsRequired?.push('dataSource');
+					propsRequired?.forEach((p: any) => {
 						set(queryItem, p, get(newQueryItem, p));
 					});
 					return queryItem;
