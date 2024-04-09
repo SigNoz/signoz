@@ -307,7 +307,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			updatedQuery,
 			{ [QueryParams.graphType]: type },
 			undefined,
-			false,
+			true,
 		);
 	};
 
