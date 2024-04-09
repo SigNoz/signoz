@@ -373,26 +373,41 @@ function ExplorerOptions({
 							onClick={handleSaveViewModalToggle}
 							className={isEditDeleteSupported ? '' : 'hidden'}
 							disabled={viewsIsLoading || isRefetching}
+							icon={<Disc3 size={16} />}
 						>
-							<Disc3 size={16} /> Save this view
+							Save this view
 						</Button>
 					</div>
 
 					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
 
 					<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
-						<Button disabled={disabled} shape="round" onClick={onCreateAlertsHandler}>
-							<ConciergeBell size={16} /> Create an Alert
+						<Button
+							disabled={disabled}
+							shape="round"
+							onClick={onCreateAlertsHandler}
+							icon={<ConciergeBell size={16} />}
+						>
+							Create an Alert
 						</Button>
 
-						<Button disabled={disabled} shape="round" onClick={onAddToDashboard}>
-							<Plus size={16} /> Add to Dashboard
+						<Button
+							type="primary"
+							disabled={disabled}
+							shape="round"
+							onClick={onAddToDashboard}
+							icon={<Plus size={16} />}
+						>
+							Add to Dashboard
 						</Button>
 
 						<Tooltip title="Hide">
-							<Button disabled={disabled} shape="circle" onClick={hideToolbar}>
-								<PanelBottomClose size={16} />
-							</Button>
+							<Button
+								disabled={disabled}
+								shape="circle"
+								onClick={hideToolbar}
+								icon={<PanelBottomClose size={16} />}
+							/>
 						</Tooltip>
 					</div>
 				</div>

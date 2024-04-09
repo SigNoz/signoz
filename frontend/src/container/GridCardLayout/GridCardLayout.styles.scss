@@ -5,6 +5,12 @@
 	.react-grid-layout {
 		border: none !important;
 		margin-top: 0;
+
+		.widget-graph-container {
+			&.graph {
+				height: 100%;
+			}
+		}
 	}
 }
 
@@ -23,7 +29,7 @@
 		.ant-modal-header {
 			background-color: var(--bg-ink-400);
 		}
-	}	
+	}
 }
 
 .lightMode {
