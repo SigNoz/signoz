@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphComponentProps } from 'container/GridCardLayout/GridCard/types';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Dispatch, SetStateAction } from 'react';
@@ -19,4 +20,5 @@ export type PanelWrapperProps = {
 	setGraphVisibility?: Dispatch<SetStateAction<boolean[]>>;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	onDragSelect: (start: number, end: number) => void;
+	selectedGraph?: PANEL_TYPES;
 };

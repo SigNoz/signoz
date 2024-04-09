@@ -13,12 +13,18 @@ interface IntegrationDetailContentProps {
 	activeDetailTab: string;
 	integrationData: IntegrationDetailedProps;
 	integrationId: string;
+	setActiveDetailTab: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 function IntegrationDetailContent(
 	props: IntegrationDetailContentProps,
 ): JSX.Element {
-	const { activeDetailTab, integrationData, integrationId } = props;
+	const {
+		activeDetailTab,
+		integrationData,
+		integrationId,
+		setActiveDetailTab,
+	} = props;
 	const items: TabsProps['items'] = [
 		{
 			key: 'overview',
@@ -78,7 +84,11 @@ function IntegrationDetailContent(
 	];
 	return (
 		<div className="integration-detail-container">
-			<Tabs defaultActiveKey={activeDetailTab} items={items} />
+			<Tabs
+				activeKey={activeDetailTab}
+				items={items}
+				onChange={setActiveDetailTab}
+			/>
 		</div>
 	);
 }
