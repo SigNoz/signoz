@@ -35,10 +35,10 @@ function LeftContainer({
 	>((state) => state.globalTime);
 
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
-		if (selectedWidget && selectedWidget.panelTypes !== PANEL_TYPES.LIST) {
+		if (selectedWidget && selectedGraph !== PANEL_TYPES.LIST) {
 			return {
 				selectedTime: selectedWidget?.timePreferance,
-				graphType: getGraphType(selectedWidget.panelTypes),
+				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery || initialQueriesMap.metrics,
 				globalSelectedInterval,
 				variables: getDashboardVariables(selectedDashboard?.data.variables),
@@ -65,6 +65,7 @@ function LeftContainer({
 		if (stagedQuery) {
 			setRequestData((prev) => ({
 				...prev,
+				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery,
 			}));
 		}

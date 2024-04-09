@@ -64,6 +64,7 @@ function WidgetGraphContainer({
 			selectedWidget={selectedWidget}
 			queryResponse={queryResponse}
 			setRequestData={setRequestData}
+			selectedGraph={selectedGraph}
 		/>
 	);
 }
