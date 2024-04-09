@@ -4,7 +4,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUplotHistogramChartOptions } from 'lib/uPlotLib/getUplotHistogramChartOptions';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { buildHistogramData } from './histogram';
 import { PanelWrapperProps } from './panelWrapper.types';
@@ -34,14 +34,25 @@ function HistogramPanelWrapper({
 	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
 	const lineChartRef = useRef<ToggleGraphProps>();
 
-	const histogramOptions = getUplotHistogramChartOptions({
-		id: widget.id,
-		dimensions: containerDimensions,
-		isDarkMode,
-		apiResponse: queryResponse.data?.payload,
-		histogramData,
-		panelType: widget.panelTypes,
-	});
+	const histogramOptions = useMemo(
+		() =>
+			getUplotHistogramChartOptions({
+				id: widget.id,
+				dimensions: containerDimensions,
+				isDarkMode,
+				apiResponse: queryResponse.data?.payload,
+				histogramData,
+				panelType: widget.panelTypes,
+			}),
+		[
+			containerDimensions,
+			histogramData,
+			isDarkMode,
+			queryResponse.data?.payload,
+			widget.id,
+			widget.panelTypes,
+		],
+	);
 
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
