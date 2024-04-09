@@ -96,6 +96,8 @@ function SideNav({
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
+	const isCloudUserVal = isCloudUser();
+
 	useEffect(() => {
 		if (inviteMembers) {
 			const updatedUserManagementMenuItems = [
@@ -135,7 +137,11 @@ function SideNav({
 						license.isCurrent && license.planKey === LICENSE_PLAN_KEY.BASIC_PLAN,
 				) || licenseData?.payload?.licenses === null;
 
-			if (role !== USER_ROLES.ADMIN || isOnBasicPlan) {
+			if (
+				role !== USER_ROLES.ADMIN ||
+				isOnBasicPlan ||
+				!(isCloudUserVal || isEECloudUser())
+			) {
 				items = items.filter((item) => item.key !== ROUTES.BILLING);
 			}
 
@@ -213,8 +219,6 @@ function SideNav({
 	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
 		pathname,
 	]);
-
-	const isCloudUserVal = isCloudUser();
 
 	useEffect(() => {
 		if (isCloudUser() || isEECloudUser()) {
