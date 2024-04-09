@@ -4,7 +4,7 @@ import getById from 'api/errors/getById';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import ErrorDetailsContainer from 'container/ErrorDetails';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -26,6 +26,7 @@ function ErrorDetails(): JSX.Element {
 	const groupId = params.get(urlKey.groupId);
 	const errorId = params.get(urlKey.errorId);
 	const timestamp = params.get(urlKey.timestamp);
+	const [refreshCount, setRefreshCount] = useState<number>(0);
 
 	const defaultError = t('something_went_wrong');
 
@@ -48,14 +49,17 @@ function ErrorDetails(): JSX.Element {
 		},
 	);
 
-	const { data, status } = useQuery([maxTime, minTime, groupId, errorId], {
-		queryFn: () =>
-			getByErrorType({
-				groupID: groupId || '',
-				timestamp: timestamp || '',
-			}),
-		enabled: !!groupId && IdStatus !== 'success',
-	});
+	const { data, status } = useQuery(
+		[maxTime, minTime, groupId, errorId, refreshCount],
+		{
+			queryFn: () =>
+				getByErrorType({
+					groupID: groupId || '',
+					timestamp: timestamp || '',
+				}),
+			enabled: !!groupId && IdStatus !== 'success',
+		},
+	);
 
 	// if errorType and serviceName is null redirecting to the ALL_ERROR page not now
 	if (groupId === null || timestamp === null) {
@@ -84,7 +88,12 @@ function ErrorDetails(): JSX.Element {
 		return <Typography>{data?.error || defaultError}</Typography>;
 	}
 
-	return <ErrorDetailsContainer idPayload={idPayload} />;
+	return (
+		<ErrorDetailsContainer
+			idPayload={idPayload}
+			refresh={() => setRefreshCount(refreshCount + 1)}
+		/>
+	);
 }
 
 export interface ErrorDetailsParams {

@@ -5,6 +5,7 @@ import getNextPrevId from 'api/errors/getNextPrevId';
 import axios from 'axios';
 import Editor from 'components/Editor';
 import { ResizeTable } from 'components/ResizeTable';
+import CreateIssue from 'container/AllError/createIssue';
 import { getNanoSeconds } from 'container/AllError/utils';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
@@ -20,6 +21,7 @@ import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/error
 import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
 
+/* eslint-disable */
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const [sourceCodeLoading, setSourceCodeLoading] = useState<boolean>(false);
 	const [messageApi, contextHolder] = message.useMessage();
@@ -33,7 +35,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const serviceName = params.get(urlKey.serviceName);
 	const errorType = params.get(urlKey.exceptionType);
 	const timestamp = params.get(urlKey.timestamp);
-	const issueLink = params.get(urlKey.issueLink);
+	// const issueLink = params.get(urlKey.issueLink);
 
 	const { data: nextPrevData, status: nextPrevStatus } = useQuery(
 		[
@@ -228,11 +230,26 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 					}}
 				>
 					<div style={{ marginRight: 10 }}>
-						{issueLink ? (
-							<Link to={issueLink}>Issue 链接</Link>
+						{/* {errorDetail.issueLink ? (
+							<Button type="link" href={errorDetail.issueLink} target="_blank">
+								Issue Link
+							</Button>
 						) : (
-							<Button type="primary">创建Issue</Button>
-						)}
+							<Button type="primary">Create Issue</Button>
+						)} */}
+						<CreateIssue
+							issueLink={errorDetail.issueLink || ''}
+							record={{
+								serviceName: errorDetail.serviceName,
+								exceptionType: errorDetail.exceptionType,
+								exceptionMessage: errorDetail.exceptionMessage,
+								time: errorDetail.timestamp,
+								groupID: errorDetail.groupID,
+							}}
+							refresh={() => {
+								props.refresh?.();
+							}}
+						/>
 					</div>
 					{showCheckBtn ? (
 						<Button
@@ -273,6 +290,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 interface ErrorDetailsProps {
 	idPayload: GetByErrorTypeAndServicePayload;
+	refresh?: () => void;
 }
 
 export default ErrorDetails;

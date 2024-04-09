@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { SearchOutlined } from '@ant-design/icons';
 import type { SelectProps } from 'antd';
 import {
@@ -52,6 +53,7 @@ import {
 	getUpdatePageSize,
 	urlKey,
 } from './utils';
+import CreateIssue from './createIssue';
 
 type QueryParams = {
 	order: string;
@@ -366,11 +368,56 @@ function AllErrors(): JSX.Element {
 		[filterIcon, filterDropdownWrapper],
 	);
 
+	const updateJiraIssue = async (issueStatus: string, groupID: string) => {
+		try {
+			const { data } = await axios.post(
+				`${process.env.SERVER_API_HOST}/capi/jira/updateStatus`,
+				{
+					// type: 'Bug',
+					// serviceName: record.serviceName,
+					issueStatus,
+					groupID,
+				},
+			);
+			console.log('updateJiraIssue', data);
+		} catch (error) {
+			console.warn('updateJiraIssueError', error);
+		}
+	};
+
 	const handleIssueChange = (value: string, groupID: string) => {
 		axios
 			.post(`/changeIssueStatus`, {
 				groupID,
 				issueStatus: Number(value),
+			})
+			.then(({ data }) => {
+				if (data) {
+					messageApi.open({
+						type: 'success',
+						content: 'change success',
+					});
+					setTimeout(() => {
+						setChangeIssueStatusNum(changeIssueStatusNum + 1);
+						updateJiraIssue(value, groupID);
+					}, 800);
+					return;
+				}
+				messageApi.open({
+					type: 'warning',
+					content: data,
+				});
+			})
+			.catch((error) => {
+				console.warn('handleIssueChangeError', error);
+			});
+	};
+
+	const updateIssueLink = (value: string, groupID: string) => {
+		axios
+			.post(`/updateIssueLink`, {
+				groupID,
+				issueLink: value,
 			})
 			.then(({ data }) => {
 				if (data) {
@@ -512,10 +559,15 @@ function AllErrors(): JSX.Element {
 			key: 'issueStatus',
 			sorter: false,
 			render: (_, record) => {
-				if (record.issueLink) {
-					return <Link to={record.issueLink}>Issue 链接</Link>;
-				}
-				return <Button type="primary">创建Issue</Button>;
+				return (
+					<>
+						<CreateIssue
+							issueLink={record.issueLink || ''}
+							record={record}
+							refresh={() => setChangeIssueStatusNum(changeIssueStatusNum + 1)}
+						/>
+					</>
+				);
 			},
 		},
 	];
