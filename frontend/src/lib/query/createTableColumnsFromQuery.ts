@@ -302,6 +302,7 @@ const fillRestAggregationData = (
 			// This line is crucial. It ensures that no additional rows are added to the table for similar labels across all formulas here is how this check is applied: signoz/frontend/src/lib/query/createTableColumnsFromQuery.ts line number 370
 			equalQueriesByLabels.push(column.field);
 		}
+		column.data.push(parseFloat(targetSeria.values[0].value).toFixed(2));
 	} else {
 		column.data.push('N/A');
 	}
