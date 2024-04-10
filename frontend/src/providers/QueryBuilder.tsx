@@ -534,12 +534,12 @@ export function QueryBuilderProvider({
 					}
 					const queryItem = item as IBuilderQuery;
 					const propsRequired =
-						panelTypeDataSourceFormValuesMap[panelType as keyof PartialPanelTypes][
+						panelTypeDataSourceFormValuesMap[panelType as keyof PartialPanelTypes]?.[
 							queryItem.dataSource
 						].builder.queryData;
 
-					propsRequired.push('dataSource');
-					propsRequired.forEach((p: any) => {
+					propsRequired?.push('dataSource');
+					propsRequired?.forEach((p: any) => {
 						set(queryItem, p, get(newQueryItem, p));
 					});
 					return queryItem;
@@ -674,7 +674,7 @@ export function QueryBuilderProvider({
 			query: Partial<Query>,
 			searchParams?: Record<string, unknown>,
 			redirectingUrl?: typeof ROUTES[keyof typeof ROUTES],
-			shallStringify?: boolean,
+			shouldNotStringify?: boolean,
 		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
@@ -728,9 +728,9 @@ export function QueryBuilderProvider({
 				Object.keys(searchParams).forEach((param) =>
 					urlQuery.set(
 						param,
-						shallStringify
-							? JSON.stringify(searchParams[param])
-							: (searchParams[param] as string),
+						shouldNotStringify
+							? (searchParams[param] as string)
+							: JSON.stringify(searchParams[param]),
 					),
 				);
 			}

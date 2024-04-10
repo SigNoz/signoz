@@ -16,6 +16,7 @@ interface DroppableAreaProps {
 	setIsExplorerOptionHidden?: Dispatch<SetStateAction<boolean>>;
 	handleClearSelect: () => void;
 	onUpdateQueryHandler: () => void;
+	isEditDeleteSupported: boolean;
 }
 
 function ExplorerOptionsHideArea({
@@ -25,6 +26,7 @@ function ExplorerOptionsHideArea({
 	setIsExplorerOptionHidden,
 	handleClearSelect,
 	onUpdateQueryHandler,
+	isEditDeleteSupported,
 }: DroppableAreaProps): JSX.Element {
 	const handleShowExplorerOption = (): void => {
 		if (setIsExplorerOptionHidden) {
@@ -47,14 +49,16 @@ function ExplorerOptionsHideArea({
 									icon={<X size={14} color={Color.BG_INK_500} />}
 								/>
 							</Tooltip>
-							<Tooltip title="Update this View">
-								<Button
-									onClick={onUpdateQueryHandler}
-									className="action-btn"
-									style={{ background: Color.BG_ROBIN_500 }}
-									icon={<Disc3 size={14} color={Color.BG_INK_500} />}
-								/>
-							</Tooltip>
+							{isEditDeleteSupported && (
+								<Tooltip title="Update this View">
+									<Button
+										onClick={onUpdateQueryHandler}
+										className="action-btn"
+										style={{ background: Color.BG_ROBIN_500 }}
+										icon={<Disc3 size={14} color={Color.BG_INK_500} />}
+									/>
+								</Tooltip>
+							)}
 						</div>
 					)}
 					<Button

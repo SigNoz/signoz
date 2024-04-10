@@ -25,6 +25,7 @@ function LeftContainer({
 	selectedTracesFields,
 	setSelectedTracesFields,
 	selectedWidget,
+	selectedTime,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const { selectedDashboard } = useDashboard();
@@ -50,7 +51,7 @@ function LeftContainer({
 		return {
 			query: updatedQuery,
 			graphType: PANEL_TYPES.LIST,
-			selectedTime: 'GLOBAL_TIME',
+			selectedTime: selectedTime.enum || 'GLOBAL_TIME',
 			globalSelectedInterval,
 			tableParams: {
 				pagination: {
@@ -65,12 +66,13 @@ function LeftContainer({
 		if (stagedQuery) {
 			setRequestData((prev) => ({
 				...prev,
+				selectedTime: selectedTime.enum || prev.selectedTime,
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery,
 			}));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [stagedQuery]);
+	}, [stagedQuery, selectedTime]);
 
 	const queryResponse = useGetQueryRange(
 		requestData,
