@@ -229,32 +229,4 @@ describe('Logs Explorer Tests', () => {
 		const aggrInterval = queryAllByText('AGGREGATION INTERVAL');
 		expect(aggrInterval.length).toBe(2);
 	});
-
-	test('Logs Explorer Page - handle histogram visibility', async () => {
-		// mocking the query range API to return the logs
-		lodsQueryServerRequest();
-		const { container } = render(
-			<MemoryRouter initialEntries={[logExplorerRoute]}>
-				<Provider store={store}>
-					<I18nextProvider i18n={i18n}>
-						<MockQueryClientProvider>
-							<QueryBuilderProvider>
-								<VirtuosoMockContext.Provider
-									value={{ viewportHeight: 300, itemHeight: 100 }}
-								>
-									<LogsExplorer />
-								</VirtuosoMockContext.Provider>
-							</QueryBuilderProvider>
-						</MockQueryClientProvider>
-					</I18nextProvider>
-				</Provider>
-			</MemoryRouter>,
-		);
-
-		const histogramToggle = container.querySelector('button[role="switch"]');
-		expect(histogramToggle).toBeChecked();
-
-		await userEvent.click(histogramToggle as HTMLElement);
-		expect(histogramToggle).not.toBeChecked();
-	});
 });

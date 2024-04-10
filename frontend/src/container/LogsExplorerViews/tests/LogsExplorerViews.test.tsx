@@ -106,7 +106,7 @@ describe('LogsExplorerViews -', () => {
 			queryByText(
 				'{"container_id":"container_id","container_name":"container_name","driver":"driver","eta":"2m0s","location":"frontend","log_level":"INFO","message":"Dispatch successful","service":"frontend","span_id":"span_id","trace_id":"span_id"}',
 			),
-		);
+		).toBeInTheDocument();
 	});
 
 	it('check isLoading state', async () => {
@@ -124,7 +124,7 @@ describe('LogsExplorerViews -', () => {
 			queryByText(
 				'Just a bit of patience, just a little bit’s enough ⎯ we’re getting your logs!',
 			),
-		);
+		).toBeInTheDocument();
 	});
 
 	it('check error state', async () => {
@@ -139,13 +139,13 @@ describe('LogsExplorerViews -', () => {
 
 		expect(
 			queryByText('Something went wrong. Please try again or contact support.'),
-		);
+		).toBeInTheDocument();
 
 		// switch to table view
 		await userEvent.click(queryByTestId('table-view') as HTMLElement);
 
 		expect(
 			queryByText('Something went wrong. Please try again or contact support.'),
-		);
+		).toBeInTheDocument();
 	});
 });
