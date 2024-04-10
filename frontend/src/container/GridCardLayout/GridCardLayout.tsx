@@ -507,7 +507,7 @@ Thanks`}
 			<FullScreen handle={handle} className="fullscreen-grid-container">
 				<ReactGridLayout
 					cols={12}
-					rowHeight={50}
+					rowHeight={45}
 					autoSize
 					width={100}
 					useCSSTransforms
