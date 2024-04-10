@@ -3,7 +3,6 @@ import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
-import { convertVariablesToDbFormat } from './util';
 import VariableItem from './VariableItem';
 
 function DashboardVariableSelection(): JSX.Element | null {
@@ -56,31 +55,27 @@ function DashboardVariableSelection(): JSX.Element | null {
 		allSelected: boolean,
 	): void => {
 		if (id) {
-			const newVariablesArr = variablesTableData.map(
-				(variable: IDashboardVariable) => {
-					const variableCopy = { ...variable };
-
-					if (variableCopy.id === id) {
-						variableCopy.selectedValue = value;
-						variableCopy.allSelected = allSelected;
-					}
-
-					return variableCopy;
-				},
-			);
 			updateLocalStorageDashboardVariables(name, value, allSelected);
 
-			const variables = convertVariablesToDbFormat(newVariablesArr);
-
 			if (selectedDashboard) {
-				setSelectedDashboard({
-					...selectedDashboard,
-					data: {
-						...selectedDashboard?.data,
-						variables: {
-							...variables,
-						},
-					},
+				setSelectedDashboard((prev) => {
+					if (prev) {
+						return {
+							...prev,
+							data: {
+								...prev?.data,
+								variables: {
+									...prev?.data.variables,
+									[id]: {
+										...prev.data.variables[id],
+										selectedValue: value,
+										allSelected,
+									},
+								},
+							},
+						};
+					}
+					return prev;
 				});
 			}
 
