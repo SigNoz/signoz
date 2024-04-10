@@ -5169,3 +5169,35 @@ func (r *ClickHouseReader) UpdateIssueLink(ctx context.Context, queryParams *mod
 	}
 	return true, nil
 }
+
+func (r *ClickHouseReader) UpdateIssueWebhook(ctx context.Context, queryParams *model.UpdateIssueWebhook) (bool, *model.ApiError) {
+	updateStmt := `UPDATE jira_issue SET issue_status = ? WHERE issue_key = ?`
+	result, err := r.localDB.Exec(updateStmt, strings.ToUpper(queryParams.IssueStatus), queryParams.IssueKey)
+
+	if err != nil {
+		zap.S().Info(err)
+		return false, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+	zap.S().Info(result)
+
+	// 修改clickhouse表
+	raptorIssueStatusMap := make(map[string]int)
+	raptorIssueStatusMap["NEW"] = 0
+	raptorIssueStatusMap["DEV IN PROGRESS"] = 1
+	raptorIssueStatusMap["IN QA"] = 1
+	raptorIssueStatusMap["DEPLOYED TO PRODUCTION"] = 2
+	raptorIssueStatusMap["CLOSED"] = 2
+	raptorIssueStatusMap["DONT FIX"] = 3
+	raptorIssueStatusMap["NOT BUG"] = 3
+
+	fmt.Println("raptorIssueStatusMap", raptorIssueStatusMap[strings.ToUpper(queryParams.IssueStatus)], queryParams.IssueStatus)
+	query := fmt.Sprintf(`ALTER TABLE signoz_traces.signoz_error_index_v2 UPDATE issueStatus = '%d' WHERE groupID = '%s'`, raptorIssueStatusMap[strings.ToUpper(queryParams.IssueStatus)], queryParams.GroupID)
+	zap.S().Info(query)
+	clickhouseErr := r.db.Exec(ctx, query)
+
+	if clickhouseErr != nil {
+		return false, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	return true, nil
+}

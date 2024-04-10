@@ -108,6 +108,7 @@ type Reader interface {
 	ChangeIssueStatus(ctx context.Context, params *model.ChangeIssueStatusParams) (bool, *model.ApiError)
 	SearchAllServices(ctx context.Context) (*[]string, error)
 	UpdateIssueLink(ctx context.Context, params *model.UpdateIssueLinkParams) (bool, *model.ApiError)
+	UpdateIssueWebhook(ctx context.Context, params *model.UpdateIssueWebhook) (bool, *model.ApiError)
 }
 
 type Querier interface {

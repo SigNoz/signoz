@@ -463,6 +463,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/changeIssueStatus", am.ViewAccess(aH.changeIssueStatus)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/searchAllServices", am.ViewAccess(aH.searchAllServices)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/updateIssueLink", am.ViewAccess(aH.updateIssueLink)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/updateIssueWebhook", am.OpenAccess(aH.updateIssueWebhook)).Methods(http.MethodPost)
 
 }
 
@@ -3456,6 +3457,19 @@ func (aH *APIHandler) updateIssueLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, apiErr := aH.reader.UpdateIssueLink(r.Context(), query)
+	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
+}
+
+func (aH *APIHandler) updateIssueWebhook(w http.ResponseWriter, r *http.Request) {
+	query, err := parseUpdateIssueWebhook(r)
+	if aH.HandleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	result, apiErr := aH.reader.UpdateIssueWebhook(r.Context(), query)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}

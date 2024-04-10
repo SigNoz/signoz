@@ -576,3 +576,9 @@ type UpdateIssueLinkParams struct {
 	GroupID   string `json:"groupID"`
 	IssueLink string `json:"issueLink"`
 }
+
+type UpdateIssueWebhook struct {
+	GroupID     string `json:"groupID"`
+	IssueKey    string `json:"issueKey"`
+	IssueStatus string `json:"issueStatus"`
+}
