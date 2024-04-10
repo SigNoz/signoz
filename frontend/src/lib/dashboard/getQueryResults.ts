@@ -33,9 +33,11 @@ export async function GetMetricQueryRange(
 	);
 
 	if (response.statusCode >= 400) {
-		throw new Error(
-			`API responded with ${response.statusCode} -  ${response.error}`,
-		);
+		let error = `API responded with ${response.statusCode} -  ${response.error} status: ${response.message}`;
+		if (response.body) {
+			error = `${error}, errors: ${response.body}`;
+		}
+		throw new Error(error);
 	}
 
 	if (response.payload?.data?.result) {
