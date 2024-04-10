@@ -6,6 +6,8 @@ import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
+import { timePreferance } from './RightContainer/timeItems';
+
 export interface NewWidgetProps {
 	selectedGraph: PANEL_TYPES;
 	yAxisUnit: Widgets['yAxisUnit'];
@@ -21,6 +23,7 @@ export interface WidgetGraphProps {
 	>;
 	selectedWidget: Widgets;
 	selectedGraph: PANEL_TYPES;
+	selectedTime: timePreferance;
 }
 
 export type WidgetGraphContainerProps = {

@@ -400,7 +400,8 @@ function ExplorerOptions({
 						>
 							Add to Dashboard
 						</Button>
-
+					</div>
+					<div className="actions">
 						<Tooltip title="Hide">
 							<Button
 								disabled={disabled}
@@ -420,6 +421,7 @@ function ExplorerOptions({
 				isQueryUpdated={isQueryUpdated}
 				handleClearSelect={handleClearSelect}
 				onUpdateQueryHandler={onUpdateQueryHandler}
+				isEditDeleteSupported={isEditDeleteSupported}
 			/>
 
 			<Modal
