@@ -342,7 +342,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v4").Subrouter()
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV4)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(withCacheControl(6*time.Hour, aH.getMetricMetadata))).Methods(http.MethodGet)
+	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
