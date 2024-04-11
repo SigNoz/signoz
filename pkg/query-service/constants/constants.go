@@ -47,6 +47,8 @@ const TimestampSort = "TimestampSort"
 const PreferRPM = "PreferRPM"
 const AlertChannelSlack = "ALERT_CHANNEL_SLACK"
 const AlertChannelWebhook = "ALERT_CHANNEL_WEBHOOK"
+const QueryBuilderPanels = "QUERY_BUILDER_PANELS"
+const QueryBuilderAlerts = "QUERY_BUILDER_ALERTS"
 
 func GetAlertManagerApiPrefix() string {
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
@@ -140,6 +142,20 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
+		Route:      "",
+	},
+	model.Feature{
+		Name:       QueryBuilderPanels,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: 20,
+		Route:      "",
+	},
+	model.Feature{
+		Name:       QueryBuilderAlerts,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: 10,
 		Route:      "",
 	},
 }
