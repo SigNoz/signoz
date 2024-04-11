@@ -287,6 +287,7 @@ const fillRestAggregationData = (
 	queryTableData: QueryDataV3[],
 	seria: SeriesItem,
 	equalQueriesByLabels: string[],
+	unusedColumnsKeys: Set<keyof RowData>,
 ): void => {
 	const nextQueryData =
 		queryTableData.find((q) => q.queryName === column.field) || null;
@@ -301,8 +302,10 @@ const fillRestAggregationData = (
 		if (!isEqual) {
 			// This line is crucial. It ensures that no additional rows are added to the table for similar labels across all formulas here is how this check is applied: signoz/frontend/src/lib/query/createTableColumnsFromQuery.ts line number 370
 			equalQueriesByLabels.push(column.field);
+		} else {
+			column.data.push(parseFloat(targetSeria.values[0].value).toFixed(2));
+			unusedColumnsKeys.delete(column.field);
 		}
-		column.data.push(parseFloat(targetSeria.values[0].value).toFixed(2));
 	} else {
 		column.data.push('N/A');
 	}
@@ -358,6 +361,7 @@ const fillDataFromSeries = (
 					queryTableData,
 					seria,
 					equalQueriesByLabels,
+					unusedColumnsKeys,
 				);
 
 				return;
@@ -401,7 +405,7 @@ const fillColumnsData: FillColumnData = (queryTableData, cols) => {
 	const formulas = cols.filter((item) => item.type === 'formula');
 	const resultColumns = [...fields, ...operators, ...formulas];
 
-	const equalQueriesByLabels: string[] = [];
+	const equalQueriesByLabels: string[] = formulas.map((col) => col.field);
 
 	queryTableData.forEach((currentQuery) => {
 		const { list } = currentQuery;
