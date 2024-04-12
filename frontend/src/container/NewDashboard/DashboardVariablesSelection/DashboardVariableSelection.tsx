@@ -1,4 +1,5 @@
 import { Row } from 'antd';
+import { isNull } from 'lodash-es';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -16,8 +17,9 @@ function DashboardVariableSelection(): JSX.Element | null {
 
 	const { variables } = data || {};
 
-	const [update, setUpdate] = useState<boolean>(false);
-	const [lastUpdatedVar, setLastUpdatedVar] = useState<string>('');
+	const [variablesToGetUpdated, setVariablesToGetUpdated] = useState<string[]>(
+		[],
+	);
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 
@@ -44,8 +46,23 @@ function DashboardVariableSelection(): JSX.Element | null {
 	}, [variables]);
 
 	const onVarChanged = (name: string): void => {
-		setLastUpdatedVar(name);
-		setUpdate(!update);
+		const dependentVariables = variablesTableData
+			?.map((variable: any) => {
+				if (variable.type === 'QUERY') {
+					const re = new RegExp(`\\{\\{\\s*?\\.${name}\\s*?\\}\\}`); // regex for `{{.var}}`
+					const queryValue = variable.queryValue || '';
+					const dependVarReMatch = queryValue.match(re);
+					if (dependVarReMatch !== null && dependVarReMatch.length > 0) {
+						return variable.name;
+					}
+				}
+				return null;
+			})
+			.filter((val: string | null) => !isNull(val));
+		setVariablesToGetUpdated((prev) => [
+			...prev.filter((v) => v !== name),
+			...dependentVariables,
+		]);
 	};
 
 	const onValueUpdate = (
@@ -80,8 +97,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 			}
 
 			onVarChanged(name);
-
-			setUpdate(!update);
 		}
 	};
 
@@ -102,13 +117,12 @@ function DashboardVariableSelection(): JSX.Element | null {
 					<VariableItem
 						key={`${variable.name}${variable.id}}${variable.order}`}
 						existingVariables={variables}
-						lastUpdatedVar={lastUpdatedVar}
 						variableData={{
 							name: variable.name,
 							...variable,
-							change: update,
 						}}
 						onValueUpdate={onValueUpdate}
+						variablesToGetUpdated={variablesToGetUpdated}
 					/>
 				))}
 		</Row>
