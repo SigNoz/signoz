@@ -25,6 +25,7 @@ export type PartialPanelTypes = {
 	[PANEL_TYPES.TABLE]: 'table';
 	[PANEL_TYPES.TIME_SERIES]: 'graph';
 	[PANEL_TYPES.VALUE]: 'value';
+	[PANEL_TYPES.HISTOGRAM]: 'histogram';
 };
 
 export const panelTypeDataSourceFormValuesMap: Record<
@@ -76,6 +77,50 @@ export const panelTypeDataSourceFormValuesMap: Record<
 		},
 	},
 	[PANEL_TYPES.TIME_SERIES]: {
+		[DataSource.LOGS]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+				],
+			},
+		},
+		[DataSource.METRICS]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+					'spaceAggregation',
+				],
+			},
+		},
+		[DataSource.TRACES]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+				],
+			},
+		},
+	},
+	[PANEL_TYPES.HISTOGRAM]: {
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
