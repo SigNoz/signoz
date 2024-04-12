@@ -51,7 +51,6 @@ const (
 
 var SAAS_EVENTS_LIST = map[string]struct{}{
 	TELEMETRY_EVENT_NUMBER_OF_SERVICES:               {},
-	TELEMETRY_EVENT_ACTIVE_USER:                      {},
 	TELEMETRY_EVENT_HEART_BEAT:                       {},
 	TELEMETRY_EVENT_LANGUAGE:                         {},
 	TELEMETRY_EVENT_SERVICE:                          {},
@@ -61,7 +60,7 @@ var SAAS_EVENTS_LIST = map[string]struct{}{
 	TELEMETRY_EVENT_DASHBOARDS_ALERTS:                {},
 	TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY: {},
 	TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY:           {},
-	// TELEMETRY_EVENT_QUERY_RANGE_API:                  {}, // this event is not part of SAAS_EVENTS_LIST as it may cause too many events to be sent
+	TELEMETRY_EVENT_QUERY_RANGE_API:                  {},
 }
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -194,10 +193,7 @@ func createTelemetry() {
 
 	rand.Seed(time.Now().UnixNano())
 
-	data := map[string]interface{}{}
-
 	telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
-	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "", true, false)
 
 	ticker := time.NewTicker(HEART_BEAT_DURATION)
 	activeUserTicker := time.NewTicker(ACTIVE_USER_DURATION)
@@ -291,8 +287,16 @@ func createTelemetry() {
 				for key, value := range tsInfo {
 					data[key] = value
 				}
-				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "", true, false)
 
+				users, apiErr := telemetry.reader.GetUsers(context.Background())
+				if apiErr == nil {
+					for _, user := range users {
+						if user.Email == DEFAULT_CLOUD_EMAIL {
+							continue
+						}
+						telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, user.Email, false, false)
+					}
+				}
 				alertsInfo, err := telemetry.reader.GetAlertsInfo(context.Background())
 				if err == nil {
 					dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
@@ -317,14 +321,19 @@ func createTelemetry() {
 									"tracesSavedViews":                savedViewsInfo.TracesSavedViews,
 								}
 								// send event only if there are dashboards or alerts or channels
-								if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0 {
-									telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "", true, false)
+								if (dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0) && apiErr == nil {
+									for _, user := range users {
+										if user.Email == DEFAULT_CLOUD_EMAIL {
+											continue
+										}
+										telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, user.Email, false, false)
+									}
 								}
 							}
 						}
 					}
 				}
-				if err != nil {
+				if err != nil || apiErr != nil {
 					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
 				}
 

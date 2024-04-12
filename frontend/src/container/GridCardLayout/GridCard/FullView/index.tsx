@@ -86,7 +86,7 @@ function FullView({
 		return {
 			query: updatedQuery,
 			graphType: PANEL_TYPES.LIST,
-			selectedTime: 'GLOBAL_TIME',
+			selectedTime: widget?.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
 			tableParams: {
 				pagination: {

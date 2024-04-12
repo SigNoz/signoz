@@ -24,6 +24,7 @@ function UplotPanelWrapper({
 	onToggleModelHandler,
 	onClickHandler,
 	onDragSelect,
+	selectedGraph,
 }: PanelWrapperProps): JSX.Element {
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
@@ -94,7 +95,8 @@ function UplotPanelWrapper({
 				softMin: widget.softMin === undefined ? null : widget.softMin,
 				graphsVisibilityStates: graphVisibility,
 				setGraphsVisibilityStates: setGraphVisibility,
-				panelType: widget.panelTypes,
+				panelType: selectedGraph || widget.panelTypes,
+				currentQuery,
 			}),
 		[
 			widget?.id,
@@ -112,6 +114,8 @@ function UplotPanelWrapper({
 			maxTimeScale,
 			graphVisibility,
 			setGraphVisibility,
+			selectedGraph,
+			currentQuery,
 		],
 	);
 

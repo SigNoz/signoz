@@ -373,34 +373,42 @@ function ExplorerOptions({
 							onClick={handleSaveViewModalToggle}
 							className={isEditDeleteSupported ? '' : 'hidden'}
 							disabled={viewsIsLoading || isRefetching}
+							icon={<Disc3 size={16} />}
 						>
-							<Disc3 size={16} /> Save this view
+							Save this view
 						</Button>
 					</div>
 
 					<hr className={isEditDeleteSupported ? '' : 'hidden'} />
 
 					<div className={cx('actions', isEditDeleteSupported ? '' : 'hidden')}>
-						<Tooltip title="Create Alerts">
+						<Button
+							disabled={disabled}
+							shape="round"
+							onClick={onCreateAlertsHandler}
+							icon={<ConciergeBell size={16} />}
+						>
+							Create an Alert
+						</Button>
+
+						<Button
+							type="primary"
+							disabled={disabled}
+							shape="round"
+							onClick={onAddToDashboard}
+							icon={<Plus size={16} />}
+						>
+							Add to Dashboard
+						</Button>
+					</div>
+					<div className="actions">
+						<Tooltip title="Hide">
 							<Button
 								disabled={disabled}
 								shape="circle"
-								onClick={onCreateAlertsHandler}
-							>
-								<ConciergeBell size={16} />
-							</Button>
-						</Tooltip>
-
-						<Tooltip title="Add to Dashboard">
-							<Button disabled={disabled} shape="circle" onClick={onAddToDashboard}>
-								<Plus size={16} />
-							</Button>
-						</Tooltip>
-
-						<Tooltip title="Hide">
-							<Button disabled={disabled} shape="circle" onClick={hideToolbar}>
-								<PanelBottomClose size={16} />
-							</Button>
+								onClick={hideToolbar}
+								icon={<PanelBottomClose size={16} />}
+							/>
 						</Tooltip>
 					</div>
 				</div>
@@ -413,6 +421,7 @@ function ExplorerOptions({
 				isQueryUpdated={isQueryUpdated}
 				handleClearSelect={handleClearSelect}
 				onUpdateQueryHandler={onUpdateQueryHandler}
+				isEditDeleteSupported={isEditDeleteSupported}
 			/>
 
 			<Modal
