@@ -53,6 +53,10 @@ type PostableRule struct {
 	// legacy
 	Expr    string `yaml:"expr,omitempty" json:"expr,omitempty"`
 	OldYaml string `json:"yaml,omitempty"`
+
+	// 自定义字段
+	AutoGenerateJiraIssue bool   `json:"autoGenerateJiraIssue,omitempty"`
+	WorkwxWebhook         string `json:"workwxWebhook,omitempty"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, []error) {
