@@ -342,7 +342,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 				maxY = Math.max(maxY, w.y + w.h);
 			});
 			const currentRowWidget = dashboardLayout.find((w) => w.i === id);
-			if (currentRowWidget) {
+			if (currentRowWidget && widgetsInsideTheRow.length) {
 				maxY -= currentRowWidget.h + currentRowWidget.y;
 			}
 
