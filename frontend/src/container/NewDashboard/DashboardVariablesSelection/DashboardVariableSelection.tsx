@@ -46,6 +46,10 @@ function DashboardVariableSelection(): JSX.Element | null {
 	}, [variables]);
 
 	const onVarChanged = (name: string): void => {
+		/**
+		 * this function takes care of adding the dependent variables to current update queue and removing
+		 * the updated variable name from the queue
+		 */
 		const dependentVariables = variablesTableData
 			?.map((variable: any) => {
 				if (variable.type === 'QUERY') {
