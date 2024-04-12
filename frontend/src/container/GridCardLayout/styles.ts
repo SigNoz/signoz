@@ -29,7 +29,7 @@ interface Props {
 export const CardContainer = styled.div<Props>`
 	overflow: auto;
 
-	&.enable-resize {
+	&.row-card {
 		.row-panel {
 			height: 100%;
 			display: flex;
@@ -38,6 +38,9 @@ export const CardContainer = styled.div<Props>`
 			align-items: center;
 			overflow: hidden;
 		}
+	}
+
+	&.enable-resize {
 		:hover {
 			.react-resizable-handle {
 				position: absolute;

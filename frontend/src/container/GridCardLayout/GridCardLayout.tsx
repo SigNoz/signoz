@@ -529,7 +529,7 @@ Thanks`}
 							const rowWidgetProperties = currentPanelMap[id] || {};
 							return (
 								<CardContainer
-									className={isDashboardLocked ? '' : 'enable-resize'}
+									className="row-card"
 									isDarkMode={isDarkMode}
 									key={id}
 									data-grid={JSON.stringify(currentWidget)}
