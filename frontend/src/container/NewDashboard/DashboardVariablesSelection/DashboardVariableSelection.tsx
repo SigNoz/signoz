@@ -11,15 +11,13 @@ function DashboardVariableSelection(): JSX.Element | null {
 		selectedDashboard,
 		setSelectedDashboard,
 		updateLocalStorageDashboardVariables,
+		variablesToGetUpdated,
+		setVariablesToGetUpdated,
 	} = useDashboard();
 
 	const { data } = selectedDashboard || {};
 
 	const { variables } = data || {};
-
-	const [variablesToGetUpdated, setVariablesToGetUpdated] = useState<string[]>(
-		[],
-	);
 
 	const [variablesTableData, setVariablesTableData] = useState<any>([]);
 
