@@ -22,3 +22,10 @@ export type PanelWrapperProps = {
 	onDragSelect: (start: number, end: number) => void;
 	selectedGraph?: PANEL_TYPES;
 };
+
+export type TooltipData = {
+	label: string;
+	key: string;
+	value: string;
+	color: string;
+};
