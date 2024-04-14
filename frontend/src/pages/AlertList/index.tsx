@@ -1,5 +1,6 @@
 import { Tabs } from 'antd';
 import AllAlertRules from 'container/ListAlertRules';
+import { PlannedDowntime } from 'container/PlannedDowntime/PlannedDowntime';
 // import MapAlertChannels from 'container/MapAlertChannels';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 
@@ -11,11 +12,11 @@ function AllAlertList(): JSX.Element {
 			key: 'Triggered Alerts',
 			children: <TriggeredAlerts />,
 		},
-		// {
-		// 	label: 'Planned Downtime',
-		// 	key: 'Planned Downtime',
-		// 	// children: <PlannedDowntime />,
-		// },
+		{
+			label: 'Configuration',
+			key: 'Configuration',
+			children: <PlannedDowntime />,
+		},
 		// {
 		// 	label: 'Map Alert Channels',
 		// 	key = 'Map Alert Channels',
