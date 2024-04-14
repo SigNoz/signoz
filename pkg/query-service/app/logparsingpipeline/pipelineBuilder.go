@@ -117,7 +117,7 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 			// To work around this, we add statements before and after the actual pipeline
 			// operator statements, that add and remove a pipeline specific marker, ensuring
 			// all operators in a pipeline get to act on the log even if an op changes the filter referenced fields.
-			pipelineMarker := uuid.NewString()
+			pipelineMarker := fmt.Sprintf("signoz-log-pipeline-%s", pipeline.Alias)
 			addMarkerStatement := fmt.Sprintf(`set(attributes["__signoz_pipeline_marker__"], "%s")`, pipelineMarker)
 			if len(filterExpr) > 0 {
 				addMarkerStatement += fmt.Sprintf(" where %s", toOttlExpr(filterExpr))
@@ -136,24 +136,18 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 
 			appendStatement := func(statement string, additionalFilter string) {
 				whereConditions := []string{pipelineMarkerWhereClause}
-				// if len(filterExpr) > 0 {
-				// 	whereConditions = append(
-				// 		whereConditions,
-				// 		toOttlExpr(filterExpr),
-				// 	)
-				// }
+
 				if len(additionalFilter) > 0 {
 					whereConditions = append(whereConditions, additionalFilter)
 				}
 
-				// if len(whereConditions) > 0 {
 				statement = fmt.Sprintf(
 					`%s where %s`, statement, strings.Join(whereConditions, " and "),
 				)
-				// }
 
 				ottlStatements = append(ottlStatements, statement)
 			}
+
 			appendDeleteStatement := func(path string) {
 				fieldPath := logTransformPathToOttlPath(path)
 				fieldPathParts := rSplitAfterN(fieldPath, "[", 2)
@@ -170,11 +164,6 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 					toOttlExpr(pathNotNilCheck),
 				)
 			}
-
-			// ensureIntermediateMaps := func(path string, additionalFilter string) {
-			// parts := pathParts(path)
-			//
-			// }
 
 			appendMapExtractStatements := func(
 				filterClause string,
@@ -215,11 +204,10 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 							value = toOttlExpr(expression)
 							fieldsNotNilCheck, err := fieldsReferencedInExprNotNilCheck(expression)
 							if err != nil {
-								panic(err)
-								// return nil, fmt.Errorf(
-								// "could'nt generate nil check for fields referenced in value expr of add operator %s: %w",
-								// operator.Name, err,
-								// )
+								return nil, nil, fmt.Errorf(
+									"could'nt generate nil check for fields referenced in value expr of add operator %s: %w",
+									operator.Name, err,
+								)
 							}
 							if fieldsNotNilCheck != "" {
 								condition = toOttlExpr(fieldsNotNilCheck)
@@ -286,14 +274,6 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 							fmt.Sprintf(`IsMatch(%s, "^\\s*{.*}\\s*$")`, logTransformPathToOttlPath(operator.ParseFrom)),
 						}, " and ")
 
-						// appendStatement(
-						// 	fmt.Sprintf(
-						// 		`merge_maps(%s, ParseJSON(%s), "upsert")`,
-						// 		logTransformPathToOttlPath(operator.ParseTo),
-						// 		logTransformPathToOttlPath(operator.ParseFrom),
-						// 	),
-						// 	whereClause,
-						// )
 						appendMapExtractStatements(
 							whereClause,
 							fmt.Sprintf("ParseJSON(%s)", logTransformPathToOttlPath(operator.ParseFrom)),
@@ -531,154 +511,6 @@ func PreparePipelineProcessorOld(pipelines []Pipeline) (map[string]interface{}, 
 		names = append(names, name)
 	}
 	return processors, names, nil
-}
-
-func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
-	filteredOp := []PipelineOperator{}
-	for i, operator := range ops {
-		if operator.Enabled {
-			if len(filteredOp) > 0 {
-				filteredOp[len(filteredOp)-1].Output = operator.ID
-			}
-
-			if operator.Type == "regex_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
-				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of regex op %s: %w", operator.Name, err,
-					)
-				}
-				operator.If = fmt.Sprintf(
-					`%s && %s matches "%s"`,
-					parseFromNotNilCheck,
-					operator.ParseFrom,
-					strings.ReplaceAll(
-						strings.ReplaceAll(operator.Regex, `\`, `\\`),
-						`"`, `\"`,
-					),
-				)
-
-			} else if operator.Type == "grok_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
-				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of grok op %s: %w", operator.Name, err,
-					)
-				}
-				operator.If = parseFromNotNilCheck
-
-			} else if operator.Type == "json_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
-				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of json parser op %s: %w", operator.Name, err,
-					)
-				}
-				operator.If = fmt.Sprintf(
-					`%s && %s matches "^\\s*{.*}\\s*$"`, parseFromNotNilCheck, operator.ParseFrom,
-				)
-
-			} else if operator.Type == "add" {
-				if strings.HasPrefix(operator.Value, "EXPR(") && strings.HasSuffix(operator.Value, ")") {
-					expression := strings.TrimSuffix(strings.TrimPrefix(operator.Value, "EXPR("), ")")
-					fieldsNotNilCheck, err := fieldsReferencedInExprNotNilCheck(expression)
-					if err != nil {
-						return nil, fmt.Errorf(
-							"could'nt generate nil check for fields referenced in value expr of add operator %s: %w",
-							operator.Name, err,
-						)
-					}
-					if fieldsNotNilCheck != "" {
-						operator.If = fieldsNotNilCheck
-					}
-				}
-
-			} else if operator.Type == "move" || operator.Type == "copy" {
-				fromNotNilCheck, err := fieldNotNilCheck(operator.From)
-				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for From field of %s op %s: %w", operator.Type, operator.Name, err,
-					)
-				}
-				operator.If = fromNotNilCheck
-
-			} else if operator.Type == "remove" {
-				fieldNotNilCheck, err := fieldNotNilCheck(operator.Field)
-				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for field to be removed by op %s: %w", operator.Name, err,
-					)
-				}
-				operator.If = fieldNotNilCheck
-
-			} else if operator.Type == "trace_parser" {
-				cleanTraceParser(&operator)
-
-			} else if operator.Type == "time_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
-				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of time parser op %s: %w", operator.Name, err,
-					)
-				}
-				operator.If = parseFromNotNilCheck
-
-				if operator.LayoutType == "strptime" {
-					regex, err := RegexForStrptimeLayout(operator.Layout)
-					if err != nil {
-						return nil, fmt.Errorf(
-							"couldn't generate layout regex for time_parser %s: %w", operator.Name, err,
-						)
-					}
-
-					operator.If = fmt.Sprintf(
-						`%s && %s matches "%s"`, operator.If, operator.ParseFrom, regex,
-					)
-				} else if operator.LayoutType == "epoch" {
-					valueRegex := `^\\s*[0-9]+\\s*$`
-					if strings.Contains(operator.Layout, ".") {
-						valueRegex = `^\\s*[0-9]+\\.[0-9]+\\s*$`
-					}
-
-					operator.If = fmt.Sprintf(
-						`%s && string(%s) matches "%s"`, operator.If, operator.ParseFrom, valueRegex,
-					)
-
-				}
-				// TODO(Raj): Maybe add support for gotime too eventually
-
-			} else if operator.Type == "severity_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
-				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of severity parser %s: %w", operator.Name, err,
-					)
-				}
-				operator.If = fmt.Sprintf(
-					`%s && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
-					parseFromNotNilCheck, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom,
-				)
-
-			}
-
-			filteredOp = append(filteredOp, operator)
-		} else if i == len(ops)-1 && len(filteredOp) != 0 {
-			filteredOp[len(filteredOp)-1].Output = ""
-		}
-	}
-	return filteredOp, nil
-}
-
-func cleanTraceParser(operator *PipelineOperator) {
-	if operator.TraceId != nil && len(operator.TraceId.ParseFrom) < 1 {
-		operator.TraceId = nil
-	}
-	if operator.SpanId != nil && len(operator.SpanId.ParseFrom) < 1 {
-		operator.SpanId = nil
-	}
-	if operator.TraceFlags != nil && len(operator.TraceFlags.ParseFrom) < 1 {
-		operator.TraceFlags = nil
-	}
 }
 
 // Generates an expression checking that `fieldPath` has a non-nil value in a log record.

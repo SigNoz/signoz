@@ -199,9 +199,10 @@ var prepareProcessorTestData = []struct {
 func TestPreparePipelineProcessor(t *testing.T) {
 	for _, test := range prepareProcessorTestData {
 		Convey(test.Name, t, func() {
-			res, err := getOperators(test.Operators)
-			So(err, ShouldBeNil)
-			So(res, ShouldResemble, test.Output)
+			require.NotNil(t, nil, "TODO(Raj): maybe use these tests in new config generation")
+			// res, err := getOperators(test.Operators)
+			// So(err, ShouldBeNil)
+			// So(res, ShouldResemble, test.Output)
 		})
 	}
 }
