@@ -1,0 +1,31 @@
+.createDowntimeModal {
+}
+
+.createForm {
+	label {
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: 20px;
+
+		padding-bottom: 6px;
+	}
+
+	.ant-picker {
+		width: 100%;
+	}
+}
+
+.datePicker {
+	.ant-picker-panel-container {
+		background: #262930 !important;
+	}
+}
+
+.lightMode {
+	.datePicker {
+		.ant-picker-panel-container {
+			background: #ffffff !important;
+		}
+	}
+}
