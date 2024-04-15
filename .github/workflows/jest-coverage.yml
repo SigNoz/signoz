@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -22,10 +22,9 @@ jobs:
 
       - name: Install dependencies
         run: cd frontend && yarn install
-        env:
-          CI: true
+
+      - name: Run ESLint
+        run: cd frontend && npm run lint
 
       - name: npm run test:changedsince
         run: cd frontend && npm run test:changedsince
-        env:
-          CI: true
