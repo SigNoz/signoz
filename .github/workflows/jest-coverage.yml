@@ -32,17 +32,18 @@
 #           echo "Coverage Summary:"
 #           cat coverage/lcov-report/index.html | grep -oP '(?<=<span class="strong">).*(?=%</span>)' | tail -n 1
 
-name: tests(push) - install, lint, test:changedsince
+name: Jest Coverage Check
 
-on: [push]
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+      - release/v*
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        node-version: [10.x, 12.x]
+  jest_coverage:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
