@@ -23,7 +23,7 @@
 		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
 		"commitlint": "commitlint --edit $1",
 		"test": "jest --coverage",
-		"custom-coverage": "npx new-files-coverage-check --e !**/*.test.tsx !**/*.test.ts !**/*.snap !**/*.js !**/*.scss !**/*.mock.ts !**/*.spec.ts !**/*.d.ts !**/*.json !**/*.types.ts !**/types.ts !**/*.yml !**/*.yaml !**/__test*/** !**/*.png !**/*.ico !**/*.svg"
+		"custom-coverage": "npm install check-code-coverage --e !**/*.test.tsx !**/*.test.ts !**/*.snap !**/*.js !**/*.scss !**/*.mock.ts !**/*.spec.ts !**/*.d.ts !**/*.json !**/*.types.ts !**/types.ts !**/*.yml !**/*.yaml !**/__test*/** !**/*.png !**/*.ico !**/*.svg"
 	},
 	"engines": {
 		"node": ">=16.15.0"
