@@ -19,13 +19,17 @@ jobs:
         run: cd frontend && yarn install
 
       - name: Run Jest with Coverage
-        run: cd frontend && npm test --coverage
+        run: cd frontend  |
+          npx jest --coverage --silent --coverageReporters text --coverageReporters text-summary --changedSince=origin/$BASE_BRANCH --passWithNoTests --listTests
+          npx jest --coverage --silent --coverageReporters text --coverageReporters json-summary --changedSince=origin/$BASE_BRANCH --passWithNoTests --maxWorkers=5 --ci --testResultsProcessor="jest-junit"
+
+          yarn custom-coverage --verbose
 
       - name: Upload Coverage Results
         uses: actions/upload-artifact@v2
         with:
           name: coverage
-          path: coverage # Adjust this path according to your coverage report location
+          path: ./frontend/coverage
 
       - name: Display Coverage Summary
         run: |
