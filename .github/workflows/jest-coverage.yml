@@ -24,13 +24,10 @@ jobs:
 
       #       yarn custom-coverage --verbose
 
-      - name: Get Changed Files
-        id: get_changed_files
-        run: |
-          echo "CHANGED_FILES=$(git diff --name-only origin/develop ${{ github.sha }} | grep '\.jsx\?$' || true)" >> $GITHUB_ENV
-
-      - name: Run Jest with Coverage for Changed Files
-        run: npm test -- --coverage --findRelatedTests ${{ steps.get_changed_files.outputs.CHANGED_FILES }}
+      - name: npm run test:changedsince
+        run: npm run test:changedsince
+        env:
+          CI: true
 
       - name: Upload Coverage Results
         uses: actions/upload-artifact@v2
