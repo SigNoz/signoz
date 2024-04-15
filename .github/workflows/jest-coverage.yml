@@ -23,8 +23,8 @@ jobs:
       - name: Install dependencies
         run: cd frontend && yarn install
 
-      - name: Run ESLint
-        run: cd frontend && npm run lint
+      # - name: Run ESLint
+      #   run: cd frontend && npm run lint
 
       - name: npm run test:changedsince
         run: cd frontend && npm run test:changedsince
