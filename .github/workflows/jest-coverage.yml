@@ -47,10 +47,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - run: |
-          git fetch --no-tags --depth=1 origin develop
-          git checkout -b develop
-          git checkout ${{ github.event.pull_request.head.sha }}
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
 
       - name: Install dependencies
         run: cd frontend && yarn install
