@@ -159,7 +159,7 @@ export default function EnvironmentDetails(): JSX.Element {
 
 			<div className="request-entity-container">
 				<Typography.Text>
-					Cannot find what you’re looking for? Request a data source
+					Cannot find what you’re looking for? Request an environment
 				</Typography.Text>
 
 				<div className="form-section">
