@@ -18,12 +18,6 @@ jobs:
       - name: Install dependencies
         run: cd frontend && yarn install
 
-      #   - name: Run Jest with Coverage
-      #     run: |
-      #       cd frontend && npm test --silent --coverageReporters text --coverageReporters json-summary --changedSince=origin/develop --passWithNoTests --maxWorkers=5 --ci --testResultsProcessor="jest-junit"
-
-      #       yarn custom-coverage --verbose
-
       - name: npm test-run-changed
         run: cd frontend && npm run test-changedsince
 
