@@ -1,0 +1,36 @@
+name: Jest Coverage Check
+
+on:
+  pull_request:
+    branches:
+      - develop # or whatever your main branch is called
+
+jobs:
+  jest_coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Jest with Coverage
+        run: npm test -- --coverage
+
+      - name: Upload Coverage Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage
+          path: coverage # Adjust this path according to your coverage report location
+
+      - name: Display Coverage Summary
+        run: |
+          echo "Coverage Summary:"
+          cat coverage/lcov-report/index.html | grep -oP '(?<=<span class="strong">).*(?=%</span>)' | tail -n 1
