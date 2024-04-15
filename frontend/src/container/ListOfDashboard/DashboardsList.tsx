@@ -396,22 +396,6 @@ function DashboardsList(): JSX.Element {
 							<div className="dashboard-title">
 								<TentIcon /> <Typography.Text>{dashboard.name}</Typography.Text>
 							</div>
-							{/* 
-							<div className="action-btn">
-								<PenLine
-									size={14}
-									className={isEditDeleteSupported ? '' : 'hidden'}
-									onClick={(): void => handleEditModelOpen(view, bgColor)}
-								/>
-								<Compass size={14} onClick={(): void => handleRedirectQuery(view)} />
-								<Trash2
-									size={14}
-									className={isEditDeleteSupported ? '' : 'hidden'}
-									color={Color.BG_CHERRY_500}
-									onClick={(): void => handleDeleteMode
-										lOpen(view.uuid, view.name)}
-								/>
-							</div> */}
 
 							{dashboard?.tags && dashboard.tags.length > 0 && (
 								<div className="dashboard-tags">
@@ -544,7 +528,7 @@ function DashboardsList(): JSX.Element {
 	const createDashboardItems: MenuProps['items'] = [
 		{
 			label: (
-				<div className="create-dashboard-menu-item">
+				<div className="create-dashboard-menu-item" onClick={onNewDashboardHandler}>
 					{' '}
 					<LayoutGrid size={14} /> Create dashboard{' '}
 				</div>
@@ -553,22 +537,25 @@ function DashboardsList(): JSX.Element {
 		},
 		{
 			label: (
-				<div className="create-dashboard-menu-item">
+				<div
+					className="create-dashboard-menu-item"
+					onClick={(): void => onModalHandler(false)}
+				>
 					{' '}
 					<Radius size={14} /> Import JSON{' '}
 				</div>
 			),
 			key: '1',
 		},
-		{
-			label: (
-				<div className="create-dashboard-menu-item">
-					{' '}
-					<GrafanaIcon /> Use Grafana JSON{' '}
-				</div>
-			),
-			key: '3',
-		},
+		// {
+		// 	label: (
+		// 		<div className="create-dashboard-menu-item">
+		// 			{' '}
+		// 			<GrafanaIcon /> Use Grafana JSON{' '}
+		// 		</div>
+		// 	),
+		// 	key: '3',
+		// },
 	];
 
 	return (
@@ -608,7 +595,11 @@ function DashboardsList(): JSX.Element {
 						menu={{ items: createDashboardItems }}
 						placement="bottomRight"
 					>
-						<Button type="primary" icon={<Plus size={14} />}>
+						<Button
+							type="primary"
+							className="periscope-btn primary"
+							icon={<Plus size={14} />}
+						>
 							New dashboard
 						</Button>
 					</Dropdown>
@@ -619,7 +610,13 @@ function DashboardsList(): JSX.Element {
 					dataSource={data}
 					loading={isDashboardListLoading}
 					showHeader={false}
-					pagination={{ pageSize: 5 }}
+					pagination={{ pageSize: 5, showSizeChanger: false }}
+				/>
+
+				<ImportJSON
+					isImportJSONModalVisible={isImportJSONModalVisible}
+					uploadedGrafana={uploadedGrafana}
+					onModalHandler={(): void => onModalHandler(false)}
 				/>
 			</div>
 		</div>
