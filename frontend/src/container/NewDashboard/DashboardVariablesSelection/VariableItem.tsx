@@ -32,7 +32,7 @@ interface VariableItemProps {
 		arg1: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
 	) => void;
-	lastUpdatedVar: string;
+	variablesToGetUpdated: string[];
 }
 
 const getSelectValue = (
@@ -49,7 +49,7 @@ function VariableItem({
 	variableData,
 	existingVariables,
 	onValueUpdate,
-	lastUpdatedVar,
+	variablesToGetUpdated,
 }: VariableItemProps): JSX.Element {
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
 		[],
@@ -108,16 +108,10 @@ function VariableItem({
 
 					if (!areArraysEqual(newOptionsData, oldOptionsData)) {
 						/* eslint-disable no-useless-escape */
-						const re = new RegExp(`\\{\\{\\s*?\\.${lastUpdatedVar}\\s*?\\}\\}`); // regex for `{{.var}}`
-						// If the variable is dependent on the last updated variable
-						// and contains the last updated variable in its query (of the form `{{.var}}`)
-						// then we need to update the value of the variable
-						const queryValue = variableData.queryValue || '';
-						const dependVarReMatch = queryValue.match(re);
 						if (
 							variableData.type === 'QUERY' &&
-							dependVarReMatch !== null &&
-							dependVarReMatch.length > 0
+							variableData.name &&
+							variablesToGetUpdated.includes(variableData.name)
 						) {
 							let value = variableData.selectedValue;
 							let allSelected = false;
