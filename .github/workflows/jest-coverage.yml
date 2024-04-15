@@ -44,19 +44,18 @@ jobs:
         os: [ubuntu-latest, windows-latest, macOS-latest]
         node-version: [10.x, 12.x]
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
       - run: |
           git fetch --no-tags --depth=1 origin develop
           git checkout -b develop
           git checkout ${{ github.event.pull_request.head.sha }}
-      - name: Use Node.js ${{ matrix.node-version }} on ${{ matrix.os }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
-      - name: npm install
-        run: cd frontend && npm install
+
+      - name: Install dependencies
+        run: cd frontend && yarn install
         env:
           CI: true
+
       - name: npm run test:changedsince
         run: cd frontend && npm run test:changedsince
         env:
