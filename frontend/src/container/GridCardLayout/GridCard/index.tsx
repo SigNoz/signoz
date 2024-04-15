@@ -166,7 +166,8 @@ function GridCardGraph({
 
 	const menuList =
 		widget.panelTypes === PANEL_TYPES.TABLE ||
-		widget.panelTypes === PANEL_TYPES.LIST
+		widget.panelTypes === PANEL_TYPES.LIST ||
+		widget.panelTypes === PANEL_TYPES.PIE
 			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
 			: headerMenuList;
 
