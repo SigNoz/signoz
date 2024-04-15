@@ -27,7 +27,7 @@ jobs:
       - name: Get Changed Files
         id: get_changed_files
         run: |
-          echo ::set-env name=CHANGED_FILES::$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.jsx\?$' || true)
+          echo "CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.jsx\?$' || true)" >> $GITHUB_ENV
 
       - name: Run Jest with Coverage for Changed Files
         run: npm test -- --coverage --findRelatedTests ${{ steps.get_changed_files.outputs.files }}
