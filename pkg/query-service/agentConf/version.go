@@ -45,7 +45,7 @@ type ConfigVersion struct {
 	CreatedAt     time.Time `json:"createdAt" db:"created_at"`
 }
 
-func NewConfigversion(typeDef ElementTypeDef) *ConfigVersion {
+func NewConfigVersion(typeDef ElementTypeDef) *ConfigVersion {
 	return &ConfigVersion{
 		ID:           uuid.NewString(),
 		ElementType:  typeDef,

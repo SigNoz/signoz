@@ -2,7 +2,7 @@
 import { QueryFunctionsTypes } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
-export const queryFunctionOptions: SelectOption<string, string>[] = [
+export const metricQueryFunctionOptions: SelectOption<string, string>[] = [
 	{
 		value: QueryFunctionsTypes.CUTOFF_MIN,
 		label: 'Cut Off Min',
@@ -65,6 +65,12 @@ export const queryFunctionOptions: SelectOption<string, string>[] = [
 	},
 ];
 
+export const logsQueryFunctionOptions: SelectOption<string, string>[] = [
+	{
+		value: QueryFunctionsTypes.TIME_SHIFT,
+		label: 'Time Shift',
+	},
+];
 interface QueryFunctionConfigType {
 	[key: string]: {
 		showInput: boolean;

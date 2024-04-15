@@ -335,6 +335,13 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetEvaluationTimestamp(t)
 			}(time.Now())
 
+			kvs := map[string]string{
+				"alertID": rule.ID(),
+				"source":  "alerts",
+				"client":  "query-service",
+			}
+			ctx = context.WithValue(ctx, "log_comment", kvs)
+
 			_, err := rule.Eval(ctx, ts, g.opts.Queriers)
 			if err != nil {
 				rule.SetHealth(HealthBad)

@@ -204,7 +204,7 @@ func (lm *Manager) Validate(ctx context.Context) (reterr error) {
 			zap.L().Error("License validation completed with error", zap.Error(reterr))
 			atomic.AddUint64(&lm.failedAttempts, 1)
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_CHECK_FAILED,
-				map[string]interface{}{"err": reterr.Error()}, "")
+				map[string]interface{}{"err": reterr.Error()}, "", true, false)
 		} else {
 			zap.L().Info("License validation completed with no errors")
 		}
@@ -263,7 +263,7 @@ func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *m
 			userEmail, err := auth.GetEmailFromJwt(ctx)
 			if err == nil {
 				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_LICENSE_ACT_FAILED,
-					map[string]interface{}{"err": errResponse.Err.Error()}, userEmail)
+					map[string]interface{}{"err": errResponse.Err.Error()}, userEmail, true, false)
 			}
 		}
 	}()

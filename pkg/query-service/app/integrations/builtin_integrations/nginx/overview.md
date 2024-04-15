@@ -1,3 +1,3 @@
 ### Monitor Nginx with SigNoz
 
-Parse your Nginx logs and collect key metrics.
+Collect and parse Nginx logs to populate timestamp, severity, and other log attributes for better querying and aggregation.

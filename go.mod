@@ -6,7 +6,7 @@ require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.20.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
-	github.com/SigNoz/signoz-otel-collector v0.88.17
+	github.com/SigNoz/signoz-otel-collector v0.88.20
 	github.com/SigNoz/zap_otlp/zap_otlp_encoder v0.0.0-20230822164844-1b861a431974
 	github.com/SigNoz/zap_otlp/zap_otlp_sync v0.0.0-20230822164844-1b861a431974
 	github.com/antonmedv/expr v1.15.3
@@ -203,4 +203,4 @@ require (
 	k8s.io/utils v0.0.0-20230711102312-30195339c3c7 // indirect
 )
 
-replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.79-0.1
+replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.10.1

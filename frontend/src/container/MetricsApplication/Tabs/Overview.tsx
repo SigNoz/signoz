@@ -19,13 +19,10 @@ import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
 import { EQueryType } from 'types/common/dashboard';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
 
 import { GraphTitle, SERVICE_CHART_ID } from '../constant';
@@ -49,9 +46,6 @@ import {
 } from './util';
 
 function Application(): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
@@ -59,10 +53,6 @@ function Application(): JSX.Element {
 	const { queries } = useResourceAttribute();
 	const urlQuery = useUrlQuery();
 
-	const selectedTags = useMemo(
-		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
-		[queries],
-	);
 	const isSpanMetricEnabled = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
 		?.active;
 
@@ -94,7 +84,7 @@ function Application(): JSX.Element {
 		isLoading: topLevelOperationsIsLoading,
 		isError: topLevelOperationsIsError,
 	} = useQuery<ServiceDataProps>({
-		queryKey: [servicename, minTime, maxTime, selectedTags],
+		queryKey: [servicename],
 		queryFn: getTopLevelOperations,
 	});
 
@@ -116,49 +106,41 @@ function Application(): JSX.Element {
 		[servicename, topLevelOperations],
 	);
 
-	const operationPerSecWidget = useMemo(
-		() =>
-			getWidgetQueryBuilder({
-				query: {
-					queryType: EQueryType.QUERY_BUILDER,
-					promql: [],
-					builder: operationPerSec({
-						servicename,
-						tagFilterItems,
-						topLevelOperations: topLevelOperationsRoute,
-					}),
-					clickhouse_sql: [],
-					id: uuid(),
-				},
-				title: GraphTitle.RATE_PER_OPS,
-				panelTypes: PANEL_TYPES.TIME_SERIES,
-				yAxisUnit: 'ops',
-				id: SERVICE_CHART_ID.rps,
+	const operationPerSecWidget = getWidgetQueryBuilder({
+		query: {
+			queryType: EQueryType.QUERY_BUILDER,
+			promql: [],
+			builder: operationPerSec({
+				servicename,
+				tagFilterItems,
+				topLevelOperations: topLevelOperationsRoute,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
-	);
+			clickhouse_sql: [],
+			id: uuid(),
+		},
+		title: GraphTitle.RATE_PER_OPS,
+		panelTypes: PANEL_TYPES.TIME_SERIES,
+		yAxisUnit: 'ops',
+		id: SERVICE_CHART_ID.rps,
+	});
 
-	const errorPercentageWidget = useMemo(
-		() =>
-			getWidgetQueryBuilder({
-				query: {
-					queryType: EQueryType.QUERY_BUILDER,
-					promql: [],
-					builder: errorPercentage({
-						servicename,
-						tagFilterItems,
-						topLevelOperations: topLevelOperationsRoute,
-					}),
-					clickhouse_sql: [],
-					id: uuid(),
-				},
-				title: GraphTitle.ERROR_PERCENTAGE,
-				panelTypes: PANEL_TYPES.TIME_SERIES,
-				yAxisUnit: '%',
-				id: SERVICE_CHART_ID.errorPercentage,
+	const errorPercentageWidget = getWidgetQueryBuilder({
+		query: {
+			queryType: EQueryType.QUERY_BUILDER,
+			promql: [],
+			builder: errorPercentage({
+				servicename,
+				tagFilterItems,
+				topLevelOperations: topLevelOperationsRoute,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
-	);
+			clickhouse_sql: [],
+			id: uuid(),
+		},
+		title: GraphTitle.ERROR_PERCENTAGE,
+		panelTypes: PANEL_TYPES.TIME_SERIES,
+		yAxisUnit: '%',
+		id: SERVICE_CHART_ID.errorPercentage,
+	});
 
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {

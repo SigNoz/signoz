@@ -10,6 +10,7 @@ import (
 	"net/http"
 	_ "net/http/pprof" // http profiler
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -328,7 +329,6 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	r.Use(loggingMiddleware)
 
 	apiHandler.RegisterRoutes(r, am)
-	apiHandler.RegisterMetricsRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterIntegrationRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
@@ -393,13 +393,14 @@ func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
 }
 
-func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface{}, bool) {
-	pathToExtractBodyFrom := "/api/v3/query_range"
+func extractQueryRangeData(path string, r *http.Request) (map[string]interface{}, bool) {
+	pathToExtractBodyFromV3 := "/api/v3/query_range"
+	pathToExtractBodyFromV4 := "/api/v4/query_range"
 
 	data := map[string]interface{}{}
 	var postData *v3.QueryRangeParamsV3
 
-	if path == pathToExtractBodyFrom && (r.Method == "POST") {
+	if (r.Method == "POST") && ((path == pathToExtractBodyFromV3) || (path == pathToExtractBodyFromV4)) {
 		if r.Body != nil {
 			bodyBytes, err := io.ReadAll(r.Body)
 			if err != nil {
@@ -415,6 +416,25 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 
 	} else {
 		return nil, false
+	}
+
+	referrer := r.Header.Get("Referer")
+
+	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the referrer", zap.Error(err))
+	}
+	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the alert: ", zap.Error(err))
+	}
+	logsExplorerMatched, err := regexp.MatchString(`/logs/logs-explorer(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the logs explorer: ", zap.Error(err))
+	}
+	traceExplorerMatched, err := regexp.MatchString(`/traces-explorer(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the trace explorer: ", zap.Error(err))
 	}
 
 	signozMetricsUsed := false
@@ -445,7 +465,21 @@ func extractQueryRangeV3Data(path string, r *http.Request) (map[string]interface
 		data["tracesUsed"] = signozTracesUsed
 		userEmail, err := baseauth.GetEmailFromJwt(r.Context())
 		if err == nil {
-			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail)
+			// switch case to set data["screen"] based on the referrer
+			switch {
+			case dashboardMatched:
+				data["screen"] = "panel"
+			case alertMatched:
+				data["screen"] = "alert"
+			case logsExplorerMatched:
+				data["screen"] = "logs-explorer"
+			case traceExplorerMatched:
+				data["screen"] = "traces-explorer"
+			default:
+				data["screen"] = "unknown"
+				return data, true
+			}
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_QUERY_RANGE_API, data, userEmail, true, false)
 		}
 	}
 	return data, true
@@ -472,7 +506,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
-		queryRangeV3data, metadataExists := extractQueryRangeV3Data(path, r)
+		queryRangeData, metadataExists := extractQueryRangeData(path, r)
 		getActiveLogs(path, r)
 
 		lrw := NewLoggingResponseWriter(w)
@@ -480,7 +514,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
 		if metadataExists {
-			for key, value := range queryRangeV3data {
+			for key, value := range queryRangeData {
 				data[key] = value
 			}
 		}
@@ -488,7 +522,7 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		if _, ok := telemetry.EnabledPaths()[path]; ok {
 			userEmail, err := baseauth.GetEmailFromJwt(r.Context())
 			if err == nil {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail)
+				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data, userEmail, true, false)
 			}
 		}
 

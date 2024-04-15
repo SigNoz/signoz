@@ -51,7 +51,6 @@ const (
 
 var SAAS_EVENTS_LIST = map[string]struct{}{
 	TELEMETRY_EVENT_NUMBER_OF_SERVICES:               {},
-	TELEMETRY_EVENT_ACTIVE_USER:                      {},
 	TELEMETRY_EVENT_HEART_BEAT:                       {},
 	TELEMETRY_EVENT_LANGUAGE:                         {},
 	TELEMETRY_EVENT_SERVICE:                          {},
@@ -61,7 +60,7 @@ var SAAS_EVENTS_LIST = map[string]struct{}{
 	TELEMETRY_EVENT_DASHBOARDS_ALERTS:                {},
 	TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY: {},
 	TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY:           {},
-	// TELEMETRY_EVENT_QUERY_RANGE_API:                  {}, // this event is not part of SAAS_EVENTS_LIST as it may cause too many events to be sent
+	TELEMETRY_EVENT_QUERY_RANGE_API:                  {},
 }
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -194,10 +193,7 @@ func createTelemetry() {
 
 	rand.Seed(time.Now().UnixNano())
 
-	data := map[string]interface{}{}
-
 	telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
-	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
 
 	ticker := time.NewTicker(HEART_BEAT_DURATION)
 	activeUserTicker := time.NewTicker(ACTIVE_USER_DURATION)
@@ -231,7 +227,12 @@ func createTelemetry() {
 				if (telemetry.activeUser["traces"] != 0) || (telemetry.activeUser["metrics"] != 0) || (telemetry.activeUser["logs"] != 0) {
 					telemetry.activeUser["any"] = 1
 				}
-				telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{"traces": telemetry.activeUser["traces"], "metrics": telemetry.activeUser["metrics"], "logs": telemetry.activeUser["logs"], "any": telemetry.activeUser["any"]}, "")
+				telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{
+					"traces":  telemetry.activeUser["traces"],
+					"metrics": telemetry.activeUser["metrics"],
+					"logs":    telemetry.activeUser["logs"],
+					"any":     telemetry.activeUser["any"]},
+					"", true, false)
 				telemetry.activeUser = map[string]int8{"traces": 0, "metrics": 0, "logs": 0, "any": 0}
 
 			case <-ticker.C:
@@ -239,17 +240,23 @@ func createTelemetry() {
 				tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
 
 				if len(tagsInfo.Env) != 0 {
-					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "")
+					telemetry.SendEvent(TELEMETRY_EVENT_ENVIRONMENT, map[string]interface{}{"value": tagsInfo.Env}, "", true, false)
 				}
 
-				for language, _ := range tagsInfo.Languages {
-					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": language}, "")
+				languages := []string{}
+				for language := range tagsInfo.Languages {
+					languages = append(languages, language)
 				}
-
-				for service, _ := range tagsInfo.Services {
-					telemetry.SendEvent(TELEMETRY_EVENT_SERVICE, map[string]interface{}{"serviceName": service}, "")
+				if len(languages) > 0 {
+					telemetry.SendEvent(TELEMETRY_EVENT_LANGUAGE, map[string]interface{}{"language": languages}, "", true, false)
 				}
-
+				services := []string{}
+				for service := range tagsInfo.Services {
+					services = append(services, service)
+				}
+				if len(services) > 0 {
+					telemetry.SendEvent(TELEMETRY_EVENT_SERVICE, map[string]interface{}{"serviceName": services}, "", true, false)
+				}
 				totalSpans, _ := telemetry.reader.GetTotalSpans(context.Background())
 				totalLogs, _ := telemetry.reader.GetTotalLogs(context.Background())
 				spansInLastHeartBeatInterval, _ := telemetry.reader.GetSpansInLastHeartBeatInterval(context.Background(), HEART_BEAT_DURATION)
@@ -280,8 +287,16 @@ func createTelemetry() {
 				for key, value := range tsInfo {
 					data[key] = value
 				}
-				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, "")
 
+				users, apiErr := telemetry.reader.GetUsers(context.Background())
+				if apiErr == nil {
+					for _, user := range users {
+						if user.Email == DEFAULT_CLOUD_EMAIL {
+							continue
+						}
+						telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data, user.Email, false, false)
+					}
+				}
 				alertsInfo, err := telemetry.reader.GetAlertsInfo(context.Background())
 				if err == nil {
 					dashboardsInfo, err := telemetry.reader.GetDashboardsInfo(context.Background())
@@ -306,19 +321,24 @@ func createTelemetry() {
 									"tracesSavedViews":                savedViewsInfo.TracesSavedViews,
 								}
 								// send event only if there are dashboards or alerts or channels
-								if dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0 {
-									telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, "")
+								if (dashboardsInfo.TotalDashboards > 0 || alertsInfo.TotalAlerts > 0 || len(*channels) > 0 || savedViewsInfo.TotalSavedViews > 0) && apiErr == nil {
+									for _, user := range users {
+										if user.Email == DEFAULT_CLOUD_EMAIL {
+											continue
+										}
+										telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, dashboardsAlertsData, user.Email, false, false)
+									}
 								}
 							}
 						}
 					}
 				}
-				if err != nil {
-					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "")
+				if err != nil || apiErr != nil {
+					telemetry.SendEvent(TELEMETRY_EVENT_DASHBOARDS_ALERTS, map[string]interface{}{"error": err.Error()}, "", true, false)
 				}
 
 				getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(context.Background())
-				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval, "")
+				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval, "", true, false)
 			}
 		}
 	}()
@@ -426,7 +446,7 @@ func (a *Telemetry) checkEvents(event string) bool {
 	return sendEvent
 }
 
-func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, opts ...bool) {
+func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEmail string, rateLimitFlag bool, viaEventsAPI bool) {
 
 	// ignore telemetry for default user
 	if userEmail == DEFAULT_CLOUD_EMAIL || a.GetUserEmail() == DEFAULT_CLOUD_EMAIL {
@@ -435,10 +455,6 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 
 	if userEmail != "" {
 		a.SetUserEmail(userEmail)
-	}
-	rateLimitFlag := true
-	if len(opts) > 0 {
-		rateLimitFlag = opts[0]
 	}
 
 	if !a.isTelemetryEnabled() {
@@ -485,7 +501,7 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, userEma
 	// check if event is part of SAAS_EVENTS_LIST
 	_, isSaaSEvent := SAAS_EVENTS_LIST[event]
 
-	if a.saasOperator != nil && a.GetUserEmail() != "" && isSaaSEvent {
+	if a.saasOperator != nil && a.GetUserEmail() != "" && (isSaaSEvent || viaEventsAPI) {
 		a.saasOperator.Enqueue(analytics.Track{
 			Event:      event,
 			UserId:     a.GetUserEmail(),
