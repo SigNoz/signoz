@@ -608,6 +608,7 @@ function LogsExplorerViews({
 										className="periscope-btn"
 										onClick={handleToggleShowFormatOptions}
 										icon={<Sliders size={14} />}
+										data-testid="periscope-btn"
 									/>
 
 									{showFormatMenuItems && (
