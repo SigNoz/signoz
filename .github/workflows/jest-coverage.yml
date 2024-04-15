@@ -22,6 +22,7 @@ jobs:
         run: npm install
 
       - name: Run Jest with Coverage
+        working-directory: frontend/package.json
         run: npm test -- --coverage
 
       - name: Upload Coverage Results
