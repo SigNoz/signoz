@@ -147,7 +147,11 @@ function App(): JSX.Element {
 			}
 		}
 
-		if (isOnBasicPlan || (isLoggedInState && role && role !== 'ADMIN')) {
+		if (
+			isOnBasicPlan ||
+			(isLoggedInState && role && role !== 'ADMIN') ||
+			!(isCloudUserVal || isEECloudUser())
+		) {
 			const newRoutes = routes.filter((route) => route?.path !== ROUTES.BILLING);
 			setRoutes(newRoutes);
 		}

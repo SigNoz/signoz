@@ -3,14 +3,18 @@ import './IntegrationDetailPage.styles.scss';
 
 import { Button, Modal, Tooltip, Typography } from 'antd';
 import installIntegration from 'api/Integrations/installIntegration';
+import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
+import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs from 'dayjs';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowLeftRight, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useMutation } from 'react-query';
 import { IntegrationConnectionStatus } from 'types/api/integrations/types';
 
+import { INTEGRATION_TELEMETRY_EVENTS } from '../utils';
 import TestConnection, { ConnectionStates } from './TestConnection';
 
 interface IntegrationDetailHeaderProps {
@@ -21,6 +25,7 @@ interface IntegrationDetailHeaderProps {
 	refetchIntegrationDetails: () => void;
 	connectionState: ConnectionStates;
 	connectionData: IntegrationConnectionStatus;
+	setActiveDetailTab: React.Dispatch<React.SetStateAction<string | null>>;
 }
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function IntegrationDetailHeader(
@@ -34,8 +39,11 @@ function IntegrationDetailHeader(
 		connectionState,
 		connectionData,
 		refetchIntegrationDetails,
+		setActiveDetailTab,
 	} = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
+
+	const { trackEvent } = useAnalytics();
 
 	const { notifications } = useNotifications();
 
@@ -102,6 +110,12 @@ function IntegrationDetailHeader(
 			last_received_from: connectionData.metrics.last_received_from,
 		};
 	}
+	const isConnectionStatePending =
+		connectionState === ConnectionStates.NotInstalled ||
+		connectionState === ConnectionStates.TestingConnection;
+
+	const isConnectionStateNotInstalled =
+		connectionState === ConnectionStates.NotInstalled;
 	return (
 		<div className="integration-connection-header">
 			<div className="integration-detail-header" key={id}>
@@ -115,20 +129,30 @@ function IntegrationDetailHeader(
 					</div>
 				</div>
 				<Button
-					className="configure-btn"
+					className={cx(
+						'configure-btn',
+						!isConnectionStateNotInstalled && 'test-connection',
+					)}
 					icon={<ArrowLeftRight size={14} />}
 					disabled={isInstallLoading}
 					onClick={(): void => {
 						if (connectionState === ConnectionStates.NotInstalled) {
-							mutate({ integration_id: id, config: {} });
+							trackEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_DETAIL_CONNECT, {
+								integration: id,
+							});
 						} else {
-							showModal();
+							trackEvent(
+								INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_DETAIL_TEST_CONNECTION,
+								{
+									integration: id,
+									connectionStatus: connectionState,
+								},
+							);
 						}
+						showModal();
 					}}
 				>
-					{connectionState === ConnectionStates.NotInstalled
-						? `Connect ${title}`
-						: `Test Connection`}
+					{isConnectionStateNotInstalled ? `Connect ${title}` : `Test Connection`}
 				</Button>
 			</div>
 
@@ -139,15 +163,67 @@ function IntegrationDetailHeader(
 			<Modal
 				className="test-connection-modal"
 				open={isModalOpen}
-				title="Test Connection"
-				onOk={handleOk}
+				title={
+					isConnectionStateNotInstalled
+						? `Connect ${title}`
+						: `Test ${title} Connection`
+				}
 				onCancel={handleCancel}
-				okText="I understand"
-				okButtonProps={{ className: 'understandBtn', icon: <Check size={14} /> }}
-				cancelButtonProps={{ style: { display: 'none' } }}
+				footer={
+					<div
+						className={cx(
+							'connection-footer',
+							!isConnectionStatePending && 'not-pending',
+						)}
+					>
+						<Button
+							type="text"
+							icon={
+								isConnectionStateNotInstalled ? <ConfigureIcon /> : <Check size={14} />
+							}
+							onClick={(): void => {
+								if (isConnectionStateNotInstalled) {
+									setActiveDetailTab('configuration');
+								}
+								handleOk();
+							}}
+							className="understandBtn"
+						>
+							{isConnectionStatePending
+								? isConnectionStateNotInstalled
+									? 'Show Configuration Steps'
+									: 'I have already configured'
+								: 'I understand'}
+						</Button>
+						{isConnectionStatePending && (
+							<Button
+								type="primary"
+								icon={
+									isConnectionStateNotInstalled ? <Check size={14} /> : <ConfigureIcon />
+								}
+								onClick={(): void => {
+									if (isConnectionStateNotInstalled) {
+										mutate({ integration_id: id, config: {} });
+									} else {
+										setActiveDetailTab('configuration');
+									}
+
+									handleOk();
+								}}
+								className="configureBtn"
+							>
+								{isConnectionStateNotInstalled
+									? 'I have already configured'
+									: 'Show Configuration Steps'}
+							</Button>
+						)}
+					</div>
+				}
 			>
 				<div className="connection-content">
-					<TestConnection connectionState={connectionState} />
+					{!isConnectionStateNotInstalled && (
+						<TestConnection connectionState={connectionState} />
+					)}
 					{connectionState === ConnectionStates.Connected ||
 					connectionState === ConnectionStates.NoDataSinceLong ? (
 						<>
@@ -196,12 +272,26 @@ function IntegrationDetailHeader(
 					) : connectionState === ConnectionStates.TestingConnection ? (
 						<div className="data-test-connection">
 							<div className="last-data">
-								After adding the {title} integration, you need to manually configure
-								your Redis data source to start sending data to SigNoz.
+								We have not received data from your {title} Instance yet. You need to
+								manually configure your {title} instance to start sending data to
+								SigNoz.
 							</div>
 							<div className="last-data">
-								The status bar above would turn green if we are successfully receiving
-								the data.
+								If you have already configured your resources to send data, sit tight
+								and wait for the data to flow in, Or else, see the steps to configure
+								your resources to start sending data.
+							</div>
+						</div>
+					) : isConnectionStateNotInstalled ? (
+						<div className="data-test-connection">
+							<div className="last-data">
+								You would need to manually configure your {title} instance to start
+								sending data to SigNoz.
+							</div>
+							<div className="last-data">
+								If you have already configured your resources to send data, sit tight
+								and wait for the data to flow in, Or else, see the steps to configure
+								your resources to start sending data.
 							</div>
 						</div>
 					) : null}

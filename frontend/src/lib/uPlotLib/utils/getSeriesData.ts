@@ -32,7 +32,6 @@ const getSeries = ({
 	widgetMetaData,
 	graphsVisibilityStates,
 	panelType,
-	currentQuery,
 }: GetSeriesProps): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
@@ -42,15 +41,13 @@ const getSeries = ({
 	const newGraphVisibilityStates = graphsVisibilityStates?.slice(1);
 
 	for (let i = 0; i < seriesList?.length; i += 1) {
-		const { metric = {}, queryName = '', legend: lgd } = widgetMetaData[i] || {};
+		const { metric = {}, queryName = '', legend = '' } = widgetMetaData[i] || {};
 
-		const newLegend =
-			currentQuery?.builder.queryData.find((item) => item.queryName === queryName)
-				?.legend || '';
-
-		const legend = newLegend || lgd || '';
-
-		const label = getLabelName(metric, queryName || '', legend);
+		const label = getLabelName(
+			metric,
+			queryName || '', // query
+			legend || '',
+		);
 
 		const color = generateColor(label, themeColors.chartcolors);
 

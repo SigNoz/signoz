@@ -58,9 +58,6 @@ type Reader interface {
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
 
 	FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error)
-	GetMetricAutocompleteMetricNames(ctx context.Context, matchText string, limit int) (*[]string, *model.ApiError)
-	GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
-	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricResult(ctx context.Context, query string) ([]*model.Series, error)
 	GetMetricResultEE(ctx context.Context, query string) ([]*model.Series, string, error)
 	GetMetricAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error)
@@ -96,6 +93,7 @@ type Reader interface {
 	GetLogAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error)
 	GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error)
 	GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error)
+	GetUsers(ctx context.Context) ([]model.UserPayload, error)
 
 	// Connection needed for rules, not ideal but required
 	GetConn() clickhouse.Conn
@@ -105,7 +103,6 @@ type Reader interface {
 	QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error)
 	CheckClickHouse(ctx context.Context) error
 
-	GetLatencyMetricMetadata(context.Context, string, string, bool) (*v3.LatencyMetricMetadataResponse, error)
 	GetMetricMetadata(context.Context, string, string) (*v3.MetricMetadataResponse, error)
 }
 

@@ -203,7 +203,7 @@ func StartNewVersion(
 ) (*ConfigVersion, *model.ApiError) {
 
 	// create a new version
-	cfg := NewConfigversion(eleType)
+	cfg := NewConfigVersion(eleType)
 
 	// insert new config and elements into database
 	err := m.insertConfig(ctx, userId, cfg, elementIds)

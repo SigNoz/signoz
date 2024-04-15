@@ -72,7 +72,7 @@ function EditAlertChannels({
 			api_url: selectedConfig?.api_url || '',
 			channel: selectedConfig?.channel || '',
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			text: selectedConfig?.text || '',
 			title: selectedConfig?.title || '',
 			id,
@@ -115,7 +115,7 @@ function EditAlertChannels({
 		return {
 			api_url: selectedConfig?.api_url || '',
 			name: name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			username,
 			password,
 			id,
@@ -284,7 +284,7 @@ function EditAlertChannels({
 		() => ({
 			webhook_url: selectedConfig?.webhook_url || '',
 			name: selectedConfig?.name || '',
-			send_resolved: true,
+			send_resolved: selectedConfig?.send_resolved || false,
 			text: selectedConfig?.text || '',
 			title: selectedConfig?.title || '',
 			id,

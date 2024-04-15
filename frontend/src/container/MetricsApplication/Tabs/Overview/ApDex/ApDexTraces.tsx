@@ -50,7 +50,6 @@ function ApDexTraces({
 
 	return (
 		<Graph
-			name="apdex"
 			widget={apDexTracesWidget}
 			onDragSelect={onDragSelect}
 			onClickHandler={handleGraphClick('ApDex')}

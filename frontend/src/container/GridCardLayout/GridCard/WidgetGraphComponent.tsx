@@ -6,7 +6,7 @@ import { ToggleGraphProps } from 'components/Graph/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import GridPanelSwitch from 'container/GridPanelSwitch';
+import PanelWrapper from 'container/PanelWrapper/PanelWrapper';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -33,23 +33,20 @@ import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
 import { getLocalStorageGraphVisibilityState } from './utils';
+// import { getLocalStorageGraphVisibilityState } from './utils';
 
 function WidgetGraphComponent({
 	widget,
 	queryResponse,
 	errorMessage,
-	name,
 	version,
 	threshold,
 	headerMenuList,
 	isWarning,
-	data,
-	options,
-	graphVisibiltyState,
+	isFetchingResponse,
+	setRequestData,
 	onClickHandler,
 	onDragSelect,
-	setGraphVisibility,
-	isFetchingResponse,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [hovered, setHovered] = useState(false);
@@ -61,12 +58,15 @@ function WidgetGraphComponent({
 	const isFullViewOpen = params.get(QueryParams.expandedWidgetId) === widget.id;
 
 	const lineChartRef = useRef<ToggleGraphProps>();
+	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
+		Array(queryResponse.data?.payload?.data.result.length || 0).fill(true),
+	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		if (!lineChartRef.current) return;
 
-		graphVisibiltyState.forEach((state, index) => {
+		graphVisibility.forEach((state, index) => {
 			lineChartRef.current?.toggleGraph(index, state);
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -210,7 +210,7 @@ function WidgetGraphComponent({
 				graphVisibilityStates: localStoredVisibilityState,
 			} = getLocalStorageGraphVisibilityState({
 				apiResponse: queryResponse.data.payload.data.result,
-				name,
+				name: widget.id,
 			});
 			setGraphVisibility(localStoredVisibilityState);
 		}
@@ -252,7 +252,7 @@ function WidgetGraphComponent({
 			onBlur={(): void => {
 				setHovered(false);
 			}}
-			id={name}
+			id={widget.id}
 		>
 			<Modal
 				destroyOnClose
@@ -278,14 +278,12 @@ function WidgetGraphComponent({
 				className="widget-full-view"
 			>
 				<FullView
-					name={`${name}expanded`}
+					name={`${widget.id}expanded`}
 					version={version}
-					originalName={name}
+					originalName={widget.id}
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
-					parentChartRef={lineChartRef}
-					onDragSelect={onDragSelect}
 				/>
 			</Modal>
 
@@ -305,26 +303,22 @@ function WidgetGraphComponent({
 					isFetchingResponse={isFetchingResponse}
 				/>
 			</div>
-			{queryResponse.isLoading && <Skeleton />}
+			{queryResponse.isLoading && widget.panelTypes !== PANEL_TYPES.LIST && (
+				<Skeleton />
+			)}
 			{(queryResponse.isSuccess || widget.panelTypes === PANEL_TYPES.LIST) && (
 				<div
 					className={cx('widget-graph-container', widget.panelTypes)}
 					ref={graphRef}
 				>
-					<GridPanelSwitch
-						panelType={widget.panelTypes}
-						data={data}
-						name={name}
-						ref={lineChartRef}
-						options={options}
-						yAxisUnit={widget.yAxisUnit}
+					<PanelWrapper
+						widget={widget}
+						queryResponse={queryResponse}
+						setRequestData={setRequestData}
+						setGraphVisibility={setGraphVisibility}
+						graphVisibility={graphVisibility}
 						onClickHandler={onClickHandler}
-						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
-						query={widget.query}
-						thresholds={widget.thresholds}
-						selectedLogFields={widget.selectedLogFields}
-						dataSource={widget.query.builder?.queryData[0]?.dataSource}
-						selectedTracesFields={widget.selectedTracesFields}
+						onDragSelect={onDragSelect}
 					/>
 				</div>
 			)}

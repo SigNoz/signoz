@@ -30,7 +30,6 @@ import (
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
-	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
@@ -39,7 +38,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -326,14 +324,6 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	}
 }
 
-func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router, am *AuthMiddleware) {
-	subRouter := router.PathPrefix("/api/v2/metrics").Subrouter()
-	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeMetricsV2)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/autocomplete/list", am.ViewAccess(aH.metricAutocompleteMetricName)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/tagKey", am.ViewAccess(aH.metricAutocompleteTagKey)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/tagValue", am.ViewAccess(aH.metricAutocompleteTagValue)).Methods(http.MethodGet)
-}
-
 func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v3").Subrouter()
 	subRouter.HandleFunc("/autocomplete/aggregate_attributes", am.ViewAccess(
@@ -401,7 +391,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/events", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
 
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
@@ -418,8 +408,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.AdminAccess(aH.insertIngestionKey)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.ViewAccess(aH.getIngestionKeys)).Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/metric_meta", am.ViewAccess(aH.getLatencyMetricMetadata)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
@@ -495,62 +483,6 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, ruleResponse)
 }
 
-func (aH *APIHandler) metricAutocompleteMetricName(w http.ResponseWriter, r *http.Request) {
-	matchText := r.URL.Query().Get("match")
-	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
-	if err != nil {
-		limit = 0 // no limit
-	}
-
-	metricNameList, apiErrObj := aH.reader.GetMetricAutocompleteMetricNames(r.Context(), matchText, limit)
-
-	if apiErrObj != nil {
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-	aH.Respond(w, metricNameList)
-
-}
-
-func (aH *APIHandler) metricAutocompleteTagKey(w http.ResponseWriter, r *http.Request) {
-	metricsAutocompleteTagKeyParams, apiErrorObj := parser.ParseMetricAutocompleteTagParams(r)
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	tagKeyList, apiErrObj := aH.reader.GetMetricAutocompleteTagKey(r.Context(), metricsAutocompleteTagKeyParams)
-
-	if apiErrObj != nil {
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-	aH.Respond(w, tagKeyList)
-}
-
-func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.Request) {
-	metricsAutocompleteTagValueParams, apiErrorObj := parser.ParseMetricAutocompleteTagParams(r)
-
-	if len(metricsAutocompleteTagValueParams.TagKey) == 0 {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("tagKey not present in params")}
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	tagValueList, apiErrObj := aH.reader.GetMetricAutocompleteTagValue(r.Context(), metricsAutocompleteTagValueParams)
-
-	if apiErrObj != nil {
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-
-	aH.Respond(w, tagValueList)
-}
-
 func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
 
 	metricNames := make([]string, 0)
@@ -591,215 +523,6 @@ func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParam
 		}
 	}
 	return nil
-}
-
-func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
-	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
-
-	if apiErrorObj != nil {
-		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	// prometheus instant query needs same timestamp
-	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
-		metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.PROM {
-		metricsQueryRangeParams.Start = metricsQueryRangeParams.End
-	}
-
-	// round up the end to neaerest multiple
-	if metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
-		end := (metricsQueryRangeParams.End) / 1000
-		step := metricsQueryRangeParams.Step
-		metricsQueryRangeParams.End = (end / step * step) * 1000
-	}
-
-	type channelResult struct {
-		Series []*model.Series
-		Err    error
-		Name   string
-		Query  string
-	}
-
-	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, error, map[string]string) {
-		var seriesList []*model.Series
-		ch := make(chan channelResult, len(queries))
-		var wg sync.WaitGroup
-
-		for name, query := range queries {
-			wg.Add(1)
-			go func(name, query string) {
-				defer wg.Done()
-				seriesList, err := aH.reader.GetMetricResult(r.Context(), query)
-				for _, series := range seriesList {
-					series.QueryName = name
-				}
-
-				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
-					return
-				}
-				ch <- channelResult{Series: seriesList}
-			}(name, query)
-		}
-
-		wg.Wait()
-		close(ch)
-
-		var errs []error
-		errQuriesByName := make(map[string]string)
-		// read values from the channel
-		for r := range ch {
-			if r.Err != nil {
-				errs = append(errs, r.Err)
-				errQuriesByName[r.Name] = r.Query
-				continue
-			}
-			seriesList = append(seriesList, r.Series...)
-		}
-		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
-		}
-		return seriesList, nil, nil
-	}
-
-	execPromQueries := func(metricsQueryRangeParams *model.QueryRangeParamsV2) ([]*model.Series, error, map[string]string) {
-		var seriesList []*model.Series
-		ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeMetricQuery.PromQueries))
-		var wg sync.WaitGroup
-
-		for name, query := range metricsQueryRangeParams.CompositeMetricQuery.PromQueries {
-			if query.Disabled {
-				continue
-			}
-			wg.Add(1)
-			go func(name string, query *model.PromQuery) {
-				var seriesList []*model.Series
-				defer wg.Done()
-				tmpl := template.New("promql-query")
-				tmpl, tmplErr := tmpl.Parse(query.Query)
-				if tmplErr != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
-					return
-				}
-				var queryBuf bytes.Buffer
-				tmplErr = tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
-				if tmplErr != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
-					return
-				}
-				query.Query = queryBuf.String()
-				queryModel := model.QueryRangeParams{
-					Start: time.UnixMilli(metricsQueryRangeParams.Start),
-					End:   time.UnixMilli(metricsQueryRangeParams.End),
-					Step:  time.Duration(metricsQueryRangeParams.Step * int64(time.Second)),
-					Query: query.Query,
-				}
-				promResult, _, err := aH.reader.GetQueryRangeResult(r.Context(), &queryModel)
-				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query.Query}
-					return
-				}
-				matrix, _ := promResult.Matrix()
-				for _, v := range matrix {
-					var s model.Series
-					s.QueryName = name
-					s.Labels = v.Metric.Copy().Map()
-					for _, p := range v.Floats {
-						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.F})
-					}
-					seriesList = append(seriesList, &s)
-				}
-				ch <- channelResult{Series: seriesList}
-			}(name, query)
-		}
-
-		wg.Wait()
-		close(ch)
-
-		var errs []error
-		errQuriesByName := make(map[string]string)
-		// read values from the channel
-		for r := range ch {
-			if r.Err != nil {
-				errs = append(errs, r.Err)
-				errQuriesByName[r.Name] = r.Query
-				continue
-			}
-			seriesList = append(seriesList, r.Series...)
-		}
-		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
-		}
-		return seriesList, nil, nil
-	}
-
-	var seriesList []*model.Series
-	var err error
-	var errQuriesByName map[string]string
-	switch metricsQueryRangeParams.CompositeMetricQuery.QueryType {
-	case model.QUERY_BUILDER:
-		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, constants.SIGNOZ_TIMESERIES_TABLENAME)
-		if runQueries.Err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
-			return
-		}
-		seriesList, err, errQuriesByName = execClickHouseQueries(runQueries.Queries)
-
-	case model.CLICKHOUSE:
-		queries := make(map[string]string)
-		for name, chQuery := range metricsQueryRangeParams.CompositeMetricQuery.ClickHouseQueries {
-			if chQuery.Disabled {
-				continue
-			}
-			tmpl := template.New("clickhouse-query")
-			tmpl, err := tmpl.Parse(chQuery.Query)
-			if err != nil {
-				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-				return
-			}
-			var query bytes.Buffer
-
-			// replace go template variables
-			querytemplate.AssignReservedVars(metricsQueryRangeParams)
-
-			err = tmpl.Execute(&query, metricsQueryRangeParams.Variables)
-			if err != nil {
-				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-				return
-			}
-
-			queries[name] = query.String()
-		}
-		seriesList, err, errQuriesByName = execClickHouseQueries(queries)
-	case model.PROM:
-		seriesList, err, errQuriesByName = execPromQueries(metricsQueryRangeParams)
-	default:
-		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
-		return
-	}
-
-	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
-		return
-	}
-	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
-		len(seriesList) > 1 &&
-		(metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER ||
-			metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.CLICKHOUSE) {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid: query resulted in more than one series for value type")}, nil)
-		return
-	}
-
-	type ResponseFormat struct {
-		ResultType string          `json:"resultType"`
-		Result     []*model.Series `json:"result"`
-	}
-	resp := ResponseFormat{ResultType: "matrix", Result: seriesList}
-	aH.Respond(w, resp)
 }
 
 // populateTemporality same as addTemporality but for v4 and better
@@ -1516,7 +1239,7 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
 	if err == nil {
-		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, userEmail, true, true)
+		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, userEmail, request.RateLimited, true)
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -3722,6 +3445,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+
 		result, err = postProcessResult(result, queryRangeParams)
 	}
 
@@ -3786,6 +3510,12 @@ func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	// We apply the functions here it's easier to add new functions
 	applyFunctions(result, queryRangeParams)
 
+	// expressions are executed at query serivce so the value of time.now in the invdividual
+	// queries will be different so for table panel we are making it same.
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable {
+		tablePanelResultProcessor(result)
+	}
+
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
 		// The way we distinguish between a formula and a query is by checking if the expression
 		// is the same as the query name
@@ -3834,6 +3564,21 @@ func applyFunctions(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV
 
 			for _, function := range functions {
 				results[idx] = queryBuilder.ApplyFunction(function, result)
+			}
+		}
+	}
+}
+
+func tablePanelResultProcessor(results []*v3.Result) {
+	var ts int64
+	for ridx := range results {
+		for sidx := range results[ridx].Series {
+			for pidx := range results[ridx].Series[sidx].Points {
+				if ts == 0 {
+					ts = results[ridx].Series[sidx].Points[pidx].Timestamp
+				} else {
+					results[ridx].Series[sidx].Points[pidx].Timestamp = ts
+				}
 			}
 		}
 	}
