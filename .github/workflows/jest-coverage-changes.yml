@@ -1,0 +1,26 @@
+name: Jest Coverage - changed files
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+      - release/v*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - run: |
+          git checkout -b develop origin/develop
+          git checkout -
+      - name: Install dependencies
+        run: cd frontend && yarn install
+
+      - name: npm run test:changedsince
+        run: cd frontend && npm run i18n:generate-hash && npm run test:changedsince
