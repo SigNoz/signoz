@@ -21,9 +21,9 @@ jobs:
       - name: Run Jest with Coverage
         run: |
           cd frontend && npm test --silent --coverageReporters text --coverageReporters text-summary --changedSince=origin/develop --passWithNoTests --listTests
-          cd frontend && npm test --silent --coverageReporters text --coverageReporters json-summary --changedSince=origin/develop --passWithNoTests --maxWorkers=5 --ci --testResultsProcessor="jest-junit"
+          npm test --silent --coverageReporters text --coverageReporters json-summary --changedSince=origin/develop --passWithNoTests --maxWorkers=5 --ci --testResultsProcessor="jest-junit"
 
-          cd frontend && yarn custom-coverage --verbose
+          yarn custom-coverage --verbose
 
       - name: Upload Coverage Results
         uses: actions/upload-artifact@v2
