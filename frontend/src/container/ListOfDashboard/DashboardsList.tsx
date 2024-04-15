@@ -35,9 +35,12 @@ import useDebouncedFn from 'hooks/useDebouncedFunction';
 import history from 'lib/history';
 import {
 	CalendarClock,
+	CalendarClockIcon,
 	Check,
 	Compass,
+	FolderPen,
 	LayoutGrid,
+	PencilRuler,
 	PenLine,
 	Plus,
 	Radius,
@@ -508,7 +511,37 @@ function DashboardsList(): JSX.Element {
 	// 	],
 	// );
 
-	const items: MenuProps['items'] = [
+	const sortMenuItems: MenuProps['items'] = [
+		{
+			label: (
+				<div className="create-dashboard-menu-item">
+					{' '}
+					<PencilRuler size={14} /> Last created
+				</div>
+			),
+			key: '0',
+		},
+		{
+			label: (
+				<div className="create-dashboard-menu-item">
+					{' '}
+					<CalendarClockIcon size={14} /> Last updated
+				</div>
+			),
+			key: '1',
+		},
+		{
+			label: (
+				<div className="create-dashboard-menu-item">
+					{' '}
+					<FolderPen size={14} /> Name
+				</div>
+			),
+			key: '3',
+		},
+	];
+
+	const createDashboardItems: MenuProps['items'] = [
 		{
 			label: (
 				<div className="create-dashboard-menu-item">
@@ -549,9 +582,19 @@ function DashboardsList(): JSX.Element {
 				</div>
 
 				<div className="dashboards-list-header-container">
-					<Button type="default" className="periscope-btn">
-						<SortDesc size={14} /> &nbsp; Sort
-					</Button>
+					<Dropdown
+						overlayClassName="new-dashboard-menu"
+						menu={{ items: sortMenuItems }}
+						placement="bottomLeft"
+					>
+						<Button
+							type="default"
+							className="periscope-btn"
+							icon={<SortDesc size={14} />}
+						>
+							Sort
+						</Button>
+					</Dropdown>
 
 					<Input
 						placeholder="Search by name, description, or tags..."
@@ -562,7 +605,7 @@ function DashboardsList(): JSX.Element {
 
 					<Dropdown
 						overlayClassName="new-dashboard-menu"
-						menu={{ items }}
+						menu={{ items: createDashboardItems }}
 						placement="bottomRight"
 					>
 						<Button type="primary" icon={<Plus size={14} />}>
