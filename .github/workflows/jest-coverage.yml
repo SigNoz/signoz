@@ -47,11 +47,23 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - run: |
+          git fetch --no-tags --depth=1 origin develop
+          git checkout -b develop
+          git checkout ${{ github.event.pull_request.head.sha }}
 
       - name: Install dependencies
         run: cd frontend && yarn install
         env:
           CI: true
+
+      - name: npm run test:changedsince
+        run: cd frontend && npm run test:changedsince
+        env:
+          CI: true
+
+      - name: Run Jest
+        run: cd frontend && npm run jest
 
       - name: npm run test:changedsince
         run: cd frontend && npm run test:changedsince
