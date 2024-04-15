@@ -22,8 +22,8 @@ jobs:
         run: npm install
 
       - name: Run Jest with Coverage
-        working-directory: signoz/frontend/package.json
-        run: npm test -- --coverage
+        working-directory: frontend/package.json
+        run: npm test --coverage
 
       - name: Upload Coverage Results
         uses: actions/upload-artifact@v2
