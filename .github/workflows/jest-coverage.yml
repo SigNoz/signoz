@@ -18,11 +18,18 @@ jobs:
       - name: Install dependencies
         run: cd frontend && yarn install
 
-      - name: Run Jest with Coverage
-        run: |
-          cd frontend && npm test --silent --coverageReporters text --coverageReporters json-summary --changedSince=origin/develop --passWithNoTests --maxWorkers=5 --ci --testResultsProcessor="jest-junit"
+      #   - name: Run Jest with Coverage
+      #     run: |
+      #       cd frontend && npm test --silent --coverageReporters text --coverageReporters json-summary --changedSince=origin/develop --passWithNoTests --maxWorkers=5 --ci --testResultsProcessor="jest-junit"
 
-          yarn custom-coverage --verbose
+      #       yarn custom-coverage --verbose
+
+      - name: Get Changed Files
+        id: get_changed_files
+        run: echo "::set-output name=files::$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.jsx\?$' || true)"
+
+      - name: Run Jest with Coverage for Changed Files
+        run: npm test -- --coverage --findRelatedTests ${{ steps.get_changed_files.outputs.files }}
 
       - name: Upload Coverage Results
         uses: actions/upload-artifact@v2
