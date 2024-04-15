@@ -3,27 +3,23 @@ name: Jest Coverage Check
 on:
   pull_request:
     branches:
-      - develop # or whatever your main branch is called
+      - develop
+      - main
+      - release/v*
 
 jobs:
   jest_coverage:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: "14"
-
-      - name: Install Dependencies
-        run: npm install
+      - name: Install dependencies
+        run: cd frontend && yarn install
 
       - name: Run Jest with Coverage
-        working-directory: frontend/package.json
-        run: npm test --coverage
+        run: cd frontend && npm test --coverage
 
       - name: Upload Coverage Results
         uses: actions/upload-artifact@v2
