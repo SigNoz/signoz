@@ -67,30 +67,32 @@ export const useDashboardVariablesFromLocalStorage = (
 		setCurrentDashboard(defaultTo(localStoreDashboardVariables[dashboardId], {}));
 	}, [dashboardId]);
 
+	useEffect(() => {
+		try {
+			const serializedData = JSON.stringify(allDashboards);
+			setLocalStorageKey(LOCALSTORAGE.DASHBOARD_VARIABLES, serializedData);
+		} catch {
+			console.error('Failed to set dashboards in local storage');
+		}
+	}, [allDashboards]);
+
+	useEffect(() => {
+		setAllDashboards((prev) => ({
+			...prev,
+			[dashboardId]: { ...currentDashboard },
+		}));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [currentDashboard]);
+
 	const updateLocalStorageDashboardVariables = (
 		id: string,
 		selectedValue: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
 	): void => {
-		const newCurrentDashboard = {
-			...currentDashboard,
+		setCurrentDashboard((prev) => ({
+			...prev,
 			[id]: { selectedValue, allSelected },
-		};
-
-		const newAllDashboards = {
-			...allDashboards,
-			[dashboardId]: newCurrentDashboard,
-		};
-
-		try {
-			const serializedData = JSON.stringify(newAllDashboards);
-			setLocalStorageKey(LOCALSTORAGE.DASHBOARD_VARIABLES, serializedData);
-		} catch {
-			console.error('Failed to set dashboards in local storage');
-		}
-
-		setAllDashboards(newAllDashboards);
-		setCurrentDashboard(newCurrentDashboard);
+		}));
 	};
 
 	return {
