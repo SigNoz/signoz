@@ -3,7 +3,21 @@ import type { Config } from '@jest/types';
 const config: Config.InitialOptions = {
 	clearMocks: true,
 	coverageDirectory: 'coverage',
-	coverageReporters: ['text', 'cobertura', 'html', 'json-summary'],
+	coverageReporters: [
+		'text',
+		'cobertura',
+		'html',
+		'json-summary',
+		'lcov',
+		'json',
+	],
+	collectCoverageFrom: [
+		'src/**/*.{ts,tsx}',
+		'!src/**/*.d.ts',
+		'!src/**/*.test.{ts,tsx}',
+		'!src/**/test/**',
+		'!src/**/tests/**',
+	],
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
