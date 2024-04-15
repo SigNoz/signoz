@@ -315,7 +315,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				className={cx(
 					'app-layout',
 					isDarkMode ? 'darkMode' : 'lightMode',
-					!collapsed ? 'docked' : '',
+					!collapsed && !renderFullScreen ? 'docked' : '',
 				)}
 			>
 				{isToDisplayLayout && !renderFullScreen && (

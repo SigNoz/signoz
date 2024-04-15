@@ -1,9 +1,18 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {
+	initialQueriesMap,
+	initialQueryBuilderFormValues,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
+import { noop } from 'lodash-es';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { QueryBuilderProvider } from 'providers/QueryBuilder';
+import {
+	QueryBuilderContext,
+	QueryBuilderProvider,
+} from 'providers/QueryBuilder';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
@@ -12,8 +21,9 @@ import { MemoryRouter } from 'react-router-dom';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import i18n from 'ReactI18';
 import store from 'store';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import LogsExplorer from '..';
+import LogsExplorer from '../index';
 
 const queryRangeURL = 'http://localhost/api/v3/query_range';
 // mocking the graph components in this test as this should be handled separately
@@ -42,6 +52,15 @@ jest.mock('d3-interpolate', () => ({
 	interpolate: jest.fn(),
 }));
 
+const logExplorerRoute = '/logs/logs-explorer';
+
+const lodsQueryServerRequest = (): void =>
+	server.use(
+		rest.post(queryRangeURL, (req, res, ctx) =>
+			res(ctx.status(200), ctx.json(logsQueryRangeSuccessResponse)),
+		),
+	);
+
 describe('Logs Explorer Tests', () => {
 	test('Logs Explorer default view test without data', async () => {
 		const {
@@ -51,7 +70,7 @@ describe('Logs Explorer Tests', () => {
 			getByTestId,
 			queryByTestId,
 		} = render(
-			<MemoryRouter initialEntries={['/logs/logs-explorer']}>
+			<MemoryRouter initialEntries={[logExplorerRoute]}>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<MockQueryClientProvider>
@@ -95,13 +114,9 @@ describe('Logs Explorer Tests', () => {
 
 	test('Logs Explorer Page should render with data', async () => {
 		// mocking the query range API to return the logs
-		server.use(
-			rest.post(queryRangeURL, (req, res, ctx) =>
-				res(ctx.status(200), ctx.json(logsQueryRangeSuccessResponse)),
-			),
-		);
+		lodsQueryServerRequest();
 		const { queryByText, queryByTestId } = render(
-			<MemoryRouter initialEntries={['/logs/logs-explorer']}>
+			<MemoryRouter initialEntries={[logExplorerRoute]}>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<MockQueryClientProvider>
@@ -143,5 +158,75 @@ describe('Logs Explorer Tests', () => {
 				'2024-02-15T21:20:22.035Z INFO frontend Dispatch successful {"service": "frontend", "trace_id": "span_id", "span_id": "span_id", "driver": "driver", "eta": "2m0s"}',
 			),
 		).toBeInTheDocument();
+	});
+
+	test('Multiple Current Queries', async () => {
+		// mocking the query range API to return the logs
+		lodsQueryServerRequest();
+		const { queryAllByText } = render(
+			<MemoryRouter initialEntries={[logExplorerRoute]}>
+				<Provider store={store}>
+					<I18nextProvider i18n={i18n}>
+						<MockQueryClientProvider>
+							<QueryBuilderContext.Provider
+								value={{
+									currentQuery: {
+										...initialQueriesMap.metrics,
+										builder: {
+											...initialQueriesMap.metrics.builder,
+											queryData: [
+												initialQueryBuilderFormValues,
+												initialQueryBuilderFormValues,
+											],
+										},
+									},
+									setSupersetQuery: jest.fn(),
+									supersetQuery: initialQueriesMap.metrics,
+									stagedQuery: initialQueriesMap.metrics,
+									initialDataSource: null,
+									panelType: PANEL_TYPES.TIME_SERIES,
+									isEnabledQuery: false,
+									handleSetQueryData: noop,
+									handleSetFormulaData: noop,
+									handleSetQueryItemData: noop,
+									handleSetConfig: noop,
+									removeQueryBuilderEntityByIndex: noop,
+									removeQueryTypeItemByIndex: noop,
+									addNewBuilderQuery: noop,
+									cloneQuery: noop,
+									addNewFormula: noop,
+									addNewQueryItem: noop,
+									redirectWithQueryBuilderData: noop,
+									handleRunQuery: noop,
+									resetQuery: noop,
+									updateAllQueriesOperators: (): Query => initialQueriesMap.metrics,
+									updateQueriesData: (): Query => initialQueriesMap.metrics,
+									initQueryBuilderData: noop,
+									handleOnUnitsChange: noop,
+									isStagedQueryUpdated: (): boolean => false,
+								}}
+							>
+								<VirtuosoMockContext.Provider
+									value={{ viewportHeight: 300, itemHeight: 100 }}
+								>
+									<LogsExplorer />
+								</VirtuosoMockContext.Provider>
+							</QueryBuilderContext.Provider>
+						</MockQueryClientProvider>
+					</I18nextProvider>
+				</Provider>
+			</MemoryRouter>,
+		);
+
+		const queries = queryAllByText(
+			'Search Filter : select options from suggested values, for IN/NOT IN operators - press "Enter" after selecting options',
+		);
+		expect(queries.length).toBe(2);
+
+		const legendFormats = queryAllByText('Legend Format');
+		expect(legendFormats.length).toBe(2);
+
+		const aggrInterval = queryAllByText('AGGREGATION INTERVAL');
+		expect(aggrInterval.length).toBe(2);
 	});
 });
