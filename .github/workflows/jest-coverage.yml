@@ -27,4 +27,4 @@ jobs:
       #   run: cd frontend && npm run lint
 
       - name: npm run test:changedsince
-        run: cd frontend && npm run test:changedsince
+        run: cd frontend && npm run i18n:generate-hash && npm run test:changedsince
