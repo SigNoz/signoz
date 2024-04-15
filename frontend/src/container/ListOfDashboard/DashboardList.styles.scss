@@ -1,37 +1,31 @@
-.save-view-container {
+.dashboards-list-container {
 	margin-top: 70px;
 	display: flex;
 	justify-content: center;
 	width: 100%;
 
-	.save-view-content {
+	.dashboards-list-view-content {
 		width: calc(100% - 30px);
 		max-width: 736px;
 
-		.title {
-			color: var(--bg-vanilla-100);
-			font-size: var(--font-size-lg);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 28px; /* 155.556% */
-			letter-spacing: -0.09px;
-		}
+		.dashboards-list-title-container {
+			.title {
+				color: var(--bg-vanilla-100);
+				font-size: var(--font-size-lg);
+				font-style: normal;
+				font-weight: var(--font-weight-normal);
+				line-height: 28px; /* 155.556% */
+				letter-spacing: -0.09px;
+			}
 
-		.subtitle {
-			color: var(--bg-vanilla-400);
-			font-size: var(--font-size-sm);
-			font-style: normal;
-			font-weight: var(--font-weight-normal);
-			line-height: 20px; /* 142.857% */
-			letter-spacing: -0.07px;
-		}
-		.learn-more {
-			font-size: 14px;
-		}
-
-		.ant-input-affix-wrapper {
-			margin-top: 16px;
-			margin-bottom: 8px;
+			.subtitle {
+				color: var(--bg-vanilla-400);
+				font-size: var(--font-size-sm);
+				font-style: normal;
+				font-weight: var(--font-weight-normal);
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
 		}
 
 		.ant-table-row {
@@ -40,29 +34,36 @@
 				border: none;
 				background: var(--bg-ink-500);
 			}
-			.column-render {
+
+			.dashboard-list-item {
 				margin: 8px 0 !important;
 				padding: 16px;
 				border-radius: 6px;
 				border: 1px solid var(--bg-slate-500);
 				background: var(--bg-ink-400);
+				cursor: pointer;
 
 				.title-with-action {
 					display: flex;
 					justify-content: space-between;
 					align-items: center;
 
-					.save-view-title {
+					min-height: 24px;
+
+					.dashboard-title {
 						display: flex;
 						align-items: center;
 						gap: 6px;
+						line-height: 20px;
+
 						.dot {
 							min-height: 6px;
 							min-width: 6px;
 							border-radius: 50%;
 						}
+
 						.ant-typography {
-							color: var(--bg-vanilla-400);
+							color: var(--bg-vanilla-100);
 							font-size: var(--font-size-sm);
 							font-style: normal;
 							font-weight: var(--font-weight-medium);
@@ -82,12 +83,13 @@
 						}
 					}
 				}
-				.view-details {
+
+				.dashboard-details {
 					margin-top: 8px;
 					display: flex;
 					align-items: center;
 
-					.view-tag {
+					.dashboard-tag {
 						width: 14px;
 						height: 14px;
 						border-radius: 50px;
@@ -100,7 +102,7 @@
 							color: var(--bg-vanilla-400);
 							leading-trim: both;
 							text-edge: cap;
-							font-size: 10px;
+							font-size: 8px;
 							font-style: normal;
 							font-weight: var(--font-weight-normal);
 							line-height: normal;
@@ -108,18 +110,19 @@
 						}
 					}
 
-					.view-created-by {
+					.dashboard-created-by {
 						margin-left: 8px;
 					}
 
-					.view-created-at {
-						margin-left: 24px;
+					.dashboard-created-at {
 						display: flex;
 						align-items: center;
+						margin-right: 16px;
+
 						.ant-typography {
 							margin-left: 6px;
 							color: var(--bg-vanilla-400);
-							font-size: var(--font-size-sm);
+							font-size: var(--font-size-xs);
 							font-style: normal;
 							font-weight: var(--font-weight-normal);
 							line-height: 18px; /* 128.571% */
@@ -156,6 +159,28 @@
 				line-height: 20px;
 			}
 		}
+	}
+
+	.dashboards-list-header-container {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+
+		margin: 16px 0;
+	}
+
+	.dashboard-tags {
+		.ant-tag {
+			border-radius: 20px;
+		}
+	}
+}
+
+.new-dashboard-menu {
+	.create-dashboard-menu-item {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 	}
 }
 
@@ -254,8 +279,8 @@
 }
 
 .lightMode {
-	.save-view-container {
-		.save-view-content {
+	.dashboards-list-container {
+		.dashboards-list-view-content {
 			.title {
 				color: var(--bg-ink-500);
 			}
@@ -271,12 +296,12 @@
 					}
 				}
 
-				.column-render {
+				.dashboard-list-item {
 					border: 1px solid var(--bg-vanilla-200);
 					background: var(--bg-vanilla-100);
 
 					.title-with-action {
-						.save-view-title {
+						.dashboard-title {
 							.ant-typography {
 								color: var(--bg-ink-500);
 							}
@@ -289,19 +314,19 @@
 						}
 					}
 
-					.view-details {
-						.view-tag {
+					.dashboard-details {
+						.dashboard-tag {
 							background: var(--bg-vanilla-200);
 							.tag-text {
 								color: var(--bg-ink-500);
 							}
 						}
 
-						.view-created-by {
+						.dashboard-created-by {
 							color: var(--bg-ink-500);
 						}
 
-						.view-created-at {
+						.dashboard-created-at {
 							.ant-typography {
 								color: var(--bg-ink-500);
 							}
