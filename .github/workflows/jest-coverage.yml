@@ -51,7 +51,7 @@ jobs:
           fetch-depth: 0
 
       - run: |
-          git checkout -b main origin/main
+          git checkout -b develop origin/develop
           git checkout -
 
       - name: Install dependencies
