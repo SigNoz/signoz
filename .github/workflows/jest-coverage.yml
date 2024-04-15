@@ -27,7 +27,7 @@ jobs:
       - name: Get Changed Files
         id: get_changed_files
         run: |
-          base_sha=$(git rev-parse origin/develop)
+          base_sha=$(git rev-parse refs/remotes/origin/develop)
           echo "BASE_SHA=${base_sha}" >> $GITHUB_ENV
           echo "CHANGED_FILES=$(git diff --name-only $BASE_SHA ${{ github.sha }} | grep '\.jsx\?$' || true)" >> $GITHUB_ENV
 
