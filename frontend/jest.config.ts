@@ -11,13 +11,6 @@ const config: Config.InitialOptions = {
 		'lcov',
 		'json',
 	],
-	collectCoverageFrom: [
-		'src/**/*.{ts,tsx}',
-		'!src/**/*.d.ts',
-		'!src/**/*.test.{ts,tsx}',
-		'!src/**/test/**',
-		'!src/**/tests/**',
-	],
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
