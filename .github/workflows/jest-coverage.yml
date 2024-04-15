@@ -1,33 +1,67 @@
-name: Jest Coverage Check
+# name: Jest Coverage Check
 
-on:
-  pull_request:
-    branches:
-      - develop
-      - main
-      - release/v*
+# on:
+#   pull_request:
+#     branches:
+#       - develop
+#       - main
+#       - release/v*
+
+# jobs:
+#   jest_coverage:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Install dependencies
+#         run: cd frontend && yarn install
+
+#       - name: npm test-run-changed
+#         run: cd frontend && npm run test-changedsince
+
+#       - name: Upload Coverage Results
+#         uses: actions/upload-artifact@v2
+#         with:
+#           name: coverage
+#           path: ./frontend/coverage
+
+#       - name: Display Coverage Summary
+#         run: |
+#           echo "Coverage Summary:"
+#           cat coverage/lcov-report/index.html | grep -oP '(?<=<span class="strong">).*(?=%</span>)' | tail -n 1
+
+name: tests(push) - install, lint, test:changedsince
+
+on: [push]
 
 jobs:
-  jest_coverage:
-    runs-on: ubuntu-latest
-
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        node-version: [10.x, 12.x]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: cd frontend && yarn install
-
-      - name: npm test-run-changed
-        run: cd frontend && npm run test-changedsince
-
-      - name: Upload Coverage Results
-        uses: actions/upload-artifact@v2
+      - uses: actions/checkout@v2
+      - run: |
+          git fetch --no-tags --depth=1 origin develop
+          git checkout -b develop
+          git checkout ${{ github.event.pull_request.head.sha }}
+      - name: Use Node.js ${{ matrix.node-version }} on ${{ matrix.os }}
+        uses: actions/setup-node@v1
         with:
-          name: coverage
-          path: ./frontend/coverage
-
-      - name: Display Coverage Summary
-        run: |
-          echo "Coverage Summary:"
-          cat coverage/lcov-report/index.html | grep -oP '(?<=<span class="strong">).*(?=%</span>)' | tail -n 1
+          node-version: ${{ matrix.node-version }}
+      - name: npm install
+        run: npm install
+        env:
+          CI: true
+      - name: npm run lint
+        run: npm run lint
+        env:
+          CI: true
+      - name: npm run test:changedsince
+        run: npm run test:changedsince
+        env:
+          CI: true
