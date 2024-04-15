@@ -54,10 +54,10 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: npm install
-        run: npm install
+        run: cd frontend && npm install
         env:
           CI: true
       - name: npm run test:changedsince
-        run: npm run test:changedsince
+        run: cd frontend && npm run test:changedsince
         env:
           CI: true
