@@ -64,8 +64,9 @@ func (r *ruleDB) CreateRuleTx(ctx context.Context, rule string) (int64, Tx, erro
 	if user := common.GetUserFromContext(ctx); user != nil {
 		userEmail = user.Email
 	}
-	createdAt := time.Now()
-	updatedAt := time.Now()
+	createdAt := time.Now().Format(time.RFC3339)
+	updatedAt := time.Now().Format(time.RFC3339)
+
 	tx, err := r.Begin()
 	if err != nil {
 		return lastInsertId, nil, err
@@ -111,7 +112,7 @@ func (r *ruleDB) EditRuleTx(ctx context.Context, rule string, id string) (string
 	if user := common.GetUserFromContext(ctx); user != nil {
 		userEmail = user.Email
 	}
-	updatedAt := time.Now()
+	updatedAt := time.Now().Format(time.RFC3339)
 	groupName = prepareTaskName(int64(idInt))
 
 	// todo(amol): resolve this error - database locked when using

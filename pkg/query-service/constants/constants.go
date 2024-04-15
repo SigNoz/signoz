@@ -148,14 +148,14 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 		Name:       QueryBuilderPanels,
 		Active:     true,
 		Usage:      0,
-		UsageLimit: 20,
+		UsageLimit: -1,
 		Route:      "",
 	},
 	model.Feature{
 		Name:       QueryBuilderAlerts,
 		Active:     true,
 		Usage:      0,
-		UsageLimit: 10,
+		UsageLimit: -1,
 		Route:      "",
 	},
 }
