@@ -1,37 +1,3 @@
-# name: Jest Coverage Check
-
-# on:
-#   pull_request:
-#     branches:
-#       - develop
-#       - main
-#       - release/v*
-
-# jobs:
-#   jest_coverage:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
-
-#       - name: Install dependencies
-#         run: cd frontend && yarn install
-
-#       - name: npm test-run-changed
-#         run: cd frontend && npm run test-changedsince
-
-#       - name: Upload Coverage Results
-#         uses: actions/upload-artifact@v2
-#         with:
-#           name: coverage
-#           path: ./frontend/coverage
-
-#       - name: Display Coverage Summary
-#         run: |
-#           echo "Coverage Summary:"
-#           cat coverage/lcov-report/index.html | grep -oP '(?<=<span class="strong">).*(?=%</span>)' | tail -n 1
-
 name: Jest Coverage Check
 
 on:
