@@ -20,8 +20,8 @@ jobs:
 
       - name: Run Jest with Coverage
         run: cd frontend  |
-          npx test --silent --coverageReporters text --coverageReporters text-summary --changedSince=origin/$BASE_BRANCH --passWithNoTests --listTests
-          npx test --silent --coverageReporters text --coverageReporters json-summary --changedSince=origin/$BASE_BRANCH --passWithNoTests --maxWorkers=5 --ci --testResultsProcessor="jest-junit"
+          npm test --silent --coverageReporters text --coverageReporters text-summary --changedSince=origin/$BASE_BRANCH --passWithNoTests --listTests
+          npm test --silent --coverageReporters text --coverageReporters json-summary --changedSince=origin/$BASE_BRANCH --passWithNoTests --maxWorkers=5 --ci --testResultsProcessor="jest-junit"
 
           yarn custom-coverage --verbose
 
