@@ -27,10 +27,12 @@ jobs:
       - name: Get Changed Files
         id: get_changed_files
         run: |
-          echo "CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.jsx\?$' || true)" >> $GITHUB_ENV
+          base_sha=$(git rev-parse origin/develop)
+          echo "BASE_SHA=${base_sha}" >> $GITHUB_ENV
+          echo "CHANGED_FILES=$(git diff --name-only $BASE_SHA ${{ github.sha }} | grep '\.jsx\?$' || true)" >> $GITHUB_ENV
 
       - name: Run Jest with Coverage for Changed Files
-        run: npm test -- --coverage --findRelatedTests ${{ steps.get_changed_files.outputs.files }}
+        run: npm test -- --coverage --findRelatedTests ${{ steps.get_changed_files.outputs.CHANGED_FILES }}
 
       - name: Upload Coverage Results
         uses: actions/upload-artifact@v2
