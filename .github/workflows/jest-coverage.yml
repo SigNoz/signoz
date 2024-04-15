@@ -27,9 +27,7 @@ jobs:
       - name: Get Changed Files
         id: get_changed_files
         run: |
-          base_sha=$(git rev-parse refs/remotes/origin/develop)
-          echo "BASE_SHA=${base_sha}" >> $GITHUB_ENV
-          echo "CHANGED_FILES=$(git diff --name-only $BASE_SHA ${{ github.sha }} | grep '\.jsx\?$' || true)" >> $GITHUB_ENV
+          echo "CHANGED_FILES=$(git diff --name-only origin/develop ${{ github.sha }} | grep '\.jsx\?$' || true)" >> $GITHUB_ENV
 
       - name: Run Jest with Coverage for Changed Files
         run: npm test -- --coverage --findRelatedTests ${{ steps.get_changed_files.outputs.CHANGED_FILES }}
