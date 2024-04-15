@@ -24,10 +24,8 @@ jobs:
 
       #       yarn custom-coverage --verbose
 
-      - name: npm run test:changedsince
-        run: cd frontend && npm test:changedsince
-        env:
-          CI: true
+      - name: npm test-run-changed
+        run: cd frontend && npm test-changedsince
 
       - name: Upload Coverage Results
         uses: actions/upload-artifact@v2

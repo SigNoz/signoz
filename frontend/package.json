@@ -24,7 +24,7 @@
 		"commitlint": "commitlint --edit $1",
 		"test": "jest --coverage",
 		"test:onlychanged": "jest --onlyChanged --coverage",
-		"test:changedsince": "jest --changedSince=master --coverage"
+		"test-changedsince": "jest --changedSince=develop --coverage"
 	},
 	"engines": {
 		"node": ">=16.15.0"
