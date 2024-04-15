@@ -21,11 +21,11 @@ function LogsExplorer(): JSX.Element {
 		SELECTED_VIEWS.SEARCH,
 	);
 
-	const { handleRunQuery, currentQuery } = useQueryBuilder();
-
 	const handleToggleShowHistogram = (): void => {
 		setShowHistogram(!showHistogram);
 	};
+
+	const { handleRunQuery, currentQuery } = useQueryBuilder();
 
 	const handleChangeSelectedView = (view: SELECTED_VIEWS): void => {
 		setSelectedView(view);
