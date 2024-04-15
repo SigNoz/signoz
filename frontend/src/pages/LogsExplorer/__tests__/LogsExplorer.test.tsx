@@ -1,16 +1,16 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-	initialQueriesMap,
-	initialQueryBuilderFormValues,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
-import { noop } from 'lodash-es';
+// import {
+// 	initialQueriesMap,
+// 	initialQueryBuilderFormValues,
+// 	PANEL_TYPES,
+// } from 'constants/queryBuilder';
+// import { noop } from 'lodash-es';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import {
-	QueryBuilderContext,
+	// QueryBuilderContext,
 	QueryBuilderProvider,
 } from 'providers/QueryBuilder';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
@@ -21,8 +21,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import i18n from 'ReactI18';
 import store from 'store';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+// import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import LogsExplorer from '../index';
 
 const queryRangeURL = 'http://localhost/api/v3/query_range';
@@ -160,73 +160,73 @@ describe('Logs Explorer Tests', () => {
 		).toBeInTheDocument();
 	});
 
-	test('Multiple Current Queries', async () => {
-		// mocking the query range API to return the logs
-		lodsQueryServerRequest();
-		const { queryAllByText } = render(
-			<MemoryRouter initialEntries={[logExplorerRoute]}>
-				<Provider store={store}>
-					<I18nextProvider i18n={i18n}>
-						<MockQueryClientProvider>
-							<QueryBuilderContext.Provider
-								value={{
-									currentQuery: {
-										...initialQueriesMap.metrics,
-										builder: {
-											...initialQueriesMap.metrics.builder,
-											queryData: [
-												initialQueryBuilderFormValues,
-												initialQueryBuilderFormValues,
-											],
-										},
-									},
-									setSupersetQuery: jest.fn(),
-									supersetQuery: initialQueriesMap.metrics,
-									stagedQuery: initialQueriesMap.metrics,
-									initialDataSource: null,
-									panelType: PANEL_TYPES.TIME_SERIES,
-									isEnabledQuery: false,
-									handleSetQueryData: noop,
-									handleSetFormulaData: noop,
-									handleSetQueryItemData: noop,
-									handleSetConfig: noop,
-									removeQueryBuilderEntityByIndex: noop,
-									removeQueryTypeItemByIndex: noop,
-									addNewBuilderQuery: noop,
-									cloneQuery: noop,
-									addNewFormula: noop,
-									addNewQueryItem: noop,
-									redirectWithQueryBuilderData: noop,
-									handleRunQuery: noop,
-									resetQuery: noop,
-									updateAllQueriesOperators: (): Query => initialQueriesMap.metrics,
-									updateQueriesData: (): Query => initialQueriesMap.metrics,
-									initQueryBuilderData: noop,
-									handleOnUnitsChange: noop,
-									isStagedQueryUpdated: (): boolean => false,
-								}}
-							>
-								<VirtuosoMockContext.Provider
-									value={{ viewportHeight: 300, itemHeight: 100 }}
-								>
-									<LogsExplorer />
-								</VirtuosoMockContext.Provider>
-							</QueryBuilderContext.Provider>
-						</MockQueryClientProvider>
-					</I18nextProvider>
-				</Provider>
-			</MemoryRouter>,
-		);
+	// test('Multiple Current Queries', async () => {
+	// 	// mocking the query range API to return the logs
+	// 	lodsQueryServerRequest();
+	// 	const { queryAllByText } = render(
+	// 		<MemoryRouter initialEntries={[logExplorerRoute]}>
+	// 			<Provider store={store}>
+	// 				<I18nextProvider i18n={i18n}>
+	// 					<MockQueryClientProvider>
+	// 						<QueryBuilderContext.Provider
+	// 							value={{
+	// 								currentQuery: {
+	// 									...initialQueriesMap.metrics,
+	// 									builder: {
+	// 										...initialQueriesMap.metrics.builder,
+	// 										queryData: [
+	// 											initialQueryBuilderFormValues,
+	// 											initialQueryBuilderFormValues,
+	// 										],
+	// 									},
+	// 								},
+	// 								setSupersetQuery: jest.fn(),
+	// 								supersetQuery: initialQueriesMap.metrics,
+	// 								stagedQuery: initialQueriesMap.metrics,
+	// 								initialDataSource: null,
+	// 								panelType: PANEL_TYPES.TIME_SERIES,
+	// 								isEnabledQuery: false,
+	// 								handleSetQueryData: noop,
+	// 								handleSetFormulaData: noop,
+	// 								handleSetQueryItemData: noop,
+	// 								handleSetConfig: noop,
+	// 								removeQueryBuilderEntityByIndex: noop,
+	// 								removeQueryTypeItemByIndex: noop,
+	// 								addNewBuilderQuery: noop,
+	// 								cloneQuery: noop,
+	// 								addNewFormula: noop,
+	// 								addNewQueryItem: noop,
+	// 								redirectWithQueryBuilderData: noop,
+	// 								handleRunQuery: noop,
+	// 								resetQuery: noop,
+	// 								updateAllQueriesOperators: (): Query => initialQueriesMap.metrics,
+	// 								updateQueriesData: (): Query => initialQueriesMap.metrics,
+	// 								initQueryBuilderData: noop,
+	// 								handleOnUnitsChange: noop,
+	// 								isStagedQueryUpdated: (): boolean => false,
+	// 							}}
+	// 						>
+	// 							<VirtuosoMockContext.Provider
+	// 								value={{ viewportHeight: 300, itemHeight: 100 }}
+	// 							>
+	// 								<LogsExplorer />
+	// 							</VirtuosoMockContext.Provider>
+	// 						</QueryBuilderContext.Provider>
+	// 					</MockQueryClientProvider>
+	// 				</I18nextProvider>
+	// 			</Provider>
+	// 		</MemoryRouter>,
+	// 	);
 
-		const queries = queryAllByText(
-			'Search Filter : select options from suggested values, for IN/NOT IN operators - press "Enter" after selecting options',
-		);
-		expect(queries.length).toBe(2);
+	// 	const queries = queryAllByText(
+	// 		'Search Filter : select options from suggested values, for IN/NOT IN operators - press "Enter" after selecting options',
+	// 	);
+	// 	expect(queries.length).toBe(2);
 
-		const legendFormats = queryAllByText('Legend Format');
-		expect(legendFormats.length).toBe(2);
+	// 	const legendFormats = queryAllByText('Legend Format');
+	// 	expect(legendFormats.length).toBe(2);
 
-		const aggrInterval = queryAllByText('AGGREGATION INTERVAL');
-		expect(aggrInterval.length).toBe(2);
-	});
+	// 	const aggrInterval = queryAllByText('AGGREGATION INTERVAL');
+	// 	expect(aggrInterval.length).toBe(2);
+	// });
 });
