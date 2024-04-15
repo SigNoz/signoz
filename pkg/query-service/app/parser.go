@@ -66,6 +66,19 @@ func parseGetTopOperationsRequest(r *http.Request) (*model.GetTopOperationsParam
 	return postData, nil
 }
 
+func parseRegisterEventRequest(r *http.Request) (*model.RegisterEventParams, error) {
+	var postData *model.RegisterEventParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+	if err != nil {
+		return nil, err
+	}
+	if postData.EventName == "" {
+		return nil, errors.New("eventName param missing in query")
+	}
+
+	return postData, nil
+}
+
 func parseMetricsTime(s string) (time.Time, error) {
 	if t, err := strconv.ParseFloat(s, 64); err == nil {
 		s, ns := math.Modf(t)

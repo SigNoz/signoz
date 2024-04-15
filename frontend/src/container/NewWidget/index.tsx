@@ -3,6 +3,7 @@ import { LockFilled, WarningOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Tooltip, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
@@ -23,7 +24,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { generatePath, useLocation, useParams } from 'react-router-dom';
+import { generatePath, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
@@ -44,7 +45,7 @@ import {
 	RightContainerWrapper,
 } from './styles';
 import { NewWidgetProps } from './types';
-import { getIsQueryModified } from './utils';
+import { getIsQueryModified, handleQueryChange } from './utils';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const {
@@ -57,7 +58,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
-	const { currentQuery, stagedQuery } = useQueryBuilder();
+	const {
+		currentQuery,
+		stagedQuery,
+		redirectWithQueryBuilderData,
+		supersetQuery,
+	} = useQueryBuilder();
 
 	const isQueryModified = useMemo(
 		() => getIsQueryModified(currentQuery, stagedQuery),
@@ -70,8 +76,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const { widgets = [] } = selectedDashboard?.data || {};
 
-	const { search } = useLocation();
-
 	const query = useUrlQuery();
 
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
@@ -81,7 +85,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		return widgets?.find((e) => e.id === widgetId);
 	}, [query, widgets]);
 
-	const selectedWidget = getWidget();
+	const [selectedWidget, setSelectedWidget] = useState(getWidget());
 
 	const [title, setTitle] = useState<string>(
 		selectedWidget?.title?.toString() || '',
@@ -128,6 +132,44 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			? null
 			: selectedWidget?.softMax || 0,
 	);
+
+	useEffect(() => {
+		setSelectedWidget((prev) => {
+			if (!prev) {
+				return prev;
+			}
+			return {
+				...prev,
+				query: currentQuery,
+				title,
+				description,
+				isStacked: stacked,
+				opacity,
+				nullZeroValues: selectedNullZeroValue,
+				yAxisUnit,
+				thresholds,
+				softMin,
+				softMax,
+				fillSpans: isFillSpans,
+				selectedLogFields,
+				selectedTracesFields,
+			};
+		});
+	}, [
+		currentQuery,
+		description,
+		isFillSpans,
+		opacity,
+		selectedLogFields,
+		selectedNullZeroValue,
+		selectedTracesFields,
+		softMax,
+		softMin,
+		stacked,
+		thresholds,
+		title,
+		yAxisUnit,
+	]);
 
 	const closeModal = (): void => {
 		setSaveModal(false);
@@ -194,21 +236,21 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					...preWidgets,
 					{
 						...(selectedWidget || ({} as Widgets)),
-						description,
+						description: selectedWidget?.description || '',
 						timePreferance: selectedTime.enum,
-						isStacked: stacked,
-						opacity,
-						nullZeroValues: selectedNullZeroValue,
-						title,
-						yAxisUnit,
+						isStacked: selectedWidget?.isStacked || false,
+						opacity: selectedWidget?.opacity || '1',
+						nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
+						title: selectedWidget?.title,
+						yAxisUnit: selectedWidget?.yAxisUnit,
 						panelTypes: graphType,
 						query: currentQuery,
-						thresholds,
-						softMin,
-						softMax,
-						fillSpans: isFillSpans,
-						selectedLogFields,
-						selectedTracesFields,
+						thresholds: selectedWidget?.thresholds,
+						softMin: selectedWidget?.softMin || 0,
+						softMax: selectedWidget?.softMax || 0,
+						fillSpans: selectedWidget?.fillSpans,
+						selectedLogFields: selectedWidget?.selectedLogFields || [],
+						selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 					},
 					...afterWidgets,
 				],
@@ -234,21 +276,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedDashboard,
 		preWidgets,
 		selectedWidget,
-		description,
 		selectedTime.enum,
-		stacked,
-		opacity,
-		selectedNullZeroValue,
-		title,
-		yAxisUnit,
 		graphType,
 		currentQuery,
-		thresholds,
-		softMin,
-		softMax,
-		isFillSpans,
-		selectedLogFields,
-		selectedTracesFields,
 		afterWidgets,
 		updateDashboardMutation,
 		setSelectedDashboard,
@@ -271,9 +301,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	}, [dashboardId]);
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
-		const params = new URLSearchParams(search);
-		params.set('graphType', type);
+		const updatedQuery = handleQueryChange(type as any, supersetQuery);
 		setGraphType(type);
+		redirectWithQueryBuilderData(
+			updatedQuery,
+			{ [QueryParams.graphType]: type },
+			undefined,
+			true,
+		);
 	};
 
 	const onSaveDashboard = useCallback((): void => {
@@ -358,19 +393,17 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
-					<LeftContainer
-						selectedTime={selectedTime}
-						selectedGraph={graphType}
-						yAxisUnit={yAxisUnit}
-						thresholds={thresholds}
-						fillSpans={isFillSpans}
-						softMax={softMax}
-						softMin={softMin}
-						selectedLogFields={selectedLogFields}
-						setSelectedLogFields={setSelectedLogFields}
-						selectedTracesFields={selectedTracesFields}
-						setSelectedTracesFields={setSelectedTracesFields}
-					/>
+					{selectedWidget && (
+						<LeftContainer
+							selectedGraph={graphType}
+							selectedLogFields={selectedLogFields}
+							setSelectedLogFields={setSelectedLogFields}
+							selectedTracesFields={selectedTracesFields}
+							setSelectedTracesFields={setSelectedTracesFields}
+							selectedWidget={selectedWidget}
+							selectedTime={selectedTime}
+						/>
+					)}
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>

@@ -197,11 +197,3 @@ export const InstalledIntegrations = Loadable(
 			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
 		),
 );
-
-export const IntegrationsMarketPlace = Loadable(
-	// eslint-disable-next-line sonarjs/no-identical-functions
-	() =>
-		import(
-			/* webpackChunkName: "IntegrationsMarketPlace" */ 'pages/IntegrationsModulePage'
-		),
-);

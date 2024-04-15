@@ -1,10 +1,15 @@
 import { ColumnsType } from 'antd/es/table';
 import { Typography } from 'antd/lib';
+import { OPERATORS } from 'constants/queryBuilder';
 // import Typography from 'antd/es/typography/Typography';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ReactNode } from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
+import { ILog } from 'types/api/logs/log';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { v4 as uuid } from 'uuid';
 
 export const getLogPanelColumnsList = (
 	selectedLogFields: Widgets['selectedLogFields'],
@@ -35,4 +40,50 @@ export const getLogPanelColumnsList = (
 		}) || [];
 
 	return [...initialColumns, ...columns];
+};
+
+export const getNextOrPreviousItems = (
+	items: TagFilterItem[],
+	direction: 'NEXT' | 'PREV',
+	log?: ILog,
+): TagFilterItem[] => {
+	const nextItem = {
+		id: uuid(),
+		key: {
+			key: 'id',
+			type: '',
+			dataType: DataTypes.String,
+			isColumn: true,
+		},
+		op: OPERATORS['<'],
+		value: log?.id || '',
+	};
+	const prevItem = {
+		id: uuid(),
+		key: {
+			key: 'id',
+			type: '',
+			dataType: DataTypes.String,
+			isColumn: true,
+		},
+		op: OPERATORS['>'],
+		value: log?.id || '',
+	};
+	let index = items.findIndex((item) => item.op === OPERATORS['<']);
+	if (index === -1) {
+		index = items.findIndex((item) => item.op === OPERATORS['>']);
+	}
+	if (index === -1) {
+		if (direction === 'NEXT') {
+			return [...items, nextItem];
+		}
+		return [...items, prevItem];
+	}
+	const newItems = [...items];
+	if (direction === 'NEXT') {
+		newItems[index] = nextItem;
+	} else {
+		newItems[index] = prevItem;
+	}
+	return newItems;
 };

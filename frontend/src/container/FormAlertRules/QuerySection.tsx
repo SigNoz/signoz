@@ -56,8 +56,9 @@ function QuerySection({
 				initialDataSource: ALERTS_DATA_SOURCE_MAP[alertType],
 			}}
 			showFunctions={
-				alertType === AlertTypes.METRICS_BASED_ALERT &&
-				alertDef.version === ENTITY_VERSION_V4
+				(alertType === AlertTypes.METRICS_BASED_ALERT &&
+					alertDef.version === ENTITY_VERSION_V4) ||
+				alertType === AlertTypes.LOGS_BASED_ALERT
 			}
 			version={alertDef.version || 'v3'}
 		/>

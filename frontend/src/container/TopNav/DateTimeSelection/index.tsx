@@ -28,7 +28,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
-import { Time as TimeV2 } from '../DateTimeSelectionV2/config';
+import { CustomTimeType, Time as TimeV2 } from '../DateTimeSelectionV2/config';
 import {
 	getDefaultOption,
 	getOptions,
@@ -122,7 +122,7 @@ function DateTimeSelection({
 	const getInputLabel = (
 		startTime?: Dayjs,
 		endTime?: Dayjs,
-		timeInterval: Time | TimeV2 = '15min',
+		timeInterval: Time | TimeV2 | CustomTimeType = '15m',
 	): string | Time => {
 		if (startTime && endTime && timeInterval === 'custom') {
 			const format = 'YYYY/MM/DD HH:mm';
@@ -225,7 +225,7 @@ function DateTimeSelection({
 		[location.pathname],
 	);
 
-	const onSelectHandler = (value: Time | TimeV2): void => {
+	const onSelectHandler = (value: Time | TimeV2 | CustomTimeType): void => {
 		if (value !== 'custom') {
 			updateTimeInterval(value);
 			updateLocalStorageForRoutes(value);
@@ -358,7 +358,7 @@ function DateTimeSelection({
 						}}
 						selectedTime={selectedTime}
 						onValidCustomDateChange={(dateTime): void =>
-							onCustomDateHandler(dateTime as DateTimeRangeType)
+							onCustomDateHandler(dateTime.time as DateTimeRangeType)
 						}
 						selectedValue={getInputLabel(
 							dayjs(minTime / 1000000),
@@ -406,7 +406,7 @@ function DateTimeSelection({
 
 interface DispatchProps {
 	updateTimeInterval: (
-		interval: Time | TimeV2,
+		interval: Time | TimeV2 | CustomTimeType,
 		dateTimeRange?: [number, number],
 	) => (dispatch: Dispatch<AppActions>) => void;
 	globalTimeLoading: () => void;

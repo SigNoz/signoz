@@ -1,10 +1,10 @@
 .hide-update {
-	left: calc(50% - 41px) !important;
+	left: calc(50% - 72px) !important;
 }
 .explorer-update {
 	position: fixed;
 	bottom: 24px;
-	left: calc(50% - 250px);
+	left: calc(50% - 352px);
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -37,7 +37,6 @@
 	}
 }
 
-	
 .explorer-options {
 	position: fixed;
 	bottom: 24px;
@@ -78,11 +77,9 @@
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			gap: 8px;
+			border: none;
 
 			border: 1px solid #1d2023;
-			color: #c0c1c3;
-			background-color: #161922;
 
 			box-shadow: none !important;
 

@@ -11,8 +11,11 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { HIGHLIGHTED_DELAY } from './configs';
 import { LogTimeRange, UseCopyLogLink } from './types';
@@ -33,15 +36,30 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 		null,
 	);
 
+	const { selectedTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const onTimeRangeChange = useCallback(
 		(newTimeRange: LogTimeRange | null): void => {
 			urlQuery.set(QueryParams.timeRange, JSON.stringify(newTimeRange));
-			urlQuery.set(QueryParams.startTime, newTimeRange?.start.toString() || '');
-			urlQuery.set(QueryParams.endTime, newTimeRange?.end.toString() || '');
+
+			if (selectedTime !== 'custom') {
+				urlQuery.delete(QueryParams.startTime);
+				urlQuery.delete(QueryParams.endTime);
+
+				urlQuery.set(QueryParams.relativeTime, selectedTime);
+			} else {
+				urlQuery.set(QueryParams.startTime, newTimeRange?.start.toString() || '');
+				urlQuery.set(QueryParams.endTime, newTimeRange?.end.toString() || '');
+
+				urlQuery.delete(QueryParams.relativeTime);
+			}
+
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
 			history.replace(generatedUrl);
 		},
-		[pathname, urlQuery],
+		[pathname, urlQuery, selectedTime],
 	);
 
 	const isActiveLog = useMemo(() => activeLogId === logId, [activeLogId, logId]);

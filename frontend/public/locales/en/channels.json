@@ -15,6 +15,7 @@
   "button_test_channel": "Test",
   "button_return": "Back",
   "field_channel_name": "Name",
+  "field_send_resolved": "Send resolved alerts",
   "field_channel_type": "Type",
   "field_webhook_url": "Webhook URL",
   "field_slack_recipient": "Recipient",

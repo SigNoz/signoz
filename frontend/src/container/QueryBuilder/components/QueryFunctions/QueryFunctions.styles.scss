@@ -65,8 +65,8 @@
 			left: -8px;
 			top: 16px;
 			z-index: 0;
-			color: var(--bg-sakura-500);
-			background-color: var(--bg-sakura-500);
+			color: var(--bg-ink-200);
+			background-color: var(--bg-ink-200);
 		}
 
 		&::after {
@@ -77,8 +77,8 @@
 			right: -8px;
 			top: 16px;
 			z-index: 0;
-			color: var(--bg-sakura-500);
-			background-color: var(--bg-sakura-500);
+			color: var(--bg-ink-200);
+			background-color: var(--bg-ink-200);
 		}
 
 		.query-function-name-selector {
@@ -145,6 +145,12 @@
 				&:focus {
 					border-color: transparent !important;
 				}
+			}
+
+			&::before,
+			&::after {
+				color: var(--bg-vanilla-300);
+				background-color: var(--bg-vanilla-300);
 			}
 		}
 	}
