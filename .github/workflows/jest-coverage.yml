@@ -48,25 +48,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
 
       - run: |
-          git fetch --no-tags --depth=1 origin develop
-          git checkout -b develop
-          git checkout ${{ github.event.pull_request.head.sha }}
+          git checkout -b main origin/main
+          git checkout -
 
       - name: Install dependencies
         run: cd frontend && yarn install
         env:
           CI: true
-
-      - name: npm run test:changedsince
-        run: cd frontend && npm run test:changedsince
-        env:
-          CI: true
-
-      - name: Run Jest
-        run: cd frontend && npm run jest
 
       - name: npm run test:changedsince
         run: cd frontend && npm run test:changedsince
