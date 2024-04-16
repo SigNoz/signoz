@@ -91,7 +91,7 @@ func main() {
 		zap.L().Info("JWT secret key set successfully.")
 	}
 
-	clickhouseOptimizeS3.InitChOptimizer()
+	clickhouseOptimizeS3.InitChOptimizer(cluster)
 
 	server, err := app.NewServer(serverOptions)
 	if err != nil {

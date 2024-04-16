@@ -26,7 +26,7 @@ const (
 	ERROR_SCHEDULING_CRON_JOB = "error scheduling cron job for %s"
 )
 
-func InitChOptimizer() error {
+func InitChOptimizer(cluster string) error {
 
 	chConn, err := initClickhouse()
 	if err != nil {
@@ -42,9 +42,9 @@ func InitChOptimizer() error {
 		return nil
 	}
 
-	err = runCronJobAsync(chConn)
+	err = runCronJobAsync(chConn, cluster)
 	if err != nil {
-		zap.L().Error(fmt.Sprintf(ERROR_RUNNING_CRON_JOB), zap.Error(err))
+		zap.L().Error(ERROR_RUNNING_CRON_JOB, zap.Error(err))
 		return err
 	}
 
@@ -77,12 +77,12 @@ func initClickhouse() (driver.Conn, error) {
 	return db, nil
 }
 
-func runCronJobAsync(chConn driver.Conn) error {
+func runCronJobAsync(chConn driver.Conn, cluster string) error {
 	var s *gocron.Scheduler
 	var err error
 
 	s = gocron.NewScheduler(time.UTC)
-	_, err = s.Every(CH_OPTIMIZE_INTERVAL_IN_HOURS).Hour().Do(optimizeTables, chConn)
+	_, err = s.Every(CH_OPTIMIZE_INTERVAL_IN_HOURS).Hour().Do(optimizeTables, chConn, cluster)
 	if err != nil {
 		return fmt.Errorf(ERROR_SCHEDULING_CRON_JOB, err)
 	}
@@ -92,12 +92,11 @@ func runCronJobAsync(chConn driver.Conn) error {
 	return nil
 }
 
-func optimizeTables(conn driver.Conn) {
+func optimizeTables(conn driver.Conn, cluster string) {
 
 	// Array of db_name.table_name
 	tables := []string{
 		"signoz_logs.logs",
-		"signoz_logs.tag_attributes",
 		"signoz_metrics.samples_v2",
 		"signoz_metrics.time_series_v4",
 		"signoz_metrics.time_series_v3",
@@ -113,7 +112,7 @@ func optimizeTables(conn driver.Conn) {
 	}
 	for _, table := range tables {
 		// run OPTIMIZE TABLE db_name.table_name ON CLUSTER cluster FINAL SETTINGS optimize_skip_merged_partitions=1;
-		err := conn.Exec(context.Background(), "OPTIMIZE TABLE "+table+" ON CLUSTER cluster FINAL SETTINGS optimize_skip_merged_partitions=1;")
+		err := conn.Exec(context.Background(), "OPTIMIZE TABLE "+table+" ON CLUSTER "+cluster+" FINAL SETTINGS optimize_skip_merged_partitions=1;")
 
 		if err != nil {
 			if exception, ok := err.(*clickhouse.Exception); ok {
