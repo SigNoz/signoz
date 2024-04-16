@@ -35,6 +35,14 @@ const config: Config.InitialOptions = {
 			browsers: ['chromium', 'firefox', 'webkit'],
 		},
 	},
+	coverageThreshold: {
+		global: {
+			statements: 65,
+			branches: 50,
+			functions: 50,
+			lines: 65,
+		},
+	},
 };
 
 export default config;

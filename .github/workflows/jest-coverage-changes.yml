@@ -2,10 +2,7 @@ name: Jest Coverage - changed files
 
 on:
   pull_request:
-    branches:
-      - develop
-      - main
-      - release/v*
+    branches: develop
 
 jobs:
   build:
