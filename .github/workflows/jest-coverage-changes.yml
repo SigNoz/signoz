@@ -8,15 +8,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-      - run: |
-          git fetch origin develop
-          git checkout -b develop origin/develop
-          git checkout ${{ github.event.pull_request.head.sha }}
-
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
