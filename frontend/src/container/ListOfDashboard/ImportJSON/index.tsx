@@ -1,19 +1,22 @@
+import './importJSON.styles.scss';
+
 import { red } from '@ant-design/colors';
 import { ExclamationCircleTwoTone } from '@ant-design/icons';
+import MEditor, { Monaco } from '@monaco-editor/react';
+import { Color } from '@signozhq/design-tokens';
 import { Button, Modal, Space, Typography, Upload, UploadProps } from 'antd';
 import createDashboard from 'api/dashboard/create';
-import Editor from 'components/Editor';
 import ROUTES from 'constants/routes';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { MESSAGE } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import history from 'lib/history';
+import { MonitorDot, MoveRight, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath } from 'react-router-dom';
 import { DashboardData } from 'types/api/dashboard/getAll';
-
-import { EditorContainer, FooterContainer } from './styles';
 
 function ImportJSON({
 	isImportJSONModalVisible,
@@ -125,62 +128,114 @@ function ImportJSON({
 		onModalHandler();
 	};
 
+	const isDarkMode = useIsDarkMode();
+
+	function setEditorTheme(monaco: Monaco): void {
+		monaco.editor.defineTheme('my-theme', {
+			base: 'vs-dark',
+			inherit: true,
+			rules: [
+				{ token: 'string.key.json', foreground: Color.BG_VANILLA_400 },
+				{ token: 'string.value.json', foreground: Color.BG_ROBIN_400 },
+			],
+			colors: {
+				'editor.background': Color.BG_INK_300,
+			},
+			fontFamily: 'Space Mono',
+			fontSize: 20,
+			fontWeight: 'normal',
+			lineHeight: 18,
+			letterSpacing: -0.06,
+		});
+	}
+
 	return (
 		<Modal
+			wrapClassName="import-json-modal"
 			open={isImportJSONModalVisible}
 			centered
-			maskClosable
+			closable={false}
 			destroyOnClose
-			width="70vw"
-			onCancel={onCancelHandler}
-			title={
-				<>
-					<Typography.Title level={4}>{t('import_json')}</Typography.Title>
-					<Typography>{t('import_dashboard_by_pasting')}</Typography>
-				</>
-			}
+			width="60vw"
 			footer={
-				<FooterContainer>
-					<Button
-						disabled={editorValue.length === 0}
-						onClick={onClickLoadJsonHandler}
-						loading={dashboardCreating}
-					>
-						{t('load_json')}
-					</Button>
-					{isCreateDashboardError && getErrorNode(t('error_loading_json'))}
-					{isFeatureAlert && (
-						<Typography.Text type="danger">
-							{MESSAGE.CREATE_DASHBOARD}
-						</Typography.Text>
+				<div className="import-json-modal-footer">
+					{isCreateDashboardError && (
+						<div className="create-dashboard-json-error">
+							{getErrorNode(t('error_loading_json'))}
+						</div>
 					)}
-				</FooterContainer>
+
+					{isUploadJSONError && (
+						<div className="create-dashboard-json-error">
+							{getErrorNode(t('error_upload_json'))}
+						</div>
+					)}
+
+					<div className="action-btns-container">
+						<Upload
+							accept=".json"
+							showUploadList={false}
+							multiple={false}
+							onChange={onChangeHandler}
+							beforeUpload={(): boolean => false}
+							action="none"
+							data={jsonData}
+						>
+							<Button
+								type="default"
+								className="periscope-btn"
+								icon={<MonitorDot size={14} />}
+							>
+								{' '}
+								{t('upload_json_file')}
+							</Button>
+						</Upload>
+
+						<Button
+							// disabled={editorValue.length === 0}
+							onClick={onClickLoadJsonHandler}
+							loading={dashboardCreating}
+							className="periscope-btn primary"
+							type="primary"
+						>
+							{t('load_json')} &nbsp; <MoveRight size={14} />
+						</Button>
+
+						{isFeatureAlert && (
+							<Typography.Text type="danger">
+								{MESSAGE.CREATE_DASHBOARD}
+							</Typography.Text>
+						)}
+					</div>
+				</div>
 			}
 		>
-			<div>
-				<Space direction="horizontal">
-					<Upload
-						accept=".json"
-						showUploadList={false}
-						multiple={false}
-						onChange={onChangeHandler}
-						beforeUpload={(): boolean => false}
-						action="none"
-						data={jsonData}
-					>
-						<Button type="primary">{t('upload_json_file')}</Button>
-					</Upload>
-					{isUploadJSONError && <>{getErrorNode(t('error_upload_json'))}</>}
-				</Space>
+			<div className="import-json-content-container">
+				<div className="import-json-content-header">
+					<Typography.Text>{t('import_json')}</Typography.Text>
 
-				<EditorContainer>
-					<Typography.Paragraph>{t('paste_json_below')}</Typography.Paragraph>
-					<Editor
-						onChange={(newValue): void => setEditorValue(newValue)}
-						value={editorValue}
-						language="json"
-					/>
-				</EditorContainer>
+					<X size={14} className="periscope-btn ghost" onClick={onCancelHandler} />
+				</div>
+
+				<MEditor
+					language="json"
+					height="40vh"
+					onChange={(newValue): void => setEditorValue(newValue || '')}
+					value={editorValue}
+					options={{
+						scrollbar: {
+							alwaysConsumeMouseWheel: false,
+						},
+						minimap: {
+							enabled: false,
+						},
+						fontSize: 14,
+						fontFamily: 'Space Mono',
+					}}
+					theme={isDarkMode ? 'my-theme' : 'light'}
+					// eslint-disable-next-line react/jsx-no-bind
+					beforeMount={setEditorTheme}
+				/>
 			</div>
 		</Modal>
 	);
