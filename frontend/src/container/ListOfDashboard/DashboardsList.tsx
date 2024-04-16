@@ -2,62 +2,36 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './DashboardList.styles.scss';
 
-import { PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
-	Col,
-	ColorPicker,
 	Dropdown,
 	Input,
 	MenuProps,
-	Modal,
-	Row,
 	Table,
-	TableColumnProps,
 	Tag,
 	Typography,
 } from 'antd';
-import { ItemType } from 'antd/es/menu/hooks/useItems';
+import { TableProps } from 'antd/lib';
 import createDashboard from 'api/dashboard/create';
-import {
-	DynamicColumnsKey,
-	TableDataSource,
-} from 'components/ResizeTable/contants';
-import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
-import LabelColumn from 'components/TableRenderer/LabelColumn';
-import TextToolTip from 'components/TextToolTip';
+import TentIcon from 'assets/CustomIcons/TentIcon';
+import { AxiosError } from 'axios';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
-import useDebouncedFn from 'hooks/useDebouncedFunction';
 import history from 'lib/history';
 import {
 	CalendarClock,
 	CalendarClockIcon,
-	Check,
-	Compass,
-	FolderPen,
 	LayoutGrid,
 	PencilRuler,
-	PenLine,
 	Plus,
 	Radius,
 	Search,
 	SortDesc,
-	TentTree,
-	Trash2,
-	X,
 } from 'lucide-react';
-import {
-	ChangeEvent,
-	Key,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import { ChangeEvent, Key, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
@@ -65,27 +39,11 @@ import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 
-import DateComponent from '../../components/ResizeTable/TableComponent/DateComponent';
 import useSortableTable from '../../hooks/ResizeTable/useSortableTable';
 import useUrlQuery from '../../hooks/useUrlQuery';
 import { GettableAlert } from '../../types/api/alerts/get';
 import ImportJSON from './ImportJSON';
-import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
-import DeleteButton from './TableComponents/DeleteButton';
-import Name from './TableComponents/Name';
 import { filterDashboard } from './utils';
-import { TableProps } from 'antd/lib';
-import { ViewProps } from 'types/api/saveViews/types';
-import getRandomColor from 'lib/getRandomColor';
-import { USER_ROLES } from 'types/roles';
-import { AxiosError } from 'axios';
-import TentIcon from 'assets/CustomIcons/TentIcon';
-import JuiceBoxIcon from 'assets/CustomIcons/JuiceBoxIcon';
-import GrafanaIcon from 'assets/CustomIcons/GrafanaIcon';
-
-// const { Search } = Input;
-
-const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
 function DashboardsList(): JSX.Element {
 	const {
@@ -156,55 +114,6 @@ function DashboardsList(): JSX.Element {
 		errorMessage: '',
 	});
 
-	const dynamicColumns: TableColumnProps<Data>[] = [
-		{
-			title: 'Created At',
-			dataIndex: 'createdAt',
-			width: 30,
-			key: DynamicColumnsKey.CreatedAt,
-			sorter: (a: Data, b: Data): number => {
-				const prev = new Date(a.createdAt).getTime();
-				const next = new Date(b.createdAt).getTime();
-
-				return prev - next;
-			},
-			render: DateComponent,
-			sortOrder:
-				sortedInfo.columnKey === DynamicColumnsKey.CreatedAt
-					? sortedInfo.order
-					: null,
-		},
-		{
-			title: 'Created By',
-			dataIndex: 'createdBy',
-			width: 30,
-			key: DynamicColumnsKey.CreatedBy,
-		},
-		{
-			title: 'Last Updated Time',
-			width: 30,
-			dataIndex: 'lastUpdatedTime',
-			key: DynamicColumnsKey.UpdatedAt,
-			sorter: (a: Data, b: Data): number => {
-				const prev = new Date(a.lastUpdatedTime).getTime();
-				const next = new Date(b.lastUpdatedTime).getTime();
-
-				return prev - next;
-			},
-			render: DateComponent,
-			sortOrder:
-				sortedInfo.columnKey === DynamicColumnsKey.UpdatedAt
-					? sortedInfo.order
-					: null,
-		},
-		{
-			title: 'Last Updated By',
-			dataIndex: 'lastUpdatedBy',
-			width: 30,
-			key: DynamicColumnsKey.UpdatedBy,
-		},
-	];
-
 	const data: Data[] =
 		dashboards?.map((e) => ({
 			createdAt: e.created_at,
@@ -257,53 +166,10 @@ function DashboardsList(): JSX.Element {
 		}
 	}, [newDashboardState, t]);
 
-	const getText = useCallback(() => {
-		if (!newDashboardState.error && !newDashboardState.loading) {
-			return 'New Dashboard';
-		}
-
-		if (newDashboardState.loading) {
-			return 'Loading';
-		}
-
-		return newDashboardState.errorMessage;
-	}, [
-		newDashboardState.error,
-		newDashboardState.errorMessage,
-		newDashboardState.loading,
-	]);
-
 	const onModalHandler = (uploadedGrafana: boolean): void => {
 		setIsImportJSONModalVisible((state) => !state);
 		setUploadedGrafana(uploadedGrafana);
 	};
-
-	const getMenuItems = useMemo(() => {
-		const menuItems: ItemType[] = [
-			{
-				key: t('import_json').toString(),
-				label: t('import_json'),
-				onClick: (): void => onModalHandler(false),
-			},
-			{
-				key: t('import_grafana_json').toString(),
-				label: t('import_grafana_json'),
-				onClick: (): void => onModalHandler(true),
-				disabled: true,
-			},
-		];
-
-		if (createNewDashboard) {
-			menuItems.unshift({
-				key: t('create_dashboard').toString(),
-				label: t('create_dashboard'),
-				disabled: isDashboardListLoading,
-				onClick: onNewDashboardHandler,
-			});
-		}
-
-		return menuItems;
-	}, [createNewDashboard, isDashboardListLoading, onNewDashboardHandler, t]);
 
 	const handleSearch = (event: ChangeEvent<HTMLInputElement>): void => {
 		setIsFilteringDashboards(true);
@@ -314,39 +180,6 @@ function DashboardsList(): JSX.Element {
 		setIsFilteringDashboards(false);
 		setSearchString(searchText);
 	};
-
-	// const columns = useMemo(() => {
-	// 	const tableColumns: TableColumnProps<Data>[] = [
-	// 		{
-	// 			title: 'Name',
-	// 			dataIndex: 'name',
-	// 			width: 40,
-	// 			render: Name,
-	// 		},
-	// 		{
-	// 			title: 'Description',
-	// 			width: 50,
-	// 			dataIndex: 'description',
-	// 		},
-	// 		{
-	// 			title: 'Tags',
-	// 			dataIndex: 'tags',
-	// 			width: 50,
-	// 			render: (value): JSX.Element => <LabelColumn labels={value} />,
-	// 		},
-	// 	];
-
-	// 	if (action) {
-	// 		tableColumns.push({
-	// 			title: 'Action',
-	// 			dataIndex: '',
-	// 			width: 40,
-	// 			render: DeleteButton,
-	// 		});
-	// 	}
-
-	// 	return tableColumns;
-	// }, [action]);
 
 	const columns: TableProps<Data>['columns'] = [
 		{
@@ -378,7 +211,7 @@ function DashboardsList(): JSX.Element {
 				// Combine time and date
 				const formattedDateAndTime = `${formattedDate} ⎯ ${formattedTime}`;
 
-				const isEditDeleteSupported = allowedRoles.includes(role as string);
+				// const isEditDeleteSupported = allowedRoles.includes(role as string);
 
 				const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.id}`;
 
@@ -431,76 +264,13 @@ function DashboardsList(): JSX.Element {
 			},
 		},
 	];
-	// const GetHeader = useMemo(
-	// 	() => (
-	// 		<Row gutter={16} align="middle">
-	// 			<Col span={18}>
-	// 				<Search
-	// 					disabled={isDashboardListLoading}
-	// 					placeholder="Search by Name, Description, Tags"
-	// 					onChange={handleSearch}
-	// 					loading={isFilteringDashboards}
-	// 					style={{ marginBottom: 16, marginTop: 16 }}
-	// 					defaultValue={searchString}
-	// 					autoFocus
-	// 				/>
-	// 			</Col>
 
-	// 			{createNewDashboard && (
-	// 				<Col
-	// 					span={6}
-	// 					style={{
-	// 						display: 'flex',
-	// 						justifyContent: 'flex-end',
-	// 					}}
-	// 				>
-	// 					<ButtonContainer>
-	// 						<TextToolTip
-	// 							{...{
-	// 								text: `More details on how to create dashboards`,
-	// 								url: 'https://signoz.io/docs/userguide/dashboards',
-	// 							}}
-	// 						/>
-	// 					</ButtonContainer>
-
-	// 					<Dropdown
-	// 						menu={{ items: getMenuItems }}
-	// 						disabled={isDashboardListLoading}
-	// 						placement="bottomRight"
-	// 					>
-	// 						<NewDashboardButton
-	// 							icon={<PlusOutlined />}
-	// 							type="primary"
-	// 							data-testid="create-new-dashboard"
-	// 							loading={newDashboardState.loading}
-	// 							danger={newDashboardState.error}
-	// 						>
-	// 							{getText()}
-	// 						</NewDashboardButton>
-	// 					</Dropdown>
-	// 				</Col>
-	// 			)}
-	// 		</Row>
-	// 	),
-	// 	[
-	// 		isDashboardListLoading,
-	// 		handleSearch,
-	// 		isFilteringDashboards,
-	// 		searchString,
-	// 		createNewDashboard,
-	// 		getMenuItems,
-	// 		newDashboardState.loading,
-	// 		newDashboardState.error,
-	// 		getText,
-	// 	],
-	// );
-
-	const sortMenuItems: MenuProps['items'] = [
+	const filterMenuItems: MenuProps['items'] = [
 		{
 			label: (
 				<div className="create-dashboard-menu-item">
 					{' '}
-					<PencilRuler size={14} /> Last created
+					<PencilRuler size={14} /> Created by
 				</div>
 			),
 			key: '0',
@@ -509,19 +279,10 @@ function DashboardsList(): JSX.Element {
 			label: (
 				<div className="create-dashboard-menu-item">
 					{' '}
-					<CalendarClockIcon size={14} /> Last updated
+					<CalendarClockIcon size={14} /> Last updated by
 				</div>
 			),
 			key: '1',
-		},
-		{
-			label: (
-				<div className="create-dashboard-menu-item">
-					{' '}
-					<FolderPen size={14} /> Name
-				</div>
-			),
-			key: '3',
 		},
 	];
 
@@ -547,15 +308,6 @@ function DashboardsList(): JSX.Element {
 			),
 			key: '1',
 		},
-		// {
-		// 	label: (
-		// 		<div className="create-dashboard-menu-item">
-		// 			{' '}
-		// 			<GrafanaIcon /> Use Grafana JSON{' '}
-		// 		</div>
-		// 	),
-		// 	key: '3',
-		// },
 	];
 
 	return (
@@ -571,7 +323,7 @@ function DashboardsList(): JSX.Element {
 				<div className="dashboards-list-header-container">
 					<Dropdown
 						overlayClassName="new-dashboard-menu"
-						menu={{ items: sortMenuItems }}
+						menu={{ items: filterMenuItems }}
 						placement="bottomLeft"
 					>
 						<Button
@@ -579,7 +331,7 @@ function DashboardsList(): JSX.Element {
 							className="periscope-btn"
 							icon={<SortDesc size={14} />}
 						>
-							Sort
+							Filter
 						</Button>
 					</Dropdown>
 
@@ -608,7 +360,7 @@ function DashboardsList(): JSX.Element {
 				<Table
 					columns={columns}
 					dataSource={data}
-					loading={isDashboardListLoading}
+					loading={isDashboardListLoading || isFilteringDashboards}
 					showHeader={false}
 					pagination={{ pageSize: 5, showSizeChanger: false }}
 				/>
