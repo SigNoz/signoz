@@ -61,6 +61,7 @@ import { USER_ROLES } from 'types/roles';
 import useSortableTable from '../../hooks/ResizeTable/useSortableTable';
 import useUrlQuery from '../../hooks/useUrlQuery';
 import { GettableAlert } from '../../types/api/alerts/get';
+import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
 import { filterDashboard } from './utils';
 
@@ -83,6 +84,10 @@ function DashboardsList(): JSX.Element {
 	);
 
 	const [searchValue, setSearchValue] = useState<string>('');
+	const [
+		showNewDashboardTemplatesModal,
+		setShowNewDashboardTemplatesModal,
+	] = useState(false);
 
 	const { t } = useTranslation('dashboard');
 
@@ -312,9 +317,14 @@ function DashboardsList(): JSX.Element {
 	const createDashboardItems: MenuProps['items'] = [
 		{
 			label: (
-				<div className="create-dashboard-menu-item" onClick={onNewDashboardHandler}>
+				<div
+					className="create-dashboard-menu-item"
+					onClick={(): void => {
+						setShowNewDashboardTemplatesModal(true);
+					}}
+				>
 					{' '}
-					<LayoutGrid size={14} /> Create dashboard{' '}
+					<LayoutGrid size={14} /> Create dashboard
 				</div>
 			),
 			key: '0',
@@ -369,6 +379,7 @@ function DashboardsList(): JSX.Element {
 						overlayClassName="new-dashboard-menu"
 						menu={{ items: createDashboardItems }}
 						placement="bottomRight"
+						trigger={['click']}
 					>
 						<Button
 							type="primary"
@@ -402,6 +413,14 @@ function DashboardsList(): JSX.Element {
 					isImportJSONModalVisible={isImportJSONModalVisible}
 					uploadedGrafana={uploadedGrafana}
 					onModalHandler={(): void => onModalHandler(false)}
+				/>
+
+				<DashboardTemplatesModal
+					showNewDashboardTemplatesModal={showNewDashboardTemplatesModal}
+					onCreateNewDashboard={onNewDashboardHandler}
+					onCancel={(): void => {
+						setShowNewDashboardTemplatesModal(false);
+					}}
 				/>
 			</div>
 		</div>
