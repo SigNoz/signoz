@@ -14,7 +14,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: git fetch origin ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - run: |
+          git checkout -b develop origin/develop
 
       - uses: actions/setup-node@v4
         with:
