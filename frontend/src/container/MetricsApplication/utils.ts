@@ -33,6 +33,8 @@ export const getNearestHighestBucketValue = (
 	value: number,
 	buckets: number[],
 ): string => {
+	// sort the buckets
+	buckets.sort((a, b) => a - b);
 	const nearestBucket = buckets.find((bucket) => bucket >= value);
 	return nearestBucket?.toString() || '+Inf';
 };
