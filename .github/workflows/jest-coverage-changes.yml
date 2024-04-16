@@ -13,6 +13,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - run: |
+          git fetch origin develop
           git checkout -b develop origin/develop
           git checkout ${{ github.event.pull_request.head.sha }}
 
