@@ -35,7 +35,11 @@ function GridCardGraph({
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
+	const {
+		toScrollWidgetId,
+		setToScrollWidgetId,
+		variablesToGetUpdated,
+	} = useDashboard();
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -90,7 +94,11 @@ function GridCardGraph({
 	const isEmptyWidget =
 		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
 
-	const queryEnabledCondition = isVisible && !isEmptyWidget && isQueryEnabled;
+	const queryEnabledCondition =
+		isVisible &&
+		!isEmptyWidget &&
+		isQueryEnabled &&
+		isEmpty(variablesToGetUpdated);
 
 	const [requestData, setRequestData] = useState<GetQueryResultsProps>(() => {
 		if (widget.panelTypes !== PANEL_TYPES.LIST) {
@@ -166,7 +174,8 @@ function GridCardGraph({
 
 	const menuList =
 		widget.panelTypes === PANEL_TYPES.TABLE ||
-		widget.panelTypes === PANEL_TYPES.LIST
+		widget.panelTypes === PANEL_TYPES.LIST ||
+		widget.panelTypes === PANEL_TYPES.PIE
 			? headerMenuList.filter((menu) => menu !== MenuItemKeys.CreateAlerts)
 			: headerMenuList;
 

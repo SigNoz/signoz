@@ -276,7 +276,6 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	am := NewAuthMiddleware(auth.GetUserFromRequest)
 
 	api.RegisterRoutes(r, am)
-	api.RegisterMetricsRoutes(r, am)
 	api.RegisterLogsRoutes(r, am)
 	api.RegisterIntegrationRoutes(r, am)
 	api.RegisterQueryRangeV3Routes(r, am)
