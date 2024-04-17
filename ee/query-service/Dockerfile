@@ -2,7 +2,7 @@ FROM alpine:3.16 as builder
 
 
 RUN apk add --no-cache ca-certificates openssl
-RUN wget https://github.com/buger/goreplay/releases/download/1.3.3/gor_${RELEASE_VERSION}_x64.tar.gz -O gor.tar.gz
+RUN wget https://github.com/buger/goreplay/releases/download/1.3.3/gor_1.3.3_x64.tar.gz -O gor.tar.gz
 RUN tar xzf gor.tar.gz
 
 
@@ -30,13 +30,13 @@ COPY pkg/query-service/config/prometheus.yml /root/config/prometheus.yml
 COPY pkg/query-service/templates /root/templates
 
 # Make query-service executable for non-root users
-RUN chmod 755 /root /root/query-service
+RUN chmod 755 /root /root/query-service /root/start.sh
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /gor .
 
 # run the binary
-ENTRYPOINT ["./start.sh"]
+ENTRYPOINT ["/root/start.sh"]
 
 # CMD ["-config", "/root/config/prometheus.yml"]
 
