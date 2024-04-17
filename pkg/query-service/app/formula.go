@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"time"
 
 	"github.com/SigNoz/govaluate"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -158,7 +159,7 @@ func processResults(results []*v3.Result, expression *govaluate.EvaluableExpress
 	}, nil
 }
 
-var SupportedFunctions = []string{"exp", "log", "ln", "exp2", "log2", "exp10", "log10", "sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma", "sin", "cos", "tan", "asin", "acos", "atan", "degrees", "radians"}
+var SupportedFunctions = []string{"exp", "log", "ln", "exp2", "log2", "exp10", "log10", "sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma", "sin", "cos", "tan", "asin", "acos", "atan", "degrees", "radians", "now", "toUnixTimestamp"}
 
 func evalFuncs() map[string]govaluate.ExpressionFunction {
 	GoValuateFuncs := make(map[string]govaluate.ExpressionFunction)
@@ -247,5 +248,21 @@ func evalFuncs() map[string]govaluate.ExpressionFunction {
 	GoValuateFuncs["radians"] = func(args ...interface{}) (interface{}, error) {
 		return args[0].(float64) * math.Pi / 180, nil
 	}
+
+	GoValuateFuncs["now"] = func(args ...interface{}) (interface{}, error) {
+		return time.Now().Unix(), nil
+	}
+
+	GoValuateFuncs["toUnixTimestamp"] = func(args ...interface{}) (interface{}, error) {
+		if len(args) != 1 {
+			return nil, fmt.Errorf("toUnixTimestamp requires exactly one argument")
+		}
+		t, err := time.Parse(time.RFC3339, args[0].(string))
+		if err != nil {
+			return nil, err
+		}
+		return t.Unix(), nil
+	}
+
 	return GoValuateFuncs
 }
