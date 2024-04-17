@@ -2,13 +2,27 @@ import './PlannedDowntime.styles.scss';
 import 'dayjs/locale/en';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, DatePicker, Divider, Form, Input, Modal, Select } from 'antd';
+import { Color } from '@signozhq/design-tokens';
+import {
+	Button,
+	DatePicker,
+	Divider,
+	Flex,
+	Form,
+	Input,
+	Modal,
+	Select,
+	Typography,
+} from 'antd';
 import {
 	ModalButtonWrapper,
 	ModalTitle,
 } from 'container/PipelinePage/PipelineListsView/styles';
 import dayjs from 'dayjs';
-import React from 'react';
+import { Search } from 'lucide-react';
+import React, { ChangeEvent } from 'react';
+
+import MyCollapseListWithFooter from './PlannedDowntimeList';
 
 interface PlannedDowntimeData {
 	name: string;
@@ -47,19 +61,42 @@ export function PlannedDowntime(): JSX.Element {
 		}
 	};
 
+	const [searchValue, setSearchValue] = React.useState<string>('');
+
+	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
+		setSearchValue(e.target.value);
+		console.log(searchValue);
+	};
+
 	const handleCancel = (): void => {
 		setIsOpen(false);
 	};
 
 	return (
-		<>
-			<Button
-				icon={<PlusOutlined />}
-				type="primary"
-				onClick={(): void => setIsOpen(true)}
-			>
-				New downtime
-			</Button>
+		<div className="planned-downtime-container">
+			<div className="planned-downtime-content">
+				<Typography.Title className="title">Planned Downtime</Typography.Title>
+				<Typography.Text className="subtitle">
+					Create and manage planned downtimes.
+				</Typography.Text>
+				<Flex className="toolbar">
+					<Input
+						placeholder="Search for a planned downtime..."
+						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
+						value={searchValue}
+						onChange={handleSearch}
+					/>
+					<Button
+						icon={<PlusOutlined />}
+						type="primary"
+						onClick={(): void => setIsOpen(true)}
+					>
+						New downtime
+					</Button>
+				</Flex>
+				<br />
+				<MyCollapseListWithFooter />
+			</div>
 			<Modal
 				title={<ModalTitle level={4}>New planned downtime</ModalTitle>}
 				centered
@@ -152,6 +189,6 @@ export function PlannedDowntime(): JSX.Element {
 					</Form.Item>
 				</Form>
 			</Modal>
-		</>
+		</div>
 	);
 }

@@ -28,4 +28,118 @@
 			background: #ffffff !important;
 		}
 	}
+
+	.planned-downtime-container {
+		.planned-downtime-content {
+			.title {
+				color: var(--bg-ink-500);
+			}
+		}
+	}
+}
+
+.planned-downtime-container {
+	margin-top: 70px;
+	display: flex;
+	justify-content: center;
+	width: 100%;
+
+	.planned-downtime-content {
+		width: calc(100% - 30px);
+		max-width: 736px;
+
+		.title {
+			color: var(--bg-vanilla-100);
+			font-size: var(--font-size-lg);
+			font-style: normal;
+			font-weight: var(--font-weight-normal);
+			line-height: 28px; /* 155.556% */
+			letter-spacing: -0.09px;
+		}
+
+		.subtitle {
+			color: var(---bg-vanilla-400);
+			font-size: var(--font-size-sm);
+			font-style: normal;
+			font-weight: var(--font-weight-normal);
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+		}
+
+		.ant-input-affix-wrapper {
+			margin-top: 16px;
+			margin-bottom: 8px;
+		}
+
+		.toolbar {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.ant-btn {
+				margin-top: 6px;
+			}
+		}
+
+		.view-created-at {
+			border: 1px solid #454c58;
+			border-top: 0px;
+			width: 100%;
+			padding: 8px 16px;
+			gap: 6px;
+			height: 40px;
+
+			display: flex;
+			align-items: center;
+			.ant-typography {
+				color: var(--bg-vanilla-400);
+				font-variant-numeric: lining-nums tabular-nums stacked-fractions
+					slashed-zero;
+				font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 18px;
+				letter-spacing: -0.07px;
+			}
+		}
+
+		.ant-collapse-header {
+			height: 56px;
+			align-items: center;
+		}
+
+		.header-content {
+			display: flex;
+			gap: 8px;
+
+			.ant-typography {
+				color: var(--bg-vanilla-400);
+				font-variant-numeric: lining-nums tabular-nums stacked-fractions
+					slashed-zero;
+				font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 18px;
+				letter-spacing: -0.07px;
+			}
+			.ant-tag {
+				border-radius: 20px;
+			}
+
+			.action-btn {
+				display: flex;
+				align-items: center;
+				gap: 20px;
+				cursor: pointer;
+
+				.hidden {
+					display: none;
+				}
+			}
+		}
+	}
 }
