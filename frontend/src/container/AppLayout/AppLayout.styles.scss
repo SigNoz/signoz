@@ -4,8 +4,9 @@
 	width: 100%;
 
 	.app-content {
-		width: 100%;
+		width: calc(100% - 64px);
 		overflow: auto;
+		z-index: 0;
 
 		.content-container {
 			position: relative;
@@ -14,6 +15,12 @@
 			flex-direction: column;
 			height: 100%;
 			width: 100%;
+		}
+	}
+
+	&.docked {
+		.app-content {
+			width: calc(100% - 240px);
 		}
 	}
 }

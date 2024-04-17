@@ -30,4 +30,6 @@ export interface IDashboardContext {
 			| undefined,
 		allSelected: boolean,
 	) => void;
+	variablesToGetUpdated: string[];
+	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
 }

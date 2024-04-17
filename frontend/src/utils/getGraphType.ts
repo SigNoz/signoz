@@ -5,5 +5,8 @@ export const getGraphType = (panelType: PANEL_TYPES): PANEL_TYPES => {
 	if (panelType === PANEL_TYPES.BAR) {
 		return PANEL_TYPES.TIME_SERIES;
 	}
+	if (panelType === PANEL_TYPES.PIE) {
+		return PANEL_TYPES.TABLE;
+	}
 	return panelType;
 };

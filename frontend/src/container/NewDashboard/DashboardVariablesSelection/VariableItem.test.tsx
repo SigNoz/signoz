@@ -53,7 +53,7 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -68,7 +68,7 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -82,7 +82,7 @@ describe('VariableItem', () => {
 					variableData={mockVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -110,7 +110,7 @@ describe('VariableItem', () => {
 					variableData={mockCustomVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -131,7 +131,7 @@ describe('VariableItem', () => {
 					variableData={customVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -146,7 +146,7 @@ describe('VariableItem', () => {
 					variableData={mockCustomVariableData}
 					existingVariables={{}}
 					onValueUpdate={mockOnValueUpdate}
-					lastUpdatedVar=""
+					variablesToGetUpdated={[]}
 				/>
 			</MockQueryClientProvider>,
 		);

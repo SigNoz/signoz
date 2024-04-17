@@ -404,7 +404,7 @@ type CompositeQuery struct {
 
 func (c *CompositeQuery) Validate() error {
 	if c == nil {
-		return nil
+		return fmt.Errorf("composite query is required")
 	}
 
 	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil {
