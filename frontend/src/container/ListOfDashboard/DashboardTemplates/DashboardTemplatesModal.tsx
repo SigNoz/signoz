@@ -17,9 +17,12 @@ import PostgreSQLIcon from 'assets/CustomIcons/PostgreSQLIcon';
 import RedisIcon from 'assets/CustomIcons/RedisIcon';
 import cx from 'classnames';
 import { ConciergeBell, DraftingCompass, Drill, Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { ChangeEvent, useState } from 'react';
+import { DashboardTemplate } from 'types/api/dashboard/getAll';
 
-const templatesList = [
+import { filterTemplates } from '../utils';
+
+const templatesList: DashboardTemplate[] = [
 	{
 		name: 'Blank dashboard',
 		icon: <Drill />,
@@ -128,6 +131,16 @@ export default function DashboardTemplatesModal({
 		templatesList[0],
 	);
 
+	const [dashboardTemplates, setDashboardTemplates] = useState(templatesList);
+
+	const handleDashboardTemplateSearch = (
+		event: ChangeEvent<HTMLInputElement>,
+	) => {
+		const searchText = event.target.value;
+		const filteredTemplates = filterTemplates(searchText, templatesList);
+		setDashboardTemplates(filteredTemplates);
+	};
+
 	return (
 		<Modal
 			wrapClassName="new-dashboard-templates-modal"
@@ -136,7 +149,7 @@ export default function DashboardTemplatesModal({
 			closable={false}
 			footer={null}
 			destroyOnClose
-			width="70vw"
+			width="60vw"
 		>
 			<div className="new-dashboard-templates-content-container">
 				<div className="new-dashboard-templates-content-header">
@@ -150,10 +163,11 @@ export default function DashboardTemplatesModal({
 						<Input
 							className="new-dashboard-templates-search"
 							placeholder="🔍 Search..."
+							onChange={handleDashboardTemplateSearch}
 						/>
 
 						<div className="templates-list">
-							{templatesList.map((template) => (
+							{dashboardTemplates.map((template) => (
 								<div
 									className={cx(
 										'template-list-item',
