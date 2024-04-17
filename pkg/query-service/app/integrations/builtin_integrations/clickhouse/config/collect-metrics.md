@@ -1,6 +1,6 @@
-### Collect Postgres Metrics
+### Collect Clickhouse Metrics
 
-You can configure Postgres metrics collection by providing the required collector config to your collector.
+You can configure Clickhouse metrics collection by providing the required collector config to your collector.
 
 #### Create collector config file
 
@@ -11,7 +11,7 @@ receivers:
   postgresql:
     # The endpoint of the postgresql server. Whether using TCP or Unix sockets, this value should be host:port. If transport is set to unix, the endpoint will internally be translated from host:port to /host.s.PGSQL.port
     endpoint: ${env:POSTGRESQL_ENDPOINT}
-    # The frequency at which to collect metrics from the Postgres instance.
+    # The frequency at which to collect metrics from the Clickhouse instance.
     collection_interval: 60s
     # The username used to access the postgres instance
     username: ${env:POSTGRESQL_USERNAME}
@@ -74,13 +74,13 @@ Set the following environment variables in your otel-collector environment:
 
 ```bash
 
-# password for Postgres monitoring user"
+# password for Clickhouse monitoring user"
 export POSTGRESQL_USERNAME="monitoring"
 
-# password for Postgres monitoring user"
+# password for Clickhouse monitoring user"
 export POSTGRESQL_PASSWORD="<PASSWORD>"
 
-# Postgres endpoint reachable from the otel collector"
+# Clickhouse endpoint reachable from the otel collector"
 export POSTGRESQL_ENDPOINT="host:port"
 
 
