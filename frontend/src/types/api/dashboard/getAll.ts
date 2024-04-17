@@ -54,6 +54,14 @@ export interface Dashboard {
 	isLocked?: boolean;
 }
 
+export interface DashboardTemplate {
+	name: string;
+	icon: React.ReactElement;
+	id: string;
+	description: string;
+	previewImage: string;
+}
+
 export interface DashboardData {
 	uuid?: string;
 	description?: string;
