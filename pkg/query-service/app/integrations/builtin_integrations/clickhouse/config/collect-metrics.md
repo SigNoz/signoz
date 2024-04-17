@@ -4,36 +4,20 @@ You can configure Clickhouse metrics collection by providing the required collec
 
 #### Create collector config file
 
-Save the following config for collecting postgres metrics in a file named `postgres-metrics-collection-config.yaml`
+Save the following config for collecting Clickhouse metrics in a file named `clickhouse-metrics-collection-config.yaml`
 
 ```yaml
 receivers:
-  postgresql:
-    # The endpoint of the postgresql server. Whether using TCP or Unix sockets, this value should be host:port. If transport is set to unix, the endpoint will internally be translated from host:port to /host.s.PGSQL.port
-    endpoint: ${env:POSTGRESQL_ENDPOINT}
-    # The frequency at which to collect metrics from the Clickhouse instance.
-    collection_interval: 60s
-    # The username used to access the postgres instance
-    username: ${env:POSTGRESQL_USERNAME}
-    # The password used to access the postgres instance
-    password: ${env:POSTGRESQL_PASSWORD}
-    # The list of databases for which the receiver will attempt to collect statistics. If an empty list is provided, the receiver will attempt to collect statistics for all non-template databases
-    databases: []
-    # # Defines the network to use for connecting to the server. Valid Values are `tcp` or `unix`
-    # transport: tcp
-    tls:
-      # set to false if SSL is enabled on the server
-      insecure: true
-    #   ca_file: /etc/ssl/certs/ca-certificates.crt
-    #   cert_file: /etc/ssl/certs/postgres.crt
-    #   key_file: /etc/ssl/certs/postgres.key
-    metrics:
-      postgresql.database.locks:
-        enabled: true
-      postgresql.deadlocks:
-        enabled: true
-      postgresql.sequential_scans:
-        enabled: true
+  prometheus/clickhouse:
+    config:
+      global:
+        scrape_interval: 60s
+      scrape_configs:
+        - job_name: clickhouse
+          static_configs:
+            - targets:
+                - ${env:CLICKHOUSE_PROM_METRICS_ENDPOINT}
+          metrics_path: ${env:CLICKHOUSE_PROM_METRICS_PATH}
 
 processors:
   # enriches the data with additional host information
@@ -46,7 +30,7 @@ processors:
 
 exporters:
   # export to SigNoz cloud
-  otlp/postgres:
+  otlp/clickhouse:
     endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
     tls:
       insecure: false
@@ -54,18 +38,18 @@ exporters:
       "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
 
   # export to local collector
-  # otlp/postgres:
+  # otlp/clickhouse:
   #   endpoint: "localhost:4317"
   #   tls:
   #     insecure: true
 
 service:
   pipelines:
-    metrics/postgresql:
-      receivers: [postgresql]
-      # note: remove this processor if the collector host is not running on the same host as the postgres instance
+    metrics/clickhouse:
+      receivers: [prometheus/clickhouse]
+      # note: remove this processor if the collector host is not running on the same host as the clickhouse instance
       processors: [resourcedetection/system]
-      exporters: [otlp/postgres]
+      exporters: [otlp/clickhouse]
 ```
 
 #### Set Environment Variables
@@ -73,16 +57,13 @@ service:
 Set the following environment variables in your otel-collector environment:
 
 ```bash
+# Prometheus metrics endpoint on the clickhouse server reachable from the otel collector.
+# You can examine clickhouse server configuration to find it. For details see https://clickhouse.com/docs/en/operations/server-configuration-parameters/settings#prometheus
+export CLICKHOUSE_PROM_METRICS_ENDPOINT="clickhouse:9363"
 
-# password for Clickhouse monitoring user"
-export POSTGRESQL_USERNAME="monitoring"
-
-# password for Clickhouse monitoring user"
-export POSTGRESQL_PASSWORD="<PASSWORD>"
-
-# Clickhouse endpoint reachable from the otel collector"
-export POSTGRESQL_ENDPOINT="host:port"
-
+# Prometheus metrics path on the clickhouse server
+# You can examine clickhouse server configuration to find it. For details see https://clickhouse.com/docs/en/operations/server-configuration-parameters/settings#prometheus
+export CLICKHOUSE_PROM_METRICS_PATH="/metrics"
 
 # region specific SigNoz cloud ingestion endpoint
 export OTLP_DESTINATION_ENDPOINT="ingest.us.signoz.cloud:443"
@@ -96,6 +77,6 @@ export SIGNOZ_INGESTION_KEY="signoz-ingestion-key"
 
 Make the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  
 ```bash
---config postgres-metrics-collection-config.yaml
+--config clickhouse-metrics-collection-config.yaml
 ```  
 Note: the collector can use multiple config files, specified by multiple occurrences of the --config flag.

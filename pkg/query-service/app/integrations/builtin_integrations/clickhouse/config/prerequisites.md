@@ -14,7 +14,7 @@ To configure metrics and logs collection for a Clickhouse server, you need the f
 - **If collecting metrics, ensure that Clickhouse is configured to export prometheus metrics**
   If needed, please [configure Clickhouse to expose prometheus metrics](https://clickhouse.com/docs/en/operations/server-configuration-parameters/settings#prometheus).
 
-- **If collecting query_log, ensure there is a clickhouse user with required permissions**
+- **If collecting query_log, ensure that there is a clickhouse user with required permissions**
   TODO(Raj): Add instructions for creating a clickhouse monitoring user.
 
 
