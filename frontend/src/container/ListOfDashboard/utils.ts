@@ -1,4 +1,4 @@
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { Dashboard, DashboardTemplate } from 'types/api/dashboard/getAll';
 
 export const filterDashboard = (
 	searchValue: string,
@@ -23,5 +23,19 @@ export const filterDashboard = (
 
 			return false;
 		});
+	});
+};
+
+export const filterTemplates = (
+	searchValue: string,
+	dashboardList: DashboardTemplate[],
+): DashboardTemplate[] => {
+	const searchValueLowerCase = searchValue?.toLowerCase();
+
+	return dashboardList.filter((item: DashboardTemplate) => {
+		const { name } = item;
+
+		// Check if any property value contains the searchValue
+		return name.toLowerCase().includes(searchValueLowerCase);
 	});
 };
