@@ -9,14 +9,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - run: |
+          git checkout -b develop origin/develop
+          git checkout ${{ github.event.pull_request.head.sha }}
+
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
       - name: Install dependencies
         run: cd frontend && npm install -g yarn && yarn
 
-      # - name: npm run test:changedsince
-      #   run: cd frontend && npm run i18n:generate-hash && npm run test:changedsince
-
-      - name: run coverage
-        run: cd frontend && npx jest --coverage --silent --changedSince=origin/develop --passWithNoTests
+      - name: npm run test:changedsince
+        run: cd frontend && npm run i18n:generate-hash && npm run test:changedsince
