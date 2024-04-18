@@ -8,11 +8,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      # Set the remote origin using the repository URL
-      - name: Set remote origin
-        run: git remote add origin https://github.com/SigNoz/signoz
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          git checkout -b develop origin/develop
+          git checkout ${{ github.event.pull_request.head.sha }}
 
       - uses: actions/setup-node@v4
         with:
