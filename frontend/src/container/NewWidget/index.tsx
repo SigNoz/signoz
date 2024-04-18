@@ -14,6 +14,7 @@ import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
+import { defaultTo, isUndefined } from 'lodash-es';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -45,7 +46,11 @@ import {
 	RightContainerWrapper,
 } from './styles';
 import { NewWidgetProps } from './types';
-import { getIsQueryModified, handleQueryChange } from './utils';
+import {
+	getDefaultWidgetData,
+	getIsQueryModified,
+	handleQueryChange,
+} from './utils';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const {
@@ -76,16 +81,36 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const { widgets = [] } = selectedDashboard?.data || {};
 
+	console.log(widgets);
+
 	const query = useUrlQuery();
 
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
+	const [isNewDashboard, setIsNewDashboard] = useState<boolean>(false);
+
+	useEffect(() => {
+		const widgetId = query.get('widgetId');
+		const selectedWidget = widgets?.find((e) => e.id === widgetId);
+		const isWidgetNotPresent = isUndefined(selectedWidget);
+		if (isWidgetNotPresent) {
+			setIsNewDashboard(true);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	const getWidget = useCallback(() => {
 		const widgetId = query.get('widgetId');
-		return widgets?.find((e) => e.id === widgetId);
-	}, [query, widgets]);
+		const selectedWidget = widgets?.find((e) => e.id === widgetId);
+		return defaultTo(
+			selectedWidget,
+			getDefaultWidgetData(widgetId || '', selectedGraph),
+		);
+	}, [query, selectedGraph, widgets]);
 
 	const [selectedWidget, setSelectedWidget] = useState(getWidget());
+
+	console.log(selectedWidget);
 
 	const [title, setTitle] = useState<string>(
 		selectedWidget?.title?.toString() || '',
@@ -227,6 +252,20 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			return;
 		}
 
+		const widgetId = query.get('widgetId');
+		let updatedLayout = selectedDashboard.data.layout || [];
+		if (isNewDashboard) {
+			updatedLayout = [
+				{
+					i: widgetId || '',
+					w: 6,
+					x: 0,
+					h: 3,
+					y: 0,
+				},
+				...updatedLayout,
+			];
+		}
 		const dashboard: Dashboard = {
 			...selectedDashboard,
 			uuid: selectedDashboard.uuid,
@@ -254,6 +293,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					},
 					...afterWidgets,
 				],
+				layout: [...updatedLayout],
 			},
 		};
 
@@ -274,6 +314,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		});
 	}, [
 		selectedDashboard,
+		query,
+		isNewDashboard,
 		preWidgets,
 		selectedWidget,
 		selectedTime.enum,
