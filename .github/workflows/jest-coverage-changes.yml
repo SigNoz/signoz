@@ -15,5 +15,8 @@ jobs:
       - name: Install dependencies
         run: cd frontend && npm install -g yarn && yarn
 
-      - name: npm run test:changedsince
-        run: cd frontend && npm run i18n:generate-hash && npm run test:changedsince
+      # - name: npm run test:changedsince
+      #   run: cd frontend && npm run i18n:generate-hash && npm run test:changedsince
+
+      - name: run coverage
+        run: cd frontend && npx jest --coverage --silent --changedSince=origin/develop --passWithNoTests
