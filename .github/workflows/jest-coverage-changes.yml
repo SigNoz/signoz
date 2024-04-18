@@ -16,7 +16,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }} # Provide the GitHub token for authentication
 
       - run: |
-          git fetch ${{ github.event.pull_request.head.sha }} && checkout ${{ github.event.pull_request.head.sha }}
+          git fetch origin ${{ github.event.pull_request.head.sha }} && checkout ${{ github.event.pull_request.head.sha }}
 
       - uses: actions/setup-node@v4
         with:
