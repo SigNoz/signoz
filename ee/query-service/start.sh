@@ -10,6 +10,10 @@ set -m
 # ./my_helper_process
 echo "Hello World"
 
+./gor --input-raw=:8080 --output-stdout
+
+echo "hello world done"
+
 # the my_helper_process might need to know how to wait on the
 # primary process to start before it does its work and returns
 
