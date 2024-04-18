@@ -3,7 +3,6 @@ package rules
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -38,8 +37,8 @@ func (a *AlertIds) Value() (driver.Value, error) {
 
 type Schedule struct {
 	Timezone   string      `json:"timezone"`
-	StartTime  *time.Time  `json:"startTime"`
-	EndTime    *time.Time  `json:"endTime"`
+	StartTime  time.Time   `json:"startTime"`
+	EndTime    time.Time   `json:"endTime"`
 	Recurrence *Recurrence `json:"recurrence"`
 }
 
@@ -76,7 +75,7 @@ const (
 
 type Recurrence struct {
 	StartTime  time.Time  `json:"startTime"`
-	EndTime    *time.Time `json:"endTime"`
+	Duration   Duration   `json:"duration"`
 	RepeatType RepeatType `json:"repeatType"`
 	RepeatOn   []RepeatOn `json:"repeatOn"`
 }
@@ -92,17 +91,20 @@ func (r *Recurrence) Value() (driver.Value, error) {
 	return json.Marshal(r)
 }
 
-func (m *PlannedMaintenance) shouldSkip(ruleID string) bool {
+func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 
 	found := false
-	for _, alertID := range *m.AlertIds {
-		if alertID == ruleID {
-			found = true
-			break
+	if m.AlertIds != nil {
+		for _, alertID := range *m.AlertIds {
+			if alertID == ruleID {
+				found = true
+				break
+			}
 		}
 	}
+
 	// If no alert ids, then skip all alerts
-	if len(*m.AlertIds) == 0 {
+	if m.AlertIds == nil || len(*m.AlertIds) == 0 {
 		found = true
 	}
 
@@ -115,16 +117,17 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string) bool {
 		// If it should not be skipped, we return false
 
 		// fixed schedule
-		if m.Schedule.StartTime != nil && m.Schedule.EndTime != nil {
+		if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
 			// if the current time in the timezone is between the start and end time
 			loc, err := time.LoadLocation(m.Schedule.Timezone)
 			if err != nil {
 				zap.L().Error("Error loading location", zap.String("timezone", m.Schedule.Timezone), zap.Error(err))
 				return false
 			}
-			currentTime := time.Now().In(loc)
-			zap.L().Info("checking fixed schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", *m.Schedule.StartTime), zap.Time("endTime", *m.Schedule.EndTime))
-			if currentTime.After(*m.Schedule.StartTime) && currentTime.Before(*m.Schedule.EndTime) {
+
+			currentTime := now.In(loc)
+			zap.L().Info("checking fixed schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", m.Schedule.StartTime), zap.Time("endTime", m.Schedule.EndTime))
+			if currentTime.After(m.Schedule.StartTime) && currentTime.Before(m.Schedule.EndTime) {
 				return true
 			}
 		}
@@ -132,18 +135,17 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string) bool {
 		// recurring schedule
 		if m.Schedule.Recurrence != nil {
 			start := m.Schedule.Recurrence.StartTime
-			end := m.Schedule.Recurrence.EndTime
+			end := m.Schedule.Recurrence.StartTime.Add(time.Duration(m.Schedule.Recurrence.Duration))
 			// if the current time in the timezone is between the start and end time
 			loc, err := time.LoadLocation(m.Schedule.Timezone)
 			if err != nil {
 				zap.L().Error("Error loading location", zap.String("timezone", m.Schedule.Timezone), zap.Error(err))
 				return false
 			}
-			currentTime := time.Now().In(loc)
+			currentTime := now.In(loc)
 
-			zap.L().Info("checking recurring schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", start), zap.Time("endTime", *end))
+			zap.L().Info("checking recurring schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", start), zap.Time("endTime", end))
 
-			fmt.Println(start.In(loc), currentTime)
 			// make sure the start time is not after the current time
 			if currentTime.Before(start.In(loc)) {
 				zap.L().Info("current time is before start time", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", start.In(loc)))
@@ -165,8 +167,12 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string) bool {
 				startTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), start.Hour(), start.Minute(), 0, 0, loc)
 				endTime := time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), end.Hour(), end.Minute(), 0, 0, loc)
 				zap.L().Info("checking weekly schedule", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", startTime), zap.Time("endTime", endTime))
-				if currentTime.After(startTime) && currentTime.Before(endTime) && slices.Contains(m.Schedule.Recurrence.RepeatOn, RepeatOn(strings.ToLower(currentTime.Weekday().String()))) {
-					return true
+				if currentTime.After(startTime) && currentTime.Before(endTime) {
+					if len(m.Schedule.Recurrence.RepeatOn) == 0 {
+						return true
+					} else if slices.Contains(m.Schedule.Recurrence.RepeatOn, RepeatOn(strings.ToLower(currentTime.Weekday().String()))) {
+						return true
+					}
 				}
 			case RepeatTypeMonthly:
 				// if the current time in the timezone is between the start and end time on the day of the current month

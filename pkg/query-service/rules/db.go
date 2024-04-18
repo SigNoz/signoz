@@ -236,8 +236,8 @@ func (r *ruleDB) GetAllPlannedMaintenance(ctx context.Context) ([]PlannedMainten
 func (r *ruleDB) GetPlannedMaintenanceByID(ctx context.Context, id string) (*PlannedMaintenance, error) {
 	maintenance := &PlannedMaintenance{}
 
-	query := fmt.Sprintf("SELECT id, name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by FROM planned_maintenance WHERE id=%s", id)
-	err := r.Get(maintenance, query)
+	query := "SELECT id, name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by FROM planned_maintenance WHERE id=$1"
+	err := r.Get(maintenance, query, id)
 
 	if err != nil {
 		zap.L().Error("Error in processing sql query", zap.Error(err))
