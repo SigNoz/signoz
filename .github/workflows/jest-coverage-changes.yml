@@ -16,7 +16,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }} # Provide the GitHub token for authentication
 
       - name: Fetch branch
-        run: git fetch origin ${{ github.event.pull_request.head.ref }}:${{ github.event.pull_request.head.ref }}
+        run: git fetch origin ${{ github.event.pull_request.head.ref }}
 
       - run: |
           git checkout ${{ github.event.pull_request.head.sha }}
