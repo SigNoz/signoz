@@ -11,9 +11,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          ref: "refs/heads/develop"
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }} # Provide the GitHub token for authentication
+
       - run: |
-          git checkout -b develop origin/develop
           git checkout ${{ github.event.pull_request.head.sha }}
 
       - uses: actions/setup-node@v4
