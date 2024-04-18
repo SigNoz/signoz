@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          git fetch origin/develop && checkout origin/develop
+          git checkout -b develop origin/develop
           git checkout ${{ github.event.pull_request.head.sha }}
 
       - uses: actions/setup-node@v4
