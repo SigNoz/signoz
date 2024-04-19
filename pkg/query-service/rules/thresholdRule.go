@@ -1076,10 +1076,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		// is used alert grouping, and we want to group alerts with the same
 		// label set, but different timestamps, together.
 		if r.typ == "TRACES_BASED_ALERT" {
-			link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
-			if link != "" && r.hostFromSource() != "" {
-				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
-			}
+			// link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
+			// if link != "" && r.hostFromSource() != "" {
+			// annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
+			// }
 		} else if r.typ == "LOGS_BASED_ALERT" {
 			link := r.prepareLinksToLogs(ts, smpl.MetricOrig)
 			if link != "" && r.hostFromSource() != "" {
