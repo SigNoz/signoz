@@ -12,7 +12,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: "refs/heads/develop"
-          fetch-depth: 1
           token: ${{ secrets.GITHUB_TOKEN }} # Provide the GitHub token for authentication
 
       - name: Fetch branch
