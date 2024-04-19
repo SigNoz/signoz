@@ -7,8 +7,6 @@ set -m
 ./query-service "$@" &
 
 # # Start the helper process
-# ./my_helper_process
-echo "Hello World"
 
 ./gor --input-raw=:8080 --output-file=%Y%m%d-%H.log
 
