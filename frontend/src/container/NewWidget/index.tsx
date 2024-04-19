@@ -81,8 +81,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const { widgets = [] } = selectedDashboard?.data || {};
 
-	console.log(widgets);
-
 	const query = useUrlQuery();
 
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
@@ -109,8 +107,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	}, [query, selectedGraph, widgets]);
 
 	const [selectedWidget, setSelectedWidget] = useState(getWidget());
-
-	console.log(selectedWidget);
 
 	const [title, setTitle] = useState<string>(
 		selectedWidget?.title?.toString() || '',
