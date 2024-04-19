@@ -11,7 +11,7 @@ set -m
 ./query-service "$@" &
 
 # # Start the helper process
-./gor --input-raw=:8080 --output-file=${OUTPUT_PATH}%Y%m%d-%H.log 
+./gor --input-raw=:8080 --output-file=${OUTPUT_PATH}%Y%m%d-%H.log --http-disallow-url /api/v1/health
 
 # the my_helper_process might need to know how to wait on the
 # primary process to start before it does its work and returns
