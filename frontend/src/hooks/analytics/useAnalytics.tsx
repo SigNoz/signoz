@@ -1,3 +1,4 @@
+import logEvent from 'api/common/logEvent';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
@@ -42,7 +43,7 @@ const useAnalytics = (): any => {
 	// 	};
 	// }, []); // The empty dependency array ensures that this effect runs only once when the component mounts
 
-	return { trackPageView, trackEvent };
+	return { trackPageView, trackEvent, logEvent };
 };
 
 export default useAnalytics;

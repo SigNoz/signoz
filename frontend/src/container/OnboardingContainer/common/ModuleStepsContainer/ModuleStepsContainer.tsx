@@ -76,7 +76,7 @@ export default function ModuleStepsContainer({
 	} = useOnboardingContext();
 
 	const [current, setCurrent] = useState(0);
-	const { trackEvent } = useAnalytics();
+	const { trackEvent, logEvent } = useAnalytics();
 	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
 	const lastStepIndex = selectedModuleSteps.length - 1;
 
@@ -381,11 +381,12 @@ export default function ModuleStepsContainer({
 	};
 
 	const handleFacingIssuesClick = (): void => {
-		trackEvent('Onboarding V2: Facing Issues Sending Data to SigNoz', {
+		logEvent('Onboarding V2: Facing Issues Sending Data to SigNoz', {
 			dataSource: selectedDataSource?.id,
 			framework: selectedFramework,
 			environment: selectedEnvironment,
 			module: activeStep?.module?.id,
+			step: activeStep?.step?.id,
 		});
 
 		const message = `Hi Team,
