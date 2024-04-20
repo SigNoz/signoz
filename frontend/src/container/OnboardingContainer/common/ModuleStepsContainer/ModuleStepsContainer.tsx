@@ -10,6 +10,7 @@ import {
 	LeftCircleOutlined,
 } from '@ant-design/icons';
 import { Button, Space, Steps, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { stepsMap } from 'container/OnboardingContainer/constants/stepsConfig';
 import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
@@ -76,7 +77,7 @@ export default function ModuleStepsContainer({
 	} = useOnboardingContext();
 
 	const [current, setCurrent] = useState(0);
-	const { trackEvent, logEvent } = useAnalytics();
+	const { trackEvent } = useAnalytics();
 	const [metaData, setMetaData] = useState<MetaDataProps[]>(defaultMetaData);
 	const lastStepIndex = selectedModuleSteps.length - 1;
 
