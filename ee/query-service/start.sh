@@ -12,7 +12,7 @@ set -m
 
 echo "Starting GOR"
 # # Start the helper process
-./gor --input-raw=:8080 --http-disallow-url "/api/v1/health" --output-file=${OUTPUT_PATH}%Y%m%d-%H.log 
+./gor --input-raw=:8080 --output-stdout --output-file=${OUTPUT_PATH}%Y%m%d-%H.log --http-disallow-url .*\/health
 echo "GOR started"
 
 # the my_helper_process might need to know how to wait on the
