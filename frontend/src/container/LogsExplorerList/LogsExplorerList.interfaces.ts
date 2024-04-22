@@ -9,4 +9,5 @@ export type LogsExplorerListProps = {
 	onEndReached: (index: number) => void;
 	isError: boolean;
 	isFilterApplied: boolean;
+	errorData?: Error | null;
 };

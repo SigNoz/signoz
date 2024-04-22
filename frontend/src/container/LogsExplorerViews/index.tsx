@@ -202,7 +202,13 @@ function LogsExplorerViews({
 		},
 	);
 
-	const { data, isLoading, isFetching, isError } = useGetExplorerQueryRange(
+	const {
+		data,
+		isLoading,
+		isFetching,
+		isError,
+		error: getExplorerQueryRangeError,
+	} = useGetExplorerQueryRange(
 		requestData,
 		panelType,
 		DEFAULT_ENTITY_VERSION,
@@ -633,6 +639,7 @@ function LogsExplorerViews({
 							currentStagedQueryData={listQuery}
 							logs={logs}
 							onEndReached={handleEndReached}
+							errorData={getExplorerQueryRangeError}
 							isError={isError}
 							isFilterApplied={!isEmpty(listQuery?.filters.items)}
 						/>
@@ -643,6 +650,7 @@ function LogsExplorerViews({
 							isLoading={isLoading || isFetching}
 							data={data}
 							isError={isError}
+							errorData={getExplorerQueryRangeError}
 							isFilterApplied={!isEmpty(listQuery?.filters.items)}
 							dataSource={DataSource.LOGS}
 						/>
@@ -653,6 +661,7 @@ function LogsExplorerViews({
 							data={data?.payload.data.newResult.data.result || []}
 							isLoading={isLoading || isFetching}
 							isError={isError}
+							errorData={getExplorerQueryRangeError}
 						/>
 					)}
 				</div>

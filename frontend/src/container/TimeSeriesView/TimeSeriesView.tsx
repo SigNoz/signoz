@@ -27,6 +27,7 @@ function TimeSeriesView({
 	yAxisUnit,
 	isFilterApplied,
 	dataSource,
+	errorData,
 }: TimeSeriesViewProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -75,7 +76,7 @@ function TimeSeriesView({
 
 	return (
 		<Container>
-			{isError && <LogsError />}
+			{isError && <LogsError errorData={errorData} />}
 			<div
 				className="graph-container"
 				style={{ height: '100%', width: '100%' }}
@@ -114,11 +115,13 @@ interface TimeSeriesViewProps {
 	isError: boolean;
 	isFilterApplied: boolean;
 	dataSource: DataSource;
+	errorData?: Error | null;
 }
 
 TimeSeriesView.defaultProps = {
 	data: undefined,
 	yAxisUnit: 'short',
+	errorData: null,
 };
 
 export default TimeSeriesView;

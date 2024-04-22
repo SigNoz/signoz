@@ -4,4 +4,5 @@ export type LogsExplorerTableProps = {
 	data: QueryDataV3[];
 	isLoading: boolean;
 	isError: boolean;
+	errorData?: Error | null;
 };
