@@ -1,10 +1,11 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './DynamicColumnTable.syles.scss';
 
-import { Button, Dropdown, MenuProps, Switch } from 'antd';
+import { Button, Dropdown, Flex, MenuProps, Switch } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { SlidersHorizontal } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
+import FacingIssueBtn from 'utils/FacingIssueBtn';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import ResizeTable from './ResizeTable';
@@ -83,19 +84,26 @@ function DynamicColumnTable({
 
 	return (
 		<div className="DynamicColumnTable">
-			{dynamicColumns && (
-				<Dropdown
-					getPopupContainer={popupContainer}
-					menu={{ items }}
-					trigger={['click']}
-				>
-					<Button
-						className="dynamicColumnTable-button filter-btn"
-						size="middle"
-						icon={<SlidersHorizontal size={14} />}
-					/>
-				</Dropdown>
-			)}
+			<Flex justify="space-between" align="center">
+				<FacingIssueBtn
+					attributes={{ pageName: 'DashboardList' }}
+					eventName="Dashboard list"
+					message="go ahead test"
+				/>
+				{dynamicColumns && (
+					<Dropdown
+						getPopupContainer={popupContainer}
+						menu={{ items }}
+						trigger={['click']}
+					>
+						<Button
+							className="dynamicColumnTable-button filter-btn"
+							size="middle"
+							icon={<SlidersHorizontal size={14} />}
+						/>
+					</Dropdown>
+				)}
+			</Flex>
 
 			<ResizeTable
 				columns={columnsData}
