@@ -1,3 +1,5 @@
+import './Description.styles.scss';
+
 import { Button, Tooltip } from 'antd';
 import { Cog } from 'lucide-react';
 import { useState } from 'react';
@@ -31,9 +33,10 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 			<DrawerContainer
 				title={drawerTitle}
 				placement="right"
-				width="60%"
+				width="50%"
 				onClose={onClose}
 				open={visible}
+				rootClassName="settings-container-root"
 			>
 				<DashboardSettingsContent />
 			</DrawerContainer>
