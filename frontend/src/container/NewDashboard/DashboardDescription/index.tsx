@@ -100,7 +100,7 @@ function DashboardDescription(): JSX.Element {
 
 					<div className="dashboard-actions">
 						{!isDashboardLocked && editDashboard && (
-							<SettingsDrawer drawerTitle={title} />
+							<SettingsDrawer drawerTitle="Dashboard Configuration" />
 						)}
 
 						<Tooltip title="Share" placement="left">
