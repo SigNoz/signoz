@@ -138,7 +138,11 @@ function FormAlertRules({
 
 	useEffect(() => {
 		// Set selectedQueryName based on the length of queryOptions
-		if (!alertDef?.condition?.selectedQueryName) {
+		const selectedQueryName = alertDef?.condition?.selectedQueryName;
+		if (
+			!selectedQueryName ||
+			!queryOptions.some((option) => option.value === selectedQueryName)
+		) {
 			setAlertDef((def) => ({
 				...def,
 				condition: {
