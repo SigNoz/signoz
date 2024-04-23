@@ -5,9 +5,10 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import AddTags from 'container/NewDashboard/DashboardSettings/General/AddTags';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
+import { isEqual } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from './styles';
@@ -25,6 +26,9 @@ function GeneralDashboardSettings(): JSX.Element {
 	const [updatedTags, setUpdatedTags] = useState<string[]>(tags || []);
 	const [updatedDescription, setUpdatedDescription] = useState(
 		description || '',
+	);
+	const [numberOfUnsavedChanges, setNumberOfUnsavedChanges] = useState<number>(
+		0,
 	);
 
 	const { t } = useTranslation('common');
@@ -58,6 +62,27 @@ function GeneralDashboardSettings(): JSX.Element {
 			},
 		);
 	};
+
+	useEffect(() => {
+		let numberOfUnsavedChanges = 0;
+		if (!isEqual(updatedTitle, selectedData?.title)) {
+			numberOfUnsavedChanges += 1;
+		}
+		if (!isEqual(updatedDescription, selectedData?.description)) {
+			numberOfUnsavedChanges += 1;
+		}
+		if (!isEqual(updatedTags, selectedData?.tags)) {
+			numberOfUnsavedChanges += 1;
+		}
+		setNumberOfUnsavedChanges(numberOfUnsavedChanges);
+	}, [
+		selectedData?.description,
+		selectedData?.tags,
+		selectedData?.title,
+		updatedDescription,
+		updatedTags,
+		updatedTitle,
+	]);
 
 	return (
 		<div className="overview-content">
@@ -103,43 +128,45 @@ function GeneralDashboardSettings(): JSX.Element {
 					</div>
 				</Space>
 			</Col>
-			<div className="overview-settings-footer">
-				<div className="unsaved">
-					<div className="unsaved-dot" />
-					<Typography.Text className="unsaved-changes">
-						1 Unsaved change
-					</Typography.Text>
+			{numberOfUnsavedChanges > 0 && (
+				<div className="overview-settings-footer">
+					<div className="unsaved">
+						<div className="unsaved-dot" />
+						<Typography.Text className="unsaved-changes">
+							{numberOfUnsavedChanges} Unsaved change
+						</Typography.Text>
+					</div>
+					<div className="footer-action-btns">
+						<Button
+							style={{
+								margin: '16px 0',
+							}}
+							disabled={updateDashboardMutation.isLoading}
+							loading={updateDashboardMutation.isLoading}
+							icon={<X size={14} />}
+							onClick={onSaveHandler}
+							type="text"
+							className="discard-btn"
+						>
+							Discard
+						</Button>
+						<Button
+							style={{
+								margin: '16px 0',
+							}}
+							disabled={updateDashboardMutation.isLoading}
+							loading={updateDashboardMutation.isLoading}
+							icon={<Check size={14} />}
+							data-testid="save-dashboard-config"
+							onClick={onSaveHandler}
+							type="primary"
+							className="save-btn"
+						>
+							{t('save')}
+						</Button>
+					</div>
 				</div>
-				<div className="footer-action-btns">
-					<Button
-						style={{
-							margin: '16px 0',
-						}}
-						disabled={updateDashboardMutation.isLoading}
-						loading={updateDashboardMutation.isLoading}
-						icon={<X size={14} />}
-						onClick={onSaveHandler}
-						type="text"
-						className="discard-btn"
-					>
-						Discard
-					</Button>
-					<Button
-						style={{
-							margin: '16px 0',
-						}}
-						disabled={updateDashboardMutation.isLoading}
-						loading={updateDashboardMutation.isLoading}
-						icon={<Check size={14} />}
-						data-testid="save-dashboard-config"
-						onClick={onSaveHandler}
-						type="primary"
-						className="save-btn"
-					>
-						{t('save')}
-					</Button>
-				</div>
-			</div>
+			)}
 		</div>
 	);
 }
