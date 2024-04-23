@@ -1,6 +1,5 @@
 import '../DashboardSettings.styles.scss';
 
-import { blue, red } from '@ant-design/colors';
 import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
@@ -18,7 +17,7 @@ import { RowProps } from 'antd/lib';
 import { convertVariablesToDbFormat } from 'container/NewDashboard/DashboardVariablesSelection/util';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
-import { PencilIcon, TrashIcon } from 'lucide-react';
+import { PenLine, Trash2 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -267,21 +266,21 @@ function VariablesSetting(): JSX.Element {
 					<Space className="actions-btns">
 						<Button
 							type="text"
-							style={{ padding: 8, cursor: 'pointer', color: blue[5] }}
 							onClick={(): void => onVariableViewModeEnter('EDIT', variable)}
+							className="edit-variable-button"
 						>
-							<PencilIcon size={14} />
+							<PenLine size={14} />
 						</Button>
 						<Button
 							type="text"
-							style={{ padding: 8, color: red[6], cursor: 'pointer' }}
 							onClick={(): void => {
 								if (variable) {
 									onVariableDeleteHandler(variable);
 								}
 							}}
+							className="delete-variable-button"
 						>
-							<TrashIcon size={14} />
+							<Trash2 size={14} />
 						</Button>
 					</Space>
 				</div>
@@ -352,6 +351,10 @@ function VariablesSetting(): JSX.Element {
 							flexDirection: 'row',
 							justifyContent: 'flex-end',
 							padding: '0.5rem 0',
+							position: 'absolute',
+							top: '-56px',
+							right: '0px',
+							zIndex: '1',
 						}}
 					>
 						<Button

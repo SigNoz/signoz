@@ -47,6 +47,29 @@
 			&:hover {
 				display: inline-flex;
 			}
+
+			.edit-variable-button {
+				width: 26px;
+				height: 22px;
+				border-radius: 2px;
+				display: flex;
+				padding: 4px 6px;
+				align-items: center;
+				gap: 3px;
+				background: var(--Slate-400, #1d212d);
+			}
+
+			.delete-variable-button {
+				width: 26px;
+				height: 22px;
+				border-radius: 2px;
+				background: rgba(229, 72, 77, 0.1);
+				display: flex;
+				padding: 4px 6px;
+				align-items: center;
+				gap: 3px;
+				color: red;
+			}
 		}
 	}
 
