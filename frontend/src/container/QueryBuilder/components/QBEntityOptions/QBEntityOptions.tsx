@@ -105,8 +105,8 @@ export default function QBEntityOptions({
 								onQueryFunctionsUpdates && (
 									<QueryFunctions
 										query={query}
-										queryFunctions={query.functions}
-										key={query.functions.toString()}
+										queryFunctions={query.functions || []}
+										key={query.functions?.toString()}
 										onChange={onQueryFunctionsUpdates}
 										maxFunctions={isLogsDataSource ? 1 : 3}
 									/>

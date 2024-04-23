@@ -10,6 +10,7 @@ import {
 	LeftCircleOutlined,
 } from '@ant-design/icons';
 import { Button, Space, Steps, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { stepsMap } from 'container/OnboardingContainer/constants/stepsConfig';
 import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
@@ -381,11 +382,12 @@ export default function ModuleStepsContainer({
 	};
 
 	const handleFacingIssuesClick = (): void => {
-		trackEvent('Onboarding V2: Facing Issues Sending Data to SigNoz', {
+		logEvent('Onboarding V2: Facing Issues Sending Data to SigNoz', {
 			dataSource: selectedDataSource?.id,
 			framework: selectedFramework,
 			environment: selectedEnvironment,
 			module: activeStep?.module?.id,
+			step: activeStep?.step?.id,
 		});
 
 		const message = `Hi Team,

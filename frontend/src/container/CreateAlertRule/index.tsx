@@ -2,6 +2,7 @@ import { Form, Row } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import FormAlertRules from 'container/FormAlertRules';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { isEqual } from 'lodash-es';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -18,9 +19,7 @@ import SelectAlertType from './SelectAlertType';
 
 function CreateRules(): JSX.Element {
 	const [initValues, setInitValues] = useState<AlertDef | null>(null);
-	const [alertType, setAlertType] = useState<AlertTypes>(
-		AlertTypes.METRICS_BASED_ALERT,
-	);
+	const [alertType, setAlertType] = useState<AlertTypes>();
 
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
@@ -56,10 +55,10 @@ function CreateRules(): JSX.Element {
 		}
 		const dataSource = compositeQuery?.builder?.queryData[0]?.dataSource;
 
-		const alertType = ALERT_TYPE_VS_SOURCE_MAPPING[dataSource];
+		const alertTypeFromQuery = ALERT_TYPE_VS_SOURCE_MAPPING[dataSource];
 
-		if (alertType) {
-			onSelectType(alertType);
+		if (alertTypeFromQuery && !isEqual(alertType, alertTypeFromQuery)) {
+			onSelectType(alertTypeFromQuery);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [compositeQuery]);

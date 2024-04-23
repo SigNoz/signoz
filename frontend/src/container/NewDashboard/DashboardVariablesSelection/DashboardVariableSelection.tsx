@@ -72,6 +72,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 		id: string,
 		value: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): void => {
 		if (id) {
 			updateLocalStorageDashboardVariables(name, value, allSelected);
@@ -79,17 +80,29 @@ function DashboardVariableSelection(): JSX.Element | null {
 			if (selectedDashboard) {
 				setSelectedDashboard((prev) => {
 					if (prev) {
+						const oldVariables = prev?.data.variables;
+						// this is added to handle case where we have two different
+						// schemas for variable response
+						if (oldVariables[id]) {
+							oldVariables[id] = {
+								...oldVariables[id],
+								selectedValue: value,
+								allSelected,
+							};
+						}
+						if (oldVariables[name]) {
+							oldVariables[name] = {
+								...oldVariables[name],
+								selectedValue: value,
+								allSelected,
+							};
+						}
 						return {
 							...prev,
 							data: {
 								...prev?.data,
 								variables: {
-									...prev?.data.variables,
-									[id]: {
-										...prev.data.variables[id],
-										selectedValue: value,
-										allSelected,
-									},
+									...oldVariables,
 								},
 							},
 						};
