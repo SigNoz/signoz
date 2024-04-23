@@ -385,6 +385,17 @@ function DashboardsList(): JSX.Element {
 					dataSource={data}
 					onChange={handleChange}
 					showSorterTooltip
+					facingIssueBtn={{
+						attributes: {
+							name: 'Dashboard list page',
+						},
+						eventName: 'Dashboard list: Facing Issues in Dashboard listing',
+						message: `Hi Team,
+
+I am facing issues with the Dashboard listing page in SigNoz.
+						
+Thanks`,
+					}}
 				/>
 			</TableContainer>
 		</Card>

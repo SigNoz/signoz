@@ -21,6 +21,7 @@ function DynamicColumnTable({
 	columns,
 	dynamicColumns,
 	onDragColumn,
+	facingIssueBtn,
 	...restProps
 }: DynamicColumnTableProps): JSX.Element {
 	const [columnsData, setColumnsData] = useState<ColumnsType | undefined>(
@@ -84,12 +85,8 @@ function DynamicColumnTable({
 
 	return (
 		<div className="DynamicColumnTable">
-			<Flex justify="space-between" align="center">
-				<FacingIssueBtn
-					attributes={{ pageName: 'DashboardList' }}
-					eventName="Dashboard list"
-					message="go ahead test"
-				/>
+			<Flex justify={facingIssueBtn ? 'space-between' : 'flex-end'} align="center">
+				{facingIssueBtn && <FacingIssueBtn {...facingIssueBtn} />}
 				{dynamicColumns && (
 					<Dropdown
 						getPopupContainer={popupContainer}

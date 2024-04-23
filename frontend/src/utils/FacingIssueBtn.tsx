@@ -3,7 +3,7 @@ import logEvent from 'api/common/logEvent';
 import { defaultTo } from 'lodash-es';
 import { HelpCircle } from 'lucide-react';
 
-interface FacingIssueBtnProps {
+export interface FacingIssueBtnProps {
 	eventName: string;
 	attributes: Record<string, unknown>;
 	message?: string;

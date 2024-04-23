@@ -358,6 +358,17 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				pagination={{
 					defaultCurrent: Number(paginationParam) || 1,
 				}}
+				facingIssueBtn={{
+					attributes: {
+						name: 'Alert list page',
+					},
+					eventName: 'Alert list: Facing Issues in alert listing',
+					message: `Hi Team,
+
+I am facing issues with the alert listing page in SigNoz.
+					
+Thanks`,
+				}}
 			/>
 		</>
 	);
