@@ -41,6 +41,7 @@ import {
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import FacingIssueBtn from 'utils/FacingIssueBtn';
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';
@@ -563,6 +564,27 @@ function FormAlertRules({
 				</StyledLeftContainer>
 				<Col flex="1 1 300px">
 					<UserGuide queryType={currentQuery.queryType} />
+					<FacingIssueBtn
+						attributes={{
+							alert: alertDef?.alert,
+							alertType: alertDef?.alertType,
+							id: ruleId,
+							ruleType: alertDef?.ruleType,
+							state: (alertDef as any)?.state,
+							panelType,
+						}}
+						className="facing-issue-btn"
+						eventName="Alert Rule Edit: Facing Issues configuring alerts"
+						message={`Hi Team,
+
+I am facing issues configuring alerts in SigNoz. Here are my alert rule details
+
+Name: ${alertDef?.alert || ''}
+Alert Type: ${alertDef?.alertType || ''}
+State: ${(alertDef as any)?.state || ''}
+
+Thanks`}
+					/>
 				</Col>
 			</PanelContainer>
 		</>

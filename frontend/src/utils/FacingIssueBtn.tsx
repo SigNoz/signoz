@@ -1,5 +1,6 @@
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
+import cx from 'classnames';
 import { defaultTo } from 'lodash-es';
 import { HelpCircle } from 'lucide-react';
 
@@ -8,6 +9,7 @@ export interface FacingIssueBtnProps {
 	attributes: Record<string, unknown>;
 	message?: string;
 	buttonText?: string;
+	className?: string;
 }
 
 function FacingIssueBtn({
@@ -15,6 +17,7 @@ function FacingIssueBtn({
 	eventName,
 	message = '',
 	buttonText = '',
+	className = '',
 }: FacingIssueBtnProps): JSX.Element {
 	const handleFacingIssuesClick = (): void => {
 		logEvent(eventName, attributes);
@@ -26,7 +29,7 @@ function FacingIssueBtn({
 
 	return (
 		<Button
-			className="periscope-btn"
+			className={cx('periscope-btn', className)}
 			onClick={handleFacingIssuesClick}
 			danger
 			icon={<HelpCircle size={14} />}
@@ -39,6 +42,7 @@ function FacingIssueBtn({
 FacingIssueBtn.defaultProps = {
 	message: '',
 	buttonText: '',
+	className: '',
 };
 
 export default FacingIssueBtn;
