@@ -4,6 +4,7 @@ import { Button, Tabs, Tooltip, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
+import { getDefaultWidgetData } from 'container/NewWidget/utils';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
@@ -11,6 +12,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { defaultTo } from 'lodash-es';
 import { Atom, Play, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -55,8 +57,11 @@ function QuerySection({
 
 	const getWidget = useCallback(() => {
 		const widgetId = urlQuery.get('widgetId');
-		return widgets?.find((e) => e.id === widgetId);
-	}, [widgets, urlQuery]);
+		return defaultTo(
+			widgets?.find((e) => e.id === widgetId),
+			getDefaultWidgetData(widgetId || '', selectedGraph),
+		);
+	}, [urlQuery, widgets, selectedGraph]);
 
 	const selectedWidget = getWidget() as Widgets;
 
