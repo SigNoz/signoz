@@ -1,7 +1,10 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
+import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { Dimensions } from 'hooks/useDimensions';
 import getLabelName from 'lib/getLabelName';
+import { Dispatch, SetStateAction } from 'react';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
@@ -21,12 +24,15 @@ type GetUplotHistogramChartOptionsProps = {
 	panelType?: PANEL_TYPES;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	currentQuery?: Query;
+	graphsVisibilityStates?: boolean[];
+	setGraphsVisibilityStates?: Dispatch<SetStateAction<boolean[]>>;
 };
 
 type GetHistogramSeriesProps = {
 	apiResponse?: MetricRangePayloadProps;
 	currentQuery?: Query;
 	widgetMetaData?: QueryData[];
+	graphsVisibilityStates?: boolean[];
 };
 
 const { bars } = uPlot.paths;
@@ -46,11 +52,14 @@ const getHistogramSeries = ({
 	apiResponse,
 	currentQuery,
 	widgetMetaData,
+	graphsVisibilityStates,
 }: GetHistogramSeriesProps): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
 	];
 	const seriesList = apiResponse?.data.result || [];
+
+	const newGraphVisibilityStates = graphsVisibilityStates?.slice(1);
 
 	for (let i = 0; i < seriesList?.length; i += 1) {
 		const { metric = {}, queryName = '', legend: lgd } =
@@ -73,7 +82,7 @@ const getHistogramSeries = ({
 			paths,
 			drawStyle: drawStyles.bars,
 			lineInterpolation: null,
-			show: true,
+			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
 			label,
 			fill: `${color}40`,
 			stroke: color,
@@ -97,6 +106,8 @@ export const getUplotHistogramChartOptions = ({
 	isDarkMode,
 	apiResponse,
 	currentQuery,
+	graphsVisibilityStates,
+	setGraphsVisibilityStates,
 }: GetUplotHistogramChartOptionsProps): uPlot.Options =>
 	({
 		id,
@@ -132,6 +143,44 @@ export const getUplotHistogramChartOptions = ({
 			apiResponse,
 			widgetMetaData: apiResponse?.data.result,
 			currentQuery,
+			graphsVisibilityStates,
 		}),
+		hooks: {
+			ready: [
+				(self): void => {
+					const legend = self.root.querySelector('.u-legend');
+					if (legend) {
+						const seriesEls = legend.querySelectorAll('.u-series');
+						const seriesArray = Array.from(seriesEls);
+						seriesArray.forEach((seriesEl, index) => {
+							seriesEl.addEventListener('click', () => {
+								if (graphsVisibilityStates) {
+									setGraphsVisibilityStates?.((prev) => {
+										const newGraphVisibilityStates = [...prev];
+										if (
+											newGraphVisibilityStates[index + 1] &&
+											newGraphVisibilityStates.every((value, i) =>
+												i === index + 1 ? value : !value,
+											)
+										) {
+											newGraphVisibilityStates.fill(true);
+										} else {
+											newGraphVisibilityStates.fill(false);
+											newGraphVisibilityStates[index + 1] = true;
+										}
+										saveLegendEntriesToLocalStorage({
+											options: self,
+											graphVisibilityState: newGraphVisibilityStates,
+											name: id || '',
+										});
+										return newGraphVisibilityStates;
+									});
+								}
+							});
+						});
+					}
+				},
+			],
+		},
 		axes: getAxes(isDarkMode),
 	} as uPlot.Options);
