@@ -1,7 +1,7 @@
 import '../DashboardSettings.styles.scss';
 
 import { blue, red } from '@ant-design/colors';
-import { MenuOutlined, PlusOutlined } from '@ant-design/icons';
+import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
 	DndContext,
@@ -53,18 +53,22 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		<tr {...props} ref={setNodeRef} style={style} {...attributes}>
 			{React.Children.map(children, (child) => {
-				if ((child as React.ReactElement).key === 'sort') {
+				if ((child as React.ReactElement).key === 'name') {
 					return React.cloneElement(child as React.ReactElement, {
 						children: (
-							<MenuOutlined
-								ref={setActivatorNodeRef}
-								style={{ touchAction: 'none', cursor: 'move' }}
-								// eslint-disable-next-line react/jsx-props-no-spreading
-								{...listeners}
-							/>
+							<div className="variable-name-drag">
+								<HolderOutlined
+									ref={setActivatorNodeRef}
+									style={{ touchAction: 'none', cursor: 'move' }}
+									// eslint-disable-next-line react/jsx-props-no-spreading
+									{...listeners}
+								/>
+								{child}
+							</div>
 						),
 					});
 				}
+
 				return child;
 			})}
 		</tr>
@@ -246,46 +250,41 @@ function VariablesSetting(): JSX.Element {
 
 	const columns = [
 		{
-			key: 'sort',
-			width: '10%',
-		},
-		{
 			title: 'Variable',
 			dataIndex: 'name',
-			width: '40%',
+			width: '50%',
 			key: 'name',
 		},
 		{
 			title: 'Description',
-			dataIndex: 'description',
-			width: '35%',
+			width: '50%',
 			key: 'description',
-		},
-		{
-			title: 'Actions',
-			width: '15%',
-			key: 'action',
 			render: (variable: IDashboardVariable): JSX.Element => (
-				<Space>
-					<Button
-						type="text"
-						style={{ padding: 8, cursor: 'pointer', color: blue[5] }}
-						onClick={(): void => onVariableViewModeEnter('EDIT', variable)}
-					>
-						<PencilIcon size={14} />
-					</Button>
-					<Button
-						type="text"
-						style={{ padding: 8, color: red[6], cursor: 'pointer' }}
-						onClick={(): void => {
-							if (variable) {
-								onVariableDeleteHandler(variable);
-							}
-						}}
-					>
-						<TrashIcon size={14} />
-					</Button>
-				</Space>
+				<div className="variable-description-actions">
+					<Typography.Text className="variable-description">
+						{variable.description}
+					</Typography.Text>
+					<Space className="actions-btns">
+						<Button
+							type="text"
+							style={{ padding: 8, cursor: 'pointer', color: blue[5] }}
+							onClick={(): void => onVariableViewModeEnter('EDIT', variable)}
+						>
+							<PencilIcon size={14} />
+						</Button>
+						<Button
+							type="text"
+							style={{ padding: 8, color: red[6], cursor: 'pointer' }}
+							onClick={(): void => {
+								if (variable) {
+									onVariableDeleteHandler(variable);
+								}
+							}}
+						>
+							<TrashIcon size={14} />
+						</Button>
+					</Space>
+				</div>
 			),
 		},
 	];
@@ -385,6 +384,7 @@ function VariablesSetting(): JSX.Element {
 								columns={columns}
 								pagination={false}
 								dataSource={variablesTableData}
+								className="dashboard-variable-settings-table"
 							/>
 						</SortableContext>
 					</DndContext>
