@@ -1995,7 +1995,23 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
-func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spanId string, levelUp int, levelDown int, spanLimit int, smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
+	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+
+	var countSpans uint64
+	countQuery := fmt.Sprintf("SELECT count() as count from %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
+	err := r.db.QueryRow(ctx, countQuery, params.TraceID).Scan(&countSpans)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, fmt.Errorf("error in processing sql query")
+	}
+
+	if countSpans > uint64(params.MaxSpansInTrace) {
+		zap.L().Error("Max spans allowed in trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
+			zap.Uint64("Count", countSpans))
+		return nil, fmt.Errorf("Max spans allowed in trace limit reached")
+	}
 
 	var searchScanResponses []model.SearchSpanDBResponseItem
 
@@ -2003,7 +2019,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 
 	start := time.Now()
 
-	err := r.db.Select(ctx, &searchScanResponses, query, traceId)
+	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID)
 
 	zap.L().Info(query)
 
@@ -2032,9 +2048,9 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 
 	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
 	smartAlgoEnabled := err == nil
-	if len(searchScanResponses) > spanLimit && spanId != "" && smartAlgoEnabled {
+	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
 		start = time.Now()
-		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, spanId, levelUp, levelDown, spanLimit)
+		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
 		if err != nil {
 			return nil, err
 		}
