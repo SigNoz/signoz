@@ -18,6 +18,10 @@ receivers:
         is_first_entry: body matches '^\\d{4}\\.\\d{2}\\.\\d{2}\\s+'
         combine_field: body
         overwrite_with: oldest
+      - type: regex_parser
+        parse_from: body
+        if: body matches '^(?P<ts>\\d{4}\\.\\d{2}\\.\\d{2} \\d{2}:\\d{2}:\\d{2}.?[0-9]*)\\s+\\[\\s+(\\x1b.*?m)?(?P<thread_id>\\d*)(\\x1b.*?m)?\\s+\\]\\s+{((\\x1b.*?m)?(?P<query_id>[0-9a-zA-Z-_]*)(\\x1b.*?m)?)?}\\s+<(\\x1b.*?m)?(?P<log_level>\\w*)(\\x1b.*?m)?>\\s+((\\x1b.*?m)?(?P<clickhouse_component>[a-zA-Z0-9_]+)(\\x1b.*?m)?:)?\\s+(?s)(?P<message>.*)$'
+        regex: '^(?P<ts>\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}.?[0-9]*)\s+\[\s+(\x1b.*?m)?(?P<thread_id>\d*)(\x1b.*?m)?\s+\]\s+{((\x1b.*?m)?(?P<query_id>[0-9a-zA-Z-_]*)(\x1b.*?m)?)?}\s+<(\x1b.*?m)?(?P<log_level>\w*)(\x1b.*?m)?>\s+((\x1b.*?m)?(?P<clickhouse_component>[a-zA-Z0-9_]+)(\x1b.*?m)?:)?\s+(?s)(?P<message>.*)$'
       - type: add
         field: attributes.source
         value: clickhouse
