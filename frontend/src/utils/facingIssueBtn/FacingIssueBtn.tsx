@@ -30,14 +30,15 @@ function FacingIssueBtn({
 	};
 
 	return (
-		<Button
-			className={cx('periscope-btn', 'facing-issue-button', className)}
-			onClick={handleFacingIssuesClick}
-			// type="primary"
-			icon={<HelpCircle size={14} />}
-		>
-			{buttonText || 'Facing issues?'}
-		</Button>
+		<div className="facing-issue-button">
+			<Button
+				className={cx('periscope-btn', 'facing-issue-button', className)}
+				onClick={handleFacingIssuesClick}
+				icon={<HelpCircle size={14} />}
+			>
+				{buttonText || 'Facing issues?'}
+			</Button>
+		</div>
 	);
 }
 
