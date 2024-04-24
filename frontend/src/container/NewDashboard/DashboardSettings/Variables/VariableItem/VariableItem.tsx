@@ -2,7 +2,7 @@
 import './VariableItem.styles.scss';
 
 import { orange } from '@ant-design/colors';
-import { Button, Input, Select, Switch, Tag, Typography } from 'antd';
+import { Button, Collapse, Input, Select, Switch, Tag, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
 import Editor from 'components/Editor';
@@ -309,30 +309,40 @@ function VariableItem({
 						</div>
 					)}
 					{queryType === 'CUSTOM' && (
-						<VariableItemRow>
-							<LabelContainer>
-								<Typography>Values separated by comma</Typography>
-							</LabelContainer>
-							<Input.TextArea
-								value={variableCustomValue}
-								placeholder="1, 10, mykey, mykey:myvalue"
-								style={{ width: 400 }}
-								onChange={(e): void => {
-									setVariableCustomValue(e.target.value);
-									setPreviewValues(
-										sortValues(
-											commaValuesParser(e.target.value),
-											variableSortType,
-										) as never,
-									);
-								}}
+						<VariableItemRow className="variable-custom-section">
+							<Collapse
+								collapsible="header"
+								rootClassName="custom-collapse"
+								defaultActiveKey={['1']}
+								items={[
+									{
+										key: '1',
+										label: 'Options',
+										children: (
+											<Input.TextArea
+												value={variableCustomValue}
+												placeholder="Enter options separated by commas."
+												rootClassName="comma-input"
+												onChange={(e): void => {
+													setVariableCustomValue(e.target.value);
+													setPreviewValues(
+														sortValues(
+															commaValuesParser(e.target.value),
+															variableSortType,
+														) as never,
+													);
+												}}
+											/>
+										),
+									},
+								]}
 							/>
 						</VariableItemRow>
 					)}
 					{queryType === 'TEXTBOX' && (
 						<VariableItemRow className="variable-textbox-section">
-							<LabelContainer className="typography-variables">
-								<Typography>Default Value</Typography>
+							<LabelContainer>
+								<Typography className="typography-variables">Default Value</Typography>
 							</LabelContainer>
 							<Input
 								value={variableTextboxValue}
@@ -347,11 +357,13 @@ function VariableItem({
 					)}
 					{(queryType === 'QUERY' || queryType === 'CUSTOM') && (
 						<>
-							<VariableItemRow>
+							<VariableItemRow className="variables-preview-section">
 								<LabelContainer>
-									<Typography>Preview of Values</Typography>
+									<Typography className="typography-variables">
+										Preview of Values
+									</Typography>
 								</LabelContainer>
-								<div style={{ flex: 1 }}>
+								<div style={{ flex: 1 }} className="preview-values">
 									{errorPreview ? (
 										<Typography style={{ color: orange[5] }}>{errorPreview}</Typography>
 									) : (
