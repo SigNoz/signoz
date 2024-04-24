@@ -21,7 +21,7 @@ function FacingIssueBtn({
 	message = '',
 	buttonText = '',
 	className = '',
-}: FacingIssueBtnProps): JSX.Element {
+}: FacingIssueBtnProps): JSX.Element | null {
 	const handleFacingIssuesClick = (): void => {
 		logEvent(eventName, attributes);
 
@@ -30,20 +30,17 @@ function FacingIssueBtn({
 		}
 	};
 
-	return (
-		isCloudUser() &&
-		window.Intercom && (
-			<div className="facing-issue-button">
-				<Button
-					className={cx('periscope-btn', 'facing-issue-button', className)}
-					onClick={handleFacingIssuesClick}
-					icon={<HelpCircle size={14} />}
-				>
-					{buttonText || 'Facing issues?'}
-				</Button>
-			</div>
-		)
-	);
+	return isCloudUser() ? (
+		<div className="facing-issue-button">
+			<Button
+				className={cx('periscope-btn', 'facing-issue-button', className)}
+				onClick={handleFacingIssuesClick}
+				icon={<HelpCircle size={14} />}
+			>
+				{buttonText || 'Facing issues?'}
+			</Button>
+		</div>
+	) : null;
 }
 
 FacingIssueBtn.defaultProps = {
