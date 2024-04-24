@@ -3,6 +3,8 @@ import './FacingIssueBtn.style.scss';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
+import { FeatureKeys } from 'constants/features';
+import useFeatureFlags from 'hooks/useFeatureFlag';
 import { defaultTo } from 'lodash-es';
 import { HelpCircle } from 'lucide-react';
 import { isCloudUser } from 'utils/app';
@@ -30,7 +32,10 @@ function FacingIssueBtn({
 		}
 	};
 
-	return isCloudUser() ? ( // we would need to move this condition to license based in future
+	const isChatSupportEnabled = useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active;
+	const isCloudUserVal = isCloudUser();
+
+	return isCloudUserVal && isChatSupportEnabled ? ( // we would need to move this condition to license based in future
 		<div className="facing-issue-button">
 			<Button
 				className={cx('periscope-btn', 'facing-issue-button', className)}
