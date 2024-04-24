@@ -132,7 +132,7 @@ function QuerySection({
 										className="stage-run-query"
 										icon={<Play size={14} />}
 									>
-										Stage & Run Query
+										Stage & Run Query2
 									</Button>
 								</span>
 							}
@@ -176,6 +176,7 @@ function QuerySection({
 				return renderChQueryUI();
 			case EQueryType.QUERY_BUILDER:
 				return renderMetricUI();
+			// return <div>hhh</div>;
 			default:
 				return null;
 		}

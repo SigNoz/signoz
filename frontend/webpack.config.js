@@ -33,8 +33,8 @@ const cssLoader = 'css-loader';
 const sassLoader = 'sass-loader';
 const styleLoader = 'style-loader';
 
-console.log('wocaooooo', envFile, finalPath);
-console.log('sss2', env, envKeys);
+// console.log('wocaooooo', envFile, finalPath);
+// console.log('sss2', env, envKeys);
 
 const plugins = [
 	new HtmlWebpackPlugin({

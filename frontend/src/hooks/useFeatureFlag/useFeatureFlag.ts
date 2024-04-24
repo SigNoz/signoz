@@ -10,7 +10,6 @@ const useFeatureFlag = (
 	const { featureResponse = [] } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
-	console.log('featureResponse', featureResponse);
 
 	if (featureResponse === null) return undefined;
 
