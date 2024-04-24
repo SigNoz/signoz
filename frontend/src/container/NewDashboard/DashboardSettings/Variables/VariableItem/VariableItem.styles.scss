@@ -83,6 +83,7 @@
 		.variable-type-section {
 			justify-content: space-between;
 			margin-bottom: 0px;
+			align-items: center;
 
 			.typography-variables {
 				color: var(--Vanilla-400, #c0c1c3);
@@ -191,6 +192,34 @@
 				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
 				width: 339px;
+			}
+		}
+
+		.variable-textbox-section {
+			justify-content: space-between;
+			margin-bottom: 0;
+			align-items: center;
+
+			.typography-variables {
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+			}
+
+			.default-input {
+				display: flex;
+				height: 32px;
+				padding: 6px 6px 6px 8px;
+				align-items: flex-start;
+				gap: 4px;
+				flex: 1 0 0;
+				border-radius: 2px;
+				border: 1px solid var(--Slate-400, #1d212d);
+				background: var(--Ink-300, #16181d);
+				width: 342px;
 			}
 		}
 	}

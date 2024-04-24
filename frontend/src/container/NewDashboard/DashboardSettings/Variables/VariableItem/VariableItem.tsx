@@ -330,16 +330,17 @@ function VariableItem({
 						</VariableItemRow>
 					)}
 					{queryType === 'TEXTBOX' && (
-						<VariableItemRow>
-							<LabelContainer>
+						<VariableItemRow className="variable-textbox-section">
+							<LabelContainer className="typography-variables">
 								<Typography>Default Value</Typography>
 							</LabelContainer>
 							<Input
 								value={variableTextboxValue}
+								className="default-input"
 								onChange={(e): void => {
 									setVariableTextboxValue(e.target.value);
 								}}
-								placeholder="Default value if any"
+								placeholder="Enter a default value (if any)..."
 								style={{ width: 400 }}
 							/>
 						</VariableItemRow>
