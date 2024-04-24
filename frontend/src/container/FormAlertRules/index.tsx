@@ -139,15 +139,21 @@ function FormAlertRules({
 
 	useEffect(() => {
 		// Set selectedQueryName based on the length of queryOptions
-		setAlertDef((def) => ({
-			...def,
-			condition: {
-				...def.condition,
-				selectedQueryName:
-					queryOptions.length > 0 ? String(queryOptions[0].value) : undefined,
-			},
-		}));
-	}, [currentQuery?.queryType, queryOptions]);
+		const selectedQueryName = alertDef?.condition?.selectedQueryName;
+		if (
+			!selectedQueryName ||
+			!queryOptions.some((option) => option.value === selectedQueryName)
+		) {
+			setAlertDef((def) => ({
+				...def,
+				condition: {
+					...def.condition,
+					selectedQueryName:
+						queryOptions.length > 0 ? String(queryOptions[0].value) : undefined,
+				},
+			}));
+		}
+	}, [alertDef, currentQuery?.queryType, queryOptions]);
 
 	const onCancelHandler = useCallback(() => {
 		history.replace(ROUTES.LIST_ALL_ALERT);
