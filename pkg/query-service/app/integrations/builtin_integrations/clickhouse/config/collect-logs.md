@@ -22,6 +22,15 @@ receivers:
         parse_from: body
         if: body matches '^(?P<ts>\\d{4}\\.\\d{2}\\.\\d{2} \\d{2}:\\d{2}:\\d{2}.?[0-9]*)\\s+\\[\\s+(\\x1b.*?m)?(?P<thread_id>\\d*)(\\x1b.*?m)?\\s+\\]\\s+{((\\x1b.*?m)?(?P<query_id>[0-9a-zA-Z-_]*)(\\x1b.*?m)?)?}\\s+<(\\x1b.*?m)?(?P<log_level>\\w*)(\\x1b.*?m)?>\\s+((\\x1b.*?m)?(?P<clickhouse_component>[a-zA-Z0-9_]+)(\\x1b.*?m)?:)?\\s+(?s)(?P<message>.*)$'
         regex: '^(?P<ts>\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}.?[0-9]*)\s+\[\s+(\x1b.*?m)?(?P<thread_id>\d*)(\x1b.*?m)?\s+\]\s+{((\x1b.*?m)?(?P<query_id>[0-9a-zA-Z-_]*)(\x1b.*?m)?)?}\s+<(\x1b.*?m)?(?P<log_level>\w*)(\x1b.*?m)?>\s+((\x1b.*?m)?(?P<clickhouse_component>[a-zA-Z0-9_]+)(\x1b.*?m)?:)?\s+(?s)(?P<message>.*)$'
+      - type: time_parser
+        if: attributes.ts != nil
+        parse_from: attributes.ts
+        layout_type: gotime
+        layout: 2006.01.02 15:04:05.999999
+        location: ${env:CLICKHOUSE_TIMEZONE}
+      - type: remove
+        if: attributes.ts != nil
+        field: attributes.ts
       - type: add
         field: attributes.source
         value: clickhouse
@@ -65,7 +74,13 @@ Set the following environment variables in your otel-collector environment:
 # typically found at /var/log/clickhouse-server/clickhouse-server.log.
 # Log file location can be found in clickhouse server config
 # See https://clickhouse.com/docs/en/operations/server-configuration-parameters/settings#logger
-export CLICKHOUSE_LOG_FILE=/var/log/clickhouse-server/server.log
+export CLICKHOUSE_LOG_FILE="/var/log/clickhouse-server/server.log"
+
+# Locale of the clickhouse server.
+# Clickhouse logs timestamps in it's locale without TZ info
+# Timezone setting can be found in clickhouse config. For details see https://clickhouse.com/docs/en/operations/server-configuration-parameters/settings#timezone
+# Must be a IANA timezone name like Asia/Kolkata. For examples, see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+export CLICKHOUSE_TIMEZONE="Etc/UTC"
 
 # region specific SigNoz cloud ingestion endpoint
 export OTLP_DESTINATION_ENDPOINT="ingest.us.signoz.cloud:443"
