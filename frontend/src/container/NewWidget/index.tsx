@@ -412,6 +412,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						queryType: currentQuery.queryType,
 					}}
 					eventName="Dashboard: Facing Issues in dashboard"
+					buttonText="Facing Issues in dashboard"
 					message={`Hi Team,
 
 I am facing issues configuring dashboard in SigNoz. Here are my dashboard details

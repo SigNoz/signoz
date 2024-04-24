@@ -390,6 +390,7 @@ function DashboardsList(): JSX.Element {
 							screen: 'Dashboard list page',
 						},
 						eventName: 'Dashboard: Facing Issues in dashboard',
+						buttonText: 'Facing Issues in dashboard',
 						message: `Hi Team,
 
 I am facing issues with dashboards.

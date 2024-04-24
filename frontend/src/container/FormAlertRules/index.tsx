@@ -578,6 +578,7 @@ function FormAlertRules({
 						}}
 						className="facing-issue-btn"
 						eventName="Alert: Facing Issues in alert"
+						buttonText="Facing Issues in alert"
 						message={`Hi Team,
 
 I am facing issues configuring alerts in SigNoz. Here are my alert rule details

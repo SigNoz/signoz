@@ -34,7 +34,7 @@ function FacingIssueBtn({
 			danger
 			icon={<HelpCircle size={14} />}
 		>
-			{buttonText || 'Facing issues sending data to SigNoz?'}
+			{buttonText || 'Facing issues?'}
 		</Button>
 	);
 }

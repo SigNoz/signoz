@@ -170,7 +170,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 
 	return (
 		<>
-			<Flex justify="space-between" align="center">
+			<Flex justify="flex-end" gap={8} align="center">
 				<FacingIssueBtn
 					attributes={{
 						uuid: selectedDashboard?.uuid,
@@ -178,6 +178,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 						screen: 'Dashboard Details',
 					}}
 					eventName="Dashboard: Facing Issues in dashboard"
+					buttonText="Facing Issues in dashboard"
 					message={`Hi Team,
 
 I am facing issues configuring dashboard in SigNoz. Here are my dashboard details

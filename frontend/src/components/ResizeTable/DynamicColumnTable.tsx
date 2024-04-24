@@ -85,7 +85,7 @@ function DynamicColumnTable({
 
 	return (
 		<div className="DynamicColumnTable">
-			<Flex justify={facingIssueBtn ? 'space-between' : 'flex-end'} align="center">
+			<Flex justify="flex-end" align="center" gap={8}>
 				{facingIssueBtn && <FacingIssueBtn {...facingIssueBtn} />}
 				{dynamicColumns && (
 					<Dropdown
