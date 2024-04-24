@@ -52,6 +52,10 @@ receivers:
       - type: remove
         if: attributes.log_level != nil
         field: attributes.log_level
+      - type: move
+        if: attributes.message != nil
+        from: attributes.message
+        to: body
       - type: add
         field: attributes.source
         value: clickhouse
