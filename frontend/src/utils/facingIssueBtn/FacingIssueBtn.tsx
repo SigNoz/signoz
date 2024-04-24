@@ -35,7 +35,7 @@ function FacingIssueBtn({
 	const isChatSupportEnabled = useFeatureFlags(FeatureKeys.CHAT_SUPPORT)?.active;
 	const isCloudUserVal = isCloudUser();
 
-	return isCloudUserVal && isChatSupportEnabled ? ( // we would need to move this condition to license based in future
+	return isCloudUserVal && isChatSupportEnabled ? ( // Note: we would need to move this condition to license based in future
 		<div className="facing-issue-button">
 			<Button
 				className={cx('periscope-btn', 'facing-issue-button', className)}
