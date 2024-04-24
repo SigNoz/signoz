@@ -31,6 +31,27 @@ receivers:
       - type: remove
         if: attributes.ts != nil
         field: attributes.ts
+      - type: severity_parser
+        if: attributes.log_level != nil
+        parse_from: attributes.log_level
+        overwrite_text: true
+        # For mapping details, see getPriorityName defined in https://github.com/ClickHouse/ClickHouse/blob/master/src/Interpreters/InternalTextLogsQueue.cpp
+        mapping:
+          trace:
+            - Trace
+            - Test
+          debug: Debug
+          info:
+            - Information
+            - Notice
+          warn: Warning
+          error: Error
+          fatal:
+            - Fatal
+            - Critical
+      - type: remove
+        if: attributes.log_level != nil
+        field: attributes.log_level
       - type: add
         field: attributes.source
         value: clickhouse
