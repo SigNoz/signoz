@@ -387,12 +387,12 @@ function DashboardsList(): JSX.Element {
 					showSorterTooltip
 					facingIssueBtn={{
 						attributes: {
-							name: 'Dashboard list page',
+							screen: 'Dashboard list page',
 						},
-						eventName: 'Dashboard list: Facing Issues in Dashboard listing',
+						eventName: 'Dashboard: Facing Issues in dashboard',
 						message: `Hi Team,
 
-I am facing issues with the Dashboard listing page in SigNoz.
+I am facing issues with dashboards.
 						
 Thanks`,
 					}}

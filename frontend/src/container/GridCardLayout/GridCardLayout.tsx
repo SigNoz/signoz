@@ -175,15 +175,15 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					attributes={{
 						uuid: selectedDashboard?.uuid,
 						title: data?.title,
-						version: data?.version,
+						screen: 'Dashboard Details',
 					}}
-					eventName="Dashboard Details: Facing Issues configuring dashboard"
+					eventName="Dashboard: Facing Issues in dashboard"
 					message={`Hi Team,
 
 I am facing issues configuring dashboard in SigNoz. Here are my dashboard details
 
 Name: ${data?.title || ''}
-Uuid: ${selectedDashboard?.uuid || ''}
+Dashboard Id: ${selectedDashboard?.uuid || ''}
 
 Thanks`}
 				/>

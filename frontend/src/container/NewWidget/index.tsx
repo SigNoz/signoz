@@ -407,17 +407,18 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					attributes={{
 						uuid: selectedDashboard?.uuid,
 						title: selectedDashboard?.data.title,
-						version: selectedDashboard?.data.version,
 						panelType: graphType,
+						widgetId: query.get('widgetId'),
+						queryType: currentQuery.queryType,
 					}}
-					eventName="Dashboard Panel Edit: Facing Issues configuring dashboard"
+					eventName="Dashboard: Facing Issues in dashboard"
 					message={`Hi Team,
 
 I am facing issues configuring dashboard in SigNoz. Here are my dashboard details
 				
 Name: ${selectedDashboard?.data.title || ''}
 Panel type: ${graphType}
-Uuid: ${selectedDashboard?.uuid || ''}
+Dashboard Id: ${selectedDashboard?.uuid || ''}
 				
 Thanks`}
 				/>

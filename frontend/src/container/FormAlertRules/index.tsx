@@ -483,6 +483,8 @@ function FormAlertRules({
 		alertDef?.broadcastToAll ||
 		(alertDef.preferredChannels && alertDef.preferredChannels.length > 0);
 
+	const isRuleCreated = !ruleId || ruleId === 0;
+
 	return (
 		<>
 			{Element}
@@ -572,9 +574,10 @@ function FormAlertRules({
 							ruleType: alertDef?.ruleType,
 							state: (alertDef as any)?.state,
 							panelType,
+							screen: isRuleCreated ? 'Edit Alert' : 'New Alert',
 						}}
 						className="facing-issue-btn"
-						eventName="Alert Rule Edit: Facing Issues configuring alerts"
+						eventName="Alert: Facing Issues in alert"
 						message={`Hi Team,
 
 I am facing issues configuring alerts in SigNoz. Here are my alert rule details
@@ -582,6 +585,7 @@ I am facing issues configuring alerts in SigNoz. Here are my alert rule details
 Name: ${alertDef?.alert || ''}
 Alert Type: ${alertDef?.alertType || ''}
 State: ${(alertDef as any)?.state || ''}
+Alert Id: ${ruleId}
 
 Thanks`}
 					/>

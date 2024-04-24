@@ -360,13 +360,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				}}
 				facingIssueBtn={{
 					attributes: {
-						name: 'Alert list page',
+						screen: 'Alert list page',
 					},
-					eventName: 'Alert list: Facing Issues in alert listing',
+					eventName: 'Alert: Facing Issues in alert',
 					message: `Hi Team,
 
-I am facing issues with the alert listing page in SigNoz.
-					
+I am facing issues with alerts.
+
 Thanks`,
 				}}
 			/>
