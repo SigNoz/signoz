@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { LockFilled, WarningOutlined } from '@ant-design/icons';
-import { Button, Modal, Space, Tooltip, Typography } from 'antd';
+import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -32,6 +32,7 @@ import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
+import FacingIssueBtn from 'utils/facingIssueBtn/FacingIssueBtn';
 
 import LeftContainer from './LeftContainer';
 import QueryTypeTag from './LeftContainer/QueryTypeTag';
@@ -401,33 +402,55 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	return (
 		<Container>
-			<ButtonContainer>
-				{isSaveDisabled && (
-					<Tooltip title={MESSAGE.PANEL}>
+			<Flex justify="space-between" align="center">
+				<FacingIssueBtn
+					attributes={{
+						uuid: selectedDashboard?.uuid,
+						title: selectedDashboard?.data.title,
+						panelType: graphType,
+						widgetId: query.get('widgetId'),
+						queryType: currentQuery.queryType,
+					}}
+					eventName="Dashboard: Facing Issues in dashboard"
+					buttonText="Facing Issues in dashboard"
+					message={`Hi Team,
+
+I am facing issues configuring dashboard in SigNoz. Here are my dashboard details
+				
+Name: ${selectedDashboard?.data.title || ''}
+Panel type: ${graphType}
+Dashboard Id: ${selectedDashboard?.uuid || ''}
+				
+Thanks`}
+				/>
+				<ButtonContainer>
+					{isSaveDisabled && (
+						<Tooltip title={MESSAGE.PANEL}>
+							<Button
+								icon={<LockFilled />}
+								type="primary"
+								disabled={isSaveDisabled}
+								onClick={onSaveDashboard}
+							>
+								Save Changes
+							</Button>
+						</Tooltip>
+					)}
+
+					{!isSaveDisabled && (
 						<Button
-							icon={<LockFilled />}
 							type="primary"
+							data-testid="new-widget-save"
+							loading={updateDashboardMutation.isLoading}
 							disabled={isSaveDisabled}
 							onClick={onSaveDashboard}
 						>
 							Save Changes
 						</Button>
-					</Tooltip>
-				)}
-
-				{!isSaveDisabled && (
-					<Button
-						type="primary"
-						data-testid="new-widget-save"
-						loading={updateDashboardMutation.isLoading}
-						disabled={isSaveDisabled}
-						onClick={onSaveDashboard}
-					>
-						Save Changes
-					</Button>
-				)}
-				<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
-			</ButtonContainer>
+					)}
+					<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
+				</ButtonContainer>
+			</Flex>
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>

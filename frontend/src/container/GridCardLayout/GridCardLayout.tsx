@@ -1,7 +1,7 @@
 import './GridCardLayout.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Tooltip } from 'antd';
+import { Flex, Tooltip } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -26,6 +26,7 @@ import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
+import FacingIssueBtn from 'utils/facingIssueBtn/FacingIssueBtn';
 import { ComponentTypes } from 'utils/permission';
 
 import { EditMenuAction, ViewMenuAction } from './config';
@@ -169,28 +170,47 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 
 	return (
 		<>
-			<ButtonContainer>
-				<Tooltip title="Open in Full Screen">
-					<Button
-						className="periscope-btn"
-						loading={updateDashboardMutation.isLoading}
-						onClick={handle.enter}
-						icon={<FullscreenIcon size={16} />}
-						disabled={updateDashboardMutation.isLoading}
-					/>
-				</Tooltip>
+			<Flex justify="flex-end" gap={8} align="center">
+				<FacingIssueBtn
+					attributes={{
+						uuid: selectedDashboard?.uuid,
+						title: data?.title,
+						screen: 'Dashboard Details',
+					}}
+					eventName="Dashboard: Facing Issues in dashboard"
+					buttonText="Facing Issues in dashboard"
+					message={`Hi Team,
 
-				{!isDashboardLocked && addPanelPermission && (
-					<Button
-						className="periscope-btn"
-						onClick={onAddPanelHandler}
-						icon={<PlusOutlined />}
-						data-testid="add-panel"
-					>
-						{t('dashboard:add_panel')}
-					</Button>
-				)}
-			</ButtonContainer>
+I am facing issues configuring dashboard in SigNoz. Here are my dashboard details
+
+Name: ${data?.title || ''}
+Dashboard Id: ${selectedDashboard?.uuid || ''}
+
+Thanks`}
+				/>
+				<ButtonContainer>
+					<Tooltip title="Open in Full Screen">
+						<Button
+							className="periscope-btn"
+							loading={updateDashboardMutation.isLoading}
+							onClick={handle.enter}
+							icon={<FullscreenIcon size={16} />}
+							disabled={updateDashboardMutation.isLoading}
+						/>
+					</Tooltip>
+
+					{!isDashboardLocked && addPanelPermission && (
+						<Button
+							className="periscope-btn"
+							onClick={onAddPanelHandler}
+							icon={<PlusOutlined />}
+							data-testid="add-panel"
+						>
+							{t('dashboard:add_panel')}
+						</Button>
+					)}
+				</ButtonContainer>
+			</Flex>
 
 			<FullScreen handle={handle} className="fullscreen-grid-container">
 				<ReactGridLayout
