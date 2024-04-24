@@ -107,7 +107,9 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					children: (
 						<TableBodyContent
 							dangerouslySetInnerHTML={{
-								__html: convert.toHtml(dompurify.sanitize(field)),
+								__html: convert.toHtml(
+									dompurify.sanitize(field, { FORBID_TAGS: ['img'] }),
+								),
 							}}
 							linesPerRow={linesPerRow}
 							isDarkMode={isDarkMode}

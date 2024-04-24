@@ -144,7 +144,7 @@ function RawLogView({
 
 	const html = useMemo(
 		() => ({
-			__html: convert.toHtml(dompurify.sanitize(text)),
+			__html: convert.toHtml(dompurify.sanitize(text, { FORBID_TAGS: ['img'] })),
 		}),
 		[text],
 	);

@@ -50,7 +50,9 @@ function LogGeneralField({
 }: LogFieldProps): JSX.Element {
 	const html = useMemo(
 		() => ({
-			__html: convert.toHtml(dompurify.sanitize(fieldValue)),
+			__html: convert.toHtml(
+				dompurify.sanitize(fieldValue, { FORBID_TAGS: ['img'] }),
+			),
 		}),
 		[fieldValue],
 	);
