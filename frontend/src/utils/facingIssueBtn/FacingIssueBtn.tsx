@@ -30,7 +30,7 @@ function FacingIssueBtn({
 		}
 	};
 
-	return isCloudUser() ? (
+	return isCloudUser() ? ( // we would need to move this condition to license based in future
 		<div className="facing-issue-button">
 			<Button
 				className={cx('periscope-btn', 'facing-issue-button', className)}
