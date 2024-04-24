@@ -305,6 +305,10 @@
 
 			.preview-values {
 				padding: 4.5px 11px;
+				display: flex;
+				overflow-y: auto;
+				flex-flow: wrap;
+				gap: 8px;
 
 				.ant-tag {
 					color: var(--bg-vanilla-100);
