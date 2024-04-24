@@ -5,6 +5,7 @@ const config: Config.InitialOptions = {
 	coverageDirectory: 'coverage',
 	coverageReporters: ['text', 'cobertura', 'html', 'json-summary'],
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
+	collectCoverageFrom: ['src/**/*.{ts,tsx}'],
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
 		'\\.(css|less|scss)$': '<rootDir>/__mocks__/cssMock.ts',
