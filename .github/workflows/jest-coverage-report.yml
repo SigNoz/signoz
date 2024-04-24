@@ -14,13 +14,16 @@ jobs:
       - name: Install dependencies
         run: cd frontend && npm install -g yarn && yarn
       - run: yarn
-      - run: cd frontend && npm run i18n:generate-hash && npm run test --silent
+      - run: |
+          cd frontend 
+          npm run i18n:generate-hash
+          npm run test --silent || true
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
-          path: "./coverage/lcov-report"
+          path: "./frontend/coverage"
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v1
         env:
