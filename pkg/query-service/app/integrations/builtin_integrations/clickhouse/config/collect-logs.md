@@ -4,56 +4,23 @@ You can configure Clickhouse logs collection by providing the required collector
 
 #### Create collector config file
 
-Save the following config for collecting postgres logs in a file named `postgres-logs-collection-config.yaml`
+Save the following config for collecting clickhouse logs in a file named `clickhouse-logs-collection-config.yaml`
 
 ```yaml
 receivers:
-  filelog/postgresql:
-    include: ["${env:POSTGRESQL_LOG_FILE}"]
+  filelog/clickhouse:
+    include: ["${env:CLICKHOUSE_LOG_FILE}"]
     operators:
-      # Parse default postgresql text log format.
-      # `log_line_prefix` postgres setting defaults to '%m [%p] ' which logs the timestamp and the process ID
-      # See https://www.postgresql.org/docs/current/runtime-config-logging.html#GUC-LOG-LINE-PREFIX for more details
-      - type: regex_parser
-        if: body matches '^(?P<ts>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}.?[0-9]*? [A-Z]*) \\[(?P<pid>[0-9]+)\\] (?P<log_level>[A-Z]*). (?P<message>.*)$'
-        parse_from: body
-        regex: '^(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.?[0-9]*? [A-Z]*) \[(?P<pid>[0-9]+)\] (?P<log_level>[A-Z]*). (?P<message>.*)$'
-        timestamp:
-          parse_from: attributes.ts
-          layout: '%Y-%m-%d %H:%M:%S %Z'
-        severity:
-          parse_from: attributes.log_level
-          mapping:
-            debug:
-              - DEBUG1
-              - DEBUG2
-              - DEBUG3
-              - DEBUG4
-              - DEBUG5
-            info:
-              - INFO
-              - LOG
-              - NOTICE
-              - DETAIL
-            warn: WARNING
-            error: ERROR
-            fatal:
-              - FATAL
-              - PANIC
-        on_error: send
-      - type: move
-        if: attributes.message != nil
-        from: attributes.message
-        to: body
-      - type: remove
-        if: attributes.log_level != nil
-        field: attributes.log_level
-      - type: remove
-        if: attributes.ts != nil
-        field: attributes.ts
+      # Parse default clickhouse text log format.
+      # See https://github.com/ClickHouse/ClickHouse/blob/master/src/Loggers/OwnPatternFormatter.cpp
+      - type: recombine
+        source_identifier: attributes["log.file.name"]
+        is_first_entry: body matches '^\\d{4}\\.\\d{2}\\.\\d{2}\\s+'
+        combine_field: body
+        overwrite_with: oldest
       - type: add
         field: attributes.source
-        value: postgres
+        value: clickhouse
 
 processors:
   batch:
@@ -63,7 +30,7 @@ processors:
 
 exporters:
   # export to SigNoz cloud
-  otlp/postgres-logs:
+  otlp/clickhouse-logs:
     endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
     tls:
       insecure: false
@@ -71,17 +38,17 @@ exporters:
       "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
 
   # export to local collector
-  # otlp/postgres-logs:
+  # otlp/clickhouse-logs:
   #   endpoint: "localhost:4317"
   #   tls:
   #     insecure: true
 
 service:
   pipelines:
-    logs/postgresql:
-      receivers: [filelog/postgresql]
+    logs/clickhouse:
+      receivers: [filelog/clickhouse]
       processors: [batch]
-      exporters: [otlp/postgresql-logs]
+      exporters: [otlp/clickhouse-logs]
 ```
 
 #### Set Environment Variables
@@ -91,9 +58,10 @@ Set the following environment variables in your otel-collector environment:
 ```bash
 
 # path of Clickhouse server log file. must be accessible by the otel collector
-# typically found in /usr/local/var/log/postgresql on macOS
-# running `SELECT pg_current_logfile();` can also give you the location of postgresql log file
-export POSTGRESQL_LOG_FILE=/var/log/postgresql/postgresql.log
+# typically found at /var/log/clickhouse-server/clickhouse-server.log.
+# Log file location can be found in clickhouse server config
+# See https://clickhouse.com/docs/en/operations/server-configuration-parameters/settings#logger
+export CLICKHOUSE_LOG_FILE=/var/log/clickhouse-server/server.log
 
 # region specific SigNoz cloud ingestion endpoint
 export OTLP_DESTINATION_ENDPOINT="ingest.us.signoz.cloud:443"
@@ -107,7 +75,7 @@ export SIGNOZ_INGESTION_KEY="signoz-ingestion-key"
 
 Make the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  
 ```bash
---config postgres-logs-collection-config.yaml
+--config clickhouse-logs-collection-config.yaml
 ```  
 Note: the collector can use multiple config files, specified by multiple occurrences of the --config flag.
 
