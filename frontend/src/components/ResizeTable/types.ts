@@ -2,7 +2,7 @@
 import { TableProps } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { ColumnGroupType, ColumnType } from 'antd/lib/table';
-import { FacingIssueBtnProps } from 'utils/facingIssueBtn/FacingIssueBtn';
+import { FacingIssueBtnProps } from 'components/facingIssueBtn/FacingIssueBtn';
 
 import { TableDataSource } from './contants';
 

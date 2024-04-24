@@ -11,6 +11,7 @@ import {
 } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -41,7 +42,6 @@ import {
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import FacingIssueBtn from 'utils/facingIssueBtn/FacingIssueBtn';
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';

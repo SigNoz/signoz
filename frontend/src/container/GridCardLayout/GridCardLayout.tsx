@@ -2,6 +2,7 @@ import './GridCardLayout.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
 import { Flex, Tooltip } from 'antd';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -26,7 +27,6 @@ import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
-import FacingIssueBtn from 'utils/facingIssueBtn/FacingIssueBtn';
 import { ComponentTypes } from 'utils/permission';
 
 import { EditMenuAction, ViewMenuAction } from './config';
