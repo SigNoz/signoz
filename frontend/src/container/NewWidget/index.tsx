@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { LockFilled, WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -32,7 +33,6 @@ import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
-import FacingIssueBtn from 'utils/facingIssueBtn/FacingIssueBtn';
 
 import LeftContainer from './LeftContainer';
 import QueryTypeTag from './LeftContainer/QueryTypeTag';

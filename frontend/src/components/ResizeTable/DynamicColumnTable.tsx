@@ -3,9 +3,9 @@ import './DynamicColumnTable.syles.scss';
 
 import { Button, Dropdown, Flex, MenuProps, Switch } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { SlidersHorizontal } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
-import FacingIssueBtn from 'utils/facingIssueBtn/FacingIssueBtn';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import ResizeTable from './ResizeTable';
