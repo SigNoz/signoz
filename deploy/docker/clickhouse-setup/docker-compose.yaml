@@ -21,7 +21,7 @@ x-clickhouse-defaults: &clickhouse-defaults
         "wget",
         "--spider",
         "-q",
-        "localhost:8123/ping"
+        "0.0.0.0:8123/ping"
       ]
     interval: 30s
     timeout: 5s
