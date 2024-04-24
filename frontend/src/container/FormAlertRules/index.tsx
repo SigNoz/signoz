@@ -41,7 +41,7 @@ import {
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import FacingIssueBtn from 'utils/FacingIssueBtn';
+import FacingIssueBtn from 'utils/facingIssueBtn/FacingIssueBtn';
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';

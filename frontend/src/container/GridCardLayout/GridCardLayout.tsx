@@ -26,7 +26,7 @@ import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
-import FacingIssueBtn from 'utils/FacingIssueBtn';
+import FacingIssueBtn from 'utils/facingIssueBtn/FacingIssueBtn';
 import { ComponentTypes } from 'utils/permission';
 
 import { EditMenuAction, ViewMenuAction } from './config';

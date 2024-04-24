@@ -32,7 +32,7 @@ import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
-import FacingIssueBtn from 'utils/FacingIssueBtn';
+import FacingIssueBtn from 'utils/facingIssueBtn/FacingIssueBtn';
 
 import LeftContainer from './LeftContainer';
 import QueryTypeTag from './LeftContainer/QueryTypeTag';

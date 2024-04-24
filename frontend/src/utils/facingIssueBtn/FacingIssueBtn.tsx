@@ -1,3 +1,5 @@
+import './FacingIssueBtn.style.scss';
+
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
@@ -29,9 +31,9 @@ function FacingIssueBtn({
 
 	return (
 		<Button
-			className={cx('periscope-btn', className)}
+			className={cx('periscope-btn', 'facing-issue-button', className)}
 			onClick={handleFacingIssuesClick}
-			danger
+			// type="primary"
 			icon={<HelpCircle size={14} />}
 		>
 			{buttonText || 'Facing issues?'}
