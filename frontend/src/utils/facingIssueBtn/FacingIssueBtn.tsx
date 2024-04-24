@@ -5,6 +5,7 @@ import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { defaultTo } from 'lodash-es';
 import { HelpCircle } from 'lucide-react';
+import { isCloudUser } from 'utils/app';
 
 export interface FacingIssueBtnProps {
 	eventName: string;
@@ -30,15 +31,18 @@ function FacingIssueBtn({
 	};
 
 	return (
-		<div className="facing-issue-button">
-			<Button
-				className={cx('periscope-btn', 'facing-issue-button', className)}
-				onClick={handleFacingIssuesClick}
-				icon={<HelpCircle size={14} />}
-			>
-				{buttonText || 'Facing issues?'}
-			</Button>
-		</div>
+		isCloudUser() &&
+		window.Intercom && (
+			<div className="facing-issue-button">
+				<Button
+					className={cx('periscope-btn', 'facing-issue-button', className)}
+					onClick={handleFacingIssuesClick}
+					icon={<HelpCircle size={14} />}
+				>
+					{buttonText || 'Facing issues?'}
+				</Button>
+			</div>
+		)
 	);
 }
 
