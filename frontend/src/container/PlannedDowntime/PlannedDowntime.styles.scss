@@ -14,6 +14,18 @@
 	.ant-picker {
 		width: 100%;
 	}
+
+	.alert-rule-tags {
+		margin-bottom: 8px;
+		overflow: auto;
+		max-height: 100px;
+		.ant-tag {
+			user-select: none;
+			height: 28px;
+			display: inline-flex;
+			align-items: center;
+		}
+	}
 }
 
 .datePicker {
