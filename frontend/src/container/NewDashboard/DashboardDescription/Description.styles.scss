@@ -7,10 +7,10 @@
 		.ant-drawer-header {
 			height: 48px;
 			border-bottom: 1px solid var(--Slate-500, hsl(225, 21%, 11%));
-			padding: 14px 14px 14px 15px;
+			padding: 14px 14px 14px 11px;
 
 			.ant-drawer-header-title {
-				gap: 32px;
+				gap: 16px;
 
 				.ant-drawer-title {
 					color: var(--bg-vanilla-400);
@@ -20,6 +20,8 @@
 					font-weight: 400;
 					line-height: 20px; /* 142.857% */
 					letter-spacing: -0.07px;
+					padding-left: 16px;
+					border-left: 1px solid #161922;
 				}
 
 				.ant-drawer-close {
