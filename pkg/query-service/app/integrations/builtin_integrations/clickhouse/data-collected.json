@@ -1,11 +1,6 @@
 {
   "logs": [
     {
-      "name": "Process ID",
-      "path": "attributes.pid",
-      "type": "string"
-    },
-    {
       "name": "Timestamp",
       "path": "timestamp",
       "type": "timestamp"
@@ -19,6 +14,21 @@
       "name": "Severity Number",
       "path": "severity_number",
       "type": "number"
+    },
+    {
+      "name": "Thread ID",
+      "path": "attributes.thread_id",
+      "type": "string"
+    },
+    {
+      "name": "Query ID",
+      "path": "attributes.query_id",
+      "type": "string"
+    },
+    {
+      "name": "Clickhouse Component",
+      "path": "attributes.clickhouse_component",
+      "type": "string"
     }
   ],
   "metrics": [
