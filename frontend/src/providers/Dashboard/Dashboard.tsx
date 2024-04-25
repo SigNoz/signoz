@@ -176,8 +176,6 @@ export function DashboardProvider({
 
 		return data;
 	};
-
-	console.log(variablesToGetUpdated);
 	const dashboardResponse = useQuery(
 		[REACT_QUERY_KEY.DASHBOARD_BY_ID, isDashboardPage?.params],
 		{

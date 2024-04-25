@@ -262,6 +262,8 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	} else if panelType == v3.PanelTypeTable {
 		queryTmpl =
 			"SELECT now() as ts,"
+		// step or aggregate interval is whole time period in case of table panel
+		step = (end*getZerosForEpochNano(end) - start*getZerosForEpochNano(start))/1000000000
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmpl =
