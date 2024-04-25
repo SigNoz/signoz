@@ -31,7 +31,7 @@ function HeaderComponent(): JSX.Element {
 	);
 }
 
-function MyCustomCollapseList(): JSX.Element {
+function CustomCollapseList(): JSX.Element {
 	const dataSource = Array.from({ length: 10 }, (_, i) => `Item ${i + 1}`);
 
 	const renderListItems = (start: number, end: number): JSX.Element[] =>
@@ -83,4 +83,4 @@ function MyCustomCollapseList(): JSX.Element {
 	);
 }
 
-export default MyCustomCollapseList;
+export default CustomCollapseList;

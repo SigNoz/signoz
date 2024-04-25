@@ -12,8 +12,15 @@ import {
 	Input,
 	Modal,
 	Select,
+	Space,
+	Spin,
+	Tag,
+	Tooltip,
 	Typography,
 } from 'antd';
+import { DefaultOptionType } from 'antd/es/select';
+import { SelectProps } from 'antd/lib';
+import getAll from 'api/alerts/getAll';
 import {
 	ModalButtonWrapper,
 	ModalTitle,
@@ -21,6 +28,7 @@ import {
 import dayjs from 'dayjs';
 import { Search } from 'lucide-react';
 import React, { ChangeEvent } from 'react';
+import { useQuery } from 'react-query';
 
 import MyCollapseListWithFooter from './PlannedDowntimeList';
 
@@ -32,9 +40,28 @@ interface PlannedDowntimeData {
 }
 
 const customFormat = 'Do MMMM, YYYY ⎯ HH:mm:ss';
+
 export function PlannedDowntime(): JSX.Element {
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [form] = Form.useForm();
+	const [selectedTags, setSelectedTags] = React.useState<
+		DefaultOptionType | DefaultOptionType[]
+	>([]);
+	const { data, isError, isLoading } = useQuery('allAlerts', {
+		queryFn: getAll,
+		cacheTime: 0,
+		enabled: isOpen,
+	});
+	const alertRuleFormName = 'alert-rules';
+
+	const alertOptions = React.useMemo(
+		() =>
+			data?.payload?.map((i) => ({
+				label: i.alert,
+				value: i.id,
+			})),
+		[data],
+	);
 
 	dayjs.locale('en');
 	const datePickerFooter = (mode: any): any =>
@@ -70,6 +97,32 @@ export function PlannedDowntime(): JSX.Element {
 
 	const handleCancel = (): void => {
 		setIsOpen(false);
+	};
+
+	const handleChange = (
+		value: string,
+		options: DefaultOptionType | DefaultOptionType[],
+	): void => {
+		console.log(options, value);
+		form.setFieldValue(alertRuleFormName, options);
+		setSelectedTags(options);
+	};
+
+	const noTagRenderer: SelectProps['tagRender'] = () => (
+		// eslint-disable-next-line react/jsx-no-useless-fragment
+		<></>
+	);
+
+	const handleClose = (removedTag: DefaultOptionType['value']): void => {
+		if (!removedTag) {
+			return;
+		}
+		const newTags = selectedTags.filter(
+			(tag: DefaultOptionType) => tag.value !== removedTag,
+		);
+		console.log(newTags);
+		form.setFieldValue(alertRuleFormName, newTags);
+		setSelectedTags(newTags);
 	};
 
 	return (
@@ -163,23 +216,64 @@ export function PlannedDowntime(): JSX.Element {
 							<Select.Option value="does-not-repeat">Does not repeat</Select.Option>
 						</Select>
 					</Form.Item>
-					<Form.Item label="Silence Alerts" name="alert-rules">
-						<Select
-							placeholder="Search for alerts rules or groups..."
-							// notFoundContent={
-							// 	loading ? (
-							// 		<span>
-							// 			<Spin size="small" /> Loading...
-							// 		</span>
-							// 	) : (
-							// 	<span>
-							// 		No resource attributes available to filter. Please refer docs to send
-							// 		attributes.
-							// 	</span>
-							// 	)
-							// }
-						/>
-					</Form.Item>
+					<div>
+						<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
+						<Form.Item noStyle shouldUpdate>
+							<Space wrap style={{ marginBottom: 8 }} className="alert-rule-tags">
+								{selectedTags?.map((tag: DefaultOptionType, index: number) => {
+									const isLongTag = (tag?.label as string)?.length > 20;
+									console.log(isLongTag, tag, tag.label);
+									const tagElem = (
+										<Tag
+											key={tag.value}
+											onClose={(): void => handleClose(tag?.value)}
+											closable
+											color={index % 2 ? 'red' : 'geekblue'}
+										>
+											<span>
+												{isLongTag
+													? `${(tag?.label as string | null)?.slice(0, 20)}...`
+													: tag?.label}
+											</span>
+										</Tag>
+									);
+									return isLongTag ? (
+										<Tooltip title={tag?.label} key={tag?.value}>
+											{tagElem}
+										</Tooltip>
+									) : (
+										tagElem
+									);
+								})}
+							</Space>
+						</Form.Item>
+						<Form.Item name={alertRuleFormName}>
+							<Select
+								placeholder="Search for alerts rules or groups..."
+								mode="multiple"
+								status={isError ? 'error' : undefined}
+								loading={isLoading}
+								tagRender={noTagRenderer}
+								onChange={handleChange}
+								options={alertOptions}
+								notFoundContent={
+									isLoading ? (
+										<span>
+											<Spin size="small" /> Loading...
+										</span>
+									) : (
+										<span>No alert available.</span>
+									)
+								}
+							>
+								{alertOptions?.map((option) => (
+									<Select.Option key={option.value} value={option.value}>
+										{option.label}
+									</Select.Option>
+								))}
+							</Select>
+						</Form.Item>
+					</div>
 					<Form.Item>
 						<ModalButtonWrapper>
 							<Button key="submit" type="primary" htmlType="submit" onClick={handleOk}>
