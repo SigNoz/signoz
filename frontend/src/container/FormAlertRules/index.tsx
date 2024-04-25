@@ -183,16 +183,21 @@ function FormAlertRules({
 
 	const handleChangeProject = (value: string) => {
 		setCurrentProject(value);
-		setAlertDef({
-			...alertDef,
-			projectId: value,
-		});
 		// handleChoiceProject(value);
 	};
 
 	useEffect(() => {
 		getAllProject();
 	}, []);
+
+	useEffect(() => {
+		if (currentProject) {
+			setAlertDef({
+				...alertDef,
+				projectId: currentProject,
+			});
+		}
+	}, [currentProject]);
 
 	useEffect(() => {
 		const broadcastToSpecificChannels =
