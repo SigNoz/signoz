@@ -24,6 +24,7 @@ export interface AlertDef {
 	broadcastToAll?: boolean;
 	autoGenerateJiraIssue?: boolean;
 	workwxWebhook?: string;
+	projectId?: string;
 }
 
 export interface RuleCondition {

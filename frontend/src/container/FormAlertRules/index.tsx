@@ -183,6 +183,10 @@ function FormAlertRules({
 
 	const handleChangeProject = (value: string) => {
 		setCurrentProject(value);
+		setAlertDef({
+			...alertDef,
+			projectId: value,
+		});
 		// handleChoiceProject(value);
 	};
 

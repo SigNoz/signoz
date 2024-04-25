@@ -57,6 +57,7 @@ type PostableRule struct {
 	// 自定义字段
 	AutoGenerateJiraIssue bool   `json:"autoGenerateJiraIssue,omitempty"`
 	WorkwxWebhook         string `json:"workwxWebhook,omitempty"`
+	ProjectId             string `json:"projectId,omitempty"`
 }
 
 func ParsePostableRule(content []byte) (*PostableRule, []error) {
