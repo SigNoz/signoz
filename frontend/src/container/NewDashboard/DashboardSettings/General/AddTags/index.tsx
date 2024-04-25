@@ -43,7 +43,7 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 			{tags.map((tag, index) => {
 				if (editInputIndex === index) {
 					return (
-						<Col key={tag} lg={4}>
+						<Col key={tag} lg={4} className="edit-input">
 							<Input
 								size="small"
 								value={editInputValue}
@@ -60,7 +60,12 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 				const isLongTag = tag.length > 20;
 
 				const tagElem = (
-					<NewTagContainer closable key={tag} onClose={(): void => handleClose(tag)}>
+					<NewTagContainer
+						closable
+						key={tag}
+						onClose={(): void => handleClose(tag)}
+						className="tag-container"
+					>
 						<span
 							onDoubleClick={(e): void => {
 								setEditInputIndex(index);
@@ -87,7 +92,7 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 					type="text"
 					value={inputValue}
 					rootClassName="tags-input"
-					placeholder="Start typing your tag name..."
+					placeholder="Start typing your tag name"
 					onChangeHandler={(event): void =>
 						onChangeHandler(event.target.value, setInputValue)
 					}
