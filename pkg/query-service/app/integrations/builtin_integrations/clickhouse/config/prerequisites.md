@@ -15,7 +15,11 @@ To configure metrics and logs collection for a Clickhouse server, you need the f
   If needed, please [configure Clickhouse to expose prometheus metrics](https://clickhouse.com/docs/en/operations/server-configuration-parameters/settings#prometheus).
 
 - **If collecting query_log, ensure that there is a clickhouse user with required permissions**
-  TODO(Raj): Add instructions for creating a clickhouse monitoring user.
+  To create a monitoring user for clickhouse, you can run:
+  ```SQL
+  CREATE USER monitoring IDENTIFIED WITH sha256_password BY '<PASSWORD>';
+  GRANT SELECT ON system.query_log to monitoring;
+  ```
 
 
 ### Ensure OTEL Collector is running and has access to the Clickhouse server
@@ -23,6 +27,7 @@ To configure metrics and logs collection for a Clickhouse server, you need the f
 - **Ensure that an OTEL collector is running in your deployment environment**  
   If needed, please [install SigNoz OTEL Collector](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/)  
   If already installed, ensure that the collector version is v0.88.0 or newer.  
+  If collecting logs from system.query_log table, ensure that the collector version is v0.88.22 or newer.
 
   Also ensure that you can provide config files to the collector and that you can set environment variables and command line flags used for running it.  
 
