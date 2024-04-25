@@ -1,110 +1,119 @@
 {
   "id": "clickhouse-overview",
-  "description": "This dashboard provides a high-level overview of your Clickhouse databases.",
+  "description": "",
   "layout": [
     {
       "h": 3,
-      "i": "540305be-453b-4a1b-a7d1-c7c0869cc23d",
+      "i": "0e281902-9a85-430e-bff4-f7b97172c8e9",
       "moved": false,
       "static": false,
       "w": 6,
-      "x": 6,
-      "y": 9
-    },
-    {
-      "h": 3,
-      "i": "b3fc0734-d263-4e85-821d-bf70fd583221",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 0,
-      "y": 9
-    },
-    {
-      "h": 3,
-      "i": "0ecd6754-0dbd-4f3a-87fc-d4bae230b587",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 6,
-      "y": 2
-    },
-    {
-      "h": 2,
-      "i": "d0195b81-4b1b-4638-80de-e73ca3ec112e",
-      "moved": false,
-      "static": false,
-      "w": 12,
       "x": 0,
       "y": 0
     },
     {
       "h": 3,
-      "i": "98864cbd-a2c5-4b85-b24f-0cc0cbd3547f",
+      "i": "d54f1672-1ead-470a-815f-c7ce2aaa1b1a",
       "moved": false,
       "static": false,
       "w": 6,
       "x": 0,
-      "y": 2
+      "y": 3
     },
     {
-      "h": 2,
-      "i": "7ea956e6-6d34-4ff4-a2fe-08a7fae782ef",
+      "h": 3,
+      "i": "6ca4ce83-cb6b-4754-87ae-fd2b5fb61548",
       "moved": false,
       "static": false,
       "w": 6,
       "x": 0,
-      "y": 5
+      "y": 6
     },
     {
-      "h": 2,
-      "i": "74cfdcbb-ac11-4358-8ea7-b6764a588956",
+      "h": 3,
+      "i": "26a1d836-669b-4360-8965-0e694c8c18f1",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 9
+    },
+    {
+      "h": 3,
+      "i": "41e1d1a6-9a2e-4442-a9a7-21f21db8b3fa",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 12
+    },
+    {
+      "h": 3,
+      "i": "0dd39792-6f29-4862-ae5f-3eb7b3cbb2b0",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 15
+    },
+    {
+      "h": 3,
+      "i": "c8377e6e-1291-4a38-91b5-e4fd5dd82f35",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 18
+    },
+    {
+      "h": 3,
+      "i": "56f6526e-9515-46d7-976b-6393103095fb",
       "moved": false,
       "static": false,
       "w": 6,
       "x": 6,
-      "y": 5
+      "y": 0
     },
     {
-      "h": 2,
-      "i": "8846c4d3-32d0-48ef-968d-95640dd08386",
+      "h": 3,
+      "i": "66f22a9d-027c-4f7d-9ecd-4a0b77c021bb",
       "moved": false,
       "static": false,
-      "w": 12,
+      "w": 6,
       "x": 0,
-      "y": 7
+      "y": 21
     }
   ],
   "name": "",
   "tags": [
-    "v2",
-    "per-pod"
+    "database"
   ],
-  "title": "Clickhouse Overview",
-  "uploadedGrafana": false,
+  "title": "ClickHouse Overview",
   "variables": {
-    "9253a091-4bdc-43e1-b9ba-6f37315c2576": {
+    "eaf65de3-20bb-4dbc-9792-32a445f7be8f": {
       "allSelected": false,
       "customValue": "",
-      "description": "List of hosts sending Clickhouse metrics",
-      "id": "9253a091-4bdc-43e1-b9ba-6f37315c2576",
-      "key": "host_name",
-      "modificationUUID": "ccf282b7-0e5e-4033-81a8-25dde4c3508e",
+      "description": "",
+      "id": "eaf65de3-20bb-4dbc-9792-32a445f7be8f",
+      "key": "eaf65de3-20bb-4dbc-9792-32a445f7be8f",
+      "modificationUUID": "2fbb477e-7775-427b-ab14-29b673dd216c",
       "multiSelect": false,
       "name": "host_name",
       "order": 0,
       "queryValue": "SELECT JSONExtractString(labels, 'host_name') AS host_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'ClickHouseMetrics_VersionInteger'\nGROUP BY host_name",
       "selectedValue": "",
-      "showALLOption": true,
+      "showALLOption": false,
       "sort": "DISABLED",
       "textboxValue": "",
       "type": "QUERY"
     }
   },
+  "version": "v3",
   "widgets": [
     {
       "description": "",
-      "id": "8846c4d3-32d0-48ef-968d-95640dd08386",
+      "fillSpans": false,
+      "id": "66f22a9d-027c-4f7d-9ecd-4a0b77c021bb",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -114,29 +123,61 @@
           "queryData": [
             {
               "aggregateAttribute": {
-                "dataType": "",
-                "id": "------false",
-                "isColumn": false,
+                "dataType": "float64",
+                "id": "ClickHouseMetrics_PartMutation--float64--Gauge--true",
+                "isColumn": true,
                 "isJSON": false,
-                "key": "",
-                "type": ""
+                "key": "ClickHouseMetrics_PartMutation",
+                "type": "Gauge"
               },
-              "aggregateOperator": "count",
+              "aggregateOperator": "avg",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "490c3c83",
+                    "key": {
+                      "dataType": "string",
+                      "id": "host_name--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "host_name",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "{{.host_name}}"
+                  }
+                ],
                 "op": "AND"
               },
-              "groupBy": [],
-              "having": [],
-              "legend": " {{host_name}}",
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host_name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host_name",
+                  "type": "tag"
+                }
+              ],
+              "having": [
+                {
+                  "columnName": "SUM(ClickHouseMetrics_PartMutation)",
+                  "op": "!=",
+                  "value": 0
+                }
+              ],
+              "legend": "{{host_name}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "sum",
-              "stepInterval": 60
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
             }
           ],
           "queryFormulas": []
@@ -144,48 +185,87 @@
         "clickhouse_sql": [
           {
             "disabled": false,
-            "legend": " {{host_name}}",
+            "legend": "",
             "name": "A",
             "query": ""
           }
         ],
-        "id": "9b6b2ec7-b4c6-4a02-b841-770676a7be5c",
+        "id": "f73fae6e-0424-4a31-9e05-170e6570a972",
         "promql": [
           {
             "disabled": false,
-            "legend": "Query",
+            "legend": "",
             "name": "A",
-            "query": "rate(ClickHouseProfileEvents_Query{host_name=\"{{.host_name}}\"}[5m])"
-          },
-          {
-            "disabled": false,
-            "legend": "SelectQuery",
-            "name": "B",
-            "query": "rate(ClickHouseProfileEvents_SelectQuery{host_name=\"{{.host_name}}\"}[5m])"
-          },
-          {
-            "disabled": false,
-            "legend": "InsertQuery",
-            "name": "C",
-            "query": "rate(ClickHouseProfileEvents_InsertQuery{host_name=\"{{.host_name}}\"}[5m])"
-          },
-          {
-            "disabled": false,
-            "legend": "AsyncInsertQuery",
-            "name": "D",
-            "query": "rate(ClickHouseProfileEvents_AsyncInsertQuery{host_name=\"{{.host_name}}\"}[5m])"
+            "query": ""
           }
         ],
-        "queryType": "promql"
+        "queryType": "builder"
       },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": null,
+      "softMin": null,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Successful Queries",
+      "title": "Number of mutations",
       "yAxisUnit": "none"
     },
     {
       "description": "",
-      "id": "74cfdcbb-ac11-4358-8ea7-b6764a588956",
+      "fillSpans": false,
+      "id": "56f6526e-9515-46d7-976b-6393103095fb",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -195,29 +275,55 @@
           "queryData": [
             {
               "aggregateAttribute": {
-                "dataType": "",
-                "id": "------false",
-                "isColumn": false,
+                "dataType": "float64",
+                "id": "ClickHouseMetrics_PartsActive--float64--Gauge--true",
+                "isColumn": true,
                 "isJSON": false,
-                "key": "",
-                "type": ""
+                "key": "ClickHouseMetrics_PartsActive",
+                "type": "Gauge"
               },
-              "aggregateOperator": "count",
+              "aggregateOperator": "avg",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "da9a69ca",
+                    "key": {
+                      "dataType": "string",
+                      "id": "host_name--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "host_name",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "{{.host_name}}"
+                  }
+                ],
                 "op": "AND"
               },
-              "groupBy": [],
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host_name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host_name",
+                  "type": "tag"
+                }
+              ],
               "having": [],
-              "legend": " {{host_name}}",
+              "legend": "{{host_name}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
-              "reduceTo": "sum",
-              "stepInterval": 60
+              "reduceTo": "avg",
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "avg"
             }
           ],
           "queryFormulas": []
@@ -225,42 +331,87 @@
         "clickhouse_sql": [
           {
             "disabled": false,
-            "legend": " {{host_name}}",
+            "legend": "",
             "name": "A",
             "query": ""
           }
         ],
-        "id": "7a87c4ca-1c35-44fd-baf1-b63389c22615",
+        "id": "8eb9b9a4-48fc-4376-9b8a-2d9448454542",
         "promql": [
           {
             "disabled": false,
-            "legend": "FailedQuery",
+            "legend": "",
             "name": "A",
-            "query": "rate(ClickHouseProfileEvents_FailedQuery{host_name=\"{{.host_name}}\"}[5m])"
-          },
-          {
-            "disabled": false,
-            "legend": "FailedSelectQuery",
-            "name": "B",
-            "query": "rate(ClickHouseProfileEvents_FailedSelectQuery{host_name=\"{{.host_name}}\"}[5m])"
-          },
-          {
-            "disabled": false,
-            "legend": "FailedInsertQuery",
-            "name": "C",
-            "query": "rate(ClickHouseProfileEvents_FailedInsertQuery{host_name=\"{{.host_name}}\"}[5m])"
+            "query": ""
           }
         ],
-        "queryType": "promql"
+        "queryType": "builder"
       },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": null,
+      "softMin": null,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Failed queries",
+      "title": "Active data parts",
       "yAxisUnit": "none"
     },
     {
       "description": "",
-      "id": "7ea956e6-6d34-4ff4-a2fe-08a7fae782ef",
+      "fillSpans": false,
+      "id": "c8377e6e-1291-4a38-91b5-e4fd5dd82f35",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -270,29 +421,54 @@
           "queryData": [
             {
               "aggregateAttribute": {
-                "dataType": "",
-                "id": "------false",
-                "isColumn": false,
+                "dataType": "float64",
+                "id": "ClickHouseProfileEvents_InsertedCompactParts--float64--Sum--true",
+                "isColumn": true,
                 "isJSON": false,
-                "key": "",
-                "type": ""
+                "key": "ClickHouseProfileEvents_InsertedCompactParts",
+                "type": "Sum"
               },
-              "aggregateOperator": "count",
+              "aggregateOperator": "sum_rate",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "17fcef9b",
+                    "key": {
+                      "dataType": "string",
+                      "id": "host_name--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "host_name",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.host_name}}"
+                    ]
+                  }
+                ],
                 "op": "AND"
               },
-              "groupBy": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host_name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host_name",
+                  "type": "tag"
+                }
+              ],
               "having": [],
-              "legend": " {{host_name}}",
+              "legend": "{{host_name}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "sum",
-              "stepInterval": 60
+              "stepInterval": 840
             }
           ],
           "queryFormulas": []
@@ -300,30 +476,87 @@
         "clickhouse_sql": [
           {
             "disabled": false,
-            "legend": " {{host_name}}",
+            "legend": "",
             "name": "A",
             "query": ""
           }
         ],
-        "id": "4143e29a-9bf2-40da-b2a1-8aa3a9d2f962",
+        "id": "80e8f58c-04bd-4fa5-9d3b-4df3cb814c21",
         "promql": [
           {
             "disabled": false,
-            "legend": "RejectedInserts",
+            "legend": "",
             "name": "A",
-            "query": "rate(ClickHouseProfileEvents_RejectedInserts{host_name=\"{{.host_name}}\"}[5m])"
+            "query": ""
           }
         ],
-        "queryType": "promql"
+        "queryType": "builder"
       },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": null,
+      "softMin": null,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "",
+      "title": "Parts",
       "yAxisUnit": "none"
     },
     {
       "description": "",
-      "id": "98864cbd-a2c5-4b85-b24f-0cc0cbd3547f",
+      "fillSpans": false,
+      "id": "0dd39792-6f29-4862-ae5f-3eb7b3cbb2b0",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -333,29 +566,54 @@
           "queryData": [
             {
               "aggregateAttribute": {
-                "dataType": "",
-                "id": "------false",
-                "isColumn": false,
+                "dataType": "float64",
+                "id": "ClickHouseMetrics_Merge--float64--Gauge--true",
+                "isColumn": true,
                 "isJSON": false,
-                "key": "",
-                "type": ""
+                "key": "ClickHouseMetrics_Merge",
+                "type": "Gauge"
               },
-              "aggregateOperator": "count",
+              "aggregateOperator": "sum",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "53e71be1",
+                    "key": {
+                      "dataType": "string",
+                      "id": "host_name--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "host_name",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.host_name}}"
+                    ]
+                  }
+                ],
                 "op": "AND"
               },
-              "groupBy": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host_name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host_name",
+                  "type": "tag"
+                }
+              ],
               "having": [],
-              "legend": " {{host_name}}",
+              "legend": "{{host_name}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "sum",
-              "stepInterval": 60
+              "stepInterval": 240
             }
           ],
           "queryFormulas": []
@@ -363,111 +621,87 @@
         "clickhouse_sql": [
           {
             "disabled": false,
-            "legend": " {{host_name}}",
+            "legend": "",
             "name": "A",
             "query": ""
           }
         ],
-        "id": "6596f535-a858-4180-bc5b-77da88593fa0",
+        "id": "019eb35f-3519-4207-9707-30307347b289",
         "promql": [
           {
             "disabled": false,
-            "legend": "{{host_name}}",
+            "legend": "",
             "name": "A",
-            "query": "ClickHouseMetrics_MemoryTracking{host_name=\"{{.host_name}}\"}"
+            "query": ""
           }
         ],
-        "queryType": "promql"
+        "queryType": "builder"
       },
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Memory usage",
-      "yAxisUnit": "decbytes"
-    },
-    {
-      "description": "",
-      "id": "d0195b81-4b1b-4638-80de-e73ca3ec112e",
-      "isStacked": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregateAttribute": {
-                "dataType": "",
-                "id": "------false",
-                "isColumn": false,
-                "isJSON": false,
-                "key": "",
-                "type": ""
-              },
-              "aggregateOperator": "count",
-              "dataSource": "metrics",
-              "disabled": false,
-              "expression": "A",
-              "filters": {
-                "items": [],
-                "op": "AND"
-              },
-              "groupBy": [],
-              "having": [],
-              "legend": " {{host_name}}",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "reduceTo": "sum",
-              "stepInterval": 60
-            }
-          ],
-          "queryFormulas": []
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
         },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": " {{host_name}}",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "id": "f0e3282a-2e28-4d0c-9545-a0f689d598d1",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "TCP",
-            "name": "A",
-            "query": "ClickHouseMetrics_TCPConnection{host_name=\"{{.host_name}}\"}"
-          },
-          {
-            "disabled": false,
-            "legend": "HTTP",
-            "name": "B",
-            "query": "ClickHouseMetrics_HTTPConnection{host_name=\"{{.host_name}}\"}"
-          },
-          {
-            "disabled": false,
-            "legend": "MYSQL",
-            "name": "C",
-            "query": "ClickHouseMetrics_MySQLConnection{host_name=\"{{.host_name}}\"}"
-          },
-          {
-            "disabled": false,
-            "legend": "POSTGRES",
-            "name": "D",
-            "query": "ClickHouseMetrics_PostgreSQLConnection{host_name=\"{{.host_name}}\"}"
-          }
-        ],
-        "queryType": "promql"
-      },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": null,
+      "softMin": null,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Active connections",
+      "title": "Merges",
       "yAxisUnit": "none"
     },
     {
       "description": "",
-      "id": "0ecd6754-0dbd-4f3a-87fc-d4bae230b587",
+      "fillSpans": false,
+      "id": "41e1d1a6-9a2e-4442-a9a7-21f21db8b3fa",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -477,29 +711,57 @@
           "queryData": [
             {
               "aggregateAttribute": {
-                "dataType": "",
-                "id": "------false",
-                "isColumn": false,
+                "dataType": "float64",
+                "id": "ClickHouseProfileEvents_DiskReadElapsedMicroseconds--float64--Sum--true",
+                "isColumn": true,
                 "isJSON": false,
-                "key": "",
-                "type": ""
+                "key": "ClickHouseProfileEvents_DiskReadElapsedMicroseconds",
+                "type": "Sum"
               },
-              "aggregateOperator": "count",
+              "aggregateOperator": "sum_rate",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "382cb674",
+                    "key": {
+                      "dataType": "string",
+                      "id": "host_name--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "host_name",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.host_name}}"
+                    ]
+                  }
+                ],
                 "op": "AND"
               },
-              "groupBy": [],
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host_name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host_name",
+                  "type": "tag"
+                }
+              ],
               "having": [],
-              "legend": " {{host_name}}",
+              "legend": "{{host_name}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "sum",
-              "stepInterval": 60
+              "spaceAggregation": "sum",
+              "stepInterval": 60,
+              "timeAggregation": "rate"
             }
           ],
           "queryFormulas": []
@@ -507,36 +769,87 @@
         "clickhouse_sql": [
           {
             "disabled": false,
-            "legend": " {{host_name}}",
+            "legend": "",
             "name": "A",
             "query": ""
           }
         ],
-        "id": "be065d1c-7781-4627-8a0d-61552795a52a",
+        "id": "87ccf2c6-61d3-4d64-9940-811addfc48d0",
         "promql": [
           {
             "disabled": false,
-            "legend": "received",
+            "legend": "",
             "name": "A",
-            "query": "rate(ClickHouseProfileEvents_NetworkReceiveBytes{host_name=\"{{.host_name}}\"}[5m])"
-          },
-          {
-            "disabled": false,
-            "legend": "sent",
-            "name": "B",
-            "query": "rate(ClickHouseProfileEvents_NetworkSendBytes{host_name=\"{{.host_name}}\"}[5m])"
+            "query": ""
           }
         ],
-        "queryType": "promql"
+        "queryType": "builder"
       },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": null,
+      "softMin": null,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Network received/sent bytes",
-      "yAxisUnit": "decbytes"
+      "title": "DiskReadElapsedTime",
+      "yAxisUnit": "µs"
     },
     {
       "description": "",
-      "id": "b3fc0734-d263-4e85-821d-bf70fd583221",
+      "fillSpans": false,
+      "id": "26a1d836-669b-4360-8965-0e694c8c18f1",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -546,29 +859,54 @@
           "queryData": [
             {
               "aggregateAttribute": {
-                "dataType": "",
-                "id": "------false",
-                "isColumn": false,
+                "dataType": "float64",
+                "id": "ClickHouseProfileEvents_InsertedRows--float64--Sum--true",
+                "isColumn": true,
                 "isJSON": false,
-                "key": "",
-                "type": ""
+                "key": "ClickHouseProfileEvents_InsertedRows",
+                "type": "Sum"
               },
-              "aggregateOperator": "count",
+              "aggregateOperator": "sum_rate",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "b3a7311e",
+                    "key": {
+                      "dataType": "string",
+                      "id": "host_name--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "host_name",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.host_name}}"
+                    ]
+                  }
+                ],
                 "op": "AND"
               },
-              "groupBy": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host_name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host_name",
+                  "type": "tag"
+                }
+              ],
               "having": [],
-              "legend": " {{host_name}}",
+              "legend": "{{host_name}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "sum",
-              "stepInterval": 60
+              "stepInterval": 240
             }
           ],
           "queryFormulas": []
@@ -576,30 +914,232 @@
         "clickhouse_sql": [
           {
             "disabled": false,
-            "legend": " {{host_name}}",
+            "legend": "",
             "name": "A",
             "query": ""
           }
         ],
-        "id": "931707fd-780e-425d-adbc-01f069dc6a3a",
+        "id": "63e071ab-b11c-4af6-9960-1d7f5900105f",
         "promql": [
           {
             "disabled": false,
-            "legend": "merges",
+            "legend": "",
             "name": "A",
-            "query": "rate(ClickHouseProfileEvents_Merge{host_name=\"{{.host_name}}\"}[5m])"
+            "query": ""
           }
         ],
-        "queryType": "promql"
+        "queryType": "builder"
       },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": null,
+      "softMin": null,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Number of launched background merges.",
+      "title": "Insert rows rate",
+      "yAxisUnit": "short"
+    },
+    {
+      "description": "",
+      "fillSpans": false,
+      "id": "6ca4ce83-cb6b-4754-87ae-fd2b5fb61548",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "ClickHouseProfileEvents_ThreadPoolReaderPageCacheMiss--float64--Sum--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "ClickHouseProfileEvents_ThreadPoolReaderPageCacheMiss",
+                "type": "Sum"
+              },
+              "aggregateOperator": "sum_rate",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "2bb57b18",
+                    "key": {
+                      "dataType": "string",
+                      "id": "host_name--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "host_name",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.host_name}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host_name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host_name",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{host_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "sum",
+              "stepInterval": 240
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "3eca8158-1d31-42bb-a07e-d9f9d6add756",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": null,
+      "softMin": null,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Page cache miss",
       "yAxisUnit": "none"
     },
     {
       "description": "",
-      "id": "540305be-453b-4a1b-a7d1-c7c0869cc23d",
+      "fillSpans": false,
+      "id": "d54f1672-1ead-470a-815f-c7ce2aaa1b1a",
       "isStacked": false,
       "nullZeroValues": "zero",
       "opacity": "1",
@@ -609,28 +1149,54 @@
           "queryData": [
             {
               "aggregateAttribute": {
-                "dataType": "",
-                "id": "------false",
-                "isColumn": false,
-                "key": "",
-                "type": ""
+                "dataType": "float64",
+                "id": "ClickHouseProfileEvents_SelectQueryTimeMicroseconds--float64--Sum--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "ClickHouseProfileEvents_SelectQueryTimeMicroseconds",
+                "type": "Sum"
               },
-              "aggregateOperator": "count",
+              "aggregateOperator": "sum_rate",
               "dataSource": "metrics",
               "disabled": false,
               "expression": "A",
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "id": "324e689c",
+                    "key": {
+                      "dataType": "string",
+                      "id": "host_name--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "host_name",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.host_name}}"
+                    ]
+                  }
+                ],
                 "op": "AND"
               },
-              "groupBy": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host_name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host_name",
+                  "type": "tag"
+                }
+              ],
               "having": [],
-              "legend": " {{host_name}}",
+              "legend": "{{host_name}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "sum",
-              "stepInterval": 60
+              "stepInterval": 240
             }
           ],
           "queryFormulas": []
@@ -638,27 +1204,228 @@
         "clickhouse_sql": [
           {
             "disabled": false,
-            "legend": " {{host_name}}",
+            "legend": "",
             "name": "A",
             "query": ""
           }
         ],
-        "id": "7c2c1650-0348-41c7-b162-1cc391d77f73",
+        "id": "f061c477-6f83-4f75-9f20-4182b09e00f9",
         "promql": [
           {
             "disabled": false,
-            "legend": " {{host_name}}",
+            "legend": "",
             "name": "A",
-            "query": "rate(ClickHouseProfileEvents_MergesTimeMilliseconds{host_name=\"{{.host_name}}\"}[5m])"
+            "query": ""
           }
         ],
-        "queryType": "promql"
+        "queryType": "builder"
       },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": null,
+      "softMin": null,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Total time spent for background merges.",
-      "yAxisUnit": "ms"
+      "title": "Time of SELECT queries",
+      "yAxisUnit": "µs"
+    },
+    {
+      "description": "",
+      "fillSpans": false,
+      "id": "0e281902-9a85-430e-bff4-f7b97172c8e9",
+      "isStacked": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {
+                "dataType": "float64",
+                "id": "ClickHouseProfileEvents_InsertQueryTimeMicroseconds--float64--Sum--true",
+                "isColumn": true,
+                "isJSON": false,
+                "key": "ClickHouseProfileEvents_InsertQueryTimeMicroseconds",
+                "type": "Sum"
+              },
+              "aggregateOperator": "sum_rate",
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filters": {
+                "items": [
+                  {
+                    "id": "50b73606",
+                    "key": {
+                      "dataType": "string",
+                      "id": "host_name--string--tag--false",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "host_name",
+                      "type": "tag"
+                    },
+                    "op": "in",
+                    "value": [
+                      "{{.host_name}}"
+                    ]
+                  }
+                ],
+                "op": "AND"
+              },
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "host_name--string--tag--false",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "host_name",
+                  "type": "tag"
+                }
+              ],
+              "having": [],
+              "legend": "{{host_name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "reduceTo": "sum",
+              "stepInterval": 240
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "df9de81f-987c-4f75-aad9-75108ae179f7",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "string",
+          "name": "body",
+          "type": ""
+        },
+        {
+          "dataType": "string",
+          "name": "timestamp",
+          "type": ""
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "dataType": "string",
+          "id": "serviceName--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "serviceName",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "name--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "name",
+          "type": "tag"
+        },
+        {
+          "dataType": "float64",
+          "id": "durationNano--float64--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "durationNano",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "httpMethod--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "httpMethod",
+          "type": "tag"
+        },
+        {
+          "dataType": "string",
+          "id": "responseStatusCode--string--tag--true",
+          "isColumn": true,
+          "isJSON": false,
+          "key": "responseStatusCode",
+          "type": "tag"
+        }
+      ],
+      "softMax": null,
+      "softMin": null,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Insert time",
+      "yAxisUnit": "µs"
     }
   ],
-  "uuid": "be5a5c4b-a456-441d-bd58-b9db91b15583"
+  "uuid": "c3a01223-a5bf-4e83-b95f-8e4bc61a781b"
 }

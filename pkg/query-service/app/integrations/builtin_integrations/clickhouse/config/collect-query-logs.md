@@ -32,7 +32,7 @@ exporters:
 
 service:
   pipelines:
-    logs/clickhouse:
+    logs/clickhouse-query-logs:
       receivers: [clickhousesystemtablesreceiver/query_log]
       processors: []
       exporters: [otlp/clickhouse-query-logs]
