@@ -169,6 +169,7 @@ func NewReaderFromClickhouseConnection(
 			MaxExecutionTimeLeaf:                os.Getenv("ClickHouseMaxExecutionTimeLeaf"),
 			TimeoutBeforeCheckingExecutionSpeed: os.Getenv("ClickHouseTimeoutBeforeCheckingExecutionSpeed"),
 			MaxBytesToRead:                      os.Getenv("ClickHouseMaxBytesToRead"),
+			OptimizeReadInOrder:                 os.Getenv("ClickHouseOptimizeReadInOrder"),
 		},
 	}
 

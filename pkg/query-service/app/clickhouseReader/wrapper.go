@@ -13,6 +13,7 @@ type ClickhouseQuerySettings struct {
 	MaxExecutionTimeLeaf                string
 	TimeoutBeforeCheckingExecutionSpeed string
 	MaxBytesToRead                      string
+	OptimizeReadInOrder                 string
 }
 
 type clickhouseConnWrapper struct {
@@ -56,6 +57,11 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 
 	if c.settings.TimeoutBeforeCheckingExecutionSpeed != "" {
 		settings["timeout_before_checking_execution_speed"] = c.settings.TimeoutBeforeCheckingExecutionSpeed
+	}
+
+	// only list queries of
+	if c.settings.OptimizeReadInOrder != "" && strings.Contains(query, "SELECT timestamp, id") && strings.Contains(query, "LIMIT") {
+		settings["optimize_read_in_order"] = c.settings.OptimizeReadInOrder
 	}
 
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
