@@ -4,6 +4,8 @@ import styled from 'styled-components';
 export const TagsContainer = styled.div`
 	display: flex;
 	align-items: center;
+	flex-flow: wrap;
+	gap: 6px;
 `;
 
 export const NewTagContainer = styled(Tag)`
@@ -25,5 +27,4 @@ export const InputContainer = styled(Col)`
 	}
 	padding-left: 0px !important;
 	padding-right: 0px !important;
-	width: 100%;
 `;
