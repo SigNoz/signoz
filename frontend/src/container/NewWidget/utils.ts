@@ -3,7 +3,13 @@ import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import {
+	listViewInitialLogQuery,
+	listViewInitialTraceQuery,
+	PANEL_TYPES_INITIAL_QUERY,
+} from 'container/NewDashboard/ComponentsSlider/constants';
 import { isEqual, set, unset } from 'lodash-es';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -302,3 +308,38 @@ export function handleQueryChange(
 		},
 	};
 }
+
+export const getDefaultWidgetData = (
+	id: string,
+	name: PANEL_TYPES,
+): Widgets => ({
+	id,
+	title: '',
+	description: '',
+	isStacked: false,
+	nullZeroValues: '',
+	opacity: '',
+	panelTypes: name,
+	query:
+		name === PANEL_TYPES.LIST
+			? listViewInitialLogQuery
+			: PANEL_TYPES_INITIAL_QUERY[name],
+	timePreferance: 'GLOBAL_TIME',
+	softMax: null,
+	softMin: null,
+	selectedLogFields: [
+		{
+			dataType: 'string',
+			type: '',
+			name: 'body',
+		},
+		{
+			dataType: 'string',
+			type: '',
+			name: 'timestamp',
+		},
+	],
+	selectedTracesFields: [
+		...listViewInitialTraceQuery.builder.queryData[0].selectColumns,
+	],
+});

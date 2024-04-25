@@ -49,15 +49,11 @@ function DashboardWidget(): JSX.Element | null {
 		);
 	}
 
-	if (selectedWidget === undefined) {
-		return null;
-	}
-
 	return (
 		<NewWidget
-			yAxisUnit={selectedWidget.yAxisUnit}
+			yAxisUnit={selectedWidget?.yAxisUnit}
 			selectedGraph={selectedGraph}
-			fillSpans={selectedWidget.fillSpans}
+			fillSpans={selectedWidget?.fillSpans}
 		/>
 	);
 }

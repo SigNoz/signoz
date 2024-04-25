@@ -1,8 +1,9 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './DynamicColumnTable.syles.scss';
 
-import { Button, Dropdown, MenuProps, Switch } from 'antd';
+import { Button, Dropdown, Flex, MenuProps, Switch } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { SlidersHorizontal } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -20,6 +21,7 @@ function DynamicColumnTable({
 	columns,
 	dynamicColumns,
 	onDragColumn,
+	facingIssueBtn,
 	...restProps
 }: DynamicColumnTableProps): JSX.Element {
 	const [columnsData, setColumnsData] = useState<ColumnsType | undefined>(
@@ -83,19 +85,22 @@ function DynamicColumnTable({
 
 	return (
 		<div className="DynamicColumnTable">
-			{dynamicColumns && (
-				<Dropdown
-					getPopupContainer={popupContainer}
-					menu={{ items }}
-					trigger={['click']}
-				>
-					<Button
-						className="dynamicColumnTable-button filter-btn"
-						size="middle"
-						icon={<SlidersHorizontal size={14} />}
-					/>
-				</Dropdown>
-			)}
+			<Flex justify="flex-end" align="center" gap={8}>
+				{facingIssueBtn && <FacingIssueBtn {...facingIssueBtn} />}
+				{dynamicColumns && (
+					<Dropdown
+						getPopupContainer={popupContainer}
+						menu={{ items }}
+						trigger={['click']}
+					>
+						<Button
+							className="dynamicColumnTable-button filter-btn"
+							size="middle"
+							icon={<SlidersHorizontal size={14} />}
+						/>
+					</Dropdown>
+				)}
+			</Flex>
 
 			<ResizeTable
 				columns={columnsData}
