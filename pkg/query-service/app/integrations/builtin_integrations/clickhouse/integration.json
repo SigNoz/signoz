@@ -22,8 +22,12 @@
       "instructions": "file://config/collect-metrics.md"
     },
     {
-      "title": "Collect Logs",
+      "title": "Collect Server Logs",
       "instructions": "file://config/collect-logs.md"
+    },
+    {
+      "title": "Collect Query Logs",
+      "instructions": "file://config/collect-query-logs.md"
     }
   ],
   "assets": {

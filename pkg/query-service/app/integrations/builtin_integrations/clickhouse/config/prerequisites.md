@@ -17,8 +17,11 @@ To configure metrics and logs collection for a Clickhouse server, you need the f
 - **If collecting query_log, ensure that there is a clickhouse user with required permissions**
   To create a monitoring user for clickhouse, you can run:
   ```SQL
-  CREATE USER monitoring IDENTIFIED WITH sha256_password BY '<PASSWORD>';
+  CREATE USER monitoring IDENTIFIED BY 'monitoring_password';
   GRANT SELECT ON system.query_log to monitoring;
+
+  -- If monitoring a clustered deployment, also grant privilege for executing remote queries
+  GRANT REMOTE ON *.* TO 'monitoring' on CLUSTER 'cluster_name';
   ```
 
 
