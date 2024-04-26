@@ -1,7 +1,6 @@
 import './GridCardLayout.styles.scss';
 
-import { PlusOutlined } from '@ant-design/icons';
-import { Tooltip } from 'antd';
+// import { Tooltip } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -13,12 +12,11 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import isEqual from 'lodash-es/isEqual';
-import { FullscreenIcon } from 'lucide-react';
+// import { FullscreenIcon } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useState } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
-import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -31,16 +29,15 @@ import { ComponentTypes } from 'utils/permission';
 import { EditMenuAction, ViewMenuAction } from './config';
 import GridCard from './GridCard';
 import {
-	Button,
-	ButtonContainer,
+	// Button,
+	// ButtonContainer,
 	Card,
 	CardContainer,
 	ReactGridLayout,
 } from './styles';
-import { GraphLayoutProps } from './types';
 import { removeUndefinedValuesFromLayout } from './utils';
 
-function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
+function GraphLayout(): JSX.Element {
 	const {
 		selectedDashboard,
 		layouts,
@@ -54,8 +51,6 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	const dispatch = useDispatch();
 
 	const { widgets, variables } = data || {};
-
-	const { t } = useTranslation(['dashboard']);
 
 	const { featureResponse, role, user } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -169,7 +164,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 
 	return (
 		<>
-			<ButtonContainer>
+			{/* <ButtonContainer>
 				<Tooltip title="Open in Full Screen">
 					<Button
 						className="periscope-btn"
@@ -179,18 +174,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 						disabled={updateDashboardMutation.isLoading}
 					/>
 				</Tooltip>
-
-				{!isDashboardLocked && addPanelPermission && (
-					<Button
-						className="periscope-btn"
-						onClick={onAddPanelHandler}
-						icon={<PlusOutlined />}
-						data-testid="add-panel"
-					>
-						{t('dashboard:add_panel')}
-					</Button>
-				)}
-			</ButtonContainer>
+			</ButtonContainer> */}
 
 			<FullScreen handle={handle} className="fullscreen-grid-container">
 				<ReactGridLayout
