@@ -410,6 +410,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						panelType: graphType,
 						widgetId: query.get('widgetId'),
 						queryType: currentQuery.queryType,
+						screen: 'Dashboard list page',
 					}}
 					eventName="Dashboard: Facing Issues in dashboard"
 					buttonText="Facing Issues in dashboard"
