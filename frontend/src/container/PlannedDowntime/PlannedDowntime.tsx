@@ -1,21 +1,20 @@
 import './PlannedDowntime.styles.scss';
 import 'dayjs/locale/en';
 
-import { PlusOutlined } from '@ant-design/icons';
+import { CheckOutlined, PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
 	DatePicker,
 	Divider,
+	Dropdown,
 	Flex,
 	Form,
 	Input,
+	MenuProps,
 	Modal,
 	Select,
-	Space,
 	Spin,
-	Tag,
-	Tooltip,
 	Typography,
 } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
@@ -26,11 +25,11 @@ import {
 	ModalTitle,
 } from 'container/PipelinePage/PipelineListsView/styles';
 import dayjs from 'dayjs';
-import { Search } from 'lucide-react';
+import { CalendarClockIcon, PencilRuler, Search, SortDesc } from 'lucide-react';
 import React, { ChangeEvent } from 'react';
 import { useQuery } from 'react-query';
 
-import MyCollapseListWithFooter from './PlannedDowntimeList';
+import { AlertRuleTags, PlannedDowntimeList } from './PlannedDowntimeList';
 
 interface PlannedDowntimeData {
 	name: string;
@@ -125,6 +124,27 @@ export function PlannedDowntime(): JSX.Element {
 		setSelectedTags(newTags);
 	};
 
+	const filterMenuItems: MenuProps['items'] = [
+		{
+			label: (
+				<div className="create-dashboard-menu-item">
+					{' '}
+					<PencilRuler size={14} /> Created by
+				</div>
+			),
+			key: '0',
+		},
+		{
+			label: (
+				<div className="create-dashboard-menu-item">
+					{' '}
+					<CalendarClockIcon size={14} /> Last updated by
+				</div>
+			),
+			key: '1',
+		},
+	];
+
 	return (
 		<div className="planned-downtime-container">
 			<div className="planned-downtime-content">
@@ -133,6 +153,19 @@ export function PlannedDowntime(): JSX.Element {
 					Create and manage planned downtimes.
 				</Typography.Text>
 				<Flex className="toolbar">
+					<Dropdown
+						overlayClassName="new-downtime-menu"
+						menu={{ items: filterMenuItems }}
+						placement="bottomLeft"
+					>
+						<Button
+							type="default"
+							className="periscope-btn"
+							icon={<SortDesc size={14} />}
+						>
+							Filter
+						</Button>
+					</Dropdown>
 					<Input
 						placeholder="Search for a planned downtime..."
 						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
@@ -148,7 +181,7 @@ export function PlannedDowntime(): JSX.Element {
 					</Button>
 				</Flex>
 				<br />
-				<MyCollapseListWithFooter />
+				<PlannedDowntimeList />
 			</div>
 			<Modal
 				title={<ModalTitle level={4}>New planned downtime</ModalTitle>}
@@ -219,33 +252,11 @@ export function PlannedDowntime(): JSX.Element {
 					<div>
 						<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
 						<Form.Item noStyle shouldUpdate>
-							<Space wrap style={{ marginBottom: 8 }} className="alert-rule-tags">
-								{selectedTags?.map((tag: DefaultOptionType, index: number) => {
-									const isLongTag = (tag?.label as string)?.length > 20;
-									console.log(isLongTag, tag, tag.label);
-									const tagElem = (
-										<Tag
-											key={tag.value}
-											onClose={(): void => handleClose(tag?.value)}
-											closable
-											color={index % 2 ? 'red' : 'geekblue'}
-										>
-											<span>
-												{isLongTag
-													? `${(tag?.label as string | null)?.slice(0, 20)}...`
-													: tag?.label}
-											</span>
-										</Tag>
-									);
-									return isLongTag ? (
-										<Tooltip title={tag?.label} key={tag?.value}>
-											{tagElem}
-										</Tooltip>
-									) : (
-										tagElem
-									);
-								})}
-							</Space>
+							<AlertRuleTags
+								closable
+								selectedTags={selectedTags}
+								handleClose={handleClose}
+							/>
 						</Form.Item>
 						<Form.Item name={alertRuleFormName}>
 							<Select
@@ -274,9 +285,15 @@ export function PlannedDowntime(): JSX.Element {
 							</Select>
 						</Form.Item>
 					</div>
-					<Form.Item>
+					<Form.Item style={{ marginBottom: 0 }}>
 						<ModalButtonWrapper>
-							<Button key="submit" type="primary" htmlType="submit" onClick={handleOk}>
+							<Button
+								key="submit"
+								type="primary"
+								htmlType="submit"
+								icon={<CheckOutlined />}
+								onClick={handleOk}
+							>
 								Add downtime schedule
 							</Button>
 						</ModalButtonWrapper>
