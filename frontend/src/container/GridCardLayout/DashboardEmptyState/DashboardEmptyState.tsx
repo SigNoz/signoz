@@ -1,10 +1,42 @@
 import './DashboardEmptyState.styles.scss';
 
+import { PlusOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
-import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
-import { Plus, Tent } from 'lucide-react';
+import SettingsDrawer from 'container/NewDashboard/DashboardDescription/SettingsDrawer';
+import useComponentPermission from 'hooks/useComponentPermission';
+import { Tent } from 'lucide-react';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useCallback } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
+import { ROLES, USER_ROLES } from 'types/roles';
+import { ComponentTypes } from 'utils/permission';
 
 export default function DashboardEmptyState(): JSX.Element {
+	const {
+		selectedDashboard,
+		isDashboardLocked,
+		handleToggleDashboardSlider,
+	} = useDashboard();
+
+	const { user, role } = useSelector<AppState, AppReducer>((state) => state.app);
+	let permissions: ComponentTypes[] = ['add_panel'];
+
+	if (isDashboardLocked) {
+		permissions = ['add_panel_locked_dashboard'];
+	}
+
+	const userRole: ROLES | null =
+		selectedDashboard?.created_by === user?.email
+			? (USER_ROLES.AUTHOR as ROLES)
+			: role;
+
+	const [addPanelPermission] = useComponentPermission(permissions, userRole);
+
+	const onEmptyWidgetHandler = useCallback(() => {
+		handleToggleDashboardSlider(true);
+	}, [handleToggleDashboardSlider]);
 	return (
 		<section className="dashboard-empty-state">
 			<div className="dashboard-content">
@@ -30,9 +62,7 @@ export default function DashboardEmptyState(): JSX.Element {
 								Give it a name, add description, tags and variables
 							</Typography.Text>
 						</div>
-						<Button type="text" className="configure-btn" icon={<ConfigureIcon />}>
-							Configure
-						</Button>
+						<SettingsDrawer drawerTitle="Dashboard Configuration" />
 					</div>
 					<div className="actions-1">
 						<div className="actions-add-panel">
@@ -44,9 +74,17 @@ export default function DashboardEmptyState(): JSX.Element {
 								Add panels to visualize your data
 							</Typography.Text>
 						</div>
-						<Button type="text" className="add-panel-btn" icon={<Plus size={14} />}>
-							New panel
-						</Button>
+						{!isDashboardLocked && addPanelPermission && (
+							<Button
+								className="add-panel-btn"
+								onClick={onEmptyWidgetHandler}
+								icon={<PlusOutlined />}
+								type="primary"
+								data-testid="add-panel"
+							>
+								New Panel
+							</Button>
+						)}
 					</div>
 				</section>
 			</div>

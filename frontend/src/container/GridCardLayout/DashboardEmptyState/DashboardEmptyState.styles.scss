@@ -55,18 +55,24 @@
 				border: 1px solid var(--Slate-500, #161922);
 				background: var(--Ink-400, #121317);
 
-				.configure-btn {
+				.configure-button {
 					display: flex;
 					width: 113px;
 					height: 32px;
 					padding: 6px;
 					justify-content: center;
 					align-items: center;
-					gap: 6px;
 					flex-shrink: 0;
 					border-radius: 2px;
 					border: 1px solid var(--Slate-400, #1d212d);
 					background: var(--Ink-300, #16181d);
+					color: var(--Vanilla-400, #c0c1c3);
+					font-family: Inter;
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 500;
+					line-height: 10px; /* 83.333% */
+					letter-spacing: 0.12px;
 				}
 
 				.actions-configure {
@@ -112,11 +118,18 @@
 					padding: 6px;
 					justify-content: center;
 					align-items: center;
-					gap: 6px;
 					flex-shrink: 0;
 					border-radius: 2px;
 					border: 1px solid var(--Slate-400, #1d212d);
 					background: var(--Ink-300, #16181d);
+					box-shadow: none;
+					color: var(--Vanilla-400, #c0c1c3);
+					font-family: Inter;
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 500;
+					line-height: 10px; /* 83.333% */
+					letter-spacing: 0.12px;
 				}
 
 				.actions-add-panel {
