@@ -1,7 +1,7 @@
 import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Tooltip, Typography } from 'antd';
+import { Button, Card, Tag, Tooltip, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -16,7 +16,7 @@ import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
-// import DashboardVariableSelection from '../DashboardVariablesSelection';
+import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
 import ShareModal from './ShareModal';
 
@@ -35,7 +35,7 @@ function DashboardDescription(): JSX.Element {
 		  }
 		: ({} as DashboardData);
 
-	const { title = '' } = selectedData || {};
+	const { title = '', description, tags } = selectedData || {};
 
 	const [openDashboardJSON, setOpenDashboardJSON] = useState<boolean>(false);
 
@@ -84,7 +84,6 @@ function DashboardDescription(): JSX.Element {
 				>
 					Dashboard
 				</Button>
-				<div>/</div>
 				<Button type="text" className="id-btn" icon={<Tent size={14} />}>
 					{title}
 				</Button>
@@ -137,6 +136,18 @@ function DashboardDescription(): JSX.Element {
 					)}
 				</div>
 			</section>
+			<div className="dashboard-tags">
+				{tags?.map((tag) => (
+					<Tag key={tag} className="tag">
+						{tag}
+					</Tag>
+				))}
+			</div>
+			<section className="dashboard-description-section">{description}</section>
+			<section className="dashboard-variables">
+				<DashboardVariableSelection />
+			</section>
+
 			{/* <Row gutter={16}>
 				<Col flex={1} span={9}>
 					<Typography.Title

@@ -115,6 +115,7 @@
 				font-weight: 500;
 				line-height: 24px; /* 150% */
 				letter-spacing: -0.08px;
+				flex-shrink: 0;
 			}
 		}
 
@@ -167,6 +168,45 @@
 				line-height: 17.812px; /* 150% */
 			}
 		}
+	}
+
+	.dashboard-tags {
+		display: flex;
+		gap: 6px;
+		padding: 16px 16px 0px 16px;
+		.tag {
+			display: flex;
+			padding: 4px 8px;
+			justify-content: center;
+			align-items: center;
+			border-radius: 20px;
+			border: 1px solid rgba(173, 127, 88, 0.2);
+			background: rgba(173, 127, 88, 0.1);
+			color: var(--Sienna-400, #bd9979);
+			text-align: center;
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+			margin-inline-end: 0px;
+		}
+	}
+	.dashboard-description-section {
+		max-width: 957px;
+		color: var(--Vanilla-400, #c0c1c3);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 22px; /* 157.143% */
+		letter-spacing: -0.07px;
+		padding: 20px 16px 0px 16px;
+	}
+
+	.dashboard-variables {
+		padding: 16px 16px 18px 16px;
 	}
 }
 
