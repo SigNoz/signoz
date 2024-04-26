@@ -3,6 +3,7 @@ package clickhouseReader
 import (
 	"context"
 	"encoding/json"
+	"regexp"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -13,7 +14,8 @@ type ClickhouseQuerySettings struct {
 	MaxExecutionTimeLeaf                string
 	TimeoutBeforeCheckingExecutionSpeed string
 	MaxBytesToRead                      string
-	OptimizeReadInOrder                 string
+	OptimizeReadInOrderRegex            string
+	OptimizeReadInOrderRegexCompiled    *regexp.Regexp
 }
 
 type clickhouseConnWrapper struct {
@@ -60,8 +62,8 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 	}
 
 	// only list queries of
-	if c.settings.OptimizeReadInOrder != "" && strings.Contains(query, "SELECT timestamp, id") && strings.Contains(query, "LIMIT") {
-		settings["optimize_read_in_order"] = c.settings.OptimizeReadInOrder
+	if c.settings.OptimizeReadInOrderRegex != "" && c.settings.OptimizeReadInOrderRegexCompiled.Match([]byte(query)) {
+		settings["optimize_read_in_order"] = 0
 	}
 
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
