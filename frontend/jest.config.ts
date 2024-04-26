@@ -4,6 +4,7 @@ const config: Config.InitialOptions = {
 	clearMocks: true,
 	coverageDirectory: 'coverage',
 	coverageReporters: ['text', 'cobertura', 'html', 'json-summary'],
+	collectCoverageFrom: ['src/**/*.{ts,tsx}'],
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
