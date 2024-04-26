@@ -14,7 +14,13 @@ export const FilterLabel = memo(function FilterLabel({
 
 	return (
 		<StyledLabel isDarkMode={isDarkMode}>
-			<Typography>{label}</Typography>
+			<Typography
+				style={{
+					color: '#c0c1c3',
+				}}
+			>
+				{label}
+			</Typography>
 		</StyledLabel>
 	);
 });

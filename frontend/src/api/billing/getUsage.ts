@@ -13,6 +13,7 @@ export interface UsageResponsePayloadProps {
 		billTotal: number;
 	};
 	discount: number;
+	subscriptionStatus?: string;
 }
 
 const getUsage = async (

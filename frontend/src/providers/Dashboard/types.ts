@@ -19,4 +19,17 @@ export interface IDashboardContext {
 	updatedTimeRef: React.MutableRefObject<dayjs.Dayjs | null>;
 	toScrollWidgetId: string;
 	setToScrollWidgetId: React.Dispatch<React.SetStateAction<string>>;
+	updateLocalStorageDashboardVariables: (
+		id: string,
+		selectedValue:
+			| string
+			| number
+			| boolean
+			| (string | number | boolean)[]
+			| null
+			| undefined,
+		allSelected: boolean,
+	) => void;
+	variablesToGetUpdated: string[];
+	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
 }

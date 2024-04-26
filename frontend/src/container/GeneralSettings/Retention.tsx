@@ -8,6 +8,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { isCloudUser } from 'utils/app';
 
 import {
 	Input,
@@ -85,9 +86,13 @@ function Retention({
 			func(null);
 		}
 	};
+
 	if (hide) {
 		return null;
 	}
+
+	const isCloudUserVal = isCloudUser();
+
 	return (
 		<RetentionContainer>
 			<Row justify="space-between">
@@ -98,12 +103,14 @@ function Retention({
 					<RetentionFieldInputContainer>
 						<Input
 							value={selectedValue && selectedValue >= 0 ? selectedValue : ''}
+							disabled={isCloudUserVal}
 							onChange={(e): void => onChangeHandler(e, setSelectedValue)}
 							style={{ width: 75 }}
 						/>
 						<Select
 							value={selectedTimeUnit}
 							onChange={currentSelectedOption}
+							disabled={isCloudUserVal}
 							style={{ width: 100 }}
 						>
 							{menuItems}

@@ -20,9 +20,11 @@ const config: Config.InitialOptions = {
 	transform: {
 		'^.+\\.(ts|tsx)?$': 'ts-jest',
 		'^.+\\.(js|jsx)$': 'babel-jest',
+		'^.+\\.(css|scss|sass|less)$': 'jest-preview/transforms/css',
+		'^(?!.*\\.(js|jsx|mjs|cjs|ts|tsx|css|json)$)': 'jest-preview/transforms/file',
 	},
 	transformIgnorePatterns: [
-		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios)/)',
+		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens|d3-interpolate|d3-color)/)',
 	],
 	setupFilesAfterEnv: ['<rootDir>jest.setup.ts'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],
@@ -31,6 +33,14 @@ const config: Config.InitialOptions = {
 	testEnvironmentOptions: {
 		'jest-playwright': {
 			browsers: ['chromium', 'firefox', 'webkit'],
+		},
+	},
+	coverageThreshold: {
+		global: {
+			statements: 80,
+			branches: 65,
+			functions: 80,
+			lines: 80,
 		},
 	},
 };

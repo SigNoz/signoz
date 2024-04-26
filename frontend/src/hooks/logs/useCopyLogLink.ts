@@ -25,9 +25,6 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	const { pathname } = useLocation();
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 
 	const { queryData: timeRange } = useUrlQueryData<LogTimeRange | null>(
 		QueryParams.timeRange,
@@ -39,15 +36,30 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 		null,
 	);
 
+	const { selectedTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const onTimeRangeChange = useCallback(
 		(newTimeRange: LogTimeRange | null): void => {
 			urlQuery.set(QueryParams.timeRange, JSON.stringify(newTimeRange));
-			urlQuery.set(QueryParams.startTime, newTimeRange?.start.toString() || '');
-			urlQuery.set(QueryParams.endTime, newTimeRange?.end.toString() || '');
+
+			if (selectedTime !== 'custom') {
+				urlQuery.delete(QueryParams.startTime);
+				urlQuery.delete(QueryParams.endTime);
+
+				urlQuery.set(QueryParams.relativeTime, selectedTime);
+			} else {
+				urlQuery.set(QueryParams.startTime, newTimeRange?.start.toString() || '');
+				urlQuery.set(QueryParams.endTime, newTimeRange?.end.toString() || '');
+
+				urlQuery.delete(QueryParams.relativeTime);
+			}
+
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
 			history.replace(generatedUrl);
 		},
-		[pathname, urlQuery],
+		[pathname, urlQuery, selectedTime],
 	);
 
 	const isActiveLog = useMemo(() => activeLogId === logId, [activeLogId, logId]);
@@ -70,8 +82,8 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 			urlQuery.delete(QueryParams.timeRange);
 			urlQuery.set(QueryParams.activeLogId, `"${logId}"`);
 			urlQuery.set(QueryParams.timeRange, range);
-			urlQuery.set(QueryParams.startTime, minTime.toString());
-			urlQuery.set(QueryParams.endTime, maxTime.toString());
+			urlQuery.set(QueryParams.startTime, timeRange?.start.toString() || '');
+			urlQuery.set(QueryParams.endTime, timeRange?.end.toString() || '');
 
 			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
 
@@ -80,16 +92,7 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 				message: 'Copied to clipboard',
 			});
 		},
-		[
-			logId,
-			timeRange,
-			urlQuery,
-			minTime,
-			maxTime,
-			pathname,
-			setCopy,
-			notifications,
-		],
+		[logId, timeRange, urlQuery, pathname, setCopy, notifications],
 	);
 
 	useEffect(() => {

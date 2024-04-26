@@ -54,6 +54,7 @@
 	"field_promql_expr": "PromQL Expression",
 	"field_alert_name": "Alert Name",
 	"field_alert_desc": "Alert Description",
+	"field_notification_channel": "Notification Channel",
 	"field_labels": "Labels",
 	"field_severity": "Severity",
 	"option_critical": "Critical",

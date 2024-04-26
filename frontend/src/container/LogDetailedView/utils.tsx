@@ -262,3 +262,7 @@ export const removeEscapeCharacters = (str: string): string =>
 		};
 		return escapeMap[char as keyof typeof escapeMap];
 	});
+
+export function removeExtraSpaces(input: string): string {
+	return input.replace(/\s+/g, ' ').trim();
+}

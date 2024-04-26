@@ -1,0 +1,143 @@
+.overview-container {
+	.tag {
+		border-radius: 20px;
+		border: 1px solid rgba(173, 127, 88, 0.2);
+		background: rgba(173, 127, 88, 0.1);
+		padding: var(--padding-1) var(--padding-2);
+		font-family: 'Inter';
+		font-size: var(--font-size-xs);
+		font-weight: var(--font-weight-medium);
+		line-height: 16px;
+		letter-spacing: -0.005em;
+		text-align: center;
+		color: var(--text-sienna-400);
+	}
+
+	.log-switch {
+		height: 36px;
+		display: flex;
+		align-items: center;
+
+		.wrap-word-switch {
+			display: flex;
+			gap: 8px;
+			margin-left: var(--margin-3);
+			align-items: center;
+		}
+
+		.log-switch-btn {
+			border: 1px solid var(--bg-slate-500);
+			background-color: var(--bg-slate-500);
+			width: 40px;
+			height: 100%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+	}
+
+	.attribute-table {
+		margin-top: var(--margin-1);
+	}
+
+	.ant-collapse {
+		border: 1px solid var(--bg-slate-400);
+	}
+
+	.collapse-content {
+		border-bottom: 1px solid var(--bg-slate-500);
+
+		.ant-collapse-header {
+			align-items: center;
+			border-radius: 2px;
+			background: rgba(171, 189, 255, 0.04);
+
+			padding: 8px;
+
+			.ant-collapse-extra {
+				display: flex;
+				align-items: center;
+
+				.action-btn {
+					display: flex;
+
+					.ant-btn {
+						background: rgba(113, 144, 249, 0.08);
+					}
+				}
+			}
+		}
+
+		.ant-collapse-content {
+			padding: 0;
+			background: var(--bg-ink-400);
+			border-top: 1px solid var(--bg-slate-500);
+
+			.ant-collapse-content-box {
+				padding: var(--padding-2) 0 0 0;
+			}
+		}
+	}
+
+	.logs-body-content {
+		padding-top: 12px;
+	}
+
+	.ant-tag-borderless {
+		border-radius: 2px;
+		background: rgba(113, 144, 249, 0.08);
+	}
+
+	.attribute-collapse {
+		.ant-collapse-content {
+			.ant-collapse-content-box {
+				padding: 0;
+			}
+		}
+	}
+
+	.ant-table-wrapper .ant-table-cell {
+		padding: 14px 14px;
+	}
+
+	.attribute-tab-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+
+		.action-btn {
+			border-radius: 2px;
+			border: 1px solid var(--bg-slate-400);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+
+			background: none;
+			border: none;
+			box-shadow: none;
+		}
+	}
+}
+
+.lightMode {
+	.overview-container {
+		.ant-collapse {
+			border: 1px solid var(--bg-vanilla-200);
+		}
+
+		.collapse-content {
+			border-bottom: 1px solid var(--bg-vanilla-200);
+			.ant-collapse-content {
+				background: var(--bg-vanilla-100);
+				border-top: 1px solid var(--bg-vanilla-200);
+			}
+		}
+
+		.log-switch {
+			.log-switch-btn {
+				background: var(--bg-vanilla-200);
+				border: 1px solid var(--bg-vanilla-400);
+			}
+		}
+	}
+}

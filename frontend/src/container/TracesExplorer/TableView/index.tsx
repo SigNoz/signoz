@@ -1,4 +1,5 @@
 import { Space } from 'antd';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { QueryTable } from 'container/QueryTable';
@@ -27,6 +28,7 @@ function TableView(): JSX.Element {
 				dataSource: 'traces',
 			},
 		},
+		DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,

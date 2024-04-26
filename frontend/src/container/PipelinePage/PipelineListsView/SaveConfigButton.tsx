@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { SaveConfigWrapper } from './styles';
 
 function SaveConfigButton({
+	showSaveButton,
 	onSaveConfigurationHandler,
 	onCancelConfigurationHandler,
 }: SaveConfigButtonTypes): JSX.Element {
@@ -11,14 +12,16 @@ function SaveConfigButton({
 
 	return (
 		<SaveConfigWrapper>
-			<Button
-				key="submit"
-				type="primary"
-				htmlType="submit"
-				onClick={onSaveConfigurationHandler}
-			>
-				{t('save_configuration')}
-			</Button>
+			{showSaveButton && (
+				<Button
+					key="submit"
+					type="primary"
+					htmlType="submit"
+					onClick={onSaveConfigurationHandler}
+				>
+					{t('save_configuration')}
+				</Button>
+			)}
 			<Button key="cancel" onClick={onCancelConfigurationHandler}>
 				{t('cancel')}
 			</Button>
@@ -26,6 +29,7 @@ function SaveConfigButton({
 	);
 }
 export interface SaveConfigButtonTypes {
+	showSaveButton: boolean;
 	onSaveConfigurationHandler: VoidFunction;
 	onCancelConfigurationHandler: VoidFunction;
 }

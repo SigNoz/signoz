@@ -277,6 +277,7 @@ function AuthDomains(): JSX.Element {
 					rowKey={(record: AuthDomain): string => record.name + v4()}
 					dataSource={!SSOFlag ? notEntripriseData : []}
 					tableLayout="fixed"
+					bordered
 				/>
 			</Space>
 		);
@@ -327,6 +328,7 @@ function AuthDomains(): JSX.Element {
 					loading={isLoading}
 					tableLayout="fixed"
 					rowKey={(record: AuthDomain): string => record.name + v4()}
+					bordered
 				/>
 			</Space>
 		</>

@@ -1,5 +1,5 @@
-import { SettingOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { Cog } from 'lucide-react';
 import { useState } from 'react';
 
 import DashboardSettingsContent from '../DashboardSettings';
@@ -18,14 +18,16 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 
 	return (
 		<>
-			<Button
-				type="dashed"
-				onClick={showDrawer}
-				style={{ width: '100%' }}
-				data-testid="show-drawer"
-			>
-				<SettingOutlined /> Configure
-			</Button>
+			<Tooltip title="Configure" placement="left">
+				<Button
+					className="periscope-btn"
+					onClick={showDrawer}
+					style={{ width: '100%' }}
+					data-testid="show-drawer"
+					icon={<Cog size={16} />}
+				/>
+			</Tooltip>
+
 			<DrawerContainer
 				title={drawerTitle}
 				placement="right"

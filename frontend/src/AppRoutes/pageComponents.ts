@@ -15,9 +15,20 @@ export const ServiceMapPage = Loadable(
 	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
 );
 
+export const LogsSaveViews = Loadable(
+	() => import(/* webpackChunkName: "LogsSaveViews" */ 'pages/LogsModulePage'), // TODO: Add a wrapper so that the same component can be used in traces
+);
+
 export const TracesExplorer = Loadable(
 	() =>
-		import(/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesExplorer'),
+		import(
+			/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesModulePage'
+		),
+);
+
+export const TracesSaveViews = Loadable(
+	() =>
+		import(/* webpackChunkName: "Traces Save Views" */ 'pages/TracesModulePage'),
 );
 
 export const TraceFilter = Loadable(
@@ -107,6 +118,10 @@ export const IngestionSettings = Loadable(
 	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
 );
 
+export const APIKeys = Loadable(
+	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
+);
+
 export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
 );
@@ -170,4 +185,15 @@ export const SupportPage = Loadable(
 export const WorkspaceBlocked = Loadable(
 	() =>
 		import(/* webpackChunkName: "WorkspaceLocked" */ 'pages/WorkspaceLocked'),
+);
+
+export const ShortcutsPage = Loadable(
+	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Shortcuts'),
+);
+
+export const InstalledIntegrations = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "InstalledIntegrations" */ 'pages/IntegrationsModulePage'
+		),
 );

@@ -118,13 +118,21 @@ export const topOperationQueries = ({
 		KeyOperationTableHeader.ERROR_RATE,
 		KeyOperationTableHeader.NUM_OF_CALLS,
 	];
-	const aggregateOperators = [
-		MetricAggregateOperator.HIST_QUANTILE_50,
-		MetricAggregateOperator.HIST_QUANTILE_90,
-		MetricAggregateOperator.HIST_QUANTILE_99,
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
+	const timeAggregateOperators = [
+		MetricAggregateOperator.EMPTY,
+		MetricAggregateOperator.EMPTY,
+		MetricAggregateOperator.EMPTY,
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+	];
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.P50,
+		MetricAggregateOperator.P90,
+		MetricAggregateOperator.P99,
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
 	const expressions = ['D*100/E'];
 	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];
@@ -135,7 +143,8 @@ export const topOperationQueries = ({
 		additionalItems,
 		disabled,
 		legends,
-		aggregateOperators,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 		expressions,
 		legendFormulas,
 		dataSource,

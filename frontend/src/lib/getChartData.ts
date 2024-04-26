@@ -88,9 +88,11 @@ const getChartData = ({
 	const allLabels = modifiedData.map((e) => e.label);
 
 	const updatedDataSet = updatedSortedData.map((e, index) => {
+		const label = allLabels[index];
+
 		const datasetBaseConfig = {
 			index,
-			label: allLabels[index],
+			label,
 			borderColor: colors[index % colors.length] || 'red',
 			data: e.second,
 			borderWidth: 1.5,

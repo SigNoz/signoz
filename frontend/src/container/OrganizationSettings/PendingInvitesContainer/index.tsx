@@ -271,12 +271,14 @@ function PendingInvitesContainer(): JSX.Element {
 
 			<Space direction="vertical" size="middle">
 				<TitleWrapper>
-					<Typography.Title level={3}>{t('pending_invites')}</Typography.Title>
+					<Typography.Title level={3}>
+						{t('pending_invites')}
+						{getPendingInvitesResponse.status !== 'loading' && dataSource && (
+							<div className="members-count"> ({dataSource.length})</div>
+						)}
+					</Typography.Title>
 
 					<Space>
-						<Typography.Text type="warning">
-							{t('invite_link_share_manually')}
-						</Typography.Text>
 						<Button
 							icon={<PlusOutlined />}
 							type="primary"
@@ -294,6 +296,7 @@ function PendingInvitesContainer(): JSX.Element {
 					dataSource={dataSource}
 					pagination={false}
 					loading={getPendingInvitesResponse.status === 'loading'}
+					bordered
 				/>
 			</Space>
 		</div>

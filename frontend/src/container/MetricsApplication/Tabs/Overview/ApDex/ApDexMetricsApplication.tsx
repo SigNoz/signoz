@@ -1,7 +1,9 @@
 import Spinner from 'components/Spinner';
 import { useGetMetricMeta } from 'hooks/apDex/useGetMetricMeta';
 import useErrorNotification from 'hooks/useErrorNotification';
+import { useParams } from 'react-router-dom';
 
+import { IServiceName } from '../../types';
 import ApDexMetrics from './ApDexMetrics';
 import { metricMeta } from './constants';
 import { ApDexDataSwitcherProps } from './types';
@@ -13,7 +15,10 @@ function ApDexMetricsApplication({
 	thresholdValue,
 	topLevelOperationsRoute,
 }: ApDexDataSwitcherProps): JSX.Element {
-	const { data, isLoading, error } = useGetMetricMeta(metricMeta);
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const servicename = decodeURIComponent(encodedServiceName);
+
+	const { data, isLoading, error } = useGetMetricMeta(metricMeta, servicename);
 	useErrorNotification(error);
 
 	if (isLoading) {

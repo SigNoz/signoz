@@ -1,4 +1,4 @@
-import { Row } from 'antd';
+import { Row, Typography } from 'antd';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -33,7 +33,14 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 
 	return (
 		<SelectTypeContainer>
-			<h3> {t('choose_alert_type')} </h3>
+			<Typography.Title
+				level={4}
+				style={{
+					padding: '0 8px',
+				}}
+			>
+				{t('choose_alert_type')}
+			</Typography.Title>
 			<Row>{renderOptions}</Row>
 		</SelectTypeContainer>
 	);

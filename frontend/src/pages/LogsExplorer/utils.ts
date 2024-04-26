@@ -10,3 +10,10 @@ export const prepareQueryWithDefaultTimestamp = (query: Query): Query => ({
 		})),
 	},
 });
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum SELECTED_VIEWS {
+	SEARCH = 'search',
+	QUERY_BUILDER = 'query-builder',
+	CLICKHOUSE = 'clickhouse',
+}

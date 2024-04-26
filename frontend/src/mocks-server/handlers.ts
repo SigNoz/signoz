@@ -11,6 +11,10 @@ export const handlers = [
 		res(ctx.status(200), ctx.json(queryRangeSuccessResponse)),
 	),
 
+	rest.post('http://localhost/api/v4/query_range', (req, res, ctx) =>
+		res(ctx.status(200), ctx.json(queryRangeSuccessResponse)),
+	),
+
 	rest.post('http://localhost/api/v1/services', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(serviceSuccessResponse)),
 	),
@@ -22,7 +26,7 @@ export const handlers = [
 	),
 
 	rest.get(
-		'http://localhost/api/v2/metrics/autocomplete/tagKey',
+		'http://localhost/api/v3/autocomplete/attribute_keys',
 		(req, res, ctx) => {
 			const metricName = req.url.searchParams.get('metricName');
 			const match = req.url.searchParams.get('match');
@@ -39,7 +43,7 @@ export const handlers = [
 	),
 
 	rest.get(
-		'http://localhost/api/v2/metrics/autocomplete/tagValue',
+		'http://localhost/api/v3/autocomplete/attribute_values',
 		(req, res, ctx) => {
 			// ?metricName=signoz_calls_total&tagKey=resource_signoz_collector_id
 			const metricName = req.url.searchParams.get('metricName');

@@ -74,6 +74,12 @@ func isEnriched(field v3.AttributeKey) bool {
 	if field.Type == v3.AttributeKeyTypeUnspecified || field.DataType == v3.AttributeKeyDataTypeUnspecified {
 		return false
 	}
+
+	// try to enrich all attributes which doesn't have isColumn = true
+	if !field.IsColumn {
+		return false
+	}
+
 	return true
 }
 
@@ -103,6 +109,7 @@ func enrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) 
 		for i := 0; i < len(query.Filters.Items); i++ {
 			query.Filters.Items[i] = jsonFilterEnrich(query.Filters.Items[i])
 			if query.Filters.Items[i].Key.IsJSON {
+				query.Filters.Items[i] = jsonReplaceField(query.Filters.Items[i], fields)
 				continue
 			}
 			query.Filters.Items[i].Key = enrichFieldWithMetadata(query.Filters.Items[i].Key, fields)
@@ -147,8 +154,12 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 	}
 
 	// enrich with default values if metadata is not found
-	field.Type = v3.AttributeKeyTypeTag
-	field.DataType = v3.AttributeKeyDataTypeString
+	if field.Type == "" {
+		field.Type = v3.AttributeKeyTypeTag
+	}
+	if field.DataType == "" {
+		field.DataType = v3.AttributeKeyDataTypeString
+	}
 	return field
 }
 
@@ -178,6 +189,19 @@ func jsonFilterEnrich(filter v3.FilterItem) v3.FilterItem {
 
 	filter.Key.DataType = v3.AttributeKeyDataType(valueType)
 	filter.Key.IsJSON = true
+	return filter
+}
+
+func jsonReplaceField(filter v3.FilterItem, fields map[string]v3.AttributeKey) v3.FilterItem {
+	key, found := strings.CutPrefix(filter.Key.Key, "body.")
+	if !found {
+		return filter
+	}
+
+	if field, ok := fields[key]; ok && field.DataType == filter.Key.DataType {
+		filter.Key = field
+	}
+
 	return filter
 }
 

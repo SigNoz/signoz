@@ -224,7 +224,6 @@ const appReducer = (
 		}
 
 		case UPDATE_USER_FLAG: {
-			console.log('herei n update user flag');
 			return {
 				...state,
 				userFlags: { ...state.userFlags, ...action.payload.flags },

@@ -81,6 +81,15 @@ function ChannelsEdit(): JSX.Element {
 			};
 		}
 
+		if (value && 'email_configs' in value) {
+			const emailConfig = value.email_configs[0];
+			channel = emailConfig;
+			return {
+				type: ChannelType.Email,
+				channel,
+			};
+		}
+
 		if (value && 'webhook_configs' in value) {
 			const webhookConfig = value.webhook_configs[0];
 			channel = webhookConfig;

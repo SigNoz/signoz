@@ -1,0 +1,13 @@
+.query-builder-search-wrapper {
+	margin-top: 10px;
+	border: 1px solid var(--bg-slate-400);
+	border-bottom: none;
+
+	.ant-select-selector {
+		border: none !important;
+
+		input {
+			font-size: 12px;
+		}
+	}
+}

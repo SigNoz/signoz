@@ -1,12 +1,17 @@
 /* eslint-disable react/no-unescaped-entities */
 import './WorkspaceLocked.styles.scss';
 
-import { CreditCardOutlined, LockOutlined } from '@ant-design/icons';
+import {
+	CreditCardOutlined,
+	LockOutlined,
+	SendOutlined,
+} from '@ant-design/icons';
 import { Button, Card, Skeleton, Typography } from 'antd';
 import updateCreditCardApi from 'api/billing/checkout';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
-import FullViewHeader from 'container/FullViewHeader/FullViewHeader';
+import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
+import useAnalytics from 'hooks/analytics/useAnalytics';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -22,6 +27,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const isAdmin = role === 'ADMIN';
 	const [activeLicense, setActiveLicense] = useState<License | null>(null);
+	const { trackEvent } = useAnalytics();
 
 	const { notifications } = useNotifications();
 
@@ -68,16 +74,36 @@ export default function WorkspaceBlocked(): JSX.Element {
 	);
 
 	const handleUpdateCreditCard = useCallback(async () => {
+		trackEvent('Workspace Blocked: User Clicked Update Credit Card');
+
 		updateCreditCard({
 			licenseKey: activeLicense?.key || '',
 			successURL: window.location.origin,
 			cancelURL: window.location.origin,
 		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [activeLicense?.key, updateCreditCard]);
+
+	const handleExtendTrial = (): void => {
+		trackEvent('Workspace Blocked: User Clicked Extend Trial');
+
+		notifications.info({
+			message: 'Extend Trial',
+			description: (
+				<Typography>
+					If you have a specific reason why you were not able to finish your PoC in
+					the trial period, please write to us on
+					<a href="mailto:cloud-support@signoz.io"> cloud-support@signoz.io </a>
+					with the reason. Sometimes we can extend trial by a few days on a case by
+					case basis
+				</Typography>
+			),
+		});
+	};
 
 	return (
 		<>
-			<FullViewHeader overrideRoute={ROUTES.WORKSPACE_LOCKED} />
+			<FullScreenHeader overrideRoute={ROUTES.WORKSPACE_LOCKED} />
 
 			<Card className="workspace-locked-container">
 				{isLoadingLicenseData || !licensesData?.payload?.workSpaceBlock ? (
@@ -95,22 +121,35 @@ export default function WorkspaceBlocked(): JSX.Element {
 							account.
 							{!isAdmin && 'Please contact your administrator for further help'}
 						</Typography.Paragraph>
-						{isAdmin && (
+
+						<div className="cta">
+							{isAdmin && (
+								<Button
+									className="update-credit-card-btn"
+									type="primary"
+									icon={<CreditCardOutlined />}
+									size="middle"
+									loading={isLoading}
+									onClick={handleUpdateCreditCard}
+								>
+									Update Credit Card
+								</Button>
+							)}
+
 							<Button
-								className="update-credit-card-btn"
-								type="primary"
-								icon={<CreditCardOutlined />}
+								className="extend-trial-btn"
+								type="default"
+								icon={<SendOutlined />}
 								size="middle"
-								loading={isLoading}
-								onClick={handleUpdateCreditCard}
+								onClick={handleExtendTrial}
 							>
-								Update Credit Card
+								Extend Trial
 							</Button>
-						)}
+						</div>
 						<div className="contact-us">
 							Got Questions?
 							<span>
-								<a href="mailto:support@signoz.io"> Contact Us </a>
+								<a href="mailto:cloud-support@signoz.io"> Contact Us </a>
 							</span>
 						</div>
 					</>

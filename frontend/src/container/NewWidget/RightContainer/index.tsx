@@ -3,6 +3,7 @@ import {
 	Button,
 	Divider,
 	Input,
+	InputNumber,
 	Select,
 	Space,
 	Switch,
@@ -11,12 +12,29 @@ import {
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
+import GraphTypes, {
+	ItemsProps,
+} from 'container/NewDashboard/ComponentsSlider/menuItems';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
-import { Dispatch, SetStateAction, useCallback } from 'react';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useState,
+} from 'react';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { DataSource } from 'types/common/queryBuilder';
 
-import { panelTypeVsThreshold } from './constants';
+import {
+	panelTypeVsCreateAlert,
+	panelTypeVsFillSpan,
+	panelTypeVsPanelTimePreferences,
+	panelTypeVsSoftMinMax,
+	panelTypeVsThreshold,
+	panelTypeVsYAxisUnit,
+} from './constants';
 import { Container, Title } from './styles';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
@@ -42,6 +60,10 @@ function RightContainer({
 	selectedWidget,
 	isFillSpans,
 	setIsFillSpans,
+	softMax,
+	softMin,
+	setSoftMax,
+	setSoftMin,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
 		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
@@ -56,6 +78,44 @@ function RightContainer({
 	const onCreateAlertsHandler = useCreateAlerts(selectedWidget);
 
 	const allowThreshold = panelTypeVsThreshold[selectedGraph];
+	const allowSoftMinMax = panelTypeVsSoftMinMax[selectedGraph];
+	const allowFillSpans = panelTypeVsFillSpan[selectedGraph];
+	const allowYAxisUnit = panelTypeVsYAxisUnit[selectedGraph];
+	const allowCreateAlerts = panelTypeVsCreateAlert[selectedGraph];
+	const allowPanelTimePreference =
+		panelTypeVsPanelTimePreferences[selectedGraph];
+
+	const { currentQuery } = useQueryBuilder();
+
+	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(GraphTypes);
+
+	useEffect(() => {
+		const queryContainsMetricsDataSource = currentQuery.builder.queryData.some(
+			(query) => query.dataSource === DataSource.METRICS,
+		);
+
+		if (queryContainsMetricsDataSource) {
+			setGraphTypes((prev) =>
+				prev.filter((graph) => graph.name !== PANEL_TYPES.LIST),
+			);
+		} else {
+			setGraphTypes(GraphTypes);
+		}
+	}, [currentQuery]);
+
+	const softMinHandler = useCallback(
+		(value: number | null) => {
+			setSoftMin(value);
+		},
+		[setSoftMin],
+	);
+
+	const softMaxHandler = useCallback(
+		(value: number | null) => {
+			setSoftMax(value);
+		},
+		[setSoftMax],
+	);
 
 	return (
 		<Container>
@@ -63,10 +123,9 @@ function RightContainer({
 			<Select
 				onChange={setGraphHandler}
 				value={selectedGraph}
-				disabled
 				style={{ width: '100%', marginBottom: 24 }}
 			>
-				{GraphTypes.map((item) => (
+				{graphTypes.map((item) => (
 					<Option key={item.name} value={item.name}>
 						{item.display}
 					</Option>
@@ -97,37 +156,69 @@ function RightContainer({
 				}
 			/>
 
-			<Space style={{ marginTop: 10 }} direction="vertical">
-				<Typography>Fill gaps</Typography>
+			{allowFillSpans && (
+				<Space style={{ marginTop: 10 }} direction="vertical">
+					<Typography>Fill gaps</Typography>
 
-				<Switch
-					checked={isFillSpans}
-					onChange={(checked): void => setIsFillSpans(checked)}
-				/>
-			</Space>
+					<Switch
+						checked={isFillSpans}
+						onChange={(checked): void => setIsFillSpans(checked)}
+					/>
+				</Space>
+			)}
 
-			<Title light="true">Panel Time Preference</Title>
+			{allowPanelTimePreference && (
+				<Title light="true">Panel Time Preference</Title>
+			)}
 
 			<Space direction="vertical">
-				<TimePreference
-					{...{
-						selectedTime,
-						setSelectedTime,
-					}}
-				/>
+				{allowPanelTimePreference && (
+					<TimePreference
+						{...{
+							selectedTime,
+							setSelectedTime,
+						}}
+					/>
+				)}
 
-				<YAxisUnitSelector
-					defaultValue={yAxisUnit}
-					onSelect={setYAxisUnit}
-					fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
-				/>
+				{allowYAxisUnit && (
+					<YAxisUnitSelector
+						defaultValue={yAxisUnit}
+						onSelect={setYAxisUnit}
+						fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
+					/>
+				)}
 
-				{selectedWidget?.panelTypes !== PANEL_TYPES.TABLE && (
+				{allowCreateAlerts && (
 					<Button icon={<UploadOutlined />} onClick={onCreateAlertsHandler}>
 						Create Alerts from Queries
 					</Button>
 				)}
 			</Space>
+
+			{allowSoftMinMax && (
+				<>
+					<Divider />
+					<Typography.Text style={{ display: 'block', margin: '5px 0' }}>
+						Soft Min
+					</Typography.Text>
+					<InputNumber
+						type="number"
+						value={softMin}
+						style={{ display: 'block', width: '100%' }}
+						onChange={softMinHandler}
+					/>
+					<Typography.Text style={{ display: 'block', margin: '5px 0' }}>
+						Soft Max
+					</Typography.Text>
+					<InputNumber
+						value={softMax}
+						type="number"
+						style={{ display: 'block', width: '100%' }}
+						onChange={softMaxHandler}
+					/>
+				</>
+			)}
 
 			{allowThreshold && (
 				<>
@@ -166,6 +257,10 @@ interface RightContainerProps {
 	selectedWidget?: Widgets;
 	isFillSpans: boolean;
 	setIsFillSpans: Dispatch<SetStateAction<boolean>>;
+	softMin: number | null;
+	softMax: number | null;
+	setSoftMin: Dispatch<SetStateAction<number | null>>;
+	setSoftMax: Dispatch<SetStateAction<number | null>>;
 }
 
 RightContainer.defaultProps = {

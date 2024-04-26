@@ -26,8 +26,8 @@ const useAnalytics = (): any => {
 				},
 			};
 
-			const updatedPropertes = { ...properties };
-			updatedPropertes.userId = user.email;
+			const updatedProperties = { ...properties };
+			updatedProperties.userId = user.email;
 			window.analytics.track(eventName, properties, context);
 		}
 	};

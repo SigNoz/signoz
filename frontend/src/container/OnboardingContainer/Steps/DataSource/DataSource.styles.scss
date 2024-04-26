@@ -22,6 +22,7 @@ div[class*='-setup-instructions-container'] {
 
 .form-container {
 	display: flex;
+	flex-direction: column;
 	align-items: flex-start;
 	width: 100%;
 	gap: 16px;
@@ -35,4 +36,8 @@ div[class*='-setup-instructions-container'] {
 	text-overflow: ellipsis;
 	text-align: center;
 	font-size: 12px;
+}
+
+.service-name-container {
+	width: 100%;
 }

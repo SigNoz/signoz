@@ -1,4 +1,6 @@
 import {
+	Checkbox,
+	Collapse,
 	Form,
 	InputNumber,
 	InputNumberProps,
@@ -18,12 +20,18 @@ import {
 	AlertDef,
 	defaultCompareOp,
 	defaultEvalWindow,
+	defaultFrequency,
 	defaultMatchType,
 } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { FormContainer, InlineSelect, StepHeading } from './styles';
+import {
+	FormContainer,
+	InlineSelect,
+	StepHeading,
+	VerticalLine,
+} from './styles';
 
 function RuleOptions({
 	alertDef,
@@ -83,7 +91,7 @@ function RuleOptions({
 		</InlineSelect>
 	);
 
-	const renderThresholdMatchOpts = (): JSX.Element => (
+	const renderMatchOpts = (): JSX.Element => (
 		<InlineSelect
 			getPopupContainer={popupContainer}
 			defaultValue={defaultMatchType}
@@ -98,17 +106,13 @@ function RuleOptions({
 		</InlineSelect>
 	);
 
-	const renderPromMatchOpts = (): JSX.Element => (
-		<InlineSelect
-			getPopupContainer={popupContainer}
-			defaultValue={defaultMatchType}
-			style={{ minWidth: '130px' }}
-			value={alertDef.condition?.matchType}
-			onChange={(value: string | unknown): void => handleMatchOptChange(value)}
-		>
-			<Select.Option value="1">{t('option_atleastonce')}</Select.Option>
-		</InlineSelect>
-	);
+	const onChangeEvalWindow = (value: string | unknown): void => {
+		const ew = (value as string) || alertDef.evalWindow;
+		setAlertDef({
+			...alertDef,
+			evalWindow: ew,
+		});
+	};
 
 	const renderEvalWindows = (): JSX.Element => (
 		<InlineSelect
@@ -116,13 +120,7 @@ function RuleOptions({
 			defaultValue={defaultEvalWindow}
 			style={{ minWidth: '120px' }}
 			value={alertDef.evalWindow}
-			onChange={(value: string | unknown): void => {
-				const ew = (value as string) || alertDef.evalWindow;
-				setAlertDef({
-					...alertDef,
-					evalWindow: ew,
-				});
-			}}
+			onChange={onChangeEvalWindow}
 		>
 			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
 			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
@@ -130,6 +128,20 @@ function RuleOptions({
 			<Select.Option value="1h0m0s">{t('option_60min')}</Select.Option>
 			<Select.Option value="4h0m0s">{t('option_4hours')}</Select.Option>
 			<Select.Option value="24h0m0s">{t('option_24hours')}</Select.Option>
+		</InlineSelect>
+	);
+
+	const renderPromEvalWindows = (): JSX.Element => (
+		<InlineSelect
+			getPopupContainer={popupContainer}
+			defaultValue={defaultEvalWindow}
+			style={{ minWidth: '120px' }}
+			value={alertDef.evalWindow}
+			onChange={onChangeEvalWindow}
+		>
+			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
+			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
+			<Select.Option value="15m0s">{t('option_15min')}</Select.Option>
 		</InlineSelect>
 	);
 
@@ -147,7 +159,7 @@ function RuleOptions({
 					onChange={onChangeSelectedQueryName}
 				/>
 				<Typography.Text>is</Typography.Text>
-				{renderCompareOps()} {t('text_condition2')} {renderThresholdMatchOpts()}{' '}
+				{renderCompareOps()} {t('text_condition2')} {renderMatchOpts()}{' '}
 				{t('text_condition3')} {renderEvalWindows()}
 			</Typography.Text>
 		</Form.Item>
@@ -167,7 +179,8 @@ function RuleOptions({
 					onChange={onChangeSelectedQueryName}
 				/>
 				<Typography.Text>is</Typography.Text>
-				{renderCompareOps()} {t('text_condition2')} {renderPromMatchOpts()}
+				{renderCompareOps()} {t('text_condition2')} {renderMatchOpts()}
+				{t('text_condition3')} {renderPromEvalWindows()}
 			</Typography.Text>
 		</Form.Item>
 	);
@@ -194,6 +207,35 @@ function RuleOptions({
 		});
 	};
 
+	const onChangeFrequency = (value: string | unknown): void => {
+		const freq = (value as string) || alertDef.frequency;
+		setAlertDef({
+			...alertDef,
+			frequency: freq,
+		});
+	};
+
+	const renderFrequency = (): JSX.Element => (
+		<InlineSelect
+			getPopupContainer={popupContainer}
+			defaultValue={defaultFrequency}
+			style={{ minWidth: '120px' }}
+			value={alertDef.frequency}
+			onChange={onChangeFrequency}
+		>
+			<Select.Option value="1m0s">{t('option_1min')}</Select.Option>
+			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
+			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
+			<Select.Option value="15m0s">{t('option_15min')}</Select.Option>
+			<Select.Option value="30m0s">{t('option_30min')}</Select.Option>
+			<Select.Option value="1h0m0s">{t('option_60min')}</Select.Option>
+			<Select.Option value="3h0m0s">{t('option_3hours')}</Select.Option>
+			<Select.Option value="6h0m0s">{t('option_6hours')}</Select.Option>
+			<Select.Option value="12h0m0s">{t('option_12hours')}</Select.Option>
+			<Select.Option value="24h0m0s">{t('option_24hours')}</Select.Option>
+		</InlineSelect>
+	);
+
 	const selectedCategory = getCategoryByOptionId(currentQuery?.unit || '');
 
 	const categorySelectOptions = getCategorySelectOptionByName(
@@ -208,28 +250,81 @@ function RuleOptions({
 					? renderPromRuleOptions()
 					: renderThresholdRuleOpts()}
 
-				<Space direction="horizontal" align="center">
-					<Form.Item noStyle name={['condition', 'target']}>
-						<InputNumber
-							addonBefore={t('field_threshold')}
-							value={alertDef?.condition?.target}
-							onChange={onChange}
-							type="number"
-							onWheel={(e): void => e.currentTarget.blur()}
-						/>
-					</Form.Item>
+				<Space direction="vertical" size="large">
+					<Space direction="horizontal" align="center">
+						<Form.Item noStyle name={['condition', 'target']}>
+							<InputNumber
+								addonBefore={t('field_threshold')}
+								value={alertDef?.condition?.target}
+								onChange={onChange}
+								type="number"
+								onWheel={(e): void => e.currentTarget.blur()}
+							/>
+						</Form.Item>
 
-					<Form.Item noStyle>
-						<Select
-							getPopupContainer={popupContainer}
-							allowClear
-							showSearch
-							options={categorySelectOptions}
-							placeholder={t('field_unit')}
-							value={alertDef.condition.targetUnit}
-							onChange={onChangeAlertUnit}
-						/>
-					</Form.Item>
+						<Form.Item noStyle>
+							<Select
+								getPopupContainer={popupContainer}
+								allowClear
+								showSearch
+								options={categorySelectOptions}
+								placeholder={t('field_unit')}
+								value={alertDef.condition.targetUnit}
+								onChange={onChangeAlertUnit}
+							/>
+						</Form.Item>
+					</Space>
+					<Collapse>
+						<Collapse.Panel header={t('More options')} key="1">
+							<Space direction="vertical" size="large">
+								<VerticalLine>
+									<Space direction="horizontal" align="center">
+										<Typography.Text>{t('text_alert_frequency')}</Typography.Text>
+										{renderFrequency()}
+									</Space>
+								</VerticalLine>
+
+								<VerticalLine>
+									<Space direction="horizontal" align="center">
+										<Form.Item noStyle name={['condition', 'alertOnAbsent']}>
+											<Checkbox
+												checked={alertDef?.condition?.alertOnAbsent}
+												onChange={(e): void => {
+													setAlertDef({
+														...alertDef,
+														condition: {
+															...alertDef.condition,
+															alertOnAbsent: e.target.checked,
+														},
+													});
+												}}
+											/>
+										</Form.Item>
+										<Typography.Text>{t('text_alert_on_absent')}</Typography.Text>
+
+										<Form.Item noStyle name={['condition', 'absentFor']}>
+											<InputNumber
+												min={1}
+												value={alertDef?.condition?.absentFor}
+												onChange={(value): void => {
+													setAlertDef({
+														...alertDef,
+														condition: {
+															...alertDef.condition,
+															absentFor: Number(value) || 0,
+														},
+													});
+												}}
+												type="number"
+												onWheel={(e): void => e.currentTarget.blur()}
+											/>
+										</Form.Item>
+										<Typography.Text>{t('text_for')}</Typography.Text>
+									</Space>
+								</VerticalLine>
+							</Space>
+						</Collapse.Panel>
+					</Collapse>
 				</Space>
 			</FormContainer>
 		</>

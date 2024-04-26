@@ -1,0 +1,27 @@
+.text {
+	color: var(--bg-vanilla-400);
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 18px; /* 128.571% */
+	letter-spacing: -0.07px;
+}
+
+.table-timestamp {
+	display: flex;
+	align-items: center;
+
+	.ant-typography {
+		margin-bottom: 0;
+	}
+
+	.log-state-indicator {
+		padding: 0px;
+	}
+}
+
+.lightMode {
+	.text {
+		color: var(--bg-slate-400);
+	}
+}

@@ -1,5 +1,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
 import { Format } from 'container/NewWidget/RightContainer/types';
+import { Dispatch, SetStateAction } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -60,7 +62,14 @@ export enum BoolOperators {
 	COUNT_DISTINCT = 'count_distinct',
 }
 
+export enum Temporality {
+	Unspecified = 'Unspecified',
+	Delta = 'Delta',
+	Cumulative = 'Cumulative',
+}
+
 export enum MetricAggregateOperator {
+	EMPTY = '', // used as time aggregator for histograms
 	NOOP = 'noop',
 	COUNT = 'count',
 	COUNT_DISTINCT = 'count_distinct',
@@ -91,6 +100,8 @@ export enum MetricAggregateOperator {
 	HIST_QUANTILE_90 = 'hist_quantile_90',
 	HIST_QUANTILE_95 = 'hist_quantile_95',
 	HIST_QUANTILE_99 = 'hist_quantile_99',
+	INCREASE = 'increase',
+	LATEST = 'latest',
 }
 
 export enum TracesAggregatorOperator {
@@ -141,6 +152,24 @@ export enum LogsAggregatorOperator {
 	RATE_MAX = 'rate_max',
 }
 
+export enum QueryFunctionsTypes {
+	CUTOFF_MIN = 'cutOffMin',
+	CUTOFF_MAX = 'cutOffMax',
+	CLAMP_MIN = 'clampMin',
+	CLAMP_MAX = 'clampMax',
+	ABSOLUTE = 'absolute',
+	LOG_2 = 'log2',
+	LOG_10 = 'log10',
+	CUMULATIVE_SUM = 'cumSum',
+	EWMA_3 = 'ewma3',
+	EWMA_5 = 'ewma5',
+	EWMA_7 = 'ewma7',
+	MEDIAN_3 = 'median3',
+	MEDIAN_5 = 'median5',
+	MEDIAN_7 = 'median7',
+	TIME_SHIFT = 'timeShift',
+}
+
 export type PanelTypeKeys =
 	| 'TIME_SERIES'
 	| 'VALUE'
@@ -159,6 +188,8 @@ export type QueryBuilderData = {
 export type QueryBuilderContextType = {
 	currentQuery: Query;
 	stagedQuery: Query | null;
+	supersetQuery: Query;
+	setSupersetQuery: Dispatch<SetStateAction<QueryState>>;
 	initialDataSource: DataSource | null;
 	panelType: PANEL_TYPES | null;
 	isEnabledQuery: boolean;
@@ -183,10 +214,13 @@ export type QueryBuilderContextType = {
 	) => void;
 	addNewBuilderQuery: () => void;
 	addNewFormula: () => void;
+	cloneQuery: (type: string, query: IBuilderQuery) => void;
 	addNewQueryItem: (type: EQueryType.PROM | EQueryType.CLICKHOUSE) => void;
 	redirectWithQueryBuilderData: (
 		query: Query,
 		searchParams?: Record<string, unknown>,
+		redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
+		shallStringify?: boolean,
 	) => void;
 	handleRunQuery: () => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;
@@ -204,7 +238,7 @@ export type QueryBuilderContextType = {
 			index: number,
 		) => QueryBuilderData[T][number],
 	) => Query;
-	initQueryBuilderData: (query: Query) => void;
+	initQueryBuilderData: (query: Query, timeUpdated?: boolean) => void;
 	isStagedQueryUpdated: (
 		viewData: ViewProps[] | undefined,
 		viewKey: string,

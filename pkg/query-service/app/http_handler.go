@@ -8,13 +8,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"sort"
+	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"text/template"
 	"time"
 
+	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
@@ -23,19 +25,19 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
-	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/app/querier"
+	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -78,13 +80,22 @@ type APIHandler struct {
 	featureFlags      interfaces.FeatureLookup
 	ready             func(http.HandlerFunc) http.HandlerFunc
 	querier           interfaces.Querier
+	querierV2         interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
 	preferDelta       bool
 	preferSpanMetrics bool
 
+	// temporalityMap is a map of metric name to temporality
+	// to avoid fetching temporality for the same metric multiple times
+	// querying the v4 table on low cardinal temporality column
+	// should be fast but we can still avoid the query if we have the data in memory
+	temporalityMap map[string]map[v3.Temporality]bool
+
 	maxIdleConns int
 	maxOpenConns int
 	dialTimeout  time.Duration
+
+	IntegrationsController *integrations.Controller
 
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
@@ -117,8 +128,12 @@ type APIHandlerOpts struct {
 	// feature flags querier
 	FeatureFlags interfaces.FeatureLookup
 
+	// Integrations
+	IntegrationsController *integrations.Controller
+
 	// Log parsing pipelines
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
+
 	// cache
 	Cache cache.Cache
 
@@ -142,7 +157,16 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		FeatureLookup: opts.FeatureFlags,
 	}
 
+	querierOptsV2 := querierV2.QuerierOptions{
+		Reader:        opts.Reader,
+		Cache:         opts.Cache,
+		KeyGenerator:  queryBuilder.NewKeyGenerator(),
+		FluxInterval:  opts.FluxInterval,
+		FeatureLookup: opts.FeatureFlags,
+	}
+
 	querier := querier.NewQuerier(querierOpts)
+	querierv2 := querierV2.NewQuerier(querierOptsV2)
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -150,14 +174,17 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		skipConfig:                    opts.SkipConfig,
 		preferDelta:                   opts.PerferDelta,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
+		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		maxIdleConns:                  opts.MaxIdleConns,
 		maxOpenConns:                  opts.MaxOpenConns,
 		dialTimeout:                   opts.DialTimeout,
 		alertManager:                  alertManager,
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
+		IntegrationsController:        opts.IntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		querier:                       querier,
+		querierV2:                     querierv2,
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
@@ -178,7 +205,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	hasUsers, err := aH.appDao.GetUsersWithOpts(context.Background(), 1)
 	if err.Error() != "" {
 		// raise warning but no panic as this is a recoverable condition
-		zap.S().Warnf("unexpected error while fetch user count while initializing base api handler", err.Error())
+		zap.L().Warn("unexpected error while fetch user count while initializing base api handler", zap.Error(err))
 	}
 	if len(hasUsers) != 0 {
 		// first user is already created, we can mark the app ready for general use.
@@ -244,7 +271,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 		Data:      data,
 	})
 	if err != nil {
-		zap.S().Error("msg", "error marshalling json response", "err", err)
+		zap.L().Error("error marshalling json response", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -274,7 +301,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	if n, err := w.Write(b); err != nil {
-		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
+		zap.L().Error("error writing response", zap.Int("bytesWritten", n), zap.Error(err))
 	}
 }
 
@@ -285,7 +312,7 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 		Data:   data,
 	})
 	if err != nil {
-		zap.S().Error("msg", "error marshalling json response", "err", err)
+		zap.L().Error("error marshalling json response", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -293,16 +320,8 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if n, err := w.Write(b); err != nil {
-		zap.S().Error("msg", "error writing response", "bytesWritten", n, "err", err)
+		zap.L().Error("error writing response", zap.Int("bytesWritten", n), zap.Error(err))
 	}
-}
-
-func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router, am *AuthMiddleware) {
-	subRouter := router.PathPrefix("/api/v2/metrics").Subrouter()
-	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeMetricsV2)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/autocomplete/list", am.ViewAccess(aH.metricAutocompleteMetricName)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/tagKey", am.ViewAccess(aH.metricAutocompleteTagKey)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/tagValue", am.ViewAccess(aH.metricAutocompleteTagValue)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMiddleware) {
@@ -318,6 +337,12 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 
 	// live logs
 	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterQueryRangeV4Routes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v4").Subrouter()
+	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV4)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/metric/metric_metadata", am.ViewAccess(aH.getMetricMetadata)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
@@ -360,12 +385,14 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.getSavedViews)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.createSavedViews)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/explorer/views", am.EditAccess(aH.createSavedViews)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.getSavedView)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.updateSavedView)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.updateSavedView)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.EditAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
+
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
@@ -381,8 +408,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.AdminAccess(aH.insertIngestionKey)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ingestion_key", am.ViewAccess(aH.getIngestionKeys)).Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/metric_meta", am.ViewAccess(aH.getLatencyMetricMetadata)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
@@ -458,69 +483,13 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, ruleResponse)
 }
 
-func (aH *APIHandler) metricAutocompleteMetricName(w http.ResponseWriter, r *http.Request) {
-	matchText := r.URL.Query().Get("match")
-	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
-	if err != nil {
-		limit = 0 // no limit
-	}
-
-	metricNameList, apiErrObj := aH.reader.GetMetricAutocompleteMetricNames(r.Context(), matchText, limit)
-
-	if apiErrObj != nil {
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-	aH.Respond(w, metricNameList)
-
-}
-
-func (aH *APIHandler) metricAutocompleteTagKey(w http.ResponseWriter, r *http.Request) {
-	metricsAutocompleteTagKeyParams, apiErrorObj := parser.ParseMetricAutocompleteTagParams(r)
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	tagKeyList, apiErrObj := aH.reader.GetMetricAutocompleteTagKey(r.Context(), metricsAutocompleteTagKeyParams)
-
-	if apiErrObj != nil {
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-	aH.Respond(w, tagKeyList)
-}
-
-func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.Request) {
-	metricsAutocompleteTagValueParams, apiErrorObj := parser.ParseMetricAutocompleteTagParams(r)
-
-	if len(metricsAutocompleteTagValueParams.TagKey) == 0 {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("tagKey not present in params")}
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	tagValueList, apiErrObj := aH.reader.GetMetricAutocompleteTagValue(r.Context(), metricsAutocompleteTagValueParams)
-
-	if apiErrObj != nil {
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-
-	aH.Respond(w, tagValueList)
-}
-
 func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
 
 	metricNames := make([]string, 0)
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
 		for _, query := range qp.CompositeQuery.BuilderQueries {
-			if query.DataSource == v3.DataSourceMetrics {
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
 				metricNames = append(metricNames, query.AggregateAttribute.Key)
 				if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
 					metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
@@ -532,7 +501,7 @@ func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParam
 	var err error
 
 	if aH.preferDelta {
-		zap.S().Debug("fetching metric temporality")
+		zap.L().Debug("fetching metric temporality")
 		metricNameToTemporality, err = aH.reader.FetchTemporality(ctx, metricNames)
 		if err != nil {
 			return err
@@ -542,7 +511,7 @@ func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParam
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
 		for name := range qp.CompositeQuery.BuilderQueries {
 			query := qp.CompositeQuery.BuilderQueries[name]
-			if query.DataSource == v3.DataSourceMetrics {
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
 				if aH.preferDelta && metricNameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
 					query.Temporality = v3.Delta
 				} else if metricNameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
@@ -556,213 +525,56 @@ func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParam
 	return nil
 }
 
-func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
-	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
+// populateTemporality same as addTemporality but for v4 and better
+func (aH *APIHandler) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
 
-	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
-		RespondError(w, apiErrorObj, nil)
-		return
-	}
-
-	// prometheus instant query needs same timestamp
-	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
-		metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.PROM {
-		metricsQueryRangeParams.Start = metricsQueryRangeParams.End
-	}
-
-	// round up the end to neaerest multiple
-	if metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
-		end := (metricsQueryRangeParams.End) / 1000
-		step := metricsQueryRangeParams.Step
-		metricsQueryRangeParams.End = (end / step * step) * 1000
-	}
-
-	type channelResult struct {
-		Series []*model.Series
-		Err    error
-		Name   string
-		Query  string
-	}
-
-	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, error, map[string]string) {
-		var seriesList []*model.Series
-		ch := make(chan channelResult, len(queries))
-		var wg sync.WaitGroup
-
-		for name, query := range queries {
-			wg.Add(1)
-			go func(name, query string) {
-				defer wg.Done()
-				seriesList, err := aH.reader.GetMetricResult(r.Context(), query)
-				for _, series := range seriesList {
-					series.QueryName = name
+	missingTemporality := make([]string, 0)
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for _, query := range qp.CompositeQuery.BuilderQueries {
+			// if there is no temporality specified in the query but we have it in the map
+			// then use the value from the map
+			if query.Temporality == "" && aH.temporalityMap[query.AggregateAttribute.Key] != nil {
+				// We prefer delta if it is available
+				if aH.temporalityMap[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if aH.temporalityMap[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
 				}
-
-				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
-					return
-				}
-				ch <- channelResult{Series: seriesList}
-			}(name, query)
-		}
-
-		wg.Wait()
-		close(ch)
-
-		var errs []error
-		errQuriesByName := make(map[string]string)
-		// read values from the channel
-		for r := range ch {
-			if r.Err != nil {
-				errs = append(errs, r.Err)
-				errQuriesByName[r.Name] = r.Query
-				continue
 			}
-			seriesList = append(seriesList, r.Series...)
+			// we don't have temporality for this metric
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				missingTemporality = append(missingTemporality, query.AggregateAttribute.Key)
+			}
+			if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
+				metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
+			}
 		}
-		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
-		}
-		return seriesList, nil, nil
 	}
 
-	execPromQueries := func(metricsQueryRangeParams *model.QueryRangeParamsV2) ([]*model.Series, error, map[string]string) {
-		var seriesList []*model.Series
-		ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeMetricQuery.PromQueries))
-		var wg sync.WaitGroup
-
-		for name, query := range metricsQueryRangeParams.CompositeMetricQuery.PromQueries {
-			if query.Disabled {
-				continue
-			}
-			wg.Add(1)
-			go func(name string, query *model.PromQuery) {
-				var seriesList []*model.Series
-				defer wg.Done()
-				tmpl := template.New("promql-query")
-				tmpl, tmplErr := tmpl.Parse(query.Query)
-				if tmplErr != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
-					return
-				}
-				var queryBuf bytes.Buffer
-				tmplErr = tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
-				if tmplErr != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
-					return
-				}
-				query.Query = queryBuf.String()
-				queryModel := model.QueryRangeParams{
-					Start: time.UnixMilli(metricsQueryRangeParams.Start),
-					End:   time.UnixMilli(metricsQueryRangeParams.End),
-					Step:  time.Duration(metricsQueryRangeParams.Step * int64(time.Second)),
-					Query: query.Query,
-				}
-				promResult, _, err := aH.reader.GetQueryRangeResult(r.Context(), &queryModel)
-				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query.Query}
-					return
-				}
-				matrix, _ := promResult.Matrix()
-				for _, v := range matrix {
-					var s model.Series
-					s.QueryName = name
-					s.Labels = v.Metric.Copy().Map()
-					for _, p := range v.Floats {
-						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.F})
-					}
-					seriesList = append(seriesList, &s)
-				}
-				ch <- channelResult{Series: seriesList}
-			}(name, query)
-		}
-
-		wg.Wait()
-		close(ch)
-
-		var errs []error
-		errQuriesByName := make(map[string]string)
-		// read values from the channel
-		for r := range ch {
-			if r.Err != nil {
-				errs = append(errs, r.Err)
-				errQuriesByName[r.Name] = r.Query
-				continue
-			}
-			seriesList = append(seriesList, r.Series...)
-		}
-		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
-		}
-		return seriesList, nil, nil
-	}
-
-	var seriesList []*model.Series
-	var err error
-	var errQuriesByName map[string]string
-	switch metricsQueryRangeParams.CompositeMetricQuery.QueryType {
-	case model.QUERY_BUILDER:
-		runQueries := metrics.PrepareBuilderMetricQueries(metricsQueryRangeParams, constants.SIGNOZ_TIMESERIES_TABLENAME)
-		if runQueries.Err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
-			return
-		}
-		seriesList, err, errQuriesByName = execClickHouseQueries(runQueries.Queries)
-
-	case model.CLICKHOUSE:
-		queries := make(map[string]string)
-		for name, chQuery := range metricsQueryRangeParams.CompositeMetricQuery.ClickHouseQueries {
-			if chQuery.Disabled {
-				continue
-			}
-			tmpl := template.New("clickhouse-query")
-			tmpl, err := tmpl.Parse(chQuery.Query)
-			if err != nil {
-				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-				return
-			}
-			var query bytes.Buffer
-
-			// replace go template variables
-			querytemplate.AssignReservedVars(metricsQueryRangeParams)
-
-			err = tmpl.Execute(&query, metricsQueryRangeParams.Variables)
-			if err != nil {
-				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-				return
-			}
-
-			queries[name] = query.String()
-		}
-		seriesList, err, errQuriesByName = execClickHouseQueries(queries)
-	case model.PROM:
-		seriesList, err, errQuriesByName = execPromQueries(metricsQueryRangeParams)
-	default:
-		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
-		return
-	}
-
+	nameToTemporality, err := aH.reader.FetchTemporality(ctx, missingTemporality)
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
-		return
-	}
-	if metricsQueryRangeParams.CompositeMetricQuery.PanelType == model.QUERY_VALUE &&
-		len(seriesList) > 1 &&
-		(metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.QUERY_BUILDER ||
-			metricsQueryRangeParams.CompositeMetricQuery.QueryType == model.CLICKHOUSE) {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid: query resulted in more than one series for value type")}, nil)
-		return
+		return err
 	}
 
-	type ResponseFormat struct {
-		ResultType string          `json:"resultType"`
-		Result     []*model.Series `json:"result"`
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for name := range qp.CompositeQuery.BuilderQueries {
+			query := qp.CompositeQuery.BuilderQueries[name]
+			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
+				if nameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if nameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+				aH.temporalityMap[query.AggregateAttribute.Key] = nameToTemporality[query.AggregateAttribute.Key]
+			}
+		}
 	}
-	resp := ResponseFormat{ResultType: "matrix", Result: seriesList}
-	aH.Respond(w, resp)
+	return nil
 }
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
@@ -781,11 +593,15 @@ func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 	allDashboards, err := dashboards.GetDashboards(r.Context())
-
 	if err != nil {
 		RespondError(w, err, nil)
 		return
 	}
+
+	ic := aH.IntegrationsController
+	installedIntegrationDashboards, err := ic.GetDashboardsForInstalledIntegrations(r.Context())
+	allDashboards = append(allDashboards, installedIntegrationDashboards...)
+
 	tagsFromReq, ok := r.URL.Query()["tags"]
 	if !ok || len(tagsFromReq) == 0 || tagsFromReq[0] == "" {
 		aH.Respond(w, allDashboards)
@@ -954,8 +770,19 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 	dashboard, apiError := dashboards.GetDashboard(r.Context(), uuid)
 
 	if apiError != nil {
-		RespondError(w, apiError, nil)
-		return
+		if apiError.Type() != model.ErrorNotFound {
+			RespondError(w, apiError, nil)
+			return
+		}
+
+		dashboard, apiError = aH.IntegrationsController.GetInstalledIntegrationDashboardById(
+			r.Context(), uuid,
+		)
+		if apiError != nil {
+			RespondError(w, apiError, nil)
+			return
+		}
+
 	}
 
 	aH.Respond(w, dashboard)
@@ -1028,7 +855,7 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body in test rule API\n", err)
+		zap.L().Error("Error in getting req body in test rule API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1071,7 +898,7 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("msg: error in getting req body of patch rule API\n", "\t error:", err)
+		zap.L().Error("error in getting req body of patch rule API\n", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1092,7 +919,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("msg: error in getting req body of edit rule API\n", "\t error:", err)
+		zap.L().Error("error in getting req body of edit rule API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1143,14 +970,14 @@ func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body of testChannel API\n", err)
+		zap.L().Error("Error in getting req body of testChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.S().Errorf("Error in parsing req body of testChannel API\n", err)
+		zap.L().Error("Error in parsing req body of testChannel API\n", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1170,14 +997,14 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body of editChannel API\n", err)
+		zap.L().Error("Error in getting req body of editChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.S().Errorf("Error in parsing req body of editChannel API\n", err)
+		zap.L().Error("Error in parsing req body of editChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1198,14 +1025,14 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body of createChannel API\n", err)
+		zap.L().Error("Error in getting req body of createChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
-		zap.S().Errorf("Error in parsing req body of createChannel API\n", err)
+		zap.L().Error("Error in parsing req body of createChannel API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1245,7 +1072,7 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("Error in getting req body for create rule API\n", err)
+		zap.L().Error("Error in getting req body for create rule API", zap.Error(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1272,7 +1099,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// zap.S().Info(query, apiError)
+	// zap.L().Info(query, apiError)
 
 	ctx := r.Context()
 	if to := r.FormValue("timeout"); to != "" {
@@ -1294,7 +1121,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if res.Err != nil {
-		zap.S().Error(res.Err)
+		zap.L().Error("error in query range metrics", zap.Error(res.Err))
 	}
 
 	if res.Err != nil {
@@ -1327,7 +1154,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// zap.S().Info(query, apiError)
+	// zap.L().Info(query, apiError)
 
 	ctx := r.Context()
 	if to := r.FormValue("timeout"); to != "" {
@@ -1349,7 +1176,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if res.Err != nil {
-		zap.S().Error(res.Err)
+		zap.L().Error("error in query range metrics", zap.Error(res.Err))
 	}
 
 	if res.Err != nil {
@@ -1400,7 +1227,22 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
 	if err == nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_INPRODUCT_FEEDBACK, data, userEmail, true, false)
+	}
+}
+
+func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
+
+	request, err := parseRegisterEventRequest(r)
+	if aH.HandleError(w, err, http.StatusBadRequest) {
+		return
+	}
+	userEmail, err := auth.GetEmailFromJwt(r.Context())
+	if err == nil {
+		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, userEmail, request.RateLimited, true)
+		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
+	} else {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 	}
 }
 
@@ -1455,7 +1297,9 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 
 func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
 
-	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig)
+	var start, end time.Time
+
+	result, _, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -1481,7 +1325,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
 	if err == nil {
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data, userEmail, true, false)
 	}
 
 	if (data["number"] != 0) && (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
@@ -1941,7 +1785,7 @@ func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := dao.DB().GetUsers(context.Background())
 	if err != nil {
-		zap.S().Debugf("[listUsers] Failed to query list of users, err: %v", err)
+		zap.L().Error("[listUsers] Failed to query list of users", zap.Error(err))
 		RespondError(w, err, nil)
 		return
 	}
@@ -1958,7 +1802,7 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	user, err := dao.DB().GetUser(ctx, id)
 	if err != nil {
-		zap.S().Debugf("[getUser] Failed to query user, err: %v", err)
+		zap.L().Error("[getUser] Failed to query user", zap.Error(err))
 		RespondError(w, err, "Failed to get user")
 		return
 	}
@@ -1988,7 +1832,7 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	old, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
-		zap.S().Debugf("[editUser] Failed to query user, err: %v", err)
+		zap.L().Error("[editUser] Failed to query user", zap.Error(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2072,7 +1916,7 @@ func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.S().Errorf("failed read user flags from http request for userId ", userId, "with error: ", err)
+		zap.L().Error("failed read user flags from http request for userId ", zap.String("userId", userId), zap.Error(err))
 		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
 		return
 	}
@@ -2080,7 +1924,7 @@ func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(b, &flags)
 	if err != nil {
-		zap.S().Errorf("failed parsing user flags for userId ", userId, "with error: ", err)
+		zap.L().Error("failed parsing user flags for userId ", zap.String("userId", userId), zap.Error(err))
 		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
 		return
 	}
@@ -2206,7 +2050,7 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 		"organizationName": req.Name,
 	}
 	userEmail, err := auth.GetEmailFromJwt(r.Context())
-	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail)
+	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_ORG_SETTINGS, data, userEmail, true, false)
 
 	aH.WriteJSON(w, r, map[string]string{"data": "org updated successfully"})
 }
@@ -2244,7 +2088,7 @@ func (aH *APIHandler) resetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := auth.ResetPassword(context.Background(), req); err != nil {
-		zap.S().Debugf("resetPassword failed, err: %v\n", err)
+		zap.L().Error("resetPassword failed", zap.Error(err))
 		if aH.HandleError(w, err, http.StatusInternalServerError) {
 			return
 		}
@@ -2259,10 +2103,9 @@ func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := auth.ChangePassword(context.Background(), req); err != nil {
-		if aH.HandleError(w, err, http.StatusInternalServerError) {
-			return
-		}
+	if apiErr := auth.ChangePassword(context.Background(), req); apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
 
 	}
 	aH.WriteJSON(w, r, map[string]string{"data": "password changed successfully"})
@@ -2288,7 +2131,7 @@ func (aH *APIHandler) HandleError(w http.ResponseWriter, err error, statusCode i
 		return false
 	}
 	if statusCode == http.StatusInternalServerError {
-		zap.S().Error("HTTP handler, Internal Server Error", zap.Error(err))
+		zap.L().Error("HTTP handler, Internal Server Error", zap.Error(err))
 	}
 	structuredResp := structuredResponse{
 		Errors: []structuredError{
@@ -2313,6 +2156,299 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 	resp, _ := marshall(response)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resp)
+}
+
+// Integrations
+func (ah *APIHandler) RegisterIntegrationRoutes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v1/integrations").Subrouter()
+
+	subRouter.HandleFunc(
+		"/install", am.ViewAccess(ah.InstallIntegration),
+	).Methods(http.MethodPost)
+
+	subRouter.HandleFunc(
+		"/uninstall", am.ViewAccess(ah.UninstallIntegration),
+	).Methods(http.MethodPost)
+
+	// Used for polling for status in v0
+	subRouter.HandleFunc(
+		"/{integrationId}/connection_status", am.ViewAccess(ah.GetIntegrationConnectionStatus),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"/{integrationId}", am.ViewAccess(ah.GetIntegration),
+	).Methods(http.MethodGet)
+
+	subRouter.HandleFunc(
+		"", am.ViewAccess(ah.ListIntegrations),
+	).Methods(http.MethodGet)
+}
+
+func (ah *APIHandler) ListIntegrations(
+	w http.ResponseWriter, r *http.Request,
+) {
+	params := map[string]string{}
+	for k, values := range r.URL.Query() {
+		params[k] = values[0]
+	}
+
+	resp, apiErr := ah.IntegrationsController.ListIntegrations(
+		r.Context(), params,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integrations")
+		return
+	}
+	ah.Respond(w, resp)
+}
+
+func (ah *APIHandler) GetIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	integration, apiErr := ah.IntegrationsController.GetIntegration(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to fetch integration details")
+		return
+	}
+
+	ah.Respond(w, integration)
+}
+
+func (ah *APIHandler) GetIntegrationConnectionStatus(
+	w http.ResponseWriter, r *http.Request,
+) {
+	integrationId := mux.Vars(r)["integrationId"]
+	isInstalled, apiErr := ah.IntegrationsController.IsIntegrationInstalled(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to check if integration is installed")
+		return
+	}
+
+	// Do not spend resources calculating connection status unless installed.
+	if !isInstalled {
+		ah.Respond(w, &integrations.IntegrationConnectionStatus{})
+		return
+	}
+
+	connectionTests, apiErr := ah.IntegrationsController.GetIntegrationConnectionTests(
+		r.Context(), integrationId,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "failed to fetch integration connection tests")
+		return
+	}
+
+	lookbackSecondsStr := r.URL.Query().Get("lookback_seconds")
+	lookbackSeconds, err := strconv.ParseInt(lookbackSecondsStr, 10, 64)
+	if err != nil {
+		lookbackSeconds = 15 * 60
+	}
+
+	connectionStatus, apiErr := ah.calculateConnectionStatus(
+		r.Context(), connectionTests, lookbackSeconds,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, "Failed to calculate integration connection status")
+		return
+	}
+
+	ah.Respond(w, connectionStatus)
+}
+
+func (ah *APIHandler) calculateConnectionStatus(
+	ctx context.Context,
+	connectionTests *integrations.IntegrationConnectionTests,
+	lookbackSeconds int64,
+) (*integrations.IntegrationConnectionStatus, *model.ApiError) {
+	// Calculate connection status for signals in parallel
+
+	result := &integrations.IntegrationConnectionStatus{}
+	errors := []*model.ApiError{}
+	var resultLock sync.Mutex
+
+	var wg sync.WaitGroup
+
+	// Calculate logs connection status
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		logsConnStatus, apiErr := ah.calculateLogsConnectionStatus(
+			ctx, connectionTests.Logs, lookbackSeconds,
+		)
+
+		resultLock.Lock()
+		defer resultLock.Unlock()
+
+		if apiErr != nil {
+			errors = append(errors, apiErr)
+		} else {
+			result.Logs = logsConnStatus
+		}
+	}()
+
+	// Calculate metrics connection status
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		if connectionTests.Metrics == nil || len(connectionTests.Metrics) < 1 {
+			return
+		}
+
+		statusForLastReceivedMetric, apiErr := ah.reader.GetLatestReceivedMetric(
+			ctx, connectionTests.Metrics,
+		)
+
+		resultLock.Lock()
+		defer resultLock.Unlock()
+
+		if apiErr != nil {
+			errors = append(errors, apiErr)
+
+		} else if statusForLastReceivedMetric != nil {
+			resourceSummaryParts := []string{}
+			for k, v := range statusForLastReceivedMetric.LastReceivedLabels {
+				interestingLabels := []string{
+					"container_name", "host_name", "node_name",
+					"pod_name", "deployment_name", "cluster_name",
+					"namespace_name", "job_name", "service_name",
+				}
+				isInterestingKey := !strings.HasPrefix(k, "_") && slices.ContainsFunc(
+					interestingLabels, func(l string) bool { return strings.Contains(k, l) },
+				)
+				if isInterestingKey {
+					resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+						"%s=%s", k, v,
+					))
+				}
+			}
+
+			result.Metrics = &integrations.SignalConnectionStatus{
+				LastReceivedFrom:     strings.Join(resourceSummaryParts, ", "),
+				LastReceivedTsMillis: statusForLastReceivedMetric.LastReceivedTsMillis,
+			}
+		}
+	}()
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return nil, errors[0]
+	}
+
+	return result, nil
+}
+
+func (ah *APIHandler) calculateLogsConnectionStatus(
+	ctx context.Context,
+	logsConnectionTest *v3.FilterSet,
+	lookbackSeconds int64,
+) (*integrations.SignalConnectionStatus, *model.ApiError) {
+	if logsConnectionTest == nil {
+		return nil, nil
+	}
+
+	qrParams := &v3.QueryRangeParamsV3{
+		Start: time.Now().UnixMilli() - (lookbackSeconds * 1000),
+		End:   time.Now().UnixMilli(),
+		CompositeQuery: &v3.CompositeQuery{
+			PanelType: v3.PanelTypeList,
+			QueryType: v3.QueryTypeBuilder,
+			BuilderQueries: map[string]*v3.BuilderQuery{
+				"A": {
+					PageSize:          1,
+					Filters:           logsConnectionTest,
+					QueryName:         "A",
+					DataSource:        v3.DataSourceLogs,
+					Expression:        "A",
+					AggregateOperator: v3.AggregateOperatorNoOp,
+				},
+			},
+		},
+	}
+	queryRes, err, _ := ah.querier.QueryRange(
+		ctx, qrParams, map[string]v3.AttributeKey{},
+	)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf(
+			"could not query for integration connection status: %w", err,
+		))
+	}
+	if len(queryRes) > 0 && queryRes[0].List != nil && len(queryRes[0].List) > 0 {
+		lastLog := queryRes[0].List[0]
+
+		resourceSummaryParts := []string{}
+		lastLogResourceAttribs := lastLog.Data["resources_string"]
+		if lastLogResourceAttribs != nil {
+			resourceAttribs, ok := lastLogResourceAttribs.(*map[string]string)
+			if !ok {
+				return nil, model.InternalError(fmt.Errorf(
+					"could not cast log resource attribs",
+				))
+			}
+			for k, v := range *resourceAttribs {
+				resourceSummaryParts = append(resourceSummaryParts, fmt.Sprintf(
+					"%s=%s", k, v,
+				))
+			}
+		}
+		lastLogResourceSummary := strings.Join(resourceSummaryParts, ", ")
+
+		return &integrations.SignalConnectionStatus{
+			LastReceivedTsMillis: lastLog.Timestamp.UnixMilli(),
+			LastReceivedFrom:     lastLogResourceSummary,
+		}, nil
+	}
+
+	return nil, nil
+}
+
+func (ah *APIHandler) InstallIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.InstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	integration, apiErr := ah.IntegrationsController.Install(
+		r.Context(), &req,
+	)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, integration)
+}
+
+func (ah *APIHandler) UninstallIntegration(
+	w http.ResponseWriter, r *http.Request,
+) {
+	req := integrations.UninstallIntegrationRequest{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+
+	ah.Respond(w, map[string]interface{}{})
 }
 
 // logs
@@ -2413,10 +2549,10 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "data: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
-			zap.S().Debug("done!")
+			zap.L().Debug("done!")
 			return
 		case err := <-client.Error:
-			zap.S().Error("error occured!", err)
+			zap.L().Error("error occured", zap.Error(err))
 			return
 		}
 	}
@@ -2508,16 +2644,17 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (
 	*logparsingpipeline.PipelinesResponse, *model.ApiError,
 ) {
 	// get lateset agent config
+	latestVersion := -1
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
-	if err != nil {
-		if err.Type() != model.ErrorNotFound {
-			return nil, model.WrapApiError(err, "failed to get latest agent config version")
-		} else {
-			return nil, nil
-		}
+	if err != nil && err.Type() != model.ErrorNotFound {
+		return nil, model.WrapApiError(err, "failed to get latest agent config version")
 	}
 
-	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, lastestConfig.Version)
+	if lastestConfig != nil {
+		latestVersion = lastestConfig.Version
+	}
+
+	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, latestVersion)
 	if err != nil {
 		return nil, model.WrapApiError(err, "failed to get pipelines")
 	}
@@ -2566,7 +2703,7 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		postable []logparsingpipeline.PostablePipeline,
 	) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 		if len(postable) == 0 {
-			zap.S().Warnf("found no pipelines in the http request, this will delete all the pipelines")
+			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")
 		}
 
 		for _, p := range postable {
@@ -3006,7 +3143,7 @@ func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request)
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
+		zap.L().Error(apiErrorObj.Err.Error())
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -3052,12 +3189,19 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 	applyMetricLimit(result, queryRangeParams)
 
+	sendQueryResultEvents(r, result, queryRangeParams)
+	// only adding applyFunctions instead of postProcess since experssion are
+	// are executed in clickhouse directly and we wanted to add support for timeshift
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		applyFunctions(result, queryRangeParams)
+	}
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
 
 	// This checks if the time for context to complete has exceeded.
-	// it adds flag to notify the user of incomplete respone
+	// it adds flag to notify the user of incomplete response
 	select {
 	case <-ctx.Done():
 		resp.ContextTimeout = true
@@ -3069,11 +3213,93 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	aH.Respond(w, resp)
 }
 
+func sendQueryResultEvents(r *http.Request, result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	referrer := r.Header.Get("Referer")
+
+	dashboardMatched, err := regexp.MatchString(`/dashboard/[a-zA-Z0-9\-]+/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the referrer", zap.Error(err))
+	}
+	alertMatched, err := regexp.MatchString(`/alerts/(new|edit)(?:\?.*)?$`, referrer)
+	if err != nil {
+		zap.L().Error("error while matching the alert: ", zap.Error(err))
+	}
+
+	if alertMatched || dashboardMatched {
+
+		if len(result) > 0 && (len(result[0].Series) > 0 || len(result[0].List) > 0) {
+
+			userEmail, err := auth.GetEmailFromJwt(r.Context())
+			if err == nil {
+				signozLogsUsed, signozMetricsUsed, signozTracesUsed := telemetry.GetInstance().CheckSigNozSignals(queryRangeParams)
+				if signozLogsUsed || signozMetricsUsed || signozTracesUsed {
+
+					if dashboardMatched {
+						var dashboardID, widgetID string
+						var dashboardIDMatch, widgetIDMatch []string
+						dashboardIDRegex, err := regexp.Compile(`/dashboard/([a-f0-9\-]+)/`)
+						if err == nil {
+							dashboardIDMatch = dashboardIDRegex.FindStringSubmatch(referrer)
+						} else {
+							zap.S().Errorf("error while matching the dashboardIDRegex: %v", err)
+						}
+						widgetIDRegex, err := regexp.Compile(`widgetId=([a-f0-9\-]+)`)
+						if err == nil {
+							widgetIDMatch = widgetIDRegex.FindStringSubmatch(referrer)
+						} else {
+							zap.S().Errorf("error while matching the widgetIDRegex: %v", err)
+						}
+
+						if len(dashboardIDMatch) > 1 {
+							dashboardID = dashboardIDMatch[1]
+						}
+
+						if len(widgetIDMatch) > 1 {
+							widgetID = widgetIDMatch[1]
+						}
+						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_DASHBOARD_PANEL_QUERY, map[string]interface{}{
+							"queryType":   queryRangeParams.CompositeQuery.QueryType,
+							"panelType":   queryRangeParams.CompositeQuery.PanelType,
+							"tracesUsed":  signozTracesUsed,
+							"logsUsed":    signozLogsUsed,
+							"metricsUsed": signozMetricsUsed,
+							"dashboardId": dashboardID,
+							"widgetId":    widgetID,
+						}, userEmail, true, false)
+					}
+					if alertMatched {
+						var alertID string
+						var alertIDMatch []string
+						alertIDRegex, err := regexp.Compile(`ruleId=(\d+)`)
+						if err != nil {
+							zap.S().Errorf("error while matching the alertIDRegex: %v", err)
+						} else {
+							alertIDMatch = alertIDRegex.FindStringSubmatch(referrer)
+						}
+
+						if len(alertIDMatch) > 1 {
+							alertID = alertIDMatch[1]
+						}
+						telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_SUCCESSFUL_ALERT_QUERY, map[string]interface{}{
+							"queryType":   queryRangeParams.CompositeQuery.QueryType,
+							"panelType":   queryRangeParams.CompositeQuery.PanelType,
+							"tracesUsed":  signozTracesUsed,
+							"logsUsed":    signozLogsUsed,
+							"metricsUsed": signozMetricsUsed,
+							"alertId":     alertID,
+						}, userEmail, true, false)
+					}
+				}
+			}
+		}
+	}
+}
+
 func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
+		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -3082,84 +3308,12 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 
 	temporalityErr := aH.addTemporality(r.Context(), queryRangeParams)
 	if temporalityErr != nil {
-		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
+		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
 		return
 	}
 
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
-}
-
-func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
-	// apply limit if any for metrics
-	// use the grouping set points to apply the limit
-
-	for _, result := range results {
-		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
-
-		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics ||
-			result.QueryName != builderQueries[result.QueryName].Expression) {
-			limit := builderQueries[result.QueryName].Limit
-
-			orderByList := builderQueries[result.QueryName].OrderBy
-			if limit >= 0 {
-				if len(orderByList) == 0 {
-					// If no orderBy is specified, sort by value in descending order
-					orderByList = []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "desc"}}
-				}
-				sort.SliceStable(result.Series, func(i, j int) bool {
-					for _, orderBy := range orderByList {
-						if orderBy.ColumnName == constants.SigNozOrderByValue {
-
-							// For table type queries (we rely on the fact that one value for row), sort
-							// based on final aggregation value
-							if len(result.Series[i].Points) == 1 && len(result.Series[j].Points) == 1 {
-								if orderBy.Order == "asc" {
-									return result.Series[i].Points[0].Value < result.Series[j].Points[0].Value
-								} else if orderBy.Order == "desc" {
-									return result.Series[i].Points[0].Value > result.Series[j].Points[0].Value
-								}
-							}
-
-							// For graph type queries, sort based on GroupingSetsPoint
-							if result.Series[i].GroupingSetsPoint == nil || result.Series[j].GroupingSetsPoint == nil {
-								// Handle nil GroupingSetsPoint, if needed
-								// Here, we assume non-nil values are always less than nil values
-								return result.Series[i].GroupingSetsPoint != nil
-							}
-							if orderBy.Order == "asc" {
-								return result.Series[i].GroupingSetsPoint.Value < result.Series[j].GroupingSetsPoint.Value
-							} else if orderBy.Order == "desc" {
-								return result.Series[i].GroupingSetsPoint.Value > result.Series[j].GroupingSetsPoint.Value
-							}
-						} else {
-							// Sort based on Labels map
-							labelI, existsI := result.Series[i].Labels[orderBy.ColumnName]
-							labelJ, existsJ := result.Series[j].Labels[orderBy.ColumnName]
-
-							if !existsI || !existsJ {
-								// Handle missing labels, if needed
-								// Here, we assume non-existent labels are always less than existing ones
-								return existsI
-							}
-
-							if orderBy.Order == "asc" {
-								return strings.Compare(labelI, labelJ) < 0
-							} else if orderBy.Order == "desc" {
-								return strings.Compare(labelI, labelJ) > 0
-							}
-						}
-					}
-					// Preserve original order if no matching orderBy is found
-					return i < j
-				})
-
-				if limit > 0 && len(result.Series) > int(limit) {
-					result.Series = result.Series[:limit]
-				}
-			}
-		}
-	}
 }
 
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
@@ -3170,7 +3324,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
+		zap.L().Error(apiErrorObj.Err.Error())
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -3231,13 +3385,201 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "data: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
-			zap.S().Debug("done!")
+			zap.L().Debug("done!")
 			return
 		case err := <-client.Error:
-			zap.S().Error("error occured!", err)
+			zap.L().Error("error occurred", zap.Error(err))
 			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
 			flusher.Flush()
 			return
+		}
+	}
+}
+
+func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) {
+	metricName := r.URL.Query().Get("metricName")
+	serviceName := r.URL.Query().Get("serviceName")
+	metricMetadata, err := aH.reader.GetMetricMetadata(r.Context(), metricName, serviceName)
+	if err != nil {
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		return
+	}
+
+	aH.WriteJSON(w, r, metricMetadata)
+}
+
+func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
+
+	var result []*v3.Result
+	var err error
+	var errQuriesByName map[string]string
+	var spanKeys map[string]v3.AttributeKey
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(queryRangeParams) {
+			// get the fields if any logs query is present
+			var fields map[string]v3.AttributeKey
+			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			logsv3.Enrich(queryRangeParams, fields)
+		}
+
+		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+		if err != nil {
+			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+			RespondError(w, apiErrObj, errQuriesByName)
+			return
+		}
+	}
+
+	result, err, errQuriesByName = aH.querierV2.QueryRange(ctx, queryRangeParams, spanKeys)
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+
+		result, err = postProcessResult(result, queryRangeParams)
+	}
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+	sendQueryResultEvents(r, result, queryRangeParams)
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+
+	if apiErrorObj != nil {
+		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	// add temporality for each metric
+	temporalityErr := aH.populateTemporality(r.Context(), queryRangeParams)
+	if temporalityErr != nil {
+		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
+		return
+	}
+
+	aH.queryRangeV4(r.Context(), queryRangeParams, w, r)
+}
+
+// postProcessResult applies having clause, metric limit, reduce function to the result
+// This function is effective for metrics data source for now, but it can be extended to other data sources
+// if needed
+// Much of this work can be done in the ClickHouse query, but we decided to do it here because:
+// 1. Effective use of caching
+// 2. Easier to add new functions
+func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) ([]*v3.Result, error) {
+	// Having clause is not part of the clickhouse query, so we need to apply it here
+	// It's not included in the query because it doesn't work nicely with caching
+	// With this change, if you have a query with a having clause, and then you change the having clause
+	// to something else, the query will still be cached.
+	applyHavingClause(result, queryRangeParams)
+	// We apply the metric limit here because it's not part of the clickhouse query
+	// The limit in the context of the time series query is the number of time series
+	// So for the limit to work, we need to know what series to keep and what to discard
+	// For us to know that, we need to execute the query first, and then apply the limit
+	// which we found expensive, because we are executing the query twice on the same data
+	// So we decided to apply the limit here, after the query is executed
+	// The function is named applyMetricLimit because it only applies to metrics data source
+	// In traces and logs, the limit is achieved using subqueries
+	applyMetricLimit(result, queryRangeParams)
+	// Each series in the result produces N number of points, where N is (end - start) / step
+	// For the panel type table, we need to show one point for each series in the row
+	// We do that by applying a reduce function to each series
+	applyReduceTo(result, queryRangeParams)
+	// We apply the functions here it's easier to add new functions
+	applyFunctions(result, queryRangeParams)
+
+	// expressions are executed at query serivce so the value of time.now in the invdividual
+	// queries will be different so for table panel we are making it same.
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable {
+		tablePanelResultProcessor(result)
+	}
+
+	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+		// The way we distinguish between a formula and a query is by checking if the expression
+		// is the same as the query name
+		// TODO(srikanthccv): Update the UI to send a flag to distinguish between a formula and a query
+		if query.Expression != query.QueryName {
+			expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
+			// This shouldn't happen here, because it should have been caught earlier in validation
+			if err != nil {
+				zap.L().Error("error in expression", zap.Error(err))
+				return nil, err
+			}
+			formulaResult, err := processResults(result, expression)
+			if err != nil {
+				zap.L().Error("error in expression", zap.Error(err))
+				return nil, err
+			}
+			formulaResult.QueryName = query.QueryName
+			result = append(result, formulaResult)
+		}
+	}
+	// we are done with the formula calculations, only send the results for enabled queries
+	removeDisabledQueries := func(result []*v3.Result) []*v3.Result {
+		var newResult []*v3.Result
+		for _, res := range result {
+			if queryRangeParams.CompositeQuery.BuilderQueries[res.QueryName].Disabled {
+				continue
+			}
+			newResult = append(newResult, res)
+		}
+		return newResult
+	}
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		result = removeDisabledQueries(result)
+	}
+	return result, nil
+}
+
+// applyFunctions applies functions for each query in the composite query
+// The functions can be more than one, and they are applied in the order they are defined
+func applyFunctions(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	for idx, result := range results {
+		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
+
+		if builderQueries != nil {
+			functions := builderQueries[result.QueryName].Functions
+
+			for _, function := range functions {
+				results[idx] = queryBuilder.ApplyFunction(function, result)
+			}
+		}
+	}
+}
+
+func tablePanelResultProcessor(results []*v3.Result) {
+	var ts int64
+	for ridx := range results {
+		for sidx := range results[ridx].Series {
+			for pidx := range results[ridx].Series[sidx].Points {
+				if ts == 0 {
+					ts = results[ridx].Series[sidx].Points[pidx].Timestamp
+				} else {
+					results[ridx].Series[sidx].Points[pidx].Timestamp = ts
+				}
+			}
 		}
 	}
 }

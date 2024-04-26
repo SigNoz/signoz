@@ -24,7 +24,6 @@ interface Props {
 }
 
 export const RefreshTextContainer = styled.div<Props>`
-	min-height: 2rem;
 	visibility: ${({ refreshButtonHidden }): string =>
 		refreshButtonHidden ? 'hidden' : 'visible'};
 `;

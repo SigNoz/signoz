@@ -15,6 +15,11 @@ import {
 	MAX_QUERIES,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
+import {
+	panelTypeDataSourceFormValuesMap,
+	PartialPanelTypes,
+} from 'container/NewWidget/utils';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -22,6 +27,7 @@ import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
+import { get, merge, set } from 'lodash-es';
 import {
 	createContext,
 	PropsWithChildren,
@@ -55,6 +61,8 @@ import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	currentQuery: initialQueriesMap.metrics,
+	supersetQuery: initialQueriesMap.metrics,
+	setSupersetQuery: () => {},
 	stagedQuery: initialQueriesMap.metrics,
 	initialDataSource: null,
 	panelType: PANEL_TYPES.TIME_SERIES,
@@ -66,6 +74,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	removeQueryBuilderEntityByIndex: () => {},
 	removeQueryTypeItemByIndex: () => {},
 	addNewBuilderQuery: () => {},
+	cloneQuery: () => {},
 	addNewFormula: () => {},
 	addNewQueryItem: () => {},
 	redirectWithQueryBuilderData: () => {},
@@ -98,9 +107,16 @@ export function QueryBuilderProvider({
 		null,
 	);
 
-	const [panelType, setPanelType] = useState<PANEL_TYPES | null>(null);
+	const panelTypeQueryParams = urlQuery.get(
+		QueryParams.panelTypes,
+	) as PANEL_TYPES | null;
+
+	const [panelType, setPanelType] = useState<PANEL_TYPES | null>(
+		panelTypeQueryParams,
+	);
 
 	const [currentQuery, setCurrentQuery] = useState<QueryState>(queryState);
+	const [supersetQuery, setSupersetQuery] = useState<QueryState>(queryState);
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
 
 	const [queryType, setQueryType] = useState<EQueryType>(queryTypeParam);
@@ -195,7 +211,7 @@ export function QueryBuilderProvider({
 	);
 
 	const initQueryBuilderData = useCallback(
-		(query: Query): void => {
+		(query: Query, timeUpdated?: boolean): void => {
 			const { queryType: newQueryType, ...queryState } = prepareQueryBuilderData(
 				query,
 			);
@@ -210,10 +226,12 @@ export function QueryBuilderProvider({
 			const nextQuery: Query = { ...newQueryState, queryType: type };
 
 			setStagedQuery(nextQuery);
-			setCurrentQuery(newQueryState);
+			setCurrentQuery(
+				timeUpdated ? merge(currentQuery, newQueryState) : newQueryState,
+			);
 			setQueryType(type);
 		},
-		[prepareQueryBuilderData],
+		[prepareQueryBuilderData, currentQuery],
 	);
 
 	const updateAllQueriesOperators = useCallback(
@@ -260,6 +278,21 @@ export function QueryBuilderProvider({
 					},
 				};
 			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				const currentArray: (IBuilderQuery | IBuilderFormula)[] =
+					prevState.builder[type];
+
+				const filteredArray = currentArray.filter((_, i) => index !== i);
+
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						[type]: filteredArray,
+					},
+				};
+			});
 		},
 		[],
 	);
@@ -267,6 +300,14 @@ export function QueryBuilderProvider({
 	const removeQueryTypeItemByIndex = useCallback(
 		(type: EQueryType.PROM | EQueryType.CLICKHOUSE, index: number) => {
 			setCurrentQuery((prevState) => {
+				const targetArray: (IPromQLQuery | IClickHouseQuery)[] = prevState[type];
+				return {
+					...prevState,
+					[type]: targetArray.filter((_, i) => index !== i),
+				};
+			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
 				const targetArray: (IPromQLQuery | IClickHouseQuery)[] = prevState[type];
 				return {
 					...prevState,
@@ -295,6 +336,23 @@ export function QueryBuilderProvider({
 			return newQuery;
 		},
 		[initialDataSource],
+	);
+
+	const cloneNewBuilderQuery = useCallback(
+		(queries: IBuilderQuery[], query: IBuilderQuery): IBuilderQuery => {
+			const existNames = queries.map((item) => item.queryName);
+			const clonedQuery: IBuilderQuery = {
+				...query,
+				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
+				expression: createNewBuilderItemName({
+					existNames,
+					sourceNames: alphabet,
+				}),
+			};
+
+			return clonedQuery;
+		},
+		[],
 	);
 
 	const createNewBuilderFormula = useCallback((formulas: IBuilderFormula[]) => {
@@ -343,6 +401,17 @@ export function QueryBuilderProvider({
 					[type]: [...prevState[type], newQuery],
 				};
 			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				if (prevState[type].length >= MAX_QUERIES) return prevState;
+
+				const newQuery = createNewQueryTypeItem(prevState[type], type);
+
+				return {
+					...prevState,
+					[type]: [...prevState[type], newQuery],
+				};
+			});
 		},
 		[createNewQueryTypeItem],
 	);
@@ -361,10 +430,77 @@ export function QueryBuilderProvider({
 				},
 			};
 		});
+		// eslint-disable-next-line sonarjs/no-identical-functions
+		setSupersetQuery((prevState) => {
+			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
+
+			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
+
+			return {
+				...prevState,
+				builder: {
+					...prevState.builder,
+					queryData: [...prevState.builder.queryData, newQuery],
+				},
+			};
+		});
 	}, [createNewBuilderQuery]);
+
+	const cloneQuery = useCallback(
+		(type: string, query: IBuilderQuery): void => {
+			setCurrentQuery((prevState) => {
+				if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
+
+				const clonedQuery = cloneNewBuilderQuery(
+					prevState.builder.queryData,
+					query,
+				);
+
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						queryData: [...prevState.builder.queryData, clonedQuery],
+					},
+				};
+			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
+
+				const clonedQuery = cloneNewBuilderQuery(
+					prevState.builder.queryData,
+					query,
+				);
+
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						queryData: [...prevState.builder.queryData, clonedQuery],
+					},
+				};
+			});
+		},
+		[cloneNewBuilderQuery],
+	);
 
 	const addNewFormula = useCallback(() => {
 		setCurrentQuery((prevState) => {
+			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) return prevState;
+
+			const newFormula = createNewBuilderFormula(prevState.builder.queryFormulas);
+
+			return {
+				...prevState,
+				builder: {
+					...prevState.builder,
+					queryFormulas: [...prevState.builder.queryFormulas, newFormula],
+				},
+			};
+		});
+		// eslint-disable-next-line sonarjs/no-identical-functions
+		setSupersetQuery((prevState) => {
 			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) return prevState;
 
 			const newFormula = createNewBuilderFormula(prevState.builder.queryFormulas);
@@ -389,6 +525,31 @@ export function QueryBuilderProvider({
 		[],
 	);
 
+	const updateSuperSetQueryBuilderData = useCallback(
+		(arr: IBuilderQuery[], index: number, newQueryItem: IBuilderQuery) =>
+			arr.map((item, idx) => {
+				if (index === idx) {
+					if (!panelType) {
+						return newQueryItem;
+					}
+					const queryItem = item as IBuilderQuery;
+					const propsRequired =
+						panelTypeDataSourceFormValuesMap[panelType as keyof PartialPanelTypes]?.[
+							queryItem.dataSource
+						].builder.queryData;
+
+					propsRequired?.push('dataSource');
+					propsRequired?.forEach((p: any) => {
+						set(queryItem, p, get(newQueryItem, p));
+					});
+					return queryItem;
+				}
+
+				return item;
+			}),
+		[panelType],
+	);
+
 	const handleSetQueryItemData = useCallback(
 		(
 			index: number,
@@ -396,6 +557,19 @@ export function QueryBuilderProvider({
 			newQueryData: IPromQLQuery | IClickHouseQuery,
 		) => {
 			setCurrentQuery((prevState) => {
+				const updatedQueryBuilderData = updateQueryBuilderData(
+					prevState[type],
+					index,
+					newQueryData,
+				);
+
+				return {
+					...prevState,
+					[type]: updatedQueryBuilderData,
+				};
+			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
 				const updatedQueryBuilderData = updateQueryBuilderData(
 					prevState[type],
 					index,
@@ -428,12 +602,44 @@ export function QueryBuilderProvider({
 					},
 				};
 			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				const updatedQueryBuilderData = updateSuperSetQueryBuilderData(
+					prevState.builder.queryData,
+					index,
+					newQueryData,
+				);
+
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						queryData: updatedQueryBuilderData,
+					},
+				};
+			});
 		},
-		[updateQueryBuilderData],
+		[updateQueryBuilderData, updateSuperSetQueryBuilderData],
 	);
 	const handleSetFormulaData = useCallback(
 		(index: number, formulaData: IBuilderFormula): void => {
 			setCurrentQuery((prevState) => {
+				const updatedFormulasBuilderData = updateQueryBuilderData(
+					prevState.builder.queryFormulas,
+					index,
+					formulaData,
+				);
+
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						queryFormulas: updatedFormulasBuilderData,
+					},
+				};
+			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
 				const updatedFormulasBuilderData = updateQueryBuilderData(
 					prevState.builder.queryFormulas,
 					index,
@@ -464,7 +670,12 @@ export function QueryBuilderProvider({
 	);
 
 	const redirectWithQueryBuilderData = useCallback(
-		(query: Partial<Query>, searchParams?: Record<string, unknown>) => {
+		(
+			query: Partial<Query>,
+			searchParams?: Record<string, unknown>,
+			redirectingUrl?: typeof ROUTES[keyof typeof ROUTES],
+			shouldNotStringify?: boolean,
+		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
 					? EQueryType.QUERY_BUILDER
@@ -515,11 +726,18 @@ export function QueryBuilderProvider({
 
 			if (searchParams) {
 				Object.keys(searchParams).forEach((param) =>
-					urlQuery.set(param, JSON.stringify(searchParams[param])),
+					urlQuery.set(
+						param,
+						shouldNotStringify
+							? (searchParams[param] as string)
+							: JSON.stringify(searchParams[param]),
+					),
 				);
 			}
 
-			const generatedUrl = `${location.pathname}?${urlQuery}`;
+			const generatedUrl = redirectingUrl
+				? `${redirectingUrl}?${urlQuery}`
+				: `${location.pathname}?${urlQuery}`;
 
 			history.replace(generatedUrl);
 		},
@@ -601,6 +819,10 @@ export function QueryBuilderProvider({
 				...prevState,
 				unit,
 			}));
+			setSupersetQuery((prevState) => ({
+				...prevState,
+				unit,
+			}));
 		},
 		[setCurrentQuery],
 	);
@@ -613,6 +835,14 @@ export function QueryBuilderProvider({
 		[currentQuery, queryType],
 	);
 
+	const superQuery: Query = useMemo(
+		() => ({
+			...supersetQuery,
+			queryType,
+		}),
+		[supersetQuery, queryType],
+	);
+
 	const isEnabledQuery = useMemo(() => !!stagedQuery && !!panelType, [
 		stagedQuery,
 		panelType,
@@ -621,6 +851,8 @@ export function QueryBuilderProvider({
 	const contextValues: QueryBuilderContextType = useMemo(
 		() => ({
 			currentQuery: query,
+			supersetQuery: superQuery,
+			setSupersetQuery,
 			stagedQuery,
 			initialDataSource,
 			panelType,
@@ -631,6 +863,7 @@ export function QueryBuilderProvider({
 			handleSetConfig,
 			removeQueryBuilderEntityByIndex,
 			removeQueryTypeItemByIndex,
+			cloneQuery,
 			addNewBuilderQuery,
 			addNewFormula,
 			addNewQueryItem,
@@ -645,6 +878,7 @@ export function QueryBuilderProvider({
 		}),
 		[
 			query,
+			superQuery,
 			stagedQuery,
 			initialDataSource,
 			panelType,
@@ -655,6 +889,7 @@ export function QueryBuilderProvider({
 			handleSetConfig,
 			removeQueryBuilderEntityByIndex,
 			removeQueryTypeItemByIndex,
+			cloneQuery,
 			addNewBuilderQuery,
 			addNewFormula,
 			addNewQueryItem,

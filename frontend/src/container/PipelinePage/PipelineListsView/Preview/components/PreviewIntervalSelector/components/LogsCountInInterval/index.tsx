@@ -1,5 +1,6 @@
 import './styles.scss';
 
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import {
 	initialFilters,
 	initialQueriesMap,
@@ -26,12 +27,15 @@ function LogsCountInInterval({
 		return q;
 	}, [filter]);
 
-	const result = useGetQueryRange({
-		graphType: PANEL_TYPES.TABLE,
-		query,
-		selectedTime: 'GLOBAL_TIME',
-		globalSelectedInterval: timeInterval,
-	});
+	const result = useGetQueryRange(
+		{
+			graphType: PANEL_TYPES.TABLE,
+			query,
+			selectedTime: 'GLOBAL_TIME',
+			globalSelectedInterval: timeInterval,
+		},
+		DEFAULT_ENTITY_VERSION,
+	);
 
 	if (!result.isFetched) {
 		return null;

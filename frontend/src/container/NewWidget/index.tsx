@@ -1,16 +1,21 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { LockFilled, WarningOutlined } from '@ant-design/icons';
-import { Button, Modal, Space, Tooltip, Typography } from 'antd';
+import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
+import { defaultTo, isUndefined } from 'lodash-es';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -18,12 +23,13 @@ import {
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
 } from 'providers/Dashboard/util';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { generatePath, useLocation, useParams } from 'react-router-dom';
+import { generatePath, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
@@ -41,7 +47,11 @@ import {
 	RightContainerWrapper,
 } from './styles';
 import { NewWidgetProps } from './types';
-import { getIsQueryModified } from './utils';
+import {
+	getDefaultWidgetData,
+	getIsQueryModified,
+	handleQueryChange,
+} from './utils';
 
 function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const {
@@ -52,7 +62,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const { t } = useTranslation(['dashboard']);
 
-	const { currentQuery, stagedQuery } = useQueryBuilder();
+	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
+
+	const {
+		currentQuery,
+		stagedQuery,
+		redirectWithQueryBuilderData,
+		supersetQuery,
+	} = useQueryBuilder();
 
 	const isQueryModified = useMemo(
 		() => getIsQueryModified(currentQuery, stagedQuery),
@@ -65,18 +82,32 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	const { widgets = [] } = selectedDashboard?.data || {};
 
-	const { search } = useLocation();
-
 	const query = useUrlQuery();
 
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
+	const [isNewDashboard, setIsNewDashboard] = useState<boolean>(false);
+
+	useEffect(() => {
+		const widgetId = query.get('widgetId');
+		const selectedWidget = widgets?.find((e) => e.id === widgetId);
+		const isWidgetNotPresent = isUndefined(selectedWidget);
+		if (isWidgetNotPresent) {
+			setIsNewDashboard(true);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	const getWidget = useCallback(() => {
 		const widgetId = query.get('widgetId');
-		return widgets?.find((e) => e.id === widgetId);
-	}, [query, widgets]);
+		const selectedWidget = widgets?.find((e) => e.id === widgetId);
+		return defaultTo(
+			selectedWidget,
+			getDefaultWidgetData(widgetId || '', selectedGraph),
+		);
+	}, [query, selectedGraph, widgets]);
 
-	const selectedWidget = getWidget();
+	const [selectedWidget, setSelectedWidget] = useState(getWidget());
 
 	const [title, setTitle] = useState<string>(
 		selectedWidget?.title?.toString() || '',
@@ -103,6 +134,64 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	);
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
+
+	const [softMin, setSoftMin] = useState<number | null>(
+		selectedWidget?.softMin === null || selectedWidget?.softMin === undefined
+			? null
+			: selectedWidget?.softMin || 0,
+	);
+
+	const [selectedLogFields, setSelectedLogFields] = useState<IField[] | null>(
+		selectedWidget?.selectedLogFields || null,
+	);
+
+	const [selectedTracesFields, setSelectedTracesFields] = useState(
+		selectedWidget?.selectedTracesFields || null,
+	);
+
+	const [softMax, setSoftMax] = useState<number | null>(
+		selectedWidget?.softMax === null || selectedWidget?.softMax === undefined
+			? null
+			: selectedWidget?.softMax || 0,
+	);
+
+	useEffect(() => {
+		setSelectedWidget((prev) => {
+			if (!prev) {
+				return prev;
+			}
+			return {
+				...prev,
+				query: currentQuery,
+				title,
+				description,
+				isStacked: stacked,
+				opacity,
+				nullZeroValues: selectedNullZeroValue,
+				yAxisUnit,
+				thresholds,
+				softMin,
+				softMax,
+				fillSpans: isFillSpans,
+				selectedLogFields,
+				selectedTracesFields,
+			};
+		});
+	}, [
+		currentQuery,
+		description,
+		isFillSpans,
+		opacity,
+		selectedLogFields,
+		selectedNullZeroValue,
+		selectedTracesFields,
+		softMax,
+		softMin,
+		stacked,
+		thresholds,
+		title,
+		yAxisUnit,
+	]);
 
 	const closeModal = (): void => {
 		setSaveModal(false);
@@ -160,6 +249,20 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			return;
 		}
 
+		const widgetId = query.get('widgetId');
+		let updatedLayout = selectedDashboard.data.layout || [];
+		if (isNewDashboard) {
+			updatedLayout = [
+				{
+					i: widgetId || '',
+					w: 6,
+					x: 0,
+					h: 3,
+					y: 0,
+				},
+				...updatedLayout,
+			];
+		}
 		const dashboard: Dashboard = {
 			...selectedDashboard,
 			uuid: selectedDashboard.uuid,
@@ -169,19 +272,25 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					...preWidgets,
 					{
 						...(selectedWidget || ({} as Widgets)),
-						description,
+						description: selectedWidget?.description || '',
 						timePreferance: selectedTime.enum,
-						isStacked: stacked,
-						opacity,
-						nullZeroValues: selectedNullZeroValue,
-						title,
-						yAxisUnit,
+						isStacked: selectedWidget?.isStacked || false,
+						opacity: selectedWidget?.opacity || '1',
+						nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
+						title: selectedWidget?.title,
+						yAxisUnit: selectedWidget?.yAxisUnit,
 						panelTypes: graphType,
-						thresholds,
-						fillSpans: isFillSpans,
+						query: currentQuery,
+						thresholds: selectedWidget?.thresholds,
+						softMin: selectedWidget?.softMin || 0,
+						softMax: selectedWidget?.softMax || 0,
+						fillSpans: selectedWidget?.fillSpans,
+						selectedLogFields: selectedWidget?.selectedLogFields || [],
+						selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 					},
 					...afterWidgets,
 				],
+				layout: [...updatedLayout],
 			},
 		};
 
@@ -202,18 +311,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		});
 	}, [
 		selectedDashboard,
+		query,
+		isNewDashboard,
 		preWidgets,
 		selectedWidget,
-		description,
 		selectedTime.enum,
-		stacked,
-		opacity,
-		selectedNullZeroValue,
-		title,
-		yAxisUnit,
 		graphType,
-		thresholds,
-		isFillSpans,
+		currentQuery,
 		afterWidgets,
 		updateDashboardMutation,
 		setSelectedDashboard,
@@ -236,9 +340,14 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	}, [dashboardId]);
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
-		const params = new URLSearchParams(search);
-		params.set('graphType', type);
+		const updatedQuery = handleQueryChange(type as any, supersetQuery);
 		setGraphType(type);
+		redirectWithQueryBuilderData(
+			updatedQuery,
+			{ [QueryParams.graphType]: type },
+			undefined,
+			true,
+		);
 	};
 
 	const onSaveDashboard = useCallback((): void => {
@@ -280,44 +389,82 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		isNewTraceLogsAvailable,
 	]);
 
+	useEffect(() => {
+		registerShortcut(DashboardShortcuts.SaveChanges, onSaveDashboard);
+		registerShortcut(DashboardShortcuts.DiscardChanges, onClickDiscardHandler);
+
+		return (): void => {
+			deregisterShortcut(DashboardShortcuts.SaveChanges);
+			deregisterShortcut(DashboardShortcuts.DiscardChanges);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [onSaveDashboard]);
+
 	return (
 		<Container>
-			<ButtonContainer>
-				{isSaveDisabled && (
-					<Tooltip title={MESSAGE.PANEL}>
+			<Flex justify="space-between" align="center">
+				<FacingIssueBtn
+					attributes={{
+						uuid: selectedDashboard?.uuid,
+						title: selectedDashboard?.data.title,
+						panelType: graphType,
+						widgetId: query.get('widgetId'),
+						queryType: currentQuery.queryType,
+					}}
+					eventName="Dashboard: Facing Issues in dashboard"
+					buttonText="Facing Issues in dashboard"
+					message={`Hi Team,
+
+I am facing issues configuring dashboard in SigNoz. Here are my dashboard details
+				
+Name: ${selectedDashboard?.data.title || ''}
+Panel type: ${graphType}
+Dashboard Id: ${selectedDashboard?.uuid || ''}
+				
+Thanks`}
+				/>
+				<ButtonContainer>
+					{isSaveDisabled && (
+						<Tooltip title={MESSAGE.PANEL}>
+							<Button
+								icon={<LockFilled />}
+								type="primary"
+								disabled={isSaveDisabled}
+								onClick={onSaveDashboard}
+							>
+								Save Changes
+							</Button>
+						</Tooltip>
+					)}
+
+					{!isSaveDisabled && (
 						<Button
-							icon={<LockFilled />}
 							type="primary"
+							data-testid="new-widget-save"
+							loading={updateDashboardMutation.isLoading}
 							disabled={isSaveDisabled}
 							onClick={onSaveDashboard}
 						>
-							Save
+							Save Changes
 						</Button>
-					</Tooltip>
-				)}
-
-				{!isSaveDisabled && (
-					<Button
-						type="primary"
-						data-testid="new-widget-save"
-						disabled={isSaveDisabled}
-						onClick={onSaveDashboard}
-					>
-						Save
-					</Button>
-				)}
-				<Button onClick={onClickDiscardHandler}>Discard</Button>
-			</ButtonContainer>
+					)}
+					<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
+				</ButtonContainer>
+			</Flex>
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
-					<LeftContainer
-						selectedTime={selectedTime}
-						selectedGraph={graphType}
-						yAxisUnit={yAxisUnit}
-						thresholds={thresholds}
-						fillSpans={isFillSpans}
-					/>
+					{selectedWidget && (
+						<LeftContainer
+							selectedGraph={graphType}
+							selectedLogFields={selectedLogFields}
+							setSelectedLogFields={setSelectedLogFields}
+							selectedTracesFields={selectedTracesFields}
+							setSelectedTracesFields={setSelectedTracesFields}
+							selectedWidget={selectedWidget}
+							selectedTime={selectedTime}
+						/>
+					)}
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>
@@ -343,6 +490,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						selectedWidget={selectedWidget}
 						isFillSpans={isFillSpans}
 						setIsFillSpans={setIsFillSpans}
+						softMin={softMin}
+						setSoftMin={setSoftMin}
+						softMax={softMax}
+						setSoftMax={setSoftMax}
 					/>
 				</RightContainerWrapper>
 			</PanelContainer>
@@ -363,6 +514,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				closable
 				onCancel={closeModal}
 				onOk={onClickSaveHandler}
+				confirmLoading={updateDashboardMutation.isLoading}
 				centered
 				open={saveModal}
 				width={600}
@@ -371,7 +523,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					<Typography>
 						{t('your_graph_build_with')}{' '}
 						<QueryTypeTag queryType={currentQuery.queryType} />
-						{t('dashboar_ok_confirm')}
+						{t('dashboard_ok_confirm')}
 					</Typography>
 				) : (
 					<Typography>{t('dashboard_unsave_changes')} </Typography>

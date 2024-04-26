@@ -26,7 +26,9 @@ function TopOperationsTable({
 	isLoading,
 }: TopOperationsTableProps): JSX.Element {
 	const searchInput = useRef<InputRef>(null);
-	const { servicename } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useParams<IServiceName>();
+
+	const servicename = decodeURIComponent(encodedServiceName);
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -39,7 +41,8 @@ function TopOperationsTable({
 	const params = useParams<{ servicename: string }>();
 
 	const handleOnClick = (operation: string): void => {
-		const { servicename } = params;
+		const { servicename: encodedServiceName } = params;
+		const servicename = decodeURIComponent(encodedServiceName);
 
 		navigateToTrace({
 			servicename,

@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/prometheus/prometheus/promql"
@@ -22,7 +23,7 @@ type Reader interface {
 	GetInstantQueryMetricsResult(ctx context.Context, query *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError)
 	GetServiceOverview(ctx context.Context, query *model.GetServiceOverviewParams, skipConfig *model.SkipConfig) (*[]model.ServiceOverviewItem, *model.ApiError)
-	GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig) (*map[string][]string, *model.ApiError)
+	GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig, start, end time.Time) (*map[string][]string, *map[string][]string, *model.ApiError)
 	GetServices(ctx context.Context, query *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError)
 	GetTopOperations(ctx context.Context, query *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError)
 	GetUsage(ctx context.Context, query *model.GetUsageParams) (*[]model.UsageItem, error)
@@ -57,14 +58,14 @@ type Reader interface {
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
 
 	FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error)
-	GetMetricAutocompleteMetricNames(ctx context.Context, matchText string, limit int) (*[]string, *model.ApiError)
-	GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
-	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricResult(ctx context.Context, query string) ([]*model.Series, error)
 	GetMetricResultEE(ctx context.Context, query string) ([]*model.Series, string, error)
 	GetMetricAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error)
 	GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error)
 	GetMetricAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error)
+
+	// Returns `MetricStatus` for latest received metric among `metricNames`. Useful for status calculations
+	GetLatestReceivedMetric(ctx context.Context, metricNames []string) (*model.MetricStatus, *model.ApiError)
 
 	// QB V3 metrics/traces/logs
 	GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error)
@@ -73,12 +74,15 @@ type Reader interface {
 
 	GetDashboardsInfo(ctx context.Context) (*model.DashboardsInfo, error)
 	GetAlertsInfo(ctx context.Context) (*model.AlertsInfo, error)
+	GetSavedViewsInfo(ctx context.Context) (*model.SavedViewsInfo, error)
 	GetTotalSpans(ctx context.Context) (uint64, error)
-	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)
+	GetTotalLogs(ctx context.Context) (uint64, error)
+	GetTotalSamples(ctx context.Context) (uint64, error)
+	GetSpansInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error)
 	GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error)
-	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
-	GetLogsInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
-	GetTagsInfoInLastHeartBeatInterval(ctx context.Context) (*model.TagsInfo, error)
+	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error)
+	GetLogsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (uint64, error)
+	GetTagsInfoInLastHeartBeatInterval(ctx context.Context, interval time.Duration) (*model.TagsInfo, error)
 	GetDistributedInfoInLastHeartBeatInterval(ctx context.Context) (map[string]interface{}, error)
 	// Logs
 	GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
@@ -89,6 +93,7 @@ type Reader interface {
 	GetLogAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error)
 	GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error)
 	GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error)
+	GetUsers(ctx context.Context) ([]model.UserPayload, error)
 
 	// Connection needed for rules, not ideal but required
 	GetConn() clickhouse.Conn
@@ -98,7 +103,7 @@ type Reader interface {
 	QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error)
 	CheckClickHouse(ctx context.Context) error
 
-	GetLatencyMetricMetadata(context.Context, string, bool) (*v3.LatencyMetricMetadataResponse, error)
+	GetMetricMetadata(context.Context, string, string) (*v3.MetricMetadataResponse, error)
 }
 
 type Querier interface {

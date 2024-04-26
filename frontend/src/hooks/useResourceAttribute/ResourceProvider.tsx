@@ -52,6 +52,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 						? `?resourceAttribute=${encode(JSON.stringify(queries))}`
 						: '',
 			});
+
 			setQueries(queries);
 		},
 		[pathname],
@@ -62,12 +63,14 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			onSelectTagKey: () => {
 				handleLoading(true);
 				GetTagKeys()
-					.then((tagKeys) =>
+					.then((tagKeys) => {
+						const options = mappingWithRoutesAndKeys(pathname, tagKeys);
+
 						setOptionsData({
-							options: mappingWithRoutesAndKeys(pathname, tagKeys),
+							options,
 							mode: undefined,
-						}),
-					)
+						});
+					})
 					.finally(() => {
 						handleLoading(false);
 					});
@@ -96,6 +99,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 				}
 
 				const generatedQuery = createQuery([...staging, selectedQuery]);
+
 				if (generatedQuery) {
 					dispatchQueries([...queries, generatedQuery]);
 				}
@@ -125,6 +129,29 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			setSelectedQueries([...value]);
 		},
 		[optionsData.mode, send],
+	);
+
+	const handleEnvironmentChange = useCallback(
+		(environments: string[]): void => {
+			const staging = ['resource_deployment_environment', 'IN'];
+
+			const queriesCopy = queries.filter(
+				(query) => query.tagKey !== 'resource_deployment_environment',
+			);
+
+			if (environments && Array.isArray(environments) && environments.length > 0) {
+				const generatedQuery = createQuery([...staging, environments]);
+
+				if (generatedQuery) {
+					dispatchQueries([...queriesCopy, generatedQuery]);
+				}
+			} else {
+				dispatchQueries([...queriesCopy]);
+			}
+
+			send('RESET');
+		},
+		[dispatchQueries, queries, send],
 	);
 
 	const handleClose = useCallback(
@@ -159,12 +186,14 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			handleFocus,
 			loading,
 			handleChange,
+			handleEnvironmentChange,
 			selectedQuery,
 			optionsData,
 		}),
 		[
 			handleBlur,
 			handleChange,
+			handleEnvironmentChange,
 			handleClearAll,
 			handleClose,
 			handleFocus,
