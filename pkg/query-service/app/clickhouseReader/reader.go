@@ -4958,21 +4958,42 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 	}
 	defer rows.Close()
 
-	var tagKey string
-	var dataType string
-	var tagType string
-	var isColumn bool
-	for rows.Next() {
-		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
-			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-		}
-		// TODO: Remove this once the column name are updated in the table
-		tagKey = tempHandleFixedColumns(tagKey)
+	// var tagKey string
+	// var dataType string
+	// var tagType string
+	// var isColumn bool
+	// for rows.Next() {
+	// 	if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
+	// 		return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+	// 	}
+	// 	// TODO: Remove this once the column name are updated in the table
+	// 	tagKey = tempHandleFixedColumns(tagKey)
+	// 	key := v3.AttributeKey{
+	// 		Key:      tagKey,
+	// 		DataType: v3.AttributeKeyDataType(dataType),
+	// 		Type:     v3.AttributeKeyType(tagType),
+	// 		IsColumn: isColumn,
+	// 	}
+	// 	response.AttributeKeys = append(response.AttributeKeys, key)
+	// }
+	// spanKeys := map[string]v3.AttributeKey{}
+	list := []string{
+		"env",
+		"path",
+		"sdkVersion",
+		"tag",
+		"deviceId",
+		"platform",
+		"url",
+		"userAgent",
+		"message",
+	}
+	for _, item := range list {
 		key := v3.AttributeKey{
-			Key:      tagKey,
-			DataType: v3.AttributeKeyDataType(dataType),
-			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn,
+			Key:      item,
+			DataType: "string",
+			Type:     "resource",
+			IsColumn: false,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}

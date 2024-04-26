@@ -214,7 +214,8 @@ func costumbuildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.Attribute
 			val := item.Value
 			// generate the key
 			// columnName := getColumnName(item.Key, keys)
-			columnName := item.Key.Key
+			// columnName := item.Key.Key
+			columnName := fmt.Sprintf("JSONExtractString(exceptionStacktrace, '%s')", item.Key.Key)
 			var fmtVal string
 			key := enrichKeyWithMetadata(item.Key, keys)
 			item.Operator = v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
@@ -727,7 +728,7 @@ func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 		return query, nil
 	}
 
-	// query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, options)
+	// query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, options)222
 	query, err := customBuildTracesQuery(start, end, mq.StepInterval, mq, "distributed_signoz_error_index_v2", keys, panelType, options)
 	if err != nil {
 		return "", err
