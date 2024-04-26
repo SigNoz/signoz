@@ -202,4 +202,4 @@ require (
 	k8s.io/utils v0.0.0-20230711102312-30195339c3c7 // indirect
 )
 
-replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.10.1
+replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.11.0
