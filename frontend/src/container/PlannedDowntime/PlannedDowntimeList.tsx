@@ -109,7 +109,7 @@ export function CollapseListContent({
 	const renderItems = (title: string, value: ReactNode): JSX.Element => (
 		<Flex style={{ marginBottom: 13 }}>
 			<Typography style={{ width: 128 }}>{title}</Typography>
-			{value}
+			<div className="render-item-value">{value}</div>
 		</Flex>
 	);
 	return (

@@ -10,6 +10,12 @@
 			background-color: var(--Ink-400, #121317);
 			.ant-typography {
 				margin: 0;
+				color: var(--Vanilla-100, #fff);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px;
 			}
 		}
 
@@ -294,6 +300,17 @@
 			}
 			.ant-collapse-content-box {
 				padding: 8px 20px 12px 38px;
+
+				.render-item-value {
+					.ant-typography {
+						color: var(--Vanilla-100, #fff);
+						font-family: Inter;
+						font-size: 14px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: 18px;
+					}
+				}
 			}
 
 			.ant-typography {
