@@ -61,6 +61,59 @@
 	}
 }
 
+.alert-rule-tags {
+	.ant-tag {
+		display: flex;
+		align-items: center;
+		border: 1px solid rgba(113, 144, 249, 0.2);
+		background: rgba(113, 144, 249, 0.1);
+		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+		padding-right: 0px;
+		border-right: 0;
+		color: var(--Robin-400, #7190f9);
+
+		.ant-tag-close-icon {
+			height: 28px;
+			width: 20px !important;
+			justify-content: center;
+			border-left: 1px solid rgba(113, 144, 249, 0.2);
+			border-radius: 0px 2px 2px 0px;
+			background: rgba(113, 144, 249, 0.3);
+			border-right: 1px solid rgba(113, 144, 249, 0.2);
+			margin-right: 0px;
+
+			svg {
+				fill: var(--bg-robin-500);
+			}
+		}
+	}
+	.non-closable-tag {
+		padding-right: 7px;
+		border-right: 1px solid rgba(113, 144, 249, 0.2);
+	}
+
+	.red-tag.non-closable-tag {
+		border-right: 1px solid rgba(242, 71, 105, 0.2) !important;
+	}
+
+	.red-tag {
+		border: 1px solid rgba(242, 71, 105, 0.2);
+		background: rgba(242, 71, 105, 0.1);
+		border-right: 0;
+		color: var(--Sakura-400, #f56c87);
+
+		.ant-tag-close-icon {
+			background: rgba(242, 71, 105, 0.3);
+			border-left: 1px solid rgba(242, 71, 105, 0.2);
+			border-right: 1px solid rgba(242, 71, 105, 0.2);
+
+			svg {
+				fill: var(--bg-sakura-500);
+			}
+		}
+	}
+}
+
 .datePicker {
 	.ant-picker-panel-container {
 		background: #262930 !important;
@@ -223,6 +276,9 @@
 
 			.alert-rule-collapse-list {
 				width: 540px;
+				max-height: 100px;
+				overflow: auto;
+
 				.ant-tag {
 					height: 28px;
 					display: flex;

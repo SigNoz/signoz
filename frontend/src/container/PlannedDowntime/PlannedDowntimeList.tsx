@@ -33,7 +33,10 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 						key={tag.value}
 						onClose={(): void => handleClose?.(tag?.value)}
 						closable={closable}
-						color={index % 2 ? 'red' : 'geekblue'}
+						className={cx(
+							{ 'red-tag': index % 2 },
+							{ 'non-closable-tag': !closable },
+						)}
 					>
 						<span>
 							{isLongTag
