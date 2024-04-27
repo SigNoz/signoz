@@ -1,11 +1,11 @@
 import './GridCardLayout.styles.scss';
 
-import { PlusOutlined } from '@ant-design/icons';
-import { Flex, Form, Input, Modal, Tooltip, Typography } from 'antd';
+import { Button, Flex, Form, Input, Modal, Tooltip, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import cx from 'classnames';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
+// import { Tooltip } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -26,12 +26,12 @@ import {
 	Settings,
 	Trash2,
 } from 'lucide-react';
+// import { FullscreenIcon } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useState } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import { ItemCallback, Layout } from 'react-grid-layout';
-import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -43,18 +43,19 @@ import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
 
 import { EditMenuAction, ViewMenuAction } from './config';
+// import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import GridCard from './GridCard';
 import {
-	Button,
 	ButtonContainer,
+	// Button,
+	// ButtonContainer,
 	Card,
 	CardContainer,
 	ReactGridLayout,
 } from './styles';
-import { GraphLayoutProps } from './types';
 import { removeUndefinedValuesFromLayout } from './utils';
 
-function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
+function GraphLayout(): JSX.Element {
 	const {
 		selectedDashboard,
 		layouts,
@@ -70,8 +71,6 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 	const dispatch = useDispatch();
 
 	const { widgets, variables } = data || {};
-
-	const { t } = useTranslation(['dashboard']);
 
 	const { featureResponse, role, user } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -483,6 +482,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 			},
 		});
 	};
+	// TOOD add dashboard empty state back
 	return (
 		<>
 			<Flex justify="flex-end" gap={8} align="center">
@@ -507,27 +507,6 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 							disabled={updateDashboardMutation.isLoading}
 						/>
 					</Tooltip>
-
-					{!isDashboardLocked && addPanelPermission && (
-						<Button
-							className="periscope-btn"
-							onClick={onAddPanelHandler}
-							icon={<PlusOutlined />}
-							data-testid="add-panel"
-						>
-							{t('dashboard:add_panel')}
-						</Button>
-					)}
-					{!isDashboardLocked && addPanelPermission && (
-						<Button
-							className="periscope-btn"
-							onClick={(): void => handleAddRow()}
-							icon={<PlusOutlined />}
-							data-testid="add-row"
-						>
-							{t('dashboard:add_row')}
-						</Button>
-					)}
 				</ButtonContainer>
 			</Flex>
 
