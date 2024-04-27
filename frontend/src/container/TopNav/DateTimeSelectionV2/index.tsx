@@ -59,6 +59,7 @@ import { Form, FormContainer, FormItem } from './styles';
 
 function DateTimeSelection({
 	showAutoRefresh,
+	hideShareModal = false,
 	location,
 	updateTimeInterval,
 	globalTimeLoading,
@@ -619,21 +620,23 @@ function DateTimeSelection({
 						</div>
 					)}
 
-					<Popover
-						rootClassName="shareable-link-popover-root"
-						className="shareable-link-popover"
-						placement="bottomRight"
-						content={shareModalContent}
-						arrow={false}
-						trigger={['hover']}
-					>
-						<Button
-							className="share-link-btn periscope-btn"
-							icon={<Send size={14} />}
+					{!hideShareModal && (
+						<Popover
+							rootClassName="shareable-link-popover-root"
+							className="shareable-link-popover"
+							placement="bottomRight"
+							content={shareModalContent}
+							arrow={false}
+							trigger={['hover']}
 						>
-							Share
-						</Button>
-					</Popover>
+							<Button
+								className="share-link-btn periscope-btn"
+								icon={<Send size={14} />}
+							>
+								Share
+							</Button>
+						</Popover>
+					)}
 				</FormContainer>
 			</Form>
 		</div>
@@ -642,7 +645,12 @@ function DateTimeSelection({
 
 interface DateTimeSelectionV2Props {
 	showAutoRefresh: boolean;
+	hideShareModal?: boolean;
 }
+
+DateTimeSelection.defaultProps = {
+	hideShareModal: false,
+};
 interface DispatchProps {
 	updateTimeInterval: (
 		interval: Time | CustomTimeType,
