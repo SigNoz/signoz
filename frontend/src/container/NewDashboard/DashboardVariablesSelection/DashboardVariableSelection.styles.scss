@@ -1,13 +1,44 @@
-.variable-name {
-	font-size: 0.8rem;
-	min-width: 100px;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	color: gray;
-}
-
 .variable-item {
+	display: flex;
+	align-items: center;
+
+	.variable-name {
+		display: flex;
+		width: 56px;
+		height: 32px;
+		padding: 6px 6px 6px 8px;
+		align-items: center;
+		gap: 4px;
+		border-radius: 2px 0px 0px 2px;
+		border: 1px solid var(--Slate-400, #1d212d);
+		background: var(--Ink-300, #16181d);
+		color: var(--Robin-300, #95acfb);
+		font-family: Inter;
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 16px; /* 133.333% */
+	}
+
+	.variable-value {
+		display: flex;
+		min-width: 120px;
+		height: 32px;
+		padding: 6px 6px 6px 8px;
+		align-items: center;
+		gap: 4px;
+		border-radius: 0px 2px 2px 0px;
+		border: 1px solid var(--Slate-400, #1d212d);
+		border-left: none;
+		background: var(--Ink-400, #121317);
+		color: var(--Vanilla-400, #c0c1c3);
+		font-family: Inter;
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 16px; /* 133.333% */
+	}
+
 	.variable-select {
 		.ant-select-dropdown {
 			max-width: 300px;
