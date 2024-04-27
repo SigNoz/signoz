@@ -1,7 +1,7 @@
 import './Description.styles.scss';
 
 import { Button, Tooltip } from 'antd';
-import { Cog } from 'lucide-react';
+import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import { useState } from 'react';
 
 import DashboardSettingsContent from '../DashboardSettings';
@@ -22,12 +22,14 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 		<>
 			<Tooltip title="Configure" placement="left">
 				<Button
-					className="periscope-btn"
-					onClick={showDrawer}
-					style={{ width: '100%' }}
+					type="text"
+					className="configure-button"
+					icon={<ConfigureIcon />}
 					data-testid="show-drawer"
-					icon={<Cog size={16} />}
-				/>
+					onClick={showDrawer}
+				>
+					Configure
+				</Button>
 			</Tooltip>
 
 			<DrawerContainer

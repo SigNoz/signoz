@@ -16,7 +16,7 @@ import { VariableResponseProps } from 'types/api/dashboard/variables/query';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { variablePropsToPayloadVariables } from '../utils';
-import { SelectItemStyle, VariableContainer, VariableValue } from './styles';
+import { SelectItemStyle } from './styles';
 import { areArraysEqual } from './util';
 
 const ALL_SELECT_VALUE = '__ALL__';
@@ -214,11 +214,11 @@ function VariableItem({
 	}, [variableData.type, variableData.customValue]);
 
 	return (
-		<VariableContainer className="variable-item">
+		<div className="variable-item">
 			<Typography.Text className="variable-name" ellipsis>
 				${variableData.name}
 			</Typography.Text>
-			<VariableValue>
+			<div className="variable-value">
 				{variableData.type === 'TEXTBOX' ? (
 					<Input
 						placeholder="Enter value"
@@ -283,8 +283,8 @@ function VariableItem({
 						</Popover>
 					</span>
 				)}
-			</VariableValue>
-		</VariableContainer>
+			</div>
+		</div>
 	);
 }
 
