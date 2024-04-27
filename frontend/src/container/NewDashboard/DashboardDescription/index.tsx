@@ -1,16 +1,20 @@
 import './Description.styles.scss';
 
-import { LockFilled, UnlockFilled } from '@ant-design/icons';
-import { Button, Card, Col, Row, Tag, Tooltip, Typography } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import { Button, Card, Tag, Tooltip, Typography } from 'antd';
+import ROUTES from 'constants/routes';
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { Share2 } from 'lucide-react';
+import history from 'lib/history';
+import { CircleEllipsis, LayoutGrid, Link2, Tent, Zap } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DashboardData } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
-import { USER_ROLES } from 'types/roles';
+import { ROLES, USER_ROLES } from 'types/roles';
+import { ComponentTypes } from 'utils/permission';
 
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
@@ -20,7 +24,8 @@ function DashboardDescription(): JSX.Element {
 	const {
 		selectedDashboard,
 		isDashboardLocked,
-		handleDashboardLockToggle,
+		handleToggleDashboardSlider,
+		// handleDashboardLockToggle,
 	} = useDashboard();
 
 	const selectedData = selectedDashboard
@@ -30,30 +35,120 @@ function DashboardDescription(): JSX.Element {
 		  }
 		: ({} as DashboardData);
 
-	const { title = '', tags, description } = selectedData || {};
+	const { title = '', description, tags } = selectedData || {};
 
 	const [openDashboardJSON, setOpenDashboardJSON] = useState<boolean>(false);
 
 	const { user, role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], role);
 
-	let isAuthor = false;
+	// let isAuthor = false;
 
-	if (selectedDashboard && user && user.email) {
-		isAuthor = selectedDashboard?.created_by === user?.email;
+	// if (selectedDashboard && user && user.email) {
+	// 	isAuthor = selectedDashboard?.created_by === user?.email;
+	// }
+
+	let permissions: ComponentTypes[] = ['add_panel'];
+
+	if (isDashboardLocked) {
+		permissions = ['add_panel_locked_dashboard'];
 	}
+
+	const userRole: ROLES | null =
+		selectedDashboard?.created_by === user?.email
+			? (USER_ROLES.AUTHOR as ROLES)
+			: role;
+
+	const [addPanelPermission] = useComponentPermission(permissions, userRole);
 
 	const onToggleHandler = (): void => {
 		setOpenDashboardJSON((state) => !state);
 	};
 
-	const handleLockDashboardToggle = (): void => {
-		handleDashboardLockToggle(!isDashboardLocked);
-	};
+	const onEmptyWidgetHandler = useCallback(() => {
+		handleToggleDashboardSlider(true);
+	}, [handleToggleDashboardSlider]);
+
+	// const handleLockDashboardToggle = (): void => {
+	// 	handleDashboardLockToggle(!isDashboardLocked);
+	// };
 
 	return (
 		<Card className="dashboard-description-container">
-			<Row gutter={16}>
+			<section className="dashboard-breadcrumbs">
+				<Button
+					type="text"
+					icon={<LayoutGrid size={14} />}
+					className="dashboard-btn"
+					onClick={(): void => history.push(ROUTES.ALL_DASHBOARD)}
+				>
+					Dashboard
+				</Button>
+				<Button type="text" className="id-btn" icon={<Tent size={14} />}>
+					{title}
+				</Button>
+			</section>
+			<section className="dashbord-details">
+				<div className="left-section">
+					<Tent size={14} />
+					<Typography.Text className="dashboard-title">{title}</Typography.Text>
+				</div>
+				<div className="right-section">
+					<Tooltip title="Actions">
+						<Button
+							icon={<CircleEllipsis size={14} />}
+							type="text"
+							className="icons"
+						/>
+					</Tooltip>
+					<Tooltip title="Share dashboard">
+						<Button
+							icon={<Link2 size={14} />}
+							type="text"
+							className="icons"
+							onClick={onToggleHandler}
+						/>
+					</Tooltip>
+					<Tooltip title="Activity">
+						<Button icon={<Zap size={14} />} type="text" className="icons" />
+					</Tooltip>
+					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
+					{!isDashboardLocked && editDashboard && (
+						<SettingsDrawer drawerTitle="Dashboard Configuration" />
+					)}
+					{!isDashboardLocked && addPanelPermission && (
+						<Button
+							className="add-panel-btn"
+							onClick={onEmptyWidgetHandler}
+							icon={<PlusOutlined />}
+							type="primary"
+							data-testid="add-panel"
+						>
+							New Panel
+						</Button>
+					)}
+					{selectedData && (
+						<ShareModal
+							isJSONModalVisible={openDashboardJSON}
+							onToggleHandler={onToggleHandler}
+							selectedData={selectedData}
+						/>
+					)}
+				</div>
+			</section>
+			<div className="dashboard-tags">
+				{tags?.map((tag) => (
+					<Tag key={tag} className="tag">
+						{tag}
+					</Tag>
+				))}
+			</div>
+			<section className="dashboard-description-section">{description}</section>
+			<section className="dashboard-variables">
+				<DashboardVariableSelection />
+			</section>
+
+			{/* <Row gutter={16}>
 				<Col flex={1} span={9}>
 					<Typography.Title
 						level={4}
@@ -127,7 +222,7 @@ function DashboardDescription(): JSX.Element {
 						)}
 					</div>
 				</Col>
-			</Row>
+			</Row> */}
 		</Card>
 	);
 }
