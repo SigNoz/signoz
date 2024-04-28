@@ -191,7 +191,7 @@ function IngoreError(): JSX.Element {
 		try {
 			setSearchLoading(true);
 			const { data } = await axios.get(
-				`${process.env.SERVER_API_HOST}/portal/searchIgnoreRules`,
+				`${process.env.SERVER_API_HOST}/capi/portal/searchIgnoreRules`,
 				{
 					params: {
 						service_name: projectId,
@@ -238,7 +238,7 @@ function IngoreError(): JSX.Element {
 	const setIgnoreRules = async (list: any) => {
 		try {
 			const { data } = await axios.post(
-				`${process.env.SERVER_API_HOST}/portal/setIgnoreRules`,
+				`${process.env.SERVER_API_HOST}/capi/portal/setIgnoreRules`,
 				list,
 			);
 			if (!data.result) {
@@ -255,7 +255,7 @@ function IngoreError(): JSX.Element {
 	const deleteIgnoreRules = async (list: any) => {
 		try {
 			const { data } = await axios.post(
-				`${process.env.SERVER_API_HOST}/portal/deleteIgnoreRules`,
+				`${process.env.SERVER_API_HOST}/capi/portal/deleteIgnoreRules`,
 				list,
 			);
 			if (data.result) {

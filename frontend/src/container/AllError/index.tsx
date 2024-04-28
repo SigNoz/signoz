@@ -368,7 +368,7 @@ function AllErrors(): JSX.Element {
 		[filterIcon, filterDropdownWrapper],
 	);
 
-	const updateJiraIssue = async (issueStatus: string, groupID: string) => {
+	const updateJiraIssue = async (issueStatus: string, groupID: string, serviceName: string, message: string, exceptionType: string) => {
 		try {
 			const { data } = await axios.post(
 				`${process.env.SERVER_API_HOST}/capi/jira/updateStatus`,
@@ -377,6 +377,9 @@ function AllErrors(): JSX.Element {
 					// serviceName: record.serviceName,
 					issueStatus,
 					groupID,
+					serviceName,
+					message,
+					exceptionType
 				},
 			);
 			console.log('updateJiraIssue', data);
@@ -385,7 +388,7 @@ function AllErrors(): JSX.Element {
 		}
 	};
 
-	const handleIssueChange = (value: string, groupID: string) => {
+	const handleIssueChange = (value: string, groupID: string, serviceName: string, message: string, exceptionType: string) => {
 		axios
 			.post(`/changeIssueStatus`, {
 				groupID,
@@ -399,7 +402,7 @@ function AllErrors(): JSX.Element {
 					});
 					setTimeout(() => {
 						setChangeIssueStatusNum(changeIssueStatusNum + 1);
-						updateJiraIssue(value, groupID);
+						updateJiraIssue(value, groupID, serviceName, message, exceptionType);
 					}, 800);
 					return;
 				}
@@ -547,7 +550,7 @@ function AllErrors(): JSX.Element {
 				<Select
 					defaultValue={String(record.issueStatus)}
 					style={{ width: 100 }}
-					onChange={(value) => handleIssueChange(value, record.groupID)}
+					onChange={(value) => handleIssueChange(value, record.groupID, record.serviceName, record.exceptionMessage, record.exceptionType)}
 					options={issueStatusOptions}
 				/>
 			),

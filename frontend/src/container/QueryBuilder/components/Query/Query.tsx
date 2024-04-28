@@ -356,50 +356,55 @@ export const Query = memo(function Query({
 							</Col>
 						</Row>
 					</Col>
-					{!isMetricsDataSource && !isListViewPanel && (
-						<Col span={11}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<OperatorsSelect
-										value={query.aggregateOperator}
-										onChange={handleChangeOperator}
-										operators={operators}
-									/>
-								</Col>
-								<Col flex="1 1 12.5rem">
-									<AggregatorFilter
-										query={query}
-										onChange={handleChangeAggregatorAttribute}
-										disabled={
-											panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE
-										}
-									/>
-								</Col>
-							</Row>
-						</Col>
-					)}
-					{!isListViewPanel && (
-						<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<FilterLabel
-										label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
-									/>
-								</Col>
-								<Col flex="1 1 12.5rem">
-									{panelType === PANEL_TYPES.VALUE ? (
-										<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
-									) : (
-										<GroupByFilter
-											disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-											query={query}
-											onChange={handleChangeGroupByKeys}
+					{/* 自定义修改，trace模式下隐藏筛选项 */}
+					{/* {!isMetricsDataSource && !isListViewPanel && ( */}
+					{!isMetricsDataSource &&
+						!isListViewPanel &&
+						currentQuery.builder.queryData?.[0].dataSource !== 'traces' && (
+							<Col span={11}>
+								<Row gutter={[11, 5]}>
+									<Col flex="5.93rem">
+										<OperatorsSelect
+											value={query.aggregateOperator}
+											onChange={handleChangeOperator}
+											operators={operators}
 										/>
-									)}
-								</Col>
-							</Row>
-						</Col>
-					)}
+									</Col>
+									<Col flex="1 1 12.5rem">
+										<AggregatorFilter
+											query={query}
+											onChange={handleChangeAggregatorAttribute}
+											disabled={
+												panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE
+											}
+										/>
+									</Col>
+								</Row>
+							</Col>
+						)}
+					{!isListViewPanel &&
+						currentQuery.builder.queryData?.[0].dataSource !== 'traces' && (
+							<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
+								<Row gutter={[11, 5]}>
+									<Col flex="5.93rem">
+										<FilterLabel
+											label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
+										/>
+									</Col>
+									<Col flex="1 1 12.5rem">
+										{panelType === PANEL_TYPES.VALUE ? (
+											<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+										) : (
+											<GroupByFilter
+												disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+												query={query}
+												onChange={handleChangeGroupByKeys}
+											/>
+										)}
+									</Col>
+								</Row>
+							</Col>
+						)}
 					{!isTracePanelType && !isListViewPanel && (
 						<Col span={24}>
 							<AdditionalFiltersToggler
