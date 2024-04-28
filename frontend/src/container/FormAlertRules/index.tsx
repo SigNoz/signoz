@@ -116,7 +116,7 @@ function FormAlertRules({
 
 	const initProjectId = useMemo(() => {
 		if (
-			alertType === AlertTypes.LOGS_BASED_ALERT &&
+			// alertType === AlertTypes.LOGS_BASED_ALERT &&
 			sq.builder.queryData.length
 		) {
 			const existProjectId = sq.builder.queryData?.[0].filters?.items?.find(
@@ -133,7 +133,8 @@ function FormAlertRules({
 	useShareBuilderUrl(sq);
 
 	const stagedQueryMemo = useMemo(() => {
-		if (stagedQuery?.builder && alertType === AlertTypes.LOGS_BASED_ALERT) {
+		// if (stagedQuery?.builder && alertType === AlertTypes.LOGS_BASED_ALERT) {
+		if (stagedQuery?.builder) {
 			stagedQuery.builder.queryData.forEach((queryDataItem) => {
 				if (queryDataItem?.filters?.items) {
 					const existProject = queryDataItem?.filters?.items?.find(
@@ -189,9 +190,9 @@ function FormAlertRules({
 	};
 
 	useEffect(() => {
-		if (alertType === AlertTypes.LOGS_BASED_ALERT) {
-			getAllProject();
-		}
+		// if (alertType === AlertTypes.LOGS_BASED_ALERT) {
+		getAllProject();
+		// }
 	}, []);
 
 	useEffect(() => {
@@ -451,8 +452,8 @@ function FormAlertRules({
 					? { data: postableAlert, id: ruleId }
 					: { data: postableAlert };
 
-			const final =
-				alertType === AlertTypes.LOGS_BASED_ALERT ? getFinalReq(apiReq) : apiReq;
+			const final = getFinalReq(apiReq);
+			// alertType === AlertTypes.LOGS_BASED_ALERT ? getFinalReq(apiReq) : apiReq;
 
 			const response = await saveAlertApi(final);
 
@@ -629,49 +630,43 @@ function FormAlertRules({
 							renderPromAndChQueryChartPreview()}
 						{currentQuery.queryType === EQueryType.CLICKHOUSE &&
 							renderPromAndChQueryChartPreview()}
-
 						<StepContainer>
 							<BuilderUnitsFilter
 								onChange={onUnitChangeHandler}
 								yAxisUnit={yAxisUnit}
 							/>
 						</StepContainer>
-
-						{alertType === AlertTypes.LOGS_BASED_ALERT ? (
-							<div>
-								<span>
-									<span>*</span>
-									选择项目：
-								</span>
-								<Select
-									value={currentProject}
-									// mode="tags"
-									showSearch
-									placeholder="Select a project"
-									style={{ width: 180 }}
-									onChange={handleChangeProject}
-									options={projectList.map((item) => ({
-										value: item,
-										label: item,
-									}))}
-								/>
-							</div>
-						) : null}
-
+						{/* {alertType === AlertTypes.LOGS_BASED_ALERT ? ( */}
+						<div>
+							<span>
+								<span>*</span>
+								选择项目：
+							</span>
+							<Select
+								value={currentProject}
+								// mode="tags"
+								showSearch
+								placeholder="Select a project"
+								style={{ width: 180 }}
+								onChange={handleChangeProject}
+								options={projectList.map((item) => ({
+									value: item,
+									label: item,
+								}))}
+							/>
+						</div>
 						<QuerySection
 							queryCategory={currentQuery.queryType}
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
 							runQuery={handleRunQuery}
 						/>
-
 						<RuleOptions
 							queryCategory={currentQuery.queryType}
 							alertDef={alertDef}
 							setAlertDef={setAlertDef}
 							queryOptions={queryOptions}
 						/>
-
 						{renderBasicInfo()}
 						<ButtonContainer>
 							<Tooltip title={isAlertAvialableToSave ? MESSAGE.ALERT : ''}>

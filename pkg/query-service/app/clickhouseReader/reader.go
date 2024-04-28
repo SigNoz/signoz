@@ -4987,7 +4987,7 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 		"url",
 		"userAgent",
 		"message",
-		"projectId",
+		// "projectId",
 	}
 	for _, item := range list {
 		key := v3.AttributeKey{
