@@ -1,6 +1,7 @@
 /* eslint-disable */
 import { Button } from 'antd';
 import axios from 'api';
+import dayjs from 'dayjs';
 
 interface CreateIssueProp {
 	issueLink: string;
@@ -38,7 +39,7 @@ function CreateIssue(props: CreateIssueProp): JSX.Element {
 					serviceName: record.serviceName,
 					exceptionType: record.exceptionType,
 					exceptionMessage: record.exceptionMessage,
-					time: record.lastSeen,
+					time: dayjs(record.lastSeen).format('DD/MM/YYYY HH:mm:ss A'),
 					groupID: record.groupID,
 				},
 			);
