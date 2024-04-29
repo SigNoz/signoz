@@ -1,12 +1,26 @@
 import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Tag, Tooltip, Typography } from 'antd';
+import { Button, Card, Popover, Tag, Tooltip, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import { CircleEllipsis, LayoutGrid, Link2, Tent, Zap } from 'lucide-react';
+import {
+	CircleEllipsis,
+	ClipboardCopy,
+	Copy,
+	FileJson,
+	FolderKanban,
+	Fullscreen,
+	LayoutGrid,
+	Link2,
+	LockKeyhole,
+	PenLine,
+	Tent,
+	Trash2,
+	Zap,
+} from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -26,7 +40,7 @@ function DashboardDescription(): JSX.Element {
 		selectedDashboard,
 		isDashboardLocked,
 		handleToggleDashboardSlider,
-		// handleDashboardLockToggle,
+		handleDashboardLockToggle,
 	} = useDashboard();
 
 	const selectedData = selectedDashboard
@@ -42,12 +56,15 @@ function DashboardDescription(): JSX.Element {
 
 	const { user, role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], role);
+	const [isDashboardSettingsOpen, setIsDashbordSettingsOpen] = useState<boolean>(
+		false,
+	);
 
-	// let isAuthor = false;
+	let isAuthor = false;
 
-	// if (selectedDashboard && user && user.email) {
-	// 	isAuthor = selectedDashboard?.created_by === user?.email;
-	// }
+	if (selectedDashboard && user && user.email) {
+		isAuthor = selectedDashboard?.created_by === user?.email;
+	}
 
 	let permissions: ComponentTypes[] = ['add_panel'];
 
@@ -70,9 +87,10 @@ function DashboardDescription(): JSX.Element {
 		handleToggleDashboardSlider(true);
 	}, [handleToggleDashboardSlider]);
 
-	// const handleLockDashboardToggle = (): void => {
-	// 	handleDashboardLockToggle(!isDashboardLocked);
-	// };
+	const handleLockDashboardToggle = (): void => {
+		setIsDashbordSettingsOpen(false);
+		handleDashboardLockToggle(!isDashboardLocked);
+	};
 
 	return (
 		<Card className="dashboard-description-container">
@@ -95,13 +113,67 @@ function DashboardDescription(): JSX.Element {
 					<Typography.Text className="dashboard-title">{title}</Typography.Text>
 				</div>
 				<div className="right-section">
-					<Tooltip title="Actions">
+					<Popover
+						open={isDashboardSettingsOpen}
+						arrow={false}
+						onOpenChange={(visible): void => setIsDashbordSettingsOpen(visible)}
+						rootClassName="dashboard-settings"
+						content={
+							<div className="menu-content">
+								<section className="section-1">
+									{(isAuthor || role === USER_ROLES.ADMIN) && (
+										<Button
+											type="text"
+											icon={<LockKeyhole size={14} />}
+											onClick={handleLockDashboardToggle}
+										>
+											{isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
+										</Button>
+									)}
+
+									{!isDashboardLocked && editDashboard && (
+										<Button type="text" icon={<PenLine size={14} />}>
+											Rename
+										</Button>
+									)}
+
+									<Button type="text" icon={<Fullscreen size={14} />}>
+										Full screen
+									</Button>
+								</section>
+								<section className="section-2">
+									<Button type="text" icon={<Copy size={14} />}>
+										Duplicate
+									</Button>
+									{!isDashboardLocked && editDashboard && (
+										<Button type="text" icon={<FolderKanban size={14} />}>
+											New section
+										</Button>
+									)}
+
+									<Button type="text" icon={<FileJson size={14} />}>
+										Export JSON
+									</Button>
+									<Button type="text" icon={<ClipboardCopy size={14} />}>
+										Copy as JSON
+									</Button>
+								</section>
+								<section className="delete-dashboard">
+									<Button type="text" icon={<Trash2 size={14} />}>
+										Delete dashboard
+									</Button>
+								</section>
+							</div>
+						}
+						trigger="click"
+						placement="bottomRight"
+					>
 						<Button
 							icon={<CircleEllipsis size={14} />}
 							type="text"
 							className="icons"
 						/>
-					</Tooltip>
+					</Popover>
 					<Tooltip title="Share dashboard">
 						<Button
 							icon={<Link2 size={14} />}
