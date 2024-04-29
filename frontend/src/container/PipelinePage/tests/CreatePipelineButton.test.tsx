@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import * as useAnalytics from 'hooks/analytics/useAnalytics';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
@@ -11,9 +10,12 @@ import CreatePipelineButton from '../Layouts/Pipeline/CreatePipelineButton';
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
 
 const trackEventVar = jest.fn();
-jest.spyOn(useAnalytics, 'default').mockImplementation(() => ({
-	trackEvent: trackEventVar,
-	trackPageView: jest.fn(),
+jest.mock('hooks/analytics/useAnalytics', () => ({
+	__esModule: true,
+	default: jest.fn().mockImplementation(() => ({
+		trackEvent: trackEventVar,
+		trackPageView: jest.fn(),
+	})),
 }));
 
 describe('PipelinePage container test', () => {
