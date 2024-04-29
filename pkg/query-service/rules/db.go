@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.uber.org/zap"
 )
@@ -249,6 +250,12 @@ func (r *ruleDB) GetPlannedMaintenanceByID(ctx context.Context, id string) (*Pla
 
 func (r *ruleDB) CreatePlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance) (int64, error) {
 
+	email, _ := auth.GetEmailFromJwt(ctx)
+	maintenance.CreatedBy = email
+	maintenance.CreatedAt = time.Now()
+	maintenance.UpdatedBy = email
+	maintenance.UpdatedAt = time.Now()
+
 	query := "INSERT INTO planned_maintenance (name, description, schedule, alert_ids, created_at, created_by, updated_at, updated_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
 
 	result, err := r.Exec(query, maintenance.Name, maintenance.Description, maintenance.Schedule, maintenance.AlertIds, maintenance.CreatedAt, maintenance.CreatedBy, maintenance.UpdatedAt, maintenance.UpdatedBy)
@@ -274,6 +281,10 @@ func (r *ruleDB) DeletePlannedMaintenance(ctx context.Context, id string) (strin
 }
 
 func (r *ruleDB) EditPlannedMaintenance(ctx context.Context, maintenance PlannedMaintenance, id string) (string, error) {
+	email, _ := auth.GetEmailFromJwt(ctx)
+	maintenance.UpdatedBy = email
+	maintenance.UpdatedAt = time.Now()
+
 	query := "UPDATE planned_maintenance SET name=$1, description=$2, schedule=$3, alert_ids=$4, updated_at=$5, updated_by=$6 WHERE id=$7"
 	_, err := r.Exec(query, maintenance.Name, maintenance.Description, maintenance.Schedule, maintenance.AlertIds, maintenance.UpdatedAt, maintenance.UpdatedBy, id)
 

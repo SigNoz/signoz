@@ -75,6 +75,7 @@ const (
 
 type Recurrence struct {
 	StartTime  time.Time  `json:"startTime"`
+	EndTime    time.Time  `json:"endTime"`
 	Duration   Duration   `json:"duration"`
 	RepeatType RepeatType `json:"repeatType"`
 	RepeatOn   []RepeatOn `json:"repeatOn"`
@@ -134,6 +135,7 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 
 		// recurring schedule
 		if m.Schedule.Recurrence != nil {
+			zap.L().Info("evaluating recurrence schedule")
 			start := m.Schedule.Recurrence.StartTime
 			end := m.Schedule.Recurrence.StartTime.Add(time.Duration(m.Schedule.Recurrence.Duration))
 			// if the current time in the timezone is between the start and end time
@@ -149,6 +151,11 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 			// make sure the start time is not after the current time
 			if currentTime.Before(start.In(loc)) {
 				zap.L().Info("current time is before start time", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("startTime", start.In(loc)))
+				return false
+			}
+
+			if currentTime.After(end.In(loc)) {
+				zap.L().Info("current time is after end time", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("endTime", end.In(loc)))
 				return false
 			}
 
@@ -187,4 +194,16 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 	}
 	// If alert is not found, we return false
 	return false
+}
+
+func (m *PlannedMaintenance) IsActive(now time.Time) bool {
+	ruleID := "maintenance"
+	if m.AlertIds != nil && len(*m.AlertIds) > 0 {
+		ruleID = (*m.AlertIds)[0]
+	}
+	return m.shouldSkip(ruleID, now)
+}
+
+func (m *PlannedMaintenance) IsRecurring() bool {
+	return m.Schedule.Recurrence != nil
 }
