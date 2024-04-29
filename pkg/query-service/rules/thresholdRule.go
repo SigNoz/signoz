@@ -352,11 +352,11 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	// todo(srikanthccv): make this configurable
 	// 2 minutes is reasonable time to wait for data to be available
 	// 60 seconds (SDK) + 10 seconds (batch) + rest for n/w + serialization + write to disk etc..
-	// start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 2*60*1000
-	// end := ts.UnixMilli() - 2*60*1000
+	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 2*60*1000
+	end := ts.UnixMilli() - 2*60*1000
 	// 自定义更早2分钟
-	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 1*60*1000
-	end := ts.UnixMilli() - 1*60*1000
+	// start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 1*60*1000
+	// end := ts.UnixMilli() - 1*60*1000
 
 	// round to minute otherwise we could potentially miss data
 	start = start - (start % (60 * 1000))
