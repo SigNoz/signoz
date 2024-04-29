@@ -1,6 +1,5 @@
 import './GridCardLayout.styles.scss';
 
-import { Tooltip } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -12,10 +11,9 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import isEqual from 'lodash-es/isEqual';
-import { FullscreenIcon } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FullScreen, useFullScreenHandle } from 'react-full-screen';
+import { FullScreen, FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -29,16 +27,16 @@ import { ComponentTypes } from 'utils/permission';
 import { EditMenuAction, ViewMenuAction } from './config';
 import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import GridCard from './GridCard';
-import {
-	Button,
-	ButtonContainer,
-	Card,
-	CardContainer,
-	ReactGridLayout,
-} from './styles';
+import { Card, CardContainer, ReactGridLayout } from './styles';
 import { removeUndefinedValuesFromLayout } from './utils';
 
-function GraphLayout(): JSX.Element {
+interface GraphLayoutProps {
+	handle: FullScreenHandle;
+}
+
+// eslint-disable-next-line sonarjs/cognitive-complexity
+function GraphLayout(props: GraphLayoutProps): JSX.Element {
+	const { handle } = props;
 	const {
 		selectedDashboard,
 		layouts,
@@ -47,7 +45,6 @@ function GraphLayout(): JSX.Element {
 		isDashboardLocked,
 	} = useDashboard();
 	const { data } = selectedDashboard || {};
-	const handle = useFullScreenHandle();
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 
@@ -173,81 +170,53 @@ function GraphLayout(): JSX.Element {
 
 	console.log(isDashboardEmpty, selectedDashboard?.data.layout);
 
-	return (
-		<>
-			{/* <ButtonContainer>
-				<Tooltip title="Open in Full Screen">
-					<Button
-						className="periscope-btn"
-						loading={updateDashboardMutation.isLoading}
-						onClick={handle.enter}
-						icon={<FullscreenIcon size={16} />}
-						disabled={updateDashboardMutation.isLoading}
-					/>
-				</Tooltip>
-			</ButtonContainer> */}
-			{isDashboardEmpty ? (
-				<DashboardEmptyState />
-			) : (
-				<>
-					<ButtonContainer>
-						<Tooltip title="Open in Full Screen">
-							<Button
-								className="periscope-btn"
-								loading={updateDashboardMutation.isLoading}
-								onClick={handle.enter}
-								icon={<FullscreenIcon size={16} />}
-								disabled={updateDashboardMutation.isLoading}
-							/>
-						</Tooltip>
-					</ButtonContainer>
-					<FullScreen handle={handle} className="fullscreen-grid-container">
-						<ReactGridLayout
-							cols={12}
-							rowHeight={100}
-							autoSize
-							width={100}
-							useCSSTransforms
-							isDraggable={!isDashboardLocked && addPanelPermission}
-							isDroppable={!isDashboardLocked && addPanelPermission}
-							isResizable={!isDashboardLocked && addPanelPermission}
-							allowOverlap={false}
-							onLayoutChange={handleLayoutChange}
-							draggableHandle=".drag-handle"
-							layout={dashboardLayout}
-							style={{ backgroundColor: isDarkMode ? '' : themeColors.snowWhite }}
-						>
-							{dashboardLayout.map((layout) => {
-								const { i: id } = layout;
-								const currentWidget = (widgets || [])?.find((e) => e.id === id);
+	return isDashboardEmpty ? (
+		<DashboardEmptyState />
+	) : (
+		<FullScreen handle={handle} className="fullscreen-grid-container">
+			<ReactGridLayout
+				cols={12}
+				rowHeight={100}
+				autoSize
+				width={100}
+				useCSSTransforms
+				isDraggable={!isDashboardLocked && addPanelPermission}
+				isDroppable={!isDashboardLocked && addPanelPermission}
+				isResizable={!isDashboardLocked && addPanelPermission}
+				allowOverlap={false}
+				onLayoutChange={handleLayoutChange}
+				draggableHandle=".drag-handle"
+				layout={dashboardLayout}
+				style={{ backgroundColor: isDarkMode ? '' : themeColors.snowWhite }}
+			>
+				{dashboardLayout.map((layout) => {
+					const { i: id } = layout;
+					const currentWidget = (widgets || [])?.find((e) => e.id === id);
 
-								return (
-									<CardContainer
-										className={isDashboardLocked ? '' : 'enable-resize'}
-										isDarkMode={isDarkMode}
-										key={id}
-										data-grid={JSON.stringify(currentWidget)}
-									>
-										<Card
-											className="grid-item"
-											$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
-										>
-											<GridCard
-												widget={currentWidget || ({ id, query: {} } as Widgets)}
-												headerMenuList={widgetActions}
-												variables={variables}
-												version={selectedDashboard?.data?.version}
-												onDragSelect={onDragSelect}
-											/>
-										</Card>
-									</CardContainer>
-								);
-							})}
-						</ReactGridLayout>
-					</FullScreen>
-				</>
-			)}
-		</>
+					return (
+						<CardContainer
+							className={isDashboardLocked ? '' : 'enable-resize'}
+							isDarkMode={isDarkMode}
+							key={id}
+							data-grid={JSON.stringify(currentWidget)}
+						>
+							<Card
+								className="grid-item"
+								$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
+							>
+								<GridCard
+									widget={currentWidget || ({ id, query: {} } as Widgets)}
+									headerMenuList={widgetActions}
+									variables={variables}
+									version={selectedDashboard?.data?.version}
+									onDragSelect={onDragSelect}
+								/>
+							</Card>
+						</CardContainer>
+					);
+				})}
+			</ReactGridLayout>
+		</FullScreen>
 	);
 }
 

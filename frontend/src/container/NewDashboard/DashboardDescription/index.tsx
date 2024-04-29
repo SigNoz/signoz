@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useState } from 'react';
+import { FullScreenHandle } from 'react-full-screen';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DashboardData } from 'types/api/dashboard/getAll';
@@ -46,7 +47,12 @@ import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
 import ShareModal from './ShareModal';
 
-function DashboardDescription(): JSX.Element {
+interface DashboardDescriptionProps {
+	handle: FullScreenHandle;
+}
+
+function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
+	const { handle } = props;
 	const {
 		selectedDashboard,
 		isDashboardLocked,
@@ -161,7 +167,11 @@ function DashboardDescription(): JSX.Element {
 										</Button>
 									)}
 
-									<Button type="text" icon={<Fullscreen size={14} />}>
+									<Button
+										type="text"
+										icon={<Fullscreen size={14} />}
+										onClick={handle.enter}
+									>
 										Full screen
 									</Button>
 								</section>

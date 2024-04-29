@@ -1,11 +1,17 @@
 import GridGraphLayout from 'container/GridCardLayout';
+import { FullScreenHandle } from 'react-full-screen';
 
 import { GridComponentSliderContainer } from './styles';
 
-function GridGraphs(): JSX.Element {
+interface GridGraphsProps {
+	handle: FullScreenHandle;
+}
+
+function GridGraphs(props: GridGraphsProps): JSX.Element {
+	const { handle } = props;
 	return (
 		<GridComponentSliderContainer>
-			<GridGraphLayout />
+			<GridGraphLayout handle={handle} />
 		</GridComponentSliderContainer>
 	);
 }
