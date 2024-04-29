@@ -83,7 +83,7 @@ function DashboardDescription(): JSX.Element {
 					className="dashboard-btn"
 					onClick={(): void => history.push(ROUTES.ALL_DASHBOARD)}
 				>
-					Dashboard
+					Dashboard /
 				</Button>
 				<Button type="text" className="id-btn" icon={<Tent size={14} />}>
 					{title}
