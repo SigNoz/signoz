@@ -16,6 +16,7 @@ import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
+import DashboardGraphSlider from '../ComponentsSlider';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
 import ShareModal from './ShareModal';
@@ -147,6 +148,7 @@ function DashboardDescription(): JSX.Element {
 			<section className="dashboard-variables">
 				<DashboardVariableSelection />
 			</section>
+			<DashboardGraphSlider />
 
 			{/* <Row gutter={16}>
 				<Col flex={1} span={9}>
