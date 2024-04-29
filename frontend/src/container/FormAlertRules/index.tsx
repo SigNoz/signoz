@@ -11,6 +11,7 @@ import {
 } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -138,15 +139,21 @@ function FormAlertRules({
 
 	useEffect(() => {
 		// Set selectedQueryName based on the length of queryOptions
-		setAlertDef((def) => ({
-			...def,
-			condition: {
-				...def.condition,
-				selectedQueryName:
-					queryOptions.length > 0 ? String(queryOptions[0].value) : undefined,
-			},
-		}));
-	}, [currentQuery?.queryType, queryOptions]);
+		const selectedQueryName = alertDef?.condition?.selectedQueryName;
+		if (
+			!selectedQueryName ||
+			!queryOptions.some((option) => option.value === selectedQueryName)
+		) {
+			setAlertDef((def) => ({
+				...def,
+				condition: {
+					...def.condition,
+					selectedQueryName:
+						queryOptions.length > 0 ? String(queryOptions[0].value) : undefined,
+				},
+			}));
+		}
+	}, [alertDef, currentQuery?.queryType, queryOptions]);
 
 	const onCancelHandler = useCallback(() => {
 		history.replace(ROUTES.LIST_ALL_ALERT);
@@ -482,6 +489,8 @@ function FormAlertRules({
 		alertDef?.broadcastToAll ||
 		(alertDef.preferredChannels && alertDef.preferredChannels.length > 0);
 
+	const isRuleCreated = !ruleId || ruleId === 0;
+
 	return (
 		<>
 			{Element}
@@ -563,6 +572,30 @@ function FormAlertRules({
 				</StyledLeftContainer>
 				<Col flex="1 1 300px">
 					<UserGuide queryType={currentQuery.queryType} />
+					<FacingIssueBtn
+						attributes={{
+							alert: alertDef?.alert,
+							alertType: alertDef?.alertType,
+							id: ruleId,
+							ruleType: alertDef?.ruleType,
+							state: (alertDef as any)?.state,
+							panelType,
+							screen: isRuleCreated ? 'Edit Alert' : 'New Alert',
+						}}
+						className="facing-issue-btn"
+						eventName="Alert: Facing Issues in alert"
+						buttonText="Facing Issues in alert"
+						message={`Hi Team,
+
+I am facing issues configuring alerts in SigNoz. Here are my alert rule details
+
+Name: ${alertDef?.alert || ''}
+Alert Type: ${alertDef?.alertType || ''}
+State: ${(alertDef as any)?.state || ''}
+Alert Id: ${ruleId}
+
+Thanks`}
+					/>
 				</Col>
 			</PanelContainer>
 		</>

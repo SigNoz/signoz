@@ -22,7 +22,7 @@ x-clickhouse-defaults: &clickhouse-defaults
         "wget",
         "--spider",
         "-q",
-        "localhost:8123/ping"
+        "0.0.0.0:8123/ping"
       ]
     interval: 30s
     timeout: 5s
@@ -146,7 +146,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.43.0
+    image: signoz/query-service:0.44.0
     command:
       [
         "-config=/root/config/prometheus.yml",
@@ -186,7 +186,7 @@ services:
     <<: *db-depend
 
   frontend:
-    image: signoz/frontend:0.43.0
+    image: signoz/frontend:0.44.0
     deploy:
       restart_policy:
         condition: on-failure
@@ -199,7 +199,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.88.20
+    image: signoz/signoz-otel-collector:0.88.21
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
@@ -237,7 +237,7 @@ services:
       - query-service
 
   otel-collector-migrator:
-      image: signoz/signoz-schema-migrator:0.88.20
+      image: signoz/signoz-schema-migrator:0.88.21
       deploy:
         restart_policy:
           condition: on-failure
