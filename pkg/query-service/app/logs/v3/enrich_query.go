@@ -146,7 +146,10 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 	// check if the field is present in the fields map
 	if existingField, ok := fields[field.Key]; ok {
 		// don't update if type is not the same
-		if (field.Type == "" && field.DataType == "") || (field.Type == existingField.Type && field.DataType == existingField.DataType) {
+		if (field.Type == "" && field.DataType == "") ||
+			(field.Type == existingField.Type && field.DataType == existingField.DataType) ||
+			(field.Type == "" && field.DataType == existingField.DataType) ||
+			(field.DataType == "" && field.Type == existingField.Type) {
 			return existingField
 		}
 	}

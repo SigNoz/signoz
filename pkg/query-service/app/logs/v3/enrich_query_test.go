@@ -356,7 +356,10 @@ var testEnrichParamsData = []struct {
 							Type:     v3.AttributeKeyTypeResource,
 							DataType: v3.AttributeKeyDataTypeInt64,
 						},
-						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "test", Type: v3.AttributeKeyTypeTag}, Value: "test", Operator: "="},
+							{Key: v3.AttributeKey{Key: "test", DataType: v3.AttributeKeyDataTypeString}, Value: "test1", Operator: "="},
+						}},
 					},
 				},
 			},
@@ -381,7 +384,10 @@ var testEnrichParamsData = []struct {
 							Type:     v3.AttributeKeyTypeResource,
 							DataType: v3.AttributeKeyDataTypeInt64,
 						},
-						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "test", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "test", Operator: "="},
+							{Key: v3.AttributeKey{Key: "test", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "test1", Operator: "="},
+						}},
 					},
 				},
 			},
