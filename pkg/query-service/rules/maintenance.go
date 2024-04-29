@@ -154,7 +154,8 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 				return false
 			}
 
-			if currentTime.After(end.In(loc)) {
+			endTime := m.Schedule.Recurrence.EndTime
+			if !endTime.IsZero() && currentTime.After(endTime.In(loc)) {
 				zap.L().Info("current time is after end time", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("endTime", end.In(loc)))
 				return false
 			}
