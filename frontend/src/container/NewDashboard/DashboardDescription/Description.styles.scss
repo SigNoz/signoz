@@ -224,6 +224,205 @@
 	gap: 8px;
 }
 
+.dashboard-settings {
+	width: 191px;
+	height: 302px;
+	flex-shrink: 0;
+
+	.ant-popover-inner {
+		padding: 0px;
+		border-radius: 4px;
+		border: 1px solid var(--Slate-400, #1d212d);
+		background: linear-gradient(
+			139deg,
+			rgba(18, 19, 23, 0.8) 0%,
+			rgba(18, 19, 23, 0.9) 98.68%
+		) !important;
+		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+		backdrop-filter: blur(20px);
+	}
+
+	.menu-content {
+		display: flex;
+		flex-direction: column;
+
+		.section-1 {
+			display: flex;
+			flex-direction: column;
+			align-items: start;
+			border-bottom: 1px solid #1d212d;
+
+			.ant-btn {
+				display: flex;
+				width: 100%;
+				height: 20px;
+				padding: 16px 18px 18px 14px;
+				align-items: center;
+				gap: 6px;
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: normal;
+				letter-spacing: 0.14px;
+				.ant-btn-icon {
+					margin-inline-end: 0px;
+				}
+			}
+		}
+		.section-2 {
+			display: flex;
+			flex-direction: column;
+			align-items: start;
+			border-bottom: 1px solid #1d212d;
+
+			.ant-btn {
+				display: flex;
+				width: 100%;
+				height: 20px;
+				padding: 16px 18px 18px 14px;
+				align-items: center;
+				gap: 6px;
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: normal;
+				letter-spacing: 0.14px;
+
+				.ant-btn-icon {
+					margin-inline-end: 0px;
+				}
+			}
+		}
+		.delete-dashboard {
+			display: flex;
+			flex-direction: column;
+			align-items: start;
+
+			.ant-typography {
+				display: flex;
+				width: 100%;
+				height: 20px;
+				padding: 16px 18px 18px 14px;
+				align-items: center;
+				gap: 6px;
+				color: var(--Cherry-400, #ea6d71) !important;
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: normal;
+				letter-spacing: 0.14px;
+			}
+		}
+	}
+}
+
+.rename-dashboard {
+	.ant-modal-content {
+		width: 384px;
+		flex-shrink: 0;
+		border-radius: 4px;
+		border: 1px solid var(--Slate-500, #161922);
+		background: var(--Ink-400, #121317);
+		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
+		padding: 0px;
+
+		.ant-modal-header {
+			height: 52px;
+			padding: 16px;
+			background: var(--Ink-400, #121317);
+			border-bottom: 1px solid var(--Slate-500, #161922);
+			margin-bottom: 0px;
+			.ant-modal-title {
+				color: var(--Vanilla-100, #fff);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				width: 349px;
+				height: 20px;
+			}
+		}
+
+		.ant-modal-body {
+			padding: 16px;
+
+			.dashboard-content {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+
+				.name-text {
+					color: var(--Vanilla-100, #fff);
+					font-family: Inter;
+					font-size: 14px;
+					font-style: normal;
+					font-weight: 500;
+					line-height: 20px; /* 142.857% */
+				}
+
+				.dashboard-name-input {
+					display: flex;
+					width: 320px;
+					padding: 6px 6px 6px 8px;
+					align-items: center;
+					gap: 4px;
+					align-self: stretch;
+					border-radius: 0px 2px 2px 0px;
+					border: 1px solid var(--Slate-400, #1d212d);
+					background: var(--Ink-300, #16181d);
+				}
+			}
+		}
+
+		.ant-modal-footer {
+			padding: 16px;
+			margin-top: 0px;
+			.dashboard-rename {
+				display: flex;
+				flex-direction: row-reverse;
+				gap: 12px;
+
+				.cancel-btn {
+					display: flex;
+					padding: 4px 8px;
+					justify-content: center;
+					align-items: center;
+					gap: 4px;
+					border-radius: 2px;
+					background: var(--Slate-500, #161922);
+
+					.ant-btn-icon {
+						margin-inline-end: 0px;
+					}
+				}
+
+				.rename-btn {
+					display: flex;
+					align-items: center;
+					display: flex;
+					width: 169px;
+					padding: 4px 8px;
+					justify-content: center;
+					align-items: center;
+					gap: 4px;
+					border-radius: 2px;
+					background: var(--Robin-500, #4e74f8);
+
+					.ant-btn-icon {
+						margin-inline-end: 0px;
+					}
+				}
+			}
+		}
+	}
+}
+
 .lightMode {
 	.dashboard-description-container {
 		box-shadow: none;
