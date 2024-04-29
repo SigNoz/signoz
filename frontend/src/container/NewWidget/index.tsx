@@ -257,7 +257,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					i: widgetId || '',
 					w: 6,
 					x: 0,
-					h: 3,
+					h: 6,
 					y: 0,
 				},
 				...updatedLayout,
