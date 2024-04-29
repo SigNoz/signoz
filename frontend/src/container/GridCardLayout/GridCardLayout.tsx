@@ -30,7 +30,7 @@ import {
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useState } from 'react';
-import { FullScreen, useFullScreenHandle } from 'react-full-screen';
+import { FullScreen, FullScreenHandle } from 'react-full-screen';
 import { ItemCallback, Layout } from 'react-grid-layout';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -55,7 +55,13 @@ import {
 } from './styles';
 import { removeUndefinedValuesFromLayout } from './utils';
 
-function GraphLayout(): JSX.Element {
+interface GraphLayoutProps {
+	handle: FullScreenHandle;
+}
+
+// eslint-disable-next-line sonarjs/cognitive-complexity
+function GraphLayout(props: GraphLayoutProps): JSX.Element {
+	const { handle } = props;
 	const {
 		selectedDashboard,
 		layouts,
@@ -66,7 +72,6 @@ function GraphLayout(): JSX.Element {
 		isDashboardLocked,
 	} = useDashboard();
 	const { data } = selectedDashboard || {};
-	const handle = useFullScreenHandle();
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 
