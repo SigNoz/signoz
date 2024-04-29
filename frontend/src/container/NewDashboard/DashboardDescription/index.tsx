@@ -4,6 +4,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
+import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -20,7 +21,6 @@ import {
 	LockKeyhole,
 	PenLine,
 	Tent,
-	Trash2,
 	X,
 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -44,6 +44,7 @@ interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const { handle } = props;
 	const {
@@ -250,9 +251,13 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 									</Button>
 								</section>
 								<section className="delete-dashboard">
-									<Button type="text" icon={<Trash2 size={14} />}>
-										Delete dashboard
-									</Button>
+									<DeleteButton
+										createdBy={selectedDashboard?.created_by || ''}
+										name={selectedDashboard?.data.title || ''}
+										id={String(selectedDashboard?.uuid) || ''}
+										isLocked={isDashboardLocked}
+										routeToListPage
+									/>
 								</section>
 							</div>
 						}

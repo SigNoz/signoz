@@ -266,6 +266,9 @@
 				font-weight: 400;
 				line-height: normal;
 				letter-spacing: 0.14px;
+				.ant-btn-icon {
+					margin-inline-end: 0px;
+				}
 			}
 		}
 		.section-2 {
@@ -288,6 +291,10 @@
 				font-weight: 400;
 				line-height: normal;
 				letter-spacing: 0.14px;
+
+				.ant-btn-icon {
+					margin-inline-end: 0px;
+				}
 			}
 		}
 		.delete-dashboard {
@@ -295,14 +302,14 @@
 			flex-direction: column;
 			align-items: start;
 
-			.ant-btn {
+			.ant-typography {
 				display: flex;
 				width: 100%;
 				height: 20px;
 				padding: 16px 18px 18px 14px;
 				align-items: center;
 				gap: 6px;
-				color: var(--Cherry-400, #ea6d71);
+				color: var(--Cherry-400, #ea6d71) !important;
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
