@@ -3,8 +3,10 @@ import './DeleteButton.styles.scss';
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal, Tooltip, Typography } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import ROUTES from 'constants/routes';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
 import { useNotifications } from 'hooks/useNotifications';
+import history from 'lib/history';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
@@ -21,13 +23,15 @@ interface DeleteButtonProps {
 	name: string;
 	id: string;
 	isLocked: boolean;
+	routeToListPage?: boolean;
 }
 
-function DeleteButton({
+export function DeleteButton({
 	createdBy,
 	name,
 	id,
 	isLocked,
+	routeToListPage,
 }: DeleteButtonProps): JSX.Element {
 	const [modal, contextHolder] = Modal.useModal();
 	const { role, user } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -60,6 +64,9 @@ function DeleteButton({
 							}),
 						});
 						queryClient.invalidateQueries([REACT_QUERY_KEY.GET_ALL_DASHBOARDS]);
+						if (routeToListPage) {
+							history.replace(ROUTES.ALL_DASHBOARD);
+						}
 					},
 				});
 			},
@@ -68,7 +75,15 @@ function DeleteButton({
 			centered: true,
 			className: 'delete-modal',
 		});
-	}, [modal, name, deleteDashboardMutation, notifications, t, queryClient]);
+	}, [
+		modal,
+		name,
+		deleteDashboardMutation,
+		notifications,
+		t,
+		queryClient,
+		routeToListPage,
+	]);
 
 	const getDeleteTooltipContent = (): string => {
 		if (isLocked) {
@@ -94,7 +109,7 @@ function DeleteButton({
 					}}
 					disabled={isLocked}
 				>
-					<DeleteOutlined /> Delete
+					<DeleteOutlined /> Delete dashboard
 				</TableLinkText>
 			</Tooltip>
 
@@ -102,6 +117,10 @@ function DeleteButton({
 		</>
 	);
 }
+
+DeleteButton.defaultProps = {
+	routeToListPage: false,
+};
 
 // This is to avoid the type collision
 function Wrapper(props: Data): JSX.Element {
