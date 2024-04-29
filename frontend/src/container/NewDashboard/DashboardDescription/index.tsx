@@ -1,19 +1,13 @@
 import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Card,
-	Input,
-	Modal,
-	Popover,
-	Tag,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import {
 	Check,
@@ -24,18 +18,18 @@ import {
 	FolderKanban,
 	Fullscreen,
 	LayoutGrid,
-	Link2,
 	LockKeyhole,
 	PenLine,
 	Tent,
 	Trash2,
 	X,
-	Zap,
 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
+import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
 import { DashboardData } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
@@ -45,7 +39,7 @@ import { ComponentTypes } from 'utils/permission';
 import DashboardGraphSlider from '../ComponentsSlider';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
-import ShareModal from './ShareModal';
+import { downloadObjectAsJson } from './utils';
 
 interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
@@ -56,6 +50,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const {
 		selectedDashboard,
 		isDashboardLocked,
+		setSelectedDashboard,
 		handleToggleDashboardSlider,
 		handleDashboardLockToggle,
 	} = useDashboard();
@@ -71,7 +66,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 
-	const [openDashboardJSON, setOpenDashboardJSON] = useState<boolean>(false);
+	const updateDashboardMutation = useUpdateDashboard();
 
 	const { user, role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], role);
@@ -95,16 +90,14 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		permissions = ['add_panel_locked_dashboard'];
 	}
 
+	const { notifications } = useNotifications();
+
 	const userRole: ROLES | null =
 		selectedDashboard?.created_by === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: role;
 
 	const [addPanelPermission] = useComponentPermission(permissions, userRole);
-
-	const onToggleHandler = (): void => {
-		setOpenDashboardJSON((state) => !state);
-	};
 
 	const onEmptyWidgetHandler = useCallback(() => {
 		handleToggleDashboardSlider(true);
@@ -114,6 +107,57 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		setIsDashbordSettingsOpen(false);
 		handleDashboardLockToggle(!isDashboardLocked);
 	};
+
+	const onNameChangeHandler = (): void => {
+		if (!selectedDashboard) {
+			return;
+		}
+		const updatedDashboard = {
+			...selectedDashboard,
+			data: {
+				...selectedDashboard.data,
+				title: updatedTitle,
+			},
+		};
+		updateDashboardMutation.mutate(updatedDashboard, {
+			onSuccess: (updatedDashboard) => {
+				notifications.success({
+					message: 'Dashboard renamed successfully',
+				});
+				setIsRenameDashboardOpen(false);
+				if (updatedDashboard.payload)
+					setSelectedDashboard(updatedDashboard.payload);
+			},
+			onError: () => {
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				});
+				setIsRenameDashboardOpen(true);
+			},
+		});
+	};
+
+	const [state, setCopy] = useCopyToClipboard();
+
+	const { t } = useTranslation(['dashboard', 'common']);
+
+	useEffect(() => {
+		if (state.error) {
+			notifications.error({
+				message: t('something_went_wrong', {
+					ns: 'common',
+				}),
+			});
+		}
+
+		if (state.value) {
+			notifications.success({
+				message: t('success', {
+					ns: 'common',
+				}),
+			});
+		}
+	}, [state.error, state.value, t, notifications]);
 
 	return (
 		<Card className="dashboard-description-container">
@@ -185,10 +229,24 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 										</Button>
 									)}
 
-									<Button type="text" icon={<FileJson size={14} />}>
+									<Button
+										type="text"
+										icon={<FileJson size={14} />}
+										onClick={(): void => {
+											downloadObjectAsJson(selectedData, selectedData.title);
+											setIsDashbordSettingsOpen(false);
+										}}
+									>
 										Export JSON
 									</Button>
-									<Button type="text" icon={<ClipboardCopy size={14} />}>
+									<Button
+										type="text"
+										icon={<ClipboardCopy size={14} />}
+										onClick={(): void => {
+											setCopy(JSON.stringify(selectedData, null, 2));
+											setIsDashbordSettingsOpen(false);
+										}}
+									>
 										Copy as JSON
 									</Button>
 								</section>
@@ -208,17 +266,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							className="icons"
 						/>
 					</Popover>
-					<Tooltip title="Share dashboard">
-						<Button
-							icon={<Link2 size={14} />}
-							type="text"
-							className="icons"
-							onClick={onToggleHandler}
-						/>
-					</Tooltip>
-					<Tooltip title="Activity">
+					{/* <Tooltip title="Activity">
 						<Button icon={<Zap size={14} />} type="text" className="icons" />
-					</Tooltip>
+					</Tooltip> */}
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					{!isDashboardLocked && editDashboard && (
 						<SettingsDrawer drawerTitle="Dashboard Configuration" />
@@ -233,13 +283,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						>
 							New Panel
 						</Button>
-					)}
-					{selectedData && (
-						<ShareModal
-							isJSONModalVisible={openDashboardJSON}
-							onToggleHandler={onToggleHandler}
-							selectedData={selectedData}
-						/>
 					)}
 				</div>
 			</section>
@@ -268,10 +311,21 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				rootClassName="rename-dashboard"
 				footer={
 					<div className="dashboard-rename">
-						<Button type="primary" icon={<Check size={14} />} className="rename-btn">
+						<Button
+							type="primary"
+							icon={<Check size={14} />}
+							className="rename-btn"
+							onClick={onNameChangeHandler}
+							disabled={updateDashboardMutation.isLoading}
+						>
 							Rename Dashboard
 						</Button>
-						<Button type="text" icon={<X size={14} />} className="cancel-btn">
+						<Button
+							type="text"
+							icon={<X size={14} />}
+							className="cancel-btn"
+							onClick={(): void => setIsRenameDashboardOpen(false)}
+						>
 							Cancel
 						</Button>
 					</div>
