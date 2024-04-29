@@ -1,12 +1,22 @@
 import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Popover, Tag, Tooltip, Typography } from 'antd';
+import {
+	Button,
+	Card,
+	Input,
+	Modal,
+	Popover,
+	Tag,
+	Tooltip,
+	Typography,
+} from 'antd';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import {
+	Check,
 	CircleEllipsis,
 	ClipboardCopy,
 	Copy,
@@ -19,6 +29,7 @@ import {
 	PenLine,
 	Tent,
 	Trash2,
+	X,
 	Zap,
 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -52,11 +63,17 @@ function DashboardDescription(): JSX.Element {
 
 	const { title = '', description, tags } = selectedData || {};
 
+	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
+
 	const [openDashboardJSON, setOpenDashboardJSON] = useState<boolean>(false);
 
 	const { user, role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], role);
 	const [isDashboardSettingsOpen, setIsDashbordSettingsOpen] = useState<boolean>(
+		false,
+	);
+
+	const [isRenameDashboardOpen, setIsRenameDashboardOpen] = useState<boolean>(
 		false,
 	);
 
@@ -132,7 +149,14 @@ function DashboardDescription(): JSX.Element {
 									)}
 
 									{!isDashboardLocked && editDashboard && (
-										<Button type="text" icon={<PenLine size={14} />}>
+										<Button
+											type="text"
+											icon={<PenLine size={14} />}
+											onClick={(): void => {
+												setIsRenameDashboardOpen(true);
+												setIsDashbordSettingsOpen(false);
+											}}
+										>
 											Rename
 										</Button>
 									)}
@@ -222,6 +246,37 @@ function DashboardDescription(): JSX.Element {
 			</section>
 			<DashboardGraphSlider />
 
+			<Modal
+				open={isRenameDashboardOpen}
+				title="Rename Dashboard"
+				onOk={(): void => {
+					// handle update dashboard here
+				}}
+				onCancel={(): void => {
+					setIsRenameDashboardOpen(false);
+				}}
+				rootClassName="rename-dashboard"
+				footer={
+					<div className="dashboard-rename">
+						<Button type="primary" icon={<Check size={14} />} className="rename-btn">
+							Rename Dashboard
+						</Button>
+						<Button type="text" icon={<X size={14} />} className="cancel-btn">
+							Cancel
+						</Button>
+					</div>
+				}
+			>
+				<div className="dashboard-content">
+					<Typography.Text className="name-text">Enter a new name</Typography.Text>
+					<Input
+						data-testid="dashboard-name"
+						className="dashboard-name-input"
+						value={updatedTitle}
+						onChange={(e): void => setUpdatedTitle(e.target.value)}
+					/>
+				</div>
+			</Modal>
 			{/* <Row gutter={16}>
 				<Col flex={1} span={9}>
 					<Typography.Title
