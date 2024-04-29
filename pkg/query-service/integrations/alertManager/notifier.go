@@ -228,6 +228,7 @@ func (n *Notifier) sendAll(alerts ...*Alert) bool {
 
 		go func(ams *alertmanagerSet, am Manager) {
 			u := am.URLPath(alertPushEndpoint).String()
+			fmt.Printf("发送内容为: \n", u, string(b), alerts)
 			if err := n.sendOne(ctx, ams.client, u, b); err != nil {
 				zap.S().Errorf("alertmanager", u, "count", len(alerts), "msg", "Error calling alert API", "err", err)
 			} else {
@@ -248,6 +249,7 @@ func (n *Notifier) sendAll(alerts ...*Alert) bool {
 
 func (n *Notifier) sendOne(ctx context.Context, c *http.Client, url string, b []byte) error {
 	req, err := http.NewRequest("POST", url, bytes.NewReader(b))
+
 	if err != nil {
 		return err
 	}

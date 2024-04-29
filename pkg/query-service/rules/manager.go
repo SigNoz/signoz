@@ -523,6 +523,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 		}
 
 		rules = append(rules, tr)
+		fmt.Printf("alerts内容为: \n", rules)
 
 		// create ch rule task for evalution
 		task = newTask(TaskTypeCh, taskName, taskNamesuffix, time.Duration(r.Frequency), rules, m.opts, m.prepareNotifyFunc())
