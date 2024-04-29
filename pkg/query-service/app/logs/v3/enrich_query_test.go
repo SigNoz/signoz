@@ -342,6 +342,57 @@ var testEnrichParamsData = []struct {
 			},
 		},
 	},
+	{
+		Name: "Don't enrich if other keys are non empty and not same",
+		Params: v3.QueryRangeParamsV3{
+			CompositeQuery: &v3.CompositeQuery{
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"test": {
+						QueryName:  "test",
+						Expression: "test",
+						DataSource: v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{
+							Key:      "test",
+							Type:     v3.AttributeKeyTypeResource,
+							DataType: v3.AttributeKeyDataTypeInt64,
+						},
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "test", Type: v3.AttributeKeyTypeTag}, Value: "test", Operator: "="},
+							{Key: v3.AttributeKey{Key: "test", DataType: v3.AttributeKeyDataTypeString}, Value: "test1", Operator: "="},
+						}},
+					},
+				},
+			},
+		},
+		Fields: map[string]v3.AttributeKey{
+			"test": {
+				Key:      "test",
+				Type:     v3.AttributeKeyTypeTag,
+				DataType: v3.AttributeKeyDataTypeString,
+				IsColumn: true,
+			},
+		},
+		Result: v3.QueryRangeParamsV3{
+			CompositeQuery: &v3.CompositeQuery{
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"test": {
+						QueryName:  "test",
+						Expression: "test",
+						DataSource: v3.DataSourceLogs,
+						AggregateAttribute: v3.AttributeKey{
+							Key:      "test",
+							Type:     v3.AttributeKeyTypeResource,
+							DataType: v3.AttributeKeyDataTypeInt64,
+						},
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "test", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "test", Operator: "="},
+							{Key: v3.AttributeKey{Key: "test", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Value: "test1", Operator: "="},
+						}},
+					},
+				},
+			},
+		},
+	},
 }
 
 func TestEnrichParams(t *testing.T) {
