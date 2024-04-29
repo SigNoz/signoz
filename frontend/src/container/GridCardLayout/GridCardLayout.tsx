@@ -144,7 +144,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					if (updatedDashboard.payload.data.layout)
 						setLayouts(sortLayout(updatedDashboard.payload.data.layout));
 					setSelectedDashboard(updatedDashboard.payload);
-					setPanelMap(updatedDashboard.payload.data.panelMap || {});
+					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
 				}
 
 				featureResponse.refetch();
@@ -260,7 +260,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					if (updatedDashboard.payload.data.layout)
 						setLayouts(sortLayout(updatedDashboard.payload.data.layout));
 					setSelectedDashboard(updatedDashboard.payload);
-					setPanelMap(updatedDashboard.payload.data.panelMap || {});
+					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
 				}
 
 				featureResponse.refetch();
@@ -313,7 +313,8 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 				if (setSelectedDashboard && updatedDashboard.payload) {
 					setSelectedDashboard(updatedDashboard.payload);
 				}
-				if (setPanelMap) setPanelMap(updatedDashboard.payload?.data.panelMap || {});
+				if (setPanelMap)
+					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
 				form.setFieldValue('title', '');
 				setIsSettingsModalOpen(false);
 				setCurrentSelectRowId(null);
@@ -467,7 +468,8 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 				if (setSelectedDashboard && updatedDashboard.payload) {
 					setSelectedDashboard(updatedDashboard.payload);
 				}
-				if (setPanelMap) setPanelMap(updatedDashboard.payload?.data.panelMap || {});
+				if (setPanelMap)
+					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
 				setIsDeleteModalOpen(false);
 				setCurrentSelectRowId(null);
 				featureResponse.refetch();

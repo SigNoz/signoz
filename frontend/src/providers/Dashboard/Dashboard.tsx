@@ -209,7 +209,7 @@ export function DashboardProvider({
 
 					setLayouts(sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)));
 
-					setPanelMap(defaultTo(updatedDashboardData.data.panelMap, {}));
+					setPanelMap(defaultTo(updatedDashboardData?.data?.panelMap, {}));
 				}
 
 				if (
