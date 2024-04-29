@@ -13,7 +13,6 @@ import {
 	Check,
 	CircleEllipsis,
 	ClipboardCopy,
-	Copy,
 	FileJson,
 	FolderKanban,
 	Fullscreen,
@@ -220,9 +219,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 									</Button>
 								</section>
 								<section className="section-2">
-									<Button type="text" icon={<Copy size={14} />}>
+									{/* <Button type="text" icon={<Copy size={14} />}>
 										Duplicate
-									</Button>
+									</Button> */}
 									{!isDashboardLocked && editDashboard && (
 										<Button type="text" icon={<FolderKanban size={14} />}>
 											New section
@@ -266,6 +265,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							className="icons"
 						/>
 					</Popover>
+					{/**
+					 * to be added later when BE supports it
+					 */}
 					{/* <Tooltip title="Activity">
 						<Button icon={<Zap size={14} />} type="text" className="icons" />
 					</Tooltip> */}
