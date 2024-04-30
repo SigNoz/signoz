@@ -1,6 +1,7 @@
 package app
 
 import (
+	"math"
 	"sort"
 	"strings"
 
@@ -39,16 +40,25 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 								}
 							}
 
-							// For graph type queries, sort based on GroupingSetsPoint
-							if result.Series[i].GroupingSetsPoint == nil || result.Series[j].GroupingSetsPoint == nil {
-								// Handle nil GroupingSetsPoint, if needed
-								// Here, we assume non-nil values are always less than nil values
-								return result.Series[i].GroupingSetsPoint != nil
+							ithSum, jthSum := 0.0, 0.0
+							for _, point := range result.Series[i].Points {
+								if math.IsNaN(point.Value) || math.IsInf(point.Value, 0) {
+									continue
+								}
+								ithSum += point.Value
 							}
+
+							for _, point := range result.Series[j].Points {
+								if math.IsNaN(point.Value) || math.IsInf(point.Value, 0) {
+									continue
+								}
+								jthSum += point.Value
+							}
+
 							if orderBy.Order == "asc" {
-								return result.Series[i].GroupingSetsPoint.Value < result.Series[j].GroupingSetsPoint.Value
+								return ithSum < jthSum
 							} else if orderBy.Order == "desc" {
-								return result.Series[i].GroupingSetsPoint.Value > result.Series[j].GroupingSetsPoint.Value
+								return ithSum > jthSum
 							}
 						} else {
 							// Sort based on Labels map
