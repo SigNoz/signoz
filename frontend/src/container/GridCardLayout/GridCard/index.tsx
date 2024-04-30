@@ -125,6 +125,13 @@ function GridCardGraph({
 		};
 	});
 
+	useEffect(() => {
+		setRequestData((prev) => ({
+			...prev,
+			query: updatedQuery,
+		}));
+	}, [updatedQuery]);
+
 	const queryResponse = useGetQueryRange(
 		{
 			...requestData,
