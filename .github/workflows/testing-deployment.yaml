@@ -46,4 +46,4 @@ jobs:
             make build-frontend-amd64
             make run-signoz
           EOF
-          gcloud compute ssh <> --zone us-central1-a --tunnel-through-iap --project signozsso --command "${COMMAND}"
+          gcloud compute ssh testingapp-server --zone us-central1-a --tunnel-through-iap --project signozsso --command "${COMMAND}"
