@@ -1,4 +1,4 @@
-import { Form, FormInstance, Input, Select, Typography } from 'antd';
+import { Form, FormInstance, Input, Select, Switch, Typography } from 'antd';
 import { Store } from 'antd/lib/form/interface';
 import UpgradePrompt from 'components/Upgrade/UpgradePrompt';
 import { FeatureKeys } from 'constants/features';
@@ -90,6 +90,22 @@ function FormAlertChannels({
 							setSelectedConfig((state) => ({
 								...state,
 								name: event.target.value,
+							}));
+						}}
+					/>
+				</Form.Item>
+
+				<Form.Item
+					label={t('field_send_resolved')}
+					labelAlign="left"
+					name="send_resolved"
+				>
+					<Switch
+						defaultChecked={initialValue?.send_resolved}
+						onChange={(value): void => {
+							setSelectedConfig((state) => ({
+								...state,
+								send_resolved: value,
 							}));
 						}}
 					/>

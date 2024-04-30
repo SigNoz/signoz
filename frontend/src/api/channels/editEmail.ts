@@ -12,7 +12,7 @@ const editEmail = async (
 			name: props.name,
 			email_configs: [
 				{
-					send_resolved: true,
+					send_resolved: props.send_resolved,
 					to: props.to,
 					html: props.html,
 					headers: props.headers,

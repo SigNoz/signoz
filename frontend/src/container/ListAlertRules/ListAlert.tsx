@@ -358,6 +358,19 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				pagination={{
 					defaultCurrent: Number(paginationParam) || 1,
 				}}
+				facingIssueBtn={{
+					attributes: {
+						screen: 'Alert list page',
+					},
+					eventName: 'Alert: Facing Issues in alert',
+					buttonText: 'Facing issues with alerts?',
+					message: `Hi Team,
+
+I need help with managing alerts.
+
+Thanks`,
+				}}
+				// onHover: Click here to get help with alerts
 			/>
 		</>
 	);
