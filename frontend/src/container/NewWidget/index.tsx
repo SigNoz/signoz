@@ -413,16 +413,17 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						screen: 'Dashboard list page',
 					}}
 					eventName="Dashboard: Facing Issues in dashboard"
-					buttonText="Facing Issues in dashboard"
+					buttonText="Need help with this chart?"
 					message={`Hi Team,
 
-I am facing issues configuring dashboard in SigNoz. Here are my dashboard details
+I need help in creating this chart. Here are my dashboard details
 				
 Name: ${selectedDashboard?.data.title || ''}
 Panel type: ${graphType}
 Dashboard Id: ${selectedDashboard?.uuid || ''}
 				
 Thanks`}
+					// onHover: Click here to get help in creating chart
 				/>
 				<ButtonContainer>
 					{isSaveDisabled && (
