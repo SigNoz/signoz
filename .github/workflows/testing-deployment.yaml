@@ -11,7 +11,7 @@ jobs:
     if: ${{ github.event.label.name == 'testing-deploy' }}
     permissions:
       contents: 'read'
-      id-token: 'read'
+      id-token: 'write'
     steps:
       - id: 'auth'
         uses: 'google-github-actions/auth@v2'
