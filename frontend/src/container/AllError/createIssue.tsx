@@ -2,6 +2,7 @@
 import { Button } from 'antd';
 import axios from 'api';
 import dayjs from 'dayjs';
+import axiosRef from 'axios';
 
 interface CreateIssueProp {
 	issueLink: string;
@@ -30,17 +31,23 @@ function CreateIssue(props: CreateIssueProp): JSX.Element {
 	};
 
 	const handleCreateIssue = async (record: any) => {
-		console.log('record', record);
 		try {
-			const { data } = await axios.post(
+			const { data } = await axiosRef.post(
 				`${process.env.SERVER_API_HOST}/capi/jira/createIssue`,
 				{
-					type: 'Bug',
+					// type: 'Bug',
 					serviceName: record.serviceName,
 					exceptionType: record.exceptionType,
-					exceptionMessage: record.exceptionMessage,
+					title: record.exceptionMessage,
+					message: record.exceptionMessage,
 					time: dayjs(record.lastSeen).format('DD/MM/YYYY HH:mm:ss A'),
-					groupID: record.groupID,
+					errorId: record.groupID,
+				},
+				{
+					headers: {
+						// 'Content-Type': 'application/json',
+						authorization: 'Basic emhpY2hhby5nYW9Ac2F5d2VlZS5jb206emhpY2hhby5nYW8=',
+					},
 				},
 			);
 			console.log('data', data);
