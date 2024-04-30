@@ -4,7 +4,6 @@ import styled from 'styled-components';
 export const Container = styled.div`
 	min-height: 78vh;
 	display: flex;
-	margin-top: 1rem;
 	flex-direction: column;
 `;
 
@@ -17,7 +16,6 @@ export const RightContainerWrapper = styled(Col)`
 
 export const LeftContainerWrapper = styled(Col)`
 	&&& {
-		margin-right: 1rem;
 		margin-bottom: 1rem;
 		max-width: 70%;
 	}
