@@ -135,7 +135,7 @@ function WidgetGraphComponent({
 				i: uuid,
 				w: 6,
 				x: 0,
-				h: 3,
+				h: 6,
 				y: 0,
 			},
 		];
