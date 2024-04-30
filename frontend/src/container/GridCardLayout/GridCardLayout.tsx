@@ -492,15 +492,16 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 						screen: 'Dashboard Details',
 					}}
 					eventName="Dashboard: Facing Issues in dashboard"
-					buttonText="Facing Issues in dashboard"
+					buttonText="Need help with this dashboard?"
 					message={`Hi Team,
 
-I am facing issues configuring dashboard in SigNoz. Here are my dashboard details
+I need help with this dashboard. Here are my dashboard details
 
 Name: ${data?.title || ''}
 Dashboard Id: ${selectedDashboard?.uuid || ''}
 
 Thanks`}
+					// onHover: Click here to get help for this dashboard
 				/>
 				<ButtonContainer>
 					<Tooltip title="Open in Full Screen">

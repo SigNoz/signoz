@@ -584,10 +584,10 @@ function FormAlertRules({
 						}}
 						className="facing-issue-btn"
 						eventName="Alert: Facing Issues in alert"
-						buttonText="Facing Issues in alert"
+						buttonText="Need help with this alert?"
 						message={`Hi Team,
 
-I am facing issues configuring alerts in SigNoz. Here are my alert rule details
+I need help in configuring this alert. Here are my alert rule details
 
 Name: ${alertDef?.alert || ''}
 Alert Type: ${alertDef?.alertType || ''}
@@ -595,6 +595,7 @@ State: ${(alertDef as any)?.state || ''}
 Alert Id: ${ruleId}
 
 Thanks`}
+						// onHover: Click here to get help with this alert
 					/>
 				</Col>
 			</PanelContainer>
