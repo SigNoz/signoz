@@ -9,19 +9,23 @@ jobs:
     runs-on: ubuntu-latest
     environment: testing
     if: ${{ github.event.label.name == 'testing-deploy' }}
+    permissions:
+      contents: 'read'
+      id-token: 'read'
     steps:
-      - name: Executing remote ssh commands using ssh key
-        uses: appleboy/ssh-action@v1.0.3
-        env:
-          GITHUB_BRANCH: ${{ github.head_ref || github.ref_name }}
-          GITHUB_SHA: ${{ github.sha }}
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
         with:
-          host: ${{ secrets.HOST_DNS }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          envs: GITHUB_BRANCH,GITHUB_SHA
-          command_timeout: 60m
-          script: |
+          workload_identity_provider: 'projects/30557428044/locations/global/workloadIdentityPools/versioncontrolsystems/providers/signoz'
+          service_account: 'wif-github@signozsso.iam.gserviceaccount.com'
+
+      - name: 'sdk'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: 'ssh'
+        shell: bash
+        run: |
+          read -r -d '' COMMAND <<EOF
             echo "GITHUB_BRANCH: ${GITHUB_BRANCH}"
             echo "GITHUB_SHA: ${GITHUB_SHA}"
             export DOCKER_TAG="${GITHUB_SHA:0:7}" # needed for child process to access it
@@ -41,3 +45,5 @@ jobs:
             make build-ee-query-service-amd64
             make build-frontend-amd64
             make run-signoz
+          EOF
+          gcloud compute ssh <> --zone us-central1-a --tunnel-through-iap --project signozsso --command "${COMMAND}"
