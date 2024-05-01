@@ -20,6 +20,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -1036,6 +1037,10 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				if !can {
 					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot join the given group keys")}
 				}
+			}
+
+			if minStep := common.MinAllowedStepInterval(queryRangeParams.Start, queryRangeParams.End); query.StepInterval < minStep {
+				query.StepInterval = minStep
 			}
 
 			var timeShiftBy int64

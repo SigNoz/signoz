@@ -4,6 +4,7 @@ import (
 	"math"
 	"time"
 
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
@@ -22,4 +23,11 @@ func AdjustedMetricTimeRange(start, end, step int64, aggregaOperator v3.TimeAggr
 func PastDayRoundOff() int64 {
 	now := time.Now().UnixMilli()
 	return int64(math.Floor(float64(now)/float64(time.Hour.Milliseconds()*24))) * time.Hour.Milliseconds() * 24
+}
+
+// start and end are in milliseconds
+func MinAllowedStepInterval(start, end int64) int64 {
+	step := (end - start) / constants.MaxAllowedPointsInTimeSeries / 1000
+	// return the nearest lower multiple of 60
+	return step - step%60
 }

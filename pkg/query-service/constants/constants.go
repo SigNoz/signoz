@@ -25,6 +25,8 @@ var ConfigSignozIo = "https://config.signoz.io/api/v1"
 
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
+const MaxAllowedPointsInTimeSeries = 300
+
 func IsTelemetryEnabled() bool {
 	if testing.Testing() {
 		return false
