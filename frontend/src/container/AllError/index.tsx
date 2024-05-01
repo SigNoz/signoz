@@ -376,7 +376,8 @@ function AllErrors(): JSX.Element {
 					// type: 'Bug',
 					// serviceName: record.serviceName,
 					issueStatus,
-					groupID,
+					// groupID,
+					errorId: groupID,
 					serviceName,
 					message,
 					exceptionType
