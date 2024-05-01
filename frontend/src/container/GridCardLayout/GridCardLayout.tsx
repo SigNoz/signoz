@@ -495,7 +495,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					eventName="Dashboard: Facing Issues in dashboard"
 					buttonText="Need help with this dashboard?"
 					message={dashboardHelpMessage(data, selectedDashboard)}
-					// onHover: Click here to get help for this dashboard
+					onHoverText="Click here to get help for this dashboard"
 				/>
 				<ButtonContainer>
 					<Tooltip title="Open in Full Screen">
