@@ -414,6 +414,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					}}
 					eventName="Dashboard: Facing Issues in dashboard"
 					buttonText="Need help with this chart?"
+					onHoverText="Click here to get help in creating chart"
 					message={`Hi Team,
 
 I need help in creating this chart. Here are my dashboard details
@@ -423,7 +424,6 @@ Panel type: ${graphType}
 Dashboard Id: ${selectedDashboard?.uuid || ''}
 				
 Thanks`}
-					// onHover: Click here to get help in creating chart
 				/>
 				<ButtonContainer>
 					{isSaveDisabled && (

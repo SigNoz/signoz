@@ -585,6 +585,7 @@ function FormAlertRules({
 						className="facing-issue-btn"
 						eventName="Alert: Facing Issues in alert"
 						buttonText="Need help with this alert?"
+						onHoverText="Click here to get help with this alert"
 						message={`Hi Team,
 
 I need help in configuring this alert. Here are my alert rule details
@@ -595,7 +596,6 @@ State: ${(alertDef as any)?.state || ''}
 Alert Id: ${ruleId}
 
 Thanks`}
-						// onHover: Click here to get help with this alert
 					/>
 				</Col>
 			</PanelContainer>

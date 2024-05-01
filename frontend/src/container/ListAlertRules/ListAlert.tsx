@@ -364,13 +364,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					},
 					eventName: 'Alert: Facing Issues in alert',
 					buttonText: 'Facing issues with alerts?',
+					onHoverText: 'Click here to get help with alerts',
 					message: `Hi Team,
 
 I need help with managing alerts.
 
 Thanks`,
 				}}
-				// onHover: Click here to get help with alerts
 			/>
 		</>
 	);
