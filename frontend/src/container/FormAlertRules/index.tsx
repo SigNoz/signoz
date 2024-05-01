@@ -523,6 +523,7 @@ function FormAlertRules({
 							runQuery={handleRunQuery}
 							alertDef={alertDef}
 							panelType={panelType || PANEL_TYPES.TIME_SERIES}
+							key={currentQuery.queryType}
 						/>
 
 						<RuleOptions
