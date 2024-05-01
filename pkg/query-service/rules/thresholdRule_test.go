@@ -266,6 +266,19 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			matchType:   "1", // Once
 			target:      0.0,
 		},
+		{
+			values: [][]interface{}{
+				{int32(2), "endpoint"},
+				{int32(3), "endpoint"},
+				{int32(2), "endpoint"},
+				{int32(4), "endpoint"},
+				{int32(2), "endpoint"},
+			},
+			expectAlert: true,
+			compareOp:   "2", // Below
+			matchType:   "3", // On Average
+			target:      3.0,
+		},
 	}
 
 	for idx, c := range cases {
