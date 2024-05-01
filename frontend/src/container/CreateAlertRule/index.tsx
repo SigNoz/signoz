@@ -27,9 +27,9 @@ function CreateRules(): JSX.Element {
 	const alertTypeFromParams = queryParams.get(QueryParams.alertType);
 
 	const compositeQuery = useGetCompositeQueryParam();
-	function getAlertTypeFromDataSource(): AlertTypes {
+	function getAlertTypeFromDataSource(): AlertTypes | null {
 		if (!compositeQuery) {
-			return AlertTypes.METRICS_BASED_ALERT;
+			return null;
 		}
 		const dataSource = compositeQuery?.builder?.queryData[0]?.dataSource;
 
@@ -66,11 +66,11 @@ function CreateRules(): JSX.Element {
 	};
 
 	useEffect(() => {
-		if (alertTypeFromParams) {
-			onSelectType(alertTypeFromParams as AlertTypes);
+		if (alertType) {
+			onSelectType(alertType);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [alertTypeFromParams]);
+	}, [alertType]);
 
 	if (!initValues) {
 		return (
