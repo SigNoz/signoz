@@ -393,7 +393,7 @@ function DashboardsList(): JSX.Element {
 						eventName: 'Dashboard: Facing Issues in dashboard',
 						buttonText: 'Facing issues with dashboards?',
 						message: dashboardListMessage,
-						// onHover: Click here to get help with dashboards
+						onHoverText: 'Click here to get help with dashboards',
 					}}
 				/>
 			</TableContainer>
