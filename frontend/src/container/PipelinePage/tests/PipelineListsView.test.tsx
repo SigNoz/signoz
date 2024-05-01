@@ -257,5 +257,9 @@ describe('PipelinePage container test', () => {
 		);
 
 		expect(document.querySelectorAll('[data-icon="delete"]').length).toBe(2);
+
+		const saveBtn = getByText('save_configuration');
+		expect(saveBtn).toBeInTheDocument();
+		await userEvent.click(saveBtn);
 	});
 });
