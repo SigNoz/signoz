@@ -5,6 +5,7 @@ import { Flex, Form, Input, Modal, Tooltip, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import cx from 'classnames';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -493,14 +494,7 @@ function GraphLayout({ onAddPanelHandler }: GraphLayoutProps): JSX.Element {
 					}}
 					eventName="Dashboard: Facing Issues in dashboard"
 					buttonText="Need help with this dashboard?"
-					message={`Hi Team,
-
-I need help with this dashboard. Here are my dashboard details
-
-Name: ${data?.title || ''}
-Dashboard Id: ${selectedDashboard?.uuid || ''}
-
-Thanks`}
+					message={dashboardHelpMessage(data, selectedDashboard)}
 					// onHover: Click here to get help for this dashboard
 				/>
 				<ButtonContainer>

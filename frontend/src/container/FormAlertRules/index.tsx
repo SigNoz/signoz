@@ -12,6 +12,7 @@ import {
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { alertHelpMessage } from 'components/facingIssueBtn/util';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -586,16 +587,7 @@ function FormAlertRules({
 						className="facing-issue-btn"
 						eventName="Alert: Facing Issues in alert"
 						buttonText="Need help with this alert?"
-						message={`Hi Team,
-
-I need help in configuring this alert. Here are my alert rule details
-
-Name: ${alertDef?.alert || ''}
-Alert Type: ${alertDef?.alertType || ''}
-State: ${(alertDef as any)?.state || ''}
-Alert Id: ${ruleId}
-
-Thanks`}
+						message={alertHelpMessage(alertDef, ruleId)}
 						// onHover: Click here to get help with this alert
 					/>
 				</Col>

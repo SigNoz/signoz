@@ -4,6 +4,7 @@ import { Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import DropDown from 'components/DropDown/DropDown';
+import { listAlertMessage } from 'components/facingIssueBtn/util';
 import {
 	DynamicColumnsKey,
 	TableDataSource,
@@ -364,11 +365,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					},
 					eventName: 'Alert: Facing Issues in alert',
 					buttonText: 'Facing issues with alerts?',
-					message: `Hi Team,
-
-I need help with managing alerts.
-
-Thanks`,
+					message: listAlertMessage,
 				}}
 				// onHover: Click here to get help with alerts
 			/>
