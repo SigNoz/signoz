@@ -67,8 +67,6 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 			return [...fieldColumns];
 		}
 
-		console.log('fieldColumns', fieldColumns);
-
 		return [
 			{
 				title: 'timestamp',
