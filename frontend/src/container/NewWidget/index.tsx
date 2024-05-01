@@ -1,6 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import './NewWidget.styles.scss';
+
 import { LockFilled, WarningOutlined } from '@ant-design/icons';
-import { Button, Col, Modal, Row, Space, Tooltip, Typography } from 'antd';
+import { Button, Modal, Space, Tooltip, Typography } from 'antd';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
@@ -402,20 +404,19 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	return (
 		<Container>
-			<Row>
-				<Col span={8} offset={8}>
-					<FacingIssueBtn
-						attributes={{
-							uuid: selectedDashboard?.uuid,
-							title: selectedDashboard?.data.title,
-							panelType: graphType,
-							widgetId: query.get('widgetId'),
-							queryType: currentQuery.queryType,
-							screen: 'Dashboard list page',
-						}}
-						eventName="Dashboard: Facing Issues in dashboard"
-						buttonText="Need help with this chart?"
-						message={`Hi Team,
+			<div className="facing-issue-btn-container">
+				<FacingIssueBtn
+					attributes={{
+						uuid: selectedDashboard?.uuid,
+						title: selectedDashboard?.data.title,
+						panelType: graphType,
+						widgetId: query.get('widgetId'),
+						queryType: currentQuery.queryType,
+						screen: 'Dashboard list page',
+					}}
+					eventName="Dashboard: Facing Issues in dashboard"
+					buttonText="Need help with this chart?"
+					message={`Hi Team,
 
 I need help in creating this chart. Here are my dashboard details
 				
@@ -424,38 +425,36 @@ Panel type: ${graphType}
 Dashboard Id: ${selectedDashboard?.uuid || ''}
 				
 Thanks`}
-						// onHover: Click here to get help in creating chart
-					/>
-
-					<ButtonContainer>
-						{isSaveDisabled && (
-							<Tooltip title={MESSAGE.PANEL}>
-								<Button
-									icon={<LockFilled />}
-									type="primary"
-									disabled={isSaveDisabled}
-									onClick={onSaveDashboard}
-								>
-									Save Changes
-								</Button>
-							</Tooltip>
-						)}
-
-						{!isSaveDisabled && (
+					// onHover: Click here to get help in creating chart
+				/>
+				<ButtonContainer>
+					{isSaveDisabled && (
+						<Tooltip title={MESSAGE.PANEL}>
 							<Button
+								icon={<LockFilled />}
 								type="primary"
-								data-testid="new-widget-save"
-								loading={updateDashboardMutation.isLoading}
 								disabled={isSaveDisabled}
 								onClick={onSaveDashboard}
 							>
 								Save Changes
 							</Button>
-						)}
-						<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
-					</ButtonContainer>
-				</Col>
-			</Row>
+						</Tooltip>
+					)}
+
+					{!isSaveDisabled && (
+						<Button
+							type="primary"
+							data-testid="new-widget-save"
+							loading={updateDashboardMutation.isLoading}
+							disabled={isSaveDisabled}
+							onClick={onSaveDashboard}
+						>
+							Save Changes
+						</Button>
+					)}
+					<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
+				</ButtonContainer>
+			</div>
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
