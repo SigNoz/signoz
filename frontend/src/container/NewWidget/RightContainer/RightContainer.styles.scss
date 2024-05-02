@@ -241,6 +241,37 @@
 			}
 		}
 	}
+
+	.alerts {
+		display: flex;
+		padding: 12px;
+		align-items: center;
+		justify-content: space-between;
+		border-bottom: 1px solid var(--bg-slate-500);
+
+		.left-section {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.bell-icon {
+				color: #c0c1c3;
+			}
+
+			.alerts-text {
+				color: #c0c1c3;
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: 0.14px;
+			}
+		}
+		.plus-icon {
+			color: #c0c1c3;
+		}
+	}
 }
 .y-axis-root-popover {
 }

@@ -1,15 +1,6 @@
 import './RightContainer.styles.scss';
 
-import { UploadOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Input,
-	InputNumber,
-	Select,
-	Space,
-	Switch,
-	Typography,
-} from 'antd';
+import { Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import GraphTypes, {
@@ -17,6 +8,7 @@ import GraphTypes, {
 } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { ConciergeBell, Plus } from 'lucide-react';
 import {
 	Dispatch,
 	SetStateAction,
@@ -216,26 +208,26 @@ function RightContainer({
 				)}
 			</section>
 
-			<section className="alerts">
-				<Space direction="vertical">
-					{allowCreateAlerts && (
-						<Button icon={<UploadOutlined />} onClick={onCreateAlertsHandler}>
-							Create Alerts from Queries
-						</Button>
-					)}
-				</Space>
-			</section>
+			{allowCreateAlerts && (
+				<section className="alerts">
+					<div className="left-section">
+						<ConciergeBell size={14} className="bell-icon" />
+						<Typography.Text className="alerts-text">Alerts</Typography.Text>
+					</div>
+					<Plus size={14} onClick={onCreateAlertsHandler} className="plus-icon" />
+				</section>
+			)}
 
-			<section className="thresholds">
-				{allowThreshold && (
+			{allowThreshold && (
+				<section>
 					<ThresholdSelector
 						thresholds={thresholds}
 						setThresholds={setThresholds}
 						yAxisUnit={yAxisUnit}
 						selectedGraph={selectedGraph}
 					/>
-				)}
-			</section>
+				</section>
+			)}
 		</div>
 	);
 }
