@@ -10,14 +10,13 @@ export const Container = styled.div`
 export const RightContainerWrapper = styled(Col)`
 	&&& {
 		min-width: 200px;
-		margin-bottom: 1rem;
 	}
 `;
 
 export const LeftContainerWrapper = styled(Col)`
 	&&& {
-		margin-bottom: 1rem;
 		max-width: 70%;
+		border-right: 1px solid var(--bg-slate-500);
 	}
 `;
 

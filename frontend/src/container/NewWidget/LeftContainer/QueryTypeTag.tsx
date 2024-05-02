@@ -7,20 +7,20 @@ function QueryTypeTag({ queryType }: IQueryTypeTagProps): JSX.Element {
 		case EQueryType.QUERY_BUILDER:
 			return (
 				<span>
-					<Tag color="geekblue">Query Builder</Tag>
+					<Tag>Query Builder</Tag>
 				</span>
 			);
 
 		case EQueryType.CLICKHOUSE:
 			return (
 				<span>
-					<Tag color="orange">ClickHouse Query</Tag>
+					<Tag>ClickHouse Query</Tag>
 				</span>
 			);
 		case EQueryType.PROM:
 			return (
 				<span>
-					<Tag color="green">PromQL</Tag>
+					<Tag>PromQL</Tag>
 				</span>
 			);
 		default:
