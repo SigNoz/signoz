@@ -3,7 +3,6 @@ import './RightContainer.styles.scss';
 import { UploadOutlined } from '@ant-design/icons';
 import {
 	Button,
-	Divider,
 	Input,
 	InputNumber,
 	Select,
@@ -36,7 +35,6 @@ import {
 	panelTypeVsThreshold,
 	panelTypeVsYAxisUnit,
 } from './constants';
-import { Title } from './styles';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
@@ -149,7 +147,7 @@ function RightContainer({
 				<Select
 					onChange={setGraphHandler}
 					value={selectedGraph}
-					style={{ width: '100%', marginBottom: 24 }}
+					style={{ width: '100%' }}
 					className="panel-type-select"
 				>
 					{graphTypes.map((item) => (
@@ -161,33 +159,30 @@ function RightContainer({
 						</Option>
 					))}
 				</Select>
-			</section>
 
-			<Title>Panel Attributes</Title>
+				{allowFillSpans && (
+					<Space className="fill-gaps">
+						<Typography className="fill-gaps-text">Fill gaps</Typography>
+						<Switch
+							checked={isFillSpans}
+							size="small"
+							onChange={(checked): void => setIsFillSpans(checked)}
+						/>
+					</Space>
+				)}
 
-			{allowFillSpans && (
-				<Space style={{ marginTop: 10 }} direction="vertical">
-					<Typography>Fill gaps</Typography>
-
-					<Switch
-						checked={isFillSpans}
-						onChange={(checked): void => setIsFillSpans(checked)}
-					/>
-				</Space>
-			)}
-
-			{allowPanelTimePreference && (
-				<Title light="true">Panel Time Preference</Title>
-			)}
-
-			<Space direction="vertical">
 				{allowPanelTimePreference && (
-					<TimePreference
-						{...{
-							selectedTime,
-							setSelectedTime,
-						}}
-					/>
+					<>
+						<Typography.Text className="panel-time-text">
+							Panel Time Preference
+						</Typography.Text>
+						<TimePreference
+							{...{
+								selectedTime,
+								setSelectedTime,
+							}}
+						/>
+					</>
 				)}
 
 				{allowYAxisUnit && (
@@ -197,49 +192,50 @@ function RightContainer({
 						fieldLabel={selectedGraphType === 'Value' ? 'Unit' : 'Y Axis Unit'}
 					/>
 				)}
-
-				{allowCreateAlerts && (
-					<Button icon={<UploadOutlined />} onClick={onCreateAlertsHandler}>
-						Create Alerts from Queries
-					</Button>
+				{allowSoftMinMax && (
+					<section className="soft-min-max">
+						<section className="container">
+							<Typography.Text className="text">Soft Min</Typography.Text>
+							<InputNumber
+								type="number"
+								value={softMin}
+								onChange={softMinHandler}
+								rootClassName="input"
+							/>
+						</section>
+						<section className="container">
+							<Typography.Text className="text">Soft Max</Typography.Text>
+							<InputNumber
+								value={softMax}
+								type="number"
+								rootClassName="input"
+								onChange={softMaxHandler}
+							/>
+						</section>
+					</section>
 				)}
-			</Space>
+			</section>
 
-			{allowSoftMinMax && (
-				<>
-					<Divider />
-					<Typography.Text style={{ display: 'block', margin: '5px 0' }}>
-						Soft Min
-					</Typography.Text>
-					<InputNumber
-						type="number"
-						value={softMin}
-						style={{ display: 'block', width: '100%' }}
-						onChange={softMinHandler}
-					/>
-					<Typography.Text style={{ display: 'block', margin: '5px 0' }}>
-						Soft Max
-					</Typography.Text>
-					<InputNumber
-						value={softMax}
-						type="number"
-						style={{ display: 'block', width: '100%' }}
-						onChange={softMaxHandler}
-					/>
-				</>
-			)}
+			<section className="alerts">
+				<Space direction="vertical">
+					{allowCreateAlerts && (
+						<Button icon={<UploadOutlined />} onClick={onCreateAlertsHandler}>
+							Create Alerts from Queries
+						</Button>
+					)}
+				</Space>
+			</section>
 
-			{allowThreshold && (
-				<>
-					<Divider />
+			<section className="thresholds">
+				{allowThreshold && (
 					<ThresholdSelector
 						thresholds={thresholds}
 						setThresholds={setThresholds}
 						yAxisUnit={yAxisUnit}
 						selectedGraph={selectedGraph}
 					/>
-				</>
-			)}
+				)}
+			</section>
 		</div>
 	);
 }
