@@ -3,6 +3,7 @@ import { Card, Col, Dropdown, Input, Row, TableColumnProps } from 'antd';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
+import { dashboardListMessage } from 'components/facingIssueBtn/util';
 import {
 	DynamicColumnsKey,
 	TableDataSource,
@@ -390,12 +391,9 @@ function DashboardsList(): JSX.Element {
 							screen: 'Dashboard list page',
 						},
 						eventName: 'Dashboard: Facing Issues in dashboard',
-						buttonText: 'Facing Issues in dashboard',
-						message: `Hi Team,
-
-I am facing issues with dashboards.
-						
-Thanks`,
+						buttonText: 'Facing issues with dashboards?',
+						message: dashboardListMessage,
+						onHoverText: 'Click here to get help with dashboards',
 					}}
 				/>
 			</TableContainer>
