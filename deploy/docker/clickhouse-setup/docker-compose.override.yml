@@ -1,0 +1,82 @@
+services:
+  zookeeper-1:
+    ports:
+      - "${SIGNOZ_ZOOKEEPER_PORT1:-2191}:2181"
+      - "${SIGNOZ_ZOOKEEPER_PORT2:-2888}:2888"
+      - "${SIGNOZ_ZOOKEEPER_PORT3:-3888}:3888"
+    volumes:
+      - ${CLICKHOUSE_DATA_DIR:-.}/data/zookeeper-1:/bitnami/zookeeper
+    networks:
+      - payapp
+
+  clickhouse:
+    ports:
+      - "${SIGNOZ_CLICKHOUSE_PORT1:-9005}:9000"
+      - "${SIGNOZ_CLICKHOUSE_PORT2:-8124}:8123"
+      - "${SIGNOZ_CLICKHOUSE_PORT3:-9182}:9181"
+    volumes:
+      - ${CLICKHOUSE_DATA_DIR:-.}/clickhouse-config.xml:/etc/clickhouse-server/config.xml
+      - ${CLICKHOUSE_DATA_DIR:-.}/clickhouse-users.xml:/etc/clickhouse-server/users.xml
+      - ${CLICKHOUSE_DATA_DIR:-.}/custom-function.xml:/etc/clickhouse-server/custom-function.xml
+      - ${CLICKHOUSE_DATA_DIR:-.}/clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
+      # - ${CLICKHOUSE_DATA_DIR:-.}/clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
+      - ${CLICKHOUSE_DATA_DIR:-.}/data/clickhouse/:/var/lib/clickhouse/
+      - ${CLICKHOUSE_DATA_DIR:-.}/user_scripts:/var/lib/clickhouse/user_scripts/
+    networks:
+      - payapp
+
+  alertmanager:
+    volumes:
+      - ${CLICKHOUSE_DATA_DIR:-.}/data/alertmanager:/data
+    networks:
+      - payapp
+
+  query-service:
+    volumes:
+      - ${CLICKHOUSE_DATA_DIR:-.}/prometheus.yml:/root/config/prometheus.yml
+      - ${CLICKHOUSE_DATA_PARENT_DIR:-..}/dashboards:/root/config/dashboards
+      - ${CLICKHOUSE_DATA_DIR:-.}/data/signoz/:/var/lib/signoz/
+    networks:
+      - payapp
+
+  frontend:
+    ports:
+      - "${SIGNOZ_FRONTEND_PORT:-3301}:3301"
+    volumes:
+      - ${CLICKHOUSE_DATA_PARENT_DIR:-..}/common/nginx-config.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - payapp
+
+  otel-collector-migrator:
+    networks:
+      - payapp
+
+  otel-collector:
+    volumes:
+      - ${CLICKHOUSE_DATA_DIR:-.}/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ${CLICKHOUSE_DATA_DIR:-.}/otel-collector-opamp-config.yaml:/etc/manager-config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    networks:
+      - payapp
+
+  logspout:
+    volumes:
+      - /etc/hostname:/etc/host_hostname:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - payapp
+
+  hotrod:
+    networks:
+      - payapp
+
+  load-hotrod:
+    volumes:
+      - ${CLICKHOUSE_DATA_PARENT_DIR:-..}/common/locust-scripts:/locust
+    networks:
+      - payapp
+
+networks:
+  payapp:
+    driver: bridge
+    name: payapp
