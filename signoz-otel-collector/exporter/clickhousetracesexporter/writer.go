@@ -319,6 +319,20 @@ func (w *SpanWriter) writeErrorBatch(batchSpans []*Span) error {
 		if span.ErrorEvent.Name == "" {
 			continue
 		}
+		// 查找同ErrorGroupID下是否存在issueLink值，存在的话用已经存在的issueLink赋值
+		if span.ErrorGroupID != "" {
+			var existingIssueLink string
+			// _, err := w.db.PrepareBatch(ctx, fmt.Sprintf("SELECT issueLink FROM %s.%s WHERE groupID = %s", w.traceDatabase, w.errorTable, span.ErrorGroupID))
+			err := w.db.QueryRow(ctx, "SELECT issueLink FROM %s.%s WHERE groupID = %s AND issueLink IS NOT NULL LIMIT 1", w.traceDatabase, w.errorTable, span.ErrorGroupID).Scan(&existingIssueLink)
+			if err != nil {
+				// 处理查询出错的情况
+				w.logger.Error("查询issueLink信息错误: ", zap.Error(err))
+			}
+			if existingIssueLink != "" {
+				span.IssueLink = existingIssueLink
+			}
+		}
+
 		err = statement.Append(
 			time.Unix(0, int64(span.ErrorEvent.TimeUnixNano)),
 			span.ErrorID,
