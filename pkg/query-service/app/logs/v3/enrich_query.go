@@ -2,12 +2,19 @@ package v3
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
+
+var disableReplaceJsonField bool
+
+func init() {
+	disableReplaceJsonField, _ = strconv.ParseBool(os.Getenv("DisableReplaceJSONField"))
+}
 
 func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 	compositeQuery := params.CompositeQuery
@@ -108,7 +115,7 @@ func enrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) 
 	if query.Filters != nil && len(query.Filters.Items) != 0 {
 		for i := 0; i < len(query.Filters.Items); i++ {
 			query.Filters.Items[i] = jsonFilterEnrich(query.Filters.Items[i])
-			if query.Filters.Items[i].Key.IsJSON {
+			if query.Filters.Items[i].Key.IsJSON && !disableReplaceJsonField {
 				query.Filters.Items[i] = jsonReplaceField(query.Filters.Items[i], fields)
 				continue
 			}
