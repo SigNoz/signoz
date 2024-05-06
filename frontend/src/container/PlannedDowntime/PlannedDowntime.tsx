@@ -1,57 +1,43 @@
 import './PlannedDowntime.styles.scss';
 import 'dayjs/locale/en';
 
-import { CheckOutlined, PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	DatePicker,
-	Divider,
-	Dropdown,
-	Flex,
-	Form,
-	Input,
-	MenuProps,
-	Modal,
-	Select,
-	Spin,
-	Typography,
-} from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
-import { SelectProps } from 'antd/lib';
+import { Button, Dropdown, Flex, Input, MenuProps, Typography } from 'antd';
 import getAll from 'api/alerts/getAll';
-import {
-	ModalButtonWrapper,
-	ModalTitle,
-} from 'container/PipelinePage/PipelineListsView/styles';
+import { useDeleteDowntimeSchedule } from 'api/plannedDowntime/deleteDowntimeSchedule';
+import getAllDowntimeSchedules, {
+	DowntimeSchedules,
+} from 'api/plannedDowntime/getAllDowntimeSchedules';
 import dayjs from 'dayjs';
+import { useNotifications } from 'hooks/useNotifications';
 import { CalendarClockIcon, PencilRuler, Search, SortDesc } from 'lucide-react';
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import { useQuery } from 'react-query';
 
-import { AlertRuleTags, PlannedDowntimeList } from './PlannedDowntimeList';
-
-interface PlannedDowntimeData {
-	name: string;
-	startTime: string;
-	endTime: string;
-	recurrence: string;
-}
-
-const customFormat = 'Do MMMM, YYYY ⎯ HH:mm:ss';
+import { PlannedDowntimeDeleteModal } from './PlannedDowntimeDeleteModal';
+import { PlannedDowntimeForm } from './PlannedDowntimeForm';
+import { PlannedDowntimeList } from './PlannedDowntimeList';
+import {
+	defautlInitialValues,
+	deleteDowntimeHandler,
+} from './PlannedDowntimeutils';
 
 export function PlannedDowntime(): JSX.Element {
-	const [isOpen, setIsOpen] = React.useState(false);
-	const [form] = Form.useForm();
-	const [selectedTags, setSelectedTags] = React.useState<
-		DefaultOptionType | DefaultOptionType[]
-	>([]);
 	const { data, isError, isLoading } = useQuery('allAlerts', {
 		queryFn: getAll,
 		cacheTime: 0,
-		enabled: isOpen,
 	});
-	const alertRuleFormName = 'alert-rules';
+	const [isOpen, setIsOpen] = React.useState(false);
+
+	const [initialValues, setInitialValues] = useState<
+		Partial<DowntimeSchedules & { editMode: boolean }>
+	>(defautlInitialValues);
+
+	const downtimeSchedules = useQuery('allDowntimeSchedules', {
+		queryFn: getAllDowntimeSchedules,
+		cacheTime: 0,
+	});
 
 	const alertOptions = React.useMemo(
 		() =>
@@ -63,65 +49,14 @@ export function PlannedDowntime(): JSX.Element {
 	);
 
 	dayjs.locale('en');
-	const datePickerFooter = (mode: any): any =>
-		mode === 'time' ? (
-			<span style={{ color: 'gray' }}>Please select the time</span>
-		) : null;
-
-	const onFinish = (values: PlannedDowntimeData): void => {
-		console.log(values);
-	};
-
-	const formValidationRules = [
-		{
-			required: true,
-		},
-	];
-
-	const handleOk = async (): Promise<void> => {
-		try {
-			await form.validateFields();
-			setIsOpen(false);
-		} catch (error) {
-			// error
-		}
-	};
 
 	const [searchValue, setSearchValue] = React.useState<string>('');
+	const [deleteData, setDeleteData] = useState<{ id: number; name: string }>();
+	const [isEditMode, setEditMode] = useState<boolean>(false);
 
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setSearchValue(e.target.value);
 		console.log(searchValue);
-	};
-
-	const handleCancel = (): void => {
-		setIsOpen(false);
-	};
-
-	const handleChange = (
-		value: string,
-		options: DefaultOptionType | DefaultOptionType[],
-	): void => {
-		console.log(options, value);
-		form.setFieldValue(alertRuleFormName, options);
-		setSelectedTags(options);
-	};
-
-	const noTagRenderer: SelectProps['tagRender'] = () => (
-		// eslint-disable-next-line react/jsx-no-useless-fragment
-		<></>
-	);
-
-	const handleClose = (removedTag: DefaultOptionType['value']): void => {
-		if (!removedTag) {
-			return;
-		}
-		const newTags = selectedTags.filter(
-			(tag: DefaultOptionType) => tag.value !== removedTag,
-		);
-		console.log(newTags);
-		form.setFieldValue(alertRuleFormName, newTags);
-		setSelectedTags(newTags);
 	};
 
 	const filterMenuItems: MenuProps['items'] = [
@@ -144,6 +79,38 @@ export function PlannedDowntime(): JSX.Element {
 			key: '1',
 		},
 	];
+
+	const clearSearch = (): void => {
+		setSearchValue('');
+	};
+
+	// Delete Downtime Schedule
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+	const { notifications } = useNotifications();
+
+	const hideDeleteDowntimeScheduleModal = (): void => {
+		setIsDeleteModalOpen(false);
+	};
+
+	const refetchAllSchedules = (): void => {
+		downtimeSchedules.refetch();
+	};
+
+	const {
+		mutateAsync: deleteDowntimeScheduleAsync,
+		isLoading: isDeleteLoading,
+	} = useDeleteDowntimeSchedule({ id: deleteData?.id });
+
+	const onDeleteHandler = (): void => {
+		deleteDowntimeHandler({
+			deleteDowntimeScheduleAsync,
+			notifications,
+			refetchAllSchedules,
+			deleteId: deleteData?.id,
+			hideDeleteDowntimeScheduleModal,
+			clearSearch,
+		});
+	};
 
 	return (
 		<div className="planned-downtime-container">
@@ -175,131 +142,44 @@ export function PlannedDowntime(): JSX.Element {
 					<Button
 						icon={<PlusOutlined />}
 						type="primary"
-						onClick={(): void => setIsOpen(true)}
+						onClick={(): void => {
+							setInitialValues({ ...defautlInitialValues, editMode: false });
+							setIsOpen(true);
+						}}
 					>
 						New downtime
 					</Button>
 				</Flex>
 				<br />
-				<PlannedDowntimeList />
+				<PlannedDowntimeList
+					downtimeSchedules={downtimeSchedules}
+					alertOptions={alertOptions || []}
+					setInitialValues={setInitialValues}
+					setModalOpen={setIsOpen}
+					handleDeleteDowntime={(id, name): void => {
+						setDeleteData({ id, name });
+						setIsDeleteModalOpen(true);
+					}}
+					setEditMode={setEditMode}
+				/>
+				<PlannedDowntimeForm
+					alertOptions={alertOptions || []}
+					initialValues={initialValues}
+					isError={isError}
+					isLoading={isLoading}
+					isOpen={isOpen}
+					setIsOpen={setIsOpen}
+					refetchAllSchedules={refetchAllSchedules}
+					isEditMode={isEditMode}
+				/>
+				<PlannedDowntimeDeleteModal
+					isDeleteLoading={isDeleteLoading}
+					isDeleteModalOpen={isDeleteModalOpen}
+					onDeleteHandler={onDeleteHandler}
+					setIsDeleteModalOpen={setIsDeleteModalOpen}
+					downtimeSchedule={deleteData?.name || ''}
+				/>
 			</div>
-			<Modal
-				title={<ModalTitle level={4}>New planned downtime</ModalTitle>}
-				centered
-				open={isOpen}
-				className="createDowntimeModal"
-				width={384}
-				onCancel={handleCancel}
-				footer={null}
-			>
-				<Divider plain />
-				<Form
-					name="create-downtime"
-					form={form}
-					layout="vertical"
-					className="createForm"
-					onFinish={onFinish}
-					autoComplete="off"
-				>
-					<Form.Item
-						label="Name"
-						name="name"
-						required={false}
-						rules={formValidationRules}
-					>
-						<Input placeholder="e.g. Upgrade downtime" />
-					</Form.Item>
-					<div className="bar">
-						<Form.Item
-							label="Starts from"
-							name="startTime"
-							required={false}
-							rules={formValidationRules}
-							className="formItemWithBullet"
-						>
-							<DatePicker
-								format={customFormat}
-								showTime
-								renderExtraFooter={datePickerFooter}
-								popupClassName="datePicker"
-							/>
-						</Form.Item>
-						<Form.Item
-							label="Ends on"
-							name="endTime"
-							required={false}
-							rules={formValidationRules}
-							className="formItemWithBullet"
-						>
-							<DatePicker
-								format={customFormat}
-								showTime
-								renderExtraFooter={datePickerFooter}
-								popupClassName="datePicker"
-							/>
-						</Form.Item>
-					</div>
-					<Form.Item
-						label="Repeats every"
-						name="recurrence"
-						required={false}
-						rules={formValidationRules}
-					>
-						<Select>
-							<Select.Option value="does-not-repeat">Does not repeat</Select.Option>
-						</Select>
-					</Form.Item>
-					<div>
-						<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
-						<Form.Item noStyle shouldUpdate>
-							<AlertRuleTags
-								closable
-								selectedTags={selectedTags}
-								handleClose={handleClose}
-							/>
-						</Form.Item>
-						<Form.Item name={alertRuleFormName}>
-							<Select
-								placeholder="Search for alerts rules or groups..."
-								mode="multiple"
-								status={isError ? 'error' : undefined}
-								loading={isLoading}
-								tagRender={noTagRenderer}
-								onChange={handleChange}
-								options={alertOptions}
-								notFoundContent={
-									isLoading ? (
-										<span>
-											<Spin size="small" /> Loading...
-										</span>
-									) : (
-										<span>No alert available.</span>
-									)
-								}
-							>
-								{alertOptions?.map((option) => (
-									<Select.Option key={option.value} value={option.value}>
-										{option.label}
-									</Select.Option>
-								))}
-							</Select>
-						</Form.Item>
-					</div>
-					<Form.Item style={{ marginBottom: 0 }}>
-						<ModalButtonWrapper>
-							<Button
-								key="submit"
-								type="primary"
-								htmlType="submit"
-								icon={<CheckOutlined />}
-								onClick={handleOk}
-							>
-								Add downtime schedule
-							</Button>
-						</ModalButtonWrapper>
-					</Form.Item>
-				</Form>
-			</Modal>
 		</div>
 	);
 }
