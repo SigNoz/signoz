@@ -322,6 +322,7 @@ func (w *SpanWriter) writeErrorBatch(batchSpans []*Span) error {
 		// 查找同ErrorGroupID下是否存在issueLink值，存在的话用已经存在的issueLink赋值
 		if span.ErrorGroupID != "" {
 			var existingIssueLink string
+			w.logger.Error("这里单独记录的参数:" + w.traceDatabase + ", " + w.errorTable + ", " + span.ErrorGroupID)
 			// _, err := w.db.PrepareBatch(ctx, fmt.Sprintf("SELECT issueLink FROM %s.%s WHERE groupID = %s", w.traceDatabase, w.errorTable, span.ErrorGroupID))
 			err := w.db.QueryRow(ctx, "SELECT issueLink FROM %s.%s WHERE groupID = %s AND issueLink IS NOT NULL LIMIT 1", w.traceDatabase, w.errorTable, span.ErrorGroupID).Scan(&existingIssueLink)
 			if err != nil {
