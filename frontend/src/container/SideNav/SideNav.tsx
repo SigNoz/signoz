@@ -278,7 +278,7 @@ function SideNav({
 	}, [isCloudUserVal, isEnterprise, isFetching]);
 
 	useEffect(() => {
-		if (!isCloudUserVal) {
+		if (!(isCloudUserVal || isEECloudUser())) {
 			let updatedMenuItems = [...menuItems];
 			updatedMenuItems = updatedMenuItems.filter(
 				(item) => item.key !== ROUTES.INTEGRATIONS,
