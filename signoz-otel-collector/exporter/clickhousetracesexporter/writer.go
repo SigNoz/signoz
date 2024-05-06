@@ -325,7 +325,7 @@ func (w *SpanWriter) writeErrorBatch(batchSpans []*Span) error {
 			w.logger.Info("这里单独记录的参数:" + w.traceDatabase + ", " + w.errorTable + ", " + span.ErrorGroupID)
 			// _, err := w.db.PrepareBatch(ctx, fmt.Sprintf("SELECT issueLink FROM %s.%s WHERE groupID = %s", w.traceDatabase, w.errorTable, span.ErrorGroupID))
 			// err := w.db.QueryRow(ctx, "SELECT issueLink FROM %s.%s WHERE groupID = %s AND issueLink IS NOT NULL LIMIT 1", w.traceDatabase, w.errorTable, span.ErrorGroupID).Scan(&existingIssueLink)
-			query := fmt.Sprintf(`SELECT issueLink FROM %s.%s WHERE groupID = \$1 AND issueLink IS NOT NULL LIMIT 1`, w.traceDatabase, w.errorTable)
+			query := fmt.Sprintf(`SELECT issueLink FROM %s.%s WHERE groupID = ? AND issueLink IS NOT NULL LIMIT 1`, w.traceDatabase, w.errorTable)
 			w.logger.Info("这里query为:" + query)
 			err := w.db.QueryRow(ctx, query, span.ErrorGroupID).Scan(&existingIssueLink)
 			if err != nil {
