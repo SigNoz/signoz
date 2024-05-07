@@ -40,8 +40,8 @@ const getSeverityType = (severityText: string): string => {
 	}
 };
 
+// https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber
 const getLogSeverityTypeByNumber = (severityNumber: number): string => {
-	// https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber
 	if (severityNumber < 1) {
 		return LogType.UNKNOWN;
 	}
