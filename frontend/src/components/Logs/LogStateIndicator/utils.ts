@@ -36,14 +36,51 @@ const getSeverityType = (severityText: string): string => {
 		case SEVERITY_TEXT_TYPE.FATAL4:
 			return SEVERITY_TEXT_TYPE.FATAL;
 		default:
-			return SEVERITY_TEXT_TYPE.INFO;
+			return SEVERITY_TEXT_TYPE.UNKNOWN;
 	}
+};
+
+const getLogSeverityTypeByNumber = (severityNumber: number): string => {
+	// https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/stanza/docs/types/severity.md#how-severity-mapping-works
+	if (severityNumber < 1) {
+		return LogType.UNKNOWN;
+	}
+	if (severityNumber < 5) {
+		return LogType.TRACE;
+	}
+	if (severityNumber < 9) {
+		return LogType.DEBUG;
+	}
+	if (severityNumber < 13) {
+		return LogType.INFO;
+	}
+	if (severityNumber < 17) {
+		return LogType.WARNING;
+	}
+	if (severityNumber < 21) {
+		return LogType.ERROR;
+	}
+	if (severityNumber < 25) {
+		return LogType.FATAL;
+	}
+	return LogType.UNKNOWN;
 };
 
 export const getLogIndicatorType = (logData: ILog): string => {
 	if (logData.severity_text) {
-		return getSeverityType(logData.severity_text);
+		const sevType = getSeverityType(logData.severity_text);
+		if (sevType !== SEVERITY_TEXT_TYPE.UNKNOWN) {
+			return sevType;
+		}
 	}
+
+	if (logData.severity_number) {
+		const sevType = getLogSeverityTypeByNumber(logData.severity_number);
+		if (sevType !== LogType.UNKNOWN) {
+			return sevType;
+		}
+	}
+
 	return logData.attributes_string?.log_level || LogType.INFO;
 };
 
