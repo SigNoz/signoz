@@ -35,7 +35,7 @@ export const LogType = {
 	TRACE: 'TRACE',
 	DEBUG: 'DEBUG',
 	INFO: 'INFO',
-	WARNING: 'WARNING',
+	WARN: 'WARN',
 	ERROR: 'ERROR',
 	FATAL: 'FATAL',
 	UNKNOWN: 'UNKNOWN',
