@@ -40,7 +40,7 @@ function CreateIssue(props: CreateIssueProp): JSX.Element {
 					exceptionType: record.exceptionType,
 					title: record.exceptionMessage,
 					message: record.exceptionMessage,
-					time: dayjs(record.lastSeen).format('DD/MM/YYYY HH:mm:ss A'),
+					time: dayjs(record.lastSeen).format('YYYY-MM-DD HH:mm:ss'),
 					errorId: record.groupID,
 				},
 				{
