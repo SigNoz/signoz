@@ -3,6 +3,7 @@ package clickhouseReader
 import (
 	"context"
 	"encoding/json"
+	"regexp"
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -13,6 +14,8 @@ type ClickhouseQuerySettings struct {
 	MaxExecutionTimeLeaf                string
 	TimeoutBeforeCheckingExecutionSpeed string
 	MaxBytesToRead                      string
+	OptimizeReadInOrderRegex            string
+	OptimizeReadInOrderRegexCompiled    *regexp.Regexp
 }
 
 type clickhouseConnWrapper struct {
@@ -56,6 +59,11 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 
 	if c.settings.TimeoutBeforeCheckingExecutionSpeed != "" {
 		settings["timeout_before_checking_execution_speed"] = c.settings.TimeoutBeforeCheckingExecutionSpeed
+	}
+
+	// only list queries of
+	if c.settings.OptimizeReadInOrderRegex != "" && c.settings.OptimizeReadInOrderRegexCompiled.Match([]byte(query)) {
+		settings["optimize_read_in_order"] = 0
 	}
 
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))

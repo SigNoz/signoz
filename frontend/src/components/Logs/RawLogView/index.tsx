@@ -90,12 +90,12 @@ function RawLogView({
 	const text = useMemo(
 		() =>
 			typeof data.timestamp === 'string'
-				? `${dayjs(data.timestamp).format()} | ${attributesText} ${severityText} ${
-						data.body
-				  }`
-				: `${dayjs(
-						data.timestamp / 1e6,
-				  ).format()} | ${attributesText} ${severityText} ${data.body}`,
+				? `${dayjs(data.timestamp).format(
+						'YYYY-MM-DD HH:mm:ss.SSS',
+				  )} | ${attributesText} ${severityText} ${data.body}`
+				: `${dayjs(data.timestamp / 1e6).format(
+						'YYYY-MM-DD HH:mm:ss.SSS',
+				  )} | ${attributesText} ${severityText} ${data.body}`,
 		[data.timestamp, data.body, severityText, attributesText],
 	);
 

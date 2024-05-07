@@ -907,6 +907,23 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'name') group by `name` order by value DESC",
 	},
 	{
+		Name:      "TABLE: Test rate with groupBy",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			StepInterval:      60,
+			AggregateOperator: v3.AggregateOperatorRate,
+			Expression:        "A",
+			GroupBy: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as `name`, count()/97.000000 as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'name') group by `name` order by value DESC",
+	},
+	{
 		Name:      "TABLE: Test count with groupBy, orderBy",
 		PanelType: v3.PanelTypeTable,
 		Start:     1680066360726210000,

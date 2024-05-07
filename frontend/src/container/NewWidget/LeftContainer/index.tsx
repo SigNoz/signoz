@@ -67,12 +67,13 @@ function LeftContainer({
 			setRequestData((prev) => ({
 				...prev,
 				selectedTime: selectedTime.enum || prev.selectedTime,
+				globalSelectedInterval,
 				graphType: getGraphType(selectedGraph || selectedWidget.panelTypes),
 				query: stagedQuery,
 			}));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [stagedQuery, selectedTime]);
+	}, [stagedQuery, selectedTime, globalSelectedInterval]);
 
 	const queryResponse = useGetQueryRange(
 		requestData,
