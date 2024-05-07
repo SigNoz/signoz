@@ -241,7 +241,7 @@ function AllErrors(): JSX.Element {
 	}, [data?.error, data?.payload, t, notifications]);
 
 	const getDateValue = (value: string): JSX.Element => (
-		<Typography>{dayjs(value).format('DD/MM/YYYY HH:mm:ss A')}</Typography>
+		<Typography>{dayjs(value).format('MM/DD/YYYY HH:mm:ss')}</Typography>
 	);
 
 	const filterIcon = useCallback(() => <SearchOutlined />, []);
@@ -368,7 +368,13 @@ function AllErrors(): JSX.Element {
 		[filterIcon, filterDropdownWrapper],
 	);
 
-	const updateJiraIssue = async (issueStatus: string, groupID: string, serviceName: string, message: string, exceptionType: string) => {
+	const updateJiraIssue = async (
+		issueStatus: string,
+		groupID: string,
+		serviceName: string,
+		message: string,
+		exceptionType: string,
+	) => {
 		try {
 			const { data } = await axios.post(
 				`${process.env.SERVER_API_HOST}/capi/jira/updateStatus`,
@@ -380,7 +386,7 @@ function AllErrors(): JSX.Element {
 					errorId: groupID,
 					serviceName,
 					message,
-					exceptionType
+					exceptionType,
 				},
 			);
 			console.log('updateJiraIssue', data);
@@ -389,7 +395,13 @@ function AllErrors(): JSX.Element {
 		}
 	};
 
-	const handleIssueChange = (value: string, groupID: string, serviceName: string, message: string, exceptionType: string) => {
+	const handleIssueChange = (
+		value: string,
+		groupID: string,
+		serviceName: string,
+		message: string,
+		exceptionType: string,
+	) => {
 		axios
 			.post(`/changeIssueStatus`, {
 				groupID,
@@ -551,7 +563,15 @@ function AllErrors(): JSX.Element {
 				<Select
 					defaultValue={String(record.issueStatus)}
 					style={{ width: 100 }}
-					onChange={(value) => handleIssueChange(value, record.groupID, record.serviceName, record.exceptionMessage, record.exceptionType)}
+					onChange={(value) =>
+						handleIssueChange(
+							value,
+							record.groupID,
+							record.serviceName,
+							record.exceptionMessage,
+							record.exceptionType,
+						)
+					}
 					options={issueStatusOptions}
 				/>
 			),
