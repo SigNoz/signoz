@@ -78,12 +78,11 @@ require (
 )
 
 require (
-	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/imdario/mergo v0.3.16 // indirect
-	github.com/kong/semver/v4 v4.0.1 // indirect
-	github.com/tidwall/gjson v1.17.0 // indirect
-	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.0 // indirect
+	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
+	golang.org/x/tools v0.16.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
+	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
 require (
@@ -133,7 +132,6 @@ require (
 	github.com/klauspost/compress v1.17.7 // indirect
 	github.com/klauspost/cpuid v1.2.3 // indirect
 	github.com/knadh/koanf/v2 v2.0.1 // indirect
-	github.com/kong/go-kong v0.52.0
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/leodido/ragel-machinery v0.0.0-20181214104525-299bdde78165 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect

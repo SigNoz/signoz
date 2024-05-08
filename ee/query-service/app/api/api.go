@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/dao"
-	"go.signoz.io/signoz/ee/query-service/gateway"
+	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
@@ -178,10 +178,8 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 		am.ViewAccess(ah.listLicensesV2)).
 		Methods(http.MethodGet)
 
-	// Ingestion Key APIs
-	router.HandleFunc("/api/v1/keys", am.AdminAccess(ah.getKeys)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/keys/{id}", am.AdminAccess(ah.deleteKey)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/keys", am.AdminAccess(ah.createKey)).Methods(http.MethodPost)
+	// Gateway
+	router.HandleFunc("/api/v1/gateway", am.AdminAccess(ah.Gateway().Proxy))
 
 	ah.APIHandler.RegisterRoutes(router, am)
 

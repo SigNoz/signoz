@@ -24,7 +24,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/auth"
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/dao"
-	"go.signoz.io/signoz/ee/query-service/gateway"
+	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	baseInterface "go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -73,8 +73,7 @@ type ServerOptions struct {
 	FluxInterval      string
 	Cluster           string
 	GatewayUrl        string
-	Name              string
-	Region            string
+	TenantId          string
 }
 
 // Server runs HTTP api service
@@ -235,8 +234,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	// start gateway
-	gateway, err := gateway.NewKongGateway(serverOptions.GatewayUrl)
+	gateway, err := gateway.NewGateway(serverOptions.GatewayUrl)
 	if err != nil {
 		return nil, err
 	}
