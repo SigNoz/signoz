@@ -637,10 +637,10 @@ function FormAlertRules({
 							/>
 						</StepContainer>
 						{/* {alertType === AlertTypes.LOGS_BASED_ALERT ? ( */}
-						<div>
-							<span>
-								<span>*</span>
-								选择项目：
+						<div style={{ display: 'flex', alignItems: 'center', margin: '16px 0' }}>
+							<span style={{}}>
+								<span style={{ color: 'red', marginRight: 4, fontSize: 16 }}>*</span>
+								<span style={{ fontSize: 14 }}>Choice Project：</span>
 							</span>
 							<Select
 								value={currentProject}

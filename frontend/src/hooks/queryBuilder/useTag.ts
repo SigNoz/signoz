@@ -55,9 +55,10 @@ export const useTag = (
 	setSearchKey: (value: string) => void,
 	whereClauseConfig?: WhereClauseConfig,
 ): IUseTag => {
-	const initTagsData = useMemo(() => queryFilterTags(query?.filters), [
-		query?.filters,
-	]);
+	const initTagsData = useMemo(() => {
+		const strArr = queryFilterTags(query?.filters) || [];
+		return strArr.filter((item) => item.indexOf('projectId =') === -1);
+	}, [query?.filters]);
 
 	const [tags, setTags] = useState<string[]>(initTagsData);
 
