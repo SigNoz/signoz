@@ -99,15 +99,6 @@ func InitDB(dataSourceName string) (*modelDao, error) {
 		updated_by_user_id TEXT NOT NULL,
 		FOREIGN KEY(user_id) REFERENCES users(id)
 	);
-	CREATE TABLE IF NOT EXISTS keys(
-		id TEXT PRIMARY KEY,
-		name TEXT NOT NULL UNIQUE,
-		value TEXT NOT NULL,
-		created_at INTEGER NOT NULL,
-		expires_at INTEGER NOT NULL,
-		created_by TEXT NOT NULL,
-		FOREIGN KEY(created_by) REFERENCES users(id)
-	)
 	`
 
 	_, err = m.DB().Exec(table_schema)
