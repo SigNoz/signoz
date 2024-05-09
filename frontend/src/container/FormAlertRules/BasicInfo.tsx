@@ -1,4 +1,4 @@
-import { Form, Select, Switch } from 'antd';
+import { Form, Input, Select, Switch } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
@@ -51,6 +51,22 @@ function BasicInfo({
 		setAlertDef({
 			...alertDef,
 			broadcastToAll: shouldBroadcast,
+		});
+	};
+
+	const handleAutoGenerateJira = (autoGenerateJira: boolean): void => {
+		setAlertDef({
+			...alertDef,
+			autoGenerateJiraIssue: autoGenerateJira,
+		});
+	};
+
+	const handleWorkwx = (
+		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+	) => {
+		setAlertDef({
+			...alertDef,
+			workwxWebhook: e.target.value,
 		});
 	};
 
@@ -164,6 +180,17 @@ function BasicInfo({
 						/>
 					</FormItemMedium>
 				)}
+
+				<FormItemMedium name="auto_generate_jira_issue" label="Auto Generate Jira">
+					<Switch
+						checked={alertDef.autoGenerateJiraIssue}
+						onChange={handleAutoGenerateJira}
+					/>
+				</FormItemMedium>
+
+				<FormItemMedium name="workwxWebhook" label="Workwx Webhook">
+					<Input placeholder="Workwx Robot Webhook" onChange={handleWorkwx} />
+				</FormItemMedium>
 			</FormContainer>
 		</>
 	);

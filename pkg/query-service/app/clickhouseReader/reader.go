@@ -2814,6 +2814,7 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 	} else {
 		query = query + ", any(exceptionMessage) as exceptionMessage"
 	}
+	query = query + ", any(issueLink) as issueLink"
 
 	query += fmt.Sprintf(" FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
@@ -2968,7 +2969,7 @@ func (r *ClickHouseReader) GetErrorFromErrorID(ctx context.Context, queryParams 
 	}
 	var getErrorWithSpanReponse []model.ErrorWithSpan
 
-	query := fmt.Sprintf("SELECT errorID, exceptionType, exceptionStacktrace, exceptionEscaped, exceptionMessage, timestamp, spanID, traceID, serviceName, groupID FROM %s.%s WHERE timestamp = @timestamp AND groupID = @groupID AND errorID = @errorID LIMIT 1", r.TraceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT errorID, exceptionType, exceptionStacktrace, exceptionEscaped, exceptionMessage, timestamp, spanID, traceID, serviceName, groupID, issueLink FROM %s.%s WHERE timestamp = @timestamp AND groupID = @groupID AND errorID = @errorID LIMIT 1", r.TraceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("errorID", queryParams.ErrorID), clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
@@ -2991,7 +2992,7 @@ func (r *ClickHouseReader) GetErrorFromGroupID(ctx context.Context, queryParams 
 
 	var getErrorWithSpanReponse []model.ErrorWithSpan
 
-	query := fmt.Sprintf("SELECT errorID, exceptionType, exceptionStacktrace, exceptionEscaped, exceptionMessage, timestamp, spanID, traceID, serviceName, groupID FROM %s.%s WHERE timestamp = @timestamp AND groupID = @groupID LIMIT 1", r.TraceDB, r.errorTable)
+	query := fmt.Sprintf("SELECT errorID, exceptionType, exceptionStacktrace, exceptionEscaped, exceptionMessage, timestamp, spanID, traceID, serviceName, groupID, issueLink FROM %s.%s WHERE timestamp = @timestamp AND groupID = @groupID LIMIT 1", r.TraceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("groupID", queryParams.GroupID), clickhouse.Named("timestamp", strconv.FormatInt(queryParams.Timestamp.UnixNano(), 10))}
 
 	err := r.db.Select(ctx, &getErrorWithSpanReponse, query, args...)
@@ -4957,21 +4958,44 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 	}
 	defer rows.Close()
 
-	var tagKey string
-	var dataType string
-	var tagType string
-	var isColumn bool
-	for rows.Next() {
-		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
-			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-		}
-		// TODO: Remove this once the column name are updated in the table
-		tagKey = tempHandleFixedColumns(tagKey)
+	// var tagKey string
+	// var dataType string
+	// var tagType string
+	// var isColumn bool
+	// for rows.Next() {
+	// 	if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
+	// 		return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+	// 	}
+	// 	// TODO: Remove this once the column name are updated in the table
+	// 	tagKey = tempHandleFixedColumns(tagKey)
+	// 	key := v3.AttributeKey{
+	// 		Key:      tagKey,
+	// 		DataType: v3.AttributeKeyDataType(dataType),
+	// 		Type:     v3.AttributeKeyType(tagType),
+	// 		IsColumn: isColumn,
+	// 	}
+	// 	response.AttributeKeys = append(response.AttributeKeys, key)
+	// }
+	// spanKeys := map[string]v3.AttributeKey{}
+	list := []string{
+		"env",
+		"path",
+		"sdkVersion",
+		"tag",
+		"deviceId",
+		"platform",
+		"url",
+		"userAgent",
+		"message",
+		"type",
+		// "projectId",
+	}
+	for _, item := range list {
 		key := v3.AttributeKey{
-			Key:      tagKey,
-			DataType: v3.AttributeKeyDataType(dataType),
-			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn,
+			Key:      item,
+			DataType: "string",
+			Type:     "resource",
+			IsColumn: false,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -5157,4 +5181,46 @@ func (r *ClickHouseReader) SearchAllServices(ctx context.Context) (*[]string, er
 		services = append(services, serviceName)
 	}
 	return &services, nil
+}
+
+func (r *ClickHouseReader) UpdateIssueLink(ctx context.Context, queryParams *model.UpdateIssueLinkParams) (bool, *model.ApiError) {
+	query := fmt.Sprintf(`ALTER TABLE signoz_traces.signoz_error_index_v2 UPDATE issueLink = '%s' WHERE groupID = '%s'`, queryParams.IssueLink, queryParams.GroupID)
+	zap.S().Info(query)
+	err := r.db.Exec(ctx, query)
+	if err != nil {
+		return false, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+	return true, nil
+}
+
+func (r *ClickHouseReader) UpdateIssueWebhook(ctx context.Context, queryParams *model.UpdateIssueWebhook) (bool, *model.ApiError) {
+	updateStmt := `UPDATE jira_issue SET issue_status = ? WHERE issue_key = ?`
+	result, err := r.localDB.Exec(updateStmt, strings.ToUpper(queryParams.IssueStatus), queryParams.IssueKey)
+
+	if err != nil {
+		zap.S().Info(err)
+		return false, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+	zap.S().Info(result)
+
+	// 修改clickhouse表
+	raptorIssueStatusMap := make(map[string]int)
+	raptorIssueStatusMap["NEW"] = 0
+	raptorIssueStatusMap["DEV IN PROGRESS"] = 1
+	raptorIssueStatusMap["IN QA"] = 1
+	raptorIssueStatusMap["DEPLOYED TO PRODUCTION"] = 2
+	raptorIssueStatusMap["CLOSED"] = 2
+	raptorIssueStatusMap["DONT FIX"] = 3
+	raptorIssueStatusMap["NOT BUG"] = 3
+
+	fmt.Println("raptorIssueStatusMap", raptorIssueStatusMap[strings.ToUpper(queryParams.IssueStatus)], queryParams.IssueStatus)
+	query := fmt.Sprintf(`ALTER TABLE signoz_traces.signoz_error_index_v2 UPDATE issueStatus = '%d' WHERE groupID = '%s'`, raptorIssueStatusMap[strings.ToUpper(queryParams.IssueStatus)], queryParams.GroupID)
+	zap.S().Info(query)
+	clickhouseErr := r.db.Exec(ctx, query)
+
+	if clickhouseErr != nil {
+		return false, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
+	return true, nil
 }

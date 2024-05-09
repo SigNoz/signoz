@@ -13,7 +13,8 @@
             "env": {
                 // "ClickHouseUrl": "tcp://localhost:9000",
                 "ClickHouseUrl": "tcp://18.219.28.108:9000",
-                "STORAGE": "clickhouse"
+                "STORAGE": "clickhouse",
+                // "ALERTMANAGER_API_PREFIX": "http://18.219.28.108:9093/api/"
             },
             "args": [
             ]

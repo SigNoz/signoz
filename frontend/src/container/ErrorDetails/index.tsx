@@ -5,6 +5,7 @@ import getNextPrevId from 'api/errors/getNextPrevId';
 import axios from 'axios';
 import Editor from 'components/Editor';
 import { ResizeTable } from 'components/ResizeTable';
+import CreateIssue from 'container/AllError/createIssue';
 import { getNanoSeconds } from 'container/AllError/utils';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
@@ -14,12 +15,13 @@ import { urlKey } from 'pages/ErrorDetails/utils';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
 
 import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
 
+/* eslint-disable */
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const [sourceCodeLoading, setSourceCodeLoading] = useState<boolean>(false);
 	const [messageApi, contextHolder] = message.useMessage();
@@ -33,6 +35,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const serviceName = params.get(urlKey.serviceName);
 	const errorType = params.get(urlKey.exceptionType);
 	const timestamp = params.get(urlKey.timestamp);
+	// const issueLink = params.get(urlKey.issueLink);
 
 	const { data: nextPrevData, status: nextPrevStatus } = useQuery(
 		[
@@ -219,16 +222,45 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				}}
 			>
 				<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
-				{/* {['Unhandled_Rejection', 'JS_ERROR'].includes(errorDetail.exceptionType) ? ( */}
-				{showCheckBtn ? (
-					<Button
-						onClick={clickCheckSourceDetail}
-						type="primary"
-						loading={sourceCodeLoading}
-					>
-						check source code
-					</Button>
-				) : null}
+				<div
+					style={{
+						display: 'flex',
+						justifyContent: 'flex-start',
+						alignItems: 'center',
+					}}
+				>
+					<div style={{ marginRight: 10 }}>
+						{/* {errorDetail.issueLink ? (
+							<Button type="link" href={errorDetail.issueLink} target="_blank">
+								Issue Link
+							</Button>
+						) : (
+							<Button type="primary">Create Issue</Button>
+						)} */}
+						<CreateIssue
+							issueLink={errorDetail.issueLink || ''}
+							record={{
+								serviceName: errorDetail.serviceName,
+								exceptionType: errorDetail.exceptionType,
+								exceptionMessage: errorDetail.exceptionMessage,
+								time: errorDetail.timestamp,
+								groupID: errorDetail.groupID,
+							}}
+							refresh={() => {
+								props.refresh?.();
+							}}
+						/>
+					</div>
+					{showCheckBtn ? (
+						<Button
+							onClick={clickCheckSourceDetail}
+							type="primary"
+							loading={sourceCodeLoading}
+						>
+							check source code
+						</Button>
+					) : null}
+				</div>
 			</div>
 
 			<div className="error-container">
@@ -258,6 +290,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 interface ErrorDetailsProps {
 	idPayload: GetByErrorTypeAndServicePayload;
+	refresh?: () => void;
 }
 
 export default ErrorDetails;

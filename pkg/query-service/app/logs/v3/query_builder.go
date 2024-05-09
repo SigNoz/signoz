@@ -256,6 +256,9 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		// Select the aggregate value for interval
 		queryTmpl =
 			fmt.Sprintf("SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts,", step)
+		// queryTmpl =
+		// 	fmt.Sprintf(`SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key,
+		// 		'projectId')] as projectId`, step)
 	}
 
 	queryTmpl =
@@ -516,6 +519,8 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 	}
 
 	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype, options.PreferRPM)
+
+	// 自定义显示字段展示projectId
 	if err != nil {
 		return "", err
 	}

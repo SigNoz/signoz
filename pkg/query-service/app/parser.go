@@ -1135,3 +1135,25 @@ func parseChangeIssueStatusRequest(r *http.Request) (*model.ChangeIssueStatusPar
 
 	return postData, nil
 }
+
+func parseUpdateIssueLinkRequest(r *http.Request) (*model.UpdateIssueLinkParams, error) {
+	var postData *model.UpdateIssueLinkParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return postData, nil
+}
+
+func parseUpdateIssueWebhook(r *http.Request) (*model.UpdateIssueWebhook, error) {
+	var postData *model.UpdateIssueWebhook
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return postData, nil
+}

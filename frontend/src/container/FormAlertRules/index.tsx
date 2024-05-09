@@ -1,8 +1,10 @@
+/* eslint-disable */
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import {
 	Col,
 	FormInstance,
 	Modal,
+	Select,
 	SelectProps,
 	Tooltip,
 	Typography,
@@ -52,6 +54,8 @@ import {
 } from './styles';
 import UserGuide from './UserGuide';
 import { getSelectedQueryOptions } from './utils';
+import getAllProjectList from 'api/projectManager/ignoreError';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function FormAlertRules({
@@ -62,6 +66,7 @@ function FormAlertRules({
 }: FormAlertRuleProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
+	// const { handleChoiceProject } = useQueryBuilder();
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -86,6 +91,7 @@ function FormAlertRules({
 	// alertDef holds the form values to be posted
 	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
 	const [yAxisUnit, setYAxisUnit] = useState<string>(currentQuery.unit || '');
+	const [projectList, setProjectList] = useState<string[]>([]);
 
 	// initQuery contains initial query when component was mounted
 	const initQuery = useMemo(() => initialValue.condition.compositeQuery, [
@@ -108,7 +114,95 @@ function FormAlertRules({
 
 	const sq = useMemo(() => mapQueryDataFromApi(initQuery), [initQuery]);
 
+	const initProjectId = useMemo(() => {
+		if (
+			// alertType === AlertTypes.LOGS_BASED_ALERT &&
+			sq.builder.queryData.length
+		) {
+			const existProjectId = sq.builder.queryData?.[0].filters?.items?.find(
+				(item: any) => item?.key?.key === 'projectId',
+			);
+			if (existProjectId) {
+				return existProjectId.value as string;
+			}
+		}
+		return '';
+	}, [sq]);
+	const [currentProject, setCurrentProject] = useState<string>(initProjectId);
+
 	useShareBuilderUrl(sq);
+
+	const stagedQueryMemo = useMemo(() => {
+		// if (stagedQuery?.builder && alertType === AlertTypes.LOGS_BASED_ALERT) {
+		if (stagedQuery?.builder) {
+			stagedQuery.builder.queryData.forEach((queryDataItem) => {
+				if (queryDataItem?.filters?.items) {
+					const existProject = queryDataItem?.filters?.items?.find(
+						(item: any) => item?.key?.key === 'projectId',
+					);
+					if (existProject) {
+						// queryDataItem?.filters?.items?.forEach((item) => {
+						// 	if (item?.key?.key === 'projectId') {
+						// 		item.value = currentProject;
+						// 		item.op = '=';
+						// 	}
+						// });
+						existProject.value = currentProject;
+						existProject.op = '=';
+					} else {
+						queryDataItem?.filters?.items?.push({
+							key: {
+								dataType: DataTypes.String,
+								isColumn: false,
+								isJSON: false,
+								key: 'projectId',
+								type: 'tag',
+							},
+							op: '=',
+							value: currentProject,
+							id: '',
+						});
+					}
+				}
+			});
+		}
+		// console.log('stagedQuery', stagedQuery);
+		return stagedQuery;
+	}, [stagedQuery, currentProject]);
+
+	const getAllProject = async () => {
+		try {
+			const res = await getAllProjectList();
+			if (res.payload?.length) {
+				setProjectList(res.payload);
+				if (!currentProject) {
+					setCurrentProject(res.payload[0]);
+				}
+			}
+		} catch (error) {
+			console.log('getAllProjectError', error);
+		}
+	};
+
+	const handleChangeProject = (value: string) => {
+		setCurrentProject(value);
+		// handleChoiceProject(value);
+	};
+
+	useEffect(() => {
+		// if (alertType === AlertTypes.LOGS_BASED_ALERT) {
+		getAllProject();
+		// }
+	}, []);
+
+	useEffect(() => {
+		if (currentProject) {
+			setAlertDef({
+				...alertDef,
+				projectId: currentProject,
+			});
+		}
+	}, [currentProject]);
 
 	useEffect(() => {
 		const broadcastToSpecificChannels =
@@ -296,6 +390,55 @@ function FormAlertRules({
 		FeatureKeys.QUERY_BUILDER_ALERTS,
 	);
 
+	const getFinalReq = useCallback(
+		(apiReq: any) => {
+			if (apiReq.data.condition.compositeQuery.builderQueries) {
+				for (const key in apiReq.data.condition.compositeQuery.builderQueries) {
+					const filters =
+						(apiReq.data.condition.compositeQuery.builderQueries[key] as any)
+							?.filters || {};
+					const existProject = filters?.items?.find(
+						(item: any) => item?.key?.key === 'projectId',
+					);
+					if (existProject) {
+						filters.items.forEach((item: any) => {
+							if (item?.key?.key === 'projectId') {
+								item.value = currentProject;
+								item.op = '=';
+							}
+						});
+					} else {
+						filters?.items?.push({
+							key: {
+								dataType: 'string',
+								isColumn: false,
+								isJSON: false,
+								key: 'projectId',
+								type: 'tag',
+							},
+							op: '=',
+							value: currentProject,
+						});
+					}
+				}
+			}
+			return {
+				...apiReq,
+				data: {
+					...apiReq.data,
+					condition: {
+						...apiReq.data.condition,
+						compositeQuery: {
+							...apiReq.data.condition.compositeQuery,
+							panelType: initQuery.panelType,
+						},
+					},
+				},
+			};
+		},
+		[currentProject],
+	);
+
 	const saveRule = useCallback(async () => {
 		if (!isFormValid()) {
 			return;
@@ -309,7 +452,10 @@ function FormAlertRules({
 					? { data: postableAlert, id: ruleId }
 					: { data: postableAlert };
 
-			const response = await saveAlertApi(apiReq);
+			const final = getFinalReq(apiReq);
+			// alertType === AlertTypes.LOGS_BASED_ALERT ? getFinalReq(apiReq) : apiReq;
+
+			const response = await saveAlertApi(final);
 
 			if (response.statusCode === 200) {
 				notifications.success({
@@ -344,6 +490,7 @@ function FormAlertRules({
 		ruleCache,
 		memoizedPreparePostData,
 		notifications,
+		getFinalReq,
 	]);
 
 	const onSaveHandler = useCallback(async () => {
@@ -419,7 +566,7 @@ function FormAlertRules({
 				/>
 			}
 			name=""
-			query={stagedQuery}
+			query={stagedQueryMemo}
 			selectedInterval={globalSelectedInterval}
 			alertDef={alertDef}
 			yAxisUnit={yAxisUnit || ''}
@@ -435,10 +582,11 @@ function FormAlertRules({
 				/>
 			}
 			name="Chart Preview"
-			query={stagedQuery}
+			query={stagedQueryMemo}
 			alertDef={alertDef}
 			selectedInterval={globalSelectedInterval}
 			yAxisUnit={yAxisUnit || ''}
+			// currentProject={currentProject}
 		/>
 	);
 
@@ -482,28 +630,43 @@ function FormAlertRules({
 							renderPromAndChQueryChartPreview()}
 						{currentQuery.queryType === EQueryType.CLICKHOUSE &&
 							renderPromAndChQueryChartPreview()}
-
 						<StepContainer>
 							<BuilderUnitsFilter
 								onChange={onUnitChangeHandler}
 								yAxisUnit={yAxisUnit}
 							/>
 						</StepContainer>
-
+						{/* {alertType === AlertTypes.LOGS_BASED_ALERT ? ( */}
+						<div style={{ display: 'flex', alignItems: 'center', margin: '16px 0' }}>
+							<span style={{}}>
+								<span style={{ color: 'red', marginRight: 4, fontSize: 16 }}>*</span>
+								<span style={{ fontSize: 14 }}>Choice Project：</span>
+							</span>
+							<Select
+								value={currentProject}
+								// mode="tags"
+								showSearch
+								placeholder="Select a project"
+								style={{ width: 180 }}
+								onChange={handleChangeProject}
+								options={projectList.map((item) => ({
+									value: item,
+									label: item,
+								}))}
+							/>
+						</div>
 						<QuerySection
 							queryCategory={currentQuery.queryType}
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
 							runQuery={handleRunQuery}
 						/>
-
 						<RuleOptions
 							queryCategory={currentQuery.queryType}
 							alertDef={alertDef}
 							setAlertDef={setAlertDef}
 							queryOptions={queryOptions}
 						/>
-
 						{renderBasicInfo()}
 						<ButtonContainer>
 							<Tooltip title={isAlertAvialableToSave ? MESSAGE.ALERT : ''}>

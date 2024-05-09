@@ -16,6 +16,7 @@ package clickhousetracesexporter
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -319,6 +320,27 @@ func (w *SpanWriter) writeErrorBatch(batchSpans []*Span) error {
 		if span.ErrorEvent.Name == "" {
 			continue
 		}
+		// 查找同ErrorGroupID下是否存在issueLink值，存在的话用已经存在的issueLink赋值
+		if span.ErrorGroupID != "" {
+			var existingIssueLink string
+			w.logger.Info("这里单独记录的参数:" + w.traceDatabase + ", " + w.errorTable + ", " + span.ErrorGroupID)
+			// _, err := w.db.PrepareBatch(ctx, fmt.Sprintf("SELECT issueLink FROM %s.%s WHERE groupID = %s", w.traceDatabase, w.errorTable, span.ErrorGroupID))
+			// err := w.db.QueryRow(ctx, "SELECT issueLink FROM %s.%s WHERE groupID = %s AND issueLink IS NOT NULL LIMIT 1", w.traceDatabase, w.errorTable, span.ErrorGroupID).Scan(&existingIssueLink)
+			query := fmt.Sprintf(`SELECT ifNull(issueLink, '') as issueLink FROM %s.%s WHERE groupID = ? AND issueLink != '' LIMIT 1`, w.traceDatabase, w.errorTable)
+			w.logger.Info("这里query为:" + query)
+			err := w.db.QueryRow(ctx, query, span.ErrorGroupID).Scan(&existingIssueLink)
+			if err != nil {
+				if err != sql.ErrNoRows {
+					// 处理查询出错的情况
+					w.logger.Error("查询issueLink信息错误: ", zap.Error(err))
+				}
+			}
+			if existingIssueLink != "" {
+				span.IssueLink = existingIssueLink
+				w.logger.Info("最后的IssueLink为:" + span.IssueLink)
+			}
+		}
+
 		err = statement.Append(
 			time.Unix(0, int64(span.ErrorEvent.TimeUnixNano)),
 			span.ErrorID,
@@ -332,6 +354,7 @@ func (w *SpanWriter) writeErrorBatch(batchSpans []*Span) error {
 			stringToBool(span.ErrorEvent.AttributeMap["exception.escaped"]),
 			span.ResourceTagsMap,
 			span.IssueStatus,
+			span.IssueLink,
 		)
 		if err != nil {
 			w.logger.Error("Could not append span to batch: ", zap.Object("span", span), zap.Error(err))

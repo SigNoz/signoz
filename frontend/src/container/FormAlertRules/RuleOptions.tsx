@@ -114,6 +114,7 @@ function RuleOptions({
 			value={alertDef.evalWindow}
 			onChange={onChangeEvalWindow}
 		>
+			{/* <Select.Option value="1m0s">1 min</Select.Option> */}
 			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
 			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
 			<Select.Option value="15m0s">{t('option_15min')}</Select.Option>

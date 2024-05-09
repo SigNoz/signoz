@@ -205,6 +205,64 @@ func buildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (
 	return queryString, nil
 }
 
+// 自定义处理traces过滤项
+func costumbuildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (string, error) {
+	var conditions []string
+
+	if fs != nil && len(fs.Items) != 0 {
+		for _, item := range fs.Items {
+			val := item.Value
+			// generate the key
+			// columnName := getColumnName(item.Key, keys)
+			// columnName := item.Key.Key
+			columnName := fmt.Sprintf("JSONExtractString(exceptionStacktrace, '%s')", item.Key.Key)
+			var fmtVal string
+			key := enrichKeyWithMetadata(item.Key, keys)
+			item.Operator = v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
+			if item.Operator != v3.FilterOperatorExists && item.Operator != v3.FilterOperatorNotExists {
+				var err error
+				val, err = utils.ValidateAndCastValue(val, key.DataType)
+				if err != nil {
+					return "", fmt.Errorf("invalid value for key %s: %v", item.Key.Key, err)
+				}
+			}
+			if val != nil {
+				fmtVal = utils.ClickHouseFormattedValue(val)
+			}
+			if operator, ok := tracesOperatorMappingV3[item.Operator]; ok {
+				switch item.Operator {
+				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
+					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, item.Value))
+				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
+					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
+				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
+					if key.IsColumn {
+						subQuery, err := existsSubQueryForFixedColumn(key, item.Operator)
+						if err != nil {
+							return "", err
+						}
+						conditions = append(conditions, subQuery)
+					} else {
+						columnType, columnDataType := getClickhouseTracesColumnDataTypeAndType(key)
+						conditions = append(conditions, fmt.Sprintf(operator, columnDataType, columnType, key.Key))
+					}
+
+				default:
+					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, operator, fmtVal))
+				}
+			} else {
+				return "", fmt.Errorf("unsupported operator %s", item.Operator)
+			}
+		}
+	}
+	queryString := strings.Join(conditions, " AND ")
+
+	if len(queryString) > 0 {
+		queryString = " AND " + queryString
+	}
+	return queryString, nil
+}
+
 func existsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (string, error) {
 	if key.DataType == v3.AttributeKeyDataTypeString {
 		if op == v3.FilterOperatorExists {
@@ -271,6 +329,150 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	queryTmpl = queryTmpl + selectLabels +
 		" %s as value " +
 		"from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME +
+		" where " + spanIndexTableTimeFilter + "%s" +
+		"%s%s" +
+		"%s"
+
+	// we don't need value for first query
+	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
+		queryTmpl = "SELECT " + getSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + queryTmpl + ")"
+	}
+
+	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(keys, mq.GroupBy)
+	if err != nil {
+		return "", err
+	}
+	filterSubQuery += emptyValuesInGroupByFilter
+
+	groupBy := groupByAttributeKeyTags(panelType, options.GraphLimitQtype, mq.GroupBy...)
+	if groupBy != "" {
+		groupBy = " group by " + groupBy
+	}
+	enrichedOrderBy := enrichOrderBy(mq.OrderBy, keys)
+	orderBy := orderByAttributeKeyTags(panelType, enrichedOrderBy, mq.GroupBy, keys)
+	if orderBy != "" {
+		orderBy = " order by " + orderBy
+	}
+
+	if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
+		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
+	}
+
+	aggregationKey := ""
+	if mq.AggregateAttribute.Key != "" {
+		aggregationKey = getColumnName(mq.AggregateAttribute, keys)
+	}
+
+	switch mq.AggregateOperator {
+	case v3.AggregateOperatorRateSum,
+		v3.AggregateOperatorRateMax,
+		v3.AggregateOperatorRateAvg,
+		v3.AggregateOperatorRateMin,
+		v3.AggregateOperatorRate:
+
+		rate := float64(step)
+		if options.PreferRPM {
+			rate = rate / 60.0
+		}
+
+		op := fmt.Sprintf("%s(%s)/%f", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
+		return query, nil
+	case
+		v3.AggregateOperatorP05,
+		v3.AggregateOperatorP10,
+		v3.AggregateOperatorP20,
+		v3.AggregateOperatorP25,
+		v3.AggregateOperatorP50,
+		v3.AggregateOperatorP75,
+		v3.AggregateOperatorP90,
+		v3.AggregateOperatorP95,
+		v3.AggregateOperatorP99:
+		op := fmt.Sprintf("quantile(%v)(%s)", aggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
+		return query, nil
+	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
+		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
+		return query, nil
+	case v3.AggregateOperatorCount:
+		if mq.AggregateAttribute.Key != "" {
+			key := enrichKeyWithMetadata(mq.AggregateAttribute, keys)
+			if key.IsColumn {
+				subQuery, err := existsSubQueryForFixedColumn(key, v3.FilterOperatorExists)
+				if err == nil {
+					filterSubQuery = fmt.Sprintf("%s AND %s", filterSubQuery, subQuery)
+				}
+			} else {
+				columnType, columnDataType := getClickhouseTracesColumnDataTypeAndType(key)
+				filterSubQuery = fmt.Sprintf("%s AND has(%s%s, '%s')", filterSubQuery, columnDataType, columnType, mq.AggregateAttribute.Key)
+			}
+		}
+		op := "toFloat64(count())"
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
+		return query, nil
+	case v3.AggregateOperatorCountDistinct:
+		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
+		return query, nil
+	case v3.AggregateOperatorNoOp:
+		var query string
+		if panelType == v3.PanelTypeTrace {
+			withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME, spanIndexTableTimeFilter, filterSubQuery)
+			withSubQuery = addLimitToQuery(withSubQuery, mq.Limit)
+			if mq.Offset != 0 {
+				withSubQuery = addOffsetToQuery(withSubQuery, mq.Offset)
+			}
+			query = withSubQuery + ") " + fmt.Sprintf(constants.TracesExplorerViewSQLSelectQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME)
+		} else if panelType == v3.PanelTypeList {
+			if len(mq.SelectColumns) == 0 {
+				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
+			}
+			selectColumns := getSelectColumns(mq.SelectColumns, keys)
+			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID, "+"%s ", selectColumns) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s" + "%s"
+			query = fmt.Sprintf(queryNoOpTmpl, spanIndexTableTimeFilter, filterSubQuery, orderBy)
+		} else {
+			return "", fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
+		}
+		return query, nil
+	default:
+		return "", fmt.Errorf("unsupported aggregate operator %s", mq.AggregateOperator)
+	}
+}
+
+// 新自定义查询方法
+func customBuildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, keys map[string]v3.AttributeKey, panelType v3.PanelType, options Options) (string, error) {
+
+	filterSubQuery, err := costumbuildTracesFilterQuery(mq.Filters, keys)
+	if err != nil {
+		return "", err
+	}
+	// timerange will be sent in epoch millisecond
+	spanIndexTableTimeFilter := fmt.Sprintf("(timestamp >= '%d' AND timestamp <= '%d')", start*getZerosForEpochNano(start), end*getZerosForEpochNano(end))
+
+	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy, keys)
+
+	having := having(mq.Having)
+	if having != "" {
+		having = " having " + having
+	}
+
+	var queryTmpl string
+	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
+		queryTmpl = "SELECT"
+	} else if panelType == v3.PanelTypeTable {
+		queryTmpl =
+			"SELECT now() as ts,"
+	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
+		// Select the aggregate value for interval
+		queryTmpl =
+			fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts,", step)
+	}
+
+	queryTmpl = queryTmpl + selectLabels +
+		" %s as value " +
+		// "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME +
+		"from " + constants.SIGNOZ_TRACE_DBNAME + "." + tableName +
 		" where " + spanIndexTableTimeFilter + "%s" +
 		"%s%s" +
 		"%s"
@@ -526,7 +728,8 @@ func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 		return query, nil
 	}
 
-	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, options)
+	// query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, options)222
+	query, err := customBuildTracesQuery(start, end, mq.StepInterval, mq, "distributed_signoz_error_index_v2", keys, panelType, options)
 	if err != nil {
 		return "", err
 	}

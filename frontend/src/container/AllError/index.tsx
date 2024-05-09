@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { SearchOutlined } from '@ant-design/icons';
 import type { SelectProps } from 'antd';
 import {
@@ -52,6 +53,7 @@ import {
 	getUpdatePageSize,
 	urlKey,
 } from './utils';
+import CreateIssue from './createIssue';
 
 type QueryParams = {
 	order: string;
@@ -239,7 +241,7 @@ function AllErrors(): JSX.Element {
 	}, [data?.error, data?.payload, t, notifications]);
 
 	const getDateValue = (value: string): JSX.Element => (
-		<Typography>{dayjs(value).format('DD/MM/YYYY HH:mm:ss A')}</Typography>
+		<Typography>{dayjs(value).format('MM/DD/YYYY HH:mm:ss')}</Typography>
 	);
 
 	const filterIcon = useCallback(() => <SearchOutlined />, []);
@@ -366,11 +368,72 @@ function AllErrors(): JSX.Element {
 		[filterIcon, filterDropdownWrapper],
 	);
 
-	const handleIssueChange = (value: string, groupID: string) => {
+	const updateJiraIssue = async (
+		issueStatus: string,
+		groupID: string,
+		serviceName: string,
+		message: string,
+		exceptionType: string,
+	) => {
+		try {
+			const { data } = await axios.post(
+				`${process.env.SERVER_API_HOST}/capi/jira/updateStatus`,
+				{
+					// type: 'Bug',
+					// serviceName: record.serviceName,
+					issueStatus,
+					// groupID,
+					errorId: groupID,
+					serviceName,
+					message,
+					exceptionType,
+				},
+			);
+			console.log('updateJiraIssue', data);
+		} catch (error) {
+			console.warn('updateJiraIssueError', error);
+		}
+	};
+
+	const handleIssueChange = (
+		value: string,
+		groupID: string,
+		serviceName: string,
+		message: string,
+		exceptionType: string,
+	) => {
 		axios
 			.post(`/changeIssueStatus`, {
 				groupID,
 				issueStatus: Number(value),
+			})
+			.then(({ data }) => {
+				if (data) {
+					messageApi.open({
+						type: 'success',
+						content: 'change success',
+					});
+					setTimeout(() => {
+						setChangeIssueStatusNum(changeIssueStatusNum + 1);
+						updateJiraIssue(value, groupID, serviceName, message, exceptionType);
+					}, 800);
+					return;
+				}
+				messageApi.open({
+					type: 'warning',
+					content: data,
+				});
+			})
+			.catch((error) => {
+				console.warn('handleIssueChangeError', error);
+			});
+	};
+
+	const updateIssueLink = (value: string, groupID: string) => {
+		axios
+			.post(`/updateIssueLink`, {
+				groupID,
+				issueLink: value,
 			})
 			.then(({ data }) => {
 				if (data) {
@@ -500,10 +563,36 @@ function AllErrors(): JSX.Element {
 				<Select
 					defaultValue={String(record.issueStatus)}
 					style={{ width: 100 }}
-					onChange={(value) => handleIssueChange(value, record.groupID)}
+					onChange={(value) =>
+						handleIssueChange(
+							value,
+							record.groupID,
+							record.serviceName,
+							record.exceptionMessage,
+							record.exceptionType,
+						)
+					}
 					options={issueStatusOptions}
 				/>
 			),
+		},
+		{
+			title: 'Issue href',
+			dataIndex: 'issueStatus',
+			width: 100,
+			key: 'issueStatus',
+			sorter: false,
+			render: (_, record) => {
+				return (
+					<>
+						<CreateIssue
+							issueLink={record.issueLink || ''}
+							record={record}
+							refresh={() => setChangeIssueStatusNum(changeIssueStatusNum + 1)}
+						/>
+					</>
+				);
+			},
 		},
 	];
 

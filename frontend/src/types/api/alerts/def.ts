@@ -22,6 +22,9 @@ export interface AlertDef {
 	disabled?: boolean;
 	preferredChannels?: string[];
 	broadcastToAll?: boolean;
+	autoGenerateJiraIssue?: boolean;
+	workwxWebhook?: string;
+	projectId?: string;
 }
 
 export interface RuleCondition {

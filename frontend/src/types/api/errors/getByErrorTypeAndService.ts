@@ -14,4 +14,5 @@ export interface PayloadProps {
 	traceID: string;
 	serviceName: string;
 	groupID: string;
+	issueLink?: string;
 }

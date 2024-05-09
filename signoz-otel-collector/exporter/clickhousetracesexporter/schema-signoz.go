@@ -125,6 +125,7 @@ type Span struct {
 	Tenant             *string            `json:"-"`
 	SpanAttributes     []SpanAttribute    `json:"spanAttributes,omitempty"`
 	IssueStatus        int8               `json:"issueStatus,omitempty"`
+	IssueLink          string             `json:"issueLink,omitempty"`
 }
 
 type SpanAttribute struct {

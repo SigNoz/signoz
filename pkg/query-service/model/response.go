@@ -459,6 +459,7 @@ type Error struct {
 	ServiceName    string    `json:"serviceName" ch:"serviceName"`
 	GroupID        string    `json:"groupID" ch:"groupID"`
 	IssueStatus    int8      `json:"issueStatus" ch:"issueStatus"`
+	IssueLink      string    `json:"issueLink" ch:"issueLink"`
 }
 
 type ErrorWithSpan struct {
@@ -472,6 +473,7 @@ type ErrorWithSpan struct {
 	TraceID             string    `json:"traceID" ch:"traceID"`
 	ServiceName         string    `json:"serviceName" ch:"serviceName"`
 	GroupID             string    `json:"groupID" ch:"groupID"`
+	IssueLink           string    `json:"issueLink" ch:"issueLink"`
 }
 
 type NextPrevErrorIDsDBResponse struct {

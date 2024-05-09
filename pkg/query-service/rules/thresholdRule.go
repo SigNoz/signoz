@@ -354,6 +354,9 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	// 60 seconds (SDK) + 10 seconds (batch) + rest for n/w + serialization + write to disk etc..
 	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 2*60*1000
 	end := ts.UnixMilli() - 2*60*1000
+	// 自定义更早2分钟
+	// start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 1*60*1000
+	// end := ts.UnixMilli() - 1*60*1000
 
 	// round to minute otherwise we could potentially miss data
 	start = start - (start % (60 * 1000))
@@ -1076,10 +1079,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		// is used alert grouping, and we want to group alerts with the same
 		// label set, but different timestamps, together.
 		if r.typ == "TRACES_BASED_ALERT" {
-			link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
-			if link != "" && r.hostFromSource() != "" {
-				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
-			}
+			// link := r.prepareLinksToTraces(ts, smpl.MetricOrig)
+			// if link != "" && r.hostFromSource() != "" {
+			// annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
+			// }
 		} else if r.typ == "LOGS_BASED_ALERT" {
 			link := r.prepareLinksToLogs(ts, smpl.MetricOrig)
 			if link != "" && r.hostFromSource() != "" {
