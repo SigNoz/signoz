@@ -1,7 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import './NewWidget.styles.scss';
+
 import { LockFilled, WarningOutlined } from '@ant-design/icons';
-import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
+import { Button, Modal, Space, Tooltip, Typography } from 'antd';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { chartHelpMessage } from 'components/facingIssueBtn/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -104,7 +107,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		return defaultTo(
 			selectedWidget,
 			getDefaultWidgetData(widgetId || '', selectedGraph),
-		);
+		) as Widgets;
 	}, [query, selectedGraph, widgets]);
 
 	const [selectedWidget, setSelectedWidget] = useState(getWidget());
@@ -257,7 +260,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					i: widgetId || '',
 					w: 6,
 					x: 0,
-					h: 3,
+					h: 6,
 					y: 0,
 				},
 				...updatedLayout,
@@ -402,7 +405,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	return (
 		<Container>
-			<Flex justify="space-between" align="center">
+			<div className="facing-issue-btn-container">
 				<FacingIssueBtn
 					attributes={{
 						uuid: selectedDashboard?.uuid,
@@ -410,18 +413,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						panelType: graphType,
 						widgetId: query.get('widgetId'),
 						queryType: currentQuery.queryType,
+						screen: 'Dashboard list page',
 					}}
 					eventName="Dashboard: Facing Issues in dashboard"
-					buttonText="Facing Issues in dashboard"
-					message={`Hi Team,
-
-I am facing issues configuring dashboard in SigNoz. Here are my dashboard details
-				
-Name: ${selectedDashboard?.data.title || ''}
-Panel type: ${graphType}
-Dashboard Id: ${selectedDashboard?.uuid || ''}
-				
-Thanks`}
+					buttonText="Need help with this chart?"
+					message={chartHelpMessage(selectedDashboard, graphType)}
+					onHoverText="Click here to get help in creating chart"
 				/>
 				<ButtonContainer>
 					{isSaveDisabled && (
@@ -450,7 +447,7 @@ Thanks`}
 					)}
 					<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
 				</ButtonContainer>
-			</Flex>
+			</div>
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>

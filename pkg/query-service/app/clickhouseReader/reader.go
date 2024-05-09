@@ -163,12 +163,24 @@ func NewReaderFromClickhouseConnection(
 		os.Exit(1)
 	}
 
+	regex := os.Getenv("ClickHouseOptimizeReadInOrderRegex")
+	var regexCompiled *regexp.Regexp
+	if regex != "" {
+		regexCompiled, err = regexp.Compile(regex)
+		if err != nil {
+			zap.L().Error("Incorrect regex for ClickHouseOptimizeReadInOrderRegex")
+			os.Exit(1)
+		}
+	}
+
 	wrap := clickhouseConnWrapper{
 		conn: db,
 		settings: ClickhouseQuerySettings{
 			MaxExecutionTimeLeaf:                os.Getenv("ClickHouseMaxExecutionTimeLeaf"),
 			TimeoutBeforeCheckingExecutionSpeed: os.Getenv("ClickHouseTimeoutBeforeCheckingExecutionSpeed"),
 			MaxBytesToRead:                      os.Getenv("ClickHouseMaxBytesToRead"),
+			OptimizeReadInOrderRegex:            os.Getenv("ClickHouseOptimizeReadInOrderRegex"),
+			OptimizeReadInOrderRegexCompiled:    regexCompiled,
 		},
 	}
 

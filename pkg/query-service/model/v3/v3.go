@@ -402,6 +402,31 @@ type CompositeQuery struct {
 	Unit              string                      `json:"unit,omitempty"`
 }
 
+func (c *CompositeQuery) EnabledQueries() int {
+	count := 0
+	switch c.QueryType {
+	case QueryTypeBuilder:
+		for _, query := range c.BuilderQueries {
+			if !query.Disabled {
+				count++
+			}
+		}
+	case QueryTypeClickHouseSQL:
+		for _, query := range c.ClickHouseQueries {
+			if !query.Disabled {
+				count++
+			}
+		}
+	case QueryTypePromQL:
+		for _, query := range c.PromQueries {
+			if !query.Disabled {
+				count++
+			}
+		}
+	}
+	return count
+}
+
 func (c *CompositeQuery) Validate() error {
 	if c == nil {
 		return fmt.Errorf("composite query is required")
