@@ -100,7 +100,7 @@ export const getUPlotChartOptions = ({
 			y: {
 				...getYAxisScale({
 					thresholds,
-					series: apiResponse?.data.newResult.data.result,
+					series: apiResponse?.data?.newResult?.data?.result || [],
 					yAxisUnit,
 					softMax,
 					softMin,

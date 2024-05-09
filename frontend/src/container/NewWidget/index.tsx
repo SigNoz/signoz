@@ -1,7 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import './NewWidget.styles.scss';
+
 import { LockFilled, WarningOutlined } from '@ant-design/icons';
-import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
+import { Button, Modal, Space, Tooltip, Typography } from 'antd';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { chartHelpMessage } from 'components/facingIssueBtn/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -402,7 +405,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	return (
 		<Container>
-			<Flex justify="space-between" align="center">
+			<div className="facing-issue-btn-container">
 				<FacingIssueBtn
 					attributes={{
 						uuid: selectedDashboard?.uuid,
@@ -414,16 +417,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					}}
 					eventName="Dashboard: Facing Issues in dashboard"
 					buttonText="Need help with this chart?"
-					message={`Hi Team,
-
-I need help in creating this chart. Here are my dashboard details
-				
-Name: ${selectedDashboard?.data.title || ''}
-Panel type: ${graphType}
-Dashboard Id: ${selectedDashboard?.uuid || ''}
-				
-Thanks`}
-					// onHover: Click here to get help in creating chart
+					message={chartHelpMessage(selectedDashboard, graphType)}
+					onHoverText="Click here to get help in creating chart"
 				/>
 				<ButtonContainer>
 					{isSaveDisabled && (
@@ -452,7 +447,7 @@ Thanks`}
 					)}
 					<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
 				</ButtonContainer>
-			</Flex>
+			</div>
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>

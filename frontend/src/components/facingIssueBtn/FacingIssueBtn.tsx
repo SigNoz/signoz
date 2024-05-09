@@ -1,6 +1,6 @@
 import './FacingIssueBtn.style.scss';
 
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { FeatureKeys } from 'constants/features';
@@ -15,6 +15,7 @@ export interface FacingIssueBtnProps {
 	message?: string;
 	buttonText?: string;
 	className?: string;
+	onHoverText?: string;
 }
 
 function FacingIssueBtn({
@@ -23,6 +24,7 @@ function FacingIssueBtn({
 	message = '',
 	buttonText = '',
 	className = '',
+	onHoverText = '',
 }: FacingIssueBtnProps): JSX.Element | null {
 	const handleFacingIssuesClick = (): void => {
 		logEvent(eventName, attributes);
@@ -37,13 +39,15 @@ function FacingIssueBtn({
 
 	return isCloudUserVal && isChatSupportEnabled ? ( // Note: we would need to move this condition to license based in future
 		<div className="facing-issue-button">
-			<Button
-				className={cx('periscope-btn', 'facing-issue-button', className)}
-				onClick={handleFacingIssuesClick}
-				icon={<HelpCircle size={14} />}
-			>
-				{buttonText || 'Facing issues?'}
-			</Button>
+			<Tooltip title={onHoverText} autoAdjustOverflow>
+				<Button
+					className={cx('periscope-btn', 'facing-issue-button', className)}
+					onClick={handleFacingIssuesClick}
+					icon={<HelpCircle size={14} />}
+				>
+					{buttonText || 'Facing issues?'}
+				</Button>
+			</Tooltip>
 		</div>
 	) : null;
 }
@@ -52,6 +56,7 @@ FacingIssueBtn.defaultProps = {
 	message: '',
 	buttonText: '',
 	className: '',
+	onHoverText: '',
 };
 
 export default FacingIssueBtn;
