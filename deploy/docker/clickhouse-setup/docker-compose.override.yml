@@ -6,6 +6,11 @@ services:
       - "${SIGNOZ_ZOOKEEPER_PORT3:-3888}:3888"
     volumes:
       - ${CLICKHOUSE_DATA_DIR:-.}/data/zookeeper-1:/bitnami/zookeeper
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - payapp
 
@@ -22,12 +27,22 @@ services:
       # - ${CLICKHOUSE_DATA_DIR:-.}/clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
       - ${CLICKHOUSE_DATA_DIR:-.}/data/clickhouse/:/var/lib/clickhouse/
       - ${CLICKHOUSE_DATA_DIR:-.}/user_scripts:/var/lib/clickhouse/user_scripts/
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - payapp
 
   alertmanager:
     volumes:
       - ${CLICKHOUSE_DATA_DIR:-.}/data/alertmanager:/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - payapp
 
@@ -36,6 +51,11 @@ services:
       - ${CLICKHOUSE_DATA_DIR:-.}/prometheus.yml:/root/config/prometheus.yml
       - ${CLICKHOUSE_DATA_PARENT_DIR:-..}/dashboards:/root/config/dashboards
       - ${CLICKHOUSE_DATA_DIR:-.}/data/signoz/:/var/lib/signoz/
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - payapp
 
@@ -44,10 +64,20 @@ services:
       - "${SIGNOZ_FRONTEND_PORT:-3301}:3301"
     volumes:
       - ${CLICKHOUSE_DATA_PARENT_DIR:-..}/common/nginx-config.conf:/etc/nginx/conf.d/default.conf
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - payapp
 
   otel-collector-migrator:
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - payapp
 
@@ -56,6 +86,11 @@ services:
       - ${CLICKHOUSE_DATA_DIR:-.}/otel-collector-config.yaml:/etc/otel-collector-config.yaml
       - ${CLICKHOUSE_DATA_DIR:-.}/otel-collector-opamp-config.yaml:/etc/manager-config.yaml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - payapp
 
@@ -63,20 +98,34 @@ services:
     volumes:
       - /etc/hostname:/etc/host_hostname:ro
       - /var/run/docker.sock:/var/run/docker.sock
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - payapp
 
   hotrod:
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - payapp
 
   load-hotrod:
     volumes:
       - ${CLICKHOUSE_DATA_PARENT_DIR:-..}/common/locust-scripts:/locust
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - payapp
 
 networks:
   payapp:
-    driver: bridge
     name: payapp
