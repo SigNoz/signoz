@@ -16,8 +16,8 @@ jobs:
       - id: 'auth'
         uses: 'google-github-actions/auth@v2'
         with:
-          workload_identity_provider: 'projects/30557428044/locations/global/workloadIdentityPools/versioncontrolsystems/providers/signoz'
-          service_account: 'wif-github@signozsso.iam.gserviceaccount.com'
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: 'sdk'
         uses: 'google-github-actions/setup-gcloud@v2'
@@ -27,6 +27,9 @@ jobs:
         env:
           GITHUB_BRANCH: ${{ github.head_ref || github.ref_name }}
           GITHUB_SHA: ${{ github.sha }}
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+          GCP_ZONE: ${{ secrets.GCP_ZONE }}
+          GCP_INSTANCE: ${{ secrets.GCP_INSTANCE }}
         run: |
           read -r -d '' COMMAND <<EOF || true
           echo "GITHUB_BRANCH: ${GITHUB_BRANCH}"
@@ -49,4 +52,4 @@ jobs:
           make build-frontend-amd64
           make run-signoz
           EOF
-          gcloud compute ssh testingapp-server --zone us-central1-a --tunnel-through-iap --project signozsso --command "${COMMAND}"
+          gcloud compute ssh ${GCP_INSTANCE} --zone ${GCP_ZONE} --tunnel-through-iap --project ${GCP_PROJECT} --command "${COMMAND}"
