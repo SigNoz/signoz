@@ -24,6 +24,9 @@ jobs:
 
       - name: 'ssh'
         shell: bash
+        env:
+          GITHUB_BRANCH: ${{ github.head_ref || github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
         run: |
           read -r -d '' COMMAND <<EOF || true
           echo "GITHUB_BRANCH: ${GITHUB_BRANCH}"
