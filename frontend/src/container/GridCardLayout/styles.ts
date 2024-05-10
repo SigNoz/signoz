@@ -29,6 +29,17 @@ interface Props {
 export const CardContainer = styled.div<Props>`
 	overflow: auto;
 
+	&.row-card {
+		.row-panel {
+			height: 100%;
+			display: flex;
+			justify-content: space-between;
+			background: var(--bg-ink-400);
+			align-items: center;
+			overflow: hidden;
+		}
+	}
+
 	&.enable-resize {
 		:hover {
 			.react-resizable-handle {

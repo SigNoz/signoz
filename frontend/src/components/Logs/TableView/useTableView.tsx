@@ -76,8 +76,8 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				render: (field, item): ColumnTypeRender<Record<string, unknown>> => {
 					const date =
 						typeof field === 'string'
-							? dayjs(field).format()
-							: dayjs(field / 1e6).format();
+							? dayjs(field).format('YYYY-MM-DD HH:mm:ss.SSS')
+							: dayjs(field / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
 					return {
 						children: (
 							<div className="table-timestamp">

@@ -59,7 +59,7 @@ function WidgetGraphComponent({
 
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const [graphVisibility, setGraphVisibility] = useState<boolean[]>(
-		Array(queryResponse.data?.payload?.data.result.length || 0).fill(true),
+		Array(queryResponse.data?.payload?.data?.result?.length || 0).fill(true),
 	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -135,7 +135,7 @@ function WidgetGraphComponent({
 				i: uuid,
 				w: 6,
 				x: 0,
-				h: 3,
+				h: 6,
 				y: 0,
 			},
 		];
