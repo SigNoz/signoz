@@ -105,7 +105,6 @@ function CustomTimePicker({
 
 	useEffect(() => {
 		const value = getSelectedTimeRangeLabel(selectedTime, selectedValue);
-
 		setSelectedTimePlaceholderValue(value);
 	}, [selectedTime, selectedValue]);
 
@@ -260,7 +259,8 @@ function CustomTimePicker({
 					)
 				}
 				arrow={false}
-				trigger="hover"
+				// trigger="hover"
+				trigger="click"
 				open={open}
 				onOpenChange={handleOpenChange}
 				style={{
@@ -270,6 +270,7 @@ function CustomTimePicker({
 				<Input
 					className="timeSelection-input"
 					type="text"
+					style={{ width: 350 }}
 					status={inputValue && inputStatus === 'error' ? 'error' : ''}
 					placeholder={
 						isInputFocused

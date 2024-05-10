@@ -58,7 +58,8 @@
 
 .date-time-root {
 	.ant-popover-inner {
-		width: 532px;
+		// width: 532px;
+		width: 700px;
 		min-height: 334px;
 		border-radius: 4px !important;
 		border: 1px solid var(--bg-slate-400);
@@ -129,7 +130,8 @@
 	}
 
 	.relative-date-time {
-		width: 307px;
+		// width: 307px;
+		width: 400px;
 		display: flex;
 		flex-direction: column;
 		gap: 35px;
@@ -228,4 +230,7 @@
 			}
 		}
 	}
+}
+.ant-picker-ranges {
+	margin-top: 0px;
 }

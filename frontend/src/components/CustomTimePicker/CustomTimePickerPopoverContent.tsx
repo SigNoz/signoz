@@ -85,7 +85,7 @@ function CustomTimePickerPopoverContent({
 	}
 
 	return (
-		<div className="date-time-popover">
+		<div className="date-time-popover" style={{ paddingBottom: '70px' }}>
 			<div className="date-time-options">
 				{isLogsExplorerPage && (
 					<Button className="data-time-live" type="text" onClick={handleGoLive}>
@@ -111,9 +111,10 @@ function CustomTimePickerPopoverContent({
 			<div className="relative-date-time">
 				{selectedTime === 'custom' || customDateTimeVisible ? (
 					<RangePicker
+						style={{ width: 360 }}
 						disabledDate={disabledDate}
 						allowClear
-						// showTime
+						showTime
 						onCalendarChange={onModalOkHandler}
 						// eslint-disable-next-line react/jsx-props-no-spreading
 						{...(selectedTime === 'custom' && {

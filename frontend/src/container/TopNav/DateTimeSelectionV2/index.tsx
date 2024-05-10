@@ -181,7 +181,8 @@ function DateTimeSelection({
 		timeInterval: Time = '15min',
 	): string | Time => {
 		if (startTime && endTime && timeInterval === 'custom') {
-			const format = 'DD/MM/YYYY HH:mm';
+			// const format = 'DD/MM/YYYY HH:mm';
+			const format = 'MM/DD/YYYY HH:mm:ss';
 
 			const startString = startTime.format(format);
 			const endString = endTime.format(format);
@@ -319,14 +320,17 @@ function DateTimeSelection({
 	};
 
 	const onCustomDateHandler = (dateTimeRange: DateTimeRangeType): void => {
+		console.log('哎呦卧槽', dateTimeRange);
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
 				setCustomDTPickerVisible(false);
 				startTimeMoment.startOf('day').toString();
 				updateTimeInterval('custom', [
-					startTimeMoment.startOf('day').toDate().getTime(),
-					endTimeMoment.endOf('day').toDate().getTime(),
+					// startTimeMoment.startOf('day').toDate().getTime(),
+					// endTimeMoment.endOf('day').toDate().getTime(),
+					startTimeMoment.toDate().getTime(),
+					endTimeMoment.toDate().getTime(),
 				]);
 				setLocalStorageKey('startTime', startTimeMoment.toString());
 				setLocalStorageKey('endTime', endTimeMoment.toString());
