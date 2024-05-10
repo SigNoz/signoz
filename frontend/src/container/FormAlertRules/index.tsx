@@ -66,7 +66,6 @@ function FormAlertRules({
 }: FormAlertRuleProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
-	// const { handleChoiceProject } = useQueryBuilder();
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -141,12 +140,6 @@ function FormAlertRules({
 						(item: any) => item?.key?.key === 'projectId',
 					);
 					if (existProject) {
-						// queryDataItem?.filters?.items?.forEach((item) => {
-						// 	if (item?.key?.key === 'projectId') {
-						// 		item.value = currentProject;
-						// 		item.op = '=';
-						// 	}
-						// });
 						existProject.value = currentProject;
 						existProject.op = '=';
 					} else {
@@ -166,7 +159,6 @@ function FormAlertRules({
 				}
 			});
 		}
-		// console.log('stagedQuery', stagedQuery);
 		return stagedQuery;
 	}, [stagedQuery, currentProject]);
 
@@ -186,7 +178,6 @@ function FormAlertRules({
 
 	const handleChangeProject = (value: string) => {
 		setCurrentProject(value);
-		// handleChoiceProject(value);
 	};
 
 	useEffect(() => {
@@ -586,7 +577,6 @@ function FormAlertRules({
 			alertDef={alertDef}
 			selectedInterval={globalSelectedInterval}
 			yAxisUnit={yAxisUnit || ''}
-			// currentProject={currentProject}
 		/>
 	);
 

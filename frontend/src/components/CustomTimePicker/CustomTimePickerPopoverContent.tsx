@@ -113,6 +113,7 @@ function CustomTimePickerPopoverContent({
 					<RangePicker
 						disabledDate={disabledDate}
 						allowClear
+						// showTime
 						onCalendarChange={onModalOkHandler}
 						// eslint-disable-next-line react/jsx-props-no-spreading
 						{...(selectedTime === 'custom' && {

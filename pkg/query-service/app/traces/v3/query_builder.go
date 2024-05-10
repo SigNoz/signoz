@@ -213,8 +213,6 @@ func costumbuildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.Attribute
 		for _, item := range fs.Items {
 			val := item.Value
 			// generate the key
-			// columnName := getColumnName(item.Key, keys)
-			// columnName := item.Key.Key
 			columnName := fmt.Sprintf("JSONExtractString(exceptionStacktrace, '%s')", item.Key.Key)
 			var fmtVal string
 			key := enrichKeyWithMetadata(item.Key, keys)
