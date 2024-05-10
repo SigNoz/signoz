@@ -39,8 +39,6 @@ type APIHandlerOptions struct {
 	Gateway                       gateway.Gateway
 	// Querier Influx Interval
 	FluxInterval time.Duration
-	// Name of current tenant
-	Name string
 }
 
 type APIHandler struct {
