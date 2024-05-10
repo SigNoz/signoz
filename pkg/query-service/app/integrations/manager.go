@@ -59,9 +59,10 @@ type CollectedLogAttribute struct {
 }
 
 type CollectedMetric struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-	Unit string `json:"unit"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Unit        string `json:"unit"`
+	Description string `json:"description"`
 }
 
 type SignalConnectionStatus struct {
