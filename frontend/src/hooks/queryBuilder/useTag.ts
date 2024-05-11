@@ -7,6 +7,7 @@ import {
 import { unparse } from 'papaparse';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -55,10 +56,16 @@ export const useTag = (
 	setSearchKey: (value: string) => void,
 	whereClauseConfig?: WhereClauseConfig,
 ): IUseTag => {
+	const location = useLocation();
+
 	const initTagsData = useMemo(() => {
 		const strArr = queryFilterTags(query?.filters) || [];
-		return strArr.filter((item) => item.indexOf('projectId =') === -1);
-	}, [query?.filters]);
+		// 仅针对与编辑报警页面过滤参数
+		if (location.pathname.indexOf('/alerts/edit') > -1) {
+			return strArr.filter((item) => item.indexOf('projectId =') === -1);
+		}
+		return strArr;
+	}, [query?.filters, location.pathname]);
 
 	const [tags, setTags] = useState<string[]>(initTagsData);
 
