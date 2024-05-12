@@ -59,6 +59,18 @@ receivers:
               - otel-collector:8888
 
 processors:
+  attributes/drop_fields:
+    actions:
+      - key: process.runtime.description
+        action: delete
+      - key: telemetry.distro.name
+        action: delete
+      - key: process.executable.path
+        action: delete
+      - key: process.runtime.name
+        action: delete
+      - key: process.command_args
+        action: delete
   batch:
     send_batch_size: 10000
     send_batch_max_size: 11000
@@ -127,7 +139,7 @@ service:
   pipelines:
     traces:
       receivers: [jaeger, otlp]
-      processors: [signozspanmetrics/cumulative, batch]
+      processors: [attributes/drop_fields, signozspanmetrics/cumulative, signozspanmetrics/delta, batch]
       exporters: [clickhousetraces]
     metrics:
       receivers: [otlp]
