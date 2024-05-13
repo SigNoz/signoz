@@ -1,4 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import './NewWidget.styles.scss';
+
 import { LockFilled, WarningOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Tooltip, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -14,6 +16,7 @@ import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
+import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -38,7 +41,6 @@ import RightContainer from './RightContainer';
 import { ThresholdProps } from './RightContainer/Threshold/types';
 import TimeItems, { timePreferance } from './RightContainer/timeItems';
 import {
-	ButtonContainer,
 	Container,
 	LeftContainerWrapper,
 	PanelContainer,
@@ -363,7 +365,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	return (
 		<Container>
-			<ButtonContainer>
+			<div className="edit-header">
+				<div className="left-header">
+					<X size={14} onClick={onClickDiscardHandler} className="discard-icon" />
+					<Typography.Text className="configure-panel">
+						Configure panel
+					</Typography.Text>
+				</div>
 				{isSaveDisabled && (
 					<Tooltip title={MESSAGE.PANEL}>
 						<Button
@@ -371,6 +379,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							type="primary"
 							disabled={isSaveDisabled}
 							onClick={onSaveDashboard}
+							className="save-btn"
 						>
 							Save Changes
 						</Button>
@@ -384,12 +393,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						loading={updateDashboardMutation.isLoading}
 						disabled={isSaveDisabled}
 						onClick={onSaveDashboard}
+						icon={<Check size={14} />}
+						className="save-btn"
 					>
 						Save Changes
 					</Button>
 				)}
-				<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
-			</ButtonContainer>
+			</div>
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>

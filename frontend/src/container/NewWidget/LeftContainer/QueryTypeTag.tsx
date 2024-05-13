@@ -1,28 +1,14 @@
 import { EQueryType } from 'types/common/dashboard';
 
-import { Tag } from '../styles';
-
 function QueryTypeTag({ queryType }: IQueryTypeTagProps): JSX.Element {
 	switch (queryType) {
 		case EQueryType.QUERY_BUILDER:
-			return (
-				<span>
-					<Tag color="geekblue">Query Builder</Tag>
-				</span>
-			);
+			return <span>Query Builder</span>;
 
 		case EQueryType.CLICKHOUSE:
-			return (
-				<span>
-					<Tag color="orange">ClickHouse Query</Tag>
-				</span>
-			);
+			return <span>ClickHouse Query</span>;
 		case EQueryType.PROM:
-			return (
-				<span>
-					<Tag color="green">PromQL</Tag>
-				</span>
-			);
+			return <span>PromQL</span>;
 		default:
 			return <span />;
 	}
