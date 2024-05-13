@@ -4,7 +4,7 @@ import './Threshold.styles.scss';
 import { Button, Input, InputNumber, Select, Space, Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Check, X } from 'lucide-react';
+import { Check, Pencil, Trash2, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
 
@@ -190,6 +190,22 @@ function Threshold({
 			className="threshold-container"
 		>
 			<div className="threshold-card-container">
+				{!isEditMode && (
+					<div className="edit-action-btns">
+						<Button
+							type="text"
+							icon={<Pencil size={14} />}
+							className="edit-btn"
+							onClick={editHandler}
+						/>
+						<Button
+							type="text"
+							icon={<Trash2 size={14} />}
+							className="delete-btn"
+							onClick={deleteHandler}
+						/>
+					</div>
+				)}
 				<div style={{ width: '100%' }}>
 					{selectedGraph === PANEL_TYPES.TIME_SERIES && (
 						<div className="time-series-alerts">
@@ -202,7 +218,7 @@ function Threshold({
 									className="label-input"
 								/>
 							) : (
-								<ShowCaseValue width="180px" value={label || 'none'} />
+								<ShowCaseValue value={label || 'none'} className="label-input" />
 							)}
 						</div>
 					)}
@@ -261,7 +277,7 @@ function Threshold({
 							className="unit-input"
 						/>
 					) : (
-						<ShowCaseValue width="60px" value={value} />
+						<ShowCaseValue value={value} className="unit-input" />
 					)}
 					{isEditMode ? (
 						<Select
@@ -272,7 +288,7 @@ function Threshold({
 							className="unit-selection"
 						/>
 					) : (
-						<ShowCaseValue width="200px" value={unit} />
+						<ShowCaseValue value={unit} className="unit-selection-prev" />
 					)}
 				</div>
 				<div className="thresholds-color-selector">
@@ -290,27 +306,36 @@ function Threshold({
 						</>
 					) : (
 						<>
-							<ShowCaseValue width="120px" value={<CustomColor color={color} />} />
-							<ShowCaseValue width="100px" value={format} />
+							<ShowCaseValue
+								value={<CustomColor color={color} />}
+								className="color-selector"
+							/>
+							<ShowCaseValue
+								width="100px"
+								value={format}
+								className="color-format-prev"
+							/>
 						</>
 					)}
 				</div>
-				<div className="threshold-action-button">
-					<Button
-						className="discard-btn"
-						icon={<X size={14} />}
-						onClick={deleteHandler}
-					>
-						Discard
-					</Button>
-					<Button
-						className="save-changes"
-						icon={<Check size={14} />}
-						onClick={isEditMode ? saveHandler : editHandler}
-					>
-						Save Changes
-					</Button>
-				</div>
+				{isEditMode && (
+					<div className="threshold-action-button">
+						<Button
+							className="discard-btn"
+							icon={<X size={14} />}
+							// add the discard handler here
+						>
+							Discard
+						</Button>
+						<Button
+							className="save-changes"
+							icon={<Check size={14} />}
+							onClick={saveHandler}
+						>
+							Save Changes
+						</Button>
+					</div>
+				)}
 			</div>
 		</div>
 	);
