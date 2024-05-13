@@ -390,15 +390,6 @@ function DashboardsList(): JSX.Element {
 					columns={columns}
 					dataSource={data}
 					showSorterTooltip
-					facingIssueBtn={{
-						attributes: {
-							screen: 'Dashboard list page',
-						},
-						eventName: 'Dashboard: Facing Issues in dashboard',
-						buttonText: 'Facing issues with dashboards?',
-						message: dashboardListMessage,
-						onHoverText: 'Click here to get help with dashboards',
-					}}
 					loading={isDashboardListLoading || isFilteringDashboards}
 					showHeader={false}
 					pagination={{ pageSize: 5, showSizeChanger: false }}
