@@ -1,18 +1,29 @@
 .custom-color-container {
-    display: flex;
-    gap: 10px;
-    align-items: center;
+	display: flex;
+	gap: 8px;
+	align-items: center;
 
-    .custom-color-typography-dark {
-        color: #fff !important;
-    }
+	.custom-color-typography-dark {
+		color: #fff !important;
+		font-family: 'Space Mono';
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 16px; /* 133.333% */
+	}
 
-    .custom-color-typography-light {
-        color: #000 !important;
-    }
+	.custom-color-typography-light {
+		color: #000 !important;
+		font-family: 'Space Mono';
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 16px; /* 133.333% */
+	}
 
-    .custom-color-tag {
-        width: 20px;
-        height: 20px;
-    }
+	.custom-color-tag {
+		width: 12px;
+		height: 12px;
+		border-radius: 12px;
+	}
 }
