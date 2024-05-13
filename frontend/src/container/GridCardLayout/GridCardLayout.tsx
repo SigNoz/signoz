@@ -1,5 +1,6 @@
 import './GridCardLayout.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Input, Modal, Popover, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import cx from 'classnames';
@@ -21,6 +22,7 @@ import {
 	ChevronDown,
 	ChevronUp,
 	CircleEllipsis,
+	GripVertical,
 	PenLine,
 	X,
 } from 'lucide-react';
@@ -454,13 +456,16 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 								data-grid={JSON.stringify(currentWidget)}
 							>
 								<div className={cx('row-panel')}>
-									<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-										<Typography.Text
-											className={cx(
-												'section-title',
-												rowWidgetProperties.collapsed ? 'drag-handle grip' : '',
-											)}
-										>
+									<div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+										{rowWidgetProperties.collapsed && (
+											<GripVertical
+												size={14}
+												className="drag-handle"
+												color={Color.BG_VANILLA_100}
+												cursor="move"
+											/>
+										)}
+										<Typography.Text className="section-title">
 											{currentWidget.title}
 										</Typography.Text>
 										{rowWidgetProperties.collapsed ? (
