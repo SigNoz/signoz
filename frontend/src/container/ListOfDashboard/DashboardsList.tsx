@@ -14,21 +14,16 @@ import {
 } from 'antd';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import { TableProps } from 'antd/lib';
-import { TableProps } from 'antd/lib';
-import createDashboard from 'api/dashboard/create';
 import createDashboard from 'api/dashboard/create';
 import GrafanaIcon from 'assets/CustomIcons/GrafanaIcon';
 import JuiceBoxIcon from 'assets/CustomIcons/JuiceBoxIcon';
 import TentIcon from 'assets/CustomIcons/TentIcon';
-import TentIcon from 'assets/CustomIcons/TentIcon';
-import { AxiosError } from 'axios';
 import { AxiosError } from 'axios';
 import { dashboardListMessage } from 'components/facingIssueBtn/util';
 import {
 	DynamicColumnsKey,
 	TableDataSource,
 } from 'components/ResizeTable/contants';
-import DynamicColumnTable from 'components/ResizeTable/DynamicColumnTable';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
 import TextToolTip from 'components/TextToolTip';
 import { ENTITY_VERSION_V4 } from 'constants/app';
