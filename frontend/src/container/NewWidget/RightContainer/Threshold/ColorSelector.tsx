@@ -73,7 +73,7 @@ function ColorSelector({
 					isDarkMode ? 'color-selector-button' : 'color-selector-button-light'
 				}
 			>
-				<Space>
+				<Space className="color-selector-space">
 					<CustomColor color={thresholdColor} />
 					<DownOutlined />
 				</Space>

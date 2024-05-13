@@ -273,7 +273,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		 * routes with id
 		 */
 		const regex = /^\/dashboard\/[a-zA-Z0-9_-]+$/;
-		console.log(regex.test(pathname));
+		return regex.test(pathname);
+	};
+
+	const isDashboardWidgetView = (): boolean => {
+		const regex = /^\/dashboard\/[a-zA-Z0-9_-]+\/new$/;
 		return regex.test(pathname);
 	};
 
@@ -342,7 +346,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 							<ChildrenContainer
 								style={{
 									margin:
-										isLogsView() || isTracesView() || isDashboardView() ? 0 : ' 0 1rem',
+										isLogsView() ||
+										isTracesView() ||
+										isDashboardView() ||
+										isDashboardWidgetView()
+											? 0
+											: ' 0 1rem',
 								}}
 							>
 								{isToDisplayLayout && !renderFullScreen && <TopNav />}
