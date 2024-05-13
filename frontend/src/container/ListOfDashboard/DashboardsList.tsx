@@ -12,26 +12,14 @@ import {
 	Tag,
 	Typography,
 } from 'antd';
-import { ItemType } from 'antd/es/menu/hooks/useItems';
 import { TableProps } from 'antd/lib';
 import createDashboard from 'api/dashboard/create';
-import GrafanaIcon from 'assets/CustomIcons/GrafanaIcon';
-import JuiceBoxIcon from 'assets/CustomIcons/JuiceBoxIcon';
 import TentIcon from 'assets/CustomIcons/TentIcon';
 import { AxiosError } from 'axios';
-import { dashboardListMessage } from 'components/facingIssueBtn/util';
-import {
-	DynamicColumnsKey,
-	TableDataSource,
-} from 'components/ResizeTable/contants';
-import LabelColumn from 'components/TableRenderer/LabelColumn';
-import TextToolTip from 'components/TextToolTip';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
-import useDebouncedFn from 'hooks/useDebouncedFunction';
-import getRandomColor from 'lib/getRandomColor';
 import history from 'lib/history';
 import {
 	CalendarClock,
@@ -43,15 +31,20 @@ import {
 	Search,
 	SortDesc,
 } from 'lucide-react';
-import { ChangeEvent, Key, useCallback, useEffect, useState } from 'react';
+import {
+	ChangeEvent,
+	Key,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
-import { ViewProps } from 'types/api/saveViews/types';
 import AppReducer from 'types/reducer/app';
-import { USER_ROLES } from 'types/roles';
 
 import useSortableTable from '../../hooks/ResizeTable/useSortableTable';
 import useUrlQuery from '../../hooks/useUrlQuery';
@@ -59,10 +52,6 @@ import { GettableAlert } from '../../types/api/alerts/get';
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
 import { filterDashboard } from './utils';
-
-// const { Search } = Input;
-
-const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
 
 function DashboardsList(): JSX.Element {
 	const {
@@ -113,6 +102,7 @@ function DashboardsList(): JSX.Element {
 		orderColumnParam || '',
 		searchString,
 	);
+	console.log(sortedInfo, handleChange);
 
 	const sortDashboardsByCreatedAt = (dashboards: Dashboard[]): void => {
 		const sortedDashboards = dashboards.sort(
@@ -262,6 +252,7 @@ function DashboardsList(): JSX.Element {
 									))}
 								</div>
 							)}
+							{action && <div>Actions</div>}
 						</div>
 						<div className="dashboard-details">
 							<div className="dashboard-created-at">
@@ -292,7 +283,6 @@ function DashboardsList(): JSX.Element {
 		{
 			label: (
 				<div className="create-dashboard-menu-item">
-					{' '}
 					<PencilRuler size={14} /> Created by
 				</div>
 			),
@@ -301,7 +291,6 @@ function DashboardsList(): JSX.Element {
 		{
 			label: (
 				<div className="create-dashboard-menu-item">
-					{' '}
 					<CalendarClockIcon size={14} /> Last updated by
 				</div>
 			),
@@ -309,34 +298,39 @@ function DashboardsList(): JSX.Element {
 		},
 	];
 
-	const createDashboardItems: MenuProps['items'] = [
-		{
-			label: (
-				<div
-					className="create-dashboard-menu-item"
-					onClick={(): void => {
-						setShowNewDashboardTemplatesModal(true);
-					}}
-				>
-					{' '}
-					<LayoutGrid size={14} /> Create dashboard
-				</div>
-			),
-			key: '0',
-		},
-		{
-			label: (
-				<div
-					className="create-dashboard-menu-item"
-					onClick={(): void => onModalHandler(false)}
-				>
-					{' '}
-					<Radius size={14} /> Import JSON{' '}
-				</div>
-			),
-			key: '1',
-		},
-	];
+	const getCreateDashboardItems = useMemo(() => {
+		const menuItems: MenuProps['items'] = [
+			{
+				label: (
+					<div
+						className="create-dashboard-menu-item"
+						onClick={(): void => onModalHandler(false)}
+					>
+						<Radius size={14} /> Import JSON
+					</div>
+				),
+				key: '1',
+			},
+		];
+
+		if (createNewDashboard) {
+			menuItems.unshift({
+				label: (
+					<div
+						className="create-dashboard-menu-item"
+						onClick={(): void => {
+							setShowNewDashboardTemplatesModal(true);
+						}}
+					>
+						<LayoutGrid size={14} /> Create dashboard
+					</div>
+				),
+				key: '0',
+			});
+		}
+
+		return menuItems;
+	}, [createNewDashboard]);
 
 	return (
 		<div className="dashboards-list-container">
@@ -372,7 +366,7 @@ function DashboardsList(): JSX.Element {
 
 					<Dropdown
 						overlayClassName="new-dashboard-menu"
-						menu={{ items: createDashboardItems }}
+						menu={{ items: getCreateDashboardItems }}
 						placement="bottomRight"
 						trigger={['click']}
 					>
@@ -392,7 +386,11 @@ function DashboardsList(): JSX.Element {
 					showSorterTooltip
 					loading={isDashboardListLoading || isFilteringDashboards}
 					showHeader={false}
-					pagination={{ pageSize: 5, showSizeChanger: false }}
+					pagination={{
+						pageSize: 5,
+						showSizeChanger: false,
+						defaultCurrent: Number(paginationParam) || 1,
+					}}
 				/>
 
 				<ImportJSON
