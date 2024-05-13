@@ -1,6 +1,6 @@
 import './QuerySection.styles.scss';
 
-import { Button, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Tabs, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
@@ -142,11 +142,10 @@ function QuerySection({
 		{
 			key: EQueryType.QUERY_BUILDER,
 			label: (
-				<Tooltip title="Query Builder">
-					<Button className="nav-btns">
-						<Atom size={14} />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<Atom size={14} />
+					<Typography>Query Builder</Typography>
+				</Button>
 			),
 			tab: <Typography>Query Builder</Typography>,
 			children: (
@@ -164,11 +163,10 @@ function QuerySection({
 		{
 			key: EQueryType.QUERY_BUILDER,
 			label: (
-				<Tooltip title="Query Builder">
-					<Button className="nav-btns">
-						<Atom size={14} />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<Atom size={14} />
+					<Typography>Query Builder</Typography>
+				</Button>
 			),
 			tab: <Typography>Query Builder</Typography>,
 			children: (
@@ -182,11 +180,10 @@ function QuerySection({
 		{
 			key: EQueryType.CLICKHOUSE,
 			label: (
-				<Tooltip title="ClickHouse">
-					<Button className="nav-btns">
-						<Terminal size={14} />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<Terminal size={14} />
+					<Typography>ClickHouse Query</Typography>
+				</Button>
 			),
 			tab: <Typography>ClickHouse Query</Typography>,
 			children: <ClickHouseQueryContainer />,
@@ -194,11 +191,10 @@ function QuerySection({
 		{
 			key: EQueryType.PROM,
 			label: (
-				<Tooltip title="PromQL">
-					<Button className="nav-btns">
-						<img src="/Icons/promQL.svg" alt="Prom Ql" className="prom-ql-icon" />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<img src="/Icons/promQL.svg" alt="Prom Ql" className="prom-ql-icon" />
+					<Typography>PromQL</Typography>
+				</Button>
 			),
 			tab: <Typography>PromQL</Typography>,
 			children: <PromQLQueryContainer />,
