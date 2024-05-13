@@ -1,12 +1,13 @@
 import './GridCardLayout.styles.scss';
 
-import { Button, Form, Input, Modal, Typography } from 'antd';
+import { Button, Form, Input, Modal, Popover, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
+import { DEFAULT_ROW_NAME } from 'container/NewDashboard/DashboardDescription/utils';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -15,7 +16,14 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
-import { GripVertical, MoveDown, MoveUp, Settings, Trash2 } from 'lucide-react';
+import {
+	Check,
+	ChevronDown,
+	ChevronUp,
+	CircleEllipsis,
+	PenLine,
+	X,
+} from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -65,6 +73,8 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const [dashboardLayout, setDashboardLayout] = useState<Layout[]>([]);
+
+	const [isRowSettingsOpen, setIsRowSettingsOpen] = useState<boolean>(false);
 
 	const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
 
@@ -191,11 +201,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [dashboardLayout]);
 
-	const handleRowSettingsClick = (id: string): void => {
-		setIsSettingsModalOpen(true);
-		setCurrentSelectRowId(id);
-	};
-
 	const onSettingsModalSubmit = (): void => {
 		const newTitle = form.getFieldValue('title');
 		if (!selectedDashboard) return;
@@ -245,6 +250,15 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			},
 		});
 	};
+
+	useEffect(() => {
+		if (!currentSelectRowId) return;
+		form.setFieldValue(
+			'title',
+			(widgets?.find((widget) => widget.id === currentSelectRowId)
+				?.title as string) || DEFAULT_ROW_NAME,
+		);
+	}, [currentSelectRowId, form, widgets]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleRowCollapse = (id: string): void => {
@@ -441,42 +455,76 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 							>
 								<div className={cx('row-panel')}>
 									<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-										<Button
-											disabled={updateDashboardMutation.isLoading}
-											icon={
-												rowWidgetProperties.collapsed ? (
-													<MoveDown size={14} />
-												) : (
-													<MoveUp size={14} />
-												)
-											}
-											type="text"
-											onClick={(): void => handleRowCollapse(id)}
-										/>
-										<Typography.Text>{currentWidget.title}</Typography.Text>
-										<Button
-											icon={<Settings size={14} />}
-											type="text"
-											onClick={(): void => handleRowSettingsClick(id)}
-										/>
+										<Typography.Text
+											className={cx(
+												'section-title',
+												rowWidgetProperties.collapsed ? 'drag-handle grip' : '',
+											)}
+										>
+											{currentWidget.title}
+										</Typography.Text>
+										{rowWidgetProperties.collapsed ? (
+											<ChevronDown
+												size={14}
+												onClick={(): void => handleRowCollapse(id)}
+												className="row-icon"
+											/>
+										) : (
+											<ChevronUp
+												size={14}
+												onClick={(): void => handleRowCollapse(id)}
+												className="row-icon"
+											/>
+										)}
 									</div>
-									{rowWidgetProperties.collapsed && (
-										<Button
-											type="text"
-											icon={<GripVertical size={14} />}
-											className="drag-handle"
+									<Popover
+										open={isRowSettingsOpen}
+										arrow={false}
+										onOpenChange={(visible): void => setIsRowSettingsOpen(visible)}
+										rootClassName="row-settings"
+										trigger="click"
+										placement="bottomRight"
+										content={
+											<div className="menu-content">
+												<section className="section-1">
+													<Button
+														className="rename-btn"
+														type="text"
+														icon={<PenLine size={14} />}
+														onClick={(): void => {
+															setIsSettingsModalOpen(true);
+															setCurrentSelectRowId(id);
+															setIsRowSettingsOpen(false);
+														}}
+													>
+														Rename
+													</Button>
+												</section>
+												{!rowWidgetProperties.collapsed && (
+													<section className="section-2">
+														<Button
+															className="remove-section"
+															type="text"
+															icon={<X size={14} />}
+															onClick={(): void => {
+																setIsDeleteModalOpen(true);
+																setCurrentSelectRowId(id);
+																setIsRowSettingsOpen(false);
+															}}
+														>
+															Remove Section
+														</Button>
+													</section>
+												)}
+											</div>
+										}
+									>
+										<CircleEllipsis
+											size={14}
+											className="settings-icon"
+											onClick={(): void => setIsRowSettingsOpen(!isRowSettingsOpen)}
 										/>
-									)}
-									{!rowWidgetProperties.collapsed && (
-										<Button
-											type="text"
-											icon={<Trash2 size={14} />}
-											onClick={(): void => {
-												setIsDeleteModalOpen(true);
-												setCurrentSelectRowId(id);
-											}}
-										/>
-									)}
+									</Popover>
 								</div>
 							</CardContainer>
 						);
@@ -507,7 +555,8 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			</ReactGridLayout>
 			<Modal
 				open={isSettingsModalOpen}
-				title="Row Options"
+				title="Rename Section"
+				rootClassName="rename-section"
 				destroyOnClose
 				footer={null}
 				onCancel={(): void => {
@@ -516,6 +565,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				}}
 			>
 				<Form form={form} onFinish={onSettingsModalSubmit} requiredMark>
+					<Typography.Text className="typography">
+						Enter section name
+					</Typography.Text>
 					<Form.Item required name={['title']}>
 						<Input
 							placeholder="Enter row name here..."
@@ -527,9 +579,28 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 						/>
 					</Form.Item>
 					<Form.Item>
-						<Button type="primary" htmlType="submit">
-							Apply Changes
-						</Button>
+						<div className="action-btns">
+							<Button
+								type="primary"
+								htmlType="submit"
+								className="ok-btn"
+								icon={<Check size={14} />}
+								disabled={updateDashboardMutation.isLoading}
+							>
+								Apply Changes
+							</Button>
+							<Button
+								type="text"
+								className="cancel-btn"
+								icon={<X size={14} />}
+								onClick={(): void => {
+									setIsSettingsModalOpen(false);
+									setCurrentSelectRowId(null);
+								}}
+							>
+								Cancel
+							</Button>
+						</div>
 					</Form.Item>
 				</Form>
 			</Modal>
