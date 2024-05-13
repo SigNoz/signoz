@@ -6,10 +6,10 @@ import GridGraphs from './GridGraphs';
 function NewDashboard(): JSX.Element {
 	const handle = useFullScreenHandle();
 	return (
-		<>
+		<div style={{ overflowX: 'hidden' }}>
 			<Description handle={handle} />
 			<GridGraphs handle={handle} />
-		</>
+		</div>
 	);
 }
 
