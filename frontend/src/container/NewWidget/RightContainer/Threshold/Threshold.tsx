@@ -83,6 +83,16 @@ function Threshold({
 		);
 	};
 
+	const discardHandler = (): void => {
+		setIsEditMode(false);
+		setOperator(thresholdOperator);
+		setValue(thresholdValue);
+		setUnit(thresholdUnit);
+		setColor(thresholdColor);
+		setFormat(thresholdFormat);
+		setLabel(thresholdLabel);
+		setTableSelectedOption(thresholdTableOptions);
+	};
 	const editHandler = (): void => {
 		setIsEditMode(true);
 	};
@@ -334,7 +344,7 @@ function Threshold({
 						<Button
 							className="discard-btn"
 							icon={<X size={14} />}
-							// add the discard handler here
+							onClick={discardHandler}
 						>
 							Discard
 						</Button>
