@@ -275,7 +275,7 @@ function DashboardsList(): JSX.Element {
 								{dashboard?.tags && dashboard.tags.length > 0 && (
 									<div className="dashboard-tags">
 										{dashboard.tags.map((tag) => (
-											<Tag color="orange" key={tag}>
+											<Tag className="tag" key={tag}>
 												{tag}
 											</Tag>
 										))}

@@ -6,7 +6,7 @@
 
 	.dashboards-list-view-content {
 		width: calc(100% - 30px);
-		max-width: 736px;
+		max-width: 836px;
 
 		.dashboards-list-title-container {
 			.title {
@@ -174,8 +174,25 @@
 		align-items: center;
 
 		.dashboard-tags {
-			.ant-tag {
+			display: flex;
+
+			.tag {
+				display: flex;
+				padding: 4px 8px;
+				justify-content: center;
+				align-items: center;
+				gap: 4px;
 				border-radius: 20px;
+				border: 1px solid rgba(173, 127, 88, 0.2);
+				background: rgba(173, 127, 88, 0.1);
+				color: var(--Sienna-400, #bd9979);
+				text-align: center;
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
 			}
 		}
 	}
