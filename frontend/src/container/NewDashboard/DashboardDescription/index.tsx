@@ -3,6 +3,7 @@ import './Description.styles.scss';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -24,21 +25,24 @@ import {
 	X,
 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { sortLayout } from 'providers/Dashboard/util';
 import { useCallback, useEffect, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
+import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
-import { DashboardData } from 'types/api/dashboard/getAll';
+import { Dashboard, DashboardData } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
+import { v4 as uuid } from 'uuid';
 
 import DashboardGraphSlider from '../ComponentsSlider';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
-import { downloadObjectAsJson } from './utils';
+import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
 
 interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
@@ -49,6 +53,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const { handle } = props;
 	const {
 		selectedDashboard,
+		panelMap,
+		setPanelMap,
+		layouts,
+		setLayouts,
 		isDashboardLocked,
 		setSelectedDashboard,
 		handleToggleDashboardSlider,
@@ -66,15 +74,23 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 
+	const [sectionName, setSectionName] = useState<string>(DEFAULT_ROW_NAME);
+
 	const updateDashboardMutation = useUpdateDashboard();
 
-	const { user, role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { featureResponse, user, role } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], role);
 	const [isDashboardSettingsOpen, setIsDashbordSettingsOpen] = useState<boolean>(
 		false,
 	);
 
 	const [isRenameDashboardOpen, setIsRenameDashboardOpen] = useState<boolean>(
+		false,
+	);
+
+	const [isPanelNameModalOpen, setIsPanelNameModalOpen] = useState<boolean>(
 		false,
 	);
 
@@ -159,6 +175,77 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		}
 	}, [state.error, state.value, t, notifications]);
 
+	function handleAddRow(): void {
+		if (!selectedDashboard) return;
+		const id = uuid();
+
+		const newRowWidgetMap: { widgets: Layout[]; collapsed: boolean } = {
+			widgets: [],
+			collapsed: false,
+		};
+		const currentRowIdx = 0;
+		for (let j = currentRowIdx; j < layouts.length; j++) {
+			if (!panelMap[layouts[j].i]) {
+				newRowWidgetMap.widgets.push(layouts[j]);
+			} else {
+				break;
+			}
+		}
+
+		const updatedDashboard: Dashboard = {
+			...selectedDashboard,
+			data: {
+				...selectedDashboard.data,
+				layout: [
+					{
+						i: id,
+						w: 12,
+						minW: 12,
+						minH: 1,
+						maxH: 1,
+						x: 0,
+						h: 1,
+						y: 0,
+					},
+					...layouts.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
+				],
+				panelMap: { ...panelMap, [id]: newRowWidgetMap },
+				widgets: [
+					...(selectedDashboard.data.widgets || []),
+					{
+						id,
+						title: sectionName,
+						description: '',
+						panelTypes: PANEL_GROUP_TYPES.ROW,
+					},
+				],
+			},
+			uuid: selectedDashboard.uuid,
+		};
+
+		updateDashboardMutation.mutate(updatedDashboard, {
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			onSuccess: (updatedDashboard) => {
+				if (updatedDashboard.payload) {
+					if (updatedDashboard.payload.data.layout)
+						setLayouts(sortLayout(updatedDashboard.payload.data.layout));
+					setSelectedDashboard(updatedDashboard.payload);
+					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
+				}
+
+				featureResponse.refetch();
+				setIsPanelNameModalOpen(false);
+				setSectionName(DEFAULT_ROW_NAME);
+			},
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			onError: () => {
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				});
+			},
+		});
+	}
+
 	return (
 		<Card className="dashboard-description-container">
 			<section className="dashboard-breadcrumbs">
@@ -220,11 +307,15 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 									</Button>
 								</section>
 								<section className="section-2">
-									{/* <Button type="text" icon={<Copy size={14} />}>
-										Duplicate
-									</Button> */}
 									{!isDashboardLocked && editDashboard && (
-										<Button type="text" icon={<FolderKanban size={14} />}>
+										<Button
+											type="text"
+											icon={<FolderKanban size={14} />}
+											onClick={(): void => {
+												setIsPanelNameModalOpen(true);
+												setIsDashbordSettingsOpen(false);
+											}}
+										>
 											New section
 										</Button>
 									)}
@@ -270,12 +361,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							className="icons"
 						/>
 					</Popover>
-					{/**
-					 * to be added later when BE supports it
-					 */}
-					{/* <Tooltip title="Activity">
-						<Button icon={<Zap size={14} />} type="text" className="icons" />
-					</Tooltip> */}
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					{!isDashboardLocked && editDashboard && (
 						<SettingsDrawer drawerTitle="Dashboard Configuration" />
@@ -348,81 +433,50 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					/>
 				</div>
 			</Modal>
-			{/* <Row gutter={16}>
-				<Col flex={1} span={9}>
-					<Typography.Title
-						level={4}
-						style={{ padding: 0, margin: 0 }}
-						data-testid="dashboard-landing-name"
-					>
-						{isDashboardLocked && (
-							<Tooltip title="Dashboard Locked" placement="top">
-								<LockFilled /> &nbsp;
-							</Tooltip>
-						)}
-						{title}
-					</Typography.Title>
-					{description && (
-						<Typography
-							className="dashboard-description"
-							data-testid="dashboard-landing-desc"
+			<Modal
+				open={isPanelNameModalOpen}
+				title="New Section"
+				rootClassName="section-naming"
+				onOk={(): void => handleAddRow()}
+				onCancel={(): void => {
+					setIsPanelNameModalOpen(false);
+					setSectionName(DEFAULT_ROW_NAME);
+				}}
+				footer={
+					<div className="dashboard-rename">
+						<Button
+							type="primary"
+							icon={<Check size={14} />}
+							className="rename-btn"
+							onClick={(): void => handleAddRow()}
+							disabled={updateDashboardMutation.isLoading}
 						>
-							{description}
-						</Typography>
-					)}
-
-					{tags && (
-						<div style={{ margin: '0.5rem 0' }}>
-							{tags?.map((tag) => (
-								<Tag key={tag}>{tag}</Tag>
-							))}
-						</div>
-					)}
-				</Col>
-				<Col span={14}>
-					<Row justify="end">
-						<DashboardVariableSelection />
-					</Row>
-				</Col>
-				<Col span={1} style={{ textAlign: 'right' }}>
-					{selectedData && (
-						<ShareModal
-							isJSONModalVisible={openDashboardJSON}
-							onToggleHandler={onToggleHandler}
-							selectedData={selectedData}
-						/>
-					)}
-
-					<div className="dashboard-actions">
-						{!isDashboardLocked && editDashboard && (
-							<SettingsDrawer drawerTitle="Dashboard Configuration" />
-						)}
-
-						<Tooltip title="Share" placement="left">
-							<Button
-								className="periscope-btn"
-								style={{ width: '100%' }}
-								onClick={onToggleHandler}
-								icon={<Share2 size={16} />}
-							/>
-						</Tooltip>
-
-						{(isAuthor || role === USER_ROLES.ADMIN) && (
-							<Tooltip
-								placement="left"
-								title={isDashboardLocked ? 'Unlock Dashboard' : 'Lock Dashboard'}
-							>
-								<Button
-									style={{ width: '100%' }}
-									className="periscope-btn"
-									onClick={handleLockDashboardToggle}
-									icon={isDashboardLocked ? <LockFilled /> : <UnlockFilled />}
-								/>
-							</Tooltip>
-						)}
+							Create Section
+						</Button>
+						<Button
+							type="text"
+							icon={<X size={14} />}
+							className="cancel-btn"
+							onClick={(): void => {
+								setIsPanelNameModalOpen(false);
+								setSectionName(DEFAULT_ROW_NAME);
+							}}
+						>
+							Cancel
+						</Button>
 					</div>
-				</Col>
-			</Row> */}
+				}
+			>
+				<div className="section-naming-content">
+					<Typography.Text className="name-text">Enter Section name</Typography.Text>
+					<Input
+						data-testid="section-name"
+						className="section-name-input"
+						value={sectionName}
+						onChange={(e): void => setSectionName(e.target.value)}
+					/>
+				</div>
+			</Modal>
 		</Card>
 	);
 }
