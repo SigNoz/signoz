@@ -9,7 +9,9 @@ import {
 	Dropdown,
 	Input,
 	MenuProps,
+	Modal,
 	Popover,
+	Switch,
 	Table,
 	Tag,
 	Tooltip,
@@ -29,6 +31,8 @@ import {
 	ArrowDownWideNarrow,
 	CalendarClock,
 	CalendarClockIcon,
+	Check,
+	Clock4,
 	Copy,
 	Expand,
 	HdmiPort,
@@ -93,6 +97,9 @@ function DashboardsList(): JSX.Element {
 
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
 	const [isFilteringDashboards, setIsFilteringDashboards] = useState(false);
+	const [isConfigureMetadataOpen, setIsConfigureMetadata] = useState<boolean>(
+		false,
+	);
 
 	const params = useUrlQuery();
 	const orderColumnParam = params.get('columnKey');
@@ -497,6 +504,11 @@ function DashboardsList(): JSX.Element {
 										type="text"
 										icon={<HdmiPort size={14} />}
 										className="configure-btn"
+										onClick={(e): void => {
+											e.preventDefault();
+											e.stopPropagation();
+											setIsConfigureMetadata(true);
+										}}
 									>
 										Configure metadata
 									</Button>
@@ -537,6 +549,74 @@ function DashboardsList(): JSX.Element {
 						setShowNewDashboardTemplatesModal(false);
 					}}
 				/>
+
+				<Modal
+					open={isConfigureMetadataOpen}
+					onCancel={(): void => {
+						setIsConfigureMetadata(false);
+					}}
+					title="Configure Metadata"
+					footer={
+						<Button
+							type="text"
+							icon={<Check size={14} />}
+							className="save-changes"
+							onClick={(): void => {
+								setIsConfigureMetadata(false);
+								// set local storage here
+							}}
+						>
+							Save Changes
+						</Button>
+					}
+					rootClassName="configure-metadata-root"
+				>
+					<div className="configure-content">
+						<div className="configure-preview">
+							<Typography.Text>Sample Title</Typography.Text>
+						</div>
+						<div className="metadata-action">
+							<div className="left">
+								<CalendarClock size={14} />
+								<Typography.Text>Created at</Typography.Text>
+							</div>
+							<div className="connection-line" />
+							<div className="right">
+								<Switch size="small" />
+							</div>
+						</div>
+						<div className="metadata-action">
+							<div className="left">
+								<CalendarClock size={14} />
+								<Typography.Text>Created by</Typography.Text>
+							</div>
+							<div className="connection-line" />
+							<div className="right">
+								<Switch size="small" />
+							</div>
+						</div>
+						<div className="metadata-action">
+							<div className="left">
+								<Clock4 size={14} />
+								<Typography.Text>Updated at</Typography.Text>
+							</div>
+							<div className="connection-line" />
+							<div className="right">
+								<Switch size="small" />
+							</div>
+						</div>
+						<div className="metadata-action">
+							<div className="left">
+								<Clock4 size={14} />
+								<Typography.Text>Updated by</Typography.Text>
+							</div>
+							<div className="connection-line" />
+							<div className="right">
+								<Switch size="small" />
+							</div>
+						</div>
+					</div>
+				</Modal>
 			</div>
 		</div>
 	);
