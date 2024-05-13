@@ -42,7 +42,7 @@ import { v4 as uuid } from 'uuid';
 import DashboardGraphSlider from '../ComponentsSlider';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
-import { downloadObjectAsJson } from './utils';
+import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
 
 interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
@@ -74,6 +74,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 
+	const [sectionName, setSectionName] = useState<string>(DEFAULT_ROW_NAME);
+
 	const updateDashboardMutation = useUpdateDashboard();
 
 	const { featureResponse, user, role } = useSelector<AppState, AppReducer>(
@@ -85,6 +87,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	);
 
 	const [isRenameDashboardOpen, setIsRenameDashboardOpen] = useState<boolean>(
+		false,
+	);
+
+	const [isPanelNameModalOpen, setIsPanelNameModalOpen] = useState<boolean>(
 		false,
 	);
 
@@ -208,7 +214,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					...(selectedDashboard.data.widgets || []),
 					{
 						id,
-						title: 'Sample Row',
+						title: sectionName,
 						description: '',
 						panelTypes: PANEL_GROUP_TYPES.ROW,
 					},
@@ -228,6 +234,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				}
 
 				featureResponse.refetch();
+				setIsPanelNameModalOpen(false);
+				setSectionName(DEFAULT_ROW_NAME);
 			},
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			onError: () => {
@@ -303,7 +311,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 										<Button
 											type="text"
 											icon={<FolderKanban size={14} />}
-											onClick={(): void => handleAddRow()}
+											onClick={(): void => {
+												setIsPanelNameModalOpen(true);
+												setIsDashbordSettingsOpen(false);
+											}}
 										>
 											New section
 										</Button>
@@ -350,12 +361,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 							className="icons"
 						/>
 					</Popover>
-					{/**
-					 * to be added later when BE supports it
-					 */}
-					{/* <Tooltip title="Activity">
-						<Button icon={<Zap size={14} />} type="text" className="icons" />
-					</Tooltip> */}
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					{!isDashboardLocked && editDashboard && (
 						<SettingsDrawer drawerTitle="Dashboard Configuration" />
@@ -425,6 +430,50 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						className="dashboard-name-input"
 						value={updatedTitle}
 						onChange={(e): void => setUpdatedTitle(e.target.value)}
+					/>
+				</div>
+			</Modal>
+			<Modal
+				open={isPanelNameModalOpen}
+				title="New Section"
+				rootClassName="section-naming"
+				onOk={(): void => handleAddRow()}
+				onCancel={(): void => {
+					setIsPanelNameModalOpen(false);
+					setSectionName(DEFAULT_ROW_NAME);
+				}}
+				footer={
+					<div className="dashboard-rename">
+						<Button
+							type="primary"
+							icon={<Check size={14} />}
+							className="rename-btn"
+							onClick={(): void => handleAddRow()}
+							disabled={updateDashboardMutation.isLoading}
+						>
+							Create Section
+						</Button>
+						<Button
+							type="text"
+							icon={<X size={14} />}
+							className="cancel-btn"
+							onClick={(): void => {
+								setIsPanelNameModalOpen(false);
+								setSectionName(DEFAULT_ROW_NAME);
+							}}
+						>
+							Cancel
+						</Button>
+					</div>
+				}
+			>
+				<div className="section-naming-content">
+					<Typography.Text className="name-text">Enter Section name</Typography.Text>
+					<Input
+						data-testid="section-name"
+						className="section-name-input"
+						value={sectionName}
+						onChange={(e): void => setSectionName(e.target.value)}
 					/>
 				</div>
 			</Modal>
