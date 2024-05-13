@@ -85,7 +85,18 @@ function WidgetGraph({
 	}, []);
 
 	return (
-		<div ref={graphRef} style={{ height: '100%' }}>
+		<div
+			ref={graphRef}
+			style={{
+				height: '80%',
+				width: '80%',
+				margin: 'auto auto',
+				borderRadius: '3px',
+				border: '1px solid var(--Slate-500, #161922)',
+				background:
+					'linear-gradient(0deg, rgba(171, 189, 255, 0.00) 0%, rgba(171, 189, 255, 0.00) 100%), #0B0C0E',
+			}}
+		>
 			<PanelWrapper
 				widget={selectedWidget}
 				queryResponse={queryResponse}
