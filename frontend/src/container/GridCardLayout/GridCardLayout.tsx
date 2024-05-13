@@ -1,11 +1,8 @@
 import './GridCardLayout.styles.scss';
 
-import { Button, Flex, Form, Input, Modal, Tooltip, Typography } from 'antd';
+import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import cx from 'classnames';
-import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
-import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
-// import { Tooltip } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -18,18 +15,10 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
-import {
-	FullscreenIcon,
-	GripVertical,
-	MoveDown,
-	MoveUp,
-	Settings,
-	Trash2,
-} from 'lucide-react';
-// import { FullscreenIcon } from 'lucide-react';
+import { GripVertical, MoveDown, MoveUp, Settings, Trash2 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { sortLayout } from 'providers/Dashboard/util';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FullScreen, FullScreenHandle } from 'react-full-screen';
 import { ItemCallback, Layout } from 'react-grid-layout';
 import { useDispatch, useSelector } from 'react-redux';
@@ -43,16 +32,9 @@ import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
 
 import { EditMenuAction, ViewMenuAction } from './config';
-// import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
+import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import GridCard from './GridCard';
-import {
-	ButtonContainer,
-	// Button,
-	// ButtonContainer,
-	Card,
-	CardContainer,
-	ReactGridLayout,
-} from './styles';
+import { Card, CardContainer, ReactGridLayout } from './styles';
 import { removeUndefinedValuesFromLayout } from './utils';
 
 interface GraphLayoutProps {
@@ -487,172 +469,153 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			},
 		});
 	};
-	// TOOD add dashboard empty state back
-	return (
-		<>
-			<Flex justify="flex-end" gap={8} align="center">
-				<FacingIssueBtn
-					attributes={{
-						uuid: selectedDashboard?.uuid,
-						title: data?.title,
-						screen: 'Dashboard Details',
-					}}
-					eventName="Dashboard: Facing Issues in dashboard"
-					buttonText="Need help with this dashboard?"
-					message={dashboardHelpMessage(data, selectedDashboard)}
-					onHoverText="Click here to get help for this dashboard"
-				/>
-				<ButtonContainer>
-					<Tooltip title="Open in Full Screen">
-						<Button
-							className="periscope-btn"
-							loading={updateDashboardMutation.isLoading}
-							onClick={handle.enter}
-							icon={<FullscreenIcon size={16} />}
-							disabled={updateDashboardMutation.isLoading}
-						/>
-					</Tooltip>
-				</ButtonContainer>
-			</Flex>
+	const isDashboardEmpty = useMemo(
+		() =>
+			selectedDashboard?.data.layout
+				? selectedDashboard?.data.layout?.length === 0
+				: true,
+		[selectedDashboard],
+	);
+	return isDashboardEmpty ? (
+		<DashboardEmptyState />
+	) : (
+		<FullScreen handle={handle} className="fullscreen-grid-container">
+			<ReactGridLayout
+				cols={12}
+				rowHeight={45}
+				autoSize
+				width={100}
+				useCSSTransforms
+				isDraggable={!isDashboardLocked && addPanelPermission}
+				isDroppable={!isDashboardLocked && addPanelPermission}
+				isResizable={!isDashboardLocked && addPanelPermission}
+				allowOverlap={false}
+				onLayoutChange={handleLayoutChange}
+				onDragStop={handleDragStop}
+				draggableHandle=".drag-handle"
+				layout={dashboardLayout}
+				style={{ backgroundColor: isDarkMode ? '' : themeColors.snowWhite }}
+			>
+				{dashboardLayout.map((layout) => {
+					const { i: id } = layout;
+					const currentWidget = (widgets || [])?.find((e) => e.id === id);
 
-			<FullScreen handle={handle} className="fullscreen-grid-container">
-				<ReactGridLayout
-					cols={12}
-					rowHeight={45}
-					autoSize
-					width={100}
-					useCSSTransforms
-					isDraggable={!isDashboardLocked && addPanelPermission}
-					isDroppable={!isDashboardLocked && addPanelPermission}
-					isResizable={!isDashboardLocked && addPanelPermission}
-					allowOverlap={false}
-					onLayoutChange={handleLayoutChange}
-					onDragStop={handleDragStop}
-					draggableHandle=".drag-handle"
-					layout={dashboardLayout}
-					style={{ backgroundColor: isDarkMode ? '' : themeColors.snowWhite }}
-				>
-					{dashboardLayout.map((layout) => {
-						const { i: id } = layout;
-						const currentWidget = (widgets || [])?.find((e) => e.id === id);
-
-						if (currentWidget?.panelTypes === PANEL_GROUP_TYPES.ROW) {
-							const rowWidgetProperties = currentPanelMap[id] || {};
-							return (
-								<CardContainer
-									className="row-card"
-									isDarkMode={isDarkMode}
-									key={id}
-									data-grid={JSON.stringify(currentWidget)}
-								>
-									<div className={cx('row-panel')}>
-										<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-											<Button
-												disabled={updateDashboardMutation.isLoading}
-												icon={
-													rowWidgetProperties.collapsed ? (
-														<MoveDown size={14} />
-													) : (
-														<MoveUp size={14} />
-													)
-												}
-												type="text"
-												onClick={(): void => handleRowCollapse(id)}
-											/>
-											<Typography.Text>{currentWidget.title}</Typography.Text>
-											<Button
-												icon={<Settings size={14} />}
-												type="text"
-												onClick={(): void => handleRowSettingsClick(id)}
-											/>
-										</div>
-										{rowWidgetProperties.collapsed && (
-											<Button
-												type="text"
-												icon={<GripVertical size={14} />}
-												className="drag-handle"
-											/>
-										)}
-										{!rowWidgetProperties.collapsed && (
-											<Button
-												type="text"
-												icon={<Trash2 size={14} />}
-												onClick={(): void => {
-													setIsDeleteModalOpen(true);
-													setCurrentSelectRowId(id);
-												}}
-											/>
-										)}
-									</div>
-								</CardContainer>
-							);
-						}
-
+					if (currentWidget?.panelTypes === PANEL_GROUP_TYPES.ROW) {
+						const rowWidgetProperties = currentPanelMap[id] || {};
 						return (
 							<CardContainer
-								className={isDashboardLocked ? '' : 'enable-resize'}
+								className="row-card"
 								isDarkMode={isDarkMode}
 								key={id}
 								data-grid={JSON.stringify(currentWidget)}
 							>
-								<Card
-									className="grid-item"
-									$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
-								>
-									<GridCard
-										widget={(currentWidget as Widgets) || ({ id, query: {} } as Widgets)}
-										headerMenuList={widgetActions}
-										variables={variables}
-										version={selectedDashboard?.data?.version}
-										onDragSelect={onDragSelect}
-									/>
-								</Card>
+								<div className={cx('row-panel')}>
+									<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+										<Button
+											disabled={updateDashboardMutation.isLoading}
+											icon={
+												rowWidgetProperties.collapsed ? (
+													<MoveDown size={14} />
+												) : (
+													<MoveUp size={14} />
+												)
+											}
+											type="text"
+											onClick={(): void => handleRowCollapse(id)}
+										/>
+										<Typography.Text>{currentWidget.title}</Typography.Text>
+										<Button
+											icon={<Settings size={14} />}
+											type="text"
+											onClick={(): void => handleRowSettingsClick(id)}
+										/>
+									</div>
+									{rowWidgetProperties.collapsed && (
+										<Button
+											type="text"
+											icon={<GripVertical size={14} />}
+											className="drag-handle"
+										/>
+									)}
+									{!rowWidgetProperties.collapsed && (
+										<Button
+											type="text"
+											icon={<Trash2 size={14} />}
+											onClick={(): void => {
+												setIsDeleteModalOpen(true);
+												setCurrentSelectRowId(id);
+											}}
+										/>
+									)}
+								</div>
 							</CardContainer>
 						);
-					})}
-				</ReactGridLayout>
-				<Modal
-					open={isSettingsModalOpen}
-					title="Row Options"
-					destroyOnClose
-					footer={null}
-					onCancel={(): void => {
-						setIsSettingsModalOpen(false);
-						setCurrentSelectRowId(null);
-					}}
-				>
-					<Form form={form} onFinish={onSettingsModalSubmit} requiredMark>
-						<Form.Item required name={['title']}>
-							<Input
-								placeholder="Enter row name here..."
-								defaultValue={defaultTo(
-									widgets?.find((widget) => widget.id === currentSelectRowId)
-										?.title as string,
-									'Sample Title',
-								)}
-							/>
-						</Form.Item>
-						<Form.Item>
-							<Button type="primary" htmlType="submit">
-								Apply Changes
-							</Button>
-						</Form.Item>
-					</Form>
-				</Modal>
-				<Modal
-					open={isDeleteModalOpen}
-					title="Delete Row"
-					destroyOnClose
-					onCancel={(): void => {
-						setIsDeleteModalOpen(false);
-						setCurrentSelectRowId(null);
-					}}
-					onOk={(): void => handleRowDelete()}
-				>
-					<Typography.Text>Are you sure you want to delete this row</Typography.Text>
-				</Modal>
-			</FullScreen>
-		</>
+					}
+
+					return (
+						<CardContainer
+							className={isDashboardLocked ? '' : 'enable-resize'}
+							isDarkMode={isDarkMode}
+							key={id}
+							data-grid={JSON.stringify(currentWidget)}
+						>
+							<Card
+								className="grid-item"
+								$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
+							>
+								<GridCard
+									widget={(currentWidget as Widgets) || ({ id, query: {} } as Widgets)}
+									headerMenuList={widgetActions}
+									variables={variables}
+									version={selectedDashboard?.data?.version}
+									onDragSelect={onDragSelect}
+								/>
+							</Card>
+						</CardContainer>
+					);
+				})}
+			</ReactGridLayout>
+			<Modal
+				open={isSettingsModalOpen}
+				title="Row Options"
+				destroyOnClose
+				footer={null}
+				onCancel={(): void => {
+					setIsSettingsModalOpen(false);
+					setCurrentSelectRowId(null);
+				}}
+			>
+				<Form form={form} onFinish={onSettingsModalSubmit} requiredMark>
+					<Form.Item required name={['title']}>
+						<Input
+							placeholder="Enter row name here..."
+							defaultValue={defaultTo(
+								widgets?.find((widget) => widget.id === currentSelectRowId)
+									?.title as string,
+								'Sample Title',
+							)}
+						/>
+					</Form.Item>
+					<Form.Item>
+						<Button type="primary" htmlType="submit">
+							Apply Changes
+						</Button>
+					</Form.Item>
+				</Form>
+			</Modal>
+			<Modal
+				open={isDeleteModalOpen}
+				title="Delete Row"
+				destroyOnClose
+				onCancel={(): void => {
+					setIsDeleteModalOpen(false);
+					setCurrentSelectRowId(null);
+				}}
+				onOk={(): void => handleRowDelete()}
+			>
+				<Typography.Text>Are you sure you want to delete this row</Typography.Text>
+			</Modal>
+		</FullScreen>
 	);
 }
 
