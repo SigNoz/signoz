@@ -21,6 +21,7 @@ import { ThresholdProps } from './types';
 
 const wrapStyle = {
 	flexWrap: 'wrap',
+	gap: '10px',
 } as React.CSSProperties;
 
 function Threshold({
@@ -179,7 +180,6 @@ function Threshold({
 		setLabel(event.target.value);
 	};
 
-	const backgroundColor = !isDarkMode ? '#ffffff' : '#141414';
 	const allowDragAndDrop = panelTypeVsDragAndDrop[selectedGraph];
 
 	return (
@@ -224,49 +224,60 @@ function Threshold({
 					)}
 					{(selectedGraph === PANEL_TYPES.VALUE ||
 						selectedGraph === PANEL_TYPES.TABLE) && (
-						<>
-							<Typography.Text>
+						<div className="value-table-alerts">
+							<Typography.Text className="typography">
 								If value {selectedGraph === PANEL_TYPES.TABLE ? 'in' : 'is'}
 							</Typography.Text>
 							{isEditMode ? (
-								<>
+								<div>
 									{selectedGraph === PANEL_TYPES.TABLE && (
 										<Space style={wrapStyle}>
 											<Select
-												style={{
-													minWidth: '150px',
-													backgroundColor,
-													borderRadius: '5px',
-												}}
 												defaultValue={tableSelectedOption}
 												options={tableOptions}
 												bordered={!isDarkMode}
 												showSearch
 												onChange={handleTableOptionsChange}
+												rootClassName="operator-input-root"
+												className="operator-input"
 											/>
-											<Typography.Text>is</Typography.Text>
+											<Typography.Text className="typography">is</Typography.Text>
 										</Space>
 									)}
 									<Select
-										style={{ minWidth: '73px', backgroundColor }}
 										defaultValue={operator}
 										options={operatorOptions}
 										onChange={handleOperatorChange}
 										bordered={!isDarkMode}
+										style={{ marginLeft: '10px' }}
+										rootClassName="operator-input-root"
+										className="operator-input"
 									/>
-								</>
+								</div>
 							) : (
-								<>
+								<div>
 									{selectedGraph === PANEL_TYPES.TABLE && (
-										<Space style={wrapStyle}>
-											<ShowCaseValue width="150px" value={tableSelectedOption} />
-											<Typography.Text>is</Typography.Text>
+										<Space>
+											<ShowCaseValue
+												value={tableSelectedOption}
+												className="typography-preview"
+											/>
+											<Typography.Text
+												className="typography"
+												style={{ marginRight: '10px' }}
+											>
+												is
+											</Typography.Text>
 										</Space>
 									)}
-									<ShowCaseValue width="49px" value={operator} />
-								</>
+									<ShowCaseValue
+										width="50px"
+										value={operator}
+										className="typography-preview"
+									/>
+								</div>
 							)}
-						</>
+						</div>
 					)}
 				</div>
 				<div className="threshold-units-selector">
