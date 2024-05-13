@@ -1,5 +1,8 @@
+import './WidgetGraph.styles.scss';
+
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Card } from 'container/GridCardLayout/styles';
+import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { memo } from 'react';
 
@@ -21,8 +24,11 @@ function WidgetGraph({
 	}
 
 	return (
-		<Container $panelType={selectedGraph}>
-			<PlotTag queryType={currentQuery.queryType} panelType={selectedGraph} />
+		<Container $panelType={selectedGraph} className="widget-graph">
+			<div className="header">
+				<PlotTag queryType={currentQuery.queryType} panelType={selectedGraph} />
+				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
+			</div>
 			{queryResponse.error && (
 				<AlertIconContainer color="red" title={queryResponse.error.message}>
 					<InfoCircleOutlined />

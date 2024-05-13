@@ -19,6 +19,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { defaultTo, isUndefined } from 'lodash-es';
+import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -442,33 +443,55 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					message={chartHelpMessage(selectedDashboard, graphType)}
 					onHoverText="Click here to get help in creating chart"
 				/>
-				<ButtonContainer>
-					{isSaveDisabled && (
-						<Tooltip title={MESSAGE.PANEL}>
-							<Button
-								icon={<LockFilled />}
-								type="primary"
-								disabled={isSaveDisabled}
-								onClick={onSaveDashboard}
-							>
-								Save Changes
-							</Button>
-						</Tooltip>
-					)}
-
-					{!isSaveDisabled && (
+			</div>
+			<ButtonContainer>
+				{isSaveDisabled && (
+					<Tooltip title={MESSAGE.PANEL}>
+						<Button
+							icon={<LockFilled />}
+							type="primary"
+							disabled={isSaveDisabled}
+							onClick={onSaveDashboard}
+						>
+							Save Changes
+						</Button>
+					</Tooltip>
+				)}
+			</ButtonContainer>
+			<div className="edit-header">
+				<div className="left-header">
+					<X size={14} onClick={onClickDiscardHandler} className="discard-icon" />
+					<Typography.Text className="configure-panel">
+						Configure panel
+					</Typography.Text>
+				</div>
+				{isSaveDisabled && (
+					<Tooltip title={MESSAGE.PANEL}>
 						<Button
 							type="primary"
 							data-testid="new-widget-save"
 							loading={updateDashboardMutation.isLoading}
 							disabled={isSaveDisabled}
 							onClick={onSaveDashboard}
+							className="save-btn"
 						>
 							Save Changes
 						</Button>
-					)}
-					<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
-				</ButtonContainer>
+					</Tooltip>
+				)}
+				{!isSaveDisabled && (
+					<Button
+						type="primary"
+						data-testid="new-widget-save"
+						loading={updateDashboardMutation.isLoading}
+						disabled={isSaveDisabled}
+						onClick={onSaveDashboard}
+						icon={<Check size={14} />}
+						className="save-btn"
+					>
+						Save Changes
+					</Button>
+				)}
 			</div>
 
 			<PanelContainer>

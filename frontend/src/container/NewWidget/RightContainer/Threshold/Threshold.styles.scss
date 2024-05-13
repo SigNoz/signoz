@@ -1,58 +1,153 @@
 .threshold-container {
+	margin-top: 12px;
 
-    .threshold-card {
-        padding: 0px;
-        border-radius: 10px;
-        position: relative;
-        margin-top: 10px;
+	.threshold-card-container {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 12px;
+		flex-shrink: 0;
+		padding: 12px;
+		border-radius: 2px;
+		border: 1px solid var(--Slate-500, #161922);
+		background: var(--Ink-400, #121317);
 
-        .threshold-card-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+		.time-series-alerts {
+			display: flex;
+			border-radius: 2px;
+			border: 1px solid var(--Slate-400, #1d212d);
+			background: var(--Ink-400, #121317);
+			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+			width: 100%;
+			align-items: center;
 
-        .ant-typography {
-            font-size: 14px;
-            font-weight: 400;
-            line-height: 22px;
-        }
+			.label {
+				color: var(--Vanilla-400, #c0c1c3);
+				font-family: 'Space Mono';
+				font-size: 12px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 16px; /* 133.333% */
+				letter-spacing: 0.48px;
+				text-transform: uppercase;
+				width: 20%;
+				padding: 8px;
+			}
 
-        .ant-typograph-dark {
-            color: #FFFFFF73;
-        }
+			.label-input {
+				height: 32px;
+				width: 80%;
+				flex-shrink: 0;
+				border-radius: 2px;
+				border-left: 1px solid var(--Slate-400, #1d212d);
+				background: var(--Ink-400, #121317);
+				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+			}
+		}
 
-        .ant-typograph-light {
-            color: #00000073;
-        }
+		.threshold-units-selector {
+			display: flex;
+			border-radius: 2px 2px 0px 0px;
+			border: 1px solid var(--Slate-400, #1d212d);
+			background: var(--Ink-400, #121317);
+			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+			height: 32px;
+			flex-shrink: 0;
+			width: 100%;
 
-    }
+			.unit-input {
+				width: 50%;
+				border: none;
+			}
 
-    .threshold-card-dark {
-        background-color: #1F1F1F;
-    }
+			.unit-selection {
+				width: 50%;
+				border: none;
+				border-left: 1px solid var(--Slate-400, #1d212d);
 
-    .threshold-card-light {
-        background-color: rgb(255, 255, 255);
-    }
+				.ant-select-selector {
+					border: none;
+					height: unset;
+					color: var(--Vanilla-400, #c0c1c3);
+					font-family: 'Space Mono';
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 16px; /* 133.333% */
+				}
+			}
+		}
 
-    .threshold-action-button {
-        position: absolute;
-        right: 10px;
-        top: 10px;
-    }
+		.thresholds-color-selector {
+			display: flex;
+			align-items: center;
+			border-radius: 0px 0px 2px 2px;
+			border: 1px solid var(--Slate-400, #1d212d);
+			border-top: none;
+			background: var(--Ink-400, #121317);
+			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+			height: 32px;
+			flex-shrink: 0;
+			width: 100%;
+			margin-top: -12px;
 
-    .threshold-action-icon {
-        font-size: 16px;
-    }
+			.color-selector {
+				width: 50%;
+			}
+			.color-format {
+				width: 50%;
+				border: none;
+				border-left: 1px solid var(--Slate-400, #1d212d);
 
-    .threshold-units-selector {
-        display: flex;
-        align-items: center;
-    }
+				.ant-select-selector {
+					border: none;
+					height: unset;
+					color: var(--Vanilla-400, #c0c1c3);
+					font-family: 'Space Mono';
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 16px; /* 133.333% */
+					background-color: unset;
+				}
+			}
+		}
 
-    .threshold-color-picker {
-        display: flex;
-        flex-direction: column;
-    }
+		.threshold-action-button {
+			display: flex;
+			align-items: center;
+			width: 100%;
+			gap: 12px;
+
+			.discard-btn {
+				display: flex;
+				width: 50%;
+				align-items: center;
+				height: 34px;
+				padding: 4px 8px 4px 10px;
+				justify-content: center;
+				gap: 6px;
+				flex: 1 0 0;
+				border-radius: 2px;
+				border: 1px solid var(--Slate-400, #1d2023);
+				background: var(--Slate-500, #161922);
+				box-shadow: none;
+			}
+
+			.save-changes {
+				display: flex;
+				width: 50%;
+				align-items: center;
+				height: 34px;
+				padding: 4px 8px 4px 10px;
+				justify-content: center;
+				gap: 6px;
+				flex: 1 0 0;
+				border-radius: 2px;
+				border: 1px solid var(--Robin-500, #4e74f8);
+				background: var(--Robin-500, #4e74f8);
+				box-shadow: none;
+			}
+		}
+	}
 }
