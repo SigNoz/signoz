@@ -29,7 +29,6 @@ import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
-import { v4 as uuid } from 'uuid';
 
 import { EditMenuAction, ViewMenuAction } from './config';
 import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
@@ -191,75 +190,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [dashboardLayout]);
-
-	function handleAddRow(): void {
-		if (!selectedDashboard) return;
-		const id = uuid();
-
-		const newRowWidgetMap: { widgets: Layout[]; collapsed: boolean } = {
-			widgets: [],
-			collapsed: false,
-		};
-		const currentRowIdx = 0;
-		for (let j = currentRowIdx; j < dashboardLayout.length; j++) {
-			if (!currentPanelMap[dashboardLayout[j].i]) {
-				newRowWidgetMap.widgets.push(dashboardLayout[j]);
-			} else {
-				break;
-			}
-		}
-
-		const updatedDashboard: Dashboard = {
-			...selectedDashboard,
-			data: {
-				...selectedDashboard.data,
-				layout: [
-					{
-						i: id,
-						w: 12,
-						minW: 12,
-						minH: 1,
-						maxH: 1,
-						x: 0,
-						h: 1,
-						y: 0,
-					},
-					...dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
-				],
-				panelMap: { ...currentPanelMap, [id]: newRowWidgetMap },
-				widgets: [
-					...(selectedDashboard.data.widgets || []),
-					{
-						id,
-						title: 'Sample Row',
-						description: '',
-						panelTypes: PANEL_GROUP_TYPES.ROW,
-					},
-				],
-			},
-			uuid: selectedDashboard.uuid,
-		};
-
-		updateDashboardMutation.mutate(updatedDashboard, {
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			onSuccess: (updatedDashboard) => {
-				if (updatedDashboard.payload) {
-					if (updatedDashboard.payload.data.layout)
-						setLayouts(sortLayout(updatedDashboard.payload.data.layout));
-					setSelectedDashboard(updatedDashboard.payload);
-					setPanelMap(updatedDashboard.payload?.data?.panelMap || {});
-				}
-
-				featureResponse.refetch();
-			},
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			onError: () => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
-			},
-		});
-	}
 
 	const handleRowSettingsClick = (id: string): void => {
 		setIsSettingsModalOpen(true);
