@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './DashboardList.styles.scss';
 
-import { MoreOutlined } from '@ant-design/icons';
+import { MoreOutlined, SmallDashOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -12,6 +12,7 @@ import {
 	Popover,
 	Table,
 	Tag,
+	Tooltip,
 	Typography,
 } from 'antd';
 import { TableProps } from 'antd/lib';
@@ -25,10 +26,12 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import {
+	ArrowDownWideNarrow,
 	CalendarClock,
 	CalendarClockIcon,
 	Copy,
 	Expand,
+	HdmiPort,
 	LayoutGrid,
 	Link2,
 	PencilRuler,
@@ -460,6 +463,52 @@ function DashboardsList(): JSX.Element {
 							New dashboard
 						</Button>
 					</Dropdown>
+				</div>
+
+				<div className="all-dashboards-header">
+					<Typography.Text className="typography">All Dashboards</Typography.Text>
+					<section className="right-actions">
+						<Tooltip title="Sort">
+							<Popover
+								trigger="click"
+								content={
+									<div className="sort-content">
+										<Typography.Text className="sort-heading">Sort By</Typography.Text>
+										<Button type="text" className="sort-btns">
+											Last created
+										</Button>
+										<Button type="text" className="sort-btns">
+											Last updated
+										</Button>
+									</div>
+								}
+								rootClassName="sort-dashboards"
+								placement="bottomRight"
+								arrow={false}
+							>
+								<ArrowDownWideNarrow size={14} />
+							</Popover>
+						</Tooltip>
+						<Popover
+							trigger="click"
+							content={
+								<div className="configure-content">
+									<Button
+										type="text"
+										icon={<HdmiPort size={14} />}
+										className="configure-btn"
+									>
+										Configure metadata
+									</Button>
+								</div>
+							}
+							rootClassName="configure-group"
+							placement="bottomRight"
+							arrow={false}
+						>
+							<SmallDashOutlined />
+						</Popover>
+					</section>
 				</div>
 
 				<Table
