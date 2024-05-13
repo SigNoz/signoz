@@ -2,12 +2,14 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './DashboardList.styles.scss';
 
+import { MoreOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
 	Dropdown,
 	Input,
 	MenuProps,
+	Popover,
 	Table,
 	Tag,
 	Typography,
@@ -20,11 +22,15 @@ import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import {
 	CalendarClock,
 	CalendarClockIcon,
+	Copy,
+	Expand,
 	LayoutGrid,
+	Link2,
 	PencilRuler,
 	Plus,
 	Radius,
@@ -42,6 +48,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
+import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
@@ -51,6 +58,7 @@ import useUrlQuery from '../../hooks/useUrlQuery';
 import { GettableAlert } from '../../types/api/alerts/get';
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
+import { DeleteButton } from './TableComponents/DeleteButton';
 import { filterDashboard } from './utils';
 
 function DashboardsList(): JSX.Element {
@@ -194,6 +202,28 @@ function DashboardsList(): JSX.Element {
 		setSearchString(searchText);
 	};
 
+	const [state, setCopy] = useCopyToClipboard();
+
+	const { notifications } = useNotifications();
+
+	useEffect(() => {
+		if (state.error) {
+			notifications.error({
+				message: t('something_went_wrong', {
+					ns: 'common',
+				}),
+			});
+		}
+
+		if (state.value) {
+			notifications.success({
+				message: t('success', {
+					ns: 'common',
+				}),
+			});
+		}
+	}, [state.error, state.value, t, notifications]);
+
 	const columns: TableProps<Data>['columns'] = [
 		{
 			title: 'Dashboards',
@@ -224,8 +254,6 @@ function DashboardsList(): JSX.Element {
 				// Combine time and date
 				const formattedDateAndTime = `${formattedDate} ⎯ ${formattedTime}`;
 
-				// const isEditDeleteSupported = allowedRoles.includes(role as string);
-
 				const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.id}`;
 
 				const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
@@ -243,16 +271,70 @@ function DashboardsList(): JSX.Element {
 								<TentIcon /> <Typography.Text>{dashboard.name}</Typography.Text>
 							</div>
 
-							{dashboard?.tags && dashboard.tags.length > 0 && (
-								<div className="dashboard-tags">
-									{dashboard.tags.map((tag) => (
-										<Tag color="orange" key={tag}>
-											{tag}
-										</Tag>
-									))}
-								</div>
-							)}
-							{action && <div>Actions</div>}
+							<div className="tags-with-actions">
+								{dashboard?.tags && dashboard.tags.length > 0 && (
+									<div className="dashboard-tags">
+										{dashboard.tags.map((tag) => (
+											<Tag color="orange" key={tag}>
+												{tag}
+											</Tag>
+										))}
+									</div>
+								)}
+								{action && (
+									<Popover
+										trigger="hover"
+										content={
+											<div className="dashboard-action-content">
+												<section className="section-1">
+													<Button
+														type="text"
+														className="action-btn"
+														icon={<Expand size={14} />}
+														onClick={onClickHandler}
+													>
+														View
+													</Button>
+													<Button
+														type="text"
+														className="action-btn"
+														icon={<Link2 size={14} />}
+														onClick={(e): void => {
+															e.stopPropagation();
+															e.preventDefault();
+															setCopy(`${window.location.origin}${getLink()}`);
+														}}
+													>
+														Copy Link
+													</Button>
+
+													<Button
+														type="text"
+														className="action-btn"
+														icon={<Copy size={14} />}
+														// TODO add duplicate dashboard here
+													>
+														Duplicate
+													</Button>
+												</section>
+												<section className="section-2">
+													<DeleteButton
+														name={dashboard.name}
+														id={dashboard.id}
+														isLocked={dashboard.isLocked}
+														createdBy={dashboard.createdBy}
+													/>
+												</section>
+											</div>
+										}
+										placement="bottomRight"
+										arrow={false}
+										rootClassName="dashboard-actions"
+									>
+										<MoreOutlined />
+									</Popover>
+								)}
+							</div>
 						</div>
 						<div className="dashboard-details">
 							<div className="dashboard-created-at">

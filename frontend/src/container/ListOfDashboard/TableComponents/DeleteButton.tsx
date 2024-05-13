@@ -102,7 +102,9 @@ export function DeleteButton({
 			<Tooltip placement="left" title={getDeleteTooltipContent()}>
 				<TableLinkText
 					type="danger"
-					onClick={(): void => {
+					onClick={(e): void => {
+						e.preventDefault();
+						e.stopPropagation();
 						if (!isLocked) {
 							openConfirmationDialog();
 						}
