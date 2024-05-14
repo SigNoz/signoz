@@ -1,6 +1,6 @@
 import './GeneralSettings.styles.scss';
 
-import { Col, Input, Space, Typography } from 'antd';
+import { Col, Input, Select, Space, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import AddTags from 'container/NewDashboard/DashboardSettings/General/AddTags';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
@@ -12,6 +12,9 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from './styles';
+import { Base64Icons } from './utils';
+
+const { Option } = Select;
 
 function GeneralDashboardSettings(): JSX.Element {
 	const { selectedDashboard, setSelectedDashboard } = useDashboard();
@@ -20,13 +23,15 @@ function GeneralDashboardSettings(): JSX.Element {
 
 	const selectedData = selectedDashboard?.data;
 
-	const { title = '', tags = [], description = '' } = selectedData || {};
+	const { title = '', tags = [], description = '', image = Base64Icons[0] } =
+		selectedData || {};
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 	const [updatedTags, setUpdatedTags] = useState<string[]>(tags || []);
 	const [updatedDescription, setUpdatedDescription] = useState(
 		description || '',
 	);
+	const [updatedImage, setUpdatedImage] = useState<string>(image);
 	const [numberOfUnsavedChanges, setNumberOfUnsavedChanges] = useState<number>(
 		0,
 	);
@@ -46,6 +51,7 @@ function GeneralDashboardSettings(): JSX.Element {
 					description: updatedDescription,
 					tags: updatedTags,
 					title: updatedTitle,
+					image: updatedImage,
 				},
 			},
 			{
@@ -74,15 +80,27 @@ function GeneralDashboardSettings(): JSX.Element {
 		if (!isEqual(updatedTags, selectedData?.tags)) {
 			numberOfUnsavedChanges += 1;
 		}
+		if (!isEqual(updatedImage, selectedData?.image)) {
+			numberOfUnsavedChanges += 1;
+		}
 		setNumberOfUnsavedChanges(numberOfUnsavedChanges);
 	}, [
 		selectedData?.description,
+		selectedData?.image,
 		selectedData?.tags,
 		selectedData?.title,
 		updatedDescription,
+		updatedImage,
 		updatedTags,
 		updatedTitle,
 	]);
+
+	const discardHandler = (): void => {
+		setUpdatedTitle(title);
+		setUpdatedImage(image);
+		setUpdatedTags(tags);
+		setUpdatedDescription(description);
+	};
 
 	return (
 		<div className="overview-content">
@@ -100,12 +118,28 @@ function GeneralDashboardSettings(): JSX.Element {
 						<Typography style={{ marginBottom: '0.5rem' }} className="dashboard-name">
 							Dashboard Name
 						</Typography>
-						<Input
-							data-testid="dashboard-name"
-							className="dashboard-name-input"
-							value={updatedTitle}
-							onChange={(e): void => setUpdatedTitle(e.target.value)}
-						/>
+						<section className="name-icon-input">
+							<Select
+								defaultActiveFirstOption
+								data-testid="dashboard-image"
+								suffixIcon={null}
+								rootClassName="dashboard-image-input"
+								value={updatedImage}
+								onChange={(value: string): void => setUpdatedImage(value)}
+							>
+								{Base64Icons.map((icon) => (
+									<Option value={icon} key={icon}>
+										<img src={icon} alt="dashboard-icon" className="list-item-image" />
+									</Option>
+								))}
+							</Select>
+							<Input
+								data-testid="dashboard-name"
+								className="dashboard-name-input"
+								value={updatedTitle}
+								onChange={(e): void => setUpdatedTitle(e.target.value)}
+							/>
+						</section>
 					</div>
 
 					<div>
@@ -144,7 +178,7 @@ function GeneralDashboardSettings(): JSX.Element {
 							disabled={updateDashboardMutation.isLoading}
 							loading={updateDashboardMutation.isLoading}
 							icon={<X size={14} />}
-							onClick={onSaveHandler}
+							onClick={discardHandler}
 							type="text"
 							className="discard-btn"
 						>

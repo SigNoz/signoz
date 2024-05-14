@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/img-redundant-alt */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './DashboardList.styles.scss';
@@ -20,11 +21,11 @@ import {
 } from 'antd';
 import { TableProps } from 'antd/lib';
 import createDashboard from 'api/dashboard/create';
-import TentIcon from 'assets/CustomIcons/TentIcon';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
+import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
@@ -242,6 +243,7 @@ function DashboardsList(): JSX.Element {
 			createdBy: e.created_by,
 			isLocked: !!e.isLocked || false,
 			lastUpdatedBy: e.updated_by,
+			image: e.data.image || Base64Icons[0],
 			refetchDashboardList,
 		})) || [];
 
@@ -400,7 +402,12 @@ function DashboardsList(): JSX.Element {
 					<div className="dashboard-list-item" onClick={onClickHandler}>
 						<div className="title-with-action">
 							<div className="dashboard-title">
-								<TentIcon /> <Typography.Text>{dashboard.name}</Typography.Text>
+								<img
+									src={dashboard?.image || Base64Icons[0]}
+									style={{ height: '14px', width: '14px' }}
+									alt="dashboard-image"
+								/>
+								<Typography.Text>{dashboard.name}</Typography.Text>
 							</div>
 
 							<div className="tags-with-actions">
@@ -742,7 +749,11 @@ function DashboardsList(): JSX.Element {
 					<div className="configure-content">
 						<div className="configure-preview">
 							<section className="header">
-								<TentIcon />
+								<img
+									src={dashboards?.[0]?.data?.image || Base64Icons[0]}
+									alt="dashboard-image"
+									style={{ height: '14px', width: '14px' }}
+								/>
 								<Typography.Text className="title">
 									{dashboards?.[0]?.data?.title}
 								</Typography.Text>
@@ -880,6 +891,7 @@ export interface Data {
 	lastUpdatedBy: string;
 	isLocked: boolean;
 	id: string;
+	image?: string;
 }
 
 export default DashboardsList;
