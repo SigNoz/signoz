@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable jsx-a11y/img-redundant-alt */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
@@ -33,6 +34,7 @@ import history from 'lib/history';
 import { get, isEmpty } from 'lodash-es';
 import {
 	ArrowDownWideNarrow,
+	ArrowUpRight,
 	CalendarClock,
 	CalendarClockIcon,
 	Check,
@@ -586,44 +588,6 @@ function DashboardsList(): JSX.Element {
 					</Typography.Text>
 				</div>
 
-				<div className="dashboards-list-header-container">
-					<Dropdown
-						overlayClassName="new-dashboard-menu"
-						menu={{ items: filterMenuItems }}
-						placement="bottomLeft"
-					>
-						<Button
-							type="default"
-							className="periscope-btn"
-							icon={<SortDesc size={14} />}
-						>
-							Filter
-						</Button>
-					</Dropdown>
-
-					<Input
-						placeholder="Search by name, description, or tags..."
-						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
-						value={searchValue}
-						onChange={handleSearch}
-					/>
-
-					<Dropdown
-						overlayClassName="new-dashboard-menu"
-						menu={{ items: getCreateDashboardItems }}
-						placement="bottomRight"
-						trigger={['click']}
-					>
-						<Button
-							type="primary"
-							className="periscope-btn primary"
-							icon={<Plus size={14} />}
-						>
-							New dashboard
-						</Button>
-					</Dropdown>
-				</div>
-
 				{isDashboardListLoading || isFilteringDashboards ? (
 					<div className="loading-dashboard-details">
 						<Skeleton.Input active size="large" className="skeleton-1" />
@@ -631,8 +595,78 @@ function DashboardsList(): JSX.Element {
 						<Skeleton.Input active size="large" className="skeleton-1" />
 						<Skeleton.Input active size="large" className="skeleton-1" />
 					</div>
+				) : dashboards?.length === 0 ? (
+					<div className="dashboard-empty-state">
+						<img
+							src="/Icons/dashboards.svg"
+							alt="dashboards"
+							className="dashboard-img"
+						/>
+						<section className="text">
+							<Typography.Text className="no-dashboard">
+								No dashboards yet.{' '}
+							</Typography.Text>
+							<Typography.Text className="info">
+								Create a dashboard to start visualizing your data
+							</Typography.Text>
+						</section>
+
+						<section className="actions">
+							<Dropdown
+								overlayClassName="new-dashboard-menu"
+								menu={{ items: getCreateDashboardItems }}
+								placement="bottomRight"
+								trigger={['click']}
+							>
+								<Button type="text" className="new-dashboard" icon={<Plus size={14} />}>
+									New Dashboard
+								</Button>
+							</Dropdown>
+							<Button type="text" className="learn-more">
+								Learn more
+							</Button>
+							<ArrowUpRight size={16} className="learn-more-arrow" />
+						</section>
+					</div>
 				) : (
 					<>
+						<div className="dashboards-list-header-container">
+							<Dropdown
+								overlayClassName="new-dashboard-menu"
+								menu={{ items: filterMenuItems }}
+								placement="bottomLeft"
+							>
+								<Button
+									type="default"
+									className="periscope-btn"
+									icon={<SortDesc size={14} />}
+								>
+									Filter
+								</Button>
+							</Dropdown>
+
+							<Input
+								placeholder="Search by name, description, or tags..."
+								prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
+								value={searchValue}
+								onChange={handleSearch}
+							/>
+
+							<Dropdown
+								overlayClassName="new-dashboard-menu"
+								menu={{ items: getCreateDashboardItems }}
+								placement="bottomRight"
+								trigger={['click']}
+							>
+								<Button
+									type="primary"
+									className="periscope-btn primary"
+									icon={<Plus size={14} />}
+								>
+									New dashboard
+								</Button>
+							</Dropdown>
+						</div>
 						<div className="all-dashboards-header">
 							<Typography.Text className="typography">All Dashboards</Typography.Text>
 							<section className="right-actions">
