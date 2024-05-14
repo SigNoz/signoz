@@ -2,67 +2,76 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './DashboardList.styles.scss';
 
+import { MoreOutlined, SmallDashOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
 	Dropdown,
 	Input,
 	MenuProps,
+	Modal,
+	Popover,
+	Switch,
 	Table,
 	Tag,
+	Tooltip,
 	Typography,
 } from 'antd';
-import { ItemType } from 'antd/es/menu/hooks/useItems';
 import { TableProps } from 'antd/lib';
 import createDashboard from 'api/dashboard/create';
-import GrafanaIcon from 'assets/CustomIcons/GrafanaIcon';
-import JuiceBoxIcon from 'assets/CustomIcons/JuiceBoxIcon';
 import TentIcon from 'assets/CustomIcons/TentIcon';
 import { AxiosError } from 'axios';
-import { dashboardListMessage } from 'components/facingIssueBtn/util';
-import {
-	DynamicColumnsKey,
-	TableDataSource,
-} from 'components/ResizeTable/contants';
-import LabelColumn from 'components/TableRenderer/LabelColumn';
-import TextToolTip from 'components/TextToolTip';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
-import useDebouncedFn from 'hooks/useDebouncedFunction';
-import getRandomColor from 'lib/getRandomColor';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { get, isEmpty } from 'lodash-es';
 import {
+	ArrowDownWideNarrow,
 	CalendarClock,
 	CalendarClockIcon,
+	Check,
+	Clock4,
+	Copy,
+	Expand,
+	HdmiPort,
 	LayoutGrid,
+	Link2,
 	PencilRuler,
 	Plus,
 	Radius,
 	Search,
 	SortDesc,
 } from 'lucide-react';
-import { ChangeEvent, Key, useCallback, useEffect, useState } from 'react';
+import {
+	ChangeEvent,
+	Key,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
+import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
-import { ViewProps } from 'types/api/saveViews/types';
 import AppReducer from 'types/reducer/app';
-import { USER_ROLES } from 'types/roles';
 
 import useSortableTable from '../../hooks/ResizeTable/useSortableTable';
 import useUrlQuery from '../../hooks/useUrlQuery';
 import { GettableAlert } from '../../types/api/alerts/get';
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
-import { filterDashboard } from './utils';
-
-// const { Search } = Input;
-
-const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.AUTHOR, USER_ROLES.EDITOR];
+import { DeleteButton } from './TableComponents/DeleteButton';
+import {
+	DashboardDynamicColumns,
+	DynamicColumns,
+	filterDashboard,
+} from './utils';
 
 function DashboardsList(): JSX.Element {
 	const {
@@ -93,6 +102,9 @@ function DashboardsList(): JSX.Element {
 
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
 	const [isFilteringDashboards, setIsFilteringDashboards] = useState(false);
+	const [isConfigureMetadataOpen, setIsConfigureMetadata] = useState<boolean>(
+		false,
+	);
 
 	const params = useUrlQuery();
 	const orderColumnParam = params.get('columnKey');
@@ -100,6 +112,49 @@ function DashboardsList(): JSX.Element {
 	const paginationParam = params.get('page');
 	const searchParams = params.get('search');
 	const [searchString, setSearchString] = useState<string>(searchParams || '');
+
+	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
+		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');
+		let dashboardDynamicColumns: DashboardDynamicColumns = {
+			createdAt: false,
+			createdBy: false,
+			updatedAt: false,
+			updatedBy: false,
+		};
+		if (typeof dashboardDynamicColumnsString === 'string') {
+			try {
+				const tempDashboardDynamicColumns = JSON.parse(
+					dashboardDynamicColumnsString,
+				);
+
+				if (isEmpty(tempDashboardDynamicColumns)) {
+					localStorage.setItem('dashboard', JSON.stringify(dashboardDynamicColumns));
+				} else {
+					dashboardDynamicColumns = { ...tempDashboardDynamicColumns };
+				}
+			} catch (error) {
+				console.error(error);
+			}
+		} else {
+			localStorage.setItem('dashboard', JSON.stringify(dashboardDynamicColumns));
+		}
+
+		return dashboardDynamicColumns;
+	};
+
+	const [visibleColumns, setVisibleColumns] = useState<DashboardDynamicColumns>(
+		() => getLocalStorageDynamicColumns(),
+	);
+
+	function setDynamicColumnsLocalStorage(
+		visibleColumns: DashboardDynamicColumns,
+	): void {
+		try {
+			localStorage.setItem('dashboard', JSON.stringify(visibleColumns));
+		} catch (error) {
+			console.error(error);
+		}
+	}
 
 	const [dashboards, setDashboards] = useState<Dashboard[]>();
 
@@ -113,6 +168,7 @@ function DashboardsList(): JSX.Element {
 		orderColumnParam || '',
 		searchString,
 	);
+	console.log(sortedInfo, handleChange);
 
 	const sortDashboardsByCreatedAt = (dashboards: Dashboard[]): void => {
 		const sortedDashboards = dashboards.sort(
@@ -204,6 +260,55 @@ function DashboardsList(): JSX.Element {
 		setSearchString(searchText);
 	};
 
+	const [state, setCopy] = useCopyToClipboard();
+
+	const { notifications } = useNotifications();
+
+	useEffect(() => {
+		if (state.error) {
+			notifications.error({
+				message: t('something_went_wrong', {
+					ns: 'common',
+				}),
+			});
+		}
+
+		if (state.value) {
+			notifications.success({
+				message: t('success', {
+					ns: 'common',
+				}),
+			});
+		}
+	}, [state.error, state.value, t, notifications]);
+
+	function getFormattedTime(dashboard: Dashboard, option: string): string {
+		const timeOptions: Intl.DateTimeFormatOptions = {
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+			hour12: false,
+		};
+		const formattedTime = new Date(get(dashboard, option, '')).toLocaleTimeString(
+			'en-US',
+			timeOptions,
+		);
+
+		const dateOptions: Intl.DateTimeFormatOptions = {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric',
+		};
+
+		const formattedDate = new Date(get(dashboard, option, '')).toLocaleDateString(
+			'en-US',
+			dateOptions,
+		);
+
+		// Combine time and date
+		return `${formattedDate} ⎯ ${formattedTime}`;
+	}
+
 	const columns: TableProps<Data>['columns'] = [
 		{
 			title: 'Dashboards',
@@ -220,6 +325,10 @@ function DashboardsList(): JSX.Element {
 					timeOptions,
 				);
 
+				const lastUpdatedFormattedTime = new Date(
+					dashboard.lastUpdatedTime,
+				).toLocaleTimeString('en-US', timeOptions);
+
 				const dateOptions: Intl.DateTimeFormatOptions = {
 					month: 'short',
 					day: 'numeric',
@@ -231,10 +340,14 @@ function DashboardsList(): JSX.Element {
 					dateOptions,
 				);
 
+				const lastUpdatedFormattedDate = new Date(
+					dashboard.lastUpdatedTime,
+				).toLocaleDateString('en-US', dateOptions);
+
 				// Combine time and date
 				const formattedDateAndTime = `${formattedDate} ⎯ ${formattedTime}`;
 
-				// const isEditDeleteSupported = allowedRoles.includes(role as string);
+				const lastUpdatedFormattedDateTime = `${lastUpdatedFormattedDate} ⎯ ${lastUpdatedFormattedTime}`;
 
 				const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.id}`;
 
@@ -253,23 +366,80 @@ function DashboardsList(): JSX.Element {
 								<TentIcon /> <Typography.Text>{dashboard.name}</Typography.Text>
 							</div>
 
-							{dashboard?.tags && dashboard.tags.length > 0 && (
-								<div className="dashboard-tags">
-									{dashboard.tags.map((tag) => (
-										<Tag color="orange" key={tag}>
-											{tag}
-										</Tag>
-									))}
-								</div>
-							)}
+							<div className="tags-with-actions">
+								{dashboard?.tags && dashboard.tags.length > 0 && (
+									<div className="dashboard-tags">
+										{dashboard.tags.map((tag) => (
+											<Tag className="tag" key={tag}>
+												{tag}
+											</Tag>
+										))}
+									</div>
+								)}
+								{action && (
+									<Popover
+										trigger="hover"
+										content={
+											<div className="dashboard-action-content">
+												<section className="section-1">
+													<Button
+														type="text"
+														className="action-btn"
+														icon={<Expand size={14} />}
+														onClick={onClickHandler}
+													>
+														View
+													</Button>
+													<Button
+														type="text"
+														className="action-btn"
+														icon={<Link2 size={14} />}
+														onClick={(e): void => {
+															e.stopPropagation();
+															e.preventDefault();
+															setCopy(`${window.location.origin}${getLink()}`);
+														}}
+													>
+														Copy Link
+													</Button>
+
+													<Button
+														type="text"
+														className="action-btn"
+														icon={<Copy size={14} />}
+														// TODO add duplicate dashboard here
+													>
+														Duplicate
+													</Button>
+												</section>
+												<section className="section-2">
+													<DeleteButton
+														name={dashboard.name}
+														id={dashboard.id}
+														isLocked={dashboard.isLocked}
+														createdBy={dashboard.createdBy}
+													/>
+												</section>
+											</div>
+										}
+										placement="bottomRight"
+										arrow={false}
+										rootClassName="dashboard-actions"
+									>
+										<MoreOutlined />
+									</Popover>
+								)}
+							</div>
 						</div>
 						<div className="dashboard-details">
-							<div className="dashboard-created-at">
-								<CalendarClock size={14} />
-								<Typography.Text>{formattedDateAndTime}</Typography.Text>
-							</div>
+							{visibleColumns.createdAt && (
+								<div className="dashboard-created-at">
+									<CalendarClock size={14} />
+									<Typography.Text>{formattedDateAndTime}</Typography.Text>
+								</div>
+							)}
 
-							{dashboard.createdBy && (
+							{dashboard.createdBy && visibleColumns.createdBy && (
 								<>
 									<div className="dashboard-tag">
 										<Typography.Text className="tag-text">
@@ -278,6 +448,27 @@ function DashboardsList(): JSX.Element {
 									</div>
 									<Typography.Text className="dashboard-created-by">
 										{dashboard.createdBy}
+									</Typography.Text>
+								</>
+							)}
+						</div>
+						<div className="dashboard-details">
+							{visibleColumns.updatedAt && (
+								<div className="dashboard-created-at">
+									<CalendarClock size={14} />
+									<Typography.Text>{lastUpdatedFormattedDateTime}</Typography.Text>
+								</div>
+							)}
+
+							{dashboard.lastUpdatedBy && visibleColumns.updatedBy && (
+								<>
+									<div className="dashboard-tag">
+										<Typography.Text className="tag-text">
+											{dashboard.lastUpdatedBy?.substring(0, 1).toUpperCase()}
+										</Typography.Text>
+									</div>
+									<Typography.Text className="dashboard-created-by">
+										{dashboard.lastUpdatedBy}
 									</Typography.Text>
 								</>
 							)}
@@ -292,7 +483,6 @@ function DashboardsList(): JSX.Element {
 		{
 			label: (
 				<div className="create-dashboard-menu-item">
-					{' '}
 					<PencilRuler size={14} /> Created by
 				</div>
 			),
@@ -301,7 +491,6 @@ function DashboardsList(): JSX.Element {
 		{
 			label: (
 				<div className="create-dashboard-menu-item">
-					{' '}
 					<CalendarClockIcon size={14} /> Last updated by
 				</div>
 			),
@@ -309,34 +498,39 @@ function DashboardsList(): JSX.Element {
 		},
 	];
 
-	const createDashboardItems: MenuProps['items'] = [
-		{
-			label: (
-				<div
-					className="create-dashboard-menu-item"
-					onClick={(): void => {
-						setShowNewDashboardTemplatesModal(true);
-					}}
-				>
-					{' '}
-					<LayoutGrid size={14} /> Create dashboard
-				</div>
-			),
-			key: '0',
-		},
-		{
-			label: (
-				<div
-					className="create-dashboard-menu-item"
-					onClick={(): void => onModalHandler(false)}
-				>
-					{' '}
-					<Radius size={14} /> Import JSON{' '}
-				</div>
-			),
-			key: '1',
-		},
-	];
+	const getCreateDashboardItems = useMemo(() => {
+		const menuItems: MenuProps['items'] = [
+			{
+				label: (
+					<div
+						className="create-dashboard-menu-item"
+						onClick={(): void => onModalHandler(false)}
+					>
+						<Radius size={14} /> Import JSON
+					</div>
+				),
+				key: '1',
+			},
+		];
+
+		if (createNewDashboard) {
+			menuItems.unshift({
+				label: (
+					<div
+						className="create-dashboard-menu-item"
+						onClick={(): void => {
+							setShowNewDashboardTemplatesModal(true);
+						}}
+					>
+						<LayoutGrid size={14} /> Create dashboard
+					</div>
+				),
+				key: '0',
+			});
+		}
+
+		return menuItems;
+	}, [createNewDashboard]);
 
 	return (
 		<div className="dashboards-list-container">
@@ -372,7 +566,7 @@ function DashboardsList(): JSX.Element {
 
 					<Dropdown
 						overlayClassName="new-dashboard-menu"
-						menu={{ items: createDashboardItems }}
+						menu={{ items: getCreateDashboardItems }}
 						placement="bottomRight"
 						trigger={['click']}
 					>
@@ -386,13 +580,68 @@ function DashboardsList(): JSX.Element {
 					</Dropdown>
 				</div>
 
+				<div className="all-dashboards-header">
+					<Typography.Text className="typography">All Dashboards</Typography.Text>
+					<section className="right-actions">
+						<Tooltip title="Sort">
+							<Popover
+								trigger="click"
+								content={
+									<div className="sort-content">
+										<Typography.Text className="sort-heading">Sort By</Typography.Text>
+										<Button type="text" className="sort-btns">
+											Last created
+										</Button>
+										<Button type="text" className="sort-btns">
+											Last updated
+										</Button>
+									</div>
+								}
+								rootClassName="sort-dashboards"
+								placement="bottomRight"
+								arrow={false}
+							>
+								<ArrowDownWideNarrow size={14} />
+							</Popover>
+						</Tooltip>
+						<Popover
+							trigger="click"
+							content={
+								<div className="configure-content">
+									<Button
+										type="text"
+										icon={<HdmiPort size={14} />}
+										className="configure-btn"
+										onClick={(e): void => {
+											e.preventDefault();
+											e.stopPropagation();
+											setIsConfigureMetadata(true);
+										}}
+									>
+										Configure metadata
+									</Button>
+								</div>
+							}
+							rootClassName="configure-group"
+							placement="bottomRight"
+							arrow={false}
+						>
+							<SmallDashOutlined />
+						</Popover>
+					</section>
+				</div>
+
 				<Table
 					columns={columns}
 					dataSource={data}
 					showSorterTooltip
 					loading={isDashboardListLoading || isFilteringDashboards}
 					showHeader={false}
-					pagination={{ pageSize: 5, showSizeChanger: false }}
+					pagination={{
+						pageSize: 5,
+						showSizeChanger: false,
+						defaultCurrent: Number(paginationParam) || 1,
+					}}
 				/>
 
 				<ImportJSON
@@ -408,6 +657,155 @@ function DashboardsList(): JSX.Element {
 						setShowNewDashboardTemplatesModal(false);
 					}}
 				/>
+
+				<Modal
+					open={isConfigureMetadataOpen}
+					onCancel={(): void => {
+						setIsConfigureMetadata(false);
+						// reset to default if the changes are not applied
+						setVisibleColumns(getLocalStorageDynamicColumns());
+					}}
+					title="Configure Metadata"
+					footer={
+						<Button
+							type="text"
+							icon={<Check size={14} />}
+							className="save-changes"
+							onClick={(): void => {
+								setIsConfigureMetadata(false);
+								setDynamicColumnsLocalStorage(visibleColumns);
+							}}
+						>
+							Save Changes
+						</Button>
+					}
+					rootClassName="configure-metadata-root"
+				>
+					<div className="configure-content">
+						<div className="configure-preview">
+							<section className="header">
+								<TentIcon />
+								<Typography.Text className="title">
+									{dashboards?.[0]?.data?.title}
+								</Typography.Text>
+							</section>
+							<section className="details">
+								<section className="createdAt">
+									{visibleColumns.createdAt && (
+										<Typography.Text className="formatted-time">
+											<CalendarClock size={14} />
+											{getFormattedTime(dashboards?.[0] as Dashboard, 'created_at')}
+										</Typography.Text>
+									)}
+									{visibleColumns.createdBy && (
+										<div className="user">
+											<Typography.Text className="user-tag">
+												{dashboards?.[0]?.created_by?.substring(0, 1).toUpperCase()}
+											</Typography.Text>
+											<Typography.Text className="dashboard-created-by">
+												{dashboards?.[0]?.created_by}
+											</Typography.Text>
+										</div>
+									)}
+								</section>
+								<section className="updatedAt">
+									{visibleColumns.updatedAt && (
+										<Typography.Text className="formatted-time">
+											<CalendarClock size={14} />
+											{getFormattedTime(dashboards?.[0] as Dashboard, 'updated_at')}
+										</Typography.Text>
+									)}
+									{visibleColumns.updatedBy && (
+										<div className="user">
+											<Typography.Text className="user-tag">
+												{dashboards?.[0]?.updated_by?.substring(0, 1).toUpperCase()}
+											</Typography.Text>
+											<Typography.Text className="dashboard-created-by">
+												{dashboards?.[0]?.updated_by}
+											</Typography.Text>
+										</div>
+									)}
+								</section>
+							</section>
+						</div>
+						<div className="metadata-action">
+							<div className="left">
+								<CalendarClock size={14} />
+								<Typography.Text>Created at</Typography.Text>
+							</div>
+							<div className="connection-line" />
+							<div className="right">
+								<Switch
+									size="small"
+									checked={visibleColumns.createdAt}
+									onChange={(check): void =>
+										setVisibleColumns((prev) => ({
+											...prev,
+											[DynamicColumns.CREATED_AT]: check,
+										}))
+									}
+								/>
+							</div>
+						</div>
+						<div className="metadata-action">
+							<div className="left">
+								<CalendarClock size={14} />
+								<Typography.Text>Created by</Typography.Text>
+							</div>
+							<div className="connection-line" />
+							<div className="right">
+								<Switch
+									size="small"
+									checked={visibleColumns.createdBy}
+									onChange={(check): void =>
+										setVisibleColumns((prev) => ({
+											...prev,
+											[DynamicColumns.CREATED_BY]: check,
+										}))
+									}
+								/>
+							</div>
+						</div>
+						<div className="metadata-action">
+							<div className="left">
+								<Clock4 size={14} />
+								<Typography.Text>Updated at</Typography.Text>
+							</div>
+							<div className="connection-line" />
+							<div className="right">
+								<Switch
+									size="small"
+									checked={visibleColumns.updatedAt}
+									onChange={(check): void =>
+										setVisibleColumns((prev) => ({
+											...prev,
+											[DynamicColumns.UPDATED_AT]: check,
+										}))
+									}
+								/>
+							</div>
+						</div>
+						<div className="metadata-action">
+							<div className="left">
+								<Clock4 size={14} />
+								<Typography.Text>Updated by</Typography.Text>
+							</div>
+							<div className="connection-line" />
+							<div className="right">
+								<Switch
+									size="small"
+									checked={visibleColumns.updatedBy}
+									onChange={(check): void =>
+										setVisibleColumns((prev) => ({
+											...prev,
+											[DynamicColumns.UPDATED_BY]: check,
+										}))
+									}
+								/>
+							</div>
+						</div>
+					</div>
+				</Modal>
 			</div>
 		</div>
 	);

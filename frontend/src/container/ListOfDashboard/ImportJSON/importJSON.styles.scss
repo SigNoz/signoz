@@ -13,6 +13,25 @@
 		padding: 0;
 	}
 
+	.margin {
+		background: linear-gradient(
+			139deg,
+			rgba(18, 19, 23, 0.8) 0%,
+			rgba(18, 19, 23, 0.9) 98.68%
+		);
+
+		backdrop-filter: blur(20px);
+	}
+	.view-lines {
+		background: linear-gradient(
+			139deg,
+			rgba(18, 19, 23, 0.8) 0%,
+			rgba(18, 19, 23, 0.9) 98.68%
+		);
+
+		backdrop-filter: blur(20px);
+	}
+
 	.import-json-content-header {
 		padding: 16px;
 		display: flex;
