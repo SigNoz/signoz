@@ -22,6 +22,7 @@ import { TableProps } from 'antd/lib';
 import createDashboard from 'api/dashboard/create';
 import TentIcon from 'assets/CustomIcons/TentIcon';
 import { AxiosError } from 'axios';
+import cx from 'classnames';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
@@ -62,9 +63,7 @@ import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 
-import useSortableTable from '../../hooks/ResizeTable/useSortableTable';
 import useUrlQuery from '../../hooks/useUrlQuery';
-import { GettableAlert } from '../../types/api/alerts/get';
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
 import { DeleteButton } from './TableComponents/DeleteButton';
@@ -114,6 +113,12 @@ function DashboardsList(): JSX.Element {
 	const searchParams = params.get('search');
 	const [searchString, setSearchString] = useState<string>(searchParams || '');
 
+	const [sortOrder, setSortOrder] = useState({
+		columnKey: orderColumnParam,
+		order: orderQueryParam,
+		pagination: paginationParam,
+	});
+
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
 		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');
 		let dashboardDynamicColumns: DashboardDynamicColumns = {
@@ -159,18 +164,6 @@ function DashboardsList(): JSX.Element {
 
 	const [dashboards, setDashboards] = useState<Dashboard[]>();
 
-	const sortingOrder: 'ascend' | 'descend' | null =
-		orderQueryParam === 'ascend' || orderQueryParam === 'descend'
-			? orderQueryParam
-			: null;
-
-	const { sortedInfo, handleChange } = useSortableTable<GettableAlert>(
-		sortingOrder,
-		orderColumnParam || '',
-		searchString,
-	);
-	console.log(sortedInfo, handleChange);
-
 	const sortDashboardsByCreatedAt = (dashboards: Dashboard[]): void => {
 		const sortedDashboards = dashboards.sort(
 			(a, b) =>
@@ -178,6 +171,49 @@ function DashboardsList(): JSX.Element {
 		);
 		setDashboards(sortedDashboards);
 	};
+
+	const sortDashboardsByUpdatedAt = (dashboards: Dashboard[]): void => {
+		const sortedDashboards = dashboards.sort(
+			(a, b) =>
+				new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+		);
+		setDashboards(sortedDashboards);
+	};
+
+	useEffect(() => {
+		params.set('columnKey', sortOrder.columnKey as string);
+		params.set('order', sortOrder.order as string);
+		params.set('page', sortOrder.pagination || '1');
+		history.replace({ search: params.toString() });
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [sortOrder]);
+
+	const sortHandle = (key: string): void => {
+		console.log(dashboards);
+		if (!dashboards) return;
+		if (key === 'createdAt') {
+			sortDashboardsByCreatedAt(dashboards);
+			setSortOrder({
+				columnKey: 'createdAt',
+				order: 'descend',
+				pagination: sortOrder.pagination || '1',
+			});
+		} else if (key === 'updatedAt') {
+			sortDashboardsByUpdatedAt(dashboards);
+			setSortOrder({
+				columnKey: 'updatedAt',
+				order: 'descend',
+				pagination: sortOrder.pagination || '1',
+			});
+		}
+	};
+
+	function handlePageSizeUpdate(page: number): void {
+		setSortOrder((order) => ({
+			...order,
+			pagination: String(page),
+		}));
+	}
 
 	useEffect(() => {
 		sortDashboardsByCreatedAt(dashboardListResponse);
@@ -599,11 +635,21 @@ function DashboardsList(): JSX.Element {
 										content={
 											<div className="sort-content">
 												<Typography.Text className="sort-heading">Sort By</Typography.Text>
-												<Button type="text" className="sort-btns">
+												<Button
+													type="text"
+													className={cx('sort-btns')}
+													onClick={(): void => sortHandle('createdAt')}
+												>
 													Last created
+													{sortOrder.columnKey === 'createdAt' && <Check size={14} />}
 												</Button>
-												<Button type="text" className="sort-btns">
+												<Button
+													type="text"
+													className={cx('sort-btns')}
+													onClick={(): void => sortHandle('updatedAt')}
+												>
 													Last updated
+													{sortOrder.columnKey === 'updatedAt' && <Check size={14} />}
 												</Button>
 											</div>
 										}
@@ -650,7 +696,8 @@ function DashboardsList(): JSX.Element {
 							pagination={{
 								pageSize: 5,
 								showSizeChanger: false,
-								defaultCurrent: Number(paginationParam) || 1,
+								onChange: (page): void => handlePageSizeUpdate(page),
+								defaultCurrent: Number(sortOrder.pagination) || 1,
 							}}
 						/>
 					</>
