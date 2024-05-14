@@ -169,6 +169,17 @@
 		margin: 16px 0;
 	}
 
+	.loading-dashboard-details {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+
+		.skeleton-1 {
+			height: 125px;
+			width: 100%;
+		}
+	}
+
 	.all-dashboards-header {
 		display: flex;
 		justify-content: space-between;
