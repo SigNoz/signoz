@@ -576,7 +576,7 @@
 
 .configure-metadata-root {
 	.ant-modal-content {
-		width: 384px;
+		width: 400px;
 		flex-shrink: 0;
 		border-radius: 4px;
 		border: 1px solid var(--Slate-500, #161922);
@@ -608,6 +608,139 @@
 					border-radius: 4px;
 					border: 0.915px solid var(--Slate-500, #161922);
 					background: var(--Ink-300, #16181d);
+
+					.header {
+						display: flex;
+						gap: 4px;
+
+						.title {
+							color: var(--Vanilla-100, #fff);
+							font-family: Inter;
+							font-size: 12.805px;
+							font-style: normal;
+							font-weight: 500;
+							line-height: 18.293px; /* 142.857% */
+							letter-spacing: -0.064px;
+						}
+					}
+
+					.details {
+						display: flex;
+						flex-direction: column;
+						gap: 8px;
+
+						.createdAt {
+							display: flex;
+							gap: 25px;
+							align-items: center;
+
+							.formatted-time {
+								display: flex;
+								gap: 4px;
+								color: var(--Vanilla-400, #c0c1c3);
+								font-variant-numeric: lining-nums tabular-nums stacked-fractions
+									slashed-zero;
+								font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+								font-family: Inter;
+								font-size: 12.805px;
+								font-style: normal;
+								font-weight: 400;
+								line-height: 16.463px; /* 128.571% */
+								letter-spacing: -0.064px;
+							}
+
+							.user {
+								display: flex;
+								align-items: center;
+								gap: 4px;
+
+								.user-tag {
+									width: 12px;
+									height: 12px;
+									display: flex;
+									justify-content: center;
+									align-items: center;
+									color: var(--bg-vanilla-400);
+									font-size: 8px;
+									font-style: normal;
+									font-weight: var(--font-weight-normal);
+									line-height: normal;
+									letter-spacing: -0.05px;
+									border-radius: 12.805px;
+									background-color: var(--bg-ink-500);
+								}
+
+								.dashboard-created-by {
+									color: var(--Vanilla-400, #c0c1c3);
+									font-variant-numeric: lining-nums tabular-nums stacked-fractions
+										slashed-zero;
+									font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+									font-family: Inter;
+									font-size: 12.805px;
+									font-style: normal;
+									font-weight: 400;
+									line-height: 16.463px; /* 128.571% */
+									letter-spacing: -0.064px;
+								}
+							}
+						}
+
+						.updatedAt {
+							display: flex;
+							gap: 25px;
+							align-items: center;
+
+							.formatted-time {
+								display: flex;
+								gap: 4px;
+								color: var(--Vanilla-400, #c0c1c3);
+								font-variant-numeric: lining-nums tabular-nums stacked-fractions
+									slashed-zero;
+								font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+								font-family: Inter;
+								font-size: 12.805px;
+								font-style: normal;
+								font-weight: 400;
+								line-height: 16.463px; /* 128.571% */
+								letter-spacing: -0.064px;
+							}
+
+							.user {
+								display: flex;
+								align-items: center;
+								gap: 4px;
+
+								.user-tag {
+									width: 12px;
+									height: 12px;
+									display: flex;
+									justify-content: center;
+									align-items: center;
+									color: var(--bg-vanilla-400);
+									font-size: 8px;
+									font-style: normal;
+									font-weight: var(--font-weight-normal);
+									line-height: normal;
+									letter-spacing: -0.05px;
+									border-radius: 12.805px;
+									background-color: var(--bg-ink-500);
+								}
+
+								.dashboard-created-by {
+									color: var(--Vanilla-400, #c0c1c3);
+									font-variant-numeric: lining-nums tabular-nums stacked-fractions
+										slashed-zero;
+									font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+									font-family: Inter;
+									font-size: 12.805px;
+									font-style: normal;
+									font-weight: 400;
+									line-height: 16.463px; /* 128.571% */
+									letter-spacing: -0.064px;
+								}
+							}
+						}
+					}
 				}
 
 				.metadata-action {

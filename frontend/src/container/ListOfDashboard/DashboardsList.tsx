@@ -27,7 +27,7 @@ import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { isEmpty } from 'lodash-es';
+import { get, isEmpty } from 'lodash-es';
 import {
 	ArrowDownWideNarrow,
 	CalendarClock,
@@ -281,6 +281,33 @@ function DashboardsList(): JSX.Element {
 			});
 		}
 	}, [state.error, state.value, t, notifications]);
+
+	function getFormattedTime(dashboard: Dashboard, option: string): string {
+		const timeOptions: Intl.DateTimeFormatOptions = {
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+			hour12: false,
+		};
+		const formattedTime = new Date(get(dashboard, option, '')).toLocaleTimeString(
+			'en-US',
+			timeOptions,
+		);
+
+		const dateOptions: Intl.DateTimeFormatOptions = {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric',
+		};
+
+		const formattedDate = new Date(get(dashboard, option, '')).toLocaleDateString(
+			'en-US',
+			dateOptions,
+		);
+
+		// Combine time and date
+		return `${formattedDate} ⎯ ${formattedTime}`;
+	}
 
 	const columns: TableProps<Data>['columns'] = [
 		{
@@ -623,7 +650,50 @@ function DashboardsList(): JSX.Element {
 				>
 					<div className="configure-content">
 						<div className="configure-preview">
-							<Typography.Text>Sample Title</Typography.Text>
+							<section className="header">
+								<TentIcon />
+								<Typography.Text className="title">
+									{dashboards?.[0]?.data?.title}
+								</Typography.Text>
+							</section>
+							<section className="details">
+								<section className="createdAt">
+									{visibleColumns.createdAt && (
+										<Typography.Text className="formatted-time">
+											<CalendarClock size={14} />
+											{getFormattedTime(dashboards?.[0] as Dashboard, 'created_at')}
+										</Typography.Text>
+									)}
+									{visibleColumns.createdBy && (
+										<div className="user">
+											<Typography.Text className="user-tag">
+												{dashboards?.[0]?.created_by?.substring(0, 1).toUpperCase()}
+											</Typography.Text>
+											<Typography.Text className="dashboard-created-by">
+												{dashboards?.[0]?.created_by}
+											</Typography.Text>
+										</div>
+									)}
+								</section>
+								<section className="updatedAt">
+									{visibleColumns.updatedAt && (
+										<Typography.Text className="formatted-time">
+											<CalendarClock size={14} />
+											{getFormattedTime(dashboards?.[0] as Dashboard, 'updated_at')}
+										</Typography.Text>
+									)}
+									{visibleColumns.updatedBy && (
+										<div className="user">
+											<Typography.Text className="user-tag">
+												{dashboards?.[0]?.updated_by?.substring(0, 1).toUpperCase()}
+											</Typography.Text>
+											<Typography.Text className="dashboard-created-by">
+												{dashboards?.[0]?.updated_by}
+											</Typography.Text>
+										</div>
+									)}
+								</section>
+							</section>
 						</div>
 						<div className="metadata-action">
 							<div className="left">
