@@ -39,3 +39,17 @@ export const filterTemplates = (
 		return name.toLowerCase().includes(searchValueLowerCase);
 	});
 };
+
+export interface DashboardDynamicColumns {
+	createdAt: boolean;
+	createdBy: boolean;
+	updatedAt: boolean;
+	updatedBy: boolean;
+}
+
+export enum DynamicColumns {
+	CREATED_AT = 'createdAt',
+	CREATED_BY = 'createdBy',
+	UPDATED_AT = 'updatedAt',
+	UPDATED_BY = 'updatedBy',
+}
