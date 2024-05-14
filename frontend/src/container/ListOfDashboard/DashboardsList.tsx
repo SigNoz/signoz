@@ -27,6 +27,7 @@ import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { isEmpty } from 'lodash-es';
 import {
 	ArrowDownWideNarrow,
 	CalendarClock,
@@ -66,7 +67,11 @@ import { GettableAlert } from '../../types/api/alerts/get';
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
 import { DeleteButton } from './TableComponents/DeleteButton';
-import { filterDashboard } from './utils';
+import {
+	DashboardDynamicColumns,
+	DynamicColumns,
+	filterDashboard,
+} from './utils';
 
 function DashboardsList(): JSX.Element {
 	const {
@@ -107,6 +112,49 @@ function DashboardsList(): JSX.Element {
 	const paginationParam = params.get('page');
 	const searchParams = params.get('search');
 	const [searchString, setSearchString] = useState<string>(searchParams || '');
+
+	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
+		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');
+		let dashboardDynamicColumns: DashboardDynamicColumns = {
+			createdAt: false,
+			createdBy: false,
+			updatedAt: false,
+			updatedBy: false,
+		};
+		if (typeof dashboardDynamicColumnsString === 'string') {
+			try {
+				const tempDashboardDynamicColumns = JSON.parse(
+					dashboardDynamicColumnsString,
+				);
+
+				if (isEmpty(tempDashboardDynamicColumns)) {
+					localStorage.setItem('dashboard', JSON.stringify(dashboardDynamicColumns));
+				} else {
+					dashboardDynamicColumns = { ...tempDashboardDynamicColumns };
+				}
+			} catch (error) {
+				console.error(error);
+			}
+		} else {
+			localStorage.setItem('dashboard', JSON.stringify(dashboardDynamicColumns));
+		}
+
+		return dashboardDynamicColumns;
+	};
+
+	const [visibleColumns, setVisibleColumns] = useState<DashboardDynamicColumns>(
+		() => getLocalStorageDynamicColumns(),
+	);
+
+	function setDynamicColumnsLocalStorage(
+		visibleColumns: DashboardDynamicColumns,
+	): void {
+		try {
+			localStorage.setItem('dashboard', JSON.stringify(visibleColumns));
+		} catch (error) {
+			console.error(error);
+		}
+	}
 
 	const [dashboards, setDashboards] = useState<Dashboard[]>();
 
@@ -554,6 +602,8 @@ function DashboardsList(): JSX.Element {
 					open={isConfigureMetadataOpen}
 					onCancel={(): void => {
 						setIsConfigureMetadata(false);
+						// reset to default if the changes are not applied
+						setVisibleColumns(getLocalStorageDynamicColumns());
 					}}
 					title="Configure Metadata"
 					footer={
@@ -563,7 +613,7 @@ function DashboardsList(): JSX.Element {
 							className="save-changes"
 							onClick={(): void => {
 								setIsConfigureMetadata(false);
-								// set local storage here
+								setDynamicColumnsLocalStorage(visibleColumns);
 							}}
 						>
 							Save Changes
@@ -582,7 +632,16 @@ function DashboardsList(): JSX.Element {
 							</div>
 							<div className="connection-line" />
 							<div className="right">
-								<Switch size="small" />
+								<Switch
+									size="small"
+									checked={visibleColumns.createdAt}
+									onChange={(check): void =>
+										setVisibleColumns((prev) => ({
+											...prev,
+											[DynamicColumns.CREATED_AT]: check,
+										}))
+									}
+								/>
 							</div>
 						</div>
 						<div className="metadata-action">
@@ -592,7 +651,16 @@ function DashboardsList(): JSX.Element {
 							</div>
 							<div className="connection-line" />
 							<div className="right">
-								<Switch size="small" />
+								<Switch
+									size="small"
+									checked={visibleColumns.createdBy}
+									onChange={(check): void =>
+										setVisibleColumns((prev) => ({
+											...prev,
+											[DynamicColumns.CREATED_BY]: check,
+										}))
+									}
+								/>
 							</div>
 						</div>
 						<div className="metadata-action">
@@ -602,7 +670,16 @@ function DashboardsList(): JSX.Element {
 							</div>
 							<div className="connection-line" />
 							<div className="right">
-								<Switch size="small" />
+								<Switch
+									size="small"
+									checked={visibleColumns.updatedAt}
+									onChange={(check): void =>
+										setVisibleColumns((prev) => ({
+											...prev,
+											[DynamicColumns.UPDATED_AT]: check,
+										}))
+									}
+								/>
 							</div>
 						</div>
 						<div className="metadata-action">
@@ -612,7 +689,16 @@ function DashboardsList(): JSX.Element {
 							</div>
 							<div className="connection-line" />
 							<div className="right">
-								<Switch size="small" />
+								<Switch
+									size="small"
+									checked={visibleColumns.updatedBy}
+									onChange={(check): void =>
+										setVisibleColumns((prev) => ({
+											...prev,
+											[DynamicColumns.UPDATED_BY]: check,
+										}))
+									}
+								/>
 							</div>
 						</div>
 					</div>
