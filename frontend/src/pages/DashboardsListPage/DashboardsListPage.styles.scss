@@ -1,0 +1,22 @@
+.dashboard-header {
+	display: flex;
+	align-items: center;
+	padding: 16px;
+	gap: 8px;
+	height: 48px;
+	border-bottom: 1px solid var(--bg-slate-500);
+
+	.icon {
+		color: var(--Vanilla-400, #c0c1c3);
+	}
+
+	.text {
+		color: var(--Vanilla-400, #c0c1c3);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px; /* 142.857% */
+		letter-spacing: -0.07px;
+	}
+}
