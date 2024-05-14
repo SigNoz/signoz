@@ -11,6 +11,7 @@ import {
 	MenuProps,
 	Modal,
 	Popover,
+	Skeleton,
 	Switch,
 	Table,
 	Tag,
@@ -580,70 +581,80 @@ function DashboardsList(): JSX.Element {
 					</Dropdown>
 				</div>
 
-				<div className="all-dashboards-header">
-					<Typography.Text className="typography">All Dashboards</Typography.Text>
-					<section className="right-actions">
-						<Tooltip title="Sort">
-							<Popover
-								trigger="click"
-								content={
-									<div className="sort-content">
-										<Typography.Text className="sort-heading">Sort By</Typography.Text>
-										<Button type="text" className="sort-btns">
-											Last created
-										</Button>
-										<Button type="text" className="sort-btns">
-											Last updated
-										</Button>
-									</div>
-								}
-								rootClassName="sort-dashboards"
-								placement="bottomRight"
-								arrow={false}
-							>
-								<ArrowDownWideNarrow size={14} />
-							</Popover>
-						</Tooltip>
-						<Popover
-							trigger="click"
-							content={
-								<div className="configure-content">
-									<Button
-										type="text"
-										icon={<HdmiPort size={14} />}
-										className="configure-btn"
-										onClick={(e): void => {
-											e.preventDefault();
-											e.stopPropagation();
-											setIsConfigureMetadata(true);
-										}}
+				{isDashboardListLoading || isFilteringDashboards ? (
+					<div className="loading-dashboard-details">
+						<Skeleton.Input active size="large" className="skeleton-1" />
+						<Skeleton.Input active size="large" className="skeleton-1" />
+						<Skeleton.Input active size="large" className="skeleton-1" />
+						<Skeleton.Input active size="large" className="skeleton-1" />
+					</div>
+				) : (
+					<>
+						<div className="all-dashboards-header">
+							<Typography.Text className="typography">All Dashboards</Typography.Text>
+							<section className="right-actions">
+								<Tooltip title="Sort">
+									<Popover
+										trigger="click"
+										content={
+											<div className="sort-content">
+												<Typography.Text className="sort-heading">Sort By</Typography.Text>
+												<Button type="text" className="sort-btns">
+													Last created
+												</Button>
+												<Button type="text" className="sort-btns">
+													Last updated
+												</Button>
+											</div>
+										}
+										rootClassName="sort-dashboards"
+										placement="bottomRight"
+										arrow={false}
 									>
-										Configure metadata
-									</Button>
-								</div>
-							}
-							rootClassName="configure-group"
-							placement="bottomRight"
-							arrow={false}
-						>
-							<SmallDashOutlined />
-						</Popover>
-					</section>
-				</div>
+										<ArrowDownWideNarrow size={14} />
+									</Popover>
+								</Tooltip>
+								<Popover
+									trigger="click"
+									content={
+										<div className="configure-content">
+											<Button
+												type="text"
+												icon={<HdmiPort size={14} />}
+												className="configure-btn"
+												onClick={(e): void => {
+													e.preventDefault();
+													e.stopPropagation();
+													setIsConfigureMetadata(true);
+												}}
+											>
+												Configure metadata
+											</Button>
+										</div>
+									}
+									rootClassName="configure-group"
+									placement="bottomRight"
+									arrow={false}
+								>
+									<SmallDashOutlined />
+								</Popover>
+							</section>
+						</div>
 
-				<Table
-					columns={columns}
-					dataSource={data}
-					showSorterTooltip
-					loading={isDashboardListLoading || isFilteringDashboards}
-					showHeader={false}
-					pagination={{
-						pageSize: 5,
-						showSizeChanger: false,
-						defaultCurrent: Number(paginationParam) || 1,
-					}}
-				/>
-
+						<Table
+							columns={columns}
+							dataSource={data}
+							showSorterTooltip
+							loading={isDashboardListLoading || isFilteringDashboards}
+							showHeader={false}
+							pagination={{
+								pageSize: 5,
+								showSizeChanger: false,
+								defaultCurrent: Number(paginationParam) || 1,
+							}}
+						/>
+					</>
+				)}
 				<ImportJSON
 					isImportJSONModalVisible={isImportJSONModalVisible}
 					uploadedGrafana={uploadedGrafana}
