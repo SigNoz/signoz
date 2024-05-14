@@ -73,6 +73,7 @@ export interface DashboardData {
 	panelMap?: Record<string, { widgets: Layout[]; collapsed: boolean }>;
 	variables: Record<string, IDashboardVariable>;
 	version?: string;
+	image?: string;
 }
 
 export interface WidgetRow {

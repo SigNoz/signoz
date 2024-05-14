@@ -21,7 +21,6 @@ import {
 	LayoutGrid,
 	LockKeyhole,
 	PenLine,
-	Tent,
 	X,
 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -40,6 +39,7 @@ import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
 
 import DashboardGraphSlider from '../ComponentsSlider';
+import { Base64Icons } from '../DashboardSettings/General/utils';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
 import SettingsDrawer from './SettingsDrawer';
 import { DEFAULT_ROW_NAME, downloadObjectAsJson } from './utils';
@@ -70,7 +70,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		  }
 		: ({} as DashboardData);
 
-	const { title = '', description, tags } = selectedData || {};
+	const { title = '', description, tags, image = Base64Icons[0] } =
+		selectedData || {};
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 
@@ -257,13 +258,28 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				>
 					Dashboard /
 				</Button>
-				<Button type="text" className="id-btn" icon={<Tent size={14} />}>
+				<Button
+					type="text"
+					className="id-btn"
+					icon={
+						// eslint-disable-next-line jsx-a11y/img-redundant-alt
+						<img
+							src={image}
+							alt="dashboard-image"
+							style={{ height: '14px', width: '14px' }}
+						/>
+					}
+				>
 					{title}
 				</Button>
 			</section>
 			<section className="dashbord-details">
 				<div className="left-section">
-					<Tent size={14} />
+					<img
+						src={image}
+						alt="dashboard-img"
+						style={{ width: '16px', height: '16px' }}
+					/>
 					<Typography.Text className="dashboard-title">{title}</Typography.Text>
 				</div>
 				<div className="right-section">
