@@ -22,6 +22,7 @@ import { TableProps } from 'antd/lib';
 import createDashboard from 'api/dashboard/create';
 import TentIcon from 'assets/CustomIcons/TentIcon';
 import { AxiosError } from 'axios';
+import cx from 'classnames';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
@@ -636,17 +637,19 @@ function DashboardsList(): JSX.Element {
 												<Typography.Text className="sort-heading">Sort By</Typography.Text>
 												<Button
 													type="text"
-													className="sort-btns"
+													className={cx('sort-btns')}
 													onClick={(): void => sortHandle('createdAt')}
 												>
 													Last created
+													{sortOrder.columnKey === 'createdAt' && <Check size={14} />}
 												</Button>
 												<Button
 													type="text"
-													className="sort-btns"
+													className={cx('sort-btns')}
 													onClick={(): void => sortHandle('updatedAt')}
 												>
 													Last updated
+													{sortOrder.columnKey === 'updatedAt' && <Check size={14} />}
 												</Button>
 											</div>
 										}

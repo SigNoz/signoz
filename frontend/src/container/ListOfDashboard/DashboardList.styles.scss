@@ -554,6 +554,9 @@
 
 			.sort-btns {
 				text-align: start;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
 				width: 100%;
 				color: var(--Vanilla-400, #c0c1c3);
 				font-family: Inter;
