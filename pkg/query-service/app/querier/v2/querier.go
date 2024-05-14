@@ -14,6 +14,7 @@ import (
 	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -506,6 +507,13 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 				results, err, errQueriesByName = q.runBuilderListQueries(ctx, params, keys)
 			} else {
 				results, err, errQueriesByName = q.runBuilderQueries(ctx, params, keys)
+			}
+			// in builder query, the only errors we expose are the ones that exceed the resource limits
+			// everything else is internal error as they are not actionable by the user
+			for name, err := range errQueriesByName {
+				if !chErrors.IsResourceLimitError(fmt.Errorf(err)) {
+					delete(errQueriesByName, name)
+				}
 			}
 		case v3.QueryTypePromQL:
 			results, err, errQueriesByName = q.runPromQueries(ctx, params)

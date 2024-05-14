@@ -59,8 +59,8 @@ function CreateAlertChannels({
 
      *Summary:* {{ .Annotations.summary }}
      *Description:* {{ .Annotations.description }}
-     *RelatedLogs:* {{ .Annotations.related_logs }}
-     *RelatedTraces:* {{ .Annotations.related_traces }}
+     *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}
+     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}
 
      *Details:*
        {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}

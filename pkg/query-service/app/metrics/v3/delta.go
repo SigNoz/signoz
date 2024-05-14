@@ -12,39 +12,22 @@ func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableNam
 
 	metricQueryGroupBy := mq.GroupBy
 
-	// if the aggregate operator is a histogram quantile, and user has not forgotten
-	// the le tag in the group by then add the le tag to the group by
-	if mq.AggregateOperator == v3.AggregateOperatorHistQuant50 ||
-		mq.AggregateOperator == v3.AggregateOperatorHistQuant75 ||
-		mq.AggregateOperator == v3.AggregateOperatorHistQuant90 ||
-		mq.AggregateOperator == v3.AggregateOperatorHistQuant95 ||
-		mq.AggregateOperator == v3.AggregateOperatorHistQuant99 {
-		found := false
-		for _, tag := range mq.GroupBy {
-			if tag.Key == "le" {
-				found = true
+	if mq.Filters != nil {
+		temporalityFound := false
+		for _, filter := range mq.Filters.Items {
+			if filter.Key.Key == "__temporality__" {
+				temporalityFound = true
 				break
 			}
 		}
-		if !found {
-			metricQueryGroupBy = append(
-				metricQueryGroupBy,
-				v3.AttributeKey{
-					Key:      "le",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeTag,
-					IsColumn: false,
-				},
-			)
-		}
-	}
 
-	if mq.Filters != nil {
-		mq.Filters.Items = append(mq.Filters.Items, v3.FilterItem{
-			Key:      v3.AttributeKey{Key: "__temporality__"},
-			Operator: v3.FilterOperatorEqual,
-			Value:    "Delta",
-		})
+		if !temporalityFound {
+			mq.Filters.Items = append(mq.Filters.Items, v3.FilterItem{
+				Key:      v3.AttributeKey{Key: "__temporality__"},
+				Operator: v3.FilterOperatorEqual,
+				Value:    "Delta",
+			})
+		}
 	}
 
 	filterSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, metricQueryGroupBy, mq)
