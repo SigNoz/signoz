@@ -325,6 +325,10 @@ function DashboardsList(): JSX.Element {
 					timeOptions,
 				);
 
+				const lastUpdatedFormattedTime = new Date(
+					dashboard.lastUpdatedTime,
+				).toLocaleTimeString('en-US', timeOptions);
+
 				const dateOptions: Intl.DateTimeFormatOptions = {
 					month: 'short',
 					day: 'numeric',
@@ -336,8 +340,14 @@ function DashboardsList(): JSX.Element {
 					dateOptions,
 				);
 
+				const lastUpdatedFormattedDate = new Date(
+					dashboard.lastUpdatedTime,
+				).toLocaleDateString('en-US', dateOptions);
+
 				// Combine time and date
 				const formattedDateAndTime = `${formattedDate} ⎯ ${formattedTime}`;
+
+				const lastUpdatedFormattedDateTime = `${lastUpdatedFormattedDate} ⎯ ${lastUpdatedFormattedTime}`;
 
 				const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.id}`;
 
@@ -422,12 +432,14 @@ function DashboardsList(): JSX.Element {
 							</div>
 						</div>
 						<div className="dashboard-details">
-							<div className="dashboard-created-at">
-								<CalendarClock size={14} />
-								<Typography.Text>{formattedDateAndTime}</Typography.Text>
-							</div>
+							{visibleColumns.createdAt && (
+								<div className="dashboard-created-at">
+									<CalendarClock size={14} />
+									<Typography.Text>{formattedDateAndTime}</Typography.Text>
+								</div>
+							)}
 
-							{dashboard.createdBy && (
+							{dashboard.createdBy && visibleColumns.createdBy && (
 								<>
 									<div className="dashboard-tag">
 										<Typography.Text className="tag-text">
@@ -436,6 +448,27 @@ function DashboardsList(): JSX.Element {
 									</div>
 									<Typography.Text className="dashboard-created-by">
 										{dashboard.createdBy}
+									</Typography.Text>
+								</>
+							)}
+						</div>
+						<div className="dashboard-details">
+							{visibleColumns.updatedAt && (
+								<div className="dashboard-created-at">
+									<CalendarClock size={14} />
+									<Typography.Text>{lastUpdatedFormattedDateTime}</Typography.Text>
+								</div>
+							)}
+
+							{dashboard.lastUpdatedBy && visibleColumns.updatedBy && (
+								<>
+									<div className="dashboard-tag">
+										<Typography.Text className="tag-text">
+											{dashboard.lastUpdatedBy?.substring(0, 1).toUpperCase()}
+										</Typography.Text>
+									</div>
+									<Typography.Text className="dashboard-created-by">
+										{dashboard.lastUpdatedBy}
 									</Typography.Text>
 								</>
 							)}
