@@ -95,6 +95,13 @@ function GeneralDashboardSettings(): JSX.Element {
 		updatedTitle,
 	]);
 
+	const discardHandler = (): void => {
+		setUpdatedTitle(title);
+		setUpdatedImage(image);
+		setUpdatedTags(tags);
+		setUpdatedDescription(description);
+	};
+
 	return (
 		<div className="overview-content">
 			<Col className="overview-settings">
@@ -171,7 +178,7 @@ function GeneralDashboardSettings(): JSX.Element {
 							disabled={updateDashboardMutation.isLoading}
 							loading={updateDashboardMutation.isLoading}
 							icon={<X size={14} />}
-							onClick={onSaveHandler}
+							onClick={discardHandler}
 							type="text"
 							className="discard-btn"
 						>
