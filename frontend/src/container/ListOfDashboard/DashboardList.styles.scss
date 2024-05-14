@@ -112,6 +112,16 @@
 
 					.dashboard-created-by {
 						margin-left: 8px;
+						color: var(--Vanilla-400, #c0c1c3);
+						font-variant-numeric: lining-nums tabular-nums stacked-fractions
+							slashed-zero;
+						font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+						font-family: Inter;
+						font-size: 14px;
+						font-style: normal;
+						font-weight: 400;
+						line-height: 18px; /* 128.571% */
+						letter-spacing: -0.07px;
 					}
 
 					.dashboard-created-at {
@@ -125,6 +135,16 @@
 							font-size: var(--font-size-xs);
 							font-style: normal;
 							font-weight: var(--font-weight-normal);
+							line-height: 18px; /* 128.571% */
+							letter-spacing: -0.07px;
+							color: var(--Vanilla-400, #c0c1c3);
+							font-variant-numeric: lining-nums tabular-nums stacked-fractions
+								slashed-zero;
+							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+							font-family: Inter;
+							font-size: 14px;
+							font-style: normal;
+							font-weight: 400;
 							line-height: 18px; /* 128.571% */
 							letter-spacing: -0.07px;
 						}
@@ -534,6 +554,9 @@
 
 			.sort-btns {
 				text-align: start;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
 				width: 100%;
 				color: var(--Vanilla-400, #c0c1c3);
 				font-family: Inter;
