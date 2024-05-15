@@ -7,6 +7,7 @@ import savePipeline from 'api/pipeline/post';
 import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useNotifications } from 'hooks/useNotifications';
 import cloneDeep from 'lodash-es/cloneDeep';
+import isEqual from 'lodash-es/isEqual';
 import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -14,7 +15,6 @@ import { useTranslation } from 'react-i18next';
 import {
 	ActionMode,
 	ActionType,
-	Pipeline,
 	PipelineData,
 	ProcessorData,
 } from 'types/api/pipeline/def';
@@ -85,7 +85,11 @@ function PipelineListsView({
 	setActionType,
 	isActionMode,
 	setActionMode,
-	pipelineData,
+	savedPipelinesVersion,
+	savedPipelines,
+	setSavedPipelines,
+	currentPipelines,
+	setCurrentPipelines,
 	refetchPipelineLists,
 }: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline', 'common']);
@@ -93,34 +97,28 @@ function PipelineListsView({
 	const { notifications } = useNotifications();
 	const [pipelineSearchValue, setPipelineSearchValue] = useState<string>('');
 	const { trackEvent } = useAnalytics();
-	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(pipelineData?.pipelines || []),
-	);
-	const [currPipelineData, setCurrPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(pipelineData?.pipelines || []),
-	);
-
 	const [expandedPipelineId, setExpandedPipelineId] = useState<
 		string | undefined
 	>(undefined);
 	const expandedPipelineData = useCallback(
-		() => currPipelineData?.find((p) => p.id === expandedPipelineId),
-		[currPipelineData, expandedPipelineId],
+		() => currentPipelines?.find((p) => p.id === expandedPipelineId),
+		[currentPipelines, expandedPipelineId],
 	);
+
 	const setExpandedPipelineData = useCallback(
 		(newData: PipelineData): void => {
 			if (expandedPipelineId) {
-				const pipelineIdx = currPipelineData?.findIndex(
+				const pipelineIdx = currentPipelines?.findIndex(
 					(p) => p.id === expandedPipelineId,
 				);
 				if (pipelineIdx >= 0) {
-					const newPipelineData = [...currPipelineData];
+					const newPipelineData = cloneDeep(currentPipelines);
 					newPipelineData[pipelineIdx] = newData;
-					setCurrPipelineData(newPipelineData);
+					setCurrentPipelines(newPipelineData);
 				}
 			}
 		},
-		[expandedPipelineId, currPipelineData],
+		[expandedPipelineId, currentPipelines, setCurrentPipelines],
 	);
 
 	const [
@@ -134,17 +132,16 @@ function PipelineListsView({
 	] = useState<PipelineData>();
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<Array<string>>();
-	const [showSaveButton, setShowSaveButton] = useState<string>();
 	const isEditingActionMode = isActionMode === ActionMode.Editing;
 
 	const visibleCurrPipelines = useMemo((): Array<PipelineData> => {
 		if (pipelineSearchValue === '') {
-			return currPipelineData;
+			return currentPipelines;
 		}
-		return currPipelineData.filter((data) =>
+		return currentPipelines.filter((data) =>
 			getDataOnSearch(data as never, pipelineSearchValue),
 		);
-	}, [currPipelineData, pipelineSearchValue]);
+	}, [currentPipelines, pipelineSearchValue]);
 
 	const handleAlert = useCallback(
 		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
@@ -171,15 +168,18 @@ function PipelineListsView({
 
 	const pipelineDeleteHandler = useCallback(
 		(record: PipelineData) => (): void => {
-			setShowSaveButton(ActionMode.Editing);
-			const filteredData = getElementFromArray(currPipelineData, record, 'id');
+			const filteredData = getElementFromArray(
+				cloneDeep(currentPipelines),
+				record,
+				'id',
+			);
 			filteredData.forEach((item, index) => {
 				const obj = item;
 				obj.orderId = index + 1;
 			});
-			setCurrPipelineData(filteredData);
+			setCurrentPipelines(filteredData);
 		},
-		[currPipelineData],
+		[currentPipelines, setCurrentPipelines],
 	);
 
 	const pipelineDeleteAction = useCallback(
@@ -204,21 +204,20 @@ function PipelineListsView({
 
 	const onSwitchPipelineChange = useCallback(
 		(checked: boolean, record: PipelineData): void => {
-			setShowSaveButton(ActionMode.Editing);
-			const findRecordIndex = getRecordIndex(currPipelineData, record, 'id');
+			const findRecordIndex = getRecordIndex(currentPipelines, record, 'id');
 			const updateSwitch = {
-				...currPipelineData[findRecordIndex],
+				...currentPipelines[findRecordIndex],
 				enabled: checked,
 			};
 			const editedPipelineData = getEditedDataSource(
-				currPipelineData,
+				cloneDeep(currentPipelines),
 				record,
 				'id',
 				updateSwitch,
 			);
-			setCurrPipelineData(editedPipelineData);
+			setCurrentPipelines(editedPipelineData);
 		},
-		[currPipelineData],
+		[currentPipelines, setCurrentPipelines],
 	);
 
 	const columns = useMemo(() => {
@@ -271,28 +270,13 @@ function PipelineListsView({
 		onSwitchPipelineChange,
 	]);
 
-	const updatePipelineSequence = useCallback(
-		(updatedRow: PipelineData[]) => (): void => {
-			setShowSaveButton(ActionMode.Editing);
-			setCurrPipelineData(updatedRow);
-		},
-		[],
-	);
-
-	const onCancelPipelineSequence = useCallback(
-		(rawData: PipelineData[]) => (): void => {
-			setCurrPipelineData(rawData);
-		},
-		[],
-	);
-
 	const movePipelineRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			if (currPipelineData && isEditingActionMode) {
-				const rawData = currPipelineData;
+			if (currentPipelines && isEditingActionMode) {
+				const rawData = currentPipelines;
 
 				const updatedRows = getUpdatedRow(
-					currPipelineData,
+					cloneDeep(currentPipelines),
 					visibleCurrPipelines[dragIndex].orderId - 1,
 					visibleCurrPipelines[hoverIndex].orderId - 1,
 				);
@@ -305,19 +289,18 @@ function PipelineListsView({
 					title: t('reorder_pipeline'),
 					descrition: t('reorder_pipeline_description'),
 					buttontext: t('reorder'),
-					onOk: updatePipelineSequence(updatedRows),
-					onCancel: onCancelPipelineSequence(rawData),
+					onOk: (): void => setCurrentPipelines(updatedRows),
+					onCancel: (): void => setCurrentPipelines(rawData),
 				});
 			}
 		},
 		[
-			currPipelineData,
+			currentPipelines,
 			isEditingActionMode,
 			visibleCurrPipelines,
 			handleAlert,
 			t,
-			updatePipelineSequence,
-			onCancelPipelineSequence,
+			setCurrentPipelines,
 		],
 	);
 
@@ -328,10 +311,9 @@ function PipelineListsView({
 				isActionMode={isActionMode}
 				setActionType={setActionType}
 				processorEditAction={processorEditAction}
-				setShowSaveButton={setShowSaveButton}
 				expandedPipelineData={expandedPipelineData()}
 				setExpandedPipelineData={setExpandedPipelineData}
-				prevPipelineData={prevPipelineData}
+				prevPipelineData={savedPipelines}
 			/>
 		),
 		[
@@ -340,7 +322,7 @@ function PipelineListsView({
 			isActionMode,
 			expandedPipelineData,
 			setActionType,
-			prevPipelineData,
+			savedPipelines,
 			setExpandedPipelineData,
 		],
 	);
@@ -390,7 +372,7 @@ function PipelineListsView({
 	}, [isEditingActionMode, addNewPipelineHandler, t]);
 
 	const onSaveConfigurationHandler = useCallback(async () => {
-		const modifiedPipelineData = currPipelineData.map((item: PipelineData) => {
+		const modifiedPipelineData = currentPipelines.map((item: PipelineData) => {
 			const pipelineData = { ...item };
 			delete pipelineData?.id;
 			return pipelineData;
@@ -401,11 +383,10 @@ function PipelineListsView({
 		if (response.statusCode === 200) {
 			refetchPipelineLists();
 			setActionMode(ActionMode.Viewing);
-			setShowSaveButton(undefined);
 
 			const pipelinesInDB = response.payload?.pipelines || [];
-			setCurrPipelineData(pipelinesInDB);
-			setPrevPipelineData(pipelinesInDB);
+			setCurrentPipelines(cloneDeep(pipelinesInDB));
+			setSavedPipelines(cloneDeep(pipelinesInDB));
 
 			trackEvent('Logs: Pipelines: Saved Pipelines', {
 				count: pipelinesInDB.length,
@@ -419,21 +400,19 @@ function PipelineListsView({
 				return pipelineData;
 			});
 			setActionMode(ActionMode.Editing);
-			setShowSaveButton(ActionMode.Editing);
 			notifications.error({
 				message: 'Error',
 				description: response.error || t('something_went_wrong'),
 			});
-			setCurrPipelineData(modifiedPipelineData);
-			setPrevPipelineData(modifiedPipelineData);
+			setCurrentPipelines(cloneDeep(modifiedPipelineData));
+			setSavedPipelines(cloneDeep(modifiedPipelineData));
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currPipelineData, notifications, refetchPipelineLists, setActionMode, t]);
+	}, [currentPipelines, notifications, refetchPipelineLists, setActionMode, t]);
 
 	const onCancelConfigurationHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
-		setShowSaveButton(undefined);
-		prevPipelineData.forEach((item, index) => {
+		savedPipelines.forEach((item, index) => {
 			const obj = item;
 			obj.orderId = index + 1;
 			if (obj.config) {
@@ -446,9 +425,9 @@ function PipelineListsView({
 				}
 			}
 		});
-		setCurrPipelineData(prevPipelineData);
+		setCurrentPipelines(cloneDeep(savedPipelines));
 		setExpandedRowKeys([]);
-	}, [prevPipelineData, setActionMode]);
+	}, [savedPipelines, setCurrentPipelines, setActionMode]);
 
 	const onRowHandler = (
 		_data: PipelineData,
@@ -473,25 +452,23 @@ function PipelineListsView({
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedPipelineData={selectedPipelineData}
-				setShowSaveButton={setShowSaveButton}
-				setCurrPipelineData={setCurrPipelineData}
-				currPipelineData={currPipelineData}
+				setCurrPipelineData={setCurrentPipelines}
+				currPipelineData={currentPipelines}
 			/>
 			<AddNewProcessor
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedProcessorData={selectedProcessorData}
-				setShowSaveButton={setShowSaveButton}
 				expandedPipelineData={expandedPipelineData()}
 				setExpandedPipelineData={setExpandedPipelineData}
 			/>
-			{prevPipelineData?.length > 0 || currPipelineData?.length > 0 ? (
+			{savedPipelines?.length > 0 || currentPipelines?.length > 0 ? (
 				<>
 					<PipelinesSearchSection setPipelineSearchValue={setPipelineSearchValue} />
 					<Container>
 						<ModeAndConfiguration
 							isActionMode={isActionMode}
-							version={pipelineData?.version}
+							version={savedPipelinesVersion}
 						/>
 						<DndProvider backend={HTML5Backend}>
 							<Table
@@ -508,7 +485,7 @@ function PipelineListsView({
 						</DndProvider>
 						{isEditingActionMode && (
 							<SaveConfigButton
-								showSaveButton={Boolean(showSaveButton)}
+								showSaveButton={!isEqual(currentPipelines, savedPipelines)}
 								onSaveConfigurationHandler={onSaveConfigurationHandler}
 								onCancelConfigurationHandler={onCancelConfigurationHandler}
 							/>
@@ -529,7 +506,13 @@ interface PipelineListsViewProps {
 	setActionType: (actionType?: ActionType) => void;
 	isActionMode: string;
 	setActionMode: (actionMode: ActionMode) => void;
-	pipelineData: Pipeline;
+	savedPipelinesVersion: number | string;
+	savedPipelines: Array<PipelineData>;
+	setSavedPipelines: (value: React.SetStateAction<Array<PipelineData>>) => void;
+	currentPipelines: Array<PipelineData>;
+	setCurrentPipelines: (
+		value: React.SetStateAction<Array<PipelineData>>,
+	) => void;
 	refetchPipelineLists: VoidFunction;
 }
 

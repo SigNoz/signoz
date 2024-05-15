@@ -1,9 +1,9 @@
 import { Button, Divider, Form, Modal } from 'antd';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { ActionMode, ActionType, PipelineData } from 'types/api/pipeline/def';
+import { ActionType, PipelineData } from 'types/api/pipeline/def';
 import AppReducer from 'types/reducer/app';
 import { v4 } from 'uuid';
 
@@ -15,7 +15,6 @@ function AddNewPipeline({
 	isActionType,
 	setActionType,
 	selectedPipelineData,
-	setShowSaveButton,
 	setCurrPipelineData,
 	currPipelineData,
 }: AddNewPipelineProps): JSX.Element {
@@ -90,11 +89,6 @@ function AddNewPipeline({
 		[isEdit, selectedPipelineData?.name, t],
 	);
 
-	const onOkModalHandler = useCallback(
-		() => setShowSaveButton(ActionMode.Editing),
-		[setShowSaveButton],
-	);
-
 	const isOpen = useMemo(() => isEdit || isAdd, [isAdd, isEdit]);
 
 	return (
@@ -122,7 +116,7 @@ function AddNewPipeline({
 							key="submit"
 							type="primary"
 							htmlType="submit"
-							onClick={onOkModalHandler}
+							onClick={(): void => {}}
 						>
 							{isEdit ? t('update') : t('create')}
 						</Button>
@@ -140,7 +134,6 @@ interface AddNewPipelineProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
 	selectedPipelineData: PipelineData | undefined;
-	setShowSaveButton: (actionMode: ActionMode) => void;
 	setCurrPipelineData: (
 		value: React.SetStateAction<Array<PipelineData>>,
 	) => void;

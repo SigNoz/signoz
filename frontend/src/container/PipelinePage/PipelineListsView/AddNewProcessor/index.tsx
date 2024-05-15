@@ -2,7 +2,6 @@ import { Button, Divider, Form, Modal } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-	ActionMode,
 	ActionType,
 	PipelineData,
 	ProcessorData,
@@ -19,7 +18,6 @@ function AddNewProcessor({
 	isActionType,
 	setActionType,
 	selectedProcessorData,
-	setShowSaveButton,
 	expandedPipelineData,
 	setExpandedPipelineData,
 }: AddNewProcessorProps): JSX.Element {
@@ -134,11 +132,6 @@ function AddNewProcessor({
 		[isEdit, selectedProcessorData?.name, t],
 	);
 
-	const onOkModalHandler = useCallback(
-		() => setShowSaveButton(ActionMode.Editing),
-		[setShowSaveButton],
-	);
-
 	const isOpen = useMemo(() => isEdit || isAdd, [isAdd, isEdit]);
 
 	const onFormValuesChanged = useCallback(
@@ -179,7 +172,7 @@ function AddNewProcessor({
 							key="submit"
 							type="primary"
 							htmlType="submit"
-							onClick={onOkModalHandler}
+							onClick={(): void => {}}
 						>
 							{isEdit ? t('update') : t('create')}
 						</Button>
@@ -202,7 +195,6 @@ interface AddNewProcessorProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
 	selectedProcessorData?: ProcessorData;
-	setShowSaveButton: (actionMode: ActionMode) => void;
 	expandedPipelineData?: PipelineData;
 	setExpandedPipelineData: (data: PipelineData) => void;
 }
