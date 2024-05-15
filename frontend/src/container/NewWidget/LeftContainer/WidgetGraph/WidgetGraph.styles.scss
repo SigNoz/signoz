@@ -22,3 +22,17 @@
 		}
 	}
 }
+
+.lightMode {
+	.widget-graph {
+		background-color: var(--bg-vanilla-100);
+		background-image: radial-gradient(var(--bg-vanilla-400) 1px, transparent 0);
+		background-size: 20px 20px;
+
+		.header {
+			.plot-tag {
+				background: var(--bg-vanilla-300);
+			}
+		}
+	}
+}
