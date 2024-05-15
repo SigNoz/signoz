@@ -11,6 +11,7 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { isEmpty } from 'lodash-es';
 import {
 	Check,
 	CircleEllipsis,
@@ -394,14 +395,18 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					)}
 				</div>
 			</section>
-			<div className="dashboard-tags">
-				{tags?.map((tag) => (
-					<Tag key={tag} className="tag">
-						{tag}
-					</Tag>
-				))}
-			</div>
-			<section className="dashboard-description-section">{description}</section>
+			{tags?.length && tags?.length > 0 && (
+				<div className="dashboard-tags">
+					{tags?.map((tag) => (
+						<Tag key={tag} className="tag">
+							{tag}
+						</Tag>
+					))}
+				</div>
+			)}
+			{!isEmpty(description) && (
+				<section className="dashboard-description-section">{description}</section>
+			)}
 			<section className="dashboard-variables">
 				<DashboardVariableSelection />
 			</section>

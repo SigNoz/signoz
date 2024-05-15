@@ -16,7 +16,7 @@ export const RightContainerWrapper = styled(Col)`
 export const LeftContainerWrapper = styled(Col)`
 	&&& {
 		max-width: 70%;
-		border-right: 1px solid var(--bg-slate-500);
+		border-right: 1px solid var(--bg-vanilla-300);
 	}
 `;
 

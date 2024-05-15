@@ -10,9 +10,9 @@
 		align-items: center;
 		gap: 4px;
 		border-radius: 2px 0px 0px 2px;
-		border: 1px solid var(--Slate-400, #1d212d);
-		background: var(--Ink-300, #16181d);
-		color: var(--Robin-300, #95acfb);
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+		color: var(--bg-robin-300);
 		font-family: Inter;
 		font-size: 12px;
 		font-style: normal;
@@ -28,10 +28,10 @@
 		align-items: center;
 		gap: 4px;
 		border-radius: 0px 2px 2px 0px;
-		border: 1px solid var(--Slate-400, #1d212d);
+		border: 1px solid var(--bg-slate-400);
 		border-left: none;
-		background: var(--Ink-400, #121317);
-		color: var(--Vanilla-400, #c0c1c3);
+		background: var(--bg-ink-400);
+		color: var(--bg-vanilla-400);
 		font-family: Inter;
 		font-size: 12px;
 		font-style: normal;
@@ -42,6 +42,22 @@
 	.variable-select {
 		.ant-select-dropdown {
 			max-width: 300px;
+		}
+	}
+}
+
+.lightMode {
+	.variable-item {
+		.variable-name {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+			color: var(--bg-robin-300);
+		}
+
+		.variable-value {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+			color: var(--bg-ink-400);
 		}
 	}
 }

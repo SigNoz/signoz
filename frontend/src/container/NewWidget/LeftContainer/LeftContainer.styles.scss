@@ -7,3 +7,10 @@
 		padding: 0px;
 	}
 }
+
+.lightMode {
+	.query-section-left-container {
+		border-top: 1px solid var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
+	}
+}

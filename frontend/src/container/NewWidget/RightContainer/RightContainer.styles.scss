@@ -12,10 +12,10 @@
 			width: 8px;
 			height: 8px;
 			border-radius: 2px;
-			background: var(--Robin-400, #7190f9);
+			background: var(--bg-robin-400);
 		}
 		.header-text {
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--bg-vanilla-400);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -34,7 +34,7 @@
 		gap: 8px;
 
 		.typography {
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--bg-vanilla-400);
 			font-family: 'Space Mono';
 			font-size: 13px;
 			font-style: normal;
@@ -52,9 +52,9 @@
 			flex: 1 0 0;
 			align-self: stretch;
 			border-radius: 2px;
-			border: 1px solid var(--Slate-400, #1d212d);
-			background: var(--Ink-300, #16181d);
-			color: var(--Vanilla-100, #fff);
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-300);
+			color: var(--bg-vanilla-100);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -73,9 +73,9 @@
 				align-items: flex-start;
 				gap: 4px;
 				border-radius: 2px;
-				border: 1px solid var(--Slate-400, #1d212d);
-				background: var(--Ink-300, #16181d);
-				color: var(--Vanilla-100, #fff);
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-300);
+				color: var(--bg-vanilla-100);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -94,7 +94,7 @@
 		border-bottom: 1px solid var(--bg-slate-500);
 
 		.typography {
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--bg-vanilla-400);
 			font-family: 'Space Mono';
 			font-size: 13px;
 			font-style: normal;
@@ -113,8 +113,8 @@
 				gap: 4px;
 				flex-shrink: 0;
 				border-radius: 2px;
-				border: 1px solid var(--Slate-400, #1d212d);
-				background: var(--Ink-300, #16181d);
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-300);
 			}
 
 			.select-option {
@@ -127,7 +127,7 @@
 				}
 
 				.display {
-					color: var(--Vanilla-100, #fff);
+					color: var(--bg-vanilla-100);
 					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
@@ -144,11 +144,11 @@
 			justify-content: space-between;
 			align-items: center;
 			border-radius: 2px;
-			border: 1px solid var(--Slate-400, #1d212d);
-			background: var(--Ink-400, #121317);
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-400);
 
 			.fill-gaps-text {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--bg-vanilla-400);
 				font-family: 'Space Mono';
 				font-size: 13px;
 				font-style: normal;
@@ -161,7 +161,7 @@
 
 		.panel-time-text {
 			margin-top: 16px;
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--bg-vanilla-400);
 			font-family: 'Space Mono';
 			font-size: 13px;
 			font-style: normal;
@@ -178,7 +178,7 @@
 			gap: 8px;
 
 			.heading {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--bg-vanilla-400);
 				font-family: 'Space Mono';
 				font-size: 13px;
 				font-style: normal;
@@ -196,11 +196,11 @@
 				gap: 4px;
 				align-self: stretch;
 				border-radius: 2px;
-				border: 1px solid var(--Slate-400, #1d212d);
-				background: var(--Ink-300, #16181d);
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-300);
 
 				.ant-input {
-					background: var(--Ink-300, #16181d);
+					background: var(--bg-ink-300);
 				}
 			}
 		}
@@ -217,13 +217,13 @@
 				align-items: center;
 				width: 50%;
 				border-radius: 2px;
-				border: 1px solid var(--Slate-400, #1d212d);
-				background: var(--Ink-400, #121317);
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-400);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
 				.text {
-					color: var(--Vanilla-400, #c0c1c3);
-					font-family: 'SF Mono';
+					color: var(--bg-vanilla-400);
+					font-family: 'Space Mono';
 					font-size: 12px;
 					font-style: normal;
 					font-weight: 400;
@@ -236,7 +236,7 @@
 				.input {
 					width: 50%;
 					border: none;
-					border-left: 1px solid var(--Slate-400, #1d212d);
+					border-left: 1px solid var(--bg-slate-400);
 				}
 			}
 		}
@@ -274,8 +274,7 @@
 		}
 	}
 }
-.y-axis-root-popover {
-}
+
 .select-option {
 	display: flex;
 	align-items: center;
@@ -286,11 +285,130 @@
 	}
 
 	.display {
-		color: var(--Vanilla-100, #fff);
+		color: var(--bg-vanilla-100);
 		font-family: Inter;
 		font-size: 12px;
 		font-style: normal;
 		font-weight: 400;
 		line-height: 16px; /* 133.333% */
+	}
+}
+
+.lightMode {
+	.right-container {
+		background-color: var(--bg-vanilla-100);
+		.header {
+			.header-text {
+				color: var(--bg-ink-400);
+			}
+		}
+
+		.name-description {
+			border-top: 1px solid var(--bg-vanilla-300);
+			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.typography {
+				color: var(--bg-ink-400);
+			}
+
+			.name-input {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-300);
+				color: var(--bg-ink-300);
+			}
+
+			.description-input {
+				.ant-input {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-300);
+					color: var(--bg-ink-300);
+				}
+			}
+		}
+
+		.panel-config {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.typography {
+				color: var(--bg-ink-400);
+			}
+
+			.panel-type-select {
+				.ant-select-selector {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-300);
+				}
+
+				.select-option {
+					.display {
+						color: var(--bg-ink-300);
+					}
+				}
+			}
+
+			.fill-gaps {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-300);
+
+				.fill-gaps-text {
+					color: var(--bg-ink-400);
+				}
+			}
+
+			.panel-time-text {
+				color: var(--bg-ink-400);
+			}
+
+			.y-axis-unit-selector {
+				.heading {
+					color: var(--bg-ink-400);
+				}
+
+				.input {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-300);
+
+					.ant-input {
+						background: var(--bg-vanilla-300);
+					}
+				}
+			}
+			.soft-min-max {
+				.container {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-300);
+
+					.text {
+						color: var(--bg-ink-300);
+					}
+					.input {
+						border-left: 1px solid var(--bg-vanilla-300);
+					}
+				}
+			}
+		}
+
+		.alerts {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.left-section {
+				.bell-icon {
+					color: var(--bg-ink-300);
+				}
+
+				.alerts-text {
+					color: var(--bg-ink-300);
+				}
+			}
+			.plus-icon {
+				color: var(--bg-ink-300);
+			}
+		}
+	}
+
+	.select-option {
+		.display {
+			color: var(--bg-ink-100);
+		}
 	}
 }
