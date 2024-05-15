@@ -1157,3 +1157,32 @@ func parseUpdateIssueWebhook(r *http.Request) (*model.UpdateIssueWebhook, error)
 
 	return postData, nil
 }
+
+func parseGetDayBugListRequest(r *http.Request) (*model.GetDayBugParams, error) {
+	startTime, err := parseTime("start", r)
+	if err != nil {
+		return nil, err
+	}
+	endTime, err := parseTime("end", r)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceName := r.URL.Query().Get("service")
+	if len(serviceName) == 0 {
+		return nil, fmt.Errorf("%s param missing in query", "service")
+	}
+
+	getDayBugParams := model.GetDayBugParams{
+		// StartTime:   startTime.Format(time.RFC3339Nano),
+		// EndTime:     endTime.Format(time.RFC3339Nano),
+		Start:       startTime,
+		End:         endTime,
+		ServiceName: serviceName,
+		// Period:      fmt.Sprintf("PT%dH", stepHour),
+		// StepHour:    stepHour,
+	}
+
+	return &getDayBugParams, nil
+
+}

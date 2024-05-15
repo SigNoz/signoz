@@ -5184,7 +5184,7 @@ func (r *ClickHouseReader) SearchAllServices(ctx context.Context) (*[]string, er
 }
 
 func (r *ClickHouseReader) UpdateIssueLink(ctx context.Context, queryParams *model.UpdateIssueLinkParams) (bool, *model.ApiError) {
-	query := fmt.Sprintf(`ALTER TABLE signoz_traces.signoz_error_index_v2 UPDATE issueLink = '%s' WHERE groupID = '%s'`, queryParams.IssueLink, queryParams.GroupID)
+	query := fmt.Sprintf(`ALTER TABLE signoz_traces.distributed_signoz_error_index_v2 UPDATE issueLink = '%s' WHERE groupID = '%s'`, queryParams.IssueLink, queryParams.GroupID)
 	zap.S().Info(query)
 	err := r.db.Exec(ctx, query)
 	if err != nil {
@@ -5214,7 +5214,7 @@ func (r *ClickHouseReader) UpdateIssueWebhook(ctx context.Context, queryParams *
 	raptorIssueStatusMap["NOT BUG"] = 3
 
 	fmt.Println("raptorIssueStatusMap", raptorIssueStatusMap[strings.ToUpper(queryParams.IssueStatus)], queryParams.IssueStatus)
-	query := fmt.Sprintf(`ALTER TABLE signoz_traces.signoz_error_index_v2 UPDATE issueStatus = '%d' WHERE groupID = '%s'`, raptorIssueStatusMap[strings.ToUpper(queryParams.IssueStatus)], queryParams.GroupID)
+	query := fmt.Sprintf(`ALTER TABLE signoz_traces.distributed_signoz_error_index_v2 UPDATE issueStatus = '%d' WHERE groupID = '%s'`, raptorIssueStatusMap[strings.ToUpper(queryParams.IssueStatus)], queryParams.GroupID)
 	zap.S().Info(query)
 	clickhouseErr := r.db.Exec(ctx, query)
 
@@ -5223,4 +5223,35 @@ func (r *ClickHouseReader) UpdateIssueWebhook(ctx context.Context, queryParams *
 	}
 
 	return true, nil
+}
+
+func (r *ClickHouseReader) GetDayBugList(ctx context.Context, queryParams *model.GetDayBugParams) (*[]model.DayBugItem, error) {
+
+	var dayBugItems []model.DayBugItem
+	namedArgs := []interface{}{
+		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
+		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
+	}
+	var query string
+	namedArgs = append(namedArgs, clickhouse.Named("serviceName", queryParams.ServiceName))
+	query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL 24 HOUR) as time, count() as count, issueStatus FROM signoz_traces.distributed_signoz_error_index_v2 WHERE serviceName=@serviceName AND timestamp>=@start AND timestamp<=@end GROUP BY time, issueStatus ORDER BY time ASC")
+
+	err := r.db.Select(ctx, &dayBugItems, query, namedArgs...)
+
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing sql query: ", err)
+		return nil, fmt.Errorf("Error in processing sql query")
+	}
+
+	// for i := range dayBugItems {
+	// 	dayBugItems[i].Timestamp = uint64(dayBugItems[i].Time.UnixNano())
+	// }
+
+	if dayBugItems == nil {
+		dayBugItems = []model.DayBugItem{}
+	}
+
+	return &dayBugItems, nil
 }

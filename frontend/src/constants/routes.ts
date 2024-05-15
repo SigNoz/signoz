@@ -48,6 +48,7 @@ const ROUTES = {
 	WORKSPACE_LOCKED: '/workspace-locked',
 	SHORTCUTS: '/shortcuts',
 	PROJECT_MANAGER: '/project-manager',
+	JIRA_REPORTS: '/jira-reports',
 } as const;
 
 export default ROUTES;

@@ -192,5 +192,10 @@ export const ShortcutsPage = Loadable(
 );
 
 export const ProjectManager = Loadable(
-	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/ProjectManager'),
+	() =>
+		import(/* webpackChunkName: "ProjectManagerPage" */ 'pages/ProjectManager'),
+);
+
+export const JiraReports = Loadable(
+	() => import(/* webpackChunkName: "JiraReportsPage" */ 'pages/JiraReports'),
 );

@@ -660,3 +660,9 @@ type GetVersionResponse struct {
 	EE             string `json:"ee"`
 	SetupCompleted bool   `json:"setupCompleted"`
 }
+
+type DayBugItem struct {
+	Time        time.Time `json:"time,omitempty" ch:"time"`
+	Count       uint64    `json:"count" ch:"count"`
+	IssueStatus int8      `json:"issueStatus" ch:"issueStatus"`
+}

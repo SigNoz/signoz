@@ -582,3 +582,11 @@ type UpdateIssueWebhook struct {
 	IssueKey    string `json:"issueKey"`
 	IssueStatus string `json:"issueStatus"`
 }
+
+type GetDayBugParams struct {
+	// StartTime   string
+	// EndTime     string
+	ServiceName string
+	Start       *time.Time
+	End         *time.Time
+}

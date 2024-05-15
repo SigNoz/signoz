@@ -464,6 +464,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/searchAllServices", am.ViewAccess(aH.searchAllServices)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/updateIssueLink", am.ViewAccess(aH.updateIssueLink)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/updateIssueWebhook", am.OpenAccess(aH.updateIssueWebhook)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getDayBugList", am.ViewAccess(aH.getDayBugList)).Methods(http.MethodGet)
 
 }
 
@@ -3471,6 +3472,20 @@ func (aH *APIHandler) updateIssueWebhook(w http.ResponseWriter, r *http.Request)
 	}
 	result, apiErr := aH.reader.UpdateIssueWebhook(r.Context(), query)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
+		return
+	}
+
+	aH.WriteJSON(w, r, result)
+}
+
+func (aH *APIHandler) getDayBugList(w http.ResponseWriter, r *http.Request) {
+	query, err := parseGetDayBugListRequest(r)
+	if aH.HandleError(w, err, http.StatusBadRequest) {
+		return
+	}
+
+	result, err := aH.reader.GetDayBugList(r.Context(), query)
+	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
 
