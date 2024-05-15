@@ -12,7 +12,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
@@ -60,9 +59,10 @@ type CollectedLogAttribute struct {
 }
 
 type CollectedMetric struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-	Unit string `json:"unit"`
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Unit        string `json:"unit"`
+	Description string `json:"description"`
 }
 
 type SignalConnectionStatus struct {
@@ -75,9 +75,14 @@ type IntegrationConnectionStatus struct {
 	Metrics *SignalConnectionStatus `json:"metrics"`
 }
 
+// log attribute value to use for finding logs for the integration.
+type LogsConnectionTest struct {
+	AttributeKey   string `json:"attribute_key"`
+	AttributeValue string `json:"attribute_value"`
+}
+
 type IntegrationConnectionTests struct {
-	// Filter to use for finding logs for the integration.
-	Logs *v3.FilterSet `json:"logs"`
+	Logs *LogsConnectionTest `json:"logs"`
 
 	// Metric names expected to have been received for the integration.
 	Metrics []string `json:"metrics"`

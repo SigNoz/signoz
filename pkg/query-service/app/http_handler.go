@@ -2347,11 +2347,26 @@ func (ah *APIHandler) calculateConnectionStatus(
 
 func (ah *APIHandler) calculateLogsConnectionStatus(
 	ctx context.Context,
-	logsConnectionTest *v3.FilterSet,
+	logsConnectionTest *integrations.LogsConnectionTest,
 	lookbackSeconds int64,
 ) (*integrations.SignalConnectionStatus, *model.ApiError) {
 	if logsConnectionTest == nil {
 		return nil, nil
+	}
+
+	logsConnTestFilter := &v3.FilterSet{
+		Operator: "AND",
+		Items: []v3.FilterItem{
+			{
+				Key: v3.AttributeKey{
+					Key:      logsConnectionTest.AttributeKey,
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+				},
+				Operator: "=",
+				Value:    logsConnectionTest.AttributeValue,
+			},
+		},
 	}
 
 	qrParams := &v3.QueryRangeParamsV3{
@@ -2363,7 +2378,7 @@ func (ah *APIHandler) calculateLogsConnectionStatus(
 			BuilderQueries: map[string]*v3.BuilderQuery{
 				"A": {
 					PageSize:          1,
-					Filters:           logsConnectionTest,
+					Filters:           logsConnTestFilter,
 					QueryName:         "A",
 					DataSource:        v3.DataSourceLogs,
 					Expression:        "A",
