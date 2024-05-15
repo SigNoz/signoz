@@ -15,11 +15,13 @@
 	}
 }
 
-.color-selector-light {
-	border: 1px solid #d9d9d9;
-	width: 100%;
-	.ant-btn {
-		box-shadow: none;
-		background-color: unset;
+.lightMode {
+	.color-selector-button {
+		background-color: var(--bg-vanilla-300);
+
+		.ant-btn {
+			box-shadow: none;
+			background-color: unset;
+		}
 	}
 }
