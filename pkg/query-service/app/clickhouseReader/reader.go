@@ -51,6 +51,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
+	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -4570,6 +4571,11 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 			return nil, err
 		}
 		groupBy, groupAttributes, groupAttributesArray, metricPoint := readRow(vars, columnNames)
+		// skip the point if the value is NaN or Inf
+		// are they ever useful enough to be returned?
+		if math.IsNaN(metricPoint.Value) || math.IsInf(metricPoint.Value, 0) {
+			continue
+		}
 		sort.Strings(groupBy)
 		key := strings.Join(groupBy, "")
 		if _, exists := seriesToAttrs[key]; !exists {
@@ -4700,11 +4706,11 @@ func getPersonalisedError(err error) error {
 	}
 	zap.L().Error("error while reading result", zap.Error(err))
 	if strings.Contains(err.Error(), "code: 307") {
-		return errors.New("query is consuming too much resources, please reach out to the team")
+		return chErrors.ErrResourceBytesLimitExceeded
 	}
 
 	if strings.Contains(err.Error(), "code: 159") {
-		return errors.New("Query is taking too long to run, please reach out to the team")
+		return chErrors.ErrResourceTimeLimitExceeded
 	}
 	return err
 }
