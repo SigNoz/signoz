@@ -460,7 +460,7 @@ func TestResourceFiltersWork(t *testing.T) {
 			Items: []v3.FilterItem{
 				{
 					Key: v3.AttributeKey{
-						Key:      "service",
+						Key:      "service_name",
 						DataType: v3.AttributeKeyDataTypeString,
 						Type:     v3.AttributeKeyTypeResource,
 					},
@@ -481,29 +481,44 @@ func TestResourceFiltersWork(t *testing.T) {
 		},
 	}
 
-	testLog := model.SignozLog{
-		Timestamp:         uint64(time.Now().UnixNano()),
-		Body:              "test log",
-		Attributes_string: map[string]string{},
-		Resources_string: map[string]string{
-			"service": "nginx",
-		},
-		SeverityText:   entry.Info.String(),
-		SeverityNumber: uint8(entry.Info),
-		SpanID:         "",
-		TraceID:        "",
-	}
+	testLogs := []model.SignozLog{
+		{
+			Timestamp:         uint64(time.Now().UnixNano()),
+			Body:              "test log",
+			Attributes_string: map[string]string{},
+			Resources_string: map[string]string{
+				"service_name": "nginx",
+			},
+			SeverityText:   entry.Info.String(),
+			SeverityNumber: uint8(entry.Info),
+			SpanID:         "",
+			TraceID:        "",
+		}, {
+			Timestamp:         uint64(time.Now().UnixNano()),
+			Body:              "test log",
+			Attributes_string: map[string]string{},
+			Resources_string: map[string]string{
+				"service.name": "nginx",
+			},
+			SeverityText:   entry.Info.String(),
+			SeverityNumber: uint8(entry.Info),
+			SpanID:         "",
+			TraceID:        "",
+		}}
 
 	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 		context.Background(),
 		[]Pipeline{testPipeline},
-		[]model.SignozLog{testLog},
+		testLogs,
 	)
 	require.Nil(err)
 	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
-	require.Equal(1, len(result))
+	require.Equal(2, len(result))
 
 	require.Equal(result[0].Attributes_string["test"], "test-value")
+
+	_, attribAddedToNonMatchingLog := result[1].Attributes_string["test"]
+	require.False(attribAddedToNonMatchingLog)
 }
 
 func TestPipelineFilterWithStringOpsShouldNotSpamWarningsIfAttributeIsMissing(t *testing.T) {
@@ -802,77 +817,4 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 
 	_, test2Exists := result[0].Attributes_string["test2"]
 	require.False(test2Exists)
-}
-
-func TestTemporaryWorkaroundForSupportingAttribsContainingDots(t *testing.T) {
-	// TODO(Raj): Remove this after dots are supported
-
-	require := require.New(t)
-
-	testPipeline := Pipeline{
-		OrderId: 1,
-		Name:    "pipeline1",
-		Alias:   "pipeline1",
-		Enabled: true,
-		Filter: &v3.FilterSet{
-			Operator: "AND",
-			Items: []v3.FilterItem{
-				{
-					Key: v3.AttributeKey{
-						Key:      "k8s_deployment_name",
-						DataType: v3.AttributeKeyDataTypeString,
-						Type:     v3.AttributeKeyTypeResource,
-					},
-					Operator: "=",
-					Value:    "ingress",
-				},
-			},
-		},
-		Config: []PipelineOperator{
-			{
-				ID:      "add",
-				Type:    "add",
-				Enabled: true,
-				Name:    "add",
-				Field:   "attributes.test",
-				Value:   "test-value",
-			},
-		},
-	}
-
-	testLogs := []model.SignozLog{{
-		Timestamp:         uint64(time.Now().UnixNano()),
-		Body:              "test log",
-		Attributes_string: map[string]string{},
-		Resources_string: map[string]string{
-			"k8s_deployment_name": "ingress",
-		},
-		SeverityText:   entry.Info.String(),
-		SeverityNumber: uint8(entry.Info),
-		SpanID:         "",
-		TraceID:        "",
-	}, {
-		Timestamp:         uint64(time.Now().UnixNano()),
-		Body:              "test log",
-		Attributes_string: map[string]string{},
-		Resources_string: map[string]string{
-			"k8s.deployment.name": "ingress",
-		},
-		SeverityText:   entry.Info.String(),
-		SeverityNumber: uint8(entry.Info),
-		SpanID:         "",
-		TraceID:        "",
-	}}
-
-	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
-		context.Background(),
-		[]Pipeline{testPipeline},
-		testLogs,
-	)
-	require.Nil(err)
-	require.Equal(0, len(collectorWarnAndErrorLogs), strings.Join(collectorWarnAndErrorLogs, "\n"))
-	require.Equal(2, len(result))
-	for _, processedLog := range result {
-		require.Equal(processedLog.Attributes_string["test"], "test-value")
-	}
 }
