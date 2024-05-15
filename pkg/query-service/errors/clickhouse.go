@@ -32,3 +32,11 @@ func IsResourceLimitError(err error) bool {
 	var target *ResourceLimitError
 	return errors.As(err, &target)
 }
+
+func (e *ResourceLimitError) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + e.Error() + `"`), nil
+}
+
+func (e *ResourceLimitError) UnmarshalJSON([]byte) error {
+	return nil
+}

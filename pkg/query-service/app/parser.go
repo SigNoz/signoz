@@ -1169,6 +1169,13 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			if chQuery.Disabled {
 				continue
 			}
+
+			for name, value := range queryRangeParams.Variables {
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("$%s", name), fmt.Sprint(value), -1)
+			}
+
 			tmpl := template.New("clickhouse-query")
 			tmpl, err := tmpl.Parse(chQuery.Query)
 			if err != nil {
@@ -1184,12 +1191,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 			}
 			chQuery.Query = query.String()
-
-			for name, value := range queryRangeParams.Variables {
-				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
-				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
-				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("$%s", name), fmt.Sprint(value), -1)
-			}
 		}
 	}
 
@@ -1199,6 +1200,13 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			if promQuery.Disabled {
 				continue
 			}
+
+			for name, value := range queryRangeParams.Variables {
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("$%s", name), fmt.Sprint(value), -1)
+			}
+
 			tmpl := template.New("prometheus-query")
 			tmpl, err := tmpl.Parse(promQuery.Query)
 			if err != nil {
@@ -1214,12 +1222,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 			}
 			promQuery.Query = query.String()
-
-			for name, value := range queryRangeParams.Variables {
-				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
-				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
-				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("$%s", name), fmt.Sprint(value), -1)
-			}
 		}
 	}
 
