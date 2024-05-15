@@ -58,3 +58,31 @@
 		border-top: 1px solid var(--Slate-500, #161922);
 	}
 }
+
+.lightMode {
+	.import-json-modal {
+		.ant-modal-content {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+		}
+
+		.margin {
+			background: var(--bg-vanilla-100);
+		}
+		.view-lines {
+			background: var(--bg-vanilla-100);
+		}
+
+		.import-json-content-header {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+		}
+
+		.ant-modal-footer {
+			border-top: 1px solid var(--bg-vanilla-300);
+
+			.ant-btn {
+				box-shadow: none;
+			}
+		}
+	}
+}
