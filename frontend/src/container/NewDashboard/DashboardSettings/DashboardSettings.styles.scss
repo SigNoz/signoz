@@ -13,7 +13,7 @@
 		.ant-table-cell {
 			padding: 0px !important;
 			border: none !important;
-			color: var(--Robin-400, #7190f9);
+			color: var(--bg-robin-400);
 			font-family: 'Space Mono';
 			font-size: 14px;
 			font-style: normal;
@@ -30,7 +30,7 @@
 		flex: 1 0 0;
 
 		.variable-description {
-			color: var(--Sienna-400, #bd9979);
+			color: var(--bg-sienna-400);
 			font-family: 'Space Mono';
 			font-size: 14px;
 			font-style: normal;
@@ -56,7 +56,7 @@
 				padding: 4px 6px;
 				align-items: center;
 				gap: 3px;
-				background: var(--Slate-400, #1d212d);
+				background: var(--bg-slate-400);
 			}
 
 			.delete-variable-button {
@@ -82,7 +82,7 @@
 	.ant-table-thead {
 		.ant-table-cell {
 			padding: 8px 12px;
-			border: 1px solid var(--Slate-500, #161922);
+			border: 1px solid var(--bg-slate-500);
 			background: unset;
 		}
 
@@ -94,13 +94,43 @@
 	.ant-table-tbody {
 		.ant-table-cell {
 			padding: 14px;
-			border: 1px solid var(--Slate-500, #161922);
+			border: 1px solid var(--bg-slate-500);
 		}
 	}
 
 	.ant-table-row {
 		.ant-table-cell:nth-child(even) {
 			background: rgba(22, 25, 34, 0.4);
+		}
+	}
+}
+
+.lightMode {
+	.dashboard-variable-settings-table {
+		.variable-description-actions {
+			.actions-btns {
+				.edit-variable-button {
+					background: var(--bg-vanilla-300);
+				}
+			}
+		}
+
+		.ant-table-thead {
+			.ant-table-cell {
+				border: 1px solid var(--bg-vanilla-300);
+			}
+		}
+
+		.ant-table-tbody {
+			.ant-table-cell {
+				border: 1px solid var(--bg-vanilla-300);
+			}
+		}
+
+		.ant-table-row {
+			.ant-table-cell:nth-child(even) {
+				background: var(--bg-vanilla-200);
+			}
 		}
 	}
 }

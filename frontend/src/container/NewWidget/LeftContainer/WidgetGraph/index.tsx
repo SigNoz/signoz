@@ -4,6 +4,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Card } from 'container/GridCardLayout/styles';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { memo } from 'react';
 
 import { WidgetGraphContainerProps } from '../../types';
@@ -19,8 +20,14 @@ function WidgetGraph({
 }: WidgetGraphContainerProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 
+	const isDarkMode = useIsDarkMode();
+
 	if (selectedWidget === undefined) {
-		return <Card $panelType={selectedGraph}>Invalid widget</Card>;
+		return (
+			<Card $panelType={selectedGraph} isDarkMode={isDarkMode}>
+				Invalid widget
+			</Card>
+		);
 	}
 
 	return (
