@@ -47,3 +47,22 @@
 		border-bottom: none;
 	}
 }
+
+.lightMode {
+	.settings-tabs {
+		.ant-tabs-nav-list {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+
+			.ant-tabs-tab-active {
+				.overview-btn {
+					background: var(--bg-vanilla-300);
+				}
+
+				.variables-btn {
+					background: var(--bg-vanilla-300);
+				}
+			}
+		}
+	}
+}

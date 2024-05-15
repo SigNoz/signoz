@@ -8,6 +8,7 @@ const ReactGridLayoutComponent = WidthProvider(RGL);
 
 interface CardProps {
 	$panelType: PANEL_TYPES;
+	isDarkMode: boolean;
 }
 
 export const Card = styled(CardComponent)<CardProps>`
@@ -15,13 +16,20 @@ export const Card = styled(CardComponent)<CardProps>`
 		height: 100%;
 		overflow: hidden;
 		border-radius: 3px;
-		border: 1px solid var(--Slate-500, #161922);
+		border: 1px solid var(--bg-slate-500);
 		background: linear-gradient(
 				0deg,
 				rgba(171, 189, 255, 0) 0%,
 				rgba(171, 189, 255, 0) 100%
 			),
 			#0b0c0e;
+
+		${({ isDarkMode }): StyledCSS =>
+			!isDarkMode &&
+			css`
+				border: 1px solid var(--bg-vanilla-300);
+				background: unset;
+			`}
 	}
 
 	.ant-card-body {
