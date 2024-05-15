@@ -795,6 +795,41 @@ func TestParseQueryRangeParamsDashboardVarsSubstitution(t *testing.T) {
 			expectErr:     false,
 			expectedValue: []interface{}{"route", []interface{}{"GET /route", "POST /route"}},
 		},
+		{
+			desc: "multiple values for single select operator",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "attribute_metrics"},
+						Expression:         "A",
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key:      v3.AttributeKey{Key: "operation_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+									Operator: v3.FilterOperatorEqual,
+									Value:    "{{.operation_name}}",
+								},
+							},
+						},
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"operation_name": []interface{}{
+					"GET /route",
+					"POST /route",
+				},
+			},
+			expectErr: true,
+			errMsg:    "multiple values [GET /route POST /route] are not allowed for operator `=` for key `operation_name`",
+		},
 	}
 
 	for _, tc := range reqCases {
