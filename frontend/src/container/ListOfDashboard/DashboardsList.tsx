@@ -47,9 +47,11 @@ import {
 	PencilRuler,
 	Plus,
 	Radius,
+	RotateCw,
 	Search,
 	SortDesc,
 } from 'lucide-react';
+import { handleContactSupport } from 'pages/Integrations/utils';
 import {
 	ChangeEvent,
 	Key,
@@ -65,6 +67,7 @@ import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
+import { isCloudUser } from 'utils/app';
 
 import useUrlQuery from '../../hooks/useUrlQuery';
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
@@ -76,10 +79,12 @@ import {
 	filterDashboard,
 } from './utils';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardsList(): JSX.Element {
 	const {
 		data: dashboardListResponse = [],
 		isLoading: isDashboardListLoading,
+		error: dashboardFetchError,
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
 
@@ -594,6 +599,36 @@ function DashboardsList(): JSX.Element {
 						<Skeleton.Input active size="large" className="skeleton-1" />
 						<Skeleton.Input active size="large" className="skeleton-1" />
 						<Skeleton.Input active size="large" className="skeleton-1" />
+					</div>
+				) : dashboardFetchError ? (
+					<div className="dashboard-error-state">
+						<img
+							src="/Icons/awwSnap.svg"
+							alt="something went wrong"
+							className="error-img"
+						/>
+
+						<Typography.Text className="error-text">
+							Something went wrong :/ Please retry or contact support.
+						</Typography.Text>
+						<section className="action-btns">
+							<Button
+								className="retry-btn"
+								type="text"
+								icon={<RotateCw size={16} />}
+								onClick={(): Promise<any> => refetchDashboardList()}
+							>
+								Retry
+							</Button>
+							<Button
+								type="text"
+								className="learn-more"
+								onClick={(): void => handleContactSupport(isCloudUser())}
+							>
+								Contact Support
+							</Button>
+							<ArrowUpRight size={16} className="learn-more-arrow" />
+						</section>
 					</div>
 				) : dashboards?.length === 0 ? (
 					<div className="dashboard-empty-state">
