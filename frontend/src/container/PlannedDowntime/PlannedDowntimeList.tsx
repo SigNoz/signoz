@@ -10,12 +10,12 @@ import {
 	PayloadProps,
 	Recurrence,
 } from 'api/plannedDowntime/getAllDowntimeSchedules';
+import { AxiosError, AxiosResponse } from 'axios';
 import cx from 'classnames';
 import { defaultTo } from 'lodash-es';
 import { CalendarClock, PenLine, Trash2 } from 'lucide-react';
 import { ReactNode } from 'react';
 import { UseQueryResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 
 import {
 	formatDateTime,
@@ -42,7 +42,6 @@ export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
 		>
 			{selectedTags?.map((tag: DefaultOptionType, index: number) => {
 				const isLongTag = (tag?.label as string)?.length > 20;
-				console.log(isLongTag, tag, tag.label);
 				const tagElem = (
 					<Tag
 						key={tag.value}
@@ -280,9 +279,11 @@ export function PlannedDowntimeList({
 	setModalOpen,
 	handleDeleteDowntime,
 	setEditMode,
+	searchValue,
 }: {
 	downtimeSchedules: UseQueryResult<
-		ErrorResponse | SuccessResponse<PayloadProps, unknown>
+		AxiosResponse<PayloadProps, any>,
+		AxiosError<unknown, any>
 	>;
 	alertOptions: DefaultOptionType[];
 	setInitialValues: React.Dispatch<
@@ -291,6 +292,7 @@ export function PlannedDowntimeList({
 	setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	handleDeleteDowntime: (id: number, name: string) => void;
 	setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
+	searchValue: string | number;
 }): JSX.Element {
 	const columns: TableProps<DowntimeSchedulesTableData>['columns'] = [
 		{
@@ -307,14 +309,20 @@ export function PlannedDowntimeList({
 		},
 	];
 
-	const tableData = (downtimeSchedules.data?.payload || []).map((data) => {
-		const specificAlertOptions = getAlertOptionsFromIds(
-			data.alertIds || [],
-			alertOptions,
-		);
+	const tableData = (downtimeSchedules.data?.data?.data || [])
+		?.filter(
+			(data) =>
+				data?.name?.includes(searchValue.toLocaleString()) ||
+				data?.id.toLocaleString() === searchValue.toLocaleString(),
+		)
+		.map?.((data) => {
+			const specificAlertOptions = getAlertOptionsFromIds(
+				data.alertIds || [],
+				alertOptions,
+			);
 
-		return { ...data, alertOptions: specificAlertOptions };
-	});
+			return { ...data, alertOptions: specificAlertOptions };
+		});
 
 	return (
 		<Table<DowntimeSchedulesTableData>

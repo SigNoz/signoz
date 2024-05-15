@@ -3,11 +3,21 @@ import 'dayjs/locale/en';
 
 import { PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Dropdown, Flex, Input, MenuProps, Typography } from 'antd';
+import {
+	Button,
+	Dropdown,
+	Flex,
+	Form,
+	Input,
+	MenuProps,
+	Typography,
+} from 'antd';
 import getAll from 'api/alerts/getAll';
 import { useDeleteDowntimeSchedule } from 'api/plannedDowntime/deleteDowntimeSchedule';
-import getAllDowntimeSchedules, {
+import {
 	DowntimeSchedules,
+	GetAllDowntimeSchedulesPayloadProps,
+	useGetAllDowntimeSchedules,
 } from 'api/plannedDowntime/getAllDowntimeSchedules';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
@@ -29,15 +39,20 @@ export function PlannedDowntime(): JSX.Element {
 		cacheTime: 0,
 	});
 	const [isOpen, setIsOpen] = React.useState(false);
+	const [form] = Form.useForm();
 
 	const [initialValues, setInitialValues] = useState<
 		Partial<DowntimeSchedules & { editMode: boolean }>
 	>(defautlInitialValues);
 
-	const downtimeSchedules = useQuery('allDowntimeSchedules', {
-		queryFn: getAllDowntimeSchedules,
-		cacheTime: 0,
+	const [
+		downtimeSchedulePayload,
+		setDowntimeSchedulePayload,
+	] = useState<GetAllDowntimeSchedulesPayloadProps>({
+		acitve: false,
+		recurrence: false,
 	});
+	const downtimeSchedules = useGetAllDowntimeSchedules(downtimeSchedulePayload);
 
 	const alertOptions = React.useMemo(
 		() =>
@@ -50,33 +65,40 @@ export function PlannedDowntime(): JSX.Element {
 
 	dayjs.locale('en');
 
-	const [searchValue, setSearchValue] = React.useState<string>('');
+	const [searchValue, setSearchValue] = React.useState<string | number>('');
 	const [deleteData, setDeleteData] = useState<{ id: number; name: string }>();
 	const [isEditMode, setEditMode] = useState<boolean>(false);
 
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setSearchValue(e.target.value);
-		console.log(searchValue);
+	};
+
+	const filterHandler = (
+		downtimePayload: GetAllDowntimeSchedulesPayloadProps,
+	): void => {
+		setDowntimeSchedulePayload(downtimePayload);
 	};
 
 	const filterMenuItems: MenuProps['items'] = [
 		{
 			label: (
-				<div className="create-dashboard-menu-item">
+				<div className="create-downtime-menu-item">
 					{' '}
-					<PencilRuler size={14} /> Created by
+					<PencilRuler size={14} /> Active
 				</div>
 			),
-			key: '0',
+			key: 'active',
+			onClick: (): void => filterHandler({ acitve: true, recurrence: false }),
 		},
 		{
 			label: (
-				<div className="create-dashboard-menu-item">
+				<div className="create-downtime-menu-item">
 					{' '}
-					<CalendarClockIcon size={14} /> Last updated by
+					<CalendarClockIcon size={14} /> Recurrence
 				</div>
 			),
-			key: '1',
+			key: 'recurrence',
+			onClick: (): void => filterHandler({ acitve: false, recurrence: true }),
 		},
 	];
 
@@ -145,6 +167,8 @@ export function PlannedDowntime(): JSX.Element {
 						onClick={(): void => {
 							setInitialValues({ ...defautlInitialValues, editMode: false });
 							setIsOpen(true);
+							setEditMode(false);
+							form.resetFields();
 						}}
 					>
 						New downtime
@@ -161,6 +185,7 @@ export function PlannedDowntime(): JSX.Element {
 						setIsDeleteModalOpen(true);
 					}}
 					setEditMode={setEditMode}
+					searchValue={searchValue}
 				/>
 				<PlannedDowntimeForm
 					alertOptions={alertOptions || []}
@@ -171,6 +196,7 @@ export function PlannedDowntime(): JSX.Element {
 					setIsOpen={setIsOpen}
 					refetchAllSchedules={refetchAllSchedules}
 					isEditMode={isEditMode}
+					form={form}
 				/>
 				<PlannedDowntimeDeleteModal
 					isDeleteLoading={isDeleteLoading}

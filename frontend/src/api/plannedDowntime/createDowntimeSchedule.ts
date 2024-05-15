@@ -3,6 +3,8 @@ import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
+import { Recurrence } from './getAllDowntimeSchedules';
+
 export interface DowntimeSchedulePayload {
 	name: string;
 	description?: string;
@@ -11,12 +13,7 @@ export interface DowntimeSchedulePayload {
 		timezone: string;
 		startTime: string;
 		endTime?: string;
-		recurrence?: {
-			startTime: string;
-			duration: string;
-			repeatType: 'daily' | 'weekly' | 'monthly';
-			repeatOn?: string[];
-		};
+		recurrence?: Recurrence;
 	};
 }
 

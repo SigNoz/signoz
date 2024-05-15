@@ -7,6 +7,7 @@ import {
 	DatePicker,
 	Divider,
 	Form,
+	FormInstance,
 	Input,
 	Modal,
 	Select,
@@ -29,6 +30,11 @@ import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import {
+	DropdownWithSubMenu,
+	Option,
+	recurrenceOption,
+} from './DropdownWithSubMenu/DropdownWithSubMenu';
 import { AlertRuleTags } from './PlannedDowntimeList';
 import {
 	createEditDowntimeSchedule,
@@ -41,7 +47,7 @@ interface PlannedDowntimeFormData {
 	endTime: dayjs.Dayjs | string;
 	recurrence?: Recurrence | null;
 	alertRules: DefaultOptionType[];
-	recurrenceSelect: string;
+	recurrenceSelect?: Recurrence;
 }
 
 const customFormat = 'Do MMMM, YYYY ⎯ HH:mm:ss';
@@ -59,6 +65,7 @@ interface PlannedDowntimeFormProps {
 	setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	refetchAllSchedules: () => void;
 	isEditMode: boolean;
+	form: FormInstance<any>;
 }
 
 export function PlannedDowntimeForm(
@@ -73,10 +80,10 @@ export function PlannedDowntimeForm(
 		setIsOpen,
 		refetchAllSchedules,
 		isEditMode,
+		form,
 	} = props;
 
 	dayjs.locale('en');
-	const [form] = Form.useForm();
 	const [selectedTags, setSelectedTags] = React.useState<
 		DefaultOptionType | DefaultOptionType[]
 	>([]);
@@ -105,6 +112,7 @@ export function PlannedDowntimeForm(
 						startTime: formatDate(values.startTime),
 						timezone: 'Asia/Kolkata', // todo
 						endTime: formatDate(values.endTime) ?? undefined,
+						recurrence: values.recurrence as Recurrence,
 					},
 				},
 				id: isEditMode ? initialValues.id : undefined,
@@ -137,8 +145,22 @@ export function PlannedDowntimeForm(
 		[initialValues.id, isEditMode, notifications, refetchAllSchedules],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
-		console.log(values, form.getFieldsError());
-		await saveHanlder(values);
+		const recurrenceData: Recurrence | undefined =
+			(values?.recurrenceSelect?.repeatType as Option)?.value === 'does-not-repeat'
+				? undefined
+				: {
+						duration: '1h',
+						endTime: values.endTime as string,
+						startTime: values.startTime as string,
+						repeatOn: !values?.recurrenceSelect?.repeatOn?.length
+							? undefined
+							: values?.recurrenceSelect?.repeatOn,
+						repeatType: (values?.recurrenceSelect?.repeatType as Option)?.value,
+				  };
+		console.log('here-recurrence=change', recurrenceData);
+
+		const payloadValues = { ...values, recurrence: recurrenceData };
+		await saveHanlder(payloadValues);
 	};
 
 	const formValidationRules = [
@@ -200,8 +222,8 @@ export function PlannedDowntimeForm(
 				? dayjs(initialValues.schedule?.startTime)
 				: '',
 			recurrenceSelect: initialValues.schedule?.recurrence
-				? defaultTo(initialValues.schedule?.recurrence?.repeatType, '')
-				: 'does-not-repeat',
+				? initialValues.schedule?.recurrence
+				: { repeatType: { label: 'Does not repeat', value: 'does-not-repeat' } },
 			recurrence: initialValues.schedule?.recurrence,
 		};
 		return formData;
@@ -217,15 +239,16 @@ export function PlannedDowntimeForm(
 		if (value.startTime) {
 			console.log(value.startTime);
 		}
-		if (value.recurrenceSelect) {
-			console.log(value.recurrenceSelect);
-		}
 		console.log('here', form.getFieldsValue());
 	};
 
 	return (
 		<Modal
-			title={<ModalTitle level={4}>New planned downtime</ModalTitle>}
+			title={
+				<ModalTitle level={4}>
+					{isEditMode ? 'Edit planned downtime' : 'New planned downtime'}
+				</ModalTitle>
+			}
 			centered
 			open={isOpen}
 			className="createDowntimeModal"
@@ -251,45 +274,61 @@ export function PlannedDowntimeForm(
 				>
 					<Input placeholder="e.g. Upgrade downtime" />
 				</Form.Item>
-				<div className="bar">
-					<Form.Item
-						label="Starts from"
-						name="startTime"
-						required={false}
-						rules={formValidationRules}
-						className="formItemWithBullet"
-					>
-						<DatePicker
-							format={customFormat}
-							showTime
-							renderExtraFooter={datePickerFooter}
-							popupClassName="datePicker"
-						/>
-					</Form.Item>
-					<Form.Item
-						label="Ends on"
-						name="endTime"
-						required={false}
-						rules={formValidationRules}
-						className="formItemWithBullet"
-					>
-						<DatePicker
-							format={customFormat}
-							showTime
-							renderExtraFooter={datePickerFooter}
-							popupClassName="datePicker"
-						/>
-					</Form.Item>
-				</div>
+				<Form.Item
+					label="Starts from"
+					name="startTime"
+					required={false}
+					rules={formValidationRules}
+					className="formItemWithBullet"
+				>
+					<DatePicker
+						format={customFormat}
+						showTime
+						renderExtraFooter={datePickerFooter}
+						popupClassName="datePicker"
+					/>
+				</Form.Item>
+				<Form.Item
+					label="Ends on"
+					name="endTime"
+					required={false}
+					rules={formValidationRules}
+					className="formItemWithBullet"
+				>
+					<DatePicker
+						format={customFormat}
+						showTime
+						renderExtraFooter={datePickerFooter}
+						popupClassName="datePicker"
+					/>
+				</Form.Item>
 				<Form.Item
 					label="Repeats every"
 					name="recurrenceSelect"
 					required={false}
 					rules={formValidationRules}
 				>
-					<Select>
-						<Select.Option value="does-not-repeat">Does not repeat</Select.Option>
-					</Select>
+					<DropdownWithSubMenu options={recurrenceOption} form={form} />
+				</Form.Item>
+				<Form.Item
+					label="Duration"
+					name="duration"
+					required={false}
+					rules={formValidationRules}
+				>
+					<Input
+						addonAfter={
+							<Select defaultValue="m">
+								<Select.Option value="m">Min</Select.Option>
+								<Select.Option value="h">Hour</Select.Option>
+							</Select>
+						}
+						className="duration-input"
+						type="number"
+						placeholder="Enter duration"
+						min={0}
+						onWheel={(e): void => e.currentTarget.blur()}
+					/>
 				</Form.Item>
 				<div>
 					<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
@@ -337,7 +376,7 @@ export function PlannedDowntimeForm(
 							onClick={handleOk}
 							loading={saveLoading || isLoading}
 						>
-							Add downtime schedule
+							{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
 						</Button>
 					</ModalButtonWrapper>
 				</Form.Item>

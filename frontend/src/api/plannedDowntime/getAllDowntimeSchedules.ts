@@ -1,16 +1,14 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-
-// import downtimeListResponse from './response.json';
+import { AxiosError, AxiosResponse } from 'axios';
+import { Option } from 'container/PlannedDowntime/DropdownWithSubMenu/DropdownWithSubMenu';
+import { useQuery, UseQueryResult } from 'react-query';
 
 export type Recurrence = {
-	startTime: string | null;
-	endTime: string | null;
-	duration: string | null;
-	repeatType: string | null;
-	repeatOn: string[] | null;
+	startTime?: string | null;
+	endTime?: string | null;
+	duration?: string | null;
+	repeatType: string | Option | null;
+	repeatOn?: string[] | null;
 };
 
 type Schedule = {
@@ -31,25 +29,24 @@ export interface DowntimeSchedules {
 	updatedAt: string | null;
 	updatedBy: string | null;
 }
-export type PayloadProps = DowntimeSchedules[];
+export type PayloadProps = { data: DowntimeSchedules[] };
 
-const getAllDowntimeSchedules = async (): Promise<
-	SuccessResponse<PayloadProps> | ErrorResponse
-> => {
-	try {
-		const response = await axios.get('/downtime_schedules');
-		// const response = downtimeListResponse;
-
-		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data.data,
-			// payload: response.data,
-		};
-	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
-	}
+export const getAllDowntimeSchedules = async (
+	props: GetAllDowntimeSchedulesPayloadProps,
+): Promise<AxiosResponse<PayloadProps>> => {
+	console.log(props);
+	return axios.get('/downtime_schedules', { params: props });
 };
 
-export default getAllDowntimeSchedules;
+export interface GetAllDowntimeSchedulesPayloadProps {
+	acitve: boolean;
+	recurrence: boolean;
+}
+
+export const useGetAllDowntimeSchedules = (
+	props: GetAllDowntimeSchedulesPayloadProps,
+): UseQueryResult<AxiosResponse<PayloadProps>, AxiosError> =>
+	useQuery<AxiosResponse<PayloadProps>, AxiosError>({
+		queryKey: ['getAllDowntimeSchedules', props],
+		queryFn: () => getAllDowntimeSchedules(props),
+	});
