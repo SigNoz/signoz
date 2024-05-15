@@ -652,12 +652,12 @@ func TestParseQueryRangeParamsDashboardVarsSubstitution(t *testing.T) {
 							Items: []v3.FilterItem{
 								{
 									Key:      v3.AttributeKey{Key: "service_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-									Operator: "EQ",
+									Operator: v3.FilterOperatorEqual,
 									Value:    "{{.service_name}}",
 								},
 								{
 									Key:      v3.AttributeKey{Key: "operation_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-									Operator: "IN",
+									Operator: v3.FilterOperatorIn,
 									Value:    "{{.operation_name}}",
 								},
 							},
@@ -674,6 +674,161 @@ func TestParseQueryRangeParamsDashboardVarsSubstitution(t *testing.T) {
 			},
 			expectErr:     false,
 			expectedValue: []interface{}{"route", []interface{}{"GET /route", "POST /route"}},
+		},
+		{
+			desc: "valid builder query with dashboard variables {{service_name}} and {{operation_name}}",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "attribute_metrics"},
+						Expression:         "A",
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key:      v3.AttributeKey{Key: "service_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+									Operator: v3.FilterOperatorEqual,
+									Value:    "{{service_name}}",
+								},
+								{
+									Key:      v3.AttributeKey{Key: "operation_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+									Operator: v3.FilterOperatorIn,
+									Value:    "{{operation_name}}",
+								},
+							},
+						},
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"operation_name": []interface{}{
+					"GET /route",
+					"POST /route",
+				},
+			},
+			expectErr:     false,
+			expectedValue: []interface{}{"route", []interface{}{"GET /route", "POST /route"}},
+		},
+		{
+			desc: "valid builder query with dashboard variables [[service_name]] and [[operation_name]]",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "attribute_metrics"},
+						Expression:         "A",
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key:      v3.AttributeKey{Key: "service_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+									Operator: v3.FilterOperatorEqual,
+									Value:    "[[service_name]]",
+								},
+								{
+									Key:      v3.AttributeKey{Key: "operation_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+									Operator: v3.FilterOperatorIn,
+									Value:    "[[operation_name]]",
+								},
+							},
+						},
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"operation_name": []interface{}{
+					"GET /route",
+					"POST /route",
+				},
+			},
+			expectErr:     false,
+			expectedValue: []interface{}{"route", []interface{}{"GET /route", "POST /route"}},
+		},
+		{
+			desc: "valid builder query with dashboard variables $service_name and $operation_name",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "attribute_metrics"},
+						Expression:         "A",
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key:      v3.AttributeKey{Key: "service_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+									Operator: v3.FilterOperatorEqual,
+									Value:    "$service_name",
+								},
+								{
+									Key:      v3.AttributeKey{Key: "operation_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+									Operator: v3.FilterOperatorIn,
+									Value:    "$operation_name",
+								},
+							},
+						},
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"operation_name": []interface{}{
+					"GET /route",
+					"POST /route",
+				},
+			},
+			expectErr:     false,
+			expectedValue: []interface{}{"route", []interface{}{"GET /route", "POST /route"}},
+		},
+		{
+			desc: "multiple values for single select operator",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         v3.DataSourceMetrics,
+						AggregateOperator:  v3.AggregateOperatorSum,
+						AggregateAttribute: v3.AttributeKey{Key: "attribute_metrics"},
+						Expression:         "A",
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key:      v3.AttributeKey{Key: "operation_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+									Operator: v3.FilterOperatorEqual,
+									Value:    "{{.operation_name}}",
+								},
+							},
+						},
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"operation_name": []interface{}{
+					"GET /route",
+					"POST /route",
+				},
+			},
+			expectErr: true,
+			errMsg:    "multiple values [GET /route POST /route] are not allowed for operator `=` for key `operation_name`",
 		},
 	}
 
@@ -745,6 +900,72 @@ func TestParseQueryRangeParamsPromQLVars(t *testing.T) {
 				PromQueries: map[string]*v3.PromQuery{
 					"A": {
 						Query:    "http_calls_total{service_name=\"{{.service_name}}\", status_code=~\"{{.status_code}}\"}",
+						Disabled: false,
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"status_code": []interface{}{
+					200,
+					505,
+				},
+			},
+			expectErr:     false,
+			expectedQuery: "http_calls_total{service_name=\"route\", status_code=~\"200|505\"}",
+		},
+		{
+			desc: "valid prom query with dashboard variables {{service_name}} and {{status_code}}",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {
+						Query:    "http_calls_total{service_name=\"{{service_name}}\", status_code=~\"{{status_code}}\"}",
+						Disabled: false,
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"status_code": []interface{}{
+					200,
+					505,
+				},
+			},
+			expectErr:     false,
+			expectedQuery: "http_calls_total{service_name=\"route\", status_code=~\"200|505\"}",
+		},
+		{
+			desc: "valid prom query with dashboard variables [[service_name]] and [[status_code]]",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {
+						Query:    "http_calls_total{service_name=\"[[service_name]]\", status_code=~\"[[status_code]]\"}",
+						Disabled: false,
+					},
+				},
+			},
+			variables: map[string]interface{}{
+				"service_name": "route",
+				"status_code": []interface{}{
+					200,
+					505,
+				},
+			},
+			expectErr:     false,
+			expectedQuery: "http_calls_total{service_name=\"route\", status_code=~\"200|505\"}",
+		},
+		{
+			desc: "valid prom query with dashboard variables $service_name and $status_code",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {
+						Query:    "http_calls_total{service_name=\"$service_name\", status_code=~\"$status_code\"}",
 						Disabled: false,
 					},
 				},

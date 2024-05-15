@@ -1,6 +1,7 @@
 package integrations
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"strings"
@@ -120,7 +121,9 @@ func readBuiltInIntegration(dirpath string) (
 	}
 
 	var integration IntegrationDetails
-	err = json.Unmarshal(hydratedSpecJson, &integration)
+	decoder := json.NewDecoder(bytes.NewReader(hydratedSpecJson))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&integration)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"couldn't parse hydrated JSON spec read from %s: %w",
