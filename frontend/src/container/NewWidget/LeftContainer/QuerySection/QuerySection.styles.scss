@@ -66,11 +66,16 @@
 
 .lightMode {
 	.dashboard-navigation {
+		.nav-btns {
+			color: var(---bg-ink-300);
+			background-color: var(--bg-vanilla-200);
+		}
 		.ant-tabs-nav-list {
 			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-300);
 		}
 		.ant-tabs-tab + .ant-tabs-tab {
-			border-left: 1px solid var(--bg-vanilla-200) !important;
+			border-left: 1px solid var(--bg-vanilla-100) !important;
 		}
 		.ant-tabs-tab-active {
 			.nav-btns {
