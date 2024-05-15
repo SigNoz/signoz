@@ -348,6 +348,7 @@ func TestDeltaQueryBuilder(t *testing.T) {
 							Temporality:        v3.Delta,
 							GroupBy: []v3.AttributeKey{
 								{Key: "service_name"},
+								{Key: "le"},
 							},
 						},
 					},

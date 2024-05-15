@@ -652,12 +652,12 @@ func TestParseQueryRangeParamsDashboardVarsSubstitution(t *testing.T) {
 							Items: []v3.FilterItem{
 								{
 									Key:      v3.AttributeKey{Key: "service_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-									Operator: "EQ",
+									Operator: v3.FilterOperatorEqual,
 									Value:    "{{.service_name}}",
 								},
 								{
 									Key:      v3.AttributeKey{Key: "operation_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-									Operator: "IN",
+									Operator: v3.FilterOperatorIn,
 									Value:    "{{.operation_name}}",
 								},
 							},
