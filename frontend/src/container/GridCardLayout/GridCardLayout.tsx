@@ -544,6 +544,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 						>
 							<Card
 								className="grid-item"
+								isDarkMode={isDarkMode}
 								$panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}
 							>
 								<GridCard
