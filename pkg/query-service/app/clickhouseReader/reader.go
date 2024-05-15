@@ -4706,11 +4706,11 @@ func getPersonalisedError(err error) error {
 	}
 	zap.L().Error("error while reading result", zap.Error(err))
 	if strings.Contains(err.Error(), "code: 307") {
-		return chErrors.NewResourceLimitError(errors.New("Query is consuming too much resources, try applying relevant filters. If the issue persists, please reach out to the team"))
+		return chErrors.ErrResourceBytesLimitExceeded
 	}
 
 	if strings.Contains(err.Error(), "code: 159") {
-		return chErrors.NewResourceLimitError(errors.New("Query is taking too long to run, try applying relevant filters. If the issue persists, please reach out to the team"))
+		return chErrors.ErrResourceTimeLimitExceeded
 	}
 	return err
 }

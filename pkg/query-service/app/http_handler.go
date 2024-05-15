@@ -2892,7 +2892,7 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	aH.Respond(w, response)
 }
 
-func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]string) {
+func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]error) {
 	type channelResult struct {
 		Series []*v3.Series
 		Err    error
@@ -2922,13 +2922,13 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 	close(ch)
 
 	var errs []error
-	errQuriesByName := make(map[string]string)
+	errQuriesByName := make(map[string]error)
 	res := make([]*v3.Result, 0)
 	// read values from the channel
 	for r := range ch {
 		if r.Err != nil {
 			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Query
+			errQuriesByName[r.Name] = r.Err
 			continue
 		}
 		res = append(res, &v3.Result{
@@ -2942,7 +2942,7 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 	return res, nil, nil
 }
 
-func (aH *APIHandler) execClickHouseListQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]string) {
+func (aH *APIHandler) execClickHouseListQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]error) {
 	type channelResult struct {
 		List  []*v3.Row
 		Err   error
@@ -2971,13 +2971,13 @@ func (aH *APIHandler) execClickHouseListQueries(ctx context.Context, queries map
 	close(ch)
 
 	var errs []error
-	errQuriesByName := make(map[string]string)
+	errQuriesByName := make(map[string]error)
 	res := make([]*v3.Result, 0)
 	// read values from the channel
 	for r := range ch {
 		if r.Err != nil {
 			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Query
+			errQuriesByName[r.Name] = r.Err
 			continue
 		}
 		res = append(res, &v3.Result{
@@ -2991,7 +2991,7 @@ func (aH *APIHandler) execClickHouseListQueries(ctx context.Context, queries map
 	return res, nil, nil
 }
 
-func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangeParams *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]string) {
+func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangeParams *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]error) {
 	type channelResult struct {
 		Series []*v3.Series
 		Err    error
@@ -3051,13 +3051,13 @@ func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangePara
 	close(ch)
 
 	var errs []error
-	errQuriesByName := make(map[string]string)
+	errQuriesByName := make(map[string]error)
 	res := make([]*v3.Result, 0)
 	// read values from the channel
 	for r := range ch {
 		if r.Err != nil {
 			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Query
+			errQuriesByName[r.Name] = r.Err
 			continue
 		}
 		res = append(res, &v3.Result{
@@ -3155,7 +3155,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 	var result []*v3.Result
 	var err error
-	var errQuriesByName map[string]string
+	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
@@ -3412,7 +3412,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 
 	var result []*v3.Result
 	var err error
-	var errQuriesByName map[string]string
+	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them

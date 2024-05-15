@@ -2,6 +2,13 @@ package errors
 
 import "errors"
 
+var (
+	// ErrResourceBytesLimitExceeded is returned when the resource bytes limit is exceeded
+	ErrResourceBytesLimitExceeded = NewResourceLimitError(errors.New("resource bytes limit exceeded, try applying filters such as service.name, etc. to reduce the data size"))
+	// ErrResourceTimeLimitExceeded is returned when the resource time limit is exceeded
+	ErrResourceTimeLimitExceeded = NewResourceLimitError(errors.New("resource time limit exceeded, try applying filters such as service.name, etc. to reduce the data size"))
+)
+
 type ResourceLimitError struct {
 	err error
 }
