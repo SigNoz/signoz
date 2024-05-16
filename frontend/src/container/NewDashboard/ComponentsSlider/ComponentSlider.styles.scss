@@ -112,3 +112,50 @@
 		}
 	}
 }
+
+.lightMode {
+	.graph-selection {
+		.ant-modal-content {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+
+			.ant-modal-header {
+				background: var(--bg-vanilla-100);
+				border-bottom: 1px solid var(--bg-vanilla-300);
+
+				.ant-modal-title {
+					color: var(--bg-ink-300);
+				}
+			}
+
+			.ant-modal-body {
+				.panel-selection {
+					.selected {
+						background: var(--bg-vanilla-200);
+					}
+
+					.ant-card {
+						border: 1px solid var(--bg-vanilla-300);
+
+						.ant-card-body {
+							.ant-typography {
+								color: var(--bg-ink-200);
+							}
+						}
+					}
+				}
+			}
+
+			.ant-modal-footer {
+				border-top: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+
+				.ant-btn {
+					color: var(--Vanilla-100, #fff);
+
+					background: var(--Robin-500, #4e74f8);
+				}
+			}
+		}
+	}
+}
