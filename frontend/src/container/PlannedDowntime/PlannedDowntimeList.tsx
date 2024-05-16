@@ -92,7 +92,6 @@ function HeaderComponent({
 			<div className="action-btn">
 				<PenLine
 					size={14}
-					// className={isEditDeleteSupported ? '' : 'hidden'}
 					onClick={(e): void => {
 						e.preventDefault();
 						e.stopPropagation();
@@ -101,7 +100,6 @@ function HeaderComponent({
 				/>
 				<Trash2
 					size={14}
-					// className={isEditDeleteSupported ? '' : 'hidden'}
 					color={Color.BG_CHERRY_500}
 					onClick={(e): void => {
 						e.preventDefault();
@@ -234,7 +232,11 @@ export function CustomCollapseList(
 				<Panel
 					header={
 						<HeaderComponent
-							duration={getDuration(schedule?.startTime, schedule?.endTime)}
+							duration={
+								schedule?.recurrence?.duration
+									? schedule?.recurrence?.duration
+									: getDuration(schedule?.startTime, schedule?.endTime)
+							}
 							name={defaultTo(name, '')}
 							handleEdit={(): void => {
 								setInitialValues({ ...props });

@@ -130,6 +130,7 @@ export function PlannedDowntimeForm(
 				const response = await createEditDowntimeSchedule({ ...createEditProps });
 
 				if (response.statusCode === 200) {
+					setIsOpen(false);
 					notifications.success({
 						message: 'Success',
 						description: 'created',
@@ -149,7 +150,7 @@ export function PlannedDowntimeForm(
 			}
 			setSaveLoading(false);
 		},
-		[initialValues.id, isEditMode, notifications, refetchAllSchedules],
+		[initialValues.id, isEditMode, notifications, refetchAllSchedules, setIsOpen],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
 		const recurrenceData: Recurrence | undefined =
@@ -183,7 +184,6 @@ export function PlannedDowntimeForm(
 	const handleOk = async (): Promise<void> => {
 		try {
 			await form.validateFields();
-			setIsOpen(false);
 		} catch (error) {
 			// error
 		}
@@ -330,8 +330,6 @@ export function PlannedDowntimeForm(
 							>
 								<Select.Option value="m">Mins</Select.Option>
 								<Select.Option value="h">Hours</Select.Option>
-								<Select.Option value="d">Days</Select.Option>
-								<Select.Option value="w">Weeks</Select.Option>
 							</Select>
 						}
 						className="duration-input"
