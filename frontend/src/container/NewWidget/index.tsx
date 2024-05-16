@@ -12,6 +12,7 @@ import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -462,7 +463,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			</div>
 
 			<PanelContainer>
-				<LeftContainerWrapper flex={5}>
+				<LeftContainerWrapper flex={5} isDarkMode={useIsDarkMode()}>
 					{selectedWidget && (
 						<LeftContainer
 							selectedGraph={graphType}

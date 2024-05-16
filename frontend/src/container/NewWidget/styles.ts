@@ -13,10 +13,17 @@ export const RightContainerWrapper = styled(Col)`
 	}
 `;
 
-export const LeftContainerWrapper = styled(Col)`
+interface LeftContainerWrapperProps {
+	isDarkMode: boolean;
+}
+
+export const LeftContainerWrapper = styled(Col)<LeftContainerWrapperProps>`
 	&&& {
 		max-width: 70%;
-		border-right: 1px solid var(--bg-vanilla-300);
+		border-right: ${({ isDarkMode }): string =>
+			isDarkMode
+				? '1px solid var(--bg-slate-300)'
+				: '1px solid var(--bg-vanilla-300)'};
 	}
 `;
 
