@@ -162,7 +162,6 @@ export function PlannedDowntimeForm(
 							: values?.recurrenceSelect?.repeatOn,
 						repeatType: (values?.recurrenceSelect?.repeatType as Option)?.value,
 				  };
-		console.log('here-recurrence=change', recurrenceData);
 
 		const payloadValues = { ...values, recurrence: recurrenceData };
 		await saveHanlder(payloadValues);
@@ -191,7 +190,6 @@ export function PlannedDowntimeForm(
 		value: string,
 		options: DefaultOptionType | DefaultOptionType[],
 	): void => {
-		console.log(options, value);
 		form.setFieldValue(alertRuleFormName, options);
 		setSelectedTags(options);
 	};
@@ -208,7 +206,6 @@ export function PlannedDowntimeForm(
 		const newTags = selectedTags.filter(
 			(tag: DefaultOptionType) => tag.value !== removedTag,
 		);
-		console.log(newTags);
 		form.setFieldValue(alertRuleFormName, newTags);
 		setSelectedTags(newTags);
 	};

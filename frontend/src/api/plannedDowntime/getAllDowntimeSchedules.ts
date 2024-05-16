@@ -33,10 +33,8 @@ export type PayloadProps = { data: DowntimeSchedules[] };
 
 export const getAllDowntimeSchedules = async (
 	props: GetAllDowntimeSchedulesPayloadProps,
-): Promise<AxiosResponse<PayloadProps>> => {
-	console.log(props);
-	return axios.get('/downtime_schedules', { params: props });
-};
+): Promise<AxiosResponse<PayloadProps>> =>
+	axios.get('/downtime_schedules', { params: props });
 
 export interface GetAllDowntimeSchedulesPayloadProps {
 	acitve: boolean;
