@@ -27,7 +27,7 @@ import {
 } from 'container/PipelinePage/PipelineListsView/styles';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
-import { defaultTo } from 'lodash-es';
+import { defaultTo, isEmpty } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 
@@ -40,6 +40,7 @@ import { AlertRuleTags } from './PlannedDowntimeList';
 import {
 	createEditDowntimeSchedule,
 	getAlertOptionsFromIds,
+	recurrenceOptions,
 } from './PlannedDowntimeutils';
 
 interface PlannedDowntimeFormData {
@@ -105,8 +106,8 @@ export function PlannedDowntimeForm(
 
 	const saveHanlder = useCallback(
 		async (values: PlannedDowntimeFormData) => {
-			const formatDate = (date: string | dayjs.Dayjs): string =>
-				dayjs(date).format('YYYY-MM-DDTHH:mm:ss[Z]');
+			const formatDate = (date: string | dayjs.Dayjs): string | undefined =>
+				!isEmpty(date) ? dayjs(date).format('YYYY-MM-DDTHH:mm:ss[Z]') : undefined;
 
 			const createEditProps: DowntimeScheduleUpdatePayload = {
 				data: {
@@ -117,7 +118,7 @@ export function PlannedDowntimeForm(
 					schedule: {
 						startTime: formatDate(values.startTime),
 						timezone: values.timezone,
-						endTime: formatDate(values.endTime) ?? undefined,
+						endTime: formatDate(values.endTime),
 						recurrence: values.recurrence as Recurrence,
 					},
 				},
@@ -152,13 +153,16 @@ export function PlannedDowntimeForm(
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
 		const recurrenceData: Recurrence | undefined =
-			(values?.recurrenceSelect?.repeatType as Option)?.value === 'does-not-repeat'
+			(values?.recurrenceSelect?.repeatType as Option)?.value ===
+			recurrenceOptions.doesNotRepeat.value
 				? undefined
 				: {
 						duration: values.recurrence?.duration
 							? `${values.recurrence?.duration}${durationUnit}`
 							: undefined,
-						endTime: values.endTime as string,
+						endTime: !isEmpty(values.endTime)
+							? (values.endTime as string)
+							: undefined,
 						startTime: values.startTime as string,
 						repeatOn: !values?.recurrenceSelect?.repeatOn?.length
 							? undefined
@@ -228,7 +232,9 @@ export function PlannedDowntimeForm(
 				: '',
 			recurrenceSelect: initialValues.schedule?.recurrence
 				? initialValues.schedule?.recurrence
-				: { repeatType: { label: 'Does not repeat', value: 'does-not-repeat' } },
+				: {
+						repeatType: recurrenceOptions.doesNotRepeat,
+				  },
 			recurrence: initialValues.schedule?.recurrence,
 		};
 		return formData;
@@ -311,7 +317,8 @@ export function PlannedDowntimeForm(
 					required={false}
 					rules={[
 						{
-							required: selectedRecurrenceOption !== 'does-not-repeat',
+							required:
+								selectedRecurrenceOption !== recurrenceOptions.doesNotRepeat.value,
 						},
 					]}
 				>
@@ -348,7 +355,8 @@ export function PlannedDowntimeForm(
 					required={false}
 					rules={[
 						{
-							required: selectedRecurrenceOption === 'does-not-repeat',
+							required:
+								selectedRecurrenceOption === recurrenceOptions.doesNotRepeat.value,
 						},
 					]}
 					className="formItemWithBullet"

@@ -7,6 +7,8 @@ import { FormInstance } from 'antd/lib';
 import { useEffect, useState } from 'react';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import { recurrenceOptions } from '../PlannedDowntimeutils';
+
 interface SubOption {
 	label: string;
 	value: string;
@@ -30,7 +32,7 @@ export function DropdownWithSubMenu(props: DropdownProps): JSX.Element {
 	const { options, form, setRecurrenceOption } = props;
 	const [selectedOption, setSelectedOption] = useState<Option | null>(
 		!form.getFieldValue('recurrenceSelect')
-			? { label: 'Does not repeat', value: 'does-not-repeat' }
+			? recurrenceOptions.doesNotRepeat
 			: form.getFieldValue('recurrenceSelect').repeatType,
 	);
 	const [selectedSubMenuOption, setSelectedSubMenuOption] = useState<string[]>(
@@ -113,7 +115,7 @@ export function DropdownWithSubMenu(props: DropdownProps): JSX.Element {
 					<div className="options-container">
 						<div className="options">
 							{options.map((option) => {
-								if (option.value === 'weekly') {
+								if (option.value === recurrenceOptions.weekly.value) {
 									return (
 										<Popover
 											key={option.value}
@@ -204,14 +206,10 @@ export function DropdownWithSubMenu(props: DropdownProps): JSX.Element {
 }
 
 export const recurrenceOption: Option[] = [
+	recurrenceOptions.doesNotRepeat,
+	recurrenceOptions.daily,
 	{
-		label: 'Does not repeat',
-		value: 'does-not-repeat',
-	},
-	{ label: 'Daily', value: 'daily' },
-	{
-		label: 'Weekly',
-		value: 'weekly',
+		...recurrenceOptions.weekly,
 		submenu: [
 			{ label: 'Monday', value: 'monday' },
 			{ label: 'Tuesday', value: 'tuesday' },
@@ -222,5 +220,5 @@ export const recurrenceOption: Option[] = [
 			{ label: 'Sunday', value: 'sunday' },
 		],
 	},
-	{ label: 'Monthly', value: 'monthly' },
+	recurrenceOptions.monthly,
 ];

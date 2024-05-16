@@ -11,7 +11,7 @@ export interface DowntimeSchedulePayload {
 	alertIds: string[];
 	schedule: {
 		timezone?: string;
-		startTime: string;
+		startTime?: string;
 		endTime?: string;
 		recurrence?: Recurrence;
 	};

@@ -148,3 +148,13 @@ export const createEditDowntimeSchedule = async (
 	}
 	return createDowntimeSchedule({ ...props.data });
 };
+
+export const recurrenceOptions = {
+	doesNotRepeat: {
+		label: 'Does not repeat',
+		value: 'does-not-repeat',
+	},
+	daily: { label: 'Daily', value: 'daily' },
+	weekly: { label: 'Weekly', value: 'weekly' },
+	monthly: { label: 'Monthly', value: 'monthly' },
+};
