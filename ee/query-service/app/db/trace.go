@@ -120,6 +120,7 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 	searchSpansResult := []basemodel.SearchSpansResult{{
 		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
 		Events:  make([][]interface{}, len(resultSpansSet)),
+		IsSubTree: true,
 	},
 	}
 

@@ -14,6 +14,7 @@ export interface PayloadProps {
 		events: Span[];
 		segmentID: string;
 		columns: string[];
+		isSubTree: boolean;
 	};
 }
 

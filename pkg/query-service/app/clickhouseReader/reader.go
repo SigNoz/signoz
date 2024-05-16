@@ -2045,6 +2045,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	searchSpansResult := []model.SearchSpansResult{{
 		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
 		Events:  make([][]interface{}, len(searchScanResponses)),
+		IsSubTree: false,
 	},
 	}
 
