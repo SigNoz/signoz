@@ -29,6 +29,7 @@ import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 
 import {
 	DropdownWithSubMenu,
@@ -48,6 +49,7 @@ interface PlannedDowntimeFormData {
 	recurrence?: Recurrence | null;
 	alertRules: DefaultOptionType[];
 	recurrenceSelect?: Recurrence;
+	timezone?: string;
 }
 
 const customFormat = 'Do MMMM, YYYY ⎯ HH:mm:ss';
@@ -89,6 +91,7 @@ export function PlannedDowntimeForm(
 	>([]);
 	const alertRuleFormName = 'alertRules';
 	const [saveLoading, setSaveLoading] = useState(false);
+	const [durationUnit, setDurationUnit] = useState<string>('m');
 
 	const { notifications } = useNotifications();
 
@@ -110,7 +113,7 @@ export function PlannedDowntimeForm(
 					name: values.name,
 					schedule: {
 						startTime: formatDate(values.startTime),
-						timezone: 'Asia/Kolkata', // todo
+						timezone: values.timezone,
 						endTime: formatDate(values.endTime) ?? undefined,
 						recurrence: values.recurrence as Recurrence,
 					},
@@ -149,7 +152,9 @@ export function PlannedDowntimeForm(
 			(values?.recurrenceSelect?.repeatType as Option)?.value === 'does-not-repeat'
 				? undefined
 				: {
-						duration: '1h',
+						duration: values.recurrence?.duration
+							? `${values.recurrence?.duration}${durationUnit}`
+							: undefined,
 						endTime: values.endTime as string,
 						startTime: values.startTime as string,
 						repeatOn: !values?.recurrenceSelect?.repeatOn?.length
@@ -235,12 +240,13 @@ export function PlannedDowntimeForm(
 		form.setFieldsValue({ ...formatedInitialValues });
 	}, [form, formatedInitialValues, initialValues]);
 
-	const onFormChange = (value: Partial<PlannedDowntimeFormData>): void => {
-		if (value.startTime) {
-			console.log(value.startTime);
-		}
-		console.log('here', form.getFieldsValue());
-	};
+	const timeZoneItems: DefaultOptionType[] = ALL_TIME_ZONES.map(
+		(timezone: string) => ({
+			label: timezone,
+			value: timezone,
+			key: timezone,
+		}),
+	);
 
 	return (
 		<Modal
@@ -263,7 +269,6 @@ export function PlannedDowntimeForm(
 				layout="vertical"
 				className="createForm"
 				onFinish={onFinish}
-				onValuesChange={onFormChange}
 				autoComplete="off"
 			>
 				<Form.Item
@@ -289,6 +294,47 @@ export function PlannedDowntimeForm(
 					/>
 				</Form.Item>
 				<Form.Item
+					label="Repeats every"
+					name="recurrenceSelect"
+					required={false}
+					rules={formValidationRules}
+				>
+					<DropdownWithSubMenu options={recurrenceOption} form={form} />
+				</Form.Item>
+				<Form.Item
+					label="Duration"
+					name={['recurrence', 'duration']}
+					required={false}
+					rules={formValidationRules}
+				>
+					<Input
+						addonAfter={
+							<Select
+								defaultValue="m"
+								onChange={(value): void => setDurationUnit(value)}
+							>
+								<Select.Option value="m">Mins</Select.Option>
+								<Select.Option value="h">Hours</Select.Option>
+								<Select.Option value="d">Days</Select.Option>
+								<Select.Option value="w">Weeks</Select.Option>
+							</Select>
+						}
+						className="duration-input"
+						type="number"
+						placeholder="Enter duration"
+						min={0}
+						onWheel={(e): void => e.currentTarget.blur()}
+					/>
+				</Form.Item>
+				<Form.Item
+					label="Timezone"
+					name="timezone"
+					required={false}
+					rules={formValidationRules}
+				>
+					<Select options={timeZoneItems} placeholder="Select timezone" showSearch />
+				</Form.Item>
+				<Form.Item
 					label="Ends on"
 					name="endTime"
 					required={false}
@@ -302,34 +348,6 @@ export function PlannedDowntimeForm(
 						popupClassName="datePicker"
 					/>
 				</Form.Item>
-				<Form.Item
-					label="Repeats every"
-					name="recurrenceSelect"
-					required={false}
-					rules={formValidationRules}
-				>
-					<DropdownWithSubMenu options={recurrenceOption} form={form} />
-				</Form.Item>
-				<Form.Item
-					label="Duration"
-					name="duration"
-					required={false}
-					rules={formValidationRules}
-				>
-					<Input
-						addonAfter={
-							<Select defaultValue="m">
-								<Select.Option value="m">Min</Select.Option>
-								<Select.Option value="h">Hour</Select.Option>
-							</Select>
-						}
-						className="duration-input"
-						type="number"
-						placeholder="Enter duration"
-						min={0}
-						onWheel={(e): void => e.currentTarget.blur()}
-					/>
-				</Form.Item>
 				<div>
 					<Typography style={{ marginBottom: 8 }}>Silence Alerts</Typography>
 					<Form.Item noStyle shouldUpdate>
@@ -339,7 +357,7 @@ export function PlannedDowntimeForm(
 							handleClose={handleClose}
 						/>
 					</Form.Item>
-					<Form.Item name={alertRuleFormName}>
+					<Form.Item name={alertRuleFormName} rules={formValidationRules}>
 						<Select
 							placeholder="Search for alerts rules or groups..."
 							mode="multiple"
