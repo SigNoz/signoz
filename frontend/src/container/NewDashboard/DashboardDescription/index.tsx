@@ -395,7 +395,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					)}
 				</div>
 			</section>
-			{tags?.length && tags?.length > 0 && (
+			{(tags?.length || 0) > 0 && (
 				<div className="dashboard-tags">
 					{tags?.map((tag) => (
 						<Tag key={tag} className="tag">
