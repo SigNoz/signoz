@@ -6,7 +6,11 @@ import { Braces, Table } from 'lucide-react';
 import GeneralDashboardSettings from './General';
 import VariablesSetting from './Variables';
 
-function DashboardSettingsContent(): JSX.Element {
+function DashboardSettingsContent({
+	variableViewModeRef,
+}: {
+	variableViewModeRef: React.MutableRefObject<(() => void) | undefined>;
+}): JSX.Element {
 	const items = [
 		{
 			label: (
@@ -24,7 +28,7 @@ function DashboardSettingsContent(): JSX.Element {
 				</Button>
 			),
 			key: 'variables',
-			children: <VariablesSetting />,
+			children: <VariablesSetting variableViewModeRef={variableViewModeRef} />,
 		},
 	];
 

@@ -2,7 +2,7 @@ import './Description.styles.scss';
 
 import { Button, Tooltip } from 'antd';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import DashboardSettingsContent from '../DashboardSettings';
 import { DrawerContainer } from './styles';
@@ -10,12 +10,15 @@ import { DrawerContainer } from './styles';
 function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 	const [visible, setVisible] = useState<boolean>(false);
 
+	const variableViewModeRef = useRef<() => void>();
+
 	const showDrawer = (): void => {
 		setVisible(true);
 	};
 
 	const onClose = (): void => {
 		setVisible(false);
+		variableViewModeRef?.current?.();
 	};
 
 	return (
@@ -40,7 +43,7 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 				open={visible}
 				rootClassName="settings-container-root"
 			>
-				<DashboardSettingsContent />
+				<DashboardSettingsContent variableViewModeRef={variableViewModeRef} />
 			</DrawerContainer>
 		</>
 	);
