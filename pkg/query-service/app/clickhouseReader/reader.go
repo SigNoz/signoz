@@ -1069,9 +1069,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	if len(queryParams.HttpRoute) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
-	if len(queryParams.HttpCode) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
-	}
 	if len(queryParams.HttpHost) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
@@ -1080,9 +1077,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	}
 	if len(queryParams.HttpUrl) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
-	}
-	if len(queryParams.Component) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
@@ -1117,12 +1111,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 		Operation:          map[string]uint64{},
 		ResponseStatusCode: map[string]uint64{},
 		RPCMethod:          map[string]uint64{},
-		HttpCode:           map[string]uint64{},
 		HttpMethod:         map[string]uint64{},
 		HttpUrl:            map[string]uint64{},
 		HttpRoute:          map[string]uint64{},
 		HttpHost:           map[string]uint64{},
-		Component:          map[string]uint64{},
 	}
 
 	for _, e := range queryParams.GetFilters {
@@ -1144,23 +1136,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			for _, service := range dBResponse {
 				if service.ServiceName != "" {
 					traceFilterReponse.ServiceName[service.ServiceName] = service.Count
-				}
-			}
-		case constants.HttpCode:
-			finalQuery := fmt.Sprintf("SELECT httpCode, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.indexTable)
-			finalQuery += query
-			finalQuery += " GROUP BY httpCode"
-			var dBResponse []model.DBResponseHttpCode
-			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.L().Info(finalQuery)
-
-			if err != nil {
-				zap.L().Error("Error in processing sql query", zap.Error(err))
-				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
-			}
-			for _, service := range dBResponse {
-				if service.HttpCode != "" {
-					traceFilterReponse.HttpCode[service.HttpCode] = service.Count
 				}
 			}
 		case constants.HttpRoute:
@@ -1246,23 +1221,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			for _, service := range dBResponse {
 				if service.Operation != "" {
 					traceFilterReponse.Operation[service.Operation] = service.Count
-				}
-			}
-		case constants.Component:
-			finalQuery := fmt.Sprintf("SELECT component, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.indexTable)
-			finalQuery += query
-			finalQuery += " GROUP BY component"
-			var dBResponse []model.DBResponseComponent
-			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.L().Info(finalQuery)
-
-			if err != nil {
-				zap.L().Error("Error in processing sql query", zap.Error(err))
-				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
-			}
-			for _, service := range dBResponse {
-				if service.Component != "" {
-					traceFilterReponse.Component[service.Component] = service.Count
 				}
 			}
 		case constants.Status:
@@ -1435,9 +1393,6 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	if len(queryParams.HttpRoute) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
-	if len(queryParams.HttpCode) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
-	}
 	if len(queryParams.HttpHost) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
@@ -1446,9 +1401,6 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	}
 	if len(queryParams.HttpUrl) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
-	}
-	if len(queryParams.Component) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
@@ -1730,9 +1682,6 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	if len(queryParams.HttpRoute) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
-	if len(queryParams.HttpCode) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
-	}
 	if len(queryParams.HttpHost) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
@@ -1741,9 +1690,6 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	}
 	if len(queryParams.HttpUrl) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
-	}
-	if len(queryParams.Component) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
@@ -1805,7 +1751,6 @@ func excludeTags(ctx context.Context, tags []string) []string {
 		"http.host":           true,
 		"messaging.system":    true,
 		"messaging.operation": true,
-		"component":           true,
 		"error":               true,
 		"service.name":        true,
 	}
@@ -1855,9 +1800,6 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 	if len(queryParams.HttpRoute) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
-	if len(queryParams.HttpCode) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
-	}
 	if len(queryParams.HttpHost) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
@@ -1866,9 +1808,6 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 	}
 	if len(queryParams.HttpUrl) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
-	}
-	if len(queryParams.Component) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
@@ -2188,9 +2127,6 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	if len(queryParams.HttpRoute) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
-	if len(queryParams.HttpCode) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
-	}
 	if len(queryParams.HttpHost) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
@@ -2199,9 +2135,6 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	}
 	if len(queryParams.HttpUrl) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
-	}
-	if len(queryParams.Component) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)

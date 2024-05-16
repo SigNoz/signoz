@@ -154,11 +154,9 @@ const (
 	TraceID                        = "traceID"
 	ServiceName                    = "serviceName"
 	HttpRoute                      = "httpRoute"
-	HttpCode                       = "httpCode"
 	HttpHost                       = "httpHost"
 	HttpUrl                        = "httpUrl"
 	HttpMethod                     = "httpMethod"
-	Component                      = "component"
 	OperationDB                    = "name"
 	OperationRequest               = "operation"
 	Status                         = "status"
@@ -193,7 +191,6 @@ var GroupByColMap = map[string]struct{}{
 	HttpRoute:          {},
 	HttpUrl:            {},
 	HttpMethod:         {},
-	Component:          {},
 	OperationDB:        {},
 	DBName:             {},
 	DBOperation:        {},
