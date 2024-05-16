@@ -87,7 +87,6 @@ function VariableItem({
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
 
 	useEffect(() => {
-		setPreviewValues([]);
 		if (queryType === 'CUSTOM') {
 			setPreviewValues(
 				sortValues(
@@ -95,6 +94,9 @@ function VariableItem({
 					variableSortType,
 				) as never,
 			);
+		}
+		if (queryType === 'QUERY') {
+			setPreviewValues((prev) => sortValues(prev, variableSortType) as never);
 		}
 	}, [
 		queryType,
@@ -129,13 +131,16 @@ function VariableItem({
 
 	// Fetches the preview values for the SQL variable query
 	const handleQueryResult = (response: any): void => {
-		if (response?.payload?.variableValues)
+		if (response?.payload?.variableValues) {
 			setPreviewValues(
 				sortValues(
 					response.payload?.variableValues || [],
 					variableSortType,
 				) as never,
 			);
+		} else {
+			setPreviewValues([]);
+		}
 	};
 
 	const { isFetching: previewLoading, refetch: runQuery } = useQuery(

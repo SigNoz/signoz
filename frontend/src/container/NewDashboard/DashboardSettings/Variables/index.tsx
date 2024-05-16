@@ -74,7 +74,11 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 	);
 }
 
-function VariablesSetting(): JSX.Element {
+function VariablesSetting({
+	variableViewModeRef,
+}: {
+	variableViewModeRef: React.MutableRefObject<(() => void) | undefined>;
+}): JSX.Element {
 	const variableToDelete = useRef<IDashboardVariable | null>(null);
 	const [deleteVariableModal, setDeleteVariableModal] = useState(false);
 
@@ -113,6 +117,13 @@ function VariablesSetting(): JSX.Element {
 		setVariableEditData(varData);
 		setVariableViewMode(viewType);
 	};
+
+	useEffect(() => {
+		if (variableViewModeRef) {
+			// eslint-disable-next-line no-param-reassign
+			variableViewModeRef.current = onDoneVariableViewMode;
+		}
+	}, [variableViewModeRef]);
 
 	const updateMutation = useUpdateDashboard();
 
