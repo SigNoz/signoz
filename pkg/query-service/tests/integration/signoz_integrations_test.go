@@ -345,10 +345,12 @@ func TestDashboardsForInstalledIntegrationDashboards(t *testing.T) {
 		len(testIntegrationDashboards), len(dashboards),
 		"dashboards for installed integrations should appear in dashboards list",
 	)
+	require.GreaterOrEqual(dashboards[0].CreatedAt.Unix(), tsBeforeInstallation)
 	require.GreaterOrEqual(dashboards[0].UpdatedAt.Unix(), tsBeforeInstallation)
 
 	// Should be able to get installed integrations dashboard by id
 	dd := integrationsTB.GetDashboardByIdFromQS(dashboards[0].Uuid)
+	require.GreaterOrEqual(dd.CreatedAt.Unix(), tsBeforeInstallation)
 	require.GreaterOrEqual(dd.UpdatedAt.Unix(), tsBeforeInstallation)
 	require.Equal(*dd, dashboards[0])
 

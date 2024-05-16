@@ -327,11 +327,15 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 		if dId, exists := dd["id"]; exists {
 			if id, ok := dId.(string); ok && id == dashboardId {
 				isLocked := 1
+				author := "integration"
 				return &dashboards.Dashboard{
 					Uuid:      m.dashboardUuid(integrationId, string(dashboardId)),
 					Locked:    &isLocked,
 					Data:      dd,
+					CreatedAt: integration.Installation.InstalledAt,
+					CreateBy:  &author,
 					UpdatedAt: integration.Installation.InstalledAt,
+					UpdateBy:  &author,
 				}, nil
 			}
 		}
@@ -357,11 +361,15 @@ func (m *Manager) GetDashboardsForInstalledIntegrations(
 			if dId, exists := dd["id"]; exists {
 				if dashboardId, ok := dId.(string); ok {
 					isLocked := 1
+					author := "integration"
 					result = append(result, dashboards.Dashboard{
 						Uuid:      m.dashboardUuid(ii.IntegrationSummary.Id, dashboardId),
 						Locked:    &isLocked,
 						Data:      dd,
+						CreatedAt: ii.Installation.InstalledAt,
+						CreateBy:  &author,
 						UpdatedAt: ii.Installation.InstalledAt,
+						UpdateBy:  &author,
 					})
 				}
 			}
