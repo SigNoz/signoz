@@ -90,6 +90,7 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 
 	resultSeries := &v3.Series{
 		Labels: uniqueLabelSet,
+		Points: make([]v3.Point, 0),
 	}
 	timestamps := make([]int64, 0)
 	for timestamp := range uniqueTimestamps {
