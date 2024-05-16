@@ -40,12 +40,13 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 								}
 							}
 
-							ithSum, jthSum := 0.0, 0.0
+							ithSum, jthSum, ithCount, jthCount := 0.0, 0.0, 1.0, 1.0
 							for _, point := range result.Series[i].Points {
 								if math.IsNaN(point.Value) || math.IsInf(point.Value, 0) {
 									continue
 								}
 								ithSum += point.Value
+								ithCount++
 							}
 
 							for _, point := range result.Series[j].Points {
@@ -53,12 +54,13 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 									continue
 								}
 								jthSum += point.Value
+								jthCount++
 							}
 
 							if orderBy.Order == "asc" {
-								return ithSum < jthSum
+								return ithSum/ithCount < jthSum/jthCount
 							} else if orderBy.Order == "desc" {
-								return ithSum > jthSum
+								return ithSum/ithCount > jthSum/jthCount
 							}
 						} else {
 							// Sort based on Labels map
