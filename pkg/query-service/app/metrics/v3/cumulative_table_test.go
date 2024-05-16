@@ -60,6 +60,11 @@ func TestPanelTableForCumulative(t *testing.T) {
 					},
 				},
 				Expression: "A",
+				GroupBy: []v3.AttributeKey{
+					{
+						Key: "le",
+					},
+				},
 			},
 			expected: "SELECT  toStartOfHour(now()) as ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.500) as value FROM (SELECT le,  toStartOfHour(now()) as ts, sum(rate_value)/29 as value FROM (SELECT le,  ts, If((value - lagInFrame(value, 1, 0) OVER rate_window) < 0, nan, If((ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window) >= 86400, nan, (value - lagInFrame(value, 1, 0) OVER rate_window) / (ts - lagInFrame(ts, 1, toDate('1970-01-01')) OVER rate_window)))  as rate_value FROM(SELECT fingerprint, le,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  JSONExtractString(labels, 'le') as le, fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'signoz_latency_bucket' AND temporality IN ['Cumulative', 'Unspecified'] AND JSONExtractString(labels, 'service_name') = 'frontend') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_bucket' AND timestamp_ms >= 1689255866000 AND timestamp_ms <= 1689257640000 GROUP BY fingerprint, le,ts ORDER BY fingerprint, le ASC, ts) WINDOW rate_window as (PARTITION BY fingerprint, le ORDER BY fingerprint, le ASC, ts)) WHERE isNaN(rate_value) = 0 GROUP BY le,ts ORDER BY le ASC, ts) GROUP BY ts ORDER BY  ts",
 		},
@@ -76,6 +81,9 @@ func TestPanelTableForCumulative(t *testing.T) {
 				GroupBy: []v3.AttributeKey{
 					{
 						Key: "service_name",
+					},
+					{
+						Key: "le",
 					},
 				},
 				Expression: "A",

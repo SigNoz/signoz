@@ -19,6 +19,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/converter"
 
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
@@ -469,7 +470,7 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 
 	if r.ruleCondition.CompositeQuery != nil && r.ruleCondition.CompositeQuery.BuilderQueries != nil {
 		for _, q := range r.ruleCondition.CompositeQuery.BuilderQueries {
-			q.StepInterval = 60
+			q.StepInterval = int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60))
 		}
 	}
 
@@ -501,13 +502,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 	}
 
 	columnTypes := rows.ColumnTypes()
-	if err != nil {
-		return nil, err
-	}
 	columnNames := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
 	vars := make([]interface{}, len(columnTypes))
 
 	for i := range columnTypes {
@@ -648,7 +643,8 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 					resultMap[labelHash] = sample
 				}
 			case OnAverage:
-				sample.Point.V = (existing.Point.V + sample.Point.V) / 2
+				sample.Point.Vs = append(existing.Point.Vs, sample.Point.V)
+				sample.Point.V = (existing.Point.V + sample.Point.V)
 				resultMap[labelHash] = sample
 			case InTotal:
 				sample.Point.V = (existing.Point.V + sample.Point.V)
@@ -676,6 +672,13 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 		}
 
+	}
+
+	if r.matchType() == OnAverage {
+		for hash, s := range resultMap {
+			s.Point.V = s.Point.V / float64(len(s.Point.Vs))
+			resultMap[hash] = s
+		}
 	}
 
 	for hash, s := range resultMap {

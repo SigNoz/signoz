@@ -290,6 +290,11 @@ export enum PANEL_TYPES {
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
+export enum PANEL_GROUP_TYPES {
+	ROW = 'row',
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum ATTRIBUTE_TYPES {
 	SUM = 'Sum',
 	GAUGE = 'Gauge',

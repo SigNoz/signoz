@@ -402,30 +402,61 @@ type CompositeQuery struct {
 	Unit              string                      `json:"unit,omitempty"`
 }
 
+func (c *CompositeQuery) EnabledQueries() int {
+	count := 0
+	switch c.QueryType {
+	case QueryTypeBuilder:
+		for _, query := range c.BuilderQueries {
+			if !query.Disabled {
+				count++
+			}
+		}
+	case QueryTypeClickHouseSQL:
+		for _, query := range c.ClickHouseQueries {
+			if !query.Disabled {
+				count++
+			}
+		}
+	case QueryTypePromQL:
+		for _, query := range c.PromQueries {
+			if !query.Disabled {
+				count++
+			}
+		}
+	}
+	return count
+}
+
 func (c *CompositeQuery) Validate() error {
 	if c == nil {
 		return fmt.Errorf("composite query is required")
 	}
 
 	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil {
-		return fmt.Errorf("composite query must contain at least one query")
+		return fmt.Errorf("composite query must contain at least one query type")
 	}
 
-	for name, query := range c.BuilderQueries {
-		if err := query.Validate(); err != nil {
-			return fmt.Errorf("builder query %s is invalid: %w", name, err)
+	if c.QueryType == QueryTypeBuilder {
+		for name, query := range c.BuilderQueries {
+			if err := query.Validate(c.PanelType); err != nil {
+				return fmt.Errorf("builder query %s is invalid: %w", name, err)
+			}
 		}
 	}
 
-	for name, query := range c.ClickHouseQueries {
-		if err := query.Validate(); err != nil {
-			return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
+	if c.QueryType == QueryTypeClickHouseSQL {
+		for name, query := range c.ClickHouseQueries {
+			if err := query.Validate(); err != nil {
+				return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
+			}
 		}
 	}
 
-	for name, query := range c.PromQueries {
-		if err := query.Validate(); err != nil {
-			return fmt.Errorf("prom query %s is invalid: %w", name, err)
+	if c.QueryType == QueryTypePromQL {
+		for name, query := range c.PromQueries {
+			if err := query.Validate(); err != nil {
+				return fmt.Errorf("prom query %s is invalid: %w", name, err)
+			}
 		}
 	}
 
@@ -638,10 +669,11 @@ type BuilderQuery struct {
 	ShiftBy            int64
 }
 
-func (b *BuilderQuery) Validate() error {
+func (b *BuilderQuery) Validate(panelType PanelType) error {
 	if b == nil {
 		return nil
 	}
+
 	if b.QueryName == "" {
 		return fmt.Errorf("query name is required")
 	}
@@ -686,6 +718,10 @@ func (b *BuilderQuery) Validate() error {
 		}
 	}
 	if b.GroupBy != nil {
+		if len(b.GroupBy) > 0 && panelType == PanelTypeList {
+			return fmt.Errorf("group by is not supported for list panel type")
+		}
+
 		for _, groupBy := range b.GroupBy {
 			if err := groupBy.Validate(); err != nil {
 				return fmt.Errorf("group by is invalid %w", err)
