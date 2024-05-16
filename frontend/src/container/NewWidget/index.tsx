@@ -11,6 +11,7 @@ import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useAxiosError from 'hooks/useAxiosError';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -242,6 +243,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		return { selectedWidget, preWidgets, afterWidgets };
 	}, [selectedDashboard, query]);
 
+	const handleError = useAxiosError();
+
 	const onClickSaveHandler = useCallback(() => {
 		if (!selectedDashboard) {
 			return;
@@ -301,6 +304,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					pathname: generatePath(ROUTES.DASHBOARD, { dashboardId }),
 				});
 			},
+			onError: handleError,
 		});
 	}, [
 		selectedDashboard,
@@ -313,6 +317,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		currentQuery,
 		afterWidgets,
 		updateDashboardMutation,
+		handleError,
 		setSelectedDashboard,
 		setToScrollWidgetId,
 		featureResponse,
