@@ -3,7 +3,6 @@ import './NewWidget.styles.scss';
 
 import { WarningOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Tooltip, Typography } from 'antd';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -14,7 +13,6 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
-import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { defaultTo, isUndefined } from 'lodash-es';
@@ -244,8 +242,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		return { selectedWidget, preWidgets, afterWidgets };
 	}, [selectedDashboard, query]);
 
-	const { notifications } = useNotifications();
-
 	const onClickSaveHandler = useCallback(() => {
 		if (!selectedDashboard) {
 			return;
@@ -305,11 +301,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					pathname: generatePath(ROUTES.DASHBOARD, { dashboardId }),
 				});
 			},
-			onError: () => {
-				notifications.error({
-					message: SOMETHING_WENT_WRONG,
-				});
-			},
 		});
 	}, [
 		selectedDashboard,
@@ -326,7 +317,6 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		setToScrollWidgetId,
 		featureResponse,
 		dashboardId,
-		notifications,
 	]);
 
 	const onClickDiscardHandler = useCallback(() => {
