@@ -258,7 +258,7 @@ func (m *Manager) UninstallIntegration(
 func (m *Manager) GetPipelinesForInstalledIntegrations(
 	ctx context.Context,
 ) ([]logparsingpipeline.Pipeline, *model.ApiError) {
-	installedIntegrations, apiErr := m.getDetailsForInstalledIntegrations(ctx)
+	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -328,9 +328,10 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 			if id, ok := dId.(string); ok && id == dashboardId {
 				isLocked := 1
 				return &dashboards.Dashboard{
-					Uuid:   m.dashboardUuid(integrationId, string(dashboardId)),
-					Locked: &isLocked,
-					Data:   dd,
+					Uuid:      m.dashboardUuid(integrationId, string(dashboardId)),
+					Locked:    &isLocked,
+					Data:      dd,
+					UpdatedAt: integration.Installation.InstalledAt,
 				}, nil
 			}
 		}
@@ -344,7 +345,7 @@ func (m *Manager) GetInstalledIntegrationDashboardById(
 func (m *Manager) GetDashboardsForInstalledIntegrations(
 	ctx context.Context,
 ) ([]dashboards.Dashboard, *model.ApiError) {
-	installedIntegrations, apiErr := m.getDetailsForInstalledIntegrations(ctx)
+	installedIntegrations, apiErr := m.getInstalledIntegrations(ctx)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -357,9 +358,10 @@ func (m *Manager) GetDashboardsForInstalledIntegrations(
 				if dashboardId, ok := dId.(string); ok {
 					isLocked := 1
 					result = append(result, dashboards.Dashboard{
-						Uuid:   m.dashboardUuid(ii.IntegrationSummary.Id, dashboardId),
-						Locked: &isLocked,
-						Data:   dd,
+						Uuid:      m.dashboardUuid(ii.IntegrationSummary.Id, dashboardId),
+						Locked:    &isLocked,
+						Data:      dd,
+						UpdatedAt: ii.Installation.InstalledAt,
 					})
 				}
 			}
@@ -418,10 +420,10 @@ func (m *Manager) getInstalledIntegration(
 	return &installation, nil
 }
 
-func (m *Manager) getDetailsForInstalledIntegrations(
+func (m *Manager) getInstalledIntegrations(
 	ctx context.Context,
 ) (
-	map[string]IntegrationDetails, *model.ApiError,
+	map[string]Integration, *model.ApiError,
 ) {
 	installations, apiErr := m.installedIntegrationsRepo.list(ctx)
 	if apiErr != nil {
@@ -431,5 +433,24 @@ func (m *Manager) getDetailsForInstalledIntegrations(
 	installedIds := utils.MapSlice(installations, func(i InstalledIntegration) string {
 		return i.IntegrationId
 	})
-	return m.availableIntegrationsRepo.get(ctx, installedIds)
+	integrationDetails, apiErr := m.availableIntegrationsRepo.get(ctx, installedIds)
+	if apiErr != nil {
+		return nil, apiErr
+	}
+
+	result := map[string]Integration{}
+	for _, ii := range installations {
+		iDetails, exists := integrationDetails[ii.IntegrationId]
+		if !exists {
+			return nil, model.InternalError(fmt.Errorf(
+				"couldn't find integration details for %s", ii.IntegrationId,
+			))
+		}
+
+		result[ii.IntegrationId] = Integration{
+			Installation:       &ii,
+			IntegrationDetails: iDetails,
+		}
+	}
+	return result, nil
 }
