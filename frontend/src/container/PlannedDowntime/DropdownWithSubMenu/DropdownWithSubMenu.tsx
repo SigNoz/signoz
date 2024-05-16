@@ -21,10 +21,13 @@ export interface Option {
 interface DropdownProps {
 	options: Option[];
 	form: FormInstance<any>;
+	setRecurrenceOption: React.Dispatch<
+		React.SetStateAction<string | undefined | null>
+	>;
 }
 
 export function DropdownWithSubMenu(props: DropdownProps): JSX.Element {
-	const { options, form } = props;
+	const { options, form, setRecurrenceOption } = props;
 	const [selectedOption, setSelectedOption] = useState<Option | null>(
 		!form.getFieldValue('recurrenceSelect')
 			? { label: 'Does not repeat', value: 'does-not-repeat' }
@@ -36,6 +39,11 @@ export function DropdownWithSubMenu(props: DropdownProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState(false);
 	const [isSubMenuOpen, setSubMenuIsOpen] = useState(false);
 	const [selectionCompleted, setSelectionCompleted] = useState(false);
+
+	useEffect(() => setRecurrenceOption?.(selectedOption?.value), [
+		selectedOption,
+		setRecurrenceOption,
+	]);
 
 	const handleSelectOption = (option: Option): void => {
 		setSelectedOption(option);

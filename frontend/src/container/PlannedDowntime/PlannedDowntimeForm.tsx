@@ -92,6 +92,9 @@ export function PlannedDowntimeForm(
 	const alertRuleFormName = 'alertRules';
 	const [saveLoading, setSaveLoading] = useState(false);
 	const [durationUnit, setDurationUnit] = useState<string>('m');
+	const [selectedRecurrenceOption, setSelectedRecurrenceOption] = useState<
+		string | null
+	>();
 
 	const { notifications } = useNotifications();
 
@@ -296,13 +299,21 @@ export function PlannedDowntimeForm(
 					required={false}
 					rules={formValidationRules}
 				>
-					<DropdownWithSubMenu options={recurrenceOption} form={form} />
+					<DropdownWithSubMenu
+						options={recurrenceOption}
+						form={form}
+						setRecurrenceOption={setSelectedRecurrenceOption}
+					/>
 				</Form.Item>
 				<Form.Item
 					label="Duration"
 					name={['recurrence', 'duration']}
 					required={false}
-					rules={formValidationRules}
+					rules={[
+						{
+							required: selectedRecurrenceOption !== 'does-not-repeat',
+						},
+					]}
 				>
 					<Input
 						addonAfter={
@@ -335,7 +346,11 @@ export function PlannedDowntimeForm(
 					label="Ends on"
 					name="endTime"
 					required={false}
-					rules={formValidationRules}
+					rules={[
+						{
+							required: selectedRecurrenceOption === 'does-not-repeat',
+						},
+					]}
 					className="formItemWithBullet"
 				>
 					<DatePicker
