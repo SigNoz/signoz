@@ -1,15 +1,3 @@
-.options-container {
-	position: absolute;
-	top: 100%;
-	left: 0;
-	z-index: 1;
-	background-color: var(--bg-slate-400);
-	border: 1px solid var(--bg-ink-300);
-	border-top: none;
-	max-height: 150px; /* Set the maximum height for the dropdown */
-	overflow-y: auto; /* Enable vertical scrolling if content exceeds the height */
-}
-
 .options {
 	width: 100%;
 }
@@ -39,25 +27,6 @@
 	gap: 6px;
 	padding: 12px;
 	border-radius: 4px;
-}
-
-.submenu {
-	width: 100%;
-}
-
-.submenu-option {
-	padding: 8px 10px;
-	cursor: pointer;
-}
-
-.submenu-option:hover {
-	background-color: var(--bg-slate-200);
-}
-
-.selected-option {
-	margin-top: 10px;
-	font-size: 14px;
-	color: #666;
 }
 
 .dropdown-submenu {
