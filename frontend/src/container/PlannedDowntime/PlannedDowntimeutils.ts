@@ -158,3 +158,29 @@ export const recurrenceOptions = {
 	weekly: { label: 'Weekly', value: 'weekly' },
 	monthly: { label: 'Monthly', value: 'monthly' },
 };
+
+interface DurationInfo {
+	value: number;
+	unit: string;
+}
+
+export function getDurationInfo(
+	durationString: string | undefined | null,
+): DurationInfo | null {
+	if (!durationString) {
+		return null;
+	}
+	// Regular expression to extract value and unit from the duration string
+	const durationRegex = /(\d+)([hms])/;
+	// Match the value and unit parts in the duration string
+	const match = durationString.match(durationRegex);
+	if (match && match.length >= 3) {
+		// Extract value and unit from the match
+		const value = parseInt(match[1], 10);
+		const unit = match[2];
+		// Return duration info object
+		return { value, unit };
+	}
+	// If no value or unit part found, return null
+	return null;
+}

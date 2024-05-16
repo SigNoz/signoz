@@ -6,8 +6,8 @@ import { useQuery, UseQueryResult } from 'react-query';
 export type Recurrence = {
 	startTime?: string | null;
 	endTime?: string | null;
-	duration?: string | null;
-	repeatType: string | Option | null;
+	duration?: number | string | null;
+	repeatType?: string | Option | null;
 	repeatOn?: string[] | null;
 };
 

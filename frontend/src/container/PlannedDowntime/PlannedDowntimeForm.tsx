@@ -40,6 +40,7 @@ import { AlertRuleTags } from './PlannedDowntimeList';
 import {
 	createEditDowntimeSchedule,
 	getAlertOptionsFromIds,
+	getDurationInfo,
 	recurrenceOptions,
 } from './PlannedDowntimeutils';
 
@@ -235,7 +236,13 @@ export function PlannedDowntimeForm(
 				: {
 						repeatType: recurrenceOptions.doesNotRepeat,
 				  },
-			recurrence: initialValues.schedule?.recurrence,
+			recurrence: {
+				...initialValues.schedule?.recurrence,
+				duration: getDurationInfo(
+					initialValues.schedule?.recurrence?.duration as string,
+				)?.value,
+			},
+			timezone: initialValues.schedule?.timezone as string,
 		};
 		return formData;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -326,6 +333,10 @@ export function PlannedDowntimeForm(
 						addonAfter={
 							<Select
 								defaultValue="m"
+								value={
+									getDurationInfo(initialValues.schedule?.recurrence?.duration as string)
+										?.unit
+								}
 								onChange={(value): void => setDurationUnit(value)}
 							>
 								<Select.Option value="m">Mins</Select.Option>

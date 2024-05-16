@@ -234,7 +234,7 @@ export function CustomCollapseList(
 						<HeaderComponent
 							duration={
 								schedule?.recurrence?.duration
-									? schedule?.recurrence?.duration
+									? (schedule?.recurrence?.duration as string)
 									: getDuration(schedule?.startTime, schedule?.endTime)
 							}
 							name={defaultTo(name, '')}
