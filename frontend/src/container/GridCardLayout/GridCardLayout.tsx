@@ -119,6 +119,11 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		userRole,
 	);
 
+	const [deleteWidget, editWidget] = useComponentPermission(
+		['delete_widget', 'edit_widget'],
+		userRole,
+	);
+
 	useEffect(() => {
 		setDashboardLayout(sortLayout(layouts));
 	}, [layouts]);
@@ -495,6 +500,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 													<Button
 														className="rename-btn"
 														type="text"
+														disabled={!editWidget}
 														icon={<PenLine size={14} />}
 														onClick={(): void => {
 															setIsSettingsModalOpen(true);
@@ -511,6 +517,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 															className="remove-section"
 															type="text"
 															icon={<X size={14} />}
+															disabled={!deleteWidget}
 															onClick={(): void => {
 																setIsDeleteModalOpen(true);
 																setCurrentSelectRowId(id);
