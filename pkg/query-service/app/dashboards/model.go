@@ -326,7 +326,15 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 	if existingTotal > newTotal && existingTotal-newTotal > 1 {
 		// if the total count of panels has reduced by more than 1,
 		// return error
-		return nil, model.BadRequest(fmt.Errorf("deleting more than one panel is not supported"))
+		existingIds := getWidgetIds(dashboard.Data)
+		newIds := getWidgetIds(data)
+
+		differenceIds := getIdDifference(existingIds, newIds)
+
+		if len(differenceIds) > 1 {
+			return nil, model.BadRequest(fmt.Errorf("deleting more than one panel is not supported"))
+		}
+
 	}
 
 	dashboard.UpdatedAt = time.Now()
@@ -713,4 +721,53 @@ func countTraceAndLogsPanel(data map[string]interface{}) (int64, int64) {
 		}
 	}
 	return count, totalPanels
+}
+
+func getWidgetIds(data map[string]interface{}) []string {
+	widgetIds := []string{}
+	if data != nil && data["widgets"] != nil {
+		widgets, ok := data["widgets"].(interface{})
+		if ok {
+			data, ok := widgets.([]interface{})
+			if ok {
+				for _, widget := range data {
+					sData, ok := widget.(map[string]interface{})
+					if ok && sData["query"] != nil && sData["id"] != nil {
+						id, ok := sData["id"].(string)
+
+						if ok {
+							widgetIds = append(widgetIds, id)
+						}
+
+					}
+				}
+			}
+		}
+	}
+	return widgetIds
+}
+
+func getIdDifference(existingIds []string, newIds []string) []string {
+	// Convert newIds array to a map for faster lookups
+	newIdsMap := make(map[string]bool)
+	for _, id := range newIds {
+		newIdsMap[id] = true
+	}
+
+	// Initialize a map to keep track of elements in the difference array
+	differenceMap := make(map[string]bool)
+
+	// Initialize the difference array
+	difference := []string{}
+
+	// Iterate through existingIds
+	for _, id := range existingIds {
+		// If the id is not found in newIds, and it's not already in the difference array
+		if _, found := newIdsMap[id]; !found && !differenceMap[id] {
+			difference = append(difference, id)
+			differenceMap[id] = true // Mark the id as seen in the difference array
+		}
+	}
+
+	return difference
 }

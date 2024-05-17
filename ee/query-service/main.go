@@ -14,7 +14,9 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.signoz.io/signoz/ee/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -141,6 +143,12 @@ func main() {
 		zap.L().Warn("No JWT secret key is specified.")
 	} else {
 		zap.L().Info("JWT secret key set successfully.")
+	}
+
+	if err := migrate.Migrate(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+		zap.L().Error("Failed to migrate", zap.Error(err))
+	} else {
+		zap.L().Info("Migration successful")
 	}
 
 	server, err := app.NewServer(serverOptions)
