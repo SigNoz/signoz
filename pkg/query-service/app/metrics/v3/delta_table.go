@@ -10,7 +10,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tableName string) (string, error) {
+func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery) (string, error) {
 
 	// round up to the nearest multiple of 60
 	step := int64(math.Ceil(float64(end-start+1)/1000/60) * 60)

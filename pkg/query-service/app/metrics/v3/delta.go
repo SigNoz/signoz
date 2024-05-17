@@ -9,7 +9,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string) (string, error) {
+func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	metricQueryGroupBy := mq.GroupBy
 

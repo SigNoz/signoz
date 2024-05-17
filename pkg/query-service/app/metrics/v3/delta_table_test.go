@@ -86,7 +86,7 @@ func TestPanelTableForDelta(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			query, err := buildDeltaMetricQueryForTable(1689255866000, 1689257640000, 1800, c.query, "distributed_time_series_v4")
+			query, err := buildDeltaMetricQueryForTable(1689255866000, 1689257640000, 1800, c.query)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
