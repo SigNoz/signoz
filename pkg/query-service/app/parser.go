@@ -1065,43 +1065,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			}
 			query.ShiftBy = timeShiftBy
 
-			if query.Filters == nil || len(query.Filters.Items) == 0 {
-				continue
-			}
-
-			for idx := range query.Filters.Items {
-				item := &query.Filters.Items[idx]
-				value := item.Value
-				if value != nil {
-					switch x := value.(type) {
-					case string:
-						variableName := strings.Trim(x, "{[.$]}")
-						if _, ok := queryRangeParams.Variables[variableName]; ok {
-							item.Value = queryRangeParams.Variables[variableName]
-						}
-					case []interface{}:
-						if len(x) > 0 {
-							switch x[0].(type) {
-							case string:
-								variableName := strings.Trim(x[0].(string), "{[.$]}")
-								if _, ok := queryRangeParams.Variables[variableName]; ok {
-									item.Value = queryRangeParams.Variables[variableName]
-								}
-							}
-						}
-					}
-				}
-
-				if item.Operator != v3.FilterOperatorIn && item.Operator != v3.FilterOperatorNotIn {
-					// the value type should not be multiple values
-					if _, ok := item.Value.([]interface{}); ok {
-						return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("multiple values %s are not allowed for operator `%s` for key `%s`", item.Value, item.Operator, item.Key.Key)}
-					}
-				}
-			}
-
 			// for metrics v3
-
 			// if the aggregate operator is a histogram quantile, and user has not forgotten
 			// the le tag in the group by then add the le tag to the group by
 			if query.AggregateOperator == v3.AggregateOperatorHistQuant50 ||
@@ -1129,28 +1093,38 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				}
 			}
 
-			// for metrics v4
-			if v3.IsPercentileOperator(query.SpaceAggregation) &&
-				query.AggregateAttribute.Type != v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
-				// If quantile is set, we need to group by le
-				// and set the space aggregation to sum
-				// and time aggregation to rate
-				query.TimeAggregation = v3.TimeAggregationRate
-				query.SpaceAggregation = v3.SpaceAggregationSum
-				// If le is not present in group by for quantile, add it
-				leFound := false
-				for _, groupBy := range query.GroupBy {
-					if groupBy.Key == "le" {
-						leFound = true
-						break
+			if query.Filters == nil || len(query.Filters.Items) == 0 {
+				continue
+			}
+
+			for idx := range query.Filters.Items {
+				item := &query.Filters.Items[idx]
+				value := item.Value
+				if value != nil {
+					switch x := value.(type) {
+					case string:
+						variableName := strings.Trim(x, "{[.$]}")
+						if _, ok := queryRangeParams.Variables[variableName]; ok {
+							item.Value = queryRangeParams.Variables[variableName]
+						}
+					case []interface{}:
+						if len(x) > 0 {
+							switch x[0].(type) {
+							case string:
+								variableName := strings.Trim(x[0].(string), "{[.$]}")
+								if _, ok := queryRangeParams.Variables[variableName]; ok {
+									item.Value = queryRangeParams.Variables[variableName]
+								}
+							}
+						}
 					}
 				}
-				if !leFound {
-					query.GroupBy = append(query.GroupBy, v3.AttributeKey{
-						Key:      "le",
-						Type:     v3.AttributeKeyTypeTag,
-						DataType: v3.AttributeKeyDataTypeString,
-					})
+
+				if v3.FilterOperator(strings.ToLower((string(item.Operator)))) != v3.FilterOperatorIn && v3.FilterOperator(strings.ToLower((string(item.Operator)))) != v3.FilterOperatorNotIn {
+					// the value type should not be multiple values
+					if _, ok := item.Value.([]interface{}); ok {
+						return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("multiple values %s are not allowed for operator `%s` for key `%s`", item.Value, item.Operator, item.Key.Key)}
+					}
 				}
 			}
 		}
