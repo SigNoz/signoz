@@ -109,7 +109,7 @@ export function DeleteButton({
 							openConfirmationDialog();
 						}
 					}}
-					disabled={isLocked}
+					disabled={isLocked || (role === USER_ROLES.VIEWER && !isAuthor)}
 				>
 					<DeleteOutlined /> Delete dashboard
 				</TableLinkText>

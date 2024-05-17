@@ -324,7 +324,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 									</Button>
 								</section>
 								<section className="section-2">
-									{!isDashboardLocked && editDashboard && (
+									{!isDashboardLocked && addPanelPermission && (
 										<Button
 											type="text"
 											icon={<FolderKanban size={14} />}
