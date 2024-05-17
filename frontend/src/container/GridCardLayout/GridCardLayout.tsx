@@ -466,7 +466,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 											<GripVertical
 												size={14}
 												className="drag-handle"
-												color={Color.BG_VANILLA_100}
+												color={isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_300}
 												cursor="move"
 											/>
 										)}
