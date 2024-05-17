@@ -11,6 +11,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
 
 	"go.uber.org/zap"
@@ -88,6 +89,12 @@ func main() {
 		zap.L().Warn("No JWT secret key is specified.")
 	} else {
 		zap.L().Info("JWT secret key set successfully.")
+	}
+
+	if err := migrate.Migrate(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+		zap.L().Error("Failed to migrate", zap.Error(err))
+	} else {
+		zap.L().Info("Migration successful")
 	}
 
 	server, err := app.NewServer(serverOptions)
