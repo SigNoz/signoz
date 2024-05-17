@@ -31,7 +31,7 @@ func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableNam
 		}
 	}
 
-	filterSubQuery, err := helpers.PrepareTimeseriesFilterQuery(start, end, mq)
+	filterSubQuery, err := helpers.PrepareTimeseriesFilterQueryV3(start, end, mq)
 	if err != nil {
 		return "", err
 	}
