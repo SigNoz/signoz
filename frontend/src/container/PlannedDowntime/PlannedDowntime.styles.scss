@@ -2,15 +2,15 @@
 	.ant-modal-content {
 		padding: 16px;
 		border-radius: 4px;
-		border: 1px solid var(--Slate-500, #161922);
-		background: var(--Ink-400, #121317);
+		border: 1px solid var(--bg-slate-500);
+		background: var(--bg-ink-400);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 
 		.ant-modal-header {
-			background-color: var(--Ink-400, #121317);
+			background-color: var(--bg-ink-400);
 			.ant-typography {
 				margin: 0;
-				color: var(--Vanilla-100, #fff);
+				color: var(--bg-vanilla-100);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -22,7 +22,7 @@
 		.ant-modal-body {
 			.ant-divider {
 				margin: 16px 0;
-				border: 0.5px solid var(--Slate-500, #161922);
+				border: 0.5px solid var(--bg-slate-500);
 			}
 		}
 	}
@@ -42,8 +42,8 @@
 	input {
 		width: 100%;
 		border-radius: 2px;
-		border: 1px solid var(--Slate-400, #1d212d);
-		background: var(--Ink-300, #16181d);
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
 	}
 
 	.alert-rule-tags {
@@ -61,8 +61,8 @@
 	.ant-select {
 		.ant-select-selector {
 			border-radius: 2px;
-			border: 1px solid var(--Slate-400, #1d212d);
-			background: var(--Ink-300, #16181d);
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-300);
 		}
 	}
 }
@@ -123,22 +123,6 @@
 .datePicker {
 	.ant-picker-panel-container {
 		background: #262930 !important;
-	}
-}
-
-.lightMode {
-	.datePicker {
-		.ant-picker-panel-container {
-			background: #ffffff !important;
-		}
-	}
-
-	.planned-downtime-container {
-		.planned-downtime-content {
-			.title {
-				color: var(--bg-ink-500);
-			}
-		}
 	}
 }
 
@@ -309,7 +293,7 @@
 
 				.render-item-value {
 					.ant-typography {
-						color: var(--Vanilla-100, #fff);
+						color: var(--bg-vanilla-100);
 						font-family: Inter;
 						font-size: 14px;
 						font-style: normal;
@@ -429,5 +413,123 @@
 .duration-input {
 	.ant-select {
 		width: 100px;
+	}
+}
+
+.lightMode {
+	.datePicker {
+		.ant-picker-panel-container {
+			background: #ffffff !important;
+		}
+	}
+
+	.planned-downtime-container {
+		.planned-downtime-content {
+			.title {
+				color: var(--bg-ink-500);
+			}
+
+			.view-created-at {
+				border: 1px solid var(--bg-vanilla-300);
+				background-color: var(--bg-vanilla-100);
+				.ant-typography {
+					color: var(--bg-slate-100);
+				}
+				border-top: 0px !important;
+			}
+		}
+	}
+
+	.planned-downtime-table {
+		.ant-table-tbody {
+			.collapse-list {
+				border: 1px solid var(--bg-vanilla-300);
+				background-color: var(--bg-vanilla-100);
+
+				.ant-collapse-content-box {
+					.ant-typography {
+						color: var(--bg-slate-100);
+					}
+				}
+
+				.ant-typography {
+					color: var(--bg-slate-400);
+				}
+			}
+		}
+	}
+
+	.delete-view-modal {
+		.ant-modal-content {
+			border: 1px solid var(--bg-vanilla-200);
+			background: var(--bg-vanilla-100);
+
+			.ant-modal-header {
+				background: var(--bg-vanilla-100);
+
+				.title {
+					color: var(--bg-ink-500);
+				}
+			}
+
+			.ant-modal-body {
+				.ant-typography {
+					color: var(--bg-ink-500);
+				}
+
+				.save-view-input {
+					.ant-input {
+						background: var(--bg-vanilla-200);
+						color: var(--bg-ink-500);
+					}
+				}
+			}
+
+			.ant-modal-footer {
+				.cancel-btn {
+					background: var(--bg-vanilla-300);
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+	}
+
+	.createDowntimeModal {
+		.ant-modal-content {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+
+			.ant-modal-header {
+				background-color: var(--bg-vanilla-100);
+				.ant-typography {
+					color: var(--bg-slate-100);
+				}
+			}
+
+			.ant-modal-body {
+				.ant-divider {
+					border: 0.5px solid var(--bg-vanilla-300);
+				}
+			}
+		}
+	}
+
+	.createForm {
+		.ant-picker,
+		input {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-100);
+		}
+
+		.ant-picker .ant-picker-input input {
+			border: 0px !important;
+		}
+
+		.ant-select {
+			.ant-select-selector {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+			}
+		}
 	}
 }

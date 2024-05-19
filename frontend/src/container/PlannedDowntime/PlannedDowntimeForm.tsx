@@ -195,7 +195,7 @@ export function PlannedDowntimeForm(
 	};
 
 	const handleChange = (
-		value: string,
+		_value: string,
 		options: DefaultOptionType | DefaultOptionType[],
 	): void => {
 		form.setFieldValue(alertRuleFormName, options);
