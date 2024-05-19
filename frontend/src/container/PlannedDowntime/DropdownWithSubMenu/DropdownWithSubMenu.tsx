@@ -111,6 +111,11 @@ export function DropdownWithSubMenu(props: DropdownProps): JSX.Element {
 			<Popover
 				getPopupContainer={popupContainer}
 				open={isOpen}
+				onOpenChange={(visible): void => {
+					if (!visible) {
+						setSubMenuIsOpen(false);
+					}
+				}}
 				content={
 					<div className="options-container">
 						<div className="options">
