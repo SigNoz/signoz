@@ -21,7 +21,9 @@
 		"playwright:codegen:local": "playwright codegen http://localhost:3301",
 		"playwright:codegen:local:auth": "yarn playwright:codegen:local --load-storage=tests/auth.json",
 		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
-		"commitlint": "commitlint --edit $1"
+		"commitlint": "commitlint --edit $1",
+		"test": "jest --coverage",
+		"test:changedsince": "jest --changedSince=develop --coverage --silent"
 	},
 	"engines": {
 		"node": ">=16.15.0"
@@ -51,7 +53,7 @@
 		"ansi-to-html": "0.7.2",
 		"antd": "5.11.0",
 		"antd-table-saveas-excel": "2.2.1",
-		"axios": "1.6.2",
+		"axios": "1.6.4",
 		"babel-eslint": "^10.1.0",
 		"babel-jest": "^29.6.4",
 		"babel-loader": "9.1.3",

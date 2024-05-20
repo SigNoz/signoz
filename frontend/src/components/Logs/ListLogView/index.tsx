@@ -157,8 +157,8 @@ function ListLogView({
 	const timestampValue = useMemo(
 		() =>
 			typeof flattenLogData.timestamp === 'string'
-				? dayjs(flattenLogData.timestamp).format()
-				: dayjs(flattenLogData.timestamp / 1e6).format(),
+				? dayjs(flattenLogData.timestamp).format('YYYY-MM-DD HH:mm:ss.SSS')
+				: dayjs(flattenLogData.timestamp / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS'),
 		[flattenLogData.timestamp],
 	);
 
