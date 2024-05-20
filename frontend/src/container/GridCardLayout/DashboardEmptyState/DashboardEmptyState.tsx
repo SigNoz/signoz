@@ -1,10 +1,10 @@
+/* eslint-disable jsx-a11y/img-redundant-alt */
 import './DashboardEmptyState.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
 import SettingsDrawer from 'container/NewDashboard/DashboardDescription/SettingsDrawer';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { Tent } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
@@ -41,7 +41,11 @@ export default function DashboardEmptyState(): JSX.Element {
 		<section className="dashboard-empty-state">
 			<div className="dashboard-content">
 				<section className="heading">
-					<Tent size={14} className="icons" />
+					<img
+						src="/Icons/dashboard_emoji.svg"
+						alt="header-image"
+						style={{ height: '32px', width: '32px' }}
+					/>
 					<Typography.Text className="welcome">
 						Welcome to your new dashboard
 					</Typography.Text>
@@ -53,7 +57,11 @@ export default function DashboardEmptyState(): JSX.Element {
 					<div className="actions-1">
 						<div className="actions-configure">
 							<div className="actions-configure-text">
-								<Tent size={14} className="icons" />
+								<img
+									src="/Icons/tools.svg"
+									alt="header-image"
+									style={{ height: '14px', width: '14px' }}
+								/>
 								<Typography.Text className="configure">
 									Configure your new dashboard
 								</Typography.Text>
@@ -67,7 +75,11 @@ export default function DashboardEmptyState(): JSX.Element {
 					<div className="actions-1">
 						<div className="actions-add-panel">
 							<div className="actions-panel-text">
-								<Tent size={14} className="icons" />
+								<img
+									src="/Icons/landscape.svg"
+									alt="header-image"
+									style={{ height: '14px', width: '14px' }}
+								/>
 								<Typography.Text className="panel">Add panels</Typography.Text>
 							</div>
 							<Typography.Text className="panel-info">
