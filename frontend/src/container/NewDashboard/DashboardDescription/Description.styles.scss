@@ -128,7 +128,20 @@
 			.icons {
 				display: flex;
 				align-items: center;
-				width: auto;
+				width: 32px;
+				height: 34px;
+				padding: 6px;
+				justify-content: center;
+				border-radius: 2px;
+				border: 1px solid var(--bg-slate-400);
+				background: var(--bg-ink-300);
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 12px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 10px; /* 83.333% */
+				letter-spacing: 0.12px;
 			}
 
 			.icons:hover {
@@ -216,12 +229,6 @@
 	-webkit-box-orient: vertical;
 	text-overflow: ellipsis;
 	overflow: hidden;
-}
-
-.dashboard-actions {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
 }
 
 .dashboard-settings {
@@ -567,6 +574,11 @@
 			}
 
 			.right-section {
+				.icons {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-100);
+					color: var(--bg-ink-400);
+				}
 				.configure-button {
 					border: 1px solid var(--bg-vanilla-300);
 					background: var(--bg-vanilla-100);
