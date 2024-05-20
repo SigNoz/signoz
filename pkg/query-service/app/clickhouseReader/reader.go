@@ -4828,6 +4828,11 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+
+		if ignoreTagKeysWhichAreIndexed(tagKey) {
+			continue
+		}
+
 		// TODO: Remove this once the column name are updated in the table
 		tagKey = tempHandleFixedColumns(tagKey)
 		key := v3.AttributeKey{
@@ -4869,6 +4874,11 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+
+		if ignoreTagKeysWhichAreIndexed(tagKey) {
+			continue
+		}
+
 		// TODO: Remove this once the column name are updated in the table
 		tagKey = tempHandleFixedColumns(tagKey)
 		key := v3.AttributeKey{
@@ -4893,6 +4903,33 @@ func tempHandleFixedColumns(tagKey string) string {
 		tagKey = "parentSpanID"
 	}
 	return tagKey
+}
+
+// ignoreTagKeysWhichAreIndexed ignores tag attributes which has an equivalent fixed column
+func ignoreTagKeysWhichAreIndexed(tagKey string) bool {
+	excludedTagsMap := map[string]bool{
+		"db.system":                 true,
+		"db.name":                   true,
+		"db.operation":              true,
+		"peer.service":              true,
+		"url.full":                  true,
+		"http.response.status_code": true,
+		"http.route":                true,
+		"http.method":               true,
+		"http.request.method":       true,
+		"http.url":                  true,
+		"http.status_code":          true,
+		"http.host":                 true,
+		"messaging.system":          true,
+		"messaging.operation":       true,
+		"service.name":              true,
+		"rpc.method":                true,
+		"rpc.service":               true,
+		"rpc.system":                true,
+		"rpc.jsonrpc.error_code":    true,
+		"rpc.grpc.status_code":      true,
+	}
+	return excludedTagsMap[tagKey]
 }
 
 func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
