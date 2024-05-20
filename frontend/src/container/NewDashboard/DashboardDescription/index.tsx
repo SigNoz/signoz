@@ -1,6 +1,6 @@
 import './Description.styles.scss';
 
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, SmallDashOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -14,7 +14,6 @@ import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import {
 	Check,
-	CircleEllipsis,
 	ClipboardCopy,
 	FileJson,
 	FolderKanban,
@@ -284,6 +283,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					<Typography.Text className="dashboard-title">{title}</Typography.Text>
 				</div>
 				<div className="right-section">
+					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					<Popover
 						open={isDashboardSettingsOpen}
 						arrow={false}
@@ -372,13 +372,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						trigger="click"
 						placement="bottomRight"
 					>
-						<Button
-							icon={<CircleEllipsis size={14} />}
-							type="text"
-							className="icons"
-						/>
+						<Button icon={<SmallDashOutlined />} type="text" className="icons" />
 					</Popover>
-					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
 					{!isDashboardLocked && editDashboard && (
 						<SettingsDrawer drawerTitle="Dashboard Configuration" />
 					)}
