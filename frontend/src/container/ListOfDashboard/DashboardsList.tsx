@@ -514,10 +514,8 @@ function DashboardsList(): JSX.Element {
 									</Typography.Text>
 								</>
 							)}
-						</div>
-						<div className="dashboard-details">
 							{visibleColumns.updatedAt && (
-								<div className="dashboard-created-at">
+								<div className="dashboard-created-at" style={{ marginLeft: '8px' }}>
 									<CalendarClock size={14} />
 									<Typography.Text>
 										{onLastUpdated(dashboard.lastUpdatedTime)}
