@@ -8,6 +8,7 @@ import dompurify from 'dompurify';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useMemo } from 'react';
+import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
 import { getLogIndicatorTypeForTable } from '../LogStateIndicator/utils';
@@ -107,7 +108,11 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					children: (
 						<TableBodyContent
 							dangerouslySetInnerHTML={{
-								__html: convert.toHtml(dompurify.sanitize(field)),
+								__html: convert.toHtml(
+									dompurify.sanitize(field, {
+										FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+									}),
+								),
 							}}
 							linesPerRow={linesPerRow}
 							isDarkMode={isDarkMode}
