@@ -584,7 +584,7 @@ function DashboardsList(): JSX.Element {
 					<div
 						className="create-dashboard-menu-item"
 						onClick={(): void => {
-							setShowNewDashboardTemplatesModal(true);
+							onNewDashboardHandler();
 						}}
 					>
 						<LayoutGrid size={14} /> Create dashboard
@@ -595,7 +595,7 @@ function DashboardsList(): JSX.Element {
 		}
 
 		return menuItems;
-	}, [createNewDashboard]);
+	}, [createNewDashboard, onNewDashboardHandler]);
 
 	return (
 		<div className="dashboards-list-container">
