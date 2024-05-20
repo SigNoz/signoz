@@ -646,22 +646,28 @@ function DashboardsList(): JSX.Element {
 							</Typography.Text>
 						</section>
 
-						<section className="actions">
-							<Dropdown
-								overlayClassName="new-dashboard-menu"
-								menu={{ items: getCreateDashboardItems }}
-								placement="bottomRight"
-								trigger={['click']}
-							>
-								<Button type="text" className="new-dashboard" icon={<Plus size={14} />}>
-									New Dashboard
+						{createNewDashboard && (
+							<section className="actions">
+								<Dropdown
+									overlayClassName="new-dashboard-menu"
+									menu={{ items: getCreateDashboardItems }}
+									placement="bottomRight"
+									trigger={['click']}
+								>
+									<Button
+										type="text"
+										className="new-dashboard"
+										icon={<Plus size={14} />}
+									>
+										New Dashboard
+									</Button>
+								</Dropdown>
+								<Button type="text" className="learn-more">
+									Learn more
 								</Button>
-							</Dropdown>
-							<Button type="text" className="learn-more">
-								Learn more
-							</Button>
-							<ArrowUpRight size={16} className="learn-more-arrow" />
-						</section>
+								<ArrowUpRight size={16} className="learn-more-arrow" />
+							</section>
+						)}
 					</div>
 				) : (
 					<>
@@ -687,20 +693,22 @@ function DashboardsList(): JSX.Element {
 								onChange={handleSearch}
 							/>
 
-							<Dropdown
-								overlayClassName="new-dashboard-menu"
-								menu={{ items: getCreateDashboardItems }}
-								placement="bottomRight"
-								trigger={['click']}
-							>
-								<Button
-									type="primary"
-									className="periscope-btn primary"
-									icon={<Plus size={14} />}
+							{createNewDashboard && (
+								<Dropdown
+									overlayClassName="new-dashboard-menu"
+									menu={{ items: getCreateDashboardItems }}
+									placement="bottomRight"
+									trigger={['click']}
 								>
-									New dashboard
-								</Button>
-							</Dropdown>
+									<Button
+										type="primary"
+										className="periscope-btn primary"
+										icon={<Plus size={14} />}
+									>
+										New dashboard
+									</Button>
+								</Dropdown>
+							)}
 						</div>
 						<div className="all-dashboards-header">
 							<Typography.Text className="typography">All Dashboards</Typography.Text>
