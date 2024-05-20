@@ -246,3 +246,8 @@ body {
 .ant-notification-notice-message {
 	padding-right: 20px;
 }
+
+.ant-drawer {
+	// do not modify this as this is required to hide intercom in modals
+	z-index: 1000000000000;
+}
