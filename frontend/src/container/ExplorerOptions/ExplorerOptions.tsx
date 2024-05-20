@@ -406,7 +406,9 @@ function ExplorerOptions({
 						<Tooltip
 							title={
 								<div>
-									Learn more{' '}
+									{sourcepage === DataSource.LOGS
+										? 'Learn more about Logs explorer'
+										: 'Learn more about Traces explorer'}
 									<Typography.Link
 										href={
 											sourcepage === DataSource.LOGS
