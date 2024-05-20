@@ -27,6 +27,7 @@ import cx from 'classnames';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
+import dayjs from 'dayjs';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
@@ -354,6 +355,37 @@ function DashboardsList(): JSX.Element {
 		return `${formattedDate} ⎯ ${formattedTime}`;
 	}
 
+	const onLastUpdated = (time: string): string => {
+		const currentTime = dayjs();
+
+		const lastRefresh = dayjs(time);
+
+		const secondsDiff = currentTime.diff(lastRefresh, 'seconds');
+
+		const minutedDiff = currentTime.diff(lastRefresh, 'minutes');
+		const hoursDiff = currentTime.diff(lastRefresh, 'hours');
+		const daysDiff = currentTime.diff(lastRefresh, 'days');
+		const monthsDiff = currentTime.diff(lastRefresh, 'months');
+
+		if (monthsDiff > 0) {
+			return `Last Updated ${monthsDiff} months ago`;
+		}
+
+		if (daysDiff > 0) {
+			return `Last Updated ${daysDiff} days ago`;
+		}
+
+		if (hoursDiff > 0) {
+			return `Last Updated ${hoursDiff} hrs ago`;
+		}
+
+		if (minutedDiff > 0) {
+			return `Last Updated ${minutedDiff} mins ago`;
+		}
+
+		return `Last Updated ${secondsDiff} sec ago`;
+	};
+
 	const columns: TableProps<Data>['columns'] = [
 		{
 			title: 'Dashboards',
@@ -370,10 +402,6 @@ function DashboardsList(): JSX.Element {
 					timeOptions,
 				);
 
-				const lastUpdatedFormattedTime = new Date(
-					dashboard.lastUpdatedTime,
-				).toLocaleTimeString('en-US', timeOptions);
-
 				const dateOptions: Intl.DateTimeFormatOptions = {
 					month: 'short',
 					day: 'numeric',
@@ -385,14 +413,8 @@ function DashboardsList(): JSX.Element {
 					dateOptions,
 				);
 
-				const lastUpdatedFormattedDate = new Date(
-					dashboard.lastUpdatedTime,
-				).toLocaleDateString('en-US', dateOptions);
-
 				// Combine time and date
 				const formattedDateAndTime = `${formattedDate} ⎯ ${formattedTime}`;
-
-				const lastUpdatedFormattedDateTime = `${lastUpdatedFormattedDate} ⎯ ${lastUpdatedFormattedTime}`;
 
 				const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.id}`;
 
@@ -497,7 +519,9 @@ function DashboardsList(): JSX.Element {
 							{visibleColumns.updatedAt && (
 								<div className="dashboard-created-at">
 									<CalendarClock size={14} />
-									<Typography.Text>{lastUpdatedFormattedDateTime}</Typography.Text>
+									<Typography.Text>
+										{onLastUpdated(dashboard.lastUpdatedTime)}
+									</Typography.Text>
 								</div>
 							)}
 
@@ -848,7 +872,7 @@ function DashboardsList(): JSX.Element {
 									{visibleColumns.updatedAt && (
 										<Typography.Text className="formatted-time">
 											<CalendarClock size={14} />
-											{getFormattedTime(dashboards?.[0] as Dashboard, 'updated_at')}
+											{onLastUpdated(dashboards?.[0]?.updated_by || '')}
 										</Typography.Text>
 									)}
 									{visibleColumns.updatedBy && (
