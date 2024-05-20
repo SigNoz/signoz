@@ -66,13 +66,15 @@ export default function QBEntityOptions({
 				<div className="left-col-items">
 					<div className="options periscope-btn-group">
 						<Button.Group>
-							<Button
-								value="search"
-								className="periscope-btn collapse"
-								onClick={onCollapseEntity}
-							>
-								{isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-							</Button>
+							<Tooltip title={isCollapsed ? 'Uncollapse' : 'Collapse'}>
+								<Button
+									value="search"
+									className="periscope-btn collapse"
+									onClick={onCollapseEntity}
+								>
+									{isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+								</Button>
+							</Tooltip>
 							<Tooltip title={entityData.disabled ? 'Show' : 'Hide'}>
 								<Button
 									value="query-builder"
