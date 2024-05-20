@@ -37,19 +37,16 @@ import {
 	ArrowDownWideNarrow,
 	ArrowUpRight,
 	CalendarClock,
-	CalendarClockIcon,
 	Check,
 	Clock4,
 	Expand,
 	HdmiPort,
 	LayoutGrid,
 	Link2,
-	PencilRuler,
 	Plus,
 	Radius,
 	RotateCw,
 	Search,
-	SortDesc,
 } from 'lucide-react';
 import { handleContactSupport } from 'pages/Integrations/utils';
 import {
@@ -542,25 +539,6 @@ function DashboardsList(): JSX.Element {
 		},
 	];
 
-	const filterMenuItems: MenuProps['items'] = [
-		{
-			label: (
-				<div className="create-dashboard-menu-item">
-					<PencilRuler size={14} /> Created by
-				</div>
-			),
-			key: '0',
-		},
-		{
-			label: (
-				<div className="create-dashboard-menu-item">
-					<CalendarClockIcon size={14} /> Last updated by
-				</div>
-			),
-			key: '1',
-		},
-	];
-
 	const getCreateDashboardItems = useMemo(() => {
 		const menuItems: MenuProps['items'] = [
 			{
@@ -684,7 +662,9 @@ function DashboardsList(): JSX.Element {
 				) : (
 					<>
 						<div className="dashboards-list-header-container">
-							<Dropdown
+							{/* TODO add filters
+							 */}
+							{/* <Dropdown
 								overlayClassName="new-dashboard-menu"
 								menu={{ items: filterMenuItems }}
 								placement="bottomLeft"
@@ -696,15 +676,13 @@ function DashboardsList(): JSX.Element {
 								>
 									Filter
 								</Button>
-							</Dropdown>
-
+							</Dropdown> */}
 							<Input
 								placeholder="Search by name, description, or tags..."
 								prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
 								value={searchValue}
 								onChange={handleSearch}
 							/>
-
 							{createNewDashboard && (
 								<Dropdown
 									overlayClassName="new-dashboard-menu"
