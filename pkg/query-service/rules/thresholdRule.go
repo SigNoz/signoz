@@ -417,8 +417,6 @@ func (r *ThresholdRule) Unit() string {
 }
 
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
-	// todo(amol): add 30 seconds to evalWindow for rate calc
-
 	// todo(srikanthccv): make this configurable
 	// 2 minutes is reasonable time to wait for data to be available
 	// 60 seconds (SDK) + 10 seconds (batch) + rest for n/w + serialization + write to disk etc..
@@ -770,6 +768,15 @@ func (r *ThresholdRule) runChQuery(
 	return result, nil
 }
 
+// FIXME(srikanthccv): remove this hack
+func (r *ThresholdRule) adjustedMetricTimeRange(start, end, step int64) (int64, int64) {
+	start = start - (start % (step * 1000))
+	start -= step * 1000
+	adjustStep := int64(math.Min(float64(step), 60))
+	end = end - (end % (adjustStep * 1000))
+	return start, end
+}
+
 func (r *ThresholdRule) prepareBuilderQueries(ts time.Time, ch driver.Conn) (map[string]string, []int64, error) {
 	params := r.prepareQueryRange(ts)
 	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
@@ -782,8 +789,10 @@ func (r *ThresholdRule) prepareBuilderQueries(ts time.Time, ch driver.Conn) (map
 
 	}
 
+	start, end := r.adjustedMetricTimeRange(params.Start, params.End, params.Step)
+
 	timestamps := []int64{}
-	for i := params.Start; i <= params.End; i += params.Step {
+	for i := start; i < end; i += params.Step * 1000 {
 		timestamps = append(timestamps, i)
 	}
 
