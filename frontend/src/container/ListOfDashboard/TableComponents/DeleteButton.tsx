@@ -46,7 +46,7 @@ export function DeleteButton({
 	const deleteDashboardMutation = useDeleteDashboard(id);
 
 	const openConfirmationDialog = useCallback((): void => {
-		modal.confirm({
+		const { destroy } = modal.confirm({
 			title: (
 				<Typography.Title level={5}>
 					Are you sure you want to delete the
@@ -55,23 +55,28 @@ export function DeleteButton({
 				</Typography.Title>
 			),
 			icon: <ExclamationCircleOutlined style={{ color: '#e42b35' }} />,
-			onOk() {
-				deleteDashboardMutation.mutateAsync(undefined, {
-					onSuccess: () => {
-						notifications.success({
-							message: t('dashboard:delete_dashboard_success', {
-								name,
-							}),
-						});
-						queryClient.invalidateQueries([REACT_QUERY_KEY.GET_ALL_DASHBOARDS]);
-						if (routeToListPage) {
-							history.replace(ROUTES.ALL_DASHBOARD);
-						}
-					},
-				});
-			},
 			okText: 'Delete',
-			okButtonProps: { danger: true },
+			okButtonProps: {
+				danger: true,
+				onClick: (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					deleteDashboardMutation.mutateAsync(undefined, {
+						onSuccess: () => {
+							notifications.success({
+								message: t('dashboard:delete_dashboard_success', {
+									name,
+								}),
+							});
+							queryClient.invalidateQueries([REACT_QUERY_KEY.GET_ALL_DASHBOARDS]);
+							if (routeToListPage) {
+								history.replace(ROUTES.ALL_DASHBOARD);
+							}
+							destroy();
+						},
+					});
+				},
+			},
 			centered: true,
 			className: 'delete-modal',
 		});
