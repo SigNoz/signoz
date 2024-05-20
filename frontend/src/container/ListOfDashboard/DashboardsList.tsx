@@ -39,7 +39,6 @@ import {
 	CalendarClockIcon,
 	Check,
 	Clock4,
-	Copy,
 	Expand,
 	HdmiPort,
 	LayoutGrid,
@@ -452,15 +451,6 @@ function DashboardsList(): JSX.Element {
 														}}
 													>
 														Copy Link
-													</Button>
-
-													<Button
-														type="text"
-														className="action-btn"
-														icon={<Copy size={14} />}
-														// TODO add duplicate dashboard here
-													>
-														Duplicate
 													</Button>
 												</section>
 												<section className="section-2">
