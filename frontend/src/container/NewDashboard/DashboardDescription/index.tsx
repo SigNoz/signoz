@@ -281,6 +281,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						style={{ width: '16px', height: '16px' }}
 					/>
 					<Typography.Text className="dashboard-title">{title}</Typography.Text>
+					{isDashboardLocked && <LockKeyhole size={14} />}
 				</div>
 				<div className="right-section">
 					<DateTimeSelectionV2 showAutoRefresh hideShareModal />
