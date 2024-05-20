@@ -40,9 +40,8 @@ func (s Sample) MarshalJSON() ([]byte, error) {
 }
 
 type Point struct {
-	T  int64
-	V  float64
-	Vs []float64
+	T int64
+	V float64
 }
 
 func (p Point) String() string {

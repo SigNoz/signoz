@@ -324,7 +324,7 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		result, err := rule.runChQuery(context.Background(), mock, queryString)
+		result, err := rule.runChQuery(context.Background(), mock, queryString, []int64{})
 		if err != nil {
 			assert.NoError(t, err)
 		}
