@@ -407,8 +407,8 @@ function ExplorerOptions({
 							title={
 								<div>
 									{sourcepage === DataSource.LOGS
-										? 'Learn more about Logs explorer'
-										: 'Learn more about Traces explorer'}
+										? 'Learn more about Logs explorer '
+										: 'Learn more about Traces explorer '}
 									<Typography.Link
 										href={
 											sourcepage === DataSource.LOGS
