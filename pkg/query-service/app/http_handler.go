@@ -483,49 +483,7 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, ruleResponse)
 }
 
-func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
-
-	metricNames := make([]string, 0)
-	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
-	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
-		for _, query := range qp.CompositeQuery.BuilderQueries {
-			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
-				metricNames = append(metricNames, query.AggregateAttribute.Key)
-				if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
-					metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
-				}
-			}
-		}
-	}
-
-	var err error
-
-	if aH.preferDelta {
-		zap.L().Debug("fetching metric temporality")
-		metricNameToTemporality, err = aH.reader.FetchTemporality(ctx, metricNames)
-		if err != nil {
-			return err
-		}
-	}
-
-	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
-		for name := range qp.CompositeQuery.BuilderQueries {
-			query := qp.CompositeQuery.BuilderQueries[name]
-			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
-				if aH.preferDelta && metricNameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
-					query.Temporality = v3.Delta
-				} else if metricNameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
-					query.Temporality = v3.Cumulative
-				} else {
-					query.Temporality = v3.Unspecified
-				}
-			}
-		}
-	}
-	return nil
-}
-
-// populateTemporality same as addTemporality but for v4 and better
+// populateTemporality adds the temporality to the query if it is not present
 func (aH *APIHandler) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
 
 	missingTemporality := make([]string, 0)
@@ -3320,8 +3278,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add temporality for each metric
-
-	temporalityErr := aH.addTemporality(r.Context(), queryRangeParams)
+	temporalityErr := aH.populateTemporality(r.Context(), queryRangeParams)
 	if temporalityErr != nil {
 		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
