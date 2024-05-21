@@ -1,6 +1,8 @@
 import './QuerySection.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip, Typography } from 'antd';
+import PromQLIcon from 'assets/Dashboard/PromQl';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
@@ -11,6 +13,7 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo } from 'lodash-es';
 import { Atom, Play, Terminal } from 'lucide-react';
@@ -52,6 +55,8 @@ function QuerySection({
 	);
 
 	const { selectedDashboard, setSelectedDashboard } = useDashboard();
+
+	const isDarkMode = useIsDarkMode();
 
 	const { widgets } = selectedDashboard?.data || {};
 
@@ -196,7 +201,9 @@ function QuerySection({
 			label: (
 				<Tooltip title="PromQL">
 					<Button className="nav-btns">
-						<img src="/Icons/promQL.svg" alt="Prom Ql" className="prom-ql-icon" />
+						<PromQLIcon
+							fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
+						/>
 					</Button>
 				</Tooltip>
 			),
