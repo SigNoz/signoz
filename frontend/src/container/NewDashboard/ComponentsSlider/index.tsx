@@ -1,15 +1,11 @@
 import './ComponentSlider.styles.scss';
 
 import { Card, Modal } from 'antd';
-import { Button } from 'antd/lib';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import { isEqual } from 'lodash-es';
-import { ArrowRight } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useState } from 'react';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
@@ -19,8 +15,6 @@ import { Text } from './styles';
 
 function DashboardGraphSlider(): JSX.Element {
 	const { handleToggleDashboardSlider, isDashboardSliderOpen } = useDashboard();
-
-	const [selectedPanelType, setSelectedPanelType] = useState<PANEL_TYPES>();
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onClickHandler = (name: PANEL_TYPES) => (): void => {
@@ -66,7 +60,7 @@ function DashboardGraphSlider(): JSX.Element {
 	};
 
 	const handleCardClick = (panelType: PANEL_TYPES): void => {
-		if (!isEqual(panelType, selectedPanelType)) setSelectedPanelType(panelType);
+		onClickHandler(panelType)();
 	};
 
 	return (
@@ -74,33 +68,14 @@ function DashboardGraphSlider(): JSX.Element {
 			open={isDashboardSliderOpen}
 			onCancel={(): void => {
 				handleToggleDashboardSlider(false);
-				setSelectedPanelType(undefined);
 			}}
 			rootClassName="graph-selection"
-			footer={
-				<Button
-					type="primary"
-					icon={<ArrowRight size={14} />}
-					onClick={(): void => {
-						if (selectedPanelType) {
-							onClickHandler(selectedPanelType)();
-							setSelectedPanelType(undefined);
-						}
-					}}
-				>
-					Select and next
-				</Button>
-			}
+			footer={null}
 			title="New Panel"
 		>
 			<div className="panel-selection">
 				{menuItems.map(({ name, icon, display }) => (
-					<Card
-						onClick={(): void => handleCardClick(name)}
-						id={name}
-						key={name}
-						className={selectedPanelType === name ? 'selected' : ''}
-					>
+					<Card onClick={(): void => handleCardClick(name)} id={name} key={name}>
 						{icon}
 						<Text>{display}</Text>
 					</Card>
