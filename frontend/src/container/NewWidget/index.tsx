@@ -458,7 +458,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			</div>
 
 			<PanelContainer>
-				<LeftContainerWrapper flex={5} isDarkMode={useIsDarkMode()}>
+				<LeftContainerWrapper isDarkMode={useIsDarkMode()}>
 					{selectedWidget && (
 						<LeftContainer
 							selectedGraph={graphType}
@@ -472,7 +472,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					)}
 				</LeftContainerWrapper>
 
-				<RightContainerWrapper flex={1}>
+				<RightContainerWrapper>
 					<RightContainer
 						setGraphHandler={setGraphHandler}
 						title={title}

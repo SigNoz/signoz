@@ -10,6 +10,7 @@ export const Container = styled.div`
 export const RightContainerWrapper = styled(Col)`
 	&&& {
 		min-width: 200px;
+		width: 30%;
 	}
 `;
 
@@ -19,7 +20,7 @@ interface LeftContainerWrapperProps {
 
 export const LeftContainerWrapper = styled(Col)<LeftContainerWrapperProps>`
 	&&& {
-		max-width: 70%;
+		width: 70%;
 		border-right: ${({ isDarkMode }): string =>
 			isDarkMode
 				? '1px solid var(--bg-slate-300)'
