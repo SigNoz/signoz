@@ -789,7 +789,6 @@ func (r *ThresholdRule) runChQuery(
 // FIXME(srikanthccv): remove this hack
 func (r *ThresholdRule) adjustedMetricTimeRange(start, end, step int64) (int64, int64) {
 	start = start - (start % (step * 1000))
-	start -= step * 1000
 	adjustStep := int64(math.Min(float64(step), 60))
 	end = end - (end % (adjustStep * 1000))
 	return start, end
