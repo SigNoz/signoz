@@ -452,6 +452,16 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	}
 }
 
+func removeGroupinSetPoints(series []Sample) []Sample {
+	var result []Sample
+	for _, s := range series {
+		if s.Point.T > 0 {
+			result = append(result, s)
+		}
+	}
+	return result
+}
+
 func (r *ThresholdRule) shouldAlert(series []Sample) (Sample, bool) {
 	var alertSmpl Sample
 	var shouldAlert bool
@@ -461,6 +471,7 @@ func (r *ThresholdRule) shouldAlert(series []Sample) (Sample, bool) {
 	if len(series) > 0 {
 		lbls = series[0].Metric
 		lblsOrig = series[0].MetricOrig
+		series = removeGroupinSetPoints(series)
 	}
 
 	switch r.matchType() {
@@ -712,36 +723,43 @@ func (r *ThresholdRule) runChQuery(
 		seriesMap[labelHash] = append(seriesMap[labelHash], sample)
 	}
 
-	for hash, s := range seriesMap {
-		if len(s) == 0 {
-			continue
-		}
+	queryLabel := r.GetSelectedQuery()
 
-		// add zero value for missing timestamps
-		missingTimestamps := make(map[int64]bool)
-		labels := s[0].Metric
-		labelsOrig := s[0].MetricOrig
-		for _, ts := range timestamps {
-			missingTimestamps[ts] = true
-		}
-		for _, sample := range s {
-			delete(missingTimestamps, sample.Point.T*1000)
-		}
-
-		for ts := range missingTimestamps {
-			sample := Sample{
-				Point: Point{
-					T: ts,
-					V: 0,
-				},
-				Metric:     labels,
-				MetricOrig: labelsOrig,
+	// if selected query is formula then populate missing labels
+	// formula can be from F1 to F26
+	formulaRegex := regexp.MustCompile(`F\d+`)
+	if formulaRegex.MatchString(queryLabel) {
+		zap.L().Info("found formula query", zap.String("ruleid", r.ID()), zap.String("query", queryLabel))
+		for hash, s := range seriesMap {
+			if len(s) == 0 {
+				continue
 			}
-			s = append(s, sample)
-		}
-		seriesMap[hash] = s
-	}
 
+			// add zero value for missing timestamps
+			missingTimestamps := make(map[int64]bool)
+			labels := s[0].Metric
+			labelsOrig := s[0].MetricOrig
+			for _, ts := range timestamps {
+				missingTimestamps[ts] = true
+			}
+			for _, sample := range s {
+				delete(missingTimestamps, sample.Point.T*1000)
+			}
+
+			for ts := range missingTimestamps {
+				sample := Sample{
+					Point: Point{
+						T: ts,
+						V: 0,
+					},
+					Metric:     labels,
+					MetricOrig: labelsOrig,
+				}
+				s = append(s, sample)
+			}
+			seriesMap[hash] = s
+		}
+	}
 	// if the data is missing for `For` duration then we should send alert
 	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
 		zap.L().Info("no data found for rule condition", zap.String("ruleid", r.ID()))
