@@ -34,7 +34,8 @@ export const CardContainer = styled.div<Props>`
 			height: 100%;
 			display: flex;
 			justify-content: space-between;
-			background: var(--bg-ink-400);
+			background: ${({ isDarkMode }): string =>
+				isDarkMode ? 'var(--bg-ink-400)' : 'var(--bg-vanilla-300)'};
 			align-items: center;
 			overflow: hidden;
 		}
