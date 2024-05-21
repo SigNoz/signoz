@@ -215,7 +215,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 			}
 
 			series.forEach((seria) => {
-				seria.labelsArray.forEach((lab) => {
+				seria.labelsArray?.forEach((lab) => {
 					Object.keys(lab).forEach((label) => {
 						if (label === currentQuery?.queryName) return;
 
