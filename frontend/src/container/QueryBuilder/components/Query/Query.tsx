@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './Query.styles.scss';
 
-import { Col, Input, Row } from 'antd';
+import { Col, Input, Row, Tooltip, Typography } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 // ** Constants
 import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -367,11 +367,29 @@ export const Query = memo(function Query({
 									<Row gutter={[11, 5]}>
 										{version && version === 'v3' && (
 											<Col flex="5.93rem">
-												<OperatorsSelect
-													value={query.aggregateOperator}
-													onChange={handleChangeOperator}
-													operators={operators}
-												/>
+												<Tooltip
+													title={
+														<div style={{ textAlign: 'center' }}>
+															Select Aggregate Operator
+															<Typography.Link
+																className="learn-more"
+																href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#aggregation"
+																target="_blank"
+																style={{ textDecoration: 'underline' }}
+															>
+																{' '}
+																<br />
+																Learn more
+															</Typography.Link>
+														</div>
+													}
+												>
+													<OperatorsSelect
+														value={query.aggregateOperator}
+														onChange={handleChangeOperator}
+														operators={operators}
+													/>
+												</Tooltip>
 											</Col>
 										)}
 
@@ -388,12 +406,30 @@ export const Query = memo(function Query({
 											Array.isArray(operators) &&
 											operators.length > 0 && (
 												<Col flex="5.93rem">
-													<OperatorsSelect
-														value={query.aggregateOperator}
-														onChange={handleChangeOperator}
-														operators={operators}
-														disabled={disableOperatorSelector}
-													/>
+													<Tooltip
+														title={
+															<div style={{ textAlign: 'center' }}>
+																Select Aggregate Operator
+																<Typography.Link
+																	className="learn-more"
+																	href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#aggregation"
+																	target="_blank"
+																	style={{ textDecoration: 'underline' }}
+																>
+																	{' '}
+																	<br />
+																	Learn more
+																</Typography.Link>
+															</div>
+														}
+													>
+														<OperatorsSelect
+															value={query.aggregateOperator}
+															onChange={handleChangeOperator}
+															operators={operators}
+															disabled={disableOperatorSelector}
+														/>
+													</Tooltip>
 												</Col>
 											)}
 									</Row>
@@ -422,11 +458,28 @@ export const Query = memo(function Query({
 						<Col span={11}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
-									<OperatorsSelect
-										value={query.aggregateOperator}
-										onChange={handleChangeOperator}
-										operators={operators}
-									/>
+									<Tooltip
+										title={
+											<div style={{ textAlign: 'center' }}>
+												Select Aggregate Operator
+												<Typography.Link
+													href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#aggregation"
+													target="_blank"
+													style={{ textDecoration: 'underline' }}
+												>
+													{' '}
+													<br />
+													Learn more
+												</Typography.Link>
+											</div>
+										}
+									>
+										<OperatorsSelect
+											value={query.aggregateOperator}
+											onChange={handleChangeOperator}
+											operators={operators}
+										/>
+									</Tooltip>
 								</Col>
 								<Col flex="1 1 12.5rem">
 									<AggregatorFilter
@@ -520,12 +573,30 @@ export const Query = memo(function Query({
 					)}
 					{panelType !== PANEL_TYPES.LIST && panelType !== PANEL_TYPES.TRACE && (
 						<Row style={{ width: '100%' }}>
-							<Input
-								onChange={handleChangeQueryLegend}
-								size="middle"
-								value={query.legend}
-								addonBefore="Legend Format"
-							/>
+							<Tooltip
+								placement="right"
+								title={
+									<div style={{ textAlign: 'center' }}>
+										Name of legend
+										<Typography.Link
+											style={{ textDecoration: 'underline' }}
+											href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#legend-format"
+											target="_blank"
+										>
+											{' '}
+											<br />
+											Learn more
+										</Typography.Link>
+									</div>
+								}
+							>
+								<Input
+									onChange={handleChangeQueryLegend}
+									size="middle"
+									value={query.legend}
+									addonBefore="Legend Format"
+								/>
+							</Tooltip>
 						</Row>
 					)}
 				</Row>

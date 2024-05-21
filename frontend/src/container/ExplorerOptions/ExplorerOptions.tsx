@@ -423,7 +423,7 @@ function ExplorerOptions({
 								</div>
 							}
 						>
-							<InfoCircleOutlined />
+							<InfoCircleOutlined className="info-icon" />
 						</Tooltip>
 						<Tooltip title="Hide">
 							<Button

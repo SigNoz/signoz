@@ -1,6 +1,6 @@
 import './QueryFunctions.styles.scss';
 
-import { Button, Tooltip } from 'antd';
+import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { cloneDeep, pullAt } from 'lodash-es';
@@ -180,9 +180,22 @@ export default function QueryFunctions({
 
 			<Tooltip
 				title={
-					functions && functions.length >= 3
-						? 'Functions are in early access. You can add a maximum of 3 function as of now.'
-						: ''
+					functions && functions.length >= 3 ? (
+						'Functions are in early access. You can add a maximum of 3 function as of now.'
+					) : (
+						<div style={{ textAlign: 'center' }}>
+							Add new function
+							<Typography.Link
+								style={{ textDecoration: 'underline' }}
+								href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#functions-for-extended-data-analysis"
+								target="_blank"
+							>
+								{' '}
+								<br />
+								Learn more
+							</Typography.Link>
+						</div>
+					)
 				}
 				placement="right"
 			>
