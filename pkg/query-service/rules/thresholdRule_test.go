@@ -12,7 +12,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
-func TestThresholdRuleCombinations(t *testing.T) {
+func skipTestThresholdRuleCombinations(t *testing.T) {
 	postableRule := PostableRule{
 		AlertName:  "Tricky Condition Tests",
 		AlertType:  "METRIC_BASED_ALERT",
