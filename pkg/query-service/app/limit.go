@@ -40,7 +40,7 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 								}
 							}
 
-							ithSum, jthSum, ithCount, jthCount := 0.0, 0.0, 1.0, 1.0
+							ithSum, jthSum, ithCount, jthCount := 0.0, 0.0, 0.0, 0.0
 							for _, point := range result.Series[i].Points {
 								if math.IsNaN(point.Value) || math.IsInf(point.Value, 0) {
 									continue
@@ -56,6 +56,10 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 								jthSum += point.Value
 								jthCount++
 							}
+
+							// avoid division by zero
+							ithCount = math.Max(ithCount, 1)
+							jthCount = math.Max(jthCount, 1)
 
 							if orderBy.Order == "asc" {
 								return ithSum/ithCount < jthSum/jthCount
