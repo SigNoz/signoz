@@ -21,6 +21,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
@@ -144,7 +145,9 @@ function RawLogView({
 
 	const html = useMemo(
 		() => ({
-			__html: convert.toHtml(dompurify.sanitize(text)),
+			__html: convert.toHtml(
+				dompurify.sanitize(text, { FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS] }),
+			),
 		}),
 		[text],
 	);
