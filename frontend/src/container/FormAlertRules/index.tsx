@@ -1,3 +1,5 @@
+import './FormAlertRules.styles.scss';
+
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import {
 	Col,
@@ -9,7 +11,10 @@ import {
 } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { alertHelpMessage } from 'components/facingIssueBtn/util';
 import { FeatureKeys } from 'constants/features';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
@@ -20,6 +25,7 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
@@ -53,6 +59,7 @@ import {
 import UserGuide from './UserGuide';
 import { getSelectedQueryOptions } from './utils';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function FormAlertRules({
 	alertType,
 	formInstance,
@@ -67,16 +74,27 @@ function FormAlertRules({
 		GlobalReducer
 	>((state) => state.globalTime);
 
+	const urlQuery = useUrlQuery();
+
+	const panelType = urlQuery.get(QueryParams.panelTypes) as PANEL_TYPES | null;
+
 	const {
 		currentQuery,
-		panelType,
 		stagedQuery,
 		handleRunQuery,
+		handleSetConfig,
+		initialDataSource,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
+	useEffect(() => {
+		handleSetConfig(panelType || PANEL_TYPES.TIME_SERIES, initialDataSource);
+	}, [handleSetConfig, initialDataSource, panelType]);
+
 	// use query client
 	const ruleCache = useQueryClient();
+
+	const isNewRule = ruleId === 0;
 
 	const [loading, setLoading] = useState(false);
 
@@ -108,20 +126,35 @@ function FormAlertRules({
 	useShareBuilderUrl(sq);
 
 	useEffect(() => {
-		setAlertDef(initialValue);
-	}, [initialValue]);
+		const broadcastToSpecificChannels =
+			(initialValue &&
+				initialValue.preferredChannels &&
+				initialValue.preferredChannels.length > 0) ||
+			isNewRule;
+
+		setAlertDef({
+			...initialValue,
+			broadcastToAll: !broadcastToSpecificChannels,
+		});
+	}, [initialValue, isNewRule]);
 
 	useEffect(() => {
 		// Set selectedQueryName based on the length of queryOptions
-		setAlertDef((def) => ({
-			...def,
-			condition: {
-				...def.condition,
-				selectedQueryName:
-					queryOptions.length > 0 ? String(queryOptions[0].value) : undefined,
-			},
-		}));
-	}, [currentQuery?.queryType, queryOptions]);
+		const selectedQueryName = alertDef?.condition?.selectedQueryName;
+		if (
+			!selectedQueryName ||
+			!queryOptions.some((option) => option.value === selectedQueryName)
+		) {
+			setAlertDef((def) => ({
+				...def,
+				condition: {
+					...def.condition,
+					selectedQueryName:
+						queryOptions.length > 0 ? String(queryOptions[0].value) : undefined,
+				},
+			}));
+		}
+	}, [alertDef, currentQuery?.queryType, queryOptions]);
 
 	const onCancelHandler = useCallback(() => {
 		history.replace(ROUTES.LIST_ALL_ALERT);
@@ -130,6 +163,10 @@ function FormAlertRules({
 	// onQueryCategoryChange handles changes to query category
 	// in state as well as sets additional defaults
 	const onQueryCategoryChange = (val: EQueryType): void => {
+		const element = document.getElementById('top');
+		if (element) {
+			element.scrollIntoView({ behavior: 'smooth' });
+		}
 		if (val === EQueryType.PROM) {
 			setAlertDef({
 				...alertDef,
@@ -243,6 +280,7 @@ function FormAlertRules({
 	const preparePostData = (): AlertDef => {
 		const postableAlert: AlertDef = {
 			...alertDef,
+			preferredChannels: alertDef.broadcastToAll ? [] : alertDef.preferredChannels,
 			alertType,
 			source: window?.location.toString(),
 			ruleType:
@@ -260,7 +298,7 @@ function FormAlertRules({
 					promQueries: mapQueryDataToApi(currentQuery.promql, 'name').data,
 					chQueries: mapQueryDataToApi(currentQuery.clickhouse_sql, 'name').data,
 					queryType: currentQuery.queryType,
-					panelType: initQuery.panelType,
+					panelType: panelType || initQuery.panelType,
 					unit: currentQuery.unit,
 				},
 			},
@@ -273,9 +311,10 @@ function FormAlertRules({
 		alertDef,
 		alertType,
 		initQuery,
+		panelType,
 	]);
 
-	const isAlertAvialable = useIsFeatureDisabled(
+	const isAlertAvailable = useIsFeatureDisabled(
 		FeatureKeys.QUERY_BUILDER_ALERTS,
 	);
 
@@ -344,6 +383,7 @@ function FormAlertRules({
 			centered: true,
 			content,
 			onOk: saveRule,
+			className: 'create-alert-modal',
 		});
 	}, [t, saveRule, currentQuery]);
 
@@ -386,7 +426,11 @@ function FormAlertRules({
 	}, [t, isFormValid, memoizedPreparePostData, notifications]);
 
 	const renderBasicInfo = (): JSX.Element => (
-		<BasicInfo alertDef={alertDef} setAlertDef={setAlertDef} />
+		<BasicInfo
+			alertDef={alertDef}
+			setAlertDef={setAlertDef}
+			isNewRule={isNewRule}
+		/>
 	);
 
 	const renderQBChartPreview = (): JSX.Element => (
@@ -402,6 +446,7 @@ function FormAlertRules({
 			selectedInterval={globalSelectedInterval}
 			alertDef={alertDef}
 			yAxisUnit={yAxisUnit || ''}
+			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 		/>
 	);
 
@@ -418,15 +463,14 @@ function FormAlertRules({
 			alertDef={alertDef}
 			selectedInterval={globalSelectedInterval}
 			yAxisUnit={yAxisUnit || ''}
+			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 		/>
 	);
 
-	const isNewRule = ruleId === 0;
-
 	const isAlertNameMissing = !formInstance.getFieldValue('alert');
 
-	const isAlertAvialableToSave =
-		isAlertAvialable &&
+	const isAlertAvailableToSave =
+		isAlertAvailable &&
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 		alertType !== AlertTypes.METRICS_BASED_ALERT;
 
@@ -442,11 +486,17 @@ function FormAlertRules({
 		}));
 	};
 
+	const isChannelConfigurationValid =
+		alertDef?.broadcastToAll ||
+		(alertDef.preferredChannels && alertDef.preferredChannels.length > 0);
+
+	const isRuleCreated = !ruleId || ruleId === 0;
+
 	return (
 		<>
 			{Element}
 
-			<PanelContainer>
+			<PanelContainer id="top">
 				<StyledLeftContainer flex="5 1 600px" md={18}>
 					<MainFormContainer
 						initialValues={initialValue}
@@ -472,6 +522,9 @@ function FormAlertRules({
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
 							runQuery={handleRunQuery}
+							alertDef={alertDef}
+							panelType={panelType || PANEL_TYPES.TIME_SERIES}
+							key={currentQuery.queryType}
 						/>
 
 						<RuleOptions
@@ -483,13 +536,17 @@ function FormAlertRules({
 
 						{renderBasicInfo()}
 						<ButtonContainer>
-							<Tooltip title={isAlertAvialableToSave ? MESSAGE.ALERT : ''}>
+							<Tooltip title={isAlertAvailableToSave ? MESSAGE.ALERT : ''}>
 								<ActionButton
 									loading={loading || false}
 									type="primary"
 									onClick={onSaveHandler}
 									icon={<SaveOutlined />}
-									disabled={isAlertNameMissing || isAlertAvialableToSave}
+									disabled={
+										isAlertNameMissing ||
+										isAlertAvailableToSave ||
+										!isChannelConfigurationValid
+									}
 								>
 									{isNewRule ? t('button_createrule') : t('button_savechanges')}
 								</ActionButton>
@@ -497,6 +554,7 @@ function FormAlertRules({
 
 							<ActionButton
 								loading={loading || false}
+								disabled={isAlertNameMissing || !isChannelConfigurationValid}
 								type="default"
 								onClick={onTestRuleHandler}
 							>
@@ -516,6 +574,22 @@ function FormAlertRules({
 				</StyledLeftContainer>
 				<Col flex="1 1 300px">
 					<UserGuide queryType={currentQuery.queryType} />
+					<FacingIssueBtn
+						attributes={{
+							alert: alertDef?.alert,
+							alertType: alertDef?.alertType,
+							id: ruleId,
+							ruleType: alertDef?.ruleType,
+							state: (alertDef as any)?.state,
+							panelType,
+							screen: isRuleCreated ? 'Edit Alert' : 'New Alert',
+						}}
+						className="facing-issue-btn"
+						eventName="Alert: Facing Issues in alert"
+						buttonText="Need help with this alert?"
+						message={alertHelpMessage(alertDef, ruleId)}
+						onHoverText="Click here to get help with this alert"
+					/>
 				</Col>
 			</PanelContainer>
 		</>

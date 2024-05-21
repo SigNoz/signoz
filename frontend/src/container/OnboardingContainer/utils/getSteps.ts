@@ -1,17 +1,30 @@
 import {
+	AddHttpDrain,
 	CheckServiceStatus,
 	CloneRepo,
+	ConfigureAws,
 	ConfigureHostmetricsJSON,
 	ConfigureMetricsReceiver,
 	ConfigureReceiver,
+	CreateDaemonService,
+	CreateHttpPayload,
+	CreateOtelConfig,
+	CreateSidecarCollectorContainer,
 	DataSourceStep,
+	DeployTaskDefinition,
+	EcsSendData,
+	EcsSendLogsData,
 	EnvDetailsStep,
 	InstallOpenTelemetryStep,
 	LogsTestConnectionStep,
+	MonitorDashboard,
 	PlotMetrics,
 	RestartOtelCollector,
 	RunApplicationStep,
 	SelectMethodStep,
+	SendLogsCloudwatch,
+	SetupDaemonService,
+	SetupLogDrains,
 	SetupOtelCollectorStep,
 	StartContainer,
 	TestConnectionStep,
@@ -42,6 +55,8 @@ export const INFRASTRUCTURE_MONITORING_STEPS: SelectedModuleStepProps[] = [
 	DataSourceStep,
 ];
 
+export const AWS_MONITORING_STEPS: SelectedModuleStepProps[] = [DataSourceStep];
+
 export const getSteps = ({
 	selectedDataSource,
 }: GetStepsProps): SelectedModuleStepProps[] => {
@@ -67,6 +82,7 @@ export const getSteps = ({
 		case 'fluentD':
 		case 'fluentBit':
 		case 'logStash':
+		case 'awsEc2ApplicationLogs':
 			return [
 				DataSourceStep,
 				EnvDetailsStep,
@@ -74,10 +90,26 @@ export const getSteps = ({
 				ConfigureReceiver,
 				RestartOtelCollector,
 			];
+		case 'heroku':
+			return [DataSourceStep, AddHttpDrain];
+		case 'vercel':
+			return [DataSourceStep, SetupLogDrains];
+		case 'http':
+			return [DataSourceStep, CreateHttpPayload];
+		case 'cloudwatch':
+			return [
+				DataSourceStep,
+				EnvDetailsStep,
+				SetupOtelCollectorStep,
+				ConfigureAws,
+				ConfigureReceiver,
+				SendLogsCloudwatch,
+			];
 
 		case 'kubernetesInfraMetrics':
 			return [DataSourceStep, SetupOtelCollectorStep, PlotMetrics];
 		case 'hostMetrics':
+		case 'awsEc2InfrastructureMetrics':
 			return [
 				DataSourceStep,
 				EnvDetailsStep,
@@ -91,6 +123,28 @@ export const getSteps = ({
 				SetupOtelCollectorStep,
 				ConfigureMetricsReceiver,
 			];
+		case 'awsEcsExternal':
+		case 'awsEcsEc2':
+			return [
+				DataSourceStep,
+				SetupDaemonService,
+				CreateOtelConfig,
+				CreateDaemonService,
+				EcsSendData,
+			];
+
+		case 'awsEcsFargate':
+			return [
+				DataSourceStep,
+				CreateOtelConfig,
+				CreateSidecarCollectorContainer,
+				DeployTaskDefinition,
+				EcsSendData,
+				EcsSendLogsData,
+			];
+		case 'awsEks':
+			return [DataSourceStep, SetupOtelCollectorStep, MonitorDashboard];
+
 		default:
 			return [DataSourceStep];
 	}

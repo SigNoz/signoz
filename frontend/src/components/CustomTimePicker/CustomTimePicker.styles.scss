@@ -1,0 +1,121 @@
+.custom-time-picker {
+	display: flex;
+	flex-direction: column;
+}
+
+.time-options-container {
+	.time-options-item {
+		margin: 2px 0;
+		padding: 8px;
+		border-radius: 2px;
+
+		&.active {
+			background-color: rgba($color: #000000, $alpha: 0.2);
+
+			&:hover {
+				cursor: pointer;
+				background-color: rgba($color: #000000, $alpha: 0.3);
+			}
+		}
+
+		&:hover {
+			cursor: pointer;
+			background-color: rgba($color: #000000, $alpha: 0.3);
+		}
+	}
+}
+
+.time-selection-dropdown-content {
+	min-width: 172px;
+	width: 100%;
+}
+
+.timeSelection-input {
+	display: flex;
+	gap: 8px;
+	height: 33px;
+	align-items: center;
+	padding: 4px 8px;
+	padding-left: 0px !important;
+
+	&.custom-time {
+		input:not(:focus) {
+			min-width: 240px;
+		}
+	}
+
+	input::placeholder {
+		color: white;
+	}
+
+	input:focus::placeholder {
+		color: rgba($color: #ffffff, $alpha: 0.4);
+	}
+}
+
+.valid-format-error {
+	margin-top: 4px;
+	color: var(--bg-cherry-400) !important;
+	font-size: 13px !important;
+	font-weight: 400 !important;
+}
+
+.info-text {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px;
+	cursor: default;
+	color: var(--bg-vanilla-400, #c0c1c3) !important;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: normal;
+	letter-spacing: 0.14px;
+}
+
+.info-text:hover {
+	&.ant-btn-text {
+		background-color: unset !important;
+	}
+}
+
+.lightMode {
+	.time-options-container {
+		.time-options-item {
+			&.active {
+				background-color: rgba($color: #ffffff, $alpha: 0.2);
+
+				&:hover {
+					cursor: pointer;
+					background-color: rgba($color: #ffffff, $alpha: 0.3);
+				}
+			}
+
+			&:hover {
+				cursor: pointer;
+				background-color: rgba($color: #ffffff, $alpha: 0.3);
+			}
+		}
+	}
+
+	.timeSelection-input {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+		padding: 4px 8px;
+		padding-left: 0px !important;
+
+		input::placeholder {
+			color: var(---bg-ink-300);
+		}
+
+		input:focus::placeholder {
+			color: rgba($color: #000000, $alpha: 0.4);
+		}
+	}
+
+	.info-text {
+		color: var(--bg-slate-400) !important;
+	}
+}

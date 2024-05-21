@@ -1,5 +1,6 @@
 import { getQueryRangeFormat } from 'api/dashboard/queryRangeFormat';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
@@ -14,6 +15,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getGraphType } from 'utils/getGraphType';
 
 const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 	const queryRangeMutation = useMutation(getQueryRangeFormat);
@@ -33,7 +35,7 @@ const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 		const { queryPayload } = prepareQueryRangePayload({
 			query: widget.query,
 			globalSelectedInterval,
-			graphType: widget.panelTypes,
+			graphType: getGraphType(widget.panelTypes),
 			selectedTime: widget.timePreferance,
 			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		});
@@ -44,7 +46,9 @@ const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 				history.push(
 					`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
 						JSON.stringify(updatedQuery),
-					)}`,
+					)}&${QueryParams.panelTypes}=${widget.panelTypes}&version=${
+						selectedDashboard?.data.version || DEFAULT_ENTITY_VERSION
+					}`,
 				);
 			},
 			onError: () => {
@@ -58,6 +62,7 @@ const useCreateAlerts = (widget?: Widgets): VoidFunction => {
 		notifications,
 		queryRangeMutation,
 		selectedDashboard?.data.variables,
+		selectedDashboard?.data.version,
 		widget,
 	]);
 };

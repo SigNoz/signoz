@@ -1,4 +1,4 @@
-import { Button, Modal, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Modal, Tabs, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
 import { QueryParams } from 'constants/query';
@@ -6,7 +6,7 @@ import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -15,13 +15,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { getTraceToLogsQuery } from './config';
 import Events from './Events';
-import {
-	CardContainer,
-	CustomSubText,
-	CustomText,
-	CustomTitle,
-	styles,
-} from './styles';
+import { CardContainer, CustomSubText, styles } from './styles';
 import Tags from './Tags';
 
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
@@ -34,11 +28,6 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { id: traceId } = useParams<Params>();
 
 	const isDarkMode = useIsDarkMode();
-
-	const OverLayComponentName = useMemo(() => tree?.name, [tree?.name]);
-	const OverLayComponentServiceName = useMemo(() => tree?.serviceName, [
-		tree?.serviceName,
-	]);
 
 	const [isOpen, setIsOpen] = useState(false);
 
@@ -102,20 +91,27 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				styledclass={[styles.selectedSpanDetailsContainer, styles.overflow]}
 				direction="vertical"
 			>
-				<Typography.Text strong> Details for selected Span </Typography.Text>
+				<Typography.Text
+					strong
+					style={{
+						marginTop: '16px',
+					}}
+				>
+					{' '}
+					Details for selected Span{' '}
+				</Typography.Text>
 
-				<CustomTitle>Service</CustomTitle>
+				<Typography.Text style={{ fontWeight: 700 }}>Service</Typography.Text>
 
-				<Tooltip overlay={OverLayComponentServiceName}>
-					<CustomText ellipsis>{tree.serviceName}</CustomText>
-				</Tooltip>
+				<Typography>{tree.serviceName}</Typography>
 
-				<CustomTitle>Operation</CustomTitle>
-				<Tooltip overlay={OverLayComponentName}>
-					<CustomText ellipsis>{tree.name}</CustomText>
-				</Tooltip>
+				<Typography.Text style={{ fontWeight: 700 }}>Operation</Typography.Text>
 
-				<Button onClick={onLogsHandler}>Go to Related logs</Button>
+				<Typography>{tree.name}</Typography>
+
+				<Button size="small" style={{ marginTop: '8px' }} onClick={onLogsHandler}>
+					Go to Related logs
+				</Button>
 			</StyledSpace>
 
 			<Modal
@@ -136,7 +132,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				)}
 			</Modal>
 
-			<Tabs defaultActiveKey="1" items={items} />
+			<Tabs style={{ padding: '8px' }} defaultActiveKey="1" items={items} />
 		</CardContainer>
 	);
 }

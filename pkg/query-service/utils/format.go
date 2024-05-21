@@ -167,7 +167,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 
 	case []interface{}:
 		if len(x) == 0 {
-			return ""
+			return "[]"
 		}
 		switch x[0].(type) {
 		case string:
@@ -183,11 +183,11 @@ func ClickHouseFormattedValue(v interface{}) string {
 		case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64, float32, float64, bool:
 			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
 		default:
-			zap.S().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
-			return ""
+			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
+			return "[]"
 		}
 	default:
-		zap.S().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
+		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
 		return ""
 	}
 }
@@ -240,7 +240,10 @@ func GetClickhouseColumnName(typeName string, dataType, field string) string {
 		typeName = typeName[:len(typeName)-1]
 	}
 
-	colName := fmt.Sprintf("%s_%s_%s", strings.ToLower(typeName), strings.ToLower(dataType), field)
+	// if name contains . replace it with `$$`
+	field = strings.ReplaceAll(field, ".", "$$")
+
+	colName := fmt.Sprintf("`%s_%s_%s`", strings.ToLower(typeName), strings.ToLower(dataType), field)
 	return colName
 }
 

@@ -1,7 +1,3 @@
-After setting up the Otel collector agent, follow the steps below to instrument your Go Application
-&nbsp;
-&nbsp;
-
 ### Step 1: Install OpenTelemetry Dependencies
 Dependencies related to OpenTelemetry exporter and SDK have to be installed first.
 
@@ -38,6 +34,7 @@ To configure your application to send data we will need a function to initialize
  import (
      .....
 
+     "google.golang.org/grpc/credentials"
      "github.com/gin-gonic/gin"
      "go.opentelemetry.io/otel"
      "go.opentelemetry.io/otel/attribute"

@@ -25,6 +25,8 @@ var ConfigSignozIo = "https://config.signoz.io/api/v1"
 
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
+const MaxAllowedPointsInTimeSeries = 300
+
 func IsTelemetryEnabled() bool {
 	if testing.Testing() {
 		return false
@@ -53,11 +55,13 @@ func GetAlertManagerApiPrefix() string {
 	return "http://alertmanager:9093/api/"
 }
 
+var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email_template.html")
+
 // Alert manager channel subpath
 var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
 
-var OTLPTarget = GetOrDefaultEnv("OTLP_TARGET", "")
-var LogExportBatchSize = GetOrDefaultEnv("LOG_EXPORT_BATCH_SIZE", "1000")
+var OTLPTarget = GetOrDefaultEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "")
+var LogExportBatchSize = GetOrDefaultEnv("OTEL_BLRP_MAX_EXPORT_BATCH_SIZE", "512")
 
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
@@ -201,12 +205,14 @@ var GroupByColMap = map[string]struct{}{
 }
 
 const (
-	SIGNOZ_METRIC_DBNAME              = "signoz_metrics"
-	SIGNOZ_SAMPLES_TABLENAME          = "distributed_samples_v2"
-	SIGNOZ_TIMESERIES_TABLENAME       = "distributed_time_series_v2"
-	SIGNOZ_TRACE_DBNAME               = "signoz_traces"
-	SIGNOZ_SPAN_INDEX_TABLENAME       = "distributed_signoz_index_v2"
-	SIGNOZ_TIMESERIES_LOCAL_TABLENAME = "time_series_v2"
+	SIGNOZ_METRIC_DBNAME                      = "signoz_metrics"
+	SIGNOZ_SAMPLES_V4_TABLENAME               = "distributed_samples_v4"
+	SIGNOZ_TRACE_DBNAME                       = "signoz_traces"
+	SIGNOZ_SPAN_INDEX_TABLENAME               = "distributed_signoz_index_v2"
+	SIGNOZ_TIMESERIES_v4_LOCAL_TABLENAME      = "time_series_v4"
+	SIGNOZ_TIMESERIES_v4_6HRS_LOCAL_TABLENAME = "time_series_v4_6hrs"
+	SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME = "time_series_v4_1day"
+	SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME       = "distributed_time_series_v4_1day"
 )
 
 var TimeoutExcludedRoutes = map[string]bool{
@@ -217,7 +223,8 @@ var TimeoutExcludedRoutes = map[string]bool{
 // alert related constants
 const (
 	// AlertHelpPage is used in case default alert repo url is not set
-	AlertHelpPage = "https://signoz.io/docs/userguide/alerts-management/#generator-url"
+	AlertHelpPage   = "https://signoz.io/docs/userguide/alerts-management/#generator-url"
+	AlertTimeFormat = "2006-01-02 15:04:05"
 )
 
 func GetOrDefaultEnv(key string, fallback string) string {
@@ -301,6 +308,8 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 // logsPPLPfx is a short constant for logsPipelinePrefix
 const LogsPPLPfx = "logstransform/pipeline_"
 
+const IntegrationPipelineIdPrefix = "integration"
+
 // The datatype present here doesn't represent the actual datatype of column in the logs table.
 
 var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
@@ -350,3 +359,36 @@ const TIMESTAMP = "timestamp"
 
 const FirstQueryGraphLimit = "first_query_graph_limit"
 const SecondQueryGraphLimit = "second_query_graph_limit"
+
+var TracesListViewDefaultSelectedColumns = []v3.AttributeKey{
+	{
+		Key:      "serviceName",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "name",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "durationNano",
+		DataType: v3.AttributeKeyDataTypeArrayFloat64,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "httpMethod",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+	{
+		Key:      "responseStatusCode",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+		IsColumn: true,
+	},
+}

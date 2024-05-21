@@ -38,6 +38,16 @@ export const getLabelRenderingValue = (
 	return label;
 };
 
+export const getLabelAndValueContent = (
+	label: string,
+	value?: string,
+): string => {
+	if (value) {
+		return `${label}: ${value}`;
+	}
+	return `${label}`;
+};
+
 interface GeneratorResizeTableColumnsProp<T> {
 	baseColumnOptions: ColumnsType<T>;
 	dynamicColumnOption: { key: string; columnOption: ColumnType<T> }[];

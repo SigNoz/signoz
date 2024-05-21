@@ -108,6 +108,7 @@ export const ModeAndConfigWrapper = styled.div`
 
 export const SaveConfigWrapper = styled.div`
 	display: flex;
+	justify-content: flex-end;
 	gap: 0.938rem;
 	margin-top: 1.25rem;
 `;

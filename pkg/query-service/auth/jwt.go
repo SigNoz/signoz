@@ -60,7 +60,7 @@ func validateUser(tok string) (*model.UserPayload, error) {
 func AttachJwtToContext(ctx context.Context, r *http.Request) context.Context {
 	token, err := ExtractJwtFromRequest(r)
 	if err != nil {
-		zap.S().Debugf("Error while getting token from header, %v", err)
+		zap.L().Error("Error while getting token from header", zap.Error(err))
 		return ctx
 	}
 

@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { ApmDocFilePaths } from 'container/OnboardingContainer/constants/apmDocFilePaths';
+import { AwsMonitoringDocFilePaths } from 'container/OnboardingContainer/constants/awsMonitoringDocFilePaths';
 import { InfraMonitoringDocFilePaths } from 'container/OnboardingContainer/constants/infraMonitoringDocFilePaths';
 import { LogsManagementDocFilePaths } from 'container/OnboardingContainer/constants/logsManagementDocFilePaths';
-import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
+import {
+	OnboardingMethods,
+	useOnboardingContext,
+} from 'container/OnboardingContainer/context/OnboardingContext';
 import { ModulesMap } from 'container/OnboardingContainer/OnboardingContainer';
-import useAnalytics from 'hooks/analytics/useAnalytics';
 import { useEffect, useState } from 'react';
 
 export interface IngestionInfoProps {
@@ -25,8 +28,6 @@ export default function MarkdownStep(): JSX.Element {
 		selectedMethod,
 	} = useOnboardingContext();
 
-	const { trackEvent } = useAnalytics();
-
 	const [markdownContent, setMarkdownContent] = useState('');
 
 	const { step } = activeStep;
@@ -42,12 +43,12 @@ export default function MarkdownStep(): JSX.Element {
 			path += `_${selectedEnvironment}`;
 		}
 
-		if (
-			selectedModule?.id === ModulesMap.APM &&
-			selectedDataSource?.id !== 'kubernetes' &&
-			selectedMethod
-		) {
-			path += `_${selectedMethod}`;
+		if (selectedModule?.id === ModulesMap.APM) {
+			if (selectedEnvironment === 'kubernetes') {
+				path += `_${OnboardingMethods.RECOMMENDED_STEPS}`;
+			} else if (selectedEnvironment !== 'kubernetes' && selectedMethod) {
+				path += `_${selectedMethod}`;
+			}
 		}
 
 		path += `_${step?.id}`;
@@ -66,8 +67,9 @@ export default function MarkdownStep(): JSX.Element {
 			docFilePaths = LogsManagementDocFilePaths;
 		} else if (selectedModule?.id === ModulesMap.InfrastructureMonitoring) {
 			docFilePaths = InfraMonitoringDocFilePaths;
+		} else if (selectedModule?.id === ModulesMap.AwsMonitoring) {
+			docFilePaths = AwsMonitoringDocFilePaths;
 		}
-
 		// @ts-ignore
 		if (docFilePaths && docFilePaths[path]) {
 			// @ts-ignore
@@ -82,27 +84,8 @@ export default function MarkdownStep(): JSX.Element {
 		SIGNOZ_INGESTION_KEY:
 			ingestionData?.SIGNOZ_INGESTION_KEY || '<SIGNOZ_INGESTION_KEY>',
 		REGION: ingestionData?.REGION || 'region',
+		OTEL_VERSION: '0.88.0',
 	};
-
-	useEffect(() => {
-		trackEvent(
-			`Onboarding: ${activeStep?.module?.id}: ${selectedDataSource?.name}: ${activeStep?.step?.title}`,
-			{
-				dataSource: selectedDataSource,
-				framework: selectedFramework,
-				environment: selectedEnvironment,
-				module: {
-					name: activeStep?.module?.title,
-					id: activeStep?.module?.id,
-				},
-				step: {
-					name: activeStep?.step?.title,
-					id: activeStep?.step?.id,
-				},
-			},
-		);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [step]);
 
 	return (
 		<div className="markdown-container">

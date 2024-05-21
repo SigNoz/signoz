@@ -506,8 +506,9 @@ function PipelineListsView({
 								pagination={false}
 							/>
 						</DndProvider>
-						{showSaveButton && (
+						{isEditingActionMode && (
 							<SaveConfigButton
+								showSaveButton={Boolean(showSaveButton)}
 								onSaveConfigurationHandler={onSaveConfigurationHandler}
 								onCancelConfigurationHandler={onCancelConfigurationHandler}
 							/>

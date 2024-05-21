@@ -20,6 +20,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -61,6 +62,19 @@ func parseGetTopOperationsRequest(r *http.Request) (*model.GetTopOperationsParam
 
 	if len(postData.ServiceName) == 0 {
 		return nil, errors.New("serviceName param missing in query")
+	}
+
+	return postData, nil
+}
+
+func parseRegisterEventRequest(r *http.Request) (*model.RegisterEventParams, error) {
+	var postData *model.RegisterEventParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+	if err != nil {
+		return nil, err
+	}
+	if postData.EventName == "" {
+		return nil, errors.New("eventName param missing in query")
 	}
 
 	return postData, nil
@@ -829,8 +843,10 @@ func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequ
 		limit = 50
 	}
 
-	if err := aggregateOperator.Validate(); err != nil {
-		return nil, err
+	if dataSource != v3.DataSourceMetrics {
+		if err := aggregateOperator.Validate(); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := dataSource.Validate(); err != nil {
@@ -861,8 +877,10 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		return nil, err
 	}
 
-	if err := aggregateOperator.Validate(); err != nil {
-		return nil, err
+	if dataSource != v3.DataSourceMetrics {
+		if err := aggregateOperator.Validate(); err != nil {
+			return nil, err
+		}
 	}
 
 	req = v3.FilterAttributeKeyRequest{
@@ -894,8 +912,10 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 		return nil, err
 	}
 
-	if err := aggregateOperator.Validate(); err != nil {
-		return nil, err
+	if dataSource != v3.DataSourceMetrics {
+		if err := aggregateOperator.Validate(); err != nil {
+			return nil, err
+		}
 	}
 
 	req = v3.FilterAttributeValueRequest{
@@ -935,11 +955,10 @@ func validateExpressions(expressions []string, funcs map[string]govaluate.Expres
 	for _, exp := range expressions {
 		evalExp, err := govaluate.NewEvaluableExpressionWithFunctions(exp, funcs)
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, fmt.Errorf("invalid expression %s: %v", exp, err))
 			continue
 		}
-		variables := evalExp.Vars()
-		for _, v := range variables {
+		for _, v := range evalExp.Vars() {
 			var hasVariable bool
 			for _, q := range cq.BuilderQueries {
 				if q.Expression == v {
@@ -961,7 +980,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 
 	// parse the request body
 	if err := json.NewDecoder(r.Body).Decode(&queryRangeParams); err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 
 	// validate the request body
@@ -969,7 +988,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
-	// prepare the variables for the corrspnding query type
+	// prepare the variables for the corresponding query type
 	formattedVars := make(map[string]interface{})
 	for name, value := range queryRangeParams.Variables {
 		if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
@@ -985,16 +1004,106 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			// Formula query
+			// Check if the queries used in the expression can be joined
+			if query.QueryName != query.Expression {
+				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
+				if err != nil {
+					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+				}
+
+				// get the group keys for the vars
+				groupKeys := make(map[string][]string)
+				for _, v := range expression.Vars() {
+					if varQuery, ok := queryRangeParams.CompositeQuery.BuilderQueries[v]; ok {
+						groupKeys[v] = []string{}
+						for _, key := range varQuery.GroupBy {
+							groupKeys[v] = append(groupKeys[v], key.Key)
+						}
+					} else {
+						return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unknown variable %s", v)}
+					}
+				}
+
+				params := make(map[string]interface{})
+				for k, v := range groupKeys {
+					params[k] = v
+				}
+
+				can, _, err := expression.CanJoin(params)
+				if err != nil {
+					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+				}
+
+				if !can {
+					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot join the given group keys")}
+				}
+			}
+
+			// If the step interval is less than the minimum allowed step interval, set it to the minimum allowed step interval
+			if minStep := common.MinAllowedStepInterval(queryRangeParams.Start, queryRangeParams.End); query.StepInterval < minStep {
+				query.StepInterval = minStep
+			}
+
+			// Remove the time shift function from the list of functions and set the shift by value
+			var timeShiftBy int64
+			if len(query.Functions) > 0 {
+				for idx := range query.Functions {
+					function := &query.Functions[idx]
+					if function.Name == v3.FunctionNameTimeShift {
+						// move the function to the beginning of the list
+						// so any other function can use the shifted time
+						var fns []v3.Function
+						fns = append(fns, *function)
+						fns = append(fns, query.Functions[:idx]...)
+						fns = append(fns, query.Functions[idx+1:]...)
+						query.Functions = fns
+						timeShiftBy = int64(function.Args[0].(float64))
+						break
+					}
+				}
+			}
+			query.ShiftBy = timeShiftBy
+
+			// for metrics v3
+			// if the aggregate operator is a histogram quantile, and user has not forgotten
+			// the le tag in the group by then add the le tag to the group by
+			if query.AggregateOperator == v3.AggregateOperatorHistQuant50 ||
+				query.AggregateOperator == v3.AggregateOperatorHistQuant75 ||
+				query.AggregateOperator == v3.AggregateOperatorHistQuant90 ||
+				query.AggregateOperator == v3.AggregateOperatorHistQuant95 ||
+				query.AggregateOperator == v3.AggregateOperatorHistQuant99 {
+				found := false
+				for _, tag := range query.GroupBy {
+					if tag.Key == "le" {
+						found = true
+						break
+					}
+				}
+				if !found {
+					query.GroupBy = append(
+						query.GroupBy,
+						v3.AttributeKey{
+							Key:      "le",
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeTag,
+							IsColumn: false,
+						},
+					)
+				}
+			}
+
 			if query.Filters == nil || len(query.Filters.Items) == 0 {
 				continue
 			}
+
 			for idx := range query.Filters.Items {
 				item := &query.Filters.Items[idx]
 				value := item.Value
 				if value != nil {
 					switch x := value.(type) {
 					case string:
-						variableName := strings.Trim(x, "{{ . }}")
+						variableName := strings.Trim(x, "{[.$]}")
 						if _, ok := queryRangeParams.Variables[variableName]; ok {
 							item.Value = queryRangeParams.Variables[variableName]
 						}
@@ -1002,12 +1111,19 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 						if len(x) > 0 {
 							switch x[0].(type) {
 							case string:
-								variableName := strings.Trim(x[0].(string), "{{ . }}")
+								variableName := strings.Trim(x[0].(string), "{[.$]}")
 								if _, ok := queryRangeParams.Variables[variableName]; ok {
 									item.Value = queryRangeParams.Variables[variableName]
 								}
 							}
 						}
+					}
+				}
+
+				if v3.FilterOperator(strings.ToLower((string(item.Operator)))) != v3.FilterOperatorIn && v3.FilterOperator(strings.ToLower((string(item.Operator)))) != v3.FilterOperatorNotIn {
+					// the value type should not be multiple values
+					if _, ok := item.Value.([]interface{}); ok {
+						return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("multiple values %s are not allowed for operator `%s` for key `%s`", item.Value, item.Operator, item.Key.Key)}
 					}
 				}
 			}
@@ -1027,6 +1143,13 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			if chQuery.Disabled {
 				continue
 			}
+
+			for name, value := range queryRangeParams.Variables {
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("$%s", name), fmt.Sprint(value), -1)
+			}
+
 			tmpl := template.New("clickhouse-query")
 			tmpl, err := tmpl.Parse(chQuery.Query)
 			if err != nil {
@@ -1051,6 +1174,13 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			if promQuery.Disabled {
 				continue
 			}
+
+			for name, value := range queryRangeParams.Variables {
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("$%s", name), fmt.Sprint(value), -1)
+			}
+
 			tmpl := template.New("prometheus-query")
 			tmpl, err := tmpl.Parse(promQuery.Query)
 			if err != nil {

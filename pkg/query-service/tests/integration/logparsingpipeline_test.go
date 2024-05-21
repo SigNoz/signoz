@@ -1,14 +1,11 @@
 package tests
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"net/http/httptest"
-	"os"
+	"runtime/debug"
 	"strings"
 	"testing"
 
@@ -18,10 +15,10 @@ import (
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/integrations"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opampModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
@@ -31,20 +28,21 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
 
 func TestLogPipelinesLifecycle(t *testing.T) {
-	testbed := NewLogPipelinesTestBed(t)
-	assert := assert.New(t)
+	testbed := NewLogPipelinesTestBed(t, nil)
+	require := require.New(t)
 
 	getPipelinesResp := testbed.GetPipelinesFromQS()
-	assert.Equal(
+	require.Equal(
 		0, len(getPipelinesResp.Pipelines),
 		"There should be no pipelines at the start",
 	)
-	assert.Equal(
+	require.Equal(
 		0, len(getPipelinesResp.History),
 		"There should be no pipelines config history at the start",
 	)
@@ -118,11 +116,11 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	)
 
 	// Deployment status should be pending.
-	assert.Equal(
+	require.Equal(
 		1, len(getPipelinesResp.History),
 		"pipelines config history should not be empty after 1st configuration",
 	)
-	assert.Equal(
+	require.Equal(
 		agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
 		"pipelines deployment should be in progress after 1st configuration",
 	)
@@ -134,7 +132,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	assertPipelinesResponseMatchesPostedPipelines(
 		t, postablePipelines, getPipelinesResp,
 	)
-	assert.Equal(
+	require.Equal(
 		agentConf.Deployed,
 		getPipelinesResp.History[0].DeployStatus,
 		"pipeline deployment should be complete after acknowledgment from opamp client",
@@ -149,12 +147,13 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	testbed.assertPipelinesSentToOpampClient(updatePipelinesResp.Pipelines)
 	testbed.assertNewAgentGetsPipelinesOnConnection(updatePipelinesResp.Pipelines)
 
-	assert.Equal(
-		2, len(updatePipelinesResp.History),
+	getPipelinesResp = testbed.GetPipelinesFromQS()
+	require.Equal(
+		2, len(getPipelinesResp.History),
 		"there should be 2 history entries after posting pipelines config for the 2nd time",
 	)
-	assert.Equal(
-		agentConf.DeployInitiated, updatePipelinesResp.History[0].DeployStatus,
+	require.Equal(
+		agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus,
 		"deployment should be in progress for latest pipeline config",
 	)
 
@@ -165,7 +164,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	assertPipelinesResponseMatchesPostedPipelines(
 		t, postablePipelines, getPipelinesResp,
 	)
-	assert.Equal(
+	require.Equal(
 		agentConf.Deployed,
 		getPipelinesResp.History[0].DeployStatus,
 		"deployment for latest pipeline config should be complete after acknowledgment from opamp client",
@@ -174,7 +173,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 
 func TestLogPipelinesHistory(t *testing.T) {
 	require := require.New(t)
-	testbed := NewLogPipelinesTestBed(t)
+	testbed := NewLogPipelinesTestBed(t, nil)
 
 	// Only the latest config version can be "IN_PROGRESS",
 	// other incomplete deployments should have status "UNKNOWN"
@@ -356,7 +355,7 @@ func TestLogPipelinesValidation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			testbed := NewLogPipelinesTestBed(t)
+			testbed := NewLogPipelinesTestBed(t, nil)
 			testbed.PostPipelinesToQSExpectingStatusCode(
 				logparsingpipeline.PostablePipelines{
 					Pipelines: []logparsingpipeline.PostablePipeline{tc.Pipeline},
@@ -369,7 +368,7 @@ func TestLogPipelinesValidation(t *testing.T) {
 
 func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 	require := require.New(t)
-	testbed := NewTestbedWithoutOpamp(t)
+	testbed := NewTestbedWithoutOpamp(t, nil)
 
 	getPipelinesResp := testbed.GetPipelinesFromQS()
 	require.Equal(0, len(getPipelinesResp.Pipelines))
@@ -422,7 +421,6 @@ func TestCanSavePipelinesWithoutConnectedAgents(t *testing.T) {
 // configuring log pipelines and provides test helpers.
 type LogPipelinesTestBed struct {
 	t               *testing.T
-	testDBFilePath  string
 	testUser        *model.User
 	apiHandler      *app.APIHandler
 	agentConfMgr    *agentConf.Manager
@@ -430,25 +428,20 @@ type LogPipelinesTestBed struct {
 	opampClientConn *opamp.MockOpAmpConnection
 }
 
-func NewTestbedWithoutOpamp(t *testing.T) *LogPipelinesTestBed {
-	// Create a tmp file based sqlite db for testing.
-	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
-	if err != nil {
-		t.Fatalf("could not create temp file for test db: %v", err)
+// testDB can be injected for sharing a DB across multiple integration testbeds.
+func NewTestbedWithoutOpamp(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed {
+	if testDB == nil {
+		testDB = utils.NewQueryServiceDBForTests(t)
 	}
-	testDBFilePath := testDBFile.Name()
-	t.Cleanup(func() { os.Remove(testDBFilePath) })
-	testDBFile.Close()
 
-	// TODO(Raj): move away from singleton DB instances to avoid
-	// issues when running tests in parallel.
-	dao.InitDao("sqlite", testDBFilePath)
-
-	testDB, err := sqlx.Open("sqlite3", testDBFilePath)
+	ic, err := integrations.NewController(testDB)
 	if err != nil {
-		t.Fatalf("could not open test db sqlite file: %v", err)
+		t.Fatalf("could not create integrations controller: %v", err)
 	}
-	controller, err := logparsingpipeline.NewLogParsingPipelinesController(testDB, "sqlite")
+
+	controller, err := logparsingpipeline.NewLogParsingPipelinesController(
+		testDB, "sqlite", ic.GetPipelinesForInstalledIntegrations,
+	)
 	if err != nil {
 		t.Fatalf("could not create a logparsingpipelines controller: %v", err)
 	}
@@ -467,7 +460,7 @@ func NewTestbedWithoutOpamp(t *testing.T) *LogPipelinesTestBed {
 	}
 
 	// Mock an available opamp agent
-	testDB, err = opampModel.InitDB(testDBFilePath)
+	testDB, err = opampModel.InitDB(testDB)
 	require.Nil(t, err, "failed to init opamp model")
 
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
@@ -479,16 +472,15 @@ func NewTestbedWithoutOpamp(t *testing.T) *LogPipelinesTestBed {
 	require.Nil(t, err, "failed to init agentConf")
 
 	return &LogPipelinesTestBed{
-		t:              t,
-		testDBFilePath: testDBFilePath,
-		testUser:       user,
-		apiHandler:     apiHandler,
-		agentConfMgr:   agentConfMgr,
+		t:            t,
+		testUser:     user,
+		apiHandler:   apiHandler,
+		agentConfMgr: agentConfMgr,
 	}
 }
 
-func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
-	testbed := NewTestbedWithoutOpamp(t)
+func NewLogPipelinesTestBed(t *testing.T, testDB *sqlx.DB) *LogPipelinesTestBed {
+	testbed := NewTestbedWithoutOpamp(t, testDB)
 
 	opampServer := opamp.InitializeServer(nil, testbed.agentConfMgr)
 	err := opampServer.Start(opamp.GetAvailableLocalAddress())
@@ -590,8 +582,8 @@ func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.Pipeline
 
 	if response.StatusCode != 200 {
 		tb.t.Fatalf(
-			"could not list log parsing pipelines. status: %d, body: %v",
-			response.StatusCode, string(responseBody),
+			"could not list log parsing pipelines. status: %d, body: %v\n%s",
+			response.StatusCode, string(responseBody), string(debug.Stack()),
 		)
 	}
 
@@ -625,7 +617,7 @@ func assertPipelinesRecommendedInRemoteConfig(
 	pipelines []logparsingpipeline.Pipeline,
 ) {
 	collectorConfigFiles := msg.RemoteConfig.Config.ConfigMap
-	assert.Equal(
+	require.Equal(
 		t, len(collectorConfigFiles), 1,
 		"otel config sent to client is expected to contain atleast 1 file",
 	)
@@ -653,7 +645,7 @@ func assertPipelinesRecommendedInRemoteConfig(
 	}
 
 	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(pipelines)
-	assert.Equal(
+	require.Equal(
 		t, expectedLogProcessorNames, collectorConfLogsPipelineProcNames,
 		"config sent to opamp client doesn't contain expected log pipelines",
 	)
@@ -661,7 +653,7 @@ func assertPipelinesRecommendedInRemoteConfig(
 	collectorConfProcessors := collectorConfSentToClient["processors"].(map[string]interface{})
 	for _, procName := range expectedLogProcessorNames {
 		pipelineProcessorInConf, procExists := collectorConfProcessors[procName]
-		assert.True(t, procExists, fmt.Sprintf(
+		require.True(t, procExists, fmt.Sprintf(
 			"%s processor not found in config sent to opamp client", procName,
 		))
 
@@ -747,16 +739,16 @@ func assertPipelinesResponseMatchesPostedPipelines(
 	postablePipelines logparsingpipeline.PostablePipelines,
 	pipelinesResp *logparsingpipeline.PipelinesResponse,
 ) {
-	assert.Equal(
+	require.Equal(
 		t, len(postablePipelines.Pipelines), len(pipelinesResp.Pipelines),
 		"length mistmatch between posted pipelines and pipelines in response",
 	)
 	for i, pipeline := range pipelinesResp.Pipelines {
 		postable := postablePipelines.Pipelines[i]
-		assert.Equal(t, postable.Name, pipeline.Name, "pipeline.Name mismatch")
-		assert.Equal(t, postable.OrderId, pipeline.OrderId, "pipeline.OrderId mismatch")
-		assert.Equal(t, postable.Enabled, pipeline.Enabled, "pipeline.Enabled mismatch")
-		assert.Equal(t, postable.Config, pipeline.Config, "pipeline.Config mismatch")
+		require.Equal(t, postable.Name, pipeline.Name, "pipeline.Name mismatch")
+		require.Equal(t, postable.OrderId, pipeline.OrderId, "pipeline.OrderId mismatch")
+		require.Equal(t, postable.Enabled, pipeline.Enabled, "pipeline.Enabled mismatch")
+		require.Equal(t, postable.Config, pipeline.Config, "pipeline.Config mismatch")
 	}
 }
 
@@ -791,61 +783,4 @@ func newInitialAgentConfigMap() *protobufs.AgentConfigMap {
 			},
 		},
 	}
-}
-
-func createTestUser() (*model.User, *model.ApiError) {
-	// Create a test user for auth
-	ctx := context.Background()
-	org, apiErr := dao.DB().CreateOrg(ctx, &model.Organization{
-		Name: "test",
-	})
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	group, apiErr := dao.DB().CreateGroup(ctx, &model.Group{
-		Name: "test",
-	})
-	if apiErr != nil {
-		return nil, apiErr
-	}
-
-	return dao.DB().CreateUser(
-		ctx,
-		&model.User{
-			Name:     "test",
-			Email:    "test@test.com",
-			Password: "test",
-			OrgId:    org.Id,
-			GroupId:  group.Id,
-		},
-		true,
-	)
-}
-
-func NewAuthenticatedTestRequest(
-	user *model.User,
-	path string,
-	postData interface{},
-) (*http.Request, error) {
-	userJwt, err := auth.GenerateJWTForUser(user)
-	if err != nil {
-		return nil, err
-	}
-
-	var req *http.Request
-
-	if postData != nil {
-		var body bytes.Buffer
-		err = json.NewEncoder(&body).Encode(postData)
-		if err != nil {
-			return nil, err
-		}
-		req = httptest.NewRequest(http.MethodPost, path, &body)
-	} else {
-		req = httptest.NewRequest(http.MethodPost, path, nil)
-	}
-
-	req.Header.Add("Authorization", "Bearer "+userJwt.AccessJwt)
-	return req, nil
 }

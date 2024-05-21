@@ -1,0 +1,24 @@
+.selectOptionContainer {
+	display: flex;
+	gap: 8px;
+	justify-content: space-between;
+	align-items: center;
+	overflow-x: auto;
+
+	&::-webkit-scrollbar {
+		width: 0.2rem;
+		height: 0.2rem;
+	}
+}
+
+.lightMode {
+	.query-builder-search {
+		.ant-select-dropdown {
+			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+		}
+
+		.ant-select-item-option-active {
+			background-color: var(--bg-vanilla-200) !important;
+		}
+	}
+}

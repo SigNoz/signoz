@@ -1,10 +1,11 @@
-import { Form, FormInstance, Input, Select, Typography } from 'antd';
+import { Form, FormInstance, Input, Select, Switch, Typography } from 'antd';
 import { Store } from 'antd/lib/form/interface';
 import UpgradePrompt from 'components/Upgrade/UpgradePrompt';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
+	EmailChannel,
 	OpsgenieChannel,
 	PagerChannel,
 	SlackChannel,
@@ -16,6 +17,7 @@ import history from 'lib/history';
 import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import EmailSettings from './Settings/Email';
 import MsTeamsSettings from './Settings/MsTeams';
 import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
@@ -69,6 +71,8 @@ function FormAlertChannels({
 				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
 			case ChannelType.Opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.Email:
+				return <EmailSettings setSelectedConfig={setSelectedConfig} />;
 			default:
 				return null;
 		}
@@ -91,6 +95,22 @@ function FormAlertChannels({
 					/>
 				</Form.Item>
 
+				<Form.Item
+					label={t('field_send_resolved')}
+					labelAlign="left"
+					name="send_resolved"
+				>
+					<Switch
+						defaultChecked={initialValue?.send_resolved}
+						onChange={(value): void => {
+							setSelectedConfig((state) => ({
+								...state,
+								send_resolved: value,
+							}));
+						}}
+					/>
+				</Form.Item>
+
 				<Form.Item label={t('field_channel_type')} labelAlign="left" name="type">
 					<Select disabled={editing} onChange={onTypeChangeHandler} value={type}>
 						<Select.Option value="slack" key="slack">
@@ -104,6 +124,9 @@ function FormAlertChannels({
 						</Select.Option>
 						<Select.Option value="opsgenie" key="opsgenie">
 							Opsgenie
+						</Select.Option>
+						<Select.Option value="email" key="email">
+							Email
 						</Select.Option>
 						{!isOssFeature?.active && (
 							<Select.Option value="msteams" key="msteams">
@@ -151,7 +174,13 @@ interface FormAlertChannelsProps {
 	type: ChannelType;
 	setSelectedConfig: Dispatch<
 		SetStateAction<
-			Partial<SlackChannel & WebhookChannel & PagerChannel & OpsgenieChannel>
+			Partial<
+				SlackChannel &
+					WebhookChannel &
+					PagerChannel &
+					OpsgenieChannel &
+					EmailChannel
+			>
 		>
 	>;
 	onTypeChangeHandler: (value: ChannelType) => void;

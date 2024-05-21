@@ -1,0 +1,55 @@
+.explorer-option-droppable-container {
+    position: fixed;
+	bottom: 0;
+    width: -webkit-fill-available;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    border-radius: 10px 10px 0px 0px;
+    // box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.25);
+    // backdrop-filter: blur(20px);
+
+    .explorer-actions-btn {
+        display: flex;
+        gap: 8px;
+        margin-right: 8px;
+
+        .action-btn {
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px 10px 0px 0px;
+            box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(20px);
+            height: 24px !important;
+            border: none;
+        }
+    }
+
+    .explorer-show-btn {
+        border-radius: 10px 10px 0px 0px;
+        border: 1px solid var(--bg-slate-400);
+        background: rgba(22, 24, 29, 0.40);
+        box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(20px);
+        align-self: center;
+        padding: 8px 12px;
+        height: 24px !important;
+
+        .menu-bar {
+            border-radius: 50px;
+            background: var(--bg-slate-200);
+            height: 4px;
+            width: 50px;
+        }
+    }
+}
+
+.lightMode {
+    .explorer-option-droppable-container {
+
+        .explorer-show-btn {
+            background: var(--bg-vanilla-200);
+        }
+    }
+}

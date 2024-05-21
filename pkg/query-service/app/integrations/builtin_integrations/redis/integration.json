@@ -1,0 +1,261 @@
+{
+  "id": "redis",
+  "title": "Redis",
+  "description": "Monitor redis with metrics and logs",
+  "author": {
+    "name": "SigNoz",
+    "email": "integrations@signoz.io",
+    "homepage": "https://signoz.io"
+  },
+  "icon": "file://icon.svg",
+  "categories": [
+    "Database"
+  ],
+  "overview": "file://overview.md",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "file://config/prerequisites.md"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "file://config/collect-metrics.md"
+    },
+    {
+      "title": "Collect Logs",
+      "instructions": "file://config/collect-logs.md"
+    }
+  ],
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": [
+      "file://assets/dashboards/overview.json"
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "logs": {
+      "attribute_key": "source",
+      "attribute_value": "redis"
+    }
+  },
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Process ID",
+        "path": "attributes.pid",
+        "type": "string"
+      },
+      {
+        "name": "Process Role",
+        "path": "attributes.role",
+        "type": "string"
+      },
+      {
+        "name": "Timestamp",
+        "path": "timestamp",
+        "type": "timestamp"
+      },
+      {
+        "name": "Severity Text",
+        "path": "severity_text",
+        "type": "string"
+      },
+      {
+        "name": "Severity Number",
+        "path": "severity_number",
+        "type": "number"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "redis_commands_processed",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of commands processed by the server"
+      },
+      {
+        "name": "redis_cpu_time",
+        "type": "Sum",
+        "unit": "s",
+        "description": "System CPU consumed by the Redis server in seconds since server start"
+      },
+      {
+        "name": "redis_keys_expired",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of key expiration events"
+      },
+      {
+        "name": "redis_db_expires",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Number of keyspace keys with an expiration"
+      },
+      {
+        "name": "redis_commands",
+        "type": "Gauge",
+        "unit": "ops/s",
+        "description": "Number of commands processed per second"
+      },
+      {
+        "name": "redis_replication_offset",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The server's current replication offset"
+      },
+      {
+        "name": "redis_net_input",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The total number of bytes read from the network"
+      },
+      {
+        "name": "redis_clients_connected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of client connections (excluding connections from replicas)"
+      },
+      {
+        "name": "redis_keys_evicted",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of evicted keys due to maxmemory limit"
+      },
+      {
+        "name": "redis_maxmemory",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The value of the maxmemory configuration directive"
+      },
+      {
+        "name": "redis_clients_max_input_buffer",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Biggest input buffer among current client connections"
+      },
+      {
+        "name": "redis_cmd_latency",
+        "type": "Gauge",
+        "unit": "s",
+        "description": "Command execution latency"
+      },
+      {
+        "name": "redis_memory_lua",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Number of bytes used by the Lua engine"
+      },
+      {
+        "name": "redis_replication_backlog_first_byte_offset",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The master offset of the replication backlog buffer"
+      },
+      {
+        "name": "redis_keyspace_hits",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of successful lookup of keys in the main dictionary"
+      },
+      {
+        "name": "redis_clients_blocked",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of clients pending on a blocking call"
+      },
+      {
+        "name": "redis_connections_rejected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of connections rejected because of maxclients limit"
+      },
+      {
+        "name": "redis_latest_fork",
+        "type": "Gauge",
+        "unit": "us",
+        "description": "Duration of the latest fork operation in microseconds"
+      },
+      {
+        "name": "redis_clients_max_output_buffer",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Longest output list among current client connections"
+      },
+      {
+        "name": "redis_slaves_connected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of connected replicas"
+      },
+      {
+        "name": "redis_db_keys",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Number of keyspace keys"
+      },
+      {
+        "name": "redis_keyspace_misses",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of failed lookup of keys in the main dictionary"
+      },
+      {
+        "name": "redis_uptime",
+        "type": "Sum",
+        "unit": "s",
+        "description": "Number of seconds since Redis server start"
+      },
+      {
+        "name": "redis_memory_used",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Total number of bytes allocated by Redis using its allocator"
+      },
+      {
+        "name": "redis_net_output",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The total number of bytes written to the network"
+      },
+      {
+        "name": "redis_connections_received",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of connections accepted by the server"
+      },
+      {
+        "name": "redis_rdb_changes_since_last_save",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of changes since the last dump"
+      },
+      {
+        "name": "redis_memory_rss",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Number of bytes that Redis allocated as seen by the operating system"
+      },
+      {
+        "name": "redis_db_avg_ttl",
+        "type": "Gauge",
+        "unit": "ms",
+        "description": "Average keyspace keys TTL"
+      },
+      {
+        "name": "redis_memory_peak",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Peak memory consumed by Redis (in bytes)"
+      },
+      {
+        "name": "redis_memory_fragmentation_ratio",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Ratio between used_memory_rss and used_memory"
+      }
+    ]
+  }
+}

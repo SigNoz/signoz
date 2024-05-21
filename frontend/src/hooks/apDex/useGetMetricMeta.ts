@@ -5,8 +5,9 @@ import { MetricMetaProps } from 'types/api/metrics/getApDex';
 
 export const useGetMetricMeta = (
 	metricName: string,
+	servicename: string,
 ): UseQueryResult<AxiosResponse<MetricMetaProps>, AxiosError> =>
 	useQuery<AxiosResponse<MetricMetaProps>, AxiosError>({
-		queryKey: [{ metricName }],
-		queryFn: async () => getMetricMeta(metricName),
+		queryKey: [{ metricName, servicename }],
+		queryFn: async () => getMetricMeta(metricName, servicename),
 	});

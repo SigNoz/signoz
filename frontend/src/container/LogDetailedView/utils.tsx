@@ -132,6 +132,16 @@ export const generateFieldKeyForArray = (
 export const removeObjectFromString = (str: string): string =>
 	str.replace(/\[object Object\]./g, '');
 
+// Split `str` on the first occurrence of `delimiter`
+// For example, will return `['a', 'b.c']` when splitting `'a.b.c'` at dots
+const splitOnce = (str: string, delimiter: string): string[] => {
+	const parts = str.split(delimiter);
+	if (parts.length < 2) {
+		return parts;
+	}
+	return [parts[0], parts.slice(1).join(delimiter)];
+};
+
 export const getFieldAttributes = (field: string): IFieldAttributes => {
 	let dataType;
 	let newField;
@@ -140,16 +150,28 @@ export const getFieldAttributes = (field: string): IFieldAttributes => {
 	if (field.startsWith('attributes_')) {
 		logType = MetricsType.Tag;
 		const stringWithoutPrefix = field.slice('attributes_'.length);
-		const parts = stringWithoutPrefix.split('.');
+		const parts = splitOnce(stringWithoutPrefix, '.');
 		[dataType, newField] = parts;
 	} else if (field.startsWith('resources_')) {
 		logType = MetricsType.Resource;
 		const stringWithoutPrefix = field.slice('resources_'.length);
-		const parts = stringWithoutPrefix.split('.');
+		const parts = splitOnce(stringWithoutPrefix, '.');
 		[dataType, newField] = parts;
 	}
 
 	return { dataType, newField, logType };
+};
+
+// Returns key to be used when filtering for `field` via
+// the query builder. This is useful for powering filtering
+// by field values from log details view.
+export const filterKeyForField = (field: string): string => {
+	// Must work for all 3 of the following types of cases
+	// timestamp -> timestamp
+	// attributes_string.log.file -> log.file
+	// resources_string.k8s.pod.name -> k8s.pod.name
+	const fieldAttribs = getFieldAttributes(field);
+	return fieldAttribs?.newField || field;
 };
 
 export const aggregateAttributesResourcesToString = (logData: ILog): string => {
@@ -240,3 +262,7 @@ export const removeEscapeCharacters = (str: string): string =>
 		};
 		return escapeMap[char as keyof typeof escapeMap];
 	});
+
+export function removeExtraSpaces(input: string): string {
+	return input.replace(/\s+/g, ' ').trim();
+}

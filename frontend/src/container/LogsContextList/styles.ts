@@ -1,19 +1,14 @@
-import { Space, Typography } from 'antd';
-import { themeColors } from 'constants/theme';
+import { Color } from '@signozhq/design-tokens';
+import { Typography } from 'antd';
 import styled from 'styled-components';
 
 export const ListContainer = styled.div<{ $isDarkMode: boolean }>`
 	position: relative;
-	margin: 0 -1.5rem;
-	height: 10rem;
-	overflow-y: scroll;
+	height: 21rem;
+	overflow: hidden;
 
 	background-color: ${({ $isDarkMode }): string =>
-		$isDarkMode ? themeColors.darkGrey : themeColors.lightgrey};
-`;
-
-export const ShowButtonWrapper = styled(Space)`
-	margin: 0.625rem 0;
+		$isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100};
 `;
 
 export const EmptyText = styled(Typography)`

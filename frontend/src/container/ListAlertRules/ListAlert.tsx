@@ -4,6 +4,7 @@ import { Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import DropDown from 'components/DropDown/DropDown';
+import { listAlertMessage } from 'components/facingIssueBtn/util';
 import {
 	DynamicColumnsKey,
 	TableDataSource,
@@ -120,7 +121,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				history.push(
 					`${ROUTES.EDIT_ALERTS}?ruleId=${record.id.toString()}&${
 						QueryParams.compositeQuery
-					}=${encodeURIComponent(JSON.stringify(compositeQuery))}`,
+					}=${encodeURIComponent(JSON.stringify(compositeQuery))}&panelTypes=${
+						record.condition.compositeQuery.panelType
+					}`,
 				);
 			})
 			.catch(handleError);
@@ -355,6 +358,15 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				onChange={handleChange}
 				pagination={{
 					defaultCurrent: Number(paginationParam) || 1,
+				}}
+				facingIssueBtn={{
+					attributes: {
+						screen: 'Alert list page',
+					},
+					eventName: 'Alert: Facing Issues in alert',
+					buttonText: 'Facing issues with alerts?',
+					message: listAlertMessage,
+					onHoverText: 'Click here to get help with alerts',
 				}}
 			/>
 		</>

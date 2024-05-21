@@ -36,7 +36,9 @@ export const useActiveLog = (): UseActiveLog => {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const { notifications } = useNotifications();
 
-	const isLogsPage = useMemo(() => pathname === ROUTES.LOGS, [pathname]);
+	const isLogsPage = useMemo(() => pathname === ROUTES.OLD_LOGS_EXPLORER, [
+		pathname,
+	]);
 
 	const [activeLog, setActiveLog] = useState<ILog | null>(null);
 
@@ -135,7 +137,7 @@ export const useActiveLog = (): UseActiveLog => {
 				queryString,
 			);
 
-			history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
+			history.replace(`${ROUTES.OLD_LOGS_EXPLORER}?q=${updatedQueryString}`);
 		},
 		[history, queryString],
 	);

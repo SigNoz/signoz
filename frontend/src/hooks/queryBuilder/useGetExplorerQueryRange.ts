@@ -15,8 +15,10 @@ import { useQueryBuilder } from './useQueryBuilder';
 export const useGetExplorerQueryRange = (
 	requestData: Query | null,
 	panelType: PANEL_TYPES | null,
+	version: string,
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
 	params?: Record<string, unknown>,
+	isDependentOnQB = true,
 ): UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error> => {
 	const { isEnabledQuery } = useQueryBuilder();
 	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
@@ -32,11 +34,11 @@ export const useGetExplorerQueryRange = (
 	const isEnabled = useMemo(() => {
 		if (!options) return isEnabledQuery;
 		if (typeof options.enabled === 'boolean') {
-			return isEnabledQuery || options.enabled;
+			return options.enabled && (!isDependentOnQB || isEnabledQuery);
 		}
 
 		return isEnabledQuery;
-	}, [options, isEnabledQuery]);
+	}, [options, isEnabledQuery, isDependentOnQB]);
 
 	return useGetQueryRange(
 		{
@@ -46,6 +48,7 @@ export const useGetExplorerQueryRange = (
 			query: requestData || initialQueriesMap.metrics,
 			params,
 		},
+		version,
 		{
 			...options,
 			retry: false,

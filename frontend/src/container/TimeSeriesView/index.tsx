@@ -1,3 +1,4 @@
+import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -49,6 +50,7 @@ function TimeSeriesViewContainer({
 				dataSource,
 			},
 		},
+		DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -68,10 +70,13 @@ function TimeSeriesViewContainer({
 
 	return (
 		<TimeSeriesView
+			// TODO handle this when revamping trace explorer
+			isFilterApplied={false}
 			isError={isError}
 			isLoading={isLoading}
 			data={responseData}
 			yAxisUnit={isValidToConvertToMs ? 'ms' : 'short'}
+			dataSource={dataSource}
 		/>
 	);
 }

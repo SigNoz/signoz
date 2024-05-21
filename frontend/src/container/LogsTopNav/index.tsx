@@ -74,6 +74,7 @@ function LogsTopNav(): JSX.Element {
 				icon={<PlayCircleFilled />}
 				onClick={handleGoLive}
 				type="primary"
+				size="small"
 			>
 				Go Live
 			</LiveButtonStyled>

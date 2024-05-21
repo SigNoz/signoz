@@ -4,12 +4,15 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import './uPlotLib.styles.scss';
 
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { FullViewProps } from 'container/GridCardLayout/GridCard/FullView/types';
+import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCard/FullView/utils';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { Dimensions } from 'hooks/useDimensions';
 import { convertValue } from 'lib/getConvertedValue';
 import _noop from 'lodash-es/noop';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import uPlot from 'uplot';
 
 import onClickPlugin, { OnClickPluginOpts } from './plugins/onClickPlugin';
@@ -19,11 +22,12 @@ import getSeries from './utils/getSeriesData';
 import { getXAxisScale } from './utils/getXAxisScale';
 import { getYAxisScale } from './utils/getYAxisScale';
 
-interface GetUPlotChartOptions {
+export interface GetUPlotChartOptions {
 	id?: string;
 	apiResponse?: MetricRangePayloadProps;
 	dimensions: Dimensions;
 	isDarkMode: boolean;
+	panelType?: PANEL_TYPES;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	yAxisUnit?: string;
 	onClickHandler?: OnClickPluginOpts['onClick'];
@@ -35,6 +39,9 @@ interface GetUPlotChartOptions {
 	fillSpans?: boolean;
 	minTimeScale?: number;
 	maxTimeScale?: number;
+	softMin: number | null;
+	softMax: number | null;
+	currentQuery?: Query;
 }
 
 export const getUPlotChartOptions = ({
@@ -51,6 +58,10 @@ export const getUPlotChartOptions = ({
 	setGraphsVisibilityStates,
 	thresholds,
 	fillSpans,
+	softMax,
+	softMin,
+	panelType,
+	currentQuery,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
@@ -87,11 +98,13 @@ export const getUPlotChartOptions = ({
 				...timeScaleProps,
 			},
 			y: {
-				...getYAxisScale(
+				...getYAxisScale({
 					thresholds,
-					apiResponse?.data.newResult.data.result,
+					series: apiResponse?.data?.newResult?.data?.result || [],
 					yAxisUnit,
-				),
+					softMax,
+					softMin,
+				}),
 			},
 		},
 		plugins: [
@@ -136,7 +149,18 @@ export const getUPlotChartOptions = ({
 							if (threshold.thresholdLabel) {
 								const text = threshold.thresholdLabel;
 								const textX = plotRight - ctx.measureText(text).width - 20;
-								const textY = yPos - 15;
+
+								const canvasHeight = ctx.canvas.height;
+								const yposHeight = canvasHeight - yPos;
+								const isHeightGreaterThan90Percent = canvasHeight * 0.9 < yposHeight;
+
+								// Adjust textY based on the condition
+								let textY;
+								if (isHeightGreaterThan90Percent) {
+									textY = yPos + 15; // Below the threshold line
+								} else {
+									textY = yPos - 15; // Above the threshold line
+								}
 								ctx.fillStyle = threshold.thresholdColor || 'red';
 								ctx.fillText(text, textX, textY);
 							}
@@ -183,6 +207,11 @@ export const getUPlotChartOptions = ({
 											newGraphVisibilityStates.fill(false);
 											newGraphVisibilityStates[index + 1] = true;
 										}
+										saveLegendEntriesToLocalStorage({
+											options: self,
+											graphVisibilityState: newGraphVisibilityStates,
+											name: id || '',
+										});
 										return newGraphVisibilityStates;
 									});
 								}
@@ -192,12 +221,13 @@ export const getUPlotChartOptions = ({
 				},
 			],
 		},
-		series: getSeries(
+		series: getSeries({
 			apiResponse,
-			apiResponse?.data.result,
+			widgetMetaData: apiResponse?.data.result,
 			graphsVisibilityStates,
-			fillSpans,
-		),
+			panelType,
+			currentQuery,
+		}),
 		axes: getAxes(isDarkMode, yAxisUnit),
 	};
 };

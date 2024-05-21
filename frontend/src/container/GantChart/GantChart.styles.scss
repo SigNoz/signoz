@@ -1,0 +1,16 @@
+.span-container {
+	.spanDetails {
+		position: absolute;
+		height: 50px;
+		padding: 8px;
+		min-width: 150px;
+		background: lightcyan;
+		color: black;
+		bottom: 24px;
+		left: 0;
+
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+}

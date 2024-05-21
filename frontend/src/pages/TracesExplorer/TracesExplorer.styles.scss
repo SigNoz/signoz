@@ -1,0 +1,13 @@
+.trace-explorer-run-query {
+	display: flex;
+	flex-direction: row-reverse;
+	align-items: center;
+	margin: 8px 16px;
+	gap: 8px;
+}
+
+.traces-explorer-views {
+	.ant-tabs-tabpane {
+		padding: 0 8px;
+	}
+}

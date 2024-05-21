@@ -1,6 +1,6 @@
 import { green, orange, volcano } from '@ant-design/colors';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Card, Col, Row } from 'antd';
+import { Card, Col } from 'antd';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TStatus } from 'types/api/settings/getRetention';
@@ -43,9 +43,16 @@ function StatusMessage({
 				width: '100%',
 			}}
 		>
-			<Row style={{ gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
+			<div
+				style={{
+					display: 'flex',
+					gap: '1rem',
+					alignItems: 'center',
+					justifyContent: 'center',
+				}}
+			>
 				<Col xs={1}>
-					<InfoCircleOutlined style={{ fontSize: '1.5rem' }} />
+					<InfoCircleOutlined style={{ fontSize: '1rem' }} />
 				</Col>
 
 				<Col
@@ -56,7 +63,7 @@ function StatusMessage({
 				>
 					{statusMessage}
 				</Col>
-			</Row>
+			</div>
 		</Card>
 	) : null;
 }

@@ -61,5 +61,4 @@ const getAxes = (isDarkMode: boolean, yAxisUnit?: string): any => [
 		},
 	},
 ];
-
 export default getAxes;

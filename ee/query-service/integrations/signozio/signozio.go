@@ -47,13 +47,13 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 	httpResponse, err := http.Post(C.Prefix+"/licenses/activate", APPLICATION_JSON, bytes.NewBuffer(reqString))
 
 	if err != nil {
-		zap.S().Errorf("failed to connect to license.signoz.io", err)
+		zap.L().Error("failed to connect to license.signoz.io", zap.Error(err))
 		return nil, model.BadRequest(fmt.Errorf("unable to connect with license.signoz.io, please check your network connection"))
 	}
 
 	httpBody, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
-		zap.S().Errorf("failed to read activation response from license.signoz.io", err)
+		zap.L().Error("failed to read activation response from license.signoz.io", zap.Error(err))
 		return nil, model.BadRequest(fmt.Errorf("failed to read activation response from license.signoz.io"))
 	}
 
@@ -63,7 +63,7 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 	result := ActivationResult{}
 	err = json.Unmarshal(httpBody, &result)
 	if err != nil {
-		zap.S().Errorf("failed to marshal activation response from license.signoz.io", err)
+		zap.L().Error("failed to marshal activation response from license.signoz.io", zap.Error(err))
 		return nil, model.InternalError(errors.Wrap(err, "failed to marshal license activation response"))
 	}
 

@@ -41,8 +41,9 @@ function Tags({
 		setSearchText(value);
 	};
 
-	const filteredTags = tags.filter((tag) => tag.key.includes(searchText));
-
+	const filteredTags = tags
+		.filter((tag) => tag.key.includes(searchText))
+		.sort((a, b) => a.key.localeCompare(b.key));
 	if (tags.length === 0) {
 		return <Typography>No tags in selected span</Typography>;
 	}

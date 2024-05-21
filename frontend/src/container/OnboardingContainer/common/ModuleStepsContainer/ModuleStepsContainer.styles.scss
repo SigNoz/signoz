@@ -39,6 +39,36 @@
 .steps-container {
 	width: 20%;
 	height: 100%;
+
+	.steps-container-header {
+		display: flex;
+		align-items: center;
+		padding: 16px 0;
+		margin-bottom: 24px;
+
+		.brand-logo {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: 16px;
+			cursor: pointer;
+
+			img {
+				height: 24px;
+				width: 24px;
+			}
+
+			.brand-logo-name {
+				font-family: 'Work Sans', sans-serif;
+				font-size: 18px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 18px;
+
+				color: #fff;
+			}
+		}
+	}
 }
 
 .selected-step-content {
@@ -152,4 +182,19 @@
 
 .error-container {
 	margin: 8px 0;
+}
+
+.lightMode {
+	.steps-container {
+		width: 20%;
+		height: 100%;
+
+		.steps-container-header {
+			.brand-logo {
+				.brand-logo-name {
+					color: black;
+				}
+			}
+		}
+	}
 }

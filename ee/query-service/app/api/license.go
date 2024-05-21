@@ -12,6 +12,20 @@ import (
 	"go.uber.org/zap"
 )
 
+type DayWiseBreakdown struct {
+	Type      string        `json:"type"`
+	Breakdown []DayWiseData `json:"breakdown"`
+}
+
+type DayWiseData struct {
+	Timestamp int64   `json:"timestamp"`
+	Count     float64 `json:"count"`
+	Size      float64 `json:"size"`
+	UnitPrice float64 `json:"unitPrice"`
+	Quantity  float64 `json:"quantity"`
+	Total     float64 `json:"total"`
+}
+
 type tierBreakdown struct {
 	UnitPrice float64 `json:"unitPrice"`
 	Quantity  float64 `json:"quantity"`
@@ -21,9 +35,10 @@ type tierBreakdown struct {
 }
 
 type usageResponse struct {
-	Type  string          `json:"type"`
-	Unit  string          `json:"unit"`
-	Tiers []tierBreakdown `json:"tiers"`
+	Type             string           `json:"type"`
+	Unit             string           `json:"unit"`
+	Tiers            []tierBreakdown  `json:"tiers"`
+	DayWiseBreakdown DayWiseBreakdown `json:"dayWiseBreakdown"`
 }
 
 type details struct {
@@ -40,6 +55,7 @@ type billingDetails struct {
 		BillingPeriodEnd   int64   `json:"billingPeriodEnd"`
 		Details            details `json:"details"`
 		Discount           float64 `json:"discount"`
+		SubscriptionStatus string  `json:"subscriptionStatus"`
 	} `json:"data"`
 }
 
@@ -175,7 +191,7 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 	url := fmt.Sprintf("%s/trial?licenseKey=%s", constants.LicenseSignozIo, currentActiveLicenseKey)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		zap.S().Error("Error while creating request for trial details", err)
+		zap.L().Error("Error while creating request for trial details", zap.Error(err))
 		// If there is an error in fetching trial details, we will still return the license details
 		// to avoid blocking the UI
 		ah.Respond(w, resp)
@@ -184,7 +200,7 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
 	trialResp, err := hClient.Do(req)
 	if err != nil {
-		zap.S().Error("Error while fetching trial details", err)
+		zap.L().Error("Error while fetching trial details", zap.Error(err))
 		// If there is an error in fetching trial details, we will still return the license details
 		// to avoid incorrectly blocking the UI
 		ah.Respond(w, resp)
@@ -195,7 +211,7 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 	trialRespBody, err := io.ReadAll(trialResp.Body)
 
 	if err != nil || trialResp.StatusCode != http.StatusOK {
-		zap.S().Error("Error while fetching trial details", err)
+		zap.L().Error("Error while fetching trial details", zap.Error(err))
 		// If there is an error in fetching trial details, we will still return the license details
 		// to avoid incorrectly blocking the UI
 		ah.Respond(w, resp)
@@ -206,7 +222,7 @@ func (ah *APIHandler) listLicensesV2(w http.ResponseWriter, r *http.Request) {
 	var trialRespData model.SubscriptionServerResp
 
 	if err := json.Unmarshal(trialRespBody, &trialRespData); err != nil {
-		zap.S().Error("Error while decoding trial details", err)
+		zap.L().Error("Error while decoding trial details", zap.Error(err))
 		// If there is an error in fetching trial details, we will still return the license details
 		// to avoid incorrectly blocking the UI
 		ah.Respond(w, resp)

@@ -12,6 +12,11 @@ import (
 	"go.opentelemetry.io/collector/processor"
 )
 
+type ProcessorConfig struct {
+	Name   string
+	Config map[string]interface{}
+}
+
 func TestLogsProcessingSimulation(t *testing.T) {
 	require := require.New(t)
 
@@ -71,10 +76,13 @@ func TestLogsProcessingSimulation(t *testing.T) {
 	)
 	require.Nil(err, "could not create processors factory map")
 
+	configGenerator := makeTestConfigGenerator(
+		[]ProcessorConfig{testProcessor1, testProcessor2},
+	)
 	outputLogs, collectorErrs, apiErr := SimulateLogsProcessing(
 		context.Background(),
 		processorFactories,
-		[]ProcessorConfig{testProcessor1, testProcessor2},
+		configGenerator,
 		inputLogs,
 		300*time.Millisecond,
 	)
@@ -110,4 +118,42 @@ func makeTestPlog(body string, attrsStr map[string]string) plog.Logs {
 	}
 
 	return pl
+}
+
+func makeTestConfigGenerator(
+	processorConfigs []ProcessorConfig,
+) ConfigGenerator {
+	return func(baseConf []byte) ([]byte, error) {
+		conf, err := yaml.Parser().Unmarshal([]byte(baseConf))
+		if err != nil {
+			return nil, err
+		}
+
+		processors := map[string]interface{}{}
+		if conf["processors"] != nil {
+			processors = conf["processors"].(map[string]interface{})
+		}
+		logsProcessors := []string{}
+		svc := conf["service"].(map[string]interface{})
+		svcPipelines := svc["pipelines"].(map[string]interface{})
+		svcLogsPipeline := svcPipelines["logs"].(map[string]interface{})
+		if svcLogsPipeline["processors"] != nil {
+			logsProcessors = svcLogsPipeline["processors"].([]string)
+		}
+
+		for _, processorConf := range processorConfigs {
+			processors[processorConf.Name] = processorConf.Config
+			logsProcessors = append(logsProcessors, processorConf.Name)
+		}
+
+		conf["processors"] = processors
+		svcLogsPipeline["processors"] = logsProcessors
+
+		confYaml, err := yaml.Parser().Marshal(conf)
+		if err != nil {
+			return nil, err
+		}
+
+		return confYaml, nil
+	}
 }

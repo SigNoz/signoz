@@ -1,20 +1,21 @@
+import './Formula.styles.scss';
+
 import { Col, Input, Row } from 'antd';
+import { LEGEND } from 'constants/global';
 // ** Components
-import {
-	FilterLabel,
-	ListItemWrapper,
-	ListMarker,
-} from 'container/QueryBuilder/components';
+import { FilterLabel } from 'container/QueryBuilder/components';
 import HavingFilter from 'container/QueryBuilder/filters/Formula/Having/HavingFilter';
 import LimitFilter from 'container/QueryBuilder/filters/Formula/Limit/Limit';
 import OrderByFilter from 'container/QueryBuilder/filters/Formula/OrderBy/OrderByFilter';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { ChangeEvent, useCallback, useMemo } from 'react';
+import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { IBuilderFormula } from 'types/api/queryBuilder/queryBuilderData';
+import { getFormatedLegend } from 'utils/getFormatedLegend';
 
 import { AdditionalFiltersToggler } from '../AdditionalFiltersToggler';
+import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
 // ** Types
 import { FormulaProps } from './Formula.interfaces';
 
@@ -38,7 +39,10 @@ export function Formula({
 		query,
 		filterConfigs,
 		formula,
+		entityVersion: '',
 	});
+
+	const [isCollapse, setIsCollapsed] = useState(false);
 
 	const handleDelete = useCallback(() => {
 		removeQueryBuilderEntityByIndex('queryFormulas', index);
@@ -53,12 +57,16 @@ export function Formula({
 		handleSetFormulaData(index, newFormula);
 	}, [index, formula, handleSetFormulaData]);
 
+	const handleToggleCollapseFormula = (): void => {
+		setIsCollapsed(!isCollapse);
+	};
+
 	const handleChange = useCallback(
 		(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 			const { name, value } = e.target;
 			const newFormula: IBuilderFormula = {
 				...formula,
-				[name]: value,
+				[name]: name === LEGEND ? getFormatedLegend(value) : value,
 			};
 
 			handleSetFormulaData(index, newFormula);
@@ -136,44 +144,51 @@ export function Formula({
 	);
 
 	return (
-		<ListItemWrapper onDelete={handleDelete}>
-			<Col span={24}>
-				<ListMarker
-					isDisabled={formula.disabled}
-					onDisable={handleToggleDisableFormula}
-					labelName={formula.queryName}
-					index={index}
-				/>
-			</Col>
-			<Col span={24}>
-				<Input.TextArea
-					name="expression"
-					onChange={handleChange}
-					size="middle"
-					value={formula.expression}
-					rows={2}
-				/>
-			</Col>
-			<Col span={24}>
-				<Input
-					name="legend"
-					onChange={handleChange}
-					size="middle"
-					value={formula.legend}
-					addonBefore="Legend Format"
-				/>
-			</Col>
-			{isAdditionalFilterEnable && (
-				<Col span={24}>
-					<AdditionalFiltersToggler
-						listOfAdditionalFilter={listOfAdditionalFormulaFilters}
-					>
-						<Row gutter={[0, 11]} justify="space-between">
-							{renderAdditionalFilters}
-						</Row>
-					</AdditionalFiltersToggler>
-				</Col>
+		<Row gutter={[0, 15]}>
+			<QBEntityOptions
+				isCollapsed={isCollapse}
+				showFunctions={false}
+				entityType="formula"
+				entityData={formula}
+				onToggleVisibility={handleToggleDisableFormula}
+				onDelete={handleDelete}
+				onCollapseEntity={handleToggleCollapseFormula}
+				showDeleteButton
+			/>
+
+			{!isCollapse && (
+				<Row gutter={[0, 15]} className="formula-container">
+					<Col span={24}>
+						<Input.TextArea
+							name="expression"
+							onChange={handleChange}
+							size="middle"
+							value={formula.expression}
+							rows={2}
+						/>
+					</Col>
+					<Col span={24}>
+						<Input
+							name="legend"
+							onChange={handleChange}
+							size="middle"
+							value={formula.legend}
+							addonBefore="Legend Format"
+						/>
+					</Col>
+					{isAdditionalFilterEnable && (
+						<Col span={24}>
+							<AdditionalFiltersToggler
+								listOfAdditionalFilter={listOfAdditionalFormulaFilters}
+							>
+								<Row gutter={[0, 11]} justify="space-between">
+									{renderAdditionalFilters}
+								</Row>
+							</AdditionalFiltersToggler>
+						</Col>
+					)}
+				</Row>
 			)}
-		</ListItemWrapper>
+		</Row>
 	);
 }

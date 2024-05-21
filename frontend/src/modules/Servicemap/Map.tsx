@@ -13,6 +13,8 @@ function ServiceMap({ fgRef, serviceMap }: any): JSX.Element {
 
 	const graphData = { nodes, links };
 
+	let zoomLevel = 1;
+
 	return (
 		<ForceGraph2D
 			ref={fgRef}
@@ -23,8 +25,9 @@ function ServiceMap({ fgRef, serviceMap }: any): JSX.Element {
 			linkDirectionalParticles="value"
 			linkDirectionalParticleSpeed={(d) => d.value}
 			nodeCanvasObject={(node, ctx) => {
-				const label = transformLabel(node.id);
-				const { fontSize } = node;
+				const label = transformLabel(node.id, zoomLevel);
+				let { fontSize } = node;
+				fontSize = (fontSize * 3) / zoomLevel;
 				ctx.font = `${fontSize}px Roboto`;
 				const { width } = node;
 
@@ -42,6 +45,9 @@ function ServiceMap({ fgRef, serviceMap }: any): JSX.Element {
 				if (tooltip && node) {
 					tooltip.innerHTML = getTooltip(node);
 				}
+			}}
+			onZoom={(zoom) => {
+				zoomLevel = zoom.k;
 			}}
 			nodePointerAreaPaint={(node, color, ctx) => {
 				ctx.fillStyle = color;

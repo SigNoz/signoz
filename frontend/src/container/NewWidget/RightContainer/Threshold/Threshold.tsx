@@ -27,6 +27,10 @@ import CustomColor from './CustomColor';
 import ShowCaseValue from './ShowCaseValue';
 import { ThresholdProps } from './types';
 
+const wrapStyle = {
+	flexWrap: 'wrap',
+} as React.CSSProperties;
+
 function Threshold({
 	index,
 	thresholdOperator = '>',
@@ -220,7 +224,7 @@ function Threshold({
 							}
 						>
 							{selectedGraph === PANEL_TYPES.TIME_SERIES && (
-								<>
+								<Space style={wrapStyle}>
 									<Typography.Text>Label</Typography.Text>
 									{isEditMode ? (
 										<Input
@@ -232,7 +236,7 @@ function Threshold({
 									) : (
 										<ShowCaseValue width="180px" value={label || 'none'} />
 									)}
-								</>
+								</Space>
 							)}
 							{(selectedGraph === PANEL_TYPES.VALUE ||
 								selectedGraph === PANEL_TYPES.TABLE) && (
@@ -243,7 +247,7 @@ function Threshold({
 									{isEditMode ? (
 										<>
 											{selectedGraph === PANEL_TYPES.TABLE && (
-												<Space>
+												<Space style={wrapStyle}>
 													<Select
 														style={{
 															minWidth: '150px',
@@ -270,7 +274,7 @@ function Threshold({
 									) : (
 										<>
 											{selectedGraph === PANEL_TYPES.TABLE && (
-												<Space>
+												<Space style={wrapStyle}>
 													<ShowCaseValue width="150px" value={tableSelectedOption} />
 													<Typography.Text>is</Typography.Text>
 												</Space>
@@ -283,7 +287,7 @@ function Threshold({
 						</Space>
 					</div>
 					<div className="threshold-units-selector">
-						<Space>
+						<Space style={wrapStyle}>
 							{isEditMode ? (
 								<InputNumber
 									style={{ backgroundColor }}
@@ -311,7 +315,7 @@ function Threshold({
 					<div>
 						<Space direction="vertical">
 							<Typography.Text>Show with</Typography.Text>
-							<Space>
+							<Space style={wrapStyle}>
 								{isEditMode ? (
 									<>
 										<ColorSelector setColor={setColor} thresholdColor={color} />

@@ -25,12 +25,14 @@ import (
 var db *sqlx.DB
 
 // User for mapping job,instance from grafana
-var instanceEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.instance}}\\\"")
-var nodeEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.node}}\\\"")
-var jobEQRE = regexp.MustCompile("job(?s)=(?s)\\\"{{.job}}\\\"")
-var instanceRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.instance}}\\\"")
-var nodeRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.node}}\\\"")
-var jobRERE = regexp.MustCompile("job(?s)=~(?s)\\\"{{.job}}\\\"")
+var (
+	instanceEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.instance}}\\\"")
+	nodeEQRE     = regexp.MustCompile("instance(?s)=(?s)\\\"{{.node}}\\\"")
+	jobEQRE      = regexp.MustCompile("job(?s)=(?s)\\\"{{.job}}\\\"")
+	instanceRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.instance}}\\\"")
+	nodeRERE     = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.node}}\\\"")
+	jobRERE      = regexp.MustCompile("job(?s)=~(?s)\\\"{{.job}}\\\"")
+)
 
 // InitDB sets up setting up the connection pool global variable.
 func InitDB(dataSourceName string) (*sqlx.DB, error) {
@@ -188,10 +190,13 @@ func CreateDashboard(ctx context.Context, data map[string]interface{}, fm interf
 	dash.UpdateBy = &userEmail
 	dash.UpdateSlug()
 	dash.Uuid = uuid.New().String()
+	if data["uuid"] != nil {
+		dash.Uuid = data["uuid"].(string)
+	}
 
 	mapData, err := json.Marshal(dash.Data)
 	if err != nil {
-		zap.S().Errorf("Error in marshalling data field in dashboard: ", dash, err)
+		zap.L().Error("Error in marshalling data field in dashboard: ", zap.Any("dashboard", dash), zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
@@ -207,11 +212,10 @@ func CreateDashboard(ctx context.Context, data map[string]interface{}, fm interf
 		dash.Uuid, dash.CreatedAt, userEmail, dash.UpdatedAt, userEmail, mapData)
 
 	if err != nil {
-		zap.S().Errorf("Error in inserting dashboard data: ", dash, err)
+		zap.L().Error("Error in inserting dashboard data: ", zap.Any("dashboard", dash), zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 	lastInsertId, err := result.LastInsertId()
-
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
@@ -242,7 +246,7 @@ func DeleteDashboard(ctx context.Context, uuid string, fm interfaces.FeatureLook
 
 	dashboard, dErr := GetDashboard(ctx, uuid)
 	if dErr != nil {
-		zap.S().Errorf("Error in getting dashboard: ", uuid, dErr)
+		zap.L().Error("Error in getting dashboard: ", zap.String("uuid", uuid), zap.Any("error", dErr))
 		return dErr
 	}
 
@@ -255,7 +259,6 @@ func DeleteDashboard(ctx context.Context, uuid string, fm interfaces.FeatureLook
 	query := `DELETE FROM dashboards WHERE uuid=?`
 
 	result, err := db.Exec(query, uuid)
-
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
@@ -293,7 +296,7 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 
 	mapData, err := json.Marshal(data)
 	if err != nil {
-		zap.S().Errorf("Error in marshalling data field in dashboard: ", data, err)
+		zap.L().Error("Error in marshalling data field in dashboard: ", zap.Any("data", data), zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
 
@@ -323,7 +326,15 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 	if existingTotal > newTotal && existingTotal-newTotal > 1 {
 		// if the total count of panels has reduced by more than 1,
 		// return error
-		return nil, model.BadRequest(fmt.Errorf("deleting more than one panel is not supported"))
+		existingIds := getWidgetIds(dashboard.Data)
+		newIds := getWidgetIds(data)
+
+		differenceIds := getIdDifference(existingIds, newIds)
+
+		if len(differenceIds) > 1 {
+			return nil, model.BadRequest(fmt.Errorf("deleting more than one panel is not supported"))
+		}
+
 	}
 
 	dashboard.UpdatedAt = time.Now()
@@ -334,7 +345,7 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 		dashboard.UpdatedAt, userEmail, mapData, dashboard.Uuid)
 
 	if err != nil {
-		zap.S().Errorf("Error in inserting dashboard data: ", data, err)
+		zap.L().Error("Error in inserting dashboard data", zap.Any("data", data), zap.Error(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 	if existingCount != newCount {
@@ -355,7 +366,7 @@ func LockUnlockDashboard(ctx context.Context, uuid string, lock bool) *model.Api
 	_, err := db.Exec(query, uuid)
 
 	if err != nil {
-		zap.S().Errorf("Error in updating dashboard: ", uuid, err)
+		zap.L().Error("Error in updating dashboard", zap.String("uuid", uuid), zap.Error(err))
 		return &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
@@ -367,10 +378,10 @@ func updateFeatureUsage(fm interfaces.FeatureLookup, usage int64) *model.ApiErro
 	if err != nil {
 		switch err.(type) {
 		case model.ErrFeatureUnavailable:
-			zap.S().Errorf("feature unavailable", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
+			zap.L().Error("feature unavailable", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
 			return model.BadRequest(err)
 		default:
-			zap.S().Errorf("feature check failed", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
+			zap.L().Error("feature check failed", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
 			return model.BadRequest(err)
 		}
 	}
@@ -394,10 +405,10 @@ func checkFeatureUsage(fm interfaces.FeatureLookup, usage int64) *model.ApiError
 	if err != nil {
 		switch err.(type) {
 		case model.ErrFeatureUnavailable:
-			zap.S().Errorf("feature unavailable", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
+			zap.L().Error("feature unavailable", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
 			return model.BadRequest(err)
 		default:
-			zap.S().Errorf("feature check failed", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
+			zap.L().Error("feature check failed", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
 			return model.BadRequest(err)
 		}
 	}
@@ -419,7 +430,6 @@ func (d *Dashboard) UpdateSlug() {
 }
 
 func IsPostDataSane(data *map[string]interface{}) error {
-
 	val, ok := (*data)["title"]
 	if !ok || val == nil {
 		return fmt.Errorf("title not found in post data")
@@ -533,13 +543,13 @@ func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.Dashboard
 
 		if template.Type == "query" {
 			if template.Datasource == nil {
-				zap.S().Warnf("Skipping panel %d as it has no datasource", templateIdx)
+				zap.L().Warn("Skipping panel as it has no datasource", zap.Int("templateIdx", templateIdx))
 				continue
 			}
 			// Skip if the source is not prometheus
 			source, stringOk := template.Datasource.(string)
 			if stringOk && !strings.Contains(strings.ToLower(source), "prometheus") {
-				zap.S().Warnf("Skipping template %d as it is not prometheus", templateIdx)
+				zap.L().Warn("Skipping template as it is not prometheus", zap.Int("templateIdx", templateIdx))
 				continue
 			}
 			var result model.Datasource
@@ -551,12 +561,12 @@ func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.Dashboard
 				}
 			}
 			if result.Type != "prometheus" && result.Type != "" {
-				zap.S().Warnf("Skipping template %d as it is not prometheus", templateIdx)
+				zap.L().Warn("Skipping template as it is not prometheus", zap.Int("templateIdx", templateIdx))
 				continue
 			}
 
 			if !stringOk && !structOk {
-				zap.S().Warnf("Didn't recognize source, skipping")
+				zap.L().Warn("Didn't recognize source, skipping")
 				continue
 			}
 			typ = "QUERY"
@@ -627,13 +637,13 @@ func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.Dashboard
 			continue
 		}
 		if panel.Datasource == nil {
-			zap.S().Warnf("Skipping panel %d as it has no datasource", idx)
+			zap.L().Warn("Skipping panel as it has no datasource", zap.Int("idx", idx))
 			continue
 		}
 		// Skip if the datasource is not prometheus
 		source, stringOk := panel.Datasource.(string)
 		if stringOk && !strings.Contains(strings.ToLower(source), "prometheus") {
-			zap.S().Warnf("Skipping panel %d as it is not prometheus", idx)
+			zap.L().Warn("Skipping panel as it is not prometheus", zap.Int("idx", idx))
 			continue
 		}
 		var result model.Datasource
@@ -645,12 +655,12 @@ func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.Dashboard
 			}
 		}
 		if result.Type != "prometheus" && result.Type != "" {
-			zap.S().Warnf("Skipping panel %d as it is not prometheus", idx)
+			zap.L().Warn("Skipping panel as it is not prometheus", zap.Int("idx", idx))
 			continue
 		}
 
 		if !stringOk && !structOk {
-			zap.S().Warnf("Didn't recognize source, skipping")
+			zap.L().Warn("Didn't recognize source, skipping")
 			continue
 		}
 
@@ -711,4 +721,53 @@ func countTraceAndLogsPanel(data map[string]interface{}) (int64, int64) {
 		}
 	}
 	return count, totalPanels
+}
+
+func getWidgetIds(data map[string]interface{}) []string {
+	widgetIds := []string{}
+	if data != nil && data["widgets"] != nil {
+		widgets, ok := data["widgets"].(interface{})
+		if ok {
+			data, ok := widgets.([]interface{})
+			if ok {
+				for _, widget := range data {
+					sData, ok := widget.(map[string]interface{})
+					if ok && sData["query"] != nil && sData["id"] != nil {
+						id, ok := sData["id"].(string)
+
+						if ok {
+							widgetIds = append(widgetIds, id)
+						}
+
+					}
+				}
+			}
+		}
+	}
+	return widgetIds
+}
+
+func getIdDifference(existingIds []string, newIds []string) []string {
+	// Convert newIds array to a map for faster lookups
+	newIdsMap := make(map[string]bool)
+	for _, id := range newIds {
+		newIdsMap[id] = true
+	}
+
+	// Initialize a map to keep track of elements in the difference array
+	differenceMap := make(map[string]bool)
+
+	// Initialize the difference array
+	difference := []string{}
+
+	// Iterate through existingIds
+	for _, id := range existingIds {
+		// If the id is not found in newIds, and it's not already in the difference array
+		if _, found := newIdsMap[id]; !found && !differenceMap[id] {
+			difference = append(difference, id)
+			differenceMap[id] = true // Mark the id as seen in the difference array
+		}
+	}
+
+	return difference
 }

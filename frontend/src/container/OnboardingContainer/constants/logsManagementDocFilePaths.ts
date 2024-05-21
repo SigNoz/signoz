@@ -121,6 +121,40 @@ import LogsManagement_logStash_macOsARM64_setupOtelCollector from '../Modules/Lo
 import LogsManagement_logStash_macOsARM64_configureReceiver from '../Modules/LogsManagement/Logstash/md-docs/MacOsARM64/logstash-macosarm64-configureReceiver.md';
 import LogsManagement_logStash_macOsARM64_restartOtelCollector from '../Modules/LogsManagement/Logstash/md-docs/MacOsARM64/logstash-macosarm64-restartOtelCollector.md';
 
+// Heroku
+
+import LogsManagement_heroku_addHttpDrain from '../Modules/LogsManagement/Heroku/md-docs/heroku-addHttpDrain.md';
+
+// Vercel
+
+import LogsManagement_vercel_setupLogDrains from '../Modules/LogsManagement/Vercel/md-docs/vercel-setupLogDrains.md';
+
+// HTTP
+
+import LogsManagement_http_createHttpPayload from '../Modules/LogsManagement/Http/md-docs/httpJsonPayload.md';
+
+// Cloudwatch
+
+import LogsManagement_cloudwatch_linuxAMD64_setupOtelCollector from '../Modules/LogsManagement/Cloudwatch/md-docs/LinuxAMD64/cloudwatch-linuxamd64-installOtelCollector.md';
+import LogsManagement_cloudwatch_linuxAMD64_configureAws from '../Modules/LogsManagement/Cloudwatch/md-docs/LinuxAMD64/cloudwatch-linuxamd64-configureAws.md';
+import LogsManagement_cloudwatch_linuxAMD64_configureReceiver from '../Modules/LogsManagement/Cloudwatch/md-docs/LinuxAMD64/cloudwatch-linuxamd64-configureReceiver.md';
+import LogsManagement_cloudwatch_linuxAMD64_sendLogsCloudwatch from '../Modules/LogsManagement/Cloudwatch/md-docs/LinuxAMD64/cloudwatch-linuxamd64-sendLogs.md';
+
+import LogsManagement_cloudwatch_linuxARM64_setupOtelCollector from '../Modules/LogsManagement/Cloudwatch/md-docs/LinuxARM64/cloudwatch-linuxarm64-installOtelCollector.md';
+import LogsManagement_cloudwatch_linuxARM64_configureAws from '../Modules/LogsManagement/Cloudwatch/md-docs/LinuxARM64/cloudwatch-linuxarm64-configureAws.md';
+import LogsManagement_cloudwatch_linuxARM64_configureReceiver from '../Modules/LogsManagement/Cloudwatch/md-docs/LinuxARM64/cloudwatch-linuxarm64-configureReceiver.md';
+import LogsManagement_cloudwatch_linuxARM64_sendLogsCloudwatch from '../Modules/LogsManagement/Cloudwatch/md-docs/LinuxARM64/cloudwatch-linuxarm64-sendLogs.md';
+
+import LogsManagement_cloudwatch_macOsAMD64_setupOtelCollector from '../Modules/LogsManagement/Cloudwatch/md-docs/MacOsAMD64/cloudwatch-macosamd64-installOtelCollector.md';
+import LogsManagement_cloudwatch_macOsAMD64_configureAws from '../Modules/LogsManagement/Cloudwatch/md-docs/MacOsAMD64/cloudwatch-macosamd64-configureAws.md';
+import LogsManagement_cloudwatch_macOsAMD64_configureReceiver from '../Modules/LogsManagement/Cloudwatch/md-docs/MacOsAMD64/cloudwatch-macosamd64-configureReceiver.md';
+import LogsManagement_cloudwatch_macOsAMD64_sendLogsCloudwatch from '../Modules/LogsManagement/Cloudwatch/md-docs/MacOsAMD64/cloudwatch-macosamd64-sendLogs.md';
+
+import LogsManagement_cloudwatch_macOsARM64_setupOtelCollector from '../Modules/LogsManagement/Cloudwatch/md-docs/MacOsARM64/cloudwatch-macosarm64-installOtelCollector.md';
+import LogsManagement_cloudwatch_macOsARM64_configureAws from '../Modules/LogsManagement/Cloudwatch/md-docs/MacOsARM64/cloudwatch-macosarm64-configureAws.md';
+import LogsManagement_cloudwatch_macOsARM64_configureReceiver from '../Modules/LogsManagement/Cloudwatch/md-docs/MacOsARM64/cloudwatch-macosarm64-configureReceiver.md';
+import LogsManagement_cloudwatch_macOsARM64_sendLogsCloudwatch from '../Modules/LogsManagement/Cloudwatch/md-docs/MacOsARM64/cloudwatch-macosarm64-sendLogs.md';
+
 export const LogsManagementDocFilePaths = {
 	// Kubernetes Pod Logs
 	LogsManagement_kubernetes_setupOtelCollector,
@@ -235,5 +269,36 @@ export const LogsManagementDocFilePaths = {
 	LogsManagement_logStash_macOsARM64_setupOtelCollector,
 	LogsManagement_logStash_macOsARM64_configureReceiver,
 	LogsManagement_logStash_macOsARM64_restartOtelCollector,
+
+	// Heroku
+	LogsManagement_heroku_addHttpDrain,
 	// ------------------------------------------------------------------------------------------------
+
+	// Vercel
+	LogsManagement_vercel_setupLogDrains,
+
+	// HTTP
+	LogsManagement_http_createHttpPayload,
+
+	// Cloudwatch
+
+	LogsManagement_cloudwatch_linuxAMD64_setupOtelCollector,
+	LogsManagement_cloudwatch_linuxAMD64_configureAws,
+	LogsManagement_cloudwatch_linuxAMD64_configureReceiver,
+	LogsManagement_cloudwatch_linuxAMD64_sendLogsCloudwatch,
+
+	LogsManagement_cloudwatch_linuxARM64_setupOtelCollector,
+	LogsManagement_cloudwatch_linuxARM64_configureAws,
+	LogsManagement_cloudwatch_linuxARM64_configureReceiver,
+	LogsManagement_cloudwatch_linuxARM64_sendLogsCloudwatch,
+
+	LogsManagement_cloudwatch_macOsAMD64_setupOtelCollector,
+	LogsManagement_cloudwatch_macOsAMD64_configureAws,
+	LogsManagement_cloudwatch_macOsAMD64_configureReceiver,
+	LogsManagement_cloudwatch_macOsAMD64_sendLogsCloudwatch,
+
+	LogsManagement_cloudwatch_macOsARM64_setupOtelCollector,
+	LogsManagement_cloudwatch_macOsARM64_configureAws,
+	LogsManagement_cloudwatch_macOsARM64_configureReceiver,
+	LogsManagement_cloudwatch_macOsARM64_sendLogsCloudwatch,
 };

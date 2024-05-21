@@ -12,9 +12,11 @@ export const Container = styled(Card)<Props>`
 	}
 
 	.ant-card-body {
-		padding: 8px;
-		height: 57vh;
-		overflow: auto;
+		padding: ${({ $panelType }): string =>
+			$panelType === PANEL_TYPES.TABLE || $panelType === PANEL_TYPES.LIST
+				? '0 0'
+				: '1.5rem 0'};
+		height: 60vh;
 		display: flex;
 		flex-direction: column;
 	}

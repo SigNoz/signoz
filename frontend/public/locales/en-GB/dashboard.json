@@ -16,6 +16,7 @@
 	"new_dashboard_title": "Sample Title",
 	"layout_saved_successfully": "Layout saved successfully",
 	"add_panel": "Add Panel",
+	"add_row": "Add Row",
 	"save_layout": "Save Layout",
 	"variable_updated_successfully": "Variable updated successfully",
 	"error_while_updating_variable": "Error while updating variable",
@@ -25,5 +26,5 @@
 	"dashboard_unsave_changes": "There are unsaved changes in the Query builder, please stage and run the query or the changes will be lost. Press OK to discard.",
 	"dashboard_save_changes": "Your graph built with {{queryTag}} query will be saved. Press OK to confirm.",
 	"your_graph_build_with": "Your graph built with",
-	"dashboar_ok_confirm": "query will be saved. Press OK to confirm."
+	"dashboard_ok_confirm": "query will be saved. Press OK to confirm."
 }

@@ -15,6 +15,7 @@ export const ButtonContainer = styled.div`
 		align-items: center;
 		margin-top: 1rem;
 		margin-bottom: 1rem;
+		padding-right: 1rem;
 	}
 `;
 

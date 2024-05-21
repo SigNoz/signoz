@@ -31,3 +31,6 @@ export const checkVersionState = (
 	const versionCore = currentVersion?.split('-')[0];
 	return versionCore === latestVersion;
 };
+
+// list of forbidden tags to remove in dompurify
+export const FORBID_DOM_PURIFY_TAGS = ['img', 'form'];

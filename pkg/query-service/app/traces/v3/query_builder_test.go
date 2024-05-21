@@ -1017,7 +1017,7 @@ var testBuildTracesQueryData = []struct {
 		PanelType: v3.PanelTypeValue,
 	},
 	{
-		Name:  "Test aggregate PXX",
+		Name:  "Test aggregate PXX with groupby",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
 		BuilderQuery: &v3.BuilderQuery{
@@ -1055,6 +1055,26 @@ var testBuildTracesQueryData = []struct {
 		},
 		TableName: "signoz_traces.distributed_signoz_index_v2",
 		ExpectedQuery: "SELECT now() as ts, quantile(0.05)(durationNano) as value " +
+			"from signoz_traces.distributed_signoz_index_v2 " +
+			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')",
+		PanelType: v3.PanelTypeTable,
+	},
+	{
+		Name:  "Test aggregate rate table panel",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			StepInterval:       60,
+			AggregateAttribute: v3.AttributeKey{Key: "durationNano", IsColumn: true, DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorRate,
+			Expression:         "A",
+			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			GroupBy:            []v3.AttributeKey{},
+			OrderBy:            []v3.OrderBy{},
+		},
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT now() as ts, count(durationNano)/97.000000 as value " +
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')",
 		PanelType: v3.PanelTypeTable,

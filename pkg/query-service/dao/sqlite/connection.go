@@ -180,7 +180,7 @@ func (mds *ModelDaoSqlite) createGroupIfNotPresent(ctx context.Context,
 		return group, nil
 	}
 
-	zap.S().Debugf("%s is not found, creating it", name)
+	zap.L().Debug("group is not found, creating it", zap.String("group_name", name))
 	group, cErr := mds.CreateGroup(ctx, &model.Group{Name: name})
 	if cErr != nil {
 		return nil, cErr.Err

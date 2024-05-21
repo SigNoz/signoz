@@ -27,5 +27,8 @@ export enum QueryParams {
 	viewName = 'viewName',
 	viewKey = 'viewKey',
 	expandedWidgetId = 'expandedWidgetId',
+	integration = 'integration',
 	pagination = 'pagination',
+	relativeTime = 'relativeTime',
+	alertType = 'alertType',
 }

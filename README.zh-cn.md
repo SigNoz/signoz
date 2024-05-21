@@ -19,7 +19,7 @@
   <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
 </h3>
 
-## 
+##
 
 SigNoz 帮助开发人员监控应用并排查已部署应用的问题。你可以使用 SigNoz 实现如下能力:
 
@@ -67,7 +67,7 @@ SigNoz 帮助开发人员监控应用并排查已部署应用的问题。你可�
 
 ## 加入我们 Slack 社区
 
-来 [Slack](https://signoz.io/slack) 和我们打招呼吧 👋  
+来 [Slack](https://signoz.io/slack) 和我们打招呼吧 👋
 
 <br /><br />
 
@@ -83,7 +83,7 @@ SigNoz 帮助开发人员监控应用并排查已部署应用的问题。你可�
 
 - 通过 服务名、操作方式、延迟、错误、标签/注释 过滤 traces 数据
 
-- 通过聚合 trace 数据而获得业务相关的 metrics。 比如你可以通过  `customer_type: gold` 或者 `deployment_version: v2` 或者 `external_call: paypal` 获取错误率和 P99 延迟数据
+- 通过聚合 trace 数据而获得业务相关的 metrics。 比如你可以通过 `customer_type: gold` 或者 `deployment_version: v2` 或者 `external_call: paypal` 获取错误率和 P99 延迟数据
 
 - 原生支持 OpenTelemetry 日志，高级日志查询，自动收集 k8s 相关日志
 
@@ -101,7 +101,7 @@ SigNoz 帮助开发人员监控应用并排查已部署应用的问题。你可�
 
 我们想做一个自托管并且可开源的工具，像 DataDog 和 NewRelic 那样， 为那些担心数据隐私和安全的公司提供第三方服务。
 
-作为开源的项目，你完全可以自己掌控你的配置、样本和更新。你同样可以基于 SigNoz 拓展特定的业务模块。 
+作为开源的项目，你完全可以自己掌控你的配置、样本和更新。你同样可以基于 SigNoz 拓展特定的业务模块。
 
 ### 支持的编程语言:
 
@@ -153,9 +153,9 @@ Jaeger 仅仅是一个分布式追踪系统。 但是 SigNoz 可以提供 metric
 
 而且, SigNoz 相较于 Jaeger 拥有更对的高级功能:
 
-- Jaegar UI 不能提供任何基于 traces 的 metrics 查询和过滤。 
+- Jaegar UI 不能提供任何基于 traces 的 metrics 查询和过滤。
 
-- Jaeger 不能针对过滤的 traces 做聚合。 比如， p99 延迟的请求有个标签是  customer_type='premium'。 而这些在 SigNoz 可以轻松做到。
+- Jaeger 不能针对过滤的 traces 做聚合。 比如， p99 延迟的请求有个标签是 customer_type='premium'。 而这些在 SigNoz 可以轻松做到。
 
 <p>&nbsp  </p>
 
@@ -185,7 +185,7 @@ Jaeger 仅仅是一个分布式追踪系统。 但是 SigNoz 可以提供 metric
 
 我们 ❤️ 你的贡献，无论大小。 请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 再开始给 SigNoz 做贡献。
 
-如果你不知道如何开始？ 只需要在  [slack 社区](https://signoz.io/slack) 通过 `#contributing` 频道联系我们。
+如果你不知道如何开始？ 只需要在 [slack 社区](https://signoz.io/slack) 通过 `#contributing` 频道联系我们。
 
 ### 项目维护人员
 
@@ -199,6 +199,8 @@ Jaeger 仅仅是一个分布式追踪系统。 但是 SigNoz 可以提供 metric
 #### 前端
 
 - [Palash Gupta](https://github.com/palashgdev)
+- [Yunus M](https://github.com/YounixM)
+- [Rajat Dabade](https://github.com/Rajat-Dabade)
 
 #### 运维开发
 

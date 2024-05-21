@@ -20,6 +20,8 @@ type Usage struct {
 	TimeStamp   time.Time `json:"timestamp"`
 	Count       int64     `json:"count"`
 	Size        int64     `json:"size"`
+	OrgName     string    `json:"orgName"`
+	TenantId    string    `json:"tenantId"`
 }
 
 type UsageDB struct {

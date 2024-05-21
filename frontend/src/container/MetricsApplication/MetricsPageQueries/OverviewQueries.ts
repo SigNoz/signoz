@@ -250,10 +250,15 @@ export const apDexTracesQueryBuilderQueries = ({
 	const disabled = Array(3).fill(true);
 	const expressions = [FORMULA.APDEX_TRACES];
 	const legendFormulas = [GraphTitle.APDEX];
-	const aggregateOperators = [
+	const timeAggregateOperators = [
 		MetricAggregateOperator.COUNT,
 		MetricAggregateOperator.COUNT,
 		MetricAggregateOperator.COUNT,
+	];
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.EMPTY,
+		MetricAggregateOperator.EMPTY,
+		MetricAggregateOperator.EMPTY,
 	];
 	const dataSource = DataSource.TRACES;
 
@@ -264,7 +269,8 @@ export const apDexTracesQueryBuilderQueries = ({
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 		dataSource,
 	});
 };
@@ -433,10 +439,16 @@ export const apDexMetricsQueryBuilderQueries = ({
 		? [FORMULA.APDEX_DELTA_SPAN_METRICS]
 		: [FORMULA.APDEX_CUMULATIVE_SPAN_METRICS];
 	const legendFormulas = [GraphTitle.APDEX];
-	const aggregateOperators = [
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
+	const timeAggregateOperators = [
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+	];
+
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
 	const dataSource = DataSource.METRICS;
 
@@ -447,7 +459,8 @@ export const apDexMetricsQueryBuilderQueries = ({
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 		dataSource,
 	});
 };
@@ -593,9 +606,13 @@ export const errorPercentage = ({
 	const disabled = [true, true];
 	const expressions = [FORMULA.ERROR_PERCENTAGE];
 	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];
-	const aggregateOperators = [
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
+	const timeAggregateOperators = [
+		MetricAggregateOperator.RATE,
+		MetricAggregateOperator.RATE,
+	];
+	const spaceAggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
 	const dataSource = DataSource.METRICS;
 
@@ -606,7 +623,8 @@ export const errorPercentage = ({
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators,
+		timeAggregateOperators,
+		spaceAggregateOperators,
 		dataSource,
 	});
 };

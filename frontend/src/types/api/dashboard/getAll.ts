@@ -1,9 +1,12 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { ReactNode } from 'react';
 import { Layout } from 'react-grid-layout';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+
+import { IField } from '../logs/fields';
+import { BaseAutocompleteData } from '../queryBuilder/queryAutocompleteResponse';
 
 export type PayloadProps = Dashboard[];
 
@@ -52,13 +55,23 @@ export interface Dashboard {
 }
 
 export interface DashboardData {
+	uuid?: string;
 	description?: string;
 	tags?: string[];
 	name?: string;
-	widgets?: Widgets[];
+	widgets?: Array<WidgetRow | Widgets>;
 	title: string;
 	layout?: Layout[];
+	panelMap?: Record<string, { widgets: Layout[]; collapsed: boolean }>;
 	variables: Record<string, IDashboardVariable>;
+	version?: string;
+}
+
+export interface WidgetRow {
+	id: string;
+	panelTypes: PANEL_GROUP_TYPES;
+	title: ReactNode;
+	description: string;
 }
 
 export interface IBaseWidget {
@@ -73,7 +86,11 @@ export interface IBaseWidget {
 	stepSize?: number;
 	yAxisUnit?: string;
 	thresholds?: ThresholdProps[];
+	softMin: number | null;
+	softMax: number | null;
 	fillSpans?: boolean;
+	selectedLogFields: IField[] | null;
+	selectedTracesFields: BaseAutocompleteData[] | null;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

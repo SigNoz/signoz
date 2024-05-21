@@ -15,15 +15,9 @@ import (
 // this file contains common structs and methods used by
 // rule engine
 
-// how long before re-sending the alert
-const resolvedRetention = 15 * time.Minute
-
 const (
-	// AlertMetricName is the metric name for synthetic alert timeseries.
-	alertMetricName = "ALERTS"
-
-	// AlertForStateMetricName is the metric name for 'for' state of alert.
-	alertForStateMetricName = "ALERTS_FOR_STATE"
+	// how long before re-sending the alert
+	resolvedRetention = 15 * time.Minute
 
 	TestAlertPostFix = "_TEST_ALERT"
 )
@@ -142,9 +136,11 @@ type RuleCondition struct {
 	CompositeQuery *v3.CompositeQuery `json:"compositeQuery,omitempty" yaml:"compositeQuery,omitempty"`
 	CompareOp      CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
 	Target         *float64           `yaml:"target,omitempty" json:"target,omitempty"`
-	MatchType      `json:"matchType,omitempty"`
-	TargetUnit     string `json:"targetUnit,omitempty"`
-	SelectedQuery  string `json:"selectedQueryName,omitempty"`
+	AlertOnAbsent  bool               `yaml:"alertOnAbsent,omitempty" json:"alertOnAbsent,omitempty"`
+	AbsentFor      uint64             `yaml:"absentFor,omitempty" json:"absentFor,omitempty"`
+	MatchType      MatchType          `json:"matchType,omitempty"`
+	TargetUnit     string             `json:"targetUnit,omitempty"`
+	SelectedQuery  string             `json:"selectedQueryName,omitempty"`
 }
 
 func (rc *RuleCondition) IsValid() bool {
@@ -225,7 +221,7 @@ func prepareRuleGeneratorURL(ruleId string, source string) string {
 	}
 
 	// check if source is a valid url
-	_, err := url.Parse(source)
+	parsedSource, err := url.Parse(source)
 	if err != nil {
 		return ""
 	}
@@ -239,5 +235,12 @@ func prepareRuleGeneratorURL(ruleId string, source string) string {
 		return ruleURL
 	}
 
-	return source
+	// The source contains the encoded query, start and end time
+	// and other parameters. We don't want to include them in the generator URL
+	// mainly to keep the URL short and lower the alert body contents
+	// The generator URL with /alerts/edit?ruleId= is enough
+	if parsedSource.Port() != "" {
+		return fmt.Sprintf("%s://%s:%s/alerts/edit?ruleId=%s", parsedSource.Scheme, parsedSource.Hostname(), parsedSource.Port(), ruleId)
+	}
+	return fmt.Sprintf("%s://%s/alerts/edit?ruleId=%s", parsedSource.Scheme, parsedSource.Hostname(), ruleId)
 }

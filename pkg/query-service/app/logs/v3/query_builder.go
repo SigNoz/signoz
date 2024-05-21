@@ -106,7 +106,7 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 	} else {
 		for _, tag := range groupBy {
 			columnName := getClickhouseColumnName(tag)
-			selectLabels += fmt.Sprintf(" %s as %s,", columnName, tag.Key)
+			selectLabels += fmt.Sprintf(" %s as `%s`,", columnName, tag.Key)
 		}
 	}
 	return selectLabels
@@ -118,7 +118,7 @@ func getSelectKeys(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attribu
 		return ""
 	} else {
 		for _, tag := range groupBy {
-			selectLabels = append(selectLabels, tag.Key)
+			selectLabels = append(selectLabels, "`"+tag.Key+"`")
 		}
 	}
 	return strings.Join(selectLabels, ",")
@@ -150,7 +150,7 @@ func GetExistsNexistsFilter(op v3.FilterOperator, item v3.FilterItem) string {
 		if op == v3.FilterOperatorNotExists {
 			val = false
 		}
-		return fmt.Sprintf("%s_exists=%v", getClickhouseColumnName(item.Key), val)
+		return fmt.Sprintf("%s_exists`=%v", strings.TrimSuffix(getClickhouseColumnName(item.Key), "`"), val)
 	}
 	columnType := getClickhouseLogsColumnType(item.Key.Type)
 	columnDataType := getClickhouseLogsColumnDataType(item.Key.DataType)
@@ -209,10 +209,10 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 		if !attr.IsColumn {
 			columnType := getClickhouseLogsColumnType(attr.Type)
 			columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
-			conditions = append(conditions, fmt.Sprintf("indexOf(%s_%s_key, '%s') > 0", columnType, columnDataType, attr.Key))
+			conditions = append(conditions, fmt.Sprintf("has(%s_%s_key, '%s')", columnType, columnDataType, attr.Key))
 		} else if attr.Type != v3.AttributeKeyTypeUnspecified {
 			// for materialzied columns
-			conditions = append(conditions, fmt.Sprintf("%s_exists=true", getClickhouseColumnName(attr)))
+			conditions = append(conditions, fmt.Sprintf("%s_exists`=true", strings.TrimSuffix(getClickhouseColumnName(attr), "`")))
 		}
 	}
 
@@ -252,6 +252,8 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	} else if panelType == v3.PanelTypeTable {
 		queryTmpl =
 			"SELECT now() as ts,"
+		// step or aggregate interval is whole time period in case of table panel
+		step = (utils.GetEpochNanoSecs(end) - utils.GetEpochNanoSecs(start)) / 1000000000
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmpl =
@@ -378,7 +380,7 @@ func groupBy(panelType v3.PanelType, graphLimitQtype string, tags ...string) str
 func groupByAttributeKeyTags(panelType v3.PanelType, graphLimitQtype string, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
-		groupTags = append(groupTags, tag.Key)
+		groupTags = append(groupTags, "`"+tag.Key+"`")
 	}
 	return groupBy(panelType, graphLimitQtype, groupTags...)
 }
@@ -393,10 +395,13 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 		if item.ColumnName == constants.SigNozOrderByValue {
 			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
 		} else if _, ok := tagLookup[item.ColumnName]; ok {
-			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
+			orderBy = append(orderBy, fmt.Sprintf("`%s` %s", item.ColumnName, item.Order))
 		} else if panelType == v3.PanelTypeList {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name := getClickhouseColumnName(attr)
+			if item.IsColumn {
+				name = "`" + name + "`"
+			}
 			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 		}
 	}
@@ -438,15 +443,15 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	// chart with just the query value.
 	switch reduceTo {
 	case v3.ReduceToOperatorLast:
-		query = fmt.Sprintf("SELECT anyLast(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT anyLast(value) as value, now() as ts FROM (%s)", query)
 	case v3.ReduceToOperatorSum:
-		query = fmt.Sprintf("SELECT sum(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT sum(value) as value, now() as ts FROM (%s)", query)
 	case v3.ReduceToOperatorAvg:
-		query = fmt.Sprintf("SELECT avg(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT avg(value) as value, now() as ts FROM (%s)", query)
 	case v3.ReduceToOperatorMax:
-		query = fmt.Sprintf("SELECT max(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT max(value) as value, now() as ts FROM (%s)", query)
 	case v3.ReduceToOperatorMin:
-		query = fmt.Sprintf("SELECT min(value) as value, any(ts) as ts FROM (%s)", query)
+		query = fmt.Sprintf("SELECT min(value) as value, now() as ts FROM (%s)", query)
 	default:
 		return "", fmt.Errorf("unsupported reduce operator")
 	}
