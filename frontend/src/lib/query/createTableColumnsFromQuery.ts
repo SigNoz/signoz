@@ -480,8 +480,6 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 
 	const dynamicColumns = getDynamicColumns(sortedQueryTableData, query);
 
-	console.log(dynamicColumns);
-
 	const { filledDynamicColumns, rowsLength } = fillColumnsData(
 		sortedQueryTableData,
 		dynamicColumns,
@@ -490,8 +488,6 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 	const dataSource = generateData(filledDynamicColumns, rowsLength);
 
 	const columns = generateTableColumns(filledDynamicColumns, renderColumnCell);
-
-	console.log(columns);
 
 	const actionsCell: ColumnType<RowData> | null = renderActionCell
 		? {
