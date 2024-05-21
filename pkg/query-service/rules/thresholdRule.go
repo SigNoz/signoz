@@ -1,17 +1,14 @@
 package rules
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"math"
 	"net/url"
-	"reflect"
 	"regexp"
 	"sort"
 	"sync"
-	"text/template"
 	"time"
 	"unicode"
 
@@ -21,13 +18,14 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/converter"
+	"go.signoz.io/signoz/pkg/query-service/postprocess"
 
+	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
-	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 
@@ -75,6 +73,8 @@ type ThresholdRule struct {
 
 	lastTimestampWithDatapoints time.Time
 	typ                         string
+
+	querierV2 interfaces.Querier
 }
 
 type ThresholdRuleOpts struct {
@@ -93,6 +93,7 @@ func NewThresholdRule(
 	p *PostableRule,
 	opts ThresholdRuleOpts,
 	featureFlags interfaces.FeatureLookup,
+	reader interfaces.Reader,
 ) (*ThresholdRule, error) {
 
 	if p.RuleCondition == nil {
@@ -135,6 +136,16 @@ func NewThresholdRule(
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
 	t.queryBuilderV4 = queryBuilder.NewQueryBuilder(builderOptsV4, featureFlags)
+
+	querierOptsV2 := querierV2.QuerierOptions{
+		Reader:        reader,
+		Cache:         nil,
+		KeyGenerator:  queryBuilder.NewKeyGenerator(),
+		FeatureLookup: featureFlags,
+	}
+
+	querierv2 := querierV2.NewQuerier(querierOptsV2)
+	t.querierV2 = querierv2
 
 	zap.L().Info("creating new ThresholdRule", zap.String("name", t.name), zap.String("id", t.id))
 
@@ -446,7 +457,6 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 }
 
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
-	// todo(amol): add 30 seconds to evalWindow for rate calc
 
 	// todo(srikanthccv): make this configurable
 	// 2 minutes is reasonable time to wait for data to be available
@@ -481,292 +491,6 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 		Step:           60,
 		CompositeQuery: r.ruleCondition.CompositeQuery,
 	}
-}
-
-func (r *ThresholdRule) shouldSkipFirstRecord() bool {
-	shouldSkip := false
-	for _, q := range r.ruleCondition.CompositeQuery.BuilderQueries {
-		if q.DataSource == v3.DataSourceMetrics && q.AggregateOperator.IsRateOperator() {
-			shouldSkip = true
-		}
-	}
-	return shouldSkip
-}
-
-// queryClickhouse runs actual query against clickhouse
-func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, query string) (Vector, error) {
-	rows, err := db.Query(ctx, query)
-	if err != nil {
-		zap.L().Error("failed to get alert query result", zap.String("rule", r.Name()), zap.Error(err))
-		return nil, err
-	}
-
-	columnTypes := rows.ColumnTypes()
-	columnNames := rows.Columns()
-	vars := make([]interface{}, len(columnTypes))
-
-	for i := range columnTypes {
-		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
-	}
-
-	// []sample list
-	var result Vector
-
-	// map[fingerprint]sample
-	resultMap := make(map[uint64]Sample, 0)
-
-	// for rates we want to skip the first record
-	// but we dont know when the rates are being used
-	// so we always pick timeframe - 30 seconds interval
-	// and skip the first record for a given label combo
-	// NOTE: this is not applicable for raw queries
-	skipFirstRecord := make(map[uint64]bool, 0)
-
-	defer rows.Close()
-	for rows.Next() {
-
-		if err := rows.Scan(vars...); err != nil {
-			return nil, err
-		}
-		r.lastTimestampWithDatapoints = time.Now()
-
-		sample := Sample{}
-		// Why do we maintain two labels sets? Alertmanager requires
-		// label keys to follow the model https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels
-		// However, our traces and logs explorers support label keys with dot and other namespace characters
-		// Using normalized label keys results in invalid filter criteria.
-		// The original labels are used to prepare the related{logs, traces} link in alert notification
-		lbls := labels.NewBuilder(labels.Labels{})
-		lblsOrig := labels.NewBuilder(labels.Labels{})
-
-		for i, v := range vars {
-
-			colName := normalizeLabelName(columnNames[i])
-
-			switch v := v.(type) {
-			case *string:
-				lbls.Set(colName, *v)
-				lblsOrig.Set(columnNames[i], *v)
-			case *time.Time:
-				timval := *v
-
-				if colName == "ts" || colName == "interval" {
-					sample.Point.T = timval.Unix()
-				} else {
-					lbls.Set(colName, timval.Format(constants.AlertTimeFormat))
-					lblsOrig.Set(columnNames[i], timval.Format(constants.AlertTimeFormat))
-				}
-
-			case *float64:
-				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
-					sample.Point.V = *v
-				} else {
-					lbls.Set(colName, fmt.Sprintf("%f", *v))
-					lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", *v))
-				}
-			case **float64:
-				// ch seems to return this type when column is derived from
-				// SELECT count(*)/ SELECT count(*)
-				floatVal := *v
-				if floatVal != nil {
-					if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
-						sample.Point.V = *floatVal
-					} else {
-						lbls.Set(colName, fmt.Sprintf("%f", *floatVal))
-						lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", *floatVal))
-					}
-				}
-			case *float32:
-				float32Val := float32(*v)
-				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
-					sample.Point.V = float64(float32Val)
-				} else {
-					lbls.Set(colName, fmt.Sprintf("%f", float32Val))
-					lblsOrig.Set(columnNames[i], fmt.Sprintf("%f", float32Val))
-				}
-			case *uint8, *uint64, *uint16, *uint32:
-				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
-					sample.Point.V = float64(reflect.ValueOf(v).Elem().Uint())
-				} else {
-					lbls.Set(colName, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
-					lblsOrig.Set(columnNames[i], fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
-				}
-			case *int8, *int16, *int32, *int64:
-				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
-					sample.Point.V = float64(reflect.ValueOf(v).Elem().Int())
-				} else {
-					lbls.Set(colName, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
-					lblsOrig.Set(columnNames[i], fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
-				}
-			default:
-				zap.L().Error("invalid var found in query result", zap.String("ruleId", r.ID()), zap.Any("value", v), zap.Any("column", columnNames[i]))
-			}
-		}
-
-		if math.IsNaN(sample.Point.V) {
-			continue
-		}
-		sample.Point.Vs = append(sample.Point.Vs, sample.Point.V)
-
-		// capture lables in result
-		sample.Metric = lbls.Labels()
-		sample.MetricOrig = lblsOrig.Labels()
-
-		labelHash := lbls.Labels().Hash()
-
-		// here we walk through values of time series
-		// and calculate the final value used to compare
-		// with rule target
-		if existing, ok := resultMap[labelHash]; ok {
-
-			switch r.matchType() {
-			case AllTheTimes:
-				if r.compareOp() == ValueIsAbove {
-					sample.Point.V = math.Min(existing.Point.V, sample.Point.V)
-					resultMap[labelHash] = sample
-				} else if r.compareOp() == ValueIsBelow {
-					sample.Point.V = math.Max(existing.Point.V, sample.Point.V)
-					resultMap[labelHash] = sample
-				} else {
-					sample.Point.Vs = append(existing.Point.Vs, sample.Point.V)
-					resultMap[labelHash] = sample
-				}
-			case AtleastOnce:
-				if r.compareOp() == ValueIsAbove {
-					sample.Point.V = math.Max(existing.Point.V, sample.Point.V)
-					resultMap[labelHash] = sample
-				} else if r.compareOp() == ValueIsBelow {
-					sample.Point.V = math.Min(existing.Point.V, sample.Point.V)
-					resultMap[labelHash] = sample
-				} else {
-					sample.Point.Vs = append(existing.Point.Vs, sample.Point.V)
-					resultMap[labelHash] = sample
-				}
-			case OnAverage:
-				sample.Point.Vs = append(existing.Point.Vs, sample.Point.V)
-				sample.Point.V = (existing.Point.V + sample.Point.V)
-				resultMap[labelHash] = sample
-			case InTotal:
-				sample.Point.V = (existing.Point.V + sample.Point.V)
-				resultMap[labelHash] = sample
-			}
-
-		} else {
-			if r.Condition().QueryType() == v3.QueryTypeBuilder {
-				// for query builder, time series data
-				// we skip the first record to support rate cases correctly
-				// improvement(amol): explore approaches to limit this only for
-				// rate uses cases
-				if exists := skipFirstRecord[labelHash]; exists || !r.shouldSkipFirstRecord() {
-					resultMap[labelHash] = sample
-				} else {
-					// looks like the first record for this label combo, skip it
-					skipFirstRecord[labelHash] = true
-				}
-			} else {
-				// for clickhouse raw queries, all records are considered
-				// improvement(amol): think about supporting rate queries
-				// written by user. may have to skip a record, similar to qb case(above)
-				resultMap[labelHash] = sample
-			}
-
-		}
-
-	}
-
-	if r.matchType() == OnAverage {
-		for hash, s := range resultMap {
-			s.Point.V = s.Point.V / float64(len(s.Point.Vs))
-			resultMap[hash] = s
-		}
-	}
-
-	for hash, s := range resultMap {
-		if r.matchType() == AllTheTimes && r.compareOp() == ValueIsEq {
-			for _, v := range s.Point.Vs {
-				if v != r.targetVal() { // if any of the values is not equal to target, alert shouldn't be sent
-					s.Point.V = v
-				}
-			}
-			resultMap[hash] = s
-		} else if r.matchType() == AllTheTimes && r.compareOp() == ValueIsNotEq {
-			for _, v := range s.Point.Vs {
-				if v == r.targetVal() { // if any of the values is equal to target, alert shouldn't be sent
-					s.Point.V = v
-				}
-			}
-			resultMap[hash] = s
-		} else if r.matchType() == AtleastOnce && r.compareOp() == ValueIsEq {
-			for _, v := range s.Point.Vs {
-				if v == r.targetVal() { // if any of the values is equal to target, alert should be sent
-					s.Point.V = v
-				}
-			}
-			resultMap[hash] = s
-		} else if r.matchType() == AtleastOnce && r.compareOp() == ValueIsNotEq {
-			for _, v := range s.Point.Vs {
-				if v != r.targetVal() { // if any of the values is not equal to target, alert should be sent
-					s.Point.V = v
-				}
-			}
-			resultMap[hash] = s
-		}
-	}
-
-	zap.L().Debug("resultmap(potential alerts)", zap.String("ruleid", r.ID()), zap.Int("count", len(resultMap)))
-
-	// if the data is missing for `For` duration then we should send alert
-	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
-		zap.L().Info("no data found for rule condition", zap.String("ruleid", r.ID()))
-		lbls := labels.NewBuilder(labels.Labels{})
-		if !r.lastTimestampWithDatapoints.IsZero() {
-			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
-		}
-		result = append(result, Sample{
-			Metric:    lbls.Labels(),
-			IsMissing: true,
-		})
-		return result, nil
-	}
-
-	for _, sample := range resultMap {
-		// check alert rule condition before dumping results, if sendUnmatchedResults
-		// is set then add results irrespective of condition
-		if r.opts.SendUnmatched || r.CheckCondition(sample.Point.V) {
-			result = append(result, sample)
-		}
-	}
-	if len(result) != 0 {
-		zap.L().Info("found alerts", zap.String("ruleid", r.ID()), zap.String("query", query), zap.Int("count", len(result)))
-	}
-	return result, nil
-}
-
-func (r *ThresholdRule) prepareBuilderQueries(ts time.Time, ch driver.Conn) (map[string]string, error) {
-	params := r.prepareQueryRange(ts)
-	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		// check if any enrichment is required for logs if yes then enrich them
-		if logsv3.EnrichmentRequired(params) {
-			// Note: Sending empty fields key because enrichment is only needed for json
-			// TODO: Add support for attribute enrichment later
-			logsv3.Enrich(params, map[string]v3.AttributeKey{})
-		}
-
-	}
-
-	var runQueries map[string]string
-	var err error
-
-	if r.version == "v4" {
-		if ch != nil {
-			r.populateTemporality(context.Background(), params, ch)
-		}
-		runQueries, err = r.queryBuilderV4.PrepareQueries(params)
-	} else {
-		runQueries, err = r.queryBuilder.PrepareQueries(params)
-	}
-
-	return runQueries, err
 }
 
 // The following function is used to prepare the where clause for the query
@@ -974,71 +698,24 @@ func (r *ThresholdRule) hostFromSource() string {
 	return fmt.Sprintf("%s://%s", parsedUrl.Scheme, parsedUrl.Hostname())
 }
 
-func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]string, error) {
-	queries := make(map[string]string)
-
-	if r.ruleCondition == nil {
-		return nil, fmt.Errorf("rule condition is empty")
-	}
-
-	if r.ruleCondition.QueryType() != v3.QueryTypeClickHouseSQL {
-		zap.L().Error("unsupported query type in prepareClickhouseQueries", zap.String("ruleid", r.ID()))
-		return nil, fmt.Errorf("failed to prepare clickhouse queries")
-	}
-
-	params := r.prepareQueryRange(ts)
-
-	// replace reserved go template variables
-	querytemplate.AssignReservedVarsV3(params)
-
-	for name, chQuery := range r.ruleCondition.CompositeQuery.ClickHouseQueries {
-		if chQuery.Disabled {
-			continue
-		}
-		tmpl := template.New("clickhouse-query")
-		tmpl, err := tmpl.Parse(chQuery.Query)
-		if err != nil {
-			zap.L().Error("failed to parse clickhouse query to populate vars", zap.String("ruleid", r.ID()), zap.Error(err))
-			r.SetHealth(HealthBad)
-			return nil, err
-		}
-		var query bytes.Buffer
-		err = tmpl.Execute(&query, params.Variables)
-		if err != nil {
-			zap.L().Error("failed to populate clickhouse query", zap.String("ruleid", r.ID()), zap.Error(err))
-			r.SetHealth(HealthBad)
-			return nil, err
-		}
-		queries[name] = query.String()
-	}
-	return queries, nil
-}
-
 func (r *ThresholdRule) GetSelectedQuery() string {
-
-	// The actual query string is not relevant here
-	// we just need to know the selected query
-
-	var queries map[string]string
-	var err error
-
-	if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
-		queries, err = r.prepareBuilderQueries(time.Now(), nil)
-		if err != nil {
-			zap.L().Error("failed to prepare metric queries", zap.String("ruleid", r.ID()), zap.Error(err))
-			return ""
-		}
-	} else if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
-		queries, err = r.prepareClickhouseQueries(time.Now())
-		if err != nil {
-			zap.L().Error("failed to prepare clickhouse queries", zap.String("ruleid", r.ID()), zap.Error(err))
-			return ""
-		}
-	}
-
 	if r.ruleCondition != nil {
 		if r.ruleCondition.SelectedQuery != "" {
 			return r.ruleCondition.SelectedQuery
+		}
+
+		queryNames := map[string]struct{}{}
+
+		if r.ruleCondition.CompositeQuery != nil {
+			if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
+				for name := range r.ruleCondition.CompositeQuery.BuilderQueries {
+					queryNames[name] = struct{}{}
+				}
+			} else if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
+				for name := range r.ruleCondition.CompositeQuery.ClickHouseQueries {
+					queryNames[name] = struct{}{}
+				}
+			}
 		}
 
 		// The following logic exists for backward compatibility
@@ -1048,11 +725,11 @@ func (r *ThresholdRule) GetSelectedQuery() string {
 		// this logic is not really correct. we should be considering
 		// whether the query is enabled or not. but this is a temporary
 		// fix to support backward compatibility
-		if _, ok := queries["F1"]; ok {
+		if _, ok := queryNames["F1"]; ok {
 			return "F1"
 		}
-		keys := make([]string, 0, len(queries))
-		for k := range queries {
+		keys := make([]string, 0, len(queryNames))
+		for k := range queryNames {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
@@ -1062,56 +739,81 @@ func (r *ThresholdRule) GetSelectedQuery() string {
 	return ""
 }
 
-// query looks if alert condition is being
-// satisfied and returns the signals
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch clickhouse.Conn) (Vector, error) {
 	if r.ruleCondition == nil || r.ruleCondition.CompositeQuery == nil {
 		r.SetHealth(HealthBad)
 		return nil, fmt.Errorf("invalid rule condition")
 	}
 
-	// var to hold target query to be executed
-	var queries map[string]string
-	var err error
-
-	// fetch the target query based on query type
-	if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
-
-		queries, err = r.prepareBuilderQueries(ts, ch)
-
-		if err != nil {
-			zap.L().Error("failed to prepare metric queries", zap.String("ruleid", r.ID()), zap.Error(err))
-			return nil, fmt.Errorf("failed to prepare metric queries")
+	params := r.prepareQueryRange(ts)
+	err := r.populateTemporality(ctx, params, ch)
+	if err != nil {
+		r.SetHealth(HealthBad)
+		return nil, fmt.Errorf("error while setting temporality")
+	}
+	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(params) {
+			// Note: Sending empty fields key because enrichment is only needed for json
+			// TODO: Add support for attribute enrichment later
+			logsv3.Enrich(params, map[string]v3.AttributeKey{})
 		}
+	}
 
-	} else if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
+	results, err, errQuriesByName := r.querierV2.QueryRange(ctx, params, map[string]v3.AttributeKey{})
 
-		queries, err = r.prepareClickhouseQueries(ts)
+	if err != nil {
+		zap.L().Error("failed to get alert query result", zap.String("rule", r.Name()), zap.Error(err), zap.Any("queries", errQuriesByName))
+		r.SetHealth(HealthBad)
+		return nil, err
+	}
 
+	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		results, err = postprocess.PostProcessResult(results, params)
 		if err != nil {
-			zap.L().Error("failed to prepare clickhouse queries", zap.String("ruleid", r.ID()), zap.Error(err))
-			return nil, fmt.Errorf("failed to prepare clickhouse queries")
+			r.SetHealth(HealthBad)
+			return nil, err
 		}
-
-	} else {
-		return nil, fmt.Errorf("unexpected rule condition - query type is empty")
 	}
 
-	if len(queries) == 0 {
-		return nil, fmt.Errorf("no queries could be built with the rule config")
+	selectedQuery := r.GetSelectedQuery()
+
+	var queryResult *v3.Result
+	for _, res := range results {
+		if res.QueryName == selectedQuery {
+			queryResult = res
+			break
+		}
 	}
 
-	zap.L().Info("prepared queries", zap.String("ruleid", r.ID()), zap.Any("queries", queries))
-
-	queryLabel := r.GetSelectedQuery()
-	zap.L().Debug("Selected query lable for rule", zap.String("ruleid", r.ID()), zap.String("label", queryLabel))
-
-	if queryString, ok := queries[queryLabel]; ok {
-		return r.runChQuery(ctx, ch, queryString)
+	if queryResult == nil {
+		r.SetHealth(HealthBad)
+		return nil, fmt.Errorf("no result found for query %s", selectedQuery)
 	}
 
-	zap.L().Error("invalid query label", zap.String("ruleid", r.ID()), zap.String("label", queryLabel), zap.Any("queries", queries))
-	return nil, fmt.Errorf("this is unexpected, invalid query label")
+	var resultVector Vector
+
+	// if the data is missing for `For` duration then we should send alert
+	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
+		zap.L().Info("no data found for rule condition", zap.String("ruleid", r.ID()))
+		lbls := labels.NewBuilder(labels.Labels{})
+		if !r.lastTimestampWithDatapoints.IsZero() {
+			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
+		}
+		resultVector = append(resultVector, Sample{
+			Metric:    lbls.Labels(),
+			IsMissing: true,
+		})
+		return resultVector, nil
+	}
+
+	for _, series := range queryResult.Series {
+		smpl, shouldAlert := r.shouldAlert(*series)
+		if shouldAlert {
+			resultVector = append(resultVector, smpl)
+		}
+	}
+	return resultVector, nil
 }
 
 func normalizeLabelName(name string) string {
@@ -1306,4 +1008,155 @@ func (r *ThresholdRule) String() string {
 	}
 
 	return string(byt)
+}
+
+func removeGroupinSetPoints(series v3.Series) []v3.Point {
+	var result []v3.Point
+	for _, s := range series.Points {
+		if s.Timestamp > 0 {
+			result = append(result, s)
+		}
+	}
+	return result
+}
+
+func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
+	var alertSmpl Sample
+	var shouldAlert bool
+	var lbls labels.Labels
+
+	for name, value := range series.Labels {
+		lbls = append(lbls, labels.Label{Name: name, Value: value})
+	}
+
+	series.Points = removeGroupinSetPoints(series)
+
+	switch r.matchType() {
+	case AtleastOnce:
+		// If any sample matches the condition, the rule is firing.
+		if r.compareOp() == ValueIsAbove {
+			for _, smpl := range series.Points {
+				if smpl.Value > r.targetVal() {
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls, MetricOrig: lbls}
+					shouldAlert = true
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			for _, smpl := range series.Points {
+				if smpl.Value < r.targetVal() {
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls, MetricOrig: lbls}
+					shouldAlert = true
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsEq {
+			for _, smpl := range series.Points {
+				if smpl.Value == r.targetVal() {
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls, MetricOrig: lbls}
+					shouldAlert = true
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			for _, smpl := range series.Points {
+				if smpl.Value != r.targetVal() {
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls, MetricOrig: lbls}
+					shouldAlert = true
+					break
+				}
+			}
+		}
+	case AllTheTimes:
+		// If all samples match the condition, the rule is firing.
+		shouldAlert = true
+		alertSmpl = Sample{Point: Point{V: r.targetVal()}, Metric: lbls, MetricOrig: lbls}
+		if r.compareOp() == ValueIsAbove {
+			for _, smpl := range series.Points {
+				if smpl.Value <= r.targetVal() {
+					shouldAlert = false
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			for _, smpl := range series.Points {
+				if smpl.Value >= r.targetVal() {
+					shouldAlert = false
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsEq {
+			for _, smpl := range series.Points {
+				if smpl.Value != r.targetVal() {
+					shouldAlert = false
+					break
+				}
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			for _, smpl := range series.Points {
+				if smpl.Value == r.targetVal() {
+					shouldAlert = false
+					break
+				}
+			}
+		}
+	case OnAverage:
+		// If the average of all samples matches the condition, the rule is firing.
+		var sum, count float64
+		for _, smpl := range series.Points {
+			if math.IsNaN(smpl.Value) || math.IsInf(smpl.Value, 0) {
+				continue
+			}
+			sum += smpl.Value
+			count++
+		}
+		avg := sum / count
+		alertSmpl = Sample{Point: Point{V: avg}, Metric: lbls, MetricOrig: lbls}
+		if r.compareOp() == ValueIsAbove {
+			if avg > r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			if avg < r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsEq {
+			if avg == r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			if avg != r.targetVal() {
+				shouldAlert = true
+			}
+		}
+	case InTotal:
+		// If the sum of all samples matches the condition, the rule is firing.
+		var sum float64
+
+		for _, smpl := range series.Points {
+			if math.IsNaN(smpl.Value) || math.IsInf(smpl.Value, 0) {
+				continue
+			}
+			sum += smpl.Value
+		}
+		alertSmpl = Sample{Point: Point{V: sum}, Metric: lbls, MetricOrig: lbls}
+		if r.compareOp() == ValueIsAbove {
+			if sum > r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsBelow {
+			if sum < r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsEq {
+			if sum == r.targetVal() {
+				shouldAlert = true
+			}
+		} else if r.compareOp() == ValueIsNotEq {
+			if sum != r.targetVal() {
+				shouldAlert = true
+			}
+		}
+	}
+	return alertSmpl, shouldAlert
 }

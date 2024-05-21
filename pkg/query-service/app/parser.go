@@ -24,6 +24,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/postprocess"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 )
@@ -1007,7 +1008,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			// Formula query
 			// Check if the queries used in the expression can be joined
 			if query.QueryName != query.Expression {
-				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
+				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, postprocess.EvalFuncs())
 				if err != nil {
 					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 				}
