@@ -523,7 +523,7 @@ function JiraReports(): JSX.Element {
 				</div>
 				<div
 					style={{
-						width: 'calc(100vw - 1200px)',
+						width: 400,
 						height: 460,
 						display: 'flex',
 						justifyContent: 'center',
@@ -536,7 +536,7 @@ function JiraReports(): JSX.Element {
 								: { display: 'block', width: '100%' }
 						}
 					>
-						<canvas ref={chartRef} style={{ width: 'calc(100vw - 1200px)' }} />
+						<canvas ref={chartRef} style={{ width: 400 }} />
 					</div>
 					<p
 						style={
