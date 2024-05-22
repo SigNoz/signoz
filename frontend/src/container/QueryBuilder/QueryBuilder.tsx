@@ -1,6 +1,6 @@
 import './QueryBuilder.styles.scss';
 
-import { Button, Col, Divider, Row, Tooltip } from 'antd';
+import { Button, Col, Divider, Row, Tooltip, Typography } from 'antd';
 import {
 	MAX_FORMULAS,
 	MAX_QUERIES,
@@ -133,13 +133,43 @@ export const QueryBuilder = memo(function QueryBuilder({
 			{!isListViewPanel && (
 				<div className="new-query-formula-buttons-container">
 					<Button.Group>
-						<Tooltip title="Add Query">
+						<Tooltip
+							title={
+								<div style={{ textAlign: 'center' }}>
+									Add New Query
+									<Typography.Link
+										href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#multiple-queries-and-functions"
+										target="_blank"
+										style={{ textDecoration: 'underline' }}
+									>
+										{' '}
+										<br />
+										Learn more
+									</Typography.Link>
+								</div>
+							}
+						>
 							<Button disabled={isDisabledQueryButton} onClick={addNewBuilderQuery}>
 								<DatabaseZap size={12} />
 							</Button>
 						</Tooltip>
 
-						<Tooltip title="Add Formula">
+						<Tooltip
+							title={
+								<div style={{ textAlign: 'center' }}>
+									Add New Formula
+									<Typography.Link
+										href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#multiple-queries-and-functions"
+										target="_blank"
+										style={{ textDecoration: 'underline' }}
+									>
+										{' '}
+										<br />
+										Learn more
+									</Typography.Link>
+								</div>
+							}
+						>
 							<Button disabled={isDisabledFormulaButton} onClick={addNewFormula}>
 								<Sigma size={12} />
 							</Button>

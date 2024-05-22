@@ -322,7 +322,8 @@ function DashboardsList(): JSX.Element {
 							<TextToolTip
 								{...{
 									text: `More details on how to create dashboards`,
-									url: 'https://signoz.io/docs/userguide/dashboards',
+									url:
+										'https://signoz.io/docs/userguide/dashboards?utm_source=product&utm_medium=list-dashboard',
 								}}
 							/>
 						</ButtonContainer>
