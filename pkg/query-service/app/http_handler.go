@@ -594,6 +594,11 @@ func (aH *APIHandler) createDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
+	if err := schedule.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
 	_, err = aH.ruleManager.RuleDB().CreatePlannedMaintenance(r.Context(), schedule)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
@@ -607,6 +612,10 @@ func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Reques
 	var schedule rules.PlannedMaintenance
 	err := json.NewDecoder(r.Body).Decode(&schedule)
 	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := schedule.Validate(); err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}

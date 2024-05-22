@@ -7,7 +7,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
+)
+
+var (
+	ErrMissingName       = errors.New("missing name")
+	ErrMissingSchedule   = errors.New("missing schedule")
+	ErrMissingTimezone   = errors.New("missing timezone")
+	ErrMissingRepeatType = errors.New("missing repeat type")
+	ErrMissingDuration   = errors.New("missing duration")
 )
 
 type PlannedMaintenance struct {
@@ -75,7 +84,7 @@ const (
 
 type Recurrence struct {
 	StartTime  time.Time  `json:"startTime"`
-	EndTime    time.Time  `json:"endTime"`
+	EndTime    *time.Time `json:"endTime,omitempty"`
 	Duration   Duration   `json:"duration"`
 	RepeatType RepeatType `json:"repeatType"`
 	RepeatOn   []RepeatOn `json:"repeatOn"`
@@ -154,7 +163,10 @@ func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
 				return false
 			}
 
-			endTime := m.Schedule.Recurrence.EndTime
+			var endTime time.Time
+			if m.Schedule.Recurrence.EndTime != nil {
+				endTime = *m.Schedule.Recurrence.EndTime
+			}
 			if !endTime.IsZero() && currentTime.After(endTime.In(loc)) {
 				zap.L().Info("current time is after end time", zap.Any("rule", ruleID), zap.String("maintenance", m.Name), zap.Time("currentTime", currentTime), zap.Time("endTime", end.In(loc)))
 				return false
@@ -207,4 +219,40 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 
 func (m *PlannedMaintenance) IsRecurring() bool {
 	return m.Schedule.Recurrence != nil
+}
+
+func (m *PlannedMaintenance) Validate() error {
+	if m.Name == "" {
+		return ErrMissingName
+	}
+	if m.Schedule == nil {
+		return ErrMissingSchedule
+	}
+	if m.Schedule.Timezone == "" {
+		return ErrMissingTimezone
+	}
+
+	_, err := time.LoadLocation(m.Schedule.Timezone)
+	if err != nil {
+		return errors.New("invalid timezone")
+	}
+
+	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
+		if m.Schedule.StartTime.After(m.Schedule.EndTime) {
+			return errors.New("start time cannot be after end time")
+		}
+	}
+
+	if m.Schedule.Recurrence != nil {
+		if m.Schedule.Recurrence.RepeatType == "" {
+			return ErrMissingRepeatType
+		}
+		if m.Schedule.Recurrence.Duration == 0 {
+			return ErrMissingDuration
+		}
+		if m.Schedule.Recurrence.EndTime != nil && m.Schedule.Recurrence.EndTime.Before(m.Schedule.Recurrence.StartTime) {
+			return errors.New("end time cannot be before start time")
+		}
+	}
+	return nil
 }
