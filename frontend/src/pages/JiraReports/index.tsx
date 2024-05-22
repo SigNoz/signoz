@@ -36,6 +36,7 @@ import Graph from 'components/Graph';
 import { ResizeTable } from 'components/ResizeTable';
 import dayjs, { Dayjs } from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import createQueryParams from 'lib/createQueryParams';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 /* eslint-disable */
 interface PieData {
@@ -298,17 +299,32 @@ function JiraReports(): JSX.Element {
 			title: 'Title',
 			dataIndex: 'issue_title',
 			width: 140,
-			render: (value, record): JSX.Element => (
-				<Tooltip overlay={(): JSX.Element => value}>
-					<Typography.Paragraph
-						ellipsis={{
-							rows: 2,
-						}}
-					>
-						{value}
-					</Typography.Paragraph>
-				</Tooltip>
-			),
+			render: (value, record): JSX.Element => {
+				return (
+					<Tooltip overlay={(): JSX.Element => value}>
+						<Typography.Paragraph
+							ellipsis={{
+								rows: 2,
+							}}
+						>
+							<a
+								target="_blank"
+								style={{ display: 'inline' }}
+								href={`${
+									process.env.FRONTEND_API_ENDPOINT
+								}/exceptions?${createQueryParams({
+									serviceName: record.issue_project_id,
+									message: record.issue_title,
+									startTime: `${curTimeList[0].startOf('day').valueOf()}000000`,
+									endTime: `${curTimeList[1].endOf('day').valueOf()}000000`,
+								})}`}
+							>
+								{value}
+							</a>
+						</Typography.Paragraph>
+					</Tooltip>
+				);
+			},
 		},
 		{
 			title: 'Type',
@@ -334,6 +350,17 @@ function JiraReports(): JSX.Element {
 			title: 'Issue Key',
 			dataIndex: 'issue_key',
 			width: 50,
+			render: (value: string, record: DataType): JSX.Element => {
+				return (
+					<a
+						target="_blank"
+						style={{ display: 'inline' }}
+						href={`${process.env.JIRA_HOST}/browse/${value}`}
+					>
+						{value}
+					</a>
+				);
+			},
 		},
 		{
 			title: 'Alert Repeat Count',
