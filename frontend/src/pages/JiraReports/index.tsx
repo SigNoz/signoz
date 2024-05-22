@@ -381,8 +381,7 @@ function JiraReports(): JSX.Element {
 			title: 'Created At',
 			dataIndex: 'created_at',
 			width: 100,
-			render: (record) =>
-				`${dayjs(record.created_at).format('MM/DD/YYYY HH:mm:ss')}`,
+			render: (value: string) => `${dayjs(value).format('MM/DD/YYYY HH:mm:ss')}`,
 		},
 	];
 
