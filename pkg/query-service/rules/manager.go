@@ -108,7 +108,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		return nil, err
 	}
 
-	db := newRuleDB(o.DBConn)
+	db := NewRuleDB(o.DBConn)
 
 	m := &Manager{
 		tasks:        map[string]Task{},
