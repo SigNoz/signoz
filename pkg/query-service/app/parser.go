@@ -1174,15 +1174,22 @@ func parseGetDayBugListRequest(r *http.Request) (*model.GetDayBugParams, error) 
 	}
 
 	getDayBugParams := model.GetDayBugParams{
-		// StartTime:   startTime.Format(time.RFC3339Nano),
-		// EndTime:     endTime.Format(time.RFC3339Nano),
 		Start:       startTime,
 		End:         endTime,
 		ServiceName: serviceName,
-		// Period:      fmt.Sprintf("PT%dH", stepHour),
-		// StepHour:    stepHour,
 	}
 
 	return &getDayBugParams, nil
 
+}
+
+func parseGetRepeatIssuesRequest(r *http.Request) (*model.GetRepeatIssuesParams, error) {
+	var postData *model.GetRepeatIssuesParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return postData, nil
 }

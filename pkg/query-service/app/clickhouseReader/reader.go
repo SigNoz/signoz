@@ -5184,7 +5184,7 @@ func (r *ClickHouseReader) SearchAllServices(ctx context.Context) (*[]string, er
 }
 
 func (r *ClickHouseReader) UpdateIssueLink(ctx context.Context, queryParams *model.UpdateIssueLinkParams) (bool, *model.ApiError) {
-	query := fmt.Sprintf(`ALTER TABLE signoz_traces.distributed_signoz_error_index_v2 UPDATE issueLink = '%s' WHERE groupID = '%s'`, queryParams.IssueLink, queryParams.GroupID)
+	query := fmt.Sprintf(`ALTER TABLE signoz_traces.signoz_error_index_v2 UPDATE issueLink = '%s' WHERE groupID = '%s'`, queryParams.IssueLink, queryParams.GroupID)
 	zap.S().Info(query)
 	err := r.db.Exec(ctx, query)
 	if err != nil {
@@ -5214,7 +5214,7 @@ func (r *ClickHouseReader) UpdateIssueWebhook(ctx context.Context, queryParams *
 	raptorIssueStatusMap["NOT BUG"] = 3
 
 	fmt.Println("raptorIssueStatusMap", raptorIssueStatusMap[strings.ToUpper(queryParams.IssueStatus)], queryParams.IssueStatus)
-	query := fmt.Sprintf(`ALTER TABLE signoz_traces.distributed_signoz_error_index_v2 UPDATE issueStatus = '%d' WHERE groupID = '%s'`, raptorIssueStatusMap[strings.ToUpper(queryParams.IssueStatus)], queryParams.GroupID)
+	query := fmt.Sprintf(`ALTER TABLE signoz_traces.signoz_error_index_v2 UPDATE issueStatus = '%d' WHERE groupID = '%s'`, raptorIssueStatusMap[strings.ToUpper(queryParams.IssueStatus)], queryParams.GroupID)
 	zap.S().Info(query)
 	clickhouseErr := r.db.Exec(ctx, query)
 
@@ -5245,13 +5245,129 @@ func (r *ClickHouseReader) GetDayBugList(ctx context.Context, queryParams *model
 		return nil, fmt.Errorf("Error in processing sql query")
 	}
 
-	// for i := range dayBugItems {
-	// 	dayBugItems[i].Timestamp = uint64(dayBugItems[i].Time.UnixNano())
-	// }
-
 	if dayBugItems == nil {
 		dayBugItems = []model.DayBugItem{}
 	}
 
 	return &dayBugItems, nil
+}
+
+func (r *ClickHouseReader) GetRepeatIssues(ctx context.Context, queryParams *model.GetRepeatIssuesParams) (*model.FinalJiraIssuesResult, error) {
+	finalJiraIssuesResult := model.FinalJiraIssuesResult{}
+	var rows driver.Rows
+
+	// 先查jira_issue表
+	jiraIssues := []model.JiraIssues{}
+	query := fmt.Sprintf(
+		"SELECT issue_key, issue_type, issue_title, issue_status, issue_project_id, COALESCE(issue_repeat_count, 0) as issue_repeat_count, created_at, error_unique_id from jira_issue WHERE issue_project_id = '%s' AND created_at >= %d AND created_at <= %d AND issue_type != 'Epic'",
+		queryParams.ServiceName,
+		queryParams.Start,
+		queryParams.End)
+
+	if queryParams.SortParam == "issue_repeat_count" && len(queryParams.SortOrder) != 0 {
+		query = query + " ORDER BY " + queryParams.SortParam
+		if queryParams.SortOrder == "ascend" {
+			query += " ASC"
+		}
+		if queryParams.SortOrder == "descend" {
+			query += " DESC"
+		}
+	} else if len(queryParams.SortOrder) == 0 {
+		query += " ORDER BY issue_repeat_count DESC"
+	}
+
+	// 分页
+	if queryParams.Pagination.PageSize != 0 {
+		offset := (queryParams.Pagination.Current - 1) * queryParams.Pagination.PageSize
+		query += fmt.Sprintf(" LIMIT %d OFFSET %d", queryParams.Pagination.PageSize, offset)
+		finalJiraIssuesResult.Offset = offset
+	}
+
+	err := r.localDB.Select(&jiraIssues, query)
+	zap.S().Info(query)
+
+	if err != nil {
+		zap.S().Debug("Error in jira_issue table processing sql query: ", err)
+		return nil, fmt.Errorf("Error in jira_issue table processing sql query")
+	}
+
+	// 查询数量
+	countQuery := `SELECT COUNT(*) FROM jira_issue WHERE issue_project_id = ? AND created_at >= ? AND created_at <= ? AND issue_type != 'Epic'`
+	err2 := r.localDB.QueryRow(countQuery, queryParams.ServiceName, queryParams.Start, queryParams.End).Scan(&finalJiraIssuesResult.Total)
+	if err2 != nil {
+		zap.S().Debug("Error in jira_issue table processing sql count: ", err)
+		return nil, fmt.Errorf("Error in jira_issue table processing sql count")
+	}
+	zap.S().Info("jira_issue count: ", finalJiraIssuesResult.Total)
+
+	if finalJiraIssuesResult.Total == 0 {
+		return &finalJiraIssuesResult, nil
+	}
+
+	groupIdList := []string{}
+	for _, issue := range jiraIssues {
+		if issue.ErrorUniqueId != "" {
+			groupIdList = append(groupIdList, issue.ErrorUniqueId)
+		}
+
+		finalJiraItem := model.FinalJiraIssues{
+			JiraIssues: issue,
+			Count:      0,
+		}
+		finalJiraIssuesResult.Issues = append(finalJiraIssuesResult.Issues, finalJiraItem)
+	}
+
+	// 再查distributed_signoz_error_index_v2表
+	startTime := time.Unix(0, queryParams.Start*int64(time.Millisecond))
+	endTime := time.Unix(0, queryParams.End*int64(time.Millisecond))
+	for i, id := range groupIdList {
+		groupIdList[i] = fmt.Sprintf("'%s'", id)
+	}
+	clickQuery := fmt.Sprintf(
+		"SELECT COUNT(), groupID from signoz_traces.distributed_signoz_error_index_v2 WHERE groupID IN (%s) AND timestamp >= '%s' AND timestamp <= '%s' GROUP BY groupID",
+		strings.Join(groupIdList, ","),
+		strconv.FormatInt(startTime.UnixNano(), 10),
+		strconv.FormatInt(endTime.UnixNano(), 10))
+
+	zap.S().Info(clickQuery)
+	rows, err = r.db.Query(ctx, clickQuery)
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var count uint64
+	var groupID string
+	groupCountMap := make(map[string]uint64)
+	for rows.Next() {
+		if err := rows.Scan(&count, &groupID); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		groupCountMap[groupID] = count
+
+	}
+
+	for i, item := range finalJiraIssuesResult.Issues {
+		if count, exist := groupCountMap[item.JiraIssues.ErrorUniqueId]; exist {
+			finalJiraIssuesResult.Issues[i].Count = count
+		}
+	}
+
+	// count-排序
+	if queryParams.SortParam == "count" {
+		if queryParams.SortOrder == "ascend" {
+			sort.SliceStable(finalJiraIssuesResult.Issues, func(i, j int) bool {
+				return finalJiraIssuesResult.Issues[i].Count < finalJiraIssuesResult.Issues[j].Count
+			})
+		}
+		if queryParams.SortOrder == "descend" {
+			sort.SliceStable(finalJiraIssuesResult.Issues, func(i, j int) bool {
+				return finalJiraIssuesResult.Issues[i].Count > finalJiraIssuesResult.Issues[j].Count
+			})
+		}
+	}
+
+	return &finalJiraIssuesResult, nil
 }

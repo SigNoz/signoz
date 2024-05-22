@@ -666,3 +666,25 @@ type DayBugItem struct {
 	Count       uint64    `json:"count" ch:"count"`
 	IssueStatus int8      `json:"issueStatus" ch:"issueStatus"`
 }
+
+type JiraIssues struct {
+	IssueKey         string    `json:"issue_key" db:"issue_key"`
+	IssueType        string    `json:"issue_type" db:"issue_type"`
+	IssueTitle       string    `json:"issue_title" db:"issue_title"`
+	IssueStatus      string    `json:"issue_status" db:"issue_status"`
+	IssueProjectId   string    `json:"issue_project_id" db:"issue_project_id"`
+	IssueRepeatCount int       `json:"issue_repeat_count" db:"issue_repeat_count"`
+	CreatedAt        time.Time `json:"created_at" db:"created_at"`
+	ErrorUniqueId    string    `json:"error_unique_id" db:"error_unique_id"`
+}
+
+type FinalJiraIssues struct {
+	JiraIssues
+	Count uint64 `json:"count"`
+}
+
+type FinalJiraIssuesResult struct {
+	Issues []FinalJiraIssues `json:"issues"`
+	Offset int               `json:"offset"`
+	Total  int               `json:"total"`
+}

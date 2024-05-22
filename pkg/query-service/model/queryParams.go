@@ -590,3 +590,17 @@ type GetDayBugParams struct {
 	Start       *time.Time
 	End         *time.Time
 }
+
+type Pagination struct {
+	Current  int `json:"current"`
+	PageSize int `json:"pageSize"`
+}
+
+type GetRepeatIssuesParams struct {
+	ServiceName string     `json:"serviceName"`
+	Start       int64      `json:"start"`
+	End         int64      `json:"end"`
+	Pagination  Pagination `json:"pagination"`
+	SortOrder   string     `json:"sortOrder"`
+	SortParam   string     `json:"sortParam"`
+}

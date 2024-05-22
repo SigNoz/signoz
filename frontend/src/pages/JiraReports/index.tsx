@@ -1,15 +1,16 @@
+import { grey } from '@ant-design/colors';
 import { SearchOutlined } from '@ant-design/icons';
+import type { TableProps } from 'antd';
 import {
 	Button,
 	Col,
 	DatePicker,
-	DatePickerProps,
 	Row,
 	Select,
 	Tooltip,
+	Typography,
 } from 'antd';
-import { RangePickerProps } from 'antd/es/date-picker';
-import { getDayBugList } from 'api/JiraReports';
+import { getDayBugList, getRepeatIssuesTable } from 'api/JiraReports';
 import getAllProjectList from 'api/projectManager/ignoreError';
 import axiosRef from 'axios';
 import {
@@ -19,7 +20,6 @@ import {
 	CategoryScale,
 	Chart,
 	Decimation,
-	DoughnutController,
 	Filler,
 	Legend,
 	LinearScale,
@@ -33,8 +33,48 @@ import {
 	Title,
 } from 'chart.js';
 import Graph from 'components/Graph';
+import { ResizeTable } from 'components/ResizeTable';
 import dayjs, { Dayjs } from 'dayjs';
-import { useEffect, useMemo, useState } from 'react';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+/* eslint-disable */
+interface PieData {
+	CLOSED: number;
+	'DEPLOYED TO PRODUCTION': number;
+	'DEV IN PROGRESS': number;
+	'DONT FIX': number;
+	'IN QA': number;
+	NEW: number;
+	'NOT BUG': number;
+}
+
+interface DataType {
+	count: number;
+	created_at: string;
+	error_unique_id: string;
+	issue_key: string;
+	issue_project_id: string;
+	issue_repeat_count: number;
+	issue_status: string;
+	issue_title: string;
+	issue_type: string;
+}
+
+type ColumnsType<T> = TableProps<T>['columns'];
+
+type Pagination = {
+	current: number;
+	pageSize: number;
+};
+type TableParamType = {
+	pagination: Pagination;
+	sortOrder: string;
+	sortParam: string;
+};
+
+type OnChange = NonNullable<TableProps<DataType>['onChange']>;
+type GetSingle<T> = T extends (infer U)[] ? U : never;
+type Sorts = GetSingle<Parameters<OnChange>[2]>;
 
 const { RangePicker } = DatePicker;
 
@@ -58,27 +98,49 @@ Chart.register(
 );
 
 function JiraReports(): JSX.Element {
-	// const { pathname } = useLocation();
+	const isDarkMode = useIsDarkMode();
 	const [currentProject, setCurrentProject] = useState<string>('');
 	const [projectList, setProjectList] = useState<string[]>([]);
-	const [curTimeList, setCurTimeList] = useState<Dayjs[]>([dayjs(), dayjs()]);
+	const [curTimeList, setCurTimeList] = useState<Dayjs[]>([
+		dayjs().subtract(7, 'day'),
+		dayjs(),
+	]);
 	const [lineDataList, setLineDataList] = useState<any[]>([]);
+	const chartRef = useRef<HTMLCanvasElement>(null);
+	const pieChartRef = useRef<Chart>();
+	const [tableData, setTableData] = useState<DataType[]>();
+	const [loading, setLoading] = useState(false);
+	const [tableParams, setTableParams] = useState<TableParamType>({
+		pagination: {
+			current: 1,
+			pageSize: 20,
+		},
+		sortOrder: '',
+		sortParam: '',
+	});
+	const [tableTotal, setTableTotal] = useState<number>(0);
+	// 用于控制排序的状态
+	const [sortedInfo, setSortedInfo] = useState<Sorts>({});
+	const [pieData, setPieData] = useState(null);
 
 	const xTimeListMemo = useMemo(() => {
 		const list: Dayjs[] = [];
 		if (curTimeList.length === 2) {
 			const diffCount = dayjs(curTimeList[1]).diff(dayjs(curTimeList[0]), 'day');
-			// console.log('diffCount', diffCount);
 			for (let i = 0; i <= diffCount; i++) {
 				const tmpDay = dayjs(curTimeList[0]).add(i, 'day');
-				// console.log('day', tmpDay.format('YYYY-MM-DD'));
 				list.push(tmpDay);
 			}
-			// console.log('list', list);
 			return list.map((item) => item.startOf('day').valueOf());
 		}
 		return list;
 	}, [curTimeList]);
+
+	const pieDataEmpty = useMemo(() => {
+		if (!pieData) return true;
+		const existNum = Object.values(pieData)?.find((item: any) => item > 0);
+		return !existNum;
+	}, [pieData]);
 
 	const handleChangeProject = (value: string) => {
 		setCurrentProject(value);
@@ -87,7 +149,6 @@ function JiraReports(): JSX.Element {
 	const getAllProject = async () => {
 		try {
 			const res = await getAllProjectList();
-			// console.log('res', res);
 			if (res.payload?.length) {
 				setProjectList(res.payload);
 				setCurrentProject(res.payload[0]);
@@ -99,12 +160,14 @@ function JiraReports(): JSX.Element {
 
 	const getBugList = async () => {
 		try {
+			if (!currentProject || curTimeList.length < 2) return;
+
 			const res = await getDayBugList({
 				start: `${curTimeList[0].startOf('day').valueOf()}000000`,
 				end: `${curTimeList[1].endOf('day').valueOf()}000000`,
 				service: currentProject,
 			});
-			if (Array.isArray(res.payload)) {
+			if (Array.isArray(res.payload) && res.payload.length) {
 				const statusList = [
 					{
 						label: 'Not fix',
@@ -130,43 +193,58 @@ function JiraReports(): JSX.Element {
 						);
 						return match?.count || 0;
 					}),
-					// data: res.payload?.map((dayBugItem) => {
-					// 	return {
-					// 		x: dayjs(dayBugItem.time).endOf('day').valueOf(),
-					// 		y: dayBugItem.count,
-					// 	};
-					// }),
 					backgroundColor: item.backgroundColor,
 					borderColor: item.borderColor,
 					borderWidth: 3,
 				}));
 				setLineDataList(datasets);
+				return;
 			}
+			setLineDataList([]);
 		} catch (error) {
 			console.log('getAllProjectError', error);
+			setLineDataList([]);
 		}
 	};
 
-	const handleRange = (
-		value: DatePickerProps['value'] | RangePickerProps['value'],
-	) => {
-		console.log('onOk: ', value);
+	const getIssuesPie = async () => {
+		if (!currentProject || curTimeList.length < 2) return;
+
+		const { data } = await axiosRef.get(
+			`${process.env.SERVER_API_HOST}/capi/jira/getIssuesCount`,
+			{
+				params: {
+					start: curTimeList[0].startOf('day').valueOf(),
+					end: curTimeList[1].endOf('day').valueOf(),
+					serviceName: currentProject,
+				},
+			},
+		);
+		return data.data || null;
 	};
 
-	const setPie = () => {
-		const ctx = window.document.getElementById('myChart')?.getContext('2d');
-		const myPieChart = new Chart(ctx, {
+	const setIssuePie = useCallback((pieData: PieData) => {
+		if (pieChartRef.current !== undefined) {
+			pieChartRef.current.destroy();
+		}
+		console.log('chartRef.current', chartRef.current);
+		if (!chartRef.current) return;
+		// @ts-ignore
+		pieChartRef.current = new Chart(chartRef.current, {
 			type: 'pie', // 指定图表类型为饼图
 			data: {
-				labels: ['红色', '蓝色', '黄色'],
+				labels: Object.keys(pieData),
 				datasets: [
 					{
-						label: 'My First Dataset',
-						data: [300, 50, 100],
+						data: Object.keys(pieData).map((key) => pieData[key as keyof PieData]),
 						backgroundColor: [
 							'rgb(255, 99, 132)',
 							'rgb(54, 162, 235)',
 							'rgb(255, 205, 86)',
+							'#1f77b4',
+							'#ff7f0e',
+							'#2ca02c',
+							'#d62728',
 						],
 						hoverOffset: 4,
 					},
@@ -176,74 +254,183 @@ function JiraReports(): JSX.Element {
 				responsive: true, // 图表将会响应式地调整大小
 				plugins: {
 					legend: {
-						position: 'top', // 图例的位置
+						position: 'bottom', // 图例的位置
+						labels: {
+							color: isDarkMode ? 'white' : 'black',
+						},
 					},
 					title: {
 						display: true,
-						text: '我的饼图',
+						font: {
+							size: 20,
+						},
+						color: isDarkMode ? 'white' : 'black',
+						text: 'Different status of issue count',
 					},
 				},
 			},
 		});
+	}, []);
+
+	const getTableList = async (
+		pagination: Pagination | null,
+		sortParam: string,
+		sortOrder: string,
+	) => {
+		try {
+			const param = {
+				serviceName: currentProject,
+				start: curTimeList[0].valueOf(),
+				end: curTimeList[1].valueOf(),
+			};
+			if (!param.serviceName || !param.start || !param.end) return;
+
+			// count排序不需要分页
+			if (pagination) {
+				Object.assign(param, { pagination });
+			}
+			if (sortParam) {
+				Object.assign(param, { sortParam });
+			}
+			if (sortOrder) {
+				Object.assign(param, { sortOrder });
+			}
+			setLoading(true);
+			const { payload } = await getRepeatIssuesTable(param);
+			if (payload?.issues?.length) {
+				setTableData(payload.issues);
+				setTableTotal(payload.total);
+			} else {
+				setTableData([]);
+				setTableTotal(0);
+			}
+			setLoading(false);
+		} catch (error) {
+			console.warn('getTableListError', error);
+			setLoading(false);
+		}
+	};
+
+	const reset = () => {
+		setTableParams((prev) => ({
+			pagination: {
+				current: 1,
+				pageSize: prev.pagination.pageSize,
+			},
+			sortOrder: '',
+			sortParam: '',
+		}));
+		setSortedInfo({});
 	};
 
 	const handleSearch = async () => {
+		reset();
 		await getBugList();
-		setPie();
-		// const lineList = bugList?.map((item) => {
-		// 	return item.data;
-		// });
-		// for (let j = 0; j < 2; j++) {
-		// 	const epic = `EcpiTest_${j}`;
-		// 	let data = [];
-		// 	for (let i = 0; i < 3; i++) {
-		// 		data.push({
-		// 			serviceName: epic,
-		// 			title: `title_${epic}_${i}_${dayjs().format('YYYY-MM-DD HH:mm:ss')}`,
-		// 			description: {
-		// 				type: 'doc',
-		// 				version: 1,
-		// 				content: [
-		// 					{
-		// 						type: 'paragraph',
-		// 						content: [
-		// 							{
-		// 								type: 'text',
-		// 								text: 'Hello world',
-		// 								marks: [
-		// 									{
-		// 										type: 'link',
-		// 										attrs: {
-		// 											href: 'http://atlassian.com',
-		// 											title: 'Atlassian',
-		// 										},
-		// 									},
-		// 								],
-		// 							},
-		// 						],
-		// 					},
-		// 				],
-		// 			},
-		// 			errorId: String(new Date().getTime()),
-		// 		});
-		// 	}
-		// 	axiosRef.post(
-		// 		// `${process.env.SERVER_API_HOST}/capi/jira/createIssueBulk`,
-		// 		`https://pulse.tb1.sayweee.net/capi/jira/createIssueBulk`,
-		// 		data,
-		// 		{
-		// 			headers: {
-		// 				authorization: 'Basic emhpY2hhby5nYW9Ac2F5d2VlZS5jb206emhpY2hhby5nYW8=',
-		// 			},
-		// 		},
-		// 	);
-		// 	// }
-		// }
+		const data = await getIssuesPie();
+		if (data) {
+			setIssuePie(data);
+			setPieData(data);
+		} else {
+			setPieData(null);
+		}
+		getTableList(
+			{
+				current: 1,
+				pageSize: tableParams.pagination.pageSize,
+			},
+			'',
+			'',
+		);
+	};
+
+	const columns: ColumnsType<DataType> = [
+		{
+			title: 'Title',
+			dataIndex: 'issue_title',
+			width: 140,
+			render: (value, record): JSX.Element => (
+				<Tooltip overlay={(): JSX.Element => value}>
+					<Typography.Paragraph
+						ellipsis={{
+							rows: 2,
+						}}
+					>
+						{value}
+					</Typography.Paragraph>
+				</Tooltip>
+			),
+		},
+		{
+			title: 'Type',
+			dataIndex: 'issue_type',
+			width: 50,
+		},
+		{
+			title: 'Issue Status',
+			dataIndex: 'issue_status',
+			width: 50,
+		},
+		{
+			title: 'Issue Key',
+			dataIndex: 'issue_key',
+			width: 50,
+		},
+		{
+			title: 'Alert Repeat Count',
+			dataIndex: 'issue_repeat_count',
+			width: 50,
+			sorter: true,
+			sortOrder:
+				sortedInfo.field === 'issue_repeat_count' ? sortedInfo.order : null,
+		},
+		{
+			title: 'Exception Count',
+			dataIndex: 'count',
+			width: 50,
+			sorter: true,
+			sortOrder: sortedInfo.field === 'count' ? sortedInfo.order : null,
+		},
+		{
+			title: 'Created At',
+			dataIndex: 'created_at',
+			width: 100,
+			render: (record) =>
+				`${dayjs(record.created_at).format('MM/DD/YYYY HH:mm:ss')}`,
+		},
+	];
+
+	const handleTableChange: OnChange = (pagination, filters, sorter) => {
+		console.log('params', pagination, filters, sorter);
+		setSortedInfo(sorter as Sorts);
+		setTableParams((prev) => {
+			return {
+				pagination: {
+					...prev.pagination,
+					current: pagination.current || 1,
+				},
+				sortOrder: (sorter as any)?.order,
+				sortParam: (sorter as any)?.field,
+			};
+		});
+		let tmpPag: Pagination | null = {
+			current: pagination.current || 0,
+			pageSize: pagination.pageSize || 0,
+		};
+		if ((sorter as any)?.field === 'count' && (sorter as any)?.order) {
+			tmpPag = null;
+		}
+		getTableList(tmpPag, (sorter as any)?.field, (sorter as any)?.order);
 	};
 
 	useEffect(() => {
 		getAllProject();
 	}, []);
+
+	useEffect(() => {
+		handleSearch();
+	}, [currentProject]);
+
+	console.log('pieDataEmpty', pieDataEmpty);
 
 	return (
 		<>
@@ -257,6 +444,9 @@ function JiraReports(): JSX.Element {
 				统计出jira_issue表中出现重复上报的issue以及频次，以及总次数，jira当期状态，table
 			</div>
 			<div>统计出不同issue状态数量占比，饼状图</div> */}
+			<h1 style={isDarkMode ? { color: 'white' } : { color: 'black' }}>
+				Jira Reports
+			</h1>
 
 			<Row gutter={16}>
 				<Col span={4}>
@@ -275,9 +465,9 @@ function JiraReports(): JSX.Element {
 				<Col span={6}>
 					<RangePicker
 						format="YYYY-MM-DD"
+						allowClear={false}
+						defaultValue={[curTimeList[0], curTimeList[1]]}
 						onChange={(value, dateString: [string, string]) => {
-							console.log('Selected Time: ', value);
-							console.log('Formatted Selected Time: ', dateString);
 							if (Array.isArray(value)) {
 								setCurTimeList(value as [Dayjs, Dayjs]);
 							}
@@ -292,7 +482,10 @@ function JiraReports(): JSX.Element {
 			</Row>
 
 			<div style={{ display: 'flex' }}>
-				<div style={{ width: 800 }}>
+				<div style={{ width: 900 }}>
+					<h2 style={isDarkMode ? { color: 'white' } : { color: 'black' }}>
+						Day Bugs List
+					</h2>
 					<Graph
 						name="jira_line"
 						data={{
@@ -304,11 +497,39 @@ function JiraReports(): JSX.Element {
 						animate
 					/>
 				</div>
-				<div style={{ width: 400, height: 400 }}>
-					<canvas id="myChart" />
+				<div
+					style={{
+						width: 360,
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+					}}
+				>
+					<canvas
+						ref={chartRef}
+						style={pieDataEmpty ? { display: 'none' } : { display: 'block' }}
+					/>
+					<p style={pieDataEmpty ? { display: 'block' } : { display: 'none' }}>
+						<span style={{ fontSize: '1.5rem', color: grey.primary }}>No data</span>
+					</p>
 				</div>
 			</div>
-			<div>table</div>
+			<div style={{ marginTop: 20 }}>
+				<h2 style={isDarkMode ? { color: 'white' } : { color: 'black' }}>
+					Issues Table
+				</h2>
+				<ResizeTable
+					columns={columns}
+					rowKey={(record) => record.issue_key}
+					dataSource={tableData}
+					pagination={{
+						...tableParams.pagination,
+						total: tableTotal,
+					}}
+					loading={loading}
+					onChange={handleTableChange}
+				/>
+			</div>
 		</>
 	);
 }
