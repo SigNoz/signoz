@@ -11,6 +11,7 @@ import updateDowntimeSchedule, {
 	PayloadProps,
 } from 'api/plannedDowntime/updateDowntimeSchedule';
 import { showErrorNotification } from 'components/ExplorerCard/utils';
+import dayjs from 'dayjs';
 import { UseMutateAsyncFunction } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
@@ -24,9 +25,9 @@ export const getDuration = (
 		return 'N/A';
 	}
 
-	const start = new Date(startTime);
-	const end = new Date(endTime);
-	const durationMs = Math.abs(end.getTime() - start.getTime());
+	const start = dayjs(startTime);
+	const end = dayjs(endTime);
+	const durationMs = end.diff(start);
 
 	const minutes = Math.floor(durationMs / (1000 * 60));
 	const hours = Math.floor(durationMs / (1000 * 60 * 60));
@@ -41,29 +42,19 @@ export const formatDateTime = (dateTimeString?: string | null): string => {
 	if (!dateTimeString) {
 		return 'N/A';
 	}
-	const options: Intl.DateTimeFormatOptions = {
-		month: 'short',
-		day: '2-digit',
-		year: 'numeric',
-		hour: 'numeric',
-		minute: '2-digit',
-		hour12: true,
-	};
-	return new Date(dateTimeString).toLocaleString('en-US', options);
+	return dayjs(dateTimeString).format('MMM DD, YYYY h:mm A');
 };
 
 export const getAlertOptionsFromIds = (
 	alertIds: string[],
 	alertOptions: DefaultOptionType[],
 ): DefaultOptionType[] =>
-	alertOptions
-		.map((alert) => {
-			if (alert.value && alertIds?.includes(alert.value as string)) {
-				return alert;
-			}
-			return undefined;
-		})
-		.filter((alert) => alert !== undefined) as DefaultOptionType[];
+	alertOptions.filter(
+		(alert) =>
+			alert !== undefined &&
+			alert.value &&
+			alertIds?.includes(alert.value as string),
+	);
 
 export const recurrenceInfo = (recurrence?: Recurrence | null): string => {
 	if (!recurrence) {
@@ -119,9 +110,8 @@ export const deleteDowntimeHandler = ({
 	notifications,
 }: DeleteDowntimeScheduleProps): void => {
 	if (!deleteId) {
-		const errorMsg = new Error(
-			'Unable to delete, please provide correct deleteId',
-		);
+		const errorMsg = new Error('Something went wrong');
+		console.error('Unable to delete, please provide correct deleteId');
 		showErrorNotification(notifications, errorMsg);
 	} else {
 		deleteDowntimeScheduleAsync(deleteId, {

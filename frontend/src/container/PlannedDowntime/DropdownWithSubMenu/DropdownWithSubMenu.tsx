@@ -31,9 +31,9 @@ interface DropdownProps {
 export function DropdownWithSubMenu(props: DropdownProps): JSX.Element {
 	const { options, form, setRecurrenceOption } = props;
 	const [selectedOption, setSelectedOption] = useState<Option | null>(
-		!form.getFieldValue('recurrenceSelect')
-			? recurrenceOptions.doesNotRepeat
-			: form.getFieldValue('recurrenceSelect').repeatType,
+		form.getFieldValue('recurrenceSelect')
+			? form.getFieldValue('recurrenceSelect').repeatType
+			: recurrenceOptions.doesNotRepeat,
 	);
 	const [selectedSubMenuOption, setSelectedSubMenuOption] = useState<string[]>(
 		[],
@@ -133,14 +133,14 @@ export function DropdownWithSubMenu(props: DropdownProps): JSX.Element {
 											content={
 												<div className="submenu-container">
 													<Typography.Text className="submenu-header">
-														REPEATS WEEKLY ON
+														repeats weekly on
 													</Typography.Text>
 													{option.submenu?.map((subMenuOption) => (
 														<Checkbox
 															onChange={(e): void =>
 																handleCheckboxChange(e, subMenuOption.value)
 															}
-															style={{ padding: 0 }}
+															className="submenu-checkbox"
 															key={subMenuOption.value}
 														>
 															{subMenuOption.label}
@@ -201,6 +201,7 @@ export function DropdownWithSubMenu(props: DropdownProps): JSX.Element {
 				<input
 					type="text"
 					placeholder="Select option..."
+					className="dropdown-input"
 					value={selectedOption?.label}
 					onChange={handleInputChange}
 					onClick={(): void => setIsOpen(true)}

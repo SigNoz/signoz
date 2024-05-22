@@ -33,6 +33,8 @@ import {
 	deleteDowntimeHandler,
 } from './PlannedDowntimeutils';
 
+dayjs.locale('en');
+
 export function PlannedDowntime(): JSX.Element {
 	const { data, isError, isLoading } = useQuery('allAlerts', {
 		queryFn: getAll,
@@ -62,8 +64,6 @@ export function PlannedDowntime(): JSX.Element {
 			})),
 		[data],
 	);
-
-	dayjs.locale('en');
 
 	const [searchValue, setSearchValue] = React.useState<string | number>('');
 	const [deleteData, setDeleteData] = useState<{ id: number; name: string }>();

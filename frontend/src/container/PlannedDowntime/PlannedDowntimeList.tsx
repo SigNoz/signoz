@@ -252,7 +252,6 @@ export function CustomCollapseList(
 				>
 					<CollapseListContent
 						created_at={defaultTo(createdAt, '')}
-						// created_by_email="valdez@signoz.com"
 						created_by_name={defaultTo(createdBy, '')}
 						timeframe={[schedule?.startTime, schedule?.endTime]}
 						repeats={schedule?.recurrence}

@@ -44,6 +44,7 @@ import {
 	recurrenceOptions,
 } from './PlannedDowntimeutils';
 
+dayjs.locale('en');
 interface PlannedDowntimeFormData {
 	name: string;
 	startTime: dayjs.Dayjs | string;
@@ -87,7 +88,6 @@ export function PlannedDowntimeForm(
 		form,
 	} = props;
 
-	dayjs.locale('en');
 	const [selectedTags, setSelectedTags] = React.useState<
 		DefaultOptionType | DefaultOptionType[]
 	>([]);
@@ -129,12 +129,13 @@ export function PlannedDowntimeForm(
 			setSaveLoading(true);
 			try {
 				const response = await createEditDowntimeSchedule({ ...createEditProps });
-
-				if (response.statusCode === 200) {
+				if (response.message === 'success') {
 					setIsOpen(false);
 					notifications.success({
 						message: 'Success',
-						description: 'created',
+						description: isEditMode
+							? 'Schedule updated successfully'
+							: 'Schedule created successfully',
 					});
 					refetchAllSchedules();
 				} else {
@@ -186,7 +187,7 @@ export function PlannedDowntimeForm(
 		try {
 			await form.validateFields();
 		} catch (error) {
-			// error
+			console.error(error);
 		}
 	};
 

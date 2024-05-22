@@ -27,10 +27,14 @@
 	gap: 6px;
 	padding: 12px;
 	border-radius: 4px;
+
+	.submenu-checkbox {
+		padding: 0px;
+	}
 }
 
 .dropdown-submenu {
-	input[type='text'] {
+	.dropdown-input {
 		box-sizing: border-box;
 		margin: 0;
 		padding: 4.5px 11px;
@@ -89,12 +93,13 @@
 }
 
 .submenu-header {
-	color: #52575c;
+	color: var(--bg-vanilla-200);
 	font-family: Inter;
 	font-size: 12px;
 	font-style: normal;
 	font-weight: 400;
 	padding-bottom: 8px;
+	text-transform: uppercase;
 }
 
 .lightMode {
@@ -108,12 +113,15 @@
 	}
 
 	.dropdown-submenu {
-		input[type='text'] {
+		.dropdown-input {
 			color: var(--bg-slate-100);
 		}
 	}
 	.options-container {
 		color: var(--bg-slate-100);
 		background-color: var(--bg-vanilla-100);
+	}
+	.submenu-header {
+		color: var(--bg-slate-200);
 	}
 }
