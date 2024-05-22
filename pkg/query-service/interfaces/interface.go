@@ -109,6 +109,8 @@ type Reader interface {
 	SearchAllServices(ctx context.Context) (*[]string, error)
 	UpdateIssueLink(ctx context.Context, params *model.UpdateIssueLinkParams) (bool, *model.ApiError)
 	UpdateIssueWebhook(ctx context.Context, params *model.UpdateIssueWebhook) (bool, *model.ApiError)
+	GetDayBugList(ctx context.Context, query *model.GetDayBugParams) (*[]model.DayBugItem, error)
+	GetRepeatIssues(ctx context.Context, query *model.GetRepeatIssuesParams) (*model.FinalJiraIssuesResult, error)
 }
 
 type Querier interface {

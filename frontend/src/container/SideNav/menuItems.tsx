@@ -3,6 +3,7 @@ import ROUTES from 'constants/routes';
 import {
 	AreaChart,
 	BarChart2,
+	BarChartBig,
 	BellDot,
 	BugIcon,
 	Cloudy,
@@ -17,6 +18,7 @@ import {
 	Settings,
 	Slack,
 	UserPlus,
+	Wrench,
 } from 'lucide-react';
 
 import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
@@ -97,7 +99,12 @@ const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.PROJECT_MANAGER,
 		label: 'Project Manager',
-		icon: <Settings size={16} />,
+		icon: <Wrench size={16} />,
+	},
+	{
+		key: ROUTES.JIRA_REPORTS,
+		label: 'Jira Reports',
+		icon: <BarChartBig size={16} />,
 	},
 	// {
 	// 	key: ROUTES.SERVICE_MAP,

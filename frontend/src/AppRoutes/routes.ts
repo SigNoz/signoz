@@ -16,6 +16,7 @@ import {
 	EditRulesPage,
 	ErrorDetails,
 	IngestionSettings,
+	JiraReports,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
@@ -342,6 +343,13 @@ const routes: AppRoutes[] = [
 		component: ProjectManager,
 		isPrivate: true,
 		key: 'PROJECT_MANAGER',
+	},
+	{
+		path: ROUTES.JIRA_REPORTS,
+		exact: true,
+		component: JiraReports,
+		isPrivate: true,
+		key: 'JIRA_REPORTS',
 	},
 ];
 
