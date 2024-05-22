@@ -119,7 +119,7 @@ export const deleteDowntimeHandler = ({
 				hideDeleteDowntimeScheduleModal();
 				clearSearch();
 				notifications.success({
-					message: 'View Deleted Successfully',
+					message: 'Downtime schedule Deleted Successfully',
 				});
 				refetchAllSchedules();
 			},

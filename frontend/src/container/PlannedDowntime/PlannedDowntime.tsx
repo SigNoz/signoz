@@ -3,25 +3,16 @@ import 'dayjs/locale/en';
 
 import { PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Dropdown,
-	Flex,
-	Form,
-	Input,
-	MenuProps,
-	Typography,
-} from 'antd';
+import { Button, Flex, Form, Input, Typography } from 'antd';
 import getAll from 'api/alerts/getAll';
 import { useDeleteDowntimeSchedule } from 'api/plannedDowntime/deleteDowntimeSchedule';
 import {
 	DowntimeSchedules,
-	GetAllDowntimeSchedulesPayloadProps,
 	useGetAllDowntimeSchedules,
 } from 'api/plannedDowntime/getAllDowntimeSchedules';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
-import { CalendarClockIcon, PencilRuler, Search, SortDesc } from 'lucide-react';
+import { Search } from 'lucide-react';
 import React, { ChangeEvent, useState } from 'react';
 import { useQuery } from 'react-query';
 
@@ -47,15 +38,7 @@ export function PlannedDowntime(): JSX.Element {
 		Partial<DowntimeSchedules & { editMode: boolean }>
 	>(defautlInitialValues);
 
-	const [
-		downtimeSchedulePayload,
-		setDowntimeSchedulePayload,
-	] = useState<GetAllDowntimeSchedulesPayloadProps>({
-		acitve: false,
-		recurrence: false,
-	});
-	const downtimeSchedules = useGetAllDowntimeSchedules(downtimeSchedulePayload);
-
+	const downtimeSchedules = useGetAllDowntimeSchedules();
 	const alertOptions = React.useMemo(
 		() =>
 			data?.payload?.map((i) => ({
@@ -72,35 +55,6 @@ export function PlannedDowntime(): JSX.Element {
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setSearchValue(e.target.value);
 	};
-
-	const filterHandler = (
-		downtimePayload: GetAllDowntimeSchedulesPayloadProps,
-	): void => {
-		setDowntimeSchedulePayload(downtimePayload);
-	};
-
-	const filterMenuItems: MenuProps['items'] = [
-		{
-			label: (
-				<div className="create-downtime-menu-item">
-					{' '}
-					<PencilRuler size={14} /> Active
-				</div>
-			),
-			key: 'active',
-			onClick: (): void => filterHandler({ acitve: true, recurrence: false }),
-		},
-		{
-			label: (
-				<div className="create-downtime-menu-item">
-					{' '}
-					<CalendarClockIcon size={14} /> Recurrence
-				</div>
-			),
-			key: 'recurrence',
-			onClick: (): void => filterHandler({ acitve: false, recurrence: true }),
-		},
-	];
 
 	const clearSearch = (): void => {
 		setSearchValue('');
@@ -142,19 +96,6 @@ export function PlannedDowntime(): JSX.Element {
 					Create and manage planned downtimes.
 				</Typography.Text>
 				<Flex className="toolbar">
-					<Dropdown
-						overlayClassName="new-downtime-menu"
-						menu={{ items: filterMenuItems }}
-						placement="bottomLeft"
-					>
-						<Button
-							type="default"
-							className="periscope-btn"
-							icon={<SortDesc size={14} />}
-						>
-							Filter
-						</Button>
-					</Dropdown>
 					<Input
 						placeholder="Search for a planned downtime..."
 						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}

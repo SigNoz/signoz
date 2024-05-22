@@ -319,38 +319,36 @@ export function PlannedDowntimeForm(
 						setRecurrenceOption={setSelectedRecurrenceOption}
 					/>
 				</Form.Item>
-				<Form.Item
-					label="Duration"
-					name={['recurrence', 'duration']}
-					required={false}
-					rules={[
-						{
-							required:
-								selectedRecurrenceOption !== recurrenceOptions.doesNotRepeat.value,
-						},
-					]}
-				>
-					<Input
-						addonAfter={
-							<Select
-								defaultValue="m"
-								value={
-									getDurationInfo(initialValues.schedule?.recurrence?.duration as string)
-										?.unit
-								}
-								onChange={(value): void => setDurationUnit(value)}
-							>
-								<Select.Option value="m">Mins</Select.Option>
-								<Select.Option value="h">Hours</Select.Option>
-							</Select>
-						}
-						className="duration-input"
-						type="number"
-						placeholder="Enter duration"
-						min={0}
-						onWheel={(e): void => e.currentTarget.blur()}
-					/>
-				</Form.Item>
+				{selectedRecurrenceOption !== recurrenceOptions.doesNotRepeat.value && (
+					<Form.Item
+						label="Duration"
+						name={['recurrence', 'duration']}
+						required={false}
+						rules={formValidationRules}
+					>
+						<Input
+							addonAfter={
+								<Select
+									defaultValue="m"
+									value={
+										getDurationInfo(
+											initialValues.schedule?.recurrence?.duration as string,
+										)?.unit
+									}
+									onChange={(value): void => setDurationUnit(value)}
+								>
+									<Select.Option value="m">Mins</Select.Option>
+									<Select.Option value="h">Hours</Select.Option>
+								</Select>
+							}
+							className="duration-input"
+							type="number"
+							placeholder="Enter duration"
+							min={1}
+							onWheel={(e): void => e.currentTarget.blur()}
+						/>
+					</Form.Item>
+				)}{' '}
 				<Form.Item
 					label="Timezone"
 					name="timezone"

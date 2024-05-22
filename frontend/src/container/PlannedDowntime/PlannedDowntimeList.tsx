@@ -12,9 +12,10 @@ import {
 } from 'api/plannedDowntime/getAllDowntimeSchedules';
 import { AxiosError, AxiosResponse } from 'axios';
 import cx from 'classnames';
+import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
 import { CalendarClock, PenLine, Trash2 } from 'lucide-react';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { UseQueryResult } from 'react-query';
 
 import {
@@ -309,6 +310,7 @@ export function PlannedDowntimeList({
 				}),
 		},
 	];
+	const { notifications } = useNotifications();
 
 	const tableData = (downtimeSchedules.data?.data?.data || [])
 		?.filter(
@@ -324,6 +326,12 @@ export function PlannedDowntimeList({
 
 			return { ...data, alertOptions: specificAlertOptions };
 		});
+
+	useEffect(() => {
+		if (downtimeSchedules.isError) {
+			notifications.error(downtimeSchedules.error);
+		}
+	}, [downtimeSchedules.error, downtimeSchedules.isError, notifications]);
 
 	return (
 		<Table<DowntimeSchedulesTableData>

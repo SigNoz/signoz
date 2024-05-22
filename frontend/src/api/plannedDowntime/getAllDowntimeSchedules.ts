@@ -32,17 +32,17 @@ export interface DowntimeSchedules {
 export type PayloadProps = { data: DowntimeSchedules[] };
 
 export const getAllDowntimeSchedules = async (
-	props: GetAllDowntimeSchedulesPayloadProps,
+	props?: GetAllDowntimeSchedulesPayloadProps,
 ): Promise<AxiosResponse<PayloadProps>> =>
 	axios.get('/downtime_schedules', { params: props });
 
 export interface GetAllDowntimeSchedulesPayloadProps {
-	acitve: boolean;
-	recurrence: boolean;
+	active?: boolean;
+	recurrence?: boolean;
 }
 
 export const useGetAllDowntimeSchedules = (
-	props: GetAllDowntimeSchedulesPayloadProps,
+	props?: GetAllDowntimeSchedulesPayloadProps,
 ): UseQueryResult<AxiosResponse<PayloadProps>, AxiosError> =>
 	useQuery<AxiosResponse<PayloadProps>, AxiosError>({
 		queryKey: ['getAllDowntimeSchedules', props],
