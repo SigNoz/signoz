@@ -222,9 +222,10 @@ export function CustomCollapseList(
 		setEditMode,
 	} = props;
 
+	const scheduleTime = schedule?.startTime ? schedule.startTime : createdAt;
 	// Combine time and date
-	const formattedDateAndTime = `Coming up on ⎯ ${formatDateTime(
-		defaultTo(createdAt, ''),
+	const formattedDateAndTime = `Start time ⎯ ${formatDateTime(
+		defaultTo(scheduleTime, ''),
 	)}`;
 
 	return (
