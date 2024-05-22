@@ -20,6 +20,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/converter"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
 
+	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -30,9 +31,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
-	metricsV4 "go.signoz.io/signoz/pkg/query-service/app/metrics/v4"
-	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/formatter"
 
 	yaml "gopkg.in/yaml.v2"
@@ -60,9 +58,7 @@ type ThresholdRule struct {
 	// map of active alerts
 	active map[uint64]*Alert
 
-	queryBuilder   *queryBuilder.QueryBuilder
-	version        string
-	queryBuilderV4 *queryBuilder.QueryBuilder
+	version string
 	// temporalityMap is a map of metric name to temporality
 	// to avoid fetching temporality for the same metric multiple times
 	// querying the v4 table on low cardinal temporality column
@@ -74,6 +70,7 @@ type ThresholdRule struct {
 	lastTimestampWithDatapoints time.Time
 	typ                         string
 
+	querier   interfaces.Querier
 	querierV2 interfaces.Querier
 }
 
@@ -123,19 +120,12 @@ func NewThresholdRule(
 		t.evalWindow = 5 * time.Minute
 	}
 
-	builderOpts := queryBuilder.QueryBuilderOptions{
-		BuildMetricQuery: metricsv3.PrepareMetricQuery,
-		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
-		BuildLogQuery:    logsv3.PrepareLogsQuery,
+	querierOption := querier.QuerierOptions{
+		Reader:        reader,
+		Cache:         nil,
+		KeyGenerator:  queryBuilder.NewKeyGenerator(),
+		FeatureLookup: featureFlags,
 	}
-	t.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, featureFlags)
-
-	builderOptsV4 := queryBuilder.QueryBuilderOptions{
-		BuildMetricQuery: metricsV4.PrepareMetricQuery,
-		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
-		BuildLogQuery:    logsv3.PrepareLogsQuery,
-	}
-	t.queryBuilderV4 = queryBuilder.NewQueryBuilder(builderOptsV4, featureFlags)
 
 	querierOptsV2 := querierV2.QuerierOptions{
 		Reader:        reader,
@@ -144,8 +134,8 @@ func NewThresholdRule(
 		FeatureLookup: featureFlags,
 	}
 
-	querierv2 := querierV2.NewQuerier(querierOptsV2)
-	t.querierV2 = querierv2
+	t.querier = querier.NewQuerier(querierOption)
+	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
 
 	zap.L().Info("creating new ThresholdRule", zap.String("name", t.name), zap.String("id", t.id))
 
@@ -177,7 +167,9 @@ func (r *ThresholdRule) targetVal() float64 {
 		return 0
 	}
 
-	return *r.ruleCondition.Target
+	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
+	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
+	return value.F
 }
 
 func (r *ThresholdRule) matchType() MatchType {
@@ -425,37 +417,6 @@ func (r *ThresholdRule) Unit() string {
 	return ""
 }
 
-func (r *ThresholdRule) CheckCondition(v float64) bool {
-
-	if math.IsNaN(v) {
-		zap.L().Debug("found NaN in rule condition", zap.String("rule", r.Name()))
-		return false
-	}
-
-	if r.ruleCondition.Target == nil {
-		zap.L().Debug("found null target in rule condition", zap.String("rule", r.Name()))
-		return false
-	}
-
-	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
-
-	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
-
-	zap.L().Info("Checking condition for rule", zap.String("rule", r.Name()), zap.String("converter", unitConverter.Name()), zap.Float64("value", v), zap.Float64("target", value.F), zap.String("compareOp", string(r.ruleCondition.CompareOp)))
-	switch r.ruleCondition.CompareOp {
-	case ValueIsEq:
-		return v == value.F
-	case ValueIsNotEq:
-		return v != value.F
-	case ValueIsBelow:
-		return v < value.F
-	case ValueIsAbove:
-		return v > value.F
-	default:
-		return false
-	}
-}
-
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 
 	// todo(srikanthccv): make this configurable
@@ -472,9 +433,10 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 		return &v3.QueryRangeParamsV3{
 			Start:          start,
 			End:            end,
-			Step:           60,
+			Step:           int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
 			CompositeQuery: r.ruleCondition.CompositeQuery,
 			Variables:      make(map[string]interface{}, 0),
+			NoCache:        true,
 		}
 	}
 
@@ -488,8 +450,10 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	return &v3.QueryRangeParamsV3{
 		Start:          start,
 		End:            end,
-		Step:           60,
+		Step:           int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
 		CompositeQuery: r.ruleCondition.CompositeQuery,
+		Variables:      make(map[string]interface{}, 0),
+		NoCache:        true,
 	}
 }
 
@@ -742,6 +706,7 @@ func (r *ThresholdRule) GetSelectedQuery() string {
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch clickhouse.Conn) (Vector, error) {
 	if r.ruleCondition == nil || r.ruleCondition.CompositeQuery == nil {
 		r.SetHealth(HealthBad)
+		r.SetLastError(fmt.Errorf("no rule condition"))
 		return nil, fmt.Errorf("invalid rule condition")
 	}
 
@@ -749,8 +714,10 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	err := r.populateTemporality(ctx, params, ch)
 	if err != nil {
 		r.SetHealth(HealthBad)
-		return nil, fmt.Errorf("error while setting temporality")
+		zap.L().Error("failed to set temporality", zap.String("rule", r.Name()), zap.Error(err))
+		return nil, fmt.Errorf("internal error while setting temporality")
 	}
+
 	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
 		if logsv3.EnrichmentRequired(params) {
@@ -760,19 +727,27 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 		}
 	}
 
-	results, err, errQuriesByName := r.querierV2.QueryRange(ctx, params, map[string]v3.AttributeKey{})
+	var results []*v3.Result
+	var errQuriesByName map[string]error
+
+	if r.version == "v4" {
+		results, err, errQuriesByName = r.querierV2.QueryRange(ctx, params, map[string]v3.AttributeKey{})
+	} else {
+		results, err, errQuriesByName = r.querier.QueryRange(ctx, params, map[string]v3.AttributeKey{})
+	}
 
 	if err != nil {
 		zap.L().Error("failed to get alert query result", zap.String("rule", r.Name()), zap.Error(err), zap.Any("queries", errQuriesByName))
 		r.SetHealth(HealthBad)
-		return nil, err
+		return nil, fmt.Errorf("internal error while querying")
 	}
 
 	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		results, err = postprocess.PostProcessResult(results, params)
 		if err != nil {
 			r.SetHealth(HealthBad)
-			return nil, err
+			zap.L().Error("failed to post process result", zap.String("rule", r.Name()), zap.Error(err))
+			return nil, fmt.Errorf("internal error while post processing")
 		}
 	}
 
@@ -786,9 +761,8 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 		}
 	}
 
-	if queryResult == nil {
-		r.SetHealth(HealthBad)
-		return nil, fmt.Errorf("no result found for query %s", selectedQuery)
+	if queryResult != nil && len(queryResult.Series) > 0 {
+		r.lastTimestampWithDatapoints = time.Now()
 	}
 
 	var resultVector Vector

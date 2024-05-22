@@ -47,6 +47,7 @@ ee/query-service/signoz.db
 ee/query-service/tests/test-deploy/data/
 
 # local data
+*.backup
 *.db
 /deploy/docker/clickhouse-setup/data/
 /deploy/docker-swarm/clickhouse-setup/data/
