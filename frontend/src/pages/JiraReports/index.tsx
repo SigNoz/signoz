@@ -121,7 +121,7 @@ function JiraReports(): JSX.Element {
 	const [tableTotal, setTableTotal] = useState<number>(0);
 	// 用于控制排序的状态
 	const [sortedInfo, setSortedInfo] = useState<Sorts>({});
-	const [pieData, setPieData] = useState(null);
+	const [pieData, setPieData] = useState<PieData | null>(null);
 
 	const xTimeListMemo = useMemo(() => {
 		const list: Dayjs[] = [];
@@ -223,55 +223,6 @@ function JiraReports(): JSX.Element {
 		return data.data || null;
 	};
 
-	const setIssuePie = useCallback((pieData: PieData) => {
-		if (pieChartRef.current !== undefined) {
-			pieChartRef.current.destroy();
-		}
-		console.log('chartRef.current', chartRef.current);
-		if (!chartRef.current) return;
-		// @ts-ignore
-		pieChartRef.current = new Chart(chartRef.current, {
-			type: 'pie', // 指定图表类型为饼图
-			data: {
-				labels: Object.keys(pieData),
-				datasets: [
-					{
-						data: Object.keys(pieData).map((key) => pieData[key as keyof PieData]),
-						backgroundColor: [
-							'rgb(255, 99, 132)',
-							'rgb(54, 162, 235)',
-							'rgb(255, 205, 86)',
-							'#1f77b4',
-							'#ff7f0e',
-							'#2ca02c',
-							'#d62728',
-						],
-						hoverOffset: 4,
-					},
-				],
-			},
-			options: {
-				responsive: true, // 图表将会响应式地调整大小
-				plugins: {
-					legend: {
-						position: 'bottom', // 图例的位置
-						labels: {
-							color: isDarkMode ? 'white' : 'black',
-						},
-					},
-					title: {
-						display: true,
-						font: {
-							size: 20,
-						},
-						color: isDarkMode ? 'white' : 'black',
-						text: 'Different status of issue count',
-					},
-				},
-			},
-		});
-	}, []);
-
 	const getTableList = async (
 		pagination: Pagination | null,
 		sortParam: string,
@@ -328,7 +279,6 @@ function JiraReports(): JSX.Element {
 		await getBugList();
 		const data = await getIssuesPie();
 		if (data) {
-			setIssuePie(data);
 			setPieData(data);
 		} else {
 			setPieData(null);
@@ -364,6 +314,16 @@ function JiraReports(): JSX.Element {
 			title: 'Type',
 			dataIndex: 'issue_type',
 			width: 50,
+			render: (value: string, record: DataType): JSX.Element => {
+				const lib: { [key: string]: string } = {
+					'story bug': 'Alert Bug',
+					Story: 'Alert',
+				};
+				if (lib[value.toLocaleLowerCase()]) {
+					return (<>{lib[value.toLocaleLowerCase()]}</>) as JSX.Element;
+				}
+				return (<>{value}</>) as JSX.Element;
+			},
 		},
 		{
 			title: 'Issue Status',
@@ -400,7 +360,6 @@ function JiraReports(): JSX.Element {
 	];
 
 	const handleTableChange: OnChange = (pagination, filters, sorter) => {
-		console.log('params', pagination, filters, sorter);
 		setSortedInfo(sorter as Sorts);
 		setTableParams((prev) => {
 			return {
@@ -430,20 +389,58 @@ function JiraReports(): JSX.Element {
 		handleSearch();
 	}, [currentProject]);
 
-	console.log('pieDataEmpty', pieDataEmpty);
+	useEffect(() => {
+		if (pieChartRef.current !== undefined) {
+			pieChartRef.current.destroy();
+		}
+		// console.log('chartRef.current', chartRef.current);
+		if (!chartRef.current || pieDataEmpty || !pieData) return;
+		// @ts-ignore
+		pieChartRef.current = new Chart(chartRef.current, {
+			type: 'pie', // 指定图表类型为饼图
+			data: {
+				labels: Object.keys(pieData),
+				datasets: [
+					{
+						data: Object.keys(pieData).map((key) => pieData[key as keyof PieData]),
+						backgroundColor: [
+							'rgb(255, 99, 132)',
+							'rgb(54, 162, 235)',
+							'rgb(255, 205, 86)',
+							'#1f77b4',
+							'#ff7f0e',
+							'#2ca02c',
+							'#d62728',
+						],
+						hoverOffset: 4,
+					},
+				],
+			},
+			options: {
+				responsive: true, // 图表将会响应式地调整大小
+				plugins: {
+					legend: {
+						position: 'bottom', // 图例的位置
+						labels: {
+							color: isDarkMode ? 'white' : 'black',
+						},
+					},
+					title: {
+						display: true,
+						font: {
+							size: 24,
+						},
+						padding: 20,
+						color: isDarkMode ? 'white' : 'black',
+						text: 'Different status of issue count',
+					},
+				},
+			},
+		});
+	}, [pieDataEmpty, pieData]);
 
 	return (
 		<>
-			{/* <div>项目筛选</div>
-			<div>时间筛选</div>
-			<div>
-				查询类别筛选：
-				bug状态为not fix的，bug状态为ignore的，折线图，以天为单位
-			</div>
-			<div>
-				统计出jira_issue表中出现重复上报的issue以及频次，以及总次数，jira当期状态，table
-			</div>
-			<div>统计出不同issue状态数量占比，饼状图</div> */}
 			<h1 style={isDarkMode ? { color: 'white' } : { color: 'black' }}>
 				Jira Reports
 			</h1>
@@ -499,17 +496,28 @@ function JiraReports(): JSX.Element {
 				</div>
 				<div
 					style={{
-						width: 360,
+						width: 'calc(100vw - 1200px)',
+						height: 460,
 						display: 'flex',
-						alignItems: 'center',
 						justifyContent: 'center',
 					}}
 				>
-					<canvas
-						ref={chartRef}
-						style={pieDataEmpty ? { display: 'none' } : { display: 'block' }}
-					/>
-					<p style={pieDataEmpty ? { display: 'block' } : { display: 'none' }}>
+					<div
+						style={
+							pieDataEmpty
+								? { display: 'none', width: '100%' }
+								: { display: 'block', width: '100%' }
+						}
+					>
+						<canvas ref={chartRef} style={{ width: 'calc(100vw - 1200px)' }} />
+					</div>
+					<p
+						style={
+							pieDataEmpty
+								? { display: 'block', width: '100%', marginTop: 240 }
+								: { display: 'none', width: '100%', marginTop: 240 }
+						}
+					>
 						<span style={{ fontSize: '1.5rem', color: grey.primary }}>No data</span>
 					</p>
 				</div>
