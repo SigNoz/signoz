@@ -10,6 +10,7 @@ import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashbo
 import useAxiosError from 'hooks/useAxiosError';
 import useTabVisibility from 'hooks/useTabFocus';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
+import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
 import omitBy from 'lodash-es/omitBy';
@@ -37,6 +38,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
 import { IDashboardContext } from './types';
+import { sortLayout } from './util';
 
 const DashboardContext = createContext<IDashboardContext>({
 	isDashboardSliderOpen: false,
@@ -47,6 +49,8 @@ const DashboardContext = createContext<IDashboardContext>({
 	selectedDashboard: {} as Dashboard,
 	dashboardId: '',
 	layouts: [],
+	panelMap: {},
+	setPanelMap: () => {},
 	setLayouts: () => {},
 	setSelectedDashboard: () => {},
 	updatedTimeRef: {} as React.MutableRefObject<Dayjs | null>,
@@ -93,6 +97,10 @@ export function DashboardProvider({
 	);
 
 	const [layouts, setLayouts] = useState<Layout[]>([]);
+
+	const [panelMap, setPanelMap] = useState<
+		Record<string, { widgets: Layout[]; collapsed: boolean }>
+	>({});
 
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 
@@ -199,7 +207,9 @@ export function DashboardProvider({
 
 					dashboardRef.current = updatedDashboardData;
 
-					setLayouts(getUpdatedLayout(updatedDashboardData.data.layout));
+					setLayouts(sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)));
+
+					setPanelMap(defaultTo(updatedDashboardData?.data?.panelMap, {}));
 				}
 
 				if (
@@ -235,7 +245,11 @@ export function DashboardProvider({
 
 							updatedTimeRef.current = dayjs(updatedDashboardData.updated_at);
 
-							setLayouts(getUpdatedLayout(updatedDashboardData.data.layout));
+							setLayouts(
+								sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)),
+							);
+
+							setPanelMap(defaultTo(updatedDashboardData.data.panelMap, {}));
 						},
 					});
 
@@ -256,7 +270,11 @@ export function DashboardProvider({
 							updatedDashboardData.data.layout,
 						)
 					) {
-						setLayouts(getUpdatedLayout(updatedDashboardData.data.layout));
+						setLayouts(
+							sortLayout(getUpdatedLayout(updatedDashboardData.data.layout)),
+						);
+
+						setPanelMap(defaultTo(updatedDashboardData.data.panelMap, {}));
 					}
 				}
 			},
@@ -323,7 +341,9 @@ export function DashboardProvider({
 			selectedDashboard,
 			dashboardId,
 			layouts,
+			panelMap,
 			setLayouts,
+			setPanelMap,
 			setSelectedDashboard,
 			updatedTimeRef,
 			setToScrollWidgetId,
@@ -339,6 +359,7 @@ export function DashboardProvider({
 			selectedDashboard,
 			dashboardId,
 			layouts,
+			panelMap,
 			toScrollWidgetId,
 			updateLocalStorageDashboardVariables,
 			currentDashboard,

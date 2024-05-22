@@ -282,7 +282,7 @@ function SaveView(): JSX.Element {
 			<div className="save-view-content">
 				<Typography.Title className="title">Views</Typography.Title>
 				<Typography.Text className="subtitle">
-					Manage your saved views for logs.
+					Manage your saved views for {ROUTES_VS_SOURCEPAGE[pathname]}.
 				</Typography.Text>
 				<Input
 					placeholder="Search for views..."

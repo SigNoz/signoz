@@ -167,7 +167,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 
 	case []interface{}:
 		if len(x) == 0 {
-			return ""
+			return "[]"
 		}
 		switch x[0].(type) {
 		case string:
@@ -184,7 +184,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
 		default:
 			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
-			return ""
+			return "[]"
 		}
 	default:
 		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))

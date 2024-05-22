@@ -1,7 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import './NewWidget.styles.scss';
+
 import { LockFilled, WarningOutlined } from '@ant-design/icons';
-import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
+import { Button, Modal, Space, Tooltip, Typography } from 'antd';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { chartHelpMessage } from 'components/facingIssueBtn/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -104,7 +107,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		return defaultTo(
 			selectedWidget,
 			getDefaultWidgetData(widgetId || '', selectedGraph),
-		);
+		) as Widgets;
 	}, [query, selectedGraph, widgets]);
 
 	const [selectedWidget, setSelectedWidget] = useState(getWidget());
@@ -257,7 +260,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 					i: widgetId || '',
 					w: 6,
 					x: 0,
-					h: 3,
+					h: 6,
 					y: 0,
 				},
 				...updatedLayout,
@@ -268,28 +271,50 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			uuid: selectedDashboard.uuid,
 			data: {
 				...selectedDashboard.data,
-				widgets: [
-					...preWidgets,
-					{
-						...(selectedWidget || ({} as Widgets)),
-						description: selectedWidget?.description || '',
-						timePreferance: selectedTime.enum,
-						isStacked: selectedWidget?.isStacked || false,
-						opacity: selectedWidget?.opacity || '1',
-						nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
-						title: selectedWidget?.title,
-						yAxisUnit: selectedWidget?.yAxisUnit,
-						panelTypes: graphType,
-						query: currentQuery,
-						thresholds: selectedWidget?.thresholds,
-						softMin: selectedWidget?.softMin || 0,
-						softMax: selectedWidget?.softMax || 0,
-						fillSpans: selectedWidget?.fillSpans,
-						selectedLogFields: selectedWidget?.selectedLogFields || [],
-						selectedTracesFields: selectedWidget?.selectedTracesFields || [],
-					},
-					...afterWidgets,
-				],
+				widgets: isNewDashboard
+					? [
+							...afterWidgets,
+							{
+								...(selectedWidget || ({} as Widgets)),
+								description: selectedWidget?.description || '',
+								timePreferance: selectedTime.enum,
+								isStacked: selectedWidget?.isStacked || false,
+								opacity: selectedWidget?.opacity || '1',
+								nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
+								title: selectedWidget?.title,
+								yAxisUnit: selectedWidget?.yAxisUnit,
+								panelTypes: graphType,
+								query: currentQuery,
+								thresholds: selectedWidget?.thresholds,
+								softMin: selectedWidget?.softMin || 0,
+								softMax: selectedWidget?.softMax || 0,
+								fillSpans: selectedWidget?.fillSpans,
+								selectedLogFields: selectedWidget?.selectedLogFields || [],
+								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
+							},
+					  ]
+					: [
+							...preWidgets,
+							{
+								...(selectedWidget || ({} as Widgets)),
+								description: selectedWidget?.description || '',
+								timePreferance: selectedTime.enum,
+								isStacked: selectedWidget?.isStacked || false,
+								opacity: selectedWidget?.opacity || '1',
+								nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
+								title: selectedWidget?.title,
+								yAxisUnit: selectedWidget?.yAxisUnit,
+								panelTypes: graphType,
+								query: currentQuery,
+								thresholds: selectedWidget?.thresholds,
+								softMin: selectedWidget?.softMin || 0,
+								softMax: selectedWidget?.softMax || 0,
+								fillSpans: selectedWidget?.fillSpans,
+								selectedLogFields: selectedWidget?.selectedLogFields || [],
+								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
+							},
+							...afterWidgets,
+					  ],
 				layout: [...updatedLayout],
 			},
 		};
@@ -402,7 +427,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 
 	return (
 		<Container>
-			<Flex justify="space-between" align="center">
+			<div className="facing-issue-btn-container">
 				<FacingIssueBtn
 					attributes={{
 						uuid: selectedDashboard?.uuid,
@@ -413,16 +438,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						screen: 'Dashboard list page',
 					}}
 					eventName="Dashboard: Facing Issues in dashboard"
-					buttonText="Facing Issues in dashboard"
-					message={`Hi Team,
-
-I am facing issues configuring dashboard in SigNoz. Here are my dashboard details
-				
-Name: ${selectedDashboard?.data.title || ''}
-Panel type: ${graphType}
-Dashboard Id: ${selectedDashboard?.uuid || ''}
-				
-Thanks`}
+					buttonText="Need help with this chart?"
+					message={chartHelpMessage(selectedDashboard, graphType)}
+					onHoverText="Click here to get help in creating chart"
 				/>
 				<ButtonContainer>
 					{isSaveDisabled && (
@@ -451,7 +469,7 @@ Thanks`}
 					)}
 					<Button onClick={onClickDiscardHandler}>Discard Changes</Button>
 				</ButtonContainer>
-			</Flex>
+			</div>
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>

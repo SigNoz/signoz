@@ -12,6 +12,7 @@ import {
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { alertHelpMessage } from 'components/facingIssueBtn/util';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -523,6 +524,7 @@ function FormAlertRules({
 							runQuery={handleRunQuery}
 							alertDef={alertDef}
 							panelType={panelType || PANEL_TYPES.TIME_SERIES}
+							key={currentQuery.queryType}
 						/>
 
 						<RuleOptions
@@ -584,17 +586,9 @@ function FormAlertRules({
 						}}
 						className="facing-issue-btn"
 						eventName="Alert: Facing Issues in alert"
-						buttonText="Facing Issues in alert"
-						message={`Hi Team,
-
-I am facing issues configuring alerts in SigNoz. Here are my alert rule details
-
-Name: ${alertDef?.alert || ''}
-Alert Type: ${alertDef?.alertType || ''}
-State: ${(alertDef as any)?.state || ''}
-Alert Id: ${ruleId}
-
-Thanks`}
+						buttonText="Need help with this alert?"
+						message={alertHelpMessage(alertDef, ruleId)}
+						onHoverText="Click here to get help with this alert"
 					/>
 				</Col>
 			</PanelContainer>

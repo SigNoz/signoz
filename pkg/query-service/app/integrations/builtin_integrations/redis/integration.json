@@ -37,18 +37,8 @@
   },
   "connection_tests": {
     "logs": {
-      "op": "AND",
-      "items": [
-        {
-          "key": {
-            "type": "tag",
-            "key": "source",
-            "dataType": "string"
-          },
-          "op": "=",
-          "value": "redis"
-        }
-      ]
+      "attribute_key": "source",
+      "attribute_value": "redis"
     }
   },
   "data_collected": {

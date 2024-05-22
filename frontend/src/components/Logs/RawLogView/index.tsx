@@ -21,6 +21,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
@@ -90,12 +91,12 @@ function RawLogView({
 	const text = useMemo(
 		() =>
 			typeof data.timestamp === 'string'
-				? `${dayjs(data.timestamp).format()} | ${attributesText} ${severityText} ${
-						data.body
-				  }`
-				: `${dayjs(
-						data.timestamp / 1e6,
-				  ).format()} | ${attributesText} ${severityText} ${data.body}`,
+				? `${dayjs(data.timestamp).format(
+						'YYYY-MM-DD HH:mm:ss.SSS',
+				  )} | ${attributesText} ${severityText} ${data.body}`
+				: `${dayjs(data.timestamp / 1e6).format(
+						'YYYY-MM-DD HH:mm:ss.SSS',
+				  )} | ${attributesText} ${severityText} ${data.body}`,
 		[data.timestamp, data.body, severityText, attributesText],
 	);
 
@@ -144,7 +145,9 @@ function RawLogView({
 
 	const html = useMemo(
 		() => ({
-			__html: convert.toHtml(dompurify.sanitize(text)),
+			__html: convert.toHtml(
+				dompurify.sanitize(text, { FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS] }),
+			),
 		}),
 		[text],
 	);
