@@ -43,7 +43,7 @@ function CreatePipelineButton({
 		<ButtonContainer>
 			<TextToolTip
 				text={t('learn_more')}
-				url="https://signoz.io/docs/logs-pipelines/introduction/"
+				url="https://signoz.io/docs/logs-pipelines/introduction/?utm_source=product&utm_medium=pipelines-tab"
 			/>
 			{isAddNewPipelineVisible && (
 				<CustomButton

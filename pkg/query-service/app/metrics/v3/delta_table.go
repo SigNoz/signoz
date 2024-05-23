@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"math"
 
+	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tableName string) (string, error) {
+func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery) (string, error) {
 
 	// round up to the nearest multiple of 60
 	step := int64(math.Ceil(float64(end-start+1)/1000/60) * 60)
@@ -43,17 +44,17 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tab
 		}
 	}
 
-	filterSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, metricQueryGroupBy, mq)
+	filterSubQuery, err := helpers.PrepareTimeseriesFilterQueryV3(start, end, mq)
 	if err != nil {
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	queryTmpl :=
 		"SELECT %s toStartOfHour(now()) as ts," + // now() has no menaing & used as a placeholder for ts
 			" %s as value" +
-			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
+			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_V4_TABLENAME +
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +

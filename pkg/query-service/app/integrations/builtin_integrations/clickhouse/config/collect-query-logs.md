@@ -78,3 +78,5 @@ Make the collector config file available to your otel collector and use it by ad
 ```
 Note: the collector can use multiple config files, specified by multiple occurrences of the --config flag.
 
+Also note that only 1 collector instance should be configured to collect query_logs.  
+Using multiple collector instances or replicas with this config will lead to duplicate logs.

@@ -11,6 +11,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
 
 	"go.uber.org/zap"
@@ -52,6 +53,8 @@ func main() {
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
+	// Allow using the consistent naming with the signoz collector
+	flag.StringVar(&cluster, "cluster-name", "cluster", "(cluster name - defaults to 'cluster')")
 	flag.IntVar(&maxIdleConns, "max-idle-conns", 50, "(number of connections to maintain in the pool, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
 	flag.IntVar(&maxOpenConns, "max-open-conns", 100, "(max connections for use at any time, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
 	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection, only used with clickhouse if not set in ClickHouseUrl env var DSN.)")
@@ -88,6 +91,12 @@ func main() {
 		zap.L().Warn("No JWT secret key is specified.")
 	} else {
 		zap.L().Info("JWT secret key set successfully.")
+	}
+
+	if err := migrate.Migrate(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+		zap.L().Error("Failed to migrate", zap.Error(err))
+	} else {
+		zap.L().Info("Migration successful")
 	}
 
 	server, err := app.NewServer(serverOptions)

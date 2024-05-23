@@ -51,6 +51,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
+	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -71,11 +72,17 @@ const (
 	signozTraceTableName       = "distributed_signoz_index_v2"
 	signozTraceLocalTableName  = "signoz_index_v2"
 	signozMetricDBName         = "signoz_metrics"
-	signozSampleLocalTableName = "samples_v2"
-	signozSampleTableName      = "distributed_samples_v2"
-	signozTSTableName          = "distributed_time_series_v2"
-	signozTSTableNameV4        = "distributed_time_series_v4"
-	signozTSTableNameV41Day    = "distributed_time_series_v4_1day"
+	signozSampleLocalTableName = "samples_v4"
+	signozSampleTableName      = "distributed_samples_v4"
+
+	signozTSLocalTableNameV4 = "time_series_v4"
+	signozTSTableNameV4      = "distributed_time_series_v4"
+
+	signozTSLocalTableNameV46Hrs = "time_series_v4_6hrs"
+	signozTSTableNameV46Hrs      = "distributed_time_series_v4_6hrs"
+
+	signozTSLocalTableNameV41Day = "time_series_v4_1day"
+	signozTSTableNameV41Day      = "distributed_time_series_v4_1day"
 
 	minTimespanForProgressiveSearch       = time.Hour
 	minTimespanForProgressiveSearchMargin = time.Minute
@@ -2381,15 +2388,17 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 		}
 
 	case constants.MetricsTTL:
-		tableName := signozMetricDBName + "." + signozSampleLocalTableName
-		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
-		if err != nil {
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing ttl_status check sql query")}
+		tableNames := []string{signozMetricDBName + "." + signozSampleLocalTableName, signozMetricDBName + "." + signozTSLocalTableNameV4, signozMetricDBName + "." + signozTSLocalTableNameV46Hrs, signozMetricDBName + "." + signozTSLocalTableNameV41Day}
+		for _, tableName := range tableNames {
+			statusItem, err := r.checkTTLStatusItem(ctx, tableName)
+			if err != nil {
+				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
+			}
+			if statusItem.Status == constants.StatusPending {
+				return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
+			}
 		}
-		if statusItem.Status == constants.StatusPending {
-			return nil, &model.ApiError{Typ: model.ErrorConflict, Err: fmt.Errorf("TTL is already running")}
-		}
-		go func(tableName string) {
+		metricTTL := func(tableName string) {
 			_, dbErr := r.localDB.Exec("INSERT INTO ttl_status (transaction_id, created_at, updated_at, table_name, ttl, status, cold_storage_ttl) VALUES (?, ?, ?, ?, ?, ?, ?)", uuid, time.Now(), time.Now(), tableName, params.DelDuration, constants.StatusPending, coldStorageDuration)
 			if dbErr != nil {
 				zap.L().Error("Error in inserting to ttl_status table", zap.Error(dbErr))
@@ -2433,7 +2442,10 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				zap.L().Error("Error in processing ttl_status update sql query", zap.Error(dbErr))
 				return
 			}
-		}(tableName)
+		}
+		for _, tableName := range tableNames {
+			go metricTTL(tableName)
+		}
 	case constants.LogsTTL:
 		tableName := r.logsDB + "." + r.logsLocalTable
 		statusItem, err := r.checkTTLStatusItem(ctx, tableName)
@@ -3258,7 +3270,7 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []s
 
 func (r *ClickHouseReader) GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error) {
 
-	queryStr := fmt.Sprintf("SELECT count() as count from %s.%s where metric_name not like 'signoz_%%' group by metric_name order by count desc;", signozMetricDBName, signozTSTableName)
+	queryStr := fmt.Sprintf("SELECT countDistinct(fingerprint) as count from %s.%s where metric_name not like 'signoz_%%' group by metric_name order by count desc;", signozMetricDBName, signozTSTableNameV41Day)
 
 	rows, _ := r.db.Query(ctx, queryStr)
 
@@ -4570,6 +4582,11 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 			return nil, err
 		}
 		groupBy, groupAttributes, groupAttributesArray, metricPoint := readRow(vars, columnNames)
+		// skip the point if the value is NaN or Inf
+		// are they ever useful enough to be returned?
+		if math.IsNaN(metricPoint.Value) || math.IsInf(metricPoint.Value, 0) {
+			continue
+		}
 		sort.Strings(groupBy)
 		key := strings.Join(groupBy, "")
 		if _, exists := seriesToAttrs[key]; !exists {
@@ -4700,11 +4717,11 @@ func getPersonalisedError(err error) error {
 	}
 	zap.L().Error("error while reading result", zap.Error(err))
 	if strings.Contains(err.Error(), "code: 307") {
-		return errors.New("query is consuming too much resources, please reach out to the team")
+		return chErrors.ErrResourceBytesLimitExceeded
 	}
 
 	if strings.Contains(err.Error(), "code: 159") {
-		return errors.New("Query is taking too long to run, please reach out to the team")
+		return chErrors.ErrResourceTimeLimitExceeded
 	}
 	return err
 }

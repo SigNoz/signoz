@@ -1005,6 +1005,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
 			// Formula query
+			// Check if the queries used in the expression can be joined
 			if query.QueryName != query.Expression {
 				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
 				if err != nil {
@@ -1039,10 +1040,12 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				}
 			}
 
+			// If the step interval is less than the minimum allowed step interval, set it to the minimum allowed step interval
 			if minStep := common.MinAllowedStepInterval(queryRangeParams.Start, queryRangeParams.End); query.StepInterval < minStep {
 				query.StepInterval = minStep
 			}
 
+			// Remove the time shift function from the list of functions and set the shift by value
 			var timeShiftBy int64
 			if len(query.Functions) > 0 {
 				for idx := range query.Functions {
@@ -1062,16 +1065,45 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			}
 			query.ShiftBy = timeShiftBy
 
+			// for metrics v3
+			// if the aggregate operator is a histogram quantile, and user has not forgotten
+			// the le tag in the group by then add the le tag to the group by
+			if query.AggregateOperator == v3.AggregateOperatorHistQuant50 ||
+				query.AggregateOperator == v3.AggregateOperatorHistQuant75 ||
+				query.AggregateOperator == v3.AggregateOperatorHistQuant90 ||
+				query.AggregateOperator == v3.AggregateOperatorHistQuant95 ||
+				query.AggregateOperator == v3.AggregateOperatorHistQuant99 {
+				found := false
+				for _, tag := range query.GroupBy {
+					if tag.Key == "le" {
+						found = true
+						break
+					}
+				}
+				if !found {
+					query.GroupBy = append(
+						query.GroupBy,
+						v3.AttributeKey{
+							Key:      "le",
+							DataType: v3.AttributeKeyDataTypeString,
+							Type:     v3.AttributeKeyTypeTag,
+							IsColumn: false,
+						},
+					)
+				}
+			}
+
 			if query.Filters == nil || len(query.Filters.Items) == 0 {
 				continue
 			}
+
 			for idx := range query.Filters.Items {
 				item := &query.Filters.Items[idx]
 				value := item.Value
 				if value != nil {
 					switch x := value.(type) {
 					case string:
-						variableName := strings.Trim(x, "{{ . }}")
+						variableName := strings.Trim(x, "{[.$]}")
 						if _, ok := queryRangeParams.Variables[variableName]; ok {
 							item.Value = queryRangeParams.Variables[variableName]
 						}
@@ -1079,12 +1111,19 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 						if len(x) > 0 {
 							switch x[0].(type) {
 							case string:
-								variableName := strings.Trim(x[0].(string), "{{ . }}")
+								variableName := strings.Trim(x[0].(string), "{[.$]}")
 								if _, ok := queryRangeParams.Variables[variableName]; ok {
 									item.Value = queryRangeParams.Variables[variableName]
 								}
 							}
 						}
+					}
+				}
+
+				if v3.FilterOperator(strings.ToLower((string(item.Operator)))) != v3.FilterOperatorIn && v3.FilterOperator(strings.ToLower((string(item.Operator)))) != v3.FilterOperatorNotIn {
+					// the value type should not be multiple values
+					if _, ok := item.Value.([]interface{}); ok {
+						return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("multiple values %s are not allowed for operator `%s` for key `%s`", item.Value, item.Operator, item.Key.Key)}
 					}
 				}
 			}
@@ -1104,6 +1143,13 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			if chQuery.Disabled {
 				continue
 			}
+
+			for name, value := range queryRangeParams.Variables {
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
+				chQuery.Query = strings.Replace(chQuery.Query, fmt.Sprintf("$%s", name), fmt.Sprint(value), -1)
+			}
+
 			tmpl := template.New("clickhouse-query")
 			tmpl, err := tmpl.Parse(chQuery.Query)
 			if err != nil {
@@ -1128,6 +1174,13 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			if promQuery.Disabled {
 				continue
 			}
+
+			for name, value := range queryRangeParams.Variables {
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("{{%s}}", name), fmt.Sprint(value), -1)
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("[[%s]]", name), fmt.Sprint(value), -1)
+				promQuery.Query = strings.Replace(promQuery.Query, fmt.Sprintf("$%s", name), fmt.Sprint(value), -1)
+			}
+
 			tmpl := template.New("prometheus-query")
 			tmpl, err := tmpl.Parse(promQuery.Query)
 			if err != nil {
