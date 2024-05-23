@@ -153,19 +153,19 @@ function WidgetHeader({
 				disabled: !editWidget,
 			},
 			{
+				key: MenuItemKeys.Download,
+				icon: <CloudDownloadOutlined />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Download],
+				isVisible: widget.panelTypes === PANEL_TYPES.TABLE,
+				disabled: false,
+			},
+			{
 				key: MenuItemKeys.Delete,
 				icon: <DeleteOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Delete) || false,
 				disabled: !deleteWidget,
 				danger: true,
-			},
-			{
-				key: MenuItemKeys.Download,
-				icon: <CloudDownloadOutlined />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Download],
-				isVisible: widget.panelTypes === PANEL_TYPES.TABLE,
-				disabled: false,
 			},
 			{
 				key: MenuItemKeys.CreateAlerts,
