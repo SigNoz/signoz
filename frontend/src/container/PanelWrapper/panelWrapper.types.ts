@@ -22,7 +22,7 @@ export type PanelWrapperProps = {
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	onDragSelect: (start: number, end: number) => void;
 	selectedGraph?: PANEL_TYPES;
-	tableProcessedDataRef: React.MutableRefObject<RowData[]>;
+	tableProcessedDataRef?: React.MutableRefObject<RowData[]>;
 };
 
 export type TooltipData = {
