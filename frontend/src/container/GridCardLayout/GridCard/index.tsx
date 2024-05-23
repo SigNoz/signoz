@@ -8,6 +8,7 @@ import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getTimeString from 'lib/getTimeString';
+import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useEffect, useRef, useState } from 'react';
@@ -124,6 +125,16 @@ function GridCardGraph({
 			},
 		};
 	});
+
+	useEffect(() => {
+		if (!isEqual(updatedQuery, requestData.query)) {
+			setRequestData((prev) => ({
+				...prev,
+				query: updatedQuery,
+			}));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [updatedQuery]);
 
 	const queryResponse = useGetQueryRange(
 		{
