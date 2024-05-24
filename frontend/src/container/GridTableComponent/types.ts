@@ -10,6 +10,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 export type GridTableComponentProps = {
 	query: Query;
 	thresholds?: ThresholdProps[];
+	tableProcessedDataRef?: React.MutableRefObject<RowData[]>;
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 

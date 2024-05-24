@@ -61,6 +61,7 @@ type ManagerOptions struct {
 	ResendDelay  time.Duration
 	DisableRules bool
 	FeatureFlags interfaces.FeatureLookup
+	Reader       interfaces.Reader
 }
 
 // The Manager manages recording and alerting rules.
@@ -79,6 +80,7 @@ type Manager struct {
 	logger log.Logger
 
 	featureFlags interfaces.FeatureLookup
+	reader       interfaces.Reader
 }
 
 func defaultOptions(o *ManagerOptions) *ManagerOptions {
@@ -119,6 +121,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 		block:        make(chan struct{}),
 		logger:       o.Logger,
 		featureFlags: o.FeatureFlags,
+		reader:       o.Reader,
 	}
 	return m, nil
 }
@@ -516,6 +519,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 			r,
 			ThresholdRuleOpts{},
 			m.featureFlags,
+			m.reader,
 		)
 
 		if err != nil {
@@ -879,6 +883,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 				SendAlways:    true,
 			},
 			m.featureFlags,
+			m.reader,
 		)
 
 		if err != nil {
