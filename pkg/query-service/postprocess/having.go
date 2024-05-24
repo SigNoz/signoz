@@ -1,4 +1,4 @@
-package app
+package postprocess
 
 import (
 	"strings"
@@ -22,6 +22,10 @@ func applyHavingClause(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 						result.Series[i].Points = append(result.Series[i].Points[:j], result.Series[i].Points[j+1:]...)
 						j--
 					}
+				}
+				if len(result.Series[i].Points) == 0 {
+					result.Series = append(result.Series[:i], result.Series[i+1:]...)
+					i--
 				}
 			}
 		}

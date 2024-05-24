@@ -1,4 +1,4 @@
-package app
+package postprocess
 
 import (
 	"testing"
@@ -594,7 +594,7 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			result := c.inputResult
-			applyMetricLimit(result, c.params)
+			ApplyMetricLimit(result, c.params)
 			if len(result) != len(c.expectedResult) {
 				t.Errorf("expected result length: %d, but got: %d", len(c.expectedResult), len(result))
 			}

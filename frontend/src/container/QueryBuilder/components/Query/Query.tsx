@@ -412,7 +412,7 @@ export const Query = memo(function Query({
 																Select Aggregate Operator
 																<Typography.Link
 																	className="learn-more"
-																	href="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=query-builder#aggregation"
+																	href="https://signoz.io/docs/metrics-management/types-and-aggregation/?utm_source=product&utm_medium=query-builder#aggregation"
 																	target="_blank"
 																	style={{ textDecoration: 'underline' }}
 																>

@@ -1,4 +1,4 @@
-package app
+package postprocess
 
 import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
