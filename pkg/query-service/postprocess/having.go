@@ -23,6 +23,10 @@ func applyHavingClause(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 						j--
 					}
 				}
+				if len(result.Series[i].Points) == 0 {
+					result.Series = append(result.Series[:i], result.Series[i+1:]...)
+					i--
+				}
 			}
 		}
 	}
