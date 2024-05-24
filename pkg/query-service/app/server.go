@@ -697,6 +697,7 @@ func makeRulesManager(
 		Logger:       nil,
 		DisableRules: disableRules,
 		FeatureFlags: fm,
+		Reader:       ch,
 	}
 
 	// create Manager
