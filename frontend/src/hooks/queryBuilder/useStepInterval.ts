@@ -8,12 +8,23 @@ export const updateStepInterval = (
 	query: Widgets['query'],
 	maxTime: number,
 	minTime: number,
+	shallUpdateStepInterval?: boolean,
 ): Widgets['query'] => {
 	const stepInterval = getStep({
 		start: minTime,
 		end: maxTime,
 		inputFormat: 'ns',
 	});
+
+	function getStepInterval(customInterval: number): number {
+		if (shallUpdateStepInterval) {
+			if (customInterval < stepInterval) {
+				return stepInterval;
+			}
+			return customInterval;
+		}
+		return stepInterval;
+	}
 
 	return {
 		...query,
@@ -22,7 +33,7 @@ export const updateStepInterval = (
 			queryData:
 				query?.builder?.queryData?.map((item) => ({
 					...item,
-					stepInterval,
+					stepInterval: getStepInterval(item.stepInterval),
 				})) || [],
 		},
 	};
