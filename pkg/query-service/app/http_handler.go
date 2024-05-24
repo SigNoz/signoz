@@ -16,7 +16,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
@@ -38,6 +37,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/postprocess"
 
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -483,49 +483,7 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, ruleResponse)
 }
 
-func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
-
-	metricNames := make([]string, 0)
-	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
-	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
-		for _, query := range qp.CompositeQuery.BuilderQueries {
-			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
-				metricNames = append(metricNames, query.AggregateAttribute.Key)
-				if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
-					metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
-				}
-			}
-		}
-	}
-
-	var err error
-
-	if aH.preferDelta {
-		zap.L().Debug("fetching metric temporality")
-		metricNameToTemporality, err = aH.reader.FetchTemporality(ctx, metricNames)
-		if err != nil {
-			return err
-		}
-	}
-
-	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
-		for name := range qp.CompositeQuery.BuilderQueries {
-			query := qp.CompositeQuery.BuilderQueries[name]
-			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
-				if aH.preferDelta && metricNameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
-					query.Temporality = v3.Delta
-				} else if metricNameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
-					query.Temporality = v3.Cumulative
-				} else {
-					query.Temporality = v3.Unspecified
-				}
-			}
-		}
-	}
-	return nil
-}
-
-// populateTemporality same as addTemporality but for v4 and better
+// populateTemporality adds the temporality to the query if it is not present
 func (aH *APIHandler) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
 
 	missingTemporality := make([]string, 0)
@@ -3202,13 +3160,13 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		return
 	}
 
-	applyMetricLimit(result, queryRangeParams)
+	postprocess.ApplyMetricLimit(result, queryRangeParams)
 
 	sendQueryResultEvents(r, result, queryRangeParams)
 	// only adding applyFunctions instead of postProcess since experssion are
 	// are executed in clickhouse directly and we wanted to add support for timeshift
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		applyFunctions(result, queryRangeParams)
+		postprocess.ApplyFunctions(result, queryRangeParams)
 	}
 
 	resp := v3.QueryRangeResponse{
@@ -3320,8 +3278,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add temporality for each metric
-
-	temporalityErr := aH.addTemporality(r.Context(), queryRangeParams)
+	temporalityErr := aH.populateTemporality(r.Context(), queryRangeParams)
 	if temporalityErr != nil {
 		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
@@ -3461,7 +3418,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 
-		result, err = postProcessResult(result, queryRangeParams)
+		result, err = postprocess.PostProcessResult(result, queryRangeParams)
 	}
 
 	if err != nil {
@@ -3495,106 +3452,4 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV4(r.Context(), queryRangeParams, w, r)
-}
-
-// postProcessResult applies having clause, metric limit, reduce function to the result
-// This function is effective for metrics data source for now, but it can be extended to other data sources
-// if needed
-// Much of this work can be done in the ClickHouse query, but we decided to do it here because:
-// 1. Effective use of caching
-// 2. Easier to add new functions
-func postProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) ([]*v3.Result, error) {
-	// Having clause is not part of the clickhouse query, so we need to apply it here
-	// It's not included in the query because it doesn't work nicely with caching
-	// With this change, if you have a query with a having clause, and then you change the having clause
-	// to something else, the query will still be cached.
-	applyHavingClause(result, queryRangeParams)
-	// We apply the metric limit here because it's not part of the clickhouse query
-	// The limit in the context of the time series query is the number of time series
-	// So for the limit to work, we need to know what series to keep and what to discard
-	// For us to know that, we need to execute the query first, and then apply the limit
-	// which we found expensive, because we are executing the query twice on the same data
-	// So we decided to apply the limit here, after the query is executed
-	// The function is named applyMetricLimit because it only applies to metrics data source
-	// In traces and logs, the limit is achieved using subqueries
-	applyMetricLimit(result, queryRangeParams)
-	// Each series in the result produces N number of points, where N is (end - start) / step
-	// For the panel type table, we need to show one point for each series in the row
-	// We do that by applying a reduce function to each series
-	applyReduceTo(result, queryRangeParams)
-	// We apply the functions here it's easier to add new functions
-	applyFunctions(result, queryRangeParams)
-
-	// expressions are executed at query serivce so the value of time.now in the invdividual
-	// queries will be different so for table panel we are making it same.
-	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable {
-		tablePanelResultProcessor(result)
-	}
-
-	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
-		// The way we distinguish between a formula and a query is by checking if the expression
-		// is the same as the query name
-		// TODO(srikanthccv): Update the UI to send a flag to distinguish between a formula and a query
-		if query.Expression != query.QueryName {
-			expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
-			// This shouldn't happen here, because it should have been caught earlier in validation
-			if err != nil {
-				zap.L().Error("error in expression", zap.Error(err))
-				return nil, err
-			}
-			formulaResult, err := processResults(result, expression)
-			if err != nil {
-				zap.L().Error("error in expression", zap.Error(err))
-				return nil, err
-			}
-			formulaResult.QueryName = query.QueryName
-			result = append(result, formulaResult)
-		}
-	}
-	// we are done with the formula calculations, only send the results for enabled queries
-	removeDisabledQueries := func(result []*v3.Result) []*v3.Result {
-		var newResult []*v3.Result
-		for _, res := range result {
-			if queryRangeParams.CompositeQuery.BuilderQueries[res.QueryName].Disabled {
-				continue
-			}
-			newResult = append(newResult, res)
-		}
-		return newResult
-	}
-	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		result = removeDisabledQueries(result)
-	}
-	return result, nil
-}
-
-// applyFunctions applies functions for each query in the composite query
-// The functions can be more than one, and they are applied in the order they are defined
-func applyFunctions(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
-	for idx, result := range results {
-		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
-
-		if builderQueries != nil {
-			functions := builderQueries[result.QueryName].Functions
-
-			for _, function := range functions {
-				results[idx] = queryBuilder.ApplyFunction(function, result)
-			}
-		}
-	}
-}
-
-func tablePanelResultProcessor(results []*v3.Result) {
-	var ts int64
-	for ridx := range results {
-		for sidx := range results[ridx].Series {
-			for pidx := range results[ridx].Series[sidx].Points {
-				if ts == 0 {
-					ts = results[ridx].Series[sidx].Points[pidx].Timestamp
-				} else {
-					results[ridx].Series[sidx].Points[pidx].Timestamp = ts
-				}
-			}
-		}
-	}
 }

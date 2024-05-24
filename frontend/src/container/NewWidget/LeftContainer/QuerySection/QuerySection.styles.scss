@@ -12,6 +12,7 @@
 			.prom-ql-icon {
 				height: 14px;
 				width: 14px;
+				color: var(--bg-vanilla-200);
 			}
 		}
 		.ant-btn-default {
@@ -54,6 +55,10 @@
 		.ant-tabs-tab-active {
 			.nav-btns {
 				background: var(--bg-vanilla-300) !important;
+
+				.prom-ql-icon {
+					color: var(--bg-ink-400);
+				}
 			}
 		}
 	}

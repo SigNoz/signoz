@@ -24,6 +24,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/postprocess"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 )
@@ -1007,7 +1008,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			// Formula query
 			// Check if the queries used in the expression can be joined
 			if query.QueryName != query.Expression {
-				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs())
+				expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, postprocess.EvalFuncs())
 				if err != nil {
 					return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 				}
@@ -1064,34 +1065,6 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 				}
 			}
 			query.ShiftBy = timeShiftBy
-
-			// for metrics v3
-			// if the aggregate operator is a histogram quantile, and user has not forgotten
-			// the le tag in the group by then add the le tag to the group by
-			if query.AggregateOperator == v3.AggregateOperatorHistQuant50 ||
-				query.AggregateOperator == v3.AggregateOperatorHistQuant75 ||
-				query.AggregateOperator == v3.AggregateOperatorHistQuant90 ||
-				query.AggregateOperator == v3.AggregateOperatorHistQuant95 ||
-				query.AggregateOperator == v3.AggregateOperatorHistQuant99 {
-				found := false
-				for _, tag := range query.GroupBy {
-					if tag.Key == "le" {
-						found = true
-						break
-					}
-				}
-				if !found {
-					query.GroupBy = append(
-						query.GroupBy,
-						v3.AttributeKey{
-							Key:      "le",
-							DataType: v3.AttributeKeyDataTypeString,
-							Type:     v3.AttributeKeyTypeTag,
-							IsColumn: false,
-						},
-					)
-				}
-			}
 
 			if query.Filters == nil || len(query.Filters.Items) == 0 {
 				continue
