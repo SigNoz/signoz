@@ -49,7 +49,7 @@ type ruleDB struct {
 
 // todo: move init methods for creating tables
 
-func newRuleDB(db *sqlx.DB) RuleDB {
+func NewRuleDB(db *sqlx.DB) RuleDB {
 	return &ruleDB{
 		db,
 	}

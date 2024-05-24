@@ -1,4 +1,4 @@
-package app
+package postprocess
 
 import (
 	"fmt"
@@ -90,6 +90,7 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 
 	resultSeries := &v3.Series{
 		Labels: uniqueLabelSet,
+		Points: make([]v3.Point, 0),
 	}
 	timestamps := make([]int64, 0)
 	for timestamp := range uniqueTimestamps {
@@ -161,7 +162,7 @@ func processResults(results []*v3.Result, expression *govaluate.EvaluableExpress
 
 var SupportedFunctions = []string{"exp", "log", "ln", "exp2", "log2", "exp10", "log10", "sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma", "sin", "cos", "tan", "asin", "acos", "atan", "degrees", "radians", "now", "toUnixTimestamp"}
 
-func evalFuncs() map[string]govaluate.ExpressionFunction {
+func EvalFuncs() map[string]govaluate.ExpressionFunction {
 	GoValuateFuncs := make(map[string]govaluate.ExpressionFunction)
 	// Returns e to the power of the given argument.
 	GoValuateFuncs["exp"] = func(args ...interface{}) (interface{}, error) {

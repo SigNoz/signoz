@@ -6,6 +6,7 @@ import { PanelWrapperProps } from './panelWrapper.types';
 function TablePanelWrapper({
 	widget,
 	queryResponse,
+	tableProcessedDataRef,
 }: PanelWrapperProps): JSX.Element {
 	const panelData =
 		queryResponse.data?.payload?.data.newResult.data.result || [];
@@ -15,6 +16,7 @@ function TablePanelWrapper({
 			data={panelData}
 			query={widget.query}
 			thresholds={thresholds}
+			tableProcessedDataRef={tableProcessedDataRef}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}
 		/>

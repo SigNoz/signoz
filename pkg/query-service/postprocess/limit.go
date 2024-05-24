@@ -1,4 +1,4 @@
-package app
+package postprocess
 
 import (
 	"math"
@@ -9,8 +9,8 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-// applyMetricLimit applies limit to the metrics query results
-func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+// ApplyMetricLimit applies limit to the metrics query results
+func ApplyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
 	// apply limit if any for metrics
 	// use the grouping set points to apply the limit
 
@@ -40,12 +40,13 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 								}
 							}
 
-							ithSum, jthSum := 0.0, 0.0
+							ithSum, jthSum, ithCount, jthCount := 0.0, 0.0, 0.0, 0.0
 							for _, point := range result.Series[i].Points {
 								if math.IsNaN(point.Value) || math.IsInf(point.Value, 0) {
 									continue
 								}
 								ithSum += point.Value
+								ithCount++
 							}
 
 							for _, point := range result.Series[j].Points {
@@ -53,12 +54,17 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 									continue
 								}
 								jthSum += point.Value
+								jthCount++
 							}
 
+							// avoid division by zero
+							ithCount = math.Max(ithCount, 1)
+							jthCount = math.Max(jthCount, 1)
+
 							if orderBy.Order == "asc" {
-								return ithSum < jthSum
+								return ithSum/ithCount < jthSum/jthCount
 							} else if orderBy.Order == "desc" {
-								return ithSum > jthSum
+								return ithSum/ithCount > jthSum/jthCount
 							}
 						} else {
 							// Sort based on Labels map

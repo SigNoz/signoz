@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import './ExplorerOptions.styles.scss';
 
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -402,6 +403,28 @@ function ExplorerOptions({
 						</Button>
 					</div>
 					<div className="actions">
+						<Tooltip
+							title={
+								<div>
+									{sourcepage === DataSource.LOGS
+										? 'Learn more about Logs explorer '
+										: 'Learn more about Traces explorer '}
+									<Typography.Link
+										href={
+											sourcepage === DataSource.LOGS
+												? 'https://signoz.io/docs/product-features/logs-explorer/?utm_source=product&utm_medium=logs-explorer-toolbar'
+												: 'https://signoz.io/docs/product-features/trace-explorer/?utm_source=product&utm_medium=trace-explorer-toolbar'
+										}
+										target="_blank"
+									>
+										{' '}
+										here
+									</Typography.Link>{' '}
+								</div>
+							}
+						>
+							<InfoCircleOutlined className="info-icon" />
+						</Tooltip>
 						<Tooltip title="Hide">
 							<Button
 								disabled={disabled}
