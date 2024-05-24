@@ -1,9 +1,11 @@
 package rules
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"math"
 	"net/url"
 	"regexp"
@@ -27,6 +29,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
+	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 
@@ -430,13 +433,34 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	end = end - (end % (60 * 1000))
 
 	if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
-		return &v3.QueryRangeParamsV3{
+		params := &v3.QueryRangeParamsV3{
 			Start:          start,
 			End:            end,
 			Step:           int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
 			CompositeQuery: r.ruleCondition.CompositeQuery,
 			Variables:      make(map[string]interface{}, 0),
 			NoCache:        true,
+		}
+		querytemplate.AssignReservedVarsV3(params)
+		for name, chQuery := range r.ruleCondition.CompositeQuery.ClickHouseQueries {
+			if chQuery.Disabled {
+				continue
+			}
+			tmpl := template.New("clickhouse-query")
+			tmpl, err := tmpl.Parse(chQuery.Query)
+			if err != nil {
+				zap.L().Error("failed to parse clickhouse query to populate vars", zap.String("ruleid", r.ID()), zap.Error(err))
+				r.SetHealth(HealthBad)
+				return params
+			}
+			var query bytes.Buffer
+			err = tmpl.Execute(&query, params.Variables)
+			if err != nil {
+				zap.L().Error("failed to populate clickhouse query", zap.String("ruleid", r.ID()), zap.Error(err))
+				r.SetHealth(HealthBad)
+				return params
+			}
+			r.ruleCondition.CompositeQuery.ClickHouseQueries[name].Query = query.String()
 		}
 	}
 
