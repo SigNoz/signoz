@@ -146,7 +146,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 							{traceMetaData.totalSpans} Spans
 						</StyledTypography.Text>
 						{hasMissingSpans && <MissingSpansMessage />}
-						{response[0].isSubTree && <SubTreeMessage />}
+						{response[0]?.isSubTree && <SubTreeMessage />}
 					</StyledCol>
 					<Col flex="auto">
 						{map(tree.spanTree, (tree) => (
