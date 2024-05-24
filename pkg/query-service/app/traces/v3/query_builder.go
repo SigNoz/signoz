@@ -85,18 +85,17 @@ func getClickhouseTracesColumnDataTypeAndType(key v3.AttributeKey) (v3.Attribute
 }
 
 func enrichKeyWithMetadata(key v3.AttributeKey, keys map[string]v3.AttributeKey) v3.AttributeKey {
-	if key.Type == "" || key.DataType == "" {
-		// check if the key is present in the keys map
-		if existingKey, ok := keys[key.Key]; ok {
-			key.IsColumn = existingKey.IsColumn
-			key.Type = existingKey.Type
-			key.DataType = existingKey.DataType
-		} else { // if not present then set the default values
-			key.Type = v3.AttributeKeyTypeTag
-			key.DataType = v3.AttributeKeyDataTypeString
-			key.IsColumn = false
-			return key
-		}
+	// check if the key is present in the keys map
+	if existingKey, ok := keys[key.Key]; ok {
+		key.Key = existingKey.Key
+		key.IsColumn = existingKey.IsColumn
+		key.Type = existingKey.Type
+		key.DataType = existingKey.DataType
+	} else if key.Type == "" || key.DataType == "" { // if not present then set the default values
+		key.Type = v3.AttributeKeyTypeTag
+		key.DataType = v3.AttributeKeyDataTypeString
+		key.IsColumn = false
+		return key
 	}
 	return key
 }
@@ -263,7 +262,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		queryTmpl =
 			"SELECT now() as ts,"
 		// step or aggregate interval is whole time period in case of table panel
-		step = (end*getZerosForEpochNano(end) - start*getZerosForEpochNano(start))/1000000000
+		step = (end*getZerosForEpochNano(end) - start*getZerosForEpochNano(start)) / 1000000000
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmpl =

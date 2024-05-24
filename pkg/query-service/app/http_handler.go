@@ -3106,6 +3106,148 @@ func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.Qu
 				Key:      "timestamp",
 				IsColumn: true,
 			}
+			spanKeys["http.url"] = v3.AttributeKey{
+				Key:      "httpUrl",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["db.system"] = v3.AttributeKey{
+				Key:      "dbSystem",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["db.name"] = v3.AttributeKey{
+				Key:      "dbName",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["db.operation"] = v3.AttributeKey{
+				Key:      "dbOperation",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["peer.service"] = v3.AttributeKey{
+				Key:      "peerService",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["url.full"] = v3.AttributeKey{
+				Key:      "httpUrl",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["http.response.status_code"] = v3.AttributeKey{
+				Key:      "responseStatusCode",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["http.route"] = v3.AttributeKey{
+				Key:      "httpRoute",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["http.method"] = v3.AttributeKey{
+				Key:      "httpMethod",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["http.request.method"] = v3.AttributeKey{
+				Key:      "httpMethod",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["http.status_code"] = v3.AttributeKey{
+				Key:      "responseStatusCode",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["http.host"] = v3.AttributeKey{
+				Key:      "httpHost",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["http.host"] = v3.AttributeKey{
+				Key:      "httpHost",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["http.request.header.host"] = v3.AttributeKey{
+				Key:      "httpHost",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["server.address"] = v3.AttributeKey{
+				Key:      "httpHost",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["client.address"] = v3.AttributeKey{
+				Key:      "httpHost",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["messaging.system"] = v3.AttributeKey{
+				Key:      "msgSystem",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["messaging.operation"] = v3.AttributeKey{
+				Key:      "msgOperation",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["service.name"] = v3.AttributeKey{
+				Key:      "serviceName",
+				IsColumn: true,
+			}
+			spanKeys["rpc.method"] = v3.AttributeKey{
+				Key:      "rpcMethod",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["rpc.service"] = v3.AttributeKey{
+				Key:      "rpcService",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["rpc.system"] = v3.AttributeKey{
+				Key:      "rpcSystem",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["rpc.jsonrpc.error_code"] = v3.AttributeKey{
+				Key:      "responseStatusCode",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
+			spanKeys["rpc.grpc.status_code"] = v3.AttributeKey{
+				Key:      "responseStatusCode",
+				Type:     v3.AttributeKeyTypeTag,
+				IsColumn: true,
+				DataType: v3.AttributeKeyDataTypeString,
+			}
 			return spanKeys, nil
 		}
 	}

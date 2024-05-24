@@ -631,12 +631,12 @@ var testBuildTracesQueryData = []struct {
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
-			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: false},
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
 		},
 		TableName: "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(stringTagMap['name'])))" +
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(name)))" +
 			" as value from signoz_traces.distributed_signoz_index_v2 where" +
 			" (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') group by ts order by value DESC",
 		PanelType: v3.PanelTypeGraph,
@@ -915,7 +915,7 @@ var testBuildTracesQueryData = []struct {
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
-			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: false},
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
 			Having: []v3.Having{
@@ -927,7 +927,7 @@ var testBuildTracesQueryData = []struct {
 			},
 		},
 		TableName: "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(stringTagMap['name']))) as value" +
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(name))) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" group by ts having value > 10 order by value DESC",
 		PanelType: v3.PanelTypeGraph,
@@ -939,7 +939,7 @@ var testBuildTracesQueryData = []struct {
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
-			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: false},
 			AggregateOperator:  v3.AggregateOperatorCount,
 			Expression:         "A",
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
@@ -957,7 +957,7 @@ var testBuildTracesQueryData = []struct {
 		TableName: "signoz_traces.distributed_signoz_index_v2",
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value from " +
 			"signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"AND stringTagMap['method'] = 'GET' AND has(stringTagMap, 'name') group by ts having value > 10 order by value DESC",
+			"AND stringTagMap['method'] = 'GET' AND name != '' group by ts having value > 10 order by value DESC",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -983,7 +983,7 @@ var testBuildTracesQueryData = []struct {
 			},
 		},
 		TableName: "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(stringTagMap['name']))) as value" +
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(name))) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' group by ts having value > 10 order by value DESC",
 		PanelType: v3.PanelTypeGraph,
@@ -995,7 +995,7 @@ var testBuildTracesQueryData = []struct {
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
-			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: false},
 			AggregateOperator:  v3.AggregateOperatorCount,
 			Expression:         "A",
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
@@ -1013,7 +1013,7 @@ var testBuildTracesQueryData = []struct {
 		TableName: "signoz_traces.distributed_signoz_index_v2",
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"AND stringTagMap['method'] = 'GET' AND has(stringTagMap, 'name') group by ts having value > 10",
+			"AND stringTagMap['method'] = 'GET' AND name != '' group by ts having value > 10",
 		PanelType: v3.PanelTypeValue,
 	},
 	{
@@ -1204,7 +1204,7 @@ var testPrepTracesQueryData = []struct {
 			GroupBy:      []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 		},
 		ExpectedQuery: "SELECT `method` from (SELECT stringTagMap['method'] as `method`," +
-			" toFloat64(count(distinct(stringTagMap['name']))) as value from signoz_traces.distributed_signoz_index_v2" +
+			" toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v2" +
 			" where (timestamp >= '1680066360000000000' AND timestamp <= '1680066420000000000') AND" +
 			" stringTagMap['method'] = 'GET' AND has(stringTagMap, 'method') group by `method` order by value DESC) LIMIT 10",
 		Keys: map[string]v3.AttributeKey{"name": {Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
@@ -1332,7 +1332,7 @@ var testPrepTracesQueryData = []struct {
 		End:       1680066458000,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
-			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: false},
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
