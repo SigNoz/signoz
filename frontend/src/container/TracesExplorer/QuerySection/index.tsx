@@ -56,7 +56,7 @@ function QuerySection(): JSX.Element {
 				version="v3" // setting this to v3 as we this is rendered in logs explorer
 				actions={
 					<ButtonWrapper>
-						<Button onClick={handleRunQuery} type="primary">
+						<Button onClick={(): void => handleRunQuery()} type="primary">
 							Run Query
 						</Button>
 					</ButtonWrapper>
