@@ -19,6 +19,7 @@ import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { isEmpty } from 'lodash-es';
 import { unparse } from 'papaparse';
 import { ReactNode, useCallback, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
@@ -86,10 +87,10 @@ function WidgetHeader({
 		const csvUrl = URL.createObjectURL(csvBlob);
 		const downloadLink = document.createElement('a');
 		downloadLink.href = csvUrl;
-		downloadLink.download = `table-data.csv`;
+		downloadLink.download = `${!isEmpty(title) ? title : 'table-panel'}.csv`;
 		downloadLink.click();
 		downloadLink.remove();
-	}, [tableProcessedDataRef]);
+	}, [tableProcessedDataRef, title]);
 
 	const keyMethodMapping = useMemo(
 		() => ({

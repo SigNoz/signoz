@@ -37,7 +37,6 @@ function GridTableComponent({
 			dataSource.map((d) => {
 				const finalObject = {};
 				const keys = Object.keys(d);
-				console.log(finalObject, keys);
 				keys.forEach((k) => {
 					const label = get(
 						columns.find((c) => get(c, 'dataIndex', '') === k) || {},
