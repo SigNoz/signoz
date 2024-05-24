@@ -50,10 +50,10 @@ services:
     container_name: signoz-zookeeper-1
     hostname: zookeeper-1
     user: root
-    ports:
-      - "2181:2181"
-      - "2888:2888"
-      - "3888:3888"
+    # ports:
+    #   - "2181:2181"
+    #   - "2888:2888"
+    #   - "3888:3888"
     volumes:
       - ./data/zookeeper-1:/bitnami/zookeeper
     environment:
@@ -100,10 +100,10 @@ services:
     <<: *clickhouse-defaults
     container_name: signoz-clickhouse
     hostname: clickhouse
-    ports:
-      - "9000:9000"
-      - "8123:8123"
-      - "9181:9181"
+    # ports:
+    #   - "9000:9000"
+    #   - "8123:8123"
+    #   - "9181:9181"
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
       - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
