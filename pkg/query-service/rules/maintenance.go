@@ -29,6 +29,8 @@ type PlannedMaintenance struct {
 	CreatedBy   string    `json:"createdBy" db:"created_by"`
 	UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
 	UpdatedBy   string    `json:"updatedBy" db:"updated_by"`
+	Status      string    `json:"status"`
+	Kind        string    `json:"kind"`
 }
 
 type AlertIds []string
@@ -46,8 +48,8 @@ func (a *AlertIds) Value() (driver.Value, error) {
 
 type Schedule struct {
 	Timezone   string      `json:"timezone"`
-	StartTime  time.Time   `json:"startTime"`
-	EndTime    time.Time   `json:"endTime"`
+	StartTime  time.Time   `json:"startTime,omitempty"`
+	EndTime    time.Time   `json:"endTime,omitempty"`
 	Recurrence *Recurrence `json:"recurrence"`
 }
 
@@ -99,6 +101,113 @@ func (r *Recurrence) Scan(src interface{}) error {
 
 func (r *Recurrence) Value() (driver.Value, error) {
 	return json.Marshal(r)
+}
+
+func (s Schedule) MarshalJSON() ([]byte, error) {
+	loc, err := time.LoadLocation(s.Timezone)
+	if err != nil {
+		return nil, err
+	}
+
+	var startTime, endTime time.Time
+	if !s.StartTime.IsZero() {
+		startTime = time.Date(s.StartTime.Year(), s.StartTime.Month(), s.StartTime.Day(), s.StartTime.Hour(), s.StartTime.Minute(), s.StartTime.Second(), s.StartTime.Nanosecond(), loc)
+	}
+	if !s.EndTime.IsZero() {
+		endTime = time.Date(s.EndTime.Year(), s.EndTime.Month(), s.EndTime.Day(), s.EndTime.Hour(), s.EndTime.Minute(), s.EndTime.Second(), s.EndTime.Nanosecond(), loc)
+	}
+
+	var recurrence *Recurrence
+	if s.Recurrence != nil {
+		recStartTime := time.Date(s.Recurrence.StartTime.Year(), s.Recurrence.StartTime.Month(), s.Recurrence.StartTime.Day(), s.Recurrence.StartTime.Hour(), s.Recurrence.StartTime.Minute(), s.Recurrence.StartTime.Second(), s.Recurrence.StartTime.Nanosecond(), loc)
+		var recEndTime *time.Time
+		if s.Recurrence.EndTime != nil {
+			end := time.Date(s.Recurrence.EndTime.Year(), s.Recurrence.EndTime.Month(), s.Recurrence.EndTime.Day(), s.Recurrence.EndTime.Hour(), s.Recurrence.EndTime.Minute(), s.Recurrence.EndTime.Second(), s.Recurrence.EndTime.Nanosecond(), loc)
+			recEndTime = &end
+		}
+		recurrence = &Recurrence{
+			StartTime:  recStartTime,
+			EndTime:    recEndTime,
+			Duration:   s.Recurrence.Duration,
+			RepeatType: s.Recurrence.RepeatType,
+			RepeatOn:   s.Recurrence.RepeatOn,
+		}
+	}
+
+	return json.Marshal(&struct {
+		Timezone   string      `json:"timezone"`
+		StartTime  string      `json:"startTime"`
+		EndTime    string      `json:"endTime"`
+		Recurrence *Recurrence `json:"recurrence,omitempty"`
+	}{
+		Timezone:   s.Timezone,
+		StartTime:  startTime.Format(time.RFC3339),
+		EndTime:    endTime.Format(time.RFC3339),
+		Recurrence: recurrence,
+	})
+}
+
+func (s *Schedule) UnmarshalJSON(data []byte) error {
+	aux := &struct {
+		Timezone   string      `json:"timezone"`
+		StartTime  string      `json:"startTime"`
+		EndTime    string      `json:"endTime"`
+		Recurrence *Recurrence `json:"recurrence,omitempty"`
+	}{}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+
+	loc, err := time.LoadLocation(aux.Timezone)
+	if err != nil {
+		return err
+	}
+
+	var startTime time.Time
+	if aux.StartTime != "" {
+		startTime, err = time.Parse(time.RFC3339, aux.StartTime)
+		if err != nil {
+			return err
+		}
+		s.StartTime = time.Date(startTime.Year(), startTime.Month(), startTime.Day(), startTime.Hour(), startTime.Minute(), startTime.Second(), startTime.Nanosecond(), loc)
+	}
+
+	var endTime time.Time
+	if aux.EndTime != "" {
+		endTime, err = time.Parse(time.RFC3339, aux.EndTime)
+		if err != nil {
+			return err
+		}
+		s.EndTime = time.Date(endTime.Year(), endTime.Month(), endTime.Day(), endTime.Hour(), endTime.Minute(), endTime.Second(), endTime.Nanosecond(), loc)
+	}
+
+	s.Timezone = aux.Timezone
+
+	if aux.Recurrence != nil {
+		recStartTime, err := time.Parse(time.RFC3339, aux.Recurrence.StartTime.Format(time.RFC3339))
+		if err != nil {
+			return err
+		}
+
+		var recEndTime *time.Time
+		if aux.Recurrence.EndTime != nil {
+			end, err := time.Parse(time.RFC3339, aux.Recurrence.EndTime.Format(time.RFC3339))
+			if err != nil {
+				return err
+			}
+			endConverted := time.Date(end.Year(), end.Month(), end.Day(), end.Hour(), end.Minute(), end.Second(), end.Nanosecond(), loc)
+			recEndTime = &endConverted
+		}
+
+		s.Recurrence = &Recurrence{
+			StartTime:  time.Date(recStartTime.Year(), recStartTime.Month(), recStartTime.Day(), recStartTime.Hour(), recStartTime.Minute(), recStartTime.Second(), recStartTime.Nanosecond(), loc),
+			EndTime:    recEndTime,
+			Duration:   aux.Recurrence.Duration,
+			RepeatType: aux.Recurrence.RepeatType,
+			RepeatOn:   aux.Recurrence.RepeatOn,
+		}
+	}
+	return nil
 }
 
 func (m *PlannedMaintenance) shouldSkip(ruleID string, now time.Time) bool {
@@ -217,6 +326,17 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 	return m.shouldSkip(ruleID, now)
 }
 
+func (m *PlannedMaintenance) IsUpcoming() bool {
+	now := time.Now().In(time.FixedZone(m.Schedule.Timezone, 0))
+	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
+		return now.Before(m.Schedule.StartTime)
+	}
+	if m.Schedule.Recurrence != nil {
+		return now.Before(m.Schedule.Recurrence.StartTime)
+	}
+	return false
+}
+
 func (m *PlannedMaintenance) IsRecurring() bool {
 	return m.Schedule.Recurrence != nil
 }
@@ -255,4 +375,49 @@ func (m *PlannedMaintenance) Validate() error {
 		}
 	}
 	return nil
+}
+
+func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
+	now := time.Now().In(time.FixedZone(m.Schedule.Timezone, 0))
+	var status string
+	if m.IsActive(now) {
+		status = "active"
+	} else if m.IsUpcoming() {
+		status = "upcoming"
+	} else {
+		status = "expired"
+	}
+	var kind string
+
+	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() && m.Schedule.EndTime.After(m.Schedule.StartTime) {
+		kind = "fixed"
+	} else {
+		kind = "recurring"
+	}
+
+	return json.Marshal(struct {
+		Id          int64     `json:"id" db:"id"`
+		Name        string    `json:"name" db:"name"`
+		Description string    `json:"description" db:"description"`
+		Schedule    *Schedule `json:"schedule" db:"schedule"`
+		AlertIds    *AlertIds `json:"alertIds" db:"alert_ids"`
+		CreatedAt   time.Time `json:"createdAt" db:"created_at"`
+		CreatedBy   string    `json:"createdBy" db:"created_by"`
+		UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
+		UpdatedBy   string    `json:"updatedBy" db:"updated_by"`
+		Status      string    `json:"status"`
+		Kind        string    `json:"kind"`
+	}{
+		Id:          m.Id,
+		Name:        m.Name,
+		Description: m.Description,
+		Schedule:    m.Schedule,
+		AlertIds:    m.AlertIds,
+		CreatedAt:   m.CreatedAt,
+		CreatedBy:   m.CreatedBy,
+		UpdatedAt:   m.UpdatedAt,
+		UpdatedBy:   m.UpdatedBy,
+		Status:      status,
+		Kind:        kind,
+	})
 }
