@@ -1,16 +1,21 @@
 import './QuerySection.styles.scss';
 
+import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip, Typography } from 'antd';
+import PromQLIcon from 'assets/Dashboard/PromQl';
 import TextToolTip from 'components/TextToolTip';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
+import { getDefaultWidgetData } from 'container/NewWidget/utils';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { defaultTo } from 'lodash-es';
 import { Atom, Play, Terminal } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
@@ -51,12 +56,17 @@ function QuerySection({
 
 	const { selectedDashboard, setSelectedDashboard } = useDashboard();
 
+	const isDarkMode = useIsDarkMode();
+
 	const { widgets } = selectedDashboard?.data || {};
 
 	const getWidget = useCallback(() => {
 		const widgetId = urlQuery.get('widgetId');
-		return widgets?.find((e) => e.id === widgetId);
-	}, [widgets, urlQuery]);
+		return defaultTo(
+			widgets?.find((e) => e.id === widgetId),
+			getDefaultWidgetData(widgetId || '', selectedGraph),
+		);
+	}, [urlQuery, widgets, selectedGraph]);
 
 	const selectedWidget = getWidget() as Widgets;
 
@@ -191,7 +201,9 @@ function QuerySection({
 			label: (
 				<Tooltip title="PromQL">
 					<Button className="nav-btns">
-						<img src="/Icons/promQL.svg" alt="Prom Ql" className="prom-ql-icon" />
+						<PromQLIcon
+							fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
+						/>
 					</Button>
 				</Tooltip>
 			),
@@ -223,7 +235,10 @@ function QuerySection({
 				onChange={handleQueryCategoryChange}
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-						<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
+						<TextToolTip
+							text="This will temporarily save the current query and graph state. This will persist across tab change"
+							url="https://signoz.io/docs/userguide/query-builder?utm_source=product&utm_medium=query-builder"
+						/>
 						<Button
 							loading={queryResponse.isFetching}
 							type="primary"

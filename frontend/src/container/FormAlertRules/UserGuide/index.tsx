@@ -147,7 +147,7 @@ function UserGuide({ queryType }: UserGuideProps): JSX.Element {
 				<Col flex="none">
 					<TextToolTip
 						text={t('user_tooltip_more_help')}
-						url="https://signoz.io/docs/userguide/alerts-management/#create-alert-rules"
+						url="https://signoz.io/docs/userguide/alerts-management/?utm_source=product&utm_medium=create-alert#creating-a-new-alert-in-signoz"
 					/>
 				</Col>
 			</Row>

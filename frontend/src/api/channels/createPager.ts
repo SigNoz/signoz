@@ -12,7 +12,7 @@ const create = async (
 			name: props.name,
 			pagerduty_configs: [
 				{
-					send_resolved: true,
+					send_resolved: props.send_resolved,
 					routing_key: props.routing_key,
 					client: props.client,
 					client_url: props.client_url,

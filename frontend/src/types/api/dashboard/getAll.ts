@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { ReactNode } from 'react';
@@ -59,11 +59,19 @@ export interface DashboardData {
 	description?: string;
 	tags?: string[];
 	name?: string;
-	widgets?: Widgets[];
+	widgets?: Array<WidgetRow | Widgets>;
 	title: string;
 	layout?: Layout[];
+	panelMap?: Record<string, { widgets: Layout[]; collapsed: boolean }>;
 	variables: Record<string, IDashboardVariable>;
 	version?: string;
+}
+
+export interface WidgetRow {
+	id: string;
+	panelTypes: PANEL_GROUP_TYPES;
+	title: ReactNode;
+	description: string;
 }
 
 export interface IBaseWidget {

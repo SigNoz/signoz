@@ -11,6 +11,8 @@ import {
 } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { alertHelpMessage } from 'components/facingIssueBtn/util';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -138,19 +140,29 @@ function FormAlertRules({
 
 	useEffect(() => {
 		// Set selectedQueryName based on the length of queryOptions
-		setAlertDef((def) => ({
-			...def,
-			condition: {
-				...def.condition,
-				selectedQueryName:
-					queryOptions.length > 0 ? String(queryOptions[0].value) : undefined,
-			},
-		}));
-	}, [currentQuery?.queryType, queryOptions]);
+		const selectedQueryName = alertDef?.condition?.selectedQueryName;
+		if (
+			!selectedQueryName ||
+			!queryOptions.some((option) => option.value === selectedQueryName)
+		) {
+			setAlertDef((def) => ({
+				...def,
+				condition: {
+					...def.condition,
+					selectedQueryName:
+						queryOptions.length > 0 ? String(queryOptions[0].value) : undefined,
+				},
+			}));
+		}
+	}, [alertDef, currentQuery?.queryType, queryOptions]);
 
 	const onCancelHandler = useCallback(() => {
-		history.replace(ROUTES.LIST_ALL_ALERT);
-	}, []);
+		urlQuery.delete(QueryParams.compositeQuery);
+		urlQuery.delete(QueryParams.panelTypes);
+		urlQuery.delete(QueryParams.ruleId);
+		urlQuery.delete(QueryParams.relativeTime);
+		history.replace(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`);
+	}, [urlQuery]);
 
 	// onQueryCategoryChange handles changes to query category
 	// in state as well as sets additional defaults
@@ -335,8 +347,13 @@ function FormAlertRules({
 				// invalidate rule in cache
 				ruleCache.invalidateQueries(['ruleId', ruleId]);
 
+				// eslint-disable-next-line sonarjs/no-identical-functions
 				setTimeout(() => {
-					history.replace(ROUTES.LIST_ALL_ALERT);
+					urlQuery.delete(QueryParams.compositeQuery);
+					urlQuery.delete(QueryParams.panelTypes);
+					urlQuery.delete(QueryParams.ruleId);
+					urlQuery.delete(QueryParams.relativeTime);
+					history.replace(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`);
 				}, 2000);
 			} else {
 				notifications.error({
@@ -352,12 +369,13 @@ function FormAlertRules({
 		}
 		setLoading(false);
 	}, [
-		t,
 		isFormValid,
-		ruleId,
-		ruleCache,
 		memoizedPreparePostData,
+		ruleId,
 		notifications,
+		t,
+		ruleCache,
+		urlQuery,
 	]);
 
 	const onSaveHandler = useCallback(async () => {
@@ -482,6 +500,8 @@ function FormAlertRules({
 		alertDef?.broadcastToAll ||
 		(alertDef.preferredChannels && alertDef.preferredChannels.length > 0);
 
+	const isRuleCreated = !ruleId || ruleId === 0;
+
 	return (
 		<>
 			{Element}
@@ -514,6 +534,7 @@ function FormAlertRules({
 							runQuery={handleRunQuery}
 							alertDef={alertDef}
 							panelType={panelType || PANEL_TYPES.TIME_SERIES}
+							key={currentQuery.queryType}
 						/>
 
 						<RuleOptions
@@ -563,6 +584,22 @@ function FormAlertRules({
 				</StyledLeftContainer>
 				<Col flex="1 1 300px">
 					<UserGuide queryType={currentQuery.queryType} />
+					<FacingIssueBtn
+						attributes={{
+							alert: alertDef?.alert,
+							alertType: alertDef?.alertType,
+							id: ruleId,
+							ruleType: alertDef?.ruleType,
+							state: (alertDef as any)?.state,
+							panelType,
+							screen: isRuleCreated ? 'Edit Alert' : 'New Alert',
+						}}
+						className="facing-issue-btn"
+						eventName="Alert: Facing Issues in alert"
+						buttonText="Need help with this alert?"
+						message={alertHelpMessage(alertDef, ruleId)}
+						onHoverText="Click here to get help with this alert"
+					/>
 				</Col>
 			</PanelContainer>
 		</>

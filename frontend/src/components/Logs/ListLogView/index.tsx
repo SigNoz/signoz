@@ -16,6 +16,7 @@ import { useCallback, useMemo, useState } from 'react';
 // interfaces
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
+import { FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 // components
 import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
@@ -50,7 +51,11 @@ function LogGeneralField({
 }: LogFieldProps): JSX.Element {
 	const html = useMemo(
 		() => ({
-			__html: convert.toHtml(dompurify.sanitize(fieldValue)),
+			__html: convert.toHtml(
+				dompurify.sanitize(fieldValue, {
+					FORBID_TAGS: [...FORBID_DOM_PURIFY_TAGS],
+				}),
+			),
 		}),
 		[fieldValue],
 	);
@@ -157,8 +162,8 @@ function ListLogView({
 	const timestampValue = useMemo(
 		() =>
 			typeof flattenLogData.timestamp === 'string'
-				? dayjs(flattenLogData.timestamp).format()
-				: dayjs(flattenLogData.timestamp / 1e6).format(),
+				? dayjs(flattenLogData.timestamp).format('YYYY-MM-DD HH:mm:ss.SSS')
+				: dayjs(flattenLogData.timestamp / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS'),
 		[flattenLogData.timestamp],
 	);
 

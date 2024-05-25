@@ -4,6 +4,7 @@ import { Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import saveAlertApi from 'api/alerts/save';
 import DropDown from 'components/DropDown/DropDown';
+import { listAlertMessage } from 'components/facingIssueBtn/util';
 import {
 	DynamicColumnsKey,
 	TableDataSource,
@@ -116,14 +117,19 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			.refetch()
 			.then(() => {
 				const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
-
-				history.push(
-					`${ROUTES.EDIT_ALERTS}?ruleId=${record.id.toString()}&${
-						QueryParams.compositeQuery
-					}=${encodeURIComponent(JSON.stringify(compositeQuery))}&panelTypes=${
-						record.condition.compositeQuery.panelType
-					}`,
+				params.set(
+					QueryParams.compositeQuery,
+					encodeURIComponent(JSON.stringify(compositeQuery)),
 				);
+
+				params.set(
+					QueryParams.panelTypes,
+					record.condition.compositeQuery.panelType,
+				);
+
+				params.set(QueryParams.ruleId, record.id.toString());
+
+				history.push(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
 			})
 			.catch(handleError);
 	};
@@ -150,7 +156,8 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				setData(refetchData.payload || []);
 				setTimeout(() => {
 					const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
-					history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${clonedAlert.id}`);
+					params.set(QueryParams.ruleId, String(clonedAlert.id));
+					history.push(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
 				}, 2000);
 			}
 			if (status === 'error') {
@@ -337,7 +344,8 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					<TextToolTip
 						{...{
 							text: `More details on how to create alerts`,
-							url: 'https://signoz.io/docs/userguide/alerts-management/',
+							url:
+								'https://signoz.io/docs/alerts/?utm_source=product&utm_medium=list-alerts',
 						}}
 					/>
 
@@ -357,6 +365,15 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				onChange={handleChange}
 				pagination={{
 					defaultCurrent: Number(paginationParam) || 1,
+				}}
+				facingIssueBtn={{
+					attributes: {
+						screen: 'Alert list page',
+					},
+					eventName: 'Alert: Facing Issues in alert',
+					buttonText: 'Facing issues with alerts?',
+					message: listAlertMessage,
+					onHoverText: 'Click here to get help with alerts',
 				}}
 			/>
 		</>

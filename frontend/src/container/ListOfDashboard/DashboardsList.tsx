@@ -3,6 +3,7 @@ import { Card, Col, Dropdown, Input, Row, TableColumnProps } from 'antd';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
+import { dashboardListMessage } from 'components/facingIssueBtn/util';
 import {
 	DynamicColumnsKey,
 	TableDataSource,
@@ -321,7 +322,8 @@ function DashboardsList(): JSX.Element {
 							<TextToolTip
 								{...{
 									text: `More details on how to create dashboards`,
-									url: 'https://signoz.io/docs/userguide/dashboards',
+									url:
+										'https://signoz.io/docs/userguide/dashboards?utm_source=product&utm_medium=list-dashboard',
 								}}
 							/>
 						</ButtonContainer>
@@ -385,6 +387,15 @@ function DashboardsList(): JSX.Element {
 					dataSource={data}
 					onChange={handleChange}
 					showSorterTooltip
+					facingIssueBtn={{
+						attributes: {
+							screen: 'Dashboard list page',
+						},
+						eventName: 'Dashboard: Facing Issues in dashboard',
+						buttonText: 'Facing issues with dashboards?',
+						message: dashboardListMessage,
+						onHoverText: 'Click here to get help with dashboards',
+					}}
 				/>
 			</TableContainer>
 		</Card>

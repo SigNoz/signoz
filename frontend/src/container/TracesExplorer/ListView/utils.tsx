@@ -24,7 +24,14 @@ export const getTraceLink = (record: RowData): string =>
 export const getListColumns = (
 	selectedColumns: BaseAutocompleteData[],
 ): ColumnsType<RowData> => {
-	const initialColumns: ColumnsType<RowData> = [];
+	const initialColumns: ColumnsType<RowData> = [
+		{
+			dataIndex: 'date',
+			key: 'date',
+			title: 'Timestamp',
+			width: 145,
+		},
+	];
 
 	const columns: ColumnsType<RowData> =
 		selectedColumns.map(({ dataType, key, type }) => ({

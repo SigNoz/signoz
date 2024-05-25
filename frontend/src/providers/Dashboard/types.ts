@@ -12,6 +12,8 @@ export interface IDashboardContext {
 	selectedDashboard: Dashboard | undefined;
 	dashboardId: string;
 	layouts: Layout[];
+	panelMap: Record<string, { widgets: Layout[]; collapsed: boolean }>;
+	setPanelMap: React.Dispatch<React.SetStateAction<Record<string, any>>>;
 	setLayouts: React.Dispatch<React.SetStateAction<Layout[]>>;
 	setSelectedDashboard: React.Dispatch<
 		React.SetStateAction<Dashboard | undefined>
@@ -30,4 +32,6 @@ export interface IDashboardContext {
 			| undefined,
 		allSelected: boolean,
 	) => void;
+	variablesToGetUpdated: string[];
+	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
 }

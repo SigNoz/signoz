@@ -42,6 +42,7 @@ const GridPanelSwitch = forwardRef<
 					thresholds,
 				},
 				[PANEL_TYPES.LIST]: null,
+				[PANEL_TYPES.PIE]: null,
 				[PANEL_TYPES.TRACE]: null,
 				[PANEL_TYPES.BAR]: {
 					data,

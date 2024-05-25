@@ -23,6 +23,8 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 
 	var quantile float64
 
+	percentileOperator := mq.SpaceAggregation
+
 	if v3.IsPercentileOperator(mq.SpaceAggregation) &&
 		mq.AggregateAttribute.Type != v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
 		quantile = v3.GetPercentileFromOperator(mq.SpaceAggregation)
@@ -80,6 +82,7 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	// fixed-bucket histogram quantiles are calculated with UDF
 	if quantile != 0 && mq.AggregateAttribute.Type != v3.AttributeKeyType(v3.MetricTypeExponentialHistogram) {
 		query = fmt.Sprintf(`SELECT %s, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s`, groupBy, quantile, query, groupBy, orderBy)
+		mq.SpaceAggregation = percentileOperator
 	}
 
 	return query, nil

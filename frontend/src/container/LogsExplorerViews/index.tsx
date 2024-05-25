@@ -531,8 +531,8 @@ function LogsExplorerViews({
 			logs.map((log) => {
 				const timestamp =
 					typeof log.timestamp === 'string'
-						? dayjs(log.timestamp).format()
-						: dayjs(log.timestamp / 1e6).format();
+						? dayjs(log.timestamp).format('YYYY-MM-DD HH:mm:ss.SSS')
+						: dayjs(log.timestamp / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
 
 				return FlatLogData({
 					timestamp,
@@ -608,6 +608,7 @@ function LogsExplorerViews({
 										className="periscope-btn"
 										onClick={handleToggleShowFormatOptions}
 										icon={<Sliders size={14} />}
+										data-testid="periscope-btn"
 									/>
 
 									{showFormatMenuItems && (

@@ -3,63 +3,47 @@ package v3
 import (
 	"fmt"
 
+	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string) (string, error) {
+func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	metricQueryGroupBy := mq.GroupBy
 
-	// if the aggregate operator is a histogram quantile, and user has not forgotten
-	// the le tag in the group by then add the le tag to the group by
-	if mq.AggregateOperator == v3.AggregateOperatorHistQuant50 ||
-		mq.AggregateOperator == v3.AggregateOperatorHistQuant75 ||
-		mq.AggregateOperator == v3.AggregateOperatorHistQuant90 ||
-		mq.AggregateOperator == v3.AggregateOperatorHistQuant95 ||
-		mq.AggregateOperator == v3.AggregateOperatorHistQuant99 {
-		found := false
-		for _, tag := range mq.GroupBy {
-			if tag.Key == "le" {
-				found = true
+	if mq.Filters != nil {
+		temporalityFound := false
+		for _, filter := range mq.Filters.Items {
+			if filter.Key.Key == "__temporality__" {
+				temporalityFound = true
 				break
 			}
 		}
-		if !found {
-			metricQueryGroupBy = append(
-				metricQueryGroupBy,
-				v3.AttributeKey{
-					Key:      "le",
-					DataType: v3.AttributeKeyDataTypeString,
-					Type:     v3.AttributeKeyTypeTag,
-					IsColumn: false,
-				},
-			)
+
+		if !temporalityFound {
+			mq.Filters.Items = append(mq.Filters.Items, v3.FilterItem{
+				Key:      v3.AttributeKey{Key: "__temporality__"},
+				Operator: v3.FilterOperatorEqual,
+				Value:    "Delta",
+			})
 		}
 	}
 
-	if mq.Filters != nil {
-		mq.Filters.Items = append(mq.Filters.Items, v3.FilterItem{
-			Key:      v3.AttributeKey{Key: "__temporality__"},
-			Operator: v3.FilterOperatorEqual,
-			Value:    "Delta",
-		})
-	}
-
-	filterSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, metricQueryGroupBy, mq)
+	filterSubQuery, err := helpers.PrepareTimeseriesFilterQueryV3(start, end, mq)
 	if err != nil {
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND unix_milli >= %d AND unix_milli <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
 		"SELECT %s" +
-			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
+			" toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as value" +
-			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
+			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_V4_TABLENAME +
 			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
@@ -157,9 +141,9 @@ func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableNam
 	case v3.AggregateOperatorNoOp:
 		queryTmpl :=
 			"SELECT fingerprint, labels as fullLabels," +
-				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
+				" toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), INTERVAL %d SECOND) as ts," +
 				" any(value) as value" +
-				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
+				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_V4_TABLENAME +
 				" INNER JOIN" +
 				" (%s) as filtered_time_series" +
 				" USING fingerprint" +

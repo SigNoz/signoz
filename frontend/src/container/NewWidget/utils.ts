@@ -3,7 +3,13 @@ import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import {
+	listViewInitialLogQuery,
+	listViewInitialTraceQuery,
+	PANEL_TYPES_INITIAL_QUERY,
+} from 'container/NewDashboard/ComponentsSlider/constants';
 import { isEqual, set, unset } from 'lodash-es';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -25,6 +31,7 @@ export type PartialPanelTypes = {
 	[PANEL_TYPES.TABLE]: 'table';
 	[PANEL_TYPES.TIME_SERIES]: 'graph';
 	[PANEL_TYPES.VALUE]: 'value';
+	[PANEL_TYPES.PIE]: 'pie';
 	[PANEL_TYPES.HISTOGRAM]: 'histogram';
 };
 
@@ -44,6 +51,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'having',
 					'orderBy',
 					'functions',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -59,6 +69,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'orderBy',
 					'functions',
 					'spaceAggregation',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -72,11 +85,67 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'limit',
 					'having',
 					'orderBy',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
 	},
 	[PANEL_TYPES.TIME_SERIES]: {
+		[DataSource.LOGS]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+					'queryName',
+					'expression',
+					'disabled',
+				],
+			},
+		},
+		[DataSource.METRICS]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+					'spaceAggregation',
+					'queryName',
+					'expression',
+					'disabled',
+				],
+			},
+		},
+		[DataSource.TRACES]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'queryName',
+					'expression',
+					'disabled',
+				],
+			},
+		},
+	},
+	[PANEL_TYPES.HISTOGRAM]: {
 		[DataSource.LOGS]: {
 			builder: {
 				queryData: [
@@ -176,6 +245,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'having',
 					'orderBy',
 					'functions',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -191,6 +263,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'orderBy',
 					'functions',
 					'spaceAggregation',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -204,6 +279,62 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'limit',
 					'having',
 					'orderBy',
+					'queryName',
+					'expression',
+					'disabled',
+				],
+			},
+		},
+	},
+	[PANEL_TYPES.PIE]: {
+		[DataSource.LOGS]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+					'queryName',
+					'expression',
+					'disabled',
+				],
+			},
+		},
+		[DataSource.METRICS]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+					'spaceAggregation',
+					'queryName',
+					'expression',
+					'disabled',
+				],
+			},
+		},
+		[DataSource.TRACES]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -235,6 +366,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'reduceTo',
 					'having',
 					'functions',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -248,6 +382,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'reduceTo',
 					'functions',
 					'spaceAggregation',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -261,6 +398,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 					'limit',
 					'having',
 					'orderBy',
+					'queryName',
+					'expression',
+					'disabled',
 				],
 			},
 		},
@@ -302,3 +442,38 @@ export function handleQueryChange(
 		},
 	};
 }
+
+export const getDefaultWidgetData = (
+	id: string,
+	name: PANEL_TYPES,
+): Widgets => ({
+	id,
+	title: '',
+	description: '',
+	isStacked: false,
+	nullZeroValues: '',
+	opacity: '',
+	panelTypes: name,
+	query:
+		name === PANEL_TYPES.LIST
+			? listViewInitialLogQuery
+			: PANEL_TYPES_INITIAL_QUERY[name],
+	timePreferance: 'GLOBAL_TIME',
+	softMax: null,
+	softMin: null,
+	selectedLogFields: [
+		{
+			dataType: 'string',
+			type: '',
+			name: 'body',
+		},
+		{
+			dataType: 'string',
+			type: '',
+			name: 'timestamp',
+		},
+	],
+	selectedTracesFields: [
+		...listViewInitialTraceQuery.builder.queryData[0].selectColumns,
+	],
+});

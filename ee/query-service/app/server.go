@@ -329,7 +329,6 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	r.Use(loggingMiddleware)
 
 	apiHandler.RegisterRoutes(r, am)
-	apiHandler.RegisterMetricsRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
 	apiHandler.RegisterIntegrationRoutes(r, am)
 	apiHandler.RegisterQueryRangeV3Routes(r, am)
@@ -711,6 +710,7 @@ func makeRulesManager(
 		Logger:       nil,
 		DisableRules: disableRules,
 		FeatureFlags: fm,
+		Reader:       ch,
 	}
 
 	// create Manager
