@@ -189,6 +189,50 @@ export const panelTypeDataSourceFormValuesMap: Record<
 			},
 		},
 	},
+	[PANEL_TYPES.HISTOGRAM]: {
+		[DataSource.LOGS]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+				],
+			},
+		},
+		[DataSource.METRICS]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+					'functions',
+					'spaceAggregation',
+				],
+			},
+		},
+		[DataSource.TRACES]: {
+			builder: {
+				queryData: [
+					'filters',
+					'aggregateOperator',
+					'aggregateAttribute',
+					'groupBy',
+					'limit',
+					'having',
+					'orderBy',
+				],
+			},
+		},
+	},
 	[PANEL_TYPES.TABLE]: {
 		[DataSource.LOGS]: {
 			builder: {
