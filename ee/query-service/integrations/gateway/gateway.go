@@ -1,19 +1,22 @@
 package gateway
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 
 	_ "go.signoz.io/signoz/pkg/query-service/model"
 )
 
 const (
-	GatewayRoutePrefix string = "/api/v1/gateway"
+	RoutePrefix   string = "/api/v1/gateway"
+	allowedPrefix string = "/v1/workspaces/me"
 )
 
 type Gateway interface {
-	Proxy(http.ResponseWriter, *http.Request)
+	ServeHTTP(http.ResponseWriter, *http.Request)
 }
 
 type gateway struct {
@@ -26,18 +29,17 @@ func NewGateway(u string) (*gateway, error) {
 		return nil, err
 	}
 
-	pr := newProxy(GatewayRoutePrefix, url)
-	proxy := &httputil.ReverseProxy{
-		Rewrite:        pr.rewrite,
-		ModifyResponse: pr.modifyResponse,
-		ErrorHandler:   pr.errorHandler,
-	}
-
 	return &gateway{
-		proxy: proxy,
+		proxy: newProxy(url, RoutePrefix),
 	}, nil
 }
 
-func (gateway *gateway) Proxy(rw http.ResponseWriter, req *http.Request) {
+func (gateway *gateway) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	fmt.Printf("%v", req.URL.Path)
+	if !strings.HasPrefix(req.URL.Path, RoutePrefix+allowedPrefix) {
+		rw.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	gateway.proxy.ServeHTTP(rw, req)
 }

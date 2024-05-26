@@ -177,7 +177,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 		Methods(http.MethodGet)
 
 	// Gateway
-	router.HandleFunc(gateway.GatewayRoutePrefix, am.AdminAccess(ah.Gateway().Proxy))
+	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.AdminAccess(ah.Gateway().ServeHTTP))
 
 	ah.APIHandler.RegisterRoutes(router, am)
 
