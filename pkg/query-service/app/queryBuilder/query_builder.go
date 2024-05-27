@@ -384,6 +384,8 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 			parts = append(parts, fmt.Sprintf("source=%s", query.DataSource))
 			parts = append(parts, fmt.Sprintf("step=%d", query.StepInterval))
 			parts = append(parts, fmt.Sprintf("aggregate=%s", query.AggregateOperator))
+			parts = append(parts, fmt.Sprintf("timeAggregation=%s", query.TimeAggregation))
+			parts = append(parts, fmt.Sprintf("spaceAggregation=%s", query.SpaceAggregation))
 
 			if query.AggregateAttribute.Key != "" {
 				parts = append(parts, fmt.Sprintf("aggregateAttribute=%s", query.AggregateAttribute.CacheKey()))
