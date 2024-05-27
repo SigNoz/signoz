@@ -1,5 +1,7 @@
 import { useMachine } from '@xstate/react';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { encode } from 'js-base64';
 import history from 'lib/history';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
@@ -30,6 +32,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 	const [queries, setQueries] = useState<IResourceAttribute[]>(
 		getResourceAttributeQueriesFromURL(),
 	);
+	const urlQuery = useUrlQuery();
 
 	const [optionsData, setOptionsData] = useState<OptionsData>({
 		mode: undefined,
@@ -45,17 +48,15 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 	const dispatchQueries = useCallback(
 		(queries: IResourceAttribute[]): void => {
-			history.replace({
-				pathname,
-				search:
-					queries && queries.length
-						? `?resourceAttribute=${encode(JSON.stringify(queries))}`
-						: '',
-			});
-
+			urlQuery.set(
+				QueryParams.resourceAttributes,
+				encode(JSON.stringify(queries)),
+			);
+			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
+			history.replace(generatedUrl);
 			setQueries(queries);
 		},
-		[pathname],
+		[pathname, urlQuery],
 	);
 
 	const [state, send] = useMachine(ResourceAttributesFilterMachine, {
