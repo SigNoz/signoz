@@ -639,7 +639,7 @@ function DashboardsList(): JSX.Element {
 							<ArrowUpRight size={16} className="learn-more-arrow" />
 						</section>
 					</div>
-				) : dashboards?.length === 0 ? (
+				) : dashboards?.length === 0 && !searchValue ? (
 					<div className="dashboard-empty-state">
 						<img
 							src="/Icons/dashboards.svg"
@@ -681,21 +681,6 @@ function DashboardsList(): JSX.Element {
 				) : (
 					<>
 						<div className="dashboards-list-header-container">
-							{/* TODO add filters
-							 */}
-							{/* <Dropdown
-								overlayClassName="new-dashboard-menu"
-								menu={{ items: filterMenuItems }}
-								placement="bottomLeft"
-							>
-								<Button
-									type="default"
-									className="periscope-btn"
-									icon={<SortDesc size={14} />}
-								>
-									Filter
-								</Button>
-							</Dropdown> */}
 							<Input
 								placeholder="Search by name, description, or tags..."
 								prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
@@ -719,81 +704,97 @@ function DashboardsList(): JSX.Element {
 								</Dropdown>
 							)}
 						</div>
-						<div className="all-dashboards-header">
-							<Typography.Text className="typography">All Dashboards</Typography.Text>
-							<section className="right-actions">
-								<Tooltip title="Sort">
-									<Popover
-										trigger="click"
-										content={
-											<div className="sort-content">
-												<Typography.Text className="sort-heading">Sort By</Typography.Text>
-												<Button
-													type="text"
-													className={cx('sort-btns')}
-													onClick={(): void => sortHandle('createdAt')}
-												>
-													Last created
-													{sortOrder.columnKey === 'createdAt' && <Check size={14} />}
-												</Button>
-												<Button
-													type="text"
-													className={cx('sort-btns')}
-													onClick={(): void => sortHandle('updatedAt')}
-												>
-													Last updated
-													{sortOrder.columnKey === 'updatedAt' && <Check size={14} />}
-												</Button>
-											</div>
-										}
-										rootClassName="sort-dashboards"
-										placement="bottomRight"
-										arrow={false}
-									>
-										<ArrowDownWideNarrow size={14} />
-									</Popover>
-								</Tooltip>
-								<Popover
-									trigger="click"
-									content={
-										<div className="configure-content">
-											<Button
-												type="text"
-												icon={<HdmiPort size={14} />}
-												className="configure-btn"
-												onClick={(e): void => {
-													e.preventDefault();
-													e.stopPropagation();
-													setIsConfigureMetadata(true);
-												}}
-											>
-												Configure metadata
-											</Button>
-										</div>
-									}
-									rootClassName="configure-group"
-									placement="bottomRight"
-									arrow={false}
-								>
-									<Ellipsis size={14} />
-								</Popover>
-							</section>
-						</div>
 
-						<Table
-							columns={columns}
-							dataSource={data}
-							showSorterTooltip
-							loading={isDashboardListLoading || isFilteringDashboards}
-							showHeader={false}
-							pagination={{
-								pageSize: 20,
-								showTotal: showPaginationItem,
-								showSizeChanger: false,
-								onChange: (page): void => handlePageSizeUpdate(page),
-								defaultCurrent: Number(sortOrder.pagination) || 1,
-							}}
-						/>
+						{dashboards?.length === 0 ? (
+							<div className="no-search">
+								<img src="/Icons/emptyState.svg" alt="img" className="img" />
+								<Typography.Text className="text">
+									No dashboards found for {searchValue}. Create a new dashboard?
+								</Typography.Text>
+							</div>
+						) : (
+							<>
+								<div className="all-dashboards-header">
+									<Typography.Text className="typography">
+										All Dashboards
+									</Typography.Text>
+									<section className="right-actions">
+										<Tooltip title="Sort">
+											<Popover
+												trigger="click"
+												content={
+													<div className="sort-content">
+														<Typography.Text className="sort-heading">
+															Sort By
+														</Typography.Text>
+														<Button
+															type="text"
+															className={cx('sort-btns')}
+															onClick={(): void => sortHandle('createdAt')}
+														>
+															Last created
+															{sortOrder.columnKey === 'createdAt' && <Check size={14} />}
+														</Button>
+														<Button
+															type="text"
+															className={cx('sort-btns')}
+															onClick={(): void => sortHandle('updatedAt')}
+														>
+															Last updated
+															{sortOrder.columnKey === 'updatedAt' && <Check size={14} />}
+														</Button>
+													</div>
+												}
+												rootClassName="sort-dashboards"
+												placement="bottomRight"
+												arrow={false}
+											>
+												<ArrowDownWideNarrow size={14} />
+											</Popover>
+										</Tooltip>
+										<Popover
+											trigger="click"
+											content={
+												<div className="configure-content">
+													<Button
+														type="text"
+														icon={<HdmiPort size={14} />}
+														className="configure-btn"
+														onClick={(e): void => {
+															e.preventDefault();
+															e.stopPropagation();
+															setIsConfigureMetadata(true);
+														}}
+													>
+														Configure metadata
+													</Button>
+												</div>
+											}
+											rootClassName="configure-group"
+											placement="bottomRight"
+											arrow={false}
+										>
+											<Ellipsis size={14} />
+										</Popover>
+									</section>
+								</div>
+
+								<Table
+									columns={columns}
+									dataSource={data}
+									showSorterTooltip
+									loading={isDashboardListLoading || isFilteringDashboards}
+									showHeader={false}
+									pagination={{
+										pageSize: 20,
+										showTotal: showPaginationItem,
+										showSizeChanger: false,
+										onChange: (page): void => handlePageSizeUpdate(page),
+										defaultCurrent: Number(sortOrder.pagination) || 1,
+									}}
+								/>
+							</>
+						)}
 					</>
 				)}
 				<ImportJSON

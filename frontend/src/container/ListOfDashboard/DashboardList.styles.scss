@@ -371,6 +371,34 @@
 		}
 	}
 
+	.no-search {
+		display: flex;
+		flex-direction: column;
+		height: 320px;
+		gap: 8px;
+		padding: 105px 190px;
+		margin-top: 16px;
+		justify-content: center;
+		align-items: flex-start;
+		border-radius: 6px;
+		border: 1px dashed var(--bg-slate-500);
+
+		.img {
+			width: 32px;
+			height: 32px;
+		}
+
+		.text {
+			color: var(--bg-vanilla-100);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 18px; /* 128.571% */
+			letter-spacing: -0.07px;
+		}
+	}
+
 	.all-dashboards-header {
 		display: flex;
 		justify-content: space-between;
