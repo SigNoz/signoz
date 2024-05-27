@@ -23,6 +23,7 @@ import {
 	ChevronUp,
 	CircleEllipsis,
 	GripVertical,
+	LockKeyhole,
 	PenLine,
 	X,
 } from 'lucide-react';
@@ -566,6 +567,18 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 					);
 				})}
 			</ReactGridLayout>
+			{isDashboardLocked && (
+				<div className="footer">
+					<Button
+						type="text"
+						icon={<LockKeyhole size={14} />}
+						className="locked-text"
+					>
+						Locked
+					</Button>
+					<div className="locked-bar" />
+				</div>
+			)}
 			<Modal
 				open={isSettingsModalOpen}
 				title="Rename Section"
