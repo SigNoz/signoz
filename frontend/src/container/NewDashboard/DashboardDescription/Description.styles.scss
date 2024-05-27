@@ -27,12 +27,17 @@
 				.ant-drawer-close {
 					height: 16px;
 					width: 16px;
+					margin-inline-end: 0px !important;
 				}
 			}
 		}
 
 		.ant-drawer-body {
 			padding: 16px;
+
+			&::-webkit-scrollbar {
+				width: 0.1rem;
+			}
 		}
 	}
 }
@@ -122,7 +127,7 @@
 		.right-section {
 			display: flex;
 			align-items: center;
-			padding: 16px 16px 0px 0px;
+			padding: 10px 16px 0px 0px;
 			gap: 14px;
 
 			.icons {
@@ -375,7 +380,6 @@
 
 				.dashboard-name-input {
 					display: flex;
-					width: 320px;
 					padding: 6px 6px 6px 8px;
 					align-items: center;
 					gap: 4px;

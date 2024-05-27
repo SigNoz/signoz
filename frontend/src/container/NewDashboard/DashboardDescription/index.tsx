@@ -1,6 +1,6 @@
 import './Description.styles.scss';
 
-import { PlusOutlined, SmallDashOutlined } from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
@@ -15,6 +15,7 @@ import { isEmpty } from 'lodash-es';
 import {
 	Check,
 	ClipboardCopy,
+	Ellipsis,
 	FileJson,
 	FolderKanban,
 	Fullscreen,
@@ -373,7 +374,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						trigger="click"
 						placement="bottomRight"
 					>
-						<Button icon={<SmallDashOutlined />} type="text" className="icons" />
+						<Button icon={<Ellipsis size={14} />} type="text" className="icons" />
 					</Popover>
 					{!isDashboardLocked && editDashboard && (
 						<SettingsDrawer drawerTitle="Dashboard Configuration" />

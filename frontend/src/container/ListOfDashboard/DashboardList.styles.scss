@@ -186,6 +186,25 @@
 		gap: 8px;
 
 		margin: 16px 0;
+
+		.btn {
+			padding: 5.937px 11.875px;
+		}
+	}
+
+	.ant-pagination-total-text {
+		display: flex;
+		gap: 4px;
+		align-items: center;
+
+		.numbers {
+			font-family: 'Space Mono';
+		}
+
+		.total {
+			font-family: 'Space Mono';
+			color: var(--bg-vanilla-300);
+		}
 	}
 
 	.dashboard-error-state {
@@ -349,6 +368,34 @@
 		.skeleton-1 {
 			height: 125px;
 			width: 100%;
+		}
+	}
+
+	.no-search {
+		display: flex;
+		flex-direction: column;
+		height: 320px;
+		gap: 8px;
+		padding: 105px 190px;
+		margin-top: 16px;
+		justify-content: center;
+		align-items: flex-start;
+		border-radius: 6px;
+		border: 1px dashed var(--bg-slate-500);
+
+		.img {
+			width: 32px;
+			height: 32px;
+		}
+
+		.text {
+			color: var(--bg-vanilla-100);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 18px; /* 128.571% */
+			letter-spacing: -0.07px;
 		}
 	}
 
@@ -538,6 +585,7 @@
 				.action-btn {
 					display: flex;
 					padding: 14px;
+					height: unset;
 					align-items: center;
 					gap: 6px;
 					color: var(--bg-vanilla-400);
@@ -632,9 +680,9 @@
 .configure-group {
 	.ant-popover-inner {
 		display: flex;
-		padding: 12px;
 		align-items: center;
 		border-radius: 4px;
+		padding: 0px;
 		border: 1px solid var(--Slate-400, #1d212d);
 		background: linear-gradient(
 			139deg,
@@ -660,7 +708,7 @@
 				font-weight: 400;
 				line-height: normal;
 				letter-spacing: 0.14px;
-				padding: 0px;
+				padding: 12px;
 			}
 		}
 	}
@@ -720,10 +768,11 @@
 						display: flex;
 						flex-direction: column;
 						gap: 8px;
+						width: 100%;
 
 						.createdAt {
 							display: flex;
-							gap: 25px;
+							justify-content: space-between;
 							align-items: center;
 
 							.formatted-time {
@@ -779,7 +828,7 @@
 
 						.updatedAt {
 							display: flex;
-							gap: 25px;
+							justify-content: space-between;
 							align-items: center;
 
 							.formatted-time {
@@ -839,8 +888,8 @@
 					display: flex;
 					justify-content: space-between;
 					align-items: center;
-					width: 324px;
-					margin: 0 auto;
+					width: 336px;
+					padding: 0px 0px 0px 14.634px;
 
 					.left {
 						display: flex;
@@ -937,6 +986,11 @@
 						}
 					}
 				}
+			}
+		}
+		.no-search {
+			.text {
+				color: var(--bg-ink-300);
 			}
 		}
 

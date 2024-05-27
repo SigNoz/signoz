@@ -251,3 +251,16 @@ body {
 	// do not modify this as this is required to hide intercom in modals
 	z-index: 1000000000000;
 }
+
+.ant-modal-root {
+	.ant-modal-mask {
+		z-index: 2000000000000 !important;
+	}
+	.ant-modal-wrap {
+		z-index: 2000000000000 !important;
+	}
+}
+
+.ant-select-dropdown {
+	z-index: 3000000000000 !important;
+}

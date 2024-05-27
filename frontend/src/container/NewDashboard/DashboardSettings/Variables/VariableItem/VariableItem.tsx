@@ -245,7 +245,10 @@ function VariableItem({
 									'variable-type-btn',
 									queryType === 'QUERY' ? 'selected' : '',
 								)}
-								onClick={(): void => setQueryType('QUERY')}
+								onClick={(): void => {
+									setQueryType('QUERY');
+									setPreviewValues([]);
+								}}
 							>
 								Query
 							</Button>
@@ -256,7 +259,10 @@ function VariableItem({
 									'variable-type-btn',
 									queryType === 'TEXTBOX' ? 'selected' : '',
 								)}
-								onClick={(): void => setQueryType('TEXTBOX')}
+								onClick={(): void => {
+									setQueryType('TEXTBOX');
+									setPreviewValues([]);
+								}}
 							>
 								Textbox
 							</Button>
@@ -267,7 +273,10 @@ function VariableItem({
 									'variable-type-btn',
 									queryType === 'CUSTOM' ? 'selected' : '',
 								)}
-								onClick={(): void => setQueryType('CUSTOM')}
+								onClick={(): void => {
+									setQueryType('CUSTOM');
+									setPreviewValues([]);
+								}}
 							>
 								Custom
 							</Button>
@@ -363,12 +372,12 @@ function VariableItem({
 					{(queryType === 'QUERY' || queryType === 'CUSTOM') && (
 						<>
 							<VariableItemRow className="variables-preview-section">
-								<LabelContainer>
+								<LabelContainer style={{ width: '100%' }}>
 									<Typography className="typography-variables">
 										Preview of Values
 									</Typography>
 								</LabelContainer>
-								<div style={{ flex: 1 }} className="preview-values">
+								<div className="preview-values">
 									{errorPreview ? (
 										<Typography style={{ color: orange[5] }}>{errorPreview}</Typography>
 									) : (

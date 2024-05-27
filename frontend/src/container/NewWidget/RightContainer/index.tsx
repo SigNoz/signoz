@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './RightContainer.styles.scss';
 
 import { Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
@@ -209,12 +211,12 @@ function RightContainer({
 			</section>
 
 			{allowCreateAlerts && (
-				<section className="alerts">
+				<section className="alerts" onClick={onCreateAlertsHandler}>
 					<div className="left-section">
 						<ConciergeBell size={14} className="bell-icon" />
 						<Typography.Text className="alerts-text">Alerts</Typography.Text>
 					</div>
-					<Plus size={14} onClick={onCreateAlertsHandler} className="plus-icon" />
+					<Plus size={14} className="plus-icon" />
 				</section>
 			)}
 
