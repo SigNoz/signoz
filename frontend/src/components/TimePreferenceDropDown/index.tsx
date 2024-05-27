@@ -38,6 +38,7 @@ function TimePreference({
 			menu={menu}
 			rootClassName="time-selection-menu"
 			className="time-selection-target"
+			trigger={['click']}
 		>
 			<Button>
 				<div className="button-selected-text">

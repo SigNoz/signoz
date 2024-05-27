@@ -27,6 +27,7 @@
 				.ant-drawer-close {
 					height: 16px;
 					width: 16px;
+					margin-inline-end: 0px !important;
 				}
 			}
 		}
@@ -126,7 +127,7 @@
 		.right-section {
 			display: flex;
 			align-items: center;
-			padding: 16px 16px 0px 0px;
+			padding: 10px 16px 0px 0px;
 			gap: 14px;
 
 			.icons {
