@@ -749,3 +749,87 @@ func TestPrepareLinksToTraces(t *testing.T) {
 	link := rule.prepareLinksToTraces(ts, labels.Labels{})
 	assert.Contains(t, link, "&timeRange=%7B%22start%22%3A1705468620000000000%2C%22end%22%3A1705468920000000000%2C%22pageSize%22%3A100%7D&startTime=1705468620000000000&endTime=1705468920000000000")
 }
+
+func TestThresholdRuleLabelNormalization(t *testing.T) {
+	postableRule := PostableRule{
+		AlertName:  "Tricky Condition Tests",
+		AlertType:  "METRIC_BASED_ALERT",
+		RuleType:   RuleTypeThreshold,
+		EvalWindow: Duration(5 * time.Minute),
+		Frequency:  Duration(1 * time.Minute),
+		RuleCondition: &RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "probe_success",
+						},
+						AggregateOperator: v3.AggregateOperatorNoOp,
+						DataSource:        v3.DataSourceMetrics,
+						Expression:        "A",
+					},
+				},
+			},
+		},
+	}
+
+	cases := []struct {
+		values      v3.Series
+		expectAlert bool
+		compareOp   string
+		matchType   string
+		target      float64
+	}{
+		// Test cases for Equals Always
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+				},
+				Labels: map[string]string{
+					"service.name": "frontend",
+				},
+				LabelsArray: []map[string]string{
+					map[string]string{
+						"service.name": "frontend",
+					},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "3", // Equals
+			matchType:   "2", // Always
+			target:      0.0,
+		},
+	}
+
+	fm := featureManager.StartManager()
+	for idx, c := range cases {
+		postableRule.RuleCondition.CompareOp = CompareOp(c.compareOp)
+		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
+		postableRule.RuleCondition.Target = &c.target
+
+		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
+		if err != nil {
+			assert.NoError(t, err)
+		}
+
+		values := c.values
+		for i := range values.Points {
+			values.Points[i].Timestamp = time.Now().UnixMilli()
+		}
+
+		sample, shoulAlert := rule.shouldAlert(c.values)
+		for name, value := range c.values.Labels {
+			assert.Equal(t, value, sample.Metric.Get(normalizeLabelName(name)))
+		}
+
+		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
+	}
+}
