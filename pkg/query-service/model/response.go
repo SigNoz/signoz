@@ -394,11 +394,6 @@ type DBResponseServiceName struct {
 	Count       uint64 `ch:"count"`
 }
 
-type DBResponseHttpCode struct {
-	HttpCode string `ch:"httpCode"`
-	Count    uint64 `ch:"count"`
-}
-
 type DBResponseHttpRoute struct {
 	HttpRoute string `ch:"httpRoute"`
 	Count     uint64 `ch:"count"`
@@ -453,14 +448,12 @@ type SpanFiltersResponse struct {
 	Status             map[string]uint64 `json:"status"`
 	Duration           map[string]uint64 `json:"duration"`
 	Operation          map[string]uint64 `json:"operation"`
-	HttpCode           map[string]uint64 `json:"httpCode"`
 	ResponseStatusCode map[string]uint64 `json:"responseStatusCode"`
 	RPCMethod          map[string]uint64 `json:"rpcMethod"`
 	HttpUrl            map[string]uint64 `json:"httpUrl"`
 	HttpMethod         map[string]uint64 `json:"httpMethod"`
 	HttpRoute          map[string]uint64 `json:"httpRoute"`
 	HttpHost           map[string]uint64 `json:"httpHost"`
-	Component          map[string]uint64 `json:"component"`
 }
 type Error struct {
 	ExceptionType  string    `json:"exceptionType" ch:"exceptionType"`
