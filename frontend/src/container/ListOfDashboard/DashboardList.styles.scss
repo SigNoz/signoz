@@ -988,6 +988,11 @@
 				}
 			}
 		}
+		.no-search {
+			.text {
+				color: var(--bg-ink-300);
+			}
+		}
 
 		.all-dashboards-header {
 			border: 1px solid var(--bg-vanilla-300);
