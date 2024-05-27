@@ -100,7 +100,7 @@ export const seriesBarChartData = {
 							series: [
 								{
 									labels: {},
-									labelsArray: null,
+									labelsArray: [],
 									values: [
 										{
 											timestamp: 1708683240000,
@@ -164,7 +164,7 @@ export const seriesBarChartData = {
 							series: [
 								{
 									labels: {},
-									labelsArray: null,
+									labelsArray: [],
 									values: [
 										{
 											timestamp: 1708683840000,
@@ -543,7 +543,7 @@ export const seriesLineChartData = {
 							series: [
 								{
 									labels: {},
-									labelsArray: null,
+									labelsArray: [],
 									values: [
 										{
 											timestamp: 1708683240000,
@@ -607,7 +607,7 @@ export const seriesLineChartData = {
 							series: [
 								{
 									labels: {},
-									labelsArray: null,
+									labelsArray: [],
 									values: [
 										{
 											timestamp: 1708683840000,

@@ -64,6 +64,7 @@ export const inputPropsTimeSeries = {
 									labels: {
 										A: 'A',
 									},
+									labelsArray: [{ A: 'A' }],
 									values: [
 										{
 											timestamp: 1708623120000,
@@ -268,6 +269,7 @@ export const inputPropsBar = {
 									labels: {
 										A: 'A',
 									},
+									labelsArray: [{ A: 'A' }],
 									values: [
 										{
 											timestamp: 1708623120000,
