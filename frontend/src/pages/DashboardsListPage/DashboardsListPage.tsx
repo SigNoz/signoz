@@ -10,7 +10,12 @@ function DashboardsListPage(): JSX.Element {
 	const location = useLocation();
 
 	return (
-		<Space direction="vertical" size="middle" style={{ width: '100%' }}>
+		<Space
+			direction="vertical"
+			size="middle"
+			style={{ width: '100%' }}
+			className="dashboard-list-page"
+		>
 			<ReleaseNote path={location.pathname} />
 			<div className="dashboard-header">
 				<LayoutGrid size={14} className="icon" />

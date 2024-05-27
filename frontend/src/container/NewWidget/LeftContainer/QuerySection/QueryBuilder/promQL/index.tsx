@@ -25,7 +25,11 @@ function PromQLQueryContainer(): JSX.Element | null {
 					/>
 				),
 			)}
-			<QueryButton onClick={addQueryHandler} icon={<PlusOutlined />}>
+			<QueryButton
+				onClick={addQueryHandler}
+				icon={<PlusOutlined />}
+				style={{ margin: '0.4rem 1rem' }}
+			>
 				Query
 			</QueryButton>
 		</>
