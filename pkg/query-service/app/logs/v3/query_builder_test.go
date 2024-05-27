@@ -188,6 +188,13 @@ var timeSeriesFilterQueryData = []struct {
 		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] ILIKE '%102.%'",
 	},
 	{
+		Name: "Test contains with single quotes",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "hello 'world'", Operator: "contains"},
+		}},
+		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'message')] ILIKE '%hello \\'world\\'%'",
+	},
+	{
 		Name: "Test not contains",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
@@ -280,7 +287,6 @@ var timeSeriesFilterQueryData = []struct {
 		}},
 		ExpectedFilter: "`attribute_int64_status_exists`=false",
 	},
-	//  add new tests
 }
 
 func TestBuildLogsTimeSeriesFilterQuery(t *testing.T) {
