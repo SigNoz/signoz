@@ -170,6 +170,11 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 		am.ViewAccess(ah.listLicensesV2)).
 		Methods(http.MethodGet)
 
+	router.HandleFunc("/api/v1/usage_alerts", am.AdminAccess(ah.listUsageAlerts)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/usage_alerts", am.AdminAccess(ah.createUsageAlert)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/usage_alerts/{id}", am.AdminAccess(ah.updateUsageAlert)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/usage_alerts/{id}", am.AdminAccess(ah.deleteUsageAlert)).Methods(http.MethodDelete)
+
 	ah.APIHandler.RegisterRoutes(router, am)
 
 }

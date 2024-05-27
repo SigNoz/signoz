@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/gorilla/mux"
+	"github.com/xtgo/uuid"
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
 	"go.uber.org/zap"
@@ -56,6 +58,23 @@ type billingDetails struct {
 		Details            details `json:"details"`
 		Discount           float64 `json:"discount"`
 		SubscriptionStatus string  `json:"subscriptionStatus"`
+	} `json:"data"`
+}
+
+type UsageAlert struct {
+	ID             uuid.UUID `db:"id"`
+	InstallationID uuid.UUID `db:"installation_id"`
+	LicenseKey     uuid.UUID `db:"license_key"`
+	Emails         string    `db:"emails"`
+	Type           string    `db:"type"`
+	Threshold      float64   `db:"threshold"`
+	AlertSent      int       `db:"alert_sent"`
+}
+
+type usageAlertResponse struct {
+	Status string `json:"status"`
+	Data   struct {
+		Alerts []UsageAlert `json:"alerts"`
 	} `json:"data"`
 }
 
@@ -269,4 +288,116 @@ func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ah.Respond(w, resp.Data)
+}
+
+func (ah *APIHandler) listUsageAlerts(w http.ResponseWriter, r *http.Request) {
+	licenseKey := r.URL.Query().Get("licenseKey")
+
+	if licenseKey == "" {
+		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
+		return
+	}
+
+	billingAlertURL := fmt.Sprintf("%s/alerts?licenseKey=%s", constants.LicenseSignozIo, licenseKey)
+
+	hClient := &http.Client{}
+	req, err := http.NewRequest("GET", billingAlertURL, nil)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
+	billingAlertResp, err := hClient.Do(req)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	// decode response body
+	var alerts usageAlertResponse
+	if err := json.NewDecoder(billingAlertResp.Body).Decode(&alerts); err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	ah.Respond(w, alerts)
+}
+
+func (ah *APIHandler) createUsageAlert(w http.ResponseWriter, r *http.Request) {
+	var alert UsageAlert
+
+	if err := json.NewDecoder(r.Body).Decode(&alert); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	billingAlertURL := fmt.Sprintf("%s/alerts", constants.LicenseSignozIo)
+
+	hClient := &http.Client{}
+	req, err := http.NewRequest("POST", billingAlertURL, r.Body)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
+	_, err = hClient.Do(req)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	ah.Respond(w, nil)
+}
+
+func (ah *APIHandler) deleteUsageAlert(w http.ResponseWriter, r *http.Request) {
+	alertID := mux.Vars(r)["id"]
+
+	if alertID == "" {
+		RespondError(w, model.BadRequest(fmt.Errorf("alertID is required")), nil)
+		return
+	}
+
+	billingAlertURL := fmt.Sprintf("%s/alerts/%s", constants.LicenseSignozIo, alertID)
+
+	hClient := &http.Client{}
+	req, err := http.NewRequest("DELETE", billingAlertURL, nil)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
+	_, err = hClient.Do(req)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	ah.Respond(w, nil)
+}
+
+func (ah *APIHandler) updateUsageAlert(w http.ResponseWriter, r *http.Request) {
+	alertID := mux.Vars(r)["id"]
+
+	if alertID == "" {
+		RespondError(w, model.BadRequest(fmt.Errorf("alertID is required")), nil)
+		return
+	}
+
+	billingAlertURL := fmt.Sprintf("%s/alerts/%s", constants.LicenseSignozIo, alertID)
+
+	hClient := &http.Client{}
+	req, err := http.NewRequest("PUT", billingAlertURL, r.Body)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
+	_, err = hClient.Do(req)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	ah.Respond(w, nil)
 }
