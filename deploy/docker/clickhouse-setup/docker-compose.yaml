@@ -169,6 +169,7 @@ services:
     command:
       [
         "-config=/root/config/prometheus.yml",
+        "-gateway-url=https://api.staging.signoz.cloud"
         # "--prefer-delta=true"
       ]
     # ports:
