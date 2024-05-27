@@ -45,6 +45,46 @@
 			}
 		}
 	}
+
+	.footer {
+		display: flex;
+		flex-direction: column;
+		position: absolute;
+		bottom: 0;
+		width: -webkit-fill-available;
+
+		.locked-text {
+			align-self: flex-end;
+			width: 80px;
+			border: none;
+			cursor: default;
+			display: inline-flex;
+			padding: 4px 6px;
+			align-items: center;
+			gap: 4px;
+			border-radius: 4px 0px 0px 0px;
+			background: var(--bg-sakura-500);
+			backdrop-filter: blur(6px);
+			color: var(--bg-ink-500);
+			font-family: 'Space Mono';
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 500;
+			line-height: 16px; /* 133.333% */
+			letter-spacing: 0.48px;
+			text-transform: uppercase;
+
+			.ant-btn-icon {
+				margin-inline-end: 0px;
+			}
+		}
+
+		.locked-bar {
+			background: var(--bg-sakura-500);
+			height: 6px;
+			width: 100%;
+		}
+	}
 }
 
 .widget-graph-container {
