@@ -25,7 +25,7 @@
 
 		.edit-action-btns {
 			position: absolute;
-			right: -10px;
+			right: -8px;
 			top: -14px;
 			display: none;
 
@@ -42,7 +42,7 @@
 			}
 
 			.ant-btn + .ant-btn {
-				border-left: 1px solid var(--bg-slate-400);
+				border-left: 1px solid var(--bg-slate-200);
 			}
 
 			.edit-btn {
