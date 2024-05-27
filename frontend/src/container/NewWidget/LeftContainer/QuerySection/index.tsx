@@ -235,7 +235,10 @@ function QuerySection({
 				onChange={handleQueryCategoryChange}
 				tabBarExtraContent={
 					<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-						<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
+						<TextToolTip
+							text="This will temporarily save the current query and graph state. This will persist across tab change"
+							url="https://signoz.io/docs/userguide/query-builder?utm_source=product&utm_medium=query-builder"
+						/>
 						<Button
 							loading={queryResponse.isFetching}
 							type="primary"

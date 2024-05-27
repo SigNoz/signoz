@@ -42,6 +42,7 @@ function FullView({
 	fullViewOptions = true,
 	version,
 	originalName,
+	tableProcessedDataRef,
 	isDependedDataLoaded = false,
 	onToggleModelHandler,
 }: FullViewProps): JSX.Element {
@@ -222,6 +223,7 @@ function FullView({
 						setGraphVisibility={setGraphsVisibilityStates}
 						graphVisibility={graphsVisibilityStates}
 						onDragSelect={onDragSelect}
+						tableProcessedDataRef={tableProcessedDataRef}
 					/>
 				</GraphContainer>
 			</div>

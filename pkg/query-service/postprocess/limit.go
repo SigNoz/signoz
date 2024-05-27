@@ -1,4 +1,4 @@
-package app
+package postprocess
 
 import (
 	"math"
@@ -9,8 +9,8 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-// applyMetricLimit applies limit to the metrics query results
-func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+// ApplyMetricLimit applies limit to the metrics query results
+func ApplyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
 	// apply limit if any for metrics
 	// use the grouping set points to apply the limit
 
