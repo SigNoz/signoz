@@ -1,9 +1,11 @@
 package rules
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"math"
 	"net/url"
 	"regexp"
@@ -27,6 +29,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
+	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 
@@ -430,13 +433,34 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	end = end - (end % (60 * 1000))
 
 	if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
-		return &v3.QueryRangeParamsV3{
+		params := &v3.QueryRangeParamsV3{
 			Start:          start,
 			End:            end,
 			Step:           int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
 			CompositeQuery: r.ruleCondition.CompositeQuery,
 			Variables:      make(map[string]interface{}, 0),
 			NoCache:        true,
+		}
+		querytemplate.AssignReservedVarsV3(params)
+		for name, chQuery := range r.ruleCondition.CompositeQuery.ClickHouseQueries {
+			if chQuery.Disabled {
+				continue
+			}
+			tmpl := template.New("clickhouse-query")
+			tmpl, err := tmpl.Parse(chQuery.Query)
+			if err != nil {
+				zap.L().Error("failed to parse clickhouse query to populate vars", zap.String("ruleid", r.ID()), zap.Error(err))
+				r.SetHealth(HealthBad)
+				return params
+			}
+			var query bytes.Buffer
+			err = tmpl.Execute(&query, params.Variables)
+			if err != nil {
+				zap.L().Error("failed to populate clickhouse query", zap.String("ruleid", r.ID()), zap.Error(err))
+				r.SetHealth(HealthBad)
+				return params
+			}
+			r.ruleCondition.CompositeQuery.ClickHouseQueries[name].Query = query.String()
 		}
 	}
 
@@ -860,7 +884,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			return result
 		}
 
-		lb := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel)
+		lb := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel)
 
 		for _, l := range r.labels {
 			lb.Set(l.Name, expand(l.Value))
@@ -998,12 +1022,19 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 	var alertSmpl Sample
 	var shouldAlert bool
 	var lbls labels.Labels
+	var lblsNormalized labels.Labels
 
 	for name, value := range series.Labels {
 		lbls = append(lbls, labels.Label{Name: name, Value: value})
+		lblsNormalized = append(lblsNormalized, labels.Label{Name: normalizeLabelName(name), Value: value})
 	}
 
 	series.Points = removeGroupinSetPoints(series)
+
+	// nothing to evaluate
+	if len(series.Points) == 0 {
+		return alertSmpl, false
+	}
 
 	switch r.matchType() {
 	case AtleastOnce:
@@ -1011,7 +1042,7 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 		if r.compareOp() == ValueIsAbove {
 			for _, smpl := range series.Points {
 				if smpl.Value > r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls, MetricOrig: lbls}
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
 					shouldAlert = true
 					break
 				}
@@ -1019,7 +1050,7 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ValueIsBelow {
 			for _, smpl := range series.Points {
 				if smpl.Value < r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls, MetricOrig: lbls}
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
 					shouldAlert = true
 					break
 				}
@@ -1027,7 +1058,7 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ValueIsEq {
 			for _, smpl := range series.Points {
 				if smpl.Value == r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls, MetricOrig: lbls}
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
 					shouldAlert = true
 					break
 				}
@@ -1035,7 +1066,7 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 		} else if r.compareOp() == ValueIsNotEq {
 			for _, smpl := range series.Points {
 				if smpl.Value != r.targetVal() {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls, MetricOrig: lbls}
+					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lblsNormalized, MetricOrig: lbls}
 					shouldAlert = true
 					break
 				}
@@ -1044,7 +1075,7 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 	case AllTheTimes:
 		// If all samples match the condition, the rule is firing.
 		shouldAlert = true
-		alertSmpl = Sample{Point: Point{V: r.targetVal()}, Metric: lbls, MetricOrig: lbls}
+		alertSmpl = Sample{Point: Point{V: r.targetVal()}, Metric: lblsNormalized, MetricOrig: lbls}
 		if r.compareOp() == ValueIsAbove {
 			for _, smpl := range series.Points {
 				if smpl.Value <= r.targetVal() {
@@ -1085,7 +1116,7 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 			count++
 		}
 		avg := sum / count
-		alertSmpl = Sample{Point: Point{V: avg}, Metric: lbls, MetricOrig: lbls}
+		alertSmpl = Sample{Point: Point{V: avg}, Metric: lblsNormalized, MetricOrig: lbls}
 		if r.compareOp() == ValueIsAbove {
 			if avg > r.targetVal() {
 				shouldAlert = true
@@ -1113,7 +1144,7 @@ func (r *ThresholdRule) shouldAlert(series v3.Series) (Sample, bool) {
 			}
 			sum += smpl.Value
 		}
-		alertSmpl = Sample{Point: Point{V: sum}, Metric: lbls, MetricOrig: lbls}
+		alertSmpl = Sample{Point: Point{V: sum}, Metric: lblsNormalized, MetricOrig: lbls}
 		if r.compareOp() == ValueIsAbove {
 			if sum > r.targetVal() {
 				shouldAlert = true
