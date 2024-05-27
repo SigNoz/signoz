@@ -1,6 +1,6 @@
 .threshold-selector-container {
 	padding: 12px;
-	border-bottom: 1px solid var(--bg-slate-500);
+	padding-bottom: 80px;
 
 	.threshold-select {
 		display: flex;
@@ -35,8 +35,6 @@
 
 .lightMode {
 	.threshold-selector-container {
-		border-bottom: 1px solid var(--bg-vanilla-300);
-
 		.threshold-select {
 			.icon {
 				color: var(--bg-ink-400);

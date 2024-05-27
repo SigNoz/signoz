@@ -53,7 +53,6 @@ function ThresholdSelector({
 
 	const addThresholdHandler = (): void => {
 		setThresholds([
-			...thresholds,
 			{
 				index: uuid(),
 				isEditEnabled: true,
@@ -67,6 +66,7 @@ function ThresholdSelector({
 				selectedGraph,
 				thresholdTableOptions: tableOptions[0]?.value || '',
 			},
+			...thresholds,
 		]);
 	};
 

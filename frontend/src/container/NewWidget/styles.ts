@@ -5,12 +5,18 @@ export const Container = styled.div`
 	min-height: 78vh;
 	display: flex;
 	flex-direction: column;
+	overflow-y: hidden;
 `;
 
 export const RightContainerWrapper = styled(Col)`
 	&&& {
 		min-width: 200px;
+		overflow-y: auto;
+		max-width: 400px;
 		width: 30%;
+	}
+	&::-webkit-scrollbar {
+		width: 0.1rem;
 	}
 `;
 
@@ -21,10 +27,14 @@ interface LeftContainerWrapperProps {
 export const LeftContainerWrapper = styled(Col)<LeftContainerWrapperProps>`
 	&&& {
 		width: 70%;
+		overflow-y: auto;
 		border-right: ${({ isDarkMode }): string =>
 			isDarkMode
 				? '1px solid var(--bg-slate-300)'
 				: '1px solid var(--bg-vanilla-300)'};
+	}
+	&::-webkit-scrollbar {
+		width: 0.1rem;
 	}
 `;
 
@@ -37,6 +47,7 @@ export const ButtonContainer = styled.div`
 
 export const PanelContainer = styled.div`
 	display: flex;
+	overflow-y: auto;
 `;
 
 export const Tag = styled(AntDTag)`

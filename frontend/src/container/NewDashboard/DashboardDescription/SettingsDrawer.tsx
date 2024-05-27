@@ -1,6 +1,6 @@
 import './Description.styles.scss';
 
-import { Button, Tooltip } from 'antd';
+import { Button } from 'antd';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import { useRef, useState } from 'react';
 
@@ -23,17 +23,15 @@ function SettingsDrawer({ drawerTitle }: { drawerTitle: string }): JSX.Element {
 
 	return (
 		<>
-			<Tooltip title="Configure" placement="left">
-				<Button
-					type="text"
-					className="configure-button"
-					icon={<ConfigureIcon />}
-					data-testid="show-drawer"
-					onClick={showDrawer}
-				>
-					Configure
-				</Button>
-			</Tooltip>
+			<Button
+				type="text"
+				className="configure-button"
+				icon={<ConfigureIcon />}
+				data-testid="show-drawer"
+				onClick={showDrawer}
+			>
+				Configure
+			</Button>
 
 			<DrawerContainer
 				title={drawerTitle}

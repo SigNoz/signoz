@@ -527,7 +527,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				{!isQueryModified ? (
 					<Typography>
 						{t('your_graph_build_with')}{' '}
-						<QueryTypeTag queryType={currentQuery.queryType} />
+						<QueryTypeTag queryType={currentQuery.queryType} />{' '}
 						{t('dashboard_ok_confirm')}
 					</Typography>
 				) : (
