@@ -60,7 +60,12 @@ func findUniqueLabelSets(results []*v3.Result) []map[string]string {
 }
 
 // Function to join series on timestamp and calculate new values
-func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, expression *govaluate.EvaluableExpression) (*v3.Series, error) {
+func joinAndCalculate(
+	results []*v3.Result,
+	uniqueLabelSet map[string]string,
+	expression *govaluate.EvaluableExpression,
+	canDefaultZero map[string]bool,
+) (*v3.Series, error) {
 
 	uniqueTimestamps := make(map[int64]struct{})
 	// map[queryName]map[timestamp]value
@@ -108,10 +113,16 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 
 		// If the value is not present in the values map, set it to 0
 		for _, v := range expression.Vars() {
-			if _, ok := values[v]; !ok {
+			if _, ok := values[v]; !ok && canDefaultZero[v] {
 				values[v] = 0
 			}
 		}
+
+		if len(expression.Vars()) != len(values) {
+			// not enough values for expression evaluation
+			continue
+		}
+
 		newValue, err := expression.Evaluate(values)
 		if err != nil {
 			return nil, err
@@ -136,16 +147,20 @@ func joinAndCalculate(results []*v3.Result, uniqueLabelSet map[string]string, ex
 // 2. For each unique label set, find a series that matches the label set from each query result
 // 3. Join the series on timestamp and calculate the new values
 // 4. Return the new series
-func processResults(results []*v3.Result, expression *govaluate.EvaluableExpression) (*v3.Result, error) {
+func processResults(
+	results []*v3.Result,
+	expression *govaluate.EvaluableExpression,
+	canDefaultZero map[string]bool,
+) (*v3.Result, error) {
 	uniqueLabelSets := findUniqueLabelSets(results)
 	newSeries := make([]*v3.Series, 0)
 
 	for _, labelSet := range uniqueLabelSets {
-		series, err := joinAndCalculate(results, labelSet, expression)
+		series, err := joinAndCalculate(results, labelSet, expression, canDefaultZero)
 		if err != nil {
 			return nil, err
 		}
-		if series != nil {
+		if series != nil && len(series.Points) != 0 {
 			labelsArray := make([]map[string]string, 0)
 			for k, v := range series.Labels {
 				labelsArray = append(labelsArray, map[string]string{k: v})

@@ -192,7 +192,8 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 					conditions = append(conditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					columnName := getClickhouseColumnName(item.Key)
-					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, item.Value))
+					val := utils.QuoteEscapedString(fmt.Sprintf("%v", item.Value))
+					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, val))
 				default:
 					columnName := getClickhouseColumnName(item.Key)
 					fmtVal := utils.ClickHouseFormattedValue(value)
