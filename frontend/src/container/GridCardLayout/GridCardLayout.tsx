@@ -1,7 +1,7 @@
 import './GridCardLayout.styles.scss';
 
 import { Color } from '@signozhq/design-tokens';
-import { Button, Form, Input, Modal, Popover, Typography } from 'antd';
+import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -21,10 +21,8 @@ import {
 	Check,
 	ChevronDown,
 	ChevronUp,
-	CircleEllipsis,
 	GripVertical,
 	LockKeyhole,
-	PenLine,
 	X,
 } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -46,6 +44,7 @@ import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import GridCard from './GridCard';
 import { Card, CardContainer, ReactGridLayout } from './styles';
 import { removeUndefinedValuesFromLayout } from './utils';
+import { WidgetRowHeader } from './WidgetRow';
 
 interface GraphLayoutProps {
 	handle: FullScreenHandle;
@@ -76,8 +75,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const [dashboardLayout, setDashboardLayout] = useState<Layout[]>([]);
-
-	const [isRowSettingsOpen, setIsRowSettingsOpen] = useState<boolean>(false);
 
 	const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
 
@@ -122,7 +119,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const [deleteWidget, editWidget] = useComponentPermission(
 		['delete_widget', 'edit_widget'],
-		userRole,
+		role,
 	);
 
 	useEffect(() => {
@@ -488,56 +485,15 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 											/>
 										)}
 									</div>
-									<Popover
-										open={isRowSettingsOpen}
-										arrow={false}
-										onOpenChange={(visible): void => setIsRowSettingsOpen(visible)}
-										rootClassName="row-settings"
-										trigger="click"
-										placement="bottomRight"
-										content={
-											<div className="menu-content">
-												<section className="section-1">
-													<Button
-														className="rename-btn"
-														type="text"
-														disabled={!editWidget}
-														icon={<PenLine size={14} />}
-														onClick={(): void => {
-															setIsSettingsModalOpen(true);
-															setCurrentSelectRowId(id);
-															setIsRowSettingsOpen(false);
-														}}
-													>
-														Rename
-													</Button>
-												</section>
-												{!rowWidgetProperties.collapsed && (
-													<section className="section-2">
-														<Button
-															className="remove-section"
-															type="text"
-															icon={<X size={14} />}
-															disabled={!deleteWidget}
-															onClick={(): void => {
-																setIsDeleteModalOpen(true);
-																setCurrentSelectRowId(id);
-																setIsRowSettingsOpen(false);
-															}}
-														>
-															Remove Section
-														</Button>
-													</section>
-												)}
-											</div>
-										}
-									>
-										<CircleEllipsis
-											size={14}
-											className="settings-icon"
-											onClick={(): void => setIsRowSettingsOpen(!isRowSettingsOpen)}
-										/>
-									</Popover>
+									<WidgetRowHeader
+										id={id}
+										rowWidgetProperties={rowWidgetProperties}
+										setCurrentSelectRowId={setCurrentSelectRowId}
+										setIsDeleteModalOpen={setIsDeleteModalOpen}
+										setIsSettingsModalOpen={setIsSettingsModalOpen}
+										editWidget={editWidget}
+										deleteWidget={deleteWidget}
+									/>
 								</div>
 							</CardContainer>
 						);
