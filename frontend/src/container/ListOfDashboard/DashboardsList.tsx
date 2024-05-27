@@ -4,7 +4,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './DashboardList.styles.scss';
 
-import { MoreOutlined, SmallDashOutlined } from '@ant-design/icons';
+import { MoreOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -39,6 +39,7 @@ import {
 	CalendarClock,
 	Check,
 	Clock4,
+	Ellipsis,
 	Expand,
 	HdmiPort,
 	LayoutGrid,
@@ -127,8 +128,8 @@ function DashboardsList(): JSX.Element {
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
 		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');
 		let dashboardDynamicColumns: DashboardDynamicColumns = {
-			createdAt: false,
-			createdBy: false,
+			createdAt: true,
+			createdBy: true,
 			updatedAt: false,
 			updatedBy: false,
 		};
@@ -364,6 +365,10 @@ function DashboardsList(): JSX.Element {
 		const daysDiff = currentTime.diff(lastRefresh, 'days');
 		const monthsDiff = currentTime.diff(lastRefresh, 'months');
 
+		if (isEmpty(time)) {
+			return `No updates yet!`;
+		}
+
 		if (monthsDiff > 0) {
 			return `Last Updated ${monthsDiff} months ago`;
 		}
@@ -447,7 +452,7 @@ function DashboardsList(): JSX.Element {
 								)}
 								{action && (
 									<Popover
-										trigger="hover"
+										trigger="click"
 										content={
 											<div className="dashboard-action-content">
 												<section className="section-1">
@@ -486,7 +491,12 @@ function DashboardsList(): JSX.Element {
 										arrow={false}
 										rootClassName="dashboard-actions"
 									>
-										<MoreOutlined />
+										<MoreOutlined
+											onClick={(e): void => {
+												e.stopPropagation();
+												e.preventDefault();
+											}}
+										/>
 									</Popover>
 								)}
 							</div>
@@ -572,6 +582,15 @@ function DashboardsList(): JSX.Element {
 
 		return menuItems;
 	}, [createNewDashboard, onNewDashboardHandler]);
+
+	const showPaginationItem = (total: number, range: number[]): JSX.Element => (
+		<>
+			<Typography.Text className="numbers">
+				{range[0]}-{range[1]}
+			</Typography.Text>
+			<Typography.Text className="total">of {total}</Typography.Text>
+		</>
+	);
 
 	return (
 		<div className="dashboards-list-container">
@@ -692,7 +711,7 @@ function DashboardsList(): JSX.Element {
 								>
 									<Button
 										type="primary"
-										className="periscope-btn primary"
+										className="periscope-btn primary btn"
 										icon={<Plus size={14} />}
 									>
 										New dashboard
@@ -756,7 +775,7 @@ function DashboardsList(): JSX.Element {
 									placement="bottomRight"
 									arrow={false}
 								>
-									<SmallDashOutlined />
+									<Ellipsis size={14} />
 								</Popover>
 							</section>
 						</div>
@@ -768,7 +787,8 @@ function DashboardsList(): JSX.Element {
 							loading={isDashboardListLoading || isFilteringDashboards}
 							showHeader={false}
 							pagination={{
-								pageSize: 5,
+								pageSize: 20,
+								showTotal: showPaginationItem,
 								showSizeChanger: false,
 								onChange: (page): void => handlePageSizeUpdate(page),
 								defaultCurrent: Number(sortOrder.pagination) || 1,
@@ -848,7 +868,7 @@ function DashboardsList(): JSX.Element {
 									{visibleColumns.updatedAt && (
 										<Typography.Text className="formatted-time">
 											<CalendarClock size={14} />
-											{onLastUpdated(dashboards?.[0]?.updated_by || '')}
+											{onLastUpdated(dashboards?.[0]?.updated_at || '')}
 										</Typography.Text>
 									)}
 									{visibleColumns.updatedBy && (
@@ -874,6 +894,7 @@ function DashboardsList(): JSX.Element {
 								<Switch
 									size="small"
 									checked={visibleColumns.createdAt}
+									disabled
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
@@ -892,6 +913,7 @@ function DashboardsList(): JSX.Element {
 							<div className="right">
 								<Switch
 									size="small"
+									disabled
 									checked={visibleColumns.createdBy}
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
