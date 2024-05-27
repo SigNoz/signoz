@@ -1,6 +1,7 @@
 import './TracesExplorer.styles.scss';
 
-import { Tabs } from 'antd';
+import { FilterOutlined } from '@ant-design/icons';
+import { Button, Card, Tabs } from 'antd';
 import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
@@ -19,13 +20,14 @@ import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 import { v4 } from 'uuid';
 
+import { Filter } from './Filter/Filter';
 import { ActionsWrapper, Container } from './styles';
 import { getTabsItems } from './utils';
 
@@ -180,42 +182,53 @@ function TracesExplorer(): JSX.Element {
 		handleExplorerTabChange,
 		currentPanelType,
 	]);
+	const [isOpen, setOpen] = useState<boolean>(true);
 
 	return (
 		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-			<>
-				<div className="trace-explorer-run-query">
-					<RightToolbarActions onStageRunQuery={handleRunQuery} />
-					<DateTimeSelector showAutoRefresh />
-				</div>
-				<ExplorerCard sourcepage={DataSource.TRACES}>
-					<QuerySection />
-				</ExplorerCard>
+			<div className="trace-explorer-page">
+				<Card className="filter" hidden={!isOpen}>
+					<Filter setOpen={setOpen} />
+				</Card>
+				<Card className="trace-explorer">
+					<div className="trace-explorer-header">
+						<Button onClick={(): void => setOpen(!isOpen)}>
+							<FilterOutlined />
+						</Button>
+						<div className="trace-explorer-run-query">
+							<RightToolbarActions onStageRunQuery={handleRunQuery} />
+							<DateTimeSelector showAutoRefresh />
+						</div>
+					</div>
+					<ExplorerCard sourcepage={DataSource.TRACES}>
+						<QuerySection />
+					</ExplorerCard>
 
-				<Container className="traces-explorer-views">
-					<ActionsWrapper>
-						<ExportPanel
-							query={exportDefaultQuery}
-							isLoading={isLoading}
-							onExport={handleExport}
+					<Container className="traces-explorer-views">
+						<ActionsWrapper>
+							<ExportPanel
+								query={exportDefaultQuery}
+								isLoading={isLoading}
+								onExport={handleExport}
+							/>
+						</ActionsWrapper>
+
+						<Tabs
+							defaultActiveKey={currentTab}
+							activeKey={currentTab}
+							items={tabsItems}
+							onChange={handleExplorerTabChange}
 						/>
-					</ActionsWrapper>
-
-					<Tabs
-						defaultActiveKey={currentTab}
-						activeKey={currentTab}
-						items={tabsItems}
-						onChange={handleExplorerTabChange}
+					</Container>
+					<ExplorerOptionWrapper
+						disabled={!stagedQuery}
+						query={exportDefaultQuery}
+						isLoading={isLoading}
+						sourcepage={DataSource.TRACES}
+						onExport={handleExport}
 					/>
-				</Container>
-				<ExplorerOptionWrapper
-					disabled={!stagedQuery}
-					query={exportDefaultQuery}
-					isLoading={isLoading}
-					sourcepage={DataSource.TRACES}
-					onExport={handleExport}
-				/>
-			</>
+				</Card>
+			</div>
 		</ErrorBoundary>
 	);
 }

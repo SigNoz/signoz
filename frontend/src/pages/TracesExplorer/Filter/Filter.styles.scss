@@ -1,0 +1,23 @@
+.collapseContainer {
+	background-color: var(--bg-ink-500);
+	.ant-collapse-header {
+		padding: 12px !important;
+		align-items: center !important;
+	}
+
+	.ant-collapse-header-text {
+		color: var(--bg-vanilla-400);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px;
+		letter-spacing: -0.07px;
+		text-transform: capitalize;
+	}
+}
+
+.divider {
+	background-color: 1px solid var(--bg-slate-400);
+	margin: 0;
+}

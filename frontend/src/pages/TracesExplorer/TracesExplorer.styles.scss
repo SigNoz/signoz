@@ -1,13 +1,87 @@
-.trace-explorer-run-query {
+.trace-explorer-header {
 	display: flex;
-	flex-direction: row-reverse;
-	align-items: center;
-	margin: 8px 16px;
-	gap: 8px;
+	justify-content: space-between;
+
+	.trace-explorer-run-query {
+		display: flex;
+		flex-direction: row-reverse;
+		align-items: center;
+		margin: 8px 16px;
+		gap: 8px;
+	}
 }
 
 .traces-explorer-views {
 	.ant-tabs-tabpane {
 		padding: 0 8px;
+	}
+}
+
+.trace-explorer-page {
+	display: flex;
+
+	.filter {
+		min-width: 240px;
+		height: 100vh;
+
+		border-right: 0px;
+		border: 1px solid var(--bg-slate-400);
+		background-color: var(--bg-ink-500);
+
+		> .ant-card-body {
+			padding: 0;
+		}
+	}
+
+	.trace-explorer {
+		width: 100%;
+		border-left: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-500);
+
+		> .ant-card-body {
+			padding: 8px 8px;
+		}
+	}
+}
+
+.section-card {
+	background-color: var(--bg-ink-500);
+	.ant-card-body {
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+
+		max-height: 500px;
+		overflow-x: hidden;
+		overflow-y: auto;
+	}
+	width: 240px;
+
+	.submenu-checkbox {
+		padding-bottom: 8px;
+	}
+}
+
+.filter-header {
+	padding: 16px 8px 16px 12px;
+	.filter-title {
+		display: flex;
+		gap: 6px;
+
+		.ant-typography {
+			color: var(--bg-vanilla-400);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 18px;
+			letter-spacing: -0.07px;
+		}
+	}
+
+	.arrow-icon {
+		background-color: var(--bg-ink-500);
+		border: 0;
+		box-shadow: none;
 	}
 }
