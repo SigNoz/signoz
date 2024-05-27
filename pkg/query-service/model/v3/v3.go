@@ -669,6 +669,34 @@ type BuilderQuery struct {
 	ShiftBy            int64
 }
 
+// CanDefaultZero returns true if the missing value can be substituted by zero
+// For example, for an aggregation window [Tx - Tx+1], with an aggregation operator `count`
+// The lack of data can always be interpreted as zero. No data for requests count = zero requests
+// This is true for all aggregations that have `count`ing involved.
+//
+// The same can't be true for others, `sum` of no values doesn't necessarily mean zero.
+// We can't decide whether or not should it be zero.
+func (b *BuilderQuery) CanDefaultZero() bool {
+	switch b.DataSource {
+	case DataSourceMetrics:
+		if b.AggregateOperator.IsRateOperator() ||
+			b.TimeAggregation.IsRateOperator() ||
+			b.AggregateOperator == AggregateOperatorCount ||
+			b.AggregateOperator == AggregateOperatorCountDistinct ||
+			b.TimeAggregation == TimeAggregationCount ||
+			b.TimeAggregation == TimeAggregationCountDistinct {
+			return true
+		}
+	case DataSourceTraces, DataSourceLogs:
+		if b.AggregateOperator.IsRateOperator() ||
+			b.AggregateOperator == AggregateOperatorCount ||
+			b.AggregateOperator == AggregateOperatorCountDistinct {
+			return true
+		}
+	}
+	return false
+}
+
 func (b *BuilderQuery) Validate(panelType PanelType) error {
 	if b == nil {
 		return nil

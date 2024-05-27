@@ -41,6 +41,12 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 		tablePanelResultProcessor(result)
 	}
 
+	canDefaultZero := make(map[string]bool)
+
+	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+		canDefaultZero[query.QueryName] = query.CanDefaultZero()
+	}
+
 	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
 		// The way we distinguish between a formula and a query is by checking if the expression
 		// is the same as the query name
@@ -52,7 +58,7 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 				zap.L().Error("error in expression", zap.Error(err))
 				return nil, err
 			}
-			formulaResult, err := processResults(result, expression)
+			formulaResult, err := processResults(result, expression, canDefaultZero)
 			if err != nil {
 				zap.L().Error("error in expression", zap.Error(err))
 				return nil, err

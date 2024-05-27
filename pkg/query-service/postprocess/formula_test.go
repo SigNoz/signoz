@@ -278,7 +278,11 @@ func TestProcessResults(t *testing.T) {
 			if err != nil {
 				t.Errorf("Error parsing expression: %v", err)
 			}
-			got, err := processResults(tt.results, expression)
+			canDefaultZero := map[string]bool{
+				"A": true,
+				"B": true,
+			}
+			got, err := processResults(tt.results, expression, canDefaultZero)
 			if err != nil {
 				t.Errorf("Error processing results: %v", err)
 			}
@@ -438,7 +442,11 @@ func TestProcessResultsErrorRate(t *testing.T) {
 			if err != nil {
 				t.Errorf("Error parsing expression: %v", err)
 			}
-			got, err := processResults(tt.results, expression)
+			canDefaultZero := map[string]bool{
+				"A": true,
+				"B": true,
+			}
+			got, err := processResults(tt.results, expression, canDefaultZero)
 			if err != nil {
 				t.Errorf("Error processing results: %v", err)
 			}
@@ -1557,7 +1565,12 @@ func TestFormula(t *testing.T) {
 				t.Errorf("Error parsing expression: %v", err)
 				return
 			}
-			got, err := processResults(tt.results, expression)
+			canDefaultZero := map[string]bool{
+				"A": true,
+				"B": true,
+				"C": true,
+			}
+			got, err := processResults(tt.results, expression, canDefaultZero)
 			if err != nil {
 				t.Errorf("Error processing results: %v", err)
 				return
@@ -1571,6 +1584,95 @@ func TestFormula(t *testing.T) {
 				if len(got.Series[i].Points) != len(tt.want.Series[i].Points) {
 					t.Errorf("processResults(): number of points - got = %v, want %v", len(got.Series[i].Points), len(tt.want.Series[i].Points))
 					return
+				}
+				for j := range got.Series[i].Points {
+					if got.Series[i].Points[j].Value != tt.want.Series[i].Points[j].Value {
+						t.Errorf("processResults(): got = %v, want %v", got.Series[i].Points[j].Value, tt.want.Series[i].Points[j].Value)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestProcessResultsNoDefaultZero(t *testing.T) {
+	tests := []struct {
+		name    string
+		results []*v3.Result
+		want    *v3.Result
+	}{
+		{
+			name: "test1",
+			results: []*v3.Result{
+				{
+					QueryName: "A",
+					Series: []*v3.Series{
+						{
+							Labels: map[string]string{
+								"service_name": "frontend",
+								"operation":    "GET /api",
+							},
+							Points: []v3.Point{
+								{
+									Timestamp: 1,
+									Value:     10,
+								},
+								{
+									Timestamp: 2,
+									Value:     20,
+								},
+							},
+						},
+					},
+				},
+				{
+					QueryName: "B",
+					Series: []*v3.Series{
+						{
+							Labels: map[string]string{
+								"service_name": "redis",
+							},
+							Points: []v3.Point{
+								{
+									Timestamp: 1,
+									Value:     30,
+								},
+								{
+									Timestamp: 3,
+									Value:     40,
+								},
+							},
+						},
+					},
+				},
+			},
+			want: &v3.Result{
+				Series: []*v3.Series{},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expression, err := govaluate.NewEvaluableExpression("A + B")
+			if err != nil {
+				t.Errorf("Error parsing expression: %v", err)
+			}
+			canDefaultZero := map[string]bool{
+				"A": false,
+				"B": false,
+			}
+			got, err := processResults(tt.results, expression, canDefaultZero)
+			if err != nil {
+				t.Errorf("Error processing results: %v", err)
+			}
+			if len(got.Series) != len(tt.want.Series) {
+				t.Errorf("processResults(): number of sereis - got = %v, want %v", len(got.Series), len(tt.want.Series))
+			}
+
+			for i := range got.Series {
+				if len(got.Series[i].Points) != len(tt.want.Series[i].Points) {
+					t.Errorf("processResults(): number of points - got = %v, want %v", got, tt.want)
 				}
 				for j := range got.Series[i].Points {
 					if got.Series[i].Points[j].Value != tt.want.Series[i].Points[j].Value {
