@@ -33,6 +33,10 @@
 
 		.ant-drawer-body {
 			padding: 16px;
+
+			&::-webkit-scrollbar {
+				width: 0.1rem;
+			}
 		}
 	}
 }

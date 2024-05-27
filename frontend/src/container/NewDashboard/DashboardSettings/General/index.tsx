@@ -176,7 +176,6 @@ function GeneralDashboardSettings(): JSX.Element {
 								margin: '16px 0',
 							}}
 							disabled={updateDashboardMutation.isLoading}
-							loading={updateDashboardMutation.isLoading}
 							icon={<X size={14} />}
 							onClick={discardHandler}
 							type="text"
