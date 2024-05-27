@@ -669,6 +669,27 @@ type BuilderQuery struct {
 	ShiftBy            int64
 }
 
+func (b *BuilderQuery) CanDefaultZero() bool {
+	switch b.DataSource {
+	case DataSourceMetrics:
+		if b.AggregateOperator.IsRateOperator() ||
+			b.TimeAggregation.IsRateOperator() ||
+			b.AggregateOperator == AggregateOperatorCount ||
+			b.AggregateOperator == AggregateOperatorCountDistinct ||
+			b.TimeAggregation == TimeAggregationCount ||
+			b.TimeAggregation == TimeAggregationCountDistinct {
+			return true
+		}
+	case DataSourceTraces, DataSourceLogs:
+		if b.AggregateOperator.IsRateOperator() ||
+			b.AggregateOperator == AggregateOperatorCount ||
+			b.AggregateOperator == AggregateOperatorCountDistinct {
+			return true
+		}
+	}
+	return false
+}
+
 func (b *BuilderQuery) Validate(panelType PanelType) error {
 	if b == nil {
 		return nil

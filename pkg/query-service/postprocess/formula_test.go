@@ -278,7 +278,11 @@ func TestProcessResults(t *testing.T) {
 			if err != nil {
 				t.Errorf("Error parsing expression: %v", err)
 			}
-			got, err := processResults(tt.results, expression)
+			canDefaultZero := map[string]bool{
+				"A": true,
+				"B": true,
+			}
+			got, err := processResults(tt.results, expression, canDefaultZero)
 			if err != nil {
 				t.Errorf("Error processing results: %v", err)
 			}
@@ -438,7 +442,11 @@ func TestProcessResultsErrorRate(t *testing.T) {
 			if err != nil {
 				t.Errorf("Error parsing expression: %v", err)
 			}
-			got, err := processResults(tt.results, expression)
+			canDefaultZero := map[string]bool{
+				"A": true,
+				"B": true,
+			}
+			got, err := processResults(tt.results, expression, canDefaultZero)
 			if err != nil {
 				t.Errorf("Error processing results: %v", err)
 			}
@@ -1557,7 +1565,12 @@ func TestFormula(t *testing.T) {
 				t.Errorf("Error parsing expression: %v", err)
 				return
 			}
-			got, err := processResults(tt.results, expression)
+			canDefaultZero := map[string]bool{
+				"A": true,
+				"B": true,
+				"C": true,
+			}
+			got, err := processResults(tt.results, expression, canDefaultZero)
 			if err != nil {
 				t.Errorf("Error processing results: %v", err)
 				return
