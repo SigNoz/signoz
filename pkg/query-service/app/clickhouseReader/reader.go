@@ -1953,7 +1953,39 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
-func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spanId string, levelUp int, levelDown int, spanLimit int, smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
+	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+
+	var countSpans uint64
+	countQuery := fmt.Sprintf("SELECT count() as count from %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
+	err := r.db.QueryRow(ctx, countQuery, params.TraceID).Scan(&countSpans)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, fmt.Errorf("error in processing sql query")
+	}
+
+	if countSpans > uint64(params.MaxSpansInTrace) {
+		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
+			zap.Uint64("Count", countSpans))
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			data := map[string]interface{}{
+				"traceSize":            countSpans,
+				"maxSpansInTraceLimit": params.MaxSpansInTrace,
+			}
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, userEmail, true, false)
+		}
+		return nil, fmt.Errorf("Max spans allowed in trace limit reached, please contact support for more details")
+	}
+
+	userEmail, err := auth.GetEmailFromJwt(ctx)
+	if err == nil {
+		data := map[string]interface{}{
+			"traceSize": countSpans,
+		}
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
+	}
 
 	var searchScanResponses []model.SearchSpanDBResponseItem
 
@@ -1961,7 +1993,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 
 	start := time.Now()
 
-	err := r.db.Select(ctx, &searchScanResponses, query, traceId)
+	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID)
 
 	zap.L().Info(query)
 
@@ -1972,8 +2004,9 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 	end := time.Now()
 	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
 	searchSpansResult := []model.SearchSpansResult{{
-		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
-		Events:  make([][]interface{}, len(searchScanResponses)),
+		Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
+		Events:    make([][]interface{}, len(searchScanResponses)),
+		IsSubTree: false,
 	},
 	}
 
@@ -1990,14 +2023,22 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 
 	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
 	smartAlgoEnabled := err == nil
-	if len(searchScanResponses) > spanLimit && spanId != "" && smartAlgoEnabled {
+	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
 		start = time.Now()
-		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, spanId, levelUp, levelDown, spanLimit)
+		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
 		if err != nil {
 			return nil, err
 		}
 		end = time.Now()
 		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			data := map[string]interface{}{
+				"traceSize":        len(searchScanResponses),
+				"spansRenderLimit": params.SpansRenderLimit,
+			}
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
+		}
 	} else {
 		for i, item := range searchSpanResponses {
 			spanEvents := item.GetValues()

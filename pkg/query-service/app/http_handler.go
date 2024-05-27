@@ -1321,13 +1321,13 @@ func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 
-	traceId, spanId, levelUpInt, levelDownInt, err := ParseSearchTracesParams(r)
+	params, err := ParseSearchTracesParams(r)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading params")
 		return
 	}
 
-	result, err := aH.reader.SearchTraces(r.Context(), traceId, spanId, levelUpInt, levelDownInt, 0, nil)
+	result, err := aH.reader.SearchTraces(r.Context(), params, nil)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}

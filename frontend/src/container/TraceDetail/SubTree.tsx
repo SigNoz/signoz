@@ -2,21 +2,21 @@ import { volcano } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 
-function MissingSpansMessage(): JSX.Element {
+function SubTreeMessage(): JSX.Element {
 	return (
 		<Typography>
 			<WarningOutlined style={{ color: volcano[6], marginRight: '0.3rem' }} />
-			This trace has missing spans, more details{' '}
+			Only part of trace is shown, for more info{' '}
 			<a
-				href="https://signoz.io/docs/userguide/traces/?utm_source=product&utm_medium=trace-details#missing-spans"
+				href="https://www.loom.com/share/3a26d398278f49919dd185d9c4344b05​"
 				target="_blank"
 				style={{ textDecoration: 'underline' }}
 				rel="noreferrer"
 			>
-				here
+				watch this
 			</a>
 		</Typography>
 	);
 }
 
-export default MissingSpansMessage;
+export default SubTreeMessage;
