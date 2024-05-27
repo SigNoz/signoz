@@ -160,7 +160,7 @@ func processResults(
 		if err != nil {
 			return nil, err
 		}
-		if series != nil {
+		if series != nil && len(series.Points) != 0 {
 			labelsArray := make([]map[string]string, 0)
 			for k, v := range series.Labels {
 				labelsArray = append(labelsArray, map[string]string{k: v})
