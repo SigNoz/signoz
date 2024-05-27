@@ -31,6 +31,10 @@
 			font-weight: 400;
 			line-height: 18px; /* 128.571% */
 		}
+
+		.all-variables-btn:hover {
+			background-color: unset !important;
+		}
 	}
 
 	.variable-item-content {
@@ -283,10 +287,11 @@
 			margin-bottom: 0px;
 			border-radius: 0px 0px 3px 3px;
 			border: 1px solid var(--bg-slate-500);
-			height: 70px;
+			height: 108px;
 			margin-top: -20px;
 			border-collapse: collapse;
 			gap: 5px;
+			flex-flow: column;
 
 			.typography-variables {
 				color: var(--bg-robin-400);
@@ -311,6 +316,7 @@
 				gap: 8px;
 
 				.ant-tag {
+					height: 30px;
 					color: var(--bg-vanilla-100);
 					font-family: 'Space Mono';
 					font-size: 14px;

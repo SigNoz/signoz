@@ -363,12 +363,12 @@ function VariableItem({
 					{(queryType === 'QUERY' || queryType === 'CUSTOM') && (
 						<>
 							<VariableItemRow className="variables-preview-section">
-								<LabelContainer>
+								<LabelContainer style={{ width: '100%' }}>
 									<Typography className="typography-variables">
 										Preview of Values
 									</Typography>
 								</LabelContainer>
-								<div style={{ flex: 1 }} className="preview-values">
+								<div className="preview-values">
 									{errorPreview ? (
 										<Typography style={{ color: orange[5] }}>{errorPreview}</Typography>
 									) : (
