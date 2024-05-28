@@ -51,12 +51,12 @@
 	}
 	.ant-tabs-nav-list {
 		border-radius: 2px;
-		border: 1px solid var(--Slate-400, #1d212d);
-		background: var(--Ink-400, #121317);
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-400);
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 	}
 	.ant-tabs-tab + .ant-tabs-tab {
-		border-left: 1px solid var(--Slate-400, #1d212d) !important;
+		border-left: 1px solid var(--bg-slate-400) !important;
 	}
 	.stage-run-query {
 		display: flex;

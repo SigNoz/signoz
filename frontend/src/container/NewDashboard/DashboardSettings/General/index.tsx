@@ -172,9 +172,6 @@ function GeneralDashboardSettings(): JSX.Element {
 					</div>
 					<div className="footer-action-btns">
 						<Button
-							style={{
-								margin: '16px 0',
-							}}
 							disabled={updateDashboardMutation.isLoading}
 							icon={<X size={14} />}
 							onClick={discardHandler}

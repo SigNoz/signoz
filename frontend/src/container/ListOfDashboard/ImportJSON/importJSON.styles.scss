@@ -1,7 +1,7 @@
 .import-json-modal {
 	.ant-modal-content {
 		border-radius: 4px;
-		border: 1px solid var(--Slate-400, #1d212d);
+		border: 1px solid var(--bg-slate-400);
 		background: linear-gradient(
 			139deg,
 			rgba(18, 19, 23, 0.8) 0%,
@@ -37,7 +37,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		border-bottom: 1px solid var(--Slate-500, #161922);
+		border-bottom: 1px solid var(--bg-slate-500);
 	}
 
 	.import-json-modal-footer {
@@ -55,7 +55,7 @@
 	.ant-modal-footer {
 		margin-top: 0;
 		padding: 16px;
-		border-top: 1px solid var(--Slate-500, #161922);
+		border-top: 1px solid var(--bg-slate-500);
 	}
 }
 
