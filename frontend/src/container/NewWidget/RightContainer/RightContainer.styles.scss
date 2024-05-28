@@ -256,11 +256,11 @@
 			gap: 8px;
 
 			.bell-icon {
-				color: #c0c1c3;
+				color: var(--bg-vanilla-400);
 			}
 
 			.alerts-text {
-				color: #c0c1c3;
+				color: var(--bg-vanilla-400);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -270,7 +270,7 @@
 			}
 		}
 		.plus-icon {
-			color: #c0c1c3;
+			color: var(--bg-vanilla-400);
 		}
 	}
 }

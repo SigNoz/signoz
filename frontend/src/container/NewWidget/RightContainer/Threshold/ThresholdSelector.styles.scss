@@ -9,7 +9,7 @@
 		cursor: pointer;
 
 		.icon {
-			color: #c0c1c3;
+			color: var(--bg-vanilla-400);
 			cursor: pointer;
 		}
 
@@ -19,10 +19,10 @@
 			gap: 8px;
 
 			.icon {
-				color: #c0c1c3;
+				color: var(--bg-vanilla-400);
 			}
 			.text {
-				color: #c0c1c3;
+				color: var(--bg-vanilla-400);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
