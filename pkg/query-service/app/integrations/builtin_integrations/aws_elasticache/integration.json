@@ -38,7 +38,7 @@
   "connection_tests": {
     "logs": {
       "attribute_key": "source",
-      "attribute_value": "postgres"
+      "attribute_value": "elasticache_redis"
     }
   },
   "data_collected": {
@@ -66,166 +66,190 @@
     ],
     "metrics": [
       {
-        "name": "postgresql_backends",
-        "type": "sum",
+        "name": "redis_commands_processed",
+        "type": "Sum",
         "unit": "number",
-        "description": "The number of backends."
+        "description": "Total number of commands processed by the server"
       },
       {
-        "name": "postgresql_bgwriter_buffers_allocated",
-        "type": "sum",
-        "unit": "number",
-        "description": "Number of buffers allocated."
+        "name": "redis_cpu_time",
+        "type": "Sum",
+        "unit": "s",
+        "description": "System CPU consumed by the Redis server in seconds since server start"
       },
       {
-        "name": "postgresql_bgwriter_buffers_writes",
-        "type": "sum",
+        "name": "redis_keys_expired",
+        "type": "Sum",
         "unit": "number",
-        "description": "Number of buffers written."
+        "description": "Total number of key expiration events"
       },
       {
-        "name": "postgresql_bgwriter_checkpoint_count",
-        "type": "sum",
+        "name": "redis_db_expires",
+        "type": "Gauge",
         "unit": "number",
-        "description": "The number of checkpoints performed."
+        "description": "Number of keyspace keys with an expiration"
       },
       {
-        "name": "postgresql_bgwriter_duration",
-        "type": "sum",
+        "name": "redis_commands",
+        "type": "Gauge",
+        "unit": "ops/s",
+        "description": "Number of commands processed per second"
+      },
+      {
+        "name": "redis_replication_offset",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The server's current replication offset"
+      },
+      {
+        "name": "redis_net_input",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The total number of bytes read from the network"
+      },
+      {
+        "name": "redis_clients_connected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of client connections (excluding connections from replicas)"
+      },
+      {
+        "name": "redis_keys_evicted",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of evicted keys due to maxmemory limit"
+      },
+      {
+        "name": "redis_maxmemory",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The value of the maxmemory configuration directive"
+      },
+      {
+        "name": "redis_clients_max_input_buffer",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Biggest input buffer among current client connections"
+      },
+      {
+        "name": "redis_cmd_latency",
+        "type": "Gauge",
+        "unit": "s",
+        "description": "Command execution latency"
+      },
+      {
+        "name": "redis_memory_lua",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Number of bytes used by the Lua engine"
+      },
+      {
+        "name": "redis_replication_backlog_first_byte_offset",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The master offset of the replication backlog buffer"
+      },
+      {
+        "name": "redis_keyspace_hits",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of successful lookup of keys in the main dictionary"
+      },
+      {
+        "name": "redis_clients_blocked",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of clients pending on a blocking call"
+      },
+      {
+        "name": "redis_connections_rejected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of connections rejected because of maxclients limit"
+      },
+      {
+        "name": "redis_latest_fork",
+        "type": "Gauge",
+        "unit": "us",
+        "description": "Duration of the latest fork operation in microseconds"
+      },
+      {
+        "name": "redis_clients_max_output_buffer",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Longest output list among current client connections"
+      },
+      {
+        "name": "redis_slaves_connected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of connected replicas"
+      },
+      {
+        "name": "redis_db_keys",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Number of keyspace keys"
+      },
+      {
+        "name": "redis_keyspace_misses",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of failed lookup of keys in the main dictionary"
+      },
+      {
+        "name": "redis_uptime",
+        "type": "Sum",
+        "unit": "s",
+        "description": "Number of seconds since Redis server start"
+      },
+      {
+        "name": "redis_memory_used",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Total number of bytes allocated by Redis using its allocator"
+      },
+      {
+        "name": "redis_net_output",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The total number of bytes written to the network"
+      },
+      {
+        "name": "redis_connections_received",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of connections accepted by the server"
+      },
+      {
+        "name": "redis_rdb_changes_since_last_save",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of changes since the last dump"
+      },
+      {
+        "name": "redis_memory_rss",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Number of bytes that Redis allocated as seen by the operating system"
+      },
+      {
+        "name": "redis_db_avg_ttl",
+        "type": "Gauge",
         "unit": "ms",
-        "description": "Total time spent writing and syncing files to disk by checkpoints."
+        "description": "Average keyspace keys TTL"
       },
       {
-        "name": "postgresql_bgwriter_maxwritten",
-        "type": "sum",
-        "unit": "number",
-        "description": "Number of times the background writer stopped a cleaning scan because it had written too many buffers."
-      },
-      {
-        "name": "postgresql_blocks_read",
-        "type": "sum",
-        "unit": "number",
-        "description": "The number of blocks read."
-      },
-      {
-        "name": "postgresql_commits",
-        "type": "sum",
-        "unit": "number",
-        "description": "The number of commits."
-      },
-      {
-        "name": "postgresql_connection_max",
-        "type": "gauge",
-        "unit": "number",
-        "description": "Configured maximum number of client connections allowed"
-      },
-      {
-        "name": "postgresql_database_count",
-        "type": "sum",
-        "unit": "number",
-        "description": "Number of user databases."
-      },
-      {
-        "name": "postgresql_database_locks",
-        "type": "gauge",
-        "unit": "number",
-        "description": "The number of database locks."
-      },
-      {
-        "name": "postgresql_db_size",
-        "type": "sum",
+        "name": "redis_memory_peak",
+        "type": "Gauge",
         "unit": "Bytes",
-        "description": "The database disk usage."
+        "description": "Peak memory consumed by Redis (in bytes)"
       },
       {
-        "name": "postgresql_deadlocks",
-        "type": "sum",
+        "name": "redis_memory_fragmentation_ratio",
+        "type": "Gauge",
         "unit": "number",
-        "description": "The number of deadlocks."
-      },
-      {
-        "name": "postgresql_index_scans",
-        "type": "sum",
-        "unit": "number",
-        "description": "The number of index scans on a table."
-      },
-      {
-        "name": "postgresql_index_size",
-        "type": "gauge",
-        "unit": "Bytes",
-        "description": "The size of the index on disk."
-      },
-      {
-        "name": "postgresql_operations",
-        "type": "sum",
-        "unit": "number",
-        "description": "The number of db row operations."
-      },
-      {
-        "name": "postgresql_replication_data_delay",
-        "type": "gauge",
-        "unit": "Bytes",
-        "description": "The amount of data delayed in replication."
-      },
-      {
-        "name": "postgresql_rollbacks",
-        "type": "sum",
-        "unit": "number",
-        "description": "The number of rollbacks."
-      },
-      {
-        "name": "postgresql_rows",
-        "type": "sum",
-        "unit": "number",
-        "description": "The number of rows in the database."
-      },
-      {
-        "name": "postgresql_sequential_scans",
-        "type": "sum",
-        "unit": "number",
-        "description": "The number of sequential scans."
-      },
-      {
-        "name": "postgresql_table_count",
-        "type": "sum",
-        "unit": "number",
-        "description": "Number of user tables in a database."
-      },
-      {
-        "name": "postgresql_table_size",
-        "type": "sum",
-        "unit": "Bytes",
-        "description": "Disk space used by a table."
-      },
-      {
-        "name": "postgresql_table_vacuum_count",
-        "type": "sum",
-        "unit": "number",
-        "description": "Number of times a table has manually been vacuumed."
-      },
-      {
-        "name": "postgresql_temp_files",
-        "type": "sum",
-        "unit": "number",
-        "description": "The number of temp files."
-      },
-      {
-        "name": "postgresql_wal_age",
-        "type": "gauge",
-        "unit": "seconds",
-        "description": "Age of the oldest WAL file."
-      },
-      {
-        "name": "postgresql_wal_delay",
-        "type": "gauge",
-        "unit": "seconds",
-        "description": "Time between flushing recent WAL locally and receiving notification that the standby server has completed an operation with it."
-      },
-      {
-        "name": "postgresql_wal_lag",
-        "type": "gauge",
-        "unit": "seconds",
-        "description": "Time between flushing recent WAL locally and receiving notification that the standby server has completed an operation with it."
+        "description": "Ratio between used_memory_rss and used_memory"
       }
     ]
   }

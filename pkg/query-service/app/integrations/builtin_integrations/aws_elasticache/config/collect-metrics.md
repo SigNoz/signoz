@@ -9,7 +9,7 @@ The [CloudWatch Exporter](https://github.com/prometheus/cloudwatch_exporter) is 
 1. Download the Prometheus CloudWatch exporter JAR file, and run the following command:
 
 ```sh
-curl -sSO https://github.com/prometheus/cloudwatch_exporter/releases/download/v0.15.5/cloudwatch_exporter-0.15.5-jar-with-dependencies.jar
+curl -sLSO https://github.com/prometheus/cloudwatch_exporter/releases/download/v0.15.5/cloudwatch_exporter-0.15.5-jar-with-dependencies.jar
 ```
 
 2. Configure the Prometheus exporter
@@ -231,6 +231,6 @@ export SIGNOZ_INGESTION_KEY="signoz-ingestion-key"
 
 Make the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  
 ```bash
---config redis-metrics-collection-config
+--config redis-metrics-collection-config.yaml
 ```  
 Note: the collector can use multiple config files, specified by multiple occurrences of the --config flag.

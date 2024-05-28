@@ -18,6 +18,11 @@ receivers:
           /aws/elasticache/:
 
 processors:
+  attributes/add_source:
+    actions:
+      - key: source
+        value: "elasticache_redis"
+        action: insert
   batch:
     send_batch_size: 10000
     send_batch_max_size: 11000
@@ -33,17 +38,17 @@ exporters:
       "signoz-access-token": "${env:SIGNOZ_INGESTION_KEY}"
 
   # export to local collector
-  # otlp/redis-logs:
-  #   endpoint: "localhost:4317"
-  #   tls:
-  #     insecure: true
+  otlp/local:
+    endpoint: "localhost:4317"
+    tls:
+      insecure: true
 
 
 service:
   pipelines:
     logs/redis:
       receivers: [awscloudwatch]
-      processors: [batch]
+      processors: [attributes/add_source, batch]
       exporters: [otlp/redis-logs]
 ```
 
