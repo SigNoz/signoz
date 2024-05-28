@@ -18,6 +18,7 @@
 }
 
 .divider {
-	background-color: 1px solid var(--bg-slate-400);
+	background-color: var(--bg-slate-400);
 	margin: 0;
+	border-color: var(--bg-slate-400);
 }

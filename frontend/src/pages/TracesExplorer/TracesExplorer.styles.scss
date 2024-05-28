@@ -21,7 +21,7 @@
 	display: flex;
 
 	.filter {
-		min-width: 240px;
+		min-width: 260px;
 		height: 100vh;
 
 		border-right: 0px;
@@ -41,6 +41,8 @@
 		> .ant-card-body {
 			padding: 8px 8px;
 		}
+
+		border-color: var(--bg-slate-400);
 	}
 }
 
