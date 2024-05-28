@@ -178,10 +178,15 @@ function App(): JSX.Element {
 	}, [pathname]);
 
 	useEffect(() => {
-		const isThemeAnalyticsSent = getLocalStorageApi(LOCALSTORAGE.THEME_ANALYTICS);
+		let isThemeAnalyticsSent;
+
+		try {
+			isThemeAnalyticsSent = getLocalStorageApi(LOCALSTORAGE.THEME_ANALYTICS);
+		} catch {
+			isThemeAnalyticsSent = true;
+		}
 
 		if (!isThemeAnalyticsSent) {
-			console.log(isDarkMode, 'sent');
 			trackEvent('Theme Analytics', {
 				theme: isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT,
 				user: pick(user, ['email', 'userId', 'name']),
