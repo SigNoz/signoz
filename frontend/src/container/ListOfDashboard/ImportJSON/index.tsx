@@ -198,7 +198,7 @@ function ImportJSON({
 							className="periscope-btn primary"
 							type="primary"
 						>
-							{t('load_json')} &nbsp; <MoveRight size={14} />
+							{t('import_and_next')} &nbsp; <MoveRight size={14} />
 						</Button>
 
 						{isFeatureAlert && (

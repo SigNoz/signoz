@@ -9,7 +9,7 @@
 	"upload_json_file": "Upload JSON file",
 	"paste_json_below": "Paste JSON below",
 	"error_upload_json": "Invalid JSON",
-	"load_json": "Import and Next",
+	"import_and_next": "Import and Next",
 	"import_dashboard_by_pasting": "Import dashboard by pasting JSON or importing JSON file",
 	"error_loading_json": "Error loading JSON file",
 	"empty_json_not_allowed": "Empty JSON is not allowed",

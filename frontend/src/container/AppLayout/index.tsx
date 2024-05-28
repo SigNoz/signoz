@@ -353,7 +353,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 										isDashboardWidgetView() ||
 										isDashboardListView()
 											? 0
-											: ' 0 1rem',
+											: '0 1rem',
 								}}
 							>
 								{isToDisplayLayout && !renderFullScreen && <TopNav />}

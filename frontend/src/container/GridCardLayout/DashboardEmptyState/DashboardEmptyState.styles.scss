@@ -21,7 +21,7 @@
 			}
 
 			.welcome {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--bg-vanilla-400);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -31,7 +31,7 @@
 			}
 
 			.welcome-info {
-				color: var(--Vanilla-100, #fff);
+				color: var(--bg-vanilla-100);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -52,8 +52,8 @@
 				justify-content: space-between;
 				align-items: flex-start;
 				border-radius: 4px 4px 0px 0px;
-				border: 1px solid var(--Slate-500, #161922);
-				background: var(--Ink-400, #121317);
+				border: 1px solid var(--bg-slate-500);
+				background: var(--bg-ink-400);
 
 				.configure-button {
 					display: flex;
@@ -64,9 +64,9 @@
 					align-items: center;
 					flex-shrink: 0;
 					border-radius: 2px;
-					border: 1px solid var(--Slate-400, #1d212d);
-					background: var(--Ink-300, #16181d);
-					color: var(--Vanilla-400, #c0c1c3);
+					border: 1px solid var(--bg-slate-400);
+					background: var(--bg-ink-300);
+					color: var(--bg-vanilla-400);
 					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
@@ -90,7 +90,7 @@
 						}
 
 						.configure {
-							color: var(--Vanilla-100, #fff);
+							color: var(--bg-vanilla-100);
 							font-family: Inter;
 							font-size: 14px;
 							font-style: normal;
@@ -100,7 +100,7 @@
 						}
 					}
 					.configure-info {
-						color: var(--Vanilla-400, #c0c1c3);
+						color: var(--bg-vanilla-400);
 						font-family: Inter;
 						font-size: 12px;
 						font-style: normal;
@@ -120,10 +120,10 @@
 					align-items: center;
 					flex-shrink: 0;
 					border-radius: 2px;
-					border: 1px solid var(--Slate-400, #1d212d);
-					background: var(--Ink-300, #16181d);
+					border: 1px solid var(--bg-slate-400);
+					background: var(--bg-ink-300);
 					box-shadow: none;
-					color: var(--Vanilla-400, #c0c1c3);
+					color: var(--bg-vanilla-400);
 					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
@@ -147,7 +147,7 @@
 						}
 
 						.panel {
-							color: var(--Vanilla-100, #fff);
+							color: var(--bg-vanilla-100);
 							font-family: Inter;
 							font-size: 14px;
 							font-style: normal;
@@ -158,7 +158,7 @@
 					}
 
 					.panel-info {
-						color: var(--Vanilla-400, #c0c1c3);
+						color: var(--bg-vanilla-400);
 						font-family: Inter;
 						font-size: 12px;
 						font-style: normal;
