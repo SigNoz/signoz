@@ -16,7 +16,7 @@ export const RightContainerWrapper = styled(Col)`
 		width: 30%;
 	}
 	&::-webkit-scrollbar {
-		width: 0.1rem;
+		width: 0rem;
 	}
 `;
 
@@ -34,7 +34,7 @@ export const LeftContainerWrapper = styled(Col)<LeftContainerWrapperProps>`
 				: '1px solid var(--bg-vanilla-300)'};
 	}
 	&::-webkit-scrollbar {
-		width: 0.1rem;
+		width: 0rem;
 	}
 `;
 

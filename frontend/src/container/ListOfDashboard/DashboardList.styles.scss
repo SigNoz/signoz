@@ -39,6 +39,7 @@
 			.dashboard-list-item {
 				padding: 12px 16px 16px 16px;
 				border: 1px solid var(--bg-slate-500);
+				border-top: none;
 				background: var(--bg-ink-400);
 				cursor: pointer;
 
@@ -87,6 +88,8 @@
 					margin-top: 12px;
 					display: flex;
 					align-items: center;
+					flex-wrap: wrap;
+					gap: 12px 24px;
 
 					.dashboard-tag {
 						width: 14px;
@@ -109,24 +112,48 @@
 						}
 					}
 
-					.dashboard-created-by {
-						margin-left: 8px;
-						color: var(--Vanilla-400, #c0c1c3);
-						font-variant-numeric: lining-nums tabular-nums stacked-fractions
-							slashed-zero;
-						font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
-						font-family: Inter;
-						font-size: 14px;
-						font-style: normal;
-						font-weight: 400;
-						line-height: 18px; /* 128.571% */
-						letter-spacing: -0.07px;
+					.created-by {
+						display: flex;
+						align-items: center;
+
+						.dashboard-tag {
+							width: 14px;
+							height: 14px;
+							border-radius: 50px;
+							background: var(--bg-slate-300);
+							display: flex;
+							justify-content: center;
+							align-items: center;
+
+							.tag-text {
+								color: var(--bg-vanilla-400);
+								leading-trim: both;
+								text-edge: cap;
+								font-size: 8px;
+								font-style: normal;
+								font-weight: var(--font-weight-normal);
+								line-height: normal;
+								letter-spacing: -0.05px;
+							}
+						}
+						.dashboard-created-by {
+							margin-left: 8px;
+							color: var(--Vanilla-400, #c0c1c3);
+							font-variant-numeric: lining-nums tabular-nums stacked-fractions
+								slashed-zero;
+							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+							font-family: Inter;
+							font-size: 14px;
+							font-style: normal;
+							font-weight: 400;
+							line-height: 18px; /* 128.571% */
+							letter-spacing: -0.07px;
+						}
 					}
 
 					.dashboard-created-at {
 						display: flex;
 						align-items: center;
-						margin-right: 16px;
 
 						.ant-typography {
 							margin-left: 6px;
@@ -136,6 +163,64 @@
 							font-weight: var(--font-weight-normal);
 							line-height: 18px; /* 128.571% */
 							letter-spacing: -0.07px;
+							color: var(--Vanilla-400, #c0c1c3);
+							font-variant-numeric: lining-nums tabular-nums stacked-fractions
+								slashed-zero;
+							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+							font-family: Inter;
+							font-size: 14px;
+							font-style: normal;
+							font-weight: 400;
+							line-height: 18px; /* 128.571% */
+							letter-spacing: -0.07px;
+						}
+					}
+
+					.updated-by {
+						display: flex;
+						align-items: center;
+
+						.text {
+							color: var(--bg-vanilla-400);
+							font-size: var(--font-size-xs);
+							font-style: normal;
+							font-weight: var(--font-weight-normal);
+							line-height: 18px; /* 128.571% */
+							letter-spacing: -0.07px;
+							color: var(--Vanilla-400, #c0c1c3);
+							font-variant-numeric: lining-nums tabular-nums stacked-fractions
+								slashed-zero;
+							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+							font-family: Inter;
+							font-size: 14px;
+							font-style: normal;
+							font-weight: 400;
+							line-height: 18px; /* 128.571% */
+							letter-spacing: -0.07px;
+						}
+
+						.dashboard-tag {
+							width: 14px;
+							height: 14px;
+							border-radius: 50px;
+							background: var(--bg-slate-300);
+							display: flex;
+							justify-content: center;
+							align-items: center;
+
+							.tag-text {
+								color: var(--bg-vanilla-400);
+								leading-trim: both;
+								text-edge: cap;
+								font-size: 8px;
+								font-style: normal;
+								font-weight: var(--font-weight-normal);
+								line-height: normal;
+								letter-spacing: -0.05px;
+							}
+						}
+						.dashboard-created-by {
+							margin-left: 8px;
 							color: var(--Vanilla-400, #c0c1c3);
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
@@ -176,6 +261,14 @@
 				font-style: normal;
 				font-weight: var(--font-weight-medium);
 				line-height: 20px;
+			}
+		}
+
+		.ant-table-tbody {
+			.ant-table-row:last-child {
+				.dashboard-list-item {
+					border-radius: 0px 0px 6px 6px;
+				}
 			}
 		}
 	}
@@ -628,7 +721,7 @@
 .sort-dashboards {
 	.ant-popover-inner {
 		display: flex;
-		padding: 12px 18px 12px 14px;
+		padding: 0px;
 		align-items: center;
 		border-radius: 4px;
 		border: 1px solid var(--bg-slate-400);
@@ -656,6 +749,7 @@
 				line-height: 18px; /* 163.636% */
 				letter-spacing: 0.88px;
 				text-transform: uppercase;
+				padding: 12px 18px 6px 14px;
 			}
 
 			.sort-btns {
@@ -671,7 +765,8 @@
 				font-weight: 400;
 				line-height: normal;
 				letter-spacing: 0.14px;
-				padding: 0px;
+				padding: 12px 18px 12px 14px;
+				height: auto;
 			}
 		}
 	}
@@ -972,6 +1067,35 @@
 							background: var(--bg-vanilla-200);
 							.tag-text {
 								color: var(--bg-ink-500);
+							}
+						}
+						.created-by {
+							.dashboard-tag {
+								background: var(--bg-vanilla-200);
+
+								.tag-text {
+									color: var(--bg-ink-500);
+								}
+							}
+							.dashboard-created-by {
+								color: var(--bg-ink-400);
+							}
+						}
+
+						.updated-by {
+							.text {
+								color: var(--bg-ink-400);
+							}
+
+							.dashboard-tag {
+								background: var(--bg-vanilla-200);
+
+								.tag-text {
+									color: var(--bg-ink-500);
+								}
+							}
+							.dashboard-created-by {
+								color: var(--bg-ink-400);
 							}
 						}
 

@@ -201,6 +201,7 @@ function QuerySection({
 						<PromQLIcon
 							fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 						/>
+						<Typography>PromQL</Typography>
 					</Button>
 				</Tooltip>
 			),

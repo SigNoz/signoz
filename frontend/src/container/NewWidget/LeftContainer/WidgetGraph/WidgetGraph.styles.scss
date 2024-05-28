@@ -21,6 +21,10 @@
 			width: fit-content;
 		}
 	}
+
+	.header:has(.date-time-selector:only-child) {
+		justify-content: end;
+	}
 }
 
 .lightMode {
