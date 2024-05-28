@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './ThresholdSelector.styles.scss';
 
 import { Typography } from 'antd';
@@ -80,7 +82,7 @@ function ThresholdSelector({
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<div className="threshold-selector-container">
-				<div className="threshold-select">
+				<div className="threshold-select" onClick={addThresholdHandler}>
 					<div className="left-section">
 						<Antenna size={14} className="icon" />
 						<Typography.Text className="text">Thresholds</Typography.Text>

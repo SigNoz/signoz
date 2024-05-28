@@ -4,7 +4,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import './DashboardList.styles.scss';
 
-import { MoreOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -40,6 +39,7 @@ import {
 	Check,
 	Clock4,
 	Ellipsis,
+	EllipsisVertical,
 	Expand,
 	HdmiPort,
 	LayoutGrid,
@@ -491,7 +491,8 @@ function DashboardsList(): JSX.Element {
 										arrow={false}
 										rootClassName="dashboard-actions"
 									>
-										<MoreOutlined
+										<EllipsisVertical
+											size={14}
 											onClick={(e): void => {
 												e.stopPropagation();
 												e.preventDefault();
@@ -510,7 +511,7 @@ function DashboardsList(): JSX.Element {
 							)}
 
 							{dashboard.createdBy && visibleColumns.createdBy && (
-								<>
+								<div className="created-by">
 									<div className="dashboard-tag">
 										<Typography.Text className="tag-text">
 											{dashboard.createdBy?.substring(0, 1).toUpperCase()}
@@ -519,10 +520,10 @@ function DashboardsList(): JSX.Element {
 									<Typography.Text className="dashboard-created-by">
 										{dashboard.createdBy}
 									</Typography.Text>
-								</>
+								</div>
 							)}
 							{visibleColumns.updatedAt && (
-								<div className="dashboard-created-at" style={{ marginLeft: '8px' }}>
+								<div className="dashboard-created-at">
 									<CalendarClock size={14} />
 									<Typography.Text>
 										{onLastUpdated(dashboard.lastUpdatedTime)}
@@ -531,7 +532,10 @@ function DashboardsList(): JSX.Element {
 							)}
 
 							{dashboard.lastUpdatedBy && visibleColumns.updatedBy && (
-								<>
+								<div className="updated-by">
+									<Typography.Text className="text">
+										Last Updated By - &nbsp;
+									</Typography.Text>
 									<div className="dashboard-tag">
 										<Typography.Text className="tag-text">
 											{dashboard.lastUpdatedBy?.substring(0, 1).toUpperCase()}
@@ -540,7 +544,7 @@ function DashboardsList(): JSX.Element {
 									<Typography.Text className="dashboard-created-by">
 										{dashboard.lastUpdatedBy}
 									</Typography.Text>
-								</>
+								</div>
 							)}
 						</div>
 					</div>
@@ -586,7 +590,7 @@ function DashboardsList(): JSX.Element {
 	const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 		<>
 			<Typography.Text className="numbers">
-				{range[0]}-{range[1]}
+				{range[0]} &#8212; {range[1]}
 			</Typography.Text>
 			<Typography.Text className="total">of {total}</Typography.Text>
 		</>
@@ -785,13 +789,15 @@ function DashboardsList(): JSX.Element {
 									showSorterTooltip
 									loading={isDashboardListLoading || isFilteringDashboards}
 									showHeader={false}
-									pagination={{
-										pageSize: 20,
-										showTotal: showPaginationItem,
-										showSizeChanger: false,
-										onChange: (page): void => handlePageSizeUpdate(page),
-										defaultCurrent: Number(sortOrder.pagination) || 1,
-									}}
+									pagination={
+										data.length > 20 && {
+											pageSize: 20,
+											showTotal: showPaginationItem,
+											showSizeChanger: false,
+											onChange: (page): void => handlePageSizeUpdate(page),
+											defaultCurrent: Number(sortOrder.pagination) || 1,
+										}
+									}
 								/>
 							</>
 						)}
