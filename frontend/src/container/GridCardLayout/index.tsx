@@ -1,16 +1,13 @@
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback } from 'react';
+import { FullScreenHandle } from 'react-full-screen';
 
 import GraphLayoutContainer from './GridCardLayout';
 
-function GridGraph(): JSX.Element {
-	const { handleToggleDashboardSlider } = useDashboard();
-
-	const onEmptyWidgetHandler = useCallback(() => {
-		handleToggleDashboardSlider(true);
-	}, [handleToggleDashboardSlider]);
-
-	return <GraphLayoutContainer onAddPanelHandler={onEmptyWidgetHandler} />;
+interface GridGraphProps {
+	handle: FullScreenHandle;
+}
+function GridGraph(props: GridGraphProps): JSX.Element {
+	const { handle } = props;
+	return <GraphLayoutContainer handle={handle} />;
 }
 
 export default GridGraph;

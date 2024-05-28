@@ -22,8 +22,9 @@ export type ThresholdProps = {
 };
 
 export type ShowCaseValueProps = {
-	width: string;
+	width?: string;
 	value: ReactNode;
+	className?: string;
 };
 
 export type CustomColorProps = {

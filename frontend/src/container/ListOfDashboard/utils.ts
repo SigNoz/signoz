@@ -1,4 +1,4 @@
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { Dashboard, DashboardTemplate } from 'types/api/dashboard/getAll';
 
 export const filterDashboard = (
 	searchValue: string,
@@ -25,3 +25,31 @@ export const filterDashboard = (
 		});
 	});
 };
+
+export const filterTemplates = (
+	searchValue: string,
+	dashboardList: DashboardTemplate[],
+): DashboardTemplate[] => {
+	const searchValueLowerCase = searchValue?.toLowerCase();
+
+	return dashboardList.filter((item: DashboardTemplate) => {
+		const { name } = item;
+
+		// Check if any property value contains the searchValue
+		return name.toLowerCase().includes(searchValueLowerCase);
+	});
+};
+
+export interface DashboardDynamicColumns {
+	createdAt: boolean;
+	createdBy: boolean;
+	updatedAt: boolean;
+	updatedBy: boolean;
+}
+
+export enum DynamicColumns {
+	CREATED_AT = 'createdAt',
+	CREATED_BY = 'createdBy',
+	UPDATED_AT = 'updatedAt',
+	UPDATED_BY = 'updatedBy',
+}
