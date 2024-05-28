@@ -50,7 +50,6 @@ type Manager struct {
 }
 
 func StartManager(dbType string, db *sqlx.DB) (*Manager, error) {
-
 	if LM != nil {
 		return LM, nil
 	}
@@ -117,7 +116,6 @@ func setDefaultFeatures(lm *Manager) {
 
 // LoadActiveLicense loads the most recent active license
 func (lm *Manager) LoadActiveLicense() error {
-	var err error
 	active, err := lm.repo.GetActiveLicense(context.Background())
 	if err != nil {
 		return err
