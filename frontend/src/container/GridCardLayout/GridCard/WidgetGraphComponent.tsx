@@ -12,6 +12,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
@@ -33,7 +34,6 @@ import FullView from './FullView';
 import { Modal } from './styles';
 import { WidgetGraphComponentProps } from './types';
 import { getLocalStorageGraphVisibilityState } from './utils';
-// import { getLocalStorageGraphVisibilityState } from './utils';
 
 function WidgetGraphComponent({
 	widget,
@@ -71,6 +71,8 @@ function WidgetGraphComponent({
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	const tableProcessedDataRef = useRef<RowData[]>([]);
 
 	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
 
@@ -284,6 +286,7 @@ function WidgetGraphComponent({
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
+					tableProcessedDataRef={tableProcessedDataRef}
 				/>
 			</Modal>
 
@@ -301,6 +304,7 @@ function WidgetGraphComponent({
 					headerMenuList={headerMenuList}
 					isWarning={isWarning}
 					isFetchingResponse={isFetchingResponse}
+					tableProcessedDataRef={tableProcessedDataRef}
 				/>
 			</div>
 			{queryResponse.isLoading && widget.panelTypes !== PANEL_TYPES.LIST && (
@@ -319,6 +323,7 @@ function WidgetGraphComponent({
 						graphVisibility={graphVisibility}
 						onClickHandler={onClickHandler}
 						onDragSelect={onDragSelect}
+						tableProcessedDataRef={tableProcessedDataRef}
 					/>
 				</div>
 			)}

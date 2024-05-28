@@ -229,9 +229,6 @@ export function QueryBuilderProvider({
 			setCurrentQuery(
 				timeUpdated ? merge(currentQuery, newQueryState) : newQueryState,
 			);
-			setSupersetQuery(
-				timeUpdated ? merge(currentQuery, newQueryState) : newQueryState,
-			);
 			setQueryType(type);
 		},
 		[prepareQueryBuilderData, currentQuery],

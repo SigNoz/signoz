@@ -22,6 +22,7 @@ export interface SeriesItem {
 	labels: {
 		[key: string]: string;
 	};
+	labelsArray: { [key: string]: string }[];
 	values: { timestamp: number; value: string }[];
 }
 

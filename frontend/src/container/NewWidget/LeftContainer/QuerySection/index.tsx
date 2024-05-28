@@ -147,11 +147,10 @@ function QuerySection({
 		{
 			key: EQueryType.QUERY_BUILDER,
 			label: (
-				<Tooltip title="Query Builder">
-					<Button className="nav-btns">
-						<Atom size={14} />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<Atom size={14} />
+					<Typography>Query Builder</Typography>
+				</Button>
 			),
 			tab: <Typography>Query Builder</Typography>,
 			children: (
@@ -169,11 +168,10 @@ function QuerySection({
 		{
 			key: EQueryType.QUERY_BUILDER,
 			label: (
-				<Tooltip title="Query Builder">
-					<Button className="nav-btns">
-						<Atom size={14} />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<Atom size={14} />
+					<Typography>Query Builder</Typography>
+				</Button>
 			),
 			tab: <Typography>Query Builder</Typography>,
 			children: (
@@ -187,11 +185,10 @@ function QuerySection({
 		{
 			key: EQueryType.CLICKHOUSE,
 			label: (
-				<Tooltip title="ClickHouse">
-					<Button className="nav-btns">
-						<Terminal size={14} />
-					</Button>
-				</Tooltip>
+				<Button className="nav-btns">
+					<Terminal size={14} />
+					<Typography>ClickHouse Query</Typography>
+				</Button>
 			),
 			tab: <Typography>ClickHouse Query</Typography>,
 			children: <ClickHouseQueryContainer />,
@@ -204,6 +201,7 @@ function QuerySection({
 						<PromQLIcon
 							fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 						/>
+						<Typography>PromQL</Typography>
 					</Button>
 				</Tooltip>
 			),
