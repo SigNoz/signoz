@@ -9,7 +9,7 @@ The [CloudWatch Exporter](https://github.com/prometheus/cloudwatch_exporter) is 
 1. Download the Prometheus CloudWatch exporter JAR file, and run the following command:
 
 ```sh
-curl -sSO https://github.com/prometheus/cloudwatch_exporter/releases/download/v0.15.5/cloudwatch_exporter-0.15.5-jar-with-dependencies.jar
+curl -sLSO https://github.com/prometheus/cloudwatch_exporter/releases/download/v0.15.5/cloudwatch_exporter-0.15.5-jar-with-dependencies.jar
 ```
 
 2. Configure the Prometheus exporter
@@ -216,6 +216,10 @@ metrics:
 java -jar cloudwatch_exporter-0.15.5-jar-with-dependencies.jar 9106 aws-rds-postgres-metrics.yaml
 ```
 
+4. Verify the CloudWatch metrics
+
+Visit the http://localhost:9106/metrics and confirm the `aws_rds_*` metrics are avialable.
+
 #### Set up the OTEL Collector
 
 Save the following config for collecting Postgres metrics in a file named `postgres-metrics-collection-config.yaml`
@@ -305,6 +309,6 @@ export SIGNOZ_INGESTION_KEY="signoz-ingestion-key"
 
 Make the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  
 ```bash
---config postgres-metrics-collection-config
+--config postgres-metrics-collection-config.yaml
 ```  
 Note: the collector can use multiple config files, specified by multiple occurrences of the --config flag.
