@@ -16,6 +16,11 @@ receivers:
           /aws/rds/:
 
 processors:
+  attributes/add_source:
+    actions:
+      - key: source
+        value: "rds_postgres"
+        action: insert
   batch:
     send_batch_size: 10000
     send_batch_max_size: 11000
@@ -82,7 +87,7 @@ service:
   pipelines:
     logs/postgres:
       receivers: [awscloudwatch/rds_postgres_logs]
-      processors: [logstransform/parse_rds_postgres_logs, batch]
+      processors: [attributes/add_source, logstransform/parse_rds_postgres_logs, batch]
       exporters: [otlp/postgres-logs]
 ```
 

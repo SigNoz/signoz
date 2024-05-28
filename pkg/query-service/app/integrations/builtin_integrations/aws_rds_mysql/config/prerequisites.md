@@ -3,8 +3,6 @@
 To configure metrics and logs collection for an AWS RDS for MySQL, you need the following.
     
 
-### Ensure OTEL Collector is running with access to the MySQL server
-
 - **Ensure Credentials and permissions are set correctly**  
  The components used for this integration relies on AWS SDKs, which offer a variety of ways to provide credentials, including the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.  
  The following IAM permissions are required:
@@ -19,11 +17,8 @@ To configure metrics and logs collection for an AWS RDS for MySQL, you need the 
  The CloudWatch Exporter used to collect the metrics requires a Java runtime environment version 11 or newer. This is not required if you can run the docker container.
 
 - **Ensure that an OTEL collector is running in your deployment environment**  
- If needed, please [install an OTEL Collector](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/)  
- If already installed, ensure that the collector version is v0.88.0 or newer.   
- Also, ensure that you can provide config files to the collector and that you can set environment variables and command line flags used for running it.
+ If needed, please [install an OTEL Collector](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/) If already installed, ensure that the collector version is v0.88.0 or newer. Also, ensure that you can provide config files to the collector and that you can set environment variables and command line flags used for running it.
 
 
 - **Ensure that the OTEL collector can access the MySQL server**
-
  To collect MySQL engine metrics, the collector must be able to access the MySQL server as a client. This step is optional.

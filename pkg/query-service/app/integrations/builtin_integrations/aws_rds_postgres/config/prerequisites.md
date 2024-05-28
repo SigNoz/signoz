@@ -19,5 +19,4 @@ To configure metrics and logs collection for an AWS RDS for PostgreSQL, you need
 
 
 - **Ensure that the OTEL collector can access the Postgres server**
-
  To collect Postgres server metrics, the collector must be able to access the Postgres server as a client. This step is optional if you are only interested in working with CloudWatch metrics.

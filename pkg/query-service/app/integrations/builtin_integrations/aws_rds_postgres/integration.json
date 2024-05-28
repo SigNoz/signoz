@@ -38,7 +38,7 @@
   "connection_tests": {
     "logs": {
       "attribute_key": "source",
-      "attribute_value": "postgres"
+      "attribute_value": "rds_postgres"
     }
   },
   "data_collected": {
