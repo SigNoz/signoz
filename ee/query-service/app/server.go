@@ -233,7 +233,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	gateway, err := gateway.NewGateway(serverOptions.GatewayUrl)
+	gateway, err := gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
 	if err != nil {
 		return nil, err
 	}

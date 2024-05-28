@@ -43,7 +43,8 @@ func TestProxyRewrite(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		proxy := newProxy(tc.url, tc.stripPath)
+		proxy, err := NewProxy(tc.url.String(), tc.stripPath)
+		require.NoError(t, err)
 		inReq, err := http.NewRequest(http.MethodGet, tc.in.String(), nil)
 		require.NoError(t, err)
 		proxyReq := &httputil.ProxyRequest{

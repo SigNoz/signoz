@@ -8,18 +8,29 @@ import (
 	"strings"
 )
 
+const (
+	RoutePrefix   string = "/api/gateway"
+	AllowedPrefix string = "/v1/workspaces/me"
+)
+
 type proxy struct {
 	url       *url.URL
 	stripPath string
 }
 
-func newProxy(url *url.URL, stripPath string) *httputil.ReverseProxy {
+func NewProxy(u string, stripPath string) (*httputil.ReverseProxy, error) {
+	url, err := url.Parse(u)
+	if err != nil {
+		return nil, err
+	}
+
 	proxy := &proxy{url: url, stripPath: stripPath}
+
 	return &httputil.ReverseProxy{
 		Rewrite:        proxy.rewrite,
 		ModifyResponse: proxy.modifyResponse,
 		ErrorHandler:   proxy.errorHandler,
-	}
+	}, nil
 }
 
 func (p *proxy) rewrite(pr *httputil.ProxyRequest) {

@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"net/http/httputil"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -36,7 +37,7 @@ type APIHandlerOptions struct {
 	IntegrationsController        *integrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	Cache                         cache.Cache
-	Gateway                       gateway.Gateway
+	Gateway                       *httputil.ReverseProxy
 	// Querier Influx Interval
 	FluxInterval time.Duration
 }
@@ -97,7 +98,7 @@ func (ah *APIHandler) AppDao() dao.ModelDao {
 	return ah.opts.AppDao
 }
 
-func (ah *APIHandler) Gateway() gateway.Gateway {
+func (ah *APIHandler) Gateway() *httputil.ReverseProxy {
 	return ah.opts.Gateway
 }
 
@@ -177,7 +178,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 		Methods(http.MethodGet)
 
 	// Gateway
-	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.AdminAccess(ah.Gateway().ServeHTTP))
+	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.AdminAccess(ah.ServeGatewayHTTP))
 
 	ah.APIHandler.RegisterRoutes(router, am)
 
