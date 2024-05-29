@@ -21,7 +21,7 @@
 	display: flex;
 
 	.filter {
-		min-width: 260px;
+		width: 260px;
 		height: 100vh;
 
 		border-right: 0px;
@@ -30,6 +30,7 @@
 
 		> .ant-card-body {
 			padding: 0;
+			width: 258px;
 		}
 	}
 

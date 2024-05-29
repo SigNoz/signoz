@@ -33,7 +33,7 @@ export function Section(props: SectionProps): JSX.Element {
 					panelName === 'durationNano'
 						? {
 								key: panelName,
-								children: <DurationSection />,
+								children: <DurationSection setSelectedFilters={setSelectedFilters} />,
 								label: AllTraceFilterKeyValue[panelName],
 						  }
 						: {

@@ -8,7 +8,12 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { AllTraceFilterKeys, statusFilterOption } from './filterUtils';
+import {
+	addFilter,
+	AllTraceFilterKeys,
+	removeFilter,
+	statusFilterOption,
+} from './filterUtils';
 
 interface SectionBodyProps {
 	type: AllTraceFilterKeys;
@@ -22,11 +27,6 @@ interface SectionBodyProps {
 		>
 	>;
 }
-
-type FilterType = Record<
-	AllTraceFilterKeys,
-	{ values: string[]; keys: BaseAutocompleteData }
->;
 
 export function SectionBody(props: SectionBodyProps): JSX.Element {
 	const { type, setSelectedFilters } = props;
@@ -46,66 +46,10 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 		setVisibleItemsCount((prevCount) => prevCount + 10);
 	};
 
-	const addFilter = (filterType: AllTraceFilterKeys, value: string): void => {
-		setSelectedFilters((prevFilters) => {
-			// If previous filters are undefined, initialize them
-			if (!prevFilters) {
-				return ({
-					[filterType]: { values: [value], keys: keys?.[0] },
-				} as unknown) as FilterType;
-			}
-			console.log(prevFilters[filterType].values);
-			// If the filter type doesn't exist, initialize it
-			if (!prevFilters[filterType].values.length) {
-				return {
-					...prevFilters,
-					[filterType]: { values: [value], keys: keys?.[0] },
-				};
-			}
-			// If the value already exists, don't add it again
-			if (prevFilters[filterType].values.includes(value)) {
-				return prevFilters;
-			}
-			// Otherwise, add the value to the existing array
-			return {
-				...prevFilters,
-				[filterType]: {
-					values: [...prevFilters[filterType].values, value],
-					keys: keys?.[0],
-				},
-			};
-		});
-	};
-
-	// Function to remove a filter
-	const removeFilter = (filterType: AllTraceFilterKeys, value: string): void => {
-		setSelectedFilters((prevFilters) => {
-			if (!prevFilters || !prevFilters[filterType].values.length) {
-				return prevFilters;
-			}
-
-			const updatedValues = prevFilters[filterType].values.filter(
-				(item) => item !== value,
-			);
-
-			if (updatedValues.length === 0) {
-				const { [filterType]: item, ...remainingFilters } = prevFilters;
-				return Object.keys(remainingFilters).length > 0
-					? (remainingFilters as FilterType)
-					: undefined;
-			}
-
-			return {
-				...prevFilters,
-				[filterType]: { values: updatedValues, keys: keys?.[0] },
-			};
-		});
-	};
-
 	const onCheckHandler = (event: CheckboxChangeEvent, value: string): void => {
 		const { checked } = event.target;
 		if (checked) {
-			addFilter(type, value);
+			addFilter(type, value, setSelectedFilters, keys);
 			setCheckedItems((prev) => {
 				if (!prev.includes(value)) {
 					prev.push(value);
@@ -113,7 +57,7 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 				return prev;
 			});
 		} else {
-			removeFilter(type, value);
+			removeFilter(type, value, setSelectedFilters, keys);
 			setCheckedItems((prev) => prev.filter((item) => item !== value));
 		}
 	};
