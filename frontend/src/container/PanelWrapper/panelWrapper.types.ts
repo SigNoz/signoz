@@ -15,7 +15,6 @@ export type PanelWrapperProps = {
 	>;
 	widget: Widgets;
 	setRequestData?: WidgetGraphComponentProps['setRequestData'];
-	setBucketWidth?: Dispatch<SetStateAction<number>>;
 	isFullViewMode?: boolean;
 	onToggleModelHandler?: () => void;
 	graphVisibility?: boolean[];

@@ -227,9 +227,7 @@ function RightContainer({
 							rootClassName="bucket-input"
 							placeholder="Default: 30"
 							onChange={(val): void => {
-								if (val) {
-									setBucketCount(val);
-								}
+								setBucketCount(val || 0);
 							}}
 						/>
 						<Typography.Text className="label bucket-size-label">
@@ -244,9 +242,7 @@ function RightContainer({
 							min={0.0}
 							rootClassName="bucket-input"
 							onChange={(val): void => {
-								if (val) {
-									setBucketWidth(val);
-								}
+								setBucketWidth(val || 0);
 							}}
 						/>
 						<section className="combine-hist">

@@ -21,7 +21,6 @@ export interface WidgetGraphProps {
 	setSelectedTracesFields?: Dispatch<
 		SetStateAction<Widgets['selectedTracesFields']>
 	>;
-	setBucketWidth: Dispatch<SetStateAction<number>>;
 	selectedWidget: Widgets;
 	selectedGraph: PANEL_TYPES;
 	selectedTime: timePreferance;
@@ -35,5 +34,4 @@ export type WidgetGraphContainerProps = {
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	selectedGraph: PANEL_TYPES;
 	selectedWidget: Widgets;
-	setBucketWidth: Dispatch<SetStateAction<number>>;
 };

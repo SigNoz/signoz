@@ -28,7 +28,6 @@ function LeftContainer({
 	setSelectedTracesFields,
 	selectedWidget,
 	selectedTime,
-	setBucketWidth,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const { selectedDashboard } = useDashboard();
@@ -99,7 +98,6 @@ function LeftContainer({
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
 				selectedWidget={selectedWidget}
-				setBucketWidth={setBucketWidth}
 			/>
 			<QueryContainer className="query-section-left-container">
 				<QuerySection selectedGraph={selectedGraph} queryResponse={queryResponse} />

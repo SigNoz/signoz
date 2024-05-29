@@ -2,8 +2,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable no-param-reassign */
 import { histogramBucketSizes } from '@grafana/data';
-import { isEqual } from 'lodash-es';
-import { Dispatch, SetStateAction } from 'react';
 import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot, { AlignedData } from 'uplot';
 
@@ -188,7 +186,6 @@ function addNullToFirstHistogram(
 
 export const buildHistogramData = (
 	data: QueryData[] | undefined,
-	setBucketWidth?: Dispatch<SetStateAction<number>>,
 	widgetBucketSize?: number,
 	widgteBucketCount?: number,
 	widgetMergeAllActiveQueries?: boolean,
@@ -235,13 +232,6 @@ export const buildHistogramData = (
 
 	if (widgetBucketSize) {
 		bucketSize = widgetBucketSize;
-	} else {
-		setBucketWidth?.((prev) => {
-			if (!isEqual(prev, bucketSize)) {
-				return bucketSize;
-			}
-			return prev;
-		});
 	}
 
 	const getBucket = (v: number): number =>
