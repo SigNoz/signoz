@@ -26,6 +26,9 @@ function HistogramPanelWrapper({
 
 	const histogramData = buildHistogramData(
 		queryResponse.data?.payload.data.result,
+		widget?.bucketWidth,
+		widget?.bucketCount,
+		widget?.mergeAllActiveQueries,
 	);
 
 	useEffect(() => {

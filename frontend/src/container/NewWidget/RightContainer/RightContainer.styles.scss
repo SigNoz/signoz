@@ -278,6 +278,23 @@
 					background: var(--bg-ink-300);
 				}
 			}
+
+			.combine-hist {
+				display: flex;
+				justify-content: space-between;
+				margin-top: 8px;
+
+				.label {
+					color: var(--bg-vanilla-400);
+					font-family: 'Space Mono';
+					font-size: 13px;
+					font-style: normal;
+					font-weight: 400;
+					line-height: 18px; /* 138.462% */
+					letter-spacing: 0.52px;
+					text-transform: uppercase;
+				}
+			}
 		}
 	}
 

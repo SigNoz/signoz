@@ -145,6 +145,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedWidget?.bucketCount || DEFAULT_BUCKET_COUNT,
 	);
 
+	const [combineHistogram, setCombineHistogram] = useState<boolean>(
+		selectedWidget?.mergeAllActiveQueries || false,
+	);
+
 	const [softMin, setSoftMin] = useState<number | null>(
 		selectedWidget?.softMin === null || selectedWidget?.softMin === undefined
 			? null
@@ -185,6 +189,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				fillSpans: isFillSpans,
 				bucketCount,
 				bucketWidth,
+				mergeAllActiveQueries: combineHistogram,
 				selectedLogFields,
 				selectedTracesFields,
 			};
@@ -205,6 +210,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		yAxisUnit,
 		bucketWidth,
 		bucketCount,
+		combineHistogram,
 	]);
 
 	const closeModal = (): void => {
@@ -302,6 +308,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								fillSpans: selectedWidget?.fillSpans,
 								bucketWidth: selectedWidget?.bucketWidth || 0,
 								bucketCount: selectedWidget?.bucketCount || 0,
+								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
 								selectedLogFields: selectedWidget?.selectedLogFields || [],
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 							},
@@ -325,6 +332,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								fillSpans: selectedWidget?.fillSpans,
 								bucketWidth: selectedWidget?.bucketWidth || 0,
 								bucketCount: selectedWidget?.bucketCount || 0,
+								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
 								selectedLogFields: selectedWidget?.selectedLogFields || [],
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 							},
@@ -502,6 +510,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						yAxisUnit={yAxisUnit}
 						bucketCount={bucketCount}
 						bucketWidth={bucketWidth}
+						combineHistogram={combineHistogram}
+						setCombineHistogram={setCombineHistogram}
 						setBucketWidth={setBucketWidth}
 						setBucketCount={setBucketCount}
 						setOpacity={setOpacity}

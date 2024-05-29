@@ -54,6 +54,8 @@ function RightContainer({
 	setYAxisUnit,
 	setGraphHandler,
 	thresholds,
+	combineHistogram,
+	setCombineHistogram,
 	setThresholds,
 	selectedWidget,
 	isFillSpans,
@@ -219,9 +221,10 @@ function RightContainer({
 					<section className="bucket-config">
 						<Typography.Text className="label">Number of buckets</Typography.Text>
 						<InputNumber
-							value={bucketCount}
+							value={bucketCount || null}
 							type="number"
 							rootClassName="bucket-input"
+							placeholder="Default: 30"
 							onChange={(val): void => {
 								if (val) {
 									setBucketCount(val);
@@ -232,8 +235,11 @@ function RightContainer({
 							Bucket width
 						</Typography.Text>
 						<InputNumber
-							value={bucketWidth}
+							value={bucketWidth || null}
 							type="number"
+							precision={2}
+							placeholder="Default: Auto"
+							step={0.1}
 							rootClassName="bucket-input"
 							onChange={(val): void => {
 								if (val) {
@@ -241,6 +247,16 @@ function RightContainer({
 								}
 							}}
 						/>
+						<section className="combine-hist">
+							<Typography.Text className="label">
+								Merge all series into one
+							</Typography.Text>
+							<Switch
+								checked={combineHistogram}
+								size="small"
+								onChange={(checked): void => setCombineHistogram(checked)}
+							/>
+						</section>
 					</section>
 				)}
 			</section>
@@ -286,6 +302,8 @@ interface RightContainerProps {
 	yAxisUnit: string;
 	bucketWidth: number;
 	bucketCount: number;
+	combineHistogram: boolean;
+	setCombineHistogram: Dispatch<SetStateAction<boolean>>;
 	setBucketWidth: Dispatch<SetStateAction<number>>;
 	setBucketCount: Dispatch<SetStateAction<number>>;
 	setYAxisUnit: Dispatch<SetStateAction<string>>;

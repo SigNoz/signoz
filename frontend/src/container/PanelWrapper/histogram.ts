@@ -186,9 +186,12 @@ function addNullToFirstHistogram(
 
 export const buildHistogramData = (
 	data: QueryData[] | undefined,
+	widgetBucketSize?: number,
+	widgteBucketCount?: number,
+	widgetMergeAllActiveQueries?: boolean,
 ): uPlot.AlignedData => {
 	let bucketSize = 0;
-	const bucketCount = DEFAULT_BUCKET_COUNT;
+	const bucketCount = widgteBucketCount || DEFAULT_BUCKET_COUNT;
 	const bucketOffset = 0;
 
 	const seriesValues: number[] = [];
@@ -227,6 +230,10 @@ export const buildHistogramData = (
 		}
 	}
 
+	if (widgetBucketSize) {
+		bucketSize = widgetBucketSize;
+	}
+
 	const getBucket = (v: number): number =>
 		roundDecimals(incrRoundDn(v - bucketOffset, bucketSize) + bucketOffset, 9);
 
@@ -239,6 +246,15 @@ export const buildHistogramData = (
 		});
 		frames.push(newFrame);
 	});
+
+	if (widgetMergeAllActiveQueries) {
+		for (let i = 1; i < frames.length; i++) {
+			frames[i].forEach((val) => {
+				frames[0].push(val);
+			});
+			frames[i] = [];
+		}
+	}
 
 	const histograms: AlignedData[] = [];
 
