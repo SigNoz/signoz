@@ -26,6 +26,7 @@ type GetUplotHistogramChartOptionsProps = {
 	currentQuery?: Query;
 	graphsVisibilityStates?: boolean[];
 	setGraphsVisibilityStates?: Dispatch<SetStateAction<boolean[]>>;
+	mergeAllQueries?: boolean;
 };
 
 type GetHistogramSeriesProps = {
@@ -108,13 +109,14 @@ export const getUplotHistogramChartOptions = ({
 	currentQuery,
 	graphsVisibilityStates,
 	setGraphsVisibilityStates,
+	mergeAllQueries,
 }: GetUplotHistogramChartOptionsProps): uPlot.Options =>
 	({
 		id,
 		width: dimensions.width,
 		height: dimensions.height - 30,
 		legend: {
-			show: true,
+			show: !mergeAllQueries,
 			live: false,
 			isolate: true,
 		},

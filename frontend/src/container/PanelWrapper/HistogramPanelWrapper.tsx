@@ -66,6 +66,7 @@ function HistogramPanelWrapper({
 				panelType: widget.panelTypes,
 				setGraphsVisibilityStates: setGraphVisibility,
 				graphsVisibilityStates: graphVisibility,
+				mergeAllQueries: widget.mergeAllActiveQueries,
 			}),
 		[
 			containerDimensions,
@@ -75,6 +76,7 @@ function HistogramPanelWrapper({
 			queryResponse.data?.payload,
 			setGraphVisibility,
 			widget.id,
+			widget.mergeAllActiveQueries,
 			widget.panelTypes,
 		],
 	);
