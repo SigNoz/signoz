@@ -14,6 +14,7 @@ function WidgetGraphContainer({
 	queryResponse,
 	setRequestData,
 	selectedWidget,
+	setBucketWidth,
 }: WidgetGraphContainerProps): JSX.Element {
 	if (queryResponse.data && selectedGraph === PANEL_TYPES.BAR) {
 		const sortedSeriesData = getSortedSeriesData(
@@ -65,6 +66,7 @@ function WidgetGraphContainer({
 			queryResponse={queryResponse}
 			setRequestData={setRequestData}
 			selectedGraph={selectedGraph}
+			setBucketWidth={setBucketWidth}
 		/>
 	);
 }

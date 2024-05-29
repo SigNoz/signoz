@@ -493,6 +493,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 							setSelectedTracesFields={setSelectedTracesFields}
 							selectedWidget={selectedWidget}
 							selectedTime={selectedTime}
+							setBucketWidth={setBucketWidth}
 						/>
 					)}
 				</LeftContainerWrapper>

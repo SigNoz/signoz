@@ -17,6 +17,7 @@ function WidgetGraph({
 	queryResponse,
 	setRequestData,
 	selectedWidget,
+	setBucketWidth,
 }: WidgetGraphContainerProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 
@@ -47,6 +48,7 @@ function WidgetGraph({
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
 				selectedWidget={selectedWidget}
+				setBucketWidth={setBucketWidth}
 			/>
 		</Container>
 	);
