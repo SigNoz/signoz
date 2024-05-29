@@ -2,14 +2,22 @@ import './Filter.styles.scss';
 
 import { Collapse, Divider } from 'antd';
 import { Dispatch, SetStateAction } from 'react';
-import { TraceFilterEnum } from 'types/reducer/trace';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
+import { DurationSection } from './DurationSection';
+import { AllTraceFilterKeys, AllTraceFilterKeyValue } from './filterUtils';
 import { SectionBody } from './SectionContent';
 
 interface SectionProps {
-	panelName: TraceFilterEnum;
+	panelName: AllTraceFilterKeys;
 	setSelectedFilters: Dispatch<
-		SetStateAction<Record<TraceFilterEnum, string[]> | undefined>
+		SetStateAction<
+			| Record<
+					AllTraceFilterKeys,
+					{ values: string[]; keys: BaseAutocompleteData }
+			  >
+			| undefined
+		>
 	>;
 }
 export function Section(props: SectionProps): JSX.Element {
@@ -22,13 +30,22 @@ export function Section(props: SectionProps): JSX.Element {
 				bordered={false}
 				className="collapseContainer"
 				items={[
-					{
-						key: panelName,
-						children: (
-							<SectionBody type={panelName} setSelectedFilters={setSelectedFilters} />
-						),
-						label: panelName,
-					},
+					panelName === 'durationNano'
+						? {
+								key: panelName,
+								children: <DurationSection />,
+								label: AllTraceFilterKeyValue[panelName],
+						  }
+						: {
+								key: panelName,
+								children: (
+									<SectionBody
+										type={panelName}
+										setSelectedFilters={setSelectedFilters}
+									/>
+								),
+								label: AllTraceFilterKeyValue[panelName],
+						  },
 				]}
 			/>
 		</div>

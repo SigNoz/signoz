@@ -1,26 +1,42 @@
-import { Button, Card, Checkbox, Tooltip } from 'antd';
+import './Filter.styles.scss';
+
+import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Dispatch, SetStateAction, useState } from 'react';
-import { TraceFilterEnum } from 'types/reducer/trace';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+
+import { AllTraceFilterKeys, statusFilterOption } from './filterUtils';
 
 interface SectionBodyProps {
-	type: TraceFilterEnum;
+	type: AllTraceFilterKeys;
 	setSelectedFilters: Dispatch<
-		SetStateAction<Record<TraceFilterEnum, string[]> | undefined>
+		SetStateAction<
+			| Record<
+					AllTraceFilterKeys,
+					{ values: string[]; keys: BaseAutocompleteData }
+			  >
+			| undefined
+		>
 	>;
 }
 
-type FilterType = Record<TraceFilterEnum, string[]>;
+type FilterType = Record<
+	AllTraceFilterKeys,
+	{ values: string[]; keys: BaseAutocompleteData }
+>;
 
 export function SectionBody(props: SectionBodyProps): JSX.Element {
 	const { type, setSelectedFilters } = props;
 	const [visibleItemsCount, setVisibleItemsCount] = useState(10);
+	const [searchFilter, setSearchFilter] = useState<string>('');
+	const [checkedItems, setCheckedItems] = useState<string[]>([]);
 
 	const { currentQuery } = useQueryBuilder();
-	const { results, isFetching } = useFetchKeysAndValues(
+
+	const { results, isFetching, keys } = useFetchKeysAndValues(
 		`${type} =`,
 		currentQuery?.builder?.queryData[0] || null,
 		type,
@@ -30,36 +46,45 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 		setVisibleItemsCount((prevCount) => prevCount + 10);
 	};
 
-	const addFilter = (filterType: TraceFilterEnum, value: string): void => {
+	const addFilter = (filterType: AllTraceFilterKeys, value: string): void => {
 		setSelectedFilters((prevFilters) => {
 			// If previous filters are undefined, initialize them
 			if (!prevFilters) {
-				return { [filterType]: [value] } as FilterType;
+				return ({
+					[filterType]: { values: [value], keys: keys?.[0] },
+				} as unknown) as FilterType;
 			}
+			console.log(prevFilters[filterType].values);
 			// If the filter type doesn't exist, initialize it
-			if (!prevFilters[filterType]) {
-				return { ...prevFilters, [filterType]: [value] };
+			if (!prevFilters[filterType].values.length) {
+				return {
+					...prevFilters,
+					[filterType]: { values: [value], keys: keys?.[0] },
+				};
 			}
 			// If the value already exists, don't add it again
-			if (prevFilters[filterType].includes(value)) {
+			if (prevFilters[filterType].values.includes(value)) {
 				return prevFilters;
 			}
 			// Otherwise, add the value to the existing array
 			return {
 				...prevFilters,
-				[filterType]: [...prevFilters[filterType], value],
+				[filterType]: {
+					values: [...prevFilters[filterType].values, value],
+					keys: keys?.[0],
+				},
 			};
 		});
 	};
 
 	// Function to remove a filter
-	const removeFilter = (filterType: TraceFilterEnum, value: string): void => {
+	const removeFilter = (filterType: AllTraceFilterKeys, value: string): void => {
 		setSelectedFilters((prevFilters) => {
-			if (!prevFilters || !prevFilters[filterType]) {
+			if (!prevFilters || !prevFilters[filterType].values.length) {
 				return prevFilters;
 			}
 
-			const updatedValues = prevFilters[filterType].filter(
+			const updatedValues = prevFilters[filterType].values.filter(
 				(item) => item !== value,
 			);
 
@@ -72,7 +97,7 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 
 			return {
 				...prevFilters,
-				[filterType]: updatedValues,
+				[filterType]: { values: updatedValues, keys: keys?.[0] },
 			};
 		});
 	};
@@ -81,21 +106,48 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 		const { checked } = event.target;
 		if (checked) {
 			addFilter(type, value);
+			setCheckedItems((prev) => {
+				if (!prev.includes(value)) {
+					prev.push(value);
+				}
+				return prev;
+			});
 		} else {
 			removeFilter(type, value);
+			setCheckedItems((prev) => prev.filter((item) => item !== value));
 		}
 	};
 
 	return (
-		<Card bordered={false} className="section-card" loading={isFetching}>
-			{results
-				.slice(0, visibleItemsCount)
+		<Card
+			bordered={false}
+			className="section-card"
+			loading={type === 'status' ? false : isFetching}
+			key={type}
+		>
+			<Input.Search
+				value={searchFilter}
+				onChange={(e): void => setSearchFilter(e.target.value)}
+				placeholder="Filter Values"
+				className="search-input"
+			/>
+			{(type === 'status' ? statusFilterOption : results)
 				.filter((i) => i.length)
+				.filter((filter) => {
+					if (searchFilter.length === 0) {
+						return true;
+					}
+					return filter
+						.toLocaleLowerCase()
+						.includes(searchFilter.toLocaleLowerCase());
+				})
+				.slice(0, visibleItemsCount)
 				.map((item) => (
 					<Checkbox
 						className="submenu-checkbox"
 						key={`${type}-${item}`}
 						onChange={(e): void => onCheckHandler(e, item)}
+						checked={checkedItems.includes(item)}
 					>
 						<Tooltip overlay={<div>{item}</div>} placement="rightTop">
 							<ParaGraph ellipsis style={{ maxWidth: 200 }}>
