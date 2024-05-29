@@ -178,21 +178,20 @@ function App(): JSX.Element {
 	}, [pathname]);
 
 	useEffect(() => {
-		let isThemeAnalyticsSent;
-
 		try {
-			isThemeAnalyticsSent = getLocalStorageApi(LOCALSTORAGE.THEME_ANALYTICS);
+			const isThemeAnalyticsSent = getLocalStorageApi(
+				LOCALSTORAGE.THEME_ANALYTICS,
+			);
+			if (!isThemeAnalyticsSent) {
+				trackEvent('Theme Analytics', {
+					theme: isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT,
+					user: pick(user, ['email', 'userId', 'name']),
+					org,
+				});
+				setLocalStorageApi(LOCALSTORAGE.THEME_ANALYTICS, 'true');
+			}
 		} catch {
-			isThemeAnalyticsSent = true;
-		}
-
-		if (!isThemeAnalyticsSent) {
-			trackEvent('Theme Analytics', {
-				theme: isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT,
-				user: pick(user, ['email', 'userId', 'name']),
-				org,
-			});
-			setLocalStorageApi(LOCALSTORAGE.THEME_ANALYTICS, 'true');
+			console.error('Failed to parse local storage theme analytics event');
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
