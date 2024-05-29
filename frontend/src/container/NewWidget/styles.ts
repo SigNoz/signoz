@@ -26,7 +26,7 @@ interface LeftContainerWrapperProps {
 
 export const LeftContainerWrapper = styled(Col)<LeftContainerWrapperProps>`
 	&&& {
-		width: 70%;
+		min-width: 70%;
 		overflow-y: auto;
 		border-right: ${({ isDarkMode }): string =>
 			isDarkMode
