@@ -898,7 +898,7 @@ function DashboardsList(): JSX.Element {
 							<div className="right">
 								<Switch
 									size="small"
-									checked={visibleColumns.createdAt}
+									checked
 									disabled
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
@@ -919,7 +919,7 @@ function DashboardsList(): JSX.Element {
 								<Switch
 									size="small"
 									disabled
-									checked={visibleColumns.createdBy}
+									checked
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
