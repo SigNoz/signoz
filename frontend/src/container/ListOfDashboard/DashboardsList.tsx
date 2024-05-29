@@ -503,14 +503,12 @@ function DashboardsList(): JSX.Element {
 							</div>
 						</div>
 						<div className="dashboard-details">
-							{visibleColumns.createdAt && (
-								<div className="dashboard-created-at">
-									<CalendarClock size={14} />
-									<Typography.Text>{formattedDateAndTime}</Typography.Text>
-								</div>
-							)}
+							<div className="dashboard-created-at">
+								<CalendarClock size={14} />
+								<Typography.Text>{formattedDateAndTime}</Typography.Text>
+							</div>
 
-							{dashboard.createdBy && visibleColumns.createdBy && (
+							{dashboard.createdBy && (
 								<div className="created-by">
 									<div className="dashboard-tag">
 										<Typography.Text className="tag-text">
