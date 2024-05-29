@@ -84,7 +84,7 @@ function HistogramPanelWrapper({
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			<Uplot options={histogramOptions} data={histogramData} ref={lineChartRef} />
-			{isFullViewMode && setGraphVisibility && (
+			{isFullViewMode && setGraphVisibility && !widget.mergeAllActiveQueries && (
 				<GraphManager
 					data={histogramData}
 					name={widget.id}
