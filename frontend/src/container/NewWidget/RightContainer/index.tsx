@@ -22,6 +22,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
+	panelTypeVsBucketConfig,
 	panelTypeVsCreateAlert,
 	panelTypeVsFillSpan,
 	panelTypeVsPanelTimePreferences,
@@ -43,6 +44,10 @@ function RightContainer({
 	setTitle,
 	title,
 	selectedGraph,
+	bucketCount,
+	bucketWidth,
+	setBucketCount,
+	setBucketWidth,
 	setSelectedTime,
 	selectedTime,
 	yAxisUnit,
@@ -75,6 +80,7 @@ function RightContainer({
 	const allowFillSpans = panelTypeVsFillSpan[selectedGraph];
 	const allowYAxisUnit = panelTypeVsYAxisUnit[selectedGraph];
 	const allowCreateAlerts = panelTypeVsCreateAlert[selectedGraph];
+	const allowBucketConfig = panelTypeVsBucketConfig[selectedGraph];
 	const allowPanelTimePreference =
 		panelTypeVsPanelTimePreferences[selectedGraph];
 
@@ -208,6 +214,35 @@ function RightContainer({
 						</section>
 					</section>
 				)}
+
+				{allowBucketConfig && (
+					<section className="bucket-config">
+						<Typography.Text className="label">Number of buckets</Typography.Text>
+						<InputNumber
+							value={bucketCount}
+							type="number"
+							rootClassName="bucket-input"
+							onChange={(val): void => {
+								if (val) {
+									setBucketCount(val);
+								}
+							}}
+						/>
+						<Typography.Text className="label bucket-size-label">
+							Bucket width
+						</Typography.Text>
+						<InputNumber
+							value={bucketWidth}
+							type="number"
+							rootClassName="bucket-input"
+							onChange={(val): void => {
+								if (val) {
+									setBucketWidth(val);
+								}
+							}}
+						/>
+					</section>
+				)}
 			</section>
 
 			{allowCreateAlerts && (
@@ -249,6 +284,10 @@ interface RightContainerProps {
 	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 	yAxisUnit: string;
+	bucketWidth: number;
+	bucketCount: number;
+	setBucketWidth: Dispatch<SetStateAction<number>>;
+	setBucketCount: Dispatch<SetStateAction<number>>;
 	setYAxisUnit: Dispatch<SetStateAction<string>>;
 	setGraphHandler: (type: PANEL_TYPES) => void;
 	thresholds: ThresholdProps[];
