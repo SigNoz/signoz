@@ -4574,20 +4574,7 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 	var seriesList []*v3.Series
 	for _, key := range keys {
 		points := seriesToPoints[key]
-		// find the grouping sets point for the series
-		// this is the point with the zero timestamp
-		// if there is no such point, then the series is not grouped
-		// and we can skip this step
-		var groupingSetsPoint *v3.Point
-		for idx, point := range points {
-			if point.Timestamp <= 0 {
-				groupingSetsPoint = &point
-				// remove the grouping sets point from the list of points
-				points = append(points[:idx], points[idx+1:]...)
-				break
-			}
-		}
-		series := v3.Series{Labels: seriesToAttrs[key], Points: points, GroupingSetsPoint: groupingSetsPoint, LabelsArray: labelsArray[key]}
+		series := v3.Series{Labels: seriesToAttrs[key], Points: points, LabelsArray: labelsArray[key]}
 		seriesList = append(seriesList, &series)
 	}
 	return seriesList, getPersonalisedError(rows.Err())
