@@ -28,7 +28,6 @@ function WidgetGraph({
 	queryResponse,
 	setRequestData,
 	selectedGraph,
-	setBucketWidth,
 }: WidgetGraphProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dispatch = useDispatch();
@@ -110,7 +109,6 @@ function WidgetGraph({
 				setRequestData={setRequestData}
 				onDragSelect={onDragSelect}
 				selectedGraph={selectedGraph}
-				setBucketWidth={setBucketWidth}
 			/>
 		</div>
 	);
@@ -124,7 +122,6 @@ interface WidgetGraphProps {
 	>;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	selectedGraph: PANEL_TYPES;
-	setBucketWidth: Dispatch<SetStateAction<number>>;
 }
 
 export default WidgetGraph;
