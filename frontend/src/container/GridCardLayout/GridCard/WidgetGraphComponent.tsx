@@ -160,7 +160,11 @@ function WidgetGraphComponent({
 				},
 			},
 			{
-				onSuccess: () => {
+				onSuccess: (updatedDashboard) => {
+					if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
+					if (setSelectedDashboard && updatedDashboard.payload) {
+						setSelectedDashboard(updatedDashboard.payload);
+					}
 					notifications.success({
 						message: 'Panel cloned successfully, redirecting to new copy.',
 					});
