@@ -6,7 +6,7 @@ import { Dispatch, SetStateAction, useState } from 'react';
 
 import { InputContainer, NewTagContainer, TagsContainer } from './styles';
 
-export function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
+function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>('');
 	const [editInputIndex, setEditInputIndex] = useState(-1);
 	const [editInputValue, setEditInputValue] = useState('');
