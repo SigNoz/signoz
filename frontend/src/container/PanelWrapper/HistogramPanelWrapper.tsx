@@ -18,6 +18,7 @@ function HistogramPanelWrapper({
 	graphVisibility,
 	isFullViewMode,
 	onToggleModelHandler,
+	setBucketWidth,
 }: PanelWrapperProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
@@ -26,6 +27,7 @@ function HistogramPanelWrapper({
 
 	const histogramData = buildHistogramData(
 		queryResponse.data?.payload.data.result,
+		setBucketWidth,
 		widget?.bucketWidth,
 		widget?.bucketCount,
 		widget?.mergeAllActiveQueries,

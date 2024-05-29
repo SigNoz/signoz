@@ -223,6 +223,7 @@ function RightContainer({
 						<InputNumber
 							value={bucketCount || null}
 							type="number"
+							min={0}
 							rootClassName="bucket-input"
 							placeholder="Default: 30"
 							onChange={(val): void => {
@@ -240,6 +241,7 @@ function RightContainer({
 							precision={2}
 							placeholder="Default: Auto"
 							step={0.1}
+							min={0.0}
 							rootClassName="bucket-input"
 							onChange={(val): void => {
 								if (val) {
