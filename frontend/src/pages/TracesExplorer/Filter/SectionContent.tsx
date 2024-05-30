@@ -3,12 +3,13 @@ import './Filter.styles.scss';
 import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
-import { Dispatch, SetStateAction, useState } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { defaultTo } from 'lodash-es';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 
 import {
 	addFilter,
 	AllTraceFilterKeys,
+	FilterType,
 	removeFilter,
 	statusFilterOption,
 	useGetAggregateValues,
@@ -16,22 +17,22 @@ import {
 
 interface SectionBodyProps {
 	type: AllTraceFilterKeys;
-	setSelectedFilters: Dispatch<
-		SetStateAction<
-			| Record<
-					AllTraceFilterKeys,
-					{ values: string[]; keys: BaseAutocompleteData }
-			  >
-			| undefined
-		>
-	>;
+	selectedFilters: FilterType | undefined;
+	setSelectedFilters: Dispatch<SetStateAction<FilterType | undefined>>;
 }
 
 export function SectionBody(props: SectionBodyProps): JSX.Element {
-	const { type, setSelectedFilters } = props;
+	const { type, setSelectedFilters, selectedFilters } = props;
 	const [visibleItemsCount, setVisibleItemsCount] = useState(10);
 	const [searchFilter, setSearchFilter] = useState<string>('');
-	const [checkedItems, setCheckedItems] = useState<string[]>([]);
+	const [checkedItems, setCheckedItems] = useState<string[]>(
+		defaultTo(selectedFilters?.[type]?.values, []),
+	);
+
+	useEffect(
+		() => setCheckedItems(defaultTo(selectedFilters?.[type]?.values, [])),
+		[selectedFilters, type],
+	);
 
 	const { isFetching, keys, results } = useGetAggregateValues({ value: type });
 
@@ -84,7 +85,7 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 						className="submenu-checkbox"
 						key={`${type}-${item}`}
 						onChange={(e): void => onCheckHandler(e, item)}
-						checked={checkedItems.includes(item)}
+						checked={checkedItems?.includes(item)}
 					>
 						<Tooltip overlay={<div>{item}</div>} placement="rightTop">
 							<ParaGraph ellipsis style={{ maxWidth: 200 }}>

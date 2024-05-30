@@ -3,22 +3,26 @@ import './Filter.styles.scss';
 
 import { ArrowLeftOutlined, FilterOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
+import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { isEqual } from 'lodash-es';
 import {
 	Dispatch,
 	SetStateAction,
 	useCallback,
 	useEffect,
+	useMemo,
 	useState,
 } from 'react';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
-import { AllTraceFilterKeys, AllTraceFilterOptions } from './filterUtils';
+import {
+	AllTraceFilterKeys,
+	AllTraceFilterOptions,
+	FilterType,
+} from './filterUtils';
 import { Section } from './Section';
 
 interface FilterProps {
@@ -31,28 +35,62 @@ export function Filter(props: FilterProps): JSX.Element {
 		Record<AllTraceFilterKeys, { values: string[]; keys: BaseAutocompleteData }>
 	>();
 
-	const requiredItem = {
-		items: [
-			{
-				id: uuid().slice(0, 8),
-				key: {
-					key: 'serviceName',
-					dataType: DataTypes.String,
-					type: 'tag',
-					isColumn: true,
-					isJSON: false,
-					id: 'serviceName--string--tag--true',
-				},
-				op: 'IN',
-				value: ['driver', 'frontend'],
-			},
-		],
-	};
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
-	const preparePostData = (): TagFilterItem[] => {
-		console.log(selectedFilters);
+	const syncSelectedFilters = useMemo((): FilterType => {
+		const filters = currentQuery.builder.queryData?.[0].filters;
 
+		let durationValue: { min?: string; max?: string } = {};
+		let durationKey;
+		const filterRet = filters.items.reduce((acc, item) => {
+			const keys = item.key as BaseAutocompleteData;
+			const attributeName = item.key?.key || '';
+			const values = item.value as string[];
+
+			if ((attributeName as AllTraceFilterKeys) === 'durationNano') {
+				if (item.op === '>=') {
+					durationValue = { ...durationValue, min: item.value as string };
+				} else {
+					durationValue = { ...durationValue, max: item.value as string };
+				}
+				durationKey = keys;
+				return acc;
+			}
+
+			if (attributeName) {
+				acc[attributeName as AllTraceFilterKeys] = { values, keys };
+			}
+
+			return acc;
+		}, {} as FilterType);
+
+		const durationFinValue = [];
+		if (durationValue.min) {
+			durationFinValue.push(getMs(String(durationValue.min)));
+		}
+
+		if (durationValue.max) {
+			durationFinValue.push(getMs(String(durationValue.max)));
+		}
+
+		return durationKey && durationFinValue.length
+			? {
+					...filterRet,
+					durationNano: {
+						keys: durationKey,
+						values: durationFinValue,
+					},
+			  }
+			: filterRet;
+	}, [currentQuery]);
+
+	useEffect(() => {
+		if (!isEqual(syncSelectedFilters, selectedFilters)) {
+			setSelectedFilters(syncSelectedFilters);
+		}
+	}, [syncSelectedFilters]);
+
+	const preparePostData = (): TagFilterItem[] => {
 		if (!selectedFilters) {
 			return [];
 		}
@@ -92,12 +130,6 @@ export function Filter(props: FilterProps): JSX.Element {
 		return items as TagFilterItem[];
 	};
 
-	console.log(
-		selectedFilters,
-		Object.keys(selectedFilters || {}),
-		preparePostData(),
-	);
-
 	const handleRun = useCallback((): void => {
 		const preparedQuery: Query = {
 			...currentQuery,
@@ -113,7 +145,7 @@ export function Filter(props: FilterProps): JSX.Element {
 			},
 		};
 		redirectWithQueryBuilderData(preparedQuery);
-	}, [currentQuery, redirectWithQueryBuilderData, requiredItem.items]);
+	}, [currentQuery, redirectWithQueryBuilderData, selectedFilters]);
 
 	useEffect(() => {
 		handleRun();
@@ -135,6 +167,7 @@ export function Filter(props: FilterProps): JSX.Element {
 					<Section
 						key={panelName}
 						panelName={panelName}
+						selectedFilters={selectedFilters}
 						setSelectedFilters={setSelectedFilters}
 					/>
 				))}

@@ -2,26 +2,22 @@ import './Filter.styles.scss';
 
 import { Collapse, Divider } from 'antd';
 import { Dispatch, SetStateAction } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { DurationSection } from './DurationSection';
-import { AllTraceFilterKeys, AllTraceFilterKeyValue } from './filterUtils';
+import {
+	AllTraceFilterKeys,
+	AllTraceFilterKeyValue,
+	FilterType,
+} from './filterUtils';
 import { SectionBody } from './SectionContent';
 
 interface SectionProps {
 	panelName: AllTraceFilterKeys;
-	setSelectedFilters: Dispatch<
-		SetStateAction<
-			| Record<
-					AllTraceFilterKeys,
-					{ values: string[]; keys: BaseAutocompleteData }
-			  >
-			| undefined
-		>
-	>;
+	selectedFilters: FilterType | undefined;
+	setSelectedFilters: Dispatch<SetStateAction<FilterType | undefined>>;
 }
 export function Section(props: SectionProps): JSX.Element {
-	const { panelName, setSelectedFilters } = props;
+	const { panelName, setSelectedFilters, selectedFilters } = props;
 
 	return (
 		<div>
@@ -38,7 +34,12 @@ export function Section(props: SectionProps): JSX.Element {
 					panelName === 'durationNano'
 						? {
 								key: panelName,
-								children: <DurationSection setSelectedFilters={setSelectedFilters} />,
+								children: (
+									<DurationSection
+										setSelectedFilters={setSelectedFilters}
+										selectedFilters={selectedFilters}
+									/>
+								),
 								label: AllTraceFilterKeyValue[panelName],
 						  }
 						: {
@@ -46,6 +47,7 @@ export function Section(props: SectionProps): JSX.Element {
 								children: (
 									<SectionBody
 										type={panelName}
+										selectedFilters={selectedFilters}
 										setSelectedFilters={setSelectedFilters}
 									/>
 								),

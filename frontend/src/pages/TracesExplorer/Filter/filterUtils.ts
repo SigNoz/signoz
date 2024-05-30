@@ -96,11 +96,11 @@ export const removeFilter = (
 	keys?: BaseAutocompleteData,
 ): void => {
 	setSelectedFilters((prevFilters) => {
-		if (!prevFilters || !prevFilters[filterType].values.length) {
+		if (!prevFilters || !prevFilters[filterType]?.values.length) {
 			return prevFilters;
 		}
 
-		const updatedValues = prevFilters[filterType].values.filter(
+		const updatedValues = prevFilters[filterType]?.values.filter(
 			(item) => item !== value,
 		);
 

@@ -6,6 +6,8 @@ import {
 	Dispatch,
 	SetStateAction,
 	useCallback,
+	useEffect,
+	useMemo,
 	useState,
 } from 'react';
 import {
@@ -13,18 +15,11 @@ import {
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { addFilter, AllTraceFilterKeys } from './filterUtils';
+import { addFilter, FilterType } from './filterUtils';
 
 interface DurationProps {
-	setSelectedFilters: Dispatch<
-		SetStateAction<
-			| Record<
-					AllTraceFilterKeys,
-					{ values: string[]; keys: BaseAutocompleteData }
-			  >
-			| undefined
-		>
-	>;
+	selectedFilters: FilterType | undefined;
+	setSelectedFilters: Dispatch<SetStateAction<FilterType | undefined>>;
 }
 
 const durationKey: BaseAutocompleteData = {
@@ -37,43 +32,44 @@ const durationKey: BaseAutocompleteData = {
 };
 
 export function DurationSection(props: DurationProps): JSX.Element {
-	const { setSelectedFilters } = props;
+	const { setSelectedFilters, selectedFilters } = props;
 
-	// const getDuration = useMemo(() => {
-	// 	const selectedDuration = selectedFilter.get('duration');
+	const getDuration = useMemo(() => {
+		const selectedDuration = selectedFilters?.durationNano;
+		console.log(selectedDuration, selectedFilters?.durationNano);
 
-	// 	if (selectedDuration) {
-	// 		return {
-	// 			maxDuration: selectedDuration[0],
-	// 			minDuration: selectedDuration[1],
-	// 		};
-	// 	}
+		if (selectedDuration) {
+			if (selectedDuration.values.length === 1) {
+				return {
+					maxDuration: selectedDuration.values?.[0],
+					minDuration: '',
+				};
+			}
+			return {
+				maxDuration: selectedDuration.values?.[1],
+				minDuration: selectedDuration.values?.[0],
+			};
+		}
 
-	// 	return filter.get('duration') || {};
-	// }, [selectedFilter, filter]);
+		return {
+			maxDuration: '',
+			minDuration: '',
+		};
+	}, [selectedFilters]);
 
 	const [preMax, setPreMax] = useState<string>('');
 	const [preMin, setPreMin] = useState<string>('');
 
-	// useEffect(() => {
-	// 	// const duration = getDuration || {};
-	// 	const duration = {};
+	useEffect(() => {
+		if (getDuration.maxDuration) {
+			setPreMax(getDuration.maxDuration);
+		}
+		if (getDuration.minDuration) {
+			setPreMin(getDuration.minDuration);
+		}
+	}, [getDuration]);
 
-	// 	// const maxDuration = duration?.maxDuration || '0';
-	// 	// const minDuration = duration?.minDuration || '0';
-	// 	const maxDuration = '0';
-	// 	const minDuration = '0';
-
-	// 	if (preLocalMaxDuration.current === undefined) {
-	// 		preLocalMaxDuration.current = parseFloat(maxDuration);
-	// 	}
-	// 	if (preLocalMinDuration.current === undefined) {
-	// 		preLocalMinDuration.current = parseFloat(minDuration);
-	// 	}
-
-	// 	setPreMax(getMs(maxDuration));
-	// 	setPreMin(getMs(minDuration));
-	// }, []);
+	console.log(getDuration, preMax, preMin);
 
 	const updateDurationFilter = (min: string, max: string): void => {
 		setSelectedFilters((prevFilters) => {
