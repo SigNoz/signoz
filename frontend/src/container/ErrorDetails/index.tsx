@@ -160,9 +160,8 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			(errorReport.columnNumber || errorReport.column) &&
 			(errorReport.lineNumber || errorReport.line) &&
 			errorReport.fileName &&
-			['Unhandled_Rejection', 'JS_ERROR'].includes(errorDetail.exceptionType)
-			//  &&
-			// /weeecdn|sayweee/.test(errorReport.fileName)
+			['Unhandled_Rejection', 'JS_ERROR'].includes(errorDetail.exceptionType) &&
+			/weeecdn|sayweee|local|localhost/.test(errorReport.fileName)
 		);
 	}, [errorDetail.exceptionStacktrace, errorDetail.exceptionType]);
 
