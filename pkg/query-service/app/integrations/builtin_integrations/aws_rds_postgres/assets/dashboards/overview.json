@@ -160,9 +160,9 @@
   "tags": [
     "aws",
     "rds",
-    "mysql"
+    "postgres"
   ],
-  "title": "AWS RDS MySQL",
+  "title": "AWS RDS Postgres",
   "uploadedGrafana": false,
   "variables": {
     "5ae02d7b-d201-4481-ad6f-ffb9d53e1b3e": {

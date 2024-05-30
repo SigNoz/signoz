@@ -2,7 +2,7 @@
 
 #### Create collector config file
 
-Save the following config for collecting RDS logs in a file named `postgres-logs-collection-config.yaml`. Make sure to update the log group name under the `named` section.
+Save the following config for collecting RDS logs in a file named `postgres-logs-collection-config.yaml`. Make sure to update the log group name(s) under the `named` section of `awscloudwatch` receiver in the config.
 
 ```yaml
 receivers:
@@ -16,7 +16,7 @@ receivers:
           /aws/rds/:
 
 processors:
-  attributes/add_source:
+  attributes/add_source_postgres:
     actions:
       - key: source
         value: "rds_postgres"
@@ -25,51 +25,10 @@ processors:
     send_batch_size: 10000
     send_batch_max_size: 11000
     timeout: 10s
-  logstransform/parse_rds_postgres_logs:
-      operators:
-          - id: 8641732b-6e58-4673-aeeb-d656f70a67e5
-            if: body != nil && body matches "^(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} UTC)::@:\\[\\d+\\]:(?P<log_level>[A-Z]+):\\s*(?P<message>.*)$$"
-            on_error: send
-            output: a3343030-5ad7-4859-82aa-aa59a9cf0e79
-            parse_from: body
-            parse_to: attributes
-            regex: ^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC)::@:\[\d+\]:(?P<log_level>[A-Z]+):\s*(?P<message>.*)$$
-            type: regex_parser
-          - id: a3343030-5ad7-4859-82aa-aa59a9cf0e79
-            if: attributes?.log_level != nil && ( type(attributes.log_level) == "string" || ( type(attributes.log_level) in ["int", "float"] && attributes.log_level == float(int(attributes.log_level)) ) )
-            mapping:
-              debug:
-                  - DEBUG1
-                  - DEBUG2
-                  - DEBUG3
-                  - DEBUG4
-                  - DEBUG5
-              error:
-                  - ERROR
-              fatal:
-                  - FATAL
-                  - PANIC
-              info:
-                  - INFO
-                  - LOG
-                  - NOTICE
-                  - DETAIL
-              trace:
-                  - TRACE
-              warn:
-                  - WARNING
-            output: fd93f35e-9cbd-4ab8-b1ed-ff90c53b7d9a
-            overwrite_text: true
-            parse_from: attributes.log_level
-            type: severity_parser
-          - field: attributes.log_level
-            id: fd93f35e-9cbd-4ab8-b1ed-ff90c53b7d9a
-            if: attributes?.log_level != nil
-            type: remove
 
 exporters:
   # export to SigNoz cloud
-  otlp/postgres-logs:
+  otlp/postgres_logs:
     endpoint: "${env:OTLP_DESTINATION_ENDPOINT}"
     tls:
       insecure: false
@@ -87,8 +46,8 @@ service:
   pipelines:
     logs/postgres:
       receivers: [awscloudwatch/rds_postgres_logs]
-      processors: [attributes/add_source, logstransform/parse_rds_postgres_logs, batch]
-      exporters: [otlp/postgres-logs]
+      processors: [attributes/add_source_postgres, batch]
+      exporters: [otlp/postgres_logs]
 ```
 
 #### Set Environment Variables
