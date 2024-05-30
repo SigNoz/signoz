@@ -98,3 +98,45 @@
 		margin-bottom: 12px;
 	}
 }
+.lightMode {
+	.collapseContainer {
+		background-color: var(--bg-vanilla-100);
+
+		.ant-collapse-header-text {
+			color: var(--bg-slate-100);
+		}
+
+		.duration-inputs {
+			.min-max-input {
+				.ant-input-group-addon {
+					color: var(--bg-slate-100);
+				}
+
+				.ant-input {
+					color: var(--bg-slate-100);
+				}
+			}
+		}
+	}
+
+	.divider {
+		background-color: var(--bg-vanilla-100);
+		border-color: var(--bg-vanilla-200);
+	}
+
+	.filter-header {
+		.filter-title {
+			.ant-typography {
+				color: var(--bg-slate-100);
+			}
+		}
+
+		.arrow-icon {
+			background-color: var(--bg-vanilla-100);
+		}
+	}
+
+	.section-card {
+		background-color: var(--bg-vanilla-100);
+	}
+}

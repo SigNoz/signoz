@@ -11,7 +11,10 @@ import {
 	useEffect,
 	useState,
 } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
@@ -28,6 +31,23 @@ export function Filter(props: FilterProps): JSX.Element {
 		Record<AllTraceFilterKeys, { values: string[]; keys: BaseAutocompleteData }>
 	>();
 
+	const requiredItem = {
+		items: [
+			{
+				id: uuid().slice(0, 8),
+				key: {
+					key: 'serviceName',
+					dataType: DataTypes.String,
+					type: 'tag',
+					isColumn: true,
+					isJSON: false,
+					id: 'serviceName--string--tag--true',
+				},
+				op: 'IN',
+				value: ['driver', 'frontend'],
+			},
+		],
+	};
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
 	const preparePostData = (): TagFilterItem[] => {
@@ -72,6 +92,12 @@ export function Filter(props: FilterProps): JSX.Element {
 		return items as TagFilterItem[];
 	};
 
+	console.log(
+		selectedFilters,
+		Object.keys(selectedFilters || {}),
+		preparePostData(),
+	);
+
 	const handleRun = useCallback((): void => {
 		const preparedQuery: Query = {
 			...currentQuery,
@@ -87,7 +113,7 @@ export function Filter(props: FilterProps): JSX.Element {
 			},
 		};
 		redirectWithQueryBuilderData(preparedQuery);
-	}, [currentQuery, redirectWithQueryBuilderData]);
+	}, [currentQuery, redirectWithQueryBuilderData, requiredItem.items]);
 
 	useEffect(() => {
 		handleRun();
