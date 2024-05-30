@@ -1,6 +1,7 @@
 import { Input, Slider } from 'antd';
 import { SliderRangeProps } from 'antd/es/slider';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
+import { isUndefined } from 'lodash-es';
 import {
 	ChangeEventHandler,
 	Dispatch,
@@ -36,18 +37,11 @@ export function DurationSection(props: DurationProps): JSX.Element {
 
 	const getDuration = useMemo(() => {
 		const selectedDuration = selectedFilters?.durationNano;
-		console.log(selectedDuration, selectedFilters?.durationNano);
 
 		if (selectedDuration) {
-			if (selectedDuration.values.length === 1) {
-				return {
-					maxDuration: selectedDuration.values?.[0],
-					minDuration: '',
-				};
-			}
 			return {
-				maxDuration: selectedDuration.values?.[1],
-				minDuration: selectedDuration.values?.[0],
+				maxDuration: selectedDuration.values?.[1] || '',
+				minDuration: selectedDuration.values?.[0] || '',
 			};
 		}
 
@@ -61,15 +55,13 @@ export function DurationSection(props: DurationProps): JSX.Element {
 	const [preMin, setPreMin] = useState<string>('');
 
 	useEffect(() => {
-		if (getDuration.maxDuration) {
+		if (!isUndefined(getDuration.maxDuration)) {
 			setPreMax(getDuration.maxDuration);
 		}
-		if (getDuration.minDuration) {
+		if (!isUndefined(getDuration.minDuration)) {
 			setPreMin(getDuration.minDuration);
 		}
 	}, [getDuration]);
-
-	console.log(getDuration, preMax, preMin);
 
 	const updateDurationFilter = (min: string, max: string): void => {
 		setSelectedFilters((prevFilters) => {
@@ -80,7 +72,7 @@ export function DurationSection(props: DurationProps): JSX.Element {
 
 			return { ...prevFilters, [type]: [] } as any;
 		});
-		addFilter('durationNano', min, setSelectedFilters, durationKey);
+		addFilter('durationNano', min || '0', setSelectedFilters, durationKey);
 		addFilter('durationNano', max, setSelectedFilters, durationKey);
 	};
 

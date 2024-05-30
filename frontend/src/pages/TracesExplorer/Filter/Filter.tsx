@@ -5,7 +5,7 @@ import { ArrowLeftOutlined, FilterOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isEqual } from 'lodash-es';
+import { isEqual, isUndefined } from 'lodash-es';
 import {
 	Dispatch,
 	SetStateAction,
@@ -65,11 +65,13 @@ export function Filter(props: FilterProps): JSX.Element {
 		}, {} as FilterType);
 
 		const durationFinValue = [];
-		if (durationValue.min) {
+		if (!isUndefined(durationValue.min)) {
 			durationFinValue.push(getMs(String(durationValue.min)));
+		} else if (durationValue.max) {
+			durationFinValue.push(getMs('0'));
 		}
 
-		if (durationValue.max) {
+		if (!isUndefined(durationValue.max)) {
 			durationFinValue.push(getMs(String(durationValue.max)));
 		}
 
