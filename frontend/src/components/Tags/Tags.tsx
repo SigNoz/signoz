@@ -90,7 +90,6 @@ function Tags({ tags, setTags }: AddTagsProps): JSX.Element {
 						onChangeHandler={(event): void =>
 							onChangeHandler(event.target.value, setInputValue)
 						}
-						// onBlurHandler={handleInputConfirm}
 						onPressEnterHandler={handleInputConfirm}
 					/>
 

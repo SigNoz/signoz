@@ -6,6 +6,7 @@ import {
 	Button,
 	Col,
 	Collapse,
+	DatePicker,
 	Form,
 	Input,
 	Modal,
@@ -27,7 +28,17 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs from 'dayjs';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check, Copy, PenLine, Plus, Search, Trash2, X } from 'lucide-react';
+import {
+	CalendarClock,
+	Check,
+	Copy,
+	Minus,
+	PenLine,
+	Plus,
+	Search,
+	Trash2,
+	X,
+} from 'lucide-react';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
@@ -37,6 +48,19 @@ import { AppState } from 'store/reducers';
 import { IngestionKeyProps } from 'types/api/ingestionKeys/types';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
+import IngestionKeyDetails from './IngestionKeyDetails';
+
+import cx from 'classnames';
+import {
+	EXPIRATION_WITHIN_SEVEN_DAYS,
+	getDateDifference,
+	isExpiredToken,
+} from 'container/APIKeys/APIKeys';
+
+export const disabledDate = (current) => {
+	// Disable all dates before today
+	return current && current < dayjs().endOf('day');
+};
 
 export const showErrorNotification = (
 	notifications: NotificationInstance,
@@ -52,7 +76,7 @@ type ExpiryOption = {
 	label: string;
 };
 
-const API_KEY_EXPIRY_OPTIONS: ExpiryOption[] = [
+export const API_KEY_EXPIRY_OPTIONS: ExpiryOption[] = [
 	{ value: '1', label: '1 day' },
 	{ value: '7', label: '1 week' },
 	{ value: '30', label: '1 month' },
@@ -66,12 +90,10 @@ function IngestionSettings(): JSX.Element {
 	const { notifications } = useNotifications();
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-	const [showNewAPIKeyDetails, setShowNewAPIKeyDetails] = useState(false);
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
 	const [updatedTags, setUpdatedTags] = useState<string[]>([]);
-
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [openEditMode, setOpenEditMode] = useState(false);
 	const [activeAPIKey, setActiveAPIKey] = useState<IngestionKeyProps | null>();
 
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -100,12 +122,11 @@ function IngestionSettings(): JSX.Element {
 	const hideEditViewModal = (): void => {
 		handleFormReset();
 		setActiveAPIKey(null);
-		setIsEditModalOpen(false);
+		setOpenEditMode(false);
 	};
 
 	const hideAddViewModal = (): void => {
 		handleFormReset();
-		setShowNewAPIKeyDetails(false);
 		setActiveAPIKey(null);
 		setIsAddModalOpen(false);
 	};
@@ -113,14 +134,8 @@ function IngestionSettings(): JSX.Element {
 	const showEditModal = (apiKey: IngestionKeyProps): void => {
 		handleFormReset();
 		setActiveAPIKey(apiKey);
-
-		editForm.setFieldsValue({
-			name: apiKey.name,
-		});
-
 		setUpdatedTags(apiKey.tags || []);
-
-		setIsEditModalOpen(true);
+		setOpenEditMode(true);
 	};
 
 	const showAddModal = (): void => {
@@ -176,9 +191,9 @@ function IngestionSettings(): JSX.Element {
 		isLoading: isLoadingCreateAPIKey,
 	} = useMutation(createIngestionKeyApi, {
 		onSuccess: (data) => {
-			setShowNewAPIKeyDetails(true);
 			setActiveAPIKey(data.payload);
-
+			setUpdatedTags([]);
+			hideAddViewModal();
 			refetchAPIKeys();
 		},
 		onError: (error) => {
@@ -191,7 +206,7 @@ function IngestionSettings(): JSX.Element {
 		{
 			onSuccess: () => {
 				refetchAPIKeys();
-				setIsEditModalOpen(false);
+				setOpenEditMode(true);
 			},
 			onError: (error) => {
 				showErrorNotification(notifications, error as AxiosError);
@@ -247,14 +262,10 @@ function IngestionSettings(): JSX.Element {
 					const requestPayload = {
 						name: values.name,
 						tags: updatedTags,
+						expires_at: dayjs(values.expires_at).endOf('day').toISOString(),
 					};
 
-					// if(values.expries_at !== 0) {
-					// 	requestPayload.expires_at =
-					// }
-
 					createIngestionKey(requestPayload);
-					setUpdatedTags([]);
 				}
 			})
 			.catch((errorInfo) => {
@@ -280,6 +291,10 @@ function IngestionSettings(): JSX.Element {
 		hideAddViewModal();
 	};
 
+	const handleIngestionKeyDataUpdate = (data) => {
+		console.log('data', data);
+	};
+
 	const columns: TableProps<IngestionKeyProps>['columns'] = [
 		{
 			title: 'Ingestion Key',
@@ -288,18 +303,19 @@ function IngestionSettings(): JSX.Element {
 			render: (APIKey: IngestionKeyProps): JSX.Element => {
 				const createdOn = getFormattedTime(APIKey.created_at);
 
-				// const expiresIn =
-				// 	APIKey.expires_at === 0
-				// 		? Number.POSITIVE_INFINITY
-				// 		: getDateDifference(APIKey?.created_at, APIKey?.expires_at);
+				const formattedDateAndTime =
+					APIKey && APIKey?.expires_at && getFormattedTime(APIKey?.expires_at);
 
-				// const isExpired = isExpiredToken(APIKey.expires_at);
+				const expiresIn = getDateDifference(
+					dayjs(APIKey?.created_at).date(),
+					dayjs(APIKey?.expires_at).date(),
+				);
 
-				const expiresOn = APIKey.expires_at
-					? getFormattedTime(APIKey.expires_at)
-					: 'No Expiry';
+				const expiresOn = getFormattedTime(dayjs(APIKey.expires_at).toString());
 
 				const updatedOn = getFormattedTime(APIKey?.updated_at);
+
+				const isExpired = isExpiredToken(dayjs(APIKey.expires_at).date());
 
 				const items: CollapseProps['items'] = [
 					{
@@ -368,11 +384,18 @@ function IngestionSettings(): JSX.Element {
 									</Row>
 								)}
 
-								{APIKey.expires_at && (
+								{APIKey.tags && Array.isArray(APIKey.tags) && APIKey.tags.length > 0 && (
 									<Row>
-										<Col span={6}> Expires on </Col>
+										<Col span={6}> Tags </Col>
 										<Col span={12}>
-											<Typography.Text>{expiresOn}</Typography.Text>
+											<div className="ingestion-key-tags-container">
+												<div className="ingestion-key-tags">
+													{APIKey.tags.map((tag, index) => (
+														// eslint-disable-next-line react/no-array-index-key
+														<Tag key={`${tag}-${index}`}> {tag} </Tag>
+													))}
+												</div>
+											</div>
 										</Col>
 									</Row>
 								)}
@@ -386,18 +409,10 @@ function IngestionSettings(): JSX.Element {
 						<Collapse items={items} />
 
 						<div className="ingestion-key-details">
-							<div className="ingestion-key-tags-container">
-								<TagsFilled size={14} />
-
-								<div className="ingestion-key-tags">
-									{APIKey.tags &&
-										Array.isArray(APIKey.tags) &&
-										APIKey.tags.length > 0 &&
-										APIKey.tags.map((tag, index) => (
-											// eslint-disable-next-line react/no-array-index-key
-											<Tag key={`${tag}-${index}`}> {tag} </Tag>
-										))}
-								</div>
+							<div className="ingestion-key-last-used-at">
+								<CalendarClock size={14} />
+								Expires on <Minus size={12} />
+								<Typography.Text>{formattedDateAndTime}</Typography.Text>
 							</div>
 						</div>
 					</div>
@@ -483,68 +498,17 @@ function IngestionSettings(): JSX.Element {
 				</Typography.Text>
 			</Modal>
 
-			{/* Edit Key Modal */}
-			<Modal
-				className="ingestion-key-modal"
-				title="Edit token"
-				open={isEditModalOpen}
-				key="edit-ingestion-key-modal"
-				afterClose={handleModalClose}
-				// closable
-				onCancel={hideEditViewModal}
-				destroyOnClose
-				footer={[
-					<Button
-						key="cancel"
-						onClick={hideEditViewModal}
-						className="periscope-btn cancel-btn"
-						icon={<X size={16} />}
-					>
-						Cancel
-					</Button>,
-					<Button
-						className="periscope-btn primary"
-						key="submit"
-						type="primary"
-						loading={isLoadingUpdateAPIKey}
-						icon={<Check size={14} />}
-						onClick={onUpdateApiKey}
-					>
-						Update Ingestion Key
-					</Button>,
-				]}
-			>
-				<Form
-					name="edit-ingestion-key-form"
-					key={activeAPIKey?.id}
-					form={editForm}
-					layout="vertical"
-					autoComplete="off"
-					initialValues={{
-						name: activeAPIKey?.name,
-					}}
-				>
-					<Form.Item
-						name="name"
-						label="Name"
-						rules={[{ required: true }, { type: 'string', min: 6 }]}
-					>
-						<Input placeholder="Enter Ingestion Key name" disabled />
-					</Form.Item>
-
-					<Form.Item name="tags" label="Tags">
-						<Tags tags={updatedTags} setTags={setUpdatedTags} />
-					</Form.Item>
-
-					<Form.Item name="expires_at" label="Expiration">
-						<Select
-							className="expiration-selector"
-							placeholder="Expiration"
-							options={API_KEY_EXPIRY_OPTIONS}
-						/>
-					</Form.Item>
-				</Form>
-			</Modal>
+			{activeAPIKey && openEditMode && (
+				<IngestionKeyDetails
+					onClose={() => hideEditViewModal()}
+					openDrawer={openEditMode}
+					data={activeAPIKey}
+					updatedTags={updatedTags}
+					onUpdatedTags={(tags) => setUpdatedTags(tags)}
+					handleCopyKey={handleCopyKey}
+					onUpdateIngestionKeyDetails={handleIngestionKeyDataUpdate}
+				/>
+			)}
 
 			{/* Create New Key Modal */}
 			<Modal
@@ -555,123 +519,73 @@ function IngestionSettings(): JSX.Element {
 				closable
 				onCancel={hideAddViewModal}
 				destroyOnClose
-				footer={
-					showNewAPIKeyDetails
-						? [
-								<Button
-									key="copy-key-close"
-									className="periscope-btn primary"
-									data-testid="copy-key-close-btn"
-									type="primary"
-									onClick={handleCopyClose}
-									icon={<Check size={12} />}
-								>
-									Copy Ingestion key and close
-								</Button>,
-						  ]
-						: [
-								<Button
-									key="cancel"
-									onClick={hideAddViewModal}
-									className="periscope-btn cancel-btn"
-									icon={<X size={16} />}
-								>
-									Cancel
-								</Button>,
-								<Button
-									className="periscope-btn primary"
-									test-id="create-new-key"
-									key="submit"
-									type="primary"
-									icon={<Check size={14} />}
-									loading={isLoadingCreateAPIKey}
-									onClick={onCreateIngestionKey}
-								>
-									Create new Ingestion key
-								</Button>,
-						  ]
-				}
-			>
-				{!showNewAPIKeyDetails && (
-					<Form
-						key="createForm"
-						name="create-ingestion-key-form"
-						form={createForm}
-						initialValues={{
-							role: USER_ROLES.ADMIN,
-							expiration: '1',
-							name: '',
-						}}
-						layout="vertical"
-						autoComplete="off"
+				footer={[
+					<Button
+						key="cancel"
+						onClick={hideAddViewModal}
+						className="periscope-btn cancel-btn"
+						icon={<X size={16} />}
 					>
-						<Form.Item
-							name="name"
-							label="Name"
-							rules={[{ required: true }, { type: 'string', min: 6 }]}
-							validateTrigger="onFinish"
-						>
-							<Input placeholder="Enter Ingestion Key name" autoFocus />
-						</Form.Item>
+						Cancel
+					</Button>,
+					<Button
+						className="periscope-btn primary"
+						test-id="create-new-key"
+						key="submit"
+						type="primary"
+						icon={<Check size={14} />}
+						loading={isLoadingCreateAPIKey}
+						onClick={onCreateIngestionKey}
+					>
+						Create new Ingestion key
+					</Button>,
+				]}
+			>
+				<Form
+					key="createForm"
+					name="create-ingestion-key-form"
+					form={createForm}
+					initialValues={{
+						role: USER_ROLES.ADMIN,
+						expiration: '1',
+						name: '',
+					}}
+					layout="vertical"
+					autoComplete="off"
+				>
+					<Form.Item
+						name="name"
+						label="Name"
+						rules={[
+							{ required: true },
+							{ type: 'string', min: 6 },
+							{
+								pattern: /^[a-zA-Z0-9_-]*$/,
+								message:
+									'Ingestion key name should only contain letters, numbers, underscores, and hyphens.',
+							},
+						]}
+						validateTrigger="onBlur"
+					>
+						<Input placeholder="Enter Ingestion Key name" autoFocus />
+					</Form.Item>
 
-						<Form.Item name="tags" label="Tags">
-							<Tags tags={updatedTags} setTags={setUpdatedTags} />
-						</Form.Item>
+					<Form.Item
+						className="expires-at"
+						name="expires_at"
+						label="Expiration"
+						rules={[{ required: true }]}
+					>
+						<DatePicker
+							popupClassName="ingestion-key-expires-at"
+							disabledDate={disabledDate}
+						/>
+					</Form.Item>
 
-						<Form.Item name="expires_at" label="Expiration">
-							<Select
-								className="expiration-selector"
-								placeholder="Expiration"
-								options={API_KEY_EXPIRY_OPTIONS}
-							/>
-						</Form.Item>
-					</Form>
-				)}
-
-				{showNewAPIKeyDetails && (
-					<div className="ingestion-key-info-container">
-						<Row>
-							<Col span={8}>Ingestion Key</Col>
-							<Col span={16}>
-								<span className="copyable-text">
-									<Typography.Text>
-										{activeAPIKey?.value.substring(0, 2)}****************
-										{activeAPIKey?.value.substring(activeAPIKey.value.length - 2).trim()}
-									</Typography.Text>
-
-									<Copy
-										className="copy-key-btn"
-										size={12}
-										onClick={(): void => {
-											if (activeAPIKey) {
-												handleCopyKey(activeAPIKey.value);
-											}
-										}}
-									/>
-								</span>
-							</Col>
-						</Row>
-
-						<Row>
-							<Col span={8}>Name</Col>
-							<Col span={16}>{activeAPIKey?.name}</Col>
-						</Row>
-
-						{activeAPIKey?.created_at && (
-							<Row>
-								<Col span={8}>Created on</Col>
-								<Col span={16}>{getFormattedTime(activeAPIKey?.created_at)}</Col>
-							</Row>
-						)}
-
-						{activeAPIKey?.expires_at && (
-							<Row>
-								<Col span={8}>Expires on</Col>
-								<Col span={16}>{getFormattedTime(activeAPIKey?.expires_at)}</Col>
-							</Row>
-						)}
-					</div>
-				)}
+					<Form.Item name="tags" label="Tags">
+						<Tags tags={updatedTags} setTags={setUpdatedTags} />
+					</Form.Item>
+				</Form>
 			</Modal>
 		</div>
 	);

@@ -21,7 +21,7 @@ export interface IngestionKeyProps {
 
 export interface CreateIngestionKeyProps {
 	name: string;
-	expires_at?: number;
+	expires_at: string;
 	tags: string[];
 }
 
