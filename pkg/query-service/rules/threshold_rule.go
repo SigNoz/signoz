@@ -16,8 +16,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/converter"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
@@ -66,7 +64,8 @@ type ThresholdRule struct {
 	// to avoid fetching temporality for the same metric multiple times
 	// querying the v4 table on low cardinal temporality column
 	// should be fast but we can still avoid the query if we have the data in memory
-	temporalityMap map[string]map[v3.Temporality]bool
+	temporalityMap  map[string]map[v3.Temporality]bool
+	temporalityLock sync.Mutex
 
 	opts ThresholdRuleOpts
 
@@ -75,6 +74,7 @@ type ThresholdRule struct {
 
 	querier   interfaces.Querier
 	querierV2 interfaces.Querier
+	reader    interfaces.Reader
 }
 
 type ThresholdRuleOpts struct {
@@ -139,6 +139,7 @@ func NewThresholdRule(
 
 	t.querier = querier.NewQuerier(querierOption)
 	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
+	t.reader = reader
 
 	zap.L().Info("creating new ThresholdRule", zap.String("name", t.name), zap.String("id", t.id))
 
@@ -301,34 +302,11 @@ func (r *ThresholdRule) ActiveAlerts() []*Alert {
 	return res
 }
 
-func (r *ThresholdRule) FetchTemporality(ctx context.Context, metricNames []string, ch driver.Conn) (map[string]map[v3.Temporality]bool, error) {
+// populateTemporality add temporality if it doesn't exist already
+func (r *ThresholdRule) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
 
-	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
-
-	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME)
-
-	rows, err := ch.Query(ctx, query, metricNames)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var metricName, temporality string
-		err := rows.Scan(&metricName, &temporality)
-		if err != nil {
-			return nil, err
-		}
-		if _, ok := metricNameToTemporality[metricName]; !ok {
-			metricNameToTemporality[metricName] = make(map[v3.Temporality]bool)
-		}
-		metricNameToTemporality[metricName][v3.Temporality(temporality)] = true
-	}
-	return metricNameToTemporality, nil
-}
-
-// populateTemporality same as addTemporality but for v4 and better
-func (r *ThresholdRule) populateTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3, ch driver.Conn) error {
+	r.temporalityLock.Lock()
+	defer r.temporalityLock.Unlock()
 
 	missingTemporality := make([]string, 0)
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
@@ -356,7 +334,7 @@ func (r *ThresholdRule) populateTemporality(ctx context.Context, qp *v3.QueryRan
 		}
 	}
 
-	nameToTemporality, err := r.FetchTemporality(ctx, missingTemporality, ch)
+	nameToTemporality, err := r.reader.FetchTemporality(ctx, missingTemporality)
 	if err != nil {
 		return err
 	}
@@ -393,7 +371,6 @@ func (r *ThresholdRule) ForEachActiveAlert(f func(*Alert)) {
 }
 
 func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay time.Duration, interval time.Duration, notifyFunc NotifyFunc) {
-	zap.L().Info("sending alerts", zap.String("rule", r.Name()))
 	alerts := []*Alert{}
 	r.ForEachActiveAlert(func(alert *Alert) {
 		if r.opts.SendAlways || alert.needsSending(ts, resendDelay) {
@@ -727,7 +704,7 @@ func (r *ThresholdRule) GetSelectedQuery() string {
 	return ""
 }
 
-func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch clickhouse.Conn) (Vector, error) {
+func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vector, error) {
 	if r.ruleCondition == nil || r.ruleCondition.CompositeQuery == nil {
 		r.SetHealth(HealthBad)
 		r.SetLastError(fmt.Errorf("no rule condition"))
@@ -735,7 +712,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	}
 
 	params := r.prepareQueryRange(ts)
-	err := r.populateTemporality(ctx, params, ch)
+	err := r.populateTemporality(ctx, params)
 	if err != nil {
 		r.SetHealth(HealthBad)
 		zap.L().Error("failed to set temporality", zap.String("rule", r.Name()), zap.Error(err))
@@ -834,7 +811,7 @@ func normalizeLabelName(name string) string {
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
 	valueFormatter := formatter.FromUnit(r.Unit())
-	res, err := r.buildAndRunQuery(ctx, ts, queriers.Ch)
+	res, err := r.buildAndRunQuery(ctx, ts)
 
 	if err != nil {
 		r.SetHealth(HealthBad)
