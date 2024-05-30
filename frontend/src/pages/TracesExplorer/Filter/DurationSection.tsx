@@ -78,14 +78,14 @@ export function DurationSection(props: DurationProps): JSX.Element {
 	const updateDurationFilter = (min: string, max: string): void => {
 		setSelectedFilters((prevFilters) => {
 			const type = 'durationNano';
-			if (!prevFilters || !prevFilters[type].values.length) {
+			if (!prevFilters || !prevFilters[type]?.values.length) {
 				return prevFilters;
 			}
 
 			return { ...prevFilters, [type]: [] } as any;
 		});
-		addFilter('durationNano', min, setSelectedFilters, [durationKey]);
-		addFilter('durationNano', max, setSelectedFilters, [durationKey]);
+		addFilter('durationNano', min, setSelectedFilters, durationKey);
+		addFilter('durationNano', max, setSelectedFilters, durationKey);
 	};
 
 	const onRangeSliderHandler = (number: [string, string]): void => {

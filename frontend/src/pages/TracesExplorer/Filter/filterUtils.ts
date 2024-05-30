@@ -1,5 +1,11 @@
-import { Dispatch, SetStateAction } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataSource } from 'types/common/queryBuilder';
 
 export const AllTraceFilterKeyValue = {
 	durationNano: 'Duration',
@@ -43,20 +49,20 @@ export const addFilter = (
 			| undefined
 		>
 	>,
-	keys?: BaseAutocompleteData[],
+	keys?: BaseAutocompleteData,
 ): void => {
 	setSelectedFilters((prevFilters) => {
 		// If previous filters are undefined, initialize them
 		if (!prevFilters) {
 			return ({
-				[filterType]: { values: [value], keys: keys?.[0] },
+				[filterType]: { values: [value], keys },
 			} as unknown) as FilterType;
 		}
 		// If the filter type doesn't exist, initialize it
 		if (!prevFilters[filterType]?.values.length) {
 			return {
 				...prevFilters,
-				[filterType]: { values: [value], keys: keys?.[0] },
+				[filterType]: { values: [value], keys },
 			};
 		}
 		// If the value already exists, don't add it again
@@ -68,7 +74,7 @@ export const addFilter = (
 			...prevFilters,
 			[filterType]: {
 				values: [...prevFilters[filterType].values, value],
-				keys: keys?.[0],
+				keys,
 			},
 		};
 	});
@@ -87,7 +93,7 @@ export const removeFilter = (
 			| undefined
 		>
 	>,
-	keys?: BaseAutocompleteData[],
+	keys?: BaseAutocompleteData,
 ): void => {
 	setSelectedFilters((prevFilters) => {
 		if (!prevFilters || !prevFilters[filterType].values.length) {
@@ -107,7 +113,155 @@ export const removeFilter = (
 
 		return {
 			...prevFilters,
-			[filterType]: { values: updatedValues, keys: keys?.[0] },
+			[filterType]: { values: updatedValues, keys },
 		};
 	});
 };
+
+export const traceFilterKeys: Record<
+	AllTraceFilterKeys,
+	BaseAutocompleteData
+> = {
+	durationNano: {
+		key: 'durationNano',
+		dataType: DataTypes.Float64,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'durationNano--float64--tag--true',
+	},
+	status: {
+		key: 'status',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'durationNano--float64--tag--true',
+	},
+	serviceName: {
+		key: 'serviceName',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'serviceName--string--tag--true',
+	},
+	name: {
+		key: 'name',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'name--string--tag--true',
+	},
+	rpcMethod: {
+		key: 'rpcMethod',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'rpcMethod--string--tag--true',
+	},
+	responseStatusCode: {
+		key: 'responseStatusCode',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'responseStatusCode--string--tag--true',
+	},
+	httpHost: {
+		key: 'httpHost',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'httpHost--string--tag--true',
+	},
+	httpMethod: {
+		key: 'httpMethod',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'httpMethod--string--tag--true',
+	},
+	httpRoute: {
+		key: 'httpRoute',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'httpRoute--string--tag--true',
+	},
+	httpUrl: {
+		key: 'httpUrl',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'httpUrl--string--tag--true',
+	},
+	traceID: {
+		key: 'traceID',
+		dataType: DataTypes.String,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'traceID--string--tag--true',
+	},
+};
+
+interface AggregateValuesProps {
+	value: AllTraceFilterKeys;
+}
+
+type IuseGetAggregateValue = {
+	keys: BaseAutocompleteData;
+	results: string[];
+	isFetching: boolean;
+};
+
+export function useGetAggregateValues(
+	props: AggregateValuesProps,
+): IuseGetAggregateValue {
+	const { value } = props;
+	const keyData = traceFilterKeys[value];
+	const [isFetching, setFetching] = useState<boolean>(true);
+	const [results, setResults] = useState<string[]>([]);
+
+	const getValues = async (): Promise<void> => {
+		try {
+			setResults([]);
+			const { payload } = await getAttributesValues({
+				aggregateOperator: 'noop',
+				dataSource: DataSource.TRACES,
+				aggregateAttribute: '',
+				attributeKey: value,
+				filterAttributeKeyDataType: keyData ? keyData.dataType : DataTypes.EMPTY,
+				tagType: keyData.type ?? '',
+				searchText: '',
+			});
+
+			if (payload) {
+				const values = Object.values(payload).find((el) => !!el) || [];
+				setResults(values);
+			}
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setFetching(false);
+		}
+	};
+
+	useEffect(() => {
+		getValues();
+	}, []);
+
+	if (!value) {
+		setFetching(false);
+		return { keys: keyData, results, isFetching };
+	}
+
+	return { keys: keyData, results, isFetching };
+}

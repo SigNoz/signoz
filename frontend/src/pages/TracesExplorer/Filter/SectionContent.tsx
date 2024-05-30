@@ -3,8 +3,6 @@ import './Filter.styles.scss';
 import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
-import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
@@ -13,6 +11,7 @@ import {
 	AllTraceFilterKeys,
 	removeFilter,
 	statusFilterOption,
+	useGetAggregateValues,
 } from './filterUtils';
 
 interface SectionBodyProps {
@@ -34,13 +33,9 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 	const [searchFilter, setSearchFilter] = useState<string>('');
 	const [checkedItems, setCheckedItems] = useState<string[]>([]);
 
-	const { currentQuery } = useQueryBuilder();
+	const { isFetching, keys, results } = useGetAggregateValues({ value: type });
 
-	const { results, isFetching, keys } = useFetchKeysAndValues(
-		`${type} =`,
-		currentQuery?.builder?.queryData[0] || null,
-		type,
-	);
+	console.log(isFetching, keys, results);
 
 	const handleShowMore = (): void => {
 		setVisibleItemsCount((prevCount) => prevCount + 10);
