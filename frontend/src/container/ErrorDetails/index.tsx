@@ -124,8 +124,8 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		const errorReport = JSON.parse(errorDetail.exceptionStacktrace || '{}');
 		setSourceCodeLoading(true);
 		axios
-			// .post('http://localhost:9331/sourcemap/searchErrDetail', {
-			.post(`${process.env.SERVER_API_HOST}/sourcemap/searchErrDetail`, {
+			// .post('http://localhost:9331/capi/sourcemap/searchErrDetail', {
+			.post(`${process.env.SERVER_API_HOST}/capi/sourcemap/searchErrDetail`, {
 				fileName: errorReport.fileName,
 				line: errorReport.lineNumber || errorReport.line,
 				column: errorReport.columnNumber || errorReport.column,
@@ -161,7 +161,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			(errorReport.lineNumber || errorReport.line) &&
 			errorReport.fileName &&
 			['Unhandled_Rejection', 'JS_ERROR'].includes(errorDetail.exceptionType) &&
-			/weeecdn|sayweee/.test(errorReport.fileName)
+			/weeecdn|sayweee|local|localhost/.test(errorReport.fileName)
 		);
 	}, [errorDetail.exceptionStacktrace, errorDetail.exceptionType]);
 
