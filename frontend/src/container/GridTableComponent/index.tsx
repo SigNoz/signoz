@@ -20,8 +20,10 @@ function GridTableComponent({
 	query,
 	thresholds,
 	tableProcessedDataRef,
+	sortColumns,
 	...props
 }: GridTableComponentProps): JSX.Element {
+	console.log(sortColumns);
 	const { t } = useTranslation(['valueGraph']);
 	const { columns, dataSource } = useMemo(
 		() =>

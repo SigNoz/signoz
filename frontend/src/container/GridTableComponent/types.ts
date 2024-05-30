@@ -5,12 +5,14 @@ import {
 	ThresholdProps,
 } from 'container/NewWidget/RightContainer/Threshold/types';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { SORT_TYPES } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export type GridTableComponentProps = {
 	query: Query;
 	thresholds?: ThresholdProps[];
 	tableProcessedDataRef?: React.MutableRefObject<RowData[]>;
+	sortColumns?: SORT_TYPES;
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
 

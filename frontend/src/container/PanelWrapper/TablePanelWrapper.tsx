@@ -11,11 +11,14 @@ function TablePanelWrapper({
 	const panelData =
 		queryResponse.data?.payload?.data.newResult.data.result || [];
 	const { thresholds } = widget;
+
+	console.log(widget.sortColumns);
 	return (
 		<GridTableComponent
 			data={panelData}
 			query={widget.query}
 			thresholds={thresholds}
+			sortColumns={widget.sortColumns}
 			tableProcessedDataRef={tableProcessedDataRef}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}

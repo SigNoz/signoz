@@ -30,7 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { Dashboard, SORT_TYPES, Widgets } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -150,6 +150,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedWidget?.selectedTracesFields || null,
 	);
 
+	const [sortColumns, setSortColumns] = useState<SORT_TYPES>(
+		selectedWidget?.sortColumns || SORT_TYPES.DEFAULT,
+	);
+
 	const [softMax, setSoftMax] = useState<number | null>(
 		selectedWidget?.softMax === null || selectedWidget?.softMax === undefined
 			? null
@@ -174,6 +178,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				softMin,
 				softMax,
 				fillSpans: isFillSpans,
+				sortColumns,
 				selectedLogFields,
 				selectedTracesFields,
 			};
@@ -188,6 +193,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		selectedTracesFields,
 		softMax,
 		softMin,
+		sortColumns,
 		stacked,
 		thresholds,
 		title,
@@ -285,6 +291,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								query: currentQuery,
 								thresholds: selectedWidget?.thresholds,
 								softMin: selectedWidget?.softMin || 0,
+								sortColumns: selectedWidget?.sortColumns || SORT_TYPES.DEFAULT,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
 								selectedLogFields: selectedWidget?.selectedLogFields || [],
@@ -305,6 +312,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								panelTypes: graphType,
 								query: currentQuery,
 								thresholds: selectedWidget?.thresholds,
+								sortColumns: selectedWidget?.sortColumns || SORT_TYPES.DEFAULT,
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
@@ -483,6 +491,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						setStacked={setStacked}
 						opacity={opacity}
 						yAxisUnit={yAxisUnit}
+						sortColumns={sortColumns}
+						setSortColumns={setSortColumns}
 						setOpacity={setOpacity}
 						selectedNullZeroValue={selectedNullZeroValue}
 						setSelectedNullZeroValue={setSelectedNullZeroValue}

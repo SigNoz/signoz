@@ -7,6 +7,7 @@ import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import GraphTypes, {
 	ItemsProps,
+	SortItems,
 } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -18,7 +19,7 @@ import {
 	useEffect,
 	useState,
 } from 'react';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { SORT_TYPES, Widgets } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -26,6 +27,7 @@ import {
 	panelTypeVsFillSpan,
 	panelTypeVsPanelTimePreferences,
 	panelTypeVsSoftMinMax,
+	panelTypeVsSortColumnsPreferences,
 	panelTypeVsThreshold,
 	panelTypeVsYAxisUnit,
 } from './constants';
@@ -51,6 +53,8 @@ function RightContainer({
 	thresholds,
 	setThresholds,
 	selectedWidget,
+	sortColumns,
+	setSortColumns,
 	isFillSpans,
 	setIsFillSpans,
 	softMax,
@@ -77,6 +81,8 @@ function RightContainer({
 	const allowCreateAlerts = panelTypeVsCreateAlert[selectedGraph];
 	const allowPanelTimePreference =
 		panelTypeVsPanelTimePreferences[selectedGraph];
+
+	const allowSortingColumns = panelTypeVsSortColumnsPreferences[selectedGraph];
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -179,6 +185,26 @@ function RightContainer({
 					</>
 				)}
 
+				{allowSortingColumns && (
+					<>
+						<Typography.Text className="sort-panel-text">
+							Sort panel columns
+						</Typography.Text>
+						<Select
+							onChange={setSortColumns}
+							value={sortColumns}
+							style={{ width: '100%' }}
+							className="sort-option-select"
+						>
+							{SortItems.map((item) => (
+								<Option key={item.name} value={item.name}>
+									<Typography.Text>{item.display}</Typography.Text>
+								</Option>
+							))}
+						</Select>
+					</>
+				)}
+
 				{allowYAxisUnit && (
 					<YAxisUnitSelector
 						defaultValue={yAxisUnit}
@@ -253,6 +279,8 @@ interface RightContainerProps {
 	setGraphHandler: (type: PANEL_TYPES) => void;
 	thresholds: ThresholdProps[];
 	setThresholds: Dispatch<SetStateAction<ThresholdProps[]>>;
+	sortColumns: SORT_TYPES;
+	setSortColumns: Dispatch<SetStateAction<SORT_TYPES>>;
 	selectedWidget?: Widgets;
 	isFillSpans: boolean;
 	setIsFillSpans: Dispatch<SetStateAction<boolean>>;

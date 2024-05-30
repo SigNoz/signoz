@@ -8,6 +8,7 @@ import {
 	SigmaSquare,
 	Table,
 } from 'lucide-react';
+import { SORT_TYPES } from 'types/api/dashboard/getAll';
 
 const Items: ItemsProps[] = [
 	{
@@ -41,6 +42,26 @@ const Items: ItemsProps[] = [
 		display: 'Pie',
 	},
 ];
+
+export const SortItems: SortItemsProps[] = [
+	{
+		name: SORT_TYPES.DEFAULT,
+		display: 'Default',
+	},
+	{
+		name: SORT_TYPES.ASC,
+		display: 'Ascending',
+	},
+	{
+		name: SORT_TYPES.DESC,
+		display: 'Descending',
+	},
+];
+
+export interface SortItemsProps {
+	name: SORT_TYPES;
+	display: string;
+}
 
 export interface ItemsProps {
 	name: PANEL_TYPES;

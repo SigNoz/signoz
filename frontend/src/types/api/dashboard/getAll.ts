@@ -83,6 +83,13 @@ export interface WidgetRow {
 	description: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum SORT_TYPES {
+	DEFAULT = 'default',
+	ASC = 'ascending',
+	DESC = 'descending',
+}
+
 export interface IBaseWidget {
 	isStacked: boolean;
 	id: string;
@@ -100,6 +107,7 @@ export interface IBaseWidget {
 	fillSpans?: boolean;
 	selectedLogFields: IField[] | null;
 	selectedTracesFields: BaseAutocompleteData[] | null;
+	sortColumns?: SORT_TYPES;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;
