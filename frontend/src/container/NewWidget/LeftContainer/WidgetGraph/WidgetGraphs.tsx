@@ -91,9 +91,9 @@ function WidgetGraph({
 		<div
 			ref={graphRef}
 			style={{
-				height: '80%',
-				width: '80%',
-				margin: 'auto auto',
+				height: '100%',
+				width: '100%',
+				marginTop: '16px',
 				borderRadius: '3px',
 				border: isDarkMode
 					? '1px solid var(--bg-slate-500)'

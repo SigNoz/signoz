@@ -503,14 +503,12 @@ function DashboardsList(): JSX.Element {
 							</div>
 						</div>
 						<div className="dashboard-details">
-							{visibleColumns.createdAt && (
-								<div className="dashboard-created-at">
-									<CalendarClock size={14} />
-									<Typography.Text>{formattedDateAndTime}</Typography.Text>
-								</div>
-							)}
+							<div className="dashboard-created-at">
+								<CalendarClock size={14} />
+								<Typography.Text>{formattedDateAndTime}</Typography.Text>
+							</div>
 
-							{dashboard.createdBy && visibleColumns.createdBy && (
+							{dashboard.createdBy && (
 								<div className="created-by">
 									<div className="dashboard-tag">
 										<Typography.Text className="tag-text">
@@ -900,7 +898,7 @@ function DashboardsList(): JSX.Element {
 							<div className="right">
 								<Switch
 									size="small"
-									checked={visibleColumns.createdAt}
+									checked
 									disabled
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
@@ -921,7 +919,7 @@ function DashboardsList(): JSX.Element {
 								<Switch
 									size="small"
 									disabled
-									checked={visibleColumns.createdBy}
+									checked
 									onChange={(check): void =>
 										setVisibleColumns((prev) => ({
 											...prev,
