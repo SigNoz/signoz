@@ -4,12 +4,16 @@ import './Filter.styles.scss';
 import { ArrowLeftOutlined, FilterOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useState,
+} from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { v4 as uuid } from 'uuid';
 
 import { AllTraceFilterKeys, AllTraceFilterOptions } from './filterUtils';
 import { Section } from './Section';
@@ -24,24 +28,49 @@ export function Filter(props: FilterProps): JSX.Element {
 		Record<AllTraceFilterKeys, { values: string[]; keys: BaseAutocompleteData }>
 	>();
 
-	const requiredItem = {
-		items: [
-			{
-				id: 'd4d99370',
-				key: {
-					key: 'serviceName',
-					dataType: DataTypes.String,
-					type: 'tag',
-					isColumn: true,
-					isJSON: false,
-					id: 'serviceName--string--tag--true',
-				},
-				op: 'IN',
-				value: ['driver', 'frontend'],
-			},
-		],
-	};
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+
+	const preparePostData = (): TagFilterItem[] => {
+		console.log(selectedFilters);
+
+		if (!selectedFilters) {
+			return [];
+		}
+		const items = Object.keys(selectedFilters)?.flatMap((attribute) => {
+			const { keys, values } = selectedFilters[attribute as AllTraceFilterKeys];
+			if ((attribute as AllTraceFilterKeys) === 'durationNano') {
+				if (!values.length) {
+					return [];
+				}
+				const minValue = values[0];
+				const maxValue = values[1];
+
+				const minItems: TagFilterItem = {
+					id: uuid().slice(0, 8),
+					op: '>=',
+					key: keys,
+					value: parseInt(minValue, 10) * 1000000,
+				};
+
+				const maxItems: TagFilterItem = {
+					id: uuid().slice(0, 8),
+					op: '<=',
+					key: keys,
+					value: parseInt(maxValue, 10) * 1000000,
+				};
+
+				return maxValue ? [minItems, maxItems] : [minItems];
+			}
+			return {
+				id: uuid().slice(0, 8),
+				key: keys,
+				op: 'IN',
+				value: values,
+			};
+		});
+
+		return items as TagFilterItem[];
+	};
 
 	const handleRun = useCallback((): void => {
 		const preparedQuery: Query = {
@@ -52,14 +81,18 @@ export function Filter(props: FilterProps): JSX.Element {
 					...item,
 					filters: {
 						...item.filters,
-						items: [...item.filters.items, ...requiredItem.items],
+						items: preparePostData(),
 					},
 				})),
 			},
 		};
 		redirectWithQueryBuilderData(preparedQuery);
-	}, [currentQuery, redirectWithQueryBuilderData, requiredItem.items]);
-	console.log(selectedFilters);
+	}, [currentQuery, redirectWithQueryBuilderData]);
+
+	useEffect(() => {
+		handleRun();
+	}, [selectedFilters]);
+
 	return (
 		<>
 			<Flex justify="space-between" align="center" className="filter-header">
@@ -68,7 +101,7 @@ export function Filter(props: FilterProps): JSX.Element {
 					<Typography.Text>Filters</Typography.Text>
 				</div>
 				<Button onClick={(): void => setOpen(false)} className="arrow-icon">
-					<ArrowLeftOutlined onClick={handleRun} />
+					<ArrowLeftOutlined />
 				</Button>
 			</Flex>
 			<>

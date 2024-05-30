@@ -35,8 +35,6 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 
 	const { isFetching, keys, results } = useGetAggregateValues({ value: type });
 
-	console.log(isFetching, keys, results);
-
 	const handleShowMore = (): void => {
 		setVisibleItemsCount((prevCount) => prevCount + 10);
 	};
