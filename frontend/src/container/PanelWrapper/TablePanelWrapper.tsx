@@ -12,7 +12,6 @@ function TablePanelWrapper({
 		queryResponse.data?.payload?.data.newResult.data.result || [];
 	const { thresholds } = widget;
 
-	console.log(widget.sortColumns);
 	return (
 		<GridTableComponent
 			data={panelData}

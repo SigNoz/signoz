@@ -4,6 +4,7 @@ import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
 import {
 	createTableColumnsFromQuery,
+	getSortedColumnData,
 	RowData,
 } from 'lib/query/createTableColumnsFromQuery';
 import { get, set } from 'lodash-es';
@@ -25,14 +26,17 @@ function GridTableComponent({
 }: GridTableComponentProps): JSX.Element {
 	console.log(sortColumns);
 	const { t } = useTranslation(['valueGraph']);
-	const { columns, dataSource } = useMemo(
+	const { columns: unsortedColumns, dataSource } = useMemo(
 		() =>
 			createTableColumnsFromQuery({
 				query,
 				queryTableData: data,
 			}),
-		[data, query],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[data, query, sortColumns],
 	);
+
+	const columns = getSortedColumnData({ columns: unsortedColumns, sortColumns });
 
 	const createDataInCorrectFormat = useCallback(
 		(dataSource: RowData[]): RowData[] =>

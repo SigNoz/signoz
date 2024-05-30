@@ -9,6 +9,7 @@ import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { isEqual, isObject } from 'lodash-es';
 import { ReactNode } from 'react';
+import { SORT_TYPES } from 'types/api/dashboard/getAll';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -503,3 +504,24 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 
 	return { columns, dataSource, rowsLength };
 };
+
+export function getSortedColumnData({
+	columns,
+	sortColumns,
+}: {
+	columns: ColumnsType<RowData>;
+	sortColumns?: SORT_TYPES;
+}): ColumnsType<RowData> {
+	if (!sortColumns || sortColumns === SORT_TYPES.DEFAULT) {
+		return columns;
+	}
+	if (sortColumns === SORT_TYPES.ASC) {
+		return columns.sort((a, b) =>
+			((a.title as string) || '').localeCompare((b.title as string) || ''),
+		);
+	}
+
+	return columns.sort((a, b) =>
+		((b.title as string) || '').localeCompare((a.title as string) || ''),
+	);
+}
