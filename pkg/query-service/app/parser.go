@@ -17,11 +17,12 @@ import (
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
 
+	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
@@ -250,28 +251,46 @@ func parseGetServicesRequest(r *http.Request) (*model.GetServicesParams, error) 
 	return postData, nil
 }
 
-func ParseSearchTracesParams(r *http.Request) (string, string, int, int, error) {
+func ParseSearchTracesParams(r *http.Request) (*model.SearchTracesParams, error) {
 	vars := mux.Vars(r)
-	traceId := vars["traceId"]
-	spanId := r.URL.Query().Get("spanId")
-	levelUp := r.URL.Query().Get("levelUp")
-	levelDown := r.URL.Query().Get("levelDown")
-	if levelUp == "" || levelUp == "null" {
-		levelUp = "0"
+	params := &model.SearchTracesParams{}
+	params.TraceID = vars["traceId"]
+	params.SpanID = r.URL.Query().Get("spanId")
+
+	levelUpStr := r.URL.Query().Get("levelUp")
+	levelDownStr := r.URL.Query().Get("levelDown")
+	SpanRenderLimitStr := r.URL.Query().Get("spanRenderLimit")
+	if levelUpStr == "" || levelUpStr == "null" {
+		levelUpStr = "0"
 	}
-	if levelDown == "" || levelDown == "null" {
-		levelDown = "0"
+	if levelDownStr == "" || levelDownStr == "null" {
+		levelDownStr = "0"
+	}
+	if SpanRenderLimitStr == "" || SpanRenderLimitStr == "null" {
+		SpanRenderLimitStr = constants.SpanRenderLimitStr
 	}
 
-	levelUpInt, err := strconv.Atoi(levelUp)
+	levelUpInt, err := strconv.Atoi(levelUpStr)
 	if err != nil {
-		return "", "", 0, 0, err
+		return nil, err
 	}
-	levelDownInt, err := strconv.Atoi(levelDown)
+	levelDownInt, err := strconv.Atoi(levelDownStr)
 	if err != nil {
-		return "", "", 0, 0, err
+		return nil, err
 	}
-	return traceId, spanId, levelUpInt, levelDownInt, nil
+	SpanRenderLimitInt, err := strconv.Atoi(SpanRenderLimitStr)
+	if err != nil {
+		return nil, err
+	}
+	MaxSpansInTraceInt, err := strconv.Atoi(constants.MaxSpansInTraceStr)
+	if err != nil {
+		return nil, err
+	}
+	params.LevelUp = levelUpInt
+	params.LevelDown = levelDownInt
+	params.SpansRenderLimit = SpanRenderLimitInt
+	params.MaxSpansInTrace = MaxSpansInTraceInt
+	return params, nil
 }
 
 func DoesExistInSlice(item string, list []string) bool {
@@ -327,16 +346,16 @@ func parseFilteredSpansRequest(r *http.Request, aH *APIHandler) (*model.GetFilte
 	}
 
 	if len(postData.Order) != 0 {
-		if postData.Order != constants.Ascending && postData.Order != constants.Descending {
+		if postData.Order != baseconstants.Ascending && postData.Order != baseconstants.Descending {
 			return nil, errors.New("order param is not in correct format")
 		}
-		if postData.OrderParam != constants.Duration && postData.OrderParam != constants.Timestamp {
+		if postData.OrderParam != baseconstants.Duration && postData.OrderParam != baseconstants.Timestamp {
 			return nil, errors.New("order param is not in correct format")
 		}
-		if postData.OrderParam == constants.Duration && !aH.CheckFeature(constants.DurationSort) {
-			return nil, model.ErrFeatureUnavailable{Key: constants.DurationSort}
-		} else if postData.OrderParam == constants.Timestamp && !aH.CheckFeature(constants.TimestampSort) {
-			return nil, model.ErrFeatureUnavailable{Key: constants.TimestampSort}
+		if postData.OrderParam == baseconstants.Duration && !aH.CheckFeature(baseconstants.DurationSort) {
+			return nil, model.ErrFeatureUnavailable{Key: baseconstants.DurationSort}
+		} else if postData.OrderParam == baseconstants.Timestamp && !aH.CheckFeature(baseconstants.TimestampSort) {
+			return nil, model.ErrFeatureUnavailable{Key: baseconstants.TimestampSort}
 		}
 	}
 	tags, err := extractTagKeys(postData.Tags)
@@ -676,7 +695,7 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 	}
 
 	// Validate the type parameter
-	if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL && typeTTL != constants.LogsTTL {
+	if typeTTL != baseconstants.TraceTTL && typeTTL != baseconstants.MetricsTTL && typeTTL != baseconstants.LogsTTL {
 		return nil, fmt.Errorf("type param should be metrics|traces|logs, got %v", typeTTL)
 	}
 
@@ -715,7 +734,7 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 		return nil, fmt.Errorf("type param cannot be empty from the query")
 	} else {
 		// Validate the type parameter
-		if typeTTL != constants.TraceTTL && typeTTL != constants.MetricsTTL && typeTTL != constants.LogsTTL {
+		if typeTTL != baseconstants.TraceTTL && typeTTL != baseconstants.MetricsTTL && typeTTL != baseconstants.LogsTTL {
 			return nil, fmt.Errorf("type param should be metrics|traces|logs, got %v", typeTTL)
 		}
 	}

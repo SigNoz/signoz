@@ -212,8 +212,9 @@ type ServiceOverviewItem struct {
 }
 
 type SearchSpansResult struct {
-	Columns []string        `json:"columns"`
-	Events  [][]interface{} `json:"events"`
+	Columns   []string        `json:"columns"`
+	Events    [][]interface{} `json:"events"`
+	IsSubTree bool            `json:"isSubTree"`
 }
 
 type GetFilterSpansResponseItem struct {

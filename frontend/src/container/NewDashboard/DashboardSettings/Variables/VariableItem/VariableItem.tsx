@@ -2,20 +2,28 @@
 import './VariableItem.styles.scss';
 
 import { orange } from '@ant-design/colors';
-import { Button, Divider, Input, Select, Switch, Tag, Typography } from 'antd';
+import { Button, Collapse, Input, Select, Switch, Tag, Typography } from 'antd';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
+import cx from 'classnames';
 import Editor from 'components/Editor';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { map } from 'lodash-es';
+import {
+	ArrowLeft,
+	Check,
+	ClipboardType,
+	DatabaseZap,
+	LayoutList,
+	X,
+} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import {
 	IDashboardVariable,
 	TSortVariableValuesType,
 	TVariableQueryType,
-	VariableQueryTypeArr,
 	VariableSortTypeArr,
 } from 'types/api/dashboard/getAll';
 import { v4 as generateUUID } from 'uuid';
@@ -79,7 +87,6 @@ function VariableItem({
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
 
 	useEffect(() => {
-		setPreviewValues([]);
 		if (queryType === 'CUSTOM') {
 			setPreviewValues(
 				sortValues(
@@ -87,6 +94,9 @@ function VariableItem({
 					variableSortType,
 				) as never,
 			);
+		}
+		if (queryType === 'QUERY') {
+			setPreviewValues((prev) => sortValues(prev, variableSortType) as never);
 		}
 	}, [
 		queryType,
@@ -121,13 +131,16 @@ function VariableItem({
 
 	// Fetches the preview values for the SQL variable query
 	const handleQueryResult = (response: any): void => {
-		if (response?.payload?.variableValues)
+		if (response?.payload?.variableValues) {
 			setPreviewValues(
 				sortValues(
 					response.payload?.variableValues || [],
 					variableSortType,
 				) as never,
 			);
+		} else {
+			setPreviewValues([]);
+		}
 	};
 
 	const { isFetching: previewLoading, refetch: runQuery } = useQuery(
@@ -169,219 +182,288 @@ function VariableItem({
 	}, []);
 
 	return (
-		<div className="variable-item-container">
-			<div className="variable-item-content">
-				<VariableItemRow>
-					<LabelContainer>
-						<Typography>Name</Typography>
-					</LabelContainer>
-					<div>
-						<Input
-							placeholder="Unique name of the variable"
-							style={{ width: 400 }}
-							value={variableName}
-							onChange={(e): void => {
-								setVariableName(e.target.value);
-								setErrorName(
-									!validateName(e.target.value) && e.target.value !== variableData.name,
-								);
-							}}
-						/>
-						<div>
-							<Typography.Text type="warning">
-								{errorName ? 'Variable name already exists' : ''}
-							</Typography.Text>
-						</div>
-					</div>
-				</VariableItemRow>
-				<VariableItemRow>
-					<LabelContainer>
-						<Typography>Description</Typography>
-					</LabelContainer>
-
-					<Input.TextArea
-						value={variableDescription}
-						placeholder="Write description of the variable"
-						style={{ width: 400 }}
-						onChange={(e): void => setVariableDescription(e.target.value)}
-					/>
-				</VariableItemRow>
-				<VariableItemRow>
-					<LabelContainer>
-						<Typography>Type</Typography>
-					</LabelContainer>
-
-					<Select
-						defaultActiveFirstOption
-						style={{ width: 400 }}
-						onChange={(e: TVariableQueryType): void => {
-							setQueryType(e);
-						}}
-						value={queryType}
+		<>
+			<div className="variable-item-container">
+				<div className="all-variables">
+					<Button
+						type="text"
+						className="all-variables-btn"
+						icon={<ArrowLeft size={14} />}
+						onClick={onCancel}
 					>
-						<Option value={VariableQueryTypeArr[0]}>Query</Option>
-						<Option value={VariableQueryTypeArr[1]}>Textbox</Option>
-						<Option value={VariableQueryTypeArr[2]}>Custom</Option>
-					</Select>
-				</VariableItemRow>
-				<Typography.Title
-					level={5}
-					style={{ marginTop: '1rem', marginBottom: '1rem' }}
-				>
-					Options
-				</Typography.Title>
-				{queryType === 'QUERY' && (
-					<div className="query-container">
+						All variables
+					</Button>
+				</div>
+				<div className="variable-item-content">
+					<VariableItemRow className="variable-name-section">
 						<LabelContainer>
-							<Typography>Query</Typography>
+							<Typography className="typography-variables">Name</Typography>
 						</LabelContainer>
-
-						<div style={{ flex: 1, position: 'relative' }}>
-							<Editor
-								language="sql"
-								value={variableQueryValue}
-								onChange={(e): void => setVariableQueryValue(e)}
-								height="240px"
-								options={{
-									fontSize: 13,
-									wordWrap: 'on',
-									lineNumbers: 'off',
-									glyphMargin: false,
-									folding: false,
-									lineDecorationsWidth: 0,
-									lineNumbersMinChars: 0,
-									minimap: {
-										enabled: false,
-									},
+						<div>
+							<Input
+								placeholder="Unique name of the variable"
+								value={variableName}
+								className="name-input"
+								onChange={(e): void => {
+									setVariableName(e.target.value);
+									setErrorName(
+										!validateName(e.target.value) && e.target.value !== variableData.name,
+									);
 								}}
 							/>
+							<div>
+								<Typography.Text type="warning">
+									{errorName ? 'Variable name already exists' : ''}
+								</Typography.Text>
+							</div>
+						</div>
+					</VariableItemRow>
+					<VariableItemRow className="variable-description-section">
+						<LabelContainer>
+							<Typography className="typography-variables">Description</Typography>
+						</LabelContainer>
+
+						<Input.TextArea
+							value={variableDescription}
+							placeholder="Enter a description for the variable"
+							className="description-input"
+							rows={3}
+							onChange={(e): void => setVariableDescription(e.target.value)}
+						/>
+					</VariableItemRow>
+					<VariableItemRow className="variable-type-section">
+						<LabelContainer>
+							<Typography className="typography-variables">Variable Type</Typography>
+						</LabelContainer>
+
+						<div className="variable-type-btn-group">
 							<Button
-								type="primary"
-								size="small"
-								onClick={handleTestRunQuery}
-								style={{
-									position: 'absolute',
-									bottom: 0,
+								type="text"
+								icon={<DatabaseZap size={14} />}
+								className={cx(
+									// eslint-disable-next-line sonarjs/no-duplicate-string
+									'variable-type-btn',
+									queryType === 'QUERY' ? 'selected' : '',
+								)}
+								onClick={(): void => {
+									setQueryType('QUERY');
+									setPreviewValues([]);
 								}}
-								loading={previewLoading}
 							>
-								Test Run Query
+								Query
+							</Button>
+							<Button
+								type="text"
+								icon={<ClipboardType size={14} />}
+								className={cx(
+									'variable-type-btn',
+									queryType === 'TEXTBOX' ? 'selected' : '',
+								)}
+								onClick={(): void => {
+									setQueryType('TEXTBOX');
+									setPreviewValues([]);
+								}}
+							>
+								Textbox
+							</Button>
+							<Button
+								type="text"
+								icon={<LayoutList size={14} />}
+								className={cx(
+									'variable-type-btn',
+									queryType === 'CUSTOM' ? 'selected' : '',
+								)}
+								onClick={(): void => {
+									setQueryType('CUSTOM');
+									setPreviewValues([]);
+								}}
+							>
+								Custom
 							</Button>
 						</div>
-					</div>
-				)}
-				{queryType === 'CUSTOM' && (
-					<VariableItemRow>
-						<LabelContainer>
-							<Typography>Values separated by comma</Typography>
-						</LabelContainer>
-						<Input.TextArea
-							value={variableCustomValue}
-							placeholder="1, 10, mykey, mykey:myvalue"
-							style={{ width: 400 }}
-							onChange={(e): void => {
-								setVariableCustomValue(e.target.value);
-								setPreviewValues(
-									sortValues(
-										commaValuesParser(e.target.value),
-										variableSortType,
-									) as never,
-								);
-							}}
-						/>
 					</VariableItemRow>
-				)}
-				{queryType === 'TEXTBOX' && (
-					<VariableItemRow>
-						<LabelContainer>
-							<Typography>Default Value</Typography>
-						</LabelContainer>
-						<Input
-							value={variableTextboxValue}
-							onChange={(e): void => {
-								setVariableTextboxValue(e.target.value);
-							}}
-							placeholder="Default value if any"
-							style={{ width: 400 }}
-						/>
-					</VariableItemRow>
-				)}
-				{(queryType === 'QUERY' || queryType === 'CUSTOM') && (
-					<>
-						<VariableItemRow>
+					{queryType === 'QUERY' && (
+						<div className="query-container">
 							<LabelContainer>
-								<Typography>Preview of Values</Typography>
-							</LabelContainer>
-							<div style={{ flex: 1 }}>
-								{errorPreview ? (
-									<Typography style={{ color: orange[5] }}>{errorPreview}</Typography>
-								) : (
-									map(previewValues, (value, idx) => (
-										<Tag key={`${value}${idx}`}>{value.toString()}</Tag>
-									))
-								)}
-							</div>
-						</VariableItemRow>
-						<VariableItemRow>
-							<LabelContainer>
-								<Typography>Sort</Typography>
+								<Typography>Query</Typography>
 							</LabelContainer>
 
-							<Select
-								defaultActiveFirstOption
-								style={{ width: 400 }}
-								defaultValue={VariableSortTypeArr[0]}
-								value={variableSortType}
-								onChange={(value: TSortVariableValuesType): void =>
-									setVariableSortType(value)
-								}
-							>
-								<Option value={VariableSortTypeArr[0]}>Disabled</Option>
-								<Option value={VariableSortTypeArr[1]}>Ascending</Option>
-								<Option value={VariableSortTypeArr[2]}>Descending</Option>
-							</Select>
-						</VariableItemRow>
-						<VariableItemRow>
-							<LabelContainer>
-								<Typography>Enable multiple values to be checked</Typography>
-							</LabelContainer>
-							<Switch
-								checked={variableMultiSelect}
-								onChange={(e): void => {
-									setVariableMultiSelect(e);
-									if (!e) {
-										setVariableShowALLOption(false);
-									}
-								}}
+							<div style={{ flex: 1, position: 'relative' }}>
+								<Editor
+									language="sql"
+									value={variableQueryValue}
+									onChange={(e): void => setVariableQueryValue(e)}
+									height="240px"
+									options={{
+										fontSize: 13,
+										wordWrap: 'on',
+										lineNumbers: 'off',
+										glyphMargin: false,
+										folding: false,
+										lineDecorationsWidth: 0,
+										lineNumbersMinChars: 0,
+										minimap: {
+											enabled: false,
+										},
+									}}
+								/>
+								<Button
+									type="primary"
+									size="small"
+									onClick={handleTestRunQuery}
+									style={{
+										position: 'absolute',
+										bottom: 0,
+									}}
+									loading={previewLoading}
+								>
+									Test Run Query
+								</Button>
+							</div>
+						</div>
+					)}
+					{queryType === 'CUSTOM' && (
+						<VariableItemRow className="variable-custom-section">
+							<Collapse
+								collapsible="header"
+								rootClassName="custom-collapse"
+								defaultActiveKey={['1']}
+								items={[
+									{
+										key: '1',
+										label: 'Options',
+										children: (
+											<Input.TextArea
+												value={variableCustomValue}
+												placeholder="Enter options separated by commas."
+												rootClassName="comma-input"
+												onChange={(e): void => {
+													setVariableCustomValue(e.target.value);
+													setPreviewValues(
+														sortValues(
+															commaValuesParser(e.target.value),
+															variableSortType,
+														) as never,
+													);
+												}}
+											/>
+										),
+									},
+								]}
 							/>
 						</VariableItemRow>
-						{variableMultiSelect && (
-							<VariableItemRow>
+					)}
+					{queryType === 'TEXTBOX' && (
+						<VariableItemRow className="variable-textbox-section">
+							<LabelContainer>
+								<Typography className="typography-variables">Default Value</Typography>
+							</LabelContainer>
+							<Input
+								value={variableTextboxValue}
+								className="default-input"
+								onChange={(e): void => {
+									setVariableTextboxValue(e.target.value);
+								}}
+								placeholder="Enter a default value (if any)..."
+								style={{ width: 400 }}
+							/>
+						</VariableItemRow>
+					)}
+					{(queryType === 'QUERY' || queryType === 'CUSTOM') && (
+						<>
+							<VariableItemRow className="variables-preview-section">
+								<LabelContainer style={{ width: '100%' }}>
+									<Typography className="typography-variables">
+										Preview of Values
+									</Typography>
+								</LabelContainer>
+								<div className="preview-values">
+									{errorPreview ? (
+										<Typography style={{ color: orange[5] }}>{errorPreview}</Typography>
+									) : (
+										map(previewValues, (value, idx) => (
+											<Tag key={`${value}${idx}`}>{value.toString()}</Tag>
+										))
+									)}
+								</div>
+							</VariableItemRow>
+							<VariableItemRow className="sort-values-section">
 								<LabelContainer>
-									<Typography>Include an option for ALL values</Typography>
+									<Typography className="typography-variables">Sort Values</Typography>
+									<Typography className="typography-sort">
+										Sort the query output values
+									</Typography>
+								</LabelContainer>
+
+								<Select
+									defaultActiveFirstOption
+									defaultValue={VariableSortTypeArr[0]}
+									value={variableSortType}
+									onChange={(value: TSortVariableValuesType): void =>
+										setVariableSortType(value)
+									}
+									className="sort-input"
+								>
+									<Option value={VariableSortTypeArr[0]}>Disabled</Option>
+									<Option value={VariableSortTypeArr[1]}>Ascending</Option>
+									<Option value={VariableSortTypeArr[2]}>Descending</Option>
+								</Select>
+							</VariableItemRow>
+							<VariableItemRow className="multiple-values-section">
+								<LabelContainer>
+									<Typography className="typography-variables">
+										Enable multiple values to be checked
+									</Typography>
 								</LabelContainer>
 								<Switch
-									checked={variableShowALLOption}
-									onChange={(e): void => setVariableShowALLOption(e)}
+									checked={variableMultiSelect}
+									onChange={(e): void => {
+										setVariableMultiSelect(e);
+										if (!e) {
+											setVariableShowALLOption(false);
+										}
+									}}
 								/>
 							</VariableItemRow>
-						)}
-					</>
-				)}
+							{variableMultiSelect && (
+								<VariableItemRow className="all-option-section">
+									<LabelContainer>
+										<Typography className="typography-variables">
+											Include an option for ALL values
+										</Typography>
+									</LabelContainer>
+									<Switch
+										checked={variableShowALLOption}
+										onChange={(e): void => setVariableShowALLOption(e)}
+									/>
+								</VariableItemRow>
+							)}
+						</>
+					)}
+				</div>
 			</div>
-
 			<div className="variable-item-footer">
-				<Divider />
 				<VariableItemRow>
-					<Button type="primary" onClick={handleSave} disabled={errorName}>
-						Save
+					<Button
+						type="default"
+						onClick={onCancel}
+						icon={<X size={14} />}
+						className="footer-btn-discard"
+					>
+						Discard
 					</Button>
-					<Button type="default" onClick={onCancel}>
-						Cancel
+					<Button
+						type="primary"
+						onClick={handleSave}
+						disabled={errorName}
+						icon={<Check size={14} />}
+						className="footer-btn-save"
+					>
+						Save Variable
 					</Button>
 				</VariableItemRow>
 			</div>
-		</div>
+		</>
 	);
 }
 

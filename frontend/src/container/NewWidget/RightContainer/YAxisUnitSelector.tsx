@@ -1,4 +1,4 @@
-import { AutoComplete, Col, Input, Typography } from 'antd';
+import { AutoComplete, Input, Typography } from 'antd';
 import { find } from 'lodash-es';
 import { Dispatch, SetStateAction } from 'react';
 
@@ -29,10 +29,11 @@ function YAxisUnitSelector({
 		value: options.name,
 	}));
 	return (
-		<Col style={{ marginBottom: 12, marginTop: 12 }}>
-			<Typography.Text>{fieldLabel}</Typography.Text>
+		<div className="y-axis-unit-selector">
+			<Typography.Text className="heading">{fieldLabel}</Typography.Text>
 			<AutoComplete
 				style={{ width: '100%' }}
+				rootClassName="y-axis-root-popover"
 				options={options}
 				defaultValue={findCategoryById(defaultValue)?.name}
 				onSelect={onSelectHandler}
@@ -45,9 +46,9 @@ function YAxisUnitSelector({
 					return false;
 				}}
 			>
-				<Input size="large" placeholder="Unit" allowClear />
+				<Input placeholder="Unit" allowClear rootClassName="input" />
 			</AutoComplete>
-		</Col>
+		</div>
 	);
 }
 

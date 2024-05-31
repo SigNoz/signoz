@@ -267,6 +267,21 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const isTracesView = (): boolean =>
 		routeKey === 'TRACES_EXPLORER' || routeKey === 'TRACES_SAVE_VIEWS';
 
+	const isDashboardListView = (): boolean => routeKey === 'ALL_DASHBOARD';
+	const isDashboardView = (): boolean => {
+		/**
+		 * need to match using regex here as the getRoute function will not work for
+		 * routes with id
+		 */
+		const regex = /^\/dashboard\/[a-zA-Z0-9_-]+$/;
+		return regex.test(pathname);
+	};
+
+	const isDashboardWidgetView = (): boolean => {
+		const regex = /^\/dashboard\/[a-zA-Z0-9_-]+\/new$/;
+		return regex.test(pathname);
+	};
+
 	useEffect(() => {
 		if (isDarkMode) {
 			document.body.classList.remove('lightMode');
@@ -331,7 +346,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 						<LayoutContent>
 							<ChildrenContainer
 								style={{
-									margin: isLogsView() || isTracesView() ? 0 : ' 0 1rem',
+									margin:
+										isLogsView() ||
+										isTracesView() ||
+										isDashboardView() ||
+										isDashboardWidgetView() ||
+										isDashboardListView()
+											? 0
+											: '0 1rem',
 								}}
 							>
 								{isToDisplayLayout && !renderFullScreen && <TopNav />}

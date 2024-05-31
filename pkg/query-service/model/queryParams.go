@@ -420,6 +420,15 @@ type GetFilteredSpanAggregatesParams struct {
 	End                *time.Time
 }
 
+type SearchTracesParams struct {
+	TraceID          string `json:"traceId"`
+	LevelUp          int    `json:"levelUp"`
+	LevelDown        int    `json:"levelDown"`
+	SpanID           string `json:"spanId"`
+	SpansRenderLimit int    `json:"spansRenderLimit"`
+	MaxSpansInTrace  int    `json:"maxSpansInTrace"`
+}
+
 type SpanFilterParams struct {
 	TraceID            []string `json:"traceID"`
 	Status             []string `json:"status"`

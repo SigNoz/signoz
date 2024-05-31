@@ -215,10 +215,12 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 			}
 
 			series.forEach((seria) => {
-				Object.keys(seria.labels).forEach((label) => {
-					if (label === currentQuery?.queryName) return;
+				seria.labelsArray?.forEach((lab) => {
+					Object.keys(lab).forEach((label) => {
+						if (label === currentQuery?.queryName) return;
 
-					addLabels(currentStagedQuery, label, dynamicColumns);
+						addLabels(currentStagedQuery, label, dynamicColumns);
+					});
 				});
 			});
 		}

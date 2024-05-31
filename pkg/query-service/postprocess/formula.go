@@ -108,7 +108,9 @@ func joinAndCalculate(
 	for _, timestamp := range timestamps {
 		values := make(map[string]interface{})
 		for queryName, series := range seriesMap {
-			values[queryName] = series[timestamp]
+			if _, ok := series[timestamp]; ok {
+				values[queryName] = series[timestamp]
+			}
 		}
 
 		// If the value is not present in the values map, set it to 0

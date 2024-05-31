@@ -1,9 +1,12 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './ThresholdSelector.styles.scss';
 
-import { Button, Typography } from 'antd';
+import { Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { Events } from 'constants/events';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { Antenna, Plus } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -52,7 +55,6 @@ function ThresholdSelector({
 
 	const addThresholdHandler = (): void => {
 		setThresholds([
-			...thresholds,
 			{
 				index: uuid(),
 				isEditEnabled: true,
@@ -66,6 +68,7 @@ function ThresholdSelector({
 				selectedGraph,
 				thresholdTableOptions: tableOptions[0]?.value || '',
 			},
+			...thresholds,
 		]);
 	};
 
@@ -79,7 +82,13 @@ function ThresholdSelector({
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<div className="threshold-selector-container">
-				<Typography.Text>Thresholds</Typography.Text>
+				<div className="threshold-select" onClick={addThresholdHandler}>
+					<div className="left-section">
+						<Antenna size={14} className="icon" />
+						<Typography.Text className="text">Thresholds</Typography.Text>
+					</div>
+					<Plus size={14} onClick={addThresholdHandler} className="icon" />
+				</div>
 				{thresholds.map((threshold, idx) => (
 					<Threshold
 						key={threshold.index}
@@ -100,9 +109,6 @@ function ThresholdSelector({
 						thresholdTableOptions={threshold.thresholdTableOptions}
 					/>
 				))}
-				<Button className="threshold-selector-button" onClick={addThresholdHandler}>
-					+ Add threshold
-				</Button>
 			</div>
 		</DndProvider>
 	);
