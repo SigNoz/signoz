@@ -270,26 +270,6 @@ func EvalFuncs() map[string]govaluate.ExpressionFunction {
 	GoValuateFuncs["now"] = func(args ...interface{}) (interface{}, error) {
 		return float64(time.Now().Unix()), nil
 	}
-	// Returns the given timestamp in seconds. The argument can be a string in RFC3339 format or an int in seconds since Unix epoch.
-	GoValuateFuncs["toUnixTimestamp"] = func(args ...interface{}) (interface{}, error) {
-		if len(args) != 1 {
-			return nil, fmt.Errorf("toUnixTimestamp requires exactly one argument")
-		}
-		var t time.Time
-		var err error
-		switch toUnixTsArg := args[0].(type) {
-		case int:
-			t = time.Unix(int64(toUnixTsArg), 0)
-		case string:
-			t, err = time.Parse(time.RFC3339, toUnixTsArg)
-			if err != nil {
-				return nil, err
-			}
-		default:
-			return nil, fmt.Errorf("toUnixTimestamp requires either a string in RFC3339 format or an int in seconds since Unix epoch")
-		}
-		return float64(t.Unix()), nil
-	}
 
 	return GoValuateFuncs
 }
