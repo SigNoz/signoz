@@ -1,24 +1,11 @@
-import { Tabs as AntDTabs } from 'antd';
+import { Tabs as AntDTabs, TabsProps } from 'antd';
 
 export interface TabProps {
-    label: string | React.ReactElement
-    key: string
-    children: React.ReactElement
+	label: string | React.ReactElement;
+	key: string;
+	children: React.ReactElement;
 }
 
-
-export interface TabsProps {
-    items: TabProps[]
-}
-
-export default function Tabs({
-    items
-}: TabsProps) {
-    return (
-        <AntDTabs
-            defaultActiveKey="1"
-            centered
-            items={items}
-        />
-    )
+export default function Tabs(props: TabsProps) {
+	return <AntDTabs {...props} />;
 }

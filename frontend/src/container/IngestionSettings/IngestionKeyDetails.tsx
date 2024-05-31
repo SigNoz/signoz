@@ -44,7 +44,7 @@ import Tags from 'components/Tags/Tags';
 import { InfoCircleFilled } from '@ant-design/icons';
 import Tabs from 'periscope/components/Tabs';
 import { TabProps } from 'periscope/components/Tabs/Tabs';
-import Limits from './Limits/Limits';
+import Limits, { LimitProps } from './Limits/Limits';
 import dayjs from 'dayjs';
 
 interface IngestionKeyDetailsProps {
@@ -69,7 +69,12 @@ function IngestionKeyDetails({
 	const [, copyToClipboard] = useCopyToClipboard();
 	const [editForm] = Form.useForm();
 	const isDarkMode = useIsDarkMode();
-	const [first, setfirst] = useState();
+
+	const [signalLimits, setSignalLimits] = useState({
+		logs: {},
+		metrics: {},
+		traces: {},
+	});
 
 	const drawerCloseHandler = (
 		e: React.MouseEvent | React.KeyboardEvent,
@@ -79,7 +84,21 @@ function IngestionKeyDetails({
 		}
 	};
 
-	const handleLimitUpdate = (id, values) => {};
+	const handleLimitUpdate = (
+		id: string,
+		values: {
+			[key: string]: LimitProps;
+		},
+	) => {
+		setSignalLimits((prevState) => ({
+			...prevState,
+			[id]: values,
+		}));
+	};
+
+	const handleTabChange = (activeKey: string) => {
+		console.log('tab change', activeKey);
+	};
 
 	const tabItems: TabProps[] = [
 		{
@@ -115,7 +134,11 @@ function IngestionKeyDetails({
 		editForm
 			.validateFields()
 			.then((values) => {
-				onUpdateIngestionKeyDetails({ ...values, tags: updatedTags });
+				onUpdateIngestionKeyDetails({
+					...values,
+					tags: updatedTags,
+					limits: signalLimits,
+				});
 			})
 			.catch((errorInfo) => {
 				console.error('error info', errorInfo);
@@ -219,7 +242,12 @@ function IngestionKeyDetails({
 				</div>
 
 				<div className="ingestion-key-limits">
-					<Tabs items={tabItems} />
+					<Tabs
+						items={tabItems}
+						onChange={handleTabChange}
+						defaultActiveKey="logs"
+						centered
+					/>
 				</div>
 			</div>
 		</Drawer>

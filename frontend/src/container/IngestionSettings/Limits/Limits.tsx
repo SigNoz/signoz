@@ -38,33 +38,35 @@ const LIMITS = [
 	},
 ];
 
+export interface LimitProps {
+	size: number;
+	count: number;
+	sizeUnit: string;
+	enabled: boolean;
+}
+
 interface LimitsProps {
 	id: string;
-	onLimitUpdate: (id: string, data: Record<string, unknown>) => void;
+	onLimitUpdate: (
+		id: string,
+		data: {
+			[key: string]: LimitProps;
+		},
+	) => void;
 }
 
 export default function Limits({ id, onLimitUpdate }: LimitsProps) {
 	const [limitValues, setLimitValues] = useState<{
-		[key: string]: {
-			size: number;
-			count: number;
-			sizeUnit: string;
-			enabled: boolean;
-		};
+		[key: string]: LimitProps;
 	}>(() => {
 		const initialLimits: {
-			[key: string]: {
-				size: number;
-				count: number;
-				sizeUnit: string;
-				enabled: boolean;
-			};
+			[key: string]: LimitProps;
 		} = {};
 
 		LIMITS.forEach((limit) => {
 			initialLimits[limit.id] = {
-				size: 10,
-				count: 10,
+				size: 0,
+				count: 0,
 				sizeUnit: 'GB',
 				enabled: false,
 			};
@@ -139,7 +141,13 @@ export default function Limits({ id, onLimitUpdate }: LimitsProps) {
 											<Option value="KB">Kilobytes</Option>
 										</Select>
 									}
-									onBlur={(e) => handleBlur(limit.id, 'size', parseInt(e.target.value))}
+									onBlur={(e) =>
+										handleBlur(
+											limit.id,
+											'size',
+											e.target.value ? parseInt(e.target.value) : 0,
+										)
+									}
 								/>
 							</div>
 
@@ -149,7 +157,13 @@ export default function Limits({ id, onLimitUpdate }: LimitsProps) {
 									addonAfter="Spans"
 									disabled={!limitValues[limit.id].enabled}
 									min={1}
-									onBlur={(e) => handleBlur(limit.id, 'count', parseInt(e.target.value))}
+									onBlur={(e) =>
+										handleBlur(
+											limit.id,
+											'count',
+											e.target.value ? parseInt(e.target.value) : 0,
+										)
+									}
 								/>
 							</div>
 						</div>
