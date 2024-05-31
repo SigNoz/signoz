@@ -83,6 +83,22 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("error in creating notification_channles table: %s", err.Error())
 	}
 
+	tableSchema := `CREATE TABLE IF NOT EXISTS planned_maintenance (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		description TEXT,
+		alert_ids TEXT,
+		schedule TEXT NOT NULL,
+		created_at datetime NOT NULL,
+		created_by TEXT NOT NULL,
+		updated_at datetime NOT NULL,
+		updated_by TEXT NOT NULL
+	);`
+	_, err = db.Exec(tableSchema)
+	if err != nil {
+		return nil, fmt.Errorf("error in creating planned_maintenance table: %s", err.Error())
+	}
+
 	table_schema = `CREATE TABLE IF NOT EXISTS ttl_status (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		transaction_id TEXT NOT NULL,
