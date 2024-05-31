@@ -375,6 +375,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
 	router.HandleFunc("/api/v1/testRule", am.EditAccess(aH.testRule)).Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/downtime_schedules", am.OpenAccess(aH.listDowntimeSchedules)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.OpenAccess(aH.getDowntimeSchedule)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/downtime_schedules", am.OpenAccess(aH.createDowntimeSchedule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.OpenAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.OpenAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
+
 	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/grafana", am.EditAccess(aH.createDashboardsTransform)).Methods(http.MethodPost)
@@ -533,6 +539,102 @@ func (aH *APIHandler) populateTemporality(ctx context.Context, qp *v3.QueryRange
 		}
 	}
 	return nil
+}
+
+func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Request) {
+	schedules, err := aH.ruleManager.RuleDB().GetAllPlannedMaintenance(r.Context())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	// The schedules are stored as JSON in the database, so we need to filter them here
+	// Since the number of schedules is expected to be small, this should be fine
+
+	if r.URL.Query().Get("active") != "" {
+		activeSchedules := make([]rules.PlannedMaintenance, 0)
+		active, _ := strconv.ParseBool(r.URL.Query().Get("active"))
+		for _, schedule := range schedules {
+			now := time.Now().In(time.FixedZone(schedule.Schedule.Timezone, 0))
+			if schedule.IsActive(now) == active {
+				activeSchedules = append(activeSchedules, schedule)
+			}
+		}
+		schedules = activeSchedules
+	}
+
+	if r.URL.Query().Get("recurring") != "" {
+		recurringSchedules := make([]rules.PlannedMaintenance, 0)
+		recurring, _ := strconv.ParseBool(r.URL.Query().Get("recurring"))
+		for _, schedule := range schedules {
+			if schedule.IsRecurring() == recurring {
+				recurringSchedules = append(recurringSchedules, schedule)
+			}
+		}
+		schedules = recurringSchedules
+	}
+
+	aH.Respond(w, schedules)
+}
+
+func (aH *APIHandler) getDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	schedule, err := aH.ruleManager.RuleDB().GetPlannedMaintenanceByID(r.Context(), id)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, schedule)
+}
+
+func (aH *APIHandler) createDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	var schedule rules.PlannedMaintenance
+	err := json.NewDecoder(r.Body).Decode(&schedule)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := schedule.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	_, err = aH.ruleManager.RuleDB().CreatePlannedMaintenance(r.Context(), schedule)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	var schedule rules.PlannedMaintenance
+	err := json.NewDecoder(r.Body).Decode(&schedule)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	if err := schedule.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	_, err = aH.ruleManager.RuleDB().EditPlannedMaintenance(r.Context(), schedule, id)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	_, err := aH.ruleManager.RuleDB().DeletePlannedMaintenance(r.Context(), id)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, nil)
 }
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
