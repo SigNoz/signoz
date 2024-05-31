@@ -263,6 +263,8 @@ type SearchSpanResponseItem struct {
 	TagMap       map[string]string `json:"tagMap"`
 	Events       []string          `json:"event"`
 	RootName     string            `json:"rootName"`
+	ErrorMessage string            `json:"errorMessage"`
+	SpanKind     string            `json:"spanKind"`
 }
 
 type OtelSpanRef struct {
@@ -299,7 +301,7 @@ func (item *SearchSpanResponseItem) GetValues() []interface{} {
 		keys = append(keys, k)
 		values = append(values, v)
 	}
-	returnArray := []interface{}{item.TimeUnixNano, item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), keys, values, referencesStringArray, item.Events, item.HasError}
+	returnArray := []interface{}{item.TimeUnixNano, item.SpanID, item.TraceID, item.ServiceName, item.Name, strconv.Itoa(int(item.Kind)), strconv.FormatInt(item.DurationNano, 10), keys, values, referencesStringArray, item.Events, item.HasError, item.ErrorMessage, item.SpanKind}
 
 	return returnArray
 }
