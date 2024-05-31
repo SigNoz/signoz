@@ -118,8 +118,10 @@ func easyjson6ff3ac1dDecodeGoSignozIoSignozPkgQueryServiceModel(in *jlexer.Lexer
 			}
 		case "rootName":
 			out.RootName = string(in.String())
-		case "errorMessage":
-			out.ErrorMessage = string(in.String())
+		case "statusMessage":
+			out.StatusMessage = string(in.String())
+		case "statusCodeString":
+			out.StatusCodeString = string(in.String())
 		case "spanKind":
 			out.SpanKind = string(in.String())
 		default:
@@ -238,9 +240,14 @@ func easyjson6ff3ac1dEncodeGoSignozIoSignozPkgQueryServiceModel(out *jwriter.Wri
 		out.String(string(in.RootName))
 	}
 	{
-		const prefix string = ",\"errorMessage\":"
+		const prefix string = ",\"statusMessage\":"
 		out.RawString(prefix)
-		out.String(string(in.ErrorMessage))
+		out.String(string(in.StatusMessage))
+	}
+	{
+		const prefix string = ",\"statusCodeString\":"
+		out.RawString(prefix)
+		out.String(string(in.StatusCodeString))
 	}
 	{
 		const prefix string = ",\"spanKind\":"
