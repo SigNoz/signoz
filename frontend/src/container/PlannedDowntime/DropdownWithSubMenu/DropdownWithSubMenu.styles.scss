@@ -1,15 +1,15 @@
 .options {
 	width: 100%;
-}
 
-.option {
-	padding: 8px 10px;
-	cursor: pointer;
-	overflow: auto;
-}
+	.option {
+		padding: 8px 10px;
+		cursor: pointer;
+		overflow: auto;
+	}
 
-.option:hover {
-	background-color: var(--bg-slate-200);
+	.option:hover {
+		background-color: var(--bg-slate-200);
+	}
 }
 
 .submenu-container {
@@ -79,6 +79,15 @@
 .submenu-popover {
 	.ant-popover-inner {
 		padding: 0px;
+	}
+	.option {
+		padding: 8px 10px;
+		cursor: pointer;
+		overflow: auto;
+	}
+
+	.option:hover {
+		background-color: var(--bg-slate-200);
 	}
 }
 
