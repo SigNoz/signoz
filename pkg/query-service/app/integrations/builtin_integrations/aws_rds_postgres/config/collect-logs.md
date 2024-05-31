@@ -1,8 +1,12 @@
 ### Collect RDS Logs
 
+#### Find the list of log group names for RDS instance
+
+Collecting logs from an RDS instance requires specifying the list of log group names. From the AWS CloudWatch console, please find the log group(s) relevant to the integration.
+
 #### Create collector config file
 
-Save the following config for collecting RDS logs in a file named `postgres-logs-collection-config.yaml`. Make sure to update the log group name(s) under the `named` section of `awscloudwatch` receiver in the config.
+Save the following configuration for collecting RDS logs in a file named `postgres-logs-collection-config.yaml`. Make sure to update the log group name(s) under the `named` section of the `awscloudwatch` receiver in the config, and set the `region` with the relevant value.
 
 ```yaml
 receivers:
@@ -41,7 +45,6 @@ exporters:
     tls:
       insecure: true
 
-
 service:
   pipelines:
     logs/postgres:
@@ -66,9 +69,8 @@ export SIGNOZ_INGESTION_KEY="signoz-ingestion-key"
 
 #### Use collector config file
 
-Make the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  
+Make the collector config file available to your OpenTelemetry (otel) collector and use it by adding the following flag to the command for running your collector:
 ```bash
 --config postgres-logs-collection-config.yaml
 ```  
-Note: the collector can use multiple config files, specified by multiple occurrences of the --config flag.
-
+Note: The collector can use multiple config files, specified by multiple occurrences of the --config flag.

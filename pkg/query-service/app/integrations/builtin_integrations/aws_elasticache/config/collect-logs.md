@@ -2,9 +2,13 @@
 
 Use the [log delivery](https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/Log_Delivery.html) instructions to send redis logs to CloudWatch Logs
 
+#### Find the list of log group names for ElastiCache instance
+
+Collecting logs from an ElastiCache instance requires specifying the list of log group names. From the AWS CloudWatch console, find the log group(s) relevant to the integration.
+
 #### Create collector config file
 
-Save the following config for collecting ElastiCache logs in a file named `redis-logs-collection-config.yaml`
+Save the following configuration for collecting ElastiCache logs in a file named `redis-logs-collection-config.yaml` and set the `region` key with the relevant value.
 
 ```yaml
 receivers:
@@ -42,7 +46,6 @@ exporters:
     endpoint: "localhost:4317"
     tls:
       insecure: true
-
 
 service:
   pipelines:

@@ -6,7 +6,7 @@ The log collection of RDS instance requires specifying the list of log group nam
 
 #### Create collector config file
 
-Save the following config for collecting RDS logs in a file named `mysql-logs-collection-config.yaml`
+Save the following config for collecting RDS logs in a file named `mysql-logs-collection-config.yaml` and set the `region` key with relevant value.
 
 ```yaml
 receivers:

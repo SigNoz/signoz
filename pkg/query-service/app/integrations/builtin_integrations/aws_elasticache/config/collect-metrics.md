@@ -14,7 +14,7 @@ curl -sLSO https://github.com/prometheus/cloudwatch_exporter/releases/download/v
 
 2. Configure the Prometheus exporter
 
-Save the following config for collecting AWS ElastiCache metrics in a file named `aws-clasticache-metrics.yaml`. Update the `region` with relevant value.
+Save the following config for collecting AWS ElastiCache metrics in a file named `aws-elasticache-metrics.yaml` and set the `region` with the relevant value.
 
 ```yaml
 ---
@@ -147,7 +147,7 @@ metrics:
 3. Run the following command
 
 ```sh
-java -jar cloudwatch_exporter-0.15.5-jar-with-dependencies.jar 9106 aws-clasticache-metrics.yaml
+java -jar cloudwatch_exporter-0.15.5-jar-with-dependencies.jar 9106 aws-elasticache-metrics.yaml
 ```
 
 #### Set up the OTEL Collector
@@ -213,7 +213,8 @@ Set the following environment variables in your otel-collector environment:
 
 ```bash
 
-# The accessible endpoint where redis server is running
+# The accessible endpoint where redis server is running.
+# The hostname and port of the Redis instance, separated by a colon.
 export REDIS_ENDPOINT="<redis-server-endpoint>"
 
 # The password to use for accessing redis instance

@@ -1,6 +1,6 @@
 ### Collect RDS Metrics
 
-The RDS (for PostgreSQL) metrics collection is a two-step process.
+Collecting RDS (for PostgreSQL) metrics is a two-step process.
 
 #### Set up the Prometheus CloudWatch exporter
 
@@ -14,7 +14,7 @@ curl -sLSO https://github.com/prometheus/cloudwatch_exporter/releases/download/v
 
 2. Configure the Prometheus exporter
 
-Save the following config for collecting AWS RDS metrics in a file named `aws-rds-postgres-metrics.yaml`. Update the `region` with relevant value.
+Save the following config for collecting AWS RDS metrics in a file named `aws-rds-postgres-metrics.yaml` and update the `region` key with relevant value.
 
 ```yaml
 ---
@@ -307,7 +307,7 @@ export SIGNOZ_INGESTION_KEY="signoz-ingestion-key"
 
 #### Use collector config file
 
-Make the collector config file available to your otel collector and use it by adding the following flag to the command for running your collector  
+Make the collector config file available to your OpenTelemetry (OTel) collector and use it by adding the following flag to the command for running your collector:
 ```bash
 --config postgres-metrics-collection-config.yaml
 ```  
