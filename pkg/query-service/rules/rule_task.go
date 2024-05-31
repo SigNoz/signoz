@@ -30,12 +30,14 @@ type RuleTask struct {
 
 	pause  bool
 	notify NotifyFunc
+
+	ruleDB RuleDB
 }
 
 const DefaultFrequency = 1 * time.Minute
 
 // newRuleTask makes a new RuleTask with the given name, options, and rules.
-func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *RuleTask {
+func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, ruleDB RuleDB) *RuleTask {
 
 	if time.Now() == time.Now().Add(frequency) {
 		frequency = DefaultFrequency
@@ -52,6 +54,7 @@ func newRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 		done:       make(chan struct{}),
 		terminated: make(chan struct{}),
 		notify:     notify,
+		ruleDB:     ruleDB,
 	}
 }
 
@@ -294,10 +297,31 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	zap.L().Debug("rule task eval started", zap.String("name", g.name), zap.Time("start time", ts))
 
+	maintenance, err := g.ruleDB.GetAllPlannedMaintenance(ctx)
+
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+	}
+
 	for i, rule := range g.rules {
 		if rule == nil {
 			continue
 		}
+
+		shouldSkip := false
+		for _, m := range maintenance {
+			zap.L().Info("checking if rule should be skipped", zap.String("rule", rule.ID()), zap.Any("maintenance", m))
+			if m.shouldSkip(rule.ID(), ts) {
+				shouldSkip = true
+				break
+			}
+		}
+
+		if shouldSkip {
+			zap.L().Info("rule should be skipped", zap.String("rule", rule.ID()))
+			continue
+		}
+
 		select {
 		case <-g.done:
 			return
