@@ -251,12 +251,14 @@ type timeRange struct {
 
 type builderQuery struct {
 	QueryData     []v3.BuilderQuery `json:"queryData"`
-	QueryFormulas []string          `json:"queryFormulas"`
+	QueryFormulas []v3.BuilderQuery `json:"queryFormulas"`
 }
 
 type urlShareableCompositeQuery struct {
-	QueryType string       `json:"queryType"`
-	Builder   builderQuery `json:"builder"`
+	QueryType  string               `json:"queryType"`
+	Builder    builderQuery         `json:"builder"`
+	PromQL     []v3.PromQuery       `json:"promql"`
+	ClickHouse []v3.ClickHouseQuery `json:"clickhouse_sql"`
 }
 
 type Options struct {

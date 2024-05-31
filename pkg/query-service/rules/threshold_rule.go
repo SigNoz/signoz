@@ -14,6 +14,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/SigNoz/govaluate"
 	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/common"
@@ -504,15 +505,24 @@ func (r *ThresholdRule) fetchFilters(selectedQuery string, lbls labels.Labels) [
 			}
 
 			if !exists {
-				// if the label is not present in the where clause, add it as it is
+				// if filter item doesn't match with any label, add it as it is
 				filterItems = append(filterItems, item)
 			}
 		}
 	}
 
+	groupBy := make(map[string]bool)
+	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder &&
+		r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery] != nil &&
+		r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy != nil {
+		for _, key := range r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery].GroupBy {
+			groupBy[key.Key] = true
+		}
+	}
+
 	// add the labels which are not present in the where clause
 	for _, label := range lbls {
-		if _, ok := added[label.Name]; !ok {
+		if _, ok := added[label.Name]; !ok && groupBy[label.Name] {
 			filterItems = append(filterItems, v3.FilterItem{
 				Key:      v3.AttributeKey{Key: label.Name},
 				Operator: v3.FilterOperatorEqual,
@@ -575,7 +585,7 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 					},
 				},
 			},
-			QueryFormulas: make([]string, 0),
+			QueryFormulas: make([]v3.BuilderQuery, 0),
 		},
 	}
 
@@ -639,7 +649,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 					},
 				},
 			},
-			QueryFormulas: make([]string, 0),
+			QueryFormulas: make([]v3.BuilderQuery, 0),
 		},
 	}
 
@@ -650,6 +660,72 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	urlEncodedOptions := url.QueryEscape(string(optionsData))
 
 	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&options=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, urlEncodedOptions)
+}
+
+func (r *ThresholdRule) getURLShareableCompositeQuery() urlShareableCompositeQuery {
+	var compositeQuery *v3.CompositeQuery
+	// TODO(srikanthccv): benchmark field-by-field copying vs ser/deser
+	jsunQuery, _ := json.Marshal(r.ruleCondition.CompositeQuery)
+	_ = json.Unmarshal(jsunQuery, &compositeQuery)
+	urlData := urlShareableCompositeQuery{
+		QueryType: string(v3.QueryTypeBuilder),
+		Builder: builderQuery{
+			QueryData:     make([]v3.BuilderQuery, 0),
+			QueryFormulas: make([]v3.BuilderQuery, 0),
+		},
+		PromQL:     make([]v3.PromQuery, 0),
+		ClickHouse: make([]v3.ClickHouseQuery, 0),
+	}
+	for _, query := range compositeQuery.BuilderQueries {
+		if query.QueryName == query.Expression {
+			urlData.Builder.QueryData = append(urlData.Builder.QueryData, *query)
+		} else {
+			urlData.Builder.QueryFormulas = append(urlData.Builder.QueryFormulas, *query)
+		}
+	}
+	return urlData
+}
+
+func (r *ThresholdRule) prepareLinkToAlert(ts time.Time, lbls labels.Labels) string {
+	selectedQuery := r.GetSelectedQuery()
+
+	urlData := r.getURLShareableCompositeQuery()
+
+	if selectedQuery < "A" || selectedQuery > "Z" {
+		query := r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery]
+		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, postprocess.EvalFuncs())
+		for _, v := range expression.Vars() {
+			for idx := range urlData.Builder.QueryData {
+				if urlData.Builder.QueryData[idx].QueryName == v {
+					urlData.Builder.QueryData[idx].Filters.Items = r.fetchFilters(v, lbls)
+					break
+				}
+			}
+		}
+	} else {
+		for idx := range urlData.Builder.QueryData {
+			if urlData.Builder.QueryData[idx].QueryName == selectedQuery {
+				urlData.Builder.QueryData[idx].Filters.Items = r.fetchFilters(selectedQuery, lbls)
+				break
+			}
+		}
+	}
+
+	q := r.prepareQueryRange(ts)
+	// Traces list view expects time in nanoseconds
+	tr := timeRange{
+		Start:    q.Start * time.Second.Microseconds(),
+		End:      q.End * time.Second.Microseconds(),
+		PageSize: 100,
+	}
+
+	period, _ := json.Marshal(tr)
+	urlEncodedTimeRange := url.QueryEscape(string(period))
+
+	data, _ := json.Marshal(urlData)
+	compositeQuery := url.QueryEscape(url.QueryEscape(string(data)))
+
+	return fmt.Sprintf("compositeQuery=%s&timeRange=%s&startTime=%d&endTime=%d&panelTypes=graph&ruleId=%s", compositeQuery, urlEncodedTimeRange, tr.Start, tr.End, r.ID())
 }
 
 func (r *ThresholdRule) hostFromSource() string {
@@ -895,6 +971,8 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
 			}
 		}
+
+		annotations = append(annotations, labels.Label{Name: "alert_link", Value: fmt.Sprintf("%s/alerts/edit?%s", r.hostFromSource(), r.prepareLinkToAlert(ts, smpl.MetricOrig))})
 
 		lbs := lb.Labels()
 		h := lbs.Hash()
