@@ -247,20 +247,22 @@ body {
 	padding-right: 20px;
 }
 
-.ant-drawer {
-	// do not modify this as this is required to hide intercom in modals
-	z-index: 1000000000000;
+// we want the z-index to be less than 1000 (z-index for antd drawers) as we do not want intercom to interfare when drawers are open
+.intercom-lightweight-app {
+	z-index: 980 !important;
 }
 
-.ant-modal-root {
-	.ant-modal-mask {
-		z-index: 2000000000000 !important;
-	}
-	.ant-modal-wrap {
-		z-index: 2000000000000 !important;
-	}
-}
+/**
 
-.ant-select-dropdown {
-	z-index: 3000000000000 !important;
-}
+z-index chart for components across application
+
+intercom        -  980
+tooltip			-  1070
+popover 		-  1030
+drawer  		-  1000
+time picker 	-  1050
+dropdown 		-  1050
+modal 			-  1000
+notifications	-  2050
+
+*/
