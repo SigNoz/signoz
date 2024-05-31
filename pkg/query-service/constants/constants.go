@@ -2,6 +2,7 @@ package constants
 
 import (
 	"os"
+	"regexp"
 	"strconv"
 	"testing"
 	"time"
@@ -306,6 +307,11 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 const LogsPPLPfx = "logstransform/pipeline_"
 
 const IntegrationPipelineIdPrefix = "integration"
+
+var (
+	// Regular expression pattern to match "F" followed by one or more digits
+	FormulaRe = regexp.MustCompile(`^F\d+$`)
+)
 
 // The datatype present here doesn't represent the actual datatype of column in the logs table.
 

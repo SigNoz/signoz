@@ -538,7 +538,7 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 	selectedQuery := r.GetSelectedQuery()
 
 	// TODO(srikanthccv): handle formula queries
-	if selectedQuery < "A" || selectedQuery > "Z" {
+	if isFormula(selectedQuery) {
 		return ""
 	}
 
@@ -602,7 +602,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	selectedQuery := r.GetSelectedQuery()
 
 	// TODO(srikanthccv): handle formula queries
-	if selectedQuery < "A" || selectedQuery > "Z" {
+	if isFormula(selectedQuery) {
 		return ""
 	}
 
@@ -686,12 +686,17 @@ func (r *ThresholdRule) getURLShareableCompositeQuery() urlShareableCompositeQue
 	return urlData
 }
 
+// isFormula checks if the given string matches the formula pattern "F1", "F2", ..., "F{number}"
+func isFormula(s string) bool {
+	return constants.FormulaRe.MatchString(s)
+}
+
 func (r *ThresholdRule) prepareLinkToAlert(ts time.Time, lbls labels.Labels) string {
 	selectedQuery := r.GetSelectedQuery()
 
 	urlData := r.getURLShareableCompositeQuery()
 
-	if selectedQuery < "A" || selectedQuery > "Z" {
+	if isFormula(selectedQuery) {
 		query := r.ruleCondition.CompositeQuery.BuilderQueries[selectedQuery]
 		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, postprocess.EvalFuncs())
 		for _, v := range expression.Vars() {
@@ -972,8 +977,9 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			}
 		}
 
-		annotations = append(annotations, labels.Label{Name: "alert_link", Value: fmt.Sprintf("%s/alerts/edit?%s", r.hostFromSource(), r.prepareLinkToAlert(ts, smpl.MetricOrig))})
-
+		if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
+			annotations = append(annotations, labels.Label{Name: "alert_link", Value: fmt.Sprintf("%s/alerts/edit?%s", r.hostFromSource(), r.prepareLinkToAlert(ts, smpl.MetricOrig))})
+		}
 		lbs := lb.Labels()
 		h := lbs.Hash()
 		resultFPs[h] = struct{}{}
