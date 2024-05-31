@@ -1011,7 +1011,7 @@ func (r *ThresholdRule) String() string {
 func removeGroupinSetPoints(series v3.Series) []v3.Point {
 	var result []v3.Point
 	for _, s := range series.Points {
-		if s.Timestamp > 0 && !math.IsNaN(s.Value) && !math.IsInf(s.Value, 0) {
+		if s.Timestamp >= 0 && !math.IsNaN(s.Value) && !math.IsInf(s.Value, 0) {
 			result = append(result, s)
 		}
 	}
