@@ -161,7 +161,8 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			(errorReport.lineNumber || errorReport.line) &&
 			errorReport.fileName &&
 			['Unhandled_Rejection', 'JS_ERROR'].includes(errorDetail.exceptionType) &&
-			/weeecdn|sayweee|local|localhost/.test(errorReport.fileName)
+			/weeecdn|sayweee|local|localhost/.test(errorReport.fileName) &&
+			/\.js/.test(errorReport.fileName)
 		);
 	}, [errorDetail.exceptionStacktrace, errorDetail.exceptionType]);
 
