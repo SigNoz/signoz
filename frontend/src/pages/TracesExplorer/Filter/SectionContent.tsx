@@ -4,7 +4,7 @@ import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
 import { defaultTo } from 'lodash-es';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 
 import {
 	addFilter,
@@ -40,36 +40,9 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 		setVisibleItemsCount((prevCount) => prevCount + 10);
 	};
 
-	const onCheckHandler = (event: CheckboxChangeEvent, value: string): void => {
-		const { checked } = event.target;
-		if (checked) {
-			addFilter(type, value, setSelectedFilters, keys);
-			setCheckedItems((prev) => {
-				if (!prev.includes(value)) {
-					prev.push(value);
-				}
-				return prev;
-			});
-		} else {
-			removeFilter(type, value, setSelectedFilters, keys);
-			setCheckedItems((prev) => prev.filter((item) => item !== value));
-		}
-	};
-
-	return (
-		<Card
-			bordered={false}
-			className="section-card"
-			loading={type === 'status' ? false : isFetching}
-			key={type}
-		>
-			<Input.Search
-				value={searchFilter}
-				onChange={(e): void => setSearchFilter(e.target.value)}
-				placeholder="Filter Values"
-				className="search-input"
-			/>
-			{(type === 'status' ? statusFilterOption : results)
+	const listData = useMemo(
+		() =>
+			(type === 'hasError' ? statusFilterOption : results)
 				.filter((i) => i.length)
 				.filter((filter) => {
 					if (searchFilter.length === 0) {
@@ -79,25 +52,70 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 						.toLocaleLowerCase()
 						.includes(searchFilter.toLocaleLowerCase());
 				})
-				.slice(0, visibleItemsCount)
-				.map((item) => (
-					<Checkbox
-						className="submenu-checkbox"
-						key={`${type}-${item}`}
-						onChange={(e): void => onCheckHandler(e, item)}
-						checked={checkedItems?.includes(item)}
-					>
-						<Tooltip overlay={<div>{item}</div>} placement="rightTop">
-							<ParaGraph ellipsis style={{ maxWidth: 200 }}>
-								{item}
-							</ParaGraph>
-						</Tooltip>
-					</Checkbox>
-				))}
-			{visibleItemsCount < results.length && (
-				<Button onClick={handleShowMore} type="link">
-					Show More
-				</Button>
+				.slice(0, visibleItemsCount),
+		[results, searchFilter, type, visibleItemsCount],
+	);
+
+	const onCheckHandler = (event: CheckboxChangeEvent, value: string): void => {
+		const { checked } = event.target;
+		let newValue = value;
+		if (type === 'hasError') {
+			newValue = String(value === 'error');
+		}
+		if (checked) {
+			addFilter(type, newValue, setSelectedFilters, keys);
+			setCheckedItems((prev) => {
+				if (!prev.includes(newValue)) {
+					prev.push(newValue);
+				}
+				return prev;
+			});
+		} else {
+			removeFilter(type, newValue, setSelectedFilters, keys);
+			setCheckedItems((prev) => prev.filter((item) => item !== newValue));
+		}
+	};
+
+	const checkboxMatcher = (item: string): boolean =>
+		checkedItems?.includes(type === 'hasError' ? String(item === 'error') : item);
+
+	return (
+		<Card
+			bordered={false}
+			className="section-card"
+			loading={type === 'hasError' ? false : isFetching}
+			key={type}
+		>
+			{listData.length === 0 ? (
+				<div style={{ padding: '8px 18px' }}>No data found</div>
+			) : (
+				<>
+					<Input.Search
+						value={searchFilter}
+						onChange={(e): void => setSearchFilter(e.target.value)}
+						placeholder="Filter Values"
+						className="search-input"
+					/>
+					{listData.map((item) => (
+						<Checkbox
+							className="submenu-checkbox"
+							key={`${type}-${item}`}
+							onChange={(e): void => onCheckHandler(e, item)}
+							checked={checkboxMatcher(item)}
+						>
+							<Tooltip overlay={<div>{item}</div>} placement="rightTop">
+								<ParaGraph ellipsis style={{ maxWidth: 200 }}>
+									{item}
+								</ParaGraph>
+							</Tooltip>
+						</Checkbox>
+					))}
+					{visibleItemsCount < results.length && (
+						<Button onClick={handleShowMore} type="link">
+							Show More
+						</Button>
+					)}
+				</>
 			)}
 		</Card>
 	);

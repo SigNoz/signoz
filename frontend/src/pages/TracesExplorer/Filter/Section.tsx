@@ -26,7 +26,7 @@ export function Section(props: SectionProps): JSX.Element {
 				bordered={false}
 				className="collapseContainer"
 				defaultActiveKey={
-					['status', 'durationNano', 'serviceName'].includes(panelName)
+					['hasError', 'durationNano', 'serviceName'].includes(panelName)
 						? panelName
 						: undefined
 				}

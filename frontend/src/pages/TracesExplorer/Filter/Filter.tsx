@@ -92,6 +92,7 @@ export function Filter(props: FilterProps): JSX.Element {
 		}
 	}, [syncSelectedFilters]);
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const preparePostData = (): TagFilterItem[] => {
 		if (!selectedFilters) {
 			return [];

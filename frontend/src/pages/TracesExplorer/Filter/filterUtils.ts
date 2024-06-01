@@ -9,7 +9,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 export const AllTraceFilterKeyValue = {
 	durationNano: 'Duration',
-	status: 'Status',
+	hasError: 'Status',
 	serviceName: 'Service Name',
 	name: 'Operation / Name',
 	rpcMethod: 'RPC Method',
@@ -130,13 +130,13 @@ export const traceFilterKeys: Record<
 		isJSON: false,
 		id: 'durationNano--float64--tag--true',
 	},
-	status: {
-		key: 'status',
-		dataType: DataTypes.String,
+	hasError: {
+		key: 'hasError',
+		dataType: DataTypes.bool,
 		type: 'tag',
 		isColumn: true,
 		isJSON: false,
-		id: 'durationNano--float64--tag--true',
+		id: 'hasError--bool--tag--true',
 	},
 	serviceName: {
 		key: 'serviceName',
