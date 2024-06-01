@@ -5,6 +5,7 @@ import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 export const AllTraceFilterKeyValue = {
@@ -292,4 +293,28 @@ export function useGetAggregateValues(
 	}
 
 	return { keys: keyData, results, isFetching };
+}
+
+export function unionTagFilterItems(
+	items1: TagFilterItem[],
+	items2: TagFilterItem[],
+): TagFilterItem[] {
+	const unionMap = new Map<string, TagFilterItem>();
+
+	items1.forEach((item) => {
+		const keyOp = `${item?.key?.key}_${item.op}`;
+		unionMap.set(keyOp, item);
+	});
+
+	items2.forEach((item) => {
+		const keyOp = `${item?.key?.key}_${item.op}`;
+		unionMap.set(keyOp, item);
+	});
+
+	return Array.from(unionMap.values());
+}
+
+export interface HandleRunProps {
+	resetAll?: boolean;
+	clearByType?: AllTraceFilterKeys;
 }

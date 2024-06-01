@@ -24,8 +24,11 @@ import { v4 as uuid } from 'uuid';
 
 import {
 	AllTraceFilterKeys,
+	AllTraceFilterKeyValue,
 	AllTraceFilterOptions,
 	FilterType,
+	HandleRunProps,
+	unionTagFilterItems,
 } from './filterUtils';
 import { Section } from './Section';
 
@@ -41,32 +44,52 @@ export function Filter(props: FilterProps): JSX.Element {
 
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const syncSelectedFilters = useMemo((): FilterType => {
 		const filters = currentQuery.builder.queryData?.[0].filters;
 
+		console.log(filters);
+
 		let durationValue: { min?: string; max?: string } = {};
 		let durationKey;
-		const filterRet = filters.items.reduce((acc, item) => {
-			const keys = item.key as BaseAutocompleteData;
-			const attributeName = item.key?.key || '';
-			const values = item.value as string[];
+		const filterRet = filters.items
+			.filter((item) =>
+				Object.keys(AllTraceFilterKeyValue).includes(item.key?.key as string),
+			)
+			.filter(
+				(item) =>
+					(item.op === 'in' && item.key?.key !== 'durationNano') ||
+					(item.key?.key === 'durationNano' && ['>=', '<='].includes(item.op)),
+			)
+			.reduce((acc, item) => {
+				const keys = item.key as BaseAutocompleteData;
+				const attributeName = item.key?.key || '';
+				const values = item.value as string[];
 
-			if ((attributeName as AllTraceFilterKeys) === 'durationNano') {
-				if (item.op === '>=') {
-					durationValue = { ...durationValue, min: item.value as string };
-				} else {
-					durationValue = { ...durationValue, max: item.value as string };
+				if ((attributeName as AllTraceFilterKeys) === 'durationNano') {
+					if (item.op === '>=') {
+						durationValue = { ...durationValue, min: item.value as string };
+					} else {
+						durationValue = { ...durationValue, max: item.value as string };
+					}
+					durationKey = keys;
+					return acc;
 				}
-				durationKey = keys;
+
+				if (attributeName) {
+					if (acc[attributeName as AllTraceFilterKeys]) {
+						const existingValue = acc[attributeName as AllTraceFilterKeys];
+						acc[attributeName as AllTraceFilterKeys] = {
+							values: [...existingValue.values, ...values],
+							keys,
+						};
+					} else {
+						acc[attributeName as AllTraceFilterKeys] = { values, keys };
+					}
+				}
+
 				return acc;
-			}
-
-			if (attributeName) {
-				acc[attributeName as AllTraceFilterKeys] = { values, keys };
-			}
-
-			return acc;
-		}, {} as FilterType);
+			}, {} as FilterType);
 
 		const durationFinValue = [];
 		if (!isUndefined(durationValue.min)) {
@@ -129,7 +152,7 @@ export function Filter(props: FilterProps): JSX.Element {
 			return {
 				id: uuid().slice(0, 8),
 				key: keys,
-				op: 'IN',
+				op: 'in',
 				value: values,
 			};
 		});
@@ -137,22 +160,31 @@ export function Filter(props: FilterProps): JSX.Element {
 		return items as TagFilterItem[];
 	};
 
-	const handleRun = useCallback((): void => {
-		const preparedQuery: Query = {
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((item) => ({
-					...item,
-					filters: {
-						...item.filters,
-						items: preparePostData(),
-					},
-				})),
-			},
-		};
-		redirectWithQueryBuilderData(preparedQuery);
-	}, [currentQuery, redirectWithQueryBuilderData, selectedFilters]);
+	const handleRun = useCallback(
+		(props?: HandleRunProps): void => {
+			const preparedQuery: Query = {
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: currentQuery.builder.queryData.map((item) => ({
+						...item,
+						filters: {
+							...item.filters,
+							items: props?.resetAll
+								? []
+								: (unionTagFilterItems(item.filters.items, preparePostData())
+										.map((item) =>
+											item.key?.key === props?.clearByType ? undefined : item,
+										)
+										.filter((i) => i) as TagFilterItem[]),
+						},
+					})),
+				},
+			};
+			redirectWithQueryBuilderData(preparedQuery);
+		},
+		[currentQuery, redirectWithQueryBuilderData, selectedFilters],
+	);
 
 	useEffect(() => {
 		handleRun();
@@ -168,7 +200,7 @@ export function Filter(props: FilterProps): JSX.Element {
 					</div>
 					<Tooltip title="Reset" placement="right">
 						<Button
-							onClick={(): void => setSelectedFilters(undefined)}
+							onClick={(): void => handleRun({ resetAll: true })}
 							className="sync-icon"
 						>
 							<SyncOutlined />
@@ -188,6 +220,7 @@ export function Filter(props: FilterProps): JSX.Element {
 						panelName={panelName}
 						selectedFilters={selectedFilters}
 						setSelectedFilters={setSelectedFilters}
+						handleRun={handleRun}
 					/>
 				))}
 			</>

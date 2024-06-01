@@ -8,7 +8,7 @@ import {
 	AllTraceFilterKeys,
 	AllTraceFilterKeyValue,
 	FilterType,
-	removeAllFilters,
+	HandleRunProps,
 } from './filterUtils';
 import { SectionBody } from './SectionContent';
 
@@ -16,14 +16,17 @@ interface SectionProps {
 	panelName: AllTraceFilterKeys;
 	selectedFilters: FilterType | undefined;
 	setSelectedFilters: Dispatch<SetStateAction<FilterType | undefined>>;
+	handleRun: (props?: HandleRunProps) => void;
 }
 export function Section(props: SectionProps): JSX.Element {
-	const { panelName, setSelectedFilters, selectedFilters } = props;
+	const { panelName, setSelectedFilters, selectedFilters, handleRun } = props;
 
 	const onClearHandler = (e: MouseEvent): void => {
 		e.stopPropagation();
 		e.preventDefault();
-		removeAllFilters(panelName, setSelectedFilters);
+		if (selectedFilters?.[panelName]) {
+			handleRun({ clearByType: panelName });
+		}
 	};
 
 	return (
