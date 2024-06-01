@@ -60,7 +60,7 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 		const { checked } = event.target;
 		let newValue = value;
 		if (type === 'hasError') {
-			newValue = String(value === 'error');
+			newValue = String(value === 'Error');
 		}
 		if (checked) {
 			addFilter(type, newValue, setSelectedFilters, keys);
@@ -77,7 +77,9 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 	};
 
 	const checkboxMatcher = (item: string): boolean =>
-		checkedItems?.includes(type === 'hasError' ? String(item === 'error') : item);
+		checkedItems?.includes(type === 'hasError' ? String(item === 'Error') : item);
+
+	const labelClassname = (item: string): string => `${type}-${item}`;
 
 	return (
 		<Card
@@ -103,11 +105,14 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 							onChange={(e): void => onCheckHandler(e, item)}
 							checked={checkboxMatcher(item)}
 						>
-							<Tooltip overlay={<div>{item}</div>} placement="rightTop">
-								<ParaGraph ellipsis style={{ maxWidth: 200 }}>
-									{item}
-								</ParaGraph>
-							</Tooltip>
+							<div className="checkbox-label">
+								<div className={labelClassname(item)} />
+								<Tooltip overlay={<div>{item}</div>} placement="rightTop">
+									<ParaGraph ellipsis style={{ maxWidth: 200 }}>
+										{item}
+									</ParaGraph>
+								</Tooltip>
+							</div>
 						</Checkbox>
 					))}
 					{visibleItemsCount < results.length && (

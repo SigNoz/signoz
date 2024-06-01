@@ -17,7 +17,7 @@ export const AllTraceFilterKeyValue = {
 	httpHost: 'HTTP Host',
 	httpMethod: 'HTTP Method',
 	httpRoute: 'HTTP Route',
-	httpUrl: 'HTTP Url',
+	httpUrl: 'HTTP URL',
 	traceID: 'Trace ID',
 };
 
@@ -30,7 +30,7 @@ export const AllTraceFilterOptions = Object.keys(
 	AllTraceFilterKeyValue,
 ) as (keyof typeof AllTraceFilterKeyValue)[];
 
-export const statusFilterOption = ['error', 'ok'];
+export const statusFilterOption = ['Error', 'Ok'];
 
 export type FilterType = Record<
 	AllTraceFilterKeys,
