@@ -2,9 +2,18 @@ import './Filter.styles.scss';
 
 import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
-import { defaultTo } from 'lodash-es';
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import useDebounce from 'hooks/useDebounce';
+import { defaultTo, isEmpty } from 'lodash-es';
+import {
+	ChangeEvent,
+	Dispatch,
+	SetStateAction,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 
 import {
 	addFilter,
@@ -29,12 +38,24 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 		defaultTo(selectedFilters?.[type]?.values, []),
 	);
 
+	const [results, setResults] = useState<string[]>([]);
+	const [isFetching, setFetching] = useState<boolean>(false);
+
 	useEffect(
 		() => setCheckedItems(defaultTo(selectedFilters?.[type]?.values, [])),
 		[selectedFilters, type],
 	);
+	const debouncedSearchText = useDebounce(searchFilter, DEBOUNCE_DELAY);
 
-	const { isFetching, keys, results } = useGetAggregateValues({ value: type });
+	const { isFetching: fetching, keys, results: res } = useGetAggregateValues({
+		value: type,
+		searchText: debouncedSearchText,
+	});
+
+	useEffect(() => {
+		setResults(res);
+		setFetching(fetching);
+	}, [fetching, res]);
 
 	const handleShowMore = (): void => {
 		setVisibleItemsCount((prevCount) => prevCount + 10);
@@ -81,6 +102,11 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 
 	const labelClassname = (item: string): string => `${type}-${item}`;
 
+	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
+		const inputValue = e.target.value;
+		setSearchFilter(inputValue);
+	};
+
 	return (
 		<Card
 			bordered={false}
@@ -88,40 +114,42 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 			loading={type === 'hasError' ? false : isFetching}
 			key={type}
 		>
-			{listData.length === 0 ? (
-				<div style={{ padding: '8px 18px' }}>No data found</div>
-			) : (
-				<>
-					<Input.Search
-						value={searchFilter}
-						onChange={(e): void => setSearchFilter(e.target.value)}
-						placeholder="Filter Values"
-						className="search-input"
-					/>
-					{listData.map((item) => (
-						<Checkbox
-							className="submenu-checkbox"
-							key={`${type}-${item}`}
-							onChange={(e): void => onCheckHandler(e, item)}
-							checked={checkboxMatcher(item)}
-						>
-							<div className="checkbox-label">
-								<div className={labelClassname(item)} />
-								<Tooltip overlay={<div>{item}</div>} placement="rightTop">
-									<ParaGraph ellipsis style={{ maxWidth: 200 }}>
-										{item}
-									</ParaGraph>
-								</Tooltip>
-							</div>
-						</Checkbox>
-					))}
-					{visibleItemsCount < results.length && (
-						<Button onClick={handleShowMore} type="link">
-							Show More
-						</Button>
-					)}
-				</>
-			)}
+			<>
+				<Input.Search
+					value={searchFilter}
+					onChange={handleSearch}
+					placeholder="Filter Values"
+					className="search-input"
+				/>
+				{listData.length === 0 && isEmpty(searchFilter) ? (
+					<div style={{ padding: '8px 18px' }}>No data found</div>
+				) : (
+					<>
+						{listData.map((item) => (
+							<Checkbox
+								className="submenu-checkbox"
+								key={`${type}-${item}`}
+								onChange={(e): void => onCheckHandler(e, item)}
+								checked={checkboxMatcher(item)}
+							>
+								<div className="checkbox-label">
+									<div className={labelClassname(item)} />
+									<Tooltip overlay={<div>{item}</div>} placement="rightTop">
+										<ParaGraph ellipsis style={{ maxWidth: 200 }}>
+											{item}
+										</ParaGraph>
+									</Tooltip>
+								</div>
+							</Checkbox>
+						))}
+						{visibleItemsCount < results.length && (
+							<Button onClick={handleShowMore} type="link">
+								Show More
+							</Button>
+						)}
+					</>
+				)}
+			</>
 		</Card>
 	);
 }

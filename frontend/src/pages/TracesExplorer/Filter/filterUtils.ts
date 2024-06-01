@@ -243,6 +243,7 @@ export const traceFilterKeys: Record<
 
 interface AggregateValuesProps {
 	value: AllTraceFilterKeys;
+	searchText?: string;
 }
 
 type IuseGetAggregateValue = {
@@ -254,7 +255,7 @@ type IuseGetAggregateValue = {
 export function useGetAggregateValues(
 	props: AggregateValuesProps,
 ): IuseGetAggregateValue {
-	const { value } = props;
+	const { value, searchText } = props;
 	const keyData = traceFilterKeys[value];
 	const [isFetching, setFetching] = useState<boolean>(true);
 	const [results, setResults] = useState<string[]>([]);
@@ -269,7 +270,7 @@ export function useGetAggregateValues(
 				attributeKey: value,
 				filterAttributeKeyDataType: keyData ? keyData.dataType : DataTypes.EMPTY,
 				tagType: keyData.type ?? '',
-				searchText: '',
+				searchText: searchText ?? '',
 			});
 
 			if (payload) {
@@ -285,7 +286,7 @@ export function useGetAggregateValues(
 
 	useEffect(() => {
 		getValues();
-	}, []);
+	}, [searchText]);
 
 	if (!value) {
 		setFetching(false);
