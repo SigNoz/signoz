@@ -833,3 +833,48 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
 	}
 }
+
+func TestThresholdRuleClickHouseTmpl(t *testing.T) {
+	postableRule := PostableRule{
+		AlertName:  "Tricky Condition Tests",
+		AlertType:  "METRIC_BASED_ALERT",
+		RuleType:   RuleTypeThreshold,
+		EvalWindow: Duration(5 * time.Minute),
+		Frequency:  Duration(1 * time.Minute),
+		RuleCondition: &RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeClickHouseSQL,
+				ClickHouseQueries: map[string]*v3.ClickHouseQuery{
+					"A": {
+						Query: "SELECT 1 >= {{.start_timestamp_ms}} AND 1 <= {{.end_timestamp_ms}}",
+					},
+				},
+			},
+		},
+	}
+
+	// 01:39:47
+	ts := time.Unix(1717205987, 0)
+
+	cases := []struct {
+		expectedQuery string
+	}{
+		// Test cases for Equals Always
+		{
+			// 01:32:00 - 01:37:00
+			expectedQuery: "SELECT 1 >= 1717205520000 AND 1 <= 1717205820000",
+		},
+	}
+
+	fm := featureManager.StartManager()
+	for idx, c := range cases {
+		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
+		if err != nil {
+			assert.NoError(t, err)
+		}
+
+		params := rule.prepareQueryRange(ts)
+
+		assert.Equal(t, c.expectedQuery, params.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
+	}
+}
