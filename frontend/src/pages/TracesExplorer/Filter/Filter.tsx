@@ -48,8 +48,6 @@ export function Filter(props: FilterProps): JSX.Element {
 	const syncSelectedFilters = useMemo((): FilterType => {
 		const filters = currentQuery.builder.queryData?.[0].filters;
 
-		console.log(filters);
-
 		let durationValue: { min?: string; max?: string } = {};
 		let durationKey;
 		const filterRet = filters.items
