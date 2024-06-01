@@ -74,6 +74,13 @@
 		background-color: var(--bg-ink-500);
 		border: 0;
 		box-shadow: none;
+
+		.anticon-vertical-align-top {
+			svg {
+				width: 16px;
+				height: 16px;
+			}
+		}
 	}
 }
 

@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import './Filter.styles.scss';
 
-import { ArrowLeftOutlined, FilterOutlined } from '@ant-design/icons';
+import { FilterOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -162,7 +162,7 @@ export function Filter(props: FilterProps): JSX.Element {
 					<Typography.Text>Filters</Typography.Text>
 				</div>
 				<Button onClick={(): void => setOpen(false)} className="arrow-icon">
-					<ArrowLeftOutlined />
+					<VerticalAlignTopOutlined rotate={270} />
 				</Button>
 			</Flex>
 			<>

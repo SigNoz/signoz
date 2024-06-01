@@ -9,6 +9,19 @@
 		margin: 8px 16px;
 		gap: 8px;
 	}
+
+	.filter-outlined-btn {
+		border-radius: 0px 2px 2px 0px;
+		border-top: 1px solid var(--bg-slate-400);
+		border-right: 1px solid var(--bg-slate-400);
+		border-bottom: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-400);
+		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+	}
+}
+
+.trace-explorer-header.single-child {
+	justify-content: flex-end;
 }
 
 .traces-explorer-views {

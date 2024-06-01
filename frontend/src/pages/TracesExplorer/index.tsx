@@ -191,10 +191,15 @@ function TracesExplorer(): JSX.Element {
 					<Filter setOpen={setOpen} />
 				</Card>
 				<Card className="trace-explorer">
-					<div className="trace-explorer-header">
-						<Button onClick={(): void => setOpen(!isOpen)}>
-							<FilterOutlined />
-						</Button>
+					<div className={`trace-explorer-header ${isOpen ? 'single-child' : ''}`}>
+						{!isOpen && (
+							<Button
+								onClick={(): void => setOpen(!isOpen)}
+								className="filter-outlined-btn"
+							>
+								<FilterOutlined />
+							</Button>
+						)}
 						<div className="trace-explorer-run-query">
 							<RightToolbarActions onStageRunQuery={handleRunQuery} />
 							<DateTimeSelector showAutoRefresh />
