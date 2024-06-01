@@ -50,6 +50,10 @@ function NewExplorerCTA(): JSX.Element | null {
 		return null;
 	}
 
+	if (location.pathname === ROUTES.TRACES_EXPLORER) {
+		return button;
+	}
+
 	if (location.pathname === ROUTES.LOGS_EXPLORER) {
 		return button;
 	}
