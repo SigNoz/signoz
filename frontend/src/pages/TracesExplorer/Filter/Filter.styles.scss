@@ -70,10 +70,18 @@
 		}
 	}
 
+	.sync-icon {
+		background-color: var(--bg-ink-500);
+		border: 0;
+		box-shadow: none;
+		padding: 8px;
+	}
+
 	.arrow-icon {
 		background-color: var(--bg-ink-500);
 		border: 0;
 		box-shadow: none;
+		padding-top: 8px;
 
 		.anticon-vertical-align-top {
 			svg {
@@ -81,6 +89,19 @@
 				height: 16px;
 			}
 		}
+	}
+}
+
+.section-body-header {
+	display: flex;
+
+	> button {
+		position: absolute;
+		right: 4px;
+		padding-top: 13px;
+	}
+	.ant-collapse {
+		width: 100%;
 	}
 }
 

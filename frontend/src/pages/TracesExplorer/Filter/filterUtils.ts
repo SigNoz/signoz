@@ -118,6 +118,34 @@ export const removeFilter = (
 	});
 };
 
+export const removeAllFilters = (
+	filterType: AllTraceFilterKeys,
+	setSelectedFilters: Dispatch<
+		SetStateAction<
+			| Record<
+					AllTraceFilterKeys,
+					{ values: string[]; keys: BaseAutocompleteData }
+			  >
+			| undefined
+		>
+	>,
+): void => {
+	setSelectedFilters((prevFilters) => {
+		if (!prevFilters || !prevFilters[filterType]) {
+			return prevFilters;
+		}
+
+		const { [filterType]: item, ...remainingFilters } = prevFilters;
+
+		return Object.keys(remainingFilters).length > 0
+			? (remainingFilters as Record<
+					AllTraceFilterKeys,
+					{ values: string[]; keys: BaseAutocompleteData }
+			  >)
+			: undefined;
+	});
+};
+
 export const traceFilterKeys: Record<
 	AllTraceFilterKeys,
 	BaseAutocompleteData

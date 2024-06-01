@@ -1,7 +1,7 @@
 import './TracesExplorer.styles.scss';
 
 import { FilterOutlined } from '@ant-design/icons';
-import { Button, Card, Tabs } from 'antd';
+import { Button, Card, Tabs, Tooltip } from 'antd';
 import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
@@ -193,12 +193,14 @@ function TracesExplorer(): JSX.Element {
 				<Card className="trace-explorer">
 					<div className={`trace-explorer-header ${isOpen ? 'single-child' : ''}`}>
 						{!isOpen && (
-							<Button
-								onClick={(): void => setOpen(!isOpen)}
-								className="filter-outlined-btn"
-							>
-								<FilterOutlined />
-							</Button>
+							<Tooltip title="Expand filters" placement="right">
+								<Button
+									onClick={(): void => setOpen(!isOpen)}
+									className="filter-outlined-btn"
+								>
+									<FilterOutlined />
+								</Button>
+							</Tooltip>
 						)}
 						<div className="trace-explorer-run-query">
 							<RightToolbarActions onStageRunQuery={handleRunQuery} />

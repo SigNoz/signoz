@@ -1,8 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import './Filter.styles.scss';
 
-import { FilterOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
-import { Button, Flex, Typography } from 'antd';
+import {
+	FilterOutlined,
+	SyncOutlined,
+	VerticalAlignTopOutlined,
+} from '@ant-design/icons';
+import { Button, Flex, Tooltip, Typography } from 'antd';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isEqual, isUndefined } from 'lodash-es';
@@ -157,13 +161,25 @@ export function Filter(props: FilterProps): JSX.Element {
 	return (
 		<>
 			<Flex justify="space-between" align="center" className="filter-header">
-				<div className="filter-title">
-					<FilterOutlined />
-					<Typography.Text>Filters</Typography.Text>
-				</div>
-				<Button onClick={(): void => setOpen(false)} className="arrow-icon">
-					<VerticalAlignTopOutlined rotate={270} />
-				</Button>
+				<Flex gap={8} align="center">
+					<div className="filter-title">
+						<FilterOutlined />
+						<Typography.Text>Filters</Typography.Text>
+					</div>
+					<Tooltip title="Reset" placement="right">
+						<Button
+							onClick={(): void => setSelectedFilters(undefined)}
+							className="sync-icon"
+						>
+							<SyncOutlined />
+						</Button>
+					</Tooltip>
+				</Flex>
+				<Tooltip title="Collapse" placement="right">
+					<Button onClick={(): void => setOpen(false)} className="arrow-icon">
+						<VerticalAlignTopOutlined rotate={270} />
+					</Button>
+				</Tooltip>
 			</Flex>
 			<>
 				{AllTraceFilterOptions.map((panelName) => (
