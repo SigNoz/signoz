@@ -19,10 +19,10 @@ function Configure(props: ConfigurationProps): JSX.Element {
 
 	const { trackEvent } = useAnalytics();
 
-	const handleMenuClick = (index: number): void => {
+	const handleMenuClick = (index: number, config: any): void => {
 		setSelectedConfigStep(index);
 		trackEvent('Integrations Detail Page: Configure tab', {
-			title: configuration[selectedConfigStep].title,
+			title: config?.title,
 			integrationId,
 		});
 	};
@@ -53,7 +53,7 @@ function Configure(props: ConfigurationProps): JSX.Element {
 						className={cx('configure-menu-item', {
 							active: selectedConfigStep === index,
 						})}
-						onClick={(): void => handleMenuClick(index)}
+						onClick={(): void => handleMenuClick(index, config)}
 					>
 						<Typography.Text className="configure-text">
 							{config.title}
