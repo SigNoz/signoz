@@ -33,6 +33,12 @@ function Configure(props: ConfigurationProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const markdownDetailsForTracking = {
+		trackingTitle: `Integrations Detail Page: Configure tab - ${configuration[selectedConfigStep].title}`,
+		configureTitle: configuration[selectedConfigStep].title,
+		integrationId,
+	};
+
 	return (
 		<div className="integration-detail-configure">
 			<div className="configure-menu">
@@ -55,6 +61,7 @@ function Configure(props: ConfigurationProps): JSX.Element {
 				<MarkdownRenderer
 					variables={{}}
 					markdownContent={configuration[selectedConfigStep].instructions}
+					elementDetails={markdownDetailsForTracking}
 				/>
 			</div>
 		</div>

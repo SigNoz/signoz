@@ -24,6 +24,12 @@ function Overview(props: OverviewProps): JSX.Element {
 	];
 
 	const assetLabelMap = ['Pipelines', 'Dashboards', 'Alerts'];
+
+	const markdownDetailsForTracking = {
+		trackingTitle: `Integrations Detail Page: Overview`,
+		categories,
+	};
+
 	return (
 		<div className="integration-detail-overview">
 			<div className="integration-detail-overview-left-container">
@@ -54,7 +60,11 @@ function Overview(props: OverviewProps): JSX.Element {
 				</div>
 			</div>
 			<div className="integration-detail-overview-right-container">
-				<MarkdownRenderer variables={{}} markdownContent={overviewContent} />
+				<MarkdownRenderer
+					variables={{}}
+					markdownContent={overviewContent}
+					elementDetails={markdownDetailsForTracking}
+				/>
 			</div>
 		</div>
 	);
