@@ -7,6 +7,12 @@ export interface User {
 	profilePictureURL?: string;
 }
 
+export interface Limit {
+	signal: string,
+	config: Record<string, unknown>,
+	tags?: []
+}
+
 export interface IngestionKeyProps {
 	name: string;
 	expires_at?: string;
@@ -16,7 +22,7 @@ export interface IngestionKeyProps {
 	created_at: string;
 	updated_at: string;
 	tags?: string[];
-	limits?: string[];
+	limits?: Limit[];
 }
 
 export interface CreateIngestionKeyProps {

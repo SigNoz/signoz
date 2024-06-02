@@ -9,6 +9,7 @@ import {
 	DatePicker,
 	Form,
 	Input,
+	InputNumber,
 	Modal,
 	Row,
 	Select,
@@ -35,7 +36,9 @@ import {
 	Minus,
 	PenLine,
 	Plus,
+	PlusIcon,
 	Search,
+	Tally1,
 	Trash2,
 	X,
 } from 'lucide-react';
@@ -45,10 +48,11 @@ import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
-import { IngestionKeyProps } from 'types/api/ingestionKeys/types';
+import { IngestionKeyProps, Limit } from 'types/api/ingestionKeys/types';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import IngestionKeyDetails from './IngestionKeyDetails';
+
+const { Option } = Select;
 
 import cx from 'classnames';
 import {
@@ -61,6 +65,8 @@ export const disabledDate = (current) => {
 	// Disable all dates before today
 	return current && current < dayjs().endOf('day');
 };
+
+const SIGNALS = ['logs', 'traces', 'metrics'];
 
 export const showErrorNotification = (
 	notifications: NotificationInstance,
@@ -91,10 +97,10 @@ function IngestionSettings(): JSX.Element {
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [, handleCopyToClipboard] = useCopyToClipboard();
-
 	const [updatedTags, setUpdatedTags] = useState<string[]>([]);
-	const [openEditMode, setOpenEditMode] = useState(false);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [activeAPIKey, setActiveAPIKey] = useState<IngestionKeyProps | null>();
+	const [activeSignal, setActiveSignal] = useState<string | null>(null);
 
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [dataSource, setDataSource] = useState<IngestionKeyProps[]>([]);
@@ -122,7 +128,7 @@ function IngestionSettings(): JSX.Element {
 	const hideEditViewModal = (): void => {
 		handleFormReset();
 		setActiveAPIKey(null);
-		setOpenEditMode(false);
+		setIsEditModalOpen(false);
 	};
 
 	const hideAddViewModal = (): void => {
@@ -135,7 +141,7 @@ function IngestionSettings(): JSX.Element {
 		handleFormReset();
 		setActiveAPIKey(apiKey);
 		setUpdatedTags(apiKey.tags || []);
-		setOpenEditMode(true);
+		setIsEditModalOpen(true);
 	};
 
 	const showAddModal = (): void => {
@@ -206,7 +212,7 @@ function IngestionSettings(): JSX.Element {
 		{
 			onSuccess: () => {
 				refetchAPIKeys();
-				setOpenEditMode(true);
+				setIsEditModalOpen(false);
 			},
 			onError: (error) => {
 				showErrorNotification(notifications, error as AxiosError);
@@ -295,6 +301,32 @@ function IngestionSettings(): JSX.Element {
 		console.log('data', data);
 	};
 
+	const handleAddLimit = (APIKey: IngestionKeyProps, signalName: string) => {
+		console.log('add - api key', APIKey);
+		console.log('signalName key', signalName);
+
+		setActiveAPIKey(APIKey);
+		setActiveSignal(signalName);
+	};
+
+	const handleEditLimit = (APIKey: IngestionKeyProps, signalName: string) => {
+		console.log('edit - api key', APIKey);
+		console.log('signalName key', signalName);
+
+		setActiveAPIKey(APIKey);
+		setActiveSignal(signalName);
+	};
+
+	const handleDeleteLimit = (APIKey: IngestionKeyProps, signalName: string) => {
+		console.log('delete - api key', APIKey);
+		console.log('signalName key', signalName);
+	};
+
+	const handleDiscardSaveLimit = () => {
+		setActiveAPIKey(null);
+		setActiveSignal(null);
+	};
+
 	const columns: TableProps<IngestionKeyProps>['columns'] = [
 		{
 			title: 'Ingestion Key',
@@ -302,7 +334,6 @@ function IngestionSettings(): JSX.Element {
 			// eslint-disable-next-line sonarjs/cognitive-complexity
 			render: (APIKey: IngestionKeyProps): JSX.Element => {
 				const createdOn = getFormattedTime(APIKey.created_at);
-
 				const formattedDateAndTime =
 					APIKey && APIKey?.expires_at && getFormattedTime(APIKey?.expires_at);
 
@@ -316,6 +347,20 @@ function IngestionSettings(): JSX.Element {
 				const updatedOn = getFormattedTime(APIKey?.updated_at);
 
 				const isExpired = isExpiredToken(dayjs(APIKey.expires_at).date());
+
+				const hasLogsLimits = false;
+				const hasTracesLimits = false;
+				const hasMetricsLimits = false;
+
+				const limits: { [key: string]: Limit } = {};
+
+				APIKey.limits?.forEach((limit: Limit) => (limits[limit.signal] = limit));
+
+				const hasLimits = (signal): boolean => {
+					return !!limits[signal];
+				};
+
+				console.log('limits', limits);
 
 				const items: CollapseProps['items'] = [
 					{
@@ -375,6 +420,7 @@ function IngestionSettings(): JSX.Element {
 										<Typography.Text>{createdOn}</Typography.Text>
 									</Col>
 								</Row>
+
 								{updatedOn && (
 									<Row>
 										<Col span={6}> Updated on </Col>
@@ -399,6 +445,188 @@ function IngestionSettings(): JSX.Element {
 										</Col>
 									</Row>
 								)}
+
+								<div className="limits-container">
+									<h4 className="capitalize"> LIMITS </h4>
+
+									<div className="limits-data">
+										<div className="signals">
+											{SIGNALS.map((signal) => {
+												return (
+													<div className="signal">
+														<div className="header">
+															<div className="signal-name">{signal}</div>
+															<div className="actions">
+																{hasLimits(signal) ? (
+																	<>
+																		<Button
+																			className="periscope-btn ghost"
+																			icon={<PenLine size={14} />}
+																			onClick={(e): void => {
+																				e.stopPropagation();
+																				e.preventDefault();
+																				handleEditLimit(APIKey, signal);
+																			}}
+																		/>
+
+																		<Button
+																			className="periscope-btn ghost"
+																			icon={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+																			onClick={(e): void => {
+																				e.stopPropagation();
+																				e.preventDefault();
+
+																				handleDeleteLimit(APIKey, signal);
+																			}}
+																		/>
+																	</>
+																) : (
+																	<Button
+																		className="periscope-btn"
+																		size="small"
+																		shape="round"
+																		icon={<PlusIcon size={14} />}
+																		disabled={!!(activeAPIKey?.id === APIKey.id && activeSignal)}
+																		onClick={(e): void => {
+																			e.stopPropagation();
+																			e.preventDefault();
+																			handleAddLimit(APIKey, signal);
+																		}}
+																	>
+																		Limits
+																	</Button>
+																)}
+															</div>
+														</div>
+
+														<div className="signal-limit-values">
+															{activeAPIKey?.id === APIKey.id && activeSignal === signal && (
+																<div className="signal-limit-edit-mode">
+																	<Form.Item
+																		className="daily-limit"
+																		name="name"
+																		validateTrigger="onBlur"
+																	>
+																		<div className="heading">
+																			<div className="title"> Daily limit </div>
+																			<div className="subtitle">
+																				Add a limit for data ingested daily{' '}
+																			</div>
+																		</div>
+
+																		<div className="size">
+																			<InputNumber
+																				min={1}
+																				type="number"
+																				// disabled={!limitValues[limit.id].enabled}
+																				addonAfter={
+																					<Select
+																						defaultValue="GB"
+																						disabled
+																						// onChange={(value) =>
+																						// 	handleBlur(limit.id, 'sizeUnit', value)
+																						// }
+																						// disabled={!limitValues[limit.id].enabled}
+																					>
+																						<Option value="TB">Terrabytes</Option>
+																						<Option value="GB">Gigabytes</Option>
+																						<Option value="MB">Megabytes</Option>
+																						<Option value="KB">Kilobytes</Option>
+																					</Select>
+																				}
+																			/>
+																		</div>
+																	</Form.Item>
+
+																	<Form.Item
+																		className="second-limit"
+																		name="name"
+																		validateTrigger="onBlur"
+																	>
+																		<div className="heading">
+																			<div className="title"> Per Second limit </div>
+																			<div className="subtitle">
+																				{' '}
+																				Add a limit for data ingested every second{' '}
+																			</div>
+																		</div>
+
+																		<div className="size">
+																			<InputNumber
+																				min={1}
+																				type="number"
+																				// disabled={!limitValues[limit.id].enabled}
+																				addonAfter={
+																					<Select
+																						defaultValue="GB"
+																						disabled
+																						// onChange={(value) =>
+																						// 	handleBlur(limit.id, 'sizeUnit', value)
+																						// }
+																						// disabled={!limitValues[limit.id].enabled}
+																					>
+																						<Option value="TB">Terrabytes</Option>
+																						<Option value="GB">Gigabytes</Option>
+																						<Option value="MB">Megabytes</Option>
+																						<Option value="KB">Kilobytes</Option>
+																					</Select>
+																				}
+																			/>
+																		</div>
+																	</Form.Item>
+																</div>
+															)}
+
+															{(activeAPIKey?.id !== APIKey.id ||
+																!activeSignal ||
+																activeSignal !== signal) && (
+																<div className="signal-limit-view-mode">
+																	<div className="signal-limit-value">
+																		<div className="limit-type">
+																			Daily <Minus size={16} />{' '}
+																		</div>
+
+																		<div> 2.6 GB / 4 GB </div>
+																	</div>
+
+																	<div className="signal-limit-value">
+																		<div className="limit-type">
+																			Seconds <Minus size={16} />
+																		</div>
+
+																		<div> 2.6 GB / 4 GB </div>
+																	</div>
+																</div>
+															)}
+														</div>
+
+														{activeAPIKey?.id === APIKey.id && activeSignal === signal && (
+															<div className="signal-limit-save-discard">
+																<Button
+																	type="primary"
+																	className="periscope-btn primary"
+																	size="small"
+																>
+																	{' '}
+																	Save{' '}
+																</Button>
+																<Button
+																	type="default"
+																	className="periscope-btn"
+																	size="small"
+																	onClick={handleDiscardSaveLimit}
+																>
+																	{' '}
+																	Discard{' '}
+																</Button>
+															</div>
+														)}
+													</div>
+												);
+											})}
+										</div>
+									</div>
+								</div>
 							</div>
 						),
 					},
@@ -498,7 +726,74 @@ function IngestionSettings(): JSX.Element {
 				</Typography.Text>
 			</Modal>
 
-			{activeAPIKey && openEditMode && (
+			{/* Edit Key Modal */}
+			<Modal
+				className="ingestion-key-modal"
+				title="Edit token"
+				open={isEditModalOpen}
+				key="edit-ingestion-key-modal"
+				afterClose={handleModalClose}
+				// closable
+				onCancel={hideEditViewModal}
+				destroyOnClose
+				footer={[
+					<Button
+						key="cancel"
+						onClick={hideEditViewModal}
+						className="periscope-btn cancel-btn"
+						icon={<X size={16} />}
+					>
+						Cancel
+					</Button>,
+					<Button
+						className="periscope-btn primary"
+						key="submit"
+						type="primary"
+						loading={isLoadingUpdateAPIKey}
+						icon={<Check size={14} />}
+						onClick={onUpdateApiKey}
+					>
+						Update Ingestion Key
+					</Button>,
+				]}
+			>
+				<Form
+					name="edit-ingestion-key-form"
+					key={activeAPIKey?.id}
+					form={editForm}
+					layout="vertical"
+					autoComplete="off"
+					initialValues={{
+						name: activeAPIKey?.name,
+					}}
+				>
+					<Form.Item
+						name="name"
+						label="Name"
+						rules={[{ required: true }, { type: 'string', min: 6 }]}
+					>
+						<Input placeholder="Enter Ingestion Key name" disabled />
+					</Form.Item>
+
+					<Form.Item name="tags" label="Tags">
+						<Tags tags={updatedTags} setTags={setUpdatedTags} />
+					</Form.Item>
+
+					<Form.Item
+						className="expires-at"
+						name="expires_at"
+						label="Expiration"
+						rules={[{ required: true }]}
+					>
+						<DatePicker
+							popupClassName="ingestion-key-expires-at"
+							disabledDate={disabledDate}
+						/>
+					</Form.Item>
+				</Form>
+			</Modal>
+
+			{/* {activeAPIKey && openEditMode && (
 				<IngestionKeyDetails
 					onClose={() => hideEditViewModal()}
 					openDrawer={openEditMode}
@@ -508,7 +803,7 @@ function IngestionSettings(): JSX.Element {
 					handleCopyKey={handleCopyKey}
 					onUpdateIngestionKeyDetails={handleIngestionKeyDataUpdate}
 				/>
-			)}
+			)} */}
 
 			{/* Create New Key Modal */}
 			<Modal
