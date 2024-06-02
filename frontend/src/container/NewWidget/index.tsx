@@ -2,7 +2,9 @@
 import './NewWidget.styles.scss';
 
 import { WarningOutlined } from '@ant-design/icons';
-import { Button, Modal, Space, Tooltip, Typography } from 'antd';
+import { Button, Flex, Modal, Space, Tooltip, Typography } from 'antd';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { chartHelpMessage } from 'components/facingIssueBtn/util';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -432,9 +434,25 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			<div className="edit-header">
 				<div className="left-header">
 					<X size={14} onClick={onClickDiscardHandler} className="discard-icon" />
-					<Typography.Text className="configure-panel">
-						Configure panel
-					</Typography.Text>
+					<Flex align="center" gap={24}>
+						<Typography.Text className="configure-panel">
+							Configure panel
+						</Typography.Text>
+						<FacingIssueBtn
+							attributes={{
+								uuid: selectedDashboard?.uuid,
+								title: selectedDashboard?.data.title,
+								screen: 'Dashboard widget',
+								panelType: graphType,
+								widgetId: query.get('widgetId'),
+								queryType: currentQuery.queryType,
+							}}
+							eventName="Dashboard: Facing Issues in dashboard"
+							message={chartHelpMessage(selectedDashboard, graphType)}
+							buttonText="Facing issues with dashboards?"
+							onHoverText="Click here to get help with dashboard widget"
+						/>
+					</Flex>
 				</div>
 				{isSaveDisabled && (
 					<Tooltip title={MESSAGE.PANEL}>
