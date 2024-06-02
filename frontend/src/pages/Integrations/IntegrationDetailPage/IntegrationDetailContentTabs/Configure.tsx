@@ -17,11 +17,15 @@ function Configure(props: ConfigurationProps): JSX.Element {
 	const { configuration, integrationId } = props;
 	const [selectedConfigStep, setSelectedConfigStep] = useState(0);
 
+	const { trackEvent } = useAnalytics();
+
 	const handleMenuClick = (index: number): void => {
 		setSelectedConfigStep(index);
+		trackEvent('Integrations Detail Page: Configure tab', {
+			title: configuration[selectedConfigStep].title,
+			integrationId,
+		});
 	};
-
-	const { trackEvent } = useAnalytics();
 
 	useEffect(() => {
 		trackEvent(
