@@ -64,6 +64,7 @@ function Overview(props: OverviewProps): JSX.Element {
 					variables={{}}
 					markdownContent={overviewContent}
 					elementDetails={markdownDetailsForTracking}
+					trackCopyAction
 				/>
 			</div>
 		</div>

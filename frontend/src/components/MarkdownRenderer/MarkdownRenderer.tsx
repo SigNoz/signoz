@@ -20,8 +20,10 @@ interface LinkProps {
 function Pre({
 	children,
 	elementDetails,
+	trackCopyAction,
 }: {
 	children: React.ReactNode;
+	trackCopyAction: boolean;
 	elementDetails: Record<string, unknown>;
 }): JSX.Element {
 	const { trackEvent } = useAnalytics();
@@ -29,12 +31,14 @@ function Pre({
 	const { trackingTitle = '', ...rest } = elementDetails;
 
 	const handleClick = (additionalInfo?: Record<string, unknown>): void => {
-		console.log('Tracking title -', trackingTitle);
 		const trackingData = { ...rest, copiedContent: additionalInfo };
-		trackEvent(
-			isEmpty(trackingTitle) ? 'Copy btn event' : trackingTitle,
-			trackingData,
-		);
+
+		if (trackCopyAction) {
+			trackEvent(
+				isEmpty(trackingTitle) ? 'Copy btn event' : trackingTitle,
+				trackingData,
+			);
+		}
 	};
 
 	return (
@@ -104,10 +108,12 @@ function CustomTag({ color }: { color: string }): JSX.Element {
 function MarkdownRenderer({
 	markdownContent,
 	variables,
+	trackCopyAction,
 	elementDetails,
 }: {
 	markdownContent: any;
 	variables: any;
+	trackCopyAction?: boolean;
 	elementDetails?: Record<string, unknown>;
 }): JSX.Element {
 	const interpolatedMarkdown = interpolateMarkdown(markdownContent, variables);
@@ -120,7 +126,11 @@ function MarkdownRenderer({
 				// @ts-ignore
 				a: Link,
 				pre: ({ children }) =>
-					Pre({ children, elementDetails: elementDetails ?? {} }),
+					Pre({
+						children,
+						elementDetails: elementDetails ?? {},
+						trackCopyAction: !!trackCopyAction,
+					}),
 				code: Code,
 				customtag: CustomTag,
 			}}
@@ -132,6 +142,7 @@ function MarkdownRenderer({
 
 MarkdownRenderer.defaultProps = {
 	elementDetails: {},
+	trackCopyAction: false,
 };
 
 export { Code, Link, MarkdownRenderer, Pre };

@@ -62,6 +62,7 @@ function Configure(props: ConfigurationProps): JSX.Element {
 					variables={{}}
 					markdownContent={configuration[selectedConfigStep].instructions}
 					elementDetails={markdownDetailsForTracking}
+					trackCopyAction
 				/>
 			</div>
 		</div>
