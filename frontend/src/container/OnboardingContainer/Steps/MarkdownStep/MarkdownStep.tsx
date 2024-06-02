@@ -87,25 +87,9 @@ export default function MarkdownStep(): JSX.Element {
 		OTEL_VERSION: '0.88.0',
 	};
 
-	const markdownDetailsForTracking = {
-		trackingTitle: 'Onboarding Markdown',
-		activeStep: activeStep?.step?.title,
-		serviceName,
-		selectedDataSource: selectedDataSource?.id,
-		selectedModule: selectedModule?.id,
-		selectedEnvironment,
-		selectedFramework,
-		selectedMethod,
-		path: getFilePath(),
-	};
-
 	return (
 		<div className="markdown-container">
-			<MarkdownRenderer
-				markdownContent={markdownContent}
-				variables={variables}
-				elementDetails={markdownDetailsForTracking}
-			/>
+			<MarkdownRenderer markdownContent={markdownContent} variables={variables} />
 		</div>
 	);
 }
