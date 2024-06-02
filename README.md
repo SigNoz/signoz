@@ -25,13 +25,13 @@
 
 SigNoz helps developers monitor applications and troubleshoot problems in their deployed applications. With SigNoz, you can:
 
-👉 Visualise Metrics, Traces and Logs in a single pane of glass
+👉 Visualise Metrics, Traces, and Logs in a single pane of glass
 
-👉 You can see metrics like p99 latency, error rates for your services, external API calls and individual end points.
+👉 You can see metrics like p99 latency, error rates for your services, external API calls, and individual endpoints.
 
-👉 You can find the root cause of the problem by going to the exact traces which are causing the problem and see detailed flamegraphs of individual request traces.
+👉 You can find the root cause of the problem by going to the exact traces that are causing the problem and seeing detailed flame graphs of individual request traces.
 
-👉 Run aggregates on trace data to get business relevant metrics
+👉 Run aggregates on trace data to get business-relevant metrics
 
 👉 Filter and query logs, build dashboards and alerts based on attributes in logs
 
@@ -80,15 +80,15 @@ Come say Hi to us on [Slack](https://signoz.io/slack) 👋
 
 ## Features:
 
-- Unified UI for metrics, traces and logs. No need to switch from Prometheus to Jaeger to debug issues, or use a logs tool like Elastic separate from your metrics and traces stack. 
+- Unified UI for metrics, traces, and logs. No need to switch from Prometheus to Jaeger to debug issues, or use a logs tool like Elastic separate from your metrics and traces stack. 
 - Application overview metrics like RPS, 50th/90th/99th Percentile latencies, and Error Rate
 - Slowest endpoints in your application
-- See exact request trace to figure out issues in downstream services, slow DB queries, call to 3rd party services like payment gateways, etc
+- See exact request trace to figure out issues in downstream services, slow DB queries, calls to 3rd party services like payment gateways, etc
 - Filter traces by service name, operation, latency, error, tags/annotations.
-- Run aggregates on trace data (events/spans) to get business relevant metrics. e.g. You can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
-- Native support for OpenTelemetry Logs, advanced log query builder, and automatic log collection from k8s cluster
+- Run aggregates on trace data (events/spans) to get business-relevant metrics. e.g. You can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
+- Native support for OpenTelemetry Logs, advanced log query builder, and automatic log collection from the k8s cluster
 - Lightning quick log analytics ([Logs Perf. Benchmark](https://signoz.io/blog/logs-performance-benchmark/))
-- End-to-End visibility into infrastructure performance, ingest metrics from all kinds of host environments
+- End-to-end visibility into infrastructure performance, ingest metrics from all kinds of host environments
 - Easy to set alerts with DIY query builder
 
 <br /><br />
@@ -96,15 +96,15 @@ Come say Hi to us on [Slack](https://signoz.io/slack) 👋
 
 ## Why SigNoz?
 
-Being developers, we found it annoying to rely on closed source SaaS vendors for every small feature we wanted. Closed source vendors often surprise you with huge month end bills without any transparency.
+Being developers, we found it annoying to rely on closed source SaaS vendors for every small feature we wanted. Closed-source vendors often surprise you with huge month-end bills without any transparency.
 
 We wanted to make a self-hosted & open source version of tools like DataDog, NewRelic for companies that have privacy and security concerns about having customer data going to third party services.
 
-Being open source also gives you complete control of your configuration, sampling, uptimes. You can also build modules over SigNoz to extend business specific capabilities
+Being open source also gives you complete control of your configuration, sampling, and uptimes. You can also build modules over SigNoz to extend business specific capabilities
 
 ### Languages supported:
 
-We support [OpenTelemetry](https://opentelemetry.io) as the library which you can use to instrument your applications. So any framework and language supported by OpenTelemetry is also supported by SigNoz. Some of the main supported languages are:
+We support [OpenTelemetry](https://opentelemetry.io) as the library that you can use to instrument your applications. So any framework and language supported by OpenTelemetry is also supported by SigNoz. Some of the main supported languages are:
 
 - Java
 - Python
