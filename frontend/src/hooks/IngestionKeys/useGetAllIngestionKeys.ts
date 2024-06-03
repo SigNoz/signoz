@@ -1,13 +1,15 @@
 import { getAllIngestionKeys } from 'api/IngestionKeys/getAllIngestionKeys';
 import { AxiosError, AxiosResponse } from 'axios';
 import { useQuery, UseQueryResult } from 'react-query';
-import { AllIngestionKeyProps } from 'types/api/ingestionKeys/types';
+import {
+	AllIngestionKeyProps,
+	GetIngestionKeyProps,
+} from 'types/api/ingestionKeys/types';
 
-export const useGetAllIngestionsKeys = (): UseQueryResult<
-	AxiosResponse<AllIngestionKeyProps>,
-	AxiosError
-> =>
+export const useGetAllIngestionsKeys = (
+	props: GetIngestionKeyProps,
+): UseQueryResult<AxiosResponse<AllIngestionKeyProps>, AxiosError> =>
 	useQuery<AxiosResponse<AllIngestionKeyProps>, AxiosError>({
-		queryKey: ['IngestionKeys'],
-		queryFn: () => getAllIngestionKeys(),
+		queryKey: [`IngestionKeys-${props.page}`],
+		queryFn: () => getAllIngestionKeys(props),
 	});

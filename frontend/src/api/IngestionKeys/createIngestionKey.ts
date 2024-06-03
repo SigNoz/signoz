@@ -11,8 +11,6 @@ const createIngestionKey = async (
 	props: CreateIngestionKeyProps,
 ): Promise<SuccessResponse<IngestionKeyProps> | ErrorResponse> => {
 	try {
-		console.log('props', props);
-
 		const response = await GatewayApiV1Instance.post('/workspaces/me/keys', {
 			...props,
 		});

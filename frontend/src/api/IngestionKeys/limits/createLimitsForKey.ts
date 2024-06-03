@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-throw-literal */
 import { GatewayApiV1Instance } from 'api';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import {
-	LimitProps,
+	AddLimitProps,
 	LimitSuccessProps,
 } from 'types/api/ingestionKeys/limits/types';
 
@@ -21,11 +21,11 @@ interface ErrorResponse {
 }
 
 const createLimitForIngestionKey = async (
-	props: LimitProps,
-): Promise<SuccessResponse<LimitSuccessProps> | AxiosError> => {
+	props: AddLimitProps,
+): Promise<SuccessResponse<LimitSuccessProps> | ErrorResponse> => {
 	try {
 		const response = await GatewayApiV1Instance.post(
-			`/workspaces/me/keys/${props.keyId}/limits`,
+			`/workspaces/me/keys/${props.keyID}/limits`,
 			{
 				...props,
 			},
@@ -39,8 +39,6 @@ const createLimitForIngestionKey = async (
 		};
 	} catch (error) {
 		if (axios.isAxiosError(error)) {
-			console.log('error', error);
-
 			// Axios error
 			const errResponse: ErrorResponse = {
 				statusCode: error.response?.status || 500,

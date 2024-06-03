@@ -9,6 +9,7 @@ export interface User {
 
 export interface Limit {
 	signal: string;
+	id: string;
 	config?: {
 		day?: {
 			size?: number;
@@ -32,15 +33,28 @@ export interface IngestionKeyProps {
 	limits?: Limit[];
 }
 
+export interface GetIngestionKeyProps {
+	page: number;
+	per_page: number;
+}
+
 export interface CreateIngestionKeyProps {
 	name: string;
 	expires_at: string;
 	tags: string[];
 }
 
+export interface PaginationProps {
+	page: number;
+	per_page: number;
+	pages?: number;
+	total?: number;
+}
+
 export interface AllIngestionKeyProps {
 	status: string;
 	data: IngestionKeyProps[];
+	_pagination: PaginationProps;
 }
 
 export interface CreateIngestionKeyProp {
@@ -55,7 +69,7 @@ export interface UpdateIngestionKeyProps {
 	id: string;
 	data: {
 		name: string;
-		expires_at?: number;
+		expires_at: string;
 		tags: string[];
 	};
 }

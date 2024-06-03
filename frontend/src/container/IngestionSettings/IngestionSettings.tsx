@@ -12,7 +12,8 @@ import {
 	Row,
 	Select,
 	Table,
-	TableProps,
+	TablePaginationConfig,
+	TableProps as AntDTableProps,
 	Tag,
 	Typography,
 } from 'antd';
@@ -20,10 +21,10 @@ import { NotificationInstance } from 'antd/es/notification/interface';
 import { CollapseProps } from 'antd/lib';
 import createIngestionKeyApi from 'api/IngestionKeys/createIngestionKey';
 import deleteIngestionKey from 'api/IngestionKeys/deleteIngestionKey';
-import deleteLimitsForIngestionKey from 'api/IngestionKeys/limits/deleteLimitsForIngestionKey';
 import createLimitForIngestionKeyApi from 'api/IngestionKeys/limits/createLimitsForKey';
+import deleteLimitsForIngestionKey from 'api/IngestionKeys/limits/deleteLimitsForIngestionKey';
+import updateLimitForIngestionKeyApi from 'api/IngestionKeys/limits/updateLimitsForIngestionKey';
 import updateIngestionKey from 'api/IngestionKeys/updateIngestionKey';
-import updateLimitForIngestionKey from 'api/IngestionKeys/limits/updateLimitsForIngestionKey';
 import { AxiosError } from 'axios';
 import Tags from 'components/Tags/Tags';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -49,10 +50,14 @@ import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
 import { AppState } from 'store/reducers';
-import { IngestionKeyProps, Limit } from 'types/api/ingestionKeys/types';
+import { ErrorResponse } from 'types/api';
+import { LimitProps } from 'types/api/ingestionKeys/limits/types';
+import {
+	IngestionKeyProps,
+	PaginationProps,
+} from 'types/api/ingestionKeys/types';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
-import { LimitProps, LimitsProps } from './Limits/Limits';
 
 const { Option } = Select;
 
@@ -91,20 +96,44 @@ function IngestionSettings(): JSX.Element {
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { notifications } = useNotifications();
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+	const [isDeleteLimitModalOpen, setIsDeleteLimitModalOpen] = useState(false);
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 	const [updatedTags, setUpdatedTags] = useState<string[]>([]);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [isEditAddLimitOpen, setIsEditAddLimitOpen] = useState(false);
 	const [activeAPIKey, setActiveAPIKey] = useState<IngestionKeyProps | null>();
-	const [activeSignal, setActiveSignal] = useState<string | null>(null);
+	const [activeSignal, setActiveSignal] = useState<LimitProps | null>(null);
 
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [dataSource, setDataSource] = useState<IngestionKeyProps[]>([]);
+	const [paginationParams, setPaginationParams] = useState<PaginationProps>({
+		page: 1,
+		per_page: 10,
+	});
+
+	const [totalIngestionKeys, setTotalIngestionKeys] = useState(0);
 
 	const [
 		hasCreateLimitForIngestionKeyError,
 		setHasCreateLimitForIngestionKeyError,
 	] = useState(false);
+
+	const [
+		createLimitForIngestionKeyError,
+		setCreateLimitForIngestionKeyError,
+	] = useState<ErrorResponse | null>(null);
+
+	const [
+		hasUpdateLimitForIngestionKeyError,
+		setHasUpdateLimitForIngestionKeyError,
+	] = useState(false);
+
+	const [
+		updateLimitForIngestionKeyError,
+		setUpdateLimitForIngestionKeyError,
+	] = useState<ErrorResponse | null>(null);
+
 	const { t } = useTranslation(['ingestionKeys']);
 
 	const [editForm] = Form.useForm();
@@ -118,12 +147,9 @@ function IngestionSettings(): JSX.Element {
 	};
 
 	const hideDeleteViewModal = (): void => {
-		console.log('hide delete modal');
 		setIsDeleteModalOpen(false);
 		setActiveAPIKey(null);
 		handleFormReset();
-
-		console.log('hide delete modal', activeAPIKey);
 	};
 
 	const showDeleteModal = (apiKey: IngestionKeyProps): void => {
@@ -132,13 +158,9 @@ function IngestionSettings(): JSX.Element {
 	};
 
 	const hideEditViewModal = (): void => {
-		console.log('hide edit modal');
-
 		setActiveAPIKey(null);
 		setIsEditModalOpen(false);
 		handleFormReset();
-
-		console.log('hide edit modal', activeAPIKey);
 	};
 
 	const hideAddViewModal = (): void => {
@@ -148,12 +170,17 @@ function IngestionSettings(): JSX.Element {
 	};
 
 	const showEditModal = (apiKey: IngestionKeyProps): void => {
-		console.log('show edit modal', apiKey);
-
 		setActiveAPIKey(apiKey);
 
 		handleFormReset();
 		setUpdatedTags(apiKey.tags || []);
+
+		editForm.setFieldsValue({
+			name: apiKey.name,
+			tags: apiKey.tags,
+			expires_at: dayjs(apiKey?.expires_at) || null,
+		});
+
 		setIsEditModalOpen(true);
 	};
 
@@ -164,7 +191,6 @@ function IngestionSettings(): JSX.Element {
 	};
 
 	const handleModalClose = (): void => {
-		console.log('modal close', activeAPIKey);
 		setActiveAPIKey(null);
 		setActiveSignal(null);
 	};
@@ -176,7 +202,7 @@ function IngestionSettings(): JSX.Element {
 		refetch: refetchAPIKeys,
 		error,
 		isError,
-	} = useGetAllIngestionsKeys();
+	} = useGetAllIngestionsKeys(paginationParams);
 
 	useEffect(() => {
 		setActiveAPIKey(IngestionKeys?.data.data[0]);
@@ -184,7 +210,9 @@ function IngestionSettings(): JSX.Element {
 
 	useEffect(() => {
 		setDataSource(IngestionKeys?.data.data || []);
-	}, [IngestionKeys?.data.data]);
+		setTotalIngestionKeys(IngestionKeys?.data?._pagination?.total || 0);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [IngestionKeys?.data?.data]);
 
 	useEffect(() => {
 		if (isError) {
@@ -251,18 +279,38 @@ function IngestionSettings(): JSX.Element {
 	const {
 		mutate: createLimitForIngestionKey,
 		isLoading: isLoadingLimitForKey,
-		error: createLimitForIngestionKeyError,
 	} = useMutation(createLimitForIngestionKeyApi, {
 		onSuccess: () => {
+			setActiveSignal(null);
+			setActiveAPIKey(null);
+			setIsEditAddLimitOpen(false);
 			setUpdatedTags([]);
 			hideAddViewModal();
 			refetchAPIKeys();
 			setHasCreateLimitForIngestionKeyError(false);
 		},
-		onError: (error) => {
-			console.log('on error', error);
+		onError: (error: ErrorResponse) => {
 			setHasCreateLimitForIngestionKeyError(true);
-			// showErrorNotification(notifications, error as AxiosError);
+			setCreateLimitForIngestionKeyError(error);
+		},
+	});
+
+	const {
+		mutate: updateLimitForIngestionKey,
+		isLoading: isLoadingUpdatedLimitForKey,
+	} = useMutation(updateLimitForIngestionKeyApi, {
+		onSuccess: () => {
+			setActiveSignal(null);
+			setActiveAPIKey(null);
+			setIsEditAddLimitOpen(false);
+			setUpdatedTags([]);
+			hideAddViewModal();
+			refetchAPIKeys();
+			setHasUpdateLimitForIngestionKeyError(false);
+		},
+		onError: (error: ErrorResponse) => {
+			setHasUpdateLimitForIngestionKeyError(true);
+			setUpdateLimitForIngestionKeyError(error);
 		},
 	});
 
@@ -270,8 +318,9 @@ function IngestionSettings(): JSX.Element {
 		deleteLimitsForIngestionKey,
 		{
 			onSuccess: () => {
-				refetchAPIKeys();
 				setIsDeleteModalOpen(false);
+				setIsDeleteLimitModalOpen(false);
+				refetchAPIKeys();
 			},
 			onError: (error) => {
 				showErrorNotification(notifications, error as AxiosError);
@@ -297,6 +346,7 @@ function IngestionSettings(): JSX.Element {
 						data: {
 							name: values.name,
 							tags: updatedTags,
+							expires_at: dayjs(values.expires_at).endOf('day').toISOString(),
 						},
 					});
 				}
@@ -339,12 +389,16 @@ function IngestionSettings(): JSX.Element {
 		APIKey: IngestionKeyProps,
 		signalName: string,
 	): void => {
-		setActiveSignal(signalName);
+		setActiveSignal({
+			id: signalName,
+			signal: signalName,
+			config: {},
+		});
 
 		const { dailyLimit, secondsLimit } = addEditLimitForm.getFieldsValue();
 
 		const payload = {
-			keyId: APIKey.id,
+			keyID: APIKey.id,
 			signal: signalName,
 			config: {
 				day: {
@@ -359,44 +413,25 @@ function IngestionSettings(): JSX.Element {
 		createLimitForIngestionKey(payload);
 	};
 
-	const enableEditLimitMode = (
+	const handleUpdateLimit = (
 		APIKey: IngestionKeyProps,
-		signalName: string,
+		signal: LimitProps,
 	): void => {
-		setActiveAPIKey(APIKey);
-		setActiveSignal(signalName);
-	};
-
-	const handleDeleteLimit = (
-		APIKey: IngestionKeyProps,
-		signal: LimitsProps,
-	): void => {
-		console.log('delete - api key', APIKey);
-		console.log('signalName key', signal);
-
-		if (signal) {
-			deleteLimitForKey(signal.id);
-		}
-	};
-
-	const handleDiscardSaveLimit = (): void => {
-		setHasCreateLimitForIngestionKeyError(false);
-		setActiveAPIKey(null);
-		setActiveSignal(null);
-
-		addEditLimitForm.resetFields();
-	};
-
-	const handleSaveLimit = (
-		APIKey: IngestionKeyProps,
-		signal: string,
-		addOrUpdate: string,
-	): void => {
-		if (addOrUpdate === 'add') {
-			handleAddLimit(APIKey, signal);
-		} else {
-			// handleAddLimit(APIKey, signal);
-		}
+		setActiveSignal(signal);
+		const { dailyLimit, secondsLimit } = addEditLimitForm.getFieldsValue();
+		const payload = {
+			limitID: signal.id,
+			signal: signal.signal,
+			config: {
+				day: {
+					size: parseInt(dailyLimit, 10) * BYTES,
+				},
+				second: {
+					size: parseInt(secondsLimit, 10) * BYTES,
+				},
+			},
+		};
+		updateLimitForIngestionKey(payload);
 	};
 
 	const getFormattedLimit = (size: number | undefined): number => {
@@ -407,7 +442,51 @@ function IngestionSettings(): JSX.Element {
 		return size / BYTES;
 	};
 
-	const columns: TableProps<IngestionKeyProps>['columns'] = [
+	const enableEditLimitMode = (
+		APIKey: IngestionKeyProps,
+		signal: LimitProps,
+	): void => {
+		setActiveAPIKey(APIKey);
+		setActiveSignal(signal);
+
+		addEditLimitForm.setFieldsValue({
+			dailyLimit: getFormattedLimit(signal?.config?.day?.size),
+			secondsLimit: getFormattedLimit(signal?.config?.second?.size),
+		});
+
+		setIsEditAddLimitOpen(true);
+	};
+
+	const onDeleteLimitHandler = (): void => {
+		if (activeSignal && activeSignal?.id) {
+			deleteLimitForKey(activeSignal.id);
+		}
+	};
+
+	const showDeleteLimitModal = (
+		APIKey: IngestionKeyProps,
+		limit: LimitProps,
+	): void => {
+		setActiveAPIKey(APIKey);
+		setActiveSignal(limit);
+		setIsDeleteLimitModalOpen(true);
+	};
+
+	const hideDeleteLimitModal = (): void => {
+		setIsDeleteLimitModalOpen(false);
+	};
+
+	const handleDiscardSaveLimit = (): void => {
+		setHasCreateLimitForIngestionKeyError(false);
+		setHasUpdateLimitForIngestionKeyError(false);
+		setIsEditAddLimitOpen(false);
+		setActiveAPIKey(null);
+		setActiveSignal(null);
+
+		addEditLimitForm.resetFields();
+	};
+
+	const columns: AntDTableProps<IngestionKeyProps>['columns'] = [
 		{
 			title: 'Ingestion Key',
 			key: 'ingestion-key',
@@ -419,15 +498,13 @@ function IngestionSettings(): JSX.Element {
 
 				const updatedOn = getFormattedTime(APIKey?.updated_at);
 
-				const limits: { [key: string]: Limit } = {};
+				const limits: { [key: string]: LimitProps } = {};
 
-				APIKey.limits?.forEach((limit: Limit) => {
+				APIKey.limits?.forEach((limit: LimitProps) => {
 					limits[limit.signal] = limit;
 				});
 
 				const hasLimits = (signal: string): boolean => !!limits[signal];
-
-				console.log('limits', limits);
 
 				const items: CollapseProps['items'] = [
 					{
@@ -533,7 +610,7 @@ function IngestionSettings(): JSX.Element {
 																		onClick={(e): void => {
 																			e.stopPropagation();
 																			e.preventDefault();
-																			enableEditLimitMode(APIKey, signal);
+																			enableEditLimitMode(APIKey, limits[signal]);
 																		}}
 																	/>
 
@@ -544,8 +621,7 @@ function IngestionSettings(): JSX.Element {
 																		onClick={(e): void => {
 																			e.stopPropagation();
 																			e.preventDefault();
-
-																			handleDeleteLimit(APIKey, limits[signal]);
+																			showDeleteLimitModal(APIKey, limits[signal]);
 																		}}
 																	/>
 																</>
@@ -560,7 +636,12 @@ function IngestionSettings(): JSX.Element {
 																	onClick={(e): void => {
 																		e.stopPropagation();
 																		e.preventDefault();
-																		enableEditLimitMode(APIKey, signal);
+
+																		enableEditLimitMode(APIKey, {
+																			id: signal,
+																			signal,
+																			config: {},
+																		});
 																	}}
 																>
 																	Limits
@@ -570,7 +651,9 @@ function IngestionSettings(): JSX.Element {
 													</div>
 
 													<div className="signal-limit-values">
-														{activeAPIKey?.id === APIKey.id && activeSignal === signal && (
+														{activeAPIKey?.id === APIKey.id &&
+														activeSignal?.signal === signal &&
+														isEditAddLimitOpen ? (
 															<Form
 																name="edit-ingestion-key-limit-form"
 																key="addEditLimitForm"
@@ -642,7 +725,7 @@ function IngestionSettings(): JSX.Element {
 																</div>
 
 																{activeAPIKey?.id === APIKey.id &&
-																	activeSignal === signal &&
+																	activeSignal.signal === signal &&
 																	!isLoadingLimitForKey &&
 																	hasCreateLimitForIngestionKeyError &&
 																	createLimitForIngestionKeyError &&
@@ -652,39 +735,55 @@ function IngestionSettings(): JSX.Element {
 																		</div>
 																	)}
 
-																{activeAPIKey?.id === APIKey.id && activeSignal === signal && (
-																	<div className="signal-limit-save-discard">
-																		<Button
-																			type="primary"
-																			className="periscope-btn primary"
-																			size="small"
-																			disabled={isLoadingLimitForKey}
-																			onClick={(): void => {
-																				handleSaveLimit(
-																					APIKey,
-																					signal,
-																					hasLimits(signal) ? 'update' : 'add',
-																				);
-																			}}
-																		>
-																			Save
-																		</Button>
-																		<Button
-																			type="default"
-																			className="periscope-btn"
-																			size="small"
-																			onClick={handleDiscardSaveLimit}
-																		>
-																			Discard
-																		</Button>
-																	</div>
-																)}
-															</Form>
-														)}
+																{activeAPIKey?.id === APIKey.id &&
+																	activeSignal.signal === signal &&
+																	!isLoadingLimitForKey &&
+																	hasUpdateLimitForIngestionKeyError &&
+																	updateLimitForIngestionKeyError && (
+																		<div className="error">
+																			{updateLimitForIngestionKeyError?.error}
+																		</div>
+																	)}
 
-														{(activeAPIKey?.id !== APIKey.id ||
-															!activeSignal ||
-															activeSignal !== signal) && (
+																{activeAPIKey?.id === APIKey.id &&
+																	activeSignal.signal === signal &&
+																	isEditAddLimitOpen && (
+																		<div className="signal-limit-save-discard">
+																			<Button
+																				type="primary"
+																				className="periscope-btn primary"
+																				size="small"
+																				disabled={
+																					isLoadingLimitForKey || isLoadingUpdatedLimitForKey
+																				}
+																				loading={
+																					isLoadingLimitForKey || isLoadingUpdatedLimitForKey
+																				}
+																				onClick={(): void => {
+																					if (!hasLimits(signal)) {
+																						handleAddLimit(APIKey, signal);
+																					} else {
+																						handleUpdateLimit(APIKey, limits[signal]);
+																					}
+																				}}
+																			>
+																				Save
+																			</Button>
+																			<Button
+																				type="default"
+																				className="periscope-btn"
+																				size="small"
+																				disabled={
+																					isLoadingLimitForKey || isLoadingUpdatedLimitForKey
+																				}
+																				onClick={handleDiscardSaveLimit}
+																			>
+																				Discard
+																			</Button>
+																		</div>
+																	)}
+															</Form>
+														) : (
 															<div className="signal-limit-view-mode">
 																<div className="signal-limit-value">
 																	<div className="limit-type">
@@ -751,6 +850,13 @@ function IngestionSettings(): JSX.Element {
 		},
 	];
 
+	const handleTableChange = (pagination: TablePaginationConfig): void => {
+		setPaginationParams({
+			page: pagination?.current || 1,
+			per_page: 10,
+		});
+	};
+
 	return (
 		<div className="ingestion-key-container">
 			<div className="ingestion-key-content">
@@ -783,11 +889,13 @@ function IngestionSettings(): JSX.Element {
 					dataSource={dataSource}
 					loading={isLoading || isRefetching}
 					showHeader={false}
+					onChange={handleTableChange}
 					pagination={{
-						pageSize: 5,
+						pageSize: paginationParams?.per_page,
 						hideOnSinglePage: true,
 						showTotal: (total: number, range: number[]): string =>
 							`${range[0]}-${range[1]} of ${total} Ingestion keys`,
+						total: totalIngestionKeys,
 					}}
 				/>
 			</div>
@@ -828,12 +936,49 @@ function IngestionSettings(): JSX.Element {
 				</Typography.Text>
 			</Modal>
 
+			{/* Delete Limit Modal */}
+			<Modal
+				className="delete-ingestion-key-modal"
+				title={<span className="title">Delete Limit </span>}
+				open={isDeleteLimitModalOpen}
+				closable
+				afterClose={handleModalClose}
+				onCancel={hideDeleteLimitModal}
+				destroyOnClose
+				footer={[
+					<Button
+						key="cancel"
+						onClick={hideDeleteLimitModal}
+						className="cancel-btn"
+						icon={<X size={16} />}
+					>
+						Cancel
+					</Button>,
+					<Button
+						key="submit"
+						icon={<Trash2 size={16} />}
+						loading={isDeletingLimit}
+						onClick={onDeleteLimitHandler}
+						className="delete-btn"
+					>
+						Delete Limit
+					</Button>,
+				]}
+			>
+				<Typography.Text className="delete-text">
+					{t('delete_limit_confirm_message', {
+						limit_name: activeSignal?.signal,
+						keyName: activeAPIKey?.name,
+					})}
+				</Typography.Text>
+			</Modal>
+
 			{/* Edit Modal */}
 			<Modal
 				className="ingestion-key-modal"
-				title="Edit token"
+				title="Edit Ingestion Key"
 				open={isEditModalOpen}
-				key={`edit-ingestion-key-modal-${activeAPIKey}`}
+				key="edit-ingestion-key-modal"
 				closable
 				onCancel={hideEditViewModal}
 				afterClose={handleModalClose}
