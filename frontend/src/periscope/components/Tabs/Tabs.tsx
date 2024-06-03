@@ -1,4 +1,6 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import { Tabs as AntDTabs, TabsProps } from 'antd';
+import React from 'react';
 
 export interface TabProps {
 	label: string | React.ReactElement;
@@ -6,6 +8,6 @@ export interface TabProps {
 	children: React.ReactElement;
 }
 
-export default function Tabs(props: TabsProps) {
+export default function Tabs(props: TabsProps): React.ReactNode {
 	return <AntDTabs {...props} />;
 }
