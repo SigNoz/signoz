@@ -135,7 +135,7 @@ export function DurationSection(props: DurationProps): JSX.Element {
 				<Input
 					type="number"
 					addonBefore="MAX"
-					placeholder="10000"
+					placeholder="100000000"
 					className="min-max-input"
 					onChange={onChangeMaxHandler}
 					value={preMax}
@@ -145,7 +145,7 @@ export function DurationSection(props: DurationProps): JSX.Element {
 			<div>
 				<Slider
 					min={0}
-					max={10000}
+					max={100000000}
 					range
 					tooltip={{ formatter: TipComponent }}
 					onChange={([min, max]): void => {

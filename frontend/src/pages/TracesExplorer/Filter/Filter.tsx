@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import { Button, Flex, Tooltip, Typography } from 'antd';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isEqual, isUndefined } from 'lodash-es';
 import {
@@ -43,10 +44,14 @@ export function Filter(props: FilterProps): JSX.Element {
 	>();
 
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const compositeQuery = useGetCompositeQueryParam();
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const syncSelectedFilters = useMemo((): FilterType => {
-		const filters = currentQuery.builder.queryData?.[0].filters;
+		const filters = compositeQuery?.builder.queryData?.[0].filters;
+		if (!filters) {
+			return {} as FilterType;
+		}
 
 		let durationValue: { min?: string; max?: string } = {};
 		let durationKey;
@@ -109,7 +114,7 @@ export function Filter(props: FilterProps): JSX.Element {
 					},
 			  }
 			: filterRet;
-	}, [currentQuery]);
+	}, [compositeQuery]);
 
 	useEffect(() => {
 		if (!isEqual(syncSelectedFilters, selectedFilters)) {

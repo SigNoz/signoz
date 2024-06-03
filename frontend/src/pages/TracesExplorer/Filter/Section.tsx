@@ -60,6 +60,7 @@ export function Section(props: SectionProps): JSX.Element {
 											type={panelName}
 											selectedFilters={selectedFilters}
 											setSelectedFilters={setSelectedFilters}
+											handleRun={handleRun}
 										/>
 									),
 									label: AllTraceFilterKeyValue[panelName],

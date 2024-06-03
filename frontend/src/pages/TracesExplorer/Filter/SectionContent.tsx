@@ -19,6 +19,7 @@ import {
 	addFilter,
 	AllTraceFilterKeys,
 	FilterType,
+	HandleRunProps,
 	removeFilter,
 	statusFilterOption,
 	useGetAggregateValues,
@@ -28,10 +29,11 @@ interface SectionBodyProps {
 	type: AllTraceFilterKeys;
 	selectedFilters: FilterType | undefined;
 	setSelectedFilters: Dispatch<SetStateAction<FilterType | undefined>>;
+	handleRun: (props?: HandleRunProps) => void;
 }
 
 export function SectionBody(props: SectionBodyProps): JSX.Element {
-	const { type, setSelectedFilters, selectedFilters } = props;
+	const { type, setSelectedFilters, selectedFilters, handleRun } = props;
 	const [visibleItemsCount, setVisibleItemsCount] = useState(10);
 	const [searchFilter, setSearchFilter] = useState<string>('');
 	const [checkedItems, setCheckedItems] = useState<string[]>(
@@ -91,6 +93,9 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 				}
 				return prev;
 			});
+		} else if (checkedItems.length === 1) {
+			handleRun({ clearByType: type });
+			setCheckedItems([]);
 		} else {
 			removeFilter(type, newValue, setSelectedFilters, keys);
 			setCheckedItems((prev) => prev.filter((item) => item !== newValue));
