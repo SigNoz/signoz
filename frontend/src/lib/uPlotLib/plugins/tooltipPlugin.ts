@@ -30,6 +30,7 @@ const generateTooltipContent = (
 	series?: uPlot.Options['series'],
 	isBillingUsageGraphs?: boolean,
 	isHistogramGraphs?: boolean,
+	isMergedSeries?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -50,7 +51,9 @@ const generateTooltipContent = (
 	}
 
 	if (Array.isArray(series) && series.length > 0) {
+		console.log(series);
 		series.forEach((item, index) => {
+			console.log(item, index);
 			if (index === 0) {
 				if (isBillingUsageGraphs) {
 					tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY');
@@ -68,7 +71,9 @@ const generateTooltipContent = (
 
 				const value = data[index][idx];
 				const dataIngested = quantity[idx];
-				const label = getLabelName(metric, queryName || '', legend || '');
+				const label = isMergedSeries
+					? 'merged_series'
+					: getLabelName(metric, queryName || '', legend || '');
 
 				let color = generateColor(label, themeColors.chartcolors);
 
@@ -197,6 +202,7 @@ type ToolTipPluginProps = {
 	yAxisUnit?: string;
 	isBillingUsageGraphs?: boolean;
 	isHistogramGraphs?: boolean;
+	isMergedSeries?: boolean;
 };
 
 const tooltipPlugin = ({
@@ -204,6 +210,7 @@ const tooltipPlugin = ({
 	yAxisUnit,
 	isBillingUsageGraphs,
 	isHistogramGraphs,
+	isMergedSeries,
 }: ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
@@ -266,6 +273,7 @@ const tooltipPlugin = ({
 							u.series,
 							isBillingUsageGraphs,
 							isHistogramGraphs,
+							isMergedSeries,
 						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });

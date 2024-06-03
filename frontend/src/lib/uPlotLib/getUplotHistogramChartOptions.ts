@@ -26,6 +26,7 @@ type GetUplotHistogramChartOptionsProps = {
 	currentQuery?: Query;
 	graphsVisibilityStates?: boolean[];
 	setGraphsVisibilityStates?: Dispatch<SetStateAction<boolean[]>>;
+	mergeAllQueries?: boolean;
 };
 
 type GetHistogramSeriesProps = {
@@ -33,6 +34,7 @@ type GetHistogramSeriesProps = {
 	currentQuery?: Query;
 	widgetMetaData?: QueryData[];
 	graphsVisibilityStates?: boolean[];
+	isMergedSeries?: boolean;
 };
 
 const { bars } = uPlot.paths;
@@ -53,6 +55,7 @@ const getHistogramSeries = ({
 	currentQuery,
 	widgetMetaData,
 	graphsVisibilityStates,
+	isMergedSeries,
 }: GetHistogramSeriesProps): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
@@ -71,7 +74,9 @@ const getHistogramSeries = ({
 
 		const legend = newLegend || lgd || '';
 
-		const label = getLabelName(metric, queryName || '', legend);
+		const label = isMergedSeries
+			? 'merged_series'
+			: getLabelName(metric, queryName || '', legend);
 
 		const color = generateColor(label, themeColors.chartcolors);
 
@@ -108,13 +113,14 @@ export const getUplotHistogramChartOptions = ({
 	currentQuery,
 	graphsVisibilityStates,
 	setGraphsVisibilityStates,
+	mergeAllQueries,
 }: GetUplotHistogramChartOptionsProps): uPlot.Options =>
 	({
 		id,
 		width: dimensions.width,
 		height: dimensions.height - 30,
 		legend: {
-			show: true,
+			show: !mergeAllQueries,
 			live: false,
 			isolate: true,
 		},
@@ -122,7 +128,13 @@ export const getUplotHistogramChartOptions = ({
 			alpha: 0.3,
 		},
 		padding: [16, 16, 8, 8],
-		plugins: [tooltipPlugin({ apiResponse, isHistogramGraphs: true })],
+		plugins: [
+			tooltipPlugin({
+				apiResponse,
+				isHistogramGraphs: true,
+				isMergedSeries: mergeAllQueries,
+			}),
+		],
 		scales: {
 			x: {
 				time: false,
@@ -144,6 +156,7 @@ export const getUplotHistogramChartOptions = ({
 			widgetMetaData: apiResponse?.data.result,
 			currentQuery,
 			graphsVisibilityStates,
+			isMergedSeries: mergeAllQueries,
 		}),
 		hooks: {
 			ready: [

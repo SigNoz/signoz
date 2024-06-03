@@ -26,6 +26,9 @@ function HistogramPanelWrapper({
 
 	const histogramData = buildHistogramData(
 		queryResponse.data?.payload.data.result,
+		widget?.bucketWidth,
+		widget?.bucketCount,
+		widget?.mergeAllActiveQueries,
 	);
 
 	useEffect(() => {
@@ -63,6 +66,7 @@ function HistogramPanelWrapper({
 				panelType: widget.panelTypes,
 				setGraphsVisibilityStates: setGraphVisibility,
 				graphsVisibilityStates: graphVisibility,
+				mergeAllQueries: widget.mergeAllActiveQueries,
 			}),
 		[
 			containerDimensions,
@@ -72,6 +76,7 @@ function HistogramPanelWrapper({
 			queryResponse.data?.payload,
 			setGraphVisibility,
 			widget.id,
+			widget.mergeAllActiveQueries,
 			widget.panelTypes,
 		],
 	);
@@ -79,7 +84,7 @@ function HistogramPanelWrapper({
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			<Uplot options={histogramOptions} data={histogramData} ref={lineChartRef} />
-			{isFullViewMode && setGraphVisibility && (
+			{isFullViewMode && setGraphVisibility && !widget.mergeAllActiveQueries && (
 				<GraphManager
 					data={histogramData}
 					name={widget.id}

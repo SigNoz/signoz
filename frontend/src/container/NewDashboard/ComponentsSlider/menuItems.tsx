@@ -42,7 +42,7 @@ const Items: ItemsProps[] = [
 	},
 	{
 		name: PANEL_TYPES.HISTOGRAM,
-		icon: <BarChart3 size={32} color={Color.BG_ROBIN_400} />,
+		icon: <BarChart3 size={16} color={Color.BG_ROBIN_400} />,
 		display: 'Histogram',
 	},
 ];
