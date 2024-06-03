@@ -30,6 +30,7 @@ import Tags from 'components/Tags/Tags';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs, { Dayjs } from 'dayjs';
 import { useGetAllIngestionsKeys } from 'hooks/IngestionKeys/useGetAllIngestionKeys';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import {
 	CalendarClock,
@@ -106,6 +107,7 @@ function IngestionSettings(): JSX.Element {
 	const [activeSignal, setActiveSignal] = useState<LimitProps | null>(null);
 
 	const [searchValue, setSearchValue] = useState<string>('');
+	const [searchText, setSearchText] = useState<string>('');
 	const [dataSource, setDataSource] = useState<IngestionKeyProps[]>([]);
 	const [paginationParams, setPaginationParams] = useState<PaginationProps>({
 		page: 1,
@@ -202,7 +204,10 @@ function IngestionSettings(): JSX.Element {
 		refetch: refetchAPIKeys,
 		error,
 		isError,
-	} = useGetAllIngestionsKeys(paginationParams);
+	} = useGetAllIngestionsKeys({
+		search: searchText,
+		...paginationParams,
+	});
 
 	useEffect(() => {
 		setActiveAPIKey(IngestionKeys?.data.data[0]);
@@ -220,15 +225,13 @@ function IngestionSettings(): JSX.Element {
 		}
 	}, [error, isError, notifications]);
 
+	const handleDebouncedSearch = useDebouncedFn((searchText): void => {
+		setSearchText(searchText as string);
+	}, 500);
+
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setSearchValue(e.target.value);
-		const filteredData = IngestionKeys?.data?.data?.filter(
-			(key: IngestionKeyProps) =>
-				key &&
-				key.name &&
-				key.name.toLowerCase().includes(e.target.value.toLowerCase()),
-		);
-		setDataSource(filteredData || []);
+		handleDebouncedSearch(e.target.value || '');
 	};
 
 	const clearSearch = (): void => {

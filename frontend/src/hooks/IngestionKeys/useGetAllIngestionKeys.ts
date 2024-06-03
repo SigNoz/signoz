@@ -10,6 +10,6 @@ export const useGetAllIngestionsKeys = (
 	props: GetIngestionKeyProps,
 ): UseQueryResult<AxiosResponse<AllIngestionKeyProps>, AxiosError> =>
 	useQuery<AxiosResponse<AllIngestionKeyProps>, AxiosError>({
-		queryKey: [`IngestionKeys-${props.page}`],
+		queryKey: [`IngestionKeys-${props.page}-${props.search}`],
 		queryFn: () => getAllIngestionKeys(props),
 	});
