@@ -50,7 +50,7 @@ function WidgetGraphContainer({
 	}
 	if (
 		selectedGraph === PANEL_TYPES.LIST &&
-		queryResponse.data?.payload.data.newResult?.data?.result?.length === 0
+		queryResponse.data?.payload?.data?.newResult?.data?.result?.length === 0
 	) {
 		return (
 			<NotFoundContainer>

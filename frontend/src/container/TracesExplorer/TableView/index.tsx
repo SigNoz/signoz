@@ -45,7 +45,7 @@ function TableView(): JSX.Element {
 		<Space.Compact block direction="vertical">
 			<QueryTable
 				query={stagedQuery || initialQueriesMap.traces}
-				queryTableData={data?.payload.data.newResult.data.result || []}
+				queryTableData={data?.payload?.data?.newResult?.data?.result || []}
 				loading={isLoading}
 			/>
 		</Space.Compact>
