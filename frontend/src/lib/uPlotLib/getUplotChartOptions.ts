@@ -62,19 +62,29 @@ function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
 
 	return series;
 }
-
-function getStackedSeriesYAxis(apiResponse: QueryDataV3[]): QueryData[] {
+function getStackedSeries1(apiResponse: QueryData[]): QueryData[] {
 	const series = cloneDeep(apiResponse);
 
 	for (let i = 1; i < series.length; i++) {
 		const { values } = series[i];
+		console.log(values);
 		for (let j = 0; j < values.length; j++) {
-			values[j][1] = String(
-				parseFloat(values[j][1]) + parseFloat(series[i - 1].values[j][1]),
+			values[j].value = String(
+				parseFloat(values[j].value) + parseFloat(series[i - 1].values[j].value),
 			);
 		}
 
 		series[i].values = values;
+	}
+
+	return series;
+}
+
+function getStackedSeriesYAxis(apiResponse: QueryDataV3[]): QueryDataV3[] {
+	const series = cloneDeep(apiResponse);
+
+	for (let i = 0; i < series.length; i++) {
+		series[i].series = getStackedSeries1(series[i].series);
 	}
 
 	return series;
@@ -101,11 +111,6 @@ export const getUPlotChartOptions = ({
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
 	const series = getStackedSeries(apiResponse?.data?.result);
-
-	console.log(
-		apiResponse?.data?.newResult?.data?.result,
-		apiResponse?.data?.result,
-	);
 
 	return {
 		id,
