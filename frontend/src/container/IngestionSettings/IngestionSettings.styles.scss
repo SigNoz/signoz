@@ -343,6 +343,10 @@
 					margin-top: 8px;
 					margin-bottom: 16px;
 
+					.edit-ingestion-key-limit-form {
+						width: 100%;
+					}
+
 					.ant-form-item {
 						margin-bottom: 12px;
 					}
@@ -385,6 +389,15 @@
 								display: flex;
 								align-items: center;
 								gap: 8px;
+							}
+
+							.limit-value {
+								display: flex;
+								align-items: center;
+								gap: 8px;
+
+								font-size: 12px;
+								font-weight: 600;
 							}
 						}
 					}
@@ -652,6 +665,11 @@
 	font-weight: 400;
 	line-height: 160%;
 	letter-spacing: 0.013px;
+}
+
+.error {
+	color: var(--bg-cherry-500);
+	margin-bottom: 8px;
 }
 
 .save-discard-changes {

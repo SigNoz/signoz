@@ -45,7 +45,7 @@ export interface LimitProps {
 	enabled: boolean;
 }
 
-interface LimitsProps {
+export interface LimitsProps {
 	id: string;
 	onLimitUpdate: (
 		id: string,

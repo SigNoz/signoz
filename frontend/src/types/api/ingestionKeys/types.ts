@@ -8,9 +8,16 @@ export interface User {
 }
 
 export interface Limit {
-	signal: string,
-	config: Record<string, unknown>,
-	tags?: []
+	signal: string;
+	config?: {
+		day?: {
+			size?: number;
+		};
+		second?: {
+			size?: number;
+		};
+	};
+	tags?: [];
 }
 
 export interface IngestionKeyProps {
