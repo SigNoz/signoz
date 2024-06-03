@@ -17,3 +17,11 @@
 		align-items: center;
 	}
 }
+
+.lightMode {
+	.column-unit-selector {
+		.heading {
+			color: var(--bg-ink-400);
+		}
+	}
+}
