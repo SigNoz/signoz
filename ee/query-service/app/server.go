@@ -142,6 +142,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 			return nil, err
 		}
 	} else {
+		zap.L().Info("Enabling gateway feature flag ...")
 		gatewayFeature.Active = true
 		gatewayProxy, err = gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
 		if err != nil {
