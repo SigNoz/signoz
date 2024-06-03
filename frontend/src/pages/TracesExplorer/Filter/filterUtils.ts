@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
+import { isArray } from 'lodash-es';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import {
 	BaseAutocompleteData,
@@ -9,7 +10,9 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 export const AllTraceFilterKeyValue = {
+	durationNanoMin: 'Duration',
 	durationNano: 'Duration',
+	durationNanoMax: 'Duration',
 	hasError: 'Status',
 	serviceName: 'Service Name',
 	name: 'Operation / Name',
@@ -35,7 +38,7 @@ export const statusFilterOption = ['Error', 'Ok'];
 
 export type FilterType = Record<
 	AllTraceFilterKeys,
-	{ values: string[]; keys: BaseAutocompleteData }
+	{ values: string[] | string; keys: BaseAutocompleteData }
 >;
 
 export const addFilter = (
@@ -45,7 +48,7 @@ export const addFilter = (
 		SetStateAction<
 			| Record<
 					AllTraceFilterKeys,
-					{ values: string[]; keys: BaseAutocompleteData }
+					{ values: string[] | string; keys: BaseAutocompleteData }
 			  >
 			| undefined
 		>
@@ -53,17 +56,23 @@ export const addFilter = (
 	keys?: BaseAutocompleteData,
 ): void => {
 	setSelectedFilters((prevFilters) => {
+		const isDuration = [
+			'durationNanoMax',
+			'durationNanoMin',
+			'durationNano',
+		].includes(filterType);
+
 		// If previous filters are undefined, initialize them
 		if (!prevFilters) {
 			return ({
-				[filterType]: { values: [value], keys },
+				[filterType]: { values: isDuration ? value : [value], keys },
 			} as unknown) as FilterType;
 		}
 		// If the filter type doesn't exist, initialize it
 		if (!prevFilters[filterType]?.values.length) {
 			return {
 				...prevFilters,
-				[filterType]: { values: [value], keys },
+				[filterType]: { values: isDuration ? value : [value], keys },
 			};
 		}
 		// If the value already exists, don't add it again
@@ -74,7 +83,7 @@ export const addFilter = (
 		return {
 			...prevFilters,
 			[filterType]: {
-				values: [...prevFilters[filterType].values, value],
+				values: isDuration ? value : [...prevFilters[filterType].values, value],
 				keys,
 			},
 		};
@@ -89,7 +98,7 @@ export const removeFilter = (
 		SetStateAction<
 			| Record<
 					AllTraceFilterKeys,
-					{ values: string[]; keys: BaseAutocompleteData }
+					{ values: string[] | string; keys: BaseAutocompleteData }
 			  >
 			| undefined
 		>
@@ -101,9 +110,10 @@ export const removeFilter = (
 			return prevFilters;
 		}
 
-		const updatedValues = prevFilters[filterType]?.values.filter(
-			(item) => item !== value,
-		);
+		const prevValue = prevFilters[filterType]?.values;
+		const updatedValues = !isArray(prevValue)
+			? prevValue
+			: prevValue?.filter((item: any) => item !== value);
 
 		if (updatedValues.length === 0) {
 			const { [filterType]: item, ...remainingFilters } = prevFilters;
@@ -238,6 +248,22 @@ export const traceFilterKeys: Record<
 		isColumn: true,
 		isJSON: false,
 		id: 'traceID--string--tag--true',
+	},
+	durationNanoMin: {
+		key: 'durationNanoMin',
+		dataType: DataTypes.Float64,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'durationNanoMin--float64--tag--true',
+	},
+	durationNanoMax: {
+		key: 'durationNanoMax',
+		dataType: DataTypes.Float64,
+		type: 'tag',
+		isColumn: true,
+		isJSON: false,
+		id: 'durationNanoMax--float64--tag--true',
 	},
 };
 

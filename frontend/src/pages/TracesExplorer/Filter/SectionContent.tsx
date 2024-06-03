@@ -37,14 +37,15 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 	const [visibleItemsCount, setVisibleItemsCount] = useState(10);
 	const [searchFilter, setSearchFilter] = useState<string>('');
 	const [checkedItems, setCheckedItems] = useState<string[]>(
-		defaultTo(selectedFilters?.[type]?.values, []),
+		defaultTo(selectedFilters?.[type]?.values as string[], []),
 	);
 
 	const [results, setResults] = useState<string[]>([]);
 	const [isFetching, setFetching] = useState<boolean>(false);
 
 	useEffect(
-		() => setCheckedItems(defaultTo(selectedFilters?.[type]?.values, [])),
+		() =>
+			setCheckedItems(defaultTo(selectedFilters?.[type]?.values as string[], [])),
 		[selectedFilters, type],
 	);
 	const debouncedSearchText = useDebounce(searchFilter, DEBOUNCE_DELAY);

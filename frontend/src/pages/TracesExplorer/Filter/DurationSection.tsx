@@ -1,7 +1,7 @@
 import { Input, Slider } from 'antd';
 import { SliderRangeProps } from 'antd/es/slider';
+import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { isUndefined } from 'lodash-es';
 import {
 	ChangeEventHandler,
 	Dispatch,
@@ -11,37 +11,29 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { addFilter, FilterType } from './filterUtils';
+import { addFilter, FilterType, traceFilterKeys } from './filterUtils';
 
 interface DurationProps {
 	selectedFilters: FilterType | undefined;
 	setSelectedFilters: Dispatch<SetStateAction<FilterType | undefined>>;
 }
 
-const durationKey: BaseAutocompleteData = {
-	key: 'durationNano',
-	dataType: DataTypes.Float64,
-	type: 'tag',
-	isColumn: true,
-	isJSON: false,
-	id: 'durationNano--float64--tag--true',
-};
-
 export function DurationSection(props: DurationProps): JSX.Element {
 	const { setSelectedFilters, selectedFilters } = props;
 
 	const getDuration = useMemo(() => {
-		const selectedDuration = selectedFilters?.durationNano;
-
-		if (selectedDuration) {
+		if (selectedFilters?.durationNanoMin || selectedFilters?.durationNanoMax) {
 			return {
-				maxDuration: selectedDuration.values?.[1] || '',
-				minDuration: selectedDuration.values?.[0] || '',
+				minDuration: selectedFilters?.durationNanoMin?.values || '',
+				maxDuration: selectedFilters?.durationNanoMax?.values || '',
+			};
+		}
+
+		if (selectedFilters?.durationNano) {
+			return {
+				minDuration: getMs(selectedFilters?.durationNano?.values?.[0] || ''),
+				maxDuration: getMs(selectedFilters?.durationNano?.values?.[1] || ''),
 			};
 		}
 
@@ -55,25 +47,16 @@ export function DurationSection(props: DurationProps): JSX.Element {
 	const [preMin, setPreMin] = useState<string>('');
 
 	useEffect(() => {
-		if (!isUndefined(getDuration.maxDuration)) {
-			setPreMax(getDuration.maxDuration);
-		}
-		if (!isUndefined(getDuration.minDuration)) {
-			setPreMin(getDuration.minDuration);
-		}
+		setPreMax(getDuration.maxDuration as string);
+		setPreMin(getDuration.minDuration as string);
 	}, [getDuration]);
 
 	const updateDurationFilter = (min: string, max: string): void => {
-		setSelectedFilters((prevFilters) => {
-			const type = 'durationNano';
-			if (!prevFilters || !prevFilters[type]?.values.length) {
-				return prevFilters;
-			}
+		const durationMin = 'durationNanoMin';
+		const durationMax = 'durationNanoMax';
 
-			return { ...prevFilters, [type]: [] } as any;
-		});
-		addFilter('durationNano', min || '0', setSelectedFilters, durationKey);
-		addFilter('durationNano', max, setSelectedFilters, durationKey);
+		addFilter(durationMin, min, setSelectedFilters, traceFilterKeys.durationNano);
+		addFilter(durationMax, max, setSelectedFilters, traceFilterKeys.durationNano);
 	};
 
 	const onRangeSliderHandler = (number: [string, string]): void => {
@@ -145,7 +128,7 @@ export function DurationSection(props: DurationProps): JSX.Element {
 			<div>
 				<Slider
 					min={0}
-					max={100000000}
+					max={100000}
 					range
 					tooltip={{ formatter: TipComponent }}
 					onChange={([min, max]): void => {

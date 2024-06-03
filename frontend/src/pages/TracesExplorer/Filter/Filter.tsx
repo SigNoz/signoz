@@ -10,7 +10,7 @@ import { Button, Flex, Tooltip, Typography } from 'antd';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { isEqual, isUndefined } from 'lodash-es';
+import { isArray, isEqual } from 'lodash-es';
 import {
 	Dispatch,
 	SetStateAction,
@@ -40,7 +40,10 @@ interface FilterProps {
 export function Filter(props: FilterProps): JSX.Element {
 	const { setOpen } = props;
 	const [selectedFilters, setSelectedFilters] = useState<
-		Record<AllTraceFilterKeys, { values: string[]; keys: BaseAutocompleteData }>
+		Record<
+			AllTraceFilterKeys,
+			{ values: string[] | string; keys: BaseAutocompleteData }
+		>
 	>();
 
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
@@ -53,9 +56,7 @@ export function Filter(props: FilterProps): JSX.Element {
 			return {} as FilterType;
 		}
 
-		let durationValue: { min?: string; max?: string } = {};
-		let durationKey;
-		const filterRet = filters.items
+		return filters.items
 			.filter((item) =>
 				Object.keys(AllTraceFilterKeyValue).includes(item.key?.key as string),
 			)
@@ -71,11 +72,16 @@ export function Filter(props: FilterProps): JSX.Element {
 
 				if ((attributeName as AllTraceFilterKeys) === 'durationNano') {
 					if (item.op === '>=') {
-						durationValue = { ...durationValue, min: item.value as string };
+						acc.durationNanoMin = {
+							values: getMs(String(values)),
+							keys,
+						};
 					} else {
-						durationValue = { ...durationValue, max: item.value as string };
+						acc.durationNanoMax = {
+							values: getMs(String(values)),
+							keys,
+						};
 					}
-					durationKey = keys;
 					return acc;
 				}
 
@@ -93,27 +99,6 @@ export function Filter(props: FilterProps): JSX.Element {
 
 				return acc;
 			}, {} as FilterType);
-
-		const durationFinValue = [];
-		if (!isUndefined(durationValue.min)) {
-			durationFinValue.push(getMs(String(durationValue.min)));
-		} else if (durationValue.max) {
-			durationFinValue.push(getMs('0'));
-		}
-
-		if (!isUndefined(durationValue.max)) {
-			durationFinValue.push(getMs(String(durationValue.max)));
-		}
-
-		return durationKey && durationFinValue.length
-			? {
-					...filterRet,
-					durationNano: {
-						keys: durationKey,
-						values: durationFinValue,
-					},
-			  }
-			: filterRet;
 	}, [compositeQuery]);
 
 	useEffect(() => {
@@ -127,30 +112,58 @@ export function Filter(props: FilterProps): JSX.Element {
 		if (!selectedFilters) {
 			return [];
 		}
+
 		const items = Object.keys(selectedFilters)?.flatMap((attribute) => {
 			const { keys, values } = selectedFilters[attribute as AllTraceFilterKeys];
-			if ((attribute as AllTraceFilterKeys) === 'durationNano') {
-				if (!values.length) {
+			if (
+				['durationNanoMax', 'durationNanoMin', 'durationNano'].includes(
+					attribute as AllTraceFilterKeys,
+				)
+			) {
+				if (!values || !values.length) {
 					return [];
 				}
-				const minValue = values[0];
-				const maxValue = values[1];
+				let minValue = '';
+				let maxValue = '';
 
-				const minItems: TagFilterItem = {
-					id: uuid().slice(0, 8),
-					op: '>=',
-					key: keys,
-					value: parseInt(minValue, 10) * 1000000,
-				};
+				const durationItems: TagFilterItem[] = [];
 
-				const maxItems: TagFilterItem = {
-					id: uuid().slice(0, 8),
-					op: '<=',
-					key: keys,
-					value: parseInt(maxValue, 10) * 1000000,
-				};
+				if (isArray(values)) {
+					minValue = values?.[0];
+					maxValue = values?.[1];
 
-				return maxValue ? [minItems, maxItems] : [minItems];
+					const minItems: TagFilterItem = {
+						id: uuid().slice(0, 8),
+						op: '>=',
+						key: keys,
+						value: Number(minValue) * 1000000,
+					};
+
+					const maxItems: TagFilterItem = {
+						id: uuid().slice(0, 8),
+						op: '<=',
+						key: keys,
+						value: Number(maxValue) * 1000000,
+					};
+					return maxValue ? [minItems, maxItems] : [minItems];
+				}
+				if (attribute === 'durationNanoMin') {
+					durationItems.push({
+						id: uuid().slice(0, 8),
+						op: '>=',
+						key: keys,
+						value: Number(values) * 1000000,
+					});
+				} else {
+					durationItems.push({
+						id: uuid().slice(0, 8),
+						op: '<=',
+						key: keys,
+						value: Number(values) * 1000000,
+					});
+				}
+
+				return durationItems;
 			}
 			return {
 				id: uuid().slice(0, 8),
@@ -217,7 +230,9 @@ export function Filter(props: FilterProps): JSX.Element {
 				</Tooltip>
 			</Flex>
 			<>
-				{AllTraceFilterOptions.map((panelName) => (
+				{AllTraceFilterOptions.filter(
+					(i) => i !== 'durationNanoMax' && i !== 'durationNanoMin',
+				).map((panelName) => (
 					<Section
 						key={panelName}
 						panelName={panelName}

@@ -24,7 +24,12 @@ export function Section(props: SectionProps): JSX.Element {
 	const onClearHandler = (e: MouseEvent): void => {
 		e.stopPropagation();
 		e.preventDefault();
-		if (selectedFilters?.[panelName]) {
+
+		if (
+			selectedFilters?.[panelName] ||
+			selectedFilters?.durationNanoMin ||
+			selectedFilters?.durationNanoMax
+		) {
 			handleRun({ clearByType: panelName });
 		}
 	};
