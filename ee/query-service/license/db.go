@@ -3,7 +3,6 @@ package license
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
@@ -49,7 +48,8 @@ func (r *Repo) GetLicenses(ctx context.Context) ([]model.License, error) {
 	return licenses, nil
 }
 
-// GetActiveLicense fetches the latest active license from DB
+// GetActiveLicense fetches the latest active license from DB.
+// If the license is not present, expect a nil license and a nil error in the output.
 func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel.ApiError) {
 	var err error
 	licenses := []model.License{}
@@ -58,9 +58,6 @@ func (r *Repo) GetActiveLicense(ctx context.Context) (*model.License, *basemodel
 
 	err = r.db.Select(&licenses, query)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, basemodel.NotFoundError(errors.New("no licenses found"))
-		}
 		return nil, basemodel.InternalError(fmt.Errorf("failed to get active licenses from db: %v", err))
 	}
 

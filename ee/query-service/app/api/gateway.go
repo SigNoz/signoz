@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
-	"go.signoz.io/signoz/ee/query-service/model"
 )
 
 func (ah *APIHandler) ServeGatewayHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -17,10 +16,8 @@ func (ah *APIHandler) ServeGatewayHTTP(rw http.ResponseWriter, req *http.Request
 
 	license, err := ah.LM().GetRepo().GetActiveLicense(ctx)
 	if err != nil {
-		if err.Typ != model.ErrorNotFound {
-			RespondError(rw, err, nil)
-			return
-		}
+		RespondError(rw, err, nil)
+		return
 	}
 
 	//Create headers
