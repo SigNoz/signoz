@@ -2,7 +2,6 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 
@@ -28,7 +27,7 @@ const paths = (
 };
 
 const getSeries = ({
-	apiResponse,
+	series,
 	widgetMetaData,
 	graphsVisibilityStates,
 	panelType,
@@ -37,7 +36,8 @@ const getSeries = ({
 		{ label: 'Timestamp', stroke: 'purple' },
 	];
 
-	const seriesList = apiResponse?.data.result || [];
+	const seriesList = series || [];
+
 	const newGraphVisibilityStates = graphsVisibilityStates?.slice(1);
 
 	for (let i = 0; i < seriesList?.length; i += 1) {
@@ -84,7 +84,7 @@ const getSeries = ({
 };
 
 export type GetSeriesProps = {
-	apiResponse?: MetricRangePayloadProps;
+	series?: QueryData[];
 	widgetMetaData: QueryData[];
 	graphsVisibilityStates?: boolean[];
 	panelType?: PANEL_TYPES;

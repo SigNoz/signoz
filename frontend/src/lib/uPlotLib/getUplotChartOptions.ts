@@ -10,9 +10,11 @@ import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCa
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { Dimensions } from 'hooks/useDimensions';
 import { convertValue } from 'lib/getConvertedValue';
+import { cloneDeep } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 
 import onClickPlugin, { OnClickPluginOpts } from './plugins/onClickPlugin';
@@ -44,6 +46,40 @@ export interface GetUPlotChartOptions {
 	currentQuery?: Query;
 }
 
+function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
+	const series = cloneDeep(apiResponse);
+
+	for (let i = 1; i < series.length; i++) {
+		const { values } = series[i];
+		for (let j = 0; j < values.length; j++) {
+			values[j][1] = String(
+				parseFloat(values[j][1]) + parseFloat(series[i - 1].values[j][1]),
+			);
+		}
+
+		series[i].values = values;
+	}
+
+	return series;
+}
+
+function getStackedSeriesYAxis(apiResponse: QueryDataV3[]): QueryData[] {
+	const series = cloneDeep(apiResponse);
+
+	for (let i = 1; i < series.length; i++) {
+		const { values } = series[i];
+		for (let j = 0; j < values.length; j++) {
+			values[j][1] = String(
+				parseFloat(values[j][1]) + parseFloat(series[i - 1].values[j][1]),
+			);
+		}
+
+		series[i].values = values;
+	}
+
+	return series;
+}
+
 export const getUPlotChartOptions = ({
 	id,
 	dimensions,
@@ -63,6 +99,13 @@ export const getUPlotChartOptions = ({
 	currentQuery,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
+
+	const series = getStackedSeries(apiResponse?.data?.result);
+
+	console.log(
+		apiResponse?.data?.newResult?.data?.result,
+		apiResponse?.data?.result,
+	);
 
 	return {
 		id,
@@ -99,7 +142,9 @@ export const getUPlotChartOptions = ({
 			y: {
 				...getYAxisScale({
 					thresholds,
-					series: apiResponse?.data?.newResult?.data?.result || [],
+					series: getStackedSeriesYAxis(
+						apiResponse?.data?.newResult?.data?.result || [],
+					),
 					yAxisUnit,
 					softMax,
 					softMin,
@@ -221,7 +266,7 @@ export const getUPlotChartOptions = ({
 			],
 		},
 		series: getSeries({
-			apiResponse,
+			series,
 			widgetMetaData: apiResponse?.data.result,
 			graphsVisibilityStates,
 			panelType,
