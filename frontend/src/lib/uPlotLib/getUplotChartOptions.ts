@@ -49,11 +49,11 @@ export interface GetUPlotChartOptions {
 function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
 	const series = cloneDeep(apiResponse);
 
-	for (let i = 1; i < series.length; i++) {
+	for (let i = series.length - 2; i >= 0; i--) {
 		const { values } = series[i];
 		for (let j = 0; j < values.length; j++) {
 			values[j][1] = String(
-				parseFloat(values[j][1]) + parseFloat(series[i - 1].values[j][1]),
+				parseFloat(values[j][1]) + parseFloat(series[i + 1].values[j][1]),
 			);
 		}
 
@@ -65,12 +65,12 @@ function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
 function getStackedSeries1(apiResponse: QueryData[]): QueryData[] {
 	const series = cloneDeep(apiResponse);
 
-	for (let i = 1; i < series.length; i++) {
+	for (let i = series.length - 2; i >= 0; i--) {
 		const { values } = series[i];
 		console.log(values);
 		for (let j = 0; j < values.length; j++) {
 			values[j].value = String(
-				parseFloat(values[j].value) + parseFloat(series[i - 1].values[j].value),
+				parseFloat(values[j].value) + parseFloat(series[i + 1].values[j].value),
 			);
 		}
 

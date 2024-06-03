@@ -66,9 +66,9 @@ function fillMissingXAxisTimestamps(
 function getStackedSeries(val: any): any {
 	const series = cloneDeep(val) || [];
 
-	for (let i = 1; i < series.length; i++) {
+	for (let i = series.length - 2; i >= 0; i--) {
 		for (let j = 0; j < series[i].length; j++) {
-			series[i][j] += series[i - 1][j];
+			series[i][j] += series[i + 1][j];
 		}
 	}
 
