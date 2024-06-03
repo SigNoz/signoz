@@ -110,7 +110,7 @@ func main() {
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
 	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
-	flag.StringVar(&gatewayUrl, "gateway-url", "localhost:8001", "(url to the gateway)")
+	flag.StringVar(&gatewayUrl, "gateway-url", "", "(url to the gateway)")
 
 	flag.Parse()
 

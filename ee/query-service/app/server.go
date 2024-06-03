@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	_ "net/http/pprof" // http profiler
 	"os"
 	"regexp"
@@ -124,8 +125,32 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	localDB.SetMaxOpenConns(10)
 
+	gatewayFeature := basemodel.Feature{
+		Name:       "GATEWAY",
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	}
+
+	//Activate this feature if the url is not empty
+	var gatewayProxy *httputil.ReverseProxy
+	if serverOptions.GatewayUrl == "" {
+		gatewayFeature.Active = false
+		gatewayProxy, err = gateway.NewNoopProxy()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		gatewayFeature.Active = true
+		gatewayProxy, err = gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", localDB)
+	lm, err := licensepkg.StartManager("sqlite", localDB, gatewayFeature)
 	if err != nil {
 		return nil, err
 	}
@@ -233,11 +258,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	gateway, err := gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
-	if err != nil {
-		return nil, err
-	}
-
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:                 reader,
 		SkipConfig:                    skipConfig,
@@ -255,7 +275,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
-		Gateway:                       gateway,
+		Gateway:                       gatewayProxy,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
