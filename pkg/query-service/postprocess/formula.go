@@ -266,20 +266,9 @@ func EvalFuncs() map[string]govaluate.ExpressionFunction {
 	GoValuateFuncs["radians"] = func(args ...interface{}) (interface{}, error) {
 		return args[0].(float64) * math.Pi / 180, nil
 	}
-
+	// Returns the current Unix timestamp in seconds.
 	GoValuateFuncs["now"] = func(args ...interface{}) (interface{}, error) {
-		return time.Now().Unix(), nil
-	}
-
-	GoValuateFuncs["toUnixTimestamp"] = func(args ...interface{}) (interface{}, error) {
-		if len(args) != 1 {
-			return nil, fmt.Errorf("toUnixTimestamp requires exactly one argument")
-		}
-		t, err := time.Parse(time.RFC3339, args[0].(string))
-		if err != nil {
-			return nil, err
-		}
-		return t.Unix(), nil
+		return float64(time.Now().Unix()), nil
 	}
 
 	return GoValuateFuncs

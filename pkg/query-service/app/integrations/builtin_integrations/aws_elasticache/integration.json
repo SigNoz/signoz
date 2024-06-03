@@ -1,0 +1,522 @@
+{
+  "id": "aws_elasticache_redis",
+  "title": "AWS ElastiCache (redis)",
+  "description": "Monitor AWS ElastiCache with metrics and logs",
+  "author": {
+    "name": "SigNoz",
+    "email": "integrations@signoz.io",
+    "homepage": "https://signoz.io"
+  },
+  "icon": "file://icon.svg",
+  "categories": [
+    "Database"
+  ],
+  "overview": "file://overview.md",
+  "configuration": [
+    {
+      "title": "Prerequisites",
+      "instructions": "file://config/prerequisites.md"
+    },
+    {
+      "title": "Collect Metrics",
+      "instructions": "file://config/collect-metrics.md"
+    },
+    {
+      "title": "Collect Logs",
+      "instructions": "file://config/collect-logs.md"
+    }
+  ],
+  "assets": {
+    "logs": {
+      "pipelines": []
+    },
+    "dashboards": [
+      "file://assets/dashboards/overview.json"
+    ],
+    "alerts": []
+  },
+  "connection_tests": {
+    "logs": {
+      "attribute_key": "source",
+      "attribute_value": "elasticache_redis"
+    }
+  },
+  "data_collected": {
+    "logs": [
+      {
+        "name": "Timestamp",
+        "path": "timestamp",
+        "type": "timestamp"
+      },
+      {
+        "name": "Body",
+        "path": "body",
+        "type": "string"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "aws_elasticache_bytes_used_for_cache_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache BytesUsedForCache Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_bytes_used_for_cache_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache BytesUsedForCache Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_cache_hits_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CacheHits Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_cache_misses_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CacheMisses Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_cpuutilization_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CPUUtilization Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_cpuutilization_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CPUUtilization Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_curr_connections_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CurrConnections Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_curr_connections_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CurrConnections Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_curr_items_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CurrItems Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_curr_items_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CurrItems Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_curr_volatile_items_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CurrVolatileItems Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_curr_volatile_items_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache CurrVolatileItems Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_database_capacity_usage_percentage_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache DatabaseCapacityUsagePercentage Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_database_capacity_usage_percentage_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache DatabaseCapacityUsagePercentage Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_database_memory_usage_percentage_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache DatabaseMemoryUsagePercentage Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_database_memory_usage_percentage_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache DatabaseMemoryUsagePercentage Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_engine_cpuutilization_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache EngineCPUUtilization Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_engine_cpuutilization_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache EngineCPUUtilization Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Percent"
+      },
+      {
+        "name": "aws_elasticache_evictions_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache Evictions Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_evictions_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache Evictions Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_freeable_memory_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache FreeableMemory Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_freeable_memory_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache FreeableMemory Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_memory_fragmentation_ratio_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache MemoryFragmentationRatio Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: None"
+      },
+      {
+        "name": "aws_elasticache_memory_fragmentation_ratio_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache MemoryFragmentationRatio Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: None"
+      },
+      {
+        "name": "aws_elasticache_memory_fragmentation_ratio_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache MemoryFragmentationRatio Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: None"
+      },
+      {
+        "name": "aws_elasticache_network_bytes_in_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkBytesIn Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_network_bytes_in_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkBytesIn Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_network_bytes_out_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkBytesOut Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_network_bytes_out_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkBytesOut Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_network_packets_in_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkPacketsIn Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_network_packets_in_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkPacketsIn Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_network_packets_out_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkPacketsOut Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_network_packets_out_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache NetworkPacketsOut Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_replication_lag_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache ReplicationLag Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Seconds"
+      },
+      {
+        "name": "aws_elasticache_save_in_progress_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SaveInProgress Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_save_in_progress_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SaveInProgress Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_save_in_progress_minimum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SaveInProgress Dimensions: [CacheClusterId, CacheNodeId] Statistic: Minimum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_save_in_progress_sample_count",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SaveInProgress Dimensions: [CacheClusterId, CacheNodeId] Statistic: SampleCount Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_save_in_progress_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SaveInProgress Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: Count"
+      },
+      {
+        "name": "aws_elasticache_swap_usage_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SwapUsage Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_swap_usage_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache SwapUsage Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: Bytes"
+      },
+      {
+        "name": "aws_elasticache_traffic_management_active_average",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache TrafficManagementActive Dimensions: [CacheClusterId, CacheNodeId] Statistic: Average Unit: None"
+      },
+      {
+        "name": "aws_elasticache_traffic_management_active_maximum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache TrafficManagementActive Dimensions: [CacheClusterId, CacheNodeId] Statistic: Maximum Unit: None"
+      },
+      {
+        "name": "aws_elasticache_traffic_management_active_minimum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache TrafficManagementActive Dimensions: [CacheClusterId, CacheNodeId] Statistic: Minimum Unit: None"
+      },
+      {
+        "name": "aws_elasticache_traffic_management_active_sample_count",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache TrafficManagementActive Dimensions: [CacheClusterId, CacheNodeId] Statistic: SampleCount Unit: None"
+      },
+      {
+        "name": "aws_elasticache_traffic_management_active_sum",
+        "type": "Gauge",
+        "unit": "",
+        "description": "CloudWatch metric AWS/ElastiCache TrafficManagementActive Dimensions: [CacheClusterId, CacheNodeId] Statistic: Sum Unit: None"
+      },
+      {
+        "name": "redis_commands_processed",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of commands processed by the server"
+      },
+      {
+        "name": "redis_cpu_time",
+        "type": "Sum",
+        "unit": "s",
+        "description": "System CPU consumed by the Redis server in seconds since server start"
+      },
+      {
+        "name": "redis_keys_expired",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of key expiration events"
+      },
+      {
+        "name": "redis_db_expires",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Number of keyspace keys with an expiration"
+      },
+      {
+        "name": "redis_commands",
+        "type": "Gauge",
+        "unit": "ops/s",
+        "description": "Number of commands processed per second"
+      },
+      {
+        "name": "redis_replication_offset",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The server's current replication offset"
+      },
+      {
+        "name": "redis_net_input",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The total number of bytes read from the network"
+      },
+      {
+        "name": "redis_clients_connected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of client connections (excluding connections from replicas)"
+      },
+      {
+        "name": "redis_keys_evicted",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of evicted keys due to maxmemory limit"
+      },
+      {
+        "name": "redis_maxmemory",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The value of the maxmemory configuration directive"
+      },
+      {
+        "name": "redis_clients_max_input_buffer",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Biggest input buffer among current client connections"
+      },
+      {
+        "name": "redis_cmd_latency",
+        "type": "Gauge",
+        "unit": "s",
+        "description": "Command execution latency"
+      },
+      {
+        "name": "redis_memory_lua",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Number of bytes used by the Lua engine"
+      },
+      {
+        "name": "redis_replication_backlog_first_byte_offset",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "The master offset of the replication backlog buffer"
+      },
+      {
+        "name": "redis_keyspace_hits",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of successful lookup of keys in the main dictionary"
+      },
+      {
+        "name": "redis_clients_blocked",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of clients pending on a blocking call"
+      },
+      {
+        "name": "redis_connections_rejected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of connections rejected because of maxclients limit"
+      },
+      {
+        "name": "redis_latest_fork",
+        "type": "Gauge",
+        "unit": "us",
+        "description": "Duration of the latest fork operation in microseconds"
+      },
+      {
+        "name": "redis_clients_max_output_buffer",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Longest output list among current client connections"
+      },
+      {
+        "name": "redis_slaves_connected",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of connected replicas"
+      },
+      {
+        "name": "redis_db_keys",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Number of keyspace keys"
+      },
+      {
+        "name": "redis_keyspace_misses",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of failed lookup of keys in the main dictionary"
+      },
+      {
+        "name": "redis_uptime",
+        "type": "Sum",
+        "unit": "s",
+        "description": "Number of seconds since Redis server start"
+      },
+      {
+        "name": "redis_memory_used",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Total number of bytes allocated by Redis using its allocator"
+      },
+      {
+        "name": "redis_net_output",
+        "type": "Sum",
+        "unit": "Bytes",
+        "description": "The total number of bytes written to the network"
+      },
+      {
+        "name": "redis_connections_received",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Total number of connections accepted by the server"
+      },
+      {
+        "name": "redis_rdb_changes_since_last_save",
+        "type": "Sum",
+        "unit": "number",
+        "description": "Number of changes since the last dump"
+      },
+      {
+        "name": "redis_memory_rss",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Number of bytes that Redis allocated as seen by the operating system"
+      },
+      {
+        "name": "redis_db_avg_ttl",
+        "type": "Gauge",
+        "unit": "ms",
+        "description": "Average keyspace keys TTL"
+      },
+      {
+        "name": "redis_memory_peak",
+        "type": "Gauge",
+        "unit": "Bytes",
+        "description": "Peak memory consumed by Redis (in bytes)"
+      },
+      {
+        "name": "redis_memory_fragmentation_ratio",
+        "type": "Gauge",
+        "unit": "number",
+        "description": "Ratio between used_memory_rss and used_memory"
+      }
+    ]
+  }
+}
