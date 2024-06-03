@@ -48,6 +48,10 @@ export const frameworksMap = {
 				label: 'React JS',
 			},
 			{
+				value: 'angular',
+				label: 'Angular',
+			},
+			{
 				value: 'others',
 				label: 'Other Web Instrumentation',
 			},

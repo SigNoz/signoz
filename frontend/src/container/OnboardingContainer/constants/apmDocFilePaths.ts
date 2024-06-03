@@ -285,6 +285,45 @@ import APM_java_tomcat_macOsARM64_quickStart_runApplication from '../Modules/APM
 import APM_java_tomcat_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Java/md-docs/Tomcat/MacOsARM64/Recommended/tomcat-macosarm64-recommended-installOtelCollector.md';
 import APM_java_tomcat_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Java/md-docs/Tomcat/MacOsARM64/Recommended/tomcat-macosarm64-recommended-instrumentApplication.md';
 import APM_java_tomcat_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Java/md-docs/Tomcat/MacOsARM64/Recommended/tomcat-macosarm64-recommended-runApplication.md';
+// Angular
+import APM_javascript_angular_docker_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/Docker/QuickStart/angular-docker-quickStart-instrumentApplication.md';
+import APM_javascript_angular_docker_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Angular/Docker/QuickStart/angular-docker-quickStart-runApplication.md';
+// Angular-Docker-recommended
+import APM_javascript_angular_docker_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Angular/Docker/Recommended/angular-docker-recommended-installOtelCollector.md';
+import APM_javascript_angular_docker_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/Docker/Recommended/angular-docker-recommended-instrumentApplication.md';
+import APM_javascript_angular_docker_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Angular/Docker/Recommended/angular-docker-recommended-runApplication.md';
+// Angular-Kubernetes
+import APM_javascript_angular_kubernetes_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Angular/Kubernetes/angular-kubernetes-installOtelCollector.md';
+import APM_javascript_angular_kubernetes_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/Kubernetes/angular-kubernetes-instrumentApplication.md';
+import APM_javascript_angular_kubernetes_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Angular/Kubernetes/angular-kubernetes-runApplication.md';
+// Angular-LinuxAMD64-quickstart
+import APM_javascript_angular_linuxAMD64_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/LinuxAMD64/QuickStart/angular-linuxamd64-quickStart-instrumentApplication.md';
+import APM_javascript_angular_linuxAMD64_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Angular/LinuxAMD64/QuickStart/angular-linuxamd64-quickStart-runApplication.md';
+// Angular-LinuxAMD64-recommended
+import APM_javascript_angular_linuxAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Angular/LinuxAMD64/Recommended/angular-linuxamd64-recommended-installOtelCollector.md';
+import APM_javascript_angular_linuxAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/LinuxAMD64/Recommended/angular-linuxamd64-recommended-instrumentApplication.md';
+import APM_javascript_angular_linuxAMD64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Angular/LinuxAMD64/Recommended/angular-linuxamd64-recommended-runApplication.md';
+// Angular-LinuxARM64-quickstart
+import APM_javascript_angular_linuxARM64_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/LinuxARM64/QuickStart/angular-linuxarm64-quickStart-instrumentApplication.md';
+import APM_javascript_angular_linuxARM64_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Angular/LinuxARM64/QuickStart/angular-linuxarm64-quickStart-runApplication.md';
+// Angular-LinuxARM64-recommended
+import APM_javascript_angular_linuxARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Angular/LinuxARM64/Recommended/angular-linuxarm64-recommended-installOtelCollector.md';
+import APM_javascript_angular_linuxARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/LinuxARM64/Recommended/angular-linuxarm64-recommended-instrumentApplication.md';
+import APM_javascript_angular_linuxARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Angular/LinuxARM64/Recommended/angular-linuxarm64-recommended-runApplication.md';
+// Angular-MacOsAMD64-quickstart
+import APM_javascript_angular_macOsAMD64_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/MacOsAMD64/QuickStart/angular-macosamd64-quickStart-instrumentApplication.md';
+import APM_javascript_angular_macOsAMD64_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Angular/MacOsAMD64/QuickStart/angular-macosamd64-quickStart-runApplication.md';
+// Angular-MacOsAMD64-recommended
+import APM_javascript_angular_macOsAMD64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Angular/MacOsAMD64/Recommended/angular-macosamd64-recommended-installOtelCollector.md';
+import APM_javascript_angular_macOsAMD64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/MacOsAMD64/Recommended/angular-macosamd64-recommended-instrumentApplication.md';
+import APM_javascript_angular_macOsAMD64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Angular/MacOsAMD64/Recommended/angular-macosamd64-recommended-runApplication.md';
+// Angular-MacOsARM64-quickstart
+import APM_javascript_angular_macOsARM64_quickStart_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/MacOsARM64/QuickStart/angular-macosarm64-quickStart-instrumentApplication.md';
+import APM_javascript_angular_macOsARM64_quickStart_runApplication from '../Modules/APM/Javascript/md-docs/Angular/MacOsARM64/QuickStart/angular-macosarm64-quickStart-runApplication.md';
+// Angular-MacOsARM64-recommended
+import APM_javascript_angular_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/Angular/MacOsARM64/Recommended/angular-macosarm64-recommended-installOtelCollector.md';
+import APM_javascript_angular_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/Angular/MacOsARM64/Recommended/angular-macosarm64-recommended-instrumentApplication.md';
+import APM_javascript_angular_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/Angular/MacOsARM64/Recommended/angular-macosarm64-recommended-runApplication.md';
 // ----------------------------------------------------------------------------
 /// ////// Python Done
 /// ///// JavaScript Start
@@ -490,6 +529,7 @@ import APM_javascript_reactjs_macOsARM64_quickStart_runApplication from '../Modu
 import APM_javascript_reactjs_macOsARM64_recommendedSteps_setupOtelCollector from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-installOtelCollector.md';
 import APM_javascript_reactjs_macOsARM64_recommendedSteps_instrumentApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-instrumentApplication.md';
 import APM_javascript_reactjs_macOsARM64_recommendedSteps_runApplication from '../Modules/APM/Javascript/md-docs/ReactJS/MacOsARM64/Recommended/reactjs-macosarm64-recommended-runApplication.md';
+// ----------------------------------------------------------------------------
 // PHP Docker
 import APM_php_docker_quickStart_instrumentApplication from '../Modules/APM/Php/md-docs/Docker/QuickStart/php-docker-quickStart-instrumentApplication.md';
 import APM_php_docker_quickStart_runApplication from '../Modules/APM/Php/md-docs/Docker/QuickStart/php-docker-quickStart-runApplication.md';
@@ -1445,6 +1485,51 @@ export const ApmDocFilePaths = {
 	APM_javascript_reactjs_macOsARM64_recommendedSteps_instrumentApplication,
 	APM_javascript_reactjs_macOsARM64_recommendedSteps_runApplication,
 
+	/// -------
+
+	// Angular-Kubernetes
+	APM_javascript_angular_kubernetes_recommendedSteps_setupOtelCollector,
+	APM_javascript_angular_kubernetes_recommendedSteps_instrumentApplication,
+	APM_javascript_angular_kubernetes_recommendedSteps_runApplication,
+
+	// Angular-LinuxAMD64-recommended
+	APM_javascript_angular_linuxAMD64_recommendedSteps_setupOtelCollector,
+	APM_javascript_angular_linuxAMD64_recommendedSteps_instrumentApplication,
+	APM_javascript_angular_linuxAMD64_recommendedSteps_runApplication,
+
+	// Angular-LinuxAMD64-quickstart
+	APM_javascript_angular_linuxAMD64_quickStart_instrumentApplication,
+	APM_javascript_angular_linuxAMD64_quickStart_runApplication,
+
+	// Angular-LinuxARM64-recommended
+	APM_javascript_angular_linuxARM64_recommendedSteps_setupOtelCollector,
+	APM_javascript_angular_linuxARM64_recommendedSteps_instrumentApplication,
+	APM_javascript_angular_linuxARM64_recommendedSteps_runApplication,
+
+	// Angular-LinuxARM64-quickstart
+	APM_javascript_angular_linuxARM64_quickStart_instrumentApplication,
+	APM_javascript_angular_linuxARM64_quickStart_runApplication,
+
+	// Angular-MacOsAMD64-recommended
+	APM_javascript_angular_macOsAMD64_recommendedSteps_setupOtelCollector,
+	APM_javascript_angular_macOsAMD64_recommendedSteps_instrumentApplication,
+	APM_javascript_angular_macOsAMD64_recommendedSteps_runApplication,
+
+	// Angular-MacOsAMD64-quickstart
+	APM_javascript_angular_macOsAMD64_quickStart_instrumentApplication,
+	APM_javascript_angular_macOsAMD64_quickStart_runApplication,
+
+	// Angular-MacOsARM64-recommended
+	APM_javascript_angular_macOsARM64_recommendedSteps_setupOtelCollector,
+	APM_javascript_angular_macOsARM64_recommendedSteps_instrumentApplication,
+	APM_javascript_angular_macOsARM64_recommendedSteps_runApplication,
+
+	// Angular-MacOsARM64-quickstart
+	APM_javascript_angular_macOsARM64_quickStart_instrumentApplication,
+	APM_javascript_angular_macOsARM64_quickStart_runApplication,
+
+	///--------------------
+
 	/// // JavaScript Others
 
 	APM_javascript_others_kubernetes_recommendedSteps_setupOtelCollector,
@@ -1823,6 +1908,13 @@ export const ApmDocFilePaths = {
 	APM_javascript_reactjs_docker_recommendedSteps_setupOtelCollector,
 	APM_javascript_reactjs_docker_recommendedSteps_instrumentApplication,
 	APM_javascript_reactjs_docker_recommendedSteps_runApplication,
+
+	APM_javascript_angular_docker_quickStart_instrumentApplication,
+	APM_javascript_angular_docker_quickStart_runApplication,
+
+	APM_javascript_angular_docker_recommendedSteps_setupOtelCollector,
+	APM_javascript_angular_docker_recommendedSteps_instrumentApplication,
+	APM_javascript_angular_docker_recommendedSteps_runApplication,
 
 	APM_javascript_others_docker_quickStart_instrumentApplication,
 	APM_javascript_others_docker_quickStart_runApplication,
