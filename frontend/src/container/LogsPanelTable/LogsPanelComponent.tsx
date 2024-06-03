@@ -85,7 +85,7 @@ function LogsPanelComponent({
 	const [lastLog, setLastLog] = useState<ILog>();
 
 	const { logs } = useLogsData({
-		result: queryResponse.data?.payload.data.newResult.data.result,
+		result: queryResponse.data?.payload?.data?.newResult?.data?.result,
 		panelType: PANEL_TYPES.LIST,
 		stagedQuery: widget.query,
 	});

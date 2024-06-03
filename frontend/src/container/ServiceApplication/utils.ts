@@ -81,7 +81,7 @@ export const getServiceListFromQuery = ({
 				services.push(serviceData);
 			}
 			if (query.data) {
-				const queryArray = query.data.payload.data.newResult.data.result;
+				const queryArray = query.data?.payload?.data?.newResult?.data?.result;
 				const serviceData: ServicesList = {
 					serviceName: topLevelOperations[index][0].toString(),
 					p99: parseFloat(getSeriesValue(queryArray, 'A')),
