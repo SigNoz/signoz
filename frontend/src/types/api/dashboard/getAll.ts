@@ -83,6 +83,9 @@ export interface WidgetRow {
 	description: string;
 }
 
+export interface ColumnUnit {
+	[key: string]: string;
+}
 export interface IBaseWidget {
 	isStacked: boolean;
 	id: string;
@@ -98,6 +101,7 @@ export interface IBaseWidget {
 	softMin: number | null;
 	softMax: number | null;
 	fillSpans?: boolean;
+	columnUnits?: ColumnUnit;
 	selectedLogFields: IField[] | null;
 	selectedTracesFields: BaseAutocompleteData[] | null;
 }

@@ -52,6 +52,8 @@ function GridTableComponent({
 		[columns],
 	);
 
+	console.log(columns, dataSource);
+
 	useEffect(() => {
 		if (tableProcessedDataRef) {
 			// eslint-disable-next-line no-param-reassign

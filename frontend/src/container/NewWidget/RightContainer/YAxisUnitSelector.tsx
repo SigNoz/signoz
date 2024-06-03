@@ -13,13 +13,14 @@ const findCategoryByName = (
 ): Record<string, string> | undefined =>
 	find(flattenedCategories, (option) => option.name === searchValue);
 
+type OnSelectType = Dispatch<SetStateAction<string>> | ((val: string) => void);
 function YAxisUnitSelector({
 	defaultValue,
 	onSelect,
 	fieldLabel,
 }: {
 	defaultValue: string;
-	onSelect: Dispatch<SetStateAction<string>>;
+	onSelect: OnSelectType;
 	fieldLabel: string;
 }): JSX.Element {
 	const onSelectHandler = (selectedValue: string): void => {

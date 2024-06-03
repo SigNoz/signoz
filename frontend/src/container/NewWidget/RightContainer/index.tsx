@@ -18,10 +18,12 @@ import {
 	useEffect,
 	useState,
 } from 'react';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { ColumnUnit, Widgets } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { ColumnUnitSelector } from './ColumnUnitSelector/ColumnUnitSelector';
 import {
+	panelTypeVsColumnUnitPreferences,
 	panelTypeVsCreateAlert,
 	panelTypeVsFillSpan,
 	panelTypeVsPanelTimePreferences,
@@ -57,6 +59,8 @@ function RightContainer({
 	softMin,
 	setSoftMax,
 	setSoftMin,
+	columnUnits,
+	setColumnUnits,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
 		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
@@ -77,6 +81,9 @@ function RightContainer({
 	const allowCreateAlerts = panelTypeVsCreateAlert[selectedGraph];
 	const allowPanelTimePreference =
 		panelTypeVsPanelTimePreferences[selectedGraph];
+
+	const allowPanelColumnPreference =
+		panelTypeVsColumnUnitPreferences[selectedGraph];
 
 	const { currentQuery } = useQueryBuilder();
 
@@ -179,6 +186,13 @@ function RightContainer({
 					</>
 				)}
 
+				{allowPanelColumnPreference && (
+					<ColumnUnitSelector
+						columnUnits={columnUnits}
+						setColumnUnits={setColumnUnits}
+					/>
+				)}
+
 				{allowYAxisUnit && (
 					<YAxisUnitSelector
 						defaultValue={yAxisUnit}
@@ -258,6 +272,8 @@ interface RightContainerProps {
 	setIsFillSpans: Dispatch<SetStateAction<boolean>>;
 	softMin: number | null;
 	softMax: number | null;
+	columnUnits: ColumnUnit;
+	setColumnUnits: Dispatch<SetStateAction<ColumnUnit>>;
 	setSoftMin: Dispatch<SetStateAction<number | null>>;
 	setSoftMax: Dispatch<SetStateAction<number | null>>;
 }

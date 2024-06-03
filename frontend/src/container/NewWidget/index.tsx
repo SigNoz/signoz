@@ -30,7 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath, useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { ColumnUnit, Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -156,6 +156,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 			: selectedWidget?.softMax || 0,
 	);
 
+	const [columnUnits, setColumnUnits] = useState<ColumnUnit>(
+		selectedWidget?.columnUnits || {},
+	);
+
 	useEffect(() => {
 		setSelectedWidget((prev) => {
 			if (!prev) {
@@ -174,11 +178,13 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				softMin,
 				softMax,
 				fillSpans: isFillSpans,
+				columnUnits,
 				selectedLogFields,
 				selectedTracesFields,
 			};
 		});
 	}, [
+		columnUnits,
 		currentQuery,
 		description,
 		isFillSpans,
@@ -284,6 +290,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								panelTypes: graphType,
 								query: currentQuery,
 								thresholds: selectedWidget?.thresholds,
+								columnUnits: selectedWidget?.columnUnits,
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
@@ -305,6 +312,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								panelTypes: graphType,
 								query: currentQuery,
 								thresholds: selectedWidget?.thresholds,
+								columnUnits: selectedWidget?.columnUnits,
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
@@ -483,6 +491,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						setStacked={setStacked}
 						opacity={opacity}
 						yAxisUnit={yAxisUnit}
+						columnUnits={columnUnits}
+						setColumnUnits={setColumnUnits}
 						setOpacity={setOpacity}
 						selectedNullZeroValue={selectedNullZeroValue}
 						setSelectedNullZeroValue={setSelectedNullZeroValue}
