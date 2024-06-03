@@ -7,7 +7,7 @@ import {
 	createTableColumnsFromQuery,
 	RowData,
 } from 'lib/query/createTableColumnsFromQuery';
-import { get, isEmpty, set } from 'lodash-es';
+import { cloneDeep, get, isEmpty, set } from 'lodash-es';
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { eventEmitter } from 'utils/getEventEmitter';
@@ -55,7 +55,7 @@ function GridTableComponent({
 
 	const applyColumnUnits = useCallback(
 		(dataSource: RowData[]): RowData[] => {
-			let mutateDataSource = dataSource;
+			let mutateDataSource = cloneDeep(dataSource);
 			if (isEmpty(columnUnits)) {
 				return mutateDataSource;
 			}
