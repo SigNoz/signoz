@@ -439,7 +439,7 @@ function IngestionSettings(): JSX.Element {
 
 	const getFormattedLimit = (size: number | undefined): number => {
 		if (!size) {
-			return 1;
+			return 0;
 		}
 
 		return size / BYTES;
@@ -796,6 +796,7 @@ function IngestionSettings(): JSX.Element {
 																	<div className="limit-value">
 																		{limits[signal]?.config?.day?.size ? (
 																			<>
+																				{getFormattedLimit(limits[signal]?.metric?.day?.size)} GB /{' '}
 																				{getFormattedLimit(limits[signal]?.config?.day?.size)} GB
 																			</>
 																		) : (
@@ -812,9 +813,11 @@ function IngestionSettings(): JSX.Element {
 																	</div>
 
 																	<div className="limit-value">
-																		{limits[signal]?.config?.day?.size ? (
+																		{limits[signal]?.config?.second?.size ? (
 																			<>
-																				{getFormattedLimit(limits[signal]?.config?.second?.size)} GB
+																				{getFormattedLimit(limits[signal]?.metric?.second?.size)} GB
+																				/ {getFormattedLimit(limits[signal]?.config?.second?.size)}{' '}
+																				GB
 																			</>
 																		) : (
 																			<>

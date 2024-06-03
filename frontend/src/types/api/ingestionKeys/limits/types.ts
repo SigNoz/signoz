@@ -13,6 +13,14 @@ export interface LimitProps {
 			size?: number;
 		};
 	};
+	metric?: {
+		day?: {
+			size?: number;
+		};
+		second?: {
+			size?: number;
+		};
+	};
 }
 
 export interface AddLimitProps {
