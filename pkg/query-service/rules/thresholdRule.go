@@ -434,12 +434,18 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 
 	if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
 		params := &v3.QueryRangeParamsV3{
-			Start:          start,
-			End:            end,
-			Step:           int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
-			CompositeQuery: r.ruleCondition.CompositeQuery,
-			Variables:      make(map[string]interface{}, 0),
-			NoCache:        true,
+			Start: start,
+			End:   end,
+			Step:  int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType:         v3.QueryTypeClickHouseSQL,
+				PanelType:         v3.PanelTypeGraph,
+				BuilderQueries:    make(map[string]*v3.BuilderQuery),
+				ClickHouseQueries: make(map[string]*v3.ClickHouseQuery),
+				PromQueries:       make(map[string]*v3.PromQuery),
+			},
+			Variables: make(map[string]interface{}, 0),
+			NoCache:   true,
 		}
 		querytemplate.AssignReservedVarsV3(params)
 		for name, chQuery := range r.ruleCondition.CompositeQuery.ClickHouseQueries {
@@ -460,8 +466,13 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 				r.SetHealth(HealthBad)
 				return params
 			}
-			r.ruleCondition.CompositeQuery.ClickHouseQueries[name].Query = query.String()
+			params.CompositeQuery.ClickHouseQueries[name] = &v3.ClickHouseQuery{
+				Query:    query.String(),
+				Disabled: chQuery.Disabled,
+				Legend:   chQuery.Legend,
+			}
 		}
+		return params
 	}
 
 	if r.ruleCondition.CompositeQuery != nil && r.ruleCondition.CompositeQuery.BuilderQueries != nil {
