@@ -16,6 +16,7 @@ function TablePanelWrapper({
 			data={panelData}
 			query={widget.query}
 			thresholds={thresholds}
+			columnUnits={widget.columnUnits}
 			tableProcessedDataRef={tableProcessedDataRef}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...GRID_TABLE_CONFIG}
