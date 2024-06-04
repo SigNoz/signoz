@@ -19,6 +19,7 @@ import {
 	defaultLiveQueryDataConfig,
 } from 'container/LiveLogs/constants';
 import { QueryHistoryState } from 'container/LiveLogs/types';
+import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -63,6 +64,7 @@ function DateTimeSelection({
 	location,
 	updateTimeInterval,
 	globalTimeLoading,
+	showOldExplorerCTA = false,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
@@ -561,6 +563,11 @@ function DateTimeSelection({
 
 	return (
 		<div className="date-time-selector">
+			{showOldExplorerCTA && (
+				<div style={{ marginRight: 12 }}>
+					<NewExplorerCTA />
+				</div>
+			)}
 			{!hasSelectedTimeError && !refreshButtonHidden && (
 				<RefreshText
 					{...{
@@ -646,10 +653,12 @@ function DateTimeSelection({
 interface DateTimeSelectionV2Props {
 	showAutoRefresh: boolean;
 	hideShareModal?: boolean;
+	showOldExplorerCTA?: boolean;
 }
 
 DateTimeSelection.defaultProps = {
 	hideShareModal: false,
+	showOldExplorerCTA: false,
 };
 interface DispatchProps {
 	updateTimeInterval: (
