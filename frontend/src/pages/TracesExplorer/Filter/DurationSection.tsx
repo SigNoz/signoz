@@ -66,13 +66,9 @@ export function DurationSection(props: DurationProps): JSX.Element {
 		setPreMax(max);
 	};
 
-	const debouncedFunction = useDebouncedFn(
-		(min, max) => {
-			updateDurationFilter(min as string, max as string);
-		},
-		1500,
-		undefined,
-	);
+	const debouncedFunction = useDebouncedFn((min, max) => {
+		updateDurationFilter(min as string, max as string);
+	}, 1500);
 
 	const onChangeMaxHandler: ChangeEventHandler<HTMLInputElement> = (event) => {
 		const { value } = event.target;
