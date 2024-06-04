@@ -95,6 +95,7 @@ func main() {
 	var maxIdleConns int
 	var maxOpenConns int
 	var dialTimeout time.Duration
+	var gatewayUrl string
 
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
@@ -109,6 +110,7 @@ func main() {
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
 	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
 	flag.StringVar(&cluster, "cluster", "cluster", "(cluster name - defaults to 'cluster')")
+	flag.StringVar(&gatewayUrl, "gateway-url", "", "(url to the gateway)")
 
 	flag.Parse()
 
@@ -134,6 +136,7 @@ func main() {
 		CacheConfigPath:   cacheConfigPath,
 		FluxInterval:      fluxInterval,
 		Cluster:           cluster,
+		GatewayUrl:        gatewayUrl,
 	}
 
 	// Read the jwt secret key
