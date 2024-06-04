@@ -5,6 +5,7 @@ import APIKeys from 'container/APIKeys/APIKeys';
 import GeneralSettings from 'container/GeneralSettings';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
+import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSettings';
 import OrganizationSettings from 'container/OrganizationSettings';
 import { TFunction } from 'i18next';
 import { Backpack, BellDot, Building, Cpu, KeySquare } from 'lucide-react';
@@ -38,6 +39,21 @@ export const alertChannels = (t: TFunction): RouteTabProps['routes'] => [
 export const ingestionSettings = (t: TFunction): RouteTabProps['routes'] => [
 	{
 		Component: IngestionSettings,
+		name: (
+			<div className="periscope-tab">
+				<Cpu size={16} /> {t('routes:ingestion_settings').toString()}
+			</div>
+		),
+		route: ROUTES.INGESTION_SETTINGS,
+		key: ROUTES.INGESTION_SETTINGS,
+	},
+];
+
+export const multiIngestionSettings = (
+	t: TFunction,
+): RouteTabProps['routes'] => [
+	{
+		Component: MultiIngestionSettings,
 		name: (
 			<div className="periscope-tab">
 				<Cpu size={16} /> {t('routes:ingestion_settings').toString()}
