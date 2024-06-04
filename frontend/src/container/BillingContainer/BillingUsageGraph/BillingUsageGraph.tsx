@@ -135,7 +135,7 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 				},
 				y: {
 					...getYAxisScale({
-						series: graphCompatibleData?.data.newResult.data.result,
+						series: graphCompatibleData?.data?.newResult?.data?.result,
 						yAxisUnit: '',
 						softMax: null,
 						softMin: null,

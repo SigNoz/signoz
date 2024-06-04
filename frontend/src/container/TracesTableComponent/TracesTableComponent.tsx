@@ -54,7 +54,7 @@ function TracesTableComponent({
 	const totalCount = useMemo(() => dataLength || 0, [dataLength]);
 
 	const queryTableDataResult =
-		queryResponse.data?.payload.data.newResult.data.result;
+		queryResponse.data?.payload?.data?.newResult?.data?.result;
 	const queryTableData = useMemo(() => queryTableDataResult || [], [
 		queryTableDataResult,
 	]);

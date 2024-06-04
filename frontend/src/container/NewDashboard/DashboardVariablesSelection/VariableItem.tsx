@@ -7,7 +7,7 @@ import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQ
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { debounce } from 'lodash-es';
+import { debounce, isArray, isString } from 'lodash-es';
 import map from 'lodash-es/map';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -108,10 +108,28 @@ function VariableItem({
 
 					if (!areArraysEqual(newOptionsData, oldOptionsData)) {
 						/* eslint-disable no-useless-escape */
+
+						let valueNotInList = false;
+
+						if (isArray(variableData.selectedValue)) {
+							variableData.selectedValue.forEach((val) => {
+								const isUsed = newOptionsData.includes(val);
+
+								if (!isUsed) {
+									valueNotInList = true;
+								}
+							});
+						} else if (isString(variableData.selectedValue)) {
+							const isUsed = newOptionsData.includes(variableData.selectedValue);
+
+							if (!isUsed) {
+								valueNotInList = true;
+							}
+						}
 						if (
 							variableData.type === 'QUERY' &&
 							variableData.name &&
-							variablesToGetUpdated.includes(variableData.name)
+							(variablesToGetUpdated.includes(variableData.name) || valueNotInList)
 						) {
 							let value = variableData.selectedValue;
 							let allSelected = false;
