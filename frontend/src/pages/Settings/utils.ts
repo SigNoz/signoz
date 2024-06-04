@@ -26,17 +26,15 @@ export const getRoutes = (
 		settings.push(...organizationSettings(t));
 	}
 
-	if (isCloudUser()) {
-		if (isGatewayEnabled) {
-			settings.push(...multiIngestionSettings(t));
-		} else {
-			settings.push(...ingestionSettings(t));
-		}
-
-		settings.push(...alertChannels(t));
-	} else {
-		settings.push(...alertChannels(t));
+	if (isGatewayEnabled && userRole === USER_ROLES.ADMIN) {
+		settings.push(...multiIngestionSettings(t));
 	}
+
+	if (isCloudUser() && !isGatewayEnabled) {
+		settings.push(...ingestionSettings(t));
+	}
+
+	settings.push(...alertChannels(t));
 
 	if ((isCloudUser() || isEECloudUser()) && userRole === USER_ROLES.ADMIN) {
 		settings.push(...apiKeys(t));
