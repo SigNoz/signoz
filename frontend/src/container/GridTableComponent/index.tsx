@@ -1,12 +1,13 @@
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Space, Tooltip } from 'antd';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
 import {
 	createTableColumnsFromQuery,
 	RowData,
 } from 'lib/query/createTableColumnsFromQuery';
-import { get, set } from 'lodash-es';
+import { cloneDeep, get, isEmpty, set } from 'lodash-es';
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { eventEmitter } from 'utils/getEventEmitter';
@@ -19,11 +20,12 @@ function GridTableComponent({
 	data,
 	query,
 	thresholds,
+	columnUnits,
 	tableProcessedDataRef,
 	...props
 }: GridTableComponentProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
-	const { columns, dataSource } = useMemo(
+	const { columns, dataSource: originalDataSource } = useMemo(
 		() =>
 			createTableColumnsFromQuery({
 				query,
@@ -31,7 +33,6 @@ function GridTableComponent({
 			}),
 		[data, query],
 	);
-
 	const createDataInCorrectFormat = useCallback(
 		(dataSource: RowData[]): RowData[] =>
 			dataSource.map((d) => {
@@ -51,6 +52,35 @@ function GridTableComponent({
 			}),
 		[columns],
 	);
+
+	const applyColumnUnits = useCallback(
+		(dataSource: RowData[]): RowData[] => {
+			let mutateDataSource = cloneDeep(dataSource);
+			if (isEmpty(columnUnits)) {
+				return mutateDataSource;
+			}
+
+			mutateDataSource = mutateDataSource.map(
+				(val): RowData => {
+					const newValue = val;
+					Object.keys(val).forEach((k) => {
+						if (columnUnits[k]) {
+							newValue[k] = getYAxisFormattedValue(String(val[k]), columnUnits[k]);
+						}
+					});
+					return newValue;
+				},
+			);
+
+			return mutateDataSource;
+		},
+		[columnUnits],
+	);
+
+	const dataSource = useMemo(() => applyColumnUnits(originalDataSource), [
+		applyColumnUnits,
+		originalDataSource,
+	]);
 
 	useEffect(() => {
 		if (tableProcessedDataRef) {

@@ -7,7 +7,7 @@ import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQ
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { debounce } from 'lodash-es';
+import { debounce, isArray, isString } from 'lodash-es';
 import map from 'lodash-es/map';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -16,7 +16,7 @@ import { VariableResponseProps } from 'types/api/dashboard/variables/query';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { variablePropsToPayloadVariables } from '../utils';
-import { SelectItemStyle, VariableContainer, VariableValue } from './styles';
+import { SelectItemStyle } from './styles';
 import { areArraysEqual } from './util';
 
 const ALL_SELECT_VALUE = '__ALL__';
@@ -108,10 +108,28 @@ function VariableItem({
 
 					if (!areArraysEqual(newOptionsData, oldOptionsData)) {
 						/* eslint-disable no-useless-escape */
+
+						let valueNotInList = false;
+
+						if (isArray(variableData.selectedValue)) {
+							variableData.selectedValue.forEach((val) => {
+								const isUsed = newOptionsData.includes(val);
+
+								if (!isUsed) {
+									valueNotInList = true;
+								}
+							});
+						} else if (isString(variableData.selectedValue)) {
+							const isUsed = newOptionsData.includes(variableData.selectedValue);
+
+							if (!isUsed) {
+								valueNotInList = true;
+							}
+						}
 						if (
 							variableData.type === 'QUERY' &&
 							variableData.name &&
-							variablesToGetUpdated.includes(variableData.name)
+							(variablesToGetUpdated.includes(variableData.name) || valueNotInList)
 						) {
 							let value = variableData.selectedValue;
 							let allSelected = false;
@@ -214,11 +232,11 @@ function VariableItem({
 	}, [variableData.type, variableData.customValue]);
 
 	return (
-		<VariableContainer className="variable-item">
+		<div className="variable-item">
 			<Typography.Text className="variable-name" ellipsis>
 				${variableData.name}
 			</Typography.Text>
-			<VariableValue>
+			<div className="variable-value">
 				{variableData.type === 'TEXTBOX' ? (
 					<Input
 						placeholder="Enter value"
@@ -283,8 +301,8 @@ function VariableItem({
 						</Popover>
 					</span>
 				)}
-			</VariableValue>
-		</VariableContainer>
+			</div>
+		</div>
 	);
 }
 
