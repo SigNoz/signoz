@@ -8,6 +8,7 @@ import {
 	DatePicker,
 	Form,
 	Input,
+	InputNumber,
 	Modal,
 	Row,
 	Select,
@@ -26,6 +27,7 @@ import deleteLimitsForIngestionKey from 'api/IngestionKeys/limits/deleteLimitsFo
 import updateLimitForIngestionKeyApi from 'api/IngestionKeys/limits/updateLimitsForIngestionKey';
 import updateIngestionKey from 'api/IngestionKeys/updateIngestionKey';
 import { AxiosError } from 'axios';
+import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Tags from 'components/Tags/Tags';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import dayjs, { Dayjs } from 'dayjs';
@@ -385,6 +387,8 @@ function MultiIngestionSettings(): JSX.Element {
 		});
 	};
 
+	const gbToBytes = (gb: number): number => Math.round(gb * 1024 ** 3);
+
 	const getFormattedTime = (date: string): string =>
 		dayjs(date).format('MMM DD,YYYY, hh:mm a');
 
@@ -405,10 +409,10 @@ function MultiIngestionSettings(): JSX.Element {
 			signal: signalName,
 			config: {
 				day: {
-					size: parseInt(dailyLimit, 10) * BYTES,
+					size: gbToBytes(dailyLimit),
 				},
 				second: {
-					size: parseInt(secondsLimit, 10) * BYTES,
+					size: gbToBytes(secondsLimit),
 				},
 			},
 		};
@@ -427,17 +431,17 @@ function MultiIngestionSettings(): JSX.Element {
 			signal: signal.signal,
 			config: {
 				day: {
-					size: parseInt(dailyLimit, 10) * BYTES,
+					size: gbToBytes(dailyLimit),
 				},
 				second: {
-					size: parseInt(secondsLimit, 10) * BYTES,
+					size: gbToBytes(secondsLimit),
 				},
 			},
 		};
 		updateLimitForIngestionKey(payload);
 	};
 
-	const getFormattedLimit = (size: number | undefined): number => {
+	const bytesToGb = (size: number | undefined): number => {
 		if (!size) {
 			return 0;
 		}
@@ -453,8 +457,8 @@ function MultiIngestionSettings(): JSX.Element {
 		setActiveSignal(signal);
 
 		addEditLimitForm.setFieldsValue({
-			dailyLimit: getFormattedLimit(signal?.config?.day?.size),
-			secondsLimit: getFormattedLimit(signal?.config?.second?.size),
+			dailyLimit: bytesToGb(signal?.config?.day?.size || 0),
+			secondsLimit: bytesToGb(signal?.config?.second?.size || 0),
 		});
 
 		setIsEditAddLimitOpen(true);
@@ -663,12 +667,8 @@ function MultiIngestionSettings(): JSX.Element {
 																form={addEditLimitForm}
 																autoComplete="off"
 																initialValues={{
-																	dailyLimit: getFormattedLimit(
-																		limits[signal]?.config?.day?.size,
-																	),
-																	secondsLimit: getFormattedLimit(
-																		limits[signal]?.config?.second?.size,
-																	),
+																	dailyLimit: bytesToGb(limits[signal]?.config?.day?.size),
+																	secondsLimit: bytesToGb(limits[signal]?.config?.second?.size),
 																}}
 																className="edit-ingestion-key-limit-form"
 															>
@@ -683,15 +683,13 @@ function MultiIngestionSettings(): JSX.Element {
 
 																		<div className="size">
 																			<Form.Item name="dailyLimit">
-																				<Input
-																					min={1}
-																					type="number"
+																				<InputNumber
 																					addonAfter={
-																						<Select defaultValue="GB" disabled>
-																							<Option value="TB">Terrabytes</Option>
-																							<Option value="GB">Gigabytes</Option>
-																							<Option value="MB">Megabytes</Option>
-																							<Option value="KB">Kilobytes</Option>
+																						<Select defaultValue="GiB" disabled>
+																							<Option value="TiB"> TiB</Option>
+																							<Option value="GiB"> GiB</Option>
+																							<Option value="MiB"> MiB </Option>
+																							<Option value="KiB"> KiB </Option>
 																						</Select>
 																					}
 																				/>
@@ -710,15 +708,13 @@ function MultiIngestionSettings(): JSX.Element {
 
 																		<div className="size">
 																			<Form.Item name="secondsLimit">
-																				<Input
-																					min={1}
-																					type="number"
+																				<InputNumber
 																					addonAfter={
-																						<Select defaultValue="GB" disabled>
-																							<Option value="TB">Terrabytes</Option>
-																							<Option value="GB">Gigabytes</Option>
-																							<Option value="MB">Megabytes</Option>
-																							<Option value="KB">Kilobytes</Option>
+																						<Select defaultValue="GiB" disabled>
+																							<Option value="TiB"> TiB</Option>
+																							<Option value="GiB"> GiB</Option>
+																							<Option value="MiB"> MiB </Option>
+																							<Option value="KiB"> KiB </Option>
 																						</Select>
 																					}
 																				/>
@@ -796,8 +792,15 @@ function MultiIngestionSettings(): JSX.Element {
 																	<div className="limit-value">
 																		{limits[signal]?.config?.day?.size ? (
 																			<>
-																				{getFormattedLimit(limits[signal]?.metric?.day?.size)} GB /{' '}
-																				{getFormattedLimit(limits[signal]?.config?.day?.size)} GB
+																				{getYAxisFormattedValue(
+																					(limits[signal]?.metric?.day?.size || 0).toString(),
+																					'bytes',
+																				)}{' '}
+																				/{' '}
+																				{getYAxisFormattedValue(
+																					(limits[signal]?.config?.day?.size || 0).toString(),
+																					'bytes',
+																				)}
 																			</>
 																		) : (
 																			<>
@@ -815,9 +818,15 @@ function MultiIngestionSettings(): JSX.Element {
 																	<div className="limit-value">
 																		{limits[signal]?.config?.second?.size ? (
 																			<>
-																				{getFormattedLimit(limits[signal]?.metric?.second?.size)} GB
-																				/ {getFormattedLimit(limits[signal]?.config?.second?.size)}{' '}
-																				GB
+																				{getYAxisFormattedValue(
+																					(limits[signal]?.metric?.second?.size || 0).toString(),
+																					'bytes',
+																				)}{' '}
+																				/{' '}
+																				{getYAxisFormattedValue(
+																					(limits[signal]?.config?.second?.size || 0).toString(),
+																					'bytes',
+																				)}
 																			</>
 																		) : (
 																			<>

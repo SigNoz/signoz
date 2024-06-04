@@ -27,7 +27,7 @@ export const getRoutes = (
 	}
 
 	if (isCloudUser()) {
-		if (!isGatewayEnabled) {
+		if (isGatewayEnabled) {
 			settings.push(...multiIngestionSettings(t));
 		} else {
 			settings.push(...ingestionSettings(t));
