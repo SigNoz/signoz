@@ -8,12 +8,14 @@ import {
 	apiKeys,
 	generalSettings,
 	ingestionSettings,
+	multiIngestionSettings,
 	organizationSettings,
 } from './config';
 
 export const getRoutes = (
 	userRole: ROLES | null,
 	isCurrentOrgSettings: boolean,
+	isGatewayEnabled: boolean,
 	t: TFunction,
 ): RouteTabProps['routes'] => {
 	const settings = [];
@@ -25,7 +27,12 @@ export const getRoutes = (
 	}
 
 	if (isCloudUser()) {
-		settings.push(...ingestionSettings(t));
+		if (!isGatewayEnabled) {
+			settings.push(...multiIngestionSettings(t));
+		} else {
+			settings.push(...ingestionSettings(t));
+		}
+
 		settings.push(...alertChannels(t));
 	} else {
 		settings.push(...alertChannels(t));
