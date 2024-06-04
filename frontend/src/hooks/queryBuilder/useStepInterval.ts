@@ -17,10 +17,8 @@ export const updateStepInterval = (
 	});
 
 	function getStepInterval(customInterval: number): number {
+		// if user enters some value then auto update should never come
 		if (shallUpdateStepInterval) {
-			if (customInterval < stepInterval) {
-				return stepInterval;
-			}
 			return customInterval;
 		}
 		return stepInterval;

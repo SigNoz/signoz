@@ -22,7 +22,6 @@ import { QueryHistoryState } from 'container/LiveLogs/types';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
@@ -315,8 +314,6 @@ function DateTimeSelection({
 			return;
 		}
 
-		const { maxTime, minTime } = GetMinMax(value, getTime());
-
 		if (!isLogsExplorerPage) {
 			urlQuery.delete('startTime');
 			urlQuery.delete('endTime');
@@ -333,7 +330,8 @@ function DateTimeSelection({
 			return;
 		}
 		// the second boolean param directs the qb about the time change so to merge the query and retain the current state
-		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime), true);
+		// we removed update step interval to stop auto updating the value on time change
+		initQueryBuilderData(stagedQuery, true);
 	};
 
 	const onRefreshHandler = (): void => {
@@ -383,8 +381,6 @@ function DateTimeSelection({
 
 		setIsValidteRelativeTime(true);
 
-		const { maxTime, minTime } = GetMinMax(dateTimeStr, getTime());
-
 		if (!isLogsExplorerPage) {
 			urlQuery.delete('startTime');
 			urlQuery.delete('endTime');
@@ -400,7 +396,8 @@ function DateTimeSelection({
 		}
 
 		// the second boolean param directs the qb about the time change so to merge the query and retain the current state
-		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime), true);
+		// we removed update step interval to stop auto updating the value on time change
+		initQueryBuilderData(stagedQuery, true);
 	};
 
 	const getCustomOrIntervalTime = (

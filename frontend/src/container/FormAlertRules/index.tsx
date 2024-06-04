@@ -22,7 +22,6 @@ import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -69,7 +68,7 @@ function FormAlertRules({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
+	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
@@ -183,7 +182,9 @@ function FormAlertRules({
 		}
 		const query: Query = { ...currentQuery, queryType: val };
 
-		redirectWithQueryBuilderData(updateStepInterval(query, maxTime, minTime));
+		// update step interval is removed from here as if the user enters
+		// any value we will use that rather than auto update
+		redirectWithQueryBuilderData(query);
 	};
 	const { notifications } = useNotifications();
 
