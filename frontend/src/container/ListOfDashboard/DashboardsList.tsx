@@ -8,6 +8,7 @@ import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
 	Dropdown,
+	Flex,
 	Input,
 	MenuProps,
 	Modal,
@@ -23,6 +24,8 @@ import { TableProps } from 'antd/lib';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { dashboardListMessage } from 'components/facingIssueBtn/util';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
@@ -599,9 +602,20 @@ function DashboardsList(): JSX.Element {
 			<div className="dashboards-list-view-content">
 				<div className="dashboards-list-title-container">
 					<Typography.Title className="title">Dashboards</Typography.Title>
-					<Typography.Text className="subtitle">
-						Create and manage dashboards for your workspace.
-					</Typography.Text>
+					<Flex align="center" justify="space-between">
+						<Typography.Text className="subtitle">
+							Create and manage dashboards for your workspace.
+						</Typography.Text>
+						<FacingIssueBtn
+							attributes={{
+								screen: 'Dashboard list page',
+							}}
+							eventName="Dashboard: Facing Issues in dashboard"
+							message={dashboardListMessage}
+							buttonText="Facing issues with dashboards?"
+							onHoverText="Click here to get help with dashboards"
+						/>
+					</Flex>
 				</div>
 
 				{isDashboardListLoading || isFilteringDashboards ? (

@@ -1,7 +1,18 @@
 import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
+import {
+	Button,
+	Card,
+	Flex,
+	Input,
+	Modal,
+	Popover,
+	Tag,
+	Typography,
+} from 'antd';
+import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
+import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -250,30 +261,43 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	return (
 		<Card className="dashboard-description-container">
-			<section className="dashboard-breadcrumbs">
-				<Button
-					type="text"
-					icon={<LayoutGrid size={14} />}
-					className="dashboard-btn"
-					onClick={(): void => history.push(ROUTES.ALL_DASHBOARD)}
-				>
-					Dashboard /
-				</Button>
-				<Button
-					type="text"
-					className="id-btn"
-					icon={
-						// eslint-disable-next-line jsx-a11y/img-redundant-alt
-						<img
-							src={image}
-							alt="dashboard-image"
-							style={{ height: '14px', width: '14px' }}
-						/>
-					}
-				>
-					{title}
-				</Button>
-			</section>
+			<Flex justify="space-between" align="center">
+				<section className="dashboard-breadcrumbs">
+					<Button
+						type="text"
+						icon={<LayoutGrid size={14} />}
+						className="dashboard-btn"
+						onClick={(): void => history.push(ROUTES.ALL_DASHBOARD)}
+					>
+						Dashboard /
+					</Button>
+					<Button
+						type="text"
+						className="id-btn"
+						icon={
+							// eslint-disable-next-line jsx-a11y/img-redundant-alt
+							<img
+								src={image}
+								alt="dashboard-image"
+								style={{ height: '14px', width: '14px' }}
+							/>
+						}
+					>
+						{title}
+					</Button>
+				</section>
+				<FacingIssueBtn
+					attributes={{
+						uuid: selectedDashboard?.uuid,
+						title: updatedTitle,
+						screen: 'Dashboard Details',
+					}}
+					eventName="Dashboard: Facing Issues in dashboard"
+					message={dashboardHelpMessage(selectedDashboard?.data, selectedDashboard)}
+					buttonText="Facing issues with dashboards?"
+					onHoverText="Click here to get help with dashboard details"
+				/>
+			</Flex>
 			<section className="dashbord-details">
 				<div className="left-section">
 					<img
