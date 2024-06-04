@@ -129,5 +129,6 @@ export const panelTypeVsColumnUnitPreferences: {
 	[PANEL_TYPES.PIE]: false,
 	[PANEL_TYPES.BAR]: false,
 	[PANEL_TYPES.TRACE]: false,
+	[PANEL_TYPES.HISTOGRAM]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;
