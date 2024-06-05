@@ -35,6 +35,8 @@ function UplotPanelWrapper({
 	const [maxTimeScale, setMaxTimeScale] = useState<number>();
 	const { currentQuery } = useQueryBuilder();
 
+	const [hiddenGraph, setHiddenGraph] = useState<{ [key: string]: boolean }>();
+
 	useEffect(() => {
 		if (toScrollWidgetId === widget.id) {
 			graphRef.current?.scrollIntoView({
@@ -79,6 +81,7 @@ function UplotPanelWrapper({
 		queryResponse?.data?.payload,
 		widget.fillSpans,
 		widget?.stackedBarChart,
+		hiddenGraph,
 	);
 
 	const options = useMemo(
@@ -101,6 +104,8 @@ function UplotPanelWrapper({
 				panelType: selectedGraph || widget.panelTypes,
 				currentQuery,
 				stackBarChart: widget?.stackedBarChart,
+				hiddenGraph,
+				setHiddenGraph,
 			}),
 		[
 			widget?.id,
@@ -121,6 +126,7 @@ function UplotPanelWrapper({
 			setGraphVisibility,
 			selectedGraph,
 			currentQuery,
+			hiddenGraph,
 		],
 	);
 

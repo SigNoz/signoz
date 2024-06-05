@@ -10,7 +10,7 @@ import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCa
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { Dimensions } from 'hooks/useDimensions';
 import { convertValue } from 'lib/getConvertedValue';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -45,6 +45,14 @@ export interface GetUPlotChartOptions {
 	softMax: number | null;
 	currentQuery?: Query;
 	stackBarChart?: boolean;
+	hiddenGraph?: {
+		[key: string]: boolean;
+	};
+	setHiddenGraph?: Dispatch<
+		SetStateAction<{
+			[key: string]: boolean;
+		}>
+	>;
 }
 
 function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
@@ -117,9 +125,13 @@ export const getUPlotChartOptions = ({
 	softMin,
 	panelType,
 	currentQuery,
-	stackBarChart,
+	stackBarChart: stackChart,
+	hiddenGraph,
+	setHiddenGraph,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
+
+	const stackBarChart = stackChart && isUndefined(hiddenGraph);
 
 	const series = getStackedSeries(apiResponse?.data?.result || []);
 
@@ -256,6 +268,15 @@ export const getUPlotChartOptions = ({
 						const seriesArray = Array.from(seriesEls);
 						seriesArray.forEach((seriesEl, index) => {
 							seriesEl.addEventListener('click', () => {
+								setHiddenGraph((prev) => {
+									if (isUndefined(prev)) {
+										return { [index]: true };
+									}
+									if (prev[index] === true) {
+										return undefined;
+									}
+									return { [index]: true };
+								});
 								if (graphsVisibilityStates) {
 									setGraphsVisibilityStates?.((prev) => {
 										const newGraphVisibilityStates = [...prev];
@@ -285,12 +306,16 @@ export const getUPlotChartOptions = ({
 			],
 		},
 		series: getSeries({
-			series: stackBarChart ? series : apiResponse?.data?.result,
+			series:
+				stackBarChart && isUndefined(hiddenGraph)
+					? series
+					: apiResponse?.data?.result,
 			widgetMetaData: apiResponse?.data.result,
 			graphsVisibilityStates,
 			panelType,
 			currentQuery,
 			stackBarChart,
+			hiddenGraph,
 		}),
 		axes: getAxes(isDarkMode, yAxisUnit),
 	};

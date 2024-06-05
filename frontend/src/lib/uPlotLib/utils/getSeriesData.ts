@@ -2,6 +2,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
+import { isUndefined } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 
@@ -31,6 +32,7 @@ const getSeries = ({
 	widgetMetaData,
 	graphsVisibilityStates,
 	panelType,
+	hiddenGraph,
 }: GetSeriesProps): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
@@ -64,7 +66,12 @@ const getSeries = ({
 				panelType && panelType === PANEL_TYPES.BAR
 					? null
 					: lineInterpolations.spline,
-			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
+			// eslint-disable-next-line no-nested-ternary
+			show: newGraphVisibilityStates
+				? newGraphVisibilityStates[i]
+				: !isUndefined(hiddenGraph)
+				? hiddenGraph[i]
+				: true,
 			label,
 			fill: panelType && panelType === PANEL_TYPES.BAR ? `${color}40` : undefined,
 			stroke: color,
@@ -90,6 +97,9 @@ export type GetSeriesProps = {
 	panelType?: PANEL_TYPES;
 	currentQuery?: Query;
 	stackBarChart?: boolean;
+	hiddenGraph?: {
+		[key: string]: boolean;
+	};
 };
 
 export default getSeries;
