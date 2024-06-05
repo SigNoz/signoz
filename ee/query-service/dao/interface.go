@@ -34,7 +34,7 @@ type ModelDao interface {
 	GetDomainByEmail(ctx context.Context, email string) (*model.OrgDomain, basemodel.BaseApiError)
 
 	CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basemodel.BaseApiError)
-	UpdatePAT(ctx context.Context, p model.PAT, id string) (basemodel.BaseApiError)
+	UpdatePAT(ctx context.Context, p model.PAT, id string) basemodel.BaseApiError
 	GetPAT(ctx context.Context, pat string) (*model.PAT, basemodel.BaseApiError)
 	UpdatePATLastUsed(ctx context.Context, pat string, lastUsed int64) basemodel.BaseApiError
 	GetPATByID(ctx context.Context, id string) (*model.PAT, basemodel.BaseApiError)

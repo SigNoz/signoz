@@ -13,6 +13,11 @@ import (
 func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]basemodel.SearchSpansResult, error) {
 	var spans []*model.SpanForTraceDetails
 
+	// if targetSpanId is null or not present then randomly select a span as targetSpanId
+	if (targetSpanId == "" || targetSpanId == "null") && len(payload) > 0 {
+		targetSpanId = payload[0].SpanID
+	}
+
 	// Build a slice of spans from the payload
 	for _, spanItem := range payload {
 		var parentID string
@@ -115,6 +120,7 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 	searchSpansResult := []basemodel.SearchSpansResult{{
 		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
 		Events:  make([][]interface{}, len(resultSpansSet)),
+		IsSubTree: true,
 	},
 	}
 

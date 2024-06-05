@@ -100,7 +100,7 @@ func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.
 		points := make([]v3.Point, 0)
 		for pointIdx := range series.Points {
 			point := series.Points[pointIdx]
-			if point.Timestamp > 0 {
+			if point.Timestamp >= 0 {
 				points = append(points, point)
 			} else {
 				pointsWithNegativeTimestamps++

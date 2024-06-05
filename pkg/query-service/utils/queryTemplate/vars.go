@@ -15,6 +15,9 @@ func AssignReservedVarsV3(queryRangeParams *v3.QueryRangeParamsV3) {
 	queryRangeParams.Variables["start_timestamp_ms"] = queryRangeParams.Start
 	queryRangeParams.Variables["end_timestamp_ms"] = queryRangeParams.End
 
+	queryRangeParams.Variables["SIGNOZ_START_TIME"] = queryRangeParams.Start
+	queryRangeParams.Variables["SIGNOZ_END_TIME"] = queryRangeParams.End
+
 	queryRangeParams.Variables["start_timestamp_nano"] = queryRangeParams.Start * 1e6
 	queryRangeParams.Variables["end_timestamp_nano"] = queryRangeParams.End * 1e6
 

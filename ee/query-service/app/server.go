@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	_ "net/http/pprof" // http profiler
 	"os"
 	"regexp"
@@ -24,6 +25,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/auth"
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/dao"
+	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	baseInterface "go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -71,6 +73,7 @@ type ServerOptions struct {
 	CacheConfigPath   string
 	FluxInterval      string
 	Cluster           string
+	GatewayUrl        string
 }
 
 // Server runs HTTP api service
@@ -122,8 +125,33 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	localDB.SetMaxOpenConns(10)
 
+	gatewayFeature := basemodel.Feature{
+		Name:       "GATEWAY",
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	}
+
+	//Activate this feature if the url is not empty
+	var gatewayProxy *httputil.ReverseProxy
+	if serverOptions.GatewayUrl == "" {
+		gatewayFeature.Active = false
+		gatewayProxy, err = gateway.NewNoopProxy()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		zap.L().Info("Enabling gateway feature flag ...")
+		gatewayFeature.Active = true
+		gatewayProxy, err = gateway.NewProxy(serverOptions.GatewayUrl, gateway.RoutePrefix)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// initiate license manager
-	lm, err := licensepkg.StartManager("sqlite", localDB)
+	lm, err := licensepkg.StartManager("sqlite", localDB, gatewayFeature)
 	if err != nil {
 		return nil, err
 	}
@@ -248,6 +276,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		LogsParsingPipelineController: logParsingPipelineController,
 		Cache:                         c,
 		FluxInterval:                  fluxInterval,
+		Gateway:                       gatewayProxy,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -710,6 +739,7 @@ func makeRulesManager(
 		Logger:       nil,
 		DisableRules: disableRules,
 		FeatureFlags: fm,
+		Reader:       ch,
 	}
 
 	// create Manager

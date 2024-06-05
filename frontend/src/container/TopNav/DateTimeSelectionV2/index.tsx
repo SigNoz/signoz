@@ -19,6 +19,7 @@ import {
 	defaultLiveQueryDataConfig,
 } from 'container/LiveLogs/constants';
 import { QueryHistoryState } from 'container/LiveLogs/types';
+import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -59,9 +60,11 @@ import { Form, FormContainer, FormItem } from './styles';
 
 function DateTimeSelection({
 	showAutoRefresh,
+	hideShareModal = false,
 	location,
 	updateTimeInterval,
 	globalTimeLoading,
+	showOldExplorerCTA = false,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
 
@@ -168,7 +171,7 @@ function DateTimeSelection({
 						: [],
 				listQueryPayload:
 					listQuery && listQuery[1]
-						? listQuery[1].payload?.data.newResult.data.result || []
+						? listQuery[1].payload?.data?.newResult?.data?.result || []
 						: [],
 			};
 		}
@@ -560,6 +563,11 @@ function DateTimeSelection({
 
 	return (
 		<div className="date-time-selector">
+			{showOldExplorerCTA && (
+				<div style={{ marginRight: 12 }}>
+					<NewExplorerCTA />
+				</div>
+			)}
 			{!hasSelectedTimeError && !refreshButtonHidden && (
 				<RefreshText
 					{...{
@@ -619,21 +627,23 @@ function DateTimeSelection({
 						</div>
 					)}
 
-					<Popover
-						rootClassName="shareable-link-popover-root"
-						className="shareable-link-popover"
-						placement="bottomRight"
-						content={shareModalContent}
-						arrow={false}
-						trigger={['hover']}
-					>
-						<Button
-							className="share-link-btn periscope-btn"
-							icon={<Send size={14} />}
+					{!hideShareModal && (
+						<Popover
+							rootClassName="shareable-link-popover-root"
+							className="shareable-link-popover"
+							placement="bottomRight"
+							content={shareModalContent}
+							arrow={false}
+							trigger={['hover']}
 						>
-							Share
-						</Button>
-					</Popover>
+							<Button
+								className="share-link-btn periscope-btn"
+								icon={<Send size={14} />}
+							>
+								Share
+							</Button>
+						</Popover>
+					)}
 				</FormContainer>
 			</Form>
 		</div>
@@ -642,7 +652,14 @@ function DateTimeSelection({
 
 interface DateTimeSelectionV2Props {
 	showAutoRefresh: boolean;
+	hideShareModal?: boolean;
+	showOldExplorerCTA?: boolean;
 }
+
+DateTimeSelection.defaultProps = {
+	hideShareModal: false,
+	showOldExplorerCTA: false,
+};
 interface DispatchProps {
 	updateTimeInterval: (
 		interval: Time | CustomTimeType,

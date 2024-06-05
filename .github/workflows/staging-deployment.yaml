@@ -49,6 +49,6 @@ jobs:
           git pull
           make build-ee-query-service-amd64
           make build-frontend-amd64
-          make run-signoz
+          make run-testing
           EOF
-          gcloud compute ssh ${GCP_INSTANCE} --zone ${GCP_ZONE} --tunnel-through-iap --project ${GCP_PROJECT} --command "${COMMAND}"
+          gcloud compute ssh ${GCP_INSTANCE} --zone ${GCP_ZONE} --ssh-key-expire-after=15m --tunnel-through-iap --project ${GCP_PROJECT} --command "${COMMAND}"

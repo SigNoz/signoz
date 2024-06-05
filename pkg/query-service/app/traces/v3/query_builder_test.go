@@ -101,6 +101,13 @@ var buildFilterQueryData = []struct {
 		ExpectedFilter: " AND stringTagMap['host'] ILIKE '%102.%'",
 	},
 	{
+		Name: "Test contains with quotes",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "message", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "Hello 'world'", Operator: "contains"},
+		}},
+		ExpectedFilter: " AND stringTagMap['message'] ILIKE '%Hello \\'world\\'%'",
+	},
+	{
 		Name: "Test not contains",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},

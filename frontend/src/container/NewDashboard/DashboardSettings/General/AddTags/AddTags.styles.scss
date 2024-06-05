@@ -1,0 +1,31 @@
+.tags-input {
+	display: flex;
+	border: none;
+	padding: 0px;
+	width: 183px;
+	height: 24px;
+	padding: 3px 1px;
+	flex-shrink: 0;
+}
+
+.tag-container {
+	color: var(--bg-sienna-400);
+	font-family: 'Space Mono';
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 20px; /* 153.846% */
+	letter-spacing: 0.52px;
+	height: 24px;
+	flex-shrink: 0;
+	border-radius: 50px;
+	border: 1px solid rgba(173, 127, 88, 0.2);
+	background: rgba(173, 127, 88, 0.1);
+	padding: 2px 8px;
+}
+
+.edit-input {
+	.ant-form-item {
+		margin-bottom: 0px;
+	}
+}

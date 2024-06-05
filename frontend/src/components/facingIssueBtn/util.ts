@@ -55,3 +55,20 @@ State: ${(alertDef as any)?.state || ''}
 Alert Id: ${ruleId}
 
 Thanks`;
+
+export const integrationsListMessage = `Hi Team,
+
+I need help with Integrations.
+
+Thanks`;
+
+export const integrationDetailMessage = (
+	selectedIntegration: string,
+): string => `
+Hi Team,
+
+I need help in configuring this integration.
+
+Integration Id: ${selectedIntegration}
+
+Thanks`;

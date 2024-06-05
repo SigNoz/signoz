@@ -29,6 +29,8 @@ const generateTooltipContent = (
 	yAxisUnit?: string,
 	series?: uPlot.Options['series'],
 	isBillingUsageGraphs?: boolean,
+	isHistogramGraphs?: boolean,
+	isMergedSeries?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -67,7 +69,9 @@ const generateTooltipContent = (
 
 				const value = data[index][idx];
 				const dataIngested = quantity[idx];
-				const label = getLabelName(metric, queryName || '', legend || '');
+				const label = isMergedSeries
+					? 'merged_series'
+					: getLabelName(metric, queryName || '', legend || '');
 
 				let color = generateColor(label, themeColors.chartcolors);
 
@@ -146,7 +150,7 @@ const generateTooltipContent = (
 
 	const div = document.createElement('div');
 	div.classList.add('tooltip-content-row');
-	div.textContent = tooltipTitle;
+	div.textContent = isHistogramGraphs ? '' : tooltipTitle;
 	div.classList.add('tooltip-content-header');
 	container.appendChild(div);
 
@@ -191,11 +195,21 @@ const generateTooltipContent = (
 	return container;
 };
 
-const tooltipPlugin = (
-	apiResponse: MetricRangePayloadProps | undefined,
-	yAxisUnit?: string,
-	isBillingUsageGraphs?: boolean,
-): any => {
+type ToolTipPluginProps = {
+	apiResponse: MetricRangePayloadProps | undefined;
+	yAxisUnit?: string;
+	isBillingUsageGraphs?: boolean;
+	isHistogramGraphs?: boolean;
+	isMergedSeries?: boolean;
+};
+
+const tooltipPlugin = ({
+	apiResponse,
+	yAxisUnit,
+	isBillingUsageGraphs,
+	isHistogramGraphs,
+	isMergedSeries,
+}: ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
 	let bLeft: any;
@@ -256,6 +270,8 @@ const tooltipPlugin = (
 							yAxisUnit,
 							u.series,
 							isBillingUsageGraphs,
+							isHistogramGraphs,
+							isMergedSeries,
 						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });

@@ -1075,9 +1075,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	if len(queryParams.HttpRoute) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
-	if len(queryParams.HttpCode) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
-	}
 	if len(queryParams.HttpHost) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
@@ -1086,9 +1083,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 	}
 	if len(queryParams.HttpUrl) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
-	}
-	if len(queryParams.Component) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
@@ -1123,12 +1117,10 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 		Operation:          map[string]uint64{},
 		ResponseStatusCode: map[string]uint64{},
 		RPCMethod:          map[string]uint64{},
-		HttpCode:           map[string]uint64{},
 		HttpMethod:         map[string]uint64{},
 		HttpUrl:            map[string]uint64{},
 		HttpRoute:          map[string]uint64{},
 		HttpHost:           map[string]uint64{},
-		Component:          map[string]uint64{},
 	}
 
 	for _, e := range queryParams.GetFilters {
@@ -1150,23 +1142,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			for _, service := range dBResponse {
 				if service.ServiceName != "" {
 					traceFilterReponse.ServiceName[service.ServiceName] = service.Count
-				}
-			}
-		case constants.HttpCode:
-			finalQuery := fmt.Sprintf("SELECT httpCode, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.indexTable)
-			finalQuery += query
-			finalQuery += " GROUP BY httpCode"
-			var dBResponse []model.DBResponseHttpCode
-			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.L().Info(finalQuery)
-
-			if err != nil {
-				zap.L().Error("Error in processing sql query", zap.Error(err))
-				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
-			}
-			for _, service := range dBResponse {
-				if service.HttpCode != "" {
-					traceFilterReponse.HttpCode[service.HttpCode] = service.Count
 				}
 			}
 		case constants.HttpRoute:
@@ -1252,23 +1227,6 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 			for _, service := range dBResponse {
 				if service.Operation != "" {
 					traceFilterReponse.Operation[service.Operation] = service.Count
-				}
-			}
-		case constants.Component:
-			finalQuery := fmt.Sprintf("SELECT component, count() as count FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.indexTable)
-			finalQuery += query
-			finalQuery += " GROUP BY component"
-			var dBResponse []model.DBResponseComponent
-			err := r.db.Select(ctx, &dBResponse, finalQuery, args...)
-			zap.L().Info(finalQuery)
-
-			if err != nil {
-				zap.L().Error("Error in processing sql query", zap.Error(err))
-				return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query: %s", err)}
-			}
-			for _, service := range dBResponse {
-				if service.Component != "" {
-					traceFilterReponse.Component[service.Component] = service.Count
 				}
 			}
 		case constants.Status:
@@ -1441,9 +1399,6 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	if len(queryParams.HttpRoute) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
-	if len(queryParams.HttpCode) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
-	}
 	if len(queryParams.HttpHost) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
@@ -1452,9 +1407,6 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	}
 	if len(queryParams.HttpUrl) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
-	}
-	if len(queryParams.Component) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
@@ -1736,9 +1688,6 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	if len(queryParams.HttpRoute) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
-	if len(queryParams.HttpCode) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
-	}
 	if len(queryParams.HttpHost) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
@@ -1747,9 +1696,6 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	}
 	if len(queryParams.HttpUrl) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
-	}
-	if len(queryParams.Component) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
@@ -1811,7 +1757,6 @@ func excludeTags(ctx context.Context, tags []string) []string {
 		"http.host":           true,
 		"messaging.system":    true,
 		"messaging.operation": true,
-		"component":           true,
 		"error":               true,
 		"service.name":        true,
 	}
@@ -1861,9 +1806,6 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 	if len(queryParams.HttpRoute) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
-	if len(queryParams.HttpCode) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
-	}
 	if len(queryParams.HttpHost) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
@@ -1872,9 +1814,6 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 	}
 	if len(queryParams.HttpUrl) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
-	}
-	if len(queryParams.Component) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
@@ -2014,7 +1953,39 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	return &usageItems, nil
 }
 
-func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spanId string, levelUp int, levelDown int, spanLimit int, smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams,
+	smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string,
+		levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error) {
+
+	var countSpans uint64
+	countQuery := fmt.Sprintf("SELECT count() as count from %s.%s WHERE traceID=$1", r.TraceDB, r.SpansTable)
+	err := r.db.QueryRow(ctx, countQuery, params.TraceID).Scan(&countSpans)
+	if err != nil {
+		zap.L().Error("Error in processing sql query", zap.Error(err))
+		return nil, fmt.Errorf("error in processing sql query")
+	}
+
+	if countSpans > uint64(params.MaxSpansInTrace) {
+		zap.L().Error("Max spans allowed in a trace limit reached", zap.Int("MaxSpansInTrace", params.MaxSpansInTrace),
+			zap.Uint64("Count", countSpans))
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			data := map[string]interface{}{
+				"traceSize":            countSpans,
+				"maxSpansInTraceLimit": params.MaxSpansInTrace,
+			}
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_MAX_SPANS_ALLOWED_LIMIT_REACHED, data, userEmail, true, false)
+		}
+		return nil, fmt.Errorf("Max spans allowed in trace limit reached, please contact support for more details")
+	}
+
+	userEmail, err := auth.GetEmailFromJwt(ctx)
+	if err == nil {
+		data := map[string]interface{}{
+			"traceSize": countSpans,
+		}
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_TRACE_DETAIL_API, data, userEmail, true, false)
+	}
 
 	var searchScanResponses []model.SearchSpanDBResponseItem
 
@@ -2022,7 +1993,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 
 	start := time.Now()
 
-	err := r.db.Select(ctx, &searchScanResponses, query, traceId)
+	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID)
 
 	zap.L().Info(query)
 
@@ -2033,8 +2004,9 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 	end := time.Now()
 	zap.L().Debug("getTraceSQLQuery took: ", zap.Duration("duration", end.Sub(start)))
 	searchSpansResult := []model.SearchSpansResult{{
-		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
-		Events:  make([][]interface{}, len(searchScanResponses)),
+		Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
+		Events:    make([][]interface{}, len(searchScanResponses)),
+		IsSubTree: false,
 	},
 	}
 
@@ -2051,14 +2023,22 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, traceId string, spa
 
 	err = r.featureFlags.CheckFeature(model.SmartTraceDetail)
 	smartAlgoEnabled := err == nil
-	if len(searchScanResponses) > spanLimit && spanId != "" && smartAlgoEnabled {
+	if len(searchScanResponses) > params.SpansRenderLimit && smartAlgoEnabled {
 		start = time.Now()
-		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, spanId, levelUp, levelDown, spanLimit)
+		searchSpansResult, err = smartTraceAlgorithm(searchSpanResponses, params.SpanID, params.LevelUp, params.LevelDown, params.SpansRenderLimit)
 		if err != nil {
 			return nil, err
 		}
 		end = time.Now()
 		zap.L().Debug("smartTraceAlgo took: ", zap.Duration("duration", end.Sub(start)))
+		userEmail, err := auth.GetEmailFromJwt(ctx)
+		if err == nil {
+			data := map[string]interface{}{
+				"traceSize":        len(searchScanResponses),
+				"spansRenderLimit": params.SpansRenderLimit,
+			}
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_LARGE_TRACE_OPENED, data, userEmail, true, false)
+		}
 	} else {
 		for i, item := range searchSpanResponses {
 			spanEvents := item.GetValues()
@@ -2194,9 +2174,6 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	if len(queryParams.HttpRoute) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpRoute, constants.HttpRoute, &query, args)
 	}
-	if len(queryParams.HttpCode) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpCode, constants.HttpCode, &query, args)
-	}
 	if len(queryParams.HttpHost) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpHost, constants.HttpHost, &query, args)
 	}
@@ -2205,9 +2182,6 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	}
 	if len(queryParams.HttpUrl) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.HttpUrl, constants.HttpUrl, &query, args)
-	}
-	if len(queryParams.Component) > 0 {
-		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Component, constants.Component, &query, args)
 	}
 	if len(queryParams.Operation) > 0 {
 		args = buildFilterArrayQuery(ctx, excludeMap, queryParams.Operation, constants.OperationDB, &query, args)
@@ -4459,7 +4433,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 }
 
-func readRow(vars []interface{}, columnNames []string) ([]string, map[string]string, []map[string]string, v3.Point) {
+func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([]string, map[string]string, []map[string]string, v3.Point) {
 	// Each row will have a value and a timestamp, and an optional list of label values
 	// example: {Timestamp: ..., Value: ...}
 	// The timestamp may also not present in some cases where the time series is reduced to single value
@@ -4503,7 +4477,7 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 		case *time.Time:
 			point.Timestamp = v.UnixMilli()
 		case *float64, *float32:
-			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
 				point.Value = float64(reflect.ValueOf(v).Elem().Float())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float()))
@@ -4512,8 +4486,8 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())
 			}
-		case *uint8, *uint64, *uint16, *uint32:
-			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+		case *uint, *uint8, *uint64, *uint16, *uint32:
+			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
 				point.Value = float64(reflect.ValueOf(v).Elem().Uint())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
@@ -4522,8 +4496,8 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint())
 			}
-		case *int8, *int16, *int32, *int64:
-			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+		case *int, *int8, *int16, *int32, *int64:
+			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
 				point.Value = float64(reflect.ValueOf(v).Elem().Int())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
@@ -4546,7 +4520,7 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 	return groupBy, groupAttributes, groupAttributesArray, point
 }
 
-func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNames []string) ([]*v3.Series, error) {
+func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNames []string, countOfNumberCols int) ([]*v3.Series, error) {
 	// when groupBy is applied, each combination of cartesian product
 	// of attribute values is a separate series. Each item in seriesToPoints
 	// represent a unique series where the key is sorted attribute values joined
@@ -4581,7 +4555,7 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 		if err := rows.Scan(vars...); err != nil {
 			return nil, err
 		}
-		groupBy, groupAttributes, groupAttributesArray, metricPoint := readRow(vars, columnNames)
+		groupBy, groupAttributes, groupAttributesArray, metricPoint := readRow(vars, columnNames, countOfNumberCols)
 		// skip the point if the value is NaN or Inf
 		// are they ever useful enough to be returned?
 		if math.IsNaN(metricPoint.Value) || math.IsInf(metricPoint.Value, 0) {
@@ -4600,20 +4574,7 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 	var seriesList []*v3.Series
 	for _, key := range keys {
 		points := seriesToPoints[key]
-		// find the grouping sets point for the series
-		// this is the point with the zero timestamp
-		// if there is no such point, then the series is not grouped
-		// and we can skip this step
-		var groupingSetsPoint *v3.Point
-		for idx, point := range points {
-			if point.Timestamp <= 0 {
-				groupingSetsPoint = &point
-				// remove the grouping sets point from the list of points
-				points = append(points[:idx], points[idx+1:]...)
-				break
-			}
-		}
-		series := v3.Series{Labels: seriesToAttrs[key], Points: points, GroupingSetsPoint: groupingSetsPoint, LabelsArray: labelsArray[key]}
+		series := v3.Series{Labels: seriesToAttrs[key], Points: points, LabelsArray: labelsArray[key]}
 		seriesList = append(seriesList, &series)
 	}
 	return seriesList, getPersonalisedError(rows.Err())
@@ -4653,11 +4614,28 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 		columnNames = rows.Columns()
 		vars        = make([]interface{}, len(columnTypes))
 	)
+	var countOfNumberCols int
+
 	for i := range columnTypes {
 		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+		switch columnTypes[i].ScanType().Kind() {
+		case reflect.Float32,
+			reflect.Float64,
+			reflect.Uint,
+			reflect.Uint8,
+			reflect.Uint16,
+			reflect.Uint32,
+			reflect.Uint64,
+			reflect.Int,
+			reflect.Int8,
+			reflect.Int16,
+			reflect.Int32,
+			reflect.Int64:
+			countOfNumberCols++
+		}
 	}
 
-	return readRowsForTimeSeriesResult(rows, vars, columnNames)
+	return readRowsForTimeSeriesResult(rows, vars, columnNames, countOfNumberCols)
 }
 
 // GetListResultV3 runs the query and returns list of rows

@@ -22,6 +22,11 @@
 }
 
 .lightMode {
+	.main-container {
+		.plot-tag {
+			background: var(--bg-vanilla-300);
+		}
+	}
 	.ant-modal-content {
 		background-color: var(--bg-vanilla-100);
 		.ant-modal-confirm-title {

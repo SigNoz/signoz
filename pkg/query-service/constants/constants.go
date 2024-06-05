@@ -154,11 +154,9 @@ const (
 	TraceID                        = "traceID"
 	ServiceName                    = "serviceName"
 	HttpRoute                      = "httpRoute"
-	HttpCode                       = "httpCode"
 	HttpHost                       = "httpHost"
 	HttpUrl                        = "httpUrl"
 	HttpMethod                     = "httpMethod"
-	Component                      = "component"
 	OperationDB                    = "name"
 	OperationRequest               = "operation"
 	Status                         = "status"
@@ -193,7 +191,6 @@ var GroupByColMap = map[string]struct{}{
 	HttpRoute:          {},
 	HttpUrl:            {},
 	HttpMethod:         {},
-	Component:          {},
 	OperationDB:        {},
 	DBName:             {},
 	DBOperation:        {},
@@ -300,9 +297,11 @@ const (
 // written clickhouse query. The column alias indcate which value is
 // to be considered as final result (or target)
 var ReservedColumnTargetAliases = map[string]struct{}{
-	"result": {},
-	"res":    {},
-	"value":  {},
+	"__result": {},
+	"__value":  {},
+	"result":   {},
+	"res":      {},
+	"value":    {},
 }
 
 // logsPPLPfx is a short constant for logsPipelinePrefix

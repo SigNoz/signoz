@@ -1,18 +1,16 @@
 package rules
 
 import (
-	"context"
 	"testing"
 	"time"
 
-	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
-func TestThresholdRuleCombinations(t *testing.T) {
+func TestThresholdRuleShouldAlert(t *testing.T) {
 	postableRule := PostableRule{
 		AlertName:  "Tricky Condition Tests",
 		AlertType:  "METRIC_BASED_ALERT",
@@ -37,18 +35,9 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			},
 		},
 	}
-	fm := featureManager.StartManager()
-	mock, err := cmock.NewClickHouseNative(nil)
-	if err != nil {
-		t.Errorf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-
-	cols := make([]cmock.ColumnType, 0)
-	cols = append(cols, cmock.ColumnType{Name: "value", Type: "Int32"})
-	cols = append(cols, cmock.ColumnType{Name: "endpoint", Type: "String"})
 
 	cases := []struct {
-		values      [][]interface{}
+		values      v3.Series
 		expectAlert bool
 		compareOp   string
 		matchType   string
@@ -56,12 +45,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 	}{
 		// Test cases for Equals Always
 		{
-			values: [][]interface{}{
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+				},
 			},
 			expectAlert: true,
 			compareOp:   "3", // Equals
@@ -69,12 +60,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			target:      0.0,
 		},
 		{
-			values: [][]interface{}{
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 1.0},
+				},
 			},
 			expectAlert: false,
 			compareOp:   "3", // Equals
@@ -82,12 +75,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			target:      0.0,
 		},
 		{
-			values: [][]interface{}{
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
 			},
 			expectAlert: false,
 			compareOp:   "3", // Equals
@@ -95,12 +90,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			target:      0.0,
 		},
 		{
-			values: [][]interface{}{
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
 			},
 			expectAlert: false,
 			compareOp:   "3", // Equals
@@ -109,12 +106,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 		},
 		// Test cases for Equals Once
 		{
-			values: [][]interface{}{
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+				},
 			},
 			expectAlert: true,
 			compareOp:   "3", // Equals
@@ -122,12 +121,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			target:      0.0,
 		},
 		{
-			values: [][]interface{}{
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 1.0},
+				},
 			},
 			expectAlert: true,
 			compareOp:   "3", // Equals
@@ -135,12 +136,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			target:      0.0,
 		},
 		{
-			values: [][]interface{}{
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
 			},
 			expectAlert: true,
 			compareOp:   "3", // Equals
@@ -148,26 +151,92 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			target:      0.0,
 		},
 		{
-			values: [][]interface{}{
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
 			},
 			expectAlert: false,
 			compareOp:   "3", // Equals
 			matchType:   "1", // Once
 			target:      0.0,
+		},
+		// Test cases for Greater Than Always
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "1", // Greater Than
+			matchType:   "2", // Always
+			target:      1.5,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "1", // Greater Than
+			matchType:   "2", // Always
+			target:      4.5,
+		},
+		// Test cases for Greater Than Once
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "1", // Greater Than
+			matchType:   "1", // Once
+			target:      4.5,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 4.0},
+					{Value: 4.0},
+					{Value: 4.0},
+					{Value: 4.0},
+					{Value: 4.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "1", // Greater Than
+			matchType:   "1", // Once
+			target:      4.5,
 		},
 		// Test cases for Not Equals Always
 		{
-			values: [][]interface{}{
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(0), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+				},
 			},
 			expectAlert: false,
 			compareOp:   "4", // Not Equals
@@ -175,12 +244,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			target:      0.0,
 		},
 		{
-			values: [][]interface{}{
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(0), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 0.0},
+				},
 			},
 			expectAlert: false,
 			compareOp:   "4", // Not Equals
@@ -188,12 +259,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			target:      0.0,
 		},
 		{
-			values: [][]interface{}{
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
 			},
 			expectAlert: true,
 			compareOp:   "4", // Not Equals
@@ -201,12 +274,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			target:      0.0,
 		},
 		{
-			values: [][]interface{}{
-				{int32(1), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.0},
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
 			},
 			expectAlert: false,
 			compareOp:   "4", // Not Equals
@@ -215,12 +290,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 		},
 		// Test cases for Not Equals Once
 		{
-			values: [][]interface{}{
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(0), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+				},
 			},
 			expectAlert: true,
 			compareOp:   "4", // Not Equals
@@ -228,12 +305,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			target:      0.0,
 		},
 		{
-			values: [][]interface{}{
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+				},
 			},
 			expectAlert: false,
 			compareOp:   "4", // Not Equals
@@ -241,12 +320,14 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			target:      0.0,
 		},
 		{
-			values: [][]interface{}{
-				{int32(0), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(0), "endpoint"},
-				{int32(1), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 1.0},
+					{Value: 0.0},
+					{Value: 1.0},
+				},
 			},
 			expectAlert: true,
 			compareOp:   "4", // Not Equals
@@ -254,85 +335,294 @@ func TestThresholdRuleCombinations(t *testing.T) {
 			target:      0.0,
 		},
 		{
-			values: [][]interface{}{
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
-				{int32(1), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+					{Value: 1.0},
+				},
 			},
 			expectAlert: true,
 			compareOp:   "4", // Not Equals
 			matchType:   "1", // Once
 			target:      0.0,
 		},
+		// Test cases for Less Than Always
 		{
-			values: [][]interface{}{
-				{int32(2), "endpoint"},
-				{int32(3), "endpoint"},
-				{int32(2), "endpoint"},
-				{int32(4), "endpoint"},
-				{int32(2), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 1.5},
+					{Value: 1.5},
+					{Value: 1.5},
+					{Value: 1.5},
+					{Value: 1.5},
+				},
 			},
 			expectAlert: true,
-			compareOp:   "2", // Below
-			matchType:   "3", // On Average
-			target:      3.0,
+			compareOp:   "2", // Less Than
+			matchType:   "2", // Always
+			target:      4,
 		},
 		{
-			values: [][]interface{}{
-				{int32(4), "endpoint"},
-				{int32(7), "endpoint"},
-				{int32(5), "endpoint"},
-				{int32(2), "endpoint"},
-				{int32(9), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+				},
 			},
 			expectAlert: false,
-			compareOp:   "2", // Below
-			matchType:   "3", // On Average
-			target:      3.0,
+			compareOp:   "2", // Less Than
+			matchType:   "2", // Always
+			target:      4,
 		},
+		// Test cases for Less Than Once
 		{
-			values: [][]interface{}{
-				{int32(4), "endpoint"},
-				{int32(7), "endpoint"},
-				{int32(5), "endpoint"},
-				{int32(2), "endpoint"},
-				{int32(9), "endpoint"},
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 2.5},
+				},
 			},
 			expectAlert: true,
-			compareOp:   "2", // Below
-			matchType:   "3", // On Average
+			compareOp:   "2", // Less Than
+			matchType:   "1", // Once
+			target:      4,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+					{Value: 4.5},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "2", // Less Than
+			matchType:   "1", // Once
+			target:      4,
+		},
+		// Test cases for OnAverage
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "3", // Equals
+			matchType:   "3", // OnAverage
 			target:      6.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "3", // Equals
+			matchType:   "3", // OnAverage
+			target:      4.5,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "4", // Not Equals
+			matchType:   "3", // OnAverage
+			target:      4.5,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "4", // Not Equals
+			matchType:   "3", // OnAverage
+			target:      6.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "1", // Greater Than
+			matchType:   "3", // OnAverage
+			target:      4.5,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "2", // Less Than
+			matchType:   "3", // OnAverage
+			target:      12.0,
+		},
+		// Test cases for InTotal
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "3", // Equals
+			matchType:   "4", // InTotal
+			target:      30.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 4.0},
+					{Value: 6.0},
+					{Value: 8.0},
+					{Value: 2.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "3", // Equals
+			matchType:   "4", // InTotal
+			target:      20.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "4", // Not Equals
+			matchType:   "4", // InTotal
+			target:      9.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "4", // Not Equals
+			matchType:   "4", // InTotal
+			target:      10.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "1", // Greater Than
+			matchType:   "4", // InTotal
+			target:      10.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "1", // Greater Than
+			matchType:   "4", // InTotal
+			target:      20.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "2", // Less Than
+			matchType:   "4", // InTotal
+			target:      30.0,
+		},
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 10.0},
+					{Value: 10.0},
+				},
+			},
+			expectAlert: false,
+			compareOp:   "2", // Less Than
+			matchType:   "4", // InTotal
+			target:      20.0,
 		},
 	}
 
+	fm := featureManager.StartManager()
 	for idx, c := range cases {
-		rows := cmock.NewRows(cols, c.values)
-		// We are testing the eval logic after the query is run
-		// so we don't care about the query string here
-		queryString := "SELECT value, endpoint FROM table"
-		mock.
-			ExpectQuery(queryString).
-			WillReturnRows(rows)
 		postableRule.RuleCondition.CompareOp = CompareOp(c.compareOp)
 		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 
-		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm)
+		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
 		if err != nil {
 			assert.NoError(t, err)
 		}
 
-		result, err := rule.runChQuery(context.Background(), mock, queryString)
-		if err != nil {
-			assert.NoError(t, err)
+		values := c.values
+		for i := range values.Points {
+			values.Points[i].Timestamp = time.Now().UnixMilli()
 		}
-		if c.expectAlert {
-			assert.Equal(t, 1, len(result), "case %d", idx)
-		} else {
-			assert.Equal(t, 0, len(result), "case %d", idx)
-		}
+
+		_, shoulAlert := rule.shouldAlert(c.values)
+		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
 	}
 }
 
@@ -407,7 +697,7 @@ func TestPrepareLinksToLogs(t *testing.T) {
 	}
 	fm := featureManager.StartManager()
 
-	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm)
+	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -449,7 +739,7 @@ func TestPrepareLinksToTraces(t *testing.T) {
 	}
 	fm := featureManager.StartManager()
 
-	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm)
+	rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
 	if err != nil {
 		assert.NoError(t, err)
 	}
@@ -458,4 +748,137 @@ func TestPrepareLinksToTraces(t *testing.T) {
 
 	link := rule.prepareLinksToTraces(ts, labels.Labels{})
 	assert.Contains(t, link, "&timeRange=%7B%22start%22%3A1705468620000000000%2C%22end%22%3A1705468920000000000%2C%22pageSize%22%3A100%7D&startTime=1705468620000000000&endTime=1705468920000000000")
+}
+
+func TestThresholdRuleLabelNormalization(t *testing.T) {
+	postableRule := PostableRule{
+		AlertName:  "Tricky Condition Tests",
+		AlertType:  "METRIC_BASED_ALERT",
+		RuleType:   RuleTypeThreshold,
+		EvalWindow: Duration(5 * time.Minute),
+		Frequency:  Duration(1 * time.Minute),
+		RuleCondition: &RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:    "A",
+						StepInterval: 60,
+						AggregateAttribute: v3.AttributeKey{
+							Key: "probe_success",
+						},
+						AggregateOperator: v3.AggregateOperatorNoOp,
+						DataSource:        v3.DataSourceMetrics,
+						Expression:        "A",
+					},
+				},
+			},
+		},
+	}
+
+	cases := []struct {
+		values      v3.Series
+		expectAlert bool
+		compareOp   string
+		matchType   string
+		target      float64
+	}{
+		// Test cases for Equals Always
+		{
+			values: v3.Series{
+				Points: []v3.Point{
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+					{Value: 0.0},
+				},
+				Labels: map[string]string{
+					"service.name": "frontend",
+				},
+				LabelsArray: []map[string]string{
+					map[string]string{
+						"service.name": "frontend",
+					},
+				},
+			},
+			expectAlert: true,
+			compareOp:   "3", // Equals
+			matchType:   "2", // Always
+			target:      0.0,
+		},
+	}
+
+	fm := featureManager.StartManager()
+	for idx, c := range cases {
+		postableRule.RuleCondition.CompareOp = CompareOp(c.compareOp)
+		postableRule.RuleCondition.MatchType = MatchType(c.matchType)
+		postableRule.RuleCondition.Target = &c.target
+
+		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
+		if err != nil {
+			assert.NoError(t, err)
+		}
+
+		values := c.values
+		for i := range values.Points {
+			values.Points[i].Timestamp = time.Now().UnixMilli()
+		}
+
+		sample, shoulAlert := rule.shouldAlert(c.values)
+		for name, value := range c.values.Labels {
+			assert.Equal(t, value, sample.Metric.Get(normalizeLabelName(name)))
+		}
+
+		assert.Equal(t, c.expectAlert, shoulAlert, "Test case %d", idx)
+	}
+}
+
+func TestThresholdRuleClickHouseTmpl(t *testing.T) {
+	postableRule := PostableRule{
+		AlertName:  "Tricky Condition Tests",
+		AlertType:  "METRIC_BASED_ALERT",
+		RuleType:   RuleTypeThreshold,
+		EvalWindow: Duration(5 * time.Minute),
+		Frequency:  Duration(1 * time.Minute),
+		RuleCondition: &RuleCondition{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeClickHouseSQL,
+				ClickHouseQueries: map[string]*v3.ClickHouseQuery{
+					"A": {
+						Query: "SELECT 1 >= {{.start_timestamp_ms}} AND 1 <= {{.end_timestamp_ms}}",
+					},
+				},
+			},
+		},
+	}
+
+	// 01:39:47
+	ts := time.Unix(1717205987, 0)
+
+	cases := []struct {
+		expectedQuery string
+	}{
+		// Test cases for Equals Always
+		{
+			// 01:32:00 - 01:37:00
+			expectedQuery: "SELECT 1 >= 1717205520000 AND 1 <= 1717205820000",
+		},
+	}
+
+	fm := featureManager.StartManager()
+	for idx, c := range cases {
+		rule, err := NewThresholdRule("69", &postableRule, ThresholdRuleOpts{}, fm, nil)
+		if err != nil {
+			assert.NoError(t, err)
+		}
+
+		params := rule.prepareQueryRange(ts)
+
+		assert.Equal(t, c.expectedQuery, params.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
+
+		secondTimeParams := rule.prepareQueryRange(ts)
+
+		assert.Equal(t, c.expectedQuery, secondTimeParams.CompositeQuery.ClickHouseQueries["A"].Query, "Test case %d", idx)
+	}
 }

@@ -63,10 +63,6 @@ export const groupBy: DefaultOptionType[] = [
 		label: 'Messaging Operation',
 		value: 'msgOperation',
 	},
-	{
-		label: 'Component',
-		value: 'component',
-	},
 ];
 
 export const functions: Dropdown[] = [

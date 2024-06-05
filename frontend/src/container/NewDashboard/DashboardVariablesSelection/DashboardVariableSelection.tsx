@@ -124,7 +124,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 	);
 
 	return (
-		<Row>
+		<Row style={{ display: 'flex', gap: '12px' }}>
 			{orderBasedSortedVariables &&
 				Array.isArray(orderBasedSortedVariables) &&
 				orderBasedSortedVariables.length > 0 &&

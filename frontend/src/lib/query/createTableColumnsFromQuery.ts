@@ -7,7 +7,7 @@ import {
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { isEqual, isObject } from 'lodash-es';
+import { isEqual, isNaN, isObject } from 'lodash-es';
 import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
@@ -215,10 +215,12 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 			}
 
 			series.forEach((seria) => {
-				Object.keys(seria.labels).forEach((label) => {
-					if (label === currentQuery?.queryName) return;
+				seria.labelsArray?.forEach((lab) => {
+					Object.keys(lab).forEach((label) => {
+						if (label === currentQuery?.queryName) return;
 
-					addLabels(currentStagedQuery, label, dynamicColumns);
+						addLabels(currentStagedQuery, label, dynamicColumns);
+					});
 				});
 			});
 		}
@@ -458,6 +460,18 @@ const generateTableColumns = (
 			title: item.title,
 			width: QUERY_TABLE_CONFIG.width,
 			render: renderColumnCell && renderColumnCell[item.dataIndex],
+			sorter: (a: RowData, b: RowData): number => {
+				const valueA = Number(a[item.dataIndex]);
+				const valueB = Number(b[item.dataIndex]);
+
+				if (!isNaN(valueA) && !isNaN(valueB)) {
+					return valueA - valueB;
+				}
+
+				return ((a[item.dataIndex] as string) || '').localeCompare(
+					(b[item.dataIndex] as string) || '',
+				);
+			},
 		};
 
 		return [...acc, column];
