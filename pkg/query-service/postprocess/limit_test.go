@@ -34,10 +34,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Value:     19.5,
 								},
 							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     19.3,
-							},
 						},
 						{
 							Labels: map[string]string{
@@ -52,10 +48,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Timestamp: 1689220096000,
 									Value:     8.83,
 								},
-							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     8.83,
 							},
 						},
 					},
@@ -99,10 +91,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Value:     19.5,
 								},
 							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     19.3,
-							},
 						},
 					},
 				},
@@ -128,10 +116,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Value:     19.5,
 								},
 							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     19.3,
-							},
 						},
 						{
 							Labels: map[string]string{
@@ -146,10 +130,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Timestamp: 1689220096000,
 									Value:     8.83,
 								},
-							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     8.83,
 							},
 						},
 					},
@@ -194,10 +174,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Value:     8.83,
 								},
 							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     8.83,
-							},
 						},
 					},
 				},
@@ -223,10 +199,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Value:     240,
 								},
 							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     154.5,
-							},
 						},
 						{
 							Labels: map[string]string{
@@ -241,10 +213,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Timestamp: 1689220096000,
 									Value:     260,
 								},
-							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     340,
 							},
 						},
 					},
@@ -289,10 +257,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Value:     240,
 								},
 							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     154.5,
-							},
 						},
 						{
 							Labels: map[string]string{
@@ -307,10 +271,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Timestamp: 1689220096000,
 									Value:     260,
 								},
-							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     340,
 							},
 						},
 					},
@@ -339,10 +299,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Value:     19.5,
 								},
 							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     19.3,
-							},
 						},
 						{
 							Labels: map[string]string{
@@ -358,10 +314,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Timestamp: 1689220096000,
 									Value:     8.83,
 								},
-							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     8.83,
 							},
 						},
 					},
@@ -407,10 +359,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Value:     8.83,
 								},
 							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     8.83,
-							},
 						},
 					},
 				},
@@ -439,10 +387,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Value:     19.5,
 								},
 							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     19.3,
-							},
 						},
 						{
 							Labels: map[string]string{
@@ -460,10 +404,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Timestamp: 1689220096000,
 									Value:     8.83,
 								},
-							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     8.83,
 							},
 						},
 						{
@@ -483,10 +423,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Value:     8.83,
 								},
 							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     8.83,
-							},
 						},
 						{
 							Labels: map[string]string{
@@ -504,10 +440,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Timestamp: 1689220096000,
 									Value:     8.83,
 								},
-							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     8.83,
 							},
 						},
 					},
@@ -558,10 +490,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Value:     19.5,
 								},
 							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     19.3,
-							},
 						},
 						{
 							Labels: map[string]string{
@@ -579,10 +507,6 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 									Timestamp: 1689220096000,
 									Value:     8.83,
 								},
-							},
-							GroupingSetsPoint: &v3.Point{
-								Timestamp: 0,
-								Value:     8.83,
 							},
 						},
 					},
