@@ -44,6 +44,7 @@ export interface GetUPlotChartOptions {
 	softMin: number | null;
 	softMax: number | null;
 	currentQuery?: Query;
+	stackBarChart?: boolean;
 }
 
 function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
@@ -116,12 +117,13 @@ export const getUPlotChartOptions = ({
 	softMin,
 	panelType,
 	currentQuery,
+	stackBarChart,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
 	const series = getStackedSeries(apiResponse?.data?.result);
 
-	const bands = getBands(series);
+	const bands = stackBarChart ? getBands(series) : null;
 
 	return {
 		id,
@@ -159,9 +161,9 @@ export const getUPlotChartOptions = ({
 			y: {
 				...getYAxisScale({
 					thresholds,
-					series: getStackedSeriesYAxis(
-						apiResponse?.data?.newResult?.data?.result || [],
-					),
+					series: stackBarChart
+						? getStackedSeriesYAxis(apiResponse?.data?.newResult?.data?.result || [])
+						: apiResponse?.data?.newResult?.data?.result || [],
 					yAxisUnit,
 					softMax,
 					softMin,
@@ -283,7 +285,7 @@ export const getUPlotChartOptions = ({
 			],
 		},
 		series: getSeries({
-			series,
+			series: stackBarChart ? series : apiResponse?.data?.result,
 			widgetMetaData: apiResponse?.data.result,
 			graphsVisibilityStates,
 			panelType,

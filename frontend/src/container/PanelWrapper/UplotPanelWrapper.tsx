@@ -78,6 +78,7 @@ function UplotPanelWrapper({
 	const chartData = getUPlotChartData(
 		queryResponse?.data?.payload,
 		widget.fillSpans,
+		widget?.stackedBarChart,
 	);
 
 	const options = useMemo(
@@ -99,6 +100,7 @@ function UplotPanelWrapper({
 				setGraphsVisibilityStates: setGraphVisibility,
 				panelType: selectedGraph || widget.panelTypes,
 				currentQuery,
+				stackBarChart: widget?.stackedBarChart,
 			}),
 		[
 			widget?.id,
@@ -107,6 +109,7 @@ function UplotPanelWrapper({
 			widget.softMax,
 			widget.softMin,
 			widget.panelTypes,
+			widget?.stackedBarChart,
 			queryResponse.data?.payload,
 			containerDimensions,
 			isDarkMode,

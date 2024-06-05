@@ -29,6 +29,7 @@ import {
 	panelTypeVsFillSpan,
 	panelTypeVsPanelTimePreferences,
 	panelTypeVsSoftMinMax,
+	panelTypeVsStackingChartPreferences,
 	panelTypeVsThreshold,
 	panelTypeVsYAxisUnit,
 } from './constants';
@@ -48,6 +49,8 @@ function RightContainer({
 	selectedGraph,
 	bucketCount,
 	bucketWidth,
+	stackedBarChart,
+	setStackedBarChart,
 	setBucketCount,
 	setBucketWidth,
 	setSelectedTime,
@@ -87,6 +90,8 @@ function RightContainer({
 	const allowYAxisUnit = panelTypeVsYAxisUnit[selectedGraph];
 	const allowCreateAlerts = panelTypeVsCreateAlert[selectedGraph];
 	const allowBucketConfig = panelTypeVsBucketConfig[selectedGraph];
+	const allowStackingBarChart =
+		panelTypeVsStackingChartPreferences[selectedGraph];
 	const allowPanelTimePreference =
 		panelTypeVsPanelTimePreferences[selectedGraph];
 
@@ -231,6 +236,17 @@ function RightContainer({
 					</section>
 				)}
 
+				{allowStackingBarChart && (
+					<section className="stack-chart">
+						<Typography.Text className="label">Stack series</Typography.Text>
+						<Switch
+							checked={stackedBarChart}
+							size="small"
+							onChange={(checked): void => setStackedBarChart(checked)}
+						/>
+					</section>
+				)}
+
 				{allowBucketConfig && (
 					<section className="bucket-config">
 						<Typography.Text className="label">Number of buckets</Typography.Text>
@@ -312,6 +328,8 @@ interface RightContainerProps {
 	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 	yAxisUnit: string;
+	stackedBarChart: boolean;
+	setStackedBarChart: Dispatch<SetStateAction<boolean>>;
 	bucketWidth: number;
 	bucketCount: number;
 	combineHistogram: boolean;

@@ -78,6 +78,7 @@ function getStackedSeries(val: any): any {
 export const getUPlotChartData = (
 	apiResponse?: MetricRangePayloadProps,
 	fillSpans?: boolean,
+	stackedBarChart?: boolean,
 ): any[] => {
 	const seriesList = apiResponse?.data?.result || [];
 	const timestampArr = getXAxisTimestamps(seriesList);
@@ -87,5 +88,8 @@ export const getUPlotChartData = (
 		fillSpans || false,
 	);
 
-	return [timestampArr, ...getStackedSeries(yAxisValuesArr)];
+	return [
+		timestampArr,
+		...(stackedBarChart ? getStackedSeries(yAxisValuesArr) : yAxisValuesArr),
+	];
 };
