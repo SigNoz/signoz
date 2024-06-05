@@ -67,7 +67,6 @@ function getStackedSeries1(apiResponse: QueryData[]): QueryData[] {
 
 	for (let i = series.length - 2; i >= 0; i--) {
 		const { values } = series[i];
-		console.log(values);
 		for (let j = 0; j < values.length; j++) {
 			values[j].value = String(
 				parseFloat(values[j].value) + parseFloat(series[i + 1].values[j].value),
@@ -88,6 +87,16 @@ function getStackedSeriesYAxis(apiResponse: QueryDataV3[]): QueryDataV3[] {
 	}
 
 	return series;
+}
+
+function getBands(series): any[] {
+	const bands = [];
+	for (let i = 0; i < series.length; i++) {
+		bands.push({
+			series: [i === 0 ? -1 : i, i + 1],
+		});
+	}
+	return bands;
 }
 
 export const getUPlotChartOptions = ({
@@ -112,15 +121,7 @@ export const getUPlotChartOptions = ({
 
 	const series = getStackedSeries(apiResponse?.data?.result);
 
-	console.log(
-		getSeries({
-			series,
-			widgetMetaData: apiResponse?.data.result,
-			graphsVisibilityStates,
-			panelType,
-			currentQuery,
-		}),
-	);
+	const bands = getBands(series);
 
 	return {
 		id,
@@ -149,18 +150,7 @@ export const getUPlotChartOptions = ({
 			},
 		},
 		padding: [16, 16, 8, 8],
-		bands: [
-			{
-				series: [-1, 1],
-			},
-			{
-				series: [1, 2],
-			},
-			{
-				series: [2, 3],
-			},
-		],
-
+		bands,
 		scales: {
 			x: {
 				spanGaps: true,
