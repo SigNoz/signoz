@@ -297,9 +297,11 @@ const (
 // written clickhouse query. The column alias indcate which value is
 // to be considered as final result (or target)
 var ReservedColumnTargetAliases = map[string]struct{}{
-	"result": {},
-	"res":    {},
-	"value":  {},
+	"__result": {},
+	"__value":  {},
+	"result":   {},
+	"res":      {},
+	"value":    {},
 }
 
 // logsPPLPfx is a short constant for logsPipelinePrefix

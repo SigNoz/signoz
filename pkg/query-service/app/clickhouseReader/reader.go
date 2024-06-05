@@ -4433,7 +4433,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 }
 
-func readRow(vars []interface{}, columnNames []string) ([]string, map[string]string, []map[string]string, v3.Point) {
+func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([]string, map[string]string, []map[string]string, v3.Point) {
 	// Each row will have a value and a timestamp, and an optional list of label values
 	// example: {Timestamp: ..., Value: ...}
 	// The timestamp may also not present in some cases where the time series is reduced to single value
@@ -4477,7 +4477,7 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 		case *time.Time:
 			point.Timestamp = v.UnixMilli()
 		case *float64, *float32:
-			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
 				point.Value = float64(reflect.ValueOf(v).Elem().Float())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float()))
@@ -4486,8 +4486,8 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())
 			}
-		case *uint8, *uint64, *uint16, *uint32:
-			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+		case *uint, *uint8, *uint64, *uint16, *uint32:
+			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
 				point.Value = float64(reflect.ValueOf(v).Elem().Uint())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
@@ -4496,8 +4496,8 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint())
 			}
-		case *int8, *int16, *int32, *int64:
-			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+		case *int, *int8, *int16, *int32, *int64:
+			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
 				point.Value = float64(reflect.ValueOf(v).Elem().Int())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
@@ -4520,7 +4520,7 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 	return groupBy, groupAttributes, groupAttributesArray, point
 }
 
-func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNames []string) ([]*v3.Series, error) {
+func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNames []string, countOfNumberCols int) ([]*v3.Series, error) {
 	// when groupBy is applied, each combination of cartesian product
 	// of attribute values is a separate series. Each item in seriesToPoints
 	// represent a unique series where the key is sorted attribute values joined
@@ -4555,7 +4555,7 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 		if err := rows.Scan(vars...); err != nil {
 			return nil, err
 		}
-		groupBy, groupAttributes, groupAttributesArray, metricPoint := readRow(vars, columnNames)
+		groupBy, groupAttributes, groupAttributesArray, metricPoint := readRow(vars, columnNames, countOfNumberCols)
 		// skip the point if the value is NaN or Inf
 		// are they ever useful enough to be returned?
 		if math.IsNaN(metricPoint.Value) || math.IsInf(metricPoint.Value, 0) {
@@ -4574,20 +4574,7 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 	var seriesList []*v3.Series
 	for _, key := range keys {
 		points := seriesToPoints[key]
-		// find the grouping sets point for the series
-		// this is the point with the zero timestamp
-		// if there is no such point, then the series is not grouped
-		// and we can skip this step
-		var groupingSetsPoint *v3.Point
-		for idx, point := range points {
-			if point.Timestamp <= 0 {
-				groupingSetsPoint = &point
-				// remove the grouping sets point from the list of points
-				points = append(points[:idx], points[idx+1:]...)
-				break
-			}
-		}
-		series := v3.Series{Labels: seriesToAttrs[key], Points: points, GroupingSetsPoint: groupingSetsPoint, LabelsArray: labelsArray[key]}
+		series := v3.Series{Labels: seriesToAttrs[key], Points: points, LabelsArray: labelsArray[key]}
 		seriesList = append(seriesList, &series)
 	}
 	return seriesList, getPersonalisedError(rows.Err())
@@ -4627,11 +4614,28 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 		columnNames = rows.Columns()
 		vars        = make([]interface{}, len(columnTypes))
 	)
+	var countOfNumberCols int
+
 	for i := range columnTypes {
 		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+		switch columnTypes[i].ScanType().Kind() {
+		case reflect.Float32,
+			reflect.Float64,
+			reflect.Uint,
+			reflect.Uint8,
+			reflect.Uint16,
+			reflect.Uint32,
+			reflect.Uint64,
+			reflect.Int,
+			reflect.Int8,
+			reflect.Int16,
+			reflect.Int32,
+			reflect.Int64:
+			countOfNumberCols++
+		}
 	}
 
-	return readRowsForTimeSeriesResult(rows, vars, columnNames)
+	return readRowsForTimeSeriesResult(rows, vars, columnNames, countOfNumberCols)
 }
 
 // GetListResultV3 runs the query and returns list of rows
