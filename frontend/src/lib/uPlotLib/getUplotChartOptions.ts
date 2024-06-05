@@ -290,6 +290,7 @@ export const getUPlotChartOptions = ({
 			graphsVisibilityStates,
 			panelType,
 			currentQuery,
+			stackBarChart,
 		}),
 		axes: getAxes(isDarkMode, yAxisUnit),
 	};

@@ -66,7 +66,7 @@ const getSeries = ({
 					: lineInterpolations.spline,
 			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
 			label,
-			fill: panelType && panelType === PANEL_TYPES.BAR ? `${color}` : undefined,
+			fill: panelType && panelType === PANEL_TYPES.BAR ? `${color}40` : undefined,
 			stroke: color,
 			width: 2,
 			spanGaps: true,
@@ -89,6 +89,7 @@ export type GetSeriesProps = {
 	graphsVisibilityStates?: boolean[];
 	panelType?: PANEL_TYPES;
 	currentQuery?: Query;
+	stackBarChart?: boolean;
 };
 
 export default getSeries;
