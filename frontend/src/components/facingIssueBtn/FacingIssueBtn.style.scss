@@ -10,4 +10,7 @@
 
 .tooltip-overlay {
 	text-wrap: nowrap;
+	.ant-tooltip-inner {
+		width: max-content;
+	}
 }
