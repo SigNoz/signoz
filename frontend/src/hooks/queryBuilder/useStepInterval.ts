@@ -16,7 +16,7 @@ export const updateStepInterval = (
 		inputFormat: 'ns',
 	});
 
-	function getStepInterval(customInterval?: number): number | undefined {
+	function getStepInterval(customInterval: number): number {
 		// if user enters some value then auto update should never come
 		if (shallUpdateStepInterval) {
 			return customInterval;

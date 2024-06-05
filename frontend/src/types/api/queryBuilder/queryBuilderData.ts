@@ -68,7 +68,7 @@ export type IBuilderQuery = {
 	disabled: boolean;
 	having: Having[];
 	limit: number | null;
-	stepInterval?: number;
+	stepInterval: number;
 	orderBy: OrderByPayload[];
 	reduceTo: ReduceOperators;
 	legend: string;
