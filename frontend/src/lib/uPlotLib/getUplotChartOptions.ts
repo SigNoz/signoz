@@ -63,7 +63,7 @@ function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
 
 	return series;
 }
-function getStackedSeries1(apiResponse: QueryData[]): QueryData[] {
+function getStackedSeriesQueryFormat(apiResponse: QueryData[]): QueryData[] {
 	const series = cloneDeep(apiResponse);
 
 	for (let i = series.length - 2; i >= 0; i--) {
@@ -84,7 +84,7 @@ function getStackedSeriesYAxis(apiResponse: QueryDataV3[]): QueryDataV3[] {
 	const series = cloneDeep(apiResponse);
 
 	for (let i = 0; i < series.length; i++) {
-		series[i].series = getStackedSeries1(series[i].series);
+		series[i].series = getStackedSeriesQueryFormat(series[i].series);
 	}
 
 	return series;
@@ -121,7 +121,7 @@ export const getUPlotChartOptions = ({
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
 
-	const series = getStackedSeries(apiResponse?.data?.result);
+	const series = getStackedSeries(apiResponse?.data?.result || []);
 
 	const bands = stackBarChart ? getBands(series) : null;
 
@@ -171,7 +171,7 @@ export const getUPlotChartOptions = ({
 			},
 		},
 		plugins: [
-			tooltipPlugin({ apiResponse, yAxisUnit }),
+			tooltipPlugin({ apiResponse, yAxisUnit, stackBarChart }),
 			onClickPlugin({
 				onClick: onClickHandler,
 			}),

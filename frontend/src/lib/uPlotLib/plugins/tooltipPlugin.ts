@@ -31,6 +31,7 @@ const generateTooltipContent = (
 	isBillingUsageGraphs?: boolean,
 	isHistogramGraphs?: boolean,
 	isMergedSeries?: boolean,
+	stackBarChart?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -67,10 +68,13 @@ const generateTooltipContent = (
 					unit = '',
 				} = seriesList[index - 1] || {};
 
-				const value = data[index][idx];
-				// index + 1 < data.length
-				// 	? data[index][idx] - data[index + 1][idx]
-				// 	: data[index][idx];
+				// eslint-disable-next-line no-nested-ternary
+				const value = stackBarChart
+					? index + 1 < data.length
+						? data[index][idx] - data[index + 1][idx]
+						: data[index][idx]
+					: data[index][idx];
+
 				const dataIngested = quantity[idx];
 				const label = isMergedSeries
 					? 'merged_series'
@@ -204,6 +208,7 @@ type ToolTipPluginProps = {
 	isBillingUsageGraphs?: boolean;
 	isHistogramGraphs?: boolean;
 	isMergedSeries?: boolean;
+	stackBarChart?: boolean;
 };
 
 const tooltipPlugin = ({
@@ -212,6 +217,7 @@ const tooltipPlugin = ({
 	isBillingUsageGraphs,
 	isHistogramGraphs,
 	isMergedSeries,
+	stackBarChart,
 }: ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
@@ -275,6 +281,7 @@ const tooltipPlugin = ({
 							isBillingUsageGraphs,
 							isHistogramGraphs,
 							isMergedSeries,
+							stackBarChart,
 						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });
