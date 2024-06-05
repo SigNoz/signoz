@@ -49,6 +49,7 @@ const GridPanelSwitch = forwardRef<
 					options,
 					ref,
 				},
+				[PANEL_TYPES.HISTOGRAM]: null,
 				[PANEL_TYPES.EMPTY_WIDGET]: null,
 			};
 

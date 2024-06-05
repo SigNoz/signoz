@@ -13,14 +13,17 @@ const findCategoryByName = (
 ): Record<string, string> | undefined =>
 	find(flattenedCategories, (option) => option.name === searchValue);
 
+type OnSelectType = Dispatch<SetStateAction<string>> | ((val: string) => void);
 function YAxisUnitSelector({
 	defaultValue,
 	onSelect,
 	fieldLabel,
+	handleClear,
 }: {
 	defaultValue: string;
-	onSelect: Dispatch<SetStateAction<string>>;
+	onSelect: OnSelectType;
 	fieldLabel: string;
+	handleClear?: () => void;
 }): JSX.Element {
 	const onSelectHandler = (selectedValue: string): void => {
 		onSelect(findCategoryByName(selectedValue)?.id || '');
@@ -35,7 +38,9 @@ function YAxisUnitSelector({
 				style={{ width: '100%' }}
 				rootClassName="y-axis-root-popover"
 				options={options}
+				allowClear
 				defaultValue={findCategoryById(defaultValue)?.name}
+				onClear={handleClear}
 				onSelect={onSelectHandler}
 				filterOption={(inputValue, option): boolean => {
 					if (option) {
@@ -46,10 +51,14 @@ function YAxisUnitSelector({
 					return false;
 				}}
 			>
-				<Input placeholder="Unit" allowClear rootClassName="input" />
+				<Input placeholder="Unit" rootClassName="input" />
 			</AutoComplete>
 		</div>
 	);
 }
 
 export default YAxisUnitSelector;
+
+YAxisUnitSelector.defaultProps = {
+	handleClear: (): void => {},
+};

@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"math"
 	"net/url"
 	"regexp"
 	"sort"
 	"sync"
+	"text/template"
 	"time"
 	"unicode"
 

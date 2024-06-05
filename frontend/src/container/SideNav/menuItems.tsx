@@ -72,7 +72,7 @@ const menuItems: SidebarItem[] = [
 		icon: <BarChart2 size={16} />,
 	},
 	{
-		key: ROUTES.TRACE,
+		key: ROUTES.TRACES_EXPLORER,
 		label: 'Traces',
 		icon: <DraftingCompass size={16} />,
 	},

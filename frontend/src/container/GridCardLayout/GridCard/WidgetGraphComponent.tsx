@@ -215,7 +215,7 @@ function WidgetGraphComponent({
 			const {
 				graphVisibilityStates: localStoredVisibilityState,
 			} = getLocalStorageGraphVisibilityState({
-				apiResponse: queryResponse.data.payload.data.result,
+				apiResponse: queryResponse.data?.payload?.data?.result,
 				name: widget.id,
 			});
 			setGraphVisibility(localStoredVisibilityState);

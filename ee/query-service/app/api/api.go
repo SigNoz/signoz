@@ -2,10 +2,12 @@ package api
 
 import (
 	"net/http"
+	"net/http/httputil"
 	"time"
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/dao"
+	"go.signoz.io/signoz/ee/query-service/integrations/gateway"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
@@ -35,6 +37,7 @@ type APIHandlerOptions struct {
 	IntegrationsController        *integrations.Controller
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 	Cache                         cache.Cache
+	Gateway                       *httputil.ReverseProxy
 	// Querier Influx Interval
 	FluxInterval time.Duration
 }
@@ -93,6 +96,10 @@ func (ah *APIHandler) UM() *usage.Manager {
 
 func (ah *APIHandler) AppDao() dao.ModelDao {
 	return ah.opts.AppDao
+}
+
+func (ah *APIHandler) Gateway() *httputil.ReverseProxy {
+	return ah.opts.Gateway
 }
 
 func (ah *APIHandler) CheckFeature(f string) bool {
@@ -169,6 +176,9 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v2/licenses",
 		am.ViewAccess(ah.listLicensesV2)).
 		Methods(http.MethodGet)
+
+	// Gateway
+	router.PathPrefix(gateway.RoutePrefix).HandlerFunc(am.AdminAccess(ah.ServeGatewayHTTP))
 
 	ah.APIHandler.RegisterRoutes(router, am)
 

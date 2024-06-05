@@ -262,7 +262,9 @@ function ChartPreview({
 						panelType={graphType}
 						data={chartData}
 						name={name || 'Chart Preview'}
-						panelData={queryResponse.data?.payload.data.newResult.data.result || []}
+						panelData={
+							queryResponse.data?.payload?.data?.newResult?.data?.result || []
+						}
 						query={query || initialQueriesMap.metrics}
 						yAxisUnit={yAxisUnit}
 					/>

@@ -39,7 +39,7 @@ function PiePanelWrapper({
 	});
 
 	const panelData =
-		queryResponse.data?.payload?.data.newResult.data.result || [];
+		queryResponse.data?.payload?.data?.newResult?.data?.result || [];
 
 	const isDarkMode = useIsDarkMode();
 
