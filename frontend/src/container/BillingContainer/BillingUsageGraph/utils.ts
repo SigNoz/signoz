@@ -58,10 +58,7 @@ export const convertDataToMetricRangePayload = (
 	};
 };
 
-export function fillMissingValuesForQuantities(
-	data: any,
-	timestampArray: number[],
-): MetricRangePayloadProps {
+export function quantityDataArr(data: any, timestampArray: number[]): any[] {
 	const { result } = data.data;
 
 	const transformedResultArr: any[] = [];
@@ -76,6 +73,14 @@ export function fillMissingValuesForQuantities(
 		);
 		transformedResultArr.push({ ...item, quantity: quantityArray });
 	});
+	return transformedResultArr;
+}
+
+export function fillMissingValuesForQuantities(
+	data: any,
+	timestampArray: number[],
+): MetricRangePayloadProps {
+	const transformedResultArr = quantityDataArr(data, timestampArray);
 
 	return {
 		data: {

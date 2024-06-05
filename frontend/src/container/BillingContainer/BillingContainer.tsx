@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
 import './BillingContainer.styles.scss';
 
-import { CheckCircleOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Alert,
@@ -27,6 +27,7 @@ import useAxiosError from 'hooks/useAxiosError';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEmpty, pick } from 'lodash-es';
+import { unparse } from 'papaparse';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
@@ -40,6 +41,9 @@ import { isCloudUser } from 'utils/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
+import generateCsvData, {
+	QuantityData,
+} from './BillingUsageGraph/generateCsvData';
 
 interface DataType {
 	key: string;
@@ -132,6 +136,7 @@ export default function BillingContainer(): JSX.Element {
 	const [daysRemaining, setDaysRemaining] = useState(0);
 	const [isFreeTrial, setIsFreeTrial] = useState(false);
 	const [data, setData] = useState<any[]>([]);
+	const [csvData, setCsvData] = useState<any[]>([]);
 	const [apiResponse, setApiResponse] = useState<
 		Partial<UsageResponsePayloadProps>
 	>({});
@@ -346,10 +351,18 @@ export default function BillingContainer(): JSX.Element {
 		updateCreditCard,
 	]);
 
+	const getCsvData = (quantityData: QuantityData[]): void => {
+		setCsvData(generateCsvData(quantityData));
+	};
+
 	const BillingUsageGraphCallback = useCallback(
 		() =>
 			!isLoading && !isFetchingBillingData ? (
-				<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
+				<BillingUsageGraph
+					data={apiResponse}
+					billAmount={billAmount}
+					getCsvData={getCsvData}
+				/>
 			) : (
 				<Card className="empty-graph-card" bordered={false}>
 					<Spinner size="large" tip="Loading..." height="35vh" />
@@ -370,6 +383,17 @@ export default function BillingContainer(): JSX.Element {
 			{` otherwise. Be sure to provide this information immediately to avoid interruption to your service.`}
 		</Typography>
 	);
+
+	const handleCsvDownload = useCallback((): void => {
+		const csv = unparse(csvData);
+		const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+		const csvUrl = URL.createObjectURL(csvBlob);
+		const downloadLink = document.createElement('a');
+		downloadLink.href = csvUrl;
+		downloadLink.download = `test-csv-download.csv`;
+		downloadLink.click();
+		downloadLink.remove();
+	}, [csvData]);
 
 	return (
 		<div className="billing-container">
@@ -399,17 +423,29 @@ export default function BillingContainer(): JSX.Element {
 							</Typography.Text>
 						) : null}
 					</Flex>
-					<Button
-						type="primary"
-						size="middle"
-						loading={isLoadingBilling || isLoadingManageBilling}
-						disabled={isLoading}
-						onClick={handleBilling}
-					>
-						{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription
-							? t('upgrade_plan')
-							: t('manage_billing')}
-					</Button>
+					<Flex gap={20}>
+						<Button
+							type="dashed"
+							size="middle"
+							loading={isLoadingBilling || isLoadingManageBilling}
+							disabled={isLoading || isFetchingBillingData}
+							onClick={handleCsvDownload}
+							icon={<CloudDownloadOutlined />}
+						>
+							Download CSV
+						</Button>
+						<Button
+							type="primary"
+							size="middle"
+							loading={isLoadingBilling || isLoadingManageBilling}
+							disabled={isLoading}
+							onClick={handleBilling}
+						>
+							{isFreeTrial && !licensesData?.payload?.trialConvertedToSubscription
+								? t('upgrade_plan')
+								: t('manage_billing')}
+						</Button>
+					</Flex>
 				</Flex>
 
 				{licensesData?.payload?.onTrial &&
