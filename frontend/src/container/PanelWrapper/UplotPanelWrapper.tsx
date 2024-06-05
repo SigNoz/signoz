@@ -129,7 +129,7 @@ function UplotPanelWrapper({
 			<Uplot options={options} data={chartData} ref={lineChartRef} />
 			{isFullViewMode && setGraphVisibility && (
 				<GraphManager
-					data={chartData}
+					data={getUPlotChartData(queryResponse?.data?.payload, widget.fillSpans)}
 					name={widget.id}
 					options={options}
 					yAxisUnit={widget.yAxisUnit}
