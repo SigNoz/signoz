@@ -27,8 +27,9 @@
 	cursor: pointer;
 
 	&.primary {
-		color: #fff;
-		background-color: #4566d6;
+		color: var(--bg-vanilla-100) !important;
+		background-color: var(--bg-robin-500) !important;
+		border: none;
 		box-shadow: 0 2px 0 rgba(62, 86, 245, 0.09);
 	}
 

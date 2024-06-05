@@ -97,6 +97,9 @@ export interface IBaseWidget {
 	timePreferance: timePreferenceType;
 	stepSize?: number;
 	yAxisUnit?: string;
+	bucketCount?: number;
+	bucketWidth?: number;
+	mergeAllActiveQueries?: boolean;
 	thresholds?: ThresholdProps[];
 	softMin: number | null;
 	softMax: number | null;

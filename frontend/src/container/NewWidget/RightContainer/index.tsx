@@ -23,6 +23,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { ColumnUnitSelector } from './ColumnUnitSelector/ColumnUnitSelector';
 import {
+	panelTypeVsBucketConfig,
 	panelTypeVsColumnUnitPreferences,
 	panelTypeVsCreateAlert,
 	panelTypeVsFillSpan,
@@ -45,12 +46,18 @@ function RightContainer({
 	setTitle,
 	title,
 	selectedGraph,
+	bucketCount,
+	bucketWidth,
+	setBucketCount,
+	setBucketWidth,
 	setSelectedTime,
 	selectedTime,
 	yAxisUnit,
 	setYAxisUnit,
 	setGraphHandler,
 	thresholds,
+	combineHistogram,
+	setCombineHistogram,
 	setThresholds,
 	selectedWidget,
 	isFillSpans,
@@ -79,6 +86,7 @@ function RightContainer({
 	const allowFillSpans = panelTypeVsFillSpan[selectedGraph];
 	const allowYAxisUnit = panelTypeVsYAxisUnit[selectedGraph];
 	const allowCreateAlerts = panelTypeVsCreateAlert[selectedGraph];
+	const allowBucketConfig = panelTypeVsBucketConfig[selectedGraph];
 	const allowPanelTimePreference =
 		panelTypeVsPanelTimePreferences[selectedGraph];
 
@@ -222,6 +230,47 @@ function RightContainer({
 						</section>
 					</section>
 				)}
+
+				{allowBucketConfig && (
+					<section className="bucket-config">
+						<Typography.Text className="label">Number of buckets</Typography.Text>
+						<InputNumber
+							value={bucketCount || null}
+							type="number"
+							min={0}
+							rootClassName="bucket-input"
+							placeholder="Default: 30"
+							onChange={(val): void => {
+								setBucketCount(val || 0);
+							}}
+						/>
+						<Typography.Text className="label bucket-size-label">
+							Bucket width
+						</Typography.Text>
+						<InputNumber
+							value={bucketWidth || null}
+							type="number"
+							precision={2}
+							placeholder="Default: Auto"
+							step={0.1}
+							min={0.0}
+							rootClassName="bucket-input"
+							onChange={(val): void => {
+								setBucketWidth(val || 0);
+							}}
+						/>
+						<section className="combine-hist">
+							<Typography.Text className="label">
+								Merge all series into one
+							</Typography.Text>
+							<Switch
+								checked={combineHistogram}
+								size="small"
+								onChange={(checked): void => setCombineHistogram(checked)}
+							/>
+						</section>
+					</section>
+				)}
 			</section>
 
 			{allowCreateAlerts && (
@@ -263,6 +312,12 @@ interface RightContainerProps {
 	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 	yAxisUnit: string;
+	bucketWidth: number;
+	bucketCount: number;
+	combineHistogram: boolean;
+	setCombineHistogram: Dispatch<SetStateAction<boolean>>;
+	setBucketWidth: Dispatch<SetStateAction<number>>;
+	setBucketCount: Dispatch<SetStateAction<number>>;
 	setYAxisUnit: Dispatch<SetStateAction<string>>;
 	setGraphHandler: (type: PANEL_TYPES) => void;
 	thresholds: ThresholdProps[];
