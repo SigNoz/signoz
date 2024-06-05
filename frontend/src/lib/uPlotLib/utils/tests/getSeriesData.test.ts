@@ -14,7 +14,7 @@ describe('Get Series Data', () => {
 		expect(seriesData.length).toBe(5);
 		expect(seriesData[1].label).toBe('firstLegend');
 		expect(seriesData[1].show).toBe(true);
-		expect(seriesData[1].fill).toBe('#C71585');
+		expect(seriesData[1].fill).toBe('#C7158540');
 		expect(seriesData[1].width).toBe(2);
 	});
 
