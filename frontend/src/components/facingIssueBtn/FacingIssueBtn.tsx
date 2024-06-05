@@ -39,7 +39,12 @@ function FacingIssueBtn({
 
 	return isCloudUserVal && isChatSupportEnabled ? ( // Note: we would need to move this condition to license based in future
 		<div className="facing-issue-button">
-			<Tooltip title={onHoverText} autoAdjustOverflow>
+			<Tooltip
+				title={onHoverText}
+				autoAdjustOverflow
+				style={{ padding: 8 }}
+				overlayClassName="tooltip-overlay"
+			>
 				<Button
 					className={cx('periscope-btn', 'facing-issue-button', className)}
 					onClick={handleFacingIssuesClick}
