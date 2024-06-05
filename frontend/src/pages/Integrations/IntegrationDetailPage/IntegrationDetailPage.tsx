@@ -79,19 +79,15 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 				</Button>
 				<FacingIssueBtn
 					attributes={{
-						screen: 'Integrations detail page: ',
+						screen: 'Integrations detail page',
 						activeTab: activeDetailTab,
 						integrationTitle: integrationData?.title || '',
 						integrationId: selectedIntegration,
 					}}
 					eventName="Integrations: Facing issues in integrations"
-					buttonText="Facing issues with integrations"
-					message={integrationDetailMessage(
-						activeDetailTab,
-						integrationData?.title || '',
-						selectedIntegration,
-					)}
-					onHoverText="Click here to get help with integrations"
+					buttonText="Facing issues with integration"
+					message={integrationDetailMessage(selectedIntegration)}
+					onHoverText="Click here to get help with this integration"
 				/>
 			</Flex>
 

@@ -63,15 +63,12 @@ I need help with Integrations.
 Thanks`;
 
 export const integrationDetailMessage = (
-	activeDetailTab: string,
-	integrationTitle: string,
 	selectedIntegration: string,
 ): string => `
 Hi Team,
 
-I need help in configuring this integration. Here are my integration details.
-Integration Title: ${integrationTitle || ''}
-Active Tab: ${activeDetailTab}
+I need help in configuring this integration.
+
 Integration Id: ${selectedIntegration}
 
 Thanks`;
