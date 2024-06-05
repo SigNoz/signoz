@@ -24,10 +24,13 @@ func isSubset(super, sub map[string]string) bool {
 }
 
 // Function to find unique label sets
-func findUniqueLabelSets(results []*v3.Result) []map[string]string {
+func findUniqueLabelSets(results []*v3.Result, queriesInExpression map[string]struct{}) []map[string]string {
 	allLabelSets := make([]map[string]string, 0)
 	// The size of the `results` small, It is the number of queries in the request
 	for _, result := range results {
+		if _, ok := queriesInExpression[result.QueryName]; !ok {
+			continue
+		}
 		// The size of the `result.Series` slice is usually small, It is the number of series in the query result.
 		// We will limit the number of series in the query result to order of 100-1000.
 		for _, series := range result.Series {
@@ -120,7 +123,15 @@ func joinAndCalculate(
 			}
 		}
 
-		if len(expression.Vars()) != len(values) {
+		canEval := true
+
+		for _, v := range expression.Vars() {
+			if _, ok := values[v]; !ok {
+				canEval = false
+			}
+		}
+
+		if !canEval {
 			// not enough values for expression evaluation
 			continue
 		}
@@ -154,7 +165,12 @@ func processResults(
 	expression *govaluate.EvaluableExpression,
 	canDefaultZero map[string]bool,
 ) (*v3.Result, error) {
-	uniqueLabelSets := findUniqueLabelSets(results)
+
+	queriesInExpression := make(map[string]struct{})
+	for _, v := range expression.Vars() {
+		queriesInExpression[v] = struct{}{}
+	}
+	uniqueLabelSets := findUniqueLabelSets(results, queriesInExpression)
 	newSeries := make([]*v3.Series, 0)
 
 	for _, labelSet := range uniqueLabelSets {
