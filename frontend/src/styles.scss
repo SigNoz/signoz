@@ -246,3 +246,23 @@ body {
 .ant-notification-notice-message {
 	padding-right: 20px;
 }
+
+// we want the z-index to be less than 1000 (z-index for antd drawers) as we do not want intercom to interfare when drawers are open
+.intercom-lightweight-app {
+	z-index: 980 !important;
+}
+
+/**
+
+z-index chart for components across application
+
+intercom        -  980
+tooltip			-  1070
+popover 		-  1030
+drawer  		-  1000
+time picker 	-  1050
+dropdown 		-  1050
+modal 			-  1000
+notifications	-  2050
+
+*/

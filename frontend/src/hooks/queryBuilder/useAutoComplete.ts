@@ -126,6 +126,7 @@ export const useAutoComplete = (
 		isExist,
 		results,
 		result,
+		isFetching,
 		whereClauseConfig,
 	);
 

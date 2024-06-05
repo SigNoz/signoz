@@ -1,0 +1,40 @@
+.dashboard-list-page {
+	.dashboard-header {
+		display: flex;
+		align-items: center;
+		padding: 16px;
+		gap: 8px;
+		height: 48px;
+		border-bottom: 1px solid var(--bg-slate-500);
+
+		.icon {
+			color: var(--bg-vanilla-400);
+		}
+
+		.text {
+			color: var(--bg-vanilla-400);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+		}
+	}
+}
+
+.lightMode {
+	.dashboard-list-page {
+		.dashboard-header {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.icon {
+				color: var(--bg-ink-400);
+			}
+
+			.text {
+				color: var(--bg-ink-400);
+			}
+		}
+	}
+}

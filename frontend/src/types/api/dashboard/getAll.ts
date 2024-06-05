@@ -54,6 +54,14 @@ export interface Dashboard {
 	isLocked?: boolean;
 }
 
+export interface DashboardTemplate {
+	name: string;
+	icon: React.ReactElement;
+	id: string;
+	description: string;
+	previewImage: string;
+}
+
 export interface DashboardData {
 	uuid?: string;
 	description?: string;
@@ -65,6 +73,7 @@ export interface DashboardData {
 	panelMap?: Record<string, { widgets: Layout[]; collapsed: boolean }>;
 	variables: Record<string, IDashboardVariable>;
 	version?: string;
+	image?: string;
 }
 
 export interface WidgetRow {
@@ -74,6 +83,9 @@ export interface WidgetRow {
 	description: string;
 }
 
+export interface ColumnUnit {
+	[key: string]: string;
+}
 export interface IBaseWidget {
 	isStacked: boolean;
 	id: string;
@@ -85,10 +97,14 @@ export interface IBaseWidget {
 	timePreferance: timePreferenceType;
 	stepSize?: number;
 	yAxisUnit?: string;
+	bucketCount?: number;
+	bucketWidth?: number;
+	mergeAllActiveQueries?: boolean;
 	thresholds?: ThresholdProps[];
 	softMin: number | null;
 	softMax: number | null;
 	fillSpans?: boolean;
+	columnUnits?: ColumnUnit;
 	selectedLogFields: IField[] | null;
 	selectedTracesFields: BaseAutocompleteData[] | null;
 }

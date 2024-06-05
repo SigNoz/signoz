@@ -7,3 +7,10 @@
 		border-color: var(--bg-amber-300) !important;
 	}
 }
+
+.tooltip-overlay {
+	text-wrap: nowrap;
+	.ant-tooltip-inner {
+		width: max-content;
+	}
+}

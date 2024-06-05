@@ -1,0 +1,1820 @@
+{
+    "description": "This dashboard provides a high-level overview of your PostgreSQL databases. It includes replication, locks, and throughput etc...",
+    "id": "postgres_overview_metrics",
+    "layout": [
+      {
+        "h": 1,
+        "i": "3bd16024-b9ff-4f02-8107-1fd817604d5f",
+        "maxH": 1,
+        "minH": 1,
+        "minW": 12,
+        "moved": false,
+        "static": false,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "h": 5,
+        "i": "8638a199-20a0-4255-b0a2-3b1ba06c485b",
+        "moved": false,
+        "static": false,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      {
+        "h": 1,
+        "i": "7df9b6d2-8f7f-48d4-80d6-ae07d47746d6",
+        "maxH": 1,
+        "minH": 1,
+        "minW": 12,
+        "moved": false,
+        "static": false,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      {
+        "h": 5,
+        "i": "191d09a6-40b0-4de8-a5b0-aa4254454b99",
+        "moved": false,
+        "static": false,
+        "w": 6,
+        "x": 0,
+        "y": 7
+      },
+      {
+        "h": 5,
+        "i": "fa941c00-ce19-49cc-baf2-c38598767dee",
+        "moved": false,
+        "static": false,
+        "w": 6,
+        "x": 6,
+        "y": 7
+      },
+      {
+        "h": 5,
+        "i": "114fcf80-e1de-4716-b1aa-0e0738dba10e",
+        "moved": false,
+        "static": false,
+        "w": 6,
+        "x": 0,
+        "y": 12
+      },
+      {
+        "h": 5,
+        "i": "667428ef-9b9a-4e91-bd1e-938e0dc1ff32",
+        "moved": false,
+        "static": false,
+        "w": 6,
+        "x": 6,
+        "y": 12
+      },
+      {
+        "h": 5,
+        "i": "bada7864-1d23-4d49-a868-c6b8a93c738f",
+        "moved": false,
+        "static": false,
+        "w": 6,
+        "x": 0,
+        "y": 17
+      },
+      {
+        "h": 1,
+        "i": "b437186f-d112-4fb9-bed5-5bea2b5f4b60",
+        "maxH": 1,
+        "minH": 1,
+        "minW": 12,
+        "moved": false,
+        "static": false,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      {
+        "h": 5,
+        "i": "6b700035-e3c2-4c48-99fa-ebfd6202eed3",
+        "moved": false,
+        "static": false,
+        "w": 6,
+        "x": 0,
+        "y": 23
+      },
+      {
+        "h": 5,
+        "i": "e9341e70-ccb3-47fc-af95-56ba8942c4f2",
+        "moved": false,
+        "static": false,
+        "w": 6,
+        "x": 6,
+        "y": 23
+      },
+      {
+        "h": 1,
+        "i": "4b94cfd8-7a28-46f9-a618-0a186908f0d5",
+        "maxH": 1,
+        "minH": 1,
+        "minW": 12,
+        "moved": false,
+        "static": false,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      {
+        "h": 6,
+        "i": "9552123d-6265-48a7-8624-3f4a3fc3c9c0",
+        "moved": false,
+        "static": false,
+        "w": 6,
+        "x": 0,
+        "y": 29
+      },
+      {
+        "h": 5,
+        "i": "d7838815-4f5b-4454-86fd-f658b201f3a9",
+        "moved": false,
+        "static": false,
+        "w": 6,
+        "x": 6,
+        "y": 29
+      },
+      {
+        "h": 5,
+        "i": "f9a6f683-7455-4643-acc8-467cc5ea52cf",
+        "moved": false,
+        "static": false,
+        "w": 6,
+        "x": 0,
+        "y": 35
+      }
+    ],
+    "name": "",
+    "panelMap": {
+      "3bd16024-b9ff-4f02-8107-1fd817604d5f": {
+        "collapsed": false,
+        "widgets": []
+      },
+      "4b94cfd8-7a28-46f9-a618-0a186908f0d5": {
+        "collapsed": true,
+        "widgets": []
+      },
+      "7df9b6d2-8f7f-48d4-80d6-ae07d47746d6": {
+        "collapsed": false,
+        "widgets": [
+          {
+            "h": 5,
+            "i": "191d09a6-40b0-4de8-a5b0-aa4254454b99",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 1
+          },
+          {
+            "h": 5,
+            "i": "fa941c00-ce19-49cc-baf2-c38598767dee",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 1
+          },
+          {
+            "h": 5,
+            "i": "114fcf80-e1de-4716-b1aa-0e0738dba10e",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 6
+          },
+          {
+            "h": 5,
+            "i": "667428ef-9b9a-4e91-bd1e-938e0dc1ff32",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 6
+          },
+          {
+            "h": 5,
+            "i": "bada7864-1d23-4d49-a868-c6b8a93c738f",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 11
+          }
+        ]
+      },
+      "b437186f-d112-4fb9-bed5-5bea2b5f4b60": {
+        "collapsed": false,
+        "widgets": [
+          {
+            "h": 5,
+            "i": "6b700035-e3c2-4c48-99fa-ebfd6202eed3",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 47
+          },
+          {
+            "h": 5,
+            "i": "e9341e70-ccb3-47fc-af95-56ba8942c4f2",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 47
+          },
+          {
+            "h": 4,
+            "i": "8638a199-20a0-4255-b0a2-3b1ba06c485b",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 3,
+            "y": 52
+          },
+          {
+            "h": 5,
+            "i": "f9a6f683-7455-4643-acc8-467cc5ea52cf",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 56
+          },
+          {
+            "h": 5,
+            "i": "d7838815-4f5b-4454-86fd-f658b201f3a9",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 6,
+            "y": 56
+          },
+          {
+            "h": 7,
+            "i": "9552123d-6265-48a7-8624-3f4a3fc3c9c0",
+            "moved": false,
+            "static": false,
+            "w": 6,
+            "x": 0,
+            "y": 61
+          }
+        ]
+      }
+    },
+    "tags": [
+      "postgres",
+      "database"
+    ],
+    "title": "Postgres overview",
+    "uploadedGrafana": false,
+    "variables": {
+      "8ecaee70-640f-46fd-83d9-a4fd18bc66e6": {
+        "allSelected": true,
+        "customValue": "",
+        "description": "List of tables",
+        "id": "8ecaee70-640f-46fd-83d9-a4fd18bc66e6",
+        "modificationUUID": "a51321cd-47a2-470a-8df4-372e5bb36f2c",
+        "multiSelect": true,
+        "name": "table_name",
+        "order": 0,
+        "queryValue": "SELECT JSONExtractString(labels, 'postgresql_table_name') AS table_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql_operations' AND JSONExtractString(labels, 'postgresql_database_name') IN {{.db_name}}\nGROUP BY table_name",
+        "selectedValue": [
+          "public.pgbench_accounts",
+          "public.pgbench_branches",
+          "public.pgbench_history",
+          "public.pgbench_tellers"
+        ],
+        "showALLOption": true,
+        "sort": "ASC",
+        "textboxValue": "",
+        "type": "QUERY"
+      },
+      "c66d1581-e5e1-440d-8ff6-ebcf078ab6dd": {
+        "allSelected": true,
+        "customValue": "",
+        "description": "List of databases",
+        "id": "c66d1581-e5e1-440d-8ff6-ebcf078ab6dd",
+        "key": "c66d1581-e5e1-440d-8ff6-ebcf078ab6dd",
+        "modificationUUID": "564a3f43-98f8-4189-b5e4-dcb518d73852",
+        "multiSelect": true,
+        "name": "db_name",
+        "order": 0,
+        "queryValue": "SELECT JSONExtractString(labels, 'postgresql_database_name') AS db_name\nFROM signoz_metrics.distributed_time_series_v4_1day\nWHERE metric_name = 'postgresql_operations'\nGROUP BY db_name",
+        "selectedValue": [
+          "pgtestdb"
+        ],
+        "showALLOption": true,
+        "sort": "DISABLED",
+        "textboxValue": "",
+        "type": "QUERY"
+      }
+    },
+    "widgets": [
+      {
+        "description": "The average number of db insert operations.",
+        "fillSpans": false,
+        "id": "191d09a6-40b0-4de8-a5b0-aa4254454b99",
+        "isStacked": false,
+        "nullZeroValues": "zero",
+        "opacity": "1",
+        "panelTypes": "graph",
+        "query": {
+          "builder": {
+            "queryData": [
+              {
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_operations--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_operations",
+                  "type": "Sum"
+                },
+                "aggregateOperator": "avg",
+                "dataSource": "metrics",
+                "disabled": false,
+                "expression": "A",
+                "filters": {
+                  "items": [
+                    {
+                      "id": "c1dff946",
+                      "key": {
+                        "dataType": "string",
+                        "id": "operation--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "operation",
+                        "type": "tag"
+                      },
+                      "op": "=",
+                      "value": "ins"
+                    },
+                    {
+                      "id": "2e60e171",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "id": "postgresql_database_name--string--tag--false",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_database_name",
+                    "type": "tag"
+                  }
+                ],
+                "having": [],
+                "legend": "{{postgresql_database_name}}",
+                "limit": null,
+                "orderBy": [],
+                "queryName": "A",
+                "reduceTo": "sum",
+                "stepInterval": 60
+              }
+            ],
+            "queryFormulas": []
+          },
+          "clickhouse_sql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "id": "bf48ac4c-bc0c-41a0-87f4-6f8ae7888d1f",
+          "promql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "queryType": "builder"
+        },
+        "softMax": null,
+        "softMin": null,
+        "thresholds": [],
+        "timePreferance": "GLOBAL_TIME",
+        "title": "Inserts",
+        "yAxisUnit": "none"
+      },
+      {
+        "description": "The average number of db update operations.",
+        "fillSpans": false,
+        "id": "fa941c00-ce19-49cc-baf2-c38598767dee",
+        "isStacked": false,
+        "nullZeroValues": "zero",
+        "opacity": "1",
+        "panelTypes": "graph",
+        "query": {
+          "builder": {
+            "queryData": [
+              {
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_operations--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_operations",
+                  "type": "Sum"
+                },
+                "aggregateOperator": "avg",
+                "dataSource": "metrics",
+                "disabled": false,
+                "expression": "A",
+                "filters": {
+                  "items": [
+                    {
+                      "id": "98463ec9",
+                      "key": {
+                        "dataType": "string",
+                        "id": "operation--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "operation",
+                        "type": "tag"
+                      },
+                      "op": "=",
+                      "value": "upd"
+                    },
+                    {
+                      "id": "64020332",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "id": "postgresql_database_name--string--tag--false",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_database_name",
+                    "type": "tag"
+                  }
+                ],
+                "having": [],
+                "legend": "{{postgresql_database_name}}",
+                "limit": null,
+                "orderBy": [],
+                "queryName": "A",
+                "reduceTo": "sum",
+                "stepInterval": 60
+              }
+            ],
+            "queryFormulas": []
+          },
+          "clickhouse_sql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "id": "34a6ac3a-b7f6-4b5f-a084-a44378033d82",
+          "promql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "queryType": "builder"
+        },
+        "softMax": null,
+        "softMin": null,
+        "thresholds": [],
+        "timePreferance": "GLOBAL_TIME",
+        "title": "Updates",
+        "yAxisUnit": "none"
+      },
+      {
+        "description": "The average number of db delete operations.",
+        "fillSpans": false,
+        "id": "114fcf80-e1de-4716-b1aa-0e0738dba10e",
+        "isStacked": false,
+        "nullZeroValues": "zero",
+        "opacity": "1",
+        "panelTypes": "graph",
+        "query": {
+          "builder": {
+            "queryData": [
+              {
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_operations--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_operations",
+                  "type": "Sum"
+                },
+                "aggregateOperator": "avg",
+                "dataSource": "metrics",
+                "disabled": false,
+                "expression": "A",
+                "filters": {
+                  "items": [
+                    {
+                      "id": "62738de4",
+                      "key": {
+                        "dataType": "string",
+                        "id": "operation--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "operation",
+                        "type": "tag"
+                      },
+                      "op": "=",
+                      "value": "del"
+                    },
+                    {
+                      "id": "9d153899",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "id": "postgresql_database_name--string--tag--false",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_database_name",
+                    "type": "tag"
+                  }
+                ],
+                "having": [],
+                "legend": "{{postgresql_database_name}}",
+                "limit": null,
+                "orderBy": [],
+                "queryName": "A",
+                "reduceTo": "sum",
+                "stepInterval": 60
+              }
+            ],
+            "queryFormulas": []
+          },
+          "clickhouse_sql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "id": "734393d1-76ed-4f4f-bef8-0a91d27ebec4",
+          "promql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "queryType": "builder"
+        },
+        "softMax": null,
+        "softMin": null,
+        "thresholds": [],
+        "timePreferance": "GLOBAL_TIME",
+        "title": "Deleted",
+        "yAxisUnit": "none"
+      },
+      {
+        "description": "The average number of db heap-only update operations.",
+        "fillSpans": false,
+        "id": "667428ef-9b9a-4e91-bd1e-938e0dc1ff32",
+        "isStacked": false,
+        "nullZeroValues": "zero",
+        "opacity": "1",
+        "panelTypes": "graph",
+        "query": {
+          "builder": {
+            "queryData": [
+              {
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_operations--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_operations",
+                  "type": "Sum"
+                },
+                "aggregateOperator": "avg",
+                "dataSource": "metrics",
+                "disabled": false,
+                "expression": "A",
+                "filters": {
+                  "items": [
+                    {
+                      "id": "a91e35c4",
+                      "key": {
+                        "dataType": "string",
+                        "id": "operation--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "operation",
+                        "type": "tag"
+                      },
+                      "op": "=",
+                      "value": "hot_upd"
+                    },
+                    {
+                      "id": "7b4a29a2",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "id": "postgresql_database_name--string--tag--false",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_database_name",
+                    "type": "tag"
+                  }
+                ],
+                "having": [],
+                "legend": "{{postgresql_database_name}}",
+                "limit": null,
+                "orderBy": [],
+                "queryName": "A",
+                "reduceTo": "sum",
+                "stepInterval": 60
+              }
+            ],
+            "queryFormulas": []
+          },
+          "clickhouse_sql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "id": "f43c2d19-4abc-4f5e-881b-db7add4a870a",
+          "promql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "queryType": "builder"
+        },
+        "softMax": null,
+        "softMin": null,
+        "thresholds": [],
+        "timePreferance": "GLOBAL_TIME",
+        "title": "Heap updates",
+        "yAxisUnit": "none"
+      },
+      {
+        "description": "",
+        "fillSpans": false,
+        "id": "bada7864-1d23-4d49-a868-c6b8a93c738f",
+        "isStacked": false,
+        "nullZeroValues": "zero",
+        "opacity": "1",
+        "panelTypes": "table",
+        "query": {
+          "builder": {
+            "queryData": [
+              {
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_operations--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_operations",
+                  "type": "Sum"
+                },
+                "aggregateOperator": "avg",
+                "dataSource": "metrics",
+                "disabled": false,
+                "expression": "A",
+                "filters": {
+                  "items": [
+                    {
+                      "id": "d6aeccf7",
+                      "key": {
+                        "dataType": "string",
+                        "id": "operation--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "operation",
+                        "type": "tag"
+                      },
+                      "op": "=",
+                      "value": "ins"
+                    },
+                    {
+                      "id": "ee4e9344",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "id": "postgresql_database_name--string--tag--false",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_database_name",
+                    "type": "tag"
+                  }
+                ],
+                "having": [],
+                "legend": "Inserted",
+                "limit": null,
+                "orderBy": [],
+                "queryName": "A",
+                "reduceTo": "sum",
+                "stepInterval": 60
+              },
+              {
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_operations--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_operations",
+                  "type": "Sum"
+                },
+                "aggregateOperator": "avg",
+                "dataSource": "metrics",
+                "disabled": false,
+                "expression": "B",
+                "filters": {
+                  "items": [
+                    {
+                      "id": "a12cceed",
+                      "key": {
+                        "dataType": "string",
+                        "id": "operation--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "operation",
+                        "type": "tag"
+                      },
+                      "op": "=",
+                      "value": "upd"
+                    },
+                    {
+                      "id": "2d542482",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "id": "postgresql_database_name--string--tag--false",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_database_name",
+                    "type": "tag"
+                  }
+                ],
+                "having": [],
+                "legend": "Updated",
+                "limit": null,
+                "orderBy": [],
+                "queryName": "B",
+                "reduceTo": "sum",
+                "stepInterval": 60
+              },
+              {
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_operations--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_operations",
+                  "type": "Sum"
+                },
+                "aggregateOperator": "avg",
+                "dataSource": "metrics",
+                "disabled": false,
+                "expression": "C",
+                "filters": {
+                  "items": [
+                    {
+                      "id": "1bca3e46",
+                      "key": {
+                        "dataType": "string",
+                        "id": "operation--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "operation",
+                        "type": "tag"
+                      },
+                      "op": "=",
+                      "value": "del"
+                    },
+                    {
+                      "id": "44ffc874",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "id": "postgresql_database_name--string--tag--false",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_database_name",
+                    "type": "tag"
+                  }
+                ],
+                "having": [],
+                "legend": "Deleted",
+                "limit": null,
+                "orderBy": [],
+                "queryName": "C",
+                "reduceTo": "sum",
+                "stepInterval": 60
+              }
+            ],
+            "queryFormulas": []
+          },
+          "clickhouse_sql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "id": "5056105b-1c30-4d27-8187-64457f2a1ec6",
+          "promql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "queryType": "builder"
+        },
+        "softMax": null,
+        "softMin": null,
+        "thresholds": [],
+        "timePreferance": "GLOBAL_TIME",
+        "title": "Operation by database",
+        "yAxisUnit": "none"
+      },
+      {
+        "description": "The number of database locks.",
+        "fillSpans": false,
+        "id": "6b700035-e3c2-4c48-99fa-ebfd6202eed3",
+        "isStacked": false,
+        "nullZeroValues": "zero",
+        "opacity": "1",
+        "panelTypes": "graph",
+        "query": {
+          "builder": {
+            "queryData": [
+              {
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_database_locks--float64--Gauge--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_database_locks",
+                  "type": "Gauge"
+                },
+                "aggregateOperator": "sum",
+                "dataSource": "metrics",
+                "disabled": false,
+                "expression": "A",
+                "filters": {
+                  "items": [],
+                  "op": "AND"
+                },
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "id": "mode--string--tag--false",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "mode",
+                    "type": "tag"
+                  }
+                ],
+                "having": [],
+                "legend": "{{mode}}",
+                "limit": null,
+                "orderBy": [],
+                "queryName": "A",
+                "reduceTo": "sum",
+                "stepInterval": 60
+              }
+            ],
+            "queryFormulas": []
+          },
+          "clickhouse_sql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "id": "877b0df3-9ae3-455e-ad27-bc3aa40b3f4c",
+          "promql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "queryType": "builder"
+        },
+        "softMax": null,
+        "softMin": null,
+        "thresholds": [],
+        "timePreferance": "GLOBAL_TIME",
+        "title": "Locks by lock mode",
+        "yAxisUnit": "none"
+      },
+      {
+        "description": "",
+        "fillSpans": false,
+        "id": "e9341e70-ccb3-47fc-af95-56ba8942c4f2",
+        "isStacked": false,
+        "nullZeroValues": "zero",
+        "opacity": "1",
+        "panelTypes": "graph",
+        "query": {
+          "builder": {
+            "queryData": [
+              {
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_deadlocks--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_deadlocks",
+                  "type": "Sum"
+                },
+                "aggregateOperator": "sum_rate",
+                "dataSource": "metrics",
+                "disabled": false,
+                "expression": "A",
+                "filters": {
+                  "items": [
+                    {
+                      "id": "efb83717",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "id": "postgresql_database_name--string--tag--false",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_database_name",
+                    "type": "tag"
+                  }
+                ],
+                "having": [],
+                "legend": "{{postgresql_database_name}}",
+                "limit": null,
+                "orderBy": [],
+                "queryName": "A",
+                "reduceTo": "sum",
+                "stepInterval": 60
+              }
+            ],
+            "queryFormulas": []
+          },
+          "clickhouse_sql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "id": "5056105b-1c30-4d27-8187-64457f2a1ec6",
+          "promql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "queryType": "builder"
+        },
+        "softMax": null,
+        "softMin": null,
+        "thresholds": [],
+        "timePreferance": "GLOBAL_TIME",
+        "title": "Deadlocks count",
+        "yAxisUnit": "none"
+      },
+      {
+        "description": "",
+        "fillSpans": false,
+        "id": "8638a199-20a0-4255-b0a2-3b1ba06c485b",
+        "isStacked": false,
+        "nullZeroValues": "zero",
+        "opacity": "1",
+        "panelTypes": "graph",
+        "query": {
+          "builder": {
+            "queryData": [
+              {
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_backends--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_backends",
+                  "type": "Sum"
+                },
+                "aggregateOperator": "avg",
+                "dataSource": "metrics",
+                "disabled": false,
+                "expression": "A",
+                "filters": {
+                  "items": [
+                    {
+                      "id": "20d2a4c5",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "id": "postgresql_database_name--string--tag--false",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_database_name",
+                    "type": "tag"
+                  }
+                ],
+                "having": [],
+                "legend": "{{postgresql_database_name}}",
+                "limit": null,
+                "orderBy": [],
+                "queryName": "A",
+                "reduceTo": "sum",
+                "stepInterval": 60
+              }
+            ],
+            "queryFormulas": []
+          },
+          "clickhouse_sql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "id": "205b99a0-2f1c-4bd2-9ba0-cc2da6ef247a",
+          "promql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "queryType": "builder"
+        },
+        "softMax": null,
+        "softMin": null,
+        "thresholds": [],
+        "timePreferance": "GLOBAL_TIME",
+        "title": "Connections per db",
+        "yAxisUnit": "none"
+      },
+      {
+        "description": "",
+        "fillSpans": false,
+        "id": "f9a6f683-7455-4643-acc8-467cc5ea52cf",
+        "isStacked": false,
+        "nullZeroValues": "zero",
+        "opacity": "1",
+        "panelTypes": "graph",
+        "query": {
+          "builder": {
+            "queryData": [
+              {
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_rows--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_rows",
+                  "type": "Sum"
+                },
+                "aggregateOperator": "sum",
+                "dataSource": "metrics",
+                "disabled": false,
+                "expression": "A",
+                "filters": {
+                  "items": [
+                    {
+                      "id": "70786905",
+                      "key": {
+                        "dataType": "string",
+                        "id": "state--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "state",
+                        "type": "tag"
+                      },
+                      "op": "=",
+                      "value": "dead"
+                    },
+                    {
+                      "id": "3e5ef839",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    },
+                    {
+                      "id": "9e913563",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_table_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_table_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.table_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "groupBy": [],
+                "having": [],
+                "legend": "Dead rows",
+                "limit": null,
+                "orderBy": [],
+                "queryName": "A",
+                "reduceTo": "sum",
+                "stepInterval": 60
+              }
+            ],
+            "queryFormulas": []
+          },
+          "clickhouse_sql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "id": "cc7452c8-118b-4676-959e-7062bafc41ee",
+          "promql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "queryType": "builder"
+        },
+        "softMax": null,
+        "softMin": null,
+        "thresholds": [],
+        "timePreferance": "GLOBAL_TIME",
+        "title": "Dead rows",
+        "yAxisUnit": "none"
+      },
+      {
+        "description": "",
+        "fillSpans": false,
+        "id": "d7838815-4f5b-4454-86fd-f658b201f3a9",
+        "isStacked": false,
+        "nullZeroValues": "zero",
+        "opacity": "1",
+        "panelTypes": "graph",
+        "query": {
+          "builder": {
+            "queryData": [
+              {
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_index_scans--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_index_scans",
+                  "type": "Sum"
+                },
+                "aggregateOperator": "sum_rate",
+                "dataSource": "metrics",
+                "disabled": false,
+                "expression": "A",
+                "filters": {
+                  "items": [
+                    {
+                      "id": "590332a7",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    },
+                    {
+                      "id": "171b9516",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_table_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_table_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.table_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "id": "postgresql_index_name--string--tag--false",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_index_name",
+                    "type": "tag"
+                  }
+                ],
+                "having": [],
+                "legend": "{{postgresql_index_name}}",
+                "limit": null,
+                "orderBy": [],
+                "queryName": "A",
+                "reduceTo": "sum",
+                "stepInterval": 60
+              }
+            ],
+            "queryFormulas": []
+          },
+          "clickhouse_sql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "id": "2c6b630b-8bd9-4001-815b-f2b1f439a9dd",
+          "promql": [
+            {
+              "disabled": false,
+              "legend": "",
+              "name": "A",
+              "query": ""
+            }
+          ],
+          "queryType": "builder"
+        },
+        "softMax": null,
+        "softMin": null,
+        "thresholds": [],
+        "timePreferance": "GLOBAL_TIME",
+        "title": "Index scans by index",
+        "yAxisUnit": "none"
+      },
+      {
+        "description": "",
+        "fillSpans": false,
+        "id": "9552123d-6265-48a7-8624-3f4a3fc3c9c0",
+        "isStacked": false,
+        "nullZeroValues": "zero",
+        "opacity": "1",
+        "panelTypes": "table",
+        "query": {
+          "clickhouse_sql": [
+            {
+              "name": "A",
+              "legend": "",
+              "disabled": false,
+              "query": ""
+            }
+          ],
+          "promql": [
+            {
+              "name": "A",
+              "query": "",
+              "legend": "",
+              "disabled": false
+            }
+          ],
+          "builder": {
+            "queryData": [
+              {
+                "dataSource": "metrics",
+                "queryName": "A",
+                "aggregateOperator": "avg",
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_rows--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_rows",
+                  "type": "Sum"
+                },
+                "timeAggregation": "rate",
+                "spaceAggregation": "sum",
+                "functions": [],
+                "filters": {
+                  "items": [
+                    {
+                      "id": "d2039662",
+                      "key": {
+                        "dataType": "string",
+                        "id": "state--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "state",
+                        "type": "tag"
+                      },
+                      "op": "=",
+                      "value": "dead"
+                    },
+                    {
+                      "id": "21c6d446",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    },
+                    {
+                      "id": "a44d1843",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_table_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_table_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.table_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "expression": "A",
+                "disabled": false,
+                "having": [],
+                "stepInterval": 840,
+                "limit": null,
+                "orderBy": [],
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_table_name",
+                    "type": "tag",
+                    "id": "postgresql_table_name--string--tag--false"
+                  }
+                ],
+                "legend": "Dead rows",
+                "reduceTo": "sum"
+              },
+              {
+                "dataSource": "metrics",
+                "queryName": "B",
+                "aggregateOperator": "avg",
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_rows--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_rows",
+                  "type": "Sum"
+                },
+                "timeAggregation": "rate",
+                "spaceAggregation": "sum",
+                "functions": [],
+                "filters": {
+                  "items": [
+                    {
+                      "id": "74888dbf",
+                      "key": {
+                        "dataType": "string",
+                        "id": "state--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "state",
+                        "type": "tag"
+                      },
+                      "op": "=",
+                      "value": "live"
+                    },
+                    {
+                      "id": "3e5d7976",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    },
+                    {
+                      "id": "c18ed7a3",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_table_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_table_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.table_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "expression": "B",
+                "disabled": false,
+                "having": [],
+                "stepInterval": 840,
+                "limit": null,
+                "orderBy": [],
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_table_name",
+                    "type": "tag",
+                    "id": "postgresql_table_name--string--tag--false"
+                  }
+                ],
+                "legend": "Live rows",
+                "reduceTo": "sum"
+              },
+              {
+                "dataSource": "metrics",
+                "queryName": "C",
+                "aggregateOperator": "sum_rate",
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_index_scans--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_index_scans",
+                  "type": "Sum"
+                },
+                "timeAggregation": "rate",
+                "spaceAggregation": "sum",
+                "functions": [],
+                "filters": {
+                  "items": [
+                    {
+                      "id": "f9355263",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    },
+                    {
+                      "id": "8807a9c4",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_table_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_table_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.table_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "expression": "C",
+                "disabled": false,
+                "having": [],
+                "stepInterval": 840,
+                "limit": null,
+                "orderBy": [],
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_table_name",
+                    "type": "tag",
+                    "id": "postgresql_table_name--string--tag--false"
+                  }
+                ],
+                "legend": "Index scans",
+                "reduceTo": "sum"
+              },
+              {
+                "dataSource": "metrics",
+                "queryName": "D",
+                "aggregateOperator": "avg",
+                "aggregateAttribute": {
+                  "dataType": "float64",
+                  "id": "postgresql_table_size--float64--Sum--true",
+                  "isColumn": true,
+                  "isJSON": false,
+                  "key": "postgresql_table_size",
+                  "type": "Sum"
+                },
+                "timeAggregation": "rate",
+                "spaceAggregation": "sum",
+                "functions": [],
+                "filters": {
+                  "items": [
+                    {
+                      "id": "4be865f1",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_database_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_database_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.db_name}}"
+                      ]
+                    },
+                    {
+                      "id": "58200638",
+                      "key": {
+                        "dataType": "string",
+                        "id": "postgresql_table_name--string--tag--false",
+                        "isColumn": false,
+                        "isJSON": false,
+                        "key": "postgresql_table_name",
+                        "type": "tag"
+                      },
+                      "op": "in",
+                      "value": [
+                        "{{.table_name}}"
+                      ]
+                    }
+                  ],
+                  "op": "AND"
+                },
+                "expression": "D",
+                "disabled": true,
+                "having": [],
+                "stepInterval": 840,
+                "limit": null,
+                "orderBy": [],
+                "groupBy": [
+                  {
+                    "dataType": "string",
+                    "isColumn": false,
+                    "isJSON": false,
+                    "key": "postgresql_table_name",
+                    "type": "tag",
+                    "id": "postgresql_table_name--string--tag--false"
+                  }
+                ],
+                "legend": "Table size",
+                "reduceTo": "sum"
+              }
+            ],
+            "queryFormulas": [
+              {
+                "queryName": "F1",
+                "expression": "D/1024/1024/1024",
+                "disabled": false,
+                "legend": "Table size (GB)"
+              }
+            ]
+          },
+          "id": "05e9c65b-a296-47c0-a802-2fca3320b07a",
+          "queryType": "builder"
+        },
+        "softMax": 0,
+        "softMin": 0,
+        "thresholds": [],
+        "timePreferance": "GLOBAL_TIME",
+        "title": "Table stats",
+        "yAxisUnit": "none",
+        "selectedLogFields": [],
+        "selectedTracesFields": []
+      },
+      {
+        "description": "",
+        "id": "7df9b6d2-8f7f-48d4-80d6-ae07d47746d6",
+        "panelTypes": "row",
+        "title": "Operations"
+      },
+      {
+        "description": "",
+        "id": "b437186f-d112-4fb9-bed5-5bea2b5f4b60",
+        "panelTypes": "row",
+        "title": "Locks"
+      },
+      {
+        "description": "",
+        "id": "3bd16024-b9ff-4f02-8107-1fd817604d5f",
+        "panelTypes": "row",
+        "title": "Connections"
+      },
+      {
+        "description": "",
+        "id": "4b94cfd8-7a28-46f9-a618-0a186908f0d5",
+        "panelTypes": "row",
+        "title": "Stats"
+      }
+    ],
+    "uuid": "149ad467-ba1b-421f-ad87-78f943cc7530"
+  }

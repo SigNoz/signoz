@@ -217,11 +217,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery) (string, erro
 // `ts` is always added to the group by clause
 func groupingSets(tags ...string) string {
 	withTs := append(tags, "ts")
-	if len(withTs) > 1 {
-		return fmt.Sprintf(`GROUPING SETS ( (%s), (%s) )`, strings.Join(withTs, ", "), strings.Join(tags, ", "))
-	} else {
-		return strings.Join(withTs, ", ")
-	}
+	return strings.Join(withTs, ", ")
 }
 
 // groupBy returns a string of comma separated tags for group by clause
@@ -344,6 +340,33 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	}
 	adjustStep := int64(math.Min(float64(mq.StepInterval), 60))
 	end = end - (end % (adjustStep * 1000))
+
+	// if the aggregate operator is a histogram quantile, and user has not forgotten
+	// the le tag in the group by then add the le tag to the group by
+	if mq.AggregateOperator == v3.AggregateOperatorHistQuant50 ||
+		mq.AggregateOperator == v3.AggregateOperatorHistQuant75 ||
+		mq.AggregateOperator == v3.AggregateOperatorHistQuant90 ||
+		mq.AggregateOperator == v3.AggregateOperatorHistQuant95 ||
+		mq.AggregateOperator == v3.AggregateOperatorHistQuant99 {
+		found := false
+		for _, tag := range mq.GroupBy {
+			if tag.Key == "le" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			mq.GroupBy = append(
+				mq.GroupBy,
+				v3.AttributeKey{
+					Key:      "le",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+					IsColumn: false,
+				},
+			)
+		}
+	}
 
 	var query string
 	var err error

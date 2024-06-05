@@ -85,9 +85,10 @@
 		"less": "^4.1.2",
 		"less-loader": "^10.2.0",
 		"lodash-es": "^4.17.21",
-		"lucide-react": "0.321.0",
+		"lucide-react": "0.379.0",
 		"mini-css-extract-plugin": "2.4.5",
 		"papaparse": "5.4.1",
+		"rc-tween-one": "3.0.6",
 		"react": "18.2.0",
 		"react-addons-update": "15.6.3",
 		"react-beautiful-dnd": "13.1.1",
@@ -235,6 +236,7 @@
 		"@types/react-dom": "18.0.10",
 		"debug": "4.3.4",
 		"semver": "7.5.4",
-		"xml2js": "0.5.0"
+		"xml2js": "0.5.0",
+		"phin": "^3.7.1"
 	}
 }

@@ -87,7 +87,7 @@ function TopOperationMetrics(): JSX.Element {
 		},
 	);
 
-	const queryTableData = data?.payload.data.newResult.data.result || [];
+	const queryTableData = data?.payload?.data?.newResult?.data?.result || [];
 
 	const renderColumnCell = useMemo(
 		() =>
