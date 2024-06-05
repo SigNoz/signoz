@@ -10,6 +10,7 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DashboardShortcuts } from 'constants/shortcuts/DashboardShortcuts';
+import { DEFAULT_BUCKET_COUNT } from 'container/PanelWrapper/constants';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -138,6 +139,18 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [saveModal, setSaveModal] = useState(false);
 	const [discardModal, setDiscardModal] = useState(false);
 
+	const [bucketWidth, setBucketWidth] = useState<number>(
+		selectedWidget?.bucketWidth || 0,
+	);
+
+	const [bucketCount, setBucketCount] = useState<number>(
+		selectedWidget?.bucketCount || DEFAULT_BUCKET_COUNT,
+	);
+
+	const [combineHistogram, setCombineHistogram] = useState<boolean>(
+		selectedWidget?.mergeAllActiveQueries || false,
+	);
+
 	const [softMin, setSoftMin] = useState<number | null>(
 		selectedWidget?.softMin === null || selectedWidget?.softMin === undefined
 			? null
@@ -181,6 +194,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				softMax,
 				fillSpans: isFillSpans,
 				columnUnits,
+				bucketCount,
+				bucketWidth,
+				mergeAllActiveQueries: combineHistogram,
 				selectedLogFields,
 				selectedTracesFields,
 			};
@@ -200,6 +216,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		thresholds,
 		title,
 		yAxisUnit,
+		bucketWidth,
+		bucketCount,
+		combineHistogram,
 	]);
 
 	const closeModal = (): void => {
@@ -296,6 +315,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
+								bucketWidth: selectedWidget?.bucketWidth || 0,
+								bucketCount: selectedWidget?.bucketCount || 0,
+								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
 								selectedLogFields: selectedWidget?.selectedLogFields || [],
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 							},
@@ -318,6 +340,9 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
+								bucketWidth: selectedWidget?.bucketWidth || 0,
+								bucketCount: selectedWidget?.bucketCount || 0,
+								mergeAllActiveQueries: selectedWidget?.mergeAllActiveQueries || false,
 								selectedLogFields: selectedWidget?.selectedLogFields || [],
 								selectedTracesFields: selectedWidget?.selectedTracesFields || [],
 							},
@@ -511,6 +536,12 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						yAxisUnit={yAxisUnit}
 						columnUnits={columnUnits}
 						setColumnUnits={setColumnUnits}
+						bucketCount={bucketCount}
+						bucketWidth={bucketWidth}
+						combineHistogram={combineHistogram}
+						setCombineHistogram={setCombineHistogram}
+						setBucketWidth={setBucketWidth}
+						setBucketCount={setBucketCount}
 						setOpacity={setOpacity}
 						selectedNullZeroValue={selectedNullZeroValue}
 						setSelectedNullZeroValue={setSelectedNullZeroValue}

@@ -204,6 +204,7 @@ function FullView({
 			<div
 				className={cx('graph-container', {
 					disabled: isDashboardLocked,
+					'height-widget': widget?.mergeAllActiveQueries,
 					'list-graph-container': isListView,
 				})}
 				ref={fullViewRef}

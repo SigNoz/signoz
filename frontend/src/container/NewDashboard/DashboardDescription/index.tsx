@@ -428,9 +428,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 			{!isEmpty(description) && (
 				<section className="dashboard-description-section">{description}</section>
 			)}
-			<section className="dashboard-variables">
-				<DashboardVariableSelection />
-			</section>
+
+			{!isEmpty(selectedData.variables) && (
+				<section className="dashboard-variables">
+					<DashboardVariableSelection />
+				</section>
+			)}
 			<DashboardGraphSlider />
 
 			<Modal
