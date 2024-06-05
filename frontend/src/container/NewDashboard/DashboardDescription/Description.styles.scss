@@ -53,53 +53,59 @@
 		padding: 0px;
 	}
 
-	.dashboard-breadcrumbs {
-		height: 48px;
-		padding: 16px;
+	.dashboard-header {
 		border-bottom: 1px solid var(--bg-slate-400);
 		display: flex;
-		gap: 6px;
+		justify-content: space-between;
 		align-items: center;
 
-		.dashboard-btn {
+		.dashboard-breadcrumbs {
+			height: 48px;
+			padding: 16px;
 			display: flex;
+			gap: 6px;
 			align-items: center;
-			color: var(--bg-vanilla-400);
-			font-family: Inter;
-			font-size: 14px;
-			font-style: normal;
-			font-weight: 400;
-			line-height: 20px; /* 142.857% */
-			letter-spacing: -0.07px;
-			padding: 0px;
-			height: 20px;
-		}
 
-		.dashboard-btn:hover {
-			background-color: unset;
-		}
-
-		.id-btn {
-			display: flex;
-			align-items: center;
-			padding: 0px 2px;
-			border-radius: 2px;
-			background: rgba(113, 144, 249, 0.1);
-			color: var(--bg-robin-400);
-			font-family: Inter;
-			font-size: 14px;
-			font-style: normal;
-			font-weight: 400;
-			line-height: 20px; /* 142.857% */
-			height: 20px;
-
-			.ant-btn-icon {
-				margin-inline-end: 4px;
+			.dashboard-btn {
+				display: flex;
+				align-items: center;
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+				padding: 0px;
+				height: 20px;
 			}
-		}
-		.id-btn:hover {
-			background: rgba(113, 144, 249, 0.1);
-			color: var(--bg-robin-300);
+
+			.dashboard-btn:hover {
+				background-color: unset;
+			}
+
+			.id-btn {
+				display: flex;
+				align-items: center;
+				padding: 0px 2px;
+				border-radius: 2px;
+				background: rgba(113, 144, 249, 0.1);
+				color: var(--bg-robin-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				height: 20px;
+
+				.ant-btn-icon {
+					margin-inline-end: 4px;
+				}
+			}
+			.id-btn:hover {
+				background: rgba(113, 144, 249, 0.1);
+				color: var(--bg-robin-300);
+			}
 		}
 	}
 
@@ -562,11 +568,12 @@
 	.dashboard-description-container {
 		color: var(--bg-ink-400);
 
-		.dashboard-breadcrumbs {
+		.dashboard-header {
 			border-bottom: 1px solid var(--bg-vanilla-300);
-
-			.dashboard-btn {
-				color: var(--bg-ink-400);
+			.dashboard-breadcrumbs {
+				.dashboard-btn {
+					color: var(--bg-ink-400);
+				}
 			}
 		}
 
