@@ -51,9 +51,7 @@ const generateTooltipContent = (
 	}
 
 	if (Array.isArray(series) && series.length > 0) {
-		console.log(series);
 		series.forEach((item, index) => {
-			console.log(item, index);
 			if (index === 0) {
 				if (isBillingUsageGraphs) {
 					tooltipTitle = dayjs(data[0][idx] * 1000).format('MMM DD YYYY');
