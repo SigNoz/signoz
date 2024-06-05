@@ -112,6 +112,16 @@ export const getUPlotChartOptions = ({
 
 	const series = getStackedSeries(apiResponse?.data?.result);
 
+	console.log(
+		getSeries({
+			series,
+			widgetMetaData: apiResponse?.data.result,
+			graphsVisibilityStates,
+			panelType,
+			currentQuery,
+		}),
+	);
+
 	return {
 		id,
 		width: dimensions.width,
@@ -139,6 +149,18 @@ export const getUPlotChartOptions = ({
 			},
 		},
 		padding: [16, 16, 8, 8],
+		bands: [
+			{
+				series: [-1, 1],
+			},
+			{
+				series: [1, 2],
+			},
+			{
+				series: [2, 3],
+			},
+		],
+
 		scales: {
 			x: {
 				spanGaps: true,
