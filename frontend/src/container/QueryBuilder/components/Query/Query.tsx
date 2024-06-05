@@ -155,12 +155,19 @@ export const Query = memo(function Query({
 
 		return (
 			<OrderByFilter
+				entityVersion={version}
 				query={query}
 				onChange={handleChangeOrderByKeys}
 				isListViewPanel={isListViewPanel}
 			/>
 		);
-	}, [queryComponents, query, handleChangeOrderByKeys, isListViewPanel]);
+	}, [
+		queryComponents,
+		query,
+		version,
+		handleChangeOrderByKeys,
+		isListViewPanel,
+	]);
 
 	const renderAggregateEveryFilter = useCallback(
 		(): JSX.Element | null =>
