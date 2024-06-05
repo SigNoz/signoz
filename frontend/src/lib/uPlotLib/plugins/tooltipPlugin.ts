@@ -67,7 +67,10 @@ const generateTooltipContent = (
 					unit = '',
 				} = seriesList[index - 1] || {};
 
-				const value = data[index][idx];
+				const value =
+					index + 1 < data.length
+						? data[index][idx] - data[index + 1][idx]
+						: data[index][idx];
 				const dataIngested = quantity[idx];
 				const label = isMergedSeries
 					? 'merged_series'
