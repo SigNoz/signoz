@@ -2,9 +2,8 @@ import './Filter.styles.scss';
 
 import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
-import useDebounce from 'hooks/useDebounce';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { defaultTo, isEmpty } from 'lodash-es';
 import {
 	ChangeEvent,
@@ -36,6 +35,7 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 	const { type, setSelectedFilters, selectedFilters, handleRun } = props;
 	const [visibleItemsCount, setVisibleItemsCount] = useState(10);
 	const [searchFilter, setSearchFilter] = useState<string>('');
+	const [searchText, setSearchText] = useState<string>('');
 	const [checkedItems, setCheckedItems] = useState<string[]>(
 		defaultTo(selectedFilters?.[type]?.values as string[], []),
 	);
@@ -48,11 +48,14 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 			setCheckedItems(defaultTo(selectedFilters?.[type]?.values as string[], [])),
 		[selectedFilters, type],
 	);
-	const debouncedSearchText = useDebounce(searchFilter, DEBOUNCE_DELAY);
+
+	const handleDebouncedSearch = useDebouncedFn((searchText): void => {
+		setSearchText(searchText as string);
+	}, 500);
 
 	const { isFetching: fetching, keys, results: res } = useGetAggregateValues({
 		value: type,
-		searchText: debouncedSearchText,
+		searchText,
 	});
 
 	useEffect(() => {
@@ -111,6 +114,7 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		const inputValue = e.target.value;
 		setSearchFilter(inputValue);
+		handleDebouncedSearch(inputValue || '');
 	};
 
 	return (

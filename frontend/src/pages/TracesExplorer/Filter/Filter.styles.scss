@@ -182,9 +182,14 @@
 		.arrow-icon {
 			background-color: var(--bg-vanilla-100);
 		}
+
+		.sync-icon {
+			background-color: var(--bg-vanilla-100);
+		}
 	}
 
 	.section-card {
 		background-color: var(--bg-vanilla-100);
+		box-shadow: none;
 	}
 }
