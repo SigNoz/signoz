@@ -646,7 +646,7 @@ type Function struct {
 
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
-	StepInterval       int64             `json:"stepInterval"`
+	StepInterval       int64             `json:"stepInterval,omitempty"`
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`

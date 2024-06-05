@@ -436,7 +436,7 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 		params := &v3.QueryRangeParamsV3{
 			Start:          start,
 			End:            end,
-			Step:           int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
+			Step:           common.MinAllowedStepInterval(start, end),
 			CompositeQuery: r.ruleCondition.CompositeQuery,
 			Variables:      make(map[string]interface{}, 0),
 			NoCache:        true,
@@ -466,7 +466,7 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 
 	if r.ruleCondition.CompositeQuery != nil && r.ruleCondition.CompositeQuery.BuilderQueries != nil {
 		for _, q := range r.ruleCondition.CompositeQuery.BuilderQueries {
-			q.StepInterval = int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60))
+			q.StepInterval = common.MinAllowedStepInterval(start, end)
 		}
 	}
 
@@ -474,7 +474,7 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	return &v3.QueryRangeParamsV3{
 		Start:          start,
 		End:            end,
-		Step:           int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
+		Step:           common.MinAllowedStepInterval(start, end),
 		CompositeQuery: r.ruleCondition.CompositeQuery,
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        true,

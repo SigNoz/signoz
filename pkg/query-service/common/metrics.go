@@ -28,6 +28,5 @@ func PastDayRoundOff() int64 {
 // start and end are in milliseconds
 func MinAllowedStepInterval(start, end int64) int64 {
 	step := (end - start) / constants.MaxAllowedPointsInTimeSeries / 1000
-	// return the nearest lower multiple of 60
-	return step - step%60
+	return step
 }
