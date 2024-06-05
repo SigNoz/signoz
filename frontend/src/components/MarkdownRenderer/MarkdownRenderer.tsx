@@ -2,7 +2,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-import useAnalytics from 'hooks/analytics/useAnalytics';
+import logEvent from 'api/common/logEvent';
 import { isEmpty } from 'lodash-es';
 import ReactMarkdown from 'react-markdown';
 import { CodeProps } from 'react-markdown/lib/ast-to-react';
@@ -26,18 +26,13 @@ function Pre({
 	trackCopyAction: boolean;
 	elementDetails: Record<string, unknown>;
 }): JSX.Element {
-	const { trackEvent } = useAnalytics();
-
 	const { trackingTitle = '', ...rest } = elementDetails;
 
 	const handleClick = (additionalInfo?: Record<string, unknown>): void => {
 		const trackingData = { ...rest, copiedContent: additionalInfo };
 
-		if (trackCopyAction) {
-			trackEvent(
-				isEmpty(trackingTitle) ? 'Copy btn event' : trackingTitle,
-				trackingData,
-			);
+		if (trackCopyAction && !isEmpty(trackingTitle)) {
+			logEvent(trackingTitle as string, trackingData);
 		}
 	};
 

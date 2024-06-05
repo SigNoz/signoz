@@ -1,6 +1,7 @@
 import './IntegrationDetailContentTabs.styles.scss';
 
 import { Button, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import useAnalytics from 'hooks/analytics/useAnalytics';
@@ -21,8 +22,8 @@ function Configure(props: ConfigurationProps): JSX.Element {
 
 	const handleMenuClick = (index: number, config: any): void => {
 		setSelectedConfigStep(index);
-		trackEvent('Integrations Detail Page: Configure tab', {
-			title: config?.title,
+		logEvent('Integrations Detail Page: Configure tab', {
+			sectionName: config?.title,
 			integrationId,
 		});
 	};
@@ -38,8 +39,8 @@ function Configure(props: ConfigurationProps): JSX.Element {
 	}, []);
 
 	const markdownDetailsForTracking = {
-		trackingTitle: `Integrations Detail Page: Configure tab - ${configuration[selectedConfigStep].title}`,
-		configureTitle: configuration[selectedConfigStep].title,
+		trackingTitle: `Integrations Detail Page: Copy button`,
+		sectionName: configuration[selectedConfigStep].title,
 		integrationId,
 	};
 
