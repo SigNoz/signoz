@@ -158,7 +158,6 @@ export const getSteps = ({
 				DataSourceStep,
 				SetupAzureEventsHub,
 				SetupCentralCollectorStep,
-				SendTraces,
 				SendLogs,
 				SendMetrics,
 			];
@@ -172,6 +171,54 @@ export const getSteps = ({
 				SendLogs,
 				SendMetrics,
 			];
+		// eslint-disable-next-line sonarjs/no-duplicated-branches
+		case 'azureAppService':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendTraces,
+				SendLogs,
+				SendMetrics,
+			];
+		// eslint-disable-next-line sonarjs/no-duplicated-branches
+		case 'azureFunctions':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendTraces,
+				SendLogs,
+				SendMetrics,
+			];
+		// eslint-disable-next-line sonarjs/no-duplicated-branches
+		case 'azureContainerApps':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendTraces,
+				SendLogs,
+				SendMetrics,
+			];
+		// eslint-disable-next-line sonarjs/no-duplicated-branches
+		case 'azureBlobStorage':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendLogs,
+				SendMetrics,
+			];
+		// eslint-disable-next-line sonarjs/no-duplicated-branches
+		case 'azureSQLDatabaseMetrics':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendMetrics,
+			];
+
 		default:
 			return [DataSourceStep];
 	}
