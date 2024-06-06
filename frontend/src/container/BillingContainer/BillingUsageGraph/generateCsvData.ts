@@ -25,6 +25,16 @@ interface DataPoint {
 	};
 }
 
+interface CsvData {
+	Date: string;
+	'Metrics Vol (Mn samples)': number;
+	'Metrics Cost ($)': number;
+	'Traces Vol (GBs)': number;
+	'Traces Cost ($)': number;
+	'Logs Vol (GBs)': number;
+	'Logs Cost ($)': number;
+}
+
 const formatDate = (timestamp: number): string =>
 	dayjs.unix(timestamp).format('MM/DD/YYYY');
 
@@ -92,25 +102,25 @@ const generateCsvData = (quantityData: QuantityData[]): any[] => {
 		},
 	);
 
-	const csvData = formattedData.map((dataPoint) => ({
+	const csvData: CsvData[] = formattedData.map((dataPoint) => ({
 		Date: dataPoint.date,
-		'Metrics Vol (Mn samples)': dataPoint.metric.total,
-		'Metrics Cost ($)': dataPoint.metric.cost,
-		'Traces Vol (GBs)': dataPoint.trace.total,
-		'Traces Cost ($)': dataPoint.trace.cost,
-		'Logs Vol (GBs)': dataPoint.log.total,
-		'Logs Cost ($)': dataPoint.log.cost,
+		'Metrics Vol (Mn samples)': parseFloat(dataPoint.metric.total.toFixed(2)),
+		'Metrics Cost ($)': parseFloat(dataPoint.metric.cost.toFixed(2)),
+		'Traces Vol (GBs)': parseFloat(dataPoint.trace.total.toFixed(2)),
+		'Traces Cost ($)': parseFloat(dataPoint.trace.cost.toFixed(2)),
+		'Logs Vol (GBs)': parseFloat(dataPoint.log.total.toFixed(2)),
+		'Logs Cost ($)': parseFloat(dataPoint.log.cost.toFixed(2)),
 	}));
 
 	// Add totals row
 	csvData.push({
 		Date: 'Total',
-		'Metrics Vol (Mn samples)': totals.metric.total,
-		'Metrics Cost ($)': totals.metric.cost,
-		'Traces Vol (GBs)': totals.trace.total,
-		'Traces Cost ($)': totals.trace.cost,
-		'Logs Vol (GBs)': totals.log.total,
-		'Logs Cost ($)': totals.log.cost,
+		'Metrics Vol (Mn samples)': parseFloat(totals.metric.total.toFixed(2)),
+		'Metrics Cost ($)': parseFloat(totals.metric.cost.toFixed(2)),
+		'Traces Vol (GBs)': parseFloat(totals.trace.total.toFixed(2)),
+		'Traces Cost ($)': parseFloat(totals.trace.cost.toFixed(2)),
+		'Logs Vol (GBs)': parseFloat(totals.log.total.toFixed(2)),
+		'Logs Cost ($)': parseFloat(totals.log.cost.toFixed(2)),
 	});
 
 	return csvData;
