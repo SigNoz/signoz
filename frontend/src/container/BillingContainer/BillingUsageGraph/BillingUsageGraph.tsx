@@ -12,7 +12,7 @@ import getRenderer from 'lib/uPlotLib/utils/getRenderer';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getXAxisScale } from 'lib/uPlotLib/utils/getXAxisScale';
 import { getYAxisScale } from 'lib/uPlotLib/utils/getYAxisScale';
-import { useEffect, useMemo, useRef } from 'react';
+import { MutableRefObject, useEffect, useMemo, useRef } from 'react';
 import uPlot from 'uplot';
 
 import { QuantityData } from './generateCsvData';
@@ -25,7 +25,7 @@ import {
 interface BillingUsageGraphProps {
 	data: any;
 	billAmount: number;
-	getCsvData: (quantityData: QuantityData[]) => void;
+	csvData: MutableRefObject<QuantityData[]>;
 }
 const paths = (
 	u: any,
@@ -60,7 +60,7 @@ const calculateStartEndTime = (
 };
 
 export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
-	const { data, billAmount, getCsvData } = props;
+	const { data, billAmount, csvData } = props;
 	const graphCompatibleData = useMemo(
 		() => convertDataToMetricRangePayload(data),
 		[data],
@@ -80,7 +80,7 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 	);
 
 	useEffect(() => {
-		getCsvData(quantityMapArr);
+		csvData.current = quantityMapArr;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 

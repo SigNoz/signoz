@@ -28,7 +28,7 @@ import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEmpty, pick } from 'lodash-es';
 import { unparse } from 'papaparse';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -136,7 +136,7 @@ export default function BillingContainer(): JSX.Element {
 	const [daysRemaining, setDaysRemaining] = useState(0);
 	const [isFreeTrial, setIsFreeTrial] = useState(false);
 	const [data, setData] = useState<any[]>([]);
-	const [csvData, setCsvData] = useState<any[]>([]);
+	const csvData = useRef<QuantityData[]>([]);
 	const [apiResponse, setApiResponse] = useState<
 		Partial<UsageResponsePayloadProps>
 	>({});
@@ -351,17 +351,13 @@ export default function BillingContainer(): JSX.Element {
 		updateCreditCard,
 	]);
 
-	const getCsvData = (quantityData: QuantityData[]): void => {
-		setCsvData(generateCsvData(quantityData));
-	};
-
 	const BillingUsageGraphCallback = useCallback(
 		() =>
 			!isLoading && !isFetchingBillingData ? (
 				<BillingUsageGraph
 					data={apiResponse}
 					billAmount={billAmount}
-					getCsvData={getCsvData}
+					csvData={csvData}
 				/>
 			) : (
 				<Card className="empty-graph-card" bordered={false}>
@@ -385,7 +381,7 @@ export default function BillingContainer(): JSX.Element {
 	);
 
 	const handleCsvDownload = useCallback((): void => {
-		const csv = unparse(csvData);
+		const csv = unparse(generateCsvData(csvData.current));
 		const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 		const csvUrl = URL.createObjectURL(csvBlob);
 		const downloadLink = document.createElement('a');
