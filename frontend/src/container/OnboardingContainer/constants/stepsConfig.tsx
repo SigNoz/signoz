@@ -35,6 +35,11 @@ export const stepsMap = {
 	deployTaskDefinition: `deployTaskDefinition`,
 	ecsSendLogsData: `ecsSendLogsData`,
 	monitorDashboard: `monitorDashboard`,
+	setupCentralCollector: `setupCentralCollector`,
+	setupAzureEventsHub: `setupAzureEventsHub`,
+	sendTraces: `sendTraces`,
+	sendLogs: `sendLogs`,
+	sendMetrics: `sendMetrics`,
 };
 
 export const DataSourceStep: SelectedModuleStepProps = {
@@ -199,5 +204,30 @@ export const EcsSendLogsData: SelectedModuleStepProps = {
 export const MonitorDashboard: SelectedModuleStepProps = {
 	id: stepsMap.monitorDashboard,
 	title: 'Monitor using Dashboard ',
+	component: <MarkdownStep />,
+};
+export const SetupCentralCollectorStep: SelectedModuleStepProps = {
+	id: stepsMap.setupCentralCollector,
+	title: 'Setup Central Collector ',
+	component: <MarkdownStep />,
+};
+export const SetupAzureEventsHub: SelectedModuleStepProps = {
+	id: stepsMap.setupAzureEventsHub,
+	title: 'Setup EventsHub',
+	component: <MarkdownStep />,
+};
+export const SendTraces: SelectedModuleStepProps = {
+	id: stepsMap.sendTraces,
+	title: 'Send Traces',
+	component: <MarkdownStep />,
+};
+export const SendLogs: SelectedModuleStepProps = {
+	id: stepsMap.sendLogs,
+	title: 'Send Logs',
+	component: <MarkdownStep />,
+};
+export const SendMetrics: SelectedModuleStepProps = {
+	id: stepsMap.sendMetrics,
+	title: 'Send Metrics',
 	component: <MarkdownStep />,
 };

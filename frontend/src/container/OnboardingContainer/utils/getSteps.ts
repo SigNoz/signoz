@@ -22,7 +22,12 @@ import {
 	RestartOtelCollector,
 	RunApplicationStep,
 	SelectMethodStep,
+	SendLogs,
 	SendLogsCloudwatch,
+	SendMetrics,
+	SendTraces,
+	SetupAzureEventsHub,
+	SetupCentralCollectorStep,
 	SetupDaemonService,
 	SetupLogDrains,
 	SetupOtelCollectorStep,
@@ -56,6 +61,10 @@ export const INFRASTRUCTURE_MONITORING_STEPS: SelectedModuleStepProps[] = [
 ];
 
 export const AWS_MONITORING_STEPS: SelectedModuleStepProps[] = [DataSourceStep];
+
+export const AZURE_MONITORING_STEPS: SelectedModuleStepProps[] = [
+	DataSourceStep,
+];
 
 export const getSteps = ({
 	selectedDataSource,
@@ -144,7 +153,25 @@ export const getSteps = ({
 			];
 		case 'awsEks':
 			return [DataSourceStep, SetupOtelCollectorStep, MonitorDashboard];
-
+		case 'azureVm':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendTraces,
+				SendLogs,
+				SendMetrics,
+			];
+		// eslint-disable-next-line sonarjs/no-duplicated-branches
+		case 'azureAks':
+			return [
+				DataSourceStep,
+				SetupAzureEventsHub,
+				SetupCentralCollectorStep,
+				SendTraces,
+				SendLogs,
+				SendMetrics,
+			];
 		default:
 			return [DataSourceStep];
 	}
