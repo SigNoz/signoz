@@ -178,23 +178,25 @@ function App(): JSX.Element {
 	}, [pathname]);
 
 	useEffect(() => {
-		try {
-			const isThemeAnalyticsSent = getLocalStorageApi(
-				LOCALSTORAGE.THEME_ANALYTICS,
-			);
-			if (!isThemeAnalyticsSent) {
-				trackEvent('Theme Analytics', {
-					theme: isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT,
-					user: pick(user, ['email', 'userId', 'name']),
-					org,
-				});
-				setLocalStorageApi(LOCALSTORAGE.THEME_ANALYTICS, 'true');
+		if (user && user?.email && user?.userId && user?.name) {
+			try {
+				const isThemeAnalyticsSent = getLocalStorageApi(
+					LOCALSTORAGE.THEME_ANALYTICS_V1,
+				);
+				if (!isThemeAnalyticsSent) {
+					trackEvent('Theme Analytics', {
+						theme: isDarkMode ? THEME_MODE.DARK : THEME_MODE.LIGHT,
+						user: pick(user, ['email', 'userId', 'name']),
+						org,
+					});
+					setLocalStorageApi(LOCALSTORAGE.THEME_ANALYTICS_V1, 'true');
+				}
+			} catch {
+				console.error('Failed to parse local storage theme analytics event');
 			}
-		} catch {
-			console.error('Failed to parse local storage theme analytics event');
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [user]);
 
 	return (
 		<ConfigProvider theme={themeConfig}>
