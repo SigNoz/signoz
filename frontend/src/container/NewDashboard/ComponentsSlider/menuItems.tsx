@@ -40,6 +40,11 @@ const Items: ItemsProps[] = [
 		icon: <PieChart size={16} color={Color.BG_ROBIN_400} />,
 		display: 'Pie',
 	},
+	{
+		name: PANEL_TYPES.HISTOGRAM,
+		icon: <BarChart3 size={16} color={Color.BG_ROBIN_400} />,
+		display: 'Histogram',
+	},
 ];
 
 export interface ItemsProps {

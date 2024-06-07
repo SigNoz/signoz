@@ -168,7 +168,7 @@ services:
     container_name: signoz-query-service
     command:
       [
-        "-config=/root/config/prometheus.yml",
+        "-config=/root/config/prometheus.yml"
         # "--prefer-delta=true"
       ]
     # ports:

@@ -10,6 +10,8 @@ import {
 	MessageSquare,
 	Slack,
 } from 'lucide-react';
+import { useEffect } from 'react';
+import { useHistory } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
@@ -84,10 +86,23 @@ const supportChannels = [
 
 export default function Support(): JSX.Element {
 	const { trackEvent } = useAnalytics();
+	const history = useHistory();
 
 	const handleChannelWithRedirects = (url: string): void => {
 		window.open(url, '_blank');
 	};
+
+	useEffect(() => {
+		if (history?.location?.state) {
+			const histroyState = history?.location?.state as any;
+
+			if (histroyState && histroyState?.from) {
+				trackEvent(`Support : From URL : ${histroyState.from}`);
+			}
+		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const handleSlackConnectRequest = (): void => {
 		const recipient = 'support@signoz.io';

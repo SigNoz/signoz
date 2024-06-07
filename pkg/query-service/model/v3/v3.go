@@ -989,10 +989,9 @@ type LogsLiveTailClient struct {
 }
 
 type Series struct {
-	Labels            map[string]string   `json:"labels"`
-	LabelsArray       []map[string]string `json:"labelsArray"`
-	Points            []Point             `json:"values"`
-	GroupingSetsPoint *Point              `json:"-"`
+	Labels      map[string]string   `json:"labels"`
+	LabelsArray []map[string]string `json:"labelsArray"`
+	Points      []Point             `json:"values"`
 }
 
 func (s *Series) SortPoints() {
