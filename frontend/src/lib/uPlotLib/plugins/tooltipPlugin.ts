@@ -70,7 +70,7 @@ const generateTooltipContent = (
 				const value = data[index][idx];
 				const dataIngested = quantity[idx];
 				const label = isMergedSeries
-					? 'merged_series'
+					? ''
 					: getLabelName(metric, queryName || '', legend || '');
 
 				let color = generateColor(label, themeColors.chartcolors);
