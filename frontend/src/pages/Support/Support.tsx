@@ -94,10 +94,9 @@ export default function Support(): JSX.Element {
 
 	useEffect(() => {
 		if (history?.location?.state) {
-			// eslint-disable-next-line @typescript-eslint/no-use-before-define
 			const histroyState = history?.location?.state as any;
 
-			if (histroyState && histroyState.from) {
+			if (histroyState && histroyState?.from) {
 				trackEvent(`Support : From URL : ${histroyState.from}`);
 			}
 		}
