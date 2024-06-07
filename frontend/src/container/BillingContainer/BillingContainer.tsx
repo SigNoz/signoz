@@ -27,8 +27,7 @@ import useAxiosError from 'hooks/useAxiosError';
 import useLicense from 'hooks/useLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEmpty, pick } from 'lodash-es';
-import { unparse } from 'papaparse';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -41,9 +40,7 @@ import { isCloudUser } from 'utils/app';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
-import generateCsvData, {
-	QuantityData,
-} from './BillingUsageGraph/generateCsvData';
+import { prepareCsvData } from './BillingUsageGraph/utils';
 
 interface DataType {
 	key: string;
@@ -136,7 +133,6 @@ export default function BillingContainer(): JSX.Element {
 	const [daysRemaining, setDaysRemaining] = useState(0);
 	const [isFreeTrial, setIsFreeTrial] = useState(false);
 	const [data, setData] = useState<any[]>([]);
-	const csvData = useRef<QuantityData[]>([]);
 	const [apiResponse, setApiResponse] = useState<
 		Partial<UsageResponsePayloadProps>
 	>({});
@@ -354,11 +350,7 @@ export default function BillingContainer(): JSX.Element {
 	const BillingUsageGraphCallback = useCallback(
 		() =>
 			!isLoading && !isFetchingBillingData ? (
-				<BillingUsageGraph
-					data={apiResponse}
-					billAmount={billAmount}
-					csvData={csvData}
-				/>
+				<BillingUsageGraph data={apiResponse} billAmount={billAmount} />
 			) : (
 				<Card className="empty-graph-card" bordered={false}>
 					<Spinner size="large" tip="Loading..." height="35vh" />
@@ -381,15 +373,15 @@ export default function BillingContainer(): JSX.Element {
 	);
 
 	const handleCsvDownload = useCallback((): void => {
-		const csv = unparse(generateCsvData(csvData.current));
-		const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+		const csv = prepareCsvData(apiResponse);
+		const csvBlob = new Blob([csv.csvData], { type: 'text/csv;charset=utf-8;' });
 		const csvUrl = URL.createObjectURL(csvBlob);
 		const downloadLink = document.createElement('a');
 		downloadLink.href = csvUrl;
-		downloadLink.download = `test-csv-download.csv`;
+		downloadLink.download = csv.fileName;
 		downloadLink.click();
 		downloadLink.remove();
-	}, [csvData]);
+	}, [apiResponse]);
 
 	return (
 		<div className="billing-container">

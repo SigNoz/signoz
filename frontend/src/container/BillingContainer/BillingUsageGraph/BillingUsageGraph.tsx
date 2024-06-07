@@ -12,20 +12,17 @@ import getRenderer from 'lib/uPlotLib/utils/getRenderer';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getXAxisScale } from 'lib/uPlotLib/utils/getXAxisScale';
 import { getYAxisScale } from 'lib/uPlotLib/utils/getYAxisScale';
-import { MutableRefObject, useEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import uPlot from 'uplot';
 
-import { QuantityData } from './generateCsvData';
 import {
 	convertDataToMetricRangePayload,
 	fillMissingValuesForQuantities,
-	quantityDataArr,
 } from './utils';
 
 interface BillingUsageGraphProps {
 	data: any;
 	billAmount: number;
-	csvData: MutableRefObject<QuantityData[]>;
 }
 const paths = (
 	u: any,
@@ -60,7 +57,7 @@ const calculateStartEndTime = (
 };
 
 export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
-	const { data, billAmount, csvData } = props;
+	const { data, billAmount } = props;
 	const graphCompatibleData = useMemo(
 		() => convertDataToMetricRangePayload(data),
 		[data],
@@ -73,16 +70,6 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 	const { startTime, endTime } = useMemo(() => calculateStartEndTime(data), [
 		data,
 	]);
-
-	const quantityMapArr = useMemo(
-		() => quantityDataArr(graphCompatibleData, chartData[0]),
-		[chartData, graphCompatibleData],
-	);
-
-	useEffect(() => {
-		csvData.current = quantityMapArr;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
 
 	const getGraphSeries = (color: string, label: string): any => ({
 		drawStyle: 'bars',
