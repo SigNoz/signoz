@@ -209,7 +209,9 @@ function SideNav({
 				if (event && isCtrlMetaKey(event)) {
 					openInNewTab(`${key}?${queryString.join('&')}`);
 				} else {
-					history.push(`${key}?${queryString.join('&')}`);
+					history.push(`${key}?${queryString.join('&')}`, {
+						from: pathname,
+					});
 				}
 			}
 		},
