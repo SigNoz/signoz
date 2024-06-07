@@ -82,6 +82,10 @@ export const getUPlotChartOptions = ({
 				prox: 1e6,
 				bias: 1,
 			},
+			sync: {
+				key: 'sync-key',
+				setSeries: true,
+			},
 			points: {
 				size: (u, seriesIdx): number => u.series[seriesIdx].points.size * 3,
 				width: (u, seriesIdx, size): number => size / 4,
