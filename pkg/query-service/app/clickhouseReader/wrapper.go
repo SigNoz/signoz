@@ -40,7 +40,7 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 
 	logComment := c.getLogComment(ctx)
 	if logComment != "" {
-		settings[string(common.LogCommentKey)] = logComment
+		settings["log_comment"] = logComment
 	}
 
 	if c.settings.MaxBytesToRead != "" {
