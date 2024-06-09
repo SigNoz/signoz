@@ -14,7 +14,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.signoz.io/signoz/ee/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/migrate"
 	"go.signoz.io/signoz/pkg/query-service/version"
@@ -148,7 +147,7 @@ func main() {
 		zap.L().Info("JWT secret key set successfully.")
 	}
 
-	if err := migrate.Migrate(constants.RELATIONAL_DATASOURCE_PATH); err != nil {
+	if err := migrate.Migrate(baseconst.RELATIONAL_DATASOURCE_PATH); err != nil {
 		zap.L().Error("Failed to migrate", zap.Error(err))
 	} else {
 		zap.L().Info("Migration successful")

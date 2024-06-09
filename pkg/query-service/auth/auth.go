@@ -28,7 +28,7 @@ const (
 )
 
 var (
-	ErrorInvalidCreds = fmt.Errorf("Invalid credentials")
+	ErrorInvalidCreds = fmt.Errorf("invalid credentials")
 )
 
 type InviteEmailData struct {
@@ -129,7 +129,6 @@ func inviteEmail(req *model.InviteRequest, au *model.UserPayload, token string) 
 		zap.L().Error("failed to send email", zap.Error(err))
 		return
 	}
-	return
 }
 
 // RevokeInvite is used to revoke the invitation for the given email.
@@ -488,10 +487,7 @@ func PasswordHash(pass string) (string, error) {
 // Checks if the given password results in the given hash.
 func passwordMatch(hash, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 func GenerateJWTForUser(user *model.User) (model.UserJwtObject, error) {

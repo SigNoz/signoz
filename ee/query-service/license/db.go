@@ -111,7 +111,7 @@ func (r *Repo) UpdatePlanDetails(ctx context.Context,
 	planDetails string) error {
 
 	if key == "" {
-		return fmt.Errorf("Update Plan Details failed: license key is required")
+		return fmt.Errorf("update plan details failed: license key is required")
 	}
 
 	query := `UPDATE licenses 
