@@ -51,7 +51,8 @@ func initZapLog(enableQueryServiceLogOTLPExport bool) *zap.Logger {
 	)
 
 	if enableQueryServiceLogOTLPExport {
-		ctx, _ := context.WithTimeout(ctx, time.Second*30)
+		ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+		defer cancel()
 		conn, err := grpc.DialContext(ctx, baseconst.OTLPTarget, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			log.Fatalf("failed to establish connection: %v", err)

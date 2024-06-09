@@ -263,6 +263,7 @@ func (r *ClickhouseReader) getSubTreeSpansCustomFunction(ctx context.Context, qu
 	return query, hash, nil
 }
 
+//lint:ignore SA4009 return hash is feeded to the query
 func processQuery(query string, hash string) (string, string, string) {
 	re3 := regexp.MustCompile(`getSubTreeSpans`)
 

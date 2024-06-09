@@ -4581,7 +4581,7 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 
 func logComment(ctx context.Context) string {
 	// Get the key-value pairs from context for log comment
-	kv := ctx.Value("log_comment")
+	kv := ctx.Value(common.LogCommentKey)
 	if kv == nil {
 		return ""
 	}

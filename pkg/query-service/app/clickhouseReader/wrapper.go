@@ -7,6 +7,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"go.signoz.io/signoz/pkg/query-service/common"
 )
 
 type ClickhouseQuerySettings struct {
@@ -39,7 +40,7 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 
 	logComment := c.getLogComment(ctx)
 	if logComment != "" {
-		settings["log_comment"] = logComment
+		settings[string(common.LogCommentKey)] = logComment
 	}
 
 	if c.settings.MaxBytesToRead != "" {
@@ -65,7 +66,7 @@ func (c clickhouseConnWrapper) addClickHouseSettings(ctx context.Context, query 
 
 func (c clickhouseConnWrapper) getLogComment(ctx context.Context) string {
 	// Get the key-value pairs from context for log comment
-	kv := ctx.Value("log_comment")
+	kv := ctx.Value(common.LogCommentKey)
 	if kv == nil {
 		return ""
 	}

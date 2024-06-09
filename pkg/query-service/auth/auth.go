@@ -22,6 +22,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type JwtContextKeyType string
+
+const AccessJwtKey JwtContextKeyType = "accessJwt"
+const RefreshJwtKey JwtContextKeyType = "refreshJwt"
+
 const (
 	opaqueTokenSize       = 16
 	minimumPasswordLength = 8

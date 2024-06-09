@@ -205,6 +205,7 @@ func createTelemetry() {
 	rateLimitTicker := time.NewTicker(RATE_LIMIT_CHECK_DURATION)
 
 	go func() {
+		//lint:ignore S1000 false positive
 		for {
 			select {
 			case <-rateLimitTicker.C:

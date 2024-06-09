@@ -27,6 +27,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
@@ -357,7 +358,7 @@ func LogCommentEnricher(next http.Handler) http.Handler {
 			"servicesTab": tab,
 		}
 
-		r = r.WithContext(context.WithValue(r.Context(), "log_comment", kvs))
+		r = r.WithContext(context.WithValue(r.Context(), common.LogCommentKey, kvs))
 		next.ServeHTTP(w, r)
 	})
 }

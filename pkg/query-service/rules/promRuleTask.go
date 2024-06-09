@@ -10,6 +10,7 @@ import (
 	"github.com/go-kit/log"
 	opentracing "github.com/opentracing/opentracing-go"
 	plabels "github.com/prometheus/prometheus/model/labels"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.uber.org/zap"
 )
 
@@ -364,7 +365,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 				"source":  "alerts",
 				"client":  "query-service",
 			}
-			ctx = context.WithValue(ctx, "log_comment", kvs)
+			ctx = context.WithValue(ctx, common.LogCommentKey, kvs)
 
 			_, err := rule.Eval(ctx, ts, g.opts.Queriers)
 			if err != nil {
