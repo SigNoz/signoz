@@ -114,6 +114,15 @@ func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*v3.
 	return result, err
 }
 
+func (q *querier) execClickHouseQueryForMultiSeries(ctx context.Context, query string) ([]*v3.Series, error) {
+	q.queriesExecuted = append(q.queriesExecuted, query)
+	if q.testingMode && q.reader == nil {
+		return q.returnedSeries, q.returnedErr
+	}
+	result, err := q.reader.GetClickHouseResult(ctx, query)
+	return result, err
+}
+
 func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangeParams) ([]*v3.Series, error) {
 	q.queriesExecuted = append(q.queriesExecuted, params.Query)
 	if q.testingMode && q.reader == nil {
@@ -424,7 +433,7 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 		wg.Add(1)
 		go func(queryName string, clickHouseQuery *v3.ClickHouseQuery) {
 			defer wg.Done()
-			series, err := q.execClickHouseQuery(ctx, clickHouseQuery.Query)
+			series, err := q.execClickHouseQueryForMultiSeries(ctx, clickHouseQuery.Query)
 			channelResults <- channelResult{Err: err, Name: queryName, Query: clickHouseQuery.Query, Series: series}
 		}(queryName, clickHouseQuery)
 	}
