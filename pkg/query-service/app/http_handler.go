@@ -2420,7 +2420,7 @@ func (ah *APIHandler) calculateLogsConnectionStatus(
 			},
 		},
 	}
-	queryRes, err, _ := ah.querier.QueryRange(
+	queryRes, _, err := ah.querier.QueryRange(
 		ctx, qrParams, map[string]v3.AttributeKey{},
 	)
 	if err != nil {
