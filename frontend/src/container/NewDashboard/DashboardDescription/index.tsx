@@ -1,16 +1,7 @@
 import './Description.styles.scss';
 
 import { PlusOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Card,
-	Flex,
-	Input,
-	Modal,
-	Popover,
-	Tag,
-	Typography,
-} from 'antd';
+import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -261,7 +252,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	return (
 		<Card className="dashboard-description-container">
-			<Flex justify="space-between" align="center">
+			<div className="dashboard-header">
 				<section className="dashboard-breadcrumbs">
 					<Button
 						type="text"
@@ -297,7 +288,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					buttonText="Facing issues with dashboards?"
 					onHoverText="Click here to get help with dashboard details"
 				/>
-			</Flex>
+			</div>
 			<section className="dashbord-details">
 				<div className="left-section">
 					<img

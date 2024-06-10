@@ -131,15 +131,22 @@ function WidgetGraphComponent({
 
 		const uuid = v4();
 
+		// this is added to make sure the cloned panel is of the same dimensions as the original one
+		const originalPanelLayout = selectedDashboard.data.layout?.find(
+			(l) => l.i === widget.id,
+		);
+
+		// added the cloned panel on the top as it is given most priority when arranging
+		// in the layout. React_grid_layout assigns priority from top, hence no random position for cloned panel
 		const layout = [
-			...(selectedDashboard.data.layout || []),
 			{
 				i: uuid,
-				w: 6,
+				w: originalPanelLayout?.w || 6,
 				x: 0,
-				h: 6,
+				h: originalPanelLayout?.h || 6,
 				y: 0,
 			},
+			...(selectedDashboard.data.layout || []),
 		];
 
 		updateDashboardMutation.mutateAsync(
