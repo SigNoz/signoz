@@ -8,7 +8,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { isEqual } from 'lodash-es';
+import { cloneDeep, isEqual } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -87,12 +87,15 @@ function UplotPanelWrapper({
 
 	useEffect(() => {
 		if (widget.panelTypes === PANEL_TYPES.BAR && widget?.stackedBarChart) {
-			const hiddenIndex = graphVisibility?.findIndex((v) => v === false) || -1;
-			if (hiddenIndex !== -1) {
-				const updatedHiddenGraph = { [hiddenIndex]: true };
-
-				if (!isEqual(hiddenGraph, updatedHiddenGraph)) {
-					setHiddenGraph(updatedHiddenGraph);
+			const graphV = cloneDeep(graphVisibility)?.slice(1);
+			const isSomeSelectedLegend = graphV?.some((v) => v === false);
+			if (isSomeSelectedLegend) {
+				const hiddenIndex = graphV?.findIndex((v) => v === true);
+				if (hiddenIndex && hiddenIndex !== -1) {
+					const updatedHiddenGraph = { [hiddenIndex]: true };
+					if (!isEqual(hiddenGraph, updatedHiddenGraph)) {
+						setHiddenGraph(updatedHiddenGraph);
+					}
 				}
 			}
 		}
