@@ -23,8 +23,8 @@ interface UplotTooltipDataProps {
 }
 
 function getTooltipBaseValue (data:any[] , index:number, idx:number ,stackBarChart:boolean | undefined):any{
-	if(stackBarChart && index + 1 < data.length){
-		data[index][idx] - data[index + 1][idx]
+	if(stackBarChart && (index + 1) < data.length){
+		return data[index][idx] - data[index + 1][idx]
 	}
 
 	return data[index][idx] 
