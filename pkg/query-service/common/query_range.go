@@ -32,7 +32,6 @@ func MinAllowedStepInterval(start, end int64) int64 {
 	return step - step%60
 }
 
-// gcd computes the Greatest Common Divisor of a and b using the Euclidean algorithm.
 func GCD(a, b int64) int64 {
 	for b != 0 {
 		a, b = b, a%b
@@ -40,7 +39,6 @@ func GCD(a, b int64) int64 {
 	return a
 }
 
-// lcm computes the Least Common Multiple of a and b.
 func LCM(a, b int64) int64 {
 	return (a * b) / GCD(a, b)
 }
