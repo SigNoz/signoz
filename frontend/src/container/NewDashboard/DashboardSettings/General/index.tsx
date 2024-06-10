@@ -71,24 +71,24 @@ function GeneralDashboardSettings(): JSX.Element {
 
 	useEffect(() => {
 		let numberOfUnsavedChanges = 0;
-		if (!isEqual(updatedTitle, selectedData?.title)) {
+		if (!isEqual(updatedTitle, title)) {
 			numberOfUnsavedChanges += 1;
 		}
-		if (!isEqual(updatedDescription, selectedData?.description)) {
+		if (!isEqual(updatedDescription, description)) {
 			numberOfUnsavedChanges += 1;
 		}
-		if (!isEqual(updatedTags, selectedData?.tags)) {
+		if (!isEqual(updatedTags, tags)) {
 			numberOfUnsavedChanges += 1;
 		}
-		if (!isEqual(updatedImage, selectedData?.image)) {
+		if (!isEqual(updatedImage, image)) {
 			numberOfUnsavedChanges += 1;
 		}
 		setNumberOfUnsavedChanges(numberOfUnsavedChanges);
 	}, [
-		selectedData?.description,
-		selectedData?.image,
-		selectedData?.tags,
-		selectedData?.title,
+		description,
+		image,
+		tags,
+		title,
 		updatedDescription,
 		updatedImage,
 		updatedTags,
@@ -168,6 +168,7 @@ function GeneralDashboardSettings(): JSX.Element {
 						<div className="unsaved-dot" />
 						<Typography.Text className="unsaved-changes">
 							{numberOfUnsavedChanges} Unsaved change
+							{numberOfUnsavedChanges > 1 && 's'}
 						</Typography.Text>
 					</div>
 					<div className="footer-action-btns">
