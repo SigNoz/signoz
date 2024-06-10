@@ -11,7 +11,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
-import { cloneDeep, isEqual } from 'lodash-es';
+import { cloneDeep, isEqual, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -94,7 +94,7 @@ function UplotPanelWrapper({
 			const isSomeSelectedLegend = graphV?.some((v) => v === false);
 			if (isSomeSelectedLegend) {
 				const hiddenIndex = graphV?.findIndex((v) => v === true);
-				if (hiddenIndex && hiddenIndex !== -1) {
+				if (!isUndefined(hiddenIndex) && hiddenIndex !== -1) {
 					const updatedHiddenGraph = { [hiddenIndex]: true };
 					if (!isEqual(hiddenGraph, updatedHiddenGraph)) {
 						setHiddenGraph(updatedHiddenGraph);
