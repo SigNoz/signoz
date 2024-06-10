@@ -75,7 +75,7 @@ const getHistogramSeries = ({
 		const legend = newLegend || lgd || '';
 
 		const label = isMergedSeries
-			? 'merged_series'
+			? ''
 			: getLabelName(metric, queryName || '', legend);
 
 		const color = generateColor(label, themeColors.chartcolors);
