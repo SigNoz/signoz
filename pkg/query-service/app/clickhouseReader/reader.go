@@ -2378,13 +2378,18 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context,
 				zap.L().Error("Error in inserting to ttl_status table", zap.Error(dbErr))
 				return
 			}
+			timeColumn := "timestamp_ms"
+			if strings.Contains(tableName, "v4") {
+				timeColumn = "unix_milli"
+			}
+
 			req := fmt.Sprintf(
-				"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + "+
-					"INTERVAL %v SECOND DELETE", tableName, r.cluster, params.DelDuration)
+				"ALTER TABLE %v ON CLUSTER %s MODIFY TTL toDateTime(toUInt32(%s / 1000), 'UTC') + "+
+					"INTERVAL %v SECOND DELETE", tableName, r.cluster, timeColumn, params.DelDuration)
 			if len(params.ColdStorageVolume) > 0 {
-				req += fmt.Sprintf(", toDateTime(toUInt32(timestamp_ms / 1000), 'UTC')"+
+				req += fmt.Sprintf(", toDateTime(toUInt32(%s / 1000), 'UTC')"+
 					" + INTERVAL %v SECOND TO VOLUME '%s'",
-					params.ToColdStorageDuration, params.ColdStorageVolume)
+					timeColumn, params.ToColdStorageDuration, params.ColdStorageVolume)
 			}
 			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 			if err != nil {
