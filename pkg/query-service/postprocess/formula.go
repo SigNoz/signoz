@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/govaluate"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
@@ -288,4 +289,17 @@ func EvalFuncs() map[string]govaluate.ExpressionFunction {
 	}
 
 	return GoValuateFuncs
+}
+
+func StepIntervalForFunction(params *v3.QueryRangeParamsV3, query string) int64 {
+	q := params.CompositeQuery.BuilderQueries[query]
+	if q.QueryName != q.Expression {
+		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(q.Expression, EvalFuncs())
+		steps := []int64{}
+		for _, v := range expression.Vars() {
+			steps = append(steps, params.CompositeQuery.BuilderQueries[v].StepInterval)
+		}
+		return common.LCMList(steps)
+	}
+	return q.StepInterval
 }

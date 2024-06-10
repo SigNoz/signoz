@@ -432,11 +432,13 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	start = start - (start % (60 * 1000))
 	end = end - (end % (60 * 1000))
 
+	minStep := common.MinAllowedStepInterval(start, end)
+
 	if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
 		params := &v3.QueryRangeParamsV3{
 			Start: start,
 			End:   end,
-			Step:  common.MinAllowedStepInterval(start, end),
+			Step:  int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType:         r.ruleCondition.CompositeQuery.QueryType,
 				PanelType:         r.ruleCondition.CompositeQuery.PanelType,
@@ -478,7 +480,9 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 
 	if r.ruleCondition.CompositeQuery != nil && r.ruleCondition.CompositeQuery.BuilderQueries != nil {
 		for _, q := range r.ruleCondition.CompositeQuery.BuilderQueries {
-			q.StepInterval = common.MinAllowedStepInterval(start, end)
+			if q.StepInterval < minStep {
+				q.StepInterval = minStep
+			}
 		}
 	}
 
@@ -486,7 +490,7 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	return &v3.QueryRangeParamsV3{
 		Start:          start,
 		End:            end,
-		Step:           common.MinAllowedStepInterval(start, end),
+		Step:           int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
 		CompositeQuery: r.ruleCondition.CompositeQuery,
 		Variables:      make(map[string]interface{}, 0),
 		NoCache:        true,
