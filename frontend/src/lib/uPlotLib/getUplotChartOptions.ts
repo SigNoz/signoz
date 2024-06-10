@@ -10,9 +10,11 @@ import { saveLegendEntriesToLocalStorage } from 'container/GridCardLayout/GridCa
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { Dimensions } from 'hooks/useDimensions';
 import { convertValue } from 'lib/getConvertedValue';
+import { cloneDeep, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 
 import onClickPlugin, { OnClickPluginOpts } from './plugins/onClickPlugin';
@@ -42,6 +44,82 @@ export interface GetUPlotChartOptions {
 	softMin: number | null;
 	softMax: number | null;
 	currentQuery?: Query;
+	stackBarChart?: boolean;
+	hiddenGraph?: {
+		[key: string]: boolean;
+	};
+	setHiddenGraph?: Dispatch<
+		SetStateAction<{
+			[key: string]: boolean;
+		}>
+	>;
+}
+
+/** the function converts series A , series B , series C to
+ *  series A , series A + series B , series A + series B + series C
+ *  which helps us to always ensure the bar in the front is always
+ *  of the smallest value.
+ */
+
+function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
+	const series = cloneDeep(apiResponse);
+
+	for (let i = series.length - 2; i >= 0; i--) {
+		const { values } = series[i];
+		for (let j = 0; j < values.length; j++) {
+			values[j][1] = String(
+				parseFloat(values[j][1]) + parseFloat(series[i + 1].values[j][1]),
+			);
+		}
+
+		series[i].values = values;
+	}
+
+	return series;
+}
+
+/** this does the exact same operations as the function above for a different
+ *  response format.
+ */
+function getStackedSeriesQueryFormat(apiResponse: QueryData[]): QueryData[] {
+	const series = cloneDeep(apiResponse);
+
+	for (let i = series.length - 2; i >= 0; i--) {
+		const { values } = series[i];
+		for (let j = 0; j < values.length; j++) {
+			values[j].value = String(
+				parseFloat(values[j].value) + parseFloat(series[i + 1].values[j].value),
+			);
+		}
+
+		series[i].values = values;
+	}
+
+	return series;
+}
+
+function getStackedSeriesYAxis(apiResponse: QueryDataV3[]): QueryDataV3[] {
+	const series = cloneDeep(apiResponse);
+
+	for (let i = 0; i < series.length; i++) {
+		series[i].series = getStackedSeriesQueryFormat(series[i].series);
+	}
+
+	return series;
+}
+
+/**
+ * here we define the different series bands which should get highlighted based
+ * on cursor hover. basically the to and the from destination of a particular band.
+ */
+function getBands(series): any[] {
+	const bands = [];
+	for (let i = 0; i < series.length; i++) {
+		bands.push({
+			series: [i === 0 ? -1 : i, i + 1],
+		});
+	}
+	return bands;
 }
 
 export const getUPlotChartOptions = ({
@@ -61,8 +139,17 @@ export const getUPlotChartOptions = ({
 	softMin,
 	panelType,
 	currentQuery,
+	stackBarChart: stackChart,
+	hiddenGraph,
+	setHiddenGraph,
 }: GetUPlotChartOptions): uPlot.Options => {
 	const timeScaleProps = getXAxisScale(minTimeScale, maxTimeScale);
+
+	const stackBarChart = stackChart && isUndefined(hiddenGraph);
+
+	const series = getStackedSeries(apiResponse?.data?.result || []);
+
+	const bands = stackBarChart ? getBands(series) : null;
 
 	return {
 		id,
@@ -91,6 +178,7 @@ export const getUPlotChartOptions = ({
 			},
 		},
 		padding: [16, 16, 8, 8],
+		bands,
 		scales: {
 			x: {
 				spanGaps: true,
@@ -99,7 +187,9 @@ export const getUPlotChartOptions = ({
 			y: {
 				...getYAxisScale({
 					thresholds,
-					series: apiResponse?.data?.newResult?.data?.result || [],
+					series: stackBarChart
+						? getStackedSeriesYAxis(apiResponse?.data?.newResult?.data?.result || [])
+						: apiResponse?.data?.newResult?.data?.result || [],
 					yAxisUnit,
 					softMax,
 					softMin,
@@ -107,7 +197,7 @@ export const getUPlotChartOptions = ({
 			},
 		},
 		plugins: [
-			tooltipPlugin({ apiResponse, yAxisUnit }),
+			tooltipPlugin({ apiResponse, yAxisUnit, stackBarChart }),
 			onClickPlugin({
 				onClick: onClickHandler,
 			}),
@@ -192,6 +282,17 @@ export const getUPlotChartOptions = ({
 						const seriesArray = Array.from(seriesEls);
 						seriesArray.forEach((seriesEl, index) => {
 							seriesEl.addEventListener('click', () => {
+								if (stackChart) {
+									setHiddenGraph((prev) => {
+										if (isUndefined(prev)) {
+											return { [index]: true };
+										}
+										if (prev[index] === true) {
+											return undefined;
+										}
+										return { [index]: true };
+									});
+								}
 								if (graphsVisibilityStates) {
 									setGraphsVisibilityStates?.((prev) => {
 										const newGraphVisibilityStates = [...prev];
@@ -221,11 +322,16 @@ export const getUPlotChartOptions = ({
 			],
 		},
 		series: getSeries({
-			apiResponse,
+			series:
+				stackBarChart && isUndefined(hiddenGraph)
+					? series
+					: apiResponse?.data?.result,
 			widgetMetaData: apiResponse?.data.result,
 			graphsVisibilityStates,
 			panelType,
 			currentQuery,
+			stackBarChart,
+			hiddenGraph,
 		}),
 		axes: getAxes(isDarkMode, yAxisUnit),
 	};
