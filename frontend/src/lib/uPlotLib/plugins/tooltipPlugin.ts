@@ -22,6 +22,14 @@ interface UplotTooltipDataProps {
 	queryName: string;
 }
 
+function getTooltipBaseValue (data:any[] , index:number, idx:number ,stackBarChart:boolean | undefined):any{
+	if(stackBarChart && index + 1 < data.length){
+		data[index][idx] - data[index + 1][idx]
+	}
+
+	return data[index][idx] 
+}
+
 const generateTooltipContent = (
 	seriesList: any[],
 	data: any[],
@@ -68,12 +76,7 @@ const generateTooltipContent = (
 					unit = '',
 				} = seriesList[index - 1] || {};
 
-				// eslint-disable-next-line no-nested-ternary
-				const value = stackBarChart
-					? index + 1 < data.length
-						? data[index][idx] - data[index + 1][idx]
-						: data[index][idx]
-					: data[index][idx];
+				const value = getTooltipBaseValue(data,index,idx,stackBarChart)
 
 				const dataIngested = quantity[idx];
 				const label = isMergedSeries
