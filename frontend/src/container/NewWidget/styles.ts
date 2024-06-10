@@ -10,10 +10,9 @@ export const Container = styled.div`
 
 export const RightContainerWrapper = styled(Col)`
 	&&& {
-		min-width: 330px;
-		overflow-y: auto;
 		max-width: 400px;
 		width: 30%;
+		overflow-y: auto;
 	}
 	&::-webkit-scrollbar {
 		width: 0rem;
@@ -26,7 +25,7 @@ interface LeftContainerWrapperProps {
 
 export const LeftContainerWrapper = styled(Col)<LeftContainerWrapperProps>`
 	&&& {
-		min-width: 70%;
+		width: 100%;
 		overflow-y: auto;
 		border-right: ${({ isDarkMode }): string =>
 			isDarkMode
