@@ -1,3 +1,6 @@
+import './UplotPanelWrapper.styles.scss';
+
+import { Alert } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import Uplot from 'components/Uplot';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -150,6 +153,13 @@ function UplotPanelWrapper({
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			<Uplot options={options} data={chartData} ref={lineChartRef} />
+			{widget?.stackedBarChart && (
+				<Alert
+					message="Selecting multiple legends is currently not supported in case of stacked bar charts"
+					type="info"
+					className="info-text"
+				/>
+			)}
 			{isFullViewMode && setGraphVisibility && !widget?.stackedBarChart && (
 				<GraphManager
 					data={getUPlotChartData(queryResponse?.data?.payload, widget.fillSpans)}
