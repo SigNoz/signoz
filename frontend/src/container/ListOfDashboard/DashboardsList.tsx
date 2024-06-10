@@ -53,6 +53,7 @@ import {
 	Search,
 } from 'lucide-react';
 import { handleContactSupport } from 'pages/Integrations/utils';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	ChangeEvent,
 	Key,
@@ -91,6 +92,11 @@ function DashboardsList(): JSX.Element {
 
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
+	const {
+		listSortOrder: sortOrder,
+		setListSortOrder: setSortOrder,
+	} = useDashboard();
+
 	const [action, createNewDashboard] = useComponentPermission(
 		['action', 'create_new_dashboards'],
 		role,
@@ -116,17 +122,8 @@ function DashboardsList(): JSX.Element {
 	);
 
 	const params = useUrlQuery();
-	const orderColumnParam = params.get('columnKey');
-	const orderQueryParam = params.get('order');
-	const paginationParam = params.get('page');
 	const searchParams = params.get('search');
 	const [searchString, setSearchString] = useState<string>(searchParams || '');
-
-	const [sortOrder, setSortOrder] = useState({
-		columnKey: orderColumnParam,
-		order: orderQueryParam,
-		pagination: paginationParam,
-	});
 
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
 		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { Dispatch, SetStateAction } from 'react';
 import { Layout } from 'react-grid-layout';
 import { UseQueryResult } from 'react-query';
 import { Dashboard } from 'types/api/dashboard/getAll';
@@ -14,6 +15,18 @@ export interface IDashboardContext {
 	layouts: Layout[];
 	panelMap: Record<string, { widgets: Layout[]; collapsed: boolean }>;
 	setPanelMap: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+	listSortOrder: {
+		columnKey: string | null;
+		order: string | null;
+		pagination: string | null;
+	};
+	setListSortOrder: Dispatch<
+		SetStateAction<{
+			columnKey: string | null;
+			order: string | null;
+			pagination: string | null;
+		}>
+	>;
 	setLayouts: React.Dispatch<React.SetStateAction<Layout[]>>;
 	setSelectedDashboard: React.Dispatch<
 		React.SetStateAction<Dashboard | undefined>
