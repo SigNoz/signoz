@@ -282,15 +282,17 @@ export const getUPlotChartOptions = ({
 						const seriesArray = Array.from(seriesEls);
 						seriesArray.forEach((seriesEl, index) => {
 							seriesEl.addEventListener('click', () => {
-								setHiddenGraph((prev) => {
-									if (isUndefined(prev)) {
+								if (stackChart) {
+									setHiddenGraph((prev) => {
+										if (isUndefined(prev)) {
+											return { [index]: true };
+										}
+										if (prev[index] === true) {
+											return undefined;
+										}
 										return { [index]: true };
-									}
-									if (prev[index] === true) {
-										return undefined;
-									}
-									return { [index]: true };
-								});
+									});
+								}
 								if (graphsVisibilityStates) {
 									setGraphsVisibilityStates?.((prev) => {
 										const newGraphVisibilityStates = [...prev];

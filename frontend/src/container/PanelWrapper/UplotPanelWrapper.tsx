@@ -8,6 +8,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { isEqual } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -84,6 +85,19 @@ function UplotPanelWrapper({
 		hiddenGraph,
 	);
 
+	useEffect(() => {
+		if (widget.panelTypes === PANEL_TYPES.BAR && widget?.stackedBarChart) {
+			const hiddenIndex = graphVisibility?.findIndex((v) => v === false) || -1;
+			if (hiddenIndex !== -1) {
+				const updatedHiddenGraph = { [hiddenIndex]: true };
+
+				if (!isEqual(hiddenGraph, updatedHiddenGraph)) {
+					setHiddenGraph(updatedHiddenGraph);
+				}
+			}
+		}
+	}, [graphVisibility, hiddenGraph, widget.panelTypes, widget?.stackedBarChart]);
+
 	const options = useMemo(
 		() =>
 			getUPlotChartOptions({
@@ -133,7 +147,7 @@ function UplotPanelWrapper({
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			<Uplot options={options} data={chartData} ref={lineChartRef} />
-			{isFullViewMode && setGraphVisibility && (
+			{isFullViewMode && setGraphVisibility && !widget?.stackedBarChart && (
 				<GraphManager
 					data={getUPlotChartData(queryResponse?.data?.payload, widget.fillSpans)}
 					name={widget.id}
