@@ -392,6 +392,9 @@ export default function BillingContainer(): JSX.Element {
 			// Clean up
 			downloadLink.remove();
 			URL.revokeObjectURL(csvUrl); // Release the memory associated with the object URL
+			notifications.success({
+				message: 'Download successful',
+			});
 		} catch (error) {
 			console.error('Error downloading the CSV file:', error);
 			notifications.error({
