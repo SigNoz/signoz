@@ -373,15 +373,32 @@ export default function BillingContainer(): JSX.Element {
 	);
 
 	const handleCsvDownload = useCallback((): void => {
-		const csv = prepareCsvData(apiResponse);
-		const csvBlob = new Blob([csv.csvData], { type: 'text/csv;charset=utf-8;' });
-		const csvUrl = URL.createObjectURL(csvBlob);
-		const downloadLink = document.createElement('a');
-		downloadLink.href = csvUrl;
-		downloadLink.download = csv.fileName;
-		downloadLink.click();
-		downloadLink.remove();
-	}, [apiResponse]);
+		try {
+			const csv = prepareCsvData(apiResponse);
+
+			if (!csv.csvData || !csv.fileName) {
+				throw new Error('Invalid CSV data or file name.');
+			}
+
+			const csvBlob = new Blob([csv.csvData], { type: 'text/csv;charset=utf-8;' });
+			const csvUrl = URL.createObjectURL(csvBlob);
+			const downloadLink = document.createElement('a');
+
+			downloadLink.href = csvUrl;
+			downloadLink.download = csv.fileName;
+			document.body.appendChild(downloadLink); // Required for Firefox
+			downloadLink.click();
+
+			// Clean up
+			downloadLink.remove();
+			URL.revokeObjectURL(csvUrl); // Release the memory associated with the object URL
+		} catch (error) {
+			console.error('Error downloading the CSV file:', error);
+			notifications.error({
+				message: SOMETHING_WENT_WRONG,
+			});
+		}
+	}, [apiResponse, notifications]);
 
 	return (
 		<div className="billing-container">
