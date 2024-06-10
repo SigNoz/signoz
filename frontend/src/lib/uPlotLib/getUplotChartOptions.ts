@@ -55,9 +55,9 @@ export interface GetUPlotChartOptions {
 	>;
 }
 
-/** the function converts series A , series B , series C to 
+/** the function converts series A , series B , series C to
  *  series A , series A + series B , series A + series B + series C
- *  which helps us to always ensure the bar in the front is always 
+ *  which helps us to always ensure the bar in the front is always
  *  of the smallest value.
  */
 
@@ -78,7 +78,7 @@ function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
 	return series;
 }
 
-/** this does the exact same operations as the function above for a different 
+/** this does the exact same operations as the function above for a different
  *  response format.
  */
 function getStackedSeriesQueryFormat(apiResponse: QueryData[]): QueryData[] {
@@ -109,7 +109,7 @@ function getStackedSeriesYAxis(apiResponse: QueryDataV3[]): QueryDataV3[] {
 }
 
 /**
- * here we define the different series bands which should get highlighted based 
+ * here we define the different series bands which should get highlighted based
  * on cursor hover. basically the to and the from destination of a particular band.
  */
 function getBands(series): any[] {
