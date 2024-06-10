@@ -153,7 +153,7 @@ function UplotPanelWrapper({
 	return (
 		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
 			<Uplot options={options} data={chartData} ref={lineChartRef} />
-			{widget?.stackedBarChart && (
+			{widget?.stackedBarChart && isFullViewMode && (
 				<Alert
 					message="Selecting multiple legends is currently not supported in case of stacked bar charts"
 					type="info"
