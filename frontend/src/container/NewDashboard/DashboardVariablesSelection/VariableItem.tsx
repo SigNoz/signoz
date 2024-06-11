@@ -2,7 +2,8 @@ import './DashboardVariableSelection.styles.scss';
 
 import { orange } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
-import { Input, Popover, Select, Typography } from 'antd';
+import { Checkbox, Input, Popover, Select, Space, Tag, Typography } from 'antd';
+import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
@@ -217,7 +218,7 @@ function VariableItem({
 		? 'ALL'
 		: selectedValueStringified;
 
-	const mode =
+	const mode: 'multiple' | undefined =
 		variableData.multiSelect && !variableData.allSelected
 			? 'multiple'
 			: undefined;
@@ -230,6 +231,44 @@ function VariableItem({
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [variableData.type, variableData.customValue]);
+
+	const checkAll = (e: CheckboxChangeEvent): void => {
+		e.stopPropagation();
+		if (e.target.checked) {
+			handleChange(ALL_SELECT_VALUE);
+		}
+	};
+
+	const handleOptionSelect = (
+		e: CheckboxChangeEvent,
+		option: string | number | boolean,
+	): void => {
+		const newSelectedValue = Array.isArray(selectedValue)
+			? ((selectedValue.filter(
+					(val) => val.toString() !== option.toString(),
+			  ) as unknown) as string[])
+			: [];
+
+		if (
+			!e.target.checked &&
+			Array.isArray(selectedValueStringified) &&
+			selectedValueStringified.includes(option.toString())
+		) {
+			if (newSelectedValue.length === 0) {
+				handleChange(ALL_SELECT_VALUE);
+				return;
+			}
+			if (newSelectedValue.length === 1) {
+				handleChange(newSelectedValue[0].toString());
+				return;
+			}
+			handleChange(newSelectedValue);
+		} else if (!e.target.checked && selectedValue === option.toString()) {
+			handleChange(ALL_SELECT_VALUE);
+		} else if (newSelectedValue.length === optionsData.length - 1) {
+			handleChange(ALL_SELECT_VALUE);
+		}
+	};
 
 	return (
 		<div className="variable-item">
@@ -266,17 +305,25 @@ function VariableItem({
 							placeholder="Select value"
 							placement="bottomRight"
 							mode={mode}
-							dropdownMatchSelectWidth={false}
 							style={SelectItemStyle}
 							loading={isLoading}
 							showSearch
 							data-testid="variable-select"
 							className="variable-select"
 							getPopupContainer={popupContainer}
+							// eslint-disable-next-line react/no-unstable-nested-components
+							tagRender={(props): JSX.Element => (
+								<Tag closable onClose={props.onClose}>
+									{props.value}
+								</Tag>
+							)}
 						>
 							{enableSelectAll && (
 								<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
-									ALL
+									<Space>
+										<Checkbox onChange={checkAll} checked={variableData.allSelected} />
+										ALL
+									</Space>
 								</Select.Option>
 							)}
 							{map(optionsData, (option) => (
@@ -285,7 +332,24 @@ function VariableItem({
 									key={option.toString()}
 									value={option}
 								>
-									{option.toString()}
+									<Space>
+										{variableData.multiSelect && (
+											<Checkbox
+												onChange={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													handleOptionSelect(e, option);
+												}}
+												checked={
+													variableData.allSelected ||
+													option.toString() === selectValue ||
+													(Array.isArray(selectValue) &&
+														selectValue?.includes(option.toString()))
+												}
+											/>
+										)}
+										{option.toString()}
+									</Space>
 								</Select.Option>
 							))}
 						</Select>
