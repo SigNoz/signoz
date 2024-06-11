@@ -8,12 +8,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/govaluate"
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/cache/status"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/postprocess"
 	"go.uber.org/zap"
 )
 
@@ -121,7 +123,7 @@ func (q *querier) runBuilderQuery(
 				cachedData = data
 			}
 		}
-		misses := q.findMissingTimeRanges(start, end, params.Step, cachedData)
+		misses := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
@@ -256,7 +258,7 @@ func (q *querier) runBuilderQuery(
 			cachedData = data
 		}
 	}
-	misses := q.findMissingTimeRanges(start, end, params.Step, cachedData)
+	misses := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
 	missedSeries := make([]*v3.Series, 0)
 	cachedSeries := make([]*v3.Series, 0)
 	for _, miss := range misses {
@@ -322,6 +324,42 @@ func (q *querier) runBuilderQuery(
 	}
 }
 
+func GCD(a, b int64) int64 {
+	for b != 0 {
+		a, b = b, a%b
+	}
+	return a
+}
+
+func LCM(a, b int64) int64 {
+	return (a * b) / GCD(a, b)
+}
+
+// LCMList computes the LCM of a list of int64 numbers.
+func LCMList(nums []int64) int64 {
+	if len(nums) == 0 {
+		return 1
+	}
+	result := nums[0]
+	for _, num := range nums[1:] {
+		result = LCM(result, num)
+	}
+	return result
+}
+
+func stepIntervalForFunction(params *v3.QueryRangeParamsV3, query string) int64 {
+	q := params.CompositeQuery.BuilderQueries[query]
+	if q.QueryName != q.Expression {
+		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(q.Expression, postprocess.EvalFuncs())
+		steps := []int64{}
+		for _, v := range expression.Vars() {
+			steps = append(steps, params.CompositeQuery.BuilderQueries[v].StepInterval)
+		}
+		return LCMList(steps)
+	}
+	return q.StepInterval
+}
+
 func (q *querier) runBuilderExpression(
 	ctx context.Context,
 	builderQuery *v3.BuilderQuery,
@@ -358,7 +396,8 @@ func (q *querier) runBuilderExpression(
 			cachedData = data
 		}
 	}
-	misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
+	step := stepIntervalForFunction(params, queryName)
+	misses := q.findMissingTimeRanges(params.Start, params.End, step, cachedData)
 	missedSeries := make([]*v3.Series, 0)
 	cachedSeries := make([]*v3.Series, 0)
 	for _, miss := range misses {

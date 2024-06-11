@@ -19,7 +19,7 @@ import (
 // step is in seconds
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options metricsV3.Options) (string, error) {
 
-	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, mq.TimeAggregation)
+	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, *mq)
 
 	var quantile float64
 
