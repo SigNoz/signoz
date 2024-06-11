@@ -81,6 +81,9 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		result = removeDisabledQueries(result)
 	}
+	if queryRangeParams.CompositeQuery.FillGaps {
+		FillGaps(result, queryRangeParams)
+	}
 	return result, nil
 }
 
