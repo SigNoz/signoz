@@ -579,7 +579,7 @@ func TestQueryRange(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, err, errByName := q.QueryRange(context.Background(), param, nil)
+		_, errByName, err := q.QueryRange(context.Background(), param, nil)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -688,7 +688,7 @@ func TestQueryRangeValueType(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, err, errByName := q.QueryRange(context.Background(), param, nil)
+		_, errByName, err := q.QueryRange(context.Background(), param, nil)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -741,7 +741,7 @@ func TestQueryRangeTimeShift(t *testing.T) {
 	expectedTimeRangeInQueryString := fmt.Sprintf("timestamp >= %d AND timestamp <= %d", (1675115596722-86400*1000)*1000000, ((1675115596722+120*60*1000)-86400*1000)*1000000)
 
 	for i, param := range params {
-		_, err, errByName := q.QueryRange(context.Background(), param, nil)
+		_, errByName, err := q.QueryRange(context.Background(), param, nil)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -839,7 +839,7 @@ func TestQueryRangeTimeShiftWithCache(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, err, errByName := q.QueryRange(context.Background(), param, nil)
+		_, errByName, err := q.QueryRange(context.Background(), param, nil)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
@@ -939,7 +939,7 @@ func TestQueryRangeTimeShiftWithLimitAndCache(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, err, errByName := q.QueryRange(context.Background(), param, nil)
+		_, errByName, err := q.QueryRange(context.Background(), param, nil)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}

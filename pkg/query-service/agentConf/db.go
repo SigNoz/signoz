@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"math/rand"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -14,10 +13,6 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
-
-func init() {
-	rand.Seed(2000)
-}
 
 // Repo handles DDL and DML ops on ingestion rules
 type Repo struct {
