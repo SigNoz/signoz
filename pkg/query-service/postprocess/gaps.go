@@ -6,7 +6,7 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-func stepIntervalForFunction(params *v3.QueryRangeParamsV3, query string) int64 {
+func StepIntervalForFunction(params *v3.QueryRangeParamsV3, query string) int64 {
 	q := params.CompositeQuery.BuilderQueries[query]
 	if q.QueryName != q.Expression {
 		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(q.Expression, EvalFuncs())
@@ -61,7 +61,7 @@ func FillGaps(results []*v3.Result, params *v3.QueryRangeParamsV3) {
 		builderQueries := params.CompositeQuery.BuilderQueries
 		if builderQueries != nil {
 			// The values should be added at the intervals of `step`
-			step := stepIntervalForFunction(params, result.QueryName)
+			step := StepIntervalForFunction(params, result.QueryName)
 			for idx := range result.Series {
 				result.Series[idx] = fillGap(result.Series[idx], params.Start, params.End, step)
 			}

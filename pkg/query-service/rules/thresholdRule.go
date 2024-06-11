@@ -423,20 +423,13 @@ func (r *ThresholdRule) Unit() string {
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 
 	// todo(srikanthccv): make this configurable
-	// 30 seconds should be enough time to assume data is available for traces and logs
-	// 5 seconds SDK + 10 seconds batch + rest for n/w + serialization + write to disk etc..
-	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 30*1000
-	end := ts.UnixMilli() - 30*1000
-
-	if r.typ == "METRIC_BASED_ALERT" {
-		// 2 minutes is reasonable time to wait for data to be available
-		// 60 seconds (SDK) + 10 seconds (batch) + rest for n/w + serialization + write to disk etc..
-		start = ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 2*60*1000
-		end = ts.UnixMilli() - 2*60*1000
-		// round to minute otherwise we could potentially miss data
-		start = start - (start % (60 * 1000))
-		end = end - (end % (60 * 1000))
-	}
+	// 2 minutes is reasonable time to wait for data to be available
+	// 60 seconds (SDK) + 10 seconds (batch) + rest for n/w + serialization + write to disk etc..
+	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 2*60*1000
+	end := ts.UnixMilli() - 2*60*1000
+	// round to minute otherwise we could potentially miss data
+	start = start - (start % (60 * 1000))
+	end = end - (end % (60 * 1000))
 
 	if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
 		params := &v3.QueryRangeParamsV3{
