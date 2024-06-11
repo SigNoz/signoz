@@ -61,7 +61,7 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 
 	// If the target span is not found, return span not found error
 	if targetSpan == nil {
-		return nil, errors.New("Span not found")
+		return nil, errors.New("span not found")
 	}
 
 	// Build the final result
@@ -118,8 +118,8 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 	}
 
 	searchSpansResult := []basemodel.SearchSpansResult{{
-		Columns: []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
-		Events:  make([][]interface{}, len(resultSpansSet)),
+		Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError"},
+		Events:    make([][]interface{}, len(resultSpansSet)),
 		IsSubTree: true,
 	},
 	}
@@ -219,7 +219,7 @@ func breadthFirstSearch(spansPtr *model.SpanForTraceDetails, targetId string) (*
 		}
 
 		for _, child := range current.Children {
-			if ok, _ := visited[child.SpanID]; !ok {
+			if ok := visited[child.SpanID]; !ok {
 				queue = append(queue, child)
 			}
 		}

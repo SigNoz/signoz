@@ -108,7 +108,7 @@ func (c *Controller) Uninstall(
 ) *model.ApiError {
 	if len(req.IntegrationId) < 1 {
 		return model.BadRequest(fmt.Errorf(
-			"integration_id is required.",
+			"integration_id is required",
 		))
 	}
 

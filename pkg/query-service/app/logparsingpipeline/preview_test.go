@@ -225,15 +225,15 @@ func makeTestSignozLog(
 	}
 
 	for k, v := range attributes {
-		switch v.(type) {
+		switch v := v.(type) {
 		case bool:
-			testLog.Attributes_bool[k] = v.(bool)
+			testLog.Attributes_bool[k] = v
 		case string:
-			testLog.Attributes_string[k] = v.(string)
+			testLog.Attributes_string[k] = v
 		case int:
-			testLog.Attributes_int64[k] = int64(v.(int))
+			testLog.Attributes_int64[k] = int64(v)
 		case float64:
-			testLog.Attributes_float64[k] = v.(float64)
+			testLog.Attributes_float64[k] = v
 		default:
 			panic(fmt.Sprintf("found attribute value of unsupported type %T in test log", v))
 		}

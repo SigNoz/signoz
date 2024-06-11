@@ -93,7 +93,7 @@ func (p *PostablePipeline) IsValid() error {
 
 func isValidOperator(op PipelineOperator) error {
 	if op.ID == "" {
-		return errors.New("PipelineOperator.ID is required.")
+		return errors.New("PipelineOperator.ID is required")
 	}
 
 	switch op.Type {
@@ -204,7 +204,7 @@ func isValidOperator(op PipelineOperator) error {
 		}
 
 		validMappingLevels := []string{"trace", "debug", "info", "warn", "error", "fatal"}
-		for k, _ := range op.SeverityMapping {
+		for k := range op.SeverityMapping {
 			if !slices.Contains(validMappingLevels, strings.ToLower(k)) {
 				return fmt.Errorf("%s is not a valid severity in processor %s", k, op.ID)
 			}

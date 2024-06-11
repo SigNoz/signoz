@@ -8,6 +8,7 @@ import (
 	"time"
 
 	opentracing "github.com/opentracing/opentracing-go"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.uber.org/zap"
 )
@@ -345,7 +346,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				"source":  "alerts",
 				"client":  "query-service",
 			}
-			ctx = context.WithValue(ctx, "log_comment", kvs)
+			ctx = context.WithValue(ctx, common.LogCommentKey, kvs)
 
 			_, err := rule.Eval(ctx, ts, g.opts.Queriers)
 			if err != nil {
