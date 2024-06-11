@@ -46,8 +46,6 @@ function ListAlertRules(): JSX.Element {
 		);
 	}
 
-	console.log(data?.payload);
-
 	if (status === 'success' && !data.payload?.length) {
 		return <AlertsEmptyState />;
 	}
