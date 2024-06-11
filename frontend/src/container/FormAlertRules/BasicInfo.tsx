@@ -1,5 +1,10 @@
-import { Form, Select, Switch } from 'antd';
-import { useEffect, useState } from 'react';
+import { PlusOutlined } from '@ant-design/icons';
+import { Button, Form, Select, Switch } from 'antd';
+import getChannels from 'api/channels/getAll';
+import ROUTES from 'constants/routes';
+import useFetch from 'hooks/useFetch';
+import history from 'lib/history';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
@@ -31,6 +36,8 @@ function BasicInfo({
 }: BasicInfoProps): JSX.Element {
 	const { t } = useTranslation('alerts');
 
+	const channels = useFetch(getChannels);
+
 	const [
 		shouldBroadCastToAllChannels,
 		setShouldBroadCastToAllChannels,
@@ -53,6 +60,11 @@ function BasicInfo({
 			broadcastToAll: shouldBroadcast,
 		});
 	};
+
+	const noChannels = !channels.payload?.length;
+	const handleCreateNewChannels = useCallback(() => {
+		history.push(ROUTES.CHANNELS_NEW);
+	}, []);
 
 	return (
 		<>
@@ -133,17 +145,19 @@ function BasicInfo({
 					/>
 				</FormItemMedium>
 
-				<FormItemMedium
-					name="alert_all_configured_channels"
-					label="Alert all the configured channels"
-				>
-					<Switch
-						checked={shouldBroadCastToAllChannels}
-						onChange={handleBroadcastToAllChannels}
-					/>
-				</FormItemMedium>
+				{!noChannels && (
+					<FormItemMedium
+						name="alert_all_configured_channels"
+						label="Alert all the configured channels"
+					>
+						<Switch
+							checked={shouldBroadCastToAllChannels}
+							onChange={handleBroadcastToAllChannels}
+						/>
+					</FormItemMedium>
+				)}
 
-				{!shouldBroadCastToAllChannels && (
+				{!shouldBroadCastToAllChannels && !noChannels && (
 					<FormItemMedium
 						label="Notification Channels"
 						name="notification_channels"
@@ -155,6 +169,7 @@ function BasicInfo({
 						<ChannelSelect
 							disabled={shouldBroadCastToAllChannels}
 							currentValue={alertDef.preferredChannels}
+							channels={channels}
 							onSelectChannels={(preferredChannels): void => {
 								setAlertDef({
 									...alertDef,
@@ -163,6 +178,12 @@ function BasicInfo({
 							}}
 						/>
 					</FormItemMedium>
+				)}
+
+				{noChannels && (
+					<Button onClick={handleCreateNewChannels} icon={<PlusOutlined />}>
+						Create a notification channel
+					</Button>
 				)}
 			</FormContainer>
 		</>
