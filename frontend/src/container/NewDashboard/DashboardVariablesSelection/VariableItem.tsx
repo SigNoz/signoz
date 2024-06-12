@@ -420,7 +420,9 @@ function VariableItem({
 									key={option.toString()}
 									value={option}
 								>
-									<div className="dropdown-checkbox-label">
+									<div
+										className={variableData.multiSelect ? 'dropdown-checkbox-label' : ''}
+									>
 										{variableData.multiSelect && (
 											<Checkbox
 												onChange={(e): void => {
@@ -447,11 +449,13 @@ function VariableItem({
 												</Typography.Text>
 											</Tooltip>
 
-											{optionState.tag === option.toString() && optionState.visible && (
-												<Typography.Text className="toggle-tag-label">
-													{currentToggleTagValue({ option: option as string })}
-												</Typography.Text>
-											)}
+											{variableData.multiSelect &&
+												optionState.tag === option.toString() &&
+												optionState.visible && (
+													<Typography.Text className="toggle-tag-label">
+														{currentToggleTagValue({ option: option as string })}
+													</Typography.Text>
+												)}
 										</div>
 									</div>
 								</Select.Option>
