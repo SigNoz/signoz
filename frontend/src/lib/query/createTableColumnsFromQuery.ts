@@ -524,6 +524,15 @@ const generateData = (
 	return data;
 };
 
+function extractNumber(val: string | number): number | null {
+	if (typeof val === 'number') return val;
+	const match = val.match(/(\d+(\.\d+)?)\s*\w+/);
+	if (match) {
+		return parseFloat(match[1]);
+	}
+	return null;
+}
+
 const generateTableColumns = (
 	dynamicColumns: DynamicColumns,
 	renderColumnCell?: QueryTableProps['renderColumnCell'],
@@ -537,8 +546,8 @@ const generateTableColumns = (
 			width: QUERY_TABLE_CONFIG.width,
 			render: renderColumnCell && renderColumnCell[item.dataIndex],
 			sorter: (a: RowData, b: RowData): number => {
-				const valueA = Number(a[item.dataIndex]);
-				const valueB = Number(b[item.dataIndex]);
+				const valueA = Number(extractNumber(a[item.dataIndex]));
+				const valueB = Number(extractNumber(b[item.dataIndex]));
 
 				if (!isNaN(valueA) && !isNaN(valueB)) {
 					return valueA - valueB;
