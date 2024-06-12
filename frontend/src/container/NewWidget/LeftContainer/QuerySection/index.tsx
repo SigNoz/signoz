@@ -12,7 +12,6 @@ import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interface
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { defaultTo } from 'lodash-es';
@@ -33,7 +32,6 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import AppReducer from 'types/reducer/app';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
@@ -45,10 +43,6 @@ function QuerySection({
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const urlQuery = useUrlQuery();
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -80,8 +74,6 @@ function QuerySection({
 				return;
 			}
 
-			const updatedQuery = updateStepInterval(query, maxTime, minTime);
-
 			const selectedWidgetIndex = getSelectedWidgetIndex(
 				selectedDashboard,
 				selectedWidget.id,
@@ -102,18 +94,16 @@ function QuerySection({
 						...previousWidgets,
 						{
 							...selectedWidget,
-							query: updatedQuery,
+							query,
 						},
 						...nextWidgets,
 					],
 				},
 			});
-			redirectWithQueryBuilderData(updatedQuery);
+			redirectWithQueryBuilderData(query);
 		},
 		[
 			selectedDashboard,
-			maxTime,
-			minTime,
 			selectedWidget,
 			setSelectedDashboard,
 			redirectWithQueryBuilderData,
@@ -137,7 +127,7 @@ function QuerySection({
 
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: false, isDisabled: true },
+			stepInterval: { isHidden: false, isDisabled: false },
 		};
 
 		return config;

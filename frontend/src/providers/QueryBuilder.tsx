@@ -752,26 +752,30 @@ export function QueryBuilderProvider({
 		[],
 	);
 
-	const handleRunQuery = useCallback(() => {
-		redirectWithQueryBuilderData({
-			...{
-				...currentQuery,
-				...updateStepInterval(
-					{
-						builder: currentQuery.builder,
-						clickhouse_sql: currentQuery.clickhouse_sql,
-						promql: currentQuery.promql,
-						id: currentQuery.id,
-						queryType,
-						unit: currentQuery.unit,
-					},
-					maxTime,
-					minTime,
-				),
-			},
-			queryType,
-		});
-	}, [currentQuery, queryType, maxTime, minTime, redirectWithQueryBuilderData]);
+	const handleRunQuery = useCallback(
+		(shallUpdateStepInterval?: boolean) => {
+			redirectWithQueryBuilderData({
+				...{
+					...currentQuery,
+					...updateStepInterval(
+						{
+							builder: currentQuery.builder,
+							clickhouse_sql: currentQuery.clickhouse_sql,
+							promql: currentQuery.promql,
+							id: currentQuery.id,
+							queryType,
+							unit: currentQuery.unit,
+						},
+						maxTime,
+						minTime,
+						!!shallUpdateStepInterval,
+					),
+				},
+				queryType,
+			});
+		},
+		[currentQuery, queryType, maxTime, minTime, redirectWithQueryBuilderData],
+	);
 
 	useEffect(() => {
 		if (!compositeQueryParam) return;
