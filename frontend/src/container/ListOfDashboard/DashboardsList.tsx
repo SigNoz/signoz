@@ -809,6 +809,7 @@ function DashboardsList(): JSX.Element {
 											showTotal: showPaginationItem,
 											showSizeChanger: false,
 											onChange: (page): void => handlePageSizeUpdate(page),
+											current: Number(sortOrder.pagination),
 											defaultCurrent: Number(sortOrder.pagination) || 1,
 										}
 									}
