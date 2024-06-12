@@ -34,7 +34,7 @@ import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { get, isEmpty, isNull } from 'lodash-es';
+import { get, isEmpty } from 'lodash-es';
 import {
 	ArrowDownWideNarrow,
 	ArrowUpRight,
@@ -227,13 +227,23 @@ function DashboardsList(): JSX.Element {
 		);
 		if (sortOrder.columnKey === 'updatedAt') {
 			sortDashboardsByUpdatedAt(filteredDashboards || []);
-		} else if (
-			sortOrder.columnKey === 'createdAt' ||
-			isNull(sortOrder.columnKey)
-		) {
+		} else if (sortOrder.columnKey === 'createdAt') {
+			sortDashboardsByCreatedAt(filteredDashboards || []);
+		} else if (sortOrder.columnKey === 'null') {
+			setSortOrder({
+				columnKey: 'createdAt',
+				order: 'descend',
+				pagination: sortOrder.pagination || '1',
+			});
 			sortDashboardsByCreatedAt(filteredDashboards || []);
 		}
-	}, [dashboardListResponse, searchString, sortOrder.columnKey]);
+	}, [
+		dashboardListResponse,
+		searchString,
+		setSortOrder,
+		sortOrder.columnKey,
+		sortOrder.pagination,
+	]);
 
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
