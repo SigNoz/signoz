@@ -431,8 +431,6 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	start = start - (start % (60 * 1000))
 	end = end - (end % (60 * 1000))
 
-	minStep := common.MinAllowedStepInterval(start, end)
-
 	if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
 		params := &v3.QueryRangeParamsV3{
 			Start: start,
