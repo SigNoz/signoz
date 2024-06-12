@@ -1,16 +1,29 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react/jsx-props-no-spreading */
+/* eslint-disable no-nested-ternary */
 import './DashboardVariableSelection.styles.scss';
 
 import { orange } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
-import { Checkbox, Input, Popover, Select, Space, Tag, Typography } from 'antd';
+import {
+	Checkbox,
+	Input,
+	Popover,
+	Select,
+	Tag,
+	Tooltip,
+	Typography,
+} from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { debounce, isArray, isString } from 'lodash-es';
+import { debounce, isArray, isEmpty, isString } from 'lodash-es';
 import map from 'lodash-es/map';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
@@ -23,6 +36,11 @@ import { areArraysEqual } from './util';
 const ALL_SELECT_VALUE = '__ALL__';
 
 const variableRegexPattern = /\{\{\s*?\.([^\s}]+)\s*?\}\}/g;
+
+enum ToggleTagValue {
+	Only = 'Only',
+	All = 'All',
+}
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
@@ -194,8 +212,10 @@ function VariableItem({
 	});
 
 	const handleChange = (value: string | string[]): void => {
-		if (variableData.name)
-			if (
+		if (variableData.name) {
+			if (isEmpty(value)) {
+				onValueUpdate(variableData.name, variableData.id, value, false);
+			} else if (
 				value === ALL_SELECT_VALUE ||
 				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE)) ||
 				(Array.isArray(value) && value.length === 0)
@@ -204,6 +224,7 @@ function VariableItem({
 			} else {
 				onValueUpdate(variableData.name, variableData.id, value, false);
 			}
+		}
 	};
 
 	// do not debounce the above function as we do not need debounce in select variables
@@ -232,9 +253,15 @@ function VariableItem({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [variableData.type, variableData.customValue]);
 
-	const checkAll = (e: CheckboxChangeEvent): void => {
+	const checkAll = (e: MouseEvent): void => {
 		e.stopPropagation();
-		if (e.target.checked) {
+		e.preventDefault();
+		const isChecked =
+			variableData.allSelected || selectValue.includes(ALL_SELECT_VALUE);
+
+		if (isChecked) {
+			handleChange([]);
+		} else {
 			handleChange(ALL_SELECT_VALUE);
 		}
 	};
@@ -270,6 +297,66 @@ function VariableItem({
 		}
 	};
 
+	const [optionState, setOptionState] = useState({
+		tag: '',
+		visible: false,
+	});
+
+	function currentToggleTagValue({
+		option,
+	}: {
+		option: string;
+	}): ToggleTagValue {
+		if (
+			option.toString() === selectValue ||
+			(Array.isArray(selectValue) &&
+				selectValue?.includes(option.toString()) &&
+				selectValue.length === 1)
+		) {
+			return ToggleTagValue.All;
+		}
+		return ToggleTagValue.Only;
+	}
+
+	function handleToggle(e: ChangeEvent, option: string): void {
+		e.stopPropagation();
+		const mode = currentToggleTagValue({ option: option as string });
+		const isChecked =
+			variableData.allSelected ||
+			option.toString() === selectValue ||
+			(Array.isArray(selectValue) && selectValue?.includes(option.toString()));
+
+		if (isChecked) {
+			if (mode === ToggleTagValue.Only) {
+				handleChange(option.toString());
+			} else {
+				handleChange(ALL_SELECT_VALUE);
+			}
+		} else {
+			handleChange(option.toString());
+		}
+	}
+
+	function retProps(
+		option: string,
+	): {
+		onMouseOver: () => void;
+		onMouseOut: () => void;
+	} {
+		return {
+			onMouseOver: (): void =>
+				setOptionState({
+					tag: option.toString(),
+					visible: true,
+				}),
+			onMouseOut: (): void =>
+				setOptionState({
+					tag: option.toString(),
+					visible: false,
+				}),
+		};
+	}
+
 	return (
 		<div className="variable-item">
 			<Typography.Text className="variable-name" ellipsis>
@@ -303,13 +390,14 @@ function VariableItem({
 							onChange={handleChange}
 							bordered={false}
 							placeholder="Select value"
-							placement="bottomRight"
+							placement="bottomLeft"
 							mode={mode}
 							style={SelectItemStyle}
 							loading={isLoading}
 							showSearch
 							data-testid="variable-select"
 							className="variable-select"
+							popupClassName="dropdown-styles"
 							getPopupContainer={popupContainer}
 							// eslint-disable-next-line react/no-unstable-nested-components
 							tagRender={(props): JSX.Element => (
@@ -320,10 +408,10 @@ function VariableItem({
 						>
 							{enableSelectAll && (
 								<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
-									<Space>
-										<Checkbox onChange={checkAll} checked={variableData.allSelected} />
+									<div className="all-label" onClick={(e): void => checkAll(e as any)}>
+										<Checkbox checked={variableData.allSelected} />
 										ALL
-									</Space>
+									</div>
 								</Select.Option>
 							)}
 							{map(optionsData, (option) => (
@@ -332,7 +420,7 @@ function VariableItem({
 									key={option.toString()}
 									value={option}
 								>
-									<Space>
+									<div className="dropdown-checkbox-label">
 										{variableData.multiSelect && (
 											<Checkbox
 												onChange={(e): void => {
@@ -348,8 +436,24 @@ function VariableItem({
 												}
 											/>
 										)}
-										{option.toString()}
-									</Space>
+										<div
+											className="dropdown-value"
+											{...retProps(option as string)}
+											onClick={(e): void => handleToggle(e as any, option as string)}
+										>
+											<Tooltip title={option.toString()} placement="bottomRight">
+												<Typography.Text ellipsis className="option-text">
+													{option.toString()}
+												</Typography.Text>
+											</Tooltip>
+
+											{optionState.tag === option.toString() && optionState.visible && (
+												<Typography.Text className="toggle-tag-label">
+													{currentToggleTagValue({ option: option as string })}
+												</Typography.Text>
+											)}
+										</div>
+									</div>
 								</Select.Option>
 							))}
 						</Select>
