@@ -88,7 +88,7 @@ export function DashboardProvider({
 	const paginationParam = params.get('page');
 
 	const [listSortOrder, setListSortOrder] = useState({
-		columnKey: orderColumnParam || 'createdAt',
+		columnKey: orderColumnParam || 'updatedAt',
 		order: orderQueryParam || 'descend',
 		pagination: paginationParam || '1',
 	});

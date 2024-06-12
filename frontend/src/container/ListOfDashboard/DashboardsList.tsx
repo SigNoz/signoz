@@ -231,7 +231,7 @@ function DashboardsList(): JSX.Element {
 			sortDashboardsByCreatedAt(filteredDashboards || []);
 		} else if (sortOrder.columnKey === 'null') {
 			setSortOrder({
-				columnKey: 'createdAt',
+				columnKey: 'updatedAt',
 				order: 'descend',
 				pagination: sortOrder.pagination || '1',
 			});
