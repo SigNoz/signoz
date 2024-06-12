@@ -3,7 +3,6 @@ import { Button, Form, Select, Switch, Tooltip } from 'antd';
 import getChannels from 'api/channels/getAll';
 import ROUTES from 'constants/routes';
 import useFetch from 'hooks/useFetch';
-import history from 'lib/history';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
@@ -63,7 +62,7 @@ function BasicInfo({
 
 	const noChannels = !channels.payload?.length;
 	const handleCreateNewChannels = useCallback(() => {
-		history.push(ROUTES.CHANNELS_NEW);
+		window.open(ROUTES.CHANNELS_NEW, '_blank');
 	}, []);
 
 	return (
