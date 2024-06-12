@@ -123,7 +123,7 @@ func (q *querier) runBuilderQuery(
 				cachedData = data
 			}
 		}
-		misses := q.findMissingTimeRanges(start, end, params.Step, cachedData)
+		misses := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
@@ -257,7 +257,7 @@ func (q *querier) runBuilderQuery(
 			cachedData = data
 		}
 	}
-	misses := q.findMissingTimeRanges(start, end, params.Step, cachedData)
+	misses := q.findMissingTimeRanges(start, end, builderQuery.StepInterval, cachedData)
 	missedSeries := make([]*v3.Series, 0)
 	cachedSeries := make([]*v3.Series, 0)
 	for _, miss := range misses {

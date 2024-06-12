@@ -2,11 +2,11 @@ package v3
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -332,14 +332,8 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 // start and end are in milliseconds
 // step is in seconds
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
-	start = start - (start % (mq.StepInterval * 1000))
-	// if the query is a rate query, we adjust the start time by one more step
-	// so that we can calculate the rate for the first data point
-	if mq.AggregateOperator.IsRateOperator() && mq.Temporality != v3.Delta {
-		start -= mq.StepInterval * 1000
-	}
-	adjustStep := int64(math.Min(float64(mq.StepInterval), 60))
-	end = end - (end % (adjustStep * 1000))
+
+	start, end = common.AdjustedMetricTimeRange(start, end, mq.StepInterval, *mq)
 
 	// if the aggregate operator is a histogram quantile, and user has not forgotten
 	// the le tag in the group by then add the le tag to the group by
