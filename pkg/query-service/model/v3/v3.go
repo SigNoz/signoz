@@ -400,6 +400,7 @@ type CompositeQuery struct {
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
 	Unit              string                      `json:"unit,omitempty"`
+	FillGaps          bool                        `json:"fillGaps,omitempty"`
 }
 
 func (c *CompositeQuery) EnabledQueries() int {

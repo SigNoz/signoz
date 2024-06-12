@@ -360,7 +360,6 @@ func (q *querier) runBuilderExpression(
 		}
 	}
 	step := postprocess.StepIntervalForFunction(params, queryName)
-
 	misses := q.findMissingTimeRanges(params.Start, params.End, step, cachedData)
 	missedSeries := make([]*v3.Series, 0)
 	cachedSeries := make([]*v3.Series, 0)

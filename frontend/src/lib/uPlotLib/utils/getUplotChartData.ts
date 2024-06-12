@@ -1,3 +1,4 @@
+import { cloneDeep, isUndefined } from 'lodash-es';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 
@@ -62,9 +63,25 @@ function fillMissingXAxisTimestamps(
 	);
 }
 
+function getStackedSeries(val: any): any {
+	const series = cloneDeep(val) || [];
+
+	for (let i = series.length - 2; i >= 0; i--) {
+		for (let j = 0; j < series[i].length; j++) {
+			series[i][j] += series[i + 1][j];
+		}
+	}
+
+	return series;
+}
+
 export const getUPlotChartData = (
 	apiResponse?: MetricRangePayloadProps,
 	fillSpans?: boolean,
+	stackedBarChart?: boolean,
+	hiddenGraph?: {
+		[key: string]: boolean;
+	},
 ): any[] => {
 	const seriesList = apiResponse?.data?.result || [];
 	const timestampArr = getXAxisTimestamps(seriesList);
@@ -74,5 +91,10 @@ export const getUPlotChartData = (
 		fillSpans || false,
 	);
 
-	return [timestampArr, ...yAxisValuesArr];
+	return [
+		timestampArr,
+		...(stackedBarChart && isUndefined(hiddenGraph)
+			? getStackedSeries(yAxisValuesArr)
+			: yAxisValuesArr),
+	];
 };

@@ -2,7 +2,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { isUndefined } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 
@@ -28,16 +28,18 @@ const paths = (
 };
 
 const getSeries = ({
-	apiResponse,
+	series,
 	widgetMetaData,
 	graphsVisibilityStates,
 	panelType,
+	hiddenGraph,
 }: GetSeriesProps): uPlot.Options['series'] => {
 	const configurations: uPlot.Series[] = [
 		{ label: 'Timestamp', stroke: 'purple' },
 	];
 
-	const seriesList = apiResponse?.data.result || [];
+	const seriesList = series || [];
+
 	const newGraphVisibilityStates = graphsVisibilityStates?.slice(1);
 
 	for (let i = 0; i < seriesList?.length; i += 1) {
@@ -64,7 +66,12 @@ const getSeries = ({
 				panelType && panelType === PANEL_TYPES.BAR
 					? null
 					: lineInterpolations.spline,
-			show: newGraphVisibilityStates ? newGraphVisibilityStates[i] : true,
+			// eslint-disable-next-line no-nested-ternary
+			show: newGraphVisibilityStates
+				? newGraphVisibilityStates[i]
+				: !isUndefined(hiddenGraph)
+				? hiddenGraph[i]
+				: true,
 			label,
 			fill: panelType && panelType === PANEL_TYPES.BAR ? `${color}40` : undefined,
 			stroke: color,
@@ -84,11 +91,15 @@ const getSeries = ({
 };
 
 export type GetSeriesProps = {
-	apiResponse?: MetricRangePayloadProps;
+	series?: QueryData[];
 	widgetMetaData: QueryData[];
 	graphsVisibilityStates?: boolean[];
 	panelType?: PANEL_TYPES;
 	currentQuery?: Query;
+	stackBarChart?: boolean;
+	hiddenGraph?: {
+		[key: string]: boolean;
+	};
 };
 
 export default getSeries;

@@ -43,7 +43,7 @@ func InitDB(qsDB *sqlx.DB) (*sqlx.DB, error) {
 
 	_, err := db.Exec(tableSchema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating agents table: %s", err.Error())
+		return nil, fmt.Errorf("error in creating agents table: %s", err.Error())
 	}
 
 	AllAgents = Agents{

@@ -22,6 +22,19 @@ interface UplotTooltipDataProps {
 	queryName: string;
 }
 
+function getTooltipBaseValue(
+	data: any[],
+	index: number,
+	idx: number,
+	stackBarChart: boolean | undefined,
+): any {
+	if (stackBarChart && index + 1 < data.length) {
+		return data[index][idx] - data[index + 1][idx];
+	}
+
+	return data[index][idx];
+}
+
 const generateTooltipContent = (
 	seriesList: any[],
 	data: any[],
@@ -31,6 +44,7 @@ const generateTooltipContent = (
 	isBillingUsageGraphs?: boolean,
 	isHistogramGraphs?: boolean,
 	isMergedSeries?: boolean,
+	stackBarChart?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): HTMLElement => {
 	const container = document.createElement('div');
@@ -67,7 +81,8 @@ const generateTooltipContent = (
 					unit = '',
 				} = seriesList[index - 1] || {};
 
-				const value = data[index][idx];
+				const value = getTooltipBaseValue(data, index, idx, stackBarChart);
+
 				const dataIngested = quantity[idx];
 				const label = isMergedSeries
 					? ''
@@ -201,6 +216,7 @@ type ToolTipPluginProps = {
 	isBillingUsageGraphs?: boolean;
 	isHistogramGraphs?: boolean;
 	isMergedSeries?: boolean;
+	stackBarChart?: boolean;
 };
 
 const tooltipPlugin = ({
@@ -209,6 +225,7 @@ const tooltipPlugin = ({
 	isBillingUsageGraphs,
 	isHistogramGraphs,
 	isMergedSeries,
+	stackBarChart,
 }: ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
@@ -272,6 +289,7 @@ const tooltipPlugin = ({
 							isBillingUsageGraphs,
 							isHistogramGraphs,
 							isMergedSeries,
+							stackBarChart,
 						);
 						overlay.appendChild(content);
 						placement(overlay, anchor, 'right', 'start', { bound });

@@ -27,6 +27,7 @@ describe('Get Series Data', () => {
 	test('Should return seris drawline line chart for panel type time series', () => {
 		const seriesData = getSeries(seriesLineChartData);
 		// @ts-ignore
+
 		expect(seriesData[1].drawStyle).toBe('line');
 	});
 });

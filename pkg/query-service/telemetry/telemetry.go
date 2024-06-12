@@ -197,8 +197,6 @@ func createTelemetry() {
 	telemetry.minRandInt = 0
 	telemetry.maxRandInt = int(1 / DEFAULT_SAMPLING)
 
-	rand.Seed(time.Now().UnixNano())
-
 	telemetry.SetTelemetryEnabled(constants.IsTelemetryEnabled())
 
 	ticker := time.NewTicker(HEART_BEAT_DURATION)
@@ -207,6 +205,7 @@ func createTelemetry() {
 	rateLimitTicker := time.NewTicker(RATE_LIMIT_CHECK_DURATION)
 
 	go func() {
+		//lint:ignore S1000 false positive
 		for {
 			select {
 			case <-rateLimitTicker.C:

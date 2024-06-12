@@ -797,7 +797,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 					"service.name": "frontend",
 				},
 				LabelsArray: []map[string]string{
-					map[string]string{
+					{
 						"service.name": "frontend",
 					},
 				},
