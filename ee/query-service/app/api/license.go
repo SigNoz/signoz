@@ -9,6 +9,7 @@ import (
 
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
+	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
@@ -71,12 +72,12 @@ func (ah *APIHandler) applyLicense(w http.ResponseWriter, r *http.Request) {
 	var l model.License
 
 	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, basemodel.BadRequest(err), nil)
 		return
 	}
 
 	if l.Key == "" {
-		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
+		RespondError(w, basemodel.BadRequest(fmt.Errorf("license key is required")), nil)
 		return
 	}
 	license, apiError := ah.LM().Activate(r.Context(), l.Key)
@@ -100,20 +101,20 @@ func (ah *APIHandler) checkout(w http.ResponseWriter, r *http.Request) {
 	hClient := &http.Client{}
 	req, err := http.NewRequest("POST", constants.LicenseSignozIo+"/checkout", r.Body)
 	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, basemodel.InternalError(err), nil)
 		return
 	}
 	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
 	licenseResp, err := hClient.Do(req)
 	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, basemodel.InternalError(err), nil)
 		return
 	}
 
 	// decode response body
 	var resp checkoutResponse
 	if err := json.NewDecoder(licenseResp.Body).Decode(&resp); err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, basemodel.InternalError(err), nil)
 		return
 	}
 
@@ -124,7 +125,7 @@ func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 	licenseKey := r.URL.Query().Get("licenseKey")
 
 	if licenseKey == "" {
-		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
+		RespondError(w, basemodel.BadRequest(fmt.Errorf("license key is required")), nil)
 		return
 	}
 
@@ -133,20 +134,20 @@ func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 	hClient := &http.Client{}
 	req, err := http.NewRequest("GET", billingURL, nil)
 	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, basemodel.InternalError(err), nil)
 		return
 	}
 	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
 	billingResp, err := hClient.Do(req)
 	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, basemodel.InternalError(err), nil)
 		return
 	}
 
 	// decode response body
 	var billingResponse billingDetails
 	if err := json.NewDecoder(billingResp.Body).Decode(&billingResponse); err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, basemodel.InternalError(err), nil)
 		return
 	}
 
@@ -251,20 +252,20 @@ func (ah *APIHandler) portalSession(w http.ResponseWriter, r *http.Request) {
 	hClient := &http.Client{}
 	req, err := http.NewRequest("POST", constants.LicenseSignozIo+"/portal", r.Body)
 	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, basemodel.InternalError(err), nil)
 		return
 	}
 	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
 	licenseResp, err := hClient.Do(req)
 	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, basemodel.InternalError(err), nil)
 		return
 	}
 
 	// decode response body
 	var resp checkoutResponse
 	if err := json.NewDecoder(licenseResp.Body).Decode(&resp); err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, basemodel.InternalError(err), nil)
 		return
 	}
 

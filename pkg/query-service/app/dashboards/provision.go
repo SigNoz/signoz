@@ -46,7 +46,7 @@ func readCurrentDir(dir string, fm interfaces.FeatureLookup) error {
 
 		id := data["uuid"]
 		if id == nil {
-			_, apiErr := CreateDashboard(context.Background(), data, fm)
+			_, apiErr := CreateDashboard(context.Background(), data)
 			if apiErr != nil {
 				zap.L().Error("Creating Dashboards: Error in file", zap.String("filename", filename), zap.Error(apiErr.Err))
 			}
@@ -65,12 +65,12 @@ func upsertDashboard(uuid string, data map[string]interface{}, filename string, 
 	_, apiErr := GetDashboard(context.Background(), uuid)
 	if apiErr == nil {
 		zap.S().Infof("Creating Dashboards: Already exists: %s\t%s", filename, "Dashboard already present in database, Updating dashboard")
-		_, apiErr := UpdateDashboard(context.Background(), uuid, data, fm)
+		_, apiErr := UpdateDashboard(context.Background(), uuid, data)
 		return apiErr
 	}
 
 	zap.S().Infof("Creating Dashboards: UUID not found: %s\t%s", filename, "Dashboard not present in database, Creating dashboard")
-	_, apiErr = CreateDashboard(context.Background(), data, fm)
+	_, apiErr = CreateDashboard(context.Background(), data)
 	return apiErr
 }
 

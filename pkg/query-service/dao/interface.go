@@ -37,7 +37,7 @@ type Queries interface {
 
 	GetIngestionKeys(ctx context.Context) ([]model.IngestionKey, *model.ApiError)
 
-	PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, model.BaseApiError)
+	PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, *model.ApiError)
 }
 
 type Mutations interface {

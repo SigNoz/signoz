@@ -13,6 +13,7 @@ import (
 
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
+	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
 var C *Client
@@ -37,7 +38,7 @@ func init() {
 }
 
 // ActivateLicense sends key to license.signoz.io and gets activation data
-func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) {
+func ActivateLicense(key, siteId string) (*ActivationResponse, *basemodel.ApiError) {
 	licenseReq := map[string]string{
 		"key":    key,
 		"siteId": siteId,
@@ -48,13 +49,13 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 
 	if err != nil {
 		zap.L().Error("failed to connect to license.signoz.io", zap.Error(err))
-		return nil, model.BadRequest(fmt.Errorf("unable to connect with license.signoz.io, please check your network connection"))
+		return nil, basemodel.BadRequest(fmt.Errorf("unable to connect with license.signoz.io, please check your network connection"))
 	}
 
 	httpBody, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
 		zap.L().Error("failed to read activation response from license.signoz.io", zap.Error(err))
-		return nil, model.BadRequest(fmt.Errorf("failed to read activation response from license.signoz.io"))
+		return nil, basemodel.BadRequest(fmt.Errorf("failed to read activation response from license.signoz.io"))
 	}
 
 	defer httpResponse.Body.Close()
@@ -64,22 +65,22 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 	err = json.Unmarshal(httpBody, &result)
 	if err != nil {
 		zap.L().Error("failed to marshal activation response from license.signoz.io", zap.Error(err))
-		return nil, model.InternalError(errors.Wrap(err, "failed to marshal license activation response"))
+		return nil, basemodel.InternalError(errors.Wrap(err, "failed to marshal license activation response"))
 	}
 
 	switch httpResponse.StatusCode {
 	case 200, 201:
 		return result.Data, nil
 	case 400, 401:
-		return nil, model.BadRequest(fmt.Errorf(fmt.Sprintf("failed to activate: %s", result.Error)))
+		return nil, basemodel.BadRequest(fmt.Errorf(fmt.Sprintf("failed to activate: %s", result.Error)))
 	default:
-		return nil, model.InternalError(fmt.Errorf(fmt.Sprintf("failed to activate: %s", result.Error)))
+		return nil, basemodel.InternalError(fmt.Errorf(fmt.Sprintf("failed to activate: %s", result.Error)))
 	}
 
 }
 
 // ValidateLicense validates the license key
-func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError) {
+func ValidateLicense(activationId string) (*ActivationResponse, *basemodel.ApiError) {
 	validReq := map[string]string{
 		"activationId": activationId,
 	}
@@ -88,12 +89,12 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 	response, err := http.Post(C.Prefix+"/licenses/validate", APPLICATION_JSON, bytes.NewBuffer(reqString))
 
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
+		return nil, basemodel.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
 	}
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, model.BadRequest(errors.Wrap(err, "failed to read validation response from license.signoz.io"))
+		return nil, basemodel.BadRequest(errors.Wrap(err, "failed to read validation response from license.signoz.io"))
 	}
 
 	defer response.Body.Close()
@@ -103,14 +104,14 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 		a := ActivationResult{}
 		err = json.Unmarshal(body, &a)
 		if err != nil {
-			return nil, model.BadRequest(errors.Wrap(err, "failed to marshal license validation response"))
+			return nil, basemodel.BadRequest(errors.Wrap(err, "failed to marshal license validation response"))
 		}
 		return a.Data, nil
 	case 400, 401:
-		return nil, model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
+		return nil, basemodel.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
 			"bad request error received from license.signoz.io"))
 	default:
-		return nil, model.InternalError(errors.Wrap(fmt.Errorf(string(body)),
+		return nil, basemodel.InternalError(errors.Wrap(fmt.Errorf(string(body)),
 			"internal error received from license.signoz.io"))
 	}
 
@@ -127,21 +128,21 @@ func NewPostRequestWithCtx(ctx context.Context, url string, contentType string, 
 }
 
 // SendUsage reports the usage of signoz to license server
-func SendUsage(ctx context.Context, usage model.UsagePayload) *model.ApiError {
+func SendUsage(ctx context.Context, usage model.UsagePayload) *basemodel.ApiError {
 	reqString, _ := json.Marshal(usage)
 	req, err := NewPostRequestWithCtx(ctx, C.Prefix+"/usage", APPLICATION_JSON, bytes.NewBuffer(reqString))
 	if err != nil {
-		return model.BadRequest(errors.Wrap(err, "unable to create http request"))
+		return basemodel.BadRequest(errors.Wrap(err, "unable to create http request"))
 	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
+		return basemodel.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
 	}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return model.BadRequest(errors.Wrap(err, "failed to read usage response from license.signoz.io"))
+		return basemodel.BadRequest(errors.Wrap(err, "failed to read usage response from license.signoz.io"))
 	}
 
 	defer res.Body.Close()
@@ -150,10 +151,10 @@ func SendUsage(ctx context.Context, usage model.UsagePayload) *model.ApiError {
 	case 200, 201:
 		return nil
 	case 400, 401:
-		return model.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
+		return basemodel.BadRequest(errors.Wrap(fmt.Errorf(string(body)),
 			"bad request error received from license.signoz.io"))
 	default:
-		return model.InternalError(errors.Wrap(fmt.Errorf(string(body)),
+		return basemodel.InternalError(errors.Wrap(fmt.Errorf(string(body)),
 			"internal error received from license.signoz.io"))
 	}
 }

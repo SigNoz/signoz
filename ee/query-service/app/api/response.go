@@ -7,6 +7,6 @@ import (
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
-func RespondError(w http.ResponseWriter, apiErr basemodel.BaseApiError, data interface{}) {
-	baseapp.RespondError(w, apiErr, data)
+func RespondError(w http.ResponseWriter, apiErr *basemodel.ApiError, data interface{}) {
+	baseapp.RespondError(w, apiErr)
 }

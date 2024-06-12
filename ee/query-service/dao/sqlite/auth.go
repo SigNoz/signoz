@@ -17,19 +17,19 @@ import (
 	"go.uber.org/zap"
 )
 
-func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (*basemodel.User, basemodel.BaseApiError) {
+func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (*basemodel.User, *basemodel.ApiError) {
 	// get auth domain from email domain
 	domain, apierr := m.GetDomainByEmail(ctx, email)
 
 	if apierr != nil {
 		zap.L().Error("failed to get domain from email", zap.Error(apierr))
-		return nil, model.InternalErrorStr("failed to get domain from email")
+		return nil, basemodel.InternalError(fmt.Errorf("failed to get domain from email"))
 	}
 
 	hash, err := baseauth.PasswordHash(utils.GeneratePassowrd())
 	if err != nil {
 		zap.L().Error("failed to generate password hash when registering a user via SSO redirect", zap.Error(err))
-		return nil, model.InternalErrorStr("failed to generate password hash")
+		return nil, basemodel.InternalError(fmt.Errorf("failed to generate password hash"))
 	}
 
 	group, apiErr := m.GetGroupByName(ctx, baseconst.ViewerGroup)
@@ -61,12 +61,12 @@ func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (
 
 // PrepareSsoRedirect prepares redirect page link after SSO response
 // is successfully parsed (i.e. valid email is available)
-func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr basemodel.BaseApiError) {
+func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr *basemodel.ApiError) {
 
 	userPayload, apierr := m.GetUserByEmail(ctx, email)
 	if !apierr.IsNil() {
 		zap.L().Error("failed to get user with email received from auth provider", zap.String("error", apierr.Error()))
-		return "", model.BadRequestStr("invalid user email received from the auth provider")
+		return "", basemodel.BadRequest(fmt.Errorf("invalid user email received from the auth provider"))
 	}
 
 	user := &basemodel.User{}
@@ -85,7 +85,7 @@ func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email st
 	tokenStore, err := baseauth.GenerateJWTForUser(user)
 	if err != nil {
 		zap.L().Error("failed to generate token for SSO login user", zap.Error(err))
-		return "", model.InternalErrorStr("failed to generate token for the user")
+		return "", basemodel.InternalError(fmt.Errorf("failed to generate token for the user"))
 	}
 
 	return fmt.Sprintf("%s?jwt=%s&usr=%s&refreshjwt=%s",
@@ -95,7 +95,7 @@ func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email st
 		tokenStore.RefreshJwt), nil
 }
 
-func (m *modelDao) CanUsePassword(ctx context.Context, email string) (bool, basemodel.BaseApiError) {
+func (m *modelDao) CanUsePassword(ctx context.Context, email string) (bool, *basemodel.ApiError) {
 	domain, apierr := m.GetDomainByEmail(ctx, email)
 	if apierr != nil {
 		return false, apierr
@@ -110,7 +110,7 @@ func (m *modelDao) CanUsePassword(ctx context.Context, email string) (bool, base
 		}
 
 		if userPayload.Role != baseconst.AdminGroup {
-			return false, model.BadRequest(fmt.Errorf("auth method not supported"))
+			return false, basemodel.BadRequest(fmt.Errorf("auth method not supported"))
 		}
 
 	}
@@ -120,7 +120,7 @@ func (m *modelDao) CanUsePassword(ctx context.Context, email string) (bool, base
 
 // PrecheckLogin is called when the login or signup page is loaded
 // to check sso login is to be prompted
-func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (*basemodel.PrecheckResponse, basemodel.BaseApiError) {
+func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (*basemodel.PrecheckResponse, *basemodel.ApiError) {
 
 	// assume user is valid unless proven otherwise
 	resp := &basemodel.PrecheckResponse{IsUser: true, CanSelfRegister: false}
@@ -144,7 +144,7 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 			ssoAvailable = false
 		default:
 			zap.L().Error("feature check failed", zap.String("featureKey", model.SSO), zap.Error(err))
-			return resp, model.BadRequestStr(err.Error())
+			return resp, &basemodel.ApiError{Err: err, Typ: basemodel.ErrorBadData}
 		}
 	}
 
@@ -177,7 +177,7 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 			siteUrl, err := url.Parse(escapedUrl)
 			if err != nil {
 				zap.L().Error("failed to parse referer", zap.Error(err))
-				return resp, model.InternalError(fmt.Errorf("failed to generate login request"))
+				return resp, basemodel.InternalError(fmt.Errorf("failed to generate login request"))
 			}
 
 			// build Idp URL that will authenticat the user
@@ -186,7 +186,7 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 
 			if err != nil {
 				zap.L().Error("failed to prepare saml request for domain", zap.String("domain", orgDomain.Name), zap.Error(err))
-				return resp, model.InternalError(err)
+				return resp, basemodel.InternalError(err)
 			}
 
 			// set SSO to true, as the url is generated correctly

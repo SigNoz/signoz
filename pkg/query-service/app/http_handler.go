@@ -52,12 +52,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/version"
 )
 
-type status string
-
 const (
-	statusSuccess       status = "success"
-	statusError         status = "error"
-	defaultFluxInterval        = 5 * time.Minute
+	defaultFluxInterval = 5 * time.Minute
 )
 
 // NewRouter creates and configures a Gorilla Router.
@@ -208,33 +204,16 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	return aH, nil
 }
 
-type structuredResponse struct {
-	Data   interface{}       `json:"data"`
-	Total  int               `json:"total"`
-	Limit  int               `json:"limit"`
-	Offset int               `json:"offset"`
-	Errors []structuredError `json:"errors"`
-}
-
-type structuredError struct {
-	Code int    `json:"code,omitempty"`
-	Msg  string `json:"msg"`
-}
-
-type ApiResponse struct {
-	Status    status          `json:"status"`
-	Data      interface{}     `json:"data,omitempty"`
-	ErrorType model.ErrorType `json:"errorType,omitempty"`
-	Error     string          `json:"error,omitempty"`
-}
-
-func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
+func RespondError(w http.ResponseWriter, apiErr *model.ApiError) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	b, err := json.Marshal(&ApiResponse{
-		Status:    statusError,
-		ErrorType: apiErr.Type(),
-		Error:     apiErr.Error(),
-		Data:      data,
+
+	b, err := json.Marshal(&model.APIResponse{
+		Status: model.StatusError,
+		Error: model.StructuredError{
+			Msg:    apiErr.Error(),
+			DocURL: apiErr.DocURL,
+			Errors: apiErr.Errors,
+		},
 	})
 	if err != nil {
 		zap.L().Error("error marshalling json response", zap.Error(err))
@@ -273,8 +252,8 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 
 func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	b, err := json.Marshal(&ApiResponse{
-		Status: statusSuccess,
+	b, err := json.Marshal(&model.APIResponse{
+		Status: model.StatusSuccess,
 		Data:   data,
 	})
 	if err != nil {
@@ -449,7 +428,7 @@ func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	ruleResponse, err := aH.ruleManager.GetRule(r.Context(), id)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 	aH.Respond(w, ruleResponse)
@@ -510,7 +489,7 @@ func (aH *APIHandler) populateTemporality(ctx context.Context, qp *v3.QueryRange
 func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Request) {
 	schedules, err := aH.ruleManager.RuleDB().GetAllPlannedMaintenance(r.Context())
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 
@@ -547,7 +526,7 @@ func (aH *APIHandler) getDowntimeSchedule(w http.ResponseWriter, r *http.Request
 	id := mux.Vars(r)["id"]
 	schedule, err := aH.ruleManager.RuleDB().GetPlannedMaintenanceByID(r.Context(), id)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 	aH.Respond(w, schedule)
@@ -557,17 +536,17 @@ func (aH *APIHandler) createDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 	var schedule rules.PlannedMaintenance
 	err := json.NewDecoder(r.Body).Decode(&schedule)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 	if err := schedule.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	_, err = aH.ruleManager.RuleDB().CreatePlannedMaintenance(r.Context(), schedule)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 	aH.Respond(w, nil)
@@ -578,16 +557,16 @@ func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Reques
 	var schedule rules.PlannedMaintenance
 	err := json.NewDecoder(r.Body).Decode(&schedule)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 	if err := schedule.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 	_, err = aH.ruleManager.RuleDB().EditPlannedMaintenance(r.Context(), schedule, id)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 	aH.Respond(w, nil)
@@ -597,7 +576,7 @@ func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 	id := mux.Vars(r)["id"]
 	_, err := aH.ruleManager.RuleDB().DeletePlannedMaintenance(r.Context(), id)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 	aH.Respond(w, nil)
@@ -607,7 +586,7 @@ func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 
 	rules, err := aH.ruleManager.ListRuleStates(r.Context())
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 
@@ -620,7 +599,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 
 	allDashboards, err := dashboards.GetDashboards(r.Context())
 	if err != nil {
-		RespondError(w, err, nil)
+		RespondError(w, err)
 		return
 	}
 
@@ -671,36 +650,35 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.Respond(w, filteredDashboards)
-
 }
+
 func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	uuid := mux.Vars(r)["uuid"]
-	err := dashboards.DeleteDashboard(r.Context(), uuid, aH.featureFlags)
+	err := dashboards.DeleteDashboard(r.Context(), uuid)
 
 	if err != nil {
-		RespondError(w, err, nil)
+		RespondError(w, err)
 		return
 	}
 
 	aH.Respond(w, nil)
-
 }
 
 func (aH *APIHandler) queryDashboardVars(w http.ResponseWriter, r *http.Request) {
 
 	query := r.URL.Query().Get("query")
 	if query == "" {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query is required")}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query is required")})
 		return
 	}
 	if strings.Contains(strings.ToLower(query), "alter table") {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query shouldn't alter data")}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query shouldn't alter data")})
 		return
 	}
 	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 	aH.Respond(w, dashboardVars)
@@ -754,13 +732,13 @@ func prepareQuery(r *http.Request) (string, error) {
 func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {
 	query, err := prepareQuery(r)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 	aH.Respond(w, dashboardVars)
@@ -773,18 +751,18 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 	var postData map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&postData)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 	err = dashboards.IsPostDataSane(&postData)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
-	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), uuid, postData, aH.featureFlags)
+	dashboard, apiError := dashboards.UpdateDashboard(r.Context(), uuid, postData)
 	if apiError != nil {
-		RespondError(w, apiError, nil)
+		RespondError(w, apiError)
 		return
 	}
 
@@ -800,7 +778,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 
 	if apiError != nil {
 		if apiError.Type() != model.ErrorNotFound {
-			RespondError(w, apiError, nil)
+			RespondError(w, apiError)
 			return
 		}
 
@@ -808,7 +786,7 @@ func (aH *APIHandler) getDashboard(w http.ResponseWriter, r *http.Request) {
 			r.Context(), uuid,
 		)
 		if apiError != nil {
-			RespondError(w, apiError, nil)
+			RespondError(w, apiError)
 			return
 		}
 
@@ -827,9 +805,9 @@ func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, r *http.Request, sign
 	toSave["widgets"] = signozDashboard.Widgets
 	toSave["variables"] = signozDashboard.Variables
 
-	dashboard, apiError := dashboards.CreateDashboard(r.Context(), toSave, aH.featureFlags)
+	dashboard, apiError := dashboards.CreateDashboard(r.Context(), toSave)
 	if apiError != nil {
-		RespondError(w, apiError, nil)
+		RespondError(w, apiError)
 		return
 	}
 	aH.Respond(w, dashboard)
@@ -841,7 +819,7 @@ func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.R
 	b, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
@@ -853,7 +831,15 @@ func (aH *APIHandler) createDashboardsTransform(w http.ResponseWriter, r *http.R
 		aH.saveAndReturn(w, r, signozDashboard)
 		return
 	}
-	RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error while creating dashboard from grafana json")
+	RespondError(w, &model.ApiError{
+		Typ: model.ErrorInternal,
+		Err: fmt.Errorf("error while creating dashboard from grafana json"),
+		Errors: []model.StructuredError{
+			{
+				Msg: err.Error(),
+			},
+		},
+	})
 }
 
 func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
@@ -862,20 +848,20 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&postData)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	err = dashboards.IsPostDataSane(&postData)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, "Error reading request body")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
-	dash, apiErr := dashboards.CreateDashboard(r.Context(), postData, aH.featureFlags)
+	dash, apiErr := dashboards.CreateDashboard(r.Context(), postData)
 
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -889,16 +875,16 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.L().Error("Error in getting req body in test rule API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	alertCount, apiRrr := aH.ruleManager.TestNotification(ctx, string(body))
-	if apiRrr != nil {
-		RespondError(w, apiRrr, nil)
+	alertCount, apiErr := aH.ruleManager.TestNotification(ctx, string(body))
+	if apiErr != nil {
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -916,7 +902,7 @@ func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
 	err := aH.ruleManager.DeleteRule(r.Context(), id)
 
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 
@@ -932,14 +918,14 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.L().Error("error in getting req body of patch rule API\n", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	gettableRule, err := aH.ruleManager.PatchRule(r.Context(), string(body), id)
 
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 
@@ -953,14 +939,14 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.L().Error("error in getting req body of edit rule API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	err = aH.ruleManager.EditRule(r.Context(), string(body), id)
 
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 
@@ -972,7 +958,7 @@ func (aH *APIHandler) getChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	channel, apiErrorObj := aH.reader.GetChannel(id)
 	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+		RespondError(w, apiErrorObj)
 		return
 	}
 	aH.Respond(w, channel)
@@ -982,7 +968,7 @@ func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	apiErrorObj := aH.reader.DeleteChannel(id)
 	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+		RespondError(w, apiErrorObj)
 		return
 	}
 	aH.Respond(w, "notification channel successfully deleted")
@@ -991,7 +977,7 @@ func (aH *APIHandler) deleteChannel(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) listChannels(w http.ResponseWriter, r *http.Request) {
 	channels, apiErrorObj := aH.reader.GetChannels()
 	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+		RespondError(w, apiErrorObj)
 		return
 	}
 	aH.Respond(w, channels)
@@ -1004,20 +990,20 @@ func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.L().Error("Error in getting req body of testChannel API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.L().Error("Error in parsing req body of testChannel API\n", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 	// send alert
 	apiErrorObj := aH.alertManager.TestReceiver(receiver)
 	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+		RespondError(w, apiErrorObj)
 		return
 	}
 	aH.Respond(w, "test alert sent")
@@ -1031,21 +1017,21 @@ func (aH *APIHandler) editChannel(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.L().Error("Error in getting req body of editChannel API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.L().Error("Error in parsing req body of editChannel API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	_, apiErrorObj := aH.reader.EditChannel(receiver, id)
 
 	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+		RespondError(w, apiErrorObj)
 		return
 	}
 
@@ -1059,21 +1045,21 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.L().Error("Error in getting req body of createChannel API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	receiver := &am.Receiver{}
 	if err := json.Unmarshal(body, receiver); err != nil { // Parse []byte to go struct pointer
 		zap.L().Error("Error in parsing req body of createChannel API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	_, apiErrorObj := aH.reader.CreateChannel(receiver)
 
 	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+		RespondError(w, apiErrorObj)
 		return
 	}
 
@@ -1086,14 +1072,14 @@ func (aH *APIHandler) getAlerts(w http.ResponseWriter, r *http.Request) {
 	amEndpoint := constants.GetAlertManagerApiPrefix()
 	resp, err := http.Get(amEndpoint + "v1/alerts" + "?" + params.Encode())
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 
@@ -1106,13 +1092,13 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.L().Error("Error in getting req body for create rule API", zap.Error(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	rule, err := aH.ruleManager.CreateRule(r.Context(), string(body))
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
@@ -1125,7 +1111,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	query, apiErrorObj := parseQueryRangeRequest(r)
 
 	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+		RespondError(w, apiErrorObj)
 		return
 	}
 
@@ -1146,7 +1132,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	res, qs, apiError := aH.reader.GetQueryRangeResult(ctx, query)
 
 	if apiError != nil {
-		RespondError(w, apiError, nil)
+		RespondError(w, apiError)
 		return
 	}
 
@@ -1157,11 +1143,11 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err})
 		case promql.ErrQueryTimeout:
-			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err})
 		}
-		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err})
 		return
 	}
 
@@ -1180,7 +1166,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	queryParams, apiErrorObj := parseInstantQueryMetricsRequest(r)
 
 	if apiErrorObj != nil {
-		RespondError(w, apiErrorObj, nil)
+		RespondError(w, apiErrorObj)
 		return
 	}
 
@@ -1201,7 +1187,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	res, qs, apiError := aH.reader.GetInstantQueryMetricsResult(ctx, queryParams)
 
 	if apiError != nil {
-		RespondError(w, apiError, nil)
+		RespondError(w, apiError)
 		return
 	}
 
@@ -1212,11 +1198,11 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	if res.Err != nil {
 		switch res.Err.(type) {
 		case promql.ErrQueryCanceled:
-			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorCanceled, Err: res.Err})
 		case promql.ErrQueryTimeout:
-			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorTimeout, Err: res.Err})
 		}
-		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorExec, Err: res.Err})
 	}
 
 	response_data := &model.QueryData{
@@ -1234,18 +1220,18 @@ func (aH *APIHandler) submitFeedback(w http.ResponseWriter, r *http.Request) {
 	var postData map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&postData)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading request body")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	message, ok := postData["message"]
 	if !ok {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("message not present in request body")}, "Error reading message from request body")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("message not present in request body")})
 		return
 	}
 	messageStr := fmt.Sprintf("%s", message)
 	if len(messageStr) == 0 {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("empty message in request body")}, "empty message in request body")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("empty message in request body")})
 		return
 	}
 
@@ -1272,7 +1258,7 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 		telemetry.GetInstance().SendEvent(request.EventName, request.Attributes, userEmail, request.RateLimited, true)
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 	}
 }
 
@@ -1331,7 +1317,7 @@ func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Requ
 
 	result, _, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig, start, end)
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -1395,7 +1381,7 @@ func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 
 	params, err := ParseSearchTracesParams(r)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading params")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
@@ -1430,7 +1416,7 @@ func (aH *APIHandler) countErrors(w http.ResponseWriter, r *http.Request) {
 	}
 	result, apiErr := aH.reader.CountErrors(r.Context(), query)
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -1445,7 +1431,7 @@ func (aH *APIHandler) getErrorFromErrorID(w http.ResponseWriter, r *http.Request
 	}
 	result, apiErr := aH.reader.GetErrorFromErrorID(r.Context(), query)
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -1460,7 +1446,7 @@ func (aH *APIHandler) getNextPrevErrorIDs(w http.ResponseWriter, r *http.Request
 	}
 	result, apiErr := aH.reader.GetNextPrevErrorIDs(r.Context(), query)
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -1475,7 +1461,7 @@ func (aH *APIHandler) getErrorFromGroupID(w http.ResponseWriter, r *http.Request
 	}
 	result, apiErr := aH.reader.GetErrorFromGroupID(r.Context(), query)
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -1661,7 +1647,7 @@ func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		err := aH.reader.CheckClickHouse(r.Context())
 		if err != nil {
-			RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorStatusServiceUnavailable}, nil)
+			RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorStatusServiceUnavailable})
 			return
 		}
 	}
@@ -1678,7 +1664,7 @@ func (aH *APIHandler) inviteUser(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := auth.Invite(r.Context(), req)
 	if err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal})
 		return
 	}
 	aH.WriteJSON(w, r, resp)
@@ -1691,7 +1677,7 @@ func (aH *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := auth.GetInvite(context.Background(), token)
 	if err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorNotFound}, nil)
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorNotFound})
 		return
 	}
 	aH.WriteJSON(w, r, resp)
@@ -1702,7 +1688,7 @@ func (aH *APIHandler) revokeInvite(w http.ResponseWriter, r *http.Request) {
 	email := mux.Vars(r)["email"]
 
 	if err := auth.RevokeInvite(r.Context(), email); err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal})
 		return
 	}
 	aH.WriteJSON(w, r, map[string]string{"data": "invite revoked successfully"})
@@ -1714,7 +1700,7 @@ func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request)
 	ctx := context.Background()
 	invites, err := dao.DB().GetInvites(ctx)
 	if err != nil {
-		RespondError(w, err, nil)
+		RespondError(w, err)
 		return
 	}
 
@@ -1725,7 +1711,7 @@ func (aH *APIHandler) listPendingInvites(w http.ResponseWriter, r *http.Request)
 
 		org, apiErr := dao.DB().GetOrg(ctx, inv.OrgId)
 		if apiErr != nil {
-			RespondError(w, apiErr, nil)
+			RespondError(w, apiErr)
 		}
 		resp = append(resp, &model.InvitationResponseObject{
 			Name:         inv.Name,
@@ -1752,7 +1738,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 	_, apiErr := auth.Register(context.Background(), req)
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -1770,9 +1756,9 @@ func (aH *APIHandler) precheckLogin(w http.ResponseWriter, r *http.Request) {
 	email := r.URL.Query().Get("email")
 	sourceUrl := r.URL.Query().Get("ref")
 
-	resp, apierr := aH.appDao.PrecheckLogin(context.Background(), email, sourceUrl)
-	if apierr != nil {
-		RespondError(w, apierr, resp)
+	resp, apiErr := aH.appDao.PrecheckLogin(context.Background(), email, sourceUrl)
+	if apiErr != nil {
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -1816,7 +1802,7 @@ func (aH *APIHandler) listUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := dao.DB().GetUsers(context.Background())
 	if err != nil {
 		zap.L().Error("[listUsers] Failed to query list of users", zap.Error(err))
-		RespondError(w, err, nil)
+		RespondError(w, err)
 		return
 	}
 	// mask the password hash
@@ -1833,14 +1819,14 @@ func (aH *APIHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	user, err := dao.DB().GetUser(ctx, id)
 	if err != nil {
 		zap.L().Error("[getUser] Failed to query user", zap.Error(err))
-		RespondError(w, err, "Failed to get user")
+		RespondError(w, err)
 		return
 	}
 	if user == nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
 			Err: errors.New("user not found"),
-		}, nil)
+		})
 		return
 	}
 
@@ -1863,7 +1849,7 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	old, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
 		zap.L().Error("[editUser] Failed to query user", zap.Error(err))
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -1884,7 +1870,7 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 		ProfilePictureURL: old.ProfilePictureURL,
 	})
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 	}
 	aH.WriteJSON(w, r, map[string]string{"data": "user updated successfully"})
@@ -1899,7 +1885,7 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	user, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to get user's group")
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -1907,31 +1893,31 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorNotFound,
 			Err: errors.New("no user found"),
-		}, nil)
+		})
 		return
 	}
 
 	adminGroup, apiErr := dao.DB().GetGroupByName(ctx, constants.AdminGroup)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to get admin group")
+		RespondError(w, apiErr)
 		return
 	}
 	adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, adminGroup.Id)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to get admin group users")
+		RespondError(w, apiErr)
 		return
 	}
 
 	if user.GroupId == adminGroup.Id && len(adminUsers) == 1 {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
-			Err: errors.New("cannot delete the last admin user")}, nil)
+			Err: errors.New("cannot delete the last admin user")})
 		return
 	}
 
 	err := dao.DB().DeleteUser(ctx, id)
 	if err != nil {
-		RespondError(w, err, "Failed to delete user")
+		RespondError(w, err)
 		return
 	}
 	aH.WriteJSON(w, r, map[string]string{"data": "user deleted successfully"})
@@ -1947,7 +1933,7 @@ func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.L().Error("failed read user flags from http request for userId ", zap.String("userId", userId), zap.Error(err))
-		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 	flags := make(map[string]string, 0)
@@ -1955,13 +1941,13 @@ func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(b, &flags)
 	if err != nil {
 		zap.L().Error("failed parsing user flags for userId ", zap.String("userId", userId), zap.Error(err))
-		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	newflags, apiError := dao.DB().UpdateUserFlags(r.Context(), userId, flags)
 	if !apiError.IsNil() {
-		RespondError(w, apiError, nil)
+		RespondError(w, apiError)
 		return
 	}
 
@@ -1973,19 +1959,19 @@ func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 
 	user, err := dao.DB().GetUser(context.Background(), id)
 	if err != nil {
-		RespondError(w, err, "Failed to get user's group")
+		RespondError(w, err)
 		return
 	}
 	if user == nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorNotFound,
 			Err: errors.New("no user found"),
-		}, nil)
+		})
 		return
 	}
 	group, err := dao.DB().GetGroup(context.Background(), user.GroupId)
 	if err != nil {
-		RespondError(w, err, "Failed to get group")
+		RespondError(w, err)
 		return
 	}
 
@@ -2003,18 +1989,18 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	newGroup, apiErr := dao.DB().GetGroupByName(ctx, req.GroupName)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to get user's group")
+		RespondError(w, apiErr)
 		return
 	}
 
 	if newGroup == nil {
-		RespondError(w, apiErr, "Specified group is not present")
+		RespondError(w, apiErr)
 		return
 	}
 
 	user, apiErr := dao.DB().GetUser(ctx, id)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch user group")
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -2022,21 +2008,21 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 	if user.GroupId == auth.AuthCacheObj.AdminGroupId {
 		adminUsers, apiErr := dao.DB().GetUsersByGroup(ctx, auth.AuthCacheObj.AdminGroupId)
 		if apiErr != nil {
-			RespondError(w, apiErr, "Failed to fetch adminUsers")
+			RespondError(w, apiErr)
 			return
 		}
 
 		if len(adminUsers) == 1 {
 			RespondError(w, &model.ApiError{
 				Err: errors.New("cannot demote the last admin"),
-				Typ: model.ErrorInternal}, nil)
+				Typ: model.ErrorInternal})
 			return
 		}
 	}
 
 	apiErr = dao.DB().UpdateUserGroup(context.Background(), user.Id, newGroup.Id)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to add user to group")
+		RespondError(w, apiErr)
 		return
 	}
 	aH.WriteJSON(w, r, map[string]string{"data": "user group updated successfully"})
@@ -2045,7 +2031,7 @@ func (aH *APIHandler) editRole(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) getOrgs(w http.ResponseWriter, r *http.Request) {
 	orgs, apiErr := dao.DB().GetOrgs(context.Background())
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch orgs from the DB")
+		RespondError(w, apiErr)
 		return
 	}
 	aH.WriteJSON(w, r, orgs)
@@ -2055,7 +2041,7 @@ func (aH *APIHandler) getOrg(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	org, apiErr := dao.DB().GetOrg(context.Background(), id)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch org from the DB")
+		RespondError(w, apiErr)
 		return
 	}
 	aH.WriteJSON(w, r, org)
@@ -2070,7 +2056,7 @@ func (aH *APIHandler) editOrg(w http.ResponseWriter, r *http.Request) {
 
 	req.Id = id
 	if apiErr := dao.DB().EditOrg(context.Background(), req); apiErr != nil {
-		RespondError(w, apiErr, "Failed to update org in the DB")
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -2092,7 +2078,7 @@ func (aH *APIHandler) getOrgUsers(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	users, apiErr := dao.DB().GetUsersByOrg(context.Background(), id)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch org users from the DB")
+		RespondError(w, apiErr)
 		return
 	}
 	// mask the password hash
@@ -2108,7 +2094,7 @@ func (aH *APIHandler) getResetPasswordToken(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorInternal,
-			Err: err}, "Failed to create reset token entry in the DB")
+			Err: err})
 		return
 	}
 	aH.WriteJSON(w, r, resp)
@@ -2137,7 +2123,7 @@ func (aH *APIHandler) changePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if apiErr := auth.ChangePassword(context.Background(), req); apiErr != nil {
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 
 	}
@@ -2166,12 +2152,10 @@ func (aH *APIHandler) HandleError(w http.ResponseWriter, err error, statusCode i
 	if statusCode == http.StatusInternalServerError {
 		zap.L().Error("HTTP handler, Internal Server Error", zap.Error(err))
 	}
-	structuredResp := structuredResponse{
-		Errors: []structuredError{
-			{
-				Code: statusCode,
-				Msg:  err.Error(),
-			},
+	structuredResp := model.APIResponse{
+		Status: model.StatusError,
+		Error: model.StructuredError{
+			Msg: err.Error(),
 		},
 	}
 	resp, _ := json.Marshal(&structuredResp)
@@ -2229,7 +2213,7 @@ func (ah *APIHandler) ListIntegrations(
 		r.Context(), params,
 	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch integrations")
+		RespondError(w, apiErr)
 		return
 	}
 	ah.Respond(w, resp)
@@ -2243,7 +2227,7 @@ func (ah *APIHandler) GetIntegration(
 		r.Context(), integrationId,
 	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch integration details")
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -2258,7 +2242,7 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 		r.Context(), integrationId,
 	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "failed to check if integration is installed")
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -2272,7 +2256,7 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 		r.Context(), integrationId,
 	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "failed to fetch integration connection tests")
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -2286,7 +2270,7 @@ func (ah *APIHandler) GetIntegrationConnectionStatus(
 		r.Context(), connectionTests, lookbackSeconds,
 	)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to calculate integration connection status")
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -2464,7 +2448,7 @@ func (ah *APIHandler) InstallIntegration(
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, model.BadRequest(err))
 		return
 	}
 
@@ -2472,7 +2456,7 @@ func (ah *APIHandler) InstallIntegration(
 		r.Context(), &req,
 	)
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -2486,13 +2470,13 @@ func (ah *APIHandler) UninstallIntegration(
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, model.BadRequest(err))
 		return
 	}
 
 	apiErr := ah.IntegrationsController.Uninstall(r.Context(), &req)
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -2517,7 +2501,7 @@ func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware)
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
 	fields, apiErr := aH.reader.GetLogFields(r.Context())
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch fields from the DB")
+		RespondError(w, apiErr)
 		return
 	}
 	aH.WriteJSON(w, r, fields)
@@ -2527,20 +2511,20 @@ func (aH *APIHandler) logFieldUpdate(w http.ResponseWriter, r *http.Request) {
 	field := model.UpdateField{}
 	if err := json.NewDecoder(r.Body).Decode(&field); err != nil {
 		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Failed to decode payload")
+		RespondError(w, apiErr)
 		return
 	}
 
 	err := logs.ValidateUpdateFieldPayload(&field)
 	if err != nil {
 		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect payload")
+		RespondError(w, apiErr)
 		return
 	}
 
 	apiErr := aH.reader.UpdateLogField(r.Context(), &field)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to update filed in the DB")
+		RespondError(w, apiErr)
 		return
 	}
 	aH.WriteJSON(w, r, field)
@@ -2550,12 +2534,12 @@ func (aH *APIHandler) getLogs(w http.ResponseWriter, r *http.Request) {
 	params, err := logs.ParseLogFilterParams(r)
 	if err != nil {
 		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect params")
+		RespondError(w, apiErr)
 		return
 	}
 	res, apiErr := aH.reader.GetLogs(r.Context(), params)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch logs from the DB")
+		RespondError(w, apiErr)
 		return
 	}
 	aH.WriteJSON(w, r, map[string]interface{}{"results": res})
@@ -2565,7 +2549,7 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 	params, err := logs.ParseLogFilterParams(r)
 	if err != nil {
 		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect params")
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -2582,7 +2566,7 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
-		RespondError(w, &err, "streaming is not supported")
+		RespondError(w, &err)
 		return
 	}
 	// flush the headers
@@ -2610,12 +2594,12 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 	params, err := logs.ParseLogAggregateParams(r)
 	if err != nil {
 		apiErr := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErr, "Incorrect params")
+		RespondError(w, apiErr)
 		return
 	}
 	res, apiErr := aH.reader.AggregateLogs(r.Context(), params)
 	if apiErr != nil {
-		RespondError(w, apiErr, "Failed to fetch logs aggregate from the DB")
+		RespondError(w, apiErr)
 		return
 	}
 	aH.WriteJSON(w, r, res)
@@ -2633,11 +2617,11 @@ func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	version64, err := strconv.ParseInt(versionString, 0, 8)
 
 	if err != nil {
-		return 0, model.BadRequestStr("invalid version number")
+		return 0, model.BadRequest(fmt.Errorf("invalid version number"))
 	}
 
 	if version64 <= 0 {
-		return 0, model.BadRequestStr("invalid version number")
+		return 0, model.BadRequest(fmt.Errorf("invalid version number"))
 	}
 
 	return int(version64), nil
@@ -2647,7 +2631,7 @@ func (ah *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 	req := logparsingpipeline.PipelinesPreviewRequest{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, model.BadRequest(err))
 		return
 	}
 
@@ -2656,7 +2640,7 @@ func (ah *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 	)
 
 	if apiErr != nil {
-		RespondError(w, apiErr, nil)
+		RespondError(w, apiErr)
 		return
 	}
 
@@ -2667,7 +2651,7 @@ func (ah *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
-		RespondError(w, model.WrapApiError(err, "Failed to parse agent config version"), nil)
+		RespondError(w, model.WrapApiError(err, "Failed to parse agent config version"))
 		return
 	}
 
@@ -2681,7 +2665,7 @@ func (ah *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	if apierr != nil {
-		RespondError(w, apierr, payload)
+		RespondError(w, apierr)
 		return
 	}
 	ah.Respond(w, payload)
@@ -2742,7 +2726,7 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 	req := logparsingpipeline.PostablePipelines{}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, model.BadRequest(err))
 		return
 	}
 
@@ -2756,7 +2740,7 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 		for _, p := range postable {
 			if err := p.IsValid(); err != nil {
-				return nil, model.BadRequestStr(err.Error())
+				return nil, model.BadRequest(err)
 			}
 		}
 
@@ -2765,7 +2749,7 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	res, err := createPipeline(r.Context(), req.Pipelines)
 	if err != nil {
-		RespondError(w, err, nil)
+		RespondError(w, err)
 		return
 	}
 
@@ -2780,7 +2764,7 @@ func (aH *APIHandler) getSavedViews(w http.ResponseWriter, r *http.Request) {
 
 	queries, err := explorer.GetViewsForFilters(sourcePage, name, category)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 	aH.Respond(w, queries)
@@ -2790,17 +2774,17 @@ func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
 	var view v3.SavedView
 	err := json.NewDecoder(r.Body).Decode(&view)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 	// validate the query
 	if err := view.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 	uuid, err := explorer.CreateView(r.Context(), view)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 
@@ -2811,7 +2795,7 @@ func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
 	viewID := mux.Vars(r)["viewId"]
 	view, err := explorer.GetView(viewID)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 
@@ -2823,18 +2807,18 @@ func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
 	var view v3.SavedView
 	err := json.NewDecoder(r.Body).Decode(&view)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 	// validate the query
 	if err := view.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
 	err = explorer.UpdateView(r.Context(), viewID, view)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 
@@ -2846,7 +2830,7 @@ func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
 	viewID := mux.Vars(r)["viewId"]
 	err := explorer.DeleteView(viewID)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err})
 		return
 	}
 
@@ -2858,7 +2842,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 	req, err := parseAggregateAttributeRequest(r)
 
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
@@ -2870,12 +2854,12 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 	case v3.DataSourceTraces:
 		response, err = aH.reader.GetTraceAggregateAttributes(r.Context(), req)
 	default:
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")})
 		return
 	}
 
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
@@ -2887,7 +2871,7 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 	req, err := parseFilterAttributeKeyRequest(r)
 
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
@@ -2899,12 +2883,12 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 	case v3.DataSourceTraces:
 		response, err = aH.reader.GetTraceAttributeKeys(r.Context(), req)
 	default:
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")})
 		return
 	}
 
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
@@ -2916,7 +2900,7 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	req, err := parseFilterAttributeValueRequest(r)
 
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
@@ -2928,12 +2912,12 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	case v3.DataSourceTraces:
 		response, err = aH.reader.GetTraceAttributeValues(r.Context(), req)
 	default:
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")})
 		return
 	}
 
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
@@ -3013,7 +2997,7 @@ func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request)
 
 	if apiErrorObj != nil {
 		zap.L().Error(apiErrorObj.Err.Error())
-		RespondError(w, apiErrorObj, nil)
+		RespondError(w, apiErrorObj)
 		return
 	}
 
@@ -3024,7 +3008,6 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 	var result []*v3.Result
 	var err error
-	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
@@ -3034,7 +3017,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, errQuriesByName)
+				RespondError(w, apiErrObj)
 				return
 			}
 			logsv3.Enrich(queryRangeParams, fields)
@@ -3043,16 +3026,16 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
 		if err != nil {
 			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
+			RespondError(w, apiErrObj)
 			return
 		}
 	}
 
-	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
+	result, _, err = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj)
 		return
 	}
 
@@ -3169,7 +3152,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 
 	if apiErrorObj != nil {
 		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
-		RespondError(w, apiErrorObj, nil)
+		RespondError(w, apiErrorObj)
 		return
 	}
 
@@ -3177,7 +3160,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	temporalityErr := aH.populateTemporality(r.Context(), queryRangeParams)
 	if temporalityErr != nil {
 		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr})
 		return
 	}
 
@@ -3193,7 +3176,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 	if apiErrorObj != nil {
 		zap.L().Error(apiErrorObj.Err.Error())
-		RespondError(w, apiErrorObj, nil)
+		RespondError(w, apiErrorObj)
 		return
 	}
 
@@ -3208,7 +3191,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			fields, err = aH.getLogFieldsV3(r.Context(), queryRangeParams)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, nil)
+				RespondError(w, apiErrObj)
 				return
 			}
 			logsv3.Enrich(queryRangeParams, fields)
@@ -3216,13 +3199,13 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 
 		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
 		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 			return
 		}
 
 	default:
 		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err})
 		return
 	}
 
@@ -3239,7 +3222,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
-		RespondError(w, &err, "streaming is not supported")
+		RespondError(w, &err)
 		return
 	}
 	// flush the headers
@@ -3269,7 +3252,7 @@ func (aH *APIHandler) getMetricMetadata(w http.ResponseWriter, r *http.Request) 
 	serviceName := r.URL.Query().Get("serviceName")
 	metricMetadata, err := aH.reader.GetMetricMetadata(r.Context(), metricName, serviceName)
 	if err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal})
 		return
 	}
 
@@ -3280,7 +3263,6 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 
 	var result []*v3.Result
 	var err error
-	var errQuriesByName map[string]error
 	var spanKeys map[string]v3.AttributeKey
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		// check if any enrichment is required for logs if yes then enrich them
@@ -3290,7 +3272,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
 			if err != nil {
 				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-				RespondError(w, apiErrObj, errQuriesByName)
+				RespondError(w, apiErrObj)
 				return
 			}
 			logsv3.Enrich(queryRangeParams, fields)
@@ -3299,16 +3281,16 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
 		if err != nil {
 			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
+			RespondError(w, apiErrObj)
 			return
 		}
 	}
 
-	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams, spanKeys)
+	result, _, err = aH.querierV2.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj)
 		return
 	}
 
@@ -3319,7 +3301,7 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		RespondError(w, apiErrObj)
 		return
 	}
 	sendQueryResultEvents(r, result, queryRangeParams)
@@ -3335,7 +3317,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 
 	if apiErrorObj != nil {
 		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
-		RespondError(w, apiErrorObj, nil)
+		RespondError(w, apiErrorObj)
 		return
 	}
 
@@ -3343,7 +3325,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	temporalityErr := aH.populateTemporality(r.Context(), queryRangeParams)
 	if temporalityErr != nil {
 		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr})
 		return
 	}
 

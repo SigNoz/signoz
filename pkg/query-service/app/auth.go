@@ -34,7 +34,7 @@ func (am *AuthMiddleware) ViewAccess(f func(http.ResponseWriter, *http.Request))
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
 				Err: err,
-			}, nil)
+			})
 			return
 		}
 
@@ -42,7 +42,7 @@ func (am *AuthMiddleware) ViewAccess(f func(http.ResponseWriter, *http.Request))
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
 				Err: errors.New("API is accessible to viewers/editors/admins"),
-			}, nil)
+			})
 			return
 		}
 		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
@@ -58,14 +58,14 @@ func (am *AuthMiddleware) EditAccess(f func(http.ResponseWriter, *http.Request))
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
 				Err: err,
-			}, nil)
+			})
 			return
 		}
 		if !(auth.IsEditor(user) || auth.IsAdmin(user)) {
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
 				Err: errors.New("API is accessible to editors/admins"),
-			}, nil)
+			})
 			return
 		}
 		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
@@ -81,7 +81,7 @@ func (am *AuthMiddleware) SelfAccess(f func(http.ResponseWriter, *http.Request))
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
 				Err: err,
-			}, nil)
+			})
 			return
 		}
 		id := mux.Vars(r)["id"]
@@ -89,7 +89,7 @@ func (am *AuthMiddleware) SelfAccess(f func(http.ResponseWriter, *http.Request))
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
 				Err: errors.New("API is accessible for self access or to the admins"),
-			}, nil)
+			})
 			return
 		}
 		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)
@@ -105,14 +105,14 @@ func (am *AuthMiddleware) AdminAccess(f func(http.ResponseWriter, *http.Request)
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorUnauthorized,
 				Err: err,
-			}, nil)
+			})
 			return
 		}
 		if !auth.IsAdmin(user) {
 			RespondError(w, &model.ApiError{
 				Typ: model.ErrorForbidden,
 				Err: errors.New("API is accessible to admins only"),
-			}, nil)
+			})
 			return
 		}
 		ctx := context.WithValue(r.Context(), constants.ContextUserKey, user)

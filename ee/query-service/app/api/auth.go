@@ -35,14 +35,14 @@ func (ah *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	req := basemodel.LoginRequest{}
 	err := parseRequest(r, &req)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, basemodel.BadRequest(err), nil)
 		return
 	}
 
 	ctx := context.Background()
 
 	if req.Email != "" && ah.CheckFeature(model.SSO) {
-		var apierr basemodel.BaseApiError
+		var apierr *basemodel.ApiError
 		_, apierr = ah.AppDao().CanUsePassword(ctx, req.Email)
 		if apierr != nil && !apierr.IsNil() {
 			RespondError(w, apierr, nil)
@@ -74,7 +74,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	requestBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		zap.L().Error("received no input in api", zap.Error(err))
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, basemodel.BadRequest(err), nil)
 		return
 	}
 
@@ -82,7 +82,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		zap.L().Error("received invalid user registration request", zap.Error(err))
-		RespondError(w, model.BadRequest(fmt.Errorf("failed to register user")), nil)
+		RespondError(w, basemodel.BadRequest(fmt.Errorf("failed to register user")), nil)
 		return
 	}
 
@@ -90,13 +90,13 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	invite, err := baseauth.ValidateInvite(ctx, req)
 	if err != nil {
 		zap.L().Error("failed to validate invite token", zap.Error(err))
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, basemodel.BadRequest(err), nil)
 		return
 	}
 
 	if invite == nil {
 		zap.L().Error("failed to validate invite token: it is either empty or invalid", zap.Error(err))
-		RespondError(w, model.BadRequest(basemodel.ErrSignupFailed{}), nil)
+		RespondError(w, basemodel.BadRequest(basemodel.ErrSignupFailed{}), nil)
 		return
 	}
 
@@ -104,7 +104,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	domain, apierr := ah.AppDao().GetDomainByEmail(ctx, invite.Email)
 	if apierr != nil {
 		zap.L().Error("failed to get domain from email", zap.Error(apierr))
-		RespondError(w, model.InternalError(basemodel.ErrSignupFailed{}), nil)
+		RespondError(w, basemodel.InternalError(basemodel.ErrSignupFailed{}), nil)
 	}
 
 	precheckResp := &basemodel.PrecheckResponse{
@@ -120,7 +120,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var precheckError basemodel.BaseApiError
+		var precheckError *basemodel.ApiError
 
 		precheckResp, precheckError = ah.AppDao().PrecheckLogin(ctx, user.Email, req.SourceUrl)
 		if precheckError != nil {
@@ -130,7 +130,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// no-sso, validate password
 		if err := baseauth.ValidatePassword(req.Password); err != nil {
-			RespondError(w, model.InternalError(fmt.Errorf("password is not in a valid format")), nil)
+			RespondError(w, basemodel.InternalError(fmt.Errorf("password is not in a valid format")), nil)
 			return
 		}
 
@@ -155,7 +155,7 @@ func (ah *APIHandler) getInvite(w http.ResponseWriter, r *http.Request) {
 
 	inviteObject, err := baseauth.GetInvite(context.Background(), token)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, basemodel.BadRequest(err), nil)
 		return
 	}
 

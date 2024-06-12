@@ -14,6 +14,25 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
+type status string
+
+const (
+	StatusSuccess status = "success"
+	StatusError   status = "error"
+)
+
+type APIResponse struct {
+	Status status          `json:"status"`
+	Data   interface{}     `json:"data,omitempty"`
+	Error  StructuredError `json:"error,omitempty"`
+}
+
+type StructuredError struct {
+	Msg    string            `json:"msg"`
+	DocURL string            `json:"docURL,omitempty"`
+	Errors []StructuredError `json:"errors,omitempty"`
+}
+
 type BaseApiError interface {
 	Type() ErrorType
 	ToError() error
@@ -22,8 +41,10 @@ type BaseApiError interface {
 }
 
 type ApiError struct {
-	Typ ErrorType
-	Err error
+	Typ    ErrorType
+	Err    error
+	DocURL string
+	Errors []StructuredError
 }
 
 func (a *ApiError) Type() ErrorType {
@@ -63,8 +84,8 @@ const (
 	ErrorUnauthorized             ErrorType = "unauthorized"
 	ErrorForbidden                ErrorType = "forbidden"
 	ErrorConflict                 ErrorType = "conflict"
-	ErrorStreamingNotSupported    ErrorType = "streaming is not supported"
-	ErrorStatusServiceUnavailable ErrorType = "service unavailable"
+	ErrorStreamingNotSupported    ErrorType = "streaming_is_not_supported"
+	ErrorStatusServiceUnavailable ErrorType = "service_unavailable"
 )
 
 // BadRequest returns a ApiError object of bad request
@@ -72,14 +93,6 @@ func BadRequest(err error) *ApiError {
 	return &ApiError{
 		Typ: ErrorBadData,
 		Err: err,
-	}
-}
-
-// BadRequestStr returns a ApiError object of bad request
-func BadRequestStr(s string) *ApiError {
-	return &ApiError{
-		Typ: ErrorBadData,
-		Err: fmt.Errorf(s),
 	}
 }
 

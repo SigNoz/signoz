@@ -137,11 +137,11 @@ func (lm *Manager) LoadActiveLicense(features ...basemodel.Feature) error {
 	return nil
 }
 
-func (lm *Manager) GetLicenses(ctx context.Context) (response []model.License, apiError *model.ApiError) {
+func (lm *Manager) GetLicenses(ctx context.Context) (response []model.License, apiError *basemodel.ApiError) {
 
 	licenses, err := lm.repo.GetLicenses(ctx)
 	if err != nil {
-		return nil, model.InternalError(err)
+		return nil, basemodel.InternalError(err)
 	}
 
 	for _, l := range licenses {
@@ -212,8 +212,8 @@ func (lm *Manager) Validate(ctx context.Context) (reterr error) {
 
 	response, apiError := validate.ValidateLicense(lm.activeLicense.ActivationId)
 	if apiError != nil {
-		zap.L().Error("failed to validate license", zap.Error(apiError.Err))
-		return apiError.Err
+		zap.L().Error("failed to validate license", zap.Any("apiError", apiError))
+		return apiError
 	}
 
 	if response.PlanDetails == lm.activeLicense.PlanDetails {
@@ -255,7 +255,7 @@ func (lm *Manager) Validate(ctx context.Context) (reterr error) {
 }
 
 // Activate activates a license key with signoz server
-func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *model.License, errResponse *model.ApiError) {
+func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *model.License, errResponse *basemodel.ApiError) {
 	defer func() {
 		if errResponse != nil {
 			userEmail, err := auth.GetEmailFromJwt(ctx)
@@ -268,7 +268,7 @@ func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *m
 
 	response, apiError := validate.ActivateLicense(key, "")
 	if apiError != nil {
-		zap.L().Error("failed to activate license", zap.Error(apiError.Err))
+		zap.L().Error("failed to activate license", zap.Any("apiError", apiError))
 		return nil, apiError
 	}
 
@@ -283,14 +283,14 @@ func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *m
 
 	if err != nil {
 		zap.L().Error("failed to activate license", zap.Error(err))
-		return nil, model.InternalError(err)
+		return nil, basemodel.InternalError(err)
 	}
 
 	// store the license before activating it
 	err = lm.repo.InsertLicense(ctx, l)
 	if err != nil {
 		zap.L().Error("failed to activate license", zap.Error(err))
-		return nil, model.InternalError(err)
+		return nil, basemodel.InternalError(err)
 	}
 
 	// license is valid, activate it

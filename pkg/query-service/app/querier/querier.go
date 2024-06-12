@@ -14,7 +14,7 @@ import (
 	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
-	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
+	chErrors "go.signoz.io/signoz/pkg/query-service/responseerrors"
 
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"

@@ -76,47 +76,47 @@ func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url
 }
 
 // GetDomainByName returns org domain for a given domain name
-func (m *modelDao) GetDomainByName(ctx context.Context, name string) (*model.OrgDomain, basemodel.BaseApiError) {
+func (m *modelDao) GetDomainByName(ctx context.Context, name string) (*model.OrgDomain, *basemodel.ApiError) {
 
 	stored := StoredDomain{}
 	err := m.DB().Get(&stored, `SELECT * FROM org_domains WHERE name=$1 LIMIT 1`, name)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, model.BadRequest(fmt.Errorf("invalid domain name"))
+			return nil, basemodel.BadRequest(fmt.Errorf("invalid domain name"))
 		}
-		return nil, model.InternalError(err)
+		return nil, basemodel.InternalError(err)
 	}
 
 	domain := &model.OrgDomain{Id: stored.Id, Name: stored.Name, OrgId: stored.OrgId}
 	if err := domain.LoadConfig(stored.Data); err != nil {
-		return nil, model.InternalError(err)
+		return nil, basemodel.InternalError(err)
 	}
 	return domain, nil
 }
 
 // GetDomain returns org domain for a given domain id
-func (m *modelDao) GetDomain(ctx context.Context, id uuid.UUID) (*model.OrgDomain, basemodel.BaseApiError) {
+func (m *modelDao) GetDomain(ctx context.Context, id uuid.UUID) (*model.OrgDomain, *basemodel.ApiError) {
 
 	stored := StoredDomain{}
 	err := m.DB().Get(&stored, `SELECT * FROM org_domains WHERE id=$1 LIMIT 1`, id)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, model.BadRequest(fmt.Errorf("invalid domain id"))
+			return nil, basemodel.BadRequest(fmt.Errorf("invalid domain id"))
 		}
-		return nil, model.InternalError(err)
+		return nil, basemodel.InternalError(err)
 	}
 
 	domain := &model.OrgDomain{Id: stored.Id, Name: stored.Name, OrgId: stored.OrgId}
 	if err := domain.LoadConfig(stored.Data); err != nil {
-		return nil, model.InternalError(err)
+		return nil, basemodel.InternalError(err)
 	}
 	return domain, nil
 }
 
 // ListDomains gets the list of auth domains by org id
-func (m *modelDao) ListDomains(ctx context.Context, orgId string) ([]model.OrgDomain, basemodel.BaseApiError) {
+func (m *modelDao) ListDomains(ctx context.Context, orgId string) ([]model.OrgDomain, *basemodel.ApiError) {
 	domains := []model.OrgDomain{}
 
 	stored := []StoredDomain{}
@@ -126,7 +126,7 @@ func (m *modelDao) ListDomains(ctx context.Context, orgId string) ([]model.OrgDo
 		if err == sql.ErrNoRows {
 			return []model.OrgDomain{}, nil
 		}
-		return nil, model.InternalError(err)
+		return nil, basemodel.InternalError(err)
 	}
 
 	for _, s := range stored {
@@ -141,20 +141,20 @@ func (m *modelDao) ListDomains(ctx context.Context, orgId string) ([]model.OrgDo
 }
 
 // CreateDomain creates  a new auth domain
-func (m *modelDao) CreateDomain(ctx context.Context, domain *model.OrgDomain) basemodel.BaseApiError {
+func (m *modelDao) CreateDomain(ctx context.Context, domain *model.OrgDomain) *basemodel.ApiError {
 
 	if domain.Id == uuid.Nil {
 		domain.Id = uuid.New()
 	}
 
 	if domain.OrgId == "" || domain.Name == "" {
-		return model.BadRequest(fmt.Errorf("domain creation failed, missing fields: OrgId, Name "))
+		return basemodel.BadRequest(fmt.Errorf("domain creation failed, missing fields: OrgId, Name "))
 	}
 
 	configJson, err := json.Marshal(domain)
 	if err != nil {
 		zap.L().Error("failed to unmarshal domain config", zap.Error(err))
-		return model.InternalError(fmt.Errorf("domain creation failed"))
+		return basemodel.InternalError(fmt.Errorf("domain creation failed"))
 	}
 
 	_, err = m.DB().ExecContext(ctx,
@@ -168,24 +168,24 @@ func (m *modelDao) CreateDomain(ctx context.Context, domain *model.OrgDomain) ba
 
 	if err != nil {
 		zap.L().Error("failed to insert domain in db", zap.Error(err))
-		return model.InternalError(fmt.Errorf("domain creation failed"))
+		return basemodel.InternalError(fmt.Errorf("domain creation failed"))
 	}
 
 	return nil
 }
 
 // UpdateDomain updates stored config params for a domain
-func (m *modelDao) UpdateDomain(ctx context.Context, domain *model.OrgDomain) basemodel.BaseApiError {
+func (m *modelDao) UpdateDomain(ctx context.Context, domain *model.OrgDomain) *basemodel.ApiError {
 
 	if domain.Id == uuid.Nil {
 		zap.L().Error("domain update failed", zap.Error(fmt.Errorf("OrgDomain.Id is null")))
-		return model.InternalError(fmt.Errorf("domain update failed"))
+		return basemodel.InternalError(fmt.Errorf("domain update failed"))
 	}
 
 	configJson, err := json.Marshal(domain)
 	if err != nil {
 		zap.L().Error("domain update failed", zap.Error(err))
-		return model.InternalError(fmt.Errorf("domain update failed"))
+		return basemodel.InternalError(fmt.Errorf("domain update failed"))
 	}
 
 	_, err = m.DB().ExecContext(ctx,
@@ -196,18 +196,18 @@ func (m *modelDao) UpdateDomain(ctx context.Context, domain *model.OrgDomain) ba
 
 	if err != nil {
 		zap.L().Error("domain update failed", zap.Error(err))
-		return model.InternalError(fmt.Errorf("domain update failed"))
+		return basemodel.InternalError(fmt.Errorf("domain update failed"))
 	}
 
 	return nil
 }
 
 // DeleteDomain deletes an org domain
-func (m *modelDao) DeleteDomain(ctx context.Context, id uuid.UUID) basemodel.BaseApiError {
+func (m *modelDao) DeleteDomain(ctx context.Context, id uuid.UUID) *basemodel.ApiError {
 
 	if id == uuid.Nil {
 		zap.L().Error("domain delete failed", zap.Error(fmt.Errorf("OrgDomain.Id is null")))
-		return model.InternalError(fmt.Errorf("domain delete failed"))
+		return basemodel.InternalError(fmt.Errorf("domain delete failed"))
 	}
 
 	_, err := m.DB().ExecContext(ctx,
@@ -216,21 +216,21 @@ func (m *modelDao) DeleteDomain(ctx context.Context, id uuid.UUID) basemodel.Bas
 
 	if err != nil {
 		zap.L().Error("domain delete failed", zap.Error(err))
-		return model.InternalError(fmt.Errorf("domain delete failed"))
+		return basemodel.InternalError(fmt.Errorf("domain delete failed"))
 	}
 
 	return nil
 }
 
-func (m *modelDao) GetDomainByEmail(ctx context.Context, email string) (*model.OrgDomain, basemodel.BaseApiError) {
+func (m *modelDao) GetDomainByEmail(ctx context.Context, email string) (*model.OrgDomain, *basemodel.ApiError) {
 
 	if email == "" {
-		return nil, model.BadRequest(fmt.Errorf("could not find auth domain, missing fields: email "))
+		return nil, basemodel.BadRequest(fmt.Errorf("could not find auth domain, missing fields: email "))
 	}
 
 	components := strings.Split(email, "@")
 	if len(components) < 2 {
-		return nil, model.BadRequest(fmt.Errorf("invalid email address"))
+		return nil, basemodel.BadRequest(fmt.Errorf("invalid email address"))
 	}
 
 	parsedDomain := components[1]
@@ -242,12 +242,12 @@ func (m *modelDao) GetDomainByEmail(ctx context.Context, email string) (*model.O
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, model.InternalError(err)
+		return nil, basemodel.InternalError(err)
 	}
 
 	domain := &model.OrgDomain{Id: stored.Id, Name: stored.Name, OrgId: stored.OrgId}
 	if err := domain.LoadConfig(stored.Data); err != nil {
-		return nil, model.InternalError(err)
+		return nil, basemodel.InternalError(err)
 	}
 	return domain, nil
 }

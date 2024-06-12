@@ -31,13 +31,13 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 
 	req := model.CreatePATRequestBody{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, basemodel.BadRequest(err), nil)
 		return
 	}
 	user, err := auth.GetUserFromRequest(r)
 	if err != nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
+		RespondError(w, &basemodel.ApiError{
+			Typ: basemodel.ErrorUnauthorized,
 			Err: err,
 		}, nil)
 		return
@@ -49,7 +49,7 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	}
 	err = validatePATRequest(pat)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, basemodel.BadRequest(err), nil)
 		return
 	}
 
@@ -66,7 +66,7 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	}
 
 	zap.L().Info("Got Create PAT request", zap.Any("pat", pat))
-	var apierr basemodel.BaseApiError
+	var apierr *basemodel.ApiError
 	if pat, apierr = ah.AppDao().CreatePAT(ctx, pat); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
@@ -93,14 +93,14 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 
 	req := model.PAT{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, basemodel.BadRequest(err), nil)
 		return
 	}
 
 	user, err := auth.GetUserFromRequest(r)
 	if err != nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
+		RespondError(w, &basemodel.ApiError{
+			Typ: basemodel.ErrorUnauthorized,
 			Err: err,
 		}, nil)
 		return
@@ -108,7 +108,7 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 
 	err = validatePATRequest(req)
 	if err != nil {
-		RespondError(w, model.BadRequest(err), nil)
+		RespondError(w, basemodel.BadRequest(err), nil)
 		return
 	}
 
@@ -116,7 +116,7 @@ func (ah *APIHandler) updatePAT(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	req.UpdatedAt = time.Now().Unix()
 	zap.L().Info("Got Update PAT request", zap.Any("pat", req))
-	var apierr basemodel.BaseApiError
+	var apierr *basemodel.ApiError
 	if apierr = ah.AppDao().UpdatePAT(ctx, req, id); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
@@ -129,8 +129,8 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	user, err := auth.GetUserFromRequest(r)
 	if err != nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
+		RespondError(w, &basemodel.ApiError{
+			Typ: basemodel.ErrorUnauthorized,
 			Err: err,
 		}, nil)
 		return
@@ -149,8 +149,8 @@ func (ah *APIHandler) revokePAT(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	user, err := auth.GetUserFromRequest(r)
 	if err != nil {
-		RespondError(w, &model.ApiError{
-			Typ: model.ErrorUnauthorized,
+		RespondError(w, &basemodel.ApiError{
+			Typ: basemodel.ErrorUnauthorized,
 			Err: err,
 		}, nil)
 		return

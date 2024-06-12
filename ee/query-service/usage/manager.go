@@ -190,7 +190,7 @@ func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload
 		} else if apiErr != nil {
 			// sleeping for exponential backoff
 			sleepDuration := RetryInterval * time.Duration(i)
-			zap.L().Error("failed to upload snapshot retrying after %v secs : %v", zap.Duration("sleepDuration", sleepDuration), zap.Error(apiErr.Err))
+			zap.L().Error("failed to upload snapshot retrying after %v secs : %v", zap.Duration("sleepDuration", sleepDuration), zap.Any("apiErr", apiErr))
 			time.Sleep(sleepDuration)
 		} else {
 			break

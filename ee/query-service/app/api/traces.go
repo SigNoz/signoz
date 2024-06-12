@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"go.signoz.io/signoz/ee/query-service/app/db"
-	"go.signoz.io/signoz/ee/query-service/model"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
@@ -19,7 +18,7 @@ func (ah *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
 	}
 	searchTracesParams, err := baseapp.ParseSearchTracesParams(r)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading params")
+		RespondError(w, &basemodel.ApiError{Typ: basemodel.ErrorBadData, Err: err}, "Error reading params")
 		return
 	}
 

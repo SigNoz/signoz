@@ -16,7 +16,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/mitchellh/mapstructure"
 	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
@@ -43,7 +42,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, err
 	}
 
-	table_schema := `CREATE TABLE IF NOT EXISTS dashboards (
+	tableSchema := `CREATE TABLE IF NOT EXISTS dashboards (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		uuid TEXT NOT NULL UNIQUE,
 		created_at datetime NOT NULL,
@@ -51,24 +50,24 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		data TEXT NOT NULL
 	);`
 
-	_, err = db.Exec(table_schema)
+	_, err = db.Exec(tableSchema)
 	if err != nil {
 		return nil, fmt.Errorf("error in creating dashboard table: %s", err.Error())
 	}
 
-	table_schema = `CREATE TABLE IF NOT EXISTS rules (
+	tableSchema = `CREATE TABLE IF NOT EXISTS rules (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		updated_at datetime NOT NULL,
 		deleted INTEGER DEFAULT 0,
 		data TEXT NOT NULL
 	);`
 
-	_, err = db.Exec(table_schema)
+	_, err = db.Exec(tableSchema)
 	if err != nil {
 		return nil, fmt.Errorf("error in creating rules table: %s", err.Error())
 	}
 
-	table_schema = `CREATE TABLE IF NOT EXISTS notification_channels (
+	tableSchema = `CREATE TABLE IF NOT EXISTS notification_channels (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		created_at datetime NOT NULL,
 		updated_at datetime NOT NULL,
@@ -78,12 +77,12 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		data TEXT NOT NULL
 	);`
 
-	_, err = db.Exec(table_schema)
+	_, err = db.Exec(tableSchema)
 	if err != nil {
 		return nil, fmt.Errorf("error in creating notification_channles table: %s", err.Error())
 	}
 
-	tableSchema := `CREATE TABLE IF NOT EXISTS planned_maintenance (
+	tableSchema = `CREATE TABLE IF NOT EXISTS planned_maintenance (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT NOT NULL,
 		description TEXT,
@@ -99,7 +98,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("error in creating planned_maintenance table: %s", err.Error())
 	}
 
-	table_schema = `CREATE TABLE IF NOT EXISTS ttl_status (
+	tableSchema = `CREATE TABLE IF NOT EXISTS ttl_status (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		transaction_id TEXT NOT NULL,
 		created_at datetime NOT NULL,
@@ -110,7 +109,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 		status TEXT NOT NULL
 	);`
 
-	_, err = db.Exec(table_schema)
+	_, err = db.Exec(tableSchema)
 	if err != nil {
 		return nil, fmt.Errorf("error in creating ttl_status table: %s", err.Error())
 	}
@@ -192,7 +191,7 @@ func (c *Data) Scan(src interface{}) error {
 }
 
 // CreateDashboard creates a new dashboard
-func CreateDashboard(ctx context.Context, data map[string]interface{}, fm interfaces.FeatureLookup) (*Dashboard, *model.ApiError) {
+func CreateDashboard(ctx context.Context, data map[string]interface{}) (*Dashboard, *model.ApiError) {
 	dash := &Dashboard{
 		Data: data,
 	}
@@ -213,15 +212,7 @@ func CreateDashboard(ctx context.Context, data map[string]interface{}, fm interf
 	mapData, err := json.Marshal(dash.Data)
 	if err != nil {
 		zap.L().Error("Error in marshalling data field in dashboard: ", zap.Any("dashboard", dash), zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
-	}
-
-	newCount, _ := countTraceAndLogsPanel(data)
-	if newCount > 0 {
-		fErr := checkFeatureUsage(fm, newCount)
-		if fErr != nil {
-			return nil, fErr
-		}
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	result, err := db.Exec("INSERT INTO dashboards (uuid, created_at, created_by, updated_at, updated_by, data) VALUES ($1, $2, $3, $4, $5, $6)",
@@ -229,18 +220,13 @@ func CreateDashboard(ctx context.Context, data map[string]interface{}, fm interf
 
 	if err != nil {
 		zap.L().Error("Error in inserting dashboard data: ", zap.Any("dashboard", dash), zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	lastInsertId, err := result.LastInsertId()
 	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	dash.Id = int(lastInsertId)
-
-	traceAndLogsPanelUsage, _ := countTraceAndLogsPanel(data)
-	if traceAndLogsPanelUsage > 0 {
-		updateFeatureUsage(fm, traceAndLogsPanelUsage)
-	}
 
 	return dash, nil
 }
@@ -252,13 +238,13 @@ func GetDashboards(ctx context.Context) ([]Dashboard, *model.ApiError) {
 
 	err := db.Select(&dashboards, query)
 	if err != nil {
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	return dashboards, nil
 }
 
-func DeleteDashboard(ctx context.Context, uuid string, fm interfaces.FeatureLookup) *model.ApiError {
+func DeleteDashboard(ctx context.Context, uuid string) *model.ApiError {
 
 	dashboard, dErr := GetDashboard(ctx, uuid)
 	if dErr != nil {
@@ -274,22 +260,9 @@ func DeleteDashboard(ctx context.Context, uuid string, fm interfaces.FeatureLook
 
 	query := `DELETE FROM dashboards WHERE uuid=?`
 
-	result, err := db.Exec(query, uuid)
+	_, err := db.Exec(query, uuid)
 	if err != nil {
-		return &model.ApiError{Typ: model.ErrorExec, Err: err}
-	}
-
-	affectedRows, err := result.RowsAffected()
-	if err != nil {
-		return &model.ApiError{Typ: model.ErrorExec, Err: err}
-	}
-	if affectedRows == 0 {
-		return &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
-	}
-
-	traceAndLogsPanelUsage, _ := countTraceAndLogsPanel(dashboard.Data)
-	if traceAndLogsPanelUsage > 0 {
-		updateFeatureUsage(fm, -traceAndLogsPanelUsage)
+		return &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 
 	return nil
@@ -308,7 +281,7 @@ func GetDashboard(ctx context.Context, uuid string) (*Dashboard, *model.ApiError
 	return &dashboard, nil
 }
 
-func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface{}, fm interfaces.FeatureLookup) (*Dashboard, *model.ApiError) {
+func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface{}) (*Dashboard, *model.ApiError) {
 
 	mapData, err := json.Marshal(data)
 	if err != nil {
@@ -330,14 +303,8 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 	}
 
 	// check if the count of trace and logs QB panel has changed, if yes, then check feature flag count
-	existingCount, existingTotal := countTraceAndLogsPanel(dashboard.Data)
-	newCount, newTotal := countTraceAndLogsPanel(data)
-	if newCount > existingCount {
-		err := checkFeatureUsage(fm, newCount-existingCount)
-		if err != nil {
-			return nil, err
-		}
-	}
+	_, existingTotal := countTraceAndLogsPanel(dashboard.Data)
+	_, newTotal := countTraceAndLogsPanel(data)
 
 	if existingTotal > newTotal && existingTotal-newTotal > 1 {
 		// if the total count of panels has reduced by more than 1,
@@ -350,7 +317,6 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 		if len(differenceIds) > 1 {
 			return nil, model.BadRequest(fmt.Errorf("deleting more than one panel is not supported"))
 		}
-
 	}
 
 	dashboard.UpdatedAt = time.Now()
@@ -362,11 +328,7 @@ func UpdateDashboard(ctx context.Context, uuid string, data map[string]interface
 
 	if err != nil {
 		zap.L().Error("Error in inserting dashboard data", zap.Any("data", data), zap.Error(err))
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
-	}
-	if existingCount != newCount {
-		// if the count of trace and logs panel has changed, we need to update feature flag count as well
-		updateFeatureUsage(fm, newCount-existingCount)
+		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
 	return dashboard, nil
 }
@@ -386,51 +348,6 @@ func LockUnlockDashboard(ctx context.Context, uuid string, lock bool) *model.Api
 		return &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
-	return nil
-}
-
-func updateFeatureUsage(fm interfaces.FeatureLookup, usage int64) *model.ApiError {
-	feature, err := fm.GetFeatureFlag(model.QueryBuilderPanels)
-	if err != nil {
-		switch err.(type) {
-		case model.ErrFeatureUnavailable:
-			zap.L().Error("feature unavailable", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
-			return model.BadRequest(err)
-		default:
-			zap.L().Error("feature check failed", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
-			return model.BadRequest(err)
-		}
-	}
-	feature.Usage += usage
-	if feature.Usage >= feature.UsageLimit && feature.UsageLimit != -1 {
-		feature.Active = false
-	}
-	if feature.Usage < feature.UsageLimit || feature.UsageLimit == -1 {
-		feature.Active = true
-	}
-	err = fm.UpdateFeatureFlag(feature)
-	if err != nil {
-		return model.BadRequest(err)
-	}
-
-	return nil
-}
-
-func checkFeatureUsage(fm interfaces.FeatureLookup, usage int64) *model.ApiError {
-	feature, err := fm.GetFeatureFlag(model.QueryBuilderPanels)
-	if err != nil {
-		switch err.(type) {
-		case model.ErrFeatureUnavailable:
-			zap.L().Error("feature unavailable", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
-			return model.BadRequest(err)
-		default:
-			zap.L().Error("feature check failed", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
-			return model.BadRequest(err)
-		}
-	}
-	if feature.UsageLimit-(feature.Usage+usage) < 0 && feature.UsageLimit != -1 {
-		return model.BadRequest(fmt.Errorf("feature usage exceeded"))
-	}
 	return nil
 }
 

@@ -21,24 +21,24 @@ type ModelDao interface {
 	DB() *sqlx.DB
 
 	// auth methods
-	CanUsePassword(ctx context.Context, email string) (bool, basemodel.BaseApiError)
-	PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr basemodel.BaseApiError)
+	CanUsePassword(ctx context.Context, email string) (bool, *basemodel.ApiError)
+	PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr *basemodel.ApiError)
 	GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*model.OrgDomain, error)
 
 	// org domain (auth domains) CRUD ops
-	ListDomains(ctx context.Context, orgId string) ([]model.OrgDomain, basemodel.BaseApiError)
-	GetDomain(ctx context.Context, id uuid.UUID) (*model.OrgDomain, basemodel.BaseApiError)
-	CreateDomain(ctx context.Context, d *model.OrgDomain) basemodel.BaseApiError
-	UpdateDomain(ctx context.Context, domain *model.OrgDomain) basemodel.BaseApiError
-	DeleteDomain(ctx context.Context, id uuid.UUID) basemodel.BaseApiError
-	GetDomainByEmail(ctx context.Context, email string) (*model.OrgDomain, basemodel.BaseApiError)
+	ListDomains(ctx context.Context, orgId string) ([]model.OrgDomain, *basemodel.ApiError)
+	GetDomain(ctx context.Context, id uuid.UUID) (*model.OrgDomain, *basemodel.ApiError)
+	CreateDomain(ctx context.Context, d *model.OrgDomain) *basemodel.ApiError
+	UpdateDomain(ctx context.Context, domain *model.OrgDomain) *basemodel.ApiError
+	DeleteDomain(ctx context.Context, id uuid.UUID) *basemodel.ApiError
+	GetDomainByEmail(ctx context.Context, email string) (*model.OrgDomain, *basemodel.ApiError)
 
-	CreatePAT(ctx context.Context, p model.PAT) (model.PAT, basemodel.BaseApiError)
-	UpdatePAT(ctx context.Context, p model.PAT, id string) basemodel.BaseApiError
-	GetPAT(ctx context.Context, pat string) (*model.PAT, basemodel.BaseApiError)
-	UpdatePATLastUsed(ctx context.Context, pat string, lastUsed int64) basemodel.BaseApiError
-	GetPATByID(ctx context.Context, id string) (*model.PAT, basemodel.BaseApiError)
-	GetUserByPAT(ctx context.Context, token string) (*basemodel.UserPayload, basemodel.BaseApiError)
-	ListPATs(ctx context.Context) ([]model.PAT, basemodel.BaseApiError)
-	RevokePAT(ctx context.Context, id string, userID string) basemodel.BaseApiError
+	CreatePAT(ctx context.Context, p model.PAT) (model.PAT, *basemodel.ApiError)
+	UpdatePAT(ctx context.Context, p model.PAT, id string) *basemodel.ApiError
+	GetPAT(ctx context.Context, pat string) (*model.PAT, *basemodel.ApiError)
+	UpdatePATLastUsed(ctx context.Context, pat string, lastUsed int64) *basemodel.ApiError
+	GetPATByID(ctx context.Context, id string) (*model.PAT, *basemodel.ApiError)
+	GetUserByPAT(ctx context.Context, token string) (*basemodel.UserPayload, *basemodel.ApiError)
+	ListPATs(ctx context.Context) ([]model.PAT, *basemodel.ApiError)
+	RevokePAT(ctx context.Context, id string, userID string) *basemodel.ApiError
 }

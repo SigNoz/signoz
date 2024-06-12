@@ -1,6 +1,8 @@
-package errors
+package responseerrors
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
 	// ErrResourceBytesLimitExceeded is returned when the resource bytes limit is exceeded

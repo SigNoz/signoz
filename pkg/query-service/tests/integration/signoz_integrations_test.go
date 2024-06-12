@@ -500,7 +500,7 @@ func (tb *IntegrationsTestBed) GetDashboardByIdFromQS(dashboardUuid string) *das
 func (tb *IntegrationsTestBed) RequestQS(
 	path string,
 	postData interface{},
-) *app.ApiResponse {
+) *model.APIResponse {
 	req, err := NewAuthenticatedTestRequest(
 		tb.testUser, path, postData,
 	)
@@ -523,7 +523,7 @@ func (tb *IntegrationsTestBed) RequestQS(
 		)
 	}
 
-	var result app.ApiResponse
+	var result model.APIResponse
 	err = json.Unmarshal(responseBody, &result)
 	if err != nil {
 		tb.t.Fatalf(

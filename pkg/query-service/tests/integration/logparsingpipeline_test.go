@@ -537,7 +537,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 		)
 	}
 
-	var result app.ApiResponse
+	var result model.APIResponse
 	err = json.Unmarshal(responseBody, &result)
 	if err != nil {
 		tb.t.Fatalf(
@@ -587,7 +587,7 @@ func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.Pipeline
 		)
 	}
 
-	var result app.ApiResponse
+	var result model.APIResponse
 	err = json.Unmarshal(responseBody, &result)
 	if err != nil {
 		tb.t.Fatalf(
@@ -718,7 +718,7 @@ func (tb *LogPipelinesTestBed) assertNewAgentGetsPipelinesOnConnection(
 	)
 }
 
-func unmarshalPipelinesResponse(apiResponse *app.ApiResponse) (
+func unmarshalPipelinesResponse(apiResponse *model.APIResponse) (
 	*logparsingpipeline.PipelinesResponse,
 	error,
 ) {

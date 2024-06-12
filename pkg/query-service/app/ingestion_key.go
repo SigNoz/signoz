@@ -15,7 +15,7 @@ func (aH *APIHandler) insertIngestionKey(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := dao.DB().InsertIngestionKey(context.Background(), req); err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal})
 		return
 	}
 
@@ -25,7 +25,7 @@ func (aH *APIHandler) insertIngestionKey(w http.ResponseWriter, r *http.Request)
 func (aH *APIHandler) getIngestionKeys(w http.ResponseWriter, r *http.Request) {
 	ingestionKeys, err := dao.DB().GetIngestionKeys(context.Background())
 	if err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal})
 		return
 	}
 

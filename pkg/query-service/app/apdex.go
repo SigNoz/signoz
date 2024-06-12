@@ -16,7 +16,7 @@ func (aH *APIHandler) setApdexSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := dao.DB().SetApdexSettings(context.Background(), req); err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal})
 		return
 	}
 
@@ -27,7 +27,7 @@ func (aH *APIHandler) getApdexSettings(w http.ResponseWriter, r *http.Request) {
 	services := r.URL.Query().Get("services")
 	apdexSet, err := dao.DB().GetApdexSettings(context.Background(), strings.Split(strings.TrimSpace(services), ","))
 	if err != nil {
-		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal}, nil)
+		RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorInternal})
 		return
 	}
 
