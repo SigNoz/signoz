@@ -235,7 +235,7 @@ function DashboardsList(): JSX.Element {
 				order: 'descend',
 				pagination: sortOrder.pagination || '1',
 			});
-			sortDashboardsByCreatedAt(filteredDashboards || []);
+			sortDashboardsByUpdatedAt(filteredDashboards || []);
 		}
 	}, [
 		dashboardListResponse,
