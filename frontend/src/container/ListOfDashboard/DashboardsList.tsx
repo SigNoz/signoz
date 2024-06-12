@@ -34,7 +34,7 @@ import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { get, isEmpty, isNull, isUndefined } from 'lodash-es';
+import { get, isEmpty, isNull } from 'lodash-es';
 import {
 	ArrowDownWideNarrow,
 	ArrowUpRight,
@@ -195,7 +195,6 @@ function DashboardsList(): JSX.Element {
 	}, [sortOrder]);
 
 	const sortHandle = (key: string): void => {
-		console.log(dashboards);
 		if (!dashboards) return;
 		if (key === 'createdAt') {
 			sortDashboardsByCreatedAt(dashboards);
@@ -214,13 +213,6 @@ function DashboardsList(): JSX.Element {
 		}
 	};
 
-	useEffect(() => {
-		if (!isUndefined(sortOrder.columnKey) && !isNull(sortOrder.columnKey)) {
-			sortHandle(sortOrder.columnKey);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dashboards]);
-
 	function handlePageSizeUpdate(page: number): void {
 		setSortOrder((order) => ({
 			...order,
@@ -233,8 +225,15 @@ function DashboardsList(): JSX.Element {
 			searchString,
 			dashboardListResponse,
 		);
-		setDashboards(filteredDashboards || []);
-	}, [dashboardListResponse, searchString]);
+		if (sortOrder.columnKey === 'updatedAt') {
+			sortDashboardsByUpdatedAt(filteredDashboards || []);
+		} else if (
+			sortOrder.columnKey === 'createdAt' ||
+			isNull(sortOrder.columnKey)
+		) {
+			sortDashboardsByCreatedAt(filteredDashboards || []);
+		}
+	}, [dashboardListResponse, searchString, sortOrder.columnKey]);
 
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
