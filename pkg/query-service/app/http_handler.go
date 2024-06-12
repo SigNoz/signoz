@@ -3065,6 +3065,10 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		postprocess.ApplyFunctions(result, queryRangeParams)
 	}
 
+	if queryRangeParams.CompositeQuery.FillGaps {
+		postprocess.FillGaps(result, queryRangeParams)
+	}
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}

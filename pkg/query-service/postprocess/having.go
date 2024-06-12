@@ -37,46 +37,38 @@ func evaluateHavingClause(having []v3.Having, value float64) bool {
 		return true
 	}
 
+	satisfied := true
+
 	for _, h := range having {
 		switch h.Operator {
 		case v3.HavingOperatorEqual:
-			if value == h.Value.(float64) {
-				return true
+			if value != h.Value.(float64) {
+				satisfied = false
 			}
 		case v3.HavingOperatorNotEqual:
-			if value != h.Value.(float64) {
-				return true
+			if value == h.Value.(float64) {
+				satisfied = false
 			}
 		case v3.HavingOperatorGreaterThan:
-			if value > h.Value.(float64) {
-				return true
+			if value <= h.Value.(float64) {
+				satisfied = false
 			}
 		case v3.HavingOperatorGreaterThanOrEq:
-			if value >= h.Value.(float64) {
-				return true
+			if value < h.Value.(float64) {
+				satisfied = false
 			}
 		case v3.HavingOperatorLessThan:
-			if value < h.Value.(float64) {
-				return true
+			if value >= h.Value.(float64) {
+				satisfied = false
 			}
 		case v3.HavingOperatorLessThanOrEq:
-			if value <= h.Value.(float64) {
-				return true
+			if value > h.Value.(float64) {
+				satisfied = false
 			}
 		case v3.HavingOperatorIn, v3.HavingOperator(strings.ToLower(string(v3.HavingOperatorIn))):
 			values, ok := h.Value.([]interface{})
 			if !ok {
-				return false
-			}
-			for _, v := range values {
-				if value == v.(float64) {
-					return true
-				}
-			}
-		case v3.HavingOperatorNotIn, v3.HavingOperator(strings.ToLower(string(v3.HavingOperatorNotIn))):
-			values, ok := h.Value.([]interface{})
-			if !ok {
-				return true
+				satisfied = false
 			}
 			found := false
 			for _, v := range values {
@@ -86,9 +78,24 @@ func evaluateHavingClause(having []v3.Having, value float64) bool {
 				}
 			}
 			if !found {
-				return true
+				satisfied = false
+			}
+		case v3.HavingOperatorNotIn, v3.HavingOperator(strings.ToLower(string(v3.HavingOperatorNotIn))):
+			values, ok := h.Value.([]interface{})
+			if !ok {
+				satisfied = false
+			}
+			found := false
+			for _, v := range values {
+				if value == v.(float64) {
+					found = true
+					break
+				}
+			}
+			if found {
+				satisfied = false
 			}
 		}
 	}
-	return false
+	return satisfied
 }

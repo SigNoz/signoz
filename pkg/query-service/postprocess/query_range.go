@@ -64,6 +64,8 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 				return nil, err
 			}
 			formulaResult.QueryName = query.QueryName
+			applyHavingClause([]*v3.Result{formulaResult}, queryRangeParams)
+			ApplyMetricLimit([]*v3.Result{formulaResult}, queryRangeParams)
 			result = append(result, formulaResult)
 		}
 	}
