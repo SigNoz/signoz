@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Select, Switch } from 'antd';
+import { Button, Form, Select, Switch, Tooltip } from 'antd';
 import getChannels from 'api/channels/getAll';
 import ROUTES from 'constants/routes';
 import useFetch from 'hooks/useFetch';
@@ -145,39 +145,56 @@ function BasicInfo({
 					/>
 				</FormItemMedium>
 
-				{!noChannels && (
-					<FormItemMedium
-						name="alert_all_configured_channels"
-						label="Alert all the configured channels"
+				<FormItemMedium
+					name="alert_all_configured_channels"
+					label="Alert all the configured channels"
+				>
+					<Tooltip
+						title={
+							noChannels
+								? 'Create a notification channel to configure alert'
+								: undefined
+						}
+						placement="right"
 					>
 						<Switch
 							checked={shouldBroadCastToAllChannels}
 							onChange={handleBroadcastToAllChannels}
+							disabled={noChannels}
 						/>
-					</FormItemMedium>
-				)}
+					</Tooltip>
+				</FormItemMedium>
 
-				{!shouldBroadCastToAllChannels && !noChannels && (
-					<FormItemMedium
-						label="Notification Channels"
-						name="notification_channels"
-						required
-						rules={[
-							{ required: true, message: requireErrorMessage(t('field_alert_name')) },
-						]}
+				{!shouldBroadCastToAllChannels && (
+					<Tooltip
+						title={
+							noChannels
+								? 'Create a notification channel to configure alert'
+								: undefined
+						}
+						placement="right"
 					>
-						<ChannelSelect
-							disabled={shouldBroadCastToAllChannels}
-							currentValue={alertDef.preferredChannels}
-							channels={channels}
-							onSelectChannels={(preferredChannels): void => {
-								setAlertDef({
-									...alertDef,
-									preferredChannels,
-								});
-							}}
-						/>
-					</FormItemMedium>
+						<FormItemMedium
+							label="Notification Channels"
+							name="notification_channels"
+							required
+							rules={[
+								{ required: true, message: requireErrorMessage(t('field_alert_name')) },
+							]}
+						>
+							<ChannelSelect
+								disabled={shouldBroadCastToAllChannels || noChannels}
+								currentValue={alertDef.preferredChannels}
+								channels={channels}
+								onSelectChannels={(preferredChannels): void => {
+									setAlertDef({
+										...alertDef,
+										preferredChannels,
+									});
+								}}
+							/>
+						</FormItemMedium>
+					</Tooltip>
 				)}
 
 				{noChannels && (
