@@ -197,7 +197,7 @@ export const getUPlotChartOptions = ({
 			},
 		},
 		plugins: [
-			tooltipPlugin({ apiResponse, yAxisUnit, stackBarChart }),
+			tooltipPlugin({ apiResponse, yAxisUnit, stackBarChart, isDarkMode }),
 			onClickPlugin({
 				onClick: onClickHandler,
 			}),
@@ -332,6 +332,7 @@ export const getUPlotChartOptions = ({
 			currentQuery,
 			stackBarChart,
 			hiddenGraph,
+			isDarkMode,
 		}),
 		axes: getAxes(isDarkMode, yAxisUnit),
 	};
