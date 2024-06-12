@@ -6,10 +6,10 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-// applyHavingClause applies the having clause to the result
+// ApplyHavingClause applies the having clause to the result
 // each query has its own having clause
 // there can be multiple having clauses for each query
-func applyHavingClause(result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+func ApplyHavingClause(result []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
 	for _, result := range result {
 		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
 
