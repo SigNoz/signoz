@@ -21,7 +21,7 @@ import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQ
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { debounce, isArray, isEmpty, isString } from 'lodash-es';
+import { debounce, isArray, isString } from 'lodash-es';
 import map from 'lodash-es/map';
 import { ChangeEvent, memo, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -213,9 +213,7 @@ function VariableItem({
 
 	const handleChange = (value: string | string[]): void => {
 		if (variableData.name) {
-			if (isEmpty(value)) {
-				onValueUpdate(variableData.name, variableData.id, value, false);
-			} else if (
+			if (
 				value === ALL_SELECT_VALUE ||
 				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE)) ||
 				(Array.isArray(value) && value.length === 0)
