@@ -53,23 +53,23 @@
 		.dropdown-checkbox-label {
 			display: grid;
 			grid-template-columns: 24px 1fr;
+		}
 
-			.dropdown-value {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
+		.dropdown-value {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
 
-				.option-text {
-					max-width: 180px;
-					padding: 0 8px;
-				}
+			.option-text {
+				max-width: 180px;
+				padding: 0 8px;
+			}
 
-				.toggle-tag-label {
-					padding-left: 8px;
-					right: 40px;
-					font-weight: normal;
-					position: absolute;
-				}
+			.toggle-tag-label {
+				padding-left: 8px;
+				right: 40px;
+				font-weight: normal;
+				position: absolute;
 			}
 		}
 	}
