@@ -233,15 +233,17 @@ function VariableItem({
 		selectedValue,
 	]);
 
-	const selectValue = variableData.allSelected
-		? 'ALL'
-		: selectedValueStringified;
+	const enableSelectAll = variableData.multiSelect && variableData.showALLOption;
+
+	const selectValue =
+		variableData.allSelected && enableSelectAll
+			? 'ALL'
+			: selectedValueStringified;
 
 	const mode: 'multiple' | undefined =
 		variableData.multiSelect && !variableData.allSelected
 			? 'multiple'
 			: undefined;
-	const enableSelectAll = variableData.multiSelect && variableData.showALLOption;
 
 	useEffect(() => {
 		// Fetch options for CUSTOM Type
