@@ -39,6 +39,7 @@ const generateTooltipContent = (
 	seriesList: any[],
 	data: any[],
 	idx: number,
+	isDarkMode: boolean,
 	yAxisUnit?: string,
 	series?: uPlot.Options['series'],
 	isBillingUsageGraphs?: boolean,
@@ -88,7 +89,10 @@ const generateTooltipContent = (
 					? ''
 					: getLabelName(metric, queryName || '', legend || '');
 
-				let color = generateColor(label, themeColors.chartcolors);
+				let color = generateColor(
+					label,
+					isDarkMode ? themeColors.chartcolors : themeColors.lightModeColor,
+				);
 
 				// in case of billing graph pick colors from the series options
 				if (isBillingUsageGraphs) {
@@ -217,6 +221,7 @@ type ToolTipPluginProps = {
 	isHistogramGraphs?: boolean;
 	isMergedSeries?: boolean;
 	stackBarChart?: boolean;
+	isDarkMode: boolean;
 };
 
 const tooltipPlugin = ({
@@ -226,6 +231,7 @@ const tooltipPlugin = ({
 	isHistogramGraphs,
 	isMergedSeries,
 	stackBarChart,
+	isDarkMode,
 }: ToolTipPluginProps): any => {
 	let over: HTMLElement;
 	let bound: HTMLElement;
@@ -284,6 +290,7 @@ const tooltipPlugin = ({
 							apiResult,
 							u.data,
 							idx,
+							isDarkMode,
 							yAxisUnit,
 							u.series,
 							isBillingUsageGraphs,

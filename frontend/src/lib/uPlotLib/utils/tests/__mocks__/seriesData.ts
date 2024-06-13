@@ -174,6 +174,7 @@ export const seriesBarChartData = {
 	],
 	graphsVisibilityStates: [true, true, true, true, true],
 	panelType: PANEL_TYPES.BAR,
+	isDarkMode: true,
 } as GetSeriesProps;
 
 export const seriesLineChartData = {
@@ -348,4 +349,5 @@ export const seriesLineChartData = {
 	],
 	graphsVisibilityStates: [true, true, true, true, true],
 	panelType: PANEL_TYPES.TIME_SERIES,
+	isDarkMode: false,
 } as GetSeriesProps;
