@@ -56,8 +56,12 @@ interface VariableItemProps {
 
 const getSelectValue = (
 	selectedValue: IDashboardVariable['selectedValue'],
+	variableData: IDashboardVariable,
 ): string | string[] => {
 	if (Array.isArray(selectedValue)) {
+		if (!variableData.multiSelect && selectedValue.length === 1) {
+			return selectedValue[0]?.toString() || '';
+		}
 		return selectedValue.map((item) => item.toString());
 	}
 	return selectedValue?.toString() || '';
@@ -229,9 +233,10 @@ function VariableItem({
 	const debouncedHandleChange = debounce(handleChange, 500);
 
 	const { selectedValue } = variableData;
-	const selectedValueStringified = useMemo(() => getSelectValue(selectedValue), [
-		selectedValue,
-	]);
+	const selectedValueStringified = useMemo(
+		() => getSelectValue(selectedValue, variableData),
+		[selectedValue, variableData],
+	);
 
 	const enableSelectAll = variableData.multiSelect && variableData.showALLOption;
 
@@ -329,6 +334,8 @@ function VariableItem({
 		if (isChecked) {
 			if (mode === ToggleTagValue.Only) {
 				handleChange(option.toString());
+			} else if (!variableData.multiSelect) {
+				handleChange(option.toString());
 			} else {
 				handleChange(ALL_SELECT_VALUE);
 			}
@@ -356,6 +363,11 @@ function VariableItem({
 				}),
 		};
 	}
+
+	const ensureValidOption = (option: string): boolean =>
+		!(
+			currentToggleTagValue({ option }) === ToggleTagValue.All && !enableSelectAll
+		);
 
 	return (
 		<div className="variable-item">
@@ -451,7 +463,8 @@ function VariableItem({
 
 											{variableData.multiSelect &&
 												optionState.tag === option.toString() &&
-												optionState.visible && (
+												optionState.visible &&
+												ensureValidOption(option as string) && (
 													<Typography.Text className="toggle-tag-label">
 														{currentToggleTagValue({ option: option as string })}
 													</Typography.Text>
