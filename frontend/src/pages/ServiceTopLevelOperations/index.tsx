@@ -50,7 +50,20 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 
 	const alertDesc = (): ReactNode => (
 		<div className="">
-			Please refer to official docs for span name guidelines{' '}
+			SigNoz calculates the RED metrics for a service using the entry-point spans.
+			For more details, you can check out our
+			<a
+				href="https://signoz.io/docs/userguide/metrics/#open-the-services-section"
+				target="_blank"
+				rel="noreferrer"
+			>
+				{' '}
+				docs
+			</a>
+			. We expect the number of unique entry-point operations to be no more than
+			2500. The high number of top level operations might be due to an
+			instrumentation issue in your service. Below table shows the sample top level
+			operations. Please refer to official docs for span name guidelines{' '}
 			<a
 				href="https://opentelemetry.io/docs/specs/otel/trace/api/#span"
 				target="_blank"
@@ -58,8 +71,10 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 			>
 				{' '}
 				here
-			</a>
-			. If you have more questions, please reach out to us via support.
+			</a>{' '}
+			and update the instrumentation to to follow the guidelines. If there are any
+			dynamic IDs in the span name, make sure to use the span attributes instead.
+			If you have more questions, please reach out to us via support.
 		</div>
 	);
 

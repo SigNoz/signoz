@@ -13,11 +13,12 @@ import { ServicesList } from 'types/api/metrics/getService';
 
 import { filterDropdown } from '../Filter/FilterDropdown';
 
-const MAX_TOP_LEVEL_OPERATIONS = 1500;
+const MAX_TOP_LEVEL_OPERATIONS = 2500;
 
 const highTopLevelOperationsPopoverDesc = (metrics: string): JSX.Element => (
 	<div className="popover-description">
-		{metrics} seems to have a very high number of top level operations
+		The service `{metrics}` has too many top level operations. It makes the
+		dashboard slow to load.
 	</div>
 );
 
@@ -61,7 +62,7 @@ export const getColumnSearchProps = (
 			<div className={`serviceName ${hasHighTopLevelOperations ? 'error' : ''} `}>
 				{hasHighTopLevelOperations && (
 					<Popconfirm
-						title="High Top Level Operations"
+						title="Too Many Top Level Operations"
 						description={highTopLevelOperationsPopoverDesc(metrics)}
 						placement="right"
 						overlayClassName="service-high-top-level-operations"
