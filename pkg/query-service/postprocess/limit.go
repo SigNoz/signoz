@@ -17,7 +17,10 @@ func ApplyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	for _, result := range results {
 		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
 
-		if builderQueries != nil && (builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics) {
+		// apply limit for metrics and formula
+		if builderQueries != nil &&
+			(builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics ||
+				builderQueries[result.QueryName].QueryName != builderQueries[result.QueryName].Expression) {
 			limit := builderQueries[result.QueryName].Limit
 
 			orderByList := builderQueries[result.QueryName].OrderBy
