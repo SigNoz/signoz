@@ -162,7 +162,7 @@ function BasicInfo({
 					<Tooltip
 						title={
 							noChannels
-								? 'Create a notification channel to configure alert'
+								? 'No channels. Ask an admin to create a notification channel'
 								: undefined
 						}
 						placement="right"
@@ -179,7 +179,7 @@ function BasicInfo({
 					<Tooltip
 						title={
 							noChannels
-								? 'Create a notification channel to configure alert'
+								? 'No channels. Ask an admin to create a notification channel'
 								: undefined
 						}
 						placement="right"
@@ -209,14 +209,24 @@ function BasicInfo({
 					</Tooltip>
 				)}
 
-				{noChannels && addNewChannelPermission && (
-					<Button
-						onClick={handleCreateNewChannels}
-						icon={<PlusOutlined />}
-						className="create-notification-btn"
+				{noChannels && (
+					<Tooltip
+						title={
+							!addNewChannelPermission
+								? 'Ask an admin to create a notification channel'
+								: undefined
+						}
+						placement="right"
 					>
-						Create a notification channel
-					</Button>
+						<Button
+							onClick={handleCreateNewChannels}
+							icon={<PlusOutlined />}
+							className="create-notification-btn"
+							disabled={!addNewChannelPermission}
+						>
+							Create a notification channel
+						</Button>
+					</Tooltip>
 				)}
 			</FormContainer>
 		</>
