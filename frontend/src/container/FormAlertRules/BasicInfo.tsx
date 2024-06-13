@@ -1,11 +1,17 @@
+import './FormAlertRules.styles.scss';
+
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Select, Switch, Tooltip } from 'antd';
 import getChannels from 'api/channels/getAll';
 import ROUTES from 'constants/routes';
+import useComponentPermission from 'hooks/useComponentPermission';
 import useFetch from 'hooks/useFetch';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { AlertDef, Labels } from 'types/api/alerts/def';
+import AppReducer from 'types/reducer/app';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -36,6 +42,11 @@ function BasicInfo({
 	const { t } = useTranslation('alerts');
 
 	const channels = useFetch(getChannels);
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const [addNewChannelPermission] = useComponentPermission(
+		['add_new_channel'],
+		role,
+	);
 
 	const [
 		shouldBroadCastToAllChannels,
@@ -60,7 +71,7 @@ function BasicInfo({
 		});
 	};
 
-	const noChannels = !channels.payload?.length;
+	const noChannels = channels.payload?.length === 0;
 	const handleCreateNewChannels = useCallback(() => {
 		window.open(ROUTES.CHANNELS_NEW, '_blank');
 	}, []);
@@ -159,7 +170,7 @@ function BasicInfo({
 						<Switch
 							checked={shouldBroadCastToAllChannels}
 							onChange={handleBroadcastToAllChannels}
-							disabled={noChannels}
+							disabled={noChannels || !!channels.loading}
 						/>
 					</Tooltip>
 				</FormItemMedium>
@@ -182,7 +193,9 @@ function BasicInfo({
 							]}
 						>
 							<ChannelSelect
-								disabled={shouldBroadCastToAllChannels || noChannels}
+								disabled={
+									shouldBroadCastToAllChannels || noChannels || !!channels.loading
+								}
 								currentValue={alertDef.preferredChannels}
 								channels={channels}
 								onSelectChannels={(preferredChannels): void => {
@@ -196,8 +209,12 @@ function BasicInfo({
 					</Tooltip>
 				)}
 
-				{noChannels && (
-					<Button onClick={handleCreateNewChannels} icon={<PlusOutlined />}>
+				{noChannels && addNewChannelPermission && (
+					<Button
+						onClick={handleCreateNewChannels}
+						icon={<PlusOutlined />}
+						className="create-notification-btn"
+					>
 						Create a notification channel
 					</Button>
 				)}
