@@ -21,6 +21,22 @@
 	}
 }
 
+.info-help-btns {
+	display: grid;
+	grid-template-columns: auto auto;
+	gap: 12px;
+	margin-top: 20px;
+
+	.doc-redirection-btn {
+		color: var(--bg-aqua-500) !important;
+		border-color: var(--bg-aqua-500) !important;
+	}
+
+	.facing-issue-btn {
+		width: 100% !important;
+	}
+}
+
 .lightMode {
 	.main-container {
 		.plot-tag {
@@ -47,9 +63,11 @@
 			}
 		}
 	}
-}
 
-.facing-issue-btn {
-	margin-top: 20px;
-	width: 100%;
+	.info-help-btns {
+		.doc-redirection-btn {
+			color: var(--bg-aqua-600) !important;
+			border-color: var(--bg-aqua-600) !important;
+		}
+	}
 }

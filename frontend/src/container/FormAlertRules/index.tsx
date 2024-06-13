@@ -2,6 +2,7 @@ import './FormAlertRules.styles.scss';
 
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import {
+	Button,
 	Col,
 	FormInstance,
 	Modal,
@@ -511,6 +512,31 @@ function FormAlertRules({
 
 	const isRuleCreated = !ruleId || ruleId === 0;
 
+	function handleRedirection(option: AlertTypes): void {
+		let url = '';
+		switch (option) {
+			case AlertTypes.METRICS_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
+				break;
+			case AlertTypes.LOGS_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
+				break;
+			case AlertTypes.TRACES_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
+				break;
+			case AlertTypes.EXCEPTIONS_BASED_ALERT:
+				url =
+					'https://signoz.io/docs/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-creation-page#examples';
+				break;
+			default:
+				break;
+		}
+		window.open(url, '_blank');
+	}
+
 	return (
 		<>
 			{Element}
@@ -594,22 +620,33 @@ function FormAlertRules({
 				</StyledLeftContainer>
 				<Col flex="1 1 300px">
 					<UserGuide queryType={currentQuery.queryType} />
-					<FacingIssueBtn
-						attributes={{
-							alert: alertDef?.alert,
-							alertType: alertDef?.alertType,
-							id: ruleId,
-							ruleType: alertDef?.ruleType,
-							state: (alertDef as any)?.state,
-							panelType,
-							screen: isRuleCreated ? 'Edit Alert' : 'New Alert',
-						}}
-						className="facing-issue-btn"
-						eventName="Alert: Facing Issues in alert"
-						buttonText="Need help with this alert?"
-						message={alertHelpMessage(alertDef, ruleId)}
-						onHoverText="Click here to get help with this alert"
-					/>
+					<div className="info-help-btns">
+						<Button
+							style={{ height: 32 }}
+							onClick={(): void =>
+								handleRedirection(alertDef?.alertType as AlertTypes)
+							}
+							className="doc-redirection-btn"
+						>
+							Check an example alert
+						</Button>
+						<FacingIssueBtn
+							attributes={{
+								alert: alertDef?.alert,
+								alertType: alertDef?.alertType,
+								id: ruleId,
+								ruleType: alertDef?.ruleType,
+								state: (alertDef as any)?.state,
+								panelType,
+								screen: isRuleCreated ? 'Edit Alert' : 'New Alert',
+							}}
+							className="facing-issue-btn"
+							eventName="Alert: Facing Issues in alert"
+							buttonText="Need help with this alert?"
+							message={alertHelpMessage(alertDef, ruleId)}
+							onHoverText="Click here to get help with this alert"
+						/>
+					</div>
 				</Col>
 			</PanelContainer>
 		</>
