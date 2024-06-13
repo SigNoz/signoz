@@ -108,23 +108,33 @@ export function AlertsEmptyState(): JSX.Element {
 								New Alert Rule
 							</Button>
 							{InfoLinkText({
-								infoText: 'Watch a tutorial',
-								link: 'https://signoz.io/docs/introduction/',
+								infoText: 'Watch a tutorial on creating a sample alert',
+								link: 'https://youtu.be/xjxNIqiv4_M',
 								leftIconVisible: true,
 								rightIconVisible: true,
 							})}
 						</div>
 
 						{InfoLinkText({
-							infoText: 'How to create Metric-based alerts',
-							link: 'https://signoz.io/',
+							infoText: 'How to create Metrics-based alerts',
+							link:
+								'https://signoz.io/docs/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-empty-page',
 							leftIconVisible: false,
 							rightIconVisible: true,
 						})}
 
 						{InfoLinkText({
-							infoText: 'How to create log-based alerts',
-							link: 'https://signoz.io/',
+							infoText: 'How to create Log-based alerts',
+							link:
+								'https://signoz.io/docs/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-empty-page',
+							leftIconVisible: false,
+							rightIconVisible: true,
+						})}
+
+						{InfoLinkText({
+							infoText: 'How to create Trace-based alerts',
+							link:
+								'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-empty-page',
 							leftIconVisible: false,
 							rightIconVisible: true,
 						})}
@@ -140,7 +150,32 @@ export function AlertsEmptyState(): JSX.Element {
 
 				<div
 					className="alert-info-card"
-					onClick={() => window.open('https://signoz.io/pricing/', '_blank')}
+					onClick={() =>
+						window.open(
+							'https://signoz.io/docs/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-empty-page#1-alert-when-memory-usage-for-host-goes-above-400-mb-or-any-fixed-memory',
+							'_blank',
+						)
+					}
+				>
+					<div className="alert-card-text">
+						<Typography.Text className="alert-card-text-header">
+							Alert on high memory usage
+						</Typography.Text>
+						<Typography.Text className="alert-card-text-subheader">
+							Monitor your host&apos;s memory usage
+						</Typography.Text>
+					</div>
+					<ArrowRightOutlined />
+				</div>
+
+				<div
+					className="alert-info-card"
+					onClick={() =>
+						window.open(
+							'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-empty-page#examples',
+							'_blank',
+						)
+					}
 				>
 					<div className="alert-card-text">
 						<Typography.Text className="alert-card-text-header">
@@ -155,14 +190,39 @@ export function AlertsEmptyState(): JSX.Element {
 
 				<div
 					className="alert-info-card"
-					onClick={() => window.open('https://signoz.io/pricing/', '_blank')}
+					onClick={() =>
+						window.open(
+							'https://signoz.io/docs/alerts-management/log-based-alerts/?utm_source=product&utm_medium=alert-empty-page#1-alert-when-percentage-of-redis-timeout-error-logs-greater-than-7-in-last-5-mins',
+							'_blank',
+						)
+					}
 				>
 					<div className="alert-card-text">
 						<Typography.Text className="alert-card-text-header">
-							Alert on high CPU usage
+							Alert on high percentage of timeout errors in logs
 						</Typography.Text>
 						<Typography.Text className="alert-card-text-subheader">
-							Monitor your server’s CPU usage
+							Monitor your logs for errors
+						</Typography.Text>
+					</div>
+					<ArrowRightOutlined />
+				</div>
+
+				<div
+					className="alert-info-card"
+					onClick={() =>
+						window.open(
+							'https://signoz.io/docs/alerts-management/metrics-based-alerts/?utm_source=product&utm_medium=alert-empty-page#3-alert-when-the-error-percentage-for-an-endpoint-exceeds-5',
+							'_blank',
+						)
+					}
+				>
+					<div className="alert-card-text">
+						<Typography.Text className="alert-card-text-header">
+							Alert on high error percentage of an endpoint
+						</Typography.Text>
+						<Typography.Text className="alert-card-text-subheader">
+							Monitor your API endpoint
 						</Typography.Text>
 					</div>
 					<ArrowRightOutlined />
