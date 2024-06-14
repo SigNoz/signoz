@@ -4437,7 +4437,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 }
 
-func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([]string, map[string]string, []map[string]string, v3.Point) {
+func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([]string, map[string]string, []map[string]string, *v3.Point) {
 	// Each row will have a value and a timestamp, and an optional list of label values
 	// example: {Timestamp: ..., Value: ...}
 	// The timestamp may also not present in some cases where the time series is reduced to single value
@@ -4452,6 +4452,8 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 	// metric point.
 	// example: {"serviceName": "frontend", "operation": "/fetch"}
 	groupAttributes := make(map[string]string)
+
+	isValidPoint := false
 
 	for idx, v := range vars {
 		colName := columnNames[idx]
@@ -4481,6 +4483,7 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 		case *time.Time:
 			point.Timestamp = v.UnixMilli()
 		case *float64, *float32:
+			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
 				point.Value = float64(reflect.ValueOf(v).Elem().Float())
 			} else {
@@ -4491,6 +4494,7 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())
 			}
 		case *uint, *uint8, *uint64, *uint16, *uint32:
+			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
 				point.Value = float64(reflect.ValueOf(v).Elem().Uint())
 			} else {
@@ -4501,6 +4505,7 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint())
 			}
 		case *int, *int8, *int16, *int32, *int64:
+			isValidPoint = true
 			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok || countOfNumberCols == 1 {
 				point.Value = float64(reflect.ValueOf(v).Elem().Int())
 			} else {
@@ -4521,7 +4526,10 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 			zap.L().Error("unsupported var type found in query builder query result", zap.Any("v", v), zap.String("colName", colName))
 		}
 	}
-	return groupBy, groupAttributes, groupAttributesArray, point
+	if isValidPoint {
+		return groupBy, groupAttributes, groupAttributesArray, &point
+	}
+	return groupBy, groupAttributes, groupAttributesArray, nil
 }
 
 func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNames []string, countOfNumberCols int) ([]*v3.Series, error) {
@@ -4562,7 +4570,7 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 		groupBy, groupAttributes, groupAttributesArray, metricPoint := readRow(vars, columnNames, countOfNumberCols)
 		// skip the point if the value is NaN or Inf
 		// are they ever useful enough to be returned?
-		if math.IsNaN(metricPoint.Value) || math.IsInf(metricPoint.Value, 0) {
+		if metricPoint != nil && (math.IsNaN(metricPoint.Value) || math.IsInf(metricPoint.Value, 0)) {
 			continue
 		}
 		sort.Strings(groupBy)
@@ -4572,7 +4580,9 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 		}
 		seriesToAttrs[key] = groupAttributes
 		labelsArray[key] = groupAttributesArray
-		seriesToPoints[key] = append(seriesToPoints[key], metricPoint)
+		if metricPoint != nil {
+			seriesToPoints[key] = append(seriesToPoints[key], *metricPoint)
+		}
 	}
 
 	var seriesList []*v3.Series
