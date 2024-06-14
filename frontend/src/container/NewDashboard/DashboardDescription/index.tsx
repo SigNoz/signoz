@@ -5,6 +5,7 @@ import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
@@ -258,6 +259,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		urlQuery.set('columnKey', listSortOrder.columnKey as string);
 		urlQuery.set('order', listSortOrder.order as string);
 		urlQuery.set('page', listSortOrder.pagination as string);
+		urlQuery.delete(QueryParams.relativeTime);
 
 		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlQuery.toString()}`;
 		history.replace(generatedUrl);

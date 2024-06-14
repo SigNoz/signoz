@@ -16,15 +16,15 @@ export interface IDashboardContext {
 	panelMap: Record<string, { widgets: Layout[]; collapsed: boolean }>;
 	setPanelMap: React.Dispatch<React.SetStateAction<Record<string, any>>>;
 	listSortOrder: {
-		columnKey: string | null;
-		order: string | null;
-		pagination: string | null;
+		columnKey: string;
+		order: string;
+		pagination: string;
 	};
 	setListSortOrder: Dispatch<
 		SetStateAction<{
-			columnKey: string | null;
-			order: string | null;
-			pagination: string | null;
+			columnKey: string;
+			order: string;
+			pagination: string;
 		}>
 	>;
 	setLayouts: React.Dispatch<React.SetStateAction<Layout[]>>;
