@@ -255,7 +255,7 @@ function FormAlertRules({
 
 		if (
 			!currentQuery.builder.queryData ||
-			currentQuery.builder.queryData.length === 0
+			currentQuery.builder.queryData?.length === 0
 		) {
 			notifications.error({
 				message: 'Error',
