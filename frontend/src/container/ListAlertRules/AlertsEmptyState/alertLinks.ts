@@ -33,7 +33,7 @@ export const ALERT_CARDS = [
 		header: 'Alert on slow external API calls',
 		subheader: 'Monitor your external API calls',
 		link:
-			'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-empty-page#examples',
+			'https://signoz.io/docs/alerts-management/trace-based-alerts/?utm_source=product&utm_medium=alert-empty-page#1-alert-when-external-api-latency-p90-is-over-1-second-for-last-5-mins',
 	},
 	{
 		header: 'Alert on high percentage of timeout errors in logs',
