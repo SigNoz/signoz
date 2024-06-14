@@ -11,6 +11,13 @@ export const ServiceMetricsPage = Loadable(
 		),
 );
 
+export const ServiceTopLevelOperationsPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/ServiceTopLevelOperations'
+		),
+);
+
 export const ServiceMapPage = Loadable(
 	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
 );
