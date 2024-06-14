@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
+import { Tooltip, Typography } from 'antd';
 import getAll from 'api/channels/getAll';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
@@ -52,11 +52,21 @@ function AlertChannels(): JSX.Element {
 						url="https://signoz.io/docs/userguide/alerts-management/#setting-notification-channel"
 					/>
 
-					{addNewChannelPermission && (
-						<Button onClick={onToggleHandler} icon={<PlusOutlined />}>
+					<Tooltip
+						title={
+							!addNewChannelPermission
+								? 'Ask an admin to create alert channel'
+								: undefined
+						}
+					>
+						<Button
+							onClick={onToggleHandler}
+							icon={<PlusOutlined />}
+							disabled={!addNewChannelPermission}
+						>
 							{t('button_new_channel')}
 						</Button>
-					)}
+					</Tooltip>
 				</RightActionContainer>
 			</ButtonContainer>
 

@@ -1,7 +1,17 @@
-import { Form, Select, Switch } from 'antd';
-import { useEffect, useState } from 'react';
+import './FormAlertRules.styles.scss';
+
+import { PlusOutlined } from '@ant-design/icons';
+import { Button, Form, Select, Switch, Tooltip } from 'antd';
+import getChannels from 'api/channels/getAll';
+import ROUTES from 'constants/routes';
+import useComponentPermission from 'hooks/useComponentPermission';
+import useFetch from 'hooks/useFetch';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { AlertDef, Labels } from 'types/api/alerts/def';
+import AppReducer from 'types/reducer/app';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -31,6 +41,13 @@ function BasicInfo({
 }: BasicInfoProps): JSX.Element {
 	const { t } = useTranslation('alerts');
 
+	const channels = useFetch(getChannels);
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const [addNewChannelPermission] = useComponentPermission(
+		['add_new_channel'],
+		role,
+	);
+
 	const [
 		shouldBroadCastToAllChannels,
 		setShouldBroadCastToAllChannels,
@@ -53,6 +70,11 @@ function BasicInfo({
 			broadcastToAll: shouldBroadcast,
 		});
 	};
+
+	const noChannels = channels.payload?.length === 0;
+	const handleCreateNewChannels = useCallback(() => {
+		window.open(ROUTES.CHANNELS_NEW, '_blank');
+	}, []);
 
 	return (
 		<>
@@ -137,32 +159,74 @@ function BasicInfo({
 					name="alert_all_configured_channels"
 					label="Alert all the configured channels"
 				>
-					<Switch
-						checked={shouldBroadCastToAllChannels}
-						onChange={handleBroadcastToAllChannels}
-					/>
+					<Tooltip
+						title={
+							noChannels
+								? 'No channels. Ask an admin to create a notification channel'
+								: undefined
+						}
+						placement="right"
+					>
+						<Switch
+							checked={shouldBroadCastToAllChannels}
+							onChange={handleBroadcastToAllChannels}
+							disabled={noChannels || !!channels.loading}
+						/>
+					</Tooltip>
 				</FormItemMedium>
 
 				{!shouldBroadCastToAllChannels && (
-					<FormItemMedium
-						label="Notification Channels"
-						name="notification_channels"
-						required
-						rules={[
-							{ required: true, message: requireErrorMessage(t('field_alert_name')) },
-						]}
+					<Tooltip
+						title={
+							noChannels
+								? 'No channels. Ask an admin to create a notification channel'
+								: undefined
+						}
+						placement="right"
 					>
-						<ChannelSelect
-							disabled={shouldBroadCastToAllChannels}
-							currentValue={alertDef.preferredChannels}
-							onSelectChannels={(preferredChannels): void => {
-								setAlertDef({
-									...alertDef,
-									preferredChannels,
-								});
-							}}
-						/>
-					</FormItemMedium>
+						<FormItemMedium
+							label="Notification Channels"
+							name="notification_channels"
+							required
+							rules={[
+								{ required: true, message: requireErrorMessage(t('field_alert_name')) },
+							]}
+						>
+							<ChannelSelect
+								disabled={
+									shouldBroadCastToAllChannels || noChannels || !!channels.loading
+								}
+								currentValue={alertDef.preferredChannels}
+								channels={channels}
+								onSelectChannels={(preferredChannels): void => {
+									setAlertDef({
+										...alertDef,
+										preferredChannels,
+									});
+								}}
+							/>
+						</FormItemMedium>
+					</Tooltip>
+				)}
+
+				{noChannels && (
+					<Tooltip
+						title={
+							!addNewChannelPermission
+								? 'Ask an admin to create a notification channel'
+								: undefined
+						}
+						placement="right"
+					>
+						<Button
+							onClick={handleCreateNewChannels}
+							icon={<PlusOutlined />}
+							className="create-notification-btn"
+							disabled={!addNewChannelPermission}
+						>
+							Create a notification channel
+						</Button>
+					</Tooltip>
 				)}
 			</FormContainer>
 		</>
