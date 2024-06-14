@@ -32,7 +32,7 @@ func prepareLogsQuery(ctx context.Context,
 	}
 
 	// for ts query with limit replace it as it is already formed
-	if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
+	if (params.CompositeQuery.PanelType == v3.PanelTypeGraph || params.CompositeQuery.PanelType == v3.PanelTypeBar) && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
 		limitQuery, err := logsV3.PrepareLogsQuery(
 			start,
 			end,
@@ -187,7 +187,7 @@ func (q *querier) runBuilderQuery(
 		var query string
 		var err error
 		// for ts query with group by and limit form two queries
-		if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
+		if (params.CompositeQuery.PanelType == v3.PanelTypeGraph || params.CompositeQuery.PanelType == v3.PanelTypeBar) && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
 			limitQuery, err := tracesV3.PrepareTracesQuery(
 				start,
 				end,

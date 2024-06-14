@@ -366,6 +366,24 @@ var testOrderBy = []struct {
 		Result: "`name` asc,value desc",
 	},
 	{
+		Name:      "Test 1",
+		PanelType: v3.PanelTypeBar,
+		Items: []v3.OrderBy{
+			{
+				ColumnName: "name",
+				Order:      "asc",
+			},
+			{
+				ColumnName: constants.SigNozOrderByValue,
+				Order:      "desc",
+			},
+		},
+		Tags: []v3.AttributeKey{
+			{Key: "name"},
+		},
+		Result: "`name` asc,value desc",
+	},
+	{
 		Name:      "Test 2",
 		PanelType: v3.PanelTypeList,
 		Items: []v3.OrderBy{
@@ -521,6 +539,23 @@ var testBuildTracesQueryData = []struct {
 			" signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <=" +
 			" '1680066458000000000') group by ts order by value DESC",
 		PanelType: v3.PanelTypeGraph,
+		Options:   Options{GraphLimitQtype: "", PreferRPM: true},
+	},
+	{
+		Name:  "Test aggregate rate without aggregate attribute bar panel",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			StepInterval:      60,
+			AggregateOperator: v3.AggregateOperatorRate,
+			Expression:        "A",
+		},
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, count()/1.000000 as value from" +
+			" signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <=" +
+			" '1680066458000000000') group by ts order by value DESC",
+		PanelType: v3.PanelTypeBar,
 		Options:   Options{GraphLimitQtype: "", PreferRPM: true},
 	},
 	{
@@ -1220,6 +1255,33 @@ var testPrepTracesQueryData = []struct {
 		},
 	},
 	{
+		Name:      "Test TS with limit- first bar panel",
+		PanelType: v3.PanelTypeBar,
+		Start:     1680066360726,
+		End:       1680066458000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			},
+			},
+			Limit:        10,
+			StepInterval: 60,
+			GroupBy:      []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+		},
+		ExpectedQuery: "SELECT `method` from (SELECT stringTagMap['method'] as `method`," +
+			" toFloat64(count(distinct(stringTagMap['name']))) as value from signoz_traces.distributed_signoz_index_v2" +
+			" where (timestamp >= '1680066360000000000' AND timestamp <= '1680066420000000000') AND" +
+			" stringTagMap['method'] = 'GET' AND has(stringTagMap, 'method') group by `method` order by value DESC) LIMIT 10",
+		Keys: map[string]v3.AttributeKey{"name": {Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
+		Options: Options{
+			GraphLimitQtype: constants.FirstQueryGraphLimit,
+		},
+	},
+	{
 		Name:      "Test TS with limit- first - with order by value",
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726,
@@ -1335,6 +1397,34 @@ var testPrepTracesQueryData = []struct {
 	{
 		Name:      "Test TS with limit- second - with order by",
 		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726,
+		End:       1680066458000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			},
+			},
+			GroupBy:      []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy:      []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
+			Limit:        2,
+			StepInterval: 60,
+		},
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, " +
+			"stringTagMap['method'] as `method`, toFloat64(count(distinct(stringTagMap['name'])))" +
+			" as value from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360000000000'" +
+			" AND timestamp <= '1680066420000000000') AND stringTagMap['method'] = 'GET' AND" +
+			" has(stringTagMap, 'method') AND (`method`) GLOBAL IN (%s) group by `method`,ts order by `method` ASC", Keys: map[string]v3.AttributeKey{},
+		Options: Options{
+			GraphLimitQtype: constants.SecondQueryGraphLimit,
+		},
+	},
+	{
+		Name:      "Test TS with limit- second - with order by bar panel",
+		PanelType: v3.PanelTypeBar,
 		Start:     1680066360726,
 		End:       1680066458000,
 		BuilderQuery: &v3.BuilderQuery{

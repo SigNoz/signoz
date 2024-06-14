@@ -198,7 +198,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 						keys = args[0].(map[string]v3.AttributeKey)
 					}
 					// for ts query with group by and limit form two queries
-					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
+					if (compositeQuery.PanelType == v3.PanelTypeGraph || compositeQuery.PanelType == v3.PanelTypeBar) && query.Limit > 0 && len(query.GroupBy) > 0 {
 						limitQuery, err := qb.options.BuildTraceQuery(start, end, compositeQuery.PanelType, query,
 							keys, tracesV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: PreferRPMFeatureEnabled})
 						if err != nil {
@@ -221,7 +221,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 					}
 				case v3.DataSourceLogs:
 					// for ts query with limit replace it as it is already formed
-					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
+					if (compositeQuery.PanelType == v3.PanelTypeGraph || compositeQuery.PanelType == v3.PanelTypeBar) && query.Limit > 0 && len(query.GroupBy) > 0 {
 						limitQuery, err := qb.options.BuildLogQuery(start, end, compositeQuery.QueryType, compositeQuery.PanelType, query, logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: PreferRPMFeatureEnabled})
 						if err != nil {
 							return nil, err
@@ -323,7 +323,7 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 	keys := make(map[string]string)
 
 	// For non-graph panels, we don't support caching
-	if params.CompositeQuery.PanelType != v3.PanelTypeGraph {
+	if params.CompositeQuery.PanelType != v3.PanelTypeGraph && params.CompositeQuery.PanelType != v3.PanelTypeBar {
 		return keys
 	}
 
