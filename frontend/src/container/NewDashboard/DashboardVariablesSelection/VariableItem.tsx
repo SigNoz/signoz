@@ -410,12 +410,19 @@ function VariableItem({
 							data-testid="variable-select"
 							className="variable-select"
 							popupClassName="dropdown-styles"
+							maxTagCount={4}
 							getPopupContainer={popupContainer}
 							// eslint-disable-next-line react/no-unstable-nested-components
 							tagRender={(props): JSX.Element => (
 								<Tag closable onClose={props.onClose}>
 									{props.value}
 								</Tag>
+							)}
+							// eslint-disable-next-line react/no-unstable-nested-components
+							maxTagPlaceholder={(omittedValues): JSX.Element => (
+								<Tooltip title={omittedValues.map(({ value }) => value).join(', ')}>
+									<span>+ {omittedValues.length} </span>
+								</Tooltip>
 							)}
 						>
 							{enableSelectAll && (
