@@ -29,7 +29,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 				break;
 			case AlertTypes.EXCEPTIONS_BASED_ALERT:
 				url =
-					'https://signoz.io/docs/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#example';
+					'https://signoz.io/docs/alerts-management/exceptions-based-alerts/?utm_source=product&utm_medium=alert-source-selection-page#examples';
 				break;
 			default:
 				break;
