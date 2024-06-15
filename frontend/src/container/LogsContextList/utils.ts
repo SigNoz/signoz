@@ -40,7 +40,7 @@ export const getRequestData = ({
 		...query,
 		builder: {
 			...query.builder,
-			queryData: query.builder.queryData.map((item) => ({
+			queryData: query.builder.queryData?.map((item) => ({
 				...item,
 				...paginateData,
 				pageSize,

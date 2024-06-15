@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 
+import { AlertsEmptyState } from './AlertsEmptyState/AlertsEmptyState';
 import ListAlert from './ListAlert';
 
 function ListAlertRules(): JSX.Element {
@@ -43,6 +44,10 @@ function ListAlertRules(): JSX.Element {
 				}}
 			/>
 		);
+	}
+
+	if (status === 'success' && !data.payload?.length) {
+		return <AlertsEmptyState />;
 	}
 
 	// in case of loading

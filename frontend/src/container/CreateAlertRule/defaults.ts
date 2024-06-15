@@ -130,7 +130,7 @@ export const exceptionAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: EQueryType.QUERY_BUILDER,
+			queryType: EQueryType.CLICKHOUSE,
 			panelType: PANEL_TYPES.TIME_SERIES,
 			unit: undefined,
 		},

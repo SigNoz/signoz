@@ -68,7 +68,7 @@ function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
 		const { values } = series[i];
 		for (let j = 0; j < values.length; j++) {
 			values[j][1] = String(
-				parseFloat(values[j][1]) + parseFloat(series[i + 1].values[j][1]),
+				parseFloat(values[j]?.[1]) + parseFloat(series[i + 1].values[j]?.[1]),
 			);
 		}
 
@@ -197,7 +197,7 @@ export const getUPlotChartOptions = ({
 			},
 		},
 		plugins: [
-			tooltipPlugin({ apiResponse, yAxisUnit, stackBarChart }),
+			tooltipPlugin({ apiResponse, yAxisUnit, stackBarChart, isDarkMode }),
 			onClickPlugin({
 				onClick: onClickHandler,
 			}),
@@ -332,6 +332,7 @@ export const getUPlotChartOptions = ({
 			currentQuery,
 			stackBarChart,
 			hiddenGraph,
+			isDarkMode,
 		}),
 		axes: getAxes(isDarkMode, yAxisUnit),
 	};

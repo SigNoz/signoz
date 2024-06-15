@@ -18,7 +18,7 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	// It's not included in the query because it doesn't work nicely with caching
 	// With this change, if you have a query with a having clause, and then you change the having clause
 	// to something else, the query will still be cached.
-	applyHavingClause(result, queryRangeParams)
+	ApplyHavingClause(result, queryRangeParams)
 	// We apply the metric limit here because it's not part of the clickhouse query
 	// The limit in the context of the time series query is the number of time series
 	// So for the limit to work, we need to know what series to keep and what to discard
@@ -64,6 +64,8 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 				return nil, err
 			}
 			formulaResult.QueryName = query.QueryName
+			ApplyHavingClause([]*v3.Result{formulaResult}, queryRangeParams)
+			ApplyMetricLimit([]*v3.Result{formulaResult}, queryRangeParams)
 			result = append(result, formulaResult)
 		}
 	}

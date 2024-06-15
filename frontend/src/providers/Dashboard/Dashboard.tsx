@@ -52,7 +52,7 @@ const DashboardContext = createContext<IDashboardContext>({
 	layouts: [],
 	panelMap: {},
 	setPanelMap: () => {},
-	listSortOrder: { columnKey: null, order: null, pagination: '1' },
+	listSortOrder: { columnKey: 'createdAt', order: 'descend', pagination: '1' },
 	setListSortOrder: () => {},
 	setLayouts: () => {},
 	setSelectedDashboard: () => {},
@@ -88,9 +88,9 @@ export function DashboardProvider({
 	const paginationParam = params.get('page');
 
 	const [listSortOrder, setListSortOrder] = useState({
-		columnKey: orderColumnParam,
-		order: orderQueryParam,
-		pagination: paginationParam,
+		columnKey: orderColumnParam || 'updatedAt',
+		order: orderQueryParam || 'descend',
+		pagination: paginationParam || '1',
 	});
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();

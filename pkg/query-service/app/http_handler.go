@@ -3039,6 +3039,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		return
 	}
 
+	postprocess.ApplyHavingClause(result, queryRangeParams)
 	postprocess.ApplyMetricLimit(result, queryRangeParams)
 
 	sendQueryResultEvents(r, result, queryRangeParams)
@@ -3046,6 +3047,10 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	// are executed in clickhouse directly and we wanted to add support for timeshift
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		postprocess.ApplyFunctions(result, queryRangeParams)
+	}
+
+	if queryRangeParams.CompositeQuery.FillGaps {
+		postprocess.FillGaps(result, queryRangeParams)
 	}
 
 	resp := v3.QueryRangeResponse{
