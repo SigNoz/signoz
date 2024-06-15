@@ -13,6 +13,7 @@ function LogsExplorerTable({
 	data,
 	isLoading,
 	isError,
+	errorData,
 }: LogsExplorerTableProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 
@@ -21,7 +22,7 @@ function LogsExplorerTable({
 	}
 
 	if (isError) {
-		return <LogsError />;
+		return <LogsError errorData={errorData} />;
 	}
 
 	return (
