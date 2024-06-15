@@ -1,8 +1,9 @@
-package errors
+package clickhouseerrors
 
 import "errors"
 
 var (
+	ErrInvalidSyntax = errors.New("syntax error")
 	// ErrResourceBytesLimitExceeded is returned when the resource bytes limit is exceeded
 	ErrResourceBytesLimitExceeded = NewResourceLimitError(errors.New("resource bytes limit exceeded, try applying filters such as service.name, etc. to reduce the data size"))
 	// ErrResourceTimeLimitExceeded is returned when the resource time limit is exceeded

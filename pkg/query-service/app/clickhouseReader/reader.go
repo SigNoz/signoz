@@ -47,10 +47,10 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	chErrors "go.signoz.io/signoz/pkg/query-service/clickhouseerrors"
 	"go.signoz.io/signoz/pkg/query-service/common"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
-	chErrors "go.signoz.io/signoz/pkg/query-service/errors"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -4619,7 +4619,7 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 
 	if err != nil {
 		zap.L().Error("error while reading time series result", zap.Error(err))
-		return nil, err
+		return nil, errors.New(err.Error())
 	}
 	defer rows.Close()
 
@@ -4661,7 +4661,7 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 
 	if err != nil {
 		zap.L().Error("error while reading time series result", zap.Error(err))
-		return nil, err
+		return nil, errors.New(err.Error())
 	}
 	defer rows.Close()
 

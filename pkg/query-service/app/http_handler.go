@@ -35,6 +35,7 @@ import (
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
+	"go.signoz.io/signoz/pkg/query-service/clickhouseerrors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/postprocess"
@@ -3051,8 +3052,16 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	result, errQuriesByName, err = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		var code int
+		errs := map[string]string{}
+		for k, v := range errQuriesByName {
+			if !clickhouseerrors.IsResourceLimitError(v) {
+				code = clickhouseerrors.GetHTTPStatusCodeFromErrorMsg(v.Error())
+			}
+			errs[k] = v.Error()
+		}
+		apiErrObj := &model.ApiError{Typ: model.HTTPCodeToErrorType(code), Err: err}
+		RespondError(w, apiErrObj, errs)
 		return
 	}
 
@@ -3312,8 +3321,16 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 	result, errQuriesByName, err = aH.querierV2.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, errQuriesByName)
+		var code int
+		errs := map[string]string{}
+		for k, v := range errQuriesByName {
+			if !clickhouseerrors.IsResourceLimitError(v) {
+				code = clickhouseerrors.GetHTTPStatusCodeFromErrorMsg(v.Error())
+			}
+			errs[k] = v.Error()
+		}
+		apiErrObj := &model.ApiError{Typ: model.HTTPCodeToErrorType(code), Err: err}
+		RespondError(w, apiErrObj, errs)
 		return
 	}
 
