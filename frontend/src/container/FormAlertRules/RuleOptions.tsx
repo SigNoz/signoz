@@ -322,6 +322,45 @@ function RuleOptions({
 										<Typography.Text>{t('text_for')}</Typography.Text>
 									</Space>
 								</VerticalLine>
+
+								<VerticalLine>
+									<Space direction="horizontal" align="center">
+										<Form.Item noStyle name={['condition', 'requireFullWindow']}>
+											<Checkbox
+												checked={alertDef?.condition?.requireFullWindow}
+												onChange={(e): void => {
+													setAlertDef({
+														...alertDef,
+														condition: {
+															...alertDef.condition,
+															requireFullWindow: e.target.checked,
+														},
+													});
+												}}
+											/>
+										</Form.Item>
+										<Typography.Text>{t('text_require_full_window')}</Typography.Text>
+
+										<Form.Item noStyle name={['condition', 'requireNumPoints']}>
+											<InputNumber
+												min={1}
+												value={alertDef?.condition?.requireNumPoints}
+												onChange={(value): void => {
+													setAlertDef({
+														...alertDef,
+														condition: {
+															...alertDef.condition,
+															requireNumPoints: Number(value) || 0,
+														},
+													});
+												}}
+												type="number"
+												onWheel={(e): void => e.currentTarget.blur()}
+											/>
+										</Form.Item>
+										<Typography.Text>{t('text_num_points')}</Typography.Text>
+									</Space>
+								</VerticalLine>
 							</Space>
 						</Collapse.Panel>
 					</Collapse>

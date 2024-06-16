@@ -133,14 +133,16 @@ const (
 )
 
 type RuleCondition struct {
-	CompositeQuery *v3.CompositeQuery `json:"compositeQuery,omitempty" yaml:"compositeQuery,omitempty"`
-	CompareOp      CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
-	Target         *float64           `yaml:"target,omitempty" json:"target,omitempty"`
-	AlertOnAbsent  bool               `yaml:"alertOnAbsent,omitempty" json:"alertOnAbsent,omitempty"`
-	AbsentFor      uint64             `yaml:"absentFor,omitempty" json:"absentFor,omitempty"`
-	MatchType      MatchType          `json:"matchType,omitempty"`
-	TargetUnit     string             `json:"targetUnit,omitempty"`
-	SelectedQuery  string             `json:"selectedQueryName,omitempty"`
+	CompositeQuery    *v3.CompositeQuery `json:"compositeQuery,omitempty" yaml:"compositeQuery,omitempty"`
+	CompareOp         CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
+	Target            *float64           `yaml:"target,omitempty" json:"target,omitempty"`
+	AlertOnAbsent     bool               `yaml:"alertOnAbsent,omitempty" json:"alertOnAbsent,omitempty"`
+	RequireFullWindow bool               `yaml:"requireFullWindow,omitempty" json:"requireFullWindow,omitempty"`
+	RequireNumPoints  int                `yaml:"requireNumPoints,omitempty" json:"requireNumPoints,omitempty"`
+	AbsentFor         uint64             `yaml:"absentFor,omitempty" json:"absentFor,omitempty"`
+	MatchType         MatchType          `json:"matchType,omitempty"`
+	TargetUnit        string             `json:"targetUnit,omitempty"`
+	SelectedQuery     string             `json:"selectedQueryName,omitempty"`
 }
 
 func (rc *RuleCondition) IsValid() bool {

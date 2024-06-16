@@ -820,6 +820,13 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	}
 
 	for _, series := range queryResult.Series {
+		if r.ruleCondition.RequireFullWindow {
+			if len(series.Points) < r.ruleCondition.RequireNumPoints {
+				zap.L().Info("skipping evaluation due to insufficient data points", zap.String("rule", r.Name()), zap.Int("expected", r.ruleCondition.RequireNumPoints), zap.Int("actual", len(series.Points)))
+				continue
+			}
+		}
+
 		smpl, shouldAlert := r.shouldAlert(*series)
 		if shouldAlert {
 			resultVector = append(resultVector, smpl)

@@ -37,6 +37,8 @@ export interface RuleCondition {
 	selectedQueryName?: string;
 	alertOnAbsent?: boolean | undefined;
 	absentFor?: number | undefined;
+	requireFullWindow?: boolean | undefined;
+	requireNumPoints?: number | undefined;
 }
 
 export interface Labels {
