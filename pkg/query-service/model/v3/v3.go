@@ -275,6 +275,29 @@ func (q AttributeKeyDataType) Validate() error {
 	}
 }
 
+type TmplVariableBuilderRequest struct {
+	DataSource         DataSource   `json:"dataSource"`
+	AggregateAttribute AttributeKey `json:"aggregateAttribute"`
+	Filters            *FilterSet   `json:"filters,omitempty"`
+}
+
+type TmplVariablePromQLRequest struct {
+	Query string `json:"query"`
+}
+
+type TmplVariableValueRequest struct {
+	QueryType QueryType                   `json:"queryType"`
+	Builder   *TmplVariableBuilderRequest `json:"builder,omitempty"`
+	PromQL    *TmplVariablePromQLRequest  `json:"promql,omitempty"`
+	Variables map[string]interface{}      `json:"variables,omitempty"`
+}
+
+type TmplVariableValueResponse struct {
+	StringAttributeValues []string      `json:"stringAttributeValues"`
+	NumberAttributeValues []interface{} `json:"numberAttributeValues"`
+	BoolAttributeValues   []bool        `json:"boolAttributeValues"`
+}
+
 // FilterAttributeValueRequest is a request to fetch possible attribute values
 // for a selected aggregate operator, aggregate attribute, filter attribute key
 // and search text.
