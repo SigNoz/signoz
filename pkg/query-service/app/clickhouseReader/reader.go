@@ -3081,7 +3081,7 @@ func (r *ClickHouseReader) GetMetricResultEE(ctx context.Context, query string) 
 // GetMetricResult runs the query and returns list of time series
 func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([]*model.Series, error) {
 
-	defer utils.Elapsed("GetMetricResult")()
+	defer utils.Elapsed("GetMetricResult", nil)()
 
 	zap.L().Info("Executing metric result query: ", zap.String("query", query))
 
@@ -4594,26 +4594,27 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 	return seriesList, getPersonalisedError(rows.Err())
 }
 
-func logComment(ctx context.Context) string {
-	// Get the key-value pairs from context for log comment
+func logCommentKVs(ctx context.Context) map[string]string {
 	kv := ctx.Value(common.LogCommentKey)
 	if kv == nil {
-		return ""
+		return nil
 	}
-
 	logCommentKVs, ok := kv.(map[string]string)
 	if !ok {
-		return ""
+		return nil
 	}
-
-	x, _ := json.Marshal(logCommentKVs)
-	return string(x)
+	return logCommentKVs
 }
 
 // GetTimeSeriesResultV3 runs the query and returns list of time series
 func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
 
-	defer utils.Elapsed("GetTimeSeriesResultV3", query, fmt.Sprintf("logComment: %s", logComment(ctx)))()
+	ctxArgs := map[string]interface{}{"query": query}
+	for k, v := range logCommentKVs(ctx) {
+		ctxArgs[k] = v
+	}
+
+	defer utils.Elapsed("GetTimeSeriesResultV3", ctxArgs)()
 
 	rows, err := r.db.Query(ctx, query)
 
@@ -4655,7 +4656,12 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 // GetListResultV3 runs the query and returns list of rows
 func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
 
-	defer utils.Elapsed("GetListResultV3", query, fmt.Sprintf("logComment: %s", logComment(ctx)))()
+	ctxArgs := map[string]interface{}{"query": query}
+	for k, v := range logCommentKVs(ctx) {
+		ctxArgs[k] = v
+	}
+
+	defer utils.Elapsed("GetListResultV3", ctxArgs)()
 
 	rows, err := r.db.Query(ctx, query)
 
