@@ -570,6 +570,23 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 		a.queryName < b.queryName ? -1 : 1,
 	);
 
+	// the reason we need this is because the filling of values in rows doesn't account for mismatch enteries
+	// in the response. Example : Series A -> [label1, label2] and Series B -> [label2,label1] this isn't accounted for
+	sortedQueryTableData.forEach((q) => {
+		q.series?.sort((a, b) => {
+			let labelA = '';
+			let labelB = '';
+			Object.values(a?.labels).forEach((val) => {
+				labelA += val;
+			});
+			Object.values(b?.labels).forEach((val) => {
+				labelB += val;
+			});
+
+			return labelA < labelB ? -1 : 1;
+		});
+	});
+
 	const dynamicColumns = getDynamicColumns(sortedQueryTableData, query);
 
 	const { filledDynamicColumns, rowsLength } = fillColumnsData(
