@@ -597,7 +597,6 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 
 	const dynamicColumns = getDynamicColumns(sortedQueryTableData, query);
 
-	console.log(dynamicColumns);
 	const { filledDynamicColumns, rowsLength } = fillColumnsData(
 		sortedQueryTableData,
 		dynamicColumns,
