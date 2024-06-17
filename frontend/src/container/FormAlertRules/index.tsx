@@ -77,7 +77,15 @@ function FormAlertRules({
 
 	const urlQuery = useUrlQuery();
 
-	const panelType = urlQuery.get(QueryParams.panelTypes) as PANEL_TYPES | null;
+	// Extract the panel type from the URL query parameters
+	const panelTypeFromQuery = urlQuery.get(
+		QueryParams.panelTypes,
+	) as PANEL_TYPES | null;
+
+	const panelType =
+		panelTypeFromQuery === PANEL_TYPES.HISTOGRAM
+			? PANEL_TYPES.TIME_SERIES
+			: panelTypeFromQuery;
 
 	const {
 		currentQuery,
