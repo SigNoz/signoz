@@ -21,7 +21,7 @@ import (
 // GetMetricResultEE runs the query and returns list of time series
 func (r *ClickhouseReader) GetMetricResultEE(ctx context.Context, query string) ([]*basemodel.Series, string, error) {
 
-	defer utils.Elapsed("GetMetricResult")()
+	defer utils.Elapsed("GetMetricResult", nil)()
 	zap.L().Info("Executing metric result query: ", zap.String("query", query))
 
 	var hash string
