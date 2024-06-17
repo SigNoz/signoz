@@ -537,8 +537,12 @@ const generateTableColumns = (
 			width: QUERY_TABLE_CONFIG.width,
 			render: renderColumnCell && renderColumnCell[item.dataIndex],
 			sorter: (a: RowData, b: RowData): number => {
-				const valueA = Number(a[item.dataIndex]);
-				const valueB = Number(b[item.dataIndex]);
+				const valueA = Number(
+					a[`${item.dataIndex}_without_unit`] ?? a[item.dataIndex],
+				);
+				const valueB = Number(
+					b[`${item.dataIndex}_without_unit`] ?? b[item.dataIndex],
+				);
 
 				if (!isNaN(valueA) && !isNaN(valueB)) {
 					return valueA - valueB;
