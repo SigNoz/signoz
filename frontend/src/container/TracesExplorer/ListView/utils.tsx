@@ -58,6 +58,7 @@ export const getListColumns = (
 					</BlockLink>
 				);
 			},
+			sorter: true,
 		},
 	];
 
@@ -101,6 +102,10 @@ export const getListColumns = (
 				);
 			},
 			responsive: ['md'],
+			sorter:
+				key === 'durationNano'
+					? (a, b): number => Number(a.durationNano) - Number(b.durationNano)
+					: undefined,
 		})) || [];
 
 	return [...initialColumns, ...columns];
