@@ -364,6 +364,13 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			continue
 		}
 
+		if r.ruleCondition.RequireFullWindow {
+			if len(series.Floats) < r.ruleCondition.RequireNumPoints {
+				zap.L().Info("skipping evaluation due to insufficient data points", zap.String("rule", r.Name()), zap.Int("expected", r.ruleCondition.RequireNumPoints), zap.Int("actual", len(series.Floats)))
+				continue
+			}
+		}
+
 		alertSmpl, shouldAlert := r.shouldAlert(series)
 		if !shouldAlert {
 			continue
