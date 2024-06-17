@@ -289,14 +289,6 @@ func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string 
 	return orderBy(items, groupTags)
 }
 
-func having(items []v3.Having) string {
-	var having []string
-	for _, item := range items {
-		having = append(having, fmt.Sprintf("%s %s %v", "value", item.Operator, utils.ClickHouseFormattedValue(item.Value)))
-	}
-	return strings.Join(having, " AND ")
-}
-
 func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v3.AggregateOperator) (string, error) {
 	var selectLabels string
 	var groupBy string
@@ -398,10 +390,6 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 			selectLabels = groupSelectAttributeKeyTags(mq.GroupBy...)
 		}
 		query = `SELECT ` + selectLabels + ` ts, ceil(value * 60) as value FROM (` + query + `)`
-	}
-
-	if having(mq.Having) != "" {
-		query = fmt.Sprintf("SELECT * FROM (%s) HAVING %s", query, having(mq.Having))
 	}
 
 	if panelType == v3.PanelTypeValue {
