@@ -75,6 +75,7 @@ export interface GetQueryResultsProps {
 	globalSelectedInterval: Time | TimeV2 | CustomTimeType;
 	variables?: Record<string, unknown>;
 	params?: Record<string, unknown>;
+	fillGaps?: boolean;
 	tableParams?: {
 		pagination?: Pagination;
 		selectColumns?: any;
