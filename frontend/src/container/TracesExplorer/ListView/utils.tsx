@@ -32,7 +32,6 @@ export const getListColumns = (
 			title: 'Timestamp',
 			width: 145,
 			render: (item): JSX.Element => {
-				console.log(item);
 				const date =
 					typeof item === 'string'
 						? dayjs(item).format('YYYY-MM-DD HH:mm:ss.SSS')
