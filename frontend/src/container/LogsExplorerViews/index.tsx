@@ -37,7 +37,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { defaultTo, isEmpty, omit } from 'lodash-es';
+import { cloneDeep, defaultTo, isEmpty, omit, set } from 'lodash-es';
 import { Sliders } from 'lucide-react';
 import { SELECTED_VIEWS } from 'pages/LogsExplorer/utils';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -315,6 +315,14 @@ function LogsExplorerViews({
 		isLoading: isUpdateDashboardLoading,
 	} = useUpdateDashboard();
 
+	const getUpdatedQueryForExport = useCallback((): Query => {
+		const updatedQuery = cloneDeep(currentQuery);
+
+		set(updatedQuery, 'builder.queryData[0].pageSize', 10);
+
+		return updatedQuery;
+	}, [currentQuery]);
+
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null): void => {
 			if (!dashboard || !panelType) return;
@@ -325,9 +333,14 @@ function LogsExplorerViews({
 
 			const widgetId = v4();
 
+			const query =
+				panelType === PANEL_TYPES.LIST
+					? getUpdatedQueryForExport()
+					: exportDefaultQuery;
+
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
-				exportDefaultQuery,
+				query,
 				widgetId,
 				panelTypeParam,
 				options.selectColumns,
@@ -360,7 +373,7 @@ function LogsExplorerViews({
 					}
 
 					const dashboardEditView = generateExportToDashboardLink({
-						query: exportDefaultQuery,
+						query,
 						panelType: panelTypeParam,
 						dashboardId: data.payload?.uuid || '',
 						widgetId,
@@ -372,8 +385,9 @@ function LogsExplorerViews({
 			});
 		},
 		[
+			getUpdatedQueryForExport,
 			exportDefaultQuery,
-			options,
+			options.selectColumns,
 			history,
 			notifications,
 			panelType,
