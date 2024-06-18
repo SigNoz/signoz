@@ -340,6 +340,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
 	router.HandleFunc("/api/v1/testRule", am.EditAccess(aH.testRule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/state_history", am.ViewAccess(aH.getRuleStateHistory)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/state_history", am.ViewAccess(aH.getGlobalRuleStateHistory)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}/top_contributors", am.ViewAccess(aH.getRuleStateHistoryTopContributors)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/top_contributors", am.ViewAccess(aH.getGlobalRuleStateHistoryTopContributors)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/downtime_schedules", am.OpenAccess(aH.listDowntimeSchedules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.OpenAccess(aH.getDowntimeSchedule)).Methods(http.MethodGet)
@@ -601,6 +605,72 @@ func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := v3.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, res)
+}
+
+func (aH *APIHandler) getGlobalRuleStateHistory(w http.ResponseWriter, r *http.Request) {
+	params := v3.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.ReadRuleStateHistory(r.Context(), &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, res)
+}
+
+func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	params := v3.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), ruleID, &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, res)
+}
+
+func (aH *APIHandler) getGlobalRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
+	params := v3.QueryRuleStateHistory{}
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	res, err := aH.reader.ReadRuleStateHistoryTopContributors(r.Context(), &params)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, res)
 }
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {

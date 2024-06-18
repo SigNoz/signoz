@@ -1,8 +1,11 @@
 package migrate
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/jmoiron/sqlx"
 	alertstov4 "go.signoz.io/signoz/pkg/query-service/migrate/0_45_alerts_to_v4"
 	alertscustomstep "go.signoz.io/signoz/pkg/query-service/migrate/0_47_alerts_custom_step"
@@ -73,6 +76,56 @@ func Migrate(dsn string) error {
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func ClickHouseMigrate(conn driver.Conn, cluster string) error {
+
+	database := "CREATE DATABASE IF NOT EXISTS signoz_history"
+
+	localTable := `CREATE TABLE IF NOT EXISTS signoz_history.rule_state_history ON CLUSTER %s
+(
+    rule_id LowCardinality(String),
+    rule_name LowCardinality(String),
+    state LowCardinality(String),
+    unix_milli Int64 CODEC(Delta(8), ZSTD(1)),
+    fingerprint UInt64 CODEC(Delta(8), ZSTD(1)),
+    value Float64 CODEC(Delta(8), ZSTD(1)),
+    labels String CODEC(ZSTD(5)),
+)
+ENGINE = MergeTree
+PARTITION BY toDate(unix_milli / 1000)
+ORDER BY (rule_id, state, unix_milli)
+TTL toDateTime(unix_milli / 1000) + toIntervalSecond(2592000)
+SETTINGS ttl_only_drop_parts = 1, index_granularity = 8192`
+
+	distributedTable := `CREATE TABLE IF NOT EXISTS signoz_history.distributed_rule_state_history ON CLUSTER %s
+(
+    rule_id LowCardinality(String),
+    rule_name LowCardinality(String),
+    state LowCardinality(String),
+    unix_milli Int64 CODEC(Delta(8), ZSTD(1)),
+    fingerprint UInt64 CODEC(Delta(8), ZSTD(1)),
+    value Float64 CODEC(Delta(8), ZSTD(1)),
+    labels String CODEC(ZSTD(5)),
+)
+ENGINE = Distributed(%s, signoz_history, rule_state_history, cityHash64(rule_id, rule_name, fingerprint))`
+
+	err := conn.Exec(context.Background(), database)
+	if err != nil {
+		return err
+	}
+
+	err = conn.Exec(context.Background(), fmt.Sprintf(localTable, cluster))
+	if err != nil {
+		return err
+	}
+
+	err = conn.Exec(context.Background(), fmt.Sprintf(distributedTable, cluster, cluster))
+	if err != nil {
+		return err
 	}
 
 	return nil
