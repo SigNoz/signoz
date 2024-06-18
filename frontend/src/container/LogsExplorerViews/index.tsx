@@ -441,6 +441,14 @@ function LogsExplorerViews({
 					timeRange?.pageSize && activeLogId ? timeRange?.pageSize : pageSize,
 			});
 
+			if (
+				selectedView === SELECTED_VIEWS.SEARCH &&
+				newRequestData &&
+				newRequestData.builder
+			) {
+				newRequestData.builder.queryData[0].groupBy = [];
+			}
+
 			setLogs([]);
 			setPage(1);
 			setRequestData(newRequestData);
