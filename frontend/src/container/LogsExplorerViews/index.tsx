@@ -117,6 +117,12 @@ function LogsExplorerViews({
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
 
+	const { options, config } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
+		dataSource: initialDataSource || DataSource.LOGS,
+		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
+	});
+
 	const orderByTimestamp: OrderByPayload | null = useMemo(() => {
 		const timestampOrderBy = listQuery?.orderBy.find(
 			(item) => item.columnName === 'timestamp',
@@ -174,10 +180,10 @@ function LogsExplorerViews({
 		() =>
 			updateAllQueriesOperators(
 				currentQuery || initialQueriesMap.logs,
-				PANEL_TYPES.TIME_SERIES,
+				selectedPanelType,
 				DataSource.LOGS,
 			),
-		[currentQuery, updateAllQueriesOperators],
+		[currentQuery, selectedPanelType, updateAllQueriesOperators],
 	);
 
 	const handleModeChange = (panelType: PANEL_TYPES): void => {
@@ -324,6 +330,7 @@ function LogsExplorerViews({
 				exportDefaultQuery,
 				widgetId,
 				panelTypeParam,
+				options.selectColumns,
 			);
 
 			updateDashboard(updatedDashboard, {
@@ -366,6 +373,7 @@ function LogsExplorerViews({
 		},
 		[
 			exportDefaultQuery,
+			options,
 			history,
 			notifications,
 			panelType,
@@ -459,12 +467,6 @@ function LogsExplorerViews({
 		panelType,
 		selectedView,
 	]);
-
-	const { options, config } = useOptionsMenu({
-		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.METRICS,
-		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
-	});
 
 	const chartData = useMemo(() => {
 		if (!stagedQuery) return [];
