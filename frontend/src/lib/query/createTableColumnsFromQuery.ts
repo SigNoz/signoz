@@ -365,6 +365,7 @@ const fillRestAggregationData = (
 	queryTableData: QueryDataV3[],
 	seria: SeriesItem,
 	equalQueriesByLabels: string[],
+	isEqualQuery: boolean,
 ): void => {
 	const nextQueryData =
 		queryTableData.find((q) => q.queryName === column.field) || null;
@@ -374,13 +375,13 @@ const fillRestAggregationData = (
 		nextQueryData,
 	);
 
+	const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
 	if (targetSeria) {
-		const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
 		if (!isEqual) {
 			// This line is crucial. It ensures that no additional rows are added to the table for similar labels across all formulas here is how this check is applied: signoz/frontend/src/lib/query/createTableColumnsFromQuery.ts line number 370
 			equalQueriesByLabels.push(column.field);
 		}
-	} else {
+	} else if (!isEqualQuery) {
 		column.data.push('N/A');
 	}
 };
@@ -435,6 +436,7 @@ const fillDataFromSeries = (
 					queryTableData,
 					seria,
 					equalQueriesByLabels,
+					isEqualQuery,
 				);
 
 				return;
@@ -569,6 +571,29 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 	const sortedQueryTableData = queryTableData.sort((a, b) =>
 		a.queryName < b.queryName ? -1 : 1,
 	);
+
+	// the reason we need this is because the filling of values in rows doesn't account for mismatch enteries
+	// in the response. Example : Series A -> [label1, label2] and Series B -> [label2,label1] this isn't accounted for
+	sortedQueryTableData.forEach((q) => {
+		q.series?.forEach((s) => {
+			s.labelsArray?.sort((a, b) =>
+				Object.keys(a)[0] < Object.keys(b)[0] ? -1 : 1,
+			);
+		});
+		q.series?.sort((a, b) => {
+			let labelA = '';
+			let labelB = '';
+			a.labelsArray.forEach((lab) => {
+				labelA += Object.values(lab)[0];
+			});
+
+			b.labelsArray.forEach((lab) => {
+				labelB += Object.values(lab)[0];
+			});
+
+			return labelA < labelB ? -1 : 1;
+		});
+	});
 
 	const dynamicColumns = getDynamicColumns(sortedQueryTableData, query);
 
