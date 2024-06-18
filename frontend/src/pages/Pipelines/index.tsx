@@ -82,7 +82,7 @@ function Pipelines(): JSX.Element {
 	}
 
 	return (
-		<Sentry.ErrorBoundary fallback={ErrorBoundaryFallback}>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<Tabs
 				className="pipeline-tabs"
 				defaultActiveKey="pipelines"

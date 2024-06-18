@@ -342,7 +342,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					/>
 				)}
 				<div className={cx('app-content', collapsed ? 'collapsed' : '')}>
-					<Sentry.ErrorBoundary fallback={ErrorBoundaryFallback}>
+					<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 						<LayoutContent>
 							<ChildrenContainer
 								style={{

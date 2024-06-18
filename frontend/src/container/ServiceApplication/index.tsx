@@ -12,7 +12,7 @@ function Services(): JSX.Element {
 		?.active;
 
 	return (
-		<Sentry.ErrorBoundary fallback={ErrorBoundaryFallback}>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<Container style={{ marginTop: 0 }}>
 				{isSpanMetricEnabled ? <ServiceMetrics /> : <ServiceTraces />}
 			</Container>

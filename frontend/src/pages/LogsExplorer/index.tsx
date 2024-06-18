@@ -70,7 +70,7 @@ function LogsExplorer(): JSX.Element {
 	);
 
 	return (
-		<Sentry.ErrorBoundary fallback={ErrorBoundaryFallback}>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<Toolbar
 				showAutoRefresh={false}
 				leftActions={

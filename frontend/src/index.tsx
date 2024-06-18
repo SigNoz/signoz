@@ -57,7 +57,7 @@ if (container) {
 	const root = createRoot(container);
 
 	root.render(
-		<Sentry.ErrorBoundary fallback={ErrorBoundaryFallback}>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<HelmetProvider>
 				<ThemeProvider>
 					<QueryClientProvider client={queryClient}>

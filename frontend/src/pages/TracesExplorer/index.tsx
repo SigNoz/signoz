@@ -185,7 +185,7 @@ function TracesExplorer(): JSX.Element {
 	const [isOpen, setOpen] = useState<boolean>(true);
 
 	return (
-		<Sentry.ErrorBoundary fallback={ErrorBoundaryFallback}>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="trace-explorer-page">
 				<Card className="filter" hidden={!isOpen}>
 					<Filter setOpen={setOpen} />

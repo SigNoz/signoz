@@ -146,7 +146,7 @@ function Trace({
 	);
 
 	return (
-		<Sentry.ErrorBoundary fallback={ErrorBoundaryFallback}>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<Search />
 			<Container>
 				<div>
