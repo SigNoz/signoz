@@ -1,6 +1,7 @@
 import './TracesExplorer.styles.scss';
 
 import { FilterOutlined } from '@ant-design/icons';
+import * as Sentry from '@sentry/react';
 import { Button, Card, Tabs, Tooltip } from 'antd';
 import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
@@ -21,7 +22,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
@@ -185,7 +185,7 @@ function TracesExplorer(): JSX.Element {
 	const [isOpen, setOpen] = useState<boolean>(true);
 
 	return (
-		<ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="trace-explorer-page">
 				<Card className="filter" hidden={!isOpen}>
 					<Filter setOpen={setOpen} />
@@ -236,7 +236,7 @@ function TracesExplorer(): JSX.Element {
 					/>
 				</Card>
 			</div>
-		</ErrorBoundary>
+		</Sentry.ErrorBoundary>
 	);
 }
 
