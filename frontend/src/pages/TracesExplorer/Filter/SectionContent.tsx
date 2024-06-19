@@ -4,7 +4,7 @@ import { Button, Card, Checkbox, Input, Tooltip } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ParaGraph } from 'container/Trace/Filters/Panel/PanelBody/Common/styles';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { isEmpty } from 'lodash-es';
+import { isArray, isEmpty } from 'lodash-es';
 import {
 	ChangeEvent,
 	Dispatch,
@@ -93,7 +93,7 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 			addFilter(type, newValue, setSelectedFilters, keys);
 			setCheckedItems((prev) => {
 				const arr = prev || [];
-				if (!arr.includes(newValue)) {
+				if (isArray(arr) && !arr.includes(newValue)) {
 					arr.push(newValue);
 				}
 				return convertToStringArr(arr);
