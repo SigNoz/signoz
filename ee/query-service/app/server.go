@@ -182,11 +182,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		}
 	}
 
-	err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
-	if err != nil {
-		return nil, err
-	}
-
 	<-readerReady
 	rm, err := makeRulesManager(serverOptions.PromConfigPath,
 		baseconst.GetAlertManagerApiPrefix(),
@@ -198,6 +193,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
+	if err != nil {
+		zap.L().Error("error creating history table", zap.Error(err))
 	}
 
 	// initiate opamp

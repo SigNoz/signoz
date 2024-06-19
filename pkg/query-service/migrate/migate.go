@@ -91,14 +91,14 @@ func ClickHouseMigrate(conn driver.Conn, cluster string) error {
     rule_name LowCardinality(String),
     state LowCardinality(String),
     unix_milli Int64 CODEC(Delta(8), ZSTD(1)),
-    fingerprint UInt64 CODEC(Delta(8), ZSTD(1)),
-    value Float64 CODEC(Delta(8), ZSTD(1)),
+    fingerprint UInt64 CODEC(ZSTD(1)),
+    value Float64 CODEC(Gorilla, ZSTD(1)),
     labels String CODEC(ZSTD(5)),
 )
 ENGINE = MergeTree
 PARTITION BY toDate(unix_milli / 1000)
-ORDER BY (rule_id, state, unix_milli)
-TTL toDateTime(unix_milli / 1000) + toIntervalSecond(2592000)
+ORDER BY (rule_id, unix_milli)
+TTL toDateTime(unix_milli / 1000) + toIntervalSecond(15552000)
 SETTINGS ttl_only_drop_parts = 1, index_granularity = 8192`
 
 	distributedTable := `CREATE TABLE IF NOT EXISTS signoz_history.distributed_rule_state_history ON CLUSTER %s
@@ -107,8 +107,8 @@ SETTINGS ttl_only_drop_parts = 1, index_granularity = 8192`
     rule_name LowCardinality(String),
     state LowCardinality(String),
     unix_milli Int64 CODEC(Delta(8), ZSTD(1)),
-    fingerprint UInt64 CODEC(Delta(8), ZSTD(1)),
-    value Float64 CODEC(Delta(8), ZSTD(1)),
+    fingerprint UInt64 CODEC(ZSTD(1)),
+    value Float64 CODEC(Gorilla, ZSTD(1)),
     labels String CODEC(ZSTD(5)),
 )
 ENGINE = Distributed(%s, signoz_history, rule_state_history, cityHash64(rule_id, rule_name, fingerprint))`

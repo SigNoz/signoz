@@ -986,6 +986,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.active {
+		labelsJSON, err := json.Marshal(a.Labels)
+		if err != nil {
+			zap.L().Error("error marshaling labels", zap.Error(err), zap.Any("labels", a.Labels))
+		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
@@ -995,13 +999,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			if a.State != StateInactive {
 				a.State = StateInactive
 				a.ResolvedAt = ts
-				r.reader.AddRuleStateHistory(ctx, []*v3.RuleStateHistory{
+				r.reader.AddRuleStateHistory(ctx, []v3.RuleStateHistory{
 					{
 						RuleID:      r.ID(),
 						RuleName:    r.Name(),
 						State:       "resolved",
 						UnixMilli:   ts.UnixMilli(),
-						Labels:      a.Labels.String(),
+						Labels:      string(labelsJSON),
 						Fingerprint: a.Labels.Hash(),
 					},
 				})
@@ -1016,13 +1020,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			if a.Missing {
 				state = "no_data"
 			}
-			r.reader.AddRuleStateHistory(ctx, []*v3.RuleStateHistory{
+			r.reader.AddRuleStateHistory(ctx, []v3.RuleStateHistory{
 				{
 					RuleID:      r.ID(),
 					RuleName:    r.Name(),
 					State:       state,
 					UnixMilli:   ts.UnixMilli(),
-					Labels:      a.Labels.String(),
+					Labels:      string(labelsJSON),
 					Fingerprint: a.Labels.Hash(),
 					Value:       a.Value,
 				},

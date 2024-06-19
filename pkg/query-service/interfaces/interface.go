@@ -105,11 +105,11 @@ type Reader interface {
 
 	GetMetricMetadata(context.Context, string, string) (*v3.MetricMetadataResponse, error)
 
-	AddRuleStateHistory(ctx context.Context, ruleStateHistory []*v3.RuleStateHistory) error
-	ReadRuleStateHistory(ctx context.Context, params *v3.QueryRuleStateHistory) ([]*v3.RuleStateHistory, error)
-	ReadRuleStateHistoryTopContributors(ctx context.Context, params *v3.QueryRuleStateHistory) ([]*v3.RuleStateHistoryContributor, error)
-	ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]*v3.RuleStateHistory, error)
-	ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]*v3.RuleStateHistoryContributor, error)
+	AddRuleStateHistory(ctx context.Context, ruleStateHistory []v3.RuleStateHistory) error
+	ReadRuleStateHistory(ctx context.Context, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistory, error)
+	ReadRuleStateHistoryTopContributors(ctx context.Context, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistoryContributor, error)
+	ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistory, error)
+	ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistoryContributor, error)
 }
 
 type Querier interface {

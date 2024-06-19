@@ -5039,7 +5039,7 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 	}
 }
 
-func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHistory []*v3.RuleStateHistory) error {
+func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHistory []v3.RuleStateHistory) error {
 	var statement driver.Batch
 	var err error
 
@@ -5070,11 +5070,11 @@ func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHis
 }
 
 func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
-	ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]*v3.RuleStateHistory, error) {
+	ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistory, error) {
 
 	var conditions []string
 
-	conditions = append(conditions, fmt.Sprintf("rule_id = %s", ruleID))
+	conditions = append(conditions, fmt.Sprintf("rule_id = '%s'", ruleID))
 
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", params.Start, params.End))
 
@@ -5126,10 +5126,10 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 	}
 	whereClause := strings.Join(conditions, " AND ")
 
-	query := fmt.Sprintf("SELECT * FROM %s.%s %s LIMIT %d OFFSET %d",
+	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE %s LIMIT %d OFFSET %d",
 		signozHistoryDBName, ruleStateHistoryTableName, whereClause, params.Limit, params.Offset)
 
-	history := []*v3.RuleStateHistory{}
+	history := []v3.RuleStateHistory{}
 	err := r.db.Select(ctx, &history, query)
 	if err != nil {
 		zap.L().Error("Error while reading rule state history", zap.Error(err))
@@ -5140,12 +5140,12 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 }
 
 func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
-	ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]*v3.RuleStateHistoryContributor, error) {
+	ctx context.Context, ruleID string, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistoryContributor, error) {
 	// Show the top 10 contributors for a rule
-	query := fmt.Sprintf("SELECT fingerprint, any(labels) as labels, count(*) as count FROM %s.%s WHERE rule_id = %s AND unix_milli >= %d AND unix_milli <= %d GROUP BY fingerprint ORDER BY count DESC LIMIT %d OFFSET %d",
+	query := fmt.Sprintf("SELECT fingerprint, any(labels) as labels, count(*) as count FROM %s.%s WHERE rule_id = '%s' AND unix_milli >= %d AND unix_milli <= %d GROUP BY fingerprint ORDER BY count DESC LIMIT %d OFFSET %d",
 		signozHistoryDBName, ruleStateHistoryTableName, ruleID, params.Start, params.End, params.Limit, params.Offset)
 
-	contributors := []*v3.RuleStateHistoryContributor{}
+	contributors := []v3.RuleStateHistoryContributor{}
 	err := r.db.Select(ctx, &contributors, query)
 	if err != nil {
 		zap.L().Error("Error while reading rule state history", zap.Error(err))
@@ -5155,7 +5155,7 @@ func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
 	return contributors, nil
 }
 
-func (r *ClickHouseReader) ReadRuleStateHistory(ctx context.Context, params *v3.QueryRuleStateHistory) ([]*v3.RuleStateHistory, error) {
+func (r *ClickHouseReader) ReadRuleStateHistory(ctx context.Context, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistory, error) {
 	var conditions []string
 
 	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", params.Start, params.End))
@@ -5208,10 +5208,10 @@ func (r *ClickHouseReader) ReadRuleStateHistory(ctx context.Context, params *v3.
 	}
 	whereClause := strings.Join(conditions, " AND ")
 
-	query := fmt.Sprintf("SELECT * FROM %s.%s %s LIMIT %d OFFSET %d",
+	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE %s LIMIT %d OFFSET %d",
 		signozHistoryDBName, ruleStateHistoryTableName, whereClause, params.Limit, params.Offset)
 
-	history := []*v3.RuleStateHistory{}
+	history := []v3.RuleStateHistory{}
 	err := r.db.Select(ctx, &history, query)
 	if err != nil {
 		zap.L().Error("Error while reading rule state history", zap.Error(err))
@@ -5222,12 +5222,12 @@ func (r *ClickHouseReader) ReadRuleStateHistory(ctx context.Context, params *v3.
 }
 
 func (r *ClickHouseReader) ReadRuleStateHistoryTopContributors(
-	ctx context.Context, params *v3.QueryRuleStateHistory) ([]*v3.RuleStateHistoryContributor, error) {
+	ctx context.Context, params *v3.QueryRuleStateHistory) ([]v3.RuleStateHistoryContributor, error) {
 
 	query := fmt.Sprintf("SELECT fingerprint, any(labels) as labels, count(*) as count FROM %s.%s WHERE unix_milli >= %d AND unix_milli <= %d GROUP BY fingerprint ORDER BY count DESC LIMIT %d OFFSET %d",
 		signozHistoryDBName, ruleStateHistoryTableName, params.Start, params.End, params.Limit, params.Offset)
 
-	contributors := []*v3.RuleStateHistoryContributor{}
+	contributors := []v3.RuleStateHistoryContributor{}
 	err := r.db.Select(ctx, &contributors, query)
 	if err != nil {
 		zap.L().Error("Error while reading rule state history", zap.Error(err))

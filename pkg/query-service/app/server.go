@@ -28,6 +28,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	"go.signoz.io/signoz/pkg/query-service/common"
+	"go.signoz.io/signoz/pkg/query-service/migrate"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
@@ -140,6 +141,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules, fm)
 	if err != nil {
 		return nil, err
+	}
+
+	err = migrate.ClickHouseMigrate(reader.GetConn(), serverOptions.Cluster)
+	if err != nil {
+		zap.L().Error("error creating history table", zap.Error(err))
 	}
 
 	var c cache.Cache

@@ -1118,13 +1118,13 @@ type MetricMetadataResponse struct {
 }
 
 type RuleStateHistory struct {
-	RuleID      string  `json:"ruleID"`
-	RuleName    string  `json:"ruleName"`
-	State       string  `json:"state"`
-	UnixMilli   int64   `json:"unixMilli"`
-	Labels      string  `json:"labels"`
-	Fingerprint uint64  `json:"fingerprint"`
-	Value       float64 `json:"value"`
+	RuleID      string  `json:"ruleID" ch:"rule_id"`
+	RuleName    string  `json:"ruleName" ch:"rule_name"`
+	State       string  `json:"state" ch:"state"`
+	UnixMilli   int64   `json:"unixMilli" ch:"unix_milli"`
+	Labels      string  `json:"labels" ch:"labels"`
+	Fingerprint uint64  `json:"fingerprint" ch:"fingerprint"`
+	Value       float64 `json:"value" ch:"value"`
 }
 
 type QueryRuleStateHistory struct {
@@ -1136,7 +1136,7 @@ type QueryRuleStateHistory struct {
 }
 
 type RuleStateHistoryContributor struct {
-	Fingerprint string            `json:"fingerprint"`
-	Labels      map[string]string `json:"labels"`
-	Count       uint64            `json:"count"`
+	Fingerprint uint64 `json:"fingerprint" ch:"fingerprint"`
+	Labels      string `json:"labels" ch:"labels"`
+	Count       uint64 `json:"count" ch:"count"`
 }
