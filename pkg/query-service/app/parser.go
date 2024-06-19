@@ -958,6 +958,9 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("cannot parse the request body: %v", err)}
 	}
 
+	// sanitize the request body
+	queryRangeParams.CompositeQuery.Sanitize()
+
 	// validate the request body
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
