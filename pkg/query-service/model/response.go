@@ -67,6 +67,21 @@ const (
 	ErrorStatusServiceUnavailable ErrorType = "service unavailable"
 )
 
+// HTTPCodeToErrorType converts a HTTP status code to an ErrorType
+func HTTPCodeToErrorType(code int) ErrorType {
+	switch code {
+	case 400:
+		return ErrorBadData
+	case 401:
+		return ErrorUnauthorized
+	case 403:
+		return ErrorForbidden
+	case 404:
+		return ErrorNotFound
+	}
+	return ErrorInternal
+}
+
 // BadRequest returns a ApiError object of bad request
 func BadRequest(err error) *ApiError {
 	return &ApiError{
