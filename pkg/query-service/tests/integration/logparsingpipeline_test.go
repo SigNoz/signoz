@@ -645,6 +645,7 @@ func assertPipelinesRecommendedInRemoteConfig(
 	}
 
 	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(pipelines)
+	require.NoError(t, err)
 	require.Equal(
 		t, expectedLogProcessorNames, collectorConfLogsPipelineProcNames,
 		"config sent to opamp client doesn't contain expected log pipelines",

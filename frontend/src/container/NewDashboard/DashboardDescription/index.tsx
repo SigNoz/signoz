@@ -5,6 +5,7 @@ import { Button, Card, Input, Modal, Popover, Tag, Typography } from 'antd';
 import FacingIssueBtn from 'components/facingIssueBtn/FacingIssueBtn';
 import { dashboardHelpMessage } from 'components/facingIssueBtn/util';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteButton';
@@ -12,6 +13,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import {
@@ -61,6 +63,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		layouts,
 		setLayouts,
 		isDashboardLocked,
+		listSortOrder,
 		setSelectedDashboard,
 		handleToggleDashboardSlider,
 		handleDashboardLockToggle,
@@ -81,6 +84,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const [sectionName, setSectionName] = useState<string>(DEFAULT_ROW_NAME);
 
 	const updateDashboardMutation = useUpdateDashboard();
+
+	const urlQuery = useUrlQuery();
 
 	const { featureResponse, user, role } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -250,6 +255,16 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		});
 	}
 
+	function goToListPage(): void {
+		urlQuery.set('columnKey', listSortOrder.columnKey as string);
+		urlQuery.set('order', listSortOrder.order as string);
+		urlQuery.set('page', listSortOrder.pagination as string);
+		urlQuery.delete(QueryParams.relativeTime);
+
+		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlQuery.toString()}`;
+		history.replace(generatedUrl);
+	}
+
 	return (
 		<Card className="dashboard-description-container">
 			<div className="dashboard-header">
@@ -258,7 +273,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						type="text"
 						icon={<LayoutGrid size={14} />}
 						className="dashboard-btn"
-						onClick={(): void => history.push(ROUTES.ALL_DASHBOARD)}
+						onClick={(): void => goToListPage()}
 					>
 						Dashboard /
 					</Button>

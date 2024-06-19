@@ -62,10 +62,11 @@ function GridTableComponent({
 
 			mutateDataSource = mutateDataSource.map(
 				(val): RowData => {
-					const newValue = val;
+					const newValue = { ...val };
 					Object.keys(val).forEach((k) => {
 						if (columnUnits[k]) {
 							newValue[k] = getYAxisFormattedValue(String(val[k]), columnUnits[k]);
+							newValue[`${k}_without_unit`] = val[k];
 						}
 					});
 					return newValue;
@@ -81,7 +82,6 @@ function GridTableComponent({
 		applyColumnUnits,
 		originalDataSource,
 	]);
-
 	useEffect(() => {
 		if (tableProcessedDataRef) {
 			// eslint-disable-next-line no-param-reassign

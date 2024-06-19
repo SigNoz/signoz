@@ -40,10 +40,44 @@
 	}
 
 	.variable-select {
-		.ant-select-dropdown {
-			max-width: 300px;
+		.ant-select-item {
+			display: flex;
+			align-items: center;
+		}
+
+		.all-label {
+			display: flex;
+			gap: 16px;
+		}
+
+		.dropdown-checkbox-label {
+			display: grid;
+			grid-template-columns: 24px 1fr;
+		}
+
+		.dropdown-value {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+
+			.option-text {
+				max-width: 180px;
+				padding: 0 8px;
+			}
+
+			.toggle-tag-label {
+				padding-left: 8px;
+				right: 40px;
+				font-weight: normal;
+				position: absolute;
+			}
 		}
 	}
+}
+
+.dropdown-styles {
+	min-width: 300px;
+	max-width: 350px;
 }
 
 .lightMode {

@@ -126,6 +126,10 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 	const [stacked, setStacked] = useState<boolean>(
 		selectedWidget?.isStacked || false,
 	);
+
+	const [stackedBarChart, setStackedBarChart] = useState<boolean>(
+		selectedWidget?.stackedBarChart || false,
+	);
 	const [opacity, setOpacity] = useState<string>(selectedWidget?.opacity || '1');
 	const [thresholds, setThresholds] = useState<ThresholdProps[]>(
 		selectedWidget?.thresholds || [],
@@ -195,6 +199,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 				fillSpans: isFillSpans,
 				columnUnits,
 				bucketCount,
+				stackedBarChart,
 				bucketWidth,
 				mergeAllActiveQueries: combineHistogram,
 				selectedLogFields,
@@ -219,6 +224,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 		bucketWidth,
 		bucketCount,
 		combineHistogram,
+		stackedBarChart,
 	]);
 
 	const closeModal = (): void => {
@@ -307,6 +313,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								opacity: selectedWidget?.opacity || '1',
 								nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
 								title: selectedWidget?.title,
+								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								panelTypes: graphType,
 								query: currentQuery,
@@ -332,6 +339,7 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 								opacity: selectedWidget?.opacity || '1',
 								nullZeroValues: selectedWidget?.nullZeroValues || 'zero',
 								title: selectedWidget?.title,
+								stackedBarChart: selectedWidget?.stackedBarChart || false,
 								yAxisUnit: selectedWidget?.yAxisUnit,
 								panelTypes: graphType,
 								query: currentQuery,
@@ -532,6 +540,8 @@ function NewWidget({ selectedGraph }: NewWidgetProps): JSX.Element {
 						setDescription={setDescription}
 						stacked={stacked}
 						setStacked={setStacked}
+						stackedBarChart={stackedBarChart}
+						setStackedBarChart={setStackedBarChart}
 						opacity={opacity}
 						yAxisUnit={yAxisUnit}
 						columnUnits={columnUnits}

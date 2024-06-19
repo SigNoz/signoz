@@ -97,6 +97,7 @@ export interface IBaseWidget {
 	timePreferance: timePreferenceType;
 	stepSize?: number;
 	yAxisUnit?: string;
+	stackedBarChart?: boolean;
 	bucketCount?: number;
 	bucketWidth?: number;
 	mergeAllActiveQueries?: boolean;
