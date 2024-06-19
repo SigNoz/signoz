@@ -289,7 +289,7 @@ function ExplorerOptions({
 	const isEditDeleteSupported = allowedRoles.includes(role as string);
 
 	return (
-		<>
+		<div className="explorer-options-container">
 			{isQueryUpdated && !isExplorerOptionHidden && (
 				<div
 					className={cx(
@@ -493,7 +493,7 @@ function ExplorerOptions({
 					onExport={onExport}
 				/>
 			</Modal>
-		</>
+		</div>
 	);
 }
 

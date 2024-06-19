@@ -77,7 +77,8 @@ function FormAlertRules({
 
 	const urlQuery = useUrlQuery();
 
-	const panelType = urlQuery.get(QueryParams.panelTypes) as PANEL_TYPES | null;
+	// In case of alert the panel types should always be "Graph" only
+	const panelType = PANEL_TYPES.TIME_SERIES;
 
 	const {
 		currentQuery,
@@ -255,7 +256,7 @@ function FormAlertRules({
 
 		if (
 			!currentQuery.builder.queryData ||
-			currentQuery.builder.queryData.length === 0
+			currentQuery.builder.queryData?.length === 0
 		) {
 			notifications.error({
 				message: 'Error',

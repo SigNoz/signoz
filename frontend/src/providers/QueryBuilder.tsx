@@ -148,13 +148,13 @@ export function QueryBuilderProvider({
 	const prepareQueryBuilderData = useCallback(
 		(query: Query): Query => {
 			const builder: QueryBuilderData = {
-				queryData: query.builder.queryData.map((item) => ({
+				queryData: query.builder.queryData?.map((item) => ({
 					...initialQueryBuilderFormValuesMap[
 						initialDataSource || DataSource.METRICS
 					],
 					...item,
 				})),
-				queryFormulas: query.builder.queryFormulas.map((item) => ({
+				queryFormulas: query.builder.queryFormulas?.map((item) => ({
 					...initialFormulaBuilderFormValues,
 					...item,
 				})),
@@ -236,7 +236,7 @@ export function QueryBuilderProvider({
 
 	const updateAllQueriesOperators = useCallback(
 		(query: Query, panelType: PANEL_TYPES, dataSource: DataSource): Query => {
-			const queryData = query.builder.queryData.map((item) =>
+			const queryData = query.builder.queryData?.map((item) =>
 				getElementWithActualOperator(item, dataSource, panelType),
 			);
 
@@ -682,7 +682,7 @@ export function QueryBuilderProvider({
 					: query.queryType;
 
 			const builder =
-				!query.builder || query.builder.queryData.length === 0
+				!query.builder || query.builder.queryData?.length === 0
 					? initialQueryState.builder
 					: query.builder;
 

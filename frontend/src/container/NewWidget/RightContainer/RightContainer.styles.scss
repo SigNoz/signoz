@@ -429,6 +429,21 @@
 				}
 			}
 
+			.bucket-config {
+				.label {
+					color: var(--bg-ink-400);
+				}
+
+				.bucket-input {
+					border: 1px solid var(--bg-vanilla-300);
+					background: var(--bg-vanilla-300);
+
+					.ant-input {
+						background: var(--bg-vanilla-300);
+					}
+				}
+			}
+
 			.panel-time-text {
 				color: var(--bg-ink-400);
 			}

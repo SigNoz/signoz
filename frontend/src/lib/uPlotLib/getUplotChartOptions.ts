@@ -68,7 +68,8 @@ function getStackedSeries(apiResponse: QueryData[]): QueryData[] {
 		const { values } = series[i];
 		for (let j = 0; j < values.length; j++) {
 			values[j][1] = String(
-				parseFloat(values[j]?.[1]) + parseFloat(series[i + 1].values[j]?.[1]),
+				parseFloat(values[j]?.[1] || '0') +
+					parseFloat(series[i + 1].values[j]?.[1] || '0'),
 			);
 		}
 
@@ -88,7 +89,8 @@ function getStackedSeriesQueryFormat(apiResponse: QueryData[]): QueryData[] {
 		const { values } = series[i];
 		for (let j = 0; j < values.length; j++) {
 			values[j].value = String(
-				parseFloat(values[j].value) + parseFloat(series[i + 1].values[j].value),
+				parseFloat(values[j]?.value || '0') +
+					parseFloat(series[i + 1].values[j]?.value || '0'),
 			);
 		}
 
