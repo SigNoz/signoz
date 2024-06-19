@@ -428,6 +428,16 @@ func (c *CompositeQuery) EnabledQueries() int {
 	return count
 }
 
+func (c *CompositeQuery) Sanitize() {
+	// remove groupBy for queries with list panel type
+	for _, query := range c.BuilderQueries {
+		if len(query.GroupBy) > 0 && c.PanelType == PanelTypeList {
+			query.GroupBy = []AttributeKey{}
+		}
+	}
+
+}
+
 func (c *CompositeQuery) Validate() error {
 	if c == nil {
 		return fmt.Errorf("composite query is required")
@@ -747,9 +757,9 @@ func (b *BuilderQuery) Validate(panelType PanelType) error {
 		}
 	}
 	if b.GroupBy != nil {
-		if len(b.GroupBy) > 0 && panelType == PanelTypeList {
-			return fmt.Errorf("group by is not supported for list panel type")
-		}
+		// if len(b.GroupBy) > 0 && panelType == PanelTypeList {
+		// 	return fmt.Errorf("group by is not supported for list panel type")
+		// }
 
 		for _, groupBy := range b.GroupBy {
 			if err := groupBy.Validate(); err != nil {
